@@ -74,10 +74,16 @@ def atomic(path, raw):
 
 def generate(source, request, base_url):
     # Existing coordinator owns recipe, model, identity and uncertain-child recovery.
-    from spoken_brief_runtime import plan, run
+    from spoken_brief_runtime import run
+    from spoken_brief_compile import compile_source, run_directory
+    from voice_profile import resolve_profile, require_executable
     arguments = {'profile_id':request['profileId'], 'delivery_id':request['deliveryId']}
-    preview = plan(source, **arguments)
-    manifest = json.loads(bounded(preview['manifest'], 1_000_000))
+    binding = resolve_profile(request['profileId'], request['deliveryId'])
+    require_executable(binding)
+    manifest = compile_source(source, speaker_id=binding['speaker_id'], voice_profile=binding)
+    retained = run_directory(source, manifest['manifest_sha256']) / 'manifest.json'
+    if retained.exists() and json.loads(bounded(retained, 1_000_000)) != manifest:
+        raise ValueError('Retained manifest changed; projection validation cannot replace it')
     spoken = ' '.join(segment['text'] for segment in manifest['segments'])
     if ' '.join(spoken.split()) != ' '.join(request['narration'].split()):
         raise ValueError('Spoken projection differs from the supplied transcript; prepare plain text upstream')
@@ -107,6 +113,16 @@ def export_brief(value, job_dir, *, base_url='http://127.0.0.1:8191', producer=g
             if bundle.get('schema') != 'action-stack.audio/v1' or sha(raw) != bundle.get('audioSha256'):
                 raise ValueError('Retained audio changed')
             check_wav(raw)
+            reference = json.loads(bounded(root / '.receipt-reference.json', 10000))
+            relative = reference.get('receipt')
+            if not isinstance(relative, str): raise ValueError('Missing retained receipt reference')
+            retained = (root / relative).resolve()
+            if not retained.is_relative_to(root / '_spoken'):
+                raise ValueError('Retained receipt escaped its owned run')
+            receipt_bytes = bounded(retained, 1_000_000)
+            receipt = json.loads(receipt_bytes)
+            if sha(receipt_bytes) != bundle['receiptSha256'] or receipt.get('producer_sha256') != bundle['producerSha256'] or receipt.get('source',{}).get('sha256') != sha(source_bytes) or receipt.get('output',{}).get('sha256') != sha(raw):
+                raise ValueError('Retained receipt no longer binds this bundle')
             return {'status':'ready','jobId':request['jobId'],'reused':True}
         result = producer(source, request, base_url)
         def owned(name):
@@ -114,7 +130,8 @@ def export_brief(value, job_dir, *, base_url='http://127.0.0.1:8191', producer=g
             if not p.is_relative_to(root / '_spoken'):
                 raise ValueError('Producer returned a foreign artifact')
             return p
-        receipt_bytes = bounded(owned('receipt'), 1_000_000)
+        receipt_path = owned('receipt')
+        receipt_bytes = bounded(receipt_path, 1_000_000)
         receipt = json.loads(receipt_bytes)
         raw = bounded(owned('output'), MAX_AUDIO)
         if receipt.get('source',{}).get('sha256') != sha(source_bytes) or bounded(source,10000) != source_bytes:
@@ -124,6 +141,7 @@ def export_brief(value, job_dir, *, base_url='http://127.0.0.1:8191', producer=g
         check_wav(raw)
         bundle = {key:request[key] for key in ('jobId','briefId','narrationSha256','profileId','deliveryId')}
         bundle.update(schema='action-stack.audio/v1',audioSha256=sha(raw),receiptSha256=sha(receipt_bytes),producerSha256=receipt['producer_sha256'])
+        atomic(root / '.receipt-reference.json', json.dumps({'receipt':receipt_path.relative_to(root).as_posix()}).encode('utf-8'))
         atomic(root / 'audio.wav', raw)
         atomic(destination, (json.dumps(bundle,sort_keys=True) + '\n').encode('utf-8'))
         return {'status':'ready','jobId':request['jobId'],'reused':False}

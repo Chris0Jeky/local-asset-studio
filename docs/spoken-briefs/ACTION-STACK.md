@@ -1,33 +1,39 @@
 # Prepared narration for Action Stack
 
-Consumer: Chris0Jeky/action-stack issue #14. Producer slice: #834.
+Consumer: Chris0Jeky/action-stack issue #14 / PR #15. Producer slice: #834 / PR #835.
 
-Action Stack is now a reading/listening surface, not a speech-generation UI. Its server projects existing source text into a short immutable brief, and an explicitly enabled local preparer sends the exact narration through `scripts/action_stack_export.py`. This wrapper reuses `spoken_brief_runtime.plan/run`; it does not load another model, install packages, rewrite the source, watch folders, or start Studio.
+Action Stack is a reading/listening surface, not a speech-generation UI. Its server projects source text into a short immutable brief; an explicitly enabled local preparer sends exact narration through `scripts/action_stack_export.py`. This wrapper reuses the existing compiler and `spoken_brief_runtime.run`. It adds no model loader, network server, folder watcher or source editor.
 
-## Supported route
+## Supported route and invocation
 
-The current executable profile is `kokoro-af-heart-control-v1`, delivery `calm-brief`, using the configured Kokoro `af_heart` baseline. Qwen3-TTS is not silently substituted or claimed as installed. Existing Voice-profile and producer fingerprint validation remains authoritative. Studio and the isolated Voice baseline must already be configured and running.
+Current executable profile: `kokoro-af-heart-control-v1`, delivery `calm-brief`, using the configured Kokoro `af_heart` baseline. Qwen3-TTS is not silently substituted or claimed as installed. Existing profile/producer fingerprint checks remain authoritative. Studio and the isolated Voice baseline must already be configured and running.
 
 ```powershell
 python scripts/action_stack_export.py --request <job-dir>/request.json --job-dir <job-dir> --base-url http://127.0.0.1:8191
 ```
 
-The executable and job directory are trusted local operator settings, not fields taken from Notion. The request permits exactly schema, jobId, briefId, actionId, narration, narrationSha256, profileId and deliveryId. Narration is one UTF-8 paragraph of at most 1600 characters. Lowercase SHA-256 identities bind exact text and voice. Job identity is SHA256 of briefId, narrationSha256, profileId and deliveryId joined by newlines.
+Executable, endpoint and directory are trusted operator settings, never taken from Notion. The request permits exactly schema, jobId, briefId, actionId, narration, narrationSha256, profileId and deliveryId. Narration is one UTF-8 paragraph, at most 1600 characters. Lowercase SHA256 identities bind the text and voice. Job ID is SHA256 of briefId, narrationSha256, profileId and deliveryId joined by newlines.
 
-## Publication protocol
+## Compilation and publication
 
-The wrapper creates immutable `COMPRESSED.md` bytes (narration plus newline). The existing compiler's spoken projection must match the supplied narration before generation begins. The existing coordinator retains child project identities, plans, source/producer hashes, uncertainty and completed reuse. Its output/receipt must remain beneath this job's `_spoken` directory.
+Immutable `COMPRESSED.md` bytes contain narration plus newline. Use the existing **non-mutating** `compile_source` with the resolved executable voice binding. Compare its spoken projection to the supplied transcript before generation. If an existing run's manifest differs, block without replacing it. Do not call `plan()` here: that command writes the manifest before the runtime's integrity check.
 
-On success, source bytes and receipt source hash must still match, WAV bytes must match the receipt output hash, and the output must be bounded 48 kHz mono PCM16. `audio.wav` is atomically replaced first, then `bundle.json` last. The bundle schema `action-stack.audio/v1` carries jobId, briefId, narrationSha256, profileId, deliveryId, audioSha256, receiptSha256 and producerSha256. The full LAS receipt remains in `_spoken`; the consumer retains its digest and copies the verified audio into its own local storage transaction.
+The existing coordinator retains child-project identities, source/producer hashes and uncertainty. Its output and receipt must resolve beneath the job's `_spoken` directory. Verify unchanged source bytes, receipt source/output hashes, producer identity, bounded 48 kHz mono PCM16 and duration before publishing. Limits: 12 MB and 120 seconds.
 
-The consumer must compare every binding against its retained request and recheck current source content before publication. It must not accept a producer-chosen remote URL or serve arbitrary local files. Reading a brief and clicking Play only retrieve prepared content. They cannot create projects or submit inference.
+Publish a local `.receipt-reference.json` pointing to the original owned `_spoken` receipt, then `audio.wav`, then `bundle.json` last, using atomic replacements. The public exchange schema `action-stack.audio/v1` carries jobId, briefId, narrationSha256, profileId, deliveryId, audioSha256, receiptSha256 and producerSha256. The reference file is producer-local recovery metadata, not a path the consumer follows.
+
+On completed reuse, read the **actual retained receipt bytes**, recheck their digest, producer identity, source and output binding, and revalidate audio. Missing/changed provenance or an escaping receipt reference blocks without invoking inference. A syntactically valid digest alone does not establish retained provenance.
+
+The consumer independently validates every binding, derives audio metadata from bytes and rechecks current source text before atomically publishing its local audio/manifest. It must not serve producer-chosen remote URLs or arbitrary local files. GET/open/Play are read-only delivery operations.
 
 ## Recovery and limits
 
-Exact valid completed bundles are reused without inference. Corrupt bundles or outputs block, never regenerate automatically. `.action-stack-export.lock` is exclusive and never expires merely by time. After a hard crash inspect the retained coordinator state, child jobs and owned processes before removing a stale lock or retrying the same request. Never create a replacement for an uncertain child submission.
+Valid completed bundles are reused. Corrupt bundles, receipts or audio never trigger automatic regeneration. The exclusive `.action-stack-export.lock` never expires merely because time passed. After a hard crash inspect owned processes, retained coordinator state and exact child projects before removing any lock or explicitly retrying. Never recreate an uncertain child submission.
 
-Audio limit is 12 MB and 120 seconds. Publication stores bounded files and excludes private text/paths from CLI errors. A local filesystem administrator can replace files; hashes prove consistency, not an adversarial authenticity signature or subjective voice quality. The consumer must retain source access controls and invalidate audio after source changes.
+Hashes establish content consistency, not an authenticity signature against a malicious local administrator or subjective voice quality. Private source text, audio, paths and credentials stay outside Git and CLI errors.
 
 ## Verification
 
-`python -m unittest discover -s tests -p "test_action_stack_export.py"` currently exercises 12 offline synthetic contracts. A corrupt-retained-provenance regression was observed failing before repair. Projection mismatch is rejected before `run`, and cached corruption cannot trigger a fresh generation. CI also runs the repository's normal checks. No real model generation or listening acceptance is implied by synthetic PCM. The configured workstation and HUMAN_TODO voice choices remain separate acceptance.
+`python -m unittest discover -s tests -p "test_action_stack_export.py" -v` exercises **18 offline synthetic contracts**. Four review regressions were observed failing before repair: missing/changed original receipt, changed retained producer identity, and projection checking that overwrote a retained manifest. Matching projection and confined-reference cases also pass. Focused Ubuntu/Windows CI and normal repository gates qualify each published head.
+
+Synthetic PCM and compiler doubles do not establish real model inference or listening acceptance. The configured workstation and HUMAN_TODO voice decisions remain separate. No private source data or generated speech is committed.

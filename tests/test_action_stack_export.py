@@ -78,13 +78,59 @@ class ExportTests(unittest.TestCase):
         p=self.root/'bundle.json';b=json.loads(p.read_text());b['receiptSha256']='_'*64;p.write_text(json.dumps(b))
         with self.assertRaises(ValueError):export_brief(request(),self.root,producer=self.producer)
         self.assertEqual(self.calls,1)
+    def test_missing_original_receipt_blocks_completed_reuse(self):
+        export_brief(request(),self.root,producer=self.producer)
+        (self.root/'_spoken'/'run'/'receipt.json').unlink()
+        with self.assertRaises((ValueError,OSError)):
+            export_brief(request(),self.root,producer=self.producer)
+        self.assertEqual(self.calls,1)
+    def test_modified_original_receipt_blocks_completed_reuse(self):
+        export_brief(request(),self.root,producer=self.producer)
+        path=self.root/'_spoken'/'run'/'receipt.json'
+        record=json.loads(path.read_text());record['producer_sha256']='c'*64
+        path.write_text(json.dumps(record))
+        with self.assertRaises(ValueError):export_brief(request(),self.root,producer=self.producer)
+        self.assertEqual(self.calls,1)
+    def test_retained_producer_identity_must_match_the_original_receipt(self):
+        export_brief(request(),self.root,producer=self.producer)
+        path=self.root/'bundle.json';record=json.loads(path.read_text());record['producerSha256']='c'*64
+        path.write_text(json.dumps(record))
+        with self.assertRaises(ValueError):export_brief(request(),self.root,producer=self.producer)
+        self.assertEqual(self.calls,1)
+    def test_projection_check_does_not_replace_a_retained_manifest(self):
+        source=self.root/'COMPRESSED.md';source.write_text(request()['narration'])
+        directory=self.root/'_spoken'/'run';directory.mkdir(parents=True)
+        target=directory/'manifest.json';target.write_text('{"corrupt":true}')
+        before=target.read_bytes();manifest={'segments':[{'text':request()['narration']}],'manifest_sha256':'c'*64}
+        def unsafe_plan(*args,**kwargs):
+            target.write_text(json.dumps(manifest));return {'manifest':str(target)}
+        runtime=types.SimpleNamespace(plan=unsafe_plan,run=lambda *a,**k:{})
+        compiler=types.SimpleNamespace(compile_source=lambda *a,**k:manifest,run_directory=lambda *a:directory)
+        profiles=types.SimpleNamespace(resolve_profile=lambda *a:{'speaker_id':'af_heart'},require_executable=lambda *a:None)
+        with patch.dict(sys.modules,{'spoken_brief_runtime':runtime,'spoken_brief_compile':compiler,'voice_profile':profiles}):
+            with self.assertRaises(ValueError):generate(source,request(),'http://127.0.0.1:8191')
+        self.assertEqual(target.read_bytes(),before)
+    def projection_modules(self, text, run):
+        manifest={'segments':[{'text':text}],'manifest_sha256':'c'*64}
+        compiler=types.SimpleNamespace(compile_source=lambda *a,**k:manifest,run_directory=lambda *a:self.root/'_spoken'/'run')
+        profiles=types.SimpleNamespace(resolve_profile=lambda *a:{'speaker_id':'af_heart'},require_executable=lambda *a:None)
+        return {'spoken_brief_runtime':types.SimpleNamespace(run=run),'spoken_brief_compile':compiler,'voice_profile':profiles}
     def test_projection_mismatch_blocks_before_run(self):
-        manifest=self.root/'manifest.json';manifest.write_text(json.dumps({'segments':[{'text':'different'}]}))
         ran=[]
-        module=types.SimpleNamespace(plan=lambda *a,**k:{'manifest':str(manifest)},run=lambda *a,**k:ran.append(True))
-        with patch.dict(sys.modules,{'spoken_brief_runtime':module}):
+        with patch.dict(sys.modules,self.projection_modules('different',lambda *a,**k:ran.append(True))):
             with self.assertRaises(ValueError):generate(self.root/'COMPRESSED.md',request(),'http://127.0.0.1:8191')
         self.assertEqual(ran,[])
+    def test_matching_projection_calls_existing_run_without_writing_a_manifest(self):
+        ran=[]
+        with patch.dict(sys.modules,self.projection_modules(request()['narration'],lambda *a,**k:ran.append(k) or {'ok':True})):
+            self.assertEqual(generate(self.root/'COMPRESSED.md',request(),'http://127.0.0.1:8191'),{'ok':True})
+        self.assertEqual(len(ran),1)
+        self.assertFalse((self.root/'_spoken'/'run'/'manifest.json').exists())
+    def test_cached_receipt_reference_cannot_escape_the_run(self):
+        export_brief(request(),self.root,producer=self.producer)
+        (self.root/'.receipt-reference.json').write_text(json.dumps({'receipt':'../foreign.json'}))
+        with self.assertRaises(ValueError):export_brief(request(),self.root,producer=self.producer)
+        self.assertEqual(self.calls,1)
     def test_lock_does_not_expire_or_repeat_an_uncertain_job(self):
         (self.root/'.action-stack-export.lock').write_text('previous process')
         with self.assertRaises(FileExistsError):export_brief(request(),self.root,producer=self.producer)
