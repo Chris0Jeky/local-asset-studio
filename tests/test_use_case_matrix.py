@@ -3,7 +3,9 @@
 No browser, no server, no Playwright import. `python tests/studio_use_cases.py` is the
 measured run; this file guards the parts that must stay correct without one.
 """
+import inspect
 import json
+import tempfile
 import unittest
 from pathlib import Path
 import sys
@@ -194,6 +196,106 @@ class LiveGuard(unittest.TestCase):
 
     def test_deny_list_beats_navigation(self):
         self.assertIn('deny-list', runner.live_allows('click', True, 'generate', 'Generate'))
+
+    def test_a_listed_local_control_skips_the_label_heuristic(self):
+        """#486: a recipe card's description says 'one run of this recipe'; picking it only loads the recipe."""
+        label = 'Qwen Atelier - 1 Reference Heavy 20B edit: one run of this recipe'
+        self.assertIn('deny-list label', runner.live_allows('click', False, '#presetList [data-id="qwen-1ref"]', label))
+        self.assertEqual(runner.live_allows('click', False, '#presetList [data-id="qwen-1ref"]', label, (), False,
+                                            '#presetList [data-id="qwen-1ref"]'), '')
+
+    def test_id_and_attribute_deny_lists_beat_the_local_list(self):
+        self.assertIn('deny-list id', runner.live_allows('click', True, 'generate', 'Generate', (), False, '#presetList [data-id="x"]'))
+        self.assertIn('deny-list attribute', runner.live_allows('click', True, 'x', 'Keep', ('data-choose-candidate',), False, '[data-asset-open="x"]'))
+
+    def test_the_local_list_covers_clicks_only(self):
+        self.assertIn('read-only', runner.live_allows('press', False, 'workshopReview', 'Review checks', (), False, '#workshopReview'))
+
+    def test_no_local_control_is_a_denied_id_and_every_one_says_why(self):
+        for selector, why in runner.LOCAL_CONTROLS.items():
+            self.assertEqual(runner.control_kind(selector), selector, 'keys are value-free: ' + selector)
+            self.assertNotIn(selector.lstrip('#'), runner.DENY_IDS, selector)
+            self.assertTrue(why.strip(), selector)
+
+    def test_writing_controls_stay_off_the_local_list(self):
+        for selector in ('#uxPrepareHandoff', '[data-ux-pull="a"]', '#productionDetail [data-choose-candidate="a"]',
+                         '#prepareExperiment', '#nativeExport', '#saveSharedWorkflow', '#generate'):
+            self.assertNotIn(runner.control_kind(selector), runner.LOCAL_CONTROLS, selector)
+            control_id = selector[1:] if selector.startswith('#') and ' ' not in selector else selector
+            self.assertTrue(runner.live_allows('click', False, control_id, 'x', (), False, selector), selector)
+
+    def test_pulling_a_saved_picture_is_denied_by_attribute(self):
+        self.assertIn('data-ux-pull', runner.deny_reason('x', 'A picture', ('data-ux-pull',)))
+
+    def test_control_kind_strips_attribute_values_only(self):
+        self.assertEqual(runner.control_kind('#productionList [data-project="ab\\"c"]'), '#productionList [data-project]')
+        self.assertEqual(runner.control_kind(' #gallery .reference-output[data-job="j"][data-index="0"] '),
+                         '#gallery .reference-output[data-job][data-index]')
+        self.assertEqual(runner.control_kind('#workshopReview'), '#workshopReview')
+
+
+class LiveOutcomes(unittest.TestCase):
+    """#486: live journeys end with a named STOP or SKIP instead of a fake missing-control dead end."""
+
+    def test_the_fixture_id_wins_when_the_live_page_lists_it(self):
+        self.assertEqual(runner.choose_live_value(['newest', 'asset-1', 'older'], 'asset-1'), 'asset-1')
+
+    def test_otherwise_the_first_the_page_lists(self):
+        self.assertEqual(runner.choose_live_value(['newest-live', 'older-live'], 'asset-1'), 'newest-live')
+        self.assertEqual(runner.choose_live_value(['newest-live', 'older-live'], 'asset-1', nth=1), 'older-live')
+        self.assertIsNone(runner.choose_live_value(['only-one'], 'asset-1', nth=1))
+
+    def test_blank_duplicate_non_text_and_unsafe_values_are_ignored(self):
+        self.assertEqual(runner.choose_live_value(['', '  ', None, 7, 'a"]', 'x' * 200, 'newest', 'newest', 'older'], nth=1), 'older')
+        self.assertIsNone(runner.choose_live_value(['', None, '   ']))
+        self.assertIsNone(runner.choose_live_value(None))
+
+    def test_a_skip_needs_a_bounded_named_reason_and_a_known_kind(self):
+        for bad in ('', '   ', 'x' * 301):
+            with self.assertRaises(ValueError): runner.LiveCaseSkip(bad)
+        with self.assertRaises(ValueError): runner.LiveCaseSkip('no asset', 'maybe')
+        skip = runner.LiveCaseSkip('  no image   asset ', 'read-only')
+        self.assertEqual((str(skip), skip.reason, skip.kind), ('no image asset', 'no image asset', 'read-only'))
+
+    def test_results_and_counts(self):
+        rows = [{'passed': True}, {'passed': False, 'skip_kind': 'read-only'}, {'passed': False, 'skip_kind': 'missing'}, {'passed': False}]
+        self.assertEqual([runner.case_result(row) for row in rows], ['PASS', 'STOP', 'SKIP', 'FAIL'])
+        self.assertEqual(runner.outcome_counts(rows), {'passed': 1, 'stopped': 1, 'skipped': 1, 'failed': 1, 'reached': 2})
+
+    def run_stub(self, live, kind):
+        case_id = 'live-outcome-stub'
+        def stub(case): raise runner.LiveCaseSkip('no image asset in the Asset library', kind)
+        runner.DRIVERS[case_id] = stub
+        spec = {'id': case_id, 'goal': 'g', 'starting_view': 'assets', 'success_condition': 's', 'steps': []}
+        try:
+            with tempfile.TemporaryDirectory() as temporary:
+                return runner.run_case(spec, object(), 'http://127.0.0.1:8191', live, Path(temporary))
+        finally: runner.DRIVERS.pop(case_id, None)
+
+    def test_a_live_skip_is_named_and_is_neither_a_failure_nor_a_dead_end(self):
+        for kind, result, prefix in (('missing', 'SKIP', 'skipped: '), ('read-only', 'STOP', 'stopped: ')):
+            row = self.run_stub(True, kind)
+            self.assertEqual((row['passed'], row['failure'], row['dead_ends'], row['steps_taken']), (False, '', 0, 0))
+            self.assertEqual((row['skip_kind'], row['skip_reason'], row['result']), (kind, 'no image asset in the Asset library', result))
+            self.assertEqual(row['detail'], prefix + 'no image asset in the Asset library')
+            self.assertIn(result, runner.table([row]))
+            self.assertEqual(runner.verdict({'mode': 'live-readonly', 'rows': [row], 'generation_submissions': 0, 'page_errors': []}), [])
+
+    def test_fixture_mode_never_skips(self):
+        row = self.run_stub(False, 'missing')
+        self.assertEqual((row['passed'], row['skip_kind'], row['result']), (False, '', 'FAIL'))
+        self.assertIn('fixture mode never skips', row['failure'])
+        self.assertTrue(runner.verdict({'mode': 'fixture', 'rows': [row], 'generation_submissions': 0, 'page_errors': []}))
+
+    def test_journeys_that_named_fixture_ids_resolve_live_ones_and_stop_before_writing(self):
+        for driver in (runner._one_reference, runner._three_references, runner._review, runner._reuse, runner._native_export):
+            self.assertIn('c.pick(', inspect.getsource(driver), driver.__name__)
+        for driver in (runner._restyle, runner._combine, runner._draw_pose):
+            self.assertIn('c.pick_output()', inspect.getsource(driver), driver.__name__)
+        for driver in (runner._one_reference, runner._three_references, runner._compare, runner._review, runner._reuse,
+                       runner._native_export, runner._restyle, runner._combine, runner._draw_pose):
+            self.assertIn('c.stop_before(', inspect.getsource(driver), driver.__name__)
+        self.assertNotIn("== 'asset-1'", inspect.getsource(runner._reuse))
 
 
 class Table(unittest.TestCase):
