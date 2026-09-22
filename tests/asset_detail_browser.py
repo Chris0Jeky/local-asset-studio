@@ -63,7 +63,7 @@ class Handler(fixture.Handler):
             if self.state.fail_write:return self.json({'error':'Workspace unavailable (synthetic fault)'},503)
             if data['request_id'] in self.state.receipts:return self.json(self.state.receipts[data['request_id']])
             selected=[a for a in fixture.ASSETS if a['id'] in data['ids']]
-            if any(a['metadata_revision']!=data['expected_revisions'][a['id']] for a in selected):return self.json({'error':'Synthetic stale revision','code':'asset_revision_conflict','workspace_id':'1'*32,'current':selected},409)
+            if any(a['metadata_revision']!=data['expected_revisions'][a['id']] for a in selected):return self.json({'error':'Synthetic stale revision','code':'asset_revision_conflict','workspace_id':'1'*32,'request_id':data['request_id'],'conflict_ids':[a['id'] for a in selected if a['metadata_revision']!=data['expected_revisions'][a['id']]],'missing_ids':[],'current':selected},409)
             for asset in fixture.ASSETS:
                 if asset['id'] in data['ids']:
                     if data['action']=='edit':asset.update({k:v for k,v in data.items() if k not in {'ids','action','workspace_id','request_id','expected_revisions'}})
