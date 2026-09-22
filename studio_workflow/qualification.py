@@ -16,6 +16,7 @@ import sys
 from .core import MAX_BYTES, canonical, decode, digest, need
 from .guidance import bindings, resource_context
 from studio_prompt.graph_provenance import inspect_graph
+from studio_prompt.schema import validate_profiles
 
 FORMAT = 'studio.route-qualification-inspection/v1'
 MAX_ROUTES = 16
@@ -39,6 +40,10 @@ def _profiles(document, preset, graph_sha256):
          'Unknown prompt-profile document')
     rows = document.get('profiles')
     need(isinstance(rows, list) and len(rows) <= 256, 'Invalid prompt-profile list')
+    try:
+        validate_profiles(document)
+    except (KeyError, TypeError) as exc:
+        raise ValueError('Invalid prompt-profile contract') from exc
     seen, result = set(), []
     mapped = bindings(preset)
     for profile in rows:
@@ -110,6 +115,17 @@ def inspect_route(preset: dict, graph: dict, manifest: dict, profiles: dict) -> 
     slots = preset.get('reference_slots', [])
     need(isinstance(slots, list) and len(slots) <= 16
          and all(isinstance(s, dict) for s in slots), 'Invalid catalog reference slots')
+    # Match the catalog validator's visual-reference vocabulary, not Prompt Lab's
+    # broader role set (which also includes voice). Do not import runtime owners.
+    roles = {'identity', 'pose', 'style', 'costume', 'composition', 'geometry', 'motion', 'mask'}
+    for slot in slots:
+        need(isinstance(slot.get('role'), str) and slot['role'] in roles,
+             'Invalid catalog reference role')
+        pair = slot.get('binding')
+        need(isinstance(pair, list) and len(pair) == 2
+             and all(isinstance(x, str) and x for x in pair), 'Invalid catalog reference binding')
+        node, field = pair
+        need(node in graph and field in graph[node]['inputs'], 'Missing catalog reference target')
     mapped = bindings(preset)
     settings = []
     for control, pairs in sorted(mapped.items()):
