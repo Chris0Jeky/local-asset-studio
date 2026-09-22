@@ -6,6 +6,7 @@ A successful inspection is not a qualified route, runtime preflight or permissio
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import copy
 import hashlib
 import json
@@ -14,8 +15,9 @@ import re
 import sys
 
 from .core import MAX_BYTES, canonical, decode, digest, need
-from .guidance import bindings, resource_context
-from studio_prompt.graph_provenance import inspect_graph
+from .guidance import bindings, file_key, resource_context
+from .model_contracts import SUFFIXES
+from studio_prompt.graph_provenance import inspect_graph, link
 from studio_prompt.schema import validate_profiles
 
 FORMAT = 'studio.route-qualification-inspection/v1'
@@ -74,6 +76,29 @@ def _profiles(document, preset, graph_sha256):
     return sorted(result, key=lambda x: x['id'])
 
 
+def _catalog_pin_valid(asset, id_counts):
+    """Catalog metadata validity, not download admission or source authentication."""
+    identifier = asset.get('id')
+    if not (isinstance(identifier, str) and re.fullmatch(r'[a-z0-9-]+', identifier)
+            and id_counts[identifier] == 1
+            and type(asset.get('bytes')) is int and asset['bytes'] > 0
+            and isinstance(asset.get('sha256'), str)
+            and re.fullmatch(r'[a-f0-9]{64}', asset['sha256'])):
+        return False
+    try:
+        path = file_key(asset.get('file'))
+    except ValueError:
+        return False
+    if PurePosixPath(path).suffix.lower() not in SUFFIXES:
+        return False
+    url = asset.get('url')
+    # A catalog source page is provenance, unlike an installable transfer URL.
+    # This intentionally does not borrow the installer's stricter endpoint gate.
+    return isinstance(url, str) and (
+        url.startswith(('https://huggingface.co/', 'https://civitai.com/', 'https://civitai.red/'))
+        or url == '' and isinstance(asset.get('terms'), str) and bool(asset['terms'].strip()))
+
+
 def inspect_route(preset: dict, graph: dict, manifest: dict, profiles: dict) -> dict:
     """Project one catalog configuration, without installed-model or source access.
 
@@ -90,15 +115,22 @@ def inspect_route(preset: dict, graph: dict, manifest: dict, profiles: dict) -> 
     need(all(isinstance(a, dict) and isinstance(a.get('file'), str) and a['file']
              for a in manifest['assets']), 'Invalid model declaration')
     graph_report = inspect_graph(graph)
+    # Provenance inspection deliberately diagnoses incomplete supplied graphs.
+    # Route inspection additionally requires usable catalog API link structure.
+    for node_id, node in graph.items():
+        for field, value in node['inputs'].items():
+            if isinstance(value, list):
+                ref = link(value)
+                need(ref is not None and isinstance(value[0], str) and value[0] in graph,
+                     f'Invalid catalog graph link at {node_id}.{field}')
     graph_sha = graph_report['graph_sha256']
     components = resource_context(graph, manifest, preset)
     diagnostics = []
+    id_counts = Counter(a['id'] for a in manifest['assets'] if isinstance(a.get('id'), str))
     for row in components:
         candidates = [a for a in manifest['assets'] if a.get('file') == row['file']]
         declaration = candidates[0] if row['identity'] == 'catalog_pin' else None
-        if declaration is not None and not (
-                isinstance(declaration.get('id'), str) and declaration['id']
-                and type(declaration.get('bytes')) is int and declaration['bytes'] > 0):
+        if declaration is not None and not _catalog_pin_valid(declaration, id_counts):
             row.update(identity='invalid_catalog_pin', pin_sha256=None)
             declaration = None
         row['library_declaration'] = copy.deepcopy(declaration)
