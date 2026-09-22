@@ -1,0 +1,53 @@
+name: Optional style board contracts
+on:
+  push:
+    paths:
+      - 'app/references.py'
+      - 'app/continuation.py'
+      - 'app/static/continuation-core.js'
+      - 'app/static/reference-model.js'
+      - 'tests/*optional_style_board*'
+      - '.github/workflows/optional-style-board.yml'
+  pull_request:
+    paths:
+      - 'app/references.py'
+      - 'app/continuation.py'
+      - 'app/static/continuation-core.js'
+      - 'app/static/reference-model.js'
+      - 'tests/*optional_style_board*'
+      - '.github/workflows/optional-style-board.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Source ownership and optional-board preparation
+        run: python -m unittest discover -s tests -p test_optional_style_board.py -v
+      - name: Existing reference regressions
+        run: python -m unittest discover -s tests -p test_references.py -v
+      - name: Existing continuation regressions
+        run: python -m unittest discover -s tests -p test_continuation.py -v
+      - name: Shared readiness contracts
+        run: node --test tests/optional_style_board.cjs
+      - name: Existing continuation client contracts
+        run: node tests/continuation_core.cjs
+      - name: Continuation syntax
+        run: node --check app/static/continuation-core.js
+      - run: python scripts/validate-repo.py
