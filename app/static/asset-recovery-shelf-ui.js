@@ -29,7 +29,7 @@ function assetShelfRender(){
     const foreign=!r.workspace_id||r.workspace_id!==assetState.workspace_id;
     return '<article class="asset-shelf-record"><h3>'+esc(assetShelfSummary(r))+'</h3>'+
       (foreign?'<p>Another or unknown Workspace: inspect, export or discard only.</p>':'<p>Local evidence, not current saved metadata. Restoring sends no save.</p>')+
-      '<div class="asset-shelf-actions"><button type="button" data-shelf-inspect="'+r.id+'">Inspect</button><button type="button" data-shelf-restore="'+r.id+'"'+(foreign?' disabled':'')+'>Restore to this tab</button><button type="button" data-shelf-export="'+r.id+'">Export record</button><button type="button" data-shelf-discard="'+r.id+'">Discard record</button></div></article>';
+      '<div class="asset-shelf-actions"><button type="button" data-shelf-inspect="'+r.id+'">Inspect</button><button type="button" data-shelf-observe="'+r.id+'"'+(foreign?' disabled':'')+'>Inspect receipt and current state</button><button type="button" data-shelf-restore="'+r.id+'"'+(foreign?' disabled':'')+'>Restore to this tab</button><button type="button" data-shelf-export="'+r.id+'">Export record</button><button type="button" data-shelf-discard="'+r.id+'">Discard record</button></div></article>';
   }).join(''):'<p>No recovery records on this origin. Enable device checkpoints to retain future detail and library updates.</p>';
   document.getElementById('assetShelfCount').textContent=assetShelfRecords.length+' of '+StudioAssetRecoveryShelf.LIMITS.records+' records. No automatic eviction or expiry.';
 }
@@ -71,6 +71,7 @@ function assetShelfInspect(record){
     '<p>Wait for “checkpoint verified” before closing. Clearing a tab record or disabling checkpoints does not delete shelf records or cancel server work. Review-queue bulk shortcuts are not included in this shelf.</p>'+
     '<p id="assetShelfStatus" role="status" aria-live="polite"></p><p id="assetShelfCount"></p>'+
     '<div class="asset-shelf-actions"><button type="button" id="assetShelfRefresh">Refresh local records</button><button type="button" id="assetShelfExport">Export shelf</button><button type="button" id="assetShelfRawExport" hidden>Export retained raw evidence</button></div>'+
+    '<div class="asset-shelf-actions"><button type="button" data-recovery-observe-slot="detail">Inspect this tab’s asset recovery</button><button type="button" data-recovery-observe-slot="library">Inspect this tab’s library recovery</button></div>'+
     '<label>Inspect a recovery JSON bundle (at most 2 MiB)<input id="assetShelfImport" type="file" accept=".json,application/json"></label>'+
     '<section id="assetShelfImportPreview" hidden><h3>Inspected import</h3><p></p><button type="button" id="assetShelfImportConfirm">Import inspected records locally</button></section>'+
     '<div id="assetShelfRecords"></div><section id="assetShelfInspection" hidden><h3></h3><p></p><pre tabindex="0" aria-label="Retained recovery text"></pre></section>';
