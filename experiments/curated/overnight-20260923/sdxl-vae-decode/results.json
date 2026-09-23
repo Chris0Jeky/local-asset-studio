@@ -1,0 +1,1909 @@
+[
+ {
+  "label": "plain-portrait",
+  "status": "success",
+  "graph_sha256": "43c698eeb1033690b5a3949b17303ce64664e3431655dfec685d3e2a5d4d9711",
+  "graph_file": "graphs/plain-portrait.json",
+  "submitted_at": "2026-09-23 03:20:34.362089",
+  "comfy_pid": 56556,
+  "commit_pct_before": 43.3,
+  "free_ram_gb_before": 15.6,
+  "config": "plain",
+  "case": "portrait",
+  "seed": 2026092301,
+  "position_in_case": 0,
+  "prompt_id": "f1ed279f-0625-41d1-83be-2ca068762461",
+  "wall_seconds": 38.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 14151,
+  "peak_shared_mb": 463,
+  "spilled": false,
+  "gpu_samples": 26,
+  "peak_commit_pct": 58.3,
+  "comfy_executed_seconds": 36.48,
+  "log_lines": [
+   "03:20:57 [INFO] Requested to load SDXLClipModel",
+   "03:20:57 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "03:20:58 [INFO] Requested to load SDXL",
+   "03:21:01 [INFO] loaded completely; 12649.97 MB usable, 4897.05 MB loaded, full load: True",
+   "03:21:08 [INFO] Requested to load AutoencoderKL",
+   "03:21:09 [INFO] Unloaded partially: 1523.35 MB freed, 3373.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:21:10 [INFO] loaded completely; 4883.28 MB usable, 159.56 MB loaded, full load: True",
+   "03:21:10 [INFO] Prompt executed in 36.48 seconds"
+  ],
+  "timeline_file": "timelines/plain-portrait.json",
+  "history_execution_seconds": 36.48,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-portrait_00001_.png",
+    "sha256": "38e5b6cb5ae0f06bb24ba1873d1b6a730bf3b11da47ee35238a722f5fed33350"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "1",
+     "class_type": "CheckpointLoaderSimple",
+     "seconds": 23.85
+    },
+    {
+     "node": "4",
+     "class_type": "EmptyLatentImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.13
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.11
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 9.94
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 2.29
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.1
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.243,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.23,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.26,
+      0.25,
+      0.25,
+      0.26,
+      0.26,
+      0.25,
+      0.25
+     ]
+    }
+   ],
+   "cached_nodes": [],
+   "ws_execution_seconds": 36.48
+  },
+  "finished_at": "2026-09-23 03:21:13.212084"
+ },
+ {
+  "label": "tiled512-portrait",
+  "status": "success",
+  "graph_sha256": "c1036b38c88aca31ee6bf94429105b221371e0bb8a6ded554648a9200d69745f",
+  "graph_file": "graphs/tiled512-portrait.json",
+  "submitted_at": "2026-09-23 03:21:13.231681",
+  "comfy_pid": 56556,
+  "commit_pct_before": 50.1,
+  "free_ram_gb_before": 14.5,
+  "config": "tiled512",
+  "case": "portrait",
+  "seed": 2026092301,
+  "position_in_case": 1,
+  "prompt_id": "fe0f6d4e-f328-4c97-a44a-f2ede403b4fc",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 8297,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 2,
+  "peak_commit_pct": 51.9,
+  "comfy_executed_seconds": 1.46,
+  "log_lines": [
+   "03:21:14 [INFO] Prompt executed in 1.46 seconds"
+  ],
+  "timeline_file": "timelines/tiled512-portrait.json",
+  "history_execution_seconds": 1.45,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-portrait_00001_.png",
+    "sha256": "b90ea7aa192cff1d53b658995618a5901c62e7768cf115fa10c3f16b31d58e69"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.37
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.17,
+     "s_per_step_steady": 0.062,
+     "step_seconds": [
+      0.17,
+      0.13,
+      0.17,
+      0.13,
+      0.13,
+      0.16,
+      0.16,
+      0.12,
+      0.05
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 1.45
+  },
+  "finished_at": "2026-09-23 03:21:15.968205"
+ },
+ {
+  "label": "tiled1024-portrait",
+  "status": "success",
+  "graph_sha256": "7fa0d45c8cd928674c81c5ee16c41c3d2d6bf201b604aec0727a658e5802a31a",
+  "graph_file": "graphs/tiled1024-portrait.json",
+  "submitted_at": "2026-09-23 03:21:15.987530",
+  "comfy_pid": 56556,
+  "commit_pct_before": 51.8,
+  "free_ram_gb_before": 14.4,
+  "config": "tiled1024",
+  "case": "portrait",
+  "seed": 2026092301,
+  "position_in_case": 2,
+  "prompt_id": "c20ef221-2ca8-402a-b93e-d03c06aeadc9",
+  "wall_seconds": 18.3,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 12057,
+  "peak_shared_mb": 4183,
+  "spilled": true,
+  "gpu_samples": 13,
+  "peak_commit_pct": 60.0,
+  "comfy_executed_seconds": 16.77,
+  "log_lines": [
+   "03:21:32 [INFO] Prompt executed in 16.77 seconds"
+  ],
+  "timeline_file": "timelines/tiled1024-portrait.json",
+  "history_execution_seconds": 16.77,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-portrait_00001_.png",
+    "sha256": "5d957228e2801cd8f1a3195210c1e0c8123d17048b5f554d69dda8cbbd53de99"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 16.67
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.1
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 7,
+     "seen": 7,
+     "first_step_s": 1.28,
+     "s_per_step_steady": 1.783,
+     "step_seconds": [
+      1.28,
+      1.8,
+      1.26,
+      0.79,
+      4.99,
+      0.07
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 16.77
+  },
+  "finished_at": "2026-09-23 03:21:34.794072"
+ },
+ {
+  "label": "tiled512-action",
+  "status": "success",
+  "graph_sha256": "0919b4df5a38c34c0fc2cdc6630981d8dba047a06f833ed86b8953ce8cbf1f83",
+  "graph_file": "graphs/tiled512-action.json",
+  "submitted_at": "2026-09-23 03:21:34.830324",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.4,
+  "free_ram_gb_before": 13.3,
+  "config": "tiled512",
+  "case": "action",
+  "seed": 2026092302,
+  "position_in_case": 0,
+  "prompt_id": "5aee99a0-36f8-4d70-8b8e-3cd8ed2a6d72",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 10496,
+  "peak_shared_mb": 1447,
+  "spilled": true,
+  "gpu_samples": 9,
+  "peak_commit_pct": 50.4,
+  "comfy_executed_seconds": 10.99,
+  "log_lines": [
+   "03:21:34 [INFO] Requested to load SDXLClipModel",
+   "03:21:36 [INFO] loaded completely; 10618.59 MB usable, 1560.80 MB loaded, full load: True",
+   "03:21:36 [INFO] loaded completely; 12427.52 MB usable, 4897.05 MB loaded, full load: True",
+   "03:21:45 [INFO] Prompt executed in 10.99 seconds"
+  ],
+  "timeline_file": "timelines/tiled512-action.json",
+  "history_execution_seconds": 10.99,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-action_00001_.png",
+    "sha256": "ea67666a20f87aa505b4052ada711c85f2a419b9dcc989f8688c580cf1da3b66"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.3
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.34
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.26
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.09
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.25,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.26,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.26
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.17,
+     "s_per_step_steady": 0.058,
+     "step_seconds": [
+      0.17,
+      0.1,
+      0.15,
+      0.14,
+      0.14,
+      0.16,
+      0.14,
+      0.12,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "3",
+    "4"
+   ],
+   "ws_execution_seconds": 10.98
+  },
+  "finished_at": "2026-09-23 03:21:47.641118"
+ },
+ {
+  "label": "tiled1024-action",
+  "status": "success",
+  "graph_sha256": "009f02b5c88a12ab0d852f8f8f60afa81a3e4ae064389fa511f23ad5f81094d9",
+  "graph_file": "graphs/tiled1024-action.json",
+  "submitted_at": "2026-09-23 03:21:47.683182",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.3,
+  "free_ram_gb_before": 16.6,
+  "config": "tiled1024",
+  "case": "action",
+  "seed": 2026092302,
+  "position_in_case": 1,
+  "prompt_id": "dd52a4ff-3604-46d3-aa03-94cddef8da0a",
+  "wall_seconds": 18.3,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 13778,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 13,
+  "peak_commit_pct": 58.2,
+  "comfy_executed_seconds": 16.28,
+  "log_lines": [
+   "03:21:48 [INFO] Unloaded partially: 1317.76 MB freed, 243.04 MB remains loaded, 62.55 MB buffer reserved, lowvram patches: 0",
+   "03:22:03 [INFO] Prompt executed in 16.28 seconds"
+  ],
+  "timeline_file": "timelines/tiled1024-action.json",
+  "history_execution_seconds": 16.28,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-action_00001_.png",
+    "sha256": "ccea7a6b42b858be418873ead1f85fc5b774c04ba554bba2bd7da5029f91e468"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 16.2
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 7,
+     "seen": 6,
+     "first_step_s": 1.8,
+     "s_per_step_steady": 1.587,
+     "step_seconds": [
+      1.8,
+      1.32,
+      1.7,
+      4.85,
+      0.07
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 16.28
+  },
+  "finished_at": "2026-09-23 03:22:06.453087"
+ },
+ {
+  "label": "plain-action",
+  "status": "success",
+  "graph_sha256": "88012c4b06307de8852dc7f51ceb2d8f60e5c76f9067943217a41d9dc32c56b9",
+  "graph_file": "graphs/plain-action.json",
+  "submitted_at": "2026-09-23 03:22:06.487552",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.8,
+  "free_ram_gb_before": 15.1,
+  "config": "plain",
+  "case": "action",
+  "seed": 2026092302,
+  "position_in_case": 2,
+  "prompt_id": "65ed32f2-b420-432c-bd79-61000ace9e9f",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 14194,
+  "peak_shared_mb": 463,
+  "spilled": false,
+  "gpu_samples": 2,
+  "peak_commit_pct": 58.2,
+  "comfy_executed_seconds": 1.7,
+  "log_lines": [
+   "03:22:07 [INFO] Unloaded partially: 1503.35 MB freed, 3393.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:22:07 [INFO] Unloaded partially: 60.00 MB freed, 3333.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:22:08 [INFO] Prompt executed in 1.70 seconds"
+  ],
+  "timeline_file": "timelines/plain-action.json",
+  "history_execution_seconds": 1.7,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-action_00001_.png",
+    "sha256": "2bfe1944c750bf3aa9aac6bdf6ff12b4047f97cf3c6b09cc3431fe19a49bf985"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 1.62
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 1.7
+  },
+  "finished_at": "2026-09-23 03:22:09.212388"
+ },
+ {
+  "label": "tiled1024-duo",
+  "status": "success",
+  "graph_sha256": "c89e2b2c34531f167dc438d6a542a0df3c1e5b86159c2893a3574eff84bfa612",
+  "graph_file": "graphs/tiled1024-duo.json",
+  "submitted_at": "2026-09-23 03:22:09.253092",
+  "comfy_pid": 56556,
+  "commit_pct_before": 58.2,
+  "free_ram_gb_before": 14.3,
+  "config": "tiled1024",
+  "case": "duo",
+  "seed": 2026092303,
+  "position_in_case": 0,
+  "prompt_id": "bc2a5d0a-76f3-40d0-8ea4-cd1369ddc9fa",
+  "wall_seconds": 24.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 14194,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 17,
+  "peak_commit_pct": 58.2,
+  "comfy_executed_seconds": 22.13,
+  "log_lines": [
+   "03:22:09 [INFO] Requested to load SDXLClipModel",
+   "03:22:10 [INFO] loaded completely; 10658.59 MB usable, 1560.80 MB loaded, full load: True",
+   "03:22:10 [INFO] loaded completely; 12307.52 MB usable, 4897.05 MB loaded, full load: True",
+   "03:22:19 [INFO] Unloaded partially: 45.13 MB freed, 4851.96 MB remains loaded, 2.35 MB buffer reserved, lowvram patches: 0",
+   "03:22:31 [INFO] Prompt executed in 22.13 seconds"
+  ],
+  "timeline_file": "timelines/tiled1024-duo.json",
+  "history_execution_seconds": 22.12,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-duo_00001_.png",
+    "sha256": "7222d62ac17b7287b66c7f7adab281e7f7b15fa3247feaa8b4ba81c05d148c3c"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.86
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.24
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 12.95
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.26,
+     "s_per_step_steady": 0.252,
+     "step_seconds": [
+      0.26,
+      0.26,
+      0.26,
+      0.26,
+      0.25,
+      0.25,
+      0.25,
+      0.26,
+      0.25,
+      0.25,
+      0.26,
+      0.25,
+      0.25,
+      0.26,
+      0.26,
+      0.25,
+      0.26,
+      0.26,
+      0.26,
+      0.26,
+      0.25,
+      0.26,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 7,
+     "seen": 6,
+     "first_step_s": 1.35,
+     "s_per_step_steady": 1.599,
+     "step_seconds": [
+      1.35,
+      1.28,
+      1.77,
+      4.88,
+      0.07
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "3",
+    "4"
+   ],
+   "ws_execution_seconds": 22.13
+  },
+  "finished_at": "2026-09-23 03:22:34.071974"
+ },
+ {
+  "label": "plain-duo",
+  "status": "success",
+  "graph_sha256": "afd5a7716796f92a81e840ed446712d26ac7862acf05238b0baad66214463725",
+  "graph_file": "graphs/plain-duo.json",
+  "submitted_at": "2026-09-23 03:22:34.089337",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.2,
+  "free_ram_gb_before": 16.6,
+  "config": "plain",
+  "case": "duo",
+  "seed": 2026092303,
+  "position_in_case": 1,
+  "prompt_id": "2615815e-95d7-4093-b378-dcded0ceb1b8",
+  "wall_seconds": 6.3,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 13611,
+  "peak_shared_mb": 2303,
+  "spilled": true,
+  "gpu_samples": 5,
+  "peak_commit_pct": 59.0,
+  "comfy_executed_seconds": 5.95,
+  "log_lines": [
+   "03:22:34 [INFO] Unloaded partially: 1558.22 MB freed, 3293.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:22:40 [INFO] Prompt executed in 5.95 seconds"
+  ],
+  "timeline_file": "timelines/plain-duo.json",
+  "history_execution_seconds": 5.95,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-duo_00001_.png",
+    "sha256": "4c2992d4d7fac8c360b156557f3d801151f7a028b7bcf0c76772811059c5c4a3"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 5.85
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.1
+    }
+   ],
+   "samplers": [],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 5.95
+  },
+  "finished_at": "2026-09-23 03:22:40.877812"
+ },
+ {
+  "label": "tiled512-duo",
+  "status": "success",
+  "graph_sha256": "7c0737d0a7719441f9761152c81faa0e5800c9e3f610862acf227593780a4a4c",
+  "graph_file": "graphs/tiled512-duo.json",
+  "submitted_at": "2026-09-23 03:22:40.900515",
+  "comfy_pid": 56556,
+  "commit_pct_before": 58.8,
+  "free_ram_gb_before": 12.9,
+  "config": "tiled512",
+  "case": "duo",
+  "seed": 2026092303,
+  "position_in_case": 2,
+  "prompt_id": "53259239-b043-45ac-ac95-aaddb2acb99f",
+  "wall_seconds": 2.4,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 13611,
+  "peak_shared_mb": 2303,
+  "spilled": true,
+  "gpu_samples": 2,
+  "peak_commit_pct": 58.8,
+  "comfy_executed_seconds": 1.95,
+  "log_lines": [
+   "03:22:42 [INFO] Prompt executed in 1.95 seconds"
+  ],
+  "timeline_file": "timelines/tiled512-duo.json",
+  "history_execution_seconds": 1.94,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-duo_00001_.png",
+    "sha256": "031780d8fed551189ed6badb6b6c1dadd62acc5617ee5a06712429e58d2d7136"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.84
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.1
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.06,
+     "step_seconds": [
+      0.16,
+      0.11,
+      0.15,
+      0.13,
+      0.14,
+      0.17,
+      0.15,
+      0.12,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 1.94
+  },
+  "finished_at": "2026-09-23 03:22:43.862631"
+ },
+ {
+  "label": "plain-environment",
+  "status": "success",
+  "graph_sha256": "dbb3abbfe3f47bdf40d032df2783c56417e953ecd7bb2a1d55d8788df13c23f8",
+  "graph_file": "graphs/plain-environment.json",
+  "submitted_at": "2026-09-23 03:22:43.888169",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.2,
+  "free_ram_gb_before": 15.1,
+  "config": "plain",
+  "case": "environment",
+  "seed": 2026092304,
+  "position_in_case": 0,
+  "prompt_id": "9f7bf9ba-78d8-4736-ab07-3afa33ba5c28",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10341,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 50.7,
+  "comfy_executed_seconds": 11.41,
+  "log_lines": [
+   "03:22:43 [INFO] Requested to load SDXLClipModel",
+   "03:22:44 [INFO] loaded completely; 10698.59 MB usable, 1560.80 MB loaded, full load: True",
+   "03:22:45 [INFO] loaded completely; 12359.52 MB usable, 4897.05 MB loaded, full load: True",
+   "03:22:54 [INFO] Unloaded partially: 1563.35 MB freed, 3333.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:22:55 [INFO] Prompt executed in 11.41 seconds"
+  ],
+  "timeline_file": "timelines/plain-environment.json",
+  "history_execution_seconds": 11.41,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-environment_00001_.png",
+    "sha256": "7817e85c6872fecf47536b87372ac437d405ac72c62f94a93335183359f9a626"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.86
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.07
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 2.35
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.13
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.233,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.25,
+      0.23
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "3",
+    "4"
+   ],
+   "ws_execution_seconds": 11.41
+  },
+  "finished_at": "2026-09-23 03:22:56.686600"
+ },
+ {
+  "label": "tiled512-environment",
+  "status": "success",
+  "graph_sha256": "42b47d76d12b2021e663da62fb212a1fee7cfc406db329394d6cc3d7b93aea26",
+  "graph_file": "graphs/tiled512-environment.json",
+  "submitted_at": "2026-09-23 03:22:56.743842",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.8,
+  "free_ram_gb_before": 14.1,
+  "config": "tiled512",
+  "case": "environment",
+  "seed": 2026092304,
+  "position_in_case": 1,
+  "prompt_id": "bee4aab7-9b84-485c-8a24-d950d5d3cd79",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 8263,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 2,
+  "peak_commit_pct": 51.7,
+  "comfy_executed_seconds": 1.42,
+  "log_lines": [
+   "03:22:58 [INFO] Prompt executed in 1.42 seconds"
+  ],
+  "timeline_file": "timelines/tiled512-environment.json",
+  "history_execution_seconds": 1.42,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-environment_00001_.png",
+    "sha256": "86d27b14187c10371babbe43986e18bf699a3b3235073e1d33f4b839da2a26ff"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.31
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.11
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.058,
+     "step_seconds": [
+      0.16,
+      0.11,
+      0.15,
+      0.13,
+      0.13,
+      0.16,
+      0.14,
+      0.12,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 1.42
+  },
+  "finished_at": "2026-09-23 03:22:59.470975"
+ },
+ {
+  "label": "tiled1024-environment",
+  "status": "success",
+  "graph_sha256": "5133209a6c35ca62be69f2b7b157fc9ad5a42d90f3667993825d8887210f02be",
+  "graph_file": "graphs/tiled1024-environment.json",
+  "submitted_at": "2026-09-23 03:22:59.499138",
+  "comfy_pid": 56556,
+  "commit_pct_before": 51.6,
+  "free_ram_gb_before": 14.1,
+  "config": "tiled1024",
+  "case": "environment",
+  "seed": 2026092304,
+  "position_in_case": 2,
+  "prompt_id": "7d8fd7a9-6ba4-4e59-a982-227c5c1bb7fc",
+  "wall_seconds": 10.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 13391,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 7,
+  "peak_commit_pct": 59.3,
+  "comfy_executed_seconds": 9.2,
+  "log_lines": [
+   "03:23:08 [INFO] Prompt executed in 9.20 seconds"
+  ],
+  "timeline_file": "timelines/tiled1024-environment.json",
+  "history_execution_seconds": 9.2,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-environment_00001_.png",
+    "sha256": "1ee4a2a30b83c102c4ab0a023aef16ec376c49ca179be3bc5f3dbedf23c17dcc"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 9.09
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.11
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 7,
+     "seen": 6,
+     "first_step_s": 1.12,
+     "s_per_step_steady": 1.092,
+     "step_seconds": [
+      1.12,
+      0.98,
+      0.95,
+      3.45,
+      0.07
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 9.2
+  },
+  "finished_at": "2026-09-23 03:23:10.271630"
+ },
+ {
+  "label": "tiled512-pinup-swim",
+  "status": "success",
+  "graph_sha256": "79ba0f51f9550645baf7bab0a2380c23eeca5cdafddcca9e50c4844aa5881531",
+  "graph_file": "graphs/tiled512-pinup-swim.json",
+  "submitted_at": "2026-09-23 03:23:10.311032",
+  "comfy_pid": 56556,
+  "commit_pct_before": 48.8,
+  "free_ram_gb_before": 14.3,
+  "config": "tiled512",
+  "case": "pinup-swim",
+  "seed": 2026092305,
+  "position_in_case": 0,
+  "prompt_id": "5cbc6044-5b9b-4154-aa9a-a9d187f81090",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10501,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 50.1,
+  "comfy_executed_seconds": 10.34,
+  "log_lines": [
+   "03:23:10 [INFO] Requested to load SDXLClipModel",
+   "03:23:11 [INFO] loaded completely; 10657.59 MB usable, 1560.80 MB loaded, full load: True",
+   "03:23:12 [INFO] loaded completely; 12420.52 MB usable, 4897.05 MB loaded, full load: True",
+   "03:23:20 [INFO] Prompt executed in 10.34 seconds"
+  ],
+  "timeline_file": "timelines/tiled512-pinup-swim.json",
+  "history_execution_seconds": 10.34,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-pinup-swim_00001_.png",
+    "sha256": "c61d413451ccf3ad79f288d95554824391bf23082f2d359c5d9c4a5c4c0e4b8f"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.86
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.06
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.31
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.1
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.236,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.25,
+      0.25,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.25,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.17,
+     "s_per_step_steady": 0.06,
+     "step_seconds": [
+      0.17,
+      0.12,
+      0.16,
+      0.14,
+      0.14,
+      0.17,
+      0.14,
+      0.12,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "3",
+    "4"
+   ],
+   "ws_execution_seconds": 10.34
+  },
+  "finished_at": "2026-09-23 03:23:23.087926"
+ },
+ {
+  "label": "tiled1024-pinup-swim",
+  "status": "success",
+  "graph_sha256": "cafb6ed95824bf4fc5d56070b2cab8a90c06ce234305a2f2b832e6b925254f08",
+  "graph_file": "graphs/tiled1024-pinup-swim.json",
+  "submitted_at": "2026-09-23 03:23:23.128713",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.7,
+  "free_ram_gb_before": 16.9,
+  "config": "tiled1024",
+  "case": "pinup-swim",
+  "seed": 2026092305,
+  "position_in_case": 1,
+  "prompt_id": "260ddb7f-1714-41e0-a6b6-4988368a2e57",
+  "wall_seconds": 12.3,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 13783,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 9,
+  "peak_commit_pct": 58.6,
+  "comfy_executed_seconds": 10.83,
+  "log_lines": [
+   "03:23:23 [INFO] Unloaded partially: 1317.76 MB freed, 243.04 MB remains loaded, 62.55 MB buffer reserved, lowvram patches: 0",
+   "03:23:33 [INFO] Prompt executed in 10.83 seconds"
+  ],
+  "timeline_file": "timelines/tiled1024-pinup-swim.json",
+  "history_execution_seconds": 10.83,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-pinup-swim_00001_.png",
+    "sha256": "fc221e7184a48b4fa2d0202513d45a38dd2c7a1257edfe0b184ea1745a9cae4c"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 10.72
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.11
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 7,
+     "seen": 6,
+     "first_step_s": 1.08,
+     "s_per_step_steady": 1.287,
+     "step_seconds": [
+      1.08,
+      1.04,
+      1.45,
+      3.87,
+      0.07
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 10.83
+  },
+  "finished_at": "2026-09-23 03:23:35.916956"
+ },
+ {
+  "label": "plain-pinup-swim",
+  "status": "success",
+  "graph_sha256": "97692c7771a52a3f14f0ea202d4acca892c3beaaebf7cc7646da271565382348",
+  "graph_file": "graphs/plain-pinup-swim.json",
+  "submitted_at": "2026-09-23 03:23:35.947044",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.5,
+  "free_ram_gb_before": 16.0,
+  "config": "plain",
+  "case": "pinup-swim",
+  "seed": 2026092305,
+  "position_in_case": 2,
+  "prompt_id": "af35f1d4-b31f-4b53-99d8-d5b30cffabc2",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 13945,
+  "peak_shared_mb": 719,
+  "spilled": true,
+  "gpu_samples": 2,
+  "peak_commit_pct": 58.3,
+  "comfy_executed_seconds": 1.98,
+  "log_lines": [
+   "03:23:36 [INFO] Unloaded partially: 1503.35 MB freed, 3393.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:23:37 [INFO] Unloaded partially: 60.00 MB freed, 3333.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:23:37 [INFO] Prompt executed in 1.98 seconds"
+  ],
+  "timeline_file": "timelines/plain-pinup-swim.json",
+  "history_execution_seconds": 1.98,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-pinup-swim_00001_.png",
+    "sha256": "d8869595b9087ae4595f69bdac1d8b7898459d90c2ac06c0531098a5a204d9b7"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 1.85
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.12
+    }
+   ],
+   "samplers": [],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 1.98
+  },
+  "finished_at": "2026-09-23 03:23:38.691500"
+ },
+ {
+  "label": "tiled1024-glamour",
+  "status": "success",
+  "graph_sha256": "f4622f198e715654fb5f4616218b3e384ed245b0df254e7db4a8dad85ebb784d",
+  "graph_file": "graphs/tiled1024-glamour.json",
+  "submitted_at": "2026-09-23 03:23:38.730762",
+  "comfy_pid": 56556,
+  "commit_pct_before": 58.3,
+  "free_ram_gb_before": 13.3,
+  "config": "tiled1024",
+  "case": "glamour",
+  "seed": 2026092306,
+  "position_in_case": 0,
+  "prompt_id": "d816f81d-a432-454f-b7b5-112690e4d22a",
+  "wall_seconds": 24.2,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 13945,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 17,
+  "peak_commit_pct": 58.4,
+  "comfy_executed_seconds": 23.6,
+  "log_lines": [
+   "03:23:38 [INFO] Requested to load SDXLClipModel",
+   "03:23:40 [INFO] loaded completely; 10657.59 MB usable, 1560.80 MB loaded, full load: True",
+   "03:23:40 [INFO] loaded completely; 12300.52 MB usable, 4897.05 MB loaded, full load: True",
+   "03:23:48 [INFO] Unloaded partially: 45.13 MB freed, 4851.96 MB remains loaded, 2.35 MB buffer reserved, lowvram patches: 0",
+   "03:24:02 [INFO] Prompt executed in 23.60 seconds"
+  ],
+  "timeline_file": "timelines/tiled1024-glamour.json",
+  "history_execution_seconds": 23.6,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-glamour_00001_.png",
+    "sha256": "d275a0d57d4efb7df8cdaaf698d1d75411278c1c79beac6c460b6a2c79a13ae9"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.37
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.0
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 14.17
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.239,
+     "step_seconds": [
+      0.23,
+      0.24,
+      0.25,
+      0.25,
+      0.25,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.26,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.26,
+      0.25
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 7,
+     "seen": 6,
+     "first_step_s": 1.61,
+     "s_per_step_steady": 1.742,
+     "step_seconds": [
+      1.61,
+      2.24,
+      1.27,
+      5.14,
+      0.06
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "3",
+    "4"
+   ],
+   "ws_execution_seconds": 23.6
+  },
+  "finished_at": "2026-09-23 03:24:03.493676"
+ },
+ {
+  "label": "plain-glamour",
+  "status": "success",
+  "graph_sha256": "fbacdab6bdbe076790d06c5d01861af21ac5299d85ab58260cbb264e54777b10",
+  "graph_file": "graphs/plain-glamour.json",
+  "submitted_at": "2026-09-23 03:24:03.538654",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.2,
+  "free_ram_gb_before": 15.7,
+  "config": "plain",
+  "case": "glamour",
+  "seed": 2026092306,
+  "position_in_case": 1,
+  "prompt_id": "eb21971a-ed25-459c-b86d-0dd789c1c6f9",
+  "wall_seconds": 10.3,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 13616,
+  "peak_shared_mb": 2303,
+  "spilled": true,
+  "gpu_samples": 7,
+  "peak_commit_pct": 59.3,
+  "comfy_executed_seconds": 8.54,
+  "log_lines": [
+   "03:24:04 [INFO] Unloaded partially: 1558.22 MB freed, 3293.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:24:12 [INFO] Prompt executed in 8.54 seconds"
+  ],
+  "timeline_file": "timelines/plain-glamour.json",
+  "history_execution_seconds": 8.54,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-glamour_00001_.png",
+    "sha256": "6b511bff2dda81b9b956f190e022e5274f5a3016b8795d848b93a7d7c59af6dd"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 8.45
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.09
+    }
+   ],
+   "samplers": [],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 8.54
+  },
+  "finished_at": "2026-09-23 03:24:14.314678"
+ },
+ {
+  "label": "tiled512-glamour",
+  "status": "success",
+  "graph_sha256": "79966206017035a0b6364ad9c6238da947fd79a548dfa732a0a3c94e37e4e4f8",
+  "graph_file": "graphs/tiled512-glamour.json",
+  "submitted_at": "2026-09-23 03:24:14.331571",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.4,
+  "free_ram_gb_before": 14.2,
+  "config": "tiled512",
+  "case": "glamour",
+  "seed": 2026092306,
+  "position_in_case": 2,
+  "prompt_id": "6b27dbc2-1745-49d9-9daa-c2da8352d97c",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 8415,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 2,
+  "peak_commit_pct": 51.4,
+  "comfy_executed_seconds": 1.34,
+  "log_lines": [
+   "03:24:15 [INFO] Prompt executed in 1.34 seconds"
+  ],
+  "timeline_file": "timelines/tiled512-glamour.json",
+  "history_execution_seconds": 1.34,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-glamour_00001_.png",
+    "sha256": "43bedcb11e6a2f0233396589d86b9777302b7a970800f7ac49b7a199478d841d"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.27
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.17,
+     "s_per_step_steady": 0.056,
+     "step_seconds": [
+      0.17,
+      0.1,
+      0.14,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 1.34
+  },
+  "finished_at": "2026-09-23 03:24:17.051063"
+ },
+ {
+  "label": "plain-hands",
+  "status": "success",
+  "graph_sha256": "65db41efd47dc0aed22eafde6ee9352056c1deab745a5ddeb246fd0700aafe96",
+  "graph_file": "graphs/plain-hands.json",
+  "submitted_at": "2026-09-23 03:24:17.087538",
+  "comfy_pid": 56556,
+  "commit_pct_before": 51.3,
+  "free_ram_gb_before": 14.2,
+  "config": "plain",
+  "case": "hands",
+  "seed": 2026092307,
+  "position_in_case": 0,
+  "prompt_id": "5823390a-39d3-44f1-894e-6d7d2af30d9b",
+  "wall_seconds": 12.2,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 9722,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 58.1,
+  "comfy_executed_seconds": 11.04,
+  "log_lines": [
+   "03:24:17 [INFO] Requested to load SDXLClipModel",
+   "03:24:17 [INFO] loaded completely; 10704.59 MB usable, 1560.80 MB loaded, full load: True",
+   "03:24:18 [INFO] loaded completely; 12417.90 MB usable, 4897.05 MB loaded, full load: True",
+   "03:24:27 [INFO] Unloaded partially: 1813.35 MB freed, 3083.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:24:28 [INFO] Prompt executed in 11.04 seconds"
+  ],
+  "timeline_file": "timelines/plain-hands.json",
+  "history_execution_seconds": 11.04,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-hands_00001_.png",
+    "sha256": "54869c58a9d7685b737f58d6c25ff8d157ee0b0d1cfd354abd4134e96112e9cd"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.59
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 7.95
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 2.43
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.24,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "3",
+    "4"
+   ],
+   "ws_execution_seconds": 11.04
+  },
+  "finished_at": "2026-09-23 03:24:29.840365"
+ },
+ {
+  "label": "tiled512-hands",
+  "status": "success",
+  "graph_sha256": "5a59b67f872199fe86c9858c6632dee432d657a78e98e6a70eb11e84bd686775",
+  "graph_file": "graphs/tiled512-hands.json",
+  "submitted_at": "2026-09-23 03:24:29.857373",
+  "comfy_pid": 56556,
+  "commit_pct_before": 50.1,
+  "free_ram_gb_before": 13.7,
+  "config": "tiled512",
+  "case": "hands",
+  "seed": 2026092307,
+  "position_in_case": 1,
+  "prompt_id": "acbdddd0-5bb5-4ee5-8a3b-e06f8d45a225",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 7344,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 2,
+  "peak_commit_pct": 51.4,
+  "comfy_executed_seconds": 1.3,
+  "log_lines": [
+   "03:24:31 [INFO] Prompt executed in 1.30 seconds"
+  ],
+  "timeline_file": "timelines/tiled512-hands.json",
+  "history_execution_seconds": 1.3,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-hands_00001_.png",
+    "sha256": "6b76c7b2a11cc5148b3a9b3a46535a2206e47e6012020adc3ef2cdb29a191617"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.23
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.055,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.16,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 1.3
+  },
+  "finished_at": "2026-09-23 03:24:32.607347"
+ },
+ {
+  "label": "tiled1024-hands",
+  "status": "success",
+  "graph_sha256": "4e4839c66e0c5f858c423e034a837987fda2368bd8827aad3d229d35d5188238",
+  "graph_file": "graphs/tiled1024-hands.json",
+  "submitted_at": "2026-09-23 03:24:32.622757",
+  "comfy_pid": 56556,
+  "commit_pct_before": 51.3,
+  "free_ram_gb_before": 13.9,
+  "config": "tiled1024",
+  "case": "hands",
+  "seed": 2026092307,
+  "position_in_case": 2,
+  "prompt_id": "3bd30dd1-2fc5-48c2-bff2-0a4f837d220b",
+  "wall_seconds": 14.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 12472,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 10,
+  "peak_commit_pct": 59.7,
+  "comfy_executed_seconds": 12.05,
+  "log_lines": [
+   "03:24:44 [INFO] Prompt executed in 12.05 seconds"
+  ],
+  "timeline_file": "timelines/tiled1024-hands.json",
+  "history_execution_seconds": 12.05,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-hands_00001_.png",
+    "sha256": "96717493d9d56c6bed7fd167c2a839c6cb3833dc9b9f449f6caa96167e881f0a"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 11.98
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 7,
+     "seen": 6,
+     "first_step_s": 1.44,
+     "s_per_step_steady": 1.443,
+     "step_seconds": [
+      1.44,
+      1.29,
+      1.8,
+      4.06,
+      0.06
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "ws_execution_seconds": 12.05
+  },
+  "finished_at": "2026-09-23 03:24:47.387811"
+ }
+]

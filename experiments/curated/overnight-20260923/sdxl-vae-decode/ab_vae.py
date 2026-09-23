@@ -47,6 +47,22 @@ def render(ids):
                              extra={'config': decoder, 'case': case['id'], 'seed': case['seed'], 'position_in_case': position})
 
 
+SWITCH = [('animagine-xl-4.0-opt.safetensors', ['plain', 'tiled512']), ('NoobAI-XL-v1.1.safetensors', ['tiled512', 'plain']),
+          ('waiIllustriousSDXL_v170.safetensors', ['plain', 'tiled512'])]
+
+
+def switch():
+    """The census condition: each prompt pair starts with a checkpoint switch (the previous SDXL model is still cached), then both
+    decoders run on the same cached latent, in alternating order. Case `hands` (original character), same seed."""
+    results = labkit.Results(HERE); case = suite.by_id('hands')
+    for ckpt, order in SWITCH:
+        for position, decoder in enumerate(order):
+            g = graph(decoder, case); g['1']['inputs']['ckpt_name'] = ckpt
+            g['7']['inputs']['filename_prefix'] = 'Research/overnight-20260923/sdxl-vae-decode/switch-%s-%s' % (ckpt.split('.')[0], decoder)
+            labkit.run_graph(g, 'switch-%s-%s' % (ckpt.split('.')[0], decoder), results, timeout=900,
+                             extra={'config': decoder, 'case': 'hands', 'seed': case['seed'], 'checkpoint': ckpt, 'position_in_case': position, 'condition': 'after-switch'})
+
+
 def diff():
     import numpy as np
     from PIL import Image
@@ -77,4 +93,5 @@ if __name__ == '__main__':
     cmd = sys.argv[1]
     if cmd == 'render': render(sys.argv[2:])
     elif cmd == 'diff': diff()
+    elif cmd == 'switch': switch()
     else: seal()

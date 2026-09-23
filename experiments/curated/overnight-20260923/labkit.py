@@ -340,6 +340,27 @@ def run_graph(graph, label, results, timeout=3600, extra=None, skip_existing=Tru
     return record
 
 
+def finalize(results, label, note, timeout=3600):
+    """Complete a `submitted` record whose poller was stopped: wait for its saved prompt ID in /history, never resubmit."""
+    record = results.find(label)
+    if not record or not record.get('prompt_id'): raise SystemExit('no submitted prompt recorded for ' + label)
+    started = time.time(); history = None
+    while time.time() - started < timeout:
+        try: history = http(COMFY + '/history/' + record['prompt_id'], timeout=30).get(record['prompt_id'])
+        except (OSError, ValueError): history = None
+        if history and history.get('status', {}).get('completed') is not None: break
+        history = None; time.sleep(5)
+    if history is None: record['status'] = 'uncertain'; record['note'] = note + '; still not terminal, left alone'
+    else:
+        st = history.get('status', {}); record['status'] = st.get('status_str'); record['note'] = note
+        ts = dict((m[0], m[1].get('timestamp')) for m in st.get('messages', []) if isinstance(m, list) and len(m) == 2 and isinstance(m[1], dict))
+        if ts.get('execution_start') and (ts.get('execution_success') or ts.get('execution_error')):
+            record['history_execution_seconds'] = round(((ts.get('execution_success') or ts.get('execution_error')) - ts['execution_start']) / 1000, 2)
+        record['outputs'] = outputs_of(history)
+    record['finished_at'] = now(); results.save(); print(json.dumps({k: record.get(k) for k in ('label', 'status', 'history_execution_seconds', 'note')}))
+    return record
+
+
 def run_studio(intent, label, results, timeout=3600, extra=None, skip_existing=True):
     """One Studio job (POST /api/jobs), sampled like run_graph. Records the job ID before polling; never retries."""
     prior = results.find(label)
