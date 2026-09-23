@@ -1,0 +1,18 @@
+{
+ "upload": {
+  "file": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png",
+  "sha256": "5451ff59ae7bdc9e7ccf9e72012c2e35e71be494094cbccfb7193b46005af876",
+  "bytes": 1287625,
+  "width": 832,
+  "height": 1216,
+  "original_name": "noob4-hand-mask.png"
+ },
+ "source": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00004_.png",
+ "source_sha256": "5b859bcd5b7a88fcecaaaca5d7320b964334d8b23306e5256b4eb1cbac281f9c",
+ "box": [
+  12,
+  535,
+  180,
+  792
+ ]
+}

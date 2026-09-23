@@ -1,0 +1,371 @@
+{
+ "version": 2,
+ "preset_id": "sdxl-inpaint-fix",
+ "controls": {
+  "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+  "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+  "seed": 2026092361,
+  "denoise": 0.7,
+  "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+ },
+ "batch_count": 1,
+ "created_at": 1790136885.9878309,
+ "workflow": {
+  "1": {
+   "class_type": "CheckpointLoaderSimple",
+   "inputs": {
+    "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+   }
+  },
+  "2": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background"
+   }
+  },
+  "3": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark"
+   }
+  },
+  "4": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   }
+  },
+  "5": {
+   "class_type": "INPAINT_LoadFooocusInpaint",
+   "inputs": {
+    "head": "fooocus_inpaint_head.pth",
+    "patch": "inpaint_v26.fooocus.patch"
+   }
+  },
+  "6": {
+   "class_type": "GrowMask",
+   "inputs": {
+    "mask": [
+     "4",
+     1
+    ],
+    "expand": 8,
+    "tapered_corners": true
+   }
+  },
+  "7": {
+   "class_type": "INPAINT_VAEEncodeInpaintConditioning",
+   "inputs": {
+    "positive": [
+     "2",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ],
+    "pixels": [
+     "4",
+     0
+    ],
+    "mask": [
+     "6",
+     0
+    ]
+   }
+  },
+  "8": {
+   "class_type": "INPAINT_ApplyFooocusInpaint",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "patch": [
+     "5",
+     0
+    ],
+    "latent": [
+     "7",
+     2
+    ]
+   }
+  },
+  "9": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "8",
+     0
+    ],
+    "seed": 2026092361,
+    "steps": 24,
+    "cfg": 5.5,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "karras",
+    "positive": [
+     "7",
+     0
+    ],
+    "negative": [
+     "7",
+     1
+    ],
+    "latent_image": [
+     "7",
+     3
+    ],
+    "denoise": 0.7
+   }
+  },
+  "10": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "9",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "11": {
+   "class_type": "ImageCompositeMasked",
+   "inputs": {
+    "destination": [
+     "4",
+     0
+    ],
+    "source": [
+     "10",
+     0
+    ],
+    "x": 0,
+    "y": 0,
+    "resize_source": false,
+    "mask": [
+     "6",
+     0
+    ]
+   }
+  },
+  "12": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "11",
+     0
+    ],
+    "filename_prefix": "Studio/SDXL-Inpaint-Fix"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "643feecb-36f8-4a4f-a566-5013bbb16deb",
+   "seed": 2026092361,
+   "graph": {
+    "1": {
+     "class_type": "CheckpointLoaderSimple",
+     "inputs": {
+      "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+     }
+    },
+    "2": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background"
+     }
+    },
+    "3": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark"
+     }
+    },
+    "4": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+     }
+    },
+    "5": {
+     "class_type": "INPAINT_LoadFooocusInpaint",
+     "inputs": {
+      "head": "fooocus_inpaint_head.pth",
+      "patch": "inpaint_v26.fooocus.patch"
+     }
+    },
+    "6": {
+     "class_type": "GrowMask",
+     "inputs": {
+      "mask": [
+       "4",
+       1
+      ],
+      "expand": 8,
+      "tapered_corners": true
+     }
+    },
+    "7": {
+     "class_type": "INPAINT_VAEEncodeInpaintConditioning",
+     "inputs": {
+      "positive": [
+       "2",
+       0
+      ],
+      "negative": [
+       "3",
+       0
+      ],
+      "vae": [
+       "1",
+       2
+      ],
+      "pixels": [
+       "4",
+       0
+      ],
+      "mask": [
+       "6",
+       0
+      ]
+     }
+    },
+    "8": {
+     "class_type": "INPAINT_ApplyFooocusInpaint",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "patch": [
+       "5",
+       0
+      ],
+      "latent": [
+       "7",
+       2
+      ]
+     }
+    },
+    "9": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "8",
+       0
+      ],
+      "seed": 2026092361,
+      "steps": 24,
+      "cfg": 5.5,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "karras",
+      "positive": [
+       "7",
+       0
+      ],
+      "negative": [
+       "7",
+       1
+      ],
+      "latent_image": [
+       "7",
+       3
+      ],
+      "denoise": 0.7
+     }
+    },
+    "10": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "9",
+       0
+      ],
+      "vae": [
+       "1",
+       2
+      ]
+     }
+    },
+    "11": {
+     "class_type": "ImageCompositeMasked",
+     "inputs": {
+      "destination": [
+       "4",
+       0
+      ],
+      "source": [
+       "10",
+       0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+       "6",
+       0
+      ]
+     }
+    },
+    "12": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "11",
+       0
+      ],
+      "filename_prefix": "Studio/SDXL-Inpaint-Fix"
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 82534400,
+    "peak_dedicated_bytes": 6939848704,
+    "samples": 2,
+    "spilled": false
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "SDXL-Inpaint-Fix_00002_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092361,
+   "prompt_id": "643feecb-36f8-4a4f-a566-5013bbb16deb",
+   "media_type": "image",
+   "asset_id": "7565737801dc52ffae6bc3bce90807eb"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}
