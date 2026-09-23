@@ -23,16 +23,17 @@ nothing to compare against).
 | `noob` | NoobAI XL 1.1 | 832x1216, 28 | 46.3 | 23 | 9 | 13 | 0.24 | 79 / **4991** | fixable |
 | `cstati-v3-baseline` | CSTati v3 | 832x1216, 30 | 44.5 | 21 | 10 | 13 | 0.25 | 79 / **4607** | fixable |
 | `yumeflux-ilv1-baseline` | YumeFlux ILv1 | 832x1216, 30 | 38.4 | 16 | 9 | 13 | 0.24 | 79 / **5119** | fixable |
-| `anima-portrait` | Anima aesthetic 1.1 | 768x1152, 30 | 34.2 | 14 | 16 | 3 | ~0.5 | 102 / 3018 | fixable |
-| `anima-artist-stack` | Anima base + 6 LoRAs | 832x1216, 30 | 34.3 | 9 | – | – | 0.57 | 79 overall | fixable |
-| `janima-v1-baseline` | JANIMA v1 | 832x1216, 30 | 32.2 | 8 | – | – | ~0.6 | 79 overall | **keep** |
-| `zimage` | Z-Image Turbo **bf16** | 1024², 8 | **308.1** | 39 | 246 (incl. 16 s load) | 21 | **28.7** | **715** / 1803 | keep |
+| `anima-portrait` | Anima aesthetic 1.1 | 768x1152, 30 | 34.2 | 14 | 16 | 3 | unverified (~0.53 from the 16 s window) | 102 / 3018 | fixable |
+| `anima-artist-stack` | Anima base + 6 LoRAs | 832x1216, 30 | 34.3 | 9 | – | – | unverified | 79 overall | fixable |
+| `janima-v1-baseline` | JANIMA v1 | 832x1216, 30 | 32.2 | 8 | – | – | unverified | 79 overall | **keep** |
+| `zimage` | Z-Image Turbo **bf16** | 1024², 8 | **308.1** | 39 | 246 (incl. 16 s load) | 21 | **28.6** | **715** / 1803 | keep |
 | `krea-portrait` | Krea 2 Turbo fp8 + retro LoRA | 768x1152, 8 | **209.3** | 12 | 183 (incl. 29 s load) | 12 | **16.9** | 81 once loaded / **5377** | keep |
 
 Prompt IDs, in order: `7a90cba2`, `759f3f24`, `b4cfb4ff`, `e4a38468`, `7d2f9491`, `40d97aba`, `2f60f01c`, `954ebe85`,
 `948d3400`, `507a7765`, `8aed29b6` (full IDs and Studio job IDs in `results.json`). "–": the log lines for that window were
 pushed out of ComfyUI's 300-entry log buffer by a custom node's "Civitai Link: Connection error" warning that fires every
-~5 s; s/step for those is the ComfyUI progress line or the load-to-decode window. s/step for Anima is the window estimate.
+~5 s. s/step is the job's own sampler run from ComfyUI's progress lines (steady state between step timestamps; zimage and
+krea-portrait are tqdm's own average over 8 steps); the three Anima rows are unverified (see the correction below).
 
 ## Findings
 
@@ -42,7 +43,7 @@ pushed out of ComfyUI's 300-entry log buffer by a custom node's "Civitai Link: C
    the UNet to make room for the VAE, and the decode still lands in shared memory. The first job after the restart (`wai`)
    decoded in 5 s with a smaller spill, so the spill grows once the model cache is warm. This is the cheapest speed lever in
    the Studio: every SDXL/Illustrious preset pays it. Follow-up: `../sdxl-vae-decode/`.
-2. **Z-Image Turbo bf16 thrashes.** 28.7 s/step with 715 MB of the diffusion weights in shared memory during sampling: the
+2. **Z-Image Turbo bf16 thrashes.** 28.6 s/step with 715 MB of the diffusion weights in shared memory during sampling: the
    11.7 GB file plus ~1.5 GB of other processes' VRAM overfills the 16 GB card. 308 s per 1024² image. The installed fp8
    build (`z-image-turbo_fp8_scaled_e4m3fn_KJ`, 6.2 GB, SHA-256 matches civitai version 2445746) is the obvious fix.
    Follow-up: `../zimage-fp8/`.
@@ -57,6 +58,19 @@ pushed out of ComfyUI's 300-entry log buffer by a custom node's "Civitai Link: C
    owner's standing complaint (HUMAN_TODO q-2). Follow-up: `../hand-fix/`.
 
 Nothing here is art acceptance or licence clearance; the census judgements are one agent's scores on one seed each.
+
+## Correction after review (Codex on #859, 23 September 2026)
+
+The census ran with a `labkit.py` that did not yet filter ComfyUI's log by submission time, so every record's `sampler_runs`
+also carried the earlier jobs still in ComfyUI's 300-entry log buffer (for example, `anime` carried WAI's 30-step run).
+`repair_sampler_runs.py` now keeps only a job's own, latest run when its step count matches the submitted recipe and its
+elapsed time fits the job's own load-to-decode window; the originals stay in `sampler_runs_contaminated`. Result: the six
+SDXL rows, `zimage` and `krea-portrait` keep their numbers (each was already its own last run). The three Anima rows are now
+**unverified**, because their progress lines were pushed out of ComfyUI's log buffer; the earlier "~0.5", "0.57" and "~0.6" s/step
+were inferences and have been withdrawn. `zimage` reads 28.6 (tqdm's average) rather than 28.7 (the steady-state estimate).
+Totals, phase windows and spill peaks never used `sampler_runs` and are unchanged. `labkit.py` now compares parsed datetimes
+and refuses to submit when the Studio's `/api/jobs` cannot be read (it used to treat that as idle). Later experiments time
+steps and nodes from ComfyUI's websocket events for their own prompt, not from the log.
 
 ## Not verified
 

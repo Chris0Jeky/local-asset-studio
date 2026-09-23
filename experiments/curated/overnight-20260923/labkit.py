@@ -49,9 +49,11 @@ def guard():
     if holder != 'overnight-lab': raise SystemExit('GPU lease holder is %r, not overnight-lab; nothing submitted' % holder)
     queue = http(COMFY + '/queue')
     if queue.get('queue_running') or queue.get('queue_pending'): raise SystemExit('primary ComfyUI queue is busy; nothing submitted')
+    # Fail closed: a Studio that cannot be read is not proof of an idle Studio.
     try: jobs = http(STUDIO + '/api/jobs', timeout=30)
-    except (OSError, ValueError): jobs = []
-    busy = [j.get('id') for j in jobs if j.get('status') in IN_FLIGHT]
+    except (OSError, ValueError) as error: raise SystemExit('Studio /api/jobs unreadable (%r); nothing submitted' % error)
+    if not isinstance(jobs, list): raise SystemExit('Studio /api/jobs returned %s, not a list; nothing submitted' % type(jobs).__name__)
+    busy = [j.get('id') for j in jobs if not isinstance(j, dict) or j.get('status') in IN_FLIGHT]
     if busy: raise SystemExit('Studio has in-flight jobs %s; nothing submitted' % busy)
 
 
@@ -100,6 +102,12 @@ def prune_loras(graph):
 
 
 CLIENT_ID = 'overnight-lab'
+
+
+def log_time(entry):
+    """A ComfyUI log entry's timestamp as a datetime ('T' or space separator both parse); unparseable sorts first."""
+    try: return datetime.datetime.fromisoformat(str(entry.get('t', '')).replace(' ', 'T'))
+    except ValueError: return datetime.datetime.min
 
 
 class Events:
@@ -183,7 +191,7 @@ class Sampler:
     """GPU memory, host commit and ComfyUI log entries sampled on background threads during one job."""
     def __init__(self, pid):
         self.pid, self.gpu, self.logs, self.commit, self.stop = pid, [], {}, [], threading.Event()
-        self.since = datetime.datetime.now().isoformat()  # log entries older than the submission belong to earlier jobs
+        self.since = datetime.datetime.now()  # log entries older than the submission belong to earlier jobs
     def _gpu(self):
         while not self.stop.is_set():
             r = gpu_memory.spill(self.pid)
@@ -201,7 +209,7 @@ class Sampler:
         return self
     def finish(self):
         self.stop.set(); self.poll_logs(); time.sleep(0.2)
-        entries = sorted((e for e in self.logs.values() if e['t'] >= self.since), key=lambda e: e['t'])
+        entries = sorted((e for e in self.logs.values() if log_time(e) >= self.since), key=log_time)
         out = summarise(entries, self.gpu, self.commit)
         t0 = self.gpu[0][0] if self.gpu else 0
         out['_timeline'] = [[round(g[0] - t0, 1), round(g[1] / 2 ** 20), round(g[2] / 2 ** 20)] for g in self.gpu]
@@ -393,7 +401,8 @@ def seal(items, folder, rng_seed=None):
     to `key.sealed.json`. Judge from `blind/` only; read the key after writing every judgement.
     """
     import shutil
-    folder = Path(folder); blind = folder / 'blind'; blind.mkdir(parents=True, exist_ok=True)
+    # Blind copies can show famous characters, so they live outside Git: <repo>/.runtime/lab-scratch/blind/<experiment>/.
+    folder = Path(folder); blind = REPO / '.runtime' / 'lab-scratch' / 'blind' / folder.name; blind.mkdir(parents=True, exist_ok=True)
     rng = random.Random(rng_seed if rng_seed is not None else time.time_ns())
     key, groups = {}, {}
     for it in items: groups.setdefault(it['group'], []).append(it)
