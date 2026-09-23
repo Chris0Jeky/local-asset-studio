@@ -95,8 +95,9 @@ move the host-commit ceiling** (#77). The narrow exit test — `full load: True`
 ## Measured reserve and one launch path, 23 September 2026 (no ComfyUI source edited, no package changed)
 
 `C:/AI/Start-ComfyUI.ps1` gained an optional `-ArgumentsFile` parameter (the Studio passes
-`BackendManager.primary_argv` through it) and its standalone default became `--reserve-vram 4
---disable-pinned-memory` plus the existing flags. SHA-256 before `0c3fbc95bcb27444…` (kept as
-`C:/AI/Start-ComfyUI.ps1.bak-20260923-reserve06`), after `ac8b40b650cb5883…`. Why, with the measurements:
+`BackendManager.primary_argv` through it) and its standalone default gained `--disable-pinned-memory`
+(reserve briefly 4, back to 0.6 the same night after the Krea 2 measurement). SHA-256 before `0c3fbc95bcb27444…`
+(kept as `C:/AI/Start-ComfyUI.ps1.bak-20260923-reserve06`), reserve-4 interim `ac8b40b650cb5883…`
+(`…bak-20260923-reserve4`), current `2ba8b22c9bc65be9…`. Why, with the measurements:
 [`docs/RUNTIME-PRECONDITIONS.md`](../docs/RUNTIME-PRECONDITIONS.md) §8.
 

@@ -20,10 +20,11 @@ class _NoRedirect(HTTPRedirectHandler):
 
 # --reserve-vram replaces ComfyUI's default rather than adding to it (600+100 MiB on this 16,304 MB Windows
 # card, comfy/model_management.py:863-867). ComfyUI's free-VRAM figure does not subtract what dwm and other
-# apps hold, so a fixed 0.6 GB let "loaded completely" models spill into WDDM shared memory (12-18 s/step
-# instead of 0.7 on 23 September 2026). The reserve is now measured per launch (app/gpu_memory.py) unless
-# config `primary_reserve_vram` pins a number. docs/RUNTIME-PRECONDITIONS.md section 7.
-PRIMARY_RESERVE_VRAM='auto'
+# apps hold, so a model it loads "completely" can spill into WDDM shared memory. A measured reserve
+# (config `primary_reserve_vram: "auto"`, app/gpu_memory.py) cured that for Qwen-Image 2.1, but on the primary
+# it turned Krea 2's full load into a partial one with per-step LoRA patches: 95 s/step against 35 s/step at
+# 0.6 (23 September 2026). 0.6 stays the default; "auto" is opt-in. docs/RUNTIME-PRECONDITIONS.md section 8.
+PRIMARY_RESERVE_VRAM=0.6
 
 
 class BackendManager:

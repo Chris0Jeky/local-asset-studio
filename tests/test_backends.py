@@ -31,10 +31,11 @@ class BackendTests(unittest.TestCase):
             self.assertFalse(BackendManager.matches_configured_process(profile,profile['python'],bad,profile['root']))
         self.assertFalse(BackendManager.matches_configured_process(profile,str(self.root/'foreign.exe'),argv,profile['root']))
 
-    def test_primary_launch_reserves_what_other_processes_hold_on_the_gpu(self):
-        # ComfyUI's free-VRAM figure ignores dwm and other apps; a fixed 0.6 GB spilled into WDDM shared memory
-        # (docs/RUNTIME-PRECONDITIONS.md section 7). 3.02 GiB held elsewhere + the 0.7 GiB margin -> 3.8.
-        profile=self.studio.backends.profiles['primary'];self.assertEqual(profile['reserve_vram'],'auto');self.assertEqual(PRIMARY_RESERVE_VRAM,'auto')
+    def test_opt_in_auto_reserve_covers_what_other_processes_hold_on_the_gpu(self):
+        # "auto" (opt-in since the Krea 2 measurement, docs/RUNTIME-PRECONDITIONS.md section 8):
+        # 3.02 GiB held elsewhere + the 0.7 GiB margin -> 3.8.
+        self.assertEqual(self.studio.backends.profiles['primary']['reserve_vram'],0.6);self.assertEqual(PRIMARY_RESERVE_VRAM,0.6)
+        profile=dict(self.studio.backends.profiles['primary'],reserve_vram='auto')
         reading={'adapters':{'0x0_0x102fb_0':{2304:{'dedicated_bytes':2282*2**20,'shared_bytes':0},30868:{'dedicated_bytes':811*2**20,'shared_bytes':0}}},'unknown_reason':None}
         with patch('backends.gpu_memory.read',return_value=reading):argv=BackendManager.primary_argv(profile)
         self.assertEqual(argv.count('--reserve-vram'),1)
@@ -56,9 +57,14 @@ class BackendTests(unittest.TestCase):
         profile['disable_pinned_memory']=True
         self.assertIn('--disable-pinned-memory',BackendManager.primary_argv(profile))
 
+    def test_default_primary_reserve_is_the_measured_fixed_0_6(self):
+        profile=self.studio.backends.profiles['primary']
+        with patch('backends.gpu_memory.read') as read:argv=BackendManager.primary_argv(profile)
+        read.assert_not_called();self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
+
     def test_switch_actually_launches_primary_with_the_reserve_flag(self):
         # primary_argv alone would stay green if the call site were reverted; assert what Popen receives.
-        manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid')
+        manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid');manager.profiles['primary']['reserve_vram']='auto'
         manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
         launched=MagicMock(pid=4321);launched.poll.return_value=1
         reserve={'reserve_gib':3.8,'basis':'measured','others_bytes':3*2**30,'adapter':'a','unknown_reason':None}
