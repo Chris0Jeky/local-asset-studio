@@ -2241,6 +2241,7 @@
       "notes": [
         "quality words go at the END of the prompt (creator card)",
         "smoke 2026-09-23 at seed 2026092301: 0.4 gave a softer, more illustrative finish with the orb over two open palms and no artifacts; 0.6 was moodier with one awkward palm, so 0.4 is the default",
+        "the trigger words were not appended in that smoke (#857): the end-of-prompt trigger advice is from the creator card, untested here",
         "evidence: experiments/curated/lora-smoke-20260923/README.md"
       ],
       "observed": [
@@ -2340,6 +2341,7 @@
       "notes": [
         "trained on NoobAI eps 1.0; matches the installed eps 1.1",
         "smoke 2026-09-23: keeps the NoobAI anime look with a warmer painterly finish at 0.4 and 0.6; a faint red/cyan fringe on outlines at both strengths",
+        "the trigger words were not appended in that smoke (#857): the end-of-prompt trigger advice is from the creator card, untested here",
         "evidence: experiments/curated/lora-smoke-20260923/README.md"
       ],
       "observed": [
@@ -2389,6 +2391,7 @@
       "licence": "civitai flags RentCivit only; derivatives not allowed",
       "notes": [
         "pure utility: at 0.6 and 0.85 it kept the Pony control's frame and style and removed a candle-in-the-palm confusion; one seed only",
+        "blind review 2026-09-23 at full resolution: both strengths drew six digit tips on the raised hand, so this seed does not show a hand fix (docs/quality/pre-reviews/q-32.md)",
         "evidence: experiments/curated/lora-smoke-20260923/README.md"
       ],
       "observed": [

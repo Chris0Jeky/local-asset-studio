@@ -5,7 +5,8 @@
 00:04-00:05. Each hash was then looked up with civitai's `GET /api/v1/model-versions/by-hash/<sha256>` at 00:07-00:08 and
 compared with its pin in `models/library.json`. "Refs" counts the files under `presets/`, `workflows/api/`, `app/` and
 `scripts/` that name the file (`git grep -F`). The scratch data (hash list, by-hash replies, generator) stayed in the
-worker's gitignored `.runtime/lora-smoke/`.
+worker's gitignored `.runtime/lora-smoke/`. The 11 LoRAs that the same night's smoke test downloaded and pinned (PR #846)
+arrived after this hash pass. The count of 85 and the tables below therefore do not include them (correction, #857).
 
 **Nothing was moved, renamed or deleted.** Every status below is a recommendation. A hash match proves the bytes match
 the listing. It does not prove who made the file, and it does not grant any licence.

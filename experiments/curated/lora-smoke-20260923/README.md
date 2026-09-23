@@ -22,8 +22,19 @@ whatever a LoRA's own flags say.
   checkpoint's own prompt convention: an adult elf mage, fully clothed, in a candlelit library, holding a
   glowing orb with both hands. WAI got the quality tail and no score tags. NoobAI got the quality/`safe` prefix.
   Pony got the `score_9…score_4_up, source_anime, rating_safe` prefix, with `rating_explicit, rating_questionable`
-  added to its negative. All three negatives carried `nsfw`. A trigger was appended only where the civitai version
-  lists one.
+  added to its negative. All three negatives carried `nsfw`. Five LoRAs got a trigger appended, as recorded per run
+  in `results.json` (`trigger`):
+  - Micro Details: `addmicrodetails`;
+  - Velvet Colorful Lines: `C0lorL1nes`;
+  - Flat Color: `flat color, no lineart`;
+  - Gothic Neon: `g0thicPXL`, the first word of its card trigger only;
+  - Dramatic Lighting: `s1_dram`.
+
+  *Correction, 23 September 2026 (#857):* the two Masterpiece LoRAs' civitai versions do list a trigger (`masterpiece, best
+  quality, very aesthetic`), and it was **not** appended. The earlier sentence "a trigger was appended only where the civitai
+  version lists one" was wrong. WAI's own tail and NoobAI's prefix already carry `masterpiece, best quality`, but not
+  `very aesthetic`. The `presets/settings-kb.json` advice to put that trigger at the end of the prompt is therefore
+  untested by this smoke.
 - Per checkpoint: one control with no LoRA, then two strengths per LoRA inside the shortlist's range.
 - **Two failures, two retries.** The first NoobAI control (`0a7c2416…`) and the first Pony control (`df9f943f…`)
   both failed in node 1, `CheckpointLoaderSimple`, before sampling. The error was `IndexError: list index out of
@@ -104,6 +115,11 @@ not verified here.
 Hands Pony at 0.6 (a pure utility; at this seed it removed the control's candle-in-palm confusion without any
 style change); Dramatic Lighting at 0.6 (a clean lighting lift). **Drop:** Dramatic Lighting at 0.85 (bob,
 smudge, youthful face).
+
+*Blind review, 23 September 2026 (agent-judged, [docs/quality/pre-reviews/q-32.md](../../../docs/quality/pre-reviews/q-32.md)).*
+At full resolution, both Hands Pony strengths drew six digit tips on the raised hand. The candle is gone, but the hand
+is not fixed. Dramatic Lighting 0.6 swaps the orb for a book. The keep list above is kept as written; read it with
+these two findings.
 
 **Prompt conventions that mattered:**
 - The Pony score prefix plus `rating_safe`, with `rating_explicit, rating_questionable` in the negative, kept every
