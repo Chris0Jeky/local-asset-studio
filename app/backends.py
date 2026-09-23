@@ -105,7 +105,10 @@ class BackendManager:
 
     def _local_work(self):
         if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
-        return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') for j in self.studio.jobs.values()) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
+        # An uncertain job whose tracking the operator stopped is a closed record, not local work; work still live in any
+        # ComfyUI queue is caught by switch()'s per-endpoint _idle check. Resuming tracking makes it block again.
+        stopped=lambda j: j.get('status')=='uncertain' and isinstance(j.get('tracking_disposition'),dict) and j['tracking_disposition'].get('status')=='stopped'
+        return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') and not stopped(j) for j in self.studio.jobs.values()) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
 
     @staticmethod
     def configured_reserve(value):

@@ -141,6 +141,15 @@ class BackendSafetyTests(unittest.TestCase):
             with self.subTest(state=state),self.assertRaisesRegex(ValueError,'reconcile'):self.manager.switch('hidream')
         self.studio.jobs={};self.manager.busy=True
         with self.assertRaisesRegex(ValueError,'already running'):self.manager.switch('hidream')
+    def test_uncertain_job_with_stopped_tracking_does_not_block_switch(self):
+        stopped={'status':'uncertain','tracking_disposition':{'status':'stopped','reason':'not in ComfyUI queue or history'}}
+        self.studio.jobs={'a':stopped};self.assertFalse(self.manager._local_work())
+        with patch.object(self.manager,'request',return_value=IDLE),patch('backends.threading.Thread') as thread:self.manager.switch('hidream')
+        thread.assert_called_once()
+        for disposition in (None,{'status':'resumed'},'stopped'):
+            self.studio.jobs={'a':dict(stopped,tracking_disposition=disposition)}
+            with self.subTest(disposition=disposition):self.assertTrue(self.manager._local_work())
+        self.studio.jobs={'a':dict(stopped,status='running')};self.assertTrue(self.manager._local_work())
     def test_failed_intent_write_releases_gate(self):
         with patch.object(self.manager,'request',return_value=IDLE),patch.object(self.manager,'_save',side_effect=OSError('disk full')),patch('backends.threading.Thread') as thread:
             with self.assertRaises(OSError):self.manager.switch('hidream')
