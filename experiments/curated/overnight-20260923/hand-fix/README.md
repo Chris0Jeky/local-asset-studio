@@ -28,7 +28,9 @@ fixed, `control` = everything else kept. The detector's own masks (`mask-*.png` 
 | cstati (two mittens) | **nothing** | nothing repainted | nothing repainted | nothing repainted |
 | yume (mitten right hand) | both hands (one box) | still a mitten | fingers now, but veiny, semi-real hands (off-style) | the same |
 
-**The detector route fixed no defect cleanly on any of the four sources.** Every record is `fixable`, and none is `keep`.
+**The detector route fixed no defect cleanly on any of the four sources.** None of the 12 outputs is `keep`. Under R8b
+(rescored after the second judge, #892) the 10 outputs that left the named defect untouched are `reject`; the two yume
+outputs at 0.6 that gave the mitten fingers but changed the style stay `fixable`.
 - **The detector misses bad hands.** It found nothing on the CSTati mittens and boxed the wrong hand on noob5. An undetected hand
   cannot be repaired.
 - **Where it finds the hand, a crop-and-repaint keeps the digit count.** On noob4 all three settings redrew the six-digit hand
