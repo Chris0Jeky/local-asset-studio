@@ -69,6 +69,27 @@ def lora(config):
                      extra={'config': config, 'case': 'krea-portrait-defaults', 'seed': g['7']['inputs']['seed'], 'probe': 'shipped recipe with the retro-anime LoRA'})
 
 
+def atelier():
+    """The owner's target stack on GGUF + CPU encoder, timed once at the recipe's own settings (presets/recipes.json
+    `krea-atelier-target-stack`: 832x1248, 15 steps euler_ancestral/simple, cfg 1, TextFusion 1.0 + Niji Sweet Spot 1.0 +
+    koukouya 1.0, seed 20260912, its own witch prompt). The fp8 reference is Studio job 7d589f47 (827.6 s, 12 September)."""
+    recipe = next(r for r in json.loads((labkit.REPO / 'presets/recipes.json').read_text(encoding='utf-8'))['recipes']
+                  if r['id'] == 'krea-atelier-target-stack')
+    c = recipe['controls']
+    g = json.loads((labkit.REPO / 'workflows/api/krea-anime-atelier-gguf-api.json').read_text(encoding='utf-8'))
+    g['4']['inputs']['text'] = c['positive']
+    g['6']['inputs'].update(width=c['width'], height=c['height'])
+    g['7']['inputs'].update(seed=c['seed'], steps=c['steps'], cfg=c['cfg'], sampler_name=c['sampler'], scheduler=c['scheduler'])
+    g['10']['inputs'].update(lora_name=c['lora_name'], strength_model=c['lora'])
+    g['11']['inputs'].update(lora_name=c['lora2_name'], strength_model=c['lora2'])
+    g['12']['inputs'].update(lora_name=c['lora3_name'], strength_model=c['lora3'])
+    g['13']['inputs']['strength_model'] = c['lora4']
+    g = labkit.prune_loras(g)
+    g['9']['inputs']['filename_prefix'] = 'Research/overnight-20260923/krea-gguf/gguf-cpute-atelier-target-stack'
+    labkit.run_graph(g, 'gguf-cpute-atelier-target-stack', labkit.Results(HERE), timeout=3600,
+                     extra={'config': 'gguf-cpute', 'case': 'krea-atelier-target-stack', 'seed': c['seed'], 'probe': 'recipe krea-atelier-target-stack on GGUF'})
+
+
 BLIND_GROUPS = {('portrait', 2026092301): 'portrait-s01', ('portrait', 2026092302): 'portrait-s02',
                 ('action', 2026092302): 'action-s02', ('hands', 2026092307): 'hands-s07'}
 
@@ -90,4 +111,5 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'probe': probe(sys.argv[2])
     elif sys.argv[1] == 'cached': cached(sys.argv[2])
     elif sys.argv[1] == 'lora': lora(sys.argv[2])
+    elif sys.argv[1] == 'atelier': atelier()
     else: seal()
