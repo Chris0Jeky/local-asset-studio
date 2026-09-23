@@ -50,7 +50,7 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
       value: '', files: [], textContent: '', classList: {toggle() {}},
-      addEventListener() {}, scrollIntoView() {}, close() {this.open=false;}, showModal() {this.open=true;},
+      addEventListener() {}, scrollIntoView() {}, focus() {this.focused=true;}, close() {this.open=false;}, showModal() {this.open=true;},
     });
     return elements.get(selector);
   };
@@ -201,6 +201,7 @@ async function slotSwapKeepsTheOtherSlots() {
   await run(`uploadRoleFile(1,${JSON.stringify(localFile('replacement.png'))})`);
   assert.deepEqual(parents(), ['asset-a'], 'Only the replaced slot loses its source');
   assert.equal(run('referencesReady()'), true, 'The board is still complete');
+  element('#positive').value = 'Keep the two retained subjects and use the replacement pose.';
   await element('#generate').onclick();
   const submitted = requests.find(r => r.url === '/api/jobs').data;
   assert.deepEqual(submitted.parent_assets, ['asset-a']);
@@ -260,6 +261,7 @@ async function savedSetupCarriesPerInputAttribution() {
   element('#reference').files = [localFile('replacement-first.png')];
   element('#reference').onchange();
   assert.deepEqual(parents(), ['asset-b'], 'Swapping the first frame after a reload releases only its source');
+  element('#positive').value = 'Move slowly from the first frame to the last.';
   await element('#generate').onclick();
   const submitted = requests.find(r => r.url === '/api/jobs').data;
   assert.deepEqual(submitted.parent_assets, ['asset-b']);
@@ -458,6 +460,7 @@ async function boardContinuationSourceHasItsOwnLineageClaim() {
 async function recipeSwapDuringUploadNeverSubmits() {
   const s = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
   s.run(`selectPreset('gentle-variation');`);
+  s.element('#positive').value = 'Keep this subject while refining the lighting.';
   s.element('#reference').files = [localFile()];
   s.element('#reference').onchange();
   const fetch = s.context.fetch;
@@ -469,6 +472,7 @@ async function recipeSwapDuringUploadNeverSubmits() {
   assert.equal(s.run('uploaded'), null, 'The refused upload is not left bound to the recipe it was not made for');
   s.context.fetch = fetch;
   s.run(`selectPreset('gentle-variation');`);
+  s.element('#positive').value = 'Keep this subject while refining the lighting.';
   s.element('#reference').files = [localFile()];
   s.element('#reference').onchange();
   await s.element('#generate').onclick();
