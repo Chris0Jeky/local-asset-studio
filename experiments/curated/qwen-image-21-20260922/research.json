@@ -1,0 +1,33 @@
+[
+ {
+  "case": "t2i",
+  "preset_id": "qwen21-t2i",
+  "prompt_id": "a259a112-213b-4174-adff-c78bbdcfecaa",
+  "status": "success",
+  "wall_seconds": 686.6,
+  "seed": 2026092201,
+  "steps": 25,
+  "changes": {},
+  "cfg": 1.0,
+  "lora": null,
+  "messages": [
+   "execution_start",
+   "execution_cached",
+   "execution_success"
+  ],
+  "outputs": [
+   {
+    "file": "qwen21-t2i.png",
+    "bytes": 1432096,
+    "mode": "RGBA",
+    "size": [
+     832,
+     1248
+    ],
+    "alpha_zero_fraction": 0.0,
+    "alpha_full_fraction": 0.921,
+    "alpha_partial_fraction": 0.079
+   }
+  ]
+ }
+]
