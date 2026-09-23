@@ -37,3 +37,7 @@ Hashes establish content consistency, not an authenticity signature against a ma
 `python -m unittest discover -s tests -p "test_action_stack_export.py" -v` exercises **18 offline synthetic contracts**. Four review regressions were observed failing before repair: missing/changed original receipt, changed retained producer identity, and projection checking that overwrote a retained manifest. Matching projection and confined-reference cases also pass. Focused Ubuntu/Windows CI and normal repository gates qualify each published head.
 
 Synthetic PCM and compiler doubles do not establish real model inference or listening acceptance. The configured workstation and HUMAN_TODO voice decisions remain separate. No private source data or generated speech is committed.
+
+## Upstream handoff content
+
+[Handoff compression and listening provenance](HANDOFF-PROVENANCE.md) proposes an editorial lineage sidecar and listening pilot around this implemented route. It does not add fields to the request/bundle, another producer, or generation on GET/Play.
