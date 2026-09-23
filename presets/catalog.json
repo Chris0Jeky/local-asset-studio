@@ -5112,7 +5112,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Executed 2026-09-23 05:24:13 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/krea-gguf/prove_gguf_presets.py): job 29e468ca-884d-44d7-a04b-c54e9aa5030a, prompt 6a856a23-67fa-42f3-b3f9-6cf686b991d5, 114.6 s (15 steps at 3.43 s/step with TextFusion + Niji Sweet Spot; the decode spilled 4.4 GB into shared memory for about 5 s), output Studio/krea-anime-atelier-gguf_00001_.png: every briefed element present, hands and eyes clean, but a faint '@NJSW33T'-style trigger watermark is painted on the cloak (agent-judged fixable). Not art acceptance."
+      "execution_note": "Executed 2026-09-23 05:24:13 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/krea-gguf/prove_gguf_presets.py): job 29e468ca-884d-44d7-a04b-c54e9aa5030a, prompt 6a856a23-67fa-42f3-b3f9-6cf686b991d5, 114.6 s (15 steps at 3.43 s/step with TextFusion + Niji Sweet Spot; the decode spilled 4.35 GiB into shared memory, shown by the Studio as 4.3 GB; the lab's 1.5 s GPU timeline puts the spill within the last 6 s of the job), output Studio/krea-anime-atelier-gguf_00001_.png: every briefed element present, hands and eyes clean, but a faint '@NJSW33T'-style trigger watermark is painted on the cloak (agent-judged fixable); the target-stack run 976da1a8 painted the same trigger as visible text. Hypothesis, untested: the trigger at the start of the prompt is rendered as text, helped by the TextFusion LoRA's text rendering; the next step is a trigger-position and TextFusion on/off test on a fixed seed. Not art acceptance."
     },
     {
       "id": "krea-style-lab",

@@ -1,0 +1,121 @@
+[
+ {
+  "run": "krea-portrait-gguf",
+  "route": "studio",
+  "job_id": "c6049b90-0942-4ec1-b76e-4b9455749ec8",
+  "prompt_id": "268f4be5-e0c2-40fa-92b5-9746ee74c663",
+  "seed": 2026091103,
+  "size": [
+   768,
+   1152
+  ],
+  "steps": 8,
+  "sampler": "euler",
+  "loras": [
+   [
+    "krea2_retroanime.safetensors",
+    1.0
+   ]
+  ],
+  "submitted_at": "2026-09-23 05:21:57.621149",
+  "finished_at": "2026-09-23 05:24:13.684238",
+  "studio_elapsed_seconds": 133.3,
+  "lab_peak_dedicated_mib": 13674,
+  "lab_peak_shared_mib": 79,
+  "studio_peak_shared_bytes": 82571264,
+  "studio_peak_shared_gib": 0.08,
+  "studio_spilled": false,
+  "commit_pct_before": 57.9,
+  "peak_commit_pct": 60.5,
+  "free_ram_gib_before": 4.7,
+  "output": {
+   "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-portrait-gguf_00001_.png",
+   "sha256": "13dd708e33bcb48579a76a41988fe6398294804d8f96739a920ed781cbe0f425"
+  }
+ },
+ {
+  "run": "krea-anime-atelier-gguf",
+  "route": "studio",
+  "job_id": "29e468ca-884d-44d7-a04b-c54e9aa5030a",
+  "prompt_id": "6a856a23-67fa-42f3-b3f9-6cf686b991d5",
+  "seed": 281715418,
+  "size": [
+   768,
+   1152
+  ],
+  "steps": 15,
+  "sampler": "euler_ancestral",
+  "loras": [
+   [
+    "Krea2_TextFusion_Refusal_Reduction.safetensors",
+    1.0
+   ],
+   [
+    "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+    1.0
+   ]
+  ],
+  "submitted_at": "2026-09-23 05:24:13.700533",
+  "finished_at": "2026-09-23 05:26:11.459560",
+  "studio_elapsed_seconds": 114.6,
+  "lab_peak_dedicated_mib": 13197,
+  "lab_peak_shared_mib": 4453,
+  "studio_peak_shared_bytes": 4669005824,
+  "studio_peak_shared_gib": 4.35,
+  "studio_spilled": true,
+  "commit_pct_before": 48.8,
+  "peak_commit_pct": 62.2,
+  "free_ram_gib_before": 11.3,
+  "output": {
+   "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-anime-atelier-gguf_00001_.png",
+   "sha256": "6f0798fe18ae50312d381abc07eb88d28aa1a6a3ff38ec4c2802bcae96288551"
+  }
+ },
+ {
+  "run": "gguf-cpute-atelier-target-stack",
+  "route": "direct ComfyUI (graph in graphs/)",
+  "job_id": null,
+  "prompt_id": "976da1a8-c551-413c-bac7-3a9352b7c9a2",
+  "seed": 20260912,
+  "size": [
+   832,
+   1248
+  ],
+  "steps": 15,
+  "sampler": "euler_ancestral",
+  "loras": [
+   [
+    "Krea2_TextFusion_Refusal_Reduction.safetensors",
+    1.0
+   ],
+   [
+    "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+    1.0
+   ],
+   [
+    "krea2_koukouya_style_c1-st3000.safetensors",
+    1.0
+   ]
+  ],
+  "submitted_at": "2026-09-23 05:10:54.629989",
+  "finished_at": "2026-09-23 05:13:50.001826",
+  "comfy_execution_seconds": 173.24,
+  "node_seconds": {
+   "VAELoader": 0.69,
+   "CLIPLoader": 1.31,
+   "CLIPTextEncode": 76.82,
+   "KSampler": 86.5,
+   "VAEDecode": 7.15
+  },
+  "s_per_step_steady": 4.661,
+  "lab_peak_dedicated_mib": 14643,
+  "lab_peak_shared_mib": 1813,
+  "commit_pct_before": 38.7,
+  "peak_commit_pct": 62.6,
+  "free_ram_gib_before": 17.9,
+  "output": {
+   "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\gguf-cpute-atelier-target-stack_00001_.png",
+   "sha256": "e0559290a14e57d80f1e05855a865fb9d282447848c362364cc33b65df6b272c"
+  }
+ }
+]
