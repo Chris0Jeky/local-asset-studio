@@ -113,3 +113,37 @@ test('a draft without a command reads lifecycle only and never fabricates a rece
   await lens.load(r);assert.equal(calls,1);assert.equal(updates.at(-1).receipt,null);
 });
 module.exports={record,observation,receipt};
+
+test('explicit inspection export excludes mutable receipt previews and preserves all local evidence',async()=>{
+  const vm=require('node:vm'),nodes=new Map(),downloads=[],reads=[],r=record();
+  class Node {
+    constructor(){this.children=[];this.hidden=false;this.listeners={};this.dataset={};}
+    set id(value){this._id=value;nodes.set(value,this);}get id(){return this._id;}
+    append(...children){this.children.push(...children);}replaceChildren(...children){this.children=[...children];}
+    setAttribute(){}focus(){}addEventListener(name,handler){this.listeners[name]=handler;}
+  }
+  const dialog=new Node();dialog.id='assetRecoveryShelfDialog';dialog.open=true;
+  const fullReceipt=receipt(r);fullReceipt.current=[{id:'asset0',notes:'PRIVATE-CURRENT-NOTES',tags:['PRIVATE-CURRENT-TAG']}];
+  const before=Core.canonical(r),receiptBefore=JSON.stringify(fullReceipt);
+  const context=vm.createContext({console,URLSearchParams,AbortController,setTimeout,clearTimeout,
+    StudioAssetRecoveryShelf:Core,document:{getElementById:id=>nodes.get(id),createElement:()=>new Node()},
+    assetState:{workspace_id:W},assetRecovery:{read:()=>r.payload},assetShelfRecords:[],validateAssetReceipt:()=>{},
+    api:async(url,options)=>{reads.push({url,options});return url.includes('/commands/')?fullReceipt:observation(r);},
+    assetShelfDownload:(text,name)=>downloads.push({text,name})});
+  vm.runInContext(fs.readFileSync(path,'utf8'),context);
+  dialog.listeners.click({target:{closest:()=>({dataset:{recoveryObserveSlot:'detail'},disabled:false})}});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(downloads.length,0,'Reads do not implicitly export private data');
+  nodes.get('assetLifecycleExport').onclick();
+  assert.equal(downloads.length,1);const exported=JSON.parse(downloads[0].text);
+  assert.equal(Object.hasOwn(exported.receipt,'current'),false,'Historical receipt must not contain the current metadata preview');
+  assert.doesNotMatch(downloads[0].text,/PRIVATE-CURRENT/);
+  assert.deepEqual(exported.receipt.applied,fullReceipt.applied);
+  assert.deepEqual(exported.receipt.revisions,fullReceipt.revisions);
+  assert.deepEqual(exported.record,r);
+  assert.equal(exported.record.payload.operation.body,r.payload.operation.body);
+  assert.deepEqual(exported.observation,observation(r));
+  assert.equal(Core.canonical(r),before);assert.equal(JSON.stringify(fullReceipt),receiptBefore);
+  assert.equal(reads.length,2);assert.ok(reads.every(x=>x.options.method==='GET'&&!x.options.body));
+  assert.equal(downloads[0].name,'asset-recovery-inspection.json');
+});
