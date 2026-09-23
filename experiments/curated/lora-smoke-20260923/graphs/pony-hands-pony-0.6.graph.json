@@ -1,0 +1,128 @@
+{
+ "1": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "pony-diffusion-v6.safetensors"
+  }
+ },
+ "2": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "10",
+    0
+   ],
+   "text": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, 1girl, solo, adult woman, elf, fantasy mage, long silver hair, green eyes, dark blue robe with gold trim, long sleeves, holding a glowing crystal orb with both hands, upper body, looking at viewer, library, bookshelves, candlelight, depth of field"
+  }
+ },
+ "3": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "10",
+    0
+   ],
+   "text": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark, rating_explicit, rating_questionable, nsfw"
+  }
+ },
+ "4": {
+  "class_type": "EmptyLatentImage",
+  "inputs": {
+   "width": 832,
+   "height": 1216,
+   "batch_size": 1
+  }
+ },
+ "5": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "9",
+    0
+   ],
+   "seed": 2026092301,
+   "steps": 30,
+   "cfg": 6.0,
+   "sampler_name": "euler_ancestral",
+   "scheduler": "normal",
+   "positive": [
+    "2",
+    0
+   ],
+   "negative": [
+    "3",
+    0
+   ],
+   "latent_image": [
+    "4",
+    0
+   ],
+   "denoise": 1.0
+  }
+ },
+ "6": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "5",
+    0
+   ],
+   "vae": [
+    "1",
+    2
+   ]
+  }
+ },
+ "7": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "6",
+    0
+   ],
+   "filename_prefix": "Research/lora-smoke-pony-hands-pony-0.6"
+  }
+ },
+ "8": {
+  "class_type": "LoraLoader",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "clip": [
+    "1",
+    1
+   ],
+   "lora_name": "Hand_pony_style_v1.safetensors",
+   "strength_model": 0.6,
+   "strength_clip": 0.6
+  }
+ },
+ "9": {
+  "class_type": "LoraLoader",
+  "inputs": {
+   "model": [
+    "8",
+    0
+   ],
+   "clip": [
+    "8",
+    1
+   ],
+   "lora_name": "manga-ink-screentone.safetensors",
+   "strength_model": 0,
+   "strength_clip": 0
+  }
+ },
+ "10": {
+  "class_type": "CLIPSetLastLayer",
+  "inputs": {
+   "clip": [
+    "9",
+    1
+   ],
+   "stop_at_clip_layer": -2
+  }
+ }
+}
