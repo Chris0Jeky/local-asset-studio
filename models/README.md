@@ -228,6 +228,35 @@ not legal advice and the linked model page governs.
 NIJISIS was downloaded by the owner on 12 September 2026 (the owner spent the Buzz); its SHA-256 was verified
 against the installed file. **koukouya was installed on 12 September 2026** with the owner's civitai key (`CIVITAI_API_TOKEN`), receipt hash matching the listing; the `krea-atelier-target-stack` recipe names all three adapters.
 
+### SDXL-family smoke LoRAs (11), 23 September 2026
+
+These LoRAs were downloaded for the smokes in issues #757 (WAI v17 / Illustrious), #758 (NoobAI-XL 1.1) and #759
+(Pony V6), using `scripts/civitai-fetch.py`. Every receipt's SHA-256 matches the civitai listing. The flags were
+read from `https://civitai.com/api/v1/models/<id>` on 23 September 2026. They are the listing's own statements,
+not licence clearance. NoobAI outputs stay hobby/non-commercial under the checkpoint's own terms, whatever a
+LoRA's flags say. Results and the verdict for each LoRA: `experiments/curated/lora-smoke-20260923/README.md`.
+
+**Base matching.** The installed `NoobAI-XL-v1.1` (Laxhar/noobai-XL-1.1) is epsilon-prediction. The NoobAI
+builds of Flat Color (`1132089`) and MeMaXL (`269772`) are all v-pred, so neither was downloaded for NoobAI. The
+Illustrious Flat Color build (Illustrious v0.1 is the parent of NoobAI eps) stood in for them.
+
+| File | Base | Trigger | civitai version | civitai `allowCommercialUse` |
+| --- | --- | --- | --- | --- |
+| `illustriousXLv01_stabilizer_v1.198.safetensors` | Illustrious | none | [971952 / 2055853](https://civitai.com/models/971952?modelVersionId=2055853) | RentCivit only; derivatives **not** allowed |
+| `detailed_hand_focus_style_illustriousXL_v1.1.safetensors` | Illustrious | none | [200255 / 2212079](https://civitai.com/models/200255?modelVersionId=2212079) | RentCivit only; derivatives **not** allowed |
+| `illustrious_masterpieces_v3.safetensors` | Illustrious | `masterpiece, best quality, very aesthetic` | [929497 / 2247497](https://civitai.com/models/929497?modelVersionId=2247497) | Image, RentCivit, Rent (no Sell) |
+| `AddMicroDetails_Illustrious_v7.safetensors` | Illustrious | `addmicrodetails` | [1377820 / 3206748](https://civitai.com/models/1377820?modelVersionId=3206748) | Image, RentCivit, Sell, Rent, SellMerge |
+| `iLLC0lorL1nes.safetensors` | Illustrious | `C0lorL1nes` | [599757 / 2620790](https://civitai.com/models/599757?modelVersionId=2620790) | RentCivit, Image, Rent, Sell, SellMerge |
+| `noobai_ep11_stabilizer_v0.205_fp16.safetensors` | NoobAI (eps 1.1) | none | [971952 / 1764869](https://civitai.com/models/971952?modelVersionId=1764869) | RentCivit only; derivatives **not** allowed |
+| `illustrious_noobai_epsilon_pred_1_masterpieces_v1.safetensors` | NoobAI (eps 1.0) | `masterpiece, best quality, very aesthetic` | [929497 / 1070123](https://civitai.com/models/929497?modelVersionId=1070123) | Image, RentCivit, Rent (no Sell) |
+| `illustrious_flat_color_v2.safetensors` | Illustrious | `flat color, no lineart` | [1132089 / 1311848](https://civitai.com/models/1132089?modelVersionId=1311848) | Image, RentCivit, Rent (no Sell) |
+| `g0th1cPXL.safetensors` | Pony | `g0thicPXL, glowing, neon,` | [888231 / 398847](https://civitai.com/models/888231?modelVersionId=398847) | RentCivit only; derivatives **not** allowed |
+| `S1_Dramatic_Lighting_v3.safetensors` | Pony | `s1_dram` | [661736 / 1280045](https://civitai.com/models/661736?modelVersionId=1280045) | RentCivit only |
+| `Hand_pony_style_v1.safetensors` | Pony | none | [200255 / 1356581](https://civitai.com/models/200255?modelVersionId=1356581) | RentCivit only; derivatives **not** allowed |
+
+The TextFusion "Refusal-Reduction" LoRA (`2775340`) was not downloaded again. It was already on disk; see
+`docs/research/LORA-DISK-AUDIT-2026-09-23.md` (#762) for its hot-path recommendation.
+
 ### Acquisition scripts
 
 | Script | Use |
