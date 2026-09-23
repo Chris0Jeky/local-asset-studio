@@ -69,3 +69,8 @@ examples/combine-research/*.jpeg
 examples/combine-research/*.png
 examples/combine-research/*.webp
 examples/combine-research/index.html
+# ...and the traced pose pictures its research scripts would regenerate in place (pose_sources.py, lora_pose.py)
+experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-depth-raw.png
+experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-depth-painted.png
+experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-depth-feet.png
+experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-mannequin-gen.png
