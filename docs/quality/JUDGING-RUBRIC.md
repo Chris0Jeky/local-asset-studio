@@ -81,5 +81,28 @@ When two or more configurations are compared (a LoRA on or off, two samplers, tw
 
 ## Calibration notes
 
-How far agent judging agrees with the owner, and the corrections that follow from it, are in
-[CALIBRATION-2026-09-23.md](CALIBRATION-2026-09-23.md). The short version is kept here once it is measured.
+Measured on 23 September 2026 ([CALIBRATION-2026-09-23.md](CALIBRATION-2026-09-23.md)). Two blind agent judges were
+compared with the owner's own verdicts on 19 pictures:
+
+- **They found the owner's named defects well**: the six fingers, the fused foxes, the lost throne.
+- **They ranked quality poorly**: Spearman 0.29 and 0.50 against the owner's tiers.
+- **Both chose the starting look the owner did not choose.**
+
+Apply these corrections every time:
+
+- **R1. Score after naming.** If the worst defect you named needs a fix before the picture is usable, the criterion it
+  belongs to scores at most 3. A 4 means you would ship it without touching that defect. Judges most often erred by
+  naming merged fingers or blotchy skin and still scoring 4.
+- **R2. Count the props.** A named prop that is missing, duplicated or not held as the brief asks caps `adherence` at 3.
+- **R3. One extra finger on an otherwise readable hand is `anatomy` 3**, because a hand inpaint fixes it. Keep 1–2 for
+  unreadable hands, several broken hands or a broken face.
+- **R4. A small signature glyph in the outer edge**, removable by a crop that does not touch the subject, is
+  `technical` 4. Name the crop as the fix.
+- **R5. Faces are faces, animals included.** A featureless or melted face on anything the brief names (a cat in a lap,
+  a fox at a shrine) is `anatomy` 3 at most, or 2 if it is the main subject. Name crude eyes when you see them.
+- **R6. Appeal is not scored.** When the owner must choose between two clean pictures (a look, a direction), describe
+  the differences and do not recommend one. Agents disagreed with the owner on exactly that kind of choice.
+
+Trust agent judging to find, locate and name defects, to reject broken outputs, and to check that a control was
+followed. Do not trust it to choose between clean looks or to say what is "spectacular". A second agent judge mostly
+repeats the first, so it does not replace the owner's eye.
