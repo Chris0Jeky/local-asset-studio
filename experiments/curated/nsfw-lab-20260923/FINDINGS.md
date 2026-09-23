@@ -421,3 +421,105 @@ New JANIMA job. Not the empty teahouse receipt. The teacup was removed before su
 - Keep: JANIMA teahouse and the ban on a face hand. The still stays, including the clasped fingers.
 
 No many-minute model was used. One Obsession and Pearly were not run. The new NSFW positives are front stands, seated portraits, a spear, a stage, and a road. None of them repeats the Wave K sentence `backless dress, open skirt, bare hips, arms behind back, no hands visible`.
+
+## Intensity loop — NSFW only
+
+Clothed casts stay paused. This loop uses adults already in this lab. A youthful face on an adult-in-canon character is a composition note, not a lab switch.
+
+One lever changes per cell, and only after the previous still has been looked at. The still is kept when fingers, costume, or tags miss. Levers, in the order they get tried: expression and light on a pose that already held, then a costume layer, then a camera, then an act. Hands stay on the park that last worked for that kind of pose.
+
+What already held: Changli's `backless dress, open skirt, bare hips, arms behind back` with `hands, fingers` in the negative. Übel's hands behind the back with no hand near the face. Wiz's flat hands on the thighs when the hands must be seen. From-below was the strong camera on 21 September. Sweat, blush, parted lips, and red light are the intensity words. Do not use the word hourglass. Omit a crowd.
+
+What failed: a prop or a lap task grows a hand at the face. Pockets do not hold both hands. A front-seated skirt lift stays closed. A military uniform overrides a no-hands request.
+
+### m-changli-heat — completed, counted
+
+- Preset `yumeflux-ilv1-baseline`, seed `2026092371`, steps 20, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `f9204d2d-df20-40f1-ac0d-170b833f00f9`. ComfyUI prompt `a537d1da-c2af-45d6-b331-6f63d77d63f1`. 32.6 s.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\YumeFlux-ILv1-Baseline_00009_.png`.
+- Positive: changli (wuthering waves), palace hall, from behind, looking back, blush, parted lips, sweat, red light, backless dress, open skirt, bare hips, clothes still on, no panties, arms behind back, no hands visible.
+- Inspection: adult woman. Pink hair in a high tail, gold hairpins, red eye, red palace, saturated red light. Changli reads. Blush, parted lips, and sweat droplets are visible, so the expression-and-light lever fired. The skirt is open over black lace and a bare hip. The dress stays on. No hands are in frame. The crop cuts the legs.
+- Keep: this stack. Expression and light did not bring the hands back.
+- Next lever: move the same stack onto Frieren. Her library uses warm lamp light instead of the palace red. The face, if youthful, stays a composition note.
+
+### m-frieren-heat — completed, counted
+
+The stack from `m-changli-heat`, moved onto Frieren. Library lamp instead of palace red.
+
+- Preset `wai`, seed `2026092372`, steps 20, CFG 5, euler ancestral / normal, `nsfw_girls.safetensors` at 0.7.
+- Studio job `aee6f9a3-27b7-48cd-b22b-7f5c4f05db85`. ComfyUI prompt `18a6f8c0-44b2-4ccb-bf59-f9b1a7a59fea`. 36.3 s.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\WAI-Illustration_00039_.png`.
+- Positive: frieren, library aisle, from behind, looking back, blush, parted lips, sweat, warm lamp light, backless dress, open skirt, bare hips, clothes still on, no panties, arms behind back, no hands visible.
+- Inspection: white twintails, green eye, pointed ear, library shelves, a lamp. Frieren reads. Blush and sweat are on the skin. The back is open and the skirt is split over a bare hip, so the leak that failed on the first library cell fired here. The dress stays on. The arms are behind the back. The face is the usual youthful Frieren design. That is a composition note. The cell stays counted in this lab.
+- Keep: the stack transfers. The first library cell stayed closed because it asked a front-ish hike with a hand on a shelf. This wording does not.
+- Next lever: camera only. Same Changli heat prompt and the same seed, plus `from below`.
+
+### m-changli-below — completed, counted
+
+Same seed and prompt as `m-changli-heat`, plus `from below`.
+
+- Preset `yumeflux-ilv1-baseline`, seed `2026092371`, steps 20, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `e06a072d-1543-4b24-8ac2-c4828e71fbd0`. ComfyUI prompt `d0e72070-e881-4075-91ec-65aaee9bbaaa`. 26.3 s.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\YumeFlux-ILv1-Baseline_00010_.png`.
+- Inspection: adult woman. Same pink hair, hairpins, red eye, red palace, sweat, blush, open red skirt, bare hip. The camera dropped: the hips fill the foreground and a red ceiling ornament sits above her. The heat stack held. The no-hands sentence did not. Two hands return at the bottom edge, holding the skirt. The fingers are cut by the frame.
+- Keep: `from below` for a lower, hotter crop. Drop it when the test is whether the hands stay gone.
+- Next lever: a front intimate act, not another low rear camera. Makima's open shirt, hands on the thighs, leaning toward the viewer. `hands, fingers` stays out of the negative so the thigh park can exist.
+
+### m-makima-lean — completed, counted
+
+Front act after `from below` brought the rear hands back. Thigh park, no `hands, fingers` in the negative.
+
+- Preset `cstati-v3-baseline`, seed `2026092374`, steps 20, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `1b020595-9b85-40bc-a1d5-8e4195bdd10f`. ComfyUI prompt `d9815111-edff-442c-938f-c312fcd2e7d7`. 28.4 s.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\CSTati-v3-Baseline_00015_.png`.
+- Positive: makima (chainsaw man), office, sitting on a desk, leaning toward the viewer, shirt unbuttoned, no bra, shirt still on, pants on, blush, parted lips, sweat, bedroom eyes, hands on thighs.
+- Inspection: adult woman. Red braid, ringed yellow eyes, white shirt, black tie, office windows. Makima reads. The shirt is open and the pants stay on, so the costume act fired. Blush and a little sweat are there. The mouth is only slightly open, milder than Changli's parted lips. She sits on the desk and leans into the frame. Both hands are on the desktop, not on her thighs. The near hand's fingers are long and the count is messy.
+- Keep: the open shirt and the lean. The still stays.
+- Next lever: same seed, same prompt, plus `both palms flat on her own thighs, not on the desk`. The desk stole the hands.
+
+### m-makima-thighs — not a result
+
+Studio job `60934d27-2ec8-4fec-9fcd-d6ee17682633` failed before ComfyUI assigned a prompt id. The worker could not rename `state.json` (`PermissionError`, access denied). It is not repeated as that id. The same recipe is `m2-makima-thighs` in the batch below.
+
+## M2 queue — posted together
+
+Nine jobs were queued on 23 September after the technique note was written. Results are filled only when a still exists. Job ids:
+
+| Cell | Job |
+| --- | --- |
+| m2-albedo-heat | `9df84a51-fa40-45c8-8b95-2f72dd3d9de0` |
+| m2-shalltear-heat | `31623b44-56b0-4bcc-b9f5-ae12e1e9bb97` |
+| m2-jane-heat | `783cdd8c-7254-43a2-be02-5a10025f3481` |
+| m2-blackswan-heat | `57f3038b-8cf2-4c90-9a79-37a3fa495340` |
+| m2-priscilla-front | `235dad00-d3e3-4a0f-a28e-58250094e3a7` |
+| m2-zhuyuan-front | `b8d3cf4d-266d-4b04-955d-f9f55435c50d` |
+| m2-yinlin-heat | `6522818e-8566-4fc1-aaa7-c6e34a091f5a` |
+| m2-artoria-heat | `861ff5fb-91bd-4a31-abbb-c4952afd9b39` |
+| m2-makima-thighs | `97fb2764-0a8e-403f-a814-9fd6af6df987` |
+
+## M2 results
+
+Every job completed. The readable account is `TECHNIQUES.md`. Short form:
+
+- T1 held on Shalltear (Anima, `31623b44` / `d8f8458d`, `Anima-v1-Baseline_00042_.png`, 30.5 s), Yinlin (JANIMA, `6522818e` / `f49999eb`, `JANIMA-v1-Baseline_00005_.png`, 30.3 s, one hip hand), Artoria (AniFox, `861ff5fb` / `9c91878b`, `AniFox-v2-Baseline_00010_.png`, 27.3 s), and mostly on Black Swan (WAI, `57f3038b` / `4bab29b6`, `WAI-Illustration_00041_.png`, 26.3 s, arms crossed in front).
+- T1 did not open Albedo's white dress. Wings covered the hips. WAI, `9df84a51` / `d0809cb6`, `WAI-Illustration_00040_.png`, 36.5 s. Hands stayed out.
+- Jane's jacket stack brought the hands back and painted fake letters. YumeFlux, `783cdd8c` / `e7118c12`, `YumeFlux-ILv1-Baseline_00011_.png`, 37.9 s. Purple light held.
+- Front thigh palms lost to the furniture: Priscilla's hands on the throne (`235dad00` / `9f1509fd`, `CSTati-v3-Baseline_00016_.png`, 26.4 s), Zhu Yuan's hand on the wall (`b8d3cf4d` / `7631b03d`, `YumeFlux-ILv1-Baseline_00012_.png`, 28.3 s), Makima's hands on the desk again (`97fb2764` / `bb09bbd2`, `CSTati-v3-Baseline_00017_.png`, 26.3 s). The shirt and the dress opening still fired. Sitting on the named surface beats "not on the desk."
+
+## M3 — see-through LoRA, queued
+
+`see_through_clothes.safetensors` at strength 1, trigger `seethroughILL`, plus `nsfw_girls` at 0.7. Illustrious presets only. Question: does the adapter open a dress that T1 left closed (Albedo), and does it keep T1's no-hands result on Shalltear and Changli.
+
+| Cell | Job |
+| --- | --- |
+| m3-albedo-sheer | `5e462af7-018a-4ba1-a26f-319c306514a3` |
+| m3-shalltear-sheer | `d33ff53d-ba67-4d4d-aa53-d7a9195fadc8` |
+| m3-changli-sheer | `1a1e5192-46d4-4c7d-beee-0dd1ff740f07` |
+
+## M3 results
+
+All three completed. The LoRA is T6 in `TECHNIQUES.md`.
+
+- Albedo, WAI, job `5e462af7`, prompt `c9500679`, 28.5 s, `WAI-Illustration_00042_.png`. The white dress that T1 left closed is now see-through over the hips. Hands stayed out. This is the adapter's hit.
+- Shalltear, YumeFlux, job `d33ff53d`, prompt `aa4133c8`, 28.2 s, `YumeFlux-ILv1-Baseline_00013_.png`. Dark dress went glossy and wet, back open, not a clear skirt. Hands stayed out.
+- Changli, AniFox, job `1a1e5192`, prompt `3f0bb896`, 28.3 s, `AniFox-v2-Baseline_00011_.png`. Wet sheen and a lace slit. Hands came back, clasped in black gloves.

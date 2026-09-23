@@ -12,6 +12,8 @@ Receipts are under `C:/Users/jekyt/source/local-asset-studio/experiments/runs` b
 
 Not run: One Obsession, Pearly, and any many-minute workflow.
 
+By 23:19 the same lab had queued nine more technique cells and three see-through cells. The usable writeup is `experiments/curated/nsfw-lab-20260923/TECHNIQUES.md`. The rear open-skirt stack held on Shalltear, Artoria, and mostly Black Swan and Yinlin, and it left Albedo's white dress closed. Front "hands on thighs" lost to the desk, the throne, and the wall. See-through Clothes Illustrious (`see_through_clothes.safetensors`, Civitai version 1610854, strength 1, trigger `seethroughILL`) made that white dress transparent and made darker dresses glossy. Jobs `5e462af7` / `c9500679`, `d33ff53d` / `aa4133c8`, `1a1e5192` / `3f0bb896`. Not art acceptance and not licence clearance.
+
 ## `zimage-fast` Studio-proved, Krea trigger follow-up, krea-refine on GGUF — 23 September 2026 (07:14-07:36)
 
 The overnight lab's last runs before the owner's shutdown. Evidence under `experiments/curated/overnight-20260923/` (the lab's
