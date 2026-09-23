@@ -363,6 +363,19 @@ def finalize(results, label, note, timeout=3600):
     return record
 
 
+def runtime_identity():
+    """Which runtime a Studio job ran on: the Studio's active backend (main checkout .runtime/backend-state.json), the preset's
+    declared backend is in the recipe, and the answering ComfyUI's argv and version from /system_stats."""
+    out = {}
+    try: out['studio_active_backend'] = json.loads((MAIN / '.runtime' / 'backend-state.json').read_text(encoding='utf-8')).get('active')
+    except (OSError, ValueError) as error: out['studio_active_backend'] = 'unreadable: %r' % error
+    try:
+        stats = http(COMFY + '/system_stats', timeout=20).get('system', {})
+        out['comfy_version'] = stats.get('comfyui_version'); out['comfy_argv_tail'] = (stats.get('argv') or [])[-8:]
+    except (OSError, ValueError) as error: out['comfy_version'] = 'unreadable: %r' % error
+    return out
+
+
 def run_studio(intent, label, results, timeout=3600, extra=None, skip_existing=True):
     """One Studio job (POST /api/jobs), sampled like run_graph. Records the job ID before polling; never retries."""
     prior = results.find(label)
@@ -371,6 +384,7 @@ def run_studio(intent, label, results, timeout=3600, extra=None, skip_existing=T
     guard(); pid = comfy_pid(); c0 = commit_pct()
     record = {'label': label, 'status': 'submitting', 'intent': intent, 'submitted_at': now(), 'comfy_pid': pid,
               'commit_pct_before': c0[0], 'free_ram_gb_before': c0[1], 'route': 'studio'}
+    record.update(runtime_identity())
     record.update(extra or {})
     sampler = Sampler(pid).start(); started = time.time()
     try: job = http(STUDIO + '/api/jobs', intent, timeout=120, origin=STUDIO)

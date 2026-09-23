@@ -85,7 +85,20 @@
     "sha256": "13dd708e33bcb48579a76a41988fe6398294804d8f96739a920ed781cbe0f425"
    }
   ],
-  "finished_at": "2026-09-23 05:24:13.684238"
+  "finished_at": "2026-09-23 05:24:13.684238",
+  "backend_id": "primary",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "runtime_note": "recorded after the run, 05:40 on 23 September 2026: .runtime/backend-state.json active \"primary\" (operation f9507a62, primary PID 46488 relaunched at the end of the coordinator's Qwen window before these jobs, which is the comfy_pid in each record); the preset declares backend_id \"primary\" in presets/catalog.json; ComfyUI 0.35.0 argv --reserve-vram 0.6 --disable-pinned-memory"
  },
  {
   "label": "krea-anime-atelier-gguf",
@@ -166,6 +179,19 @@
     "sha256": "6f0798fe18ae50312d381abc07eb88d28aa1a6a3ff38ec4c2802bcae96288551"
    }
   ],
-  "finished_at": "2026-09-23 05:26:11.459560"
+  "finished_at": "2026-09-23 05:26:11.459560",
+  "backend_id": "primary",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "runtime_note": "recorded after the run, 05:40 on 23 September 2026: .runtime/backend-state.json active \"primary\" (operation f9507a62, primary PID 46488 relaunched at the end of the coordinator's Qwen window before these jobs, which is the comfy_pid in each record); the preset declares backend_id \"primary\" in presets/catalog.json; ComfyUI 0.35.0 argv --reserve-vram 0.6 --disable-pinned-memory"
  }
 ]

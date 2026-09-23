@@ -1,5 +1,19 @@
 # Current state — 23 September 2026
 
+## Krea 2 Q5_K_M GGUF with the text encoder on the CPU: measured and proved — 23 September 2026 (03:32-05:26)
+
+Supersedes the "Krea 2 Q5 GGUF download in progress / comparison not run" lines further down (12 September); those stay
+as history. The file `diffusion_models/krea2_turbo-Q5_K_M.gguf` (vantagewithai/Krea-2-Turbo-GGUF rev `390847e2`, SHA-256
+`dcba1696…061dd`) is complete and pinned as `krea-turbo-q5km-gguf` (#873). Executed straight against ComfyUI 0.35.0 on the
+primary (`experiments/curated/overnight-20260923/krea-gguf/`): with `CLIPLoader` `device: cpu` the GGUF samples at
+2.37-2.45 s/step and takes 77-101 s per new prompt, against 175-544 s for the fp8 build with its encoder on the GPU. It
+was a blind tie with fp8 on three showcase seeds. The GGUF with the encoder on the GPU is the worst case: 112 s/step. The
+atelier target-stack recipe took 173.2 s on it (prompt `976da1a8`), against 827.6 s for fp8. The new presets
+`krea-portrait-gguf` (Studio job `c6049b90`, prompt `268f4be5`, 133.3 s) and `krea-anime-atelier-gguf` (job `29e468ca`,
+prompt `6a856a23`, 114.6 s) were proved through the Studio on backend `primary` and are `verified: true` (#880). The atelier
+proof painted a faint `@NJSW33T` watermark; a trigger-position test is the next step. Generated and agent-judged only, not
+art acceptance; the Krea 2 Community License terms are recorded, not cleared. HUMAN_TODO unchanged.
+
 ## GPU memory on this card: spill measured, reserve default kept at 0.6 — 23 September 2026 (02:40)
 
 ComfyUI's free-VRAM figure ignores what dwm and other apps hold (0.9–2.3 GB for dwm alone tonight), so a

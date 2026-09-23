@@ -31,7 +31,10 @@
   "output": {
    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-portrait-gguf_00001_.png",
    "sha256": "13dd708e33bcb48579a76a41988fe6398294804d8f96739a920ed781cbe0f425"
-  }
+  },
+  "backend_id": "primary",
+  "comfy_pid": 46488,
+  "runtime_note": "recorded after the run, 05:40 on 23 September 2026: .runtime/backend-state.json active \"primary\" (operation f9507a62, primary PID 46488 relaunched at the end of the coordinator's Qwen window before these jobs, which is the comfy_pid in each record); the preset declares backend_id \"primary\" in presets/catalog.json; ComfyUI 0.35.0 argv --reserve-vram 0.6 --disable-pinned-memory"
  },
  {
   "run": "krea-anime-atelier-gguf",
@@ -69,7 +72,10 @@
   "output": {
    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-anime-atelier-gguf_00001_.png",
    "sha256": "6f0798fe18ae50312d381abc07eb88d28aa1a6a3ff38ec4c2802bcae96288551"
-  }
+  },
+  "backend_id": "primary",
+  "comfy_pid": 46488,
+  "runtime_note": "recorded after the run, 05:40 on 23 September 2026: .runtime/backend-state.json active \"primary\" (operation f9507a62, primary PID 46488 relaunched at the end of the coordinator's Qwen window before these jobs, which is the comfy_pid in each record); the preset declares backend_id \"primary\" in presets/catalog.json; ComfyUI 0.35.0 argv --reserve-vram 0.6 --disable-pinned-memory"
  },
  {
   "run": "gguf-cpute-atelier-target-stack",
@@ -116,6 +122,8 @@
   "output": {
    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\gguf-cpute-atelier-target-stack_00001_.png",
    "sha256": "e0559290a14e57d80f1e05855a865fb9d282447848c362364cc33b65df6b272c"
-  }
+  },
+  "backend_id": "primary",
+  "comfy_pid": 46488
  }
 ]
