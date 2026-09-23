@@ -73,6 +73,8 @@ looks.
 | Krea GGUF (#874) | 15/15 | | Krea refine foxes (#889) | 3/6 |
 | Combine (#879) | 12/12 | | Style+Pose (#891) | 18/18 |
 | Hand inpaint (#882) | 10/18 | | Hand fix (#892) | 2/12; 10/12 after the R8b rescore |
+| Z-Image fp8 (#895) | 9/9 | | Painted trigger (#895) | 7/8; text found at the same 8 places |
+| Style+Pose weight (#895) | 2/6; burn gone 6/6 for both | | | |
 
 The low scores are all correction passes. The judges saw the same things but scored them differently, and rules R8–R8b
 now settle how.
@@ -117,6 +119,6 @@ now settle how.
 
 - Every experiment used 1–3 seeds and 1–4 sources. A tie is a tie, not a ranking.
 - There are no Studio proofs yet for `zimage-fast` (#893) or the tiled-decode presets (#888).
-- The style-weight fix rests on 6 jobs, and the trigger test on 2 seeds (#893). Neither has a second judge yet.
+- The style-weight fix rests on 6 jobs, and the trigger test on 2 seeds (#893). The second judge (#895) confirms both.
 - The detector hand route was tested with one detector model and threshold only (#890).
 - Nothing is art-accepted or licence-cleared. Every verdict here is agent-judged.
