@@ -93,6 +93,14 @@ Danbooru names were checked against `https://danbooru.donmai.us/tags.json` on 23
 | Epic Seven | `bellona (epic seven)` | 53 | Adult pirate. |
 | Epic Seven | `destina (epic seven)` | 11 | Adult healer. |
 | Epic Seven | `tenebria (epic seven)` | 87 | Adult mage. |
+| Persona 5 | `tae takemi` | (unchecked) | Adult doctor with her own clinic. Tag check 24 September returned 403, so no count. |
+| Persona 5 | `kawakami sadayo` | (unchecked) | Adult teacher. Tag check 24 September returned 403, so no count. |
+| Persona 5 | `sae niijima` | (unchecked) | Adult prosecutor. Tag check 24 September returned 403, so no count. |
+| Persona 5 | `chihaya mifune` | (unchecked) | Adult fortune teller. Tag check 24 September returned 403, so no count. |
+| Pokemon | `diantha (pokemon)` | (unchecked) | Adult Champion and actress. Tag check 24 September returned 403, so no count. |
+| Pokemon | `elesa (pokemon)` | (unchecked) | Adult model and gym leader. Tag check 24 September returned 403, so no count. |
+| Pokemon | `skyla (pokemon)` | (unchecked) | Adult pilot and gym leader. Tag check 24 September returned 403, so no count. |
+| Pokemon | `jessie (pokemon)` | (unchecked) | Adult Team Rocket member. Tag check 24 September returned 403, so no count. |
 
 ### Additional, aged up characters
 
@@ -113,6 +121,8 @@ Canonically under 18, school students, etc, made 18.
 | Child Wuthering Waves | Encore and other child resonators. |
 | Child Epic Seven | Child units. The four tags above are the adult shortlist only. |
 | Asa Mitaka and the Chainsaw Man school cast | High school. Makima, Himeno, Power, and Quanxi are the adult shortlist. |
+| Persona 5 Phantom Thieves school cast | Joker, Ann, Makoto, Haru, Futaba, Ryuji, Yusuke, Sumire: high-school students. Sae, Takemi, Kawakami, and Chihaya are the adult shortlist. |
+| Pokemon school-age trainers | Hilda, Rosa, Serena, Dawn, May, and the other teen player companions. Cynthia, Diantha, Elesa, Skyla, and Jessie are the adult shortlist. |
 
 ## Wave J — first continuation wave
 
@@ -615,3 +625,78 @@ The squat now goes to Jane, whose jacket stack brought the hands back, and to Bl
 | p4-jane-squat | `b77fc33a-5174-4bcc-8f0b-182ab4fe557c` |
 | p4-blackswan-squat | `60808b27-b99b-4f24-aa2a-22b37a9a2285` |
 | p4-narberal-bentover | `2f132d78-e9e8-45b7-bc31-b218c2eb55bf` |
+
+### p4 results
+
+All three completed. No spill line on any receipt. No resubmits.
+
+- p4-jane-squat, YumeFlux, seed `2026092431`, job `b77fc33a`, prompt `0420cda3`, 48.4 s, `YumeFlux-ILv1-Baseline_00018_.png`. Identity: Jane Doe reads clearly and adult, short grey hair, red eyes, rat ears, striped tail, neon alley, purple light. Lever: the squat with hands behind the head held on the first non-dress character, front spread-leg crop, facing the viewer. Hands: both hidden behind the head, no fingers to count; the m2 jacket-stack fists are gone. Cloth: black bodysuit glossy and wet-looking, not transparent; red jacket open; dark-cloth gloss matches T6. Background signs are still stylized glyphs though `logo, letters` was in the negative. Keep-or-change: keep the squat as Jane's pose; next lever is one mouth tag (mouth closed here) or a lighter garment if transparency is the question.
+- p4-blackswan-squat, WAI, seed `2026092432`, job `60808b27`, prompt `1ddd7f42`, 30.5 s, `WAI-Illustration_00048_.png`. Identity: Black Swan reads, long pale-lavender hair, purple eyes, headdress veil, flower emblem, adult; the place drifted from ballroom to a stained-glass chapel. Lever: the squat with hands behind the head held, spread-leg front crop. Hands: hidden behind the head; no shush, no lap hand, so the l-blackswan-ballroom face gesture is gone. Cloth: purple bodice glossy with sweat sheen and a sheer chest panel, long slit drape over the thighs; wet gloss, not full transparency, the dark-dress rule again. Keep-or-change: keep; next lever is one mouth tag, since the half-lidded eyes already read.
+- p4-narberal-bentover, CSTati, seed `2026092433`, job `2f132d78`, prompt `5dd2864b`, 30.3 s, `CSTati-v3-Baseline_00021_.png`. Identity: Narberal reads, long black hair, white maid headdress and bow, yellow eye in profile, adult battle maid, mansion hall. Lever: the bent-over rear crop with hands on the butt held, from behind, bent over, foreshortening; Narberal is settled. Hands: both on the hips and butt with normal-looking spread fingers, no obvious extra digits. Cloth: black maid dress glossy and wet with sheen highlights, apron bow opaque; dark cloth went glossy, not transparent, matching T6. Keep-or-change: keep; the bent-over light-cloth rule still needs new adults in light garments, because Narberal's dress is dark.
+
+## Pose transfer — p5 wave
+
+P4 settled Narberal and confirmed the squat on Jane and Black Swan, so both poses are now stacks (T7 squat, T8 bent-over). This wave moves T8 onto four new adults in light garments and T7 onto four new adults. One lever per cell: the character. All cells: 832×1216, 20 steps, CFG 5, euler ancestral, `nsfw_girls` 0.7, `see_through_clothes` 1.0 with `seethroughILL` head, shared negative with `child, loli, shota, logo, letters`. WAI scheduler normal, others karras. Queued in one burst.
+
+| Cell | Preset | Seed | Job |
+| --- | --- | --- | --- |
+| p5-tifa-bentover | anifox-v2-baseline | 2026092441 | `b3001cc0-3b77-4f93-b846-bab2c48e2be6` |
+| p5-ruanmei-bentover | wai | 2026092442 | `caa2ca0b-45fb-4a52-a47e-3713030ad36c` |
+| p5-himeko-bentover | yumeflux-ilv1-baseline | 2026092443 | `d229b2b5-7adf-4b7b-8186-9b591ba27997` |
+| p5-shorekeeper-bentover | cstati-v3-baseline | 2026092444 | `e82bc89a-604d-4e79-b7d0-3ef675f33cc1` |
+| p5-kafka-squat | wai | 2026092445 | `2da470ec-739a-44c7-afe9-c7676681067c` |
+| p5-yor-squat | cstati-v3-baseline | 2026092446 | `60c224a6-3672-40dd-a6ba-2e176077f7b9` |
+| p5-miyabi-squat | yumeflux-ilv1-baseline | 2026092447 | `6ebc1d65-0e84-4b47-9f32-f72ae403a062` |
+| p5-camellia-squat | anifox-v2-baseline | 2026092448 | `9e4404df-9e7d-49af-86b0-22e37fee0b31` |
+
+### p5 results
+
+All eight completed, 28.3–34.4 s each. No spill line on any receipt. T8 held on all four bent-overs with light-cloth transparency firing on each. T7 held on all four squats.
+
+- p5-tifa-bentover, AniFox, seed `2026092441`, job `b3001cc0`, prompt `60f9d577`, 34.3 s, `AniFox-v2-Baseline_00015_.png`. Identity: Tifa reads clearly and adult, long black hair, red eyes, bar interior with bottle shelves. Lever: T8 held, leaning over the counter, rear crop, looking back. Hands: both on the skirt and hips with normal-looking fingers. Cloth: white tank top wet with sheer patches on the back, transparency firing; black skirt glossy and wet, opaque. Mouth closed, slight smile. Keep-or-change: keep; next lever is one mouth tag.
+- p5-ruanmei-bentover, WAI, seed `2026092442`, job `caa2ca0b`, prompt `c100da0f`, 34.4 s, `WAI-Illustration_00049_.png`. Identity: adult woman, dark hair in an ornamented bun with gold and blue hairpieces, pearl necklace, white lab interior; reads adult. Lever: T8 held strongly, deep bend, foreshortening, rear crop. Hands: both gripping the dress at the hips, normal counts. Cloth: white and pale dress wet with sheen, translucent over the hips, transparency firing. Head down, so `looking at viewer` missed; composition note. Keep-or-change: keep; next lever is one mouth tag.
+- p5-himeko-bentover, YumeFlux, seed `2026092443`, job `d229b2b5`, prompt `c2287555`, 34.4 s, `YumeFlux-ILv1-Baseline_00019_.png`. Identity: Himeko reads, long red hair, yellow eyes, rose hairpin, space station with Earth view, adult. Lever: T8 held, leaning at the window, looking back at the viewer. Hands: both on the red skirt and hips, normal-looking. Cloth: white shirt sheer on the back and sleeves, transparency firing; red skirt glossy and wet, opaque. Keep-or-change: keep; next lever is one mouth tag.
+- p5-shorekeeper-bentover, CSTati, seed `2026092444`, job `e82bc89a`, prompt `bce0659f`, 30.5 s, `CSTati-v3-Baseline_00022_.png`. Identity: adult woman, light blue hair, night balcony with moon; generic face on a few-post character, as expected, reads adult. Lever: T8 held, bent over the railing, looking back. Hands: both on the dress at the hips, normal counts. Cloth: pale blue dress translucent over the back and hips with white floral lace, transparency firing. Keep-or-change: keep; next lever is one mouth tag.
+- p5-kafka-squat, WAI, seed `2026092445`, job `2da470ec`, prompt `175d9b88`, 30.3 s, `WAI-Illustration_00050_.png`. Identity: Kafka reads, magenta hair, sunglasses on head, white shirt, black jacket, night rooftop city, adult; eyes came out purple, not the prompted yellow. Lever: T7 held, facing the viewer, spread legs. Hands: hidden behind the head. Cloth: white shirt glossy with wet sheen and slight chest transparency; darks glossy. Mouth already slightly open. Keep-or-change: keep; next lever is `parted lips` as the measured tag.
+- p5-yor-squat, CSTati, seed `2026092446`, job `60c224a6`, prompt `e2a207b8`, 30.3 s, `CSTati-v3-Baseline_00023_.png`. Identity: Yor reads, long black hair, red eyes, white headband, gold earrings, red dress, warm lamp interior, adult. Lever: T7 held. Hands: hidden behind the head. Cloth: red dress glossy and wet, opaque; thighs glossy. Mouth closed, blush and sweat held. Keep-or-change: keep; next lever is one mouth tag.
+- p5-miyabi-squat, YumeFlux, seed `2026092447`, job `6ebc1d65`, prompt `ca94f401`, 28.3 s, `YumeFlux-ILv1-Baseline_00020_.png`. Identity: adult woman, dark blue hair, blue eyes, night shrine with red lanterns, crest emblem; reads adult, likeness generic-ish. Lever: T7 held. Hands: hidden behind the head. Cloth: black uniform top went sheer and translucent over the chest with visible sheen; dark thin cloth can go sheer, refining T6. Mouth closed. Keep-or-change: keep; next lever is one mouth tag.
+- p5-camellia-squat, AniFox, seed `2026092448`, job `9e4404df`, prompt `6578cd7b`, 30.3 s, `AniFox-v2-Baseline_00016_.png`. Identity: adult woman, long red hair with braid, red eyes, greenhouse conservatory, white-and-red dress, reads adult. Lever: T7 held. Hands: hidden behind the head. Cloth: white sleeves sheer, red dress glossy and wet, white chest panel sheer-ish. Mouth closed. Keep-or-change: keep; next lever is one mouth tag.
+
+## Expression layer — p6 wave
+
+P5 held 8/8, so the expression layer goes onto poses that already held. One mouth tag only: `parted lips` added to the exact held prompt at the same seed, so the tag is the only change. Three T7 squats, three T8 bent-overs. Same presets, settings, and shared negative as p5. Queued in one burst.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p6-kafka-lips | p5-kafka-squat | wai | 2026092445 | `5330c754-b820-4737-a882-e7756dc47f88` |
+| p6-yor-lips | p5-yor-squat | cstati-v3-baseline | 2026092446 | `54999005-1f84-4d68-9048-6cdab806c7b5` |
+| p6-jane-lips | p4-jane-squat | yumeflux-ilv1-baseline | 2026092431 | `bb54f5fe-4d08-4134-bf89-fedfb305cb4b` |
+| p6-tifa-lips | p5-tifa-bentover | anifox-v2-baseline | 2026092441 | `12ea069f-b822-4bd0-882a-0b0f68803998` |
+| p6-himeko-lips | p5-himeko-bentover | yumeflux-ilv1-baseline | 2026092443 | `d28fdfd0-a635-408d-b263-2caac5959f44` |
+| p6-narberal-lips | p4-narberal-bentover | cstati-v3-baseline | 2026092433 | `d962c65a-aad4-46a2-b365-2ca23f8718e5` |
+
+### p6 results
+
+All six completed, 26.3–36.4 s each. No spill line on any receipt. Same-seed isolation worked: compositions are otherwise near-identical to the held cells, so the mouth is the only real change. `parted lips` fired on all three front-face squats and mildly on two of three bent-over profiles; Himeko's face turned away, so the tag had nowhere to show.
+
+- p6-kafka-lips, WAI, seed `2026092445`, job `5330c754`, prompt `24656736`, 36.4 s, `WAI-Illustration_00051_.png`. Identity: same Kafka read, magenta hair, sunglasses, rooftop, adult. Lever: mouth now visibly open; tag fired. Hands: still hidden behind the head. Cloth: same glossy white shirt and darks. Keep-or-change: keep; expression layer confirmed on T7.
+- p6-yor-lips, CSTati, seed `2026092446`, job `54999005`, prompt `3692c711`, 32.4 s, `CSTati-v3-Baseline_00024_.png`. Identity: same Yor read, headband, red dress, lamp interior, adult. Lever: mouth slightly parted; tag fired mildly. Hands: hidden. Cloth: same glossy red dress. Keep-or-change: keep.
+- p6-jane-lips, YumeFlux, seed `2026092431`, job `bb54f5fe`, prompt `78219dec`, 28.4 s, `YumeFlux-ILv1-Baseline_00021_.png`. Identity: same Jane read, grey hair, rat ears, tail, neon alley, adult. Lever: mouth clearly open; tag fired. Hands: hidden. Cloth: same glossy black bodysuit. Keep-or-change: keep.
+- p6-tifa-lips, AniFox, seed `2026092441`, job `12ea069f`, prompt `4d043915`, 26.3 s, `AniFox-v2-Baseline_00017_.png`. Identity: same Tifa read, bar interior, adult. Lever: mouth slightly open in profile; tag fired mildly. Hands: both on the skirt, normal-looking. Cloth: white tank still sheer-patched, black skirt glossy. Keep-or-change: keep.
+- p6-himeko-lips, YumeFlux, seed `2026092443`, job `d28fdfd0`, prompt `b58450cc`, 28.3 s, `YumeFlux-ILv1-Baseline_00022_.png`. Identity: same Himeko read, red hair, station window, adult. Lever: face turned away and down, mouth barely visible; tag effect unmeasurable here. Hands and cloth unchanged. Keep-or-change: keep; mouth tags need a visible face, so bent-over profiles are a weak test.
+- p6-narberal-lips, CSTati, seed `2026092433`, job `d962c65a`, prompt `d38cfcac`, 26.5 s, `CSTati-v3-Baseline_00025_.png`. Identity: same Narberal read, maid headdress, mansion hall, adult. Lever: mouth slightly open in profile; tag fired mildly. Hands: both on the dress, normal-looking. Cloth: same dark gloss. Keep-or-change: keep.
+
+## New adults — p7 wave (Persona 5, Pokemon)
+
+Owner request, 24 September: include Persona 5 characters and more Pokemon characters. Only the adult shortlists run: Sae, Takemi, Kawakami, Chihaya (the Phantom Thieves school cast stays dropped) and Diantha, Elesa, Skyla, Jessie (Cynthia already ran 21 September; teen trainers stay dropped). One lever per cell: the character, on T7/T8 with `parted lips` already in the prompt. Same presets, settings, and shared negative as p6. Queued in one burst.
+
+| Cell | Preset | Seed | Job |
+| --- | --- | --- | --- |
+| p7-takemi-bentover | wai | 2026092461 | `f14c5406-ddc4-45c2-880e-cacd031eb03a` |
+| p7-kawakami-bentover | cstati-v3-baseline | 2026092462 | `4360edfe-a157-47f5-8149-2e3f21856bdc` |
+| p7-diantha-bentover | yumeflux-ilv1-baseline | 2026092463 | `bdf00dbc-5f55-4c03-9f58-768aa54872c3` |
+| p7-skyla-bentover | anifox-v2-baseline | 2026092464 | `ad37cc19-27a6-4d88-aeb6-305ed333e8ea` |
+| p7-sae-squat | wai | 2026092465 | `794283fd-184c-43c6-81ee-e1e1c9c80b6b` |
+| p7-chihaya-squat | cstati-v3-baseline | 2026092466 | `22887bd1-8c86-4882-a1a7-dcd8d9540b5a` |
+| p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `1bb3450e-0566-46d7-9998-061e6d9dac51` |
+| p7-jessie-squat | anifox-v2-baseline | 2026092468 | `c5dfd218-79a3-49a6-afe6-4300cbb05167` |

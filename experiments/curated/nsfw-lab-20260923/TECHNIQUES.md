@@ -83,6 +83,60 @@ All five completed. The bent-over crop, the seiza, the squat with hands behind t
 
 Transfer after that: the squat held on Yinlin and Scathach. The bent-over crop held on Frieren, hands on a see-through white dress. It missed Albedo's hands because the wings cover that spot. Wiz held the seiza. Artoria held the seated rear. A finished wave is a checkpoint. The next wave puts Albedo in the squat, and gives the bent-over crop to Luna and Serie.
 
+That wave held too. Albedo in the squat (WAI, job `bc2094e7`, prompt `6c46cb62`, `WAI-Illustration_00047_.png`, 26.5 s): hands behind the head, wings out to the sides, white dress see-through. The squat fixed the wing problem. Luna bent-over (YumeFlux, job `850d49ac`, prompt `f4a76734`, `YumeFlux-ILv1-Baseline_00017_.png`, 26.3 s): hands on the robe, see-through white cloth, glasses did not steal a hand. Serie bent-over (CSTati, job `263ad942`, prompt `eedc7769`, `CSTati-v3-Baseline_00020_.png`, 28.2 s): hands on a see-through white-and-gold dress; the place drifted to a bed. Priscilla in the squat (AniFox, job `d06d4362`, prompt `a2f42800`, `AniFox-v2-Baseline_00014_.png`, 26.3 s): hands behind the head, not on the throne arms. The squat beat the throne.
+
+P4 confirmed both poses on new adults. The squat held on Jane (YumeFlux, job `b77fc33a`, prompt `0420cda3`, `YumeFlux-ILv1-Baseline_00018_.png`, 48.4 s, first non-dress hold, bodysuit glossy not transparent) and Black Swan (WAI, job `60808b27`, prompt `1ddd7f42`, `WAI-Illustration_00048_.png`, 30.5 s, no shush, ballroom drifted to a chapel). The bent-over crop held on Narberal (CSTati, job `2f132d78`, prompt `5dd2864b`, `CSTati-v3-Baseline_00021_.png`, 30.3 s, dark maid dress glossy, hands on the butt with clean-looking fingers). Both are promoted to stacks below.
+
+## T7 — squat, hands behind the head
+
+Use when a front pose must keep the hands off furniture, thrones, ledges, and faces.
+
+Positive head: `seethroughILL, see through clothes, wet clothes` at the front. Slot 2 `see_through_clothes.safetensors` at 1 beside `nsfw_girls` at 0.7. Illustrious presets only.
+
+Positive tail: `facing the viewer, squatting, hands behind head, spread legs, heavy sweating, shiny body, blush`
+
+Negative add: `logo, letters` on top of the usual quality and `child, loli, shota` line. No `hands, fingers` ban: the hands are part of the pose, parked behind the head.
+
+Held: `p-makima-squat` (CSTati, job `db749a02`, prompt `f96cc17a`, `CSTati-v3-Baseline_00018_.png`), `p2-yinlin-squat` (CSTati, job `7a94c733`, prompt `7afd1b41`, `CSTati-v3-Baseline_00019_.png`), `p2-scathach-squat` (AniFox, job `14d3e126`, prompt `21b68986`, `AniFox-v2-Baseline_00013_.png`), `p3-albedo-squat` (WAI, job `bc2094e7`, prompt `6c46cb62`, `WAI-Illustration_00047_.png`, wings out to the sides), `p3-priscilla-squat` (AniFox, job `d06d4362`, prompt `a2f42800`, `AniFox-v2-Baseline_00014_.png`, beat the throne), `p4-jane-squat` (YumeFlux, job `b77fc33a`, prompt `0420cda3`, `YumeFlux-ILv1-Baseline_00018_.png`, first non-dress hold), `p4-blackswan-squat` (WAI, job `60808b27`, prompt `1ddd7f42`, `WAI-Illustration_00048_.png`, no shush).
+
+Breaks it: nothing has broken the pose itself. Mouth tags stay weak (Makima's mouth stayed closed). The place can drift (Black Swan's ballroom became a chapel). Dark cloth goes glossy, not transparent (Jane's bodysuit, Black Swan's bodice).
+
+P5 added four more holds: `p5-kafka-squat` (WAI, job `2da470ec`, prompt `175d9b88`, `WAI-Illustration_00050_.png`, 30.3 s, eyes drifted yellow to purple, mouth already slightly open), `p5-yor-squat` (CSTati, job `60c224a6`, prompt `e2a207b8`, `CSTati-v3-Baseline_00023_.png`, 30.3 s), `p5-miyabi-squat` (YumeFlux, job `6ebc1d65`, prompt `ca94f401`, `YumeFlux-ILv1-Baseline_00020_.png`, 28.3 s, black top went sheer), `p5-camellia-squat` (AniFox, job `9e4404df`, prompt `6578cd7b`, `AniFox-v2-Baseline_00016_.png`, 30.3 s).
+
+Next lever: one mouth tag (`parted lips`) on a squat that already held, same seed so the tag is the only change; then new adults in light garments.
+
+## T8 — bent-over rear crop, hands on the butt
+
+Use when the hips are the subject and the hands are allowed to be on the body.
+
+Positive head: `seethroughILL, see through clothes, wet clothes` at the front. Slot 2 `see_through_clothes.safetensors` at 1 beside `nsfw_girls` at 0.7. Illustrious presets only.
+
+Positive tail: `from behind, bent over, looking at viewer, hands on butt, dynamic angle, foreshortening, blush, sweat, slim waist, wide hips`
+
+Negative add: `logo, letters` on top of the usual quality and `child, loli, shota` line. No `hands, fingers` ban: the hands are part of the pose.
+
+Held: `p-changli-bentover` (WAI, job `f767bc31`, prompt `79548544`, `WAI-Illustration_00043_.png`), `p2-frieren-bentover` (YumeFlux, job `c4e06186`, prompt `b3415c34`, `YumeFlux-ILv1-Baseline_00015_.png`, light dress), `p3-luna-bentover` (YumeFlux, job `850d49ac`, prompt `f4a76734`, `YumeFlux-ILv1-Baseline_00017_.png`, glasses did not steal a hand), `p3-serie-bentover` (CSTati, job `263ad942`, prompt `eedc7769`, `CSTati-v3-Baseline_00020_.png`), `p4-narberal-bentover` (CSTati, job `2f132d78`, prompt `5dd2864b`, `CSTati-v3-Baseline_00021_.png`, dark gloss, clean-looking fingers).
+
+Breaks it: wings cover where the hands should be (`p2-albedo-bentover`, WAI, job `543aa322`, prompt `1147dd12`, `WAI-Illustration_00045_.png`); the squat (T7) is her pose instead. Dark cloth goes glossy rather than transparent (Narberal's maid dress, Shalltear's dark skirt in M3). Do not mix with the no-hands rear stack T1.
+
+P5 confirmed the light-cloth rule on four new adults: `p5-tifa-bentover` (AniFox, job `b3001cc0`, prompt `60f9d577`, `AniFox-v2-Baseline_00015_.png`, 34.3 s, white tank sheer, black skirt glossy), `p5-ruanmei-bentover` (WAI, job `caa2ca0b`, prompt `c100da0f`, `WAI-Illustration_00049_.png`, 34.4 s, white dress translucent, head down so `looking at viewer` missed), `p5-himeko-bentover` (YumeFlux, job `d229b2b5`, prompt `c2287555`, `YumeFlux-ILv1-Baseline_00019_.png`, 34.4 s, white shirt sheer, red skirt glossy), `p5-shorekeeper-bentover` (CSTati, job `e82bc89a`, prompt `bce0659f`, `CSTati-v3-Baseline_00022_.png`, 30.5 s, pale blue dress translucent).
+
+T6 refined: dark heavy cloth goes glossy (Narberal, Jane, Yor), but dark thin cloth can go sheer (`p5-miyabi-squat`, YumeFlux, job `6ebc1d65`, prompt `ca94f401`, black top translucent over the chest).
+
+Next lever: one mouth tag (`parted lips`) on a crop that already held, same seed so the tag is the only change.
+
+## T9 — parted lips on a held pose
+
+Use when a held T7 or T8 still needs a mouth. Add `parted lips` to the exact held prompt at the same seed. One mouth tag only.
+
+Positive tail add: `, parted lips` after `blush` (T7) or after `blush` before `sweat` (T8). No negative change.
+
+Held: `p6-kafka-lips` (WAI, job `5330c754`, prompt `24656736`, `WAI-Illustration_00051_.png`, 36.4 s, mouth visibly open), `p6-yor-lips` (CSTati, job `54999005`, prompt `3692c711`, `CSTati-v3-Baseline_00024_.png`, 32.4 s, slightly parted), `p6-jane-lips` (YumeFlux, job `bb54f5fe`, prompt `78219dec`, `YumeFlux-ILv1-Baseline_00021_.png`, 28.4 s, clearly open), `p6-tifa-lips` (AniFox, job `12ea069f`, prompt `4d043915`, `AniFox-v2-Baseline_00017_.png`, 26.3 s, slightly open in profile), `p6-narberal-lips` (CSTati, job `d962c65a`, prompt `d38cfcac`, `CSTati-v3-Baseline_00025_.png`, 26.5 s, slightly open in profile).
+
+Breaks it: a face turned away leaves the tag nowhere to show (`p6-himeko-lips`, YumeFlux, job `d28fdfd0`, prompt `b58450cc`, `YumeFlux-ILv1-Baseline_00022_.png`). Bent-over profiles are a weak mouth test; front squats are the strong one. Pose, hands, and cloth were otherwise undisturbed at the same seed on all six.
+
+Next lever: new adult characters (owner request: Persona 5 adults and more Pokemon adults) on T7/T8 with `parted lips` already in the prompt.
+
 ## M2 measured
 
 All nine jobs completed. About 26–38 seconds each. No spill line was required to finish the queue.

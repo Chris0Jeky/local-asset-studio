@@ -1,4 +1,10 @@
-# Current state — 23 September 2026
+# Current state — 24 September 2026
+
+## NSFW lab overnight: p4 judged, T7/T8/T9 measured, p5–p7 queued — 24 September 2026 (00:10 local)
+
+Executed through Studio on the primary. Notes are `experiments/curated/nsfw-lab-20260923/FINDINGS.md` (cell log) and `TECHNIQUES.md` (stacks). Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. No Creative Bundle entry. No many-minute model. Pictures stay under the ComfyUI `output/Studio` folder.
+
+Judged p4 (3/3 held): Jane squat `b77fc33a` / `0420cda3`, Black Swan squat `60808b27` / `1ddd7f42`, Narberal bent-over `2f132d78` / `5dd2864b`. Promoted T7 (squat, hands behind head) and T8 (bent-over rear crop, hands on butt). P5 confirmed both on eight new adults, 8/8 held: Tifa `b3001cc0` / `60f9d577`, Ruan Mei `caa2ca0b` / `c100da0f`, Himeko `d229b2b5` / `c2287555`, Shorekeeper `e82bc89a` / `bce0659f`, Kafka `2da470ec` / `175d9b88`, Yor `60c224a6` / `e2a207b8`, Miyabi `6ebc1d65` / `ca94f401` (dark thin cloth went sheer, refining T6), Camellya `9e4404df` / `6578cd7b`. P6 measured `parted lips` at the same seed on six held poses (T9): Kafka `5330c754` / `24656736`, Yor `54999005` / `3692c711`, Jane `bb54f5fe` / `78219dec`, Tifa `12ea069f` / `4d043915`, Himeko `d28fdfd0` / `b58450cc` (face turned away, unmeasurable), Narberal `d962c65a` / `d38cfcac`. P7 queued per owner request (Persona 5 adults and more Pokemon adults only; school casts stay dropped): Takemi `f14c5406`, Kawakami `4360edfe`, Diantha `bdf00dbc`, Skyla `ad37cc19`, Sae `794283fd`, Chihaya `22887bd1`, Elesa `1bb3450e`, Jessie `c5dfd218`. No spill line on any receipt this session. Aqua still unconfirmed, no new Aqua cells.
 
 ## Franchise labs, fast families only — 23 September 2026 (20:25 local)
 
