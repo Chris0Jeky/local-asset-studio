@@ -523,3 +523,41 @@ All three completed. The LoRA is T6 in `TECHNIQUES.md`.
 - Albedo, WAI, job `5e462af7`, prompt `c9500679`, 28.5 s, `WAI-Illustration_00042_.png`. The white dress that T1 left closed is now see-through over the hips. Hands stayed out. This is the adapter's hit.
 - Shalltear, YumeFlux, job `d33ff53d`, prompt `aa4133c8`, 28.2 s, `YumeFlux-ILv1-Baseline_00013_.png`. Dark dress went glossy and wet, back open, not a clear skirt. Hands stayed out.
 - Changli, AniFox, job `1a1e5192`, prompt `3f0bb896`, 28.3 s, `AniFox-v2-Baseline_00011_.png`. Wet sheen and a lace slit. Hands came back, clasped in black gloves.
+
+## Page poses — queued from the LoRA examples
+
+The version page has four poses worth copying, listed as T6 page poses in `TECHNIQUES.md`. Posted with `seethroughILL` and the LoRA at strength 1.
+
+| Cell | Job | Prompt | Still |
+| --- | --- | --- | --- |
+| p-changli-bentover | `f767bc31-9d38-4a19-b1ba-109abfcb6584` | `79548544-a0c2-4638-9696-539250ebd415` | `WAI-Illustration_00043_.png`, 28.4 s |
+| p-shalltear-seiza | `37b8802b-6075-4dfb-8b21-bd1cd7f8a567` | `8cff72d8-1b43-43e2-bc49-c12c09df1666` | `YumeFlux-ILv1-Baseline_00014_.png`, 26.3 s |
+| p-makima-squat | `db749a02-f6bf-4156-9fdf-97ee3581271d` | `f96cc17a-9e46-4820-94c9-e07bb68532c6` | `CSTati-v3-Baseline_00018_.png`, 24.3 s |
+| p-zhuyuan-skirt | `0744d4f9-5c10-49e8-a57e-3ffd15fd2602` | `1982818d-3fa7-45d3-b723-2d5c0786fd41` | `AniFox-v2-Baseline_00012_.png`, 24.3 s |
+| p-blackswan-portrait | `89658af5-156b-4b87-9c18-7676d84f256e` | `6ad6f1ef-3d7e-4d0f-b7bd-fb1bdf7788b4` | `WAI-Illustration_00044_.png`, 38.5 s |
+
+### p-changli-bentover — completed, counted
+
+The page's bent-over rear crop, on Changli, with the see-through LoRA.
+
+- Preset `wai`, seed `2026092401`, steps 20, CFG 5, euler ancestral / normal. `nsfw_girls` at 0.7 and `see_through_clothes.safetensors` at 1.
+- Studio job `f767bc31-9d38-4a19-b1ba-109abfcb6584`. ComfyUI prompt `79548544-a0c2-4638-9696-539250ebd415`. 28.4 s.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\WAI-Illustration_00043_.png`.
+- Inspection: the pose transferred. She is bent over a couch, seen from behind and below, pink hair and the hairpins still readable upside-down between her legs. Glossy black bike shorts read as wet and tight. Both hands are on the shorts. The fingers look like a normal spread, not a pile. Sweat is on the thighs. The face is squeezed by the foreshortening. Adult.
+- Keep: this is the page pose. Use it when the crop should be the hips and the hands are allowed. Do not mix it with the no-hands rear stack.
+
+### p-shalltear-seiza — completed, counted
+
+YumeFlux, seed `2026092402`, job `37b8802b-6075-4dfb-8b21-bd1cd7f8a567`, prompt `8cff72d8-1b43-43e2-bc49-c12c09df1666`, 26.3 s, `YumeFlux-ILv1-Baseline_00014_.png`. Kneeling seiza, from behind, tongue out, red room, wet dark skirt that reads see-through. Bare feet are in frame. The pose held. Hands are not the subject.
+
+### p-makima-squat — completed, counted
+
+CSTati, seed `2026092403`, job `db749a02-f6bf-4156-9fdf-97ee3581271d`, prompt `f96cc17a-9e46-4820-94c9-e07bb68532c6`, 24.3 s, `CSTati-v3-Baseline_00018_.png`. Wide squat, hands behind the head, wet black bodysuit, ringed yellow eyes, braid. The hands are off the furniture, which the desk sentence never managed. Mouth stayed closed. Keep this as the front pose.
+
+### p-zhuyuan-skirt — completed, counted
+
+AniFox, seed `2026092404`, job `0744d4f9-5c10-49e8-a57e-3ffd15fd2602`, prompt `1982818d-3fa7-45d3-b723-2d5c0786fd41`, 24.3 s, `AniFox-v2-Baseline_00012_.png`. Sitting away at a night window. The shirt and the dark bottoms are both see-through. The pencil skirt became trousers. The rear sit and the wet cloth held. Hands are out of frame.
+
+### p-blackswan-portrait — completed, counted
+
+WAI, seed `2026092405`, job `89658af5-156b-4b87-9c18-7676d84f256e`, prompt `6ad6f1ef-3d7e-4d0f-b7bd-fb1bdf7788b4`, 38.5 s, `WAI-Illustration_00044_.png`. Face crop. Veil, purple eyes, small smile. A sheer panel is on the chest. The LoRA still fires on a portrait. Identity is the strongest of the five.
