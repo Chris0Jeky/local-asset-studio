@@ -30,7 +30,7 @@ Records with SHA-256 and crop coordinates:
 | Question | Source | Answer |
 | --- | --- | --- |
 | Did `anime-detail-fix` fix the six-finger NoobAI hand (job `14caa4fb`)? | CURRENT_STATE, atelier doc, STATUS G3 | **No.** At full resolution the hand still has six digits: two tall fingers, a thumb across the palm and three fingers on the right, the same structure as the original. The pass redrew the hand (mean change about 9 grey levels in its box) without fixing the count. The Gentle 0.3 trial (`e4e49006`) also kept it, as recorded. Correction notes now sit beside the three claims. |
-| Does `anime-detail-fix` repair hands reliably? | CURRENT_STATE | **Not on the evidence: 0 of 3 recorded passes fixed their target.** On the NoobAI hand, `14caa4fb` and `e4e49006` both left six digits. On the fantasy portrait, `009eddad` changed the eyes, removed both earrings and left the hands ([q-30](pre-reviews/q-30.md)). A masked hand inpaint is the next thing to try. |
+| Does `anime-detail-fix` repair hands reliably? | CURRENT_STATE | **Not on the evidence: 0 of 3 recorded passes fixed their target.** On the NoobAI hand, `14caa4fb` and `e4e49006` both left six digits. On the fantasy portrait, `009eddad` changed the eyes, removed both earrings and left the hands ([q-30](pre-reviews/q-30.md)). *Later the same night:* the feathered `anime-masked-repair` at denoise 0.6 fixed this hand on 3 of 3 seeds, keeping the style, with no seam on 2 of 3 ([second-judge/hand-inpaint.md](second-judge/hand-inpaint.md)); that is the working correction route. |
 | Did `krea-refine` fix the fox faces on the fox shrine (`21e4a629`)? | CURRENT_STATE, atelier doc | **Partly.** The faces now have eyes and snouts. But three or four small foxes became two large ones, and white snow specks cover the frame. The run's prompt was the preset's example ("two red foxes ... on a snowy hill under a starry night sky"), not the shrine's. Refine with the source's own prompt. |
 | Does the lantern grip in fantasy-pack portrait 1 need correcting? | q-30, CURRENT_STATE | **No.** Both hands have five digits and a readable pinch. The real flaw is the lantern cut by the bottom edge ([q-30](pre-reviews/q-30.md)). |
 | Is the stocking on the throne witch's raised leg a defect (`Nova_00004_`, job `bb8efa52`)? | style-pose-matrix nova README | **Yes.** It ends in a toe-less, bandage-wrapped tip (crop 20,780-230,930), and every Klein restyle of the picture inherited it ([q-27](pre-reviews/q-27.md)). The owner ruled the witch an adult original on 23 September. |
@@ -46,6 +46,11 @@ Records with SHA-256 and crop coordinates:
 | Are Anima hands acceptable when visible? | CURRENT_STATE | **Yes, simplified but clean.** The plain base with artist tags (`anima-artist-stack_00002_`) draws a readable pinch on the hat brim and a loose fist; the fantasy pack's look B drew clean hands in 1, 2 and 3 ([q-30](pre-reviews/q-30.md)). Four Anima pictures with visible hands, none broken. |
 | Is any Wan 2.2 output temporally coherent? | CURRENT_STATE, workflow-lab README | **The surviving clip is, because it barely moves.** `examples/workflow-lab/wan-retro-anime.mp4` (job `e33116f1`, 33 frames): face, hand and umbrella hold with no flicker or morphing; consecutive frames differ by a median of 0.48 grey levels, first against last by 6.8 (a slight head turn, the mouth, the rain). Small periodic jumps every 3–4 frames are not codec keyframes (the MP4 has one I-frame); their spacing fits the Wan VAE's 4-frame temporal compression, a hypothesis. The recorded failures were not re-checked. |
 | Are the TRELLIS and Hunyuan3D lanterns usable drafts? | CURRENT_STATE, workflow-lab README | **As drafts, yes; as assets, not yet.** Hunyuan: one closed piece, recognisably the lantern from every side, but untextured, lumpy and with 1,243 non-manifold edges: a blockout. TRELLIS (trimmed): the better look, a consistent teal/brass/orange texture from all four sides, but the base is open where the ground plane was cut and the mesh is triangle soup (80,262 separate pieces): merge by distance and cap the base first. Checked with Blender on the CPU (Cycles, four side views and one from below). |
+| Do the Combine routes hold on an adult original pair? | q-28, #422, #446 | **Skeleton 3 of 3 keep, Copy Pose 2 of 3, depth 1 of 3 (blank faces), depth with the 88 % cut 1 of 3.** Two judges agreed on 12 of 12 verdicts ([second-judge/combine-adult.md](second-judge/combine-adult.md)). |
+| Do named colours and a named foot fix the Klein restyle's drift and toe-less foot? | [q-27](pre-reviews/q-27.md) | **Yes.** Naming the colours kept them 3 of 3 (shipped wording 1 of 3); naming the beige stocking gave a clean stocking foot 3 of 3; "bare feet" gave toes 3 of 3, one under a band ([second-judge/klein-restyle.md](second-judge/klein-restyle.md)). |
+| Does anything fix the NoobAI six-finger hand? | this page | **Yes: the feathered masked repair at 0.6**, 3 of 3 seeds. Plain 0.6 fixes it but leaves a seam; 0.4 and Fooocus fail ([second-judge/hand-inpaint.md](second-judge/hand-inpaint.md)). |
+| Is Krea 2 GGUF Q5_K_M softer than fp8? | #873 | **No**: sharpness equal in every pair, characters and the retro LoRA intact ([second-judge/krea-gguf.md](second-judge/krea-gguf.md)). |
+| Does tiled VAE decode change SDXL pictures? | lab | **No**: mean difference 0.5-1.5 grey levels, no seams ([second-judge/sdxl-vae-decode.md](second-judge/sdxl-vae-decode.md)). |
 
 ## Partly answered
 
@@ -53,7 +58,7 @@ Records with SHA-256 and crop coordinates:
 | --- | --- | --- | --- |
 | Do the Hands LoRAs fix hands? | lora-smoke README | Hands Pony drew six digit tips at both strengths; Hands Illu changed nothing visible (the blind judge mistook it for the control) | a multi-seed test where the base draws bad hands |
 | Which Pony renders read adult, and which cues make Pony draw one? | lora-smoke README | the control, both Hands renders and (per the README) Dramatic Lighting 0.85 read youthful; Gothic Neon and Dramatic Lighting 0.6 read adult | which prompt cues work: needs renders |
-| Is Qwen-Image 2.1 good enough, next to the current defaults? | #739 | both seeds are underexposed navy and soft at 8 steps (style 3, technical 3) | more steps and a side-by-side with the defaults |
+| Is Qwen-Image 2.1 good enough, next to the current defaults? | #739 | at 8 steps both seeds are underexposed navy and soft; at 25 steps the Studio proofs are correctly lit (t2i keep, edit keep, RGBA icon fixable for alpha dust; [second-judge/qwen21-proofs.md](second-judge/qwen21-proofs.md)) | a side-by-side with the defaults on one brief |
 | Does the replace route keep the portrait's face? | CURRENT_STATE, fantasy-pack README | the fringe, the earrings and the expression carry at full-body scale; the fine features are redrawn ([q-30](pre-reviews/q-30.md)) | portrait-fidelity faces: a face pass, needs renders |
 | Which installed SDXL checkpoint is the best base (#14)? | #14, CURRENT_STATE | on the evidence so far, WAI and YumeFlux lead and tie, CSTati is close, Animagine is next, and Pony and NoobAI are weakest. Sources: the calibration pack (WAI 4.4, NoobAI 3.4–3.8, Pony 2.8–3.6 on one brief), the smoke controls (WAI 3.6, NoobAI 3.4, Pony 3.0) and the Style + Pose matrix | one fixed brief across all seven, three seeds, blind |
 | The Anima two-seed comparison `fbb384c7` | CURRENT_STATE | both seeds are clean and neither draws the sword the brief names; agent-judged here | which look the owner prefers (rubric R6); probably superseded |
@@ -76,17 +81,14 @@ Records with SHA-256 and crop coordinates:
 
 | Question | Source |
 | --- | --- |
-| Combine routes on an adult original pair: depth, ankle cut, Copy Pose, skeleton, replace; three seeds each | q-28, #422, #446, #427 |
 | Replace route with a costume-leak test (image 2 in different clothes) | CURRENT_STATE |
 | Copy Pose as the fantasy pack's full-body route | CURRENT_STATE |
 | A third board picture with "take only … from image 3" wording | CURRENT_STATE |
 | Qwen-Image-Edit 2511 re-posing on hard poses against its cost | #812 |
-| LoRA smoke: untested full triggers, stacking, three seeds for the candidates | lora-smoke README, #857 |
+| LoRA smoke: untested full triggers and stacking (the three-seed retest is done: every candidate ties its control, see [q-32](pre-reviews/q-32.md)) | lora-smoke README, #857 |
 | Pony adult cues | lora-smoke README |
 | Style + Pose: other seeds, pose strength 0.7 / 0.9 / 1.0, the pack's own portrait as the board, the unrun Animagine and CSTati boards | q-25, CURRENT_STATE |
 | Restyle: other boards, a denoise sweep, a Nova twin, Klein 9B, AniEdit, Z-Image Turbo | #351, #343, #357 |
-| Klein restyle with "bare feet" wording and the source's true colours named | [q-27](pre-reviews/q-27.md) |
-| Masked hand inpaint on the NoobAI six-finger hand and the pack's depth-Combine lantern hand | this page |
 | The repair-yield programme: scoped repair against a whole-image edit | #72, #257, #66 |
 | Qwen Atelier reference fidelity on the corrected graphs | #21 |
 | IP-Adapter plus / plus-face carrying an original design on WAI | CURRENT_STATE |

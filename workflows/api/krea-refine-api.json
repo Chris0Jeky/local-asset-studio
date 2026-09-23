@@ -69,7 +69,7 @@
       "cfg": 1.0,
       "sampler_name": "euler",
       "scheduler": "simple",
-      "denoise": 0.35
+      "denoise": 0.25
     }
   },
   "8": {

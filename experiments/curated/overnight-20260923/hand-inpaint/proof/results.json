@@ -1,0 +1,114 @@
+[
+ {
+  "label": "anime-masked-repair-proof",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anime-masked-repair",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092361,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 06:11:18.159237",
+  "comfy_pid": 46488,
+  "commit_pct_before": 44.0,
+  "free_ram_gb_before": 15.0,
+  "route": "studio",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "latent2rgb",
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "config": "studio-proof-defaults",
+  "seed": 2026092361,
+  "preset_id": "anime-masked-repair",
+  "backend_id": "primary",
+  "job_id": "1f9b3e11-ab8f-4e9f-96ec-24eb4f4cd52a",
+  "prompt_ids": [
+   "c83c97f5-3fca-49dc-9e67-811bde582c43"
+  ],
+  "wall_seconds": 30.4,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 12699,
+  "peak_shared_mb": 2383,
+  "spilled": true,
+  "gpu_samples": 20,
+  "peak_commit_pct": 60.8,
+  "comfy_executed_seconds": 26.83,
+  "log_lines": [
+   "06:11:32 [INFO] Requested to load SDXLClipModel",
+   "06:11:32 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "06:11:32 [INFO] Requested to load SDXL",
+   "06:11:32 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "06:11:32 [INFO] Requested to load AutoencoderKL",
+   "06:11:33 [INFO] Unloaded partially: 1030.04 MB freed, 530.76 MB remains loaded, 62.55 MB buffer reserved, lowvram patches: 0",
+   "06:11:33 [INFO] loaded completely; 4070.53 MB usable, 159.56 MB loaded, full load: True",
+   "06:11:33 [INFO] loaded completely; 9113.67 MB usable, 1560.80 MB loaded, full load: True",
+   "06:11:42 [INFO] Unloaded partially: 1908.35 MB freed, 2988.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "06:11:45 [INFO] Prompt executed in 26.83 seconds"
+  ],
+  "timeline_file": "timelines/anime-masked-repair-proof.json",
+  "outputs": [
+   {
+    "filename": "Anime-Masked-Repair_00007_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092361,
+    "prompt_id": "c83c97f5-3fca-49dc-9e67-811bde582c43",
+    "media_type": "image",
+    "asset_id": "9ad0476d5abf5237aa7188749d232222"
+   }
+  ],
+  "elapsed_seconds": 27.10951328277588,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 2.3 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092361,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "c83c97f5-3fca-49dc-9e67-811bde582c43",
+    "seed": 2026092361,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 2498453504,
+     "peak_dedicated_bytes": 13106212864,
+     "samples": 4,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/anime-masked-repair-proof.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00007_.png",
+    "sha256": "a453697692e6e887dae7af1535d33c3794b358e6b4e4dc4dcc7680c881485325"
+   }
+  ],
+  "finished_at": "2026-09-23 06:11:48.553324"
+ }
+]

@@ -269,9 +269,10 @@ press **Generate** explicitly. Opening either action does not start a render or 
   [binding reconciliation](reconciliation/2026-09-14-detail-denoise.md) for the measured recipe and limits.
   *Correction, 23 September 2026 (agent review, full-resolution crop; [docs/quality/QUALITY-BACKLOG.md](quality/QUALITY-BACKLOG.md)):* after job `14caa4fb` the raised hand still has six digits (two tall fingers, a thumb across the palm, three fingers on the right), the same structure as the original. The pass redrew the hand (mean pixel change about 9 levels in its box) without fixing the count, so this is not a proven hand repair. A masked hand inpaint is the next thing to try.
 - **`krea-refine`** — a global img2img polish for Krea 2 pictures: Qwen-VAE encode, re-sample at denoise
-  0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
+  0.25 (0.35 until 23 September 2026) for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
   faces (the foxes) while keeping the composition; "Redraw" at 0.5 changes more.
   *Correction, 23 September 2026 (agent review; [docs/quality/QUALITY-BACKLOG.md](quality/QUALITY-BACKLOG.md)):* the fox faces did get eyes and snouts, but the run also turned three or four small foxes into two large ones and scattered white snow specks over the frame. Its prompt was the preset's example ("two red foxes ... on a snowy hill under a starry night sky"), not the shrine's. Give the source picture's own prompt when refining.
+  *Follow-up, 23 September 2026 ([evidence](../experiments/curated/overnight-20260923/krea-refine-foxes/)):* with the shrine's own prompt, denoise 0.25 kept all four foxes with clearer faces on 3 of 3 seeds (2 keep, 1 fixable), and 0.35 lost foxes or doubled one on 3 of 3, so 0.25 is now the default. Each job took 5.6-7 minutes on the fp8 build.
 - **`anime-masked-repair`** — a manual local option when a detector crop is the wrong shape. Select it from
   **Anime quality**, then upload a real **RGBA PNG** with both dimensions divisible by 8: retain the image in RGB, leave every protected area
   opaque, and make only the broken hand or other repair area transparent. Prepare refuses JPG, WebP, RGB-only and fully opaque uploads before queueing; it does not pad or crop an unaligned source. The existing core `LoadImage` alpha
@@ -282,8 +283,8 @@ press **Generate** explicitly. Opening either action does not start a render or 
   six-digit NoobAI hand (`experiments/curated/overnight-20260923/hand-inpaint/`, straight against ComfyUI with this
   preset's own submitted graphs): the old 0.4 default left the extra digit on 3 of 3 seeds, 0.6 gave five digits on
   3 of 3 with the gesture and painterly shading kept, and the old hard mask edge left a visible seam where it cut
-  the background light streak, which the feathered mask removed. The preset stays unverified until one Studio
-  proof of the feathered graph is inspected and recorded.
+  the background light streak, which the feathered mask removed. Proved through the Studio on 23 September 2026
+  (job `1f9b3e11`, 27 s): five digits and no seam on the same hand at the new defaults.
 - **`sdxl-inpaint-fix`** (**WAI • Fooocus inpaint repair**) — the same manual RGBA upload as
   `anime-masked-repair`, but the repaint runs through the **Fooocus inpaint patch** that is already installed,
   so the model is conditioned on the surrounding picture instead of re-imagining the hole from noise. That is

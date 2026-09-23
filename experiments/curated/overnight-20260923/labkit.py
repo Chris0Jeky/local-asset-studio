@@ -457,10 +457,35 @@ def seal(items, folder, rng_seed=None):
     return sorted(key)
 
 
-def judge(folder, image, scores, verdict, worst_defect, fix=None, notes='', prompt_id=None, job_id=None, blind=True):
-    """Append one judgement (protocol shape) to `<folder>/judgements.jsonl`."""
-    p = Path(image)
-    rec = {'image': str(p), 'sha256': file_sha(p), 'prompt_id': prompt_id, 'job_id': job_id, 'judge': 'lab', 'judged_at': now(),
-           'blind': blind, 'scores': scores, 'verdict': verdict, 'worst_defect': worst_defect, 'fix': fix, 'notes': notes}
+def run_index(folder):
+    """sha256 -> {job_id, prompt_id, original_image} for every output recorded in `<folder>/results.json` (Studio jobs keep their
+    files in `output_files`, direct prompts in `outputs`). Blind copies are byte copies, so they share their original's hash."""
+    path = Path(folder) / 'results.json'
+    if not path.exists(): return {}
+    index = {}
+    for r in json.loads(path.read_text(encoding='utf-8')):
+        prompt = r.get('prompt_id') or ((r.get('prompt_ids') or [None])[0])
+        for o in (r.get('output_files') or []) + [o for o in (r.get('outputs') or []) if isinstance(o, dict) and o.get('sha256')]:
+            if o.get('sha256'): index[o['sha256']] = {'job_id': r.get('job_id'), 'prompt_id': prompt, 'original_image': o.get('file')}
+    return index
+
+
+def judge(folder, image, scores, verdict, worst_defect, fix=None, notes='', prompt_id=None, job_id=None, blind=True, no_run=False):
+    """Append one judgement (protocol shape) to `<folder>/judgements.jsonl`.
+
+    The job and prompt IDs and the original image path are looked up from the folder's results.json by the image's sha256
+    unless given; a record that matches no recorded run is refused, except for a picture that is not a run of this experiment
+    (a source picture sealed into a blind group, a census input), which must say so with `no_run=True`.
+    """
+    p = Path(image); sha = file_sha(p)
+    found = run_index(folder).get(sha)
+    if found:
+        job_id = job_id or found['job_id']; prompt_id = prompt_id or found['prompt_id']; original = found['original_image']
+    elif no_run: original = str(p)
+    else: raise SystemExit('%s matches no run in %s/results.json; pass --no-run for a source picture' % (p.name, Path(folder).name))
+    if not no_run and not (job_id or prompt_id): raise SystemExit('%s: the matching run has no job or prompt ID' % p.name)
+    rec = {'image': str(p), 'original_image': original, 'sha256': sha, 'prompt_id': prompt_id, 'job_id': job_id, 'judge': 'lab',
+           'judged_at': now(), 'blind': blind, 'scores': scores, 'verdict': verdict, 'worst_defect': worst_defect, 'fix': fix,
+           'notes': notes, 'no_run': no_run}
     with open(Path(folder) / 'judgements.jsonl', 'a', encoding='utf-8', newline='\n') as f: f.write(json.dumps(rec) + '\n')
     return rec

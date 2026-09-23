@@ -1,0 +1,38 @@
+{
+ "s1-C.png": {
+  "config": "denoise-0.25",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00002_.png"
+ },
+ "s1-A.png": {
+  "config": "denoise-0.35",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00005_.png"
+ },
+ "s1-B.png": {
+  "config": "source",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-style-lab_00001_.png"
+ },
+ "s2-B.png": {
+  "config": "denoise-0.25",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00003_.png"
+ },
+ "s2-C.png": {
+  "config": "denoise-0.35",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00006_.png"
+ },
+ "s2-A.png": {
+  "config": "source",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-style-lab_00001_.png"
+ },
+ "s3-C.png": {
+  "config": "denoise-0.25",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00004_.png"
+ },
+ "s3-B.png": {
+  "config": "denoise-0.35",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00007_.png"
+ },
+ "s3-A.png": {
+  "config": "source",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-style-lab_00001_.png"
+ }
+}

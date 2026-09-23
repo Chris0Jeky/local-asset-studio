@@ -1,5 +1,9 @@
 # Current state — 23 September 2026
 
+## `krea-refine` default 0.35 → 0.25 after the fox-shrine refine — 23 September 2026 (05:31-06:09)
+
+Six Studio jobs of `krea-refine` on `Studio/krea-style-lab_00001_.png` with the shrine's own prompt (`experiments/curated/overnight-20260923/krea-refine-foxes/`): at denoise 0.25 (jobs `36e5d833`, `0cba57ec`, `0887896e`) all four foxes were kept with clearer faces on 3 of 3 seeds (agent-judged keep, keep, fixable); at 0.35 (jobs `9602e836`, `36537036`, `f5427eb8`) foxes were lost or doubled on 3 of 3 (reject, reject, fixable). Each job took 338-420 s on the fp8 build. The preset default is now 0.25 and the former `Light touch (denoise 0.25)` variant is now `Stronger (denoise 0.35, the old default)` (#886); the continuation test follows the rename. The preset stays `verified: true` on these Studio executions. Not art acceptance; HUMAN_TODO unchanged.
+
 ## Krea 2 Q5_K_M GGUF with the text encoder on the CPU: measured and proved — 23 September 2026 (03:32-05:26)
 
 Supersedes the "Krea 2 Q5 GGUF download in progress / comparison not run" lines further down (12 September); those stay
@@ -1218,7 +1222,7 @@ Preset shortcuts now restore the destination's complete authored sampling and ad
 applying the selected override, while preserving source, wording, size and seed. In particular,
 Krea Refine's `Full 8-step without the distill LoRA` followed by `Light touch` restores the currently
 authored 4 steps, 0.25 denoise and slot-3 distill strength 0.85 rather than retaining the disabled
-adapter. Recipe examples are exact-preset only during a continuation and cannot overwrite source or
+adapter. *(23 September 2026: that variant is now `Stronger (denoise 0.35, the old default)`, since the authored default itself became 0.25; see the section at the top.)* Recipe examples are exact-preset only during a continuation and cannot overwrite source or
 edited wording.
 
 The full repository suite passes **1,322 tests with 51 skipped**, and repository validation passes
@@ -1722,6 +1726,8 @@ repair generation was submitted. PR #67 now enforces a supplied nonempty RGBA al
 divisible by eight before any job is created; valid PNG bytes remain unchanged. This does
 not imply a successful Krea hand repair: the earlier unsuccessful Gentle digit trial used the NoobAI
 portrait. `HUMAN_TODO.md` retains the owner's optional creative choices and model-use decisions.
+
+*Correction, 23 September 2026 (06:11):* this is no longer current. #881 made the graph feather its mask (GrowMask 12 + ImageBlur 24/8) and raised the default denoise to 0.6, and the Studio proof on the six-digit NoobAI hand (job `1f9b3e11`, prompt `c83c97f5`, 06:11:18, 27.1 s) gave five digits with no seam, agent-judged keep. The preset is `verified: true` via #885 (`experiments/curated/overnight-20260923/hand-inpaint/proof/`). Not art acceptance.
 
 ## Offline CPU voice baseline - 12 September 2026
 

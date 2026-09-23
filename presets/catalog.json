@@ -1867,7 +1867,7 @@
       "collection": "workflow-lab",
       "graph": "workflows/api/anime-masked-repair-api.json",
       "visual": "workflows/comfyui/24 - Anime Masked Repair.json",
-      "verified": false,
+      "verified": true,
       "requires_rgba_mask": true,
       "commercial_note": "Repaints a manually selected region with WAI v17 (Illustrious); WAI hashes do not authenticate its creator and its commercial terms are unresolved. The source image keeps its own terms.",
       "positive": [
@@ -1935,7 +1935,7 @@
         "Composite over source",
         "PNG"
       ],
-      "execution_note": "Not yet proved through the Studio with this graph. Executed 23 September 2026 in research: the previous hard-mask graph through the Studio (POST /api/jobs) at 0.4 (jobs 6f5231ad, fe1986ed, 6770d510) and 0.6 (jobs c1ce3e4b, d247aec0, c7e37394), and this feathered graph straight against ComfyUI at 0.6 (prompts 212b3467, 84ae73ff, d467432f), on a six-digit hand (Studio/noob_00004_.png) with a hand mask: the feathered 0.6 runs gave five digits on 3 of 3 seeds with no seam, agent-inspected at full resolution (experiments/curated/overnight-20260923/hand-inpaint/). Not a Studio proof of this graph, and not art acceptance."
+      "execution_note": "Executed 2026-09-23 06:11:18 through the Studio (POST /api/jobs at the defaults merged in #881: feathered mask, denoise 0.6; experiments/curated/overnight-20260923/hand-inpaint/prove_masked_repair.py) on the staged RGBA hand mask of Studio/noob_00004_.png (a six-digit raised hand), seed 2026092361: job 1f9b3e11-ab8f-4e9f-96ec-24eb4f4cd52a, prompt c83c97f5-3fca-49dc-9e67-811bde582c43, 27.1 s, backend primary, output Studio/Anime-Masked-Repair_00007_.png: five digits, the gesture and painterly shading kept, no seam at the mask edge (agent-judged keep). Earlier research: the previous hard-mask graph at 0.4 fixed 0 of 3 seeds, at 0.6 3 of 3 with a seam; the feathered graph 3 of 3 with no seam. One picture and one hand; not art acceptance."
     },
     {
       "id": "anime-esrgan",
@@ -5362,7 +5362,7 @@
       },
       "backend_id": "primary",
       "source": "https://huggingface.co/Comfy-Org/Krea-2",
-      "description": "A global polish pass for a finished Krea 2 image: the picture is encoded with the Qwen VAE and re-sampled at denoise 0.35 with the 4-step distill LoRA in slot 3, keeping TextFusion and Niji Sweet Spot in slots 1-2 so the style stays put. It tightens small details and faces that came out mushy (the style-lab foxes) without changing the composition. Raise denoise towards 0.5 to redraw more; the source's own prompt belongs in the positive text.",
+      "description": "A global polish pass for a finished Krea 2 image: the picture is encoded with the Qwen VAE and re-sampled at denoise 0.25 with the 4-step distill LoRA in slot 3, keeping TextFusion and Niji Sweet Spot in slots 1-2 so the style stays put. It tightens small details and faces that came out mushy (the style-lab foxes) without changing the composition. Measured 23 September 2026 on the fox shrine with its own prompt (experiments/curated/overnight-20260923/krea-refine-foxes/): 0.25 kept all four foxes with clearer faces on 3 of 3 seeds (2 keep, 1 fixable), while 0.35 lost foxes or doubled one on 3 of 3 (2 reject, 1 fixable), so 0.25 is the default. Raise denoise towards 0.5 to redraw more; the source's own prompt belongs in the positive text.",
       "stages": [
         "Reference image",
         "Qwen VAE encode",
@@ -5373,9 +5373,9 @@
       ],
       "variants": [
         {
-          "name": "Light touch (denoise 0.25)",
+          "name": "Stronger (denoise 0.35, the old default)",
           "controls": {
-            "denoise": 0.25
+            "denoise": 0.35
           }
         },
         {
@@ -5394,7 +5394,7 @@
           }
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval."
+      "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval. Default changed to denoise 0.25 on 23 September 2026 after six Studio jobs on Studio/krea-style-lab_00001_.png with the shrine's own prompt (denoise 0.25: jobs 36e5d833, 0cba57ec, 0887896e; 0.35: jobs 9602e836, 36537036, f5427eb8; 338-420 s each on the fp8 build), judged with the source in shuffled groups. Not art acceptance."
     },
     {
       "id": "sdxl-inpaint-fix",
