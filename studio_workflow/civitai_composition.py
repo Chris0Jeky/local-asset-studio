@@ -31,7 +31,9 @@ AIR = re.compile(
     r'civitai:([1-9][0-9]{0,19})@([1-9][0-9]{0,19})\Z', re.IGNORECASE)
 SENSITIVE_QUERY = {'apikey', 'token', 'accesstoken', 'authorization', 'key',
                    'secret', 'password', 'clientsecret', 'accesskey',
-                   'refreshtoken', 'privatekey'}
+                   'refreshtoken', 'privatekey', 'auth', 'bearer', 'jwt',
+                   'session', 'sessionid', 'cookie', 'setcookie', 'sig',
+                   'signature', 'credential', 'credentials', 'passwd', 'pwd'}
 PAGINATION_QUERY = {'cursor', 'page', 'limit'}
 REACTIONS = ('cryCount', 'dislikeCount', 'heartCount', 'laughCount', 'likeCount')
 
@@ -84,7 +86,7 @@ def normalize_query(value: Any) -> dict[str, Any]:
         need(token(key, 128), 'Invalid source query key')
         compact = re.sub(r'[^a-z0-9]', '', key.casefold())
         need(compact not in SENSITIVE_QUERY and not compact.startswith('authorization')
-             and not compact.endswith(('token', 'secret', 'password')),
+             and not compact.endswith(('apikey', 'token', 'secret', 'password', 'credential', 'signature')),
              'Source receipt cannot retain a sensitive query parameter')
         if isinstance(raw, list):
             need(len(raw) <= 64, 'Source query list is oversized')
@@ -154,8 +156,8 @@ def file_facts(raw: Any, version_id: int, seen_ids: set[int]) -> dict[str, Any]:
     file_id = positive(raw.get('id'), 'Civitai file ID')
     need(file_id not in seen_ids, 'Civitai response contains duplicate file ID'); seen_ids.add(file_id)
     name = safe_file_name(raw.get('name')); size = raw.get('sizeKB')
-    need(type(size) in (int, float) and not isinstance(size, bool) and math.isfinite(float(size))
-         and 0 < float(size) <= MAX_BYTES / 1024, 'Civitai file sizeKB must be positive, finite, and bounded')
+    need(type(size) in (int, float) and not isinstance(size, bool) and 0 < size <= MAX_BYTES / 1024
+         and math.isfinite(float(size)), 'Civitai file sizeKB must be positive, finite, and bounded')
     byte_count = int(round(float(size) * 1024)); need(0 < byte_count <= MAX_BYTES, 'Invalid Civitai file byte count')
     hashes = provider_hashes(raw.get('hashes'), name); metadata = raw.get('metadata')
     need(metadata is None or isinstance(metadata, dict), 'Civitai file metadata must be an object'); metadata = metadata or {}
@@ -199,7 +201,7 @@ def normalize_model(value: Any, diagnostics: list[dict[str, Any]]) -> tuple[dict
         air_match = AIR.fullmatch(air) if isinstance(air, str) else None
         if (air_match is not None and int(air_match.group(1)) == model_id
                 and int(air_match.group(2)) == version_id):
-            identity = air
+            identity = air.casefold()
         else:
             diagnostics.append({'code': 'invalid_air',
                 'message': 'Provider AIR was invalid or targeted another model/version; exact version identity was retained instead.'})
@@ -254,7 +256,7 @@ def gallery_resources(meta: dict[str, Any], diagnostics: list[dict[str, Any]], i
             kind = optional_text(item.get('type'), 'gallery resource type', 100) or 'unknown'; weight = item.get('weight')
             if weight is not None:
                 need(type(weight) in (int, float) and not isinstance(weight, bool)
-                     and math.isfinite(float(weight)) and abs(float(weight)) <= 100,
+                     and -100 <= weight <= 100 and math.isfinite(float(weight)),
                      'gallery resource weight must be finite and bounded')
                 weight = float(weight)
             result.append({'version_id': version_id, 'type': kind.casefold(), 'weight': weight})
@@ -269,7 +271,7 @@ def number(value: Any, label: str, diagnostics: list[dict[str, Any]], image_id: 
            *, integer: bool = False, minimum: float = 0, maximum: float = 10000) -> int | float | None:
     if value is None: return None
     valid = type(value) is int if integer else type(value) in (int, float) and not isinstance(value, bool)
-    if not valid or not math.isfinite(float(value)) or not minimum <= float(value) <= maximum:
+    if not valid or not minimum <= value <= maximum or not math.isfinite(float(value)):
         diagnostics.append({'code': 'invalid_gallery_setting', 'message': 'Invalid ' + label,
                             'image_id': image_id, 'setting': label}); return None
     return int(value) if integer else value
