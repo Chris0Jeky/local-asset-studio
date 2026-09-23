@@ -1,0 +1,1312 @@
+[
+ {
+  "label": "authored-noob4",
+  "status": "success",
+  "graph_sha256": "c2e1348e2ed2fd7f222754c1ed689ca994124e57b96daecaea5f495784ae2934",
+  "graph_file": "graphs/authored-noob4.json",
+  "submitted_at": "2026-09-23 06:21:35.397826",
+  "comfy_pid": 46488,
+  "commit_pct_before": 58.2,
+  "free_ram_gb_before": 6.9,
+  "config": "authored",
+  "source": "noob4",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00004_.png",
+  "seed": 2026092395,
+  "prompt_id": "943d882d-7827-4c36-9639-5ede5755dd52",
+  "wall_seconds": 10.4,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": 0.14
+   }
+  ],
+  "peak_dedicated_mb": 10498,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 7,
+  "peak_commit_pct": 56.1,
+  "comfy_executed_seconds": 9.97,
+  "log_lines": [
+   "06:21:35 [INFO] Requested to load SDXLClipModel",
+   "06:21:36 [INFO] loaded completely; 14061.46 MB usable, 1560.80 MB loaded, full load: True",
+   "06:21:37 [INFO] Requested to load SDXL",
+   "06:21:38 [INFO] loaded completely; 12466.61 MB usable, 4897.05 MB loaded, full load: True",
+   "06:21:45 [INFO] Prompt executed in 9.97 seconds"
+  ],
+  "timeline_file": "timelines/authored-noob4.json",
+  "history_execution_seconds": 9.97,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\authored-noob4_00001_.png",
+    "sha256": "74e3a4b71af744e43a9efd2d2c948517fbaf2a34450b9a403992d9443a4253bd"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-authored-noob4_00001_.png",
+    "sha256": "e459aed5d6f9592c6c54aace3da4ec9df127939f3e3ba0df939e9931275cca77"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "UltralyticsDetectorProvider",
+     "seconds": 0.27
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.62
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.08
+    },
+    {
+     "node": "4",
+     "class_type": "LoadImage",
+     "seconds": 0.04
+    },
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 8.86
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.03
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.08,
+     "s_per_step_steady": 0.144,
+     "step_seconds": [
+      0.08,
+      0.14,
+      0.15,
+      0.13,
+      0.15,
+      0.14,
+      0.15,
+      0.16,
+      0.12,
+      0.14,
+      0.14,
+      0.14,
+      0.15,
+      0.14,
+      0.15,
+      0.15,
+      0.14,
+      0.14,
+      0.14,
+      0.16,
+      0.13,
+      0.15,
+      0.15
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1"
+   ],
+   "ws_execution_seconds": 9.97
+  },
+  "finished_at": "2026-09-23 06:21:46.293857"
+ },
+ {
+  "label": "d06-noob4",
+  "status": "success",
+  "graph_sha256": "35cfd15a491d83cdcd1a0183816cfa67761241d11264ccfe426440ed581c79ce",
+  "graph_file": "graphs/d06-noob4.json",
+  "submitted_at": "2026-09-23 06:21:46.347470",
+  "comfy_pid": 46488,
+  "commit_pct_before": 51.6,
+  "free_ram_gb_before": 15.2,
+  "config": "d06",
+  "source": "noob4",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00004_.png",
+  "seed": 2026092395,
+  "prompt_id": "49a7416e-e7a5-4e9a-9ce5-435001850c90",
+  "wall_seconds": 8.2,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": null
+   }
+  ],
+  "peak_dedicated_mb": 9891,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 6,
+  "peak_commit_pct": 54.8,
+  "comfy_executed_seconds": 6.09,
+  "log_lines": [
+   "06:21:46 [INFO] Requested to load SDXL",
+   "06:21:52 [INFO] Prompt executed in 6.09 seconds"
+  ],
+  "timeline_file": "timelines/d06-noob4.json",
+  "history_execution_seconds": 6.09,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-noob4_00001_.png",
+    "sha256": "4a49c48281d947eef10325dc0bcff5c710c66cd1efb9804e59223c83b80ab901"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-d06-noob4_00001_.png",
+    "sha256": "8fbe01eff0ea204d7d340890c9df1f7b419fc371c66df70da2916cadafe6e5ca"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 5.99
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.02
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.09,
+     "s_per_step_steady": 0.143,
+     "step_seconds": [
+      0.09,
+      0.14,
+      0.14,
+      0.15,
+      0.16,
+      0.13,
+      0.14,
+      0.14,
+      0.15,
+      0.13,
+      0.14,
+      0.15,
+      0.14,
+      0.14,
+      0.15,
+      0.14,
+      0.14,
+      0.14,
+      0.14,
+      0.14,
+      0.14,
+      0.14,
+      0.14
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8"
+   ],
+   "ws_execution_seconds": 6.09
+  },
+  "finished_at": "2026-09-23 06:21:55.119910"
+ },
+ {
+  "label": "d06-g768-noob4",
+  "status": "success",
+  "graph_sha256": "37813f4efe4868df65008535615b177fa54d92dd71d025289f7a8261c1455b8e",
+  "graph_file": "graphs/d06-g768-noob4.json",
+  "submitted_at": "2026-09-23 06:21:55.138056",
+  "comfy_pid": 46488,
+  "commit_pct_before": 54.7,
+  "free_ram_gb_before": 12.4,
+  "config": "d06-g768",
+  "source": "noob4",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00004_.png",
+  "seed": 2026092395,
+  "prompt_id": "efa05c1f-f295-4a12-b7cd-d80aac4ad19a",
+  "wall_seconds": 8.2,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": null
+   }
+  ],
+  "peak_dedicated_mb": 9891,
+  "peak_shared_mb": 2815,
+  "spilled": true,
+  "gpu_samples": 6,
+  "peak_commit_pct": 54.7,
+  "comfy_executed_seconds": 6.14,
+  "log_lines": [
+   "06:21:55 [INFO] Requested to load SDXL",
+   "06:22:01 [INFO] Prompt executed in 6.14 seconds"
+  ],
+  "timeline_file": "timelines/d06-g768-noob4.json",
+  "history_execution_seconds": 6.14,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-g768-noob4_00001_.png",
+    "sha256": "47a9063c31c3cc7968b2397a0d96bbea6e9326f67dc989e49fce75838eb05e6a"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-d06-g768-noob4_00001_.png",
+    "sha256": "df97a222e8617ab5c98133d4b3b0afc8eb64bc195dc14c8eb6d4aff05db69387"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 6.05
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.02
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.07,
+     "s_per_step_steady": 0.143,
+     "step_seconds": [
+      0.07,
+      0.14,
+      0.15,
+      0.14,
+      0.14,
+      0.14,
+      0.14,
+      0.14,
+      0.14,
+      0.15,
+      0.14,
+      0.14,
+      0.15,
+      0.14,
+      0.15,
+      0.15,
+      0.15,
+      0.13,
+      0.15,
+      0.14,
+      0.14,
+      0.14,
+      0.14
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8"
+   ],
+   "ws_execution_seconds": 6.14
+  },
+  "finished_at": "2026-09-23 06:22:03.911162"
+ },
+ {
+  "label": "authored-noob5",
+  "status": "success",
+  "graph_sha256": "ad63eb1a497a5db37996110f26de62b41e6ef48131c12d879dcaa1406dd887ce",
+  "graph_file": "graphs/authored-noob5.json",
+  "submitted_at": "2026-09-23 06:22:03.929157",
+  "comfy_pid": 46488,
+  "commit_pct_before": 51.5,
+  "free_ram_gb_before": 15.2,
+  "config": "authored",
+  "source": "noob5",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00005_.png",
+  "seed": 2026092395,
+  "prompt_id": "8b9b45e0-1139-4669-a80f-8e6c1045498d",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.22
+   }
+  ],
+  "peak_dedicated_mb": 13361,
+  "peak_shared_mb": 2149,
+  "spilled": true,
+  "gpu_samples": 10,
+  "peak_commit_pct": 60.4,
+  "comfy_executed_seconds": 12.5,
+  "log_lines": [
+   "06:22:04 [INFO] Unloaded partially: 327.97 MB freed, 1232.83 MB remains loaded, 15.64 MB buffer reserved, lowvram patches: 0",
+   "06:22:08 [INFO] Requested to load SDXL",
+   "06:22:14 [INFO] Unloaded partially: 956.54 MB freed, 3940.55 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "06:22:16 [INFO] Prompt executed in 12.50 seconds"
+  ],
+  "timeline_file": "timelines/authored-noob5.json",
+  "history_execution_seconds": 12.48,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\authored-noob5_00001_.png",
+    "sha256": "5a6104cc2eca1fdfc267d21d97ca303ea950713731f7681bcc5c287a63f2a90a"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-authored-noob5_00001_.png",
+    "sha256": "9f468d8cf4fc69e4f7d31bcf7340e244d934f18d272dac9c33af9be659787867"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "LoadImage",
+     "seconds": 0.04
+    },
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 12.36
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.04
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.22
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.07,
+     "s_per_step_steady": 0.219,
+     "step_seconds": [
+      0.07,
+      0.23,
+      0.21,
+      0.23,
+      0.21,
+      0.22,
+      0.22,
+      0.21,
+      0.22,
+      0.22,
+      0.21,
+      0.22,
+      0.22,
+      0.22,
+      0.23,
+      0.21,
+      0.22,
+      0.22,
+      0.22,
+      0.23,
+      0.21,
+      0.22,
+      0.22
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "8"
+   ],
+   "ws_execution_seconds": 12.67
+  },
+  "finished_at": "2026-09-23 06:22:18.772948"
+ },
+ {
+  "label": "d06-noob5",
+  "status": "success",
+  "graph_sha256": "ea1afde980b1b36ccf800b9fee13b97d30d75942decd2200efdbfae0a2ecc95b",
+  "graph_file": "graphs/d06-noob5.json",
+  "submitted_at": "2026-09-23 06:22:18.805043",
+  "comfy_pid": 46488,
+  "commit_pct_before": 52.5,
+  "free_ram_gb_before": 12.6,
+  "config": "d06",
+  "source": "noob5",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00005_.png",
+  "seed": 2026092395,
+  "prompt_id": "1b9a43a9-7bfe-428d-b07e-4d6d6bf64fdd",
+  "wall_seconds": 8.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.21
+   }
+  ],
+  "peak_dedicated_mb": 13380,
+  "peak_shared_mb": 1615,
+  "spilled": true,
+  "gpu_samples": 6,
+  "peak_commit_pct": 60.4,
+  "comfy_executed_seconds": 7.35,
+  "log_lines": [
+   "06:22:19 [INFO] Requested to load SDXL",
+   "06:22:19 [INFO] loaded completely; 13979.88 MB usable, 4897.05 MB loaded, full load: True",
+   "06:22:25 [INFO] Unloaded partially: 1119.17 MB freed, 3777.92 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "06:22:26 [INFO] Prompt executed in 7.35 seconds"
+  ],
+  "timeline_file": "timelines/d06-noob5.json",
+  "history_execution_seconds": 7.35,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-noob5_00001_.png",
+    "sha256": "ec7922317dee1857bc8393eb69ead89291b7166246d918ec57a884761720c20f"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-d06-noob5_00001_.png",
+    "sha256": "59dbe13f2c1606457f8bbb8b0f30536c6f36d32478936e34d635a6b46a342ad4"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 7.28
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.04
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.02
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.07,
+     "s_per_step_steady": 0.213,
+     "step_seconds": [
+      0.07,
+      0.22,
+      0.21,
+      0.21,
+      0.23,
+      0.21,
+      0.26,
+      0.17,
+      0.23,
+      0.19,
+      0.22,
+      0.22,
+      0.22,
+      0.21,
+      0.22,
+      0.21,
+      0.21,
+      0.21,
+      0.2,
+      0.21,
+      0.22,
+      0.19,
+      0.21
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8"
+   ],
+   "ws_execution_seconds": 7.35
+  },
+  "finished_at": "2026-09-23 06:22:27.588874"
+ },
+ {
+  "label": "d06-g768-noob5",
+  "status": "success",
+  "graph_sha256": "56c4d5f590e1d8002adb4d4a3ac8bc48bf3ae834159006697dfa78c1887f8585",
+  "graph_file": "graphs/d06-g768-noob5.json",
+  "submitted_at": "2026-09-23 06:22:27.630541",
+  "comfy_pid": 46488,
+  "commit_pct_before": 52.6,
+  "free_ram_gb_before": 12.3,
+  "config": "d06-g768",
+  "source": "noob5",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00005_.png",
+  "seed": 2026092395,
+  "prompt_id": "e72176e5-fe2d-4d5f-a6fb-408f48ec368b",
+  "wall_seconds": 8.2,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.21
+   }
+  ],
+  "peak_dedicated_mb": 13426,
+  "peak_shared_mb": 1487,
+  "spilled": true,
+  "gpu_samples": 6,
+  "peak_commit_pct": 60.1,
+  "comfy_executed_seconds": 7.23,
+  "log_lines": [
+   "06:22:27 [INFO] Requested to load SDXL",
+   "06:22:28 [INFO] loaded completely; 13979.84 MB usable, 4897.05 MB loaded, full load: True",
+   "06:22:33 [INFO] Unloaded partially: 1037.85 MB freed, 3859.23 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "06:22:34 [INFO] Prompt executed in 7.23 seconds"
+  ],
+  "timeline_file": "timelines/d06-g768-noob5.json",
+  "history_execution_seconds": 7.23,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-g768-noob5_00001_.png",
+    "sha256": "e6fffebd499c5d749fbf6f76462a88891786a822f6f4021e89ac8ae1399df79e"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-d06-g768-noob5_00001_.png",
+    "sha256": "ec4f0c6a6f22321ee908d589cba69639c0c74548dcbe0200e1d1bc536a230610"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 7.16
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.04
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.02
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.07,
+     "s_per_step_steady": 0.211,
+     "step_seconds": [
+      0.07,
+      0.22,
+      0.21,
+      0.21,
+      0.21,
+      0.22,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.22,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.21,
+      0.21
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8"
+   ],
+   "ws_execution_seconds": 7.23
+  },
+  "finished_at": "2026-09-23 06:22:36.413483"
+ },
+ {
+  "label": "authored-cstati",
+  "status": "success",
+  "graph_sha256": "c2d8a94c51f586f79b6b5f8e82058b0d79f9edea733ce9bcd2b938fc72380227",
+  "graph_file": "graphs/authored-cstati.json",
+  "submitted_at": "2026-09-23 06:22:36.437470",
+  "comfy_pid": 46488,
+  "commit_pct_before": 60.2,
+  "free_ram_gb_before": 11.0,
+  "config": "authored",
+  "source": "cstati",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\CSTati-v3-Baseline_00003_.png",
+  "seed": 2026092395,
+  "prompt_id": "61d87521-a43c-4881-bff8-f2c8fed4f20e",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 13426,
+  "peak_shared_mb": 1487,
+  "spilled": true,
+  "gpu_samples": 2,
+  "peak_commit_pct": 60.2,
+  "comfy_executed_seconds": 0.19,
+  "log_lines": [
+   "06:22:36 [INFO] Prompt executed in 0.19 seconds"
+  ],
+  "timeline_file": "timelines/authored-cstati.json",
+  "history_execution_seconds": 0.19,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\authored-cstati_00001_.png",
+    "sha256": "eb78ed95a4caa6b1fd7efca8174694e357e89973de3f889682e4c177bd81204c"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-authored-cstati_00001_.png",
+    "sha256": "dd0ca2463e5275ef882d8352dac8ed0a49ba3ec7988172b6bae815aa80bd998f"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "LoadImage",
+     "seconds": 0.05
+    },
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 0.03
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.19
+    }
+   ],
+   "samplers": [],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "8"
+   ],
+   "ws_execution_seconds": 0.36
+  },
+  "finished_at": "2026-09-23 06:22:39.172615"
+ },
+ {
+  "label": "d06-cstati",
+  "status": "success",
+  "graph_sha256": "725ae8193a27ccdc873b8892693a55f74a21866b1aea5353cacb2a61b7e4a55e",
+  "graph_file": "graphs/d06-cstati.json",
+  "submitted_at": "2026-09-23 06:22:39.226447",
+  "comfy_pid": 46488,
+  "commit_pct_before": 52.7,
+  "free_ram_gb_before": 12.3,
+  "config": "d06",
+  "source": "cstati",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\CSTati-v3-Baseline_00003_.png",
+  "seed": 2026092395,
+  "prompt_id": "84a1a8b7-2e9c-461f-a49a-9a887a69e307",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 7255,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 2,
+  "peak_commit_pct": 52.7,
+  "comfy_executed_seconds": 0.15,
+  "log_lines": [
+   "06:22:39 [INFO] Prompt executed in 0.15 seconds"
+  ],
+  "timeline_file": "timelines/d06-cstati.json",
+  "history_execution_seconds": 0.15,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-cstati_00001_.png",
+    "sha256": "16e4fbec1333b6edd43c44e972610f5c0b148a09df0c6a14c68b8181a6671647"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-d06-cstati_00001_.png",
+    "sha256": "866ed7c20936739e0a0cdf40e8ef40c25d6e3a23e70523a4e11e9b8cc7a58e8a"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 0.04
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.02
+    }
+   ],
+   "samplers": [],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8"
+   ],
+   "ws_execution_seconds": 0.15
+  },
+  "finished_at": "2026-09-23 06:22:41.973798"
+ },
+ {
+  "label": "d06-g768-cstati",
+  "status": "success",
+  "graph_sha256": "59b7d549c56bee2f7798a3dc89d0034d8f645e635055e9f41606bd6c4752c1b7",
+  "graph_file": "graphs/d06-g768-cstati.json",
+  "submitted_at": "2026-09-23 06:22:41.990762",
+  "comfy_pid": 46488,
+  "commit_pct_before": 52.5,
+  "free_ram_gb_before": 12.3,
+  "config": "d06-g768",
+  "source": "cstati",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\CSTati-v3-Baseline_00003_.png",
+  "seed": 2026092395,
+  "prompt_id": "0306fe6a-e0da-4f67-a620-f18728eee067",
+  "wall_seconds": 2.2,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 7255,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 2,
+  "peak_commit_pct": 52.7,
+  "comfy_executed_seconds": 0.14,
+  "log_lines": [
+   "06:22:42 [INFO] Prompt executed in 0.14 seconds"
+  ],
+  "timeline_file": "timelines/d06-g768-cstati.json",
+  "history_execution_seconds": 0.14,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-g768-cstati_00001_.png",
+    "sha256": "0c33480101eb2a644ed7f0262eb0a2da7b2ae53dfbcb46039240ceded8de81ac"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-d06-g768-cstati_00001_.png",
+    "sha256": "cf5b4b34f60cf8914b2d1591098e2aef32022d74f4ef8a17ded0e8f72c82c0ef"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 0.04
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.02
+    }
+   ],
+   "samplers": [],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8"
+   ],
+   "ws_execution_seconds": 0.14
+  },
+  "finished_at": "2026-09-23 06:22:44.728863"
+ },
+ {
+  "label": "authored-yume",
+  "status": "success",
+  "graph_sha256": "02cdd1658f9825bfe4a2549b7548b9b2a445fb43dc16784e12160b33058429df",
+  "graph_file": "graphs/authored-yume.json",
+  "submitted_at": "2026-09-23 06:22:44.763199",
+  "comfy_pid": 46488,
+  "commit_pct_before": 52.9,
+  "free_ram_gb_before": 12.0,
+  "config": "authored",
+  "source": "yume",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\YumeFlux-ILv1-Baseline_00002_.png",
+  "seed": 2026092395,
+  "prompt_id": "906730e3-7253-4233-a063-43530e6225c0",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": 0.16
+   },
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": 0.13
+   }
+  ],
+  "peak_dedicated_mb": 10873,
+  "peak_shared_mb": 3139,
+  "spilled": true,
+  "gpu_samples": 10,
+  "peak_commit_pct": 58.7,
+  "comfy_executed_seconds": 12.43,
+  "log_lines": [
+   "06:22:45 [INFO] Requested to load SDXL",
+   "06:22:45 [INFO] loaded completely; 13979.96 MB usable, 4897.05 MB loaded, full load: True",
+   "06:22:57 [INFO] Prompt executed in 12.43 seconds"
+  ],
+  "timeline_file": "timelines/authored-yume.json",
+  "history_execution_seconds": 12.43,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\authored-yume_00001_.png",
+    "sha256": "eabe726d203432dc7467b894a5990b34f9202591b1b98f47e6259a3f457870e1"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-authored-yume_00001_.png",
+    "sha256": "a17ef28bc343d9c1b6e4a595153f104a1b96c73d0c0a4da71e119d626ac96fd1"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "LoadImage",
+     "seconds": 0.06
+    },
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 12.25
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.17
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.08,
+     "s_per_step_steady": 0.159,
+     "step_seconds": [
+      0.08,
+      0.18,
+      0.15,
+      0.16,
+      0.15,
+      0.15,
+      0.17,
+      0.15,
+      0.17,
+      0.15,
+      0.16,
+      0.16,
+      0.17,
+      0.15,
+      0.16,
+      0.16,
+      0.15,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.15,
+      0.16
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "8"
+   ],
+   "ws_execution_seconds": 12.57
+  },
+  "finished_at": "2026-09-23 06:22:59.572545"
+ },
+ {
+  "label": "d06-yume",
+  "status": "success",
+  "graph_sha256": "0725ff6963f0c9176f6dbf4b813baebddbab1940b36e6b95ffcbe7b3cae62d0d",
+  "graph_file": "graphs/d06-yume.json",
+  "submitted_at": "2026-09-23 06:22:59.636935",
+  "comfy_pid": 46488,
+  "commit_pct_before": 53.6,
+  "free_ram_gb_before": 12.8,
+  "config": "d06",
+  "source": "yume",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\YumeFlux-ILv1-Baseline_00002_.png",
+  "seed": 2026092395,
+  "prompt_id": "1ede2cd3-ffdc-4df9-ac5c-59ff871f7d84",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": null
+   }
+  ],
+  "peak_dedicated_mb": 9005,
+  "peak_shared_mb": 3139,
+  "spilled": true,
+  "gpu_samples": 9,
+  "peak_commit_pct": 57.0,
+  "comfy_executed_seconds": 11.49,
+  "log_lines": [
+   "06:22:59 [INFO] Requested to load SDXL",
+   "06:23:11 [INFO] Prompt executed in 11.49 seconds"
+  ],
+  "timeline_file": "timelines/d06-yume.json",
+  "history_execution_seconds": 11.49,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-yume_00001_.png",
+    "sha256": "6e63df9607e5b54ddc04d268fc0683f9b251485cd7b1039daad0c94e475090b0"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-d06-yume_00001_.png",
+    "sha256": "3fdd4335369c26bb23aa3bacbaa81399999677c11b1167a81c4aa5e792c997b8"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 11.39
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.02
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.07,
+     "s_per_step_steady": 0.158,
+     "step_seconds": [
+      0.07,
+      0.16,
+      0.15,
+      0.16,
+      0.16,
+      0.15,
+      0.16,
+      0.16,
+      0.16,
+      0.15,
+      0.16,
+      0.17,
+      0.16,
+      0.14,
+      0.16,
+      0.16,
+      0.16,
+      0.15,
+      0.16,
+      0.17,
+      0.15,
+      0.16,
+      0.15
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8"
+   ],
+   "ws_execution_seconds": 11.49
+  },
+  "finished_at": "2026-09-23 06:23:12.458243"
+ },
+ {
+  "label": "d06-g768-yume",
+  "status": "success",
+  "graph_sha256": "4cf30715bb237e8478979250c13193a91584b1463bcce22634d005599a0cd38a",
+  "graph_file": "graphs/d06-g768-yume.json",
+  "submitted_at": "2026-09-23 06:23:12.474904",
+  "comfy_pid": 46488,
+  "commit_pct_before": 54.0,
+  "free_ram_gb_before": 12.3,
+  "config": "d06-g768",
+  "source": "yume",
+  "source_file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\YumeFlux-ILv1-Baseline_00002_.png",
+  "seed": 2026092395,
+  "prompt_id": "6e4b9415-b65f-4a48-95ec-a9a513f8f64c",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 3,
+    "s_per_step_tqdm": 0.12,
+    "s_per_step_steady": 0.13
+   }
+  ],
+  "peak_dedicated_mb": 9005,
+  "peak_shared_mb": 3139,
+  "spilled": true,
+  "gpu_samples": 10,
+  "peak_commit_pct": 56.5,
+  "comfy_executed_seconds": 12.33,
+  "log_lines": [
+   "06:23:12 [INFO] Requested to load SDXL",
+   "06:23:24 [INFO] Prompt executed in 12.33 seconds"
+  ],
+  "timeline_file": "timelines/d06-g768-yume.json",
+  "history_execution_seconds": 12.33,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-g768-yume_00001_.png",
+    "sha256": "2f1f7a513282f127b17496d647cc615450bf908b4105b174b1d6e0d7015db205"
+   },
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\mask-d06-g768-yume_00001_.png",
+    "sha256": "376adc520e4da0d61fa7b39986d3ea510b39ec42caf8c8fa734557ad84625c9b"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "seconds": 12.21
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    },
+    {
+     "node": "6",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.19
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "FaceDetailer",
+     "steps": 24,
+     "seen": 24,
+     "first_step_s": 0.07,
+     "s_per_step_steady": 0.158,
+     "step_seconds": [
+      0.07,
+      0.16,
+      0.16,
+      0.16,
+      0.15,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.15,
+      0.15,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.15,
+      0.16
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8"
+   ],
+   "ws_execution_seconds": 12.49
+  },
+  "finished_at": "2026-09-23 06:23:27.261761"
+ }
+]
