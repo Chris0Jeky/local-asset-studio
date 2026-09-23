@@ -262,6 +262,30 @@ def expanded_input_contract(contract, live_inputs):
                     fields[key] = ['COMBO', dict(options, options=names)]
                     if group == 'required': required.add(key)
                     visit(selected['inputs'], key+'.', depth+1)
+                elif kind == 'COMFY_AUTOGROW_V3':
+                    # Mirrors Autogrow._expand_schema_for_dynamic (ComfyUI v0.35.0-v0.37.0): the group itself is not
+                    # an input; each template name becomes `<key>.<name>`, the first `min` of them required when
+                    # the template input is. TextEncodeQwenImage21's `images` (min 0) is the first graph to use it.
+                    template = options.get('template')
+                    require(isinstance(template, dict) and isinstance(template.get('input'), dict), 'Invalid autogrow template: '+key)
+                    low = template.get('min')
+                    require(type(low) is int and low >= 0, 'Invalid autogrow minimum: '+key)
+                    if 'names' in template:
+                        names = template['names']
+                        require(isinstance(names, list) and 0 < len(names) <= 100 and all(isinstance(n, str) and n for n in names)
+                                and len(set(names)) == len(names), 'Invalid autogrow names: '+key)
+                    else:
+                        high = template.get('max')
+                        require(isinstance(template.get('prefix'), str) and type(high) is int and 1 <= high <= 100, 'Invalid autogrow prefix: '+key)
+                        names = [template['prefix'] + str(i) for i in range(high)]
+                    groups = [(g, e) for g, e in template['input'].items() if isinstance(e, dict) and e]
+                    require(groups and groups[0][0] in ('required', 'optional'), 'Invalid autogrow template input: '+key)
+                    item = next(iter(groups[0][1].values())); _input_descriptor(item, key)
+                    for index, name in enumerate(names):
+                        member = key + '.' + name
+                        require(member not in fields, 'Duplicate expanded input: '+member)
+                        fields[member] = item
+                        if index < low and groups[0][0] == 'required': required.add(member)
                 else:
                     fields[key] = spec
                     if group == 'required': required.add(key)
