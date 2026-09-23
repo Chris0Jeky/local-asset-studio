@@ -92,6 +92,26 @@ move the host-commit ceiling** (#77). The narrow exit test — `full load: True`
 832×1216 with two references — is still unobserved. Detail in
 [`docs/RUNTIME-PRECONDITIONS.md`](../docs/RUNTIME-PRECONDITIONS.md) §7.
 
+## Studio VRAM guard, 23 September 2026 (no ComfyUI source edited, no package changed)
+
+`comfy-extensions/studio_vram_guard/__init__.py` is a Studio-owned ComfyUI extension. The Studio's primary launch
+(`BackendManager.primary_argv`, and `scripts/primary-comfy-args.py` for `C:/AI/Start-ComfyUI.ps1 -ArgumentsFile`) adds
+`--extra-model-paths-config <this folder>/comfy-extensions/extra-paths.yaml`, which only registers this folder as a
+custom-nodes path. At import it wraps `comfy.model_management.free_memory` so that, while an eviction is being decided,
+`get_free_memory` subtracts the dedicated VRAM other processes hold (Windows GPU Process Memory counters through
+`app/gpu_memory.py`, cached 0.5 s). Load decisions (full or partial) are untouched. Why and what it measured:
+[`docs/RUNTIME-PRECONDITIONS.md`](../docs/RUNTIME-PRECONDITIONS.md) §10.
+
+The guard installs only against the functions it was written for (SHA-256 of each function's source segment, ComfyUI
+commit `40c4fcdf513a4523e39d54a9d391908af8df8171`, file `comfy/model_management.py` SHA-256
+`bb0e9f439370b2a2606b6b74c8c2d27162a293796dd2c408e947769ad7f280c3`):
+`free_memory` `80ea11a1b6a61a9b83155b7f925bc99ef453e2a89e2e9574f6cde400d1a65de7`,
+`get_free_memory` `7621aa973a4551eb04c7fdca2444e4e80bf53034abde6affb3f5386cdc5b86e5`. Any other source leaves it off, with
+the reason in the ComfyUI log, at `GET /studio/vram-guard` and in the Studio's `/api/health` (`vram_guard`, read from
+`.runtime/vram-guard.json`, which the guard writes at start). `tests/test_vram_guard.py` fails when the installed ComfyUI no longer
+matches the pinned hashes. To turn it off, set `"primary_vram_guard": false` in `config/local.json` and restart ComfyUI
+through the Studio; nothing needs reverting in the installation.
+
 ## Measured reserve and one launch path, 23 September 2026 (no ComfyUI source edited, no package changed)
 
 `C:/AI/Start-ComfyUI.ps1` gained an optional `-ArgumentsFile` parameter (the Studio passes

@@ -321,9 +321,11 @@ The primary's Krea 2 fp8 route (13.1 GB of diffusion weights) was recorded at 94
 - Pinned host memory is not counted as a spill: the primary started with about 13 GB pinned read
   9,755 MB dedicated and 79 MB shared through the same counters.
 - Each job records the peak dedicated and shared memory of the ComfyUI process while it runs
-  (`submissions[].gpu_memory`, sampled every 10 s); a job that spilled more than 512 MB completes with
-  the message *Complete, but slowly: GPU memory spilled … into system RAM*. `/api/health` carries the
-  live `gpu_memory` reading.
+  (`submissions[].gpu_memory`; sampled every 0.5 s on its own thread since §10, every 10 s before, which missed most
+  decode overflows), the largest other GPU holders at the worst moment (`top_holders`) and, after a spill, whether the
+  shared memory drained within 3 s (`settled_shared_bytes`, `lingering`). A spill that drained completes with *Complete. GPU
+  memory overflowed … while it ran*; only a lingering one says *Complete, but slowly* and suggests a restart. Both name the
+  largest other holder. `/api/health` carries the live `gpu_memory` reading and `vram_guard` (§10).
 
 **Measured on the primary: the measured reserve is the wrong default there.** Krea 2 fp8 (`krea-portrait`
 graph unchanged, 768x1152, 8 steps, seed 2026091103; `experiments/curated/vram-spill-20260923/krea_bench.json`):
@@ -390,3 +392,45 @@ read true inside that job and false in a Claude Code shell.
 never by launching `app/server.py` or ComfyUI's `main.py` directly from an agent command: a direct launch stays in the job.
 Deaths remain possible for other reasons; when one happens, check whether the launching command's task has ended before
 reading it as a runtime failure.
+
+
+## 10. The decode overflow and the VRAM guard — 23 September 2026, late evening
+
+**What was left after §8's unload fix.** With the desktop holding more VRAM as the evening went on (dwm 2.3 GB, then
+3.3, 5.6, 6.0 and 6.3 GB; all other processes together 8.0-8.5 GB), SDXL jobs still spilled. A probe that sampled the
+ComfyUI process and every other GPU user every 0.25 s and lined the samples up with ComfyUI's log
+(`experiments/curated/vram-spill-20260923/phase_probe.py`, results in `vram-guard-sdxl.json`) showed where: sampling ran at
+8.6 GB dedicated with no spill and 4.3 it/s. At `Requested to load AutoencoderKL` ComfyUI unloaded only part of the
+UNet (`Unloaded partially: 1341 MB freed, 3556 MB remains loaded`), because its free-VRAM figure ignores other processes.
+The VAE decode (bf16, 832x1216) then overflowed **3.7-3.8 GB** into shared memory for about 3 s. The overflow drained
+when the prompt finished, so this was not §8's residue that slows every later job. It did add seconds to every job. The
+Studio's 10 s sampling saw 0.08 GB of it, which is why the receipts looked clean.
+
+**The guard.** `runtime-patches/comfy-extensions/studio_vram_guard` is loaded into the Studio's primary launch through
+`--extra-model-paths-config`. No file of the ComfyUI installation changes (`runtime-patches/README.md`). While
+`comfy.model_management.free_memory` decides what to unload, `get_free_memory` subtracts the dedicated VRAM other
+processes hold, read from the same Windows counters as `app/gpu_memory.py`. Evictions therefore make room that exists.
+Whether a model loads completely or partially is decided exactly as before. That keeps §8's lesson: a truthful *load*
+decision forced Krea 2 into a partial load with per-step LoRA patches (2.7x slower). The guard pins the two functions'
+source hashes, stays off on any other ComfyUI version, and reports its state in the ComfyUI log, at `GET /studio/vram-guard`
+and in `/api/health` (`vram_guard`). `"primary_vram_guard": false` launches without it.
+
+**Measured, same desktop load (other processes 8.0-8.5 GB):**
+
+| run | peak shared | time |
+| --- | --- | --- |
+| SDXL WAI → CSTati, no guard | 3.70 / 3.83 GB | 31.9 / 32.6 s |
+| SDXL WAI → CSTati → WAI, guard | 0.16 / 0.15 / 0.08 GB | 34.4 (after the restart, from disk) / 26.2 / 28.3 s |
+| Krea 2 fp8 `krea-portrait`, 8 steps, no guard (control, prompt `383c3ae9`) | 6,019 MB | 52.9 s/step, 557.7 s |
+| Krea 2 fp8 `krea-portrait`, 8 steps, guard (prompt `a95ade87`) | 2,353 MB | 52.4 s/step, 528.1 s |
+
+Both Krea runs logged `loaded completely … 12532.86 MB loaded, full load: True`: the guard did not bring back the partial
+load. Before its decode, the control ran a partial unload with 128 lowvram patches (`10404.14 MB remains loaded`) and then
+decoded with 2 GB "usable". With the guard, the decode had 11.4 GB and no patches. Krea's 52 s/step against §8's 35 s/step
+is the desktop: 8.5 GB held elsewhere against about 3.3 GB then, with the same 12.5 GB model. It is not the guard. The
+control shows the same rate. The Krea records are in `krea_bench.json`.
+
+**Not measured:** Anima, Klein, Qwen and video graphs under the guard; a desktop that holds even more (the guard cannot
+make a model that does not fit fit, it only stops evictions from being too small). **Residual:** dwm's VRAM grew all
+evening and was not given back while the session ran. Signing out and back in (or a restart) resets it; the Studio now
+names it in the spill message when it is the largest other holder.
