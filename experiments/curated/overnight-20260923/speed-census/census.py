@@ -20,8 +20,9 @@ ORDER = ['wai', 'anime', 'pony', 'noob', 'cstati-v3-baseline', 'yumeflux-ilv1-ba
 
 
 def swap_indexerror(record):
+    # Only the known pre-sampling race (model_management.free_memory IndexError at a loader); anything else is never retried.
     text = str(record.get('failure')) + str(record.get('message'))
-    return record.get('status') == 'failed' and 'list index out of range' in text
+    return record.get('status') == 'failed' and 'list index out of range' in text and 'free_memory' in text
 
 
 def main(ids):

@@ -14,14 +14,16 @@ read sentences (Krea 2, Z-Image, Klein, Qwen). What each prompt exercises:
 | glamour | non-nude fanservice, #403 A4 "fantasy glamour" editorial, canonically adult (Raiden Shogun) |
 | hands | an original adult character with both hands busy and visible: fingers, props |
 
-Adult-only rule (#403): fanservice prompts name canonically adult, adult-designed characters only, carry no youth tags,
-and their negatives include nude, nipples, explicit, sex, underwear, loli, child, young. A youthful-looking result is
-discarded, not repaired. Git-safe images are the original-character, non-fanservice ones (`git_safe`); everything else
-stays under ComfyUI output/Research/overnight-20260923/ with a local index.html.
+Adult-only rule (#403): fanservice prompts name canonically adult, adult-designed characters only and carry no youth tags.
+Where a route samples with CFG above 1 (the SDXL family: WAI, NoobAI, Animagine, Pony), every case, fanservice or not, gets
+`negative_tags()`: the model's own negative plus nsfw, nude, nipples, explicit, sex, underwear, lingerie, loli, child, young,
+teenage and school uniform. Krea 2, Z-Image and Klein run at CFG 1 with a zeroed negative, where a negative prompt has no
+effect, so on those routes safety comes only from the positive wording and the canonically adult character choice.
+A youthful-looking result is discarded, not repaired. Git-safe images are the original-character, non-fanservice ones
+(`git_safe`); everything else stays under ComfyUI output/Research/overnight-20260923/ with a local index.html.
 """
 
 SFW_NEG_TAGS = 'nsfw, nude, nipples, explicit, sex, underwear, lingerie, loli, child, young, teenage, school uniform'
-SFW_NEG_PROSE = 'nudity, nipples, explicit content, underwear, lingerie, child, teenager, school uniform'
 
 SUITE = [
     {'id': 'portrait', 'seed': 2026092301, 'famous': True, 'fanservice': False,
