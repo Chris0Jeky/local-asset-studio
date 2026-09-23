@@ -342,6 +342,48 @@ model fit (Qwen-Image 2.1 above, measured with the benchmark's `--reserve-vram 3
 it automatically yet (the isolated qwen21 backend is #739's pending branch). The per-job spill message still
 reports every run that spills. HiDream (8192) and H3 (8194) keep their fixed `--reserve-vram 2`.
 
+**Checkpoint switches spill even when every model fits (23 September 2026, evening).** SDXL jobs of about 30 s spilled
+0, 3.7 and 6.0 GB (CSTati, WAI, CSTati) and 0, 3.7 and 5.6 GB (WAI, AniFox, YumeFlux) in one ComfyUI process each. Every
+load logged `loaded completely` with 12.6-13.0 GB "usable", and `/system_stats` read 16,136 MB free on the 16,304 MB card
+with the desktop holding ~3.3 GB: ComfyUI's figure ignores other processes, so when the next checkpoint loads it unloads only
+part of the previous one (`Unloaded partially: 1469.43 MB freed, 2093.49 MB remains loaded`) and the residue plus the new
+model overflows into shared memory. Runs that reuse one checkpoint stayed flat. Since then the Studio posts
+`/free {"unload_models": true}` before a graph that drops a model the previous Studio graph loaded on the same process, or
+when that idle process already spills, and waits for `torch_vram_total` to fall (`docs/OPERATIONS.md`). The same
+three-checkpoint sequence in a fresh process then peaked at 0.16, 0.09 and 0.08 GB shared in 30.4, 29.3 and 31.8 s; each
+unload took PyTorch's reservation from 3.9-4.2 GB to 0.08 GB in 1.0-1.6 s
+(`experiments/curated/vram-spill-20260923/checkpoint-switch.json`). A reserve increase would also have forced the unload
+but costs every large model a partial load (Krea above); the unload costs a switch nothing, because the new checkpoint loads
+from disk either way. Not measured: Anima/Klein/Qwen switches and graphs whose own working set spills without a switch.
+
 To opt the primary into the measured reserve anyway, set `"primary_reserve_vram": "auto"` in `config/local.json`
 and restart through `Start Studio.cmd` (the desktop path reads the same setting through `scripts/primary-comfy-args.py`).
 
+
+## 9. Studio and ComfyUI vanishing together with empty logs — 23 September 2026
+
+**Not a crash.** On 23 September the Studio and ComfyUI disappeared together several times, sometimes before any job, with
+a 0-byte Studio error log and a ComfyUI log that stops mid-stream with no shutdown line. Windows recorded no Application
+Error 1000 and no WER report for `python.exe` in those windows, which a native access violation (§5) would have left.
+
+**Cause: the job object of the agent shell that launched them.** Grok Build runs every command inside a Windows job object.
+The three job objects `grok.exe` held after 20:30 read `LimitFlags 0x2000` — `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, with neither
+`BREAKAWAY_OK` nor `SILENT_BREAKAWAY_OK` (read by duplicating its job handles and calling `QueryInformationJobObject`).
+`Start-Process` children stay in their parent's job, so `Start-Studio.ps1` run from a Grok command put the Studio and
+ComfyUI in that command's job (`IsProcessInJob` was true for both, and both parents had already exited). When Grok later closes
+the handle, Windows terminates every member at once. Tonight's two unplanned deaths each followed the launching command by a
+few minutes: task `…-19` ended 20:04:10 and the pair was alive at 20:07:47 and gone by 20:09:14; task `…-91` ended 20:24:51
+and its pair (PIDs 2180 and 31676) was alive at 20:25:01 and gone by 20:31:36, with no stop command from any agent in between.
+Earlier deaths blamed on the spill or on loading Anima fit the same shape and are not separately proven either way.
+
+**Fix.** `scripts/Start-Studio.ps1` checks `IsProcessInJob` on itself. Inside a job it starts itself again through
+WMI `Win32_Process.Create` (hidden window, `-Detached`), which creates the process in the same interactive session but
+outside any job, waits for it, relays its log (`.runtime/start-studio-detached-*.log`), and succeeds only when
+`/api/identity` answers for this workspace. Outside a job nothing changes. Reproduced with a harness job carrying Grok's flags:
+closing the handle killed the `Start-Process` child and left the `Win32_Process.Create` child running, and the in-job check
+read true inside that job and false in a Claude Code shell.
+
+**What an agent should still do.** Start or restart the Studio only through `Start-Studio.ps1` (or `Start Studio.cmd`),
+never by launching `app/server.py` or ComfyUI's `main.py` directly from an agent command: a direct launch stays in the job.
+Deaths remain possible for other reasons; when one happens, check whether the launching command's task has ended before
+reading it as a runtime failure.
