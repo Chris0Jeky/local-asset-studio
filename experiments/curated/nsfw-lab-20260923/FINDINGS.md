@@ -700,3 +700,40 @@ Owner request, 24 September: include Persona 5 characters and more Pokemon chara
 | p7-chihaya-squat | cstati-v3-baseline | 2026092466 | `22887bd1-8c86-4882-a1a7-dcd8d9540b5a` |
 | p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `1bb3450e-0566-46d7-9998-061e6d9dac51` |
 | p7-jessie-squat | anifox-v2-baseline | 2026092468 | `c5dfd218-79a3-49a6-afe6-4300cbb05167` |
+
+### p7 results
+
+All eight completed, 32.3–54.5 s each. No spill line on any receipt. T7/T8 with `parted lips` held 8/8 on the new Persona 5 and Pokemon adults. Front-squat transparency fired hard on white garments (Sae's shirt, Chihaya's robe), so T6 holds on front poses too.
+
+- p7-takemi-bentover, WAI, seed `2026092461`, job `f14c5406`, prompt `bf8d1dc0`, 32.3 s, `WAI-Illustration_00052_.png`. Identity: adult woman, red eyes, white coat, clinic interior; reads adult, but hair came out a short bob, not the prompted long hair. Lever: T8 held, bent over, rear crop, looking back, mouth slightly open. Hands: both on the skirt, normal-looking. Cloth: white coat glossy with sheen, black dress glossy; light coat went glossy rather than sheer here. Keep-or-change: keep; hair-length drift is the note.
+- p7-kawakami-bentover, CSTati, seed `2026092462`, job `4360edfe`, prompt `38c2a596`, 32.4 s, `CSTati-v3-Baseline_00026_.png`. Identity: adult woman, glasses, maid headdress, black-and-white maid uniform, apartment hallway; reads adult. Lever: T8 held, mouth slightly open. Hands: both on the dress, normal-looking. Cloth: black maid dress glossy and wet, white frills opaque. Keep-or-change: keep.
+- p7-diantha-bentover, YumeFlux, seed `2026092463`, job `bdf00dbc`, prompt `aa593892`, 34.4 s, `YumeFlux-ILv1-Baseline_00023_.png`. Identity: adult woman, dark hair in a bun, white headband, white dress, boutique hallway; reads adult. Lever: T8 held, mouth slightly open. Hands: both on the dress, normal-looking. Cloth: white dress strongly translucent over the hips, the hardest transparency of the wave. Keep-or-change: keep.
+- p7-skyla-bentover, AniFox, seed `2026092464`, job `ad37cc19`, prompt `c129d4e9`, 36.5 s, `AniFox-v2-Baseline_00018_.png`. Identity: Skyla reads strongly, red hair with the propeller ornament, blue flight suit, airport; adult. Lever: T8 held with strong foreshortening, mouth slightly open. Hands: both on the suit, normal-looking. Cloth: blue suit glossy and wet with sheen and slight translucency. Keep-or-change: keep.
+- p7-sae-squat, WAI, seed `2026092465`, job `794283fd`, prompt `7191234b`, 36.5 s, `WAI-Illustration_00053_.png`. Identity: adult woman, brown bob, glasses, red eyes, black suit, white shirt, office at night; reads adult. Lever: T7 held with `parted lips` firing. Hands: hidden behind the head. Cloth: white shirt strongly translucent over the chest; suit and stockings glossy. Keep-or-change: keep.
+- p7-chihaya-squat, CSTati, seed `2026092466`, job `22887bd1`, prompt `afb2fb2b`, 42.4 s, `CSTati-v3-Baseline_00027_.png`. Identity: adult woman, dark teal hair, white robe with teal trim, lamp-lit booth; reads adult. Lever: T7 held with `parted lips` firing. Hands: hidden behind the head. Cloth: white robe translucent over the chest and thighs. Keep-or-change: keep.
+- p7-elesa-squat, YumeFlux, seed `2026092467`, job `1bb3450e`, prompt `e4d1b4f2`, 54.5 s, `YumeFlux-ILv1-Baseline_00024_.png`. Identity: Elesa reads strongly, long blonde hair, headphone antennae, yellow jacket, runway stage; adult. Lever: T7 held with `parted lips` firing. Hands: hidden behind the head under the jacket. Cloth: black top sheer over the chest (dark thin goes sheer again), yellow jacket glossy. Keep-or-change: keep.
+- p7-jessie-squat, AniFox, seed `2026092468`, job `c5dfd218`, prompt `40209b6e`, 34.3 s, `AniFox-v2-Baseline_00019_.png`. Identity: Jessie reads strongly, long crimson hair, blue eyes, green earrings, white uniform, rooftop at night; adult. Lever: T7 held with `parted lips` firing. Hands: hidden behind the head. Cloth: white top translucent at the chest and sides, white skirt wet-glossy. Keep-or-change: keep.
+
+## Camera layer — p8 wave
+
+P7 held 8/8, so the camera layer goes onto held p7 cells. One camera tag only, added to the exact held prompt at the same seed: `from below` on two squats (does T1b's hand-return apply to front poses?), `cowboy shot` on two bent-overs, `close-up` on two squats. Never two cameras at once. Same presets, settings, and shared negative as p7. Queued in one burst.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p8-sae-below | p7-sae-squat | wai | 2026092465 | `b1f73887-8f99-4ea3-807d-c095273de8c7` |
+| p8-jessie-below | p7-jessie-squat | anifox-v2-baseline | 2026092468 | `af62ba51-520c-4309-946f-e28fb78692f5` |
+| p8-diantha-cowboy | p7-diantha-bentover | yumeflux-ilv1-baseline | 2026092463 | `50e6352f-5179-43e7-826f-dbfbbd1bc705` |
+| p8-skyla-cowboy | p7-skyla-bentover | anifox-v2-baseline | 2026092464 | `0cf01575-0deb-48a5-92af-2352a6f0213f` |
+| p8-elesa-closeup | p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `01903e63-9171-4245-96b2-3bec79fa0e74` |
+| p8-chihaya-closeup | p7-chihaya-squat | cstati-v3-baseline | 2026092466 | `38716e1c-9d6e-42b6-b4fc-b4c826249cf1` |
+
+### p8 results
+
+All six completed, 30.3–38.4 s each. No spill line on any receipt. `from below` on the squat drops the camera low while the hands stay hidden, so T1b's hand-return is rear-view-specific. `cowboy shot` tightens the bent-over crop and everything holds. `close-up` barely reframes against the squat pose tags.
+
+- p8-sae-below, WAI, seed `2026092465`, job `b1f73887`, prompt `8b778fed`, 38.4 s, `WAI-Illustration_00054_.png`. Identity: same Sae read, suit, office, adult. Lever: worm's-eye view, hips and thighs dominate the foreground, face smaller at top. Hands: still hidden behind the head; no hand-return. Cloth: white shirt translucent, suit glossy, mouth parted. Keep-or-change: keep; use for a hotter lower crop.
+- p8-jessie-below, AniFox, seed `2026092468`, job `af62ba51`, prompt `0338c8e4`, 32.4 s, `AniFox-v2-Baseline_00020_.png`. Identity: same Jessie read, rooftop, adult. Lever: same low camera, hips foreground. Hands: hidden. Cloth: white uniform translucent at the chest, mouth parted. Keep-or-change: keep.
+- p8-diantha-cowboy, YumeFlux, seed `2026092463`, job `50e6352f`, prompt `8dbc0496`, 34.4 s, `YumeFlux-ILv1-Baseline_00025_.png`. Identity: same Diantha read, white dress, salon, adult. Lever: tighter thighs-up rear crop, legs cut; bent-over held. Hands: both on the dress, normal-looking. Cloth: white dress translucent over the hips, mouth slightly open. Keep-or-change: keep; the clean framing tag for T8.
+- p8-skyla-cowboy, AniFox, seed `2026092464`, job `0cf01575`, prompt `f1f392e5`, 30.3 s, `AniFox-v2-Baseline_00021_.png`. Identity: same Skyla read, propeller ornament, airport, adult. Lever: same tighter rear crop, face in profile. Hands: both on the suit, normal-looking. Cloth: blue suit glossy with slight translucency, mouth slightly open. Keep-or-change: keep.
+- p8-elesa-closeup, YumeFlux, seed `2026092467`, job `01903e63`, prompt `de275c32`, 32.3 s, `YumeFlux-ILv1-Baseline_00026_.png`. Identity: same Elesa read, stronger face presence, adult. Lever: framing only slightly tighter; the squat pose tags beat `close-up`, still a full squat. Hands: hidden. Cloth: black top sheer, mouth parted. Keep-or-change: keep; a real face crop needs the pose tags trimmed, a different experiment.
+- p8-chihaya-closeup, CSTati, seed `2026092466`, job `38716e1c`, prompt `db35471a`, 30.3 s, `CSTati-v3-Baseline_00028_.png`. Identity: same Chihaya read, bigger face, adult. Lever: same weak reframing, still a full squat. Hands: hidden. Cloth: robe translucent, mouth parted. Keep-or-change: keep.

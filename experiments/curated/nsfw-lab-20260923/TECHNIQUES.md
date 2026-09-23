@@ -137,6 +137,20 @@ Breaks it: a face turned away leaves the tag nowhere to show (`p6-himeko-lips`, 
 
 Next lever: new adult characters (owner request: Persona 5 adults and more Pokemon adults) on T7/T8 with `parted lips` already in the prompt.
 
+P7 held 8/8 with `parted lips` in the prompt from the start: `p7-takemi-bentover` (WAI, job `f14c5406`, prompt `bf8d1dc0`, `WAI-Illustration_00052_.png`, hair drifted long to short), `p7-kawakami-bentover` (CSTati, job `4360edfe`, prompt `38c2a596`, `CSTati-v3-Baseline_00026_.png`), `p7-diantha-bentover` (YumeFlux, job `bdf00dbc`, prompt `aa593892`, `YumeFlux-ILv1-Baseline_00023_.png`, white dress strongly translucent), `p7-skyla-bentover` (AniFox, job `ad37cc19`, prompt `c129d4e9`, `AniFox-v2-Baseline_00018_.png`, strong likeness), `p7-sae-squat` (WAI, job `794283fd`, prompt `7191234b`, `WAI-Illustration_00053_.png`, white shirt strongly translucent), `p7-chihaya-squat` (CSTati, job `22887bd1`, prompt `afb2fb2b`, `CSTati-v3-Baseline_00027_.png`, robe translucent), `p7-elesa-squat` (YumeFlux, job `1bb3450e`, prompt `e4d1b4f2`, `YumeFlux-ILv1-Baseline_00024_.png`, 54.5 s, black top sheer), `p7-jessie-squat` (AniFox, job `c5dfd218`, prompt `40209b6e`, `AniFox-v2-Baseline_00019_.png`, strong likeness). T6 now holds on front poses too: white garments go translucent on the squat, dark thin cloth goes sheer, dark heavy cloth goes glossy.
+
+Next lever: camera layer, one tag at a time at the same seed: `from below` on the squat (does T1b's hand-return apply to front poses?), `cowboy shot` on the bent-over, `close-up` on the squat.
+
+## T10 — camera tags on held poses
+
+Use one camera tag at a time, added to the exact held prompt at the same seed, placed after the place and light and before the pose tail. No negative change.
+
+- `from below` on the T7 squat: worm's-eye view, hips and thighs fill the foreground, face smaller at top. The hands stay hidden behind the head, so T1b's hand-return is rear-view-specific and does not apply here. Held: `p8-sae-below` (WAI, job `b1f73887`, prompt `8b778fed`, `WAI-Illustration_00054_.png`, 38.4 s), `p8-jessie-below` (AniFox, job `af62ba51`, prompt `0338c8e4`, `AniFox-v2-Baseline_00020_.png`, 32.4 s).
+- `cowboy shot` on the T8 bent-over: tighter thighs-up rear crop, legs cut, pose and hands-on-butt hold. Held: `p8-diantha-cowboy` (YumeFlux, job `50e6352f`, prompt `8dbc0496`, `YumeFlux-ILv1-Baseline_00025_.png`, 34.4 s), `p8-skyla-cowboy` (AniFox, job `0cf01575`, prompt `f1f392e5`, `AniFox-v2-Baseline_00021_.png`, 30.3 s). This is the clean framing tag for T8.
+- `close-up` on the T7 squat: weak. Framing tightens only slightly; `squatting, spread legs` wins and the still stays a full squat with a bigger face. Measured: `p8-elesa-closeup` (YumeFlux, job `01903e63`, prompt `de275c32`, `YumeFlux-ILv1-Baseline_00026_.png`, 32.3 s), `p8-chihaya-closeup` (CSTati, job `38716e1c`, prompt `db35471a`, `CSTati-v3-Baseline_00028_.png`, 30.3 s). A real face crop needs the pose tags trimmed; do not use `close-up` alone and expect a portrait.
+
+Next lever: a second Illustrious adapter from civitai.red with a pose or cloth effect we do not already have, tested on/off at the same seed.
+
 ## M2 measured
 
 All nine jobs completed. About 26–38 seconds each. No spill line was required to finish the queue.

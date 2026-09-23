@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p7–p8 judged, second adapter picked — 24 September 2026 (00:35 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P7 held 8/8 on the owner-requested Persona 5 and Pokemon adults with `parted lips` in the prompt: Takemi `f14c5406` / `bf8d1dc0`, Kawakami `4360edfe` / `38c2a596`, Diantha `bdf00dbc` / `aa593892`, Skyla `ad37cc19` / `c129d4e9`, Sae `794283fd` / `7191234b`, Chihaya `22887bd1` / `afb2fb2b`, Elesa `1bb3450e` / `e4d1b4f2`, Jessie `c5dfd218` / `40209b6e`. T6 now holds on front poses too. P8 measured the camera layer at the same seed (T10): `from below` on two squats (Sae `b1f73887` / `8b778fed`, Jessie `af62ba51` / `0338c8e4`, hands stay hidden, so T1b's hand-return is rear-view-specific), `cowboy shot` on two bent-overs (Diantha `50e6352f` / `8dbc0496`, Skyla `0cf01575` / `f1f392e5`), `close-up` on two squats (Elesa `01903e63` / `de275c32`, Chihaya `38716e1c` / `db35471a`, weak reframing). Second adapter picked from civitai.red example pages: Elbow All Fours, model 2536873 version 2851096, 217.9 MB, trigger `elbowallfours`, strength 1; the furry-trained "On all fours" 2510611 was rejected. No spill line on any receipt this session.
+
 ## NSFW lab overnight: p4 judged, T7/T8/T9 measured, p5–p7 queued — 24 September 2026 (00:10 local)
 
 Executed through Studio on the primary. Notes are `experiments/curated/nsfw-lab-20260923/FINDINGS.md` (cell log) and `TECHNIQUES.md` (stacks). Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. No Creative Bundle entry. No many-minute model. Pictures stay under the ComfyUI `output/Studio` folder.
