@@ -13,8 +13,10 @@ agent inspected every image; no LoRA collapsed.
 
 **Smoke winners.** WAI: Masterpiece v3 at 0.4, Stabilizer illus01 at 0.5 and Velvet Colorful Lines at 0.6.
 NoobAI (hobby/non-commercial): Flat Color (Illustrious build) at 0.85 and Masterpiece eps at 0.4. Pony: Gothic
-Neon at 0.85 and Hands at 0.6. Loser: the NoobAI Stabilizer, which went semi-real without style words and
-dropped the orb at 1.0. The seven winners now have `presets/settings-kb.json` entries with their prompt IDs.
+Neon at 0.85 and Hands at 0.6, with Dramatic Lighting at 0.6 also kept as a lighting option. Loser: the NoobAI
+Stabilizer, which went semi-real without style words and dropped the orb at 1.0. Seven of these have
+`presets/settings-kb.json` entries with their prompt IDs; Dramatic Lighting and the two utilities (Micro Details,
+Hands Illu) are recorded only in the curated README.
 Evidence: `experiments/curated/lora-smoke-20260923/README.md`; sheets in `examples/lora-smoke/`.
 
 **Audit (#762), no files touched.** All 85 LoRAs on disk were hashed. The 77 pinned files match their pins. Eight

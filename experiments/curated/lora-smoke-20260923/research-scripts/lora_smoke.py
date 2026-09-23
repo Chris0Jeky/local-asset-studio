@@ -56,23 +56,33 @@ def build(ck,run):
  else:g['8']['inputs'].update(strength_model=0,strength_clip=0)
  g['9']['inputs'].update(strength_model=0,strength_clip=0);g['7']['inputs']['filename_prefix']='Research/lora-smoke-'+run['name']
  return g
+UNRESOLVED=('submitted','timeout')   # a prompt ID whose outcome is unknown: inspect /history, never resubmit
 def submit(g):
+ """POST /prompt only. Returns (prompt_id, None) or (None, rejection text); nothing is queued when it is rejected."""
  req=urllib.request.Request(COMFY+'/prompt',json.dumps({'prompt':g}).encode(),{'Content-Type':'application/json'})
- try:r=json.load(urllib.request.urlopen(req,timeout=30))
- except urllib.error.HTTPError as e:return None,'rejected',0,[],[e.read().decode('utf-8','replace')[:800]]
- pid=r['prompt_id'];t0=time.time()
- while time.time()-t0<1800:
+ try:return json.load(urllib.request.urlopen(req,timeout=30))['prompt_id'],None
+ except urllib.error.HTTPError as e:return None,e.read().decode('utf-8','replace')[:800]
+def wait(pid,limit=1800):
+ """Poll /history; a transient polling failure keeps polling, and the deadline leaves the run 'timeout' (unresolved)."""
+ t0=time.time()
+ while time.time()-t0<limit:
   time.sleep(4)
-  h=json.load(urllib.request.urlopen(COMFY+'/history/'+pid,timeout=30))
+  try:h=json.load(urllib.request.urlopen(COMFY+'/history/'+pid,timeout=30))
+  except (urllib.error.URLError,OSError,ValueError):continue
   if pid in h:
    st=h[pid].get('status',{});files=[o['filename'] for n in h[pid].get('outputs',{}).values() for o in n.get('images',[])]
    err=[m[1].get('exception_message','')[:300] for m in st.get('messages',[]) if isinstance(m,list) and m[0]=='execution_error']
-   return pid,st.get('status_str'),round(time.time()-t0,1),files,err
- return pid,'timeout',round(time.time()-t0,1),[],[]
+   return st.get('status_str'),round(time.time()-t0,1),files,err
+ return 'timeout',round(time.time()-t0,1),[],[]
 def main(argv):
  ck=argv[0];only=set(argv[2].split(',')) if len(argv)>2 and argv[1]=='--only' else None
  OUT.mkdir(parents=True,exist_ok=True);path=OUT/'results.json'
  results=json.loads(path.read_text(encoding='utf-8')) if path.is_file() else []
+ save=lambda:path.write_text(json.dumps(results,indent=1,ensure_ascii=False),encoding='utf-8')
+ open_=[r for r in results if r['status'] in UNRESOLVED]
+ if open_:print('unresolved prompt IDs (inspect /history, then record the outcome; never resubmit):',[r['prompt_id'] for r in open_],flush=True);return 4
+ # Only a success counts as done. A history-confirmed 'error' is a known failure, so the next deliberate
+ # invocation may run that step again; 'rejected' never reached the queue.
  done={r['name'] for r in results if r['status']=='success'};p=pins()
  for run in plan(ck):
   if run['name'] in done or (only and run['name'] not in only):continue
@@ -80,14 +90,19 @@ def main(argv):
   q=json.load(urllib.request.urlopen(COMFY+'/queue',timeout=30))
   if q.get('queue_running') or q.get('queue_pending'):print('ComfyUI queue is busy; stopping',flush=True);return 3
   g=build(ck,run);(OUT/(run['name']+'.graph.json')).write_text(json.dumps(g,indent=1),encoding='utf-8')
-  started=now();pid,st,secs,files,err=submit(g);finished=now()
   pin=p.get(run['lora'] or '',{})
   rec=dict(run,issue={'wai':757,'noob':758,'pony':759}[ck],checkpoint=g['1']['inputs']['ckpt_name'],seed=SEED,width=W,height=H,
            steps=g['5']['inputs']['steps'],cfg=g['5']['inputs']['cfg'],sampler=g['5']['inputs']['sampler_name'],scheduler=g['5']['inputs']['scheduler'],
            positive=g['2']['inputs']['text'],negative=g['3']['inputs']['text'],lora_sha256=pin.get('sha256'),lora_source=pin.get('source'),
-           prompt_id=pid,status=st,seconds=secs,files=files,error=err,started=started,finished=finished)
-  results.append(rec);path.write_text(json.dumps(results,indent=1,ensure_ascii=False),encoding='utf-8')
-  print(run['name'],(pid or '-')[:8],st,secs,files,err,flush=True)
-  if st!='success':print('stopping after a non-success; inspect before any further submission',flush=True);return 1
+           started=now())
+  pid,rejected=submit(g)
+  if pid is None:rec.update(prompt_id=None,status='rejected',seconds=0,files=[],error=[rejected],finished=now())
+  else:
+   # Persist the prompt ID before polling, so a crash while waiting leaves a recoverable 'submitted' record.
+   rec.update(prompt_id=pid,status='submitted');results.append(rec);save()
+   st,secs,files,err=wait(pid);rec.update(status=st,seconds=secs,files=files,error=err,finished=now());results.remove(rec)
+  results.append(rec);save()
+  print(run['name'],(pid or '-')[:8],rec['status'],rec['seconds'],rec['files'],rec['error'],flush=True)
+  if rec['status']!='success':print('stopping after a non-success; inspect before any further submission',flush=True);return 1
  return 0
 if __name__=='__main__':raise SystemExit(main(sys.argv[1:]))

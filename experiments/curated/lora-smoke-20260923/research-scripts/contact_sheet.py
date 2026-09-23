@@ -9,7 +9,9 @@ REPO=Path(__file__).resolve().parents[4];OUT=Path(os.environ.get('OUT',REPO/'.ru
 COMFY_OUT=Path('C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research')
 TW,TH,LH,COLS=240,351,34,4
 def main(ck,dest):
- res=[r for r in json.loads((OUT/'results.json').read_text(encoding='utf-8')) if r['name'].startswith(ck+'-') and r['status']=='success']
+ data=json.loads((OUT/'results.json').read_text(encoding='utf-8'))
+ data=data['runs'] if isinstance(data,dict) else data   # curated results.json wraps the runtime list under 'runs'
+ res=[r for r in data if r['name'].startswith(ck+'-') and r['status']=='success']
  seen={};[seen.__setitem__(r['name'],r) for r in res];res=list(seen.values())
  rows=(len(res)+COLS-1)//COLS;sheet=Image.new('RGB',(COLS*TW,rows*(TH+LH)),'white');d=ImageDraw.Draw(sheet)
  try:font=ImageFont.truetype('arial.ttf',13)
