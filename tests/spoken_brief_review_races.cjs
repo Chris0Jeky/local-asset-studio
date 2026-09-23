@@ -79,7 +79,11 @@ function pageHarness() {
     emit(event) { for(const listener of this.listeners[event]||[]) listener({target:this}); }
     pause() { this.paused=true; }
     load() { this.currentSrc=''; this.readyState=0; this.currentTime=0; this.emit('emptied'); }
-    reset() { /* tests set form values explicitly; no simulated persistence or network */ }
+    reset() { // Model the native form defaults, not prior values from another archive.
+      for (const [id,value] of Object.entries({reviewTarget:'master',decision:'unreviewed',reviewer:'owner',reason:''})) elements.get(id).value=value;
+      for (const [id,element] of elements) if (id.startsWith('finding-')) element.value='not-reviewed';
+    }
+    focus() { this.focused=true; }
   }
   const root=path.join(__dirname,'../app/static');
   for(const [,tag,id] of fs.readFileSync(path.join(root,'spoken-briefs.html'),'utf8').matchAll(/<(\w+)[^>]*\bid="([^"]+)"/g)) {
@@ -90,7 +94,8 @@ function pageHarness() {
     fetch:(target,options)=>new Promise((resolve,reject)=>{
       const u=new URL(target,'http://127.0.0.1:8191');
       requests.push({route:u.pathname.replace('/api/spoken-briefs',''),query:Object.fromEntries(u.searchParams),
-        body:options.body&&JSON.parse(options.body),resolve:value=>resolve(new Response(JSON.stringify(value))),reject});
+        body:options.body&&JSON.parse(options.body),resolve:value=>resolve(new Response(JSON.stringify(value),{headers:{'Content-Type':'application/json'}})),
+        respond:resolve,reject});
     })});
   vm.runInContext(fs.readFileSync(path.join(root,'spoken-brief-session.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'spoken-briefs.js'),'utf8'),context);
@@ -167,4 +172,54 @@ test('saving a separate review preserves the identity of the currently inspected
   h.requests.at(-1).resolve({id:newBookmark,reused:false}); await saved;
   assert.equal(h.el('reviewList').value,reportA,'Displayed owner evidence must keep its selected identity');
   assert.match(h.el('reviewDetail').textContent,new RegExp(reportA));
+});
+
+for (const rate of ['', ' ', 'NaN', 'Infinity', '0.49', '3.01']) {
+  test(`invalid playback rate ${JSON.stringify(rate)} never sends a bookmark`,async()=>{
+    const h=await page();h.loaded();h.el('rate').value=rate;
+    const count=h.requests.length,attempt=h.el('savePosition').onclick();
+    if(h.requests.length>count)h.requests.at(-1).resolve(acknowledgement());
+    await attempt;assert.equal(h.requests.length,count);
+    assert.match(h.el('status').textContent,/0.5.*3/);
+    assert.equal(h.el('saveReview').disabled,false,'Local invalid input must not poison session write ownership');
+    h.el('rate').value='1.25';const saved=h.el('savePosition').onclick();
+    assert.equal(h.requests.at(-1).body.rate,1.25);h.requests.at(-1).resolve(acknowledgement());await saved;
+  });
+}
+test('more than 64 untouched inspections never consume the review draft budget',async()=>{
+  const h=await page();
+  for(let i=0;i<70;i++){
+    const count=h.requests.length;await h.inspected('untouched-'+i);
+    assert.equal(h.requests.length,count+1,`Untouched inspection ${i} should remain available`);
+  }
+});
+test('real drafts survive switching and the 64-draft cap never silently evicts them',async()=>{
+  const h=await page();
+  for(let i=0;i<64;i++){
+    h.el('reason').value='Draft '+i;h.el('reviewForm').emit('input');
+    await h.inspected('edited-'+i);
+  }
+  h.el('reason').value='Overflow draft';h.el('reviewForm').emit('input');
+  const count=h.requests.length;await h.inspected('overflow');
+  assert.equal(h.requests.length,count);assert.match(h.el('status').textContent,/draft limit/);
+  assert.equal(h.el('reason').value,'Overflow draft');
+  h.el('discardDraft').onclick();await h.inspected('A');
+  assert.equal(h.el('reason').value,'Draft 0');
+});
+test('editing then reverting all review fields does not consume draft capacity',async()=>{
+  const h=await page();
+  for(let i=0;i<70;i++){
+    h.el('reason').value='temporary';h.el('reviewForm').emit('input');
+    h.el('reason').value='';h.el('reviewForm').emit('input');
+    const count=h.requests.length;await h.inspected('reverted-'+i);assert.equal(h.requests.length,count+1);
+  }
+});
+for(const [name,response] of [
+  ['HTML',()=>new Response('<!DOCTYPE html>',{status:404,headers:{'Content-Type':'text/html'}})],
+  ['invalid JSON',()=>new Response('{oops',{headers:{'Content-Type':'application/json'}})]
+])test(`Spoken Brief ${name} capability failures use unavailable copy and keep discovery disabled`,async()=>{
+  const h=pageHarness();h.requests[0].respond(response());await new Promise(resolve=>setImmediate(resolve));
+  assert.match(h.el('configuration').textContent,/unavailable/i);
+  assert.doesNotMatch(h.el('configuration').textContent,/Unexpected token|JSON/);
+  assert.equal(h.el('discover').disabled,true);assert.equal(h.requests.length,1);
 });
