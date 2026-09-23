@@ -1,6 +1,33 @@
-param([switch]$NoBrowser)
+param([switch]$NoBrowser, [switch]$Detached)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
+# Start-Process children stay in the caller's Windows job object. Grok Build runs every command in a job with
+# KILL_ON_JOB_CLOSE and no breakaway, so a Studio and ComfyUI started from it died together, with empty logs, a few minutes
+# after that command finished (23 September 2026; docs/RUNTIME-PRECONDITIONS.md section 9). WMI's Win32_Process.Create
+# starts this script again in the same interactive session but outside any job; this copy waits for it and relays its log.
+if (-not $Detached) {
+    Add-Type -Namespace StudioLaunch -Name Job -MemberDefinition '[DllImport("kernel32.dll")] public static extern bool IsProcessInJob(System.IntPtr process, System.IntPtr job, out bool result); [DllImport("kernel32.dll")] public static extern System.IntPtr GetCurrentProcess();'
+    $inJob = $false
+    [void][StudioLaunch.Job]::IsProcessInJob([StudioLaunch.Job]::GetCurrentProcess(), [System.IntPtr]::Zero, [ref]$inJob)
+    if ($inJob) {
+        $logRoot = Join-Path $repoRoot '.runtime'
+        New-Item -ItemType Directory -Path $logRoot -Force | Out-Null
+        $detachLog = Join-Path $logRoot ('start-studio-detached-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
+        $switches = if ($NoBrowser) { ' -NoBrowser' } else { '' }
+        $command = "& '" + $PSCommandPath.Replace("'", "''") + "'" + $switches + " -Detached *> '" + $detachLog.Replace("'", "''") + "'; exit `$LASTEXITCODE"
+        $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
+        $startup = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{ ShowWindow = [uint16]0 }
+        $created = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "powershell.exe -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded"; CurrentDirectory = $repoRoot; ProcessStartupInformation = $startup }
+        if ($created.ReturnValue -ne 0) { throw "Could not start the Studio outside this shell's job object (Win32_Process.Create returned $($created.ReturnValue))." }
+        $child = Get-Process -Id $created.ProcessId -ErrorAction SilentlyContinue
+        if ($child) { $child.WaitForExit() }
+        if (Test-Path -LiteralPath $detachLog) { Get-Content -LiteralPath $detachLog | ForEach-Object { Write-Host $_ } }
+        $ready = $false
+        try { $identity = Invoke-RestMethod 'http://127.0.0.1:8191/api/identity' -TimeoutSec 3; $ready = $identity.app -eq 'local-asset-studio' -and $identity.workspace -eq $repoRoot } catch { }
+        if (-not $ready) { throw "Asset Studio did not become ready. See $detachLog" }
+        exit 0
+    }
+}
 $configPath = Join-Path $repoRoot 'config\local.json'
 if (-not (Test-Path -LiteralPath $configPath)) {
     Copy-Item -LiteralPath (Join-Path $repoRoot 'config\example.json') -Destination $configPath
