@@ -36,6 +36,7 @@ from production import Production, fingerprint
 import mixed_batch
 from backends import BackendManager
 import host_memory
+import gpu_memory
 import wan_capacity
 from runtime_recovery import RuntimeRecovery
 import prompting
@@ -58,6 +59,7 @@ PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit i
 HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the prompt; Stop tracking ends observation sooner
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
+GPU_SAMPLE_EVERY = 5                    # empty history polls between GPU memory samples (app/gpu_memory.py)
 HOST_COMMIT_MINIMUM = 32 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
@@ -113,6 +115,7 @@ class Studio:
         self._schema = None; self._schema_at = 0
         self._options = None; self._options_at = 0
         self._host_commit = None; self._host_commit_at = 0
+        self._gpu_memory = None; self._gpu_memory_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
         # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
@@ -471,6 +474,29 @@ class Studio:
         wan_capacity.enforce(graph)
         self.host_commit_preflight(preset, graph)
         return preset, graph, graph_path, controls, batch
+
+    def gpu_memory_reading(self, refresh=False):
+        """The active ComfyUI process's dedicated and shared GPU memory (app/gpu_memory.py); never raises."""
+        if refresh or self._gpu_memory is None or time.monotonic() - self._gpu_memory_at > 5:
+            pid = None
+            try:
+                backends = getattr(self, 'backends', None)
+                process = backends.process(backends.profiles[backends.active]) if backends else None
+                pid = process.pid if process else None
+            except (ValueError, KeyError, AttributeError, OSError): pid = None
+            self._gpu_memory = gpu_memory.spill(pid); self._gpu_memory_at = time.monotonic()
+        return dict(self._gpu_memory)
+
+    def _sample_gpu_memory(self, job, submission):
+        """Keep the peak shared (WDDM-paged) GPU memory seen while a prompt runs; spilling makes every step page weights."""
+        try: reading = self.gpu_memory_reading(refresh=True)
+        except Exception: return
+        if reading.get('shared_bytes') is None: return
+        peak = submission.setdefault('gpu_memory', {'peak_shared_bytes': 0, 'peak_dedicated_bytes': 0, 'samples': 0, 'spilled': False})
+        peak['samples'] += 1; peak['peak_shared_bytes'] = max(peak['peak_shared_bytes'], reading['shared_bytes'])
+        peak['peak_dedicated_bytes'] = max(peak['peak_dedicated_bytes'], reading['dedicated_bytes'] or 0)
+        if reading.get('spilled') and not peak['spilled']:
+            peak['spilled'] = True; job['gpu_spill'] = True
 
     def host_commit_reading(self, refresh=False):
         if refresh or self._host_commit is None or time.monotonic() - self._host_commit_at > 3:
@@ -1222,8 +1248,8 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "cache_release": self.cache_release_status()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "cache_release": self.cache_release_status()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
@@ -1533,6 +1559,9 @@ class Studio:
             job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
             if not self._wait_history(job, submission): return
         job["status"] = "completed"; job["message"] = "Complete"
+        if job.get('gpu_spill'):
+            peak = max(s.get('gpu_memory', {}).get('peak_shared_bytes', 0) for s in job.get('submissions', []))
+            job["message"] = f"Complete, but slowly: GPU memory spilled {peak / 2**30:.1f} GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job."
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
 
     def _prompt_listed(self, job, prompt_id):
@@ -1565,6 +1594,8 @@ class Studio:
                     job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job)
                 return False
             if history:
+                # A prompt that finishes between samples (or before the first) still gets one reading at completion.
+                self._sample_gpu_memory(job, submission)
                 status = history.get("status", {})
                 if status.get("status_str") == "error":
                     errors = [m[1] for m in status.get("messages", []) if isinstance(m, list) and len(m) > 1 and m[0] == "execution_error" and isinstance(m[1], dict)]
@@ -1589,6 +1620,7 @@ class Studio:
                                 if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
                 submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
             empty_polls += 1
+            if empty_polls % GPU_SAMPLE_EVERY == 1: self._sample_gpu_memory(job, submission)
             if empty_polls % HISTORY_QUEUE_CHECK_EVERY == 0:
                 # A prompt in neither the queue nor the history is gone (restart, cleared queue); do not wait out the ceiling.
                 unlisted = 0 if self._prompt_listed(job, prompt_id) else unlisted + 1
