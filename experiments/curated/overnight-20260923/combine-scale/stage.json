@@ -1,0 +1,12 @@
+{
+ "character": {
+  "file": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png",
+  "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+  "bytes": 1158496,
+  "width": 832,
+  "height": 1216,
+  "original_name": "adult-traveller-fullbody.png"
+ },
+ "character_source": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anima-v1-Baseline_00005_.png",
+ "pose_file": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png"
+}

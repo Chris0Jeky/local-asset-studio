@@ -1,0 +1,38 @@
+{
+ "s1-A.png": {
+  "config": "shipped",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00005_.png"
+ },
+ "s1-C.png": {
+  "config": "colours-barefoot",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00006_.png"
+ },
+ "s1-B.png": {
+  "config": "colours-stocking",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00007_.png"
+ },
+ "s2-A.png": {
+  "config": "shipped",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00008_.png"
+ },
+ "s2-B.png": {
+  "config": "colours-barefoot",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00009_.png"
+ },
+ "s2-C.png": {
+  "config": "colours-stocking",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00010_.png"
+ },
+ "s3-A.png": {
+  "config": "shipped",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00011_.png"
+ },
+ "s3-B.png": {
+  "config": "colours-barefoot",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00012_.png"
+ },
+ "s3-C.png": {
+  "config": "colours-stocking",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00013_.png"
+ }
+}

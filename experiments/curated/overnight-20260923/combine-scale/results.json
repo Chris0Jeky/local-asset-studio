@@ -1,0 +1,307 @@
+[
+ {
+  "label": "depth-fullbody-2026092341",
+  "status": "completed",
+  "intent": {
+   "preset_id": "combine-klein-9b-depth",
+   "controls": {
+    "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "last_reference": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png",
+    "seed": 2026092341
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png",
+     "role": "pose"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:26:27.123942",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.2,
+  "free_ram_gb_before": 10.4,
+  "route": "studio",
+  "config": "depth-fullbody-character",
+  "seed": 2026092341,
+  "job_id": "046c9632-805d-4964-a7cb-3313150e8561",
+  "prompt_ids": [
+   "dee3464f-2d5d-4c46-b758-5714ba10f793"
+  ],
+  "wall_seconds": 96.6,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 39,
+    "s_per_step_tqdm": 6.5,
+    "s_per_step_steady": 6.52
+   }
+  ],
+  "peak_dedicated_mb": 14145,
+  "peak_shared_mb": 2057,
+  "spilled": true,
+  "gpu_samples": 64,
+  "peak_commit_pct": 76.5,
+  "comfy_executed_seconds": 92.54,
+  "log_lines": [
+   "05:26:45 [INFO] Requested to load AutoencoderKL",
+   "05:26:45 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:26:57 [INFO] Requested to load Flux2TEModel_",
+   "05:26:57 [INFO] loaded completely;  8263.34 MB loaded, full load: True",
+   "05:27:00 [INFO] Requested to load AutoencoderKL",
+   "05:27:01 [INFO] Unloaded partially: 3140.34 MB freed, 5123.00 MB remains loaded, 336.00 MB buffer reserved, lowvram patches: 0",
+   "05:27:01 [INFO] loaded completely; 4224.74 MB usable, 160.31 MB loaded, full load: True",
+   "05:27:02 [INFO] Requested to load Flux2",
+   "05:27:15 [INFO] loaded completely; 9549.85 MB usable, 7693.02 MB loaded, full load: True",
+   "05:27:55 [INFO] Requested to load AutoencoderKL",
+   "05:27:57 [INFO] loaded completely; 6273.95 MB usable, 160.31 MB loaded, full load: True",
+   "05:27:59 [INFO] Prompt executed in 92.54 seconds"
+  ],
+  "timeline_file": "timelines/depth-fullbody-2026092341.json",
+  "outputs": [
+   {
+    "filename": "Klein-9B-depth_00014_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026092341,
+    "prompt_id": "dee3464f-2d5d-4c46-b758-5714ba10f793",
+    "media_type": "image",
+    "asset_id": "b68016e24a5a5122b18f292aaa82b0e8"
+   }
+  ],
+  "elapsed_seconds": 94.61287212371826,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 2.0 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+   "last_reference": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png",
+   "seed": 2026092341
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "dee3464f-2d5d-4c46-b758-5714ba10f793",
+    "seed": 2026092341,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 2156617728,
+     "peak_dedicated_bytes": 14830006272,
+     "samples": 11,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/depth-fullbody-2026092341.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Combine\\Klein-9B-depth_00014_.png",
+    "sha256": "f39f336984b5871013eebdb9500cd19283d3c8734211fec745c318f9c7587651"
+   }
+  ],
+  "finished_at": "2026-09-23 05:28:03.717142"
+ },
+ {
+  "label": "depth-fullbody-2026092342",
+  "status": "completed",
+  "intent": {
+   "preset_id": "combine-klein-9b-depth",
+   "controls": {
+    "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "last_reference": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png",
+    "seed": 2026092342
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png",
+     "role": "pose"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:28:03.733827",
+  "comfy_pid": 46488,
+  "commit_pct_before": 53.3,
+  "free_ram_gb_before": 9.6,
+  "route": "studio",
+  "config": "depth-fullbody-character",
+  "seed": 2026092342,
+  "job_id": "ba146785-7724-41e8-af71-48f46827d91a",
+  "prompt_ids": [
+   "9a6c22be-6165-4320-9148-c9078577ebc9"
+  ],
+  "wall_seconds": 78.5,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 39,
+    "s_per_step_tqdm": 6.5,
+    "s_per_step_steady": 6.47
+   }
+  ],
+  "peak_dedicated_mb": 14145,
+  "peak_shared_mb": 1487,
+  "spilled": true,
+  "gpu_samples": 53,
+  "peak_commit_pct": 76.4,
+  "comfy_executed_seconds": 75.94,
+  "log_lines": [
+   "05:28:19 [INFO] Requested to load AutoencoderKL",
+   "05:28:19 [INFO] loaded completely; 6273.95 MB usable, 160.31 MB loaded, full load: True",
+   "05:28:19 [INFO] Requested to load Flux2TEModel_",
+   "05:28:21 [INFO] loaded completely; 14096.83 MB usable, 8263.34 MB loaded, full load: True",
+   "05:28:24 [INFO] Unloaded partially: 3092.34 MB freed, 5171.00 MB remains loaded, 336.00 MB buffer reserved, lowvram patches: 0",
+   "05:28:25 [INFO] Requested to load Flux2",
+   "05:28:36 [INFO] loaded completely; 9549.85 MB usable, 7693.02 MB loaded, full load: True",
+   "05:29:15 [INFO] Requested to load AutoencoderKL",
+   "05:29:17 [INFO] loaded completely; 6273.95 MB usable, 160.31 MB loaded, full load: True",
+   "05:29:19 [INFO] Prompt executed in 75.94 seconds"
+  ],
+  "timeline_file": "timelines/depth-fullbody-2026092342.json",
+  "outputs": [
+   {
+    "filename": "Klein-9B-depth_00015_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026092342,
+    "prompt_id": "9a6c22be-6165-4320-9148-c9078577ebc9",
+    "media_type": "image",
+    "asset_id": "0a12ad3da74d54ce8ca3d71fa2748891"
+   }
+  ],
+  "elapsed_seconds": 76.612713098526,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+   "last_reference": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png",
+   "seed": 2026092342
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "9a6c22be-6165-4320-9148-c9078577ebc9",
+    "seed": 2026092342,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 13241298944,
+     "samples": 9,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/depth-fullbody-2026092342.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Combine\\Klein-9B-depth_00015_.png",
+    "sha256": "115eecc3c928b546c20b5e3b04642c8cc70df941810ae1a5ff856cf28d51cc9b"
+   }
+  ],
+  "finished_at": "2026-09-23 05:29:22.240884"
+ },
+ {
+  "label": "depth-fullbody-2026092343",
+  "status": "completed",
+  "intent": {
+   "preset_id": "combine-klein-9b-depth",
+   "controls": {
+    "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "last_reference": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png",
+    "seed": 2026092343
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png",
+     "role": "pose"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:29:22.256366",
+  "comfy_pid": 46488,
+  "commit_pct_before": 52.7,
+  "free_ram_gb_before": 9.9,
+  "route": "studio",
+  "config": "depth-fullbody-character",
+  "seed": 2026092343,
+  "job_id": "26db6262-dd04-4bc1-a84d-90e819be1c43",
+  "prompt_ids": [
+   "8651e5b4-958a-4690-9dbe-b26a816d0c6d"
+  ],
+  "wall_seconds": 81.6,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 39,
+    "s_per_step_tqdm": 6.5,
+    "s_per_step_steady": 6.59
+   }
+  ],
+  "peak_dedicated_mb": 14145,
+  "peak_shared_mb": 1487,
+  "spilled": true,
+  "gpu_samples": 55,
+  "peak_commit_pct": 76.5,
+  "comfy_executed_seconds": 76.77,
+  "log_lines": [
+   "05:29:36 [INFO] Requested to load AutoencoderKL",
+   "05:29:36 [INFO] loaded completely; 6273.95 MB usable, 160.31 MB loaded, full load: True",
+   "05:29:37 [INFO] Requested to load Flux2TEModel_",
+   "05:29:39 [INFO] loaded completely; 14096.83 MB usable, 8263.34 MB loaded, full load: True",
+   "05:29:43 [INFO] Unloaded partially: 3092.34 MB freed, 5171.00 MB remains loaded, 336.00 MB buffer reserved, lowvram patches: 0",
+   "05:29:43 [INFO] Requested to load Flux2",
+   "05:29:54 [INFO] loaded completely; 9549.85 MB usable, 7693.02 MB loaded, full load: True",
+   "05:30:34 [INFO] Requested to load AutoencoderKL",
+   "05:30:36 [INFO] loaded completely; 6273.95 MB usable, 160.31 MB loaded, full load: True",
+   "05:30:39 [INFO] Prompt executed in 76.77 seconds"
+  ],
+  "timeline_file": "timelines/depth-fullbody-2026092343.json",
+  "outputs": [
+   {
+    "filename": "Klein-9B-depth_00016_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026092343,
+    "prompt_id": "8651e5b4-958a-4690-9dbe-b26a816d0c6d",
+    "media_type": "image",
+    "asset_id": "f41c8b06e77558d28a4a71720b49ebc0"
+   }
+  ],
+  "elapsed_seconds": 78.57642316818237,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+   "last_reference": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png",
+   "seed": 2026092343
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "8651e5b4-958a-4690-9dbe-b26a816d0c6d",
+    "seed": 2026092343,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 13241298944,
+     "samples": 9,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/depth-fullbody-2026092343.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Combine\\Klein-9B-depth_00016_.png",
+    "sha256": "95ad1d86f5e520d85a3fafd8dd66c3c5fde8e755c145ab1ebaf2cca69dfb18c4"
+   }
+  ],
+  "finished_at": "2026-09-23 05:30:43.820907"
+ }
+]
