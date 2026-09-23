@@ -1,4 +1,4 @@
-# Klein restyle of the throne witch: name the colours and the foot — 23 September 2026 (overnight lab)
+# Klein restyle of the throne witch: naming the colours and the foot — 23 September 2026 (overnight lab)
 
 **Question** (review judge, q-27 pre-review in PR #862). Every Klein restyle of `Style-Pose/Nova_00004_.png` drew the raised leg's
 foot as a toe-less stocking tip, and the shipped source description ("long dark hair", taken from the source's own prompt)
@@ -30,8 +30,9 @@ Seeds 2026091401 (the shipped seed), 2026092351 and 2026092352. **Only partly bl
 | `colours-barefoot` | **3 / 3**: purple or lavender hair, blue eyes | a bare foot with toes on 3/3 (a gold sandal band on 52) | keep ×3 | 18 |
 | `colours-stocking` | **3 / 3** | the stocking kept with a proper stocking foot on 3/3, as in the source | keep ×3 | 16-18 |
 
-- **Naming the colours the picture actually shows fixes the colour drift, 3/3.** The shipped description is the source's
-  prompt, and the source's prompt disagrees with its pixels. That confirms the q-27 hypothesis: Klein follows the words.
+- **Both treated wordings kept the colours, 3/3; the shipped one lost them, 3/3.** The shipped description is the source's
+  prompt, which disagrees with its pixels. The result is consistent with the q-27 hypothesis (Klein follows the words), but it
+  is an association, not a proven cause: both arms changed the colour words and added footwear words at once.
 - **The shipped wording never mentions the legs or feet.** The restyle removed the source's stocking but kept its toe-less
   shape on 2 of 3 seeds. With "bare feet" the foot has toes (3/3). Describing the stocking that is really there keeps the
   stocking and gives a correct stocking foot (3/3). Which one to prefer is a look choice for the owner (R6): a bare foot, or the
