@@ -1,10 +1,13 @@
-"""Append one protocol-shaped judgement: python addjudge.py <folder> <image> <scores a,an,s,t,c[,ctl]> <verdict> <worst> [fix] [notes] [--open] [--prompt ID] [--job ID] [--criterion KEY]
+"""Append one protocol-shaped judgement: python addjudge.py <folder> <image> <scores a,an,s,t,c[,ctl]> <verdict> <worst> [fix] [notes] [--open] [--prompt ID] [--job ID] [--criterion KEY] [--no-run]
 
 R7: when `fix` is given (a fix is needed before use), the worst defect must name its criterion (--criterion anatomy) and
 that criterion must score 3 or lower.
 
 Scores are adherence,anatomy,style,technical,composition[,control] (use - for control when no control input exists).
 `--open` marks the judgement as not blind (single outputs, census); blind is the default for A/B folders.
+
+The job and prompt IDs and the original image are looked up from <folder>/results.json by sha256; an image that matches no
+recorded run is refused unless --no-run says it is not a run of this experiment (a source picture in a blind group).
 """
 import sys
 from pathlib import Path
@@ -15,6 +18,8 @@ import labkit  # noqa: E402
 args = sys.argv[1:]; blind = True; prompt = job = criterion = None
 if '--open' in args: args.remove('--open'); blind = False
 if '--criterion' in args: i = args.index('--criterion'); criterion = args[i + 1]; del args[i:i + 2]
+no_run = '--no-run' in args
+if no_run: args.remove('--no-run')
 if '--prompt' in args: i = args.index('--prompt'); prompt = args[i + 1]; del args[i:i + 2]
 if '--job' in args: i = args.index('--job'); job = args[i + 1]; del args[i:i + 2]
 folder, image, raw, verdict, worst = args[:5]
@@ -31,5 +36,5 @@ if verdict == 'fixable': assert low >= 3, 'fixable needs nothing below 3'
 if fix and not worst.lower().startswith('none'):
     if criterion not in scores or scores[criterion] is None: raise SystemExit('R7: name the worst defect\'s criterion with --criterion <key>')
     if scores[criterion] > 3: raise SystemExit('R7: the worst defect is scored %s on %s; a named defect caps its criterion at 3 (or write "none ...")' % (scores[criterion], criterion))
-rec = labkit.judge(folder, image, scores, verdict, worst, fix, notes, prompt_id=prompt, job_id=job, blind=blind)
+rec = labkit.judge(folder, image, scores, verdict, worst, fix, notes, prompt_id=prompt, job_id=job, blind=blind, no_run=no_run)
 print(rec['verdict'], rec['scores'], Path(image).name)
