@@ -13,12 +13,12 @@ Related GitHub (Refs, never Closes until acceptance is complete):
 
 ## Hard rules
 
-- Adult only. Negatives always include `child, loli, shota`. No real people. **As planned: no named franchise
-  characters — not what happened.** From wave C on, the lab used adult-coded Danbooru character tags (2B, Kafka,
-  Darkness, Aqua, Cynthia, Asuna, Yelan, Raiden, Tifa, and Yor and Acheron in `presets/wildcards/nsfw_character.txt`),
-  and they are in `FINDINGS.md`, `presets/nsfw-intel.json` and the media manifests. The adult-only and no-real-people
-  parts held: Megumin and child-coded franchise tags were skipped on purpose. Whether the lab should use named
-  franchise characters at all is an owner decision, raised in `HUMAN_TODO.md`; nothing was deleted to hide the gap.
+- Adult only. Negatives always include `child, loli, shota`. No real people. **Named franchise characters are a lab
+  lever (owner decision q-31, 23 September 2026):** adult-coded Danbooru character tags (2B, Kafka, Darkness, Aqua,
+  Cynthia, Asuna, Yelan, Raiden, Tifa, and Yor and Acheron in `presets/wildcards/nsfw_character.txt`) may be used, each
+  with an adult qualifier. A character whose canon is child-coded or ambiguous is never used (Megumin and similar were
+  skipped on purpose), whatever the tag says. The plan originally said "no named franchise characters"; waves C onward
+  used them before the decision, and nothing was deleted.
 - Fast families only: Anima, AniFox, WAI, CSTati, YumeFlux, JANIMA, One Obsession, Pearly Mix, Animagine. Skip Qwen / FLUX.2 32B / H3 / Wan / Hunyuan / Trellis / HiDream / Klein 9B / z-image / extra Krea.
 - One seed per cell unless the cell *is* a seed audition. Never resubmit an uncertain job.
 - Generated ≠ accepted ≠ licensed. Catalog `verified` stays false for new presets.
