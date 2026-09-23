@@ -1883,8 +1883,8 @@ Background download logs: `.runtime/downloads/civitai-retry2-2026-09-12.log`, `a
 | Run | Result |
 |---|---|
 | `krea-anime-atelier`, full target stack TextFusion + Niji Sweet Spot + koukouya, 15 steps, 832×1248 (job `7d589f47`) | 827.6 s; the closest match yet to the owner's target image; koukouya's brushwork dominates |
-| `anime-detail-fix` on the NoobAI portrait with the six-finger hand (job `14caa4fb`) | 36.2 s; hand repainted to five clean digits, eye opened and sharpened; only the two crops changed |
-| `krea-refine` on the style-lab fox shrine (job `21e4a629`) | 233.2 s; fox faces are fox faces again, composition kept; the third fox merged into the pair at denoise 0.35 |
+| `anime-detail-fix` on the NoobAI portrait with the six-finger hand (job `14caa4fb`) | 36.2 s; hand repainted to five clean digits, eye opened and sharpened; only the two crops changed *(correction, 23 September 2026: at full resolution six digits remain after this job; see `docs/quality/QUALITY-BACKLOG.md`)* |
+| `krea-refine` on the style-lab fox shrine (job `21e4a629`) | 233.2 s; fox faces are fox faces again, composition kept; the third fox merged into the pair at denoise 0.35 *(correction, 23 September 2026: the run used the preset's example prompt, which halved the fox count and added snow specks; see `docs/quality/QUALITY-BACKLOG.md`)* |
 | `anima-artist-stack` graph as ComfyUI probes on anima-aesthetic-v1.1: four adapters, then all six (kieed is LyCORIS) | 35.0 s and 25.0 s; clean witch portraits, no LoRA key warnings; proves the six-slot chain, the LyCORIS load and the loader path, not the base v1.0 look |
 | `anima-artist-stack` on Anima base v1.0 as authored, the artist-tag variant and the 1328×1776 reference variant (jobs `8a593206`, `8eb5bc19`, `6ae066d8`) | 24.3 s, 20.1 s, 66.4 s; all clean, no anatomy errors; the artist-tag runs hallucinate a small signature glyph bottom-right |
 

@@ -36,7 +36,7 @@ Records with SHA-256 and crop coordinates:
 | Is the stocking on the throne witch's raised leg a defect (`Nova_00004_`, job `bb8efa52`)? | style-pose-matrix nova README | **Yes.** It ends in a toe-less, bandage-wrapped tip (crop 20,780-230,930), and every Klein restyle of the picture inherited it ([q-27](pre-reviews/q-27.md)). The owner ruled the witch an adult original on 23 September. |
 | Do the two Krea 2 VRAM-spill benchmark renders look right, and do they match? | CURRENT_STATE (22–23 Sep), `vram-spill-20260923/` | **Yes.** Same picture and quality, not bit-identical (mean difference 7 of 255). Clean faces and hands; the neon signs carry pseudo-glyphs. The spill did not degrade the image at this seed. |
 | Do the Qwen-Image 2.1 launch flags change the picture? | #739, `qwen21-bench.json` | **No.** Per seed, the four flag sets differ by a mean of 0.21 grey levels. The flags change speed, not the image. (Quality: see *partly* below.) |
-| How bad are the hand and leg defects in the CSTati, YumeFlux and JANIMA station baselines? | CURRENT_STATE, goal-baselines README | **Mild.** CSTati and YumeFlux have simple but readable hands, and a catwalk stride that hides one boot (composition 3). JANIMA hides its hands in the coat but plants both feet (all 4s). |
+| How bad are the hand and leg defects in the CSTati, YumeFlux and JANIMA station baselines? | CURRENT_STATE, goal-baselines README | **Mild.** CSTati and YumeFlux have simple but readable hands, and a catwalk stride that hides one boot (composition 3). JANIMA hides its hands in the coat but plants both feet (nothing below 4). |
 | How often do Anima artist-tag runs leave a corner signature mark? | CURRENT_STATE | **2 of 4 checked.** The mark is clear on the artist-tag run (`anima-artist-stack_00002_`) and faint on the 1328×1776 reference (`_00003_`), and absent on the six-adapter and Failleaf runs. It is invisible at thumbnail size; a 40 px crop removes it. |
 | Is the 4-step Krea target stack on par with 15 steps? | CURRENT_STATE | **Yes, a tie.** Both blind calibration judges gave both about 4.2 (the 4-step run 4.2 and 4.2, the 15-step 4.2 and 4.0), and the owner called both "very good". |
 | Does the compass read at 128 px, and how much cleanup does A need? | compass-first-batch README | **It reads, but it is not yet an icon.** Both exports keep an off-white background, a grey drop shadow and about 4,300 anti-aliased colours. A needs about 10–15 minutes of cleanup: background to alpha, a 16–32 colour palette. B also needs its garbled W and S redrawn. |
@@ -100,7 +100,7 @@ Records with SHA-256 and crop coordinates:
 
 ## Found on the way
 
-- The two Style + Pose matrix files that held a clothing-less beach render (`Style-Pose/WAI_00008_.png`, sha256
+- The two Style + Pose matrix files that held a beach render skipped as adult content by a blind judge (the prompt asked for a clothed witch; `Style-Pose/WAI_00008_.png`, sha256
   `bdf2fc68…`) were found by numeric matching without opening them. The coordinator is moving them to local-only (PR #865).
 - An agent judgement recorded in a README can be wrong at full resolution. Three examples tonight:
   - "clean five-digit hand" (NoobAI);
