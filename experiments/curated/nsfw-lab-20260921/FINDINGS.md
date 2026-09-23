@@ -190,7 +190,10 @@ The recipe ports: Asuna tavern, Kafka train, Yelan teahouse, 2B library. Darknes
 
 #416, #417, #419 merged. #420 retargeted to main, not merged until its refresh is green. Programme specifics still later.
 
-**Retired, 23 September 2026.** The Asuna cells above (`c-asuna-lingerie-smirk`, `g-asuna-inn`, `i-asuna-tavern`,
-`i-asuna-inn-lift`) break the lab's rule that a character who is a minor for most of their canon is never used, whatever
-the qualifier. They were removed from `presets/nsfw-intel.json` and `presets/wildcards/nsfw_character.txt`. The rows stay
-here as history; the local render files are the owner's to delete.
+**Retired, 23 September 2026, 22:01.** The Asuna cells above (`c-asuna-lingerie-smirk`, `g-asuna-inn`, `i-asuna-tavern`,
+`i-asuna-inn-lift`) were removed from `presets/nsfw-intel.json` and `presets/wildcards/nsfw_character.txt` under a
+child-coded reading. The rows stayed here as history.
+
+**Restored, 23 September 2026, 22:41.** The owner double-checked and concluded that Asuna can stay: her canon age is
+acceptable. The wildcard line and the three intel cells are back. `i-asuna-inn-lift` was never an intel entry; its
+findings row and manifest entry had remained. Do not delete the render files.
