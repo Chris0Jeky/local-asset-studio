@@ -63,8 +63,10 @@ The comparison covers 15 pictures. The GGUF cached-encoder portrait is in this s
 | … adherence, anatomy | 12 of 15 each |
 | … composition | 6 of 15: the lab gave 5 where this judge gave 4 on the portraits and hands |
 
-**The same worst defect, named independently.** On every portrait, both judges picked the same worst defect: a hard,
-plastic-looking white highlight on the shirt front.
+**The same worst defect, named independently, on four of the six compared portraits.** On both fp8 portraits at
+seed …01 and on both probe renders, both judges picked a hard, plastic-looking white highlight on the shirt front. On
+the two GGUF portraits at seed …01, this judge named the single-ring irises instead; the lab named the shirt highlight
+there too.
 
 **Where the two judges differ, all within one point:**
 
@@ -79,6 +81,7 @@ verdicts, and drift by one point on the softer criteria.
 ## Not verified
 
 - Speed and memory, which are the lab's numbers.
-- Any seed beyond the three used.
+- Any other seed. Each subject has its own seed, eight in all (2026091103 and 2026092301–2026092307). fp8 and GGUF are
+  compared at the same seed on four subjects: portrait (…01), portrait probe (…02), action (…02) and hands (…07).
 - The GGUF build with other LoRAs.
 - Whether the owner sees a difference.
