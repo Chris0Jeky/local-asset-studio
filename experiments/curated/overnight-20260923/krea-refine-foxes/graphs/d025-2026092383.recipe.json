@@ -1,0 +1,330 @@
+{
+ "version": 2,
+ "preset_id": "krea-refine",
+ "controls": {
+  "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+  "seed": 2026092383,
+  "denoise": 0.25,
+  "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+ },
+ "batch_count": 1,
+ "created_at": 1790138624.0868003,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "krea2_turbo_fp8_scaled.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+    "type": "krea2",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "qwen_image_vae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "text": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style"
+   }
+  },
+  "5": {
+   "class_type": "ConditioningZeroOut",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+   }
+  },
+  "7": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "12",
+     0
+    ],
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "5",
+     0
+    ],
+    "latent_image": [
+     "16",
+     0
+    ],
+    "seed": 2026092383,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler_name": "euler",
+    "scheduler": "simple",
+    "denoise": 0.25
+   }
+  },
+  "8": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "7",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "9": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "8",
+     0
+    ],
+    "filename_prefix": "Studio/krea-refine"
+   }
+  },
+  "10": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+    "strength_model": 1.0
+   }
+  },
+  "11": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "10",
+     0
+    ],
+    "lora_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+    "strength_model": 1.0
+   }
+  },
+  "12": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "11",
+     0
+    ],
+    "lora_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+    "strength_model": 0.85
+   }
+  },
+  "16": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "6",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "227fe636-9370-429f-8654-0e6f053d6baa",
+   "seed": 2026092383,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "krea2_turbo_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+      "type": "krea2",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+     }
+    },
+    "7": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "12",
+       0
+      ],
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "16",
+       0
+      ],
+      "seed": 2026092383,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.25
+     }
+    },
+    "8": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "7",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "9": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "8",
+       0
+      ],
+      "filename_prefix": "Studio/krea-refine"
+     }
+    },
+    "10": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+      "strength_model": 1.0
+     }
+    },
+    "11": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "10",
+       0
+      ],
+      "lora_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+      "strength_model": 1.0
+     }
+    },
+    "12": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "11",
+       0
+      ],
+      "lora_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+      "strength_model": 0.85
+     }
+    },
+    "16": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "6",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 4578828288,
+    "peak_dedicated_bytes": 15523631104,
+    "samples": 38,
+    "spilled": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "krea-refine_00004_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092383,
+   "prompt_id": "227fe636-9370-429f-8654-0e6f053d6baa",
+   "media_type": "image",
+   "asset_id": "4192d3e2ad645f3681589aa3bbde237b"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}
