@@ -123,9 +123,16 @@ class BackendSafetyTests(unittest.TestCase):
             with patch.object(self.manager,'request',return_value=reply),patch('backends.threading.Thread') as thread:
                 with self.assertRaises(ValueError):self.manager.switch('hidream')
                 thread.assert_not_called();self.assertFalse(self.manager.busy)
-    def test_timeout_is_not_offline(self):
-        with patch.object(self.manager,'request',side_effect=TimeoutError()),patch.object(self.manager,'process',return_value=None):
+    def test_timeout_is_not_offline_while_something_listens(self):
+        with patch.object(self.manager,'request',side_effect=TimeoutError()),patch.object(self.manager,'process',return_value=self.process()):
             with self.assertRaisesRegex(ValueError,'unknown'):self.manager._idle(self.manager.profiles['h3'],allow_offline=True)
+        with patch.object(self.manager,'request',side_effect=TimeoutError()),patch.object(self.manager,'process',return_value=None):
+            with self.assertRaisesRegex(ValueError,'unknown'):self.manager._idle(self.manager.profiles['h3'])
+    def test_timeout_with_no_listener_is_offline(self):
+        # Windows refuses a closed loopback port only after ~2 s of SYN retries, past the 2 s probe (measured 2.05 s).
+        for error in (TimeoutError('timed out'),URLError(TimeoutError('timed out'))):
+            with self.subTest(error=type(error).__name__),patch.object(self.manager,'request',side_effect=error),patch.object(self.manager,'process',return_value=None):
+                self.assertFalse(self.manager._idle(self.manager.profiles['h3'],allow_offline=True))
     def test_connection_refused_requires_no_listener(self):
         error=URLError(ConnectionRefusedError(errno.ECONNREFUSED,'refused'))
         with patch.object(self.manager,'request',side_effect=error):
@@ -145,7 +152,7 @@ class BackendSafetyTests(unittest.TestCase):
         stopped={'status':'uncertain','tracking_disposition':{'status':'stopped','reason':'not in ComfyUI queue or history'}}
         self.studio.jobs={'a':stopped};self.assertFalse(self.manager._local_work())
         absent=lambda profile,route,timeout=2:{} if route.startswith('/history/') else IDLE
-        with patch.object(self.manager,'request',side_effect=absent),patch('backends.threading.Thread') as thread:self.manager.switch('hidream')
+        with patch.object(self.manager,'request',side_effect=absent),patch.object(self.manager,'process',return_value=None),patch('backends.threading.Thread') as thread:self.manager.switch('hidream')
         thread.assert_called_once()
         for disposition in (None,{'status':'resumed'},'stopped'):
             self.studio.jobs={'a':dict(stopped,tracking_disposition=disposition)}
@@ -167,28 +174,30 @@ class BackendSafetyTests(unittest.TestCase):
             seen.append((profile['id'],route))
             if profile['id']!='primary':raise URLError(ConnectionRefusedError(errno.ECONNREFUSED,'refused'))
             return {} if route.startswith('/history/') else IDLE
-        with patch.object(self.manager,'request',side_effect=replies),patch.object(self.manager,'process',return_value=None),patch('backends.threading.Thread') as thread:
+        listener=lambda profile:self.process() if profile['id']=='primary' else None
+        with patch.object(self.manager,'request',side_effect=replies),patch.object(self.manager,'process',side_effect=listener),patch('backends.threading.Thread') as thread:
             self.manager.switch('hidream')
         thread.assert_called_once()
         self.assertIn(('primary','/history/p1'),seen);self.assertIn(('primary','/history/p2'),seen)
+        self.assertFalse([route for profile,route in seen if profile!='primary' and route.startswith('/history/')],'offline backends are not asked for history')
 
     def test_stopped_record_with_a_result_still_in_comfy_history_blocks_switch(self):
         """Switching would stop the process holding the only descriptor Resume observation could still record."""
         self.studio.jobs={'a':{'id':'aaaa1111','status':'uncertain','prompt_ids':['p1'],'tracking_disposition':{'status':'stopped','reason':'r'}}}
         kept=lambda profile,route,timeout=2:{'p1':{'status':{'status_str':'success'},'outputs':{}}} if route=='/history/p1' else IDLE
-        with patch.object(self.manager,'request',side_effect=kept),patch('backends.threading.Thread') as thread:
+        with patch.object(self.manager,'request',side_effect=kept),patch.object(self.manager,'process',return_value=self.process()),patch('backends.threading.Thread') as thread:
             with self.assertRaisesRegex(ValueError,'resume its observation'):self.manager.switch('hidream')
         thread.assert_not_called()
         for failure,expect in ((TimeoutError('slow'),'history is unknown'),(ValueError('bad json'),None)):
             def flaky(profile,route,timeout=2,failure=failure):
                 if route.startswith('/history/'):raise failure
                 return IDLE
-            with self.subTest(failure=type(failure).__name__),patch.object(self.manager,'request',side_effect=flaky),patch('backends.threading.Thread') as thread:
+            with self.subTest(failure=type(failure).__name__),patch.object(self.manager,'request',side_effect=flaky),patch.object(self.manager,'process',return_value=self.process()),patch('backends.threading.Thread') as thread:
                 with self.assertRaises(ValueError) as caught:self.manager.switch('hidream')
                 if expect:self.assertIn(expect,str(caught.exception))
                 thread.assert_not_called()
         for reply in ([],None):
-            with self.subTest(reply=reply),patch.object(self.manager,'request',side_effect=lambda profile,route,timeout=2,reply=reply:reply if route.startswith('/history/') else IDLE),patch('backends.threading.Thread') as thread:
+            with self.subTest(reply=reply),patch.object(self.manager,'request',side_effect=lambda profile,route,timeout=2,reply=reply:reply if route.startswith('/history/') else IDLE),patch.object(self.manager,'process',return_value=self.process()),patch('backends.threading.Thread') as thread:
                 with self.assertRaisesRegex(ValueError,'history is unknown'):self.manager.switch('hidream')
                 thread.assert_not_called()
 

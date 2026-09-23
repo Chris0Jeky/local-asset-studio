@@ -11,7 +11,7 @@ import uuid
 from urllib.parse import quote
 from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
 from urllib.error import HTTPError
-from backend_contracts import connection_refused, endpoint_ready, loopback_port, queue_is_idle, readiness
+from backend_contracts import connection_refused, endpoint_ready, loopback_port, queue_is_idle, readiness, timed_out
 import gpu_memory
 
 
@@ -121,14 +121,16 @@ class BackendManager:
 
         Stopping that process would discard the only descriptor of a completed result that Resume observation could still
         record. An endpoint that refuses connections with no listener has no history left to lose; any other failure is unknown."""
-        for job in self.studio.jobs.values():
-            if not self._stopped_record(job):continue
+        stopped=[job for job in self.studio.jobs.values() if self._stopped_record(job)]
+        if not stopped:return
+        # A backend with no listening socket has no in-memory history to lose; ask the process table once per profile.
+        live=[profile for profile in self.profiles.values() if self.process(profile) is not None]
+        for job in stopped:
             for prompt_id in job.get('prompt_ids') or []:
                 if type(prompt_id) is not str or not prompt_id:continue
-                for profile in self.profiles.values():
+                for profile in live:
                     try:history=self.request(profile,'/history/'+quote(prompt_id,safe=''))
                     except OSError as exc:
-                        if connection_refused(exc) and self.process(profile) is None:continue
                         raise ValueError('ComfyUI history is unknown for '+profile['name']+'; existing processes were preserved') from exc
                     if not isinstance(history,dict):raise ValueError('ComfyUI history is unknown for '+profile['name']+'; existing processes were preserved')
                     if prompt_id in history:raise ValueError('Job '+str(job.get('id',''))[:8]+' has a result in '+profile['name']+"'s history; resume its observation before switching")
@@ -244,8 +246,10 @@ class BackendManager:
     def _idle(self, profile, allow_offline=False):
         try:queue=self.request(profile,'/queue')
         except OSError as exc:
-            # Timeouts, HTTP errors and inaccessible listeners are not evidence of absence.
-            if allow_offline and connection_refused(exc) and self.process(profile) is None:return False
+            # HTTP errors and inaccessible listeners are not evidence of absence, nor is a timeout while something listens.
+            # A refusal is, and so is a timeout with no listening socket at all: Windows answers a closed loopback port only
+            # after ~2 s of SYN retries (2.05 s measured 23 Sep 2026), past the probe timeout.
+            if allow_offline and (connection_refused(exc) or timed_out(exc)) and self.process(profile) is None:return False
             raise ValueError('ComfyUI queue state is unknown for '+profile['name']+'; existing processes were preserved') from exc
         queue_is_idle(queue)
         return True

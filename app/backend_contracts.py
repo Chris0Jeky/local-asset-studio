@@ -51,6 +51,12 @@ def connection_refused(error):
     return isinstance(reason, OSError) and (reason.errno == errno.ECONNREFUSED or getattr(reason, 'winerror', None) == 10061)
 
 
+def timed_out(error):
+    """A connect or read timeout, raised directly or wrapped in URLError.reason."""
+    reason = getattr(error, 'reason', error)
+    return isinstance(error, TimeoutError) or isinstance(reason, TimeoutError)
+
+
 def endpoint_ready(value):
     return isinstance(value, dict) and isinstance(value.get('system'), dict) and bool(value['system'])
 
