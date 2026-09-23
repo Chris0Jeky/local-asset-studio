@@ -43,6 +43,9 @@ Records with SHA-256 and crop coordinates:
 | Is the NoobAI Masterpiece colour fringe real? | lora-smoke README | **Yes.** A red/cyan fringe on the edges at both strengths, confirmed at full resolution. It ties the control, so there is no gain to set against it ([q-32](pre-reviews/q-32.md)). |
 | Is the `wai-skeleton` dark background acceptable at 0.8, and is the Studio proof clean? | CURRENT_STATE, sdxl-skeleton README | **Yes to both.** The proof (`6a342bbf`) is clean on white. On seed 03 at 0.8 the leak reads as a mid-grey backdrop (fixable). The bent-skeleton renders were not judged: that skeleton was estimated from an excluded fan picture. |
 | Does the pilot profile marked "needs review" keep the canon, and are the ten rejections right? | CURRENT_STATE, character-reference-pilot README | **The profile passes on everything visible**: the looped top section, the ornament with gold balls, blue eyes, bangs, frilled collar and the whole standard costume, in a strict side view with complete boots. Its hands are not visible, and the canon has no side view, so the owner confirms. Nine of the ten rejections hold at thumbnail level. The tenth, `606882fb` (rear view missing the lilac underskirt and the V boot tops), is strict: fixable under R1. No pictures committed (a named franchise character). |
+| Are Anima hands acceptable when visible? | CURRENT_STATE | **Yes, simplified but clean.** The plain base with artist tags (`anima-artist-stack_00002_`) draws a readable pinch on the hat brim and a loose fist; the fantasy pack's look B drew clean hands in 1, 2 and 3 ([q-30](pre-reviews/q-30.md)). Four Anima pictures with visible hands, none broken. |
+| Is any Wan 2.2 output temporally coherent? | CURRENT_STATE, workflow-lab README | **The surviving clip is, because it barely moves.** `examples/workflow-lab/wan-retro-anime.mp4` (job `e33116f1`, 33 frames): face, hand and umbrella hold with no flicker or morphing; consecutive frames differ by a median of 0.48 grey levels, first against last by 6.8 (a slight head turn, the mouth, the rain). Small periodic jumps every 3–4 frames are not codec keyframes (the MP4 has one I-frame); their spacing fits the Wan VAE's 4-frame temporal compression, a hypothesis. The recorded failures were not re-checked. |
+| Are the TRELLIS and Hunyuan3D lanterns usable drafts? | CURRENT_STATE, workflow-lab README | **As drafts, yes; as assets, not yet.** Hunyuan: one closed piece, recognisably the lantern from every side, but untextured, lumpy and with 1,243 non-manifold edges: a blockout. TRELLIS (trimmed): the better look, a consistent teal/brass/orange texture from all four sides, but the base is open where the ground plane was cut and the mesh is triangle soup (80,262 separate pieces): merge by distance and cap the base first. Checked with Blender on the CPU (Cycles, four side views and one from below). |
 
 ## Partly answered
 
@@ -52,7 +55,6 @@ Records with SHA-256 and crop coordinates:
 | Which Pony renders read adult, and which cues make Pony draw one? | lora-smoke README | the control, both Hands renders and (per the README) Dramatic Lighting 0.85 read youthful; Gothic Neon and Dramatic Lighting 0.6 read adult | which prompt cues work: needs renders |
 | Is Qwen-Image 2.1 good enough, next to the current defaults? | #739 | both seeds are underexposed navy and soft at 8 steps (style 3, technical 3) | more steps and a side-by-side with the defaults |
 | Does the replace route keep the portrait's face? | CURRENT_STATE, fantasy-pack README | the fringe, the earrings and the expression carry at full-body scale; the fine features are redrawn ([q-30](pre-reviews/q-30.md)) | portrait-fidelity faces: a face pass, needs renders |
-| Are Anima hands acceptable when visible? | CURRENT_STATE | on look B (the fantasy pack) the visible hands were clean in 1, 2 and 3 ([q-30](pre-reviews/q-30.md)) | plain Anima base with hands in view |
 | Which installed SDXL checkpoint is the best base (#14)? | #14, CURRENT_STATE | on the evidence so far, WAI and YumeFlux lead and tie, CSTati is close, Animagine is next, and Pony and NoobAI are weakest. Sources: the calibration pack (WAI 4.4, NoobAI 3.4–3.8, Pony 2.8–3.6 on one brief), the smoke controls (WAI 3.6, NoobAI 3.4, Pony 3.0) and the Style + Pose matrix | one fixed brief across all seven, three seeds, blind |
 | The Anima two-seed comparison `fbb384c7` | CURRENT_STATE | both seeds are clean and neither draws the sword the brief names; agent-judged here | which look the owner prefers (rubric R6); probably superseded |
 | Does the calibrated judge agree with the owner on new pictures? | #66, the calibration | measured on 14 tiered pictures: finds defects, ranks poorly | new owner verdicts |
@@ -96,7 +98,6 @@ Records with SHA-256 and crop coordinates:
 | Question | Why |
 | --- | --- |
 | Depth-cut value; subject isolation; speech-bubble and lettering leaks; Q8 against Q6 | every render uses the excluded student-canon fan pair (the q-28 note) |
-| Wan 2.2 video coherence; TRELLIS and Hunyuan3D meshes | video and 3D need frame or turntable review; not reached tonight |
 
 ## Found on the way
 
