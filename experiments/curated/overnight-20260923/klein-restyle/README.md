@@ -52,5 +52,8 @@ the footwear into the source description.
 ## Not verified
 
 - One source picture and three seeds.
+- The split test was not run. `klein_restyle.py split` (colours only and foot only, the same three seeds, records to `split/`)
+  was written on 23 September 2026, but the lab paused for the owner's wrap-up before its first job, and no job was submitted.
+  The foot fix is still confounded with the colour wording.
 - The gold sandal band on seed 52 is unexplained (it appears with every wording).
 - No art acceptance. q-27 stays the owner's. FLUX.2 Klein 4B is Apache-2.0.

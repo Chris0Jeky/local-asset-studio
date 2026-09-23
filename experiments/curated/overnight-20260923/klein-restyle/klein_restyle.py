@@ -2,6 +2,8 @@
 
     python klein_restyle.py run      # 9 Studio jobs (restyle-klein), one at a time
     python klein_restyle.py seal     # blind copies per seed + key.sealed.json
+    python klein_restyle.py split    # the confound split test (6 jobs to split/): written, NOT run (lab paused 23 Sep 2026)
+    python klein_restyle.py seal-split
 
 The q-27 pre-review (PR #862) found two repeat faults in every Klein restyle of `Style-Pose/Nova_00004_.png` (the owner ruled
 on 23 September 2026 that she is an adult original): the raised leg's foot comes out as a toe-less stocking tip, and the shipped
@@ -48,6 +50,30 @@ def run():
             labkit.run_studio(intent, '%s-%d' % (name, seed), results, timeout=1200, extra={'config': name, 'seed': seed})
 
 
+SPLIT = {
+    'colours-only': SHIPPED.replace('long dark hair', 'long purple hair, blue eyes'),
+    'foot-only': SHIPPED.replace('one knee raised,', 'one knee raised, bare feet,'),
+}
+
+
+def split():
+    """Split test for the confound in the first run (#883 review): colours only, and footwear only, on the same three seeds.
+    Results go to split/ so the judged first key stays untouched."""
+    results = labkit.Results(HERE / 'split')
+    for seed in SEEDS:
+        for name, text in SPLIT.items():
+            controls = {'positive': FINISH + text, 'seed': seed, 'steps': 6, 'cfg': 1, 'width': 1040, 'height': 1520, 'reference': REFERENCE}
+            intent = {'preset_id': 'restyle-klein', 'controls': controls, 'batch_count': 1, 'references': [], 'parent_assets': []}
+            labkit.run_studio(intent, '%s-%d' % (name, seed), results, timeout=1200, extra={'config': name, 'seed': seed})
+
+
+def seal_split():
+    results = labkit.Results(HERE / 'split')
+    items = [{'group': 's%d' % (SEEDS.index(r['seed']) + 1), 'config': r['config'], 'file': r['output_files'][0]['file']}
+             for r in results.records if r.get('status') == 'completed' and r.get('output_files')]
+    print(labkit.seal(items, HERE / 'split'))
+
+
 def seal():
     results = labkit.Results(HERE)
     items = [{'group': 's%d' % (SEEDS.index(r['seed']) + 1), 'config': r['config'], 'file': r['output_files'][0]['file']}
@@ -56,4 +82,4 @@ def seal():
 
 
 if __name__ == '__main__':
-    {'run': run, 'seal': seal}[sys.argv[1]]()
+    {'run': run, 'seal': seal, 'split': split, 'seal-split': seal_split}[sys.argv[1]]()
