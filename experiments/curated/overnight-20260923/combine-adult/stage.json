@@ -1,0 +1,117 @@
+{
+ "character": {
+  "file": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+  "sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+  "bytes": 1184091,
+  "width": 832,
+  "height": 1216,
+  "original_name": "adult-traveller-portrait.png"
+ },
+ "pose_picture": {
+  "file": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png",
+  "sha256": "fd6c3db4c974c833a7c6780531382531622363c0a6f2631b821a5972fc965df4",
+  "bytes": 280692,
+  "width": 832,
+  "height": 1216,
+  "original_name": "adult-stance-pose.png"
+ },
+ "skeleton": {
+  "file": "46eee08aa10e476ba54577b96041fcdb_drawn-pose.png",
+  "sha256": "87479eebf275e06ad2d672f84d1eda3433cf526422428ece0dd93c74ae89d8a6",
+  "bytes": 9702,
+  "width": 832,
+  "height": 1216,
+  "original_name": "drawn-pose",
+  "artifact_id": "64265bacdc3fd2f00b6e66ab22f90d9f2035af5251e2d733bc1f46bc1938b96b",
+  "artifact": {
+   "id": "64265bacdc3fd2f00b6e66ab22f90d9f2035af5251e2d733bc1f46bc1938b96b",
+   "schema": "studio.pose-artifact/v1",
+   "file": "64265bacdc3fd2f00b6e66ab22f90d9f2035af5251e2d733bc1f46bc1938b96b.pose.json",
+   "sha256": "df30edb67c4b8831915a0aa0c8b445c45f9fafff809def3227928684da1ea9a3",
+   "bytes": 1651,
+   "url": "/api/pose/artifacts/64265bacdc3fd2f00b6e66ab22f90d9f2035af5251e2d733bc1f46bc1938b96b",
+   "authority": "none",
+   "review": "unreviewed"
+  },
+  "renderer": "studio.coco18-lines/v1",
+  "generation_submitted": false
+ },
+ "keypoints": {
+  "width": 832,
+  "height": 1216,
+  "source": "pose-source-v2-2026092346_00001_.png, joints read by eye at full resolution. COCO-18 order: nose, neck, R shoulder, R elbow, R wrist, L shoulder, L elbow, L wrist, R hip, R knee, R ankle, L hip, L knee, L ankle, R eye, L eye, R ear, L ear. R/L are the figure's own sides; the right ear is hidden.",
+  "keypoints": [
+   [
+    458,
+    312
+   ],
+   [
+    440,
+    388
+   ],
+   [
+    372,
+    402
+   ],
+   [
+    402,
+    222
+   ],
+   [
+    425,
+    118
+   ],
+   [
+    508,
+    408
+   ],
+   [
+    545,
+    560
+   ],
+   [
+    606,
+    626
+   ],
+   [
+    330,
+    612
+   ],
+   [
+    245,
+    842
+   ],
+   [
+    118,
+    1072
+   ],
+   [
+    468,
+    616
+   ],
+   [
+    570,
+    852
+   ],
+   [
+    692,
+    1062
+   ],
+   [
+    440,
+    290
+   ],
+   [
+    482,
+    290
+   ],
+   null,
+   [
+    500,
+    318
+   ]
+  ]
+ },
+ "character_source": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anima-v1-Baseline_00004_.png",
+ "pose_source": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\combine-adult\\pose-source-v2-2026092346_00001_.png"
+}

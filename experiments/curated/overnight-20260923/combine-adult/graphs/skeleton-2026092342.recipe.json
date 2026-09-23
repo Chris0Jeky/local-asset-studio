@@ -1,0 +1,528 @@
+{
+ "version": 2,
+ "preset_id": "combine-klein-9b-skeleton",
+ "controls": {
+  "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "last_reference": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+  "seed": 2026092342
+ },
+ "batch_count": 1,
+ "created_at": 1790136132.525602,
+ "workflow": {
+  "1": {
+   "class_type": "UnetLoaderGGUF",
+   "inputs": {
+    "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+    "type": "flux2",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "flux2-vae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "text": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "clip": [
+     "2",
+     0
+    ]
+   }
+  },
+  "5": {
+   "class_type": "ConditioningZeroOut",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "CFGGuider",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "positive": [
+     "23",
+     0
+    ],
+    "negative": [
+     "18",
+     0
+    ],
+    "cfg": 1.0
+   }
+  },
+  "7": {
+   "class_type": "RandomNoise",
+   "inputs": {
+    "noise_seed": 2026092342
+   }
+  },
+  "8": {
+   "class_type": "KSamplerSelect",
+   "inputs": {
+    "sampler_name": "euler"
+   }
+  },
+  "9": {
+   "class_type": "Flux2Scheduler",
+   "inputs": {
+    "steps": 6,
+    "width": 1024,
+    "height": 1536
+   }
+  },
+  "10": {
+   "class_type": "EmptyFlux2LatentImage",
+   "inputs": {
+    "width": 1024,
+    "height": 1536,
+    "batch_size": 1
+   }
+  },
+  "11": {
+   "class_type": "SamplerCustomAdvanced",
+   "inputs": {
+    "noise": [
+     "7",
+     0
+    ],
+    "guider": [
+     "6",
+     0
+    ],
+    "sampler": [
+     "8",
+     0
+    ],
+    "sigmas": [
+     "9",
+     0
+    ],
+    "latent_image": [
+     "10",
+     0
+    ]
+   }
+  },
+  "12": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "11",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "13": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "filename_prefix": "Combine/Klein-9B-skeleton",
+    "images": [
+     "12",
+     0
+    ]
+   }
+  },
+  "14": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "46eee08aa10e476ba54577b96041fcdb_drawn-pose.png"
+   }
+  },
+  "15": {
+   "class_type": "ImageScaleToTotalPixels",
+   "inputs": {
+    "image": [
+     "14",
+     0
+    ],
+    "upscale_method": "lanczos",
+    "megapixels": 1.0,
+    "resolution_steps": 1
+   }
+  },
+  "16": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "15",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "17": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ],
+    "latent": [
+     "16",
+     0
+    ]
+   }
+  },
+  "18": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "5",
+     0
+    ],
+    "latent": [
+     "16",
+     0
+    ]
+   }
+  },
+  "20": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png"
+   }
+  },
+  "21": {
+   "class_type": "ImageScaleToTotalPixels",
+   "inputs": {
+    "image": [
+     "20",
+     0
+    ],
+    "upscale_method": "lanczos",
+    "megapixels": 1.0,
+    "resolution_steps": 1
+   }
+  },
+  "22": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "21",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "23": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "17",
+     0
+    ],
+    "latent": [
+     "22",
+     0
+    ]
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "820a4406-85d4-4f13-a827-48461324057e",
+   "seed": 2026092342,
+   "graph": {
+    "1": {
+     "class_type": "UnetLoaderGGUF",
+     "inputs": {
+      "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "text": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+      "clip": [
+       "2",
+       0
+      ]
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "CFGGuider",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "positive": [
+       "23",
+       0
+      ],
+      "negative": [
+       "18",
+       0
+      ],
+      "cfg": 1.0
+     }
+    },
+    "7": {
+     "class_type": "RandomNoise",
+     "inputs": {
+      "noise_seed": 2026092342
+     }
+    },
+    "8": {
+     "class_type": "KSamplerSelect",
+     "inputs": {
+      "sampler_name": "euler"
+     }
+    },
+    "9": {
+     "class_type": "Flux2Scheduler",
+     "inputs": {
+      "steps": 6,
+      "width": 1024,
+      "height": 1536
+     }
+    },
+    "10": {
+     "class_type": "EmptyFlux2LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1536,
+      "batch_size": 1
+     }
+    },
+    "11": {
+     "class_type": "SamplerCustomAdvanced",
+     "inputs": {
+      "noise": [
+       "7",
+       0
+      ],
+      "guider": [
+       "6",
+       0
+      ],
+      "sampler": [
+       "8",
+       0
+      ],
+      "sigmas": [
+       "9",
+       0
+      ],
+      "latent_image": [
+       "10",
+       0
+      ]
+     }
+    },
+    "12": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "11",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "13": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "filename_prefix": "Combine/Klein-9B-skeleton",
+      "images": [
+       "12",
+       0
+      ]
+     }
+    },
+    "14": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "46eee08aa10e476ba54577b96041fcdb_drawn-pose.png"
+     }
+    },
+    "15": {
+     "class_type": "ImageScaleToTotalPixels",
+     "inputs": {
+      "image": [
+       "14",
+       0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+     }
+    },
+    "16": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "15",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "17": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ],
+      "latent": [
+       "16",
+       0
+      ]
+     }
+    },
+    "18": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "5",
+       0
+      ],
+      "latent": [
+       "16",
+       0
+      ]
+     }
+    },
+    "20": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png"
+     }
+    },
+    "21": {
+     "class_type": "ImageScaleToTotalPixels",
+     "inputs": {
+      "image": [
+       "20",
+       0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+     }
+    },
+    "22": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "21",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "23": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "17",
+       0
+      ],
+      "latent": [
+       "22",
+       0
+      ]
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 2446053376,
+    "peak_dedicated_bytes": 13933490176,
+    "samples": 8,
+    "spilled": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "Klein-9B-skeleton_00006_.png",
+   "subfolder": "Combine",
+   "type": "output",
+   "seed": 2026092342,
+   "prompt_id": "820a4406-85d4-4f13-a827-48461324057e",
+   "media_type": "image",
+   "asset_id": "9810d317adc8523f828cb5d083830809"
+  }
+ ],
+ "parent_assets": [],
+ "references": [
+  {
+   "file": "46eee08aa10e476ba54577b96041fcdb_drawn-pose.png",
+   "sha256": "87479eebf275e06ad2d672f84d1eda3433cf526422428ece0dd93c74ae89d8a6",
+   "bytes": 9702,
+   "width": 832,
+   "height": 1216,
+   "role": "pose",
+   "slot": 1,
+   "contribution": "",
+   "avoid": "",
+   "transform": {
+    "policy": "FLUX.2 Klein reference latents: the drawn skeleton is image 1 (its body position is followed), your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+   }
+  }
+ ],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

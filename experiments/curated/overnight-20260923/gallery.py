@@ -39,7 +39,7 @@ def main(argv):
     cards, safe = [], []
     for r in records:
         if r.get('status') not in ('success', 'completed'): continue
-        for o in r.get('outputs') or r.get('output_files') or []:
+        for o in r.get('output_files') or r.get('outputs') or []:  # Studio records keep the file paths in output_files
             path = Path(o['file'])
             if '/mask-' in str(path).replace('\\', '/') or not path.exists(): continue
             j = judged.get(str(path).lower())

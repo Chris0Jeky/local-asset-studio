@@ -1,0 +1,100 @@
+{
+ "1": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "pony-diffusion-v6.safetensors"
+  }
+ },
+ "2": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "10",
+    0
+   ],
+   "text": "score_9, score_8_up, score_7_up, score_6_up, source_anime, rating_safe, 1girl, solo, makima (chainsaw man), adult woman, red hair, braided ponytail, yellow eyes, ringed eyes, white collared shirt, black necktie, black jacket, portrait, looking at viewer, slight smile, office window, evening light, upper body, mature female, tall, adult proportions, adult face"
+  }
+ },
+ "3": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "10",
+    0
+   ],
+   "text": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark, nsfw, nude, nipples, explicit, sex, underwear, lingerie, loli, child, young, teenage, school uniform"
+  }
+ },
+ "4": {
+  "class_type": "EmptyLatentImage",
+  "inputs": {
+   "width": 1024,
+   "height": 1024,
+   "batch_size": 1
+  }
+ },
+ "5": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "seed": 2026092301,
+   "steps": 30,
+   "cfg": 6.0,
+   "sampler_name": "euler_ancestral",
+   "scheduler": "normal",
+   "positive": [
+    "2",
+    0
+   ],
+   "negative": [
+    "3",
+    0
+   ],
+   "latent_image": [
+    "4",
+    0
+   ],
+   "denoise": 1.0
+  }
+ },
+ "6": {
+  "class_type": "VAEDecodeTiled",
+  "inputs": {
+   "samples": [
+    "5",
+    0
+   ],
+   "vae": [
+    "1",
+    2
+   ],
+   "tile_size": 512,
+   "overlap": 64,
+   "temporal_size": 64,
+   "temporal_overlap": 8
+  }
+ },
+ "7": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "6",
+    0
+   ],
+   "filename_prefix": "Research/overnight-20260923/q32-loras/pony-control-portrait"
+  }
+ },
+ "10": {
+  "class_type": "CLIPSetLastLayer",
+  "inputs": {
+   "clip": [
+    "1",
+    1
+   ],
+   "stop_at_clip_layer": -2
+  }
+ }
+}
