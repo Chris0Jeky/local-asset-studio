@@ -21,4 +21,7 @@ target = {'python': str(Path(config.get('python', 'C:/AI/ComfyUI_windows_portabl
           'reserve_vram': BackendManager.configured_reserve(config.get('primary_reserve_vram', PRIMARY_RESERVE_VRAM))}
 reserve = BackendManager.launch_reserve(target)
 argv = BackendManager.primary_argv(target, reserve)
+# The desktop launcher has always loaded ComfyUI-Manager (runtime-patches/README.md); keep that for this path only.
+# The ownership checks read --listen/--port, so the extra flag does not change which process the Studio adopts.
+argv.append('--enable-manager')
 print(json.dumps({'python': argv[0], 'arguments': argv[1:], 'reserve': reserve}))

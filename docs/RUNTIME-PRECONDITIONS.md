@@ -213,15 +213,16 @@ change to only one of the two produces two different runtimes on the same port.
 | `C:/AI/Start-ComfyUI.ps1.bak-20260923-reserve06` (reserve 0.6, 12-22 September) | `0c3fbc95bcb27444797eeffe08bb4047029a55f1ad352a9f979ed26bf8ea969e` |
 | `C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2` (reserve 2, original) | `526fcda531f6d7aded268e9f69ad3fa1bc643d05f7e74e65f5b32f902ddc604c` |
 
-To revert, with the ComfyUI queue empty and its process stopped, copy the backup back over the
-launcher and re-check the hash:
+To revert to the 12 September reserve-2 original, with the ComfyUI queue empty and its process stopped,
+copy that backup back over the launcher and re-check the hash (§8 has the revert to the 0.6 launcher):
 
 ```powershell
 Copy-Item "C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2" "C:/AI/Start-ComfyUI.ps1" -Force
 Get-FileHash "C:/AI/Start-ComfyUI.ps1" -Algorithm SHA256
 ```
 
-Reverting the launcher alone leaves `app/backends.py` at 0.6; revert both or neither. The change is
+Since 23 September `app/backends.py` measures the reserve per launch (§8); pin `primary_reserve_vram` in
+`config/local.json` to the launcher's value when reverting, so both paths start the same runtime. The change is
 also logged in [`runtime-patches/README.md`](../runtime-patches/README.md).
 
 The two argument lists are **not** otherwise identical, and this predates the reserve change: the
@@ -310,8 +311,11 @@ The primary's Krea 2 fp8 route (13.1 GB of diffusion weights) was recorded at 94
   to `C:/AI/Start-ComfyUI.ps1 -ArgumentsFile`. Before this, the startup script omitted
   `--disable-pinned-memory`, so a Studio started from the desktop shortcut pinned about 13 GB of host
   RAM (`Enabled pinned memory 12994.0` in `C:/AI/logs/20260922-231528-error.log`) although config asks
-  for it off. Run without `-ArgumentsFile`, the launcher now defaults to `--reserve-vram 4
-  --disable-pinned-memory` (and still `--enable-manager`, which the Studio's own path does not pass).
+  for it off. The desktop path keeps `--enable-manager` (ComfyUI-Manager), which the Studio's switch and
+  recovery launches still do not pass; the ownership checks only read `--listen`/`--port`. Run without
+  `-ArgumentsFile`, the launcher defaults to `--reserve-vram 4 --disable-pinned-memory --enable-manager`.
+- Pinned host memory is not counted as a spill: the primary started with about 13 GB pinned read
+  9,755 MB dedicated and 79 MB shared through the same counters.
 - Each job records the peak dedicated and shared memory of the ComfyUI process while it runs
   (`submissions[].gpu_memory`, sampled every 10 s); a job that spilled more than 512 MB completes with
   the message *Complete, but slowly: GPU memory spilled … into system RAM*. `/api/health` carries the

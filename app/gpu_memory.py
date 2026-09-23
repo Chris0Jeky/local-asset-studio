@@ -107,9 +107,10 @@ def launch_reserve_gib(reading=None, exclude_pids=()):
 
 def spill(pid, reading=None):
     """A running ComfyUI process's dedicated and shared GPU memory; `spilled` when shared use shows WDDM paging."""
+    if pid is None: return {'pid': None, 'dedicated_bytes': None, 'shared_bytes': None, 'spilled': None, 'unknown_reason': 'No ComfyUI process to measure'}
     reading = read() if reading is None else reading
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
-    if not adapters or pid is None:
+    if not adapters:
         return {'pid': pid, 'dedicated_bytes': None, 'shared_bytes': None, 'spilled': None,
                 'unknown_reason': (reading or {}).get('unknown_reason') or 'No ComfyUI process to measure'}
     adapter = select_adapter(adapters, pid)

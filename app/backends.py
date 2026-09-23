@@ -112,10 +112,12 @@ class BackendManager:
         return number
 
     @staticmethod
-    def launch_reserve(target):
-        """The --reserve-vram decision for one launch: the configured number, else what other processes hold on the GPU."""
+    def launch_reserve(target, exclude_pids=()):
+        """The --reserve-vram decision for one launch: the configured number, else what other processes hold on the GPU.
+
+        `exclude_pids` drops backends this switch just stopped, whose counters can lag their exit."""
         if target.get('reserve_vram','auto')!='auto':return {'reserve_gib':float(target['reserve_vram']),'basis':'configured','others_bytes':None,'adapter':None,'unknown_reason':None}
-        return gpu_memory.launch_reserve_gib()
+        return gpu_memory.launch_reserve_gib(exclude_pids=exclude_pids)
 
     @staticmethod
     def primary_argv(target, reserve=None):
@@ -312,7 +314,8 @@ class BackendManager:
                 if not owned:
                     stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
                     if identifier=='primary':
-                        self.last_launch_reserve=dict(self.launch_reserve(target),recorded_at=time.time(),profile=identifier)
+                        stopped=[p['pid'] for p in self.operation.get('stopped_processes',[])]
+                        self.last_launch_reserve=dict(self.launch_reserve(target,stopped),recorded_at=time.time(),profile=identifier,excluded_pids=stopped)
                         argv=self.primary_argv(target,self.last_launch_reserve);self.operation['launch_reserve']=self.last_launch_reserve
                     elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
                     else:argv=[target['python'],'-s',target['entry'],'--comfy-root',target['root']]
