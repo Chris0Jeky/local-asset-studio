@@ -22,7 +22,8 @@ if (-not $Detached) {
         $created = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "powershell.exe -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded"; CurrentDirectory = $repoRoot; ProcessStartupInformation = $startup }
         if ($created.ReturnValue -ne 0) { throw "Could not start the Studio outside this shell's job object (Win32_Process.Create returned $($created.ReturnValue))." }
         $child = Get-Process -Id $created.ProcessId -ErrorAction SilentlyContinue
-        if ($child) { $null = $child.Handle; $child.WaitForExit() }
+        # The copy's own waits end within about 5 minutes (ComfyUI 240 s, Studio 30 s); do not block a caller forever past that.
+        if ($child) { $null = $child.Handle; if (-not $child.WaitForExit(600000)) { throw "The detached launcher (PID $($child.Id)) is still running after 10 minutes. See $detachLog and the logs in $logRoot." } }
         if (Test-Path -LiteralPath $detachLog) { Get-Content -LiteralPath $detachLog | ForEach-Object { Write-Host $_ } }
         $ready = $false
         try { $identity = Invoke-RestMethod 'http://127.0.0.1:8191/api/identity' -TimeoutSec 3; $ready = $identity.app -eq 'local-asset-studio' -and $identity.workspace -eq $repoRoot } catch { }

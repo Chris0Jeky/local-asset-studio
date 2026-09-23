@@ -1,5 +1,10 @@
 # LoRA disk audit: on-disk LoRAs vs upstream pages (issue #762), 23 September 2026
 
+> **Reading the flags (owner clarification, 23 September 2026).** An adapter's `nsfw` flag or a name such as "policy-bypass"
+> or "Refusal Reduction" is the source site's label, kept so the file can be identified. It does not make an image explicit:
+> a picture is explicit or not because of its prompt and content. Recipes that load such an adapter are not explicit
+> recipes on that account (q-32 (c): `anima-screenshot-stack` and `krea-realism-engine` stay where they are).
+
 **What was checked, and when (local time, BST).** Every `.safetensors` file in the primary ComfyUI LoRA folder
 (`C:/AI/ComfyUI_windows_portable/ComfyUI/models/loras/`, 85 files, about 26 GB) was hashed with SHA-256 at
 00:04-00:05. Each hash was then looked up with civitai's `GET /api/v1/model-versions/by-hash/<sha256>` at 00:07-00:08 and

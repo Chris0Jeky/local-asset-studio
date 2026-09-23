@@ -2598,6 +2598,142 @@
         0.6,
         1.0
       ]
+    },
+    {
+      "id": "a1animegirls-klein9b",
+      "name": "A1 Anime style - Flux.2 Klein 9b / v1.0",
+      "file": "loras/A1AnimeGirls_Klein9B.safetensors",
+      "source": "https://civitai.com/models/2497765?modelVersionId=2807775",
+      "url": "https://civitai.com/api/download/models/2807775",
+      "bytes": 165703320,
+      "sha256": "f82bdf186138681632c35a6433e8b020871c3d81c50d1ae765a00cb449a3350e",
+      "license": "",
+      "terms": "civitai model 2497765 / version 2807775 (v1.0), identified by SHA-256 (GET /api/v1/model-versions/by-hash) and flags read from /api/v1/models/2497765 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'Flux.2 Klein 9B'. Already on disk before the pin (how it was downloaded is unrecorded); pinned from the on-disk bytes by owner decision q-32 (b), 23 September 2026, because the #762 audit found it unpinned and unused. No recipe uses it yet. A hash match is not creator authentication; a civitai flag is not licence clearance.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "aimaginedworlds-turbo-zimage",
+      "name": "aimaginedworlds: Z-Image Turbo LoRA Guide (Best Version) / v1.0",
+      "file": "loras/aimaginedworlds_turbo_zimage.safetensors",
+      "source": "https://civitai.com/models/2286065?modelVersionId=2572799",
+      "url": "https://civitai.com/api/download/models/2572799",
+      "bytes": 170128312,
+      "sha256": "34d27f3c3ef36791284726d684877f445453b57089bb05d47c4b6aaf4a40b7ae",
+      "license": "",
+      "terms": "civitai model 2286065 / version 2572799 (v1.0), identified by SHA-256 (GET /api/v1/model-versions/by-hash) and flags read from /api/v1/models/2286065 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'ZImageTurbo'. Already on disk before the pin (how it was downloaded is unrecorded); pinned from the on-disk bytes by owner decision q-32 (b), 23 September 2026, because the #762 audit found it unpinned and unused. No recipe uses it yet. A hash match is not creator authentication; a civitai flag is not licence clearance.",
+      "family": "Z-Image Turbo",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "aniedit-klein4b",
+      "name": "AniEdit (Flux 2 Klein) / 4B",
+      "file": "loras/AniEdit-Klein4B.safetensors",
+      "source": "https://civitai.com/models/2332320?modelVersionId=2623552",
+      "url": "https://civitai.com/api/download/models/2623552",
+      "bytes": 739267464,
+      "sha256": "12c5a690b1e71117835c58a9e6a699271b2488cb723da20294d0475d141c70dc",
+      "license": "",
+      "terms": "civitai model 2332320 / version 2623552 (4B), identified by SHA-256 (GET /api/v1/model-versions/by-hash) and flags read from /api/v1/models/2332320 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'Flux.2 Klein 4B'. Already on disk before the pin (how it was downloaded is unrecorded); pinned from the on-disk bytes by owner decision q-32 (b), 23 September 2026, because the #762 audit found it unpinned and unused. No recipe uses it yet. A hash match is not creator authentication; a civitai flag is not licence clearance.",
+      "family": "FLUX.2 Klein 4B",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "aniedit9b-v2",
+      "name": "AniEdit (Flux 2 Klein) / 9B v2",
+      "file": "loras/AniEdit9B_v2.safetensors",
+      "source": "https://civitai.com/models/2332320?modelVersionId=2642969",
+      "url": "https://civitai.com/api/download/models/2642969",
+      "bytes": 994079944,
+      "sha256": "d37d58268f6e704f7d5d5daf3cfc4d69bc82189c71e17494b5e02b6892274927",
+      "license": "",
+      "terms": "civitai model 2332320 / version 2642969 (9B v2), identified by SHA-256 (GET /api/v1/model-versions/by-hash) and flags read from /api/v1/models/2332320 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'Flux.2 Klein 9B'. Already on disk before the pin (how it was downloaded is unrecorded); pinned from the on-disk bytes by owner decision q-32 (b), 23 September 2026, because the #762 audit found it unpinned and unused. No recipe uses it yet. A hash match is not creator authentication; a civitai flag is not licence clearance.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "anime-style-v1-zimage",
+      "name": "Anime Style Lora For Z-Image-Turbo / v1.0",
+      "file": "loras/anime_style_v1_zimage.safetensors",
+      "source": "https://civitai.com/models/2186181?modelVersionId=2461573",
+      "url": "https://civitai.com/api/download/models/2461573",
+      "bytes": 340194480,
+      "sha256": "1e72f061f777570a634a915914dc8dbaa6b73c1dc9ac1681e6e216debbb146f8",
+      "license": "",
+      "terms": "civitai model 2186181 / version 2461573 (v1.0), identified by SHA-256 (GET /api/v1/model-versions/by-hash) and flags read from /api/v1/models/2186181 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'ZImageTurbo'. Already on disk before the pin (how it was downloaded is unrecorded); pinned from the on-disk bytes by owner decision q-32 (b), 23 September 2026, because the #762 audit found it unpinned and unused. No recipe uses it yet. A hash match is not creator authentication; a civitai flag is not licence clearance.",
+      "family": "Z-Image Turbo",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "elusarca-anime-style-zimage",
+      "name": "Elusarca's Anime Style LoRA for Z-Image Turbo / v1.0",
+      "file": "loras/elusarca_anime_style_zimage.safetensors",
+      "source": "https://civitai.com/models/2176274?modelVersionId=2450720",
+      "url": "https://civitai.com/api/download/models/2450720",
+      "bytes": 170128320,
+      "sha256": "4e2edb94c3cf7573af9734e7ce171c1c3176119febfa81470acc326d671774a8",
+      "license": "",
+      "terms": "civitai model 2176274 / version 2450720 (v1.0), identified by SHA-256 (GET /api/v1/model-versions/by-hash) and flags read from /api/v1/models/2176274 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'ZImageTurbo'. Already on disk before the pin (how it was downloaded is unrecorded); pinned from the on-disk bytes by owner decision q-32 (b), 23 September 2026, because the #762 audit found it unpinned and unused. No recipe uses it yet. A hash match is not creator authentication; a civitai flag is not licence clearance.",
+      "family": "Z-Image Turbo",
+      "trigger": "elusarca anime style",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "klein9b-anime-v3-refined",
+      "name": "Mrpopo's Flux.2 Klein 9B anime / Anime V3 Refined",
+      "file": "loras/Klein9B_Anime_V3_Refined.safetensors",
+      "source": "https://civitai.com/models/2432849?modelVersionId=2825584",
+      "url": "https://civitai.com/api/download/models/2825584",
+      "bytes": 165705536,
+      "sha256": "8e15bcaa9347e3a84e6deb0c35696443c585786a013fc6632b2bf66942aefebe",
+      "license": "",
+      "terms": "civitai model 2432849 / version 2825584 (Anime V3 Refined), identified by SHA-256 (GET /api/v1/model-versions/by-hash) and flags read from /api/v1/models/2432849 on 2026-09-23: allowCommercialUse RentCivit, Rent, Image; allowNoCredit true; derivatives NOT allowed; different licence allowed. Base model 'Flux.2 Klein 9B'. Already on disk before the pin (how it was downloaded is unrecorded); pinned from the on-disk bytes by owner decision q-32 (b), 23 September 2026, because the #762 audit found it unpinned and unused. No recipe uses it yet. A hash match is not creator authentication; a civitai flag is not licence clearance.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "z-image-anime-v1",
+      "name": "Illustrious Anime Collection / Z-Image-Turbo-Anime-V1",
+      "file": "loras/z-image-anime-v1.safetensors",
+      "source": "https://civitai.com/models/1994924?modelVersionId=2455794",
+      "url": "https://civitai.com/api/download/models/2455794",
+      "bytes": 170128232,
+      "sha256": "2cbbd577fd4849e9ad4928092f0515318c4d6e2ae47ea5e5fa78d22d5dcb00fd",
+      "license": "",
+      "terms": "civitai model 1994924 / version 2455794 (Z-Image-Turbo-Anime-V1), identified by SHA-256 (GET /api/v1/model-versions/by-hash) and flags read from /api/v1/models/1994924 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'ZImageTurbo'. nsfw=true on the listing (a site label, not a property of the images a recipe makes). Already on disk before the pin (how it was downloaded is unrecorded); pinned from the on-disk bytes by owner decision q-32 (b), 23 September 2026, because the #762 audit found it unpinned and unused. No recipe uses it yet. A hash match is not creator authentication; a civitai flag is not licence clearance.",
+      "family": "Z-Image Turbo",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
     }
   ],
   "collections": [
