@@ -69,6 +69,12 @@ examples/combine-research/*.jpeg
 examples/combine-research/*.png
 examples/combine-research/*.webp
 examples/combine-research/index.html
+# Committed pictures later found to hold nude or near-nude renders (lab-media policy): local-only since 23 September 2026
+examples/local-only/*.jpg
+examples/local-only/*.jpeg
+examples/local-only/*.png
+examples/local-only/*.webp
+examples/local-only/index.html
 # ...and the traced pose pictures its research scripts would regenerate in place (pose_sources.py, lora_pose.py)
 experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-depth-raw.png
 experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-depth-painted.png

@@ -15,7 +15,7 @@ import argparse, hashlib, html, json, re, subprocess, sys
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-FOLDERS=('nsfw-lab','civitai-intake','combine-research')
+FOLDERS=('nsfw-lab','civitai-intake','combine-research','local-only')
 
 def _root(args):
     return Path(args.repo_root).resolve() if getattr(args,'repo_root',None) else ROOT

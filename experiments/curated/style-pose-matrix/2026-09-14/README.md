@@ -10,8 +10,11 @@ weighting; Xinsir OpenPose ControlNet from an OpenPose skeleton extracted at 102
 
 Grid: six checkpoints × {no LoRA / cinematic lighting 0.5 / manga-ink-screentone 0.6} × {throne, beach}; the
 LoRA cells ran on the throne pose only (cinematic) or both poses (screentone) to keep the run under two hours.
-Assessment sheet: [`examples/style-pose/matrix/assessment-sheet.jpg`](../../../../examples/style-pose/matrix/assessment-sheet.jpg);
-full-size JPEG copies of six cells sit next to it.
+Assessment sheet: [`examples/local-only/assessment-sheet.jpg`](../../../../examples/local-only/assessment-sheet.jpg);
+full-size JPEG copies of six cells sit next to it. **Local-only since 23 September 2026:** the assessment sheet and the
+WAI beach cell moved to `examples/local-only/` (gitignored; `MANIFEST.json` there records hash, size and former path) because the
+beach render (cell S49, job `4fcdbfa9`) came out without a visible garment although the prompt asked for a clothed witch; the
+other five cell copies stay.
 
 ## What was seen (one seed, my reading, not art acceptance)
 

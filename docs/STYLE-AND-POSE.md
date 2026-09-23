@@ -264,7 +264,7 @@ licence clearance for the checkpoint, the adapters or either reference picture.
 
 Six checkpoints × three LoRA settings × two poses with the owner's own pictures, one seed, 30 Studio jobs:
 [`experiments/curated/style-pose-matrix/2026-09-14/`](../experiments/curated/style-pose-matrix/2026-09-14/README.md),
-assessment sheet in [`examples/style-pose/matrix/`](../examples/style-pose/matrix/assessment-sheet.jpg). WAI v17 and
+assessment sheet in [`examples/local-only/`](../examples/local-only/assessment-sheet.jpg) (local-only since 23 September 2026). WAI v17 and
 YumeFlux carried both the palette and the poses; Animagine was darker; CSTati soft; Pony V6 and NoobAI produced no figure
 at all, so their recipes were dropped. Cells took 62–372 s each; the spread is ComfyUI reloading models from paged RAM,
 not the graph (see the README). Seven Illustrious LoRAs for this look were installed afterwards

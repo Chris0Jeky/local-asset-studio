@@ -1,0 +1,37 @@
+{
+ "version": 1,
+ "folder": "local-only",
+ "updated": "2026-09-23",
+ "policy": "Image files are local-only and gitignored; this manifest is the tracked record.",
+ "reason": "General local-only folder for committed pictures later found to contain nude or near-nude renders (lab-media local-only policy). First entries: the Style+Pose matrix render whose prompt asked for a clothed witch but came out without a visible garment (cell S49), found by the overnight blind judge on 23 September 2026.",
+ "source": "experiments/curated/style-pose-matrix/2026-09-14/README.md",
+ "restore": "python scripts/lab-media.py restore --folder local-only --from-ref a5133b8407ed (reads each entry's former_path at that commit)",
+ "entries": [
+  {
+   "id": "style-pose-wai__none__beach",
+   "file": "style-pose-wai__none__beach.jpg",
+   "sha256": "b741846b36c002c19e00fd8b711b7ff5fd2f54423dbcf162e0d6390814a8ce05",
+   "bytes": 131265,
+   "width": 640,
+   "height": 935,
+   "job_id": "4fcdbfa9-d3de-49ce-a4c1-4ee025679f1b",
+   "prompt_id": "0a0fca62-f4b1-41f2-b135-7ed81c7d9137",
+   "source_png": "Style-Pose/WAI_00008_.png",
+   "former_path": "examples/style-pose/matrix/style-pose-wai__none__beach.jpg",
+   "note": "Full-size JPEG copy of Style+Pose matrix cell S49 (WAI v17, no LoRA, beach pose, seed 2026091410; job 4fcdbfa9-d3de-49ce-a4c1-4ee025679f1b, prompt 0a0fca62-f4b1-41f2-b135-7ed81c7d9137; source Style-Pose/WAI_00008_.png sha256 bdf2fc685319a39b00a3fcb2ada11ee958e2a8df8b3fdde071c9e68346d85685). The prompt asked for a clothed witch; a blind agent judge skipped the render as adult content (no visible garment in the rear view). Identified by pixel comparison, not by viewing."
+  },
+  {
+   "id": "assessment-sheet",
+   "file": "assessment-sheet.jpg",
+   "sha256": "211002c25cf61213a3072e246fab3535252c37bee2346cf511f3566ab0d3b8f8",
+   "bytes": 700087,
+   "width": 1430,
+   "height": 2290,
+   "job_id": null,
+   "prompt_id": null,
+   "source_png": null,
+   "former_path": "examples/style-pose/matrix/assessment-sheet.jpg",
+   "note": "The 14 September six-checkpoint Style+Pose assessment sheet; row 1 column 2 is cell S49 (see style-pose-wai__none__beach.jpg), matched by pixel comparison (mean absolute difference 13.0 against 36-65 for non-members)."
+  }
+ ]
+}

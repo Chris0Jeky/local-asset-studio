@@ -19,7 +19,7 @@ import tempfile
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-FOLDERS=('nsfw-lab','civitai-intake','combine-research')
+FOLDERS=('nsfw-lab','civitai-intake','combine-research','local-only')
 SOURCES=('presets/nsfw-intel.json','presets/recipes.json','app/static/bundle-showcase.json')
 IMAGE_SUFFIXES={'.jpg','.jpeg','.png','.webp','.gif','.bmp','.tif','.tiff','.avif'}
 REFERENCE=re.compile(r'/api/examples/('+'|'.join(FOLDERS)+r')/([A-Za-z0-9][A-Za-z0-9._-]*)')
