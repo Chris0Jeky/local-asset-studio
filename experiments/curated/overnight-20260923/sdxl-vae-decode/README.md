@@ -4,7 +4,8 @@
 after a checkpoint switch, with 4.0-5.1 GB of the ComfyUI process in WDDM shared memory during the decode. Does
 `VAEDecodeTiled` avoid the spill and the time without visible seams?
 
-**Method.** `ab_vae.py render`, 03:24-03:31 local, straight to the primary ComfyUI (PID 56556, `--reserve-vram 0.6
+**Method.** `ab_vae.py render`, 03:20:34-03:24:47 local (first submission to last finish in `results.json`; the after-switch rows ran
+04:34:19-04:46:10), straight to the primary ComfyUI (PID 56556, `--reserve-vram 0.6
 --disable-pinned-memory`). The shipped `wai` graph (WAI v17, 832x1216, 30 steps euler_ancestral/normal, cfg 5) on the seven
 showcase cases of `../suite.py` (fixed seeds 2026092301-07; tag dialect; the SDXL adult-only negative on every case). Per case,
 three prompts that differ only in the decoder node: `plain` = `VAEDecode`, `tiled512` = `VAEDecodeTiled` (tile 512, overlap 64),
@@ -22,7 +23,7 @@ Images of famous characters and fanservice cases are not in Git: they are in Com
 
 | decoder | decode s, 7 cases (median / range) | peak shared MB inside the decode | quality (blind, mean of 5 scores) |
 | --- | --- | --- | --- |
-| `VAEDecode` (shipped) | 2.35 / 1.62-8.45 | 79-2303 (2.3 GB on 2 of 7 cases; those decoded in 5.9 and 8.5 s) | 4.31 |
+| `VAEDecode` (shipped) | 2.35 / 1.62-8.45 | 79-2303 (above the 512 MB spill threshold on 3 of 7: 2.3 GB on duo and glamour, decoded in 5.9 and 8.5 s; 719 MB on pinup-swim, 1.85 s) | 4.31 |
 | `VAEDecodeTiled` 512/64 | **1.31 / 1.23-1.84** | **79 on every case** (no spill observed in its own window; see below) | 4.31 |
 | `VAEDecodeTiled` 1024/64 | 12.95 / 9.09-16.67 | 2815-4183 on every case | 4.31 |
 

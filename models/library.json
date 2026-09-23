@@ -141,6 +141,21 @@
       "trigger": ""
     },
     {
+      "id": "krea-turbo-q5km-gguf",
+      "name": "Krea 2 Turbo / Q5_K_M GGUF",
+      "file": "diffusion_models/krea2_turbo-Q5_K_M.gguf",
+      "repo": "vantagewithai/Krea-2-Turbo-GGUF",
+      "revision": "390847e2835c16bdf82303731e3d35b874760d89",
+      "source": "https://huggingface.co/vantagewithai/Krea-2-Turbo-GGUF",
+      "url": "https://huggingface.co/vantagewithai/Krea-2-Turbo-GGUF/resolve/390847e2835c16bdf82303731e3d35b874760d89/krea2_turbo-Q5_K_M.gguf",
+      "bytes": 8871195936,
+      "sha256": "dcba1696a78ca453cc389118cb3db3f9ba25a027ada118511efe409fcf7061dd",
+      "family": "Krea 2",
+      "license": "Krea 2 Community",
+      "terms": "Model card at revision 390847e2 declares license \"other\" / krea-2-community-license with base model krea/Krea-2-Turbo, read from the Hugging Face API on 2026-09-23. The coordinator downloaded it on 2026-09-23 and verified the SHA-256 against the Hugging Face LFS oid (dcba1696...061dd); a hash match proves the bytes, not the creator. Pin-only: .gguf files are reported as present but never installed automatically. Needs the ComfyUI-GGUF loader (UnetLoaderGGUF); ComfyUI logs two unused tensors (last.down.weight, last.up.weight) when loading it.",
+      "trigger": ""
+    },
+    {
       "id": "krea-text",
       "name": "Krea 2 / prompt encoder",
       "file": "text_encoders/qwen3vl_4b_fp8_scaled.safetensors",

@@ -8,6 +8,6 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 for args in json.loads(Path(sys.argv[1]).read_text(encoding='utf-8')):
-    done = subprocess.run([sys.executable, str(HERE / 'addjudge.py')] + [str(a) for a in args], capture_output=True, text=True)
+    done = subprocess.run([sys.executable, str(HERE / 'addjudge.py')] + ['' if a is None else str(a) for a in args], capture_output=True, text=True)
     print((done.stdout or done.stderr).strip()[:200])
     if done.returncode: raise SystemExit('refused: %s' % args[:2])
