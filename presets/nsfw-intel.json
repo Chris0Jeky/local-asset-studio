@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "updated": "2026-09-21",
+  "updated": "2026-09-23",
   "title": "Anime NSFW lab notes",
-  "caveat": "Local observations from one-seed cells. Generated is not accepted art and not licence clearance. Adult original characters or adult-coded franchise looks only (no Megumin, no child Pokemon/Genshin/HSR).",
+  "caveat": "Local observations from one-seed cells. Generated is not accepted art and not licence clearance. Adult original characters or adult-coded franchise looks only (no Megumin, no child Pokemon/Genshin/HSR, no school casts). The 23 Sep continuation is experiments/curated/nsfw-lab-20260923/FINDINGS.md.",
   "families": {
     "Anima": {
       "undress": "nsfw_girls_anima at 0.7-0.85 undresses reliably on anima-v1-baseline.",
@@ -52,7 +52,7 @@
     },
     {
       "name": "nsfw_character",
-      "use": "Adult Danbooru tags only: 2B, Kafka, Darkness, Aqua, Cynthia, Asuna, Yelan, Raiden, Tifa, Yor, Acheron."
+      "use": "Adult Danbooru tags only. 21 Sep: 2B, Kafka, Darkness, Aqua, Cynthia, Asuna, Yelan, Raiden, Tifa, Yor, Acheron. 23 Sep adds Albedo, Shalltear, Wiz, Frieren, Serie, Crusch, Makima, Artoria, Jane, Black Swan, Changli, Tamarinne. A youthful face on an adult character is a composition note, not a drop."
     },
     {
       "name": "nsfw_anatomy",
@@ -85,7 +85,7 @@
       "note": "High-gloss wet skin on AniFox."
     }
   ],
-  "hands": "Wave A: hands on thighs + five fingers + neat hands showed five-finger hands. Raised arms still grow extras. Extra fingers in the negative is not enough by itself.",
+  "hands": "Wave A: hands on thighs + five fingers + neat hands showed five-finger hands. Raised arms still grow extras. Extra fingers in the negative is not enough by itself. 23 Sep: hands out of frame still drew a lifting hand (Shalltear, Artoria, Jane). Flat hands on the thighs had five fingers (Wiz, JANIMA). arms behind back plus hands and fingers in the negative removed the hands on Changli and on Albedo's rear view, and the skirt stayed closed until the prompt said open skirt, bare hips. A military uniform put the hands back on the hips (Crusch).",
   "gallery": "/static/nsfw-lab.html",
   "receipt": "experiments/curated/nsfw-lab-20260921/FINDINGS.md",
   "examples": [

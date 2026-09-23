@@ -1,5 +1,11 @@
 # Current state — 23 September 2026
 
+## Adult franchise NSFW lab continuation — 23 September 2026 (evening)
+
+Record: `experiments/curated/nsfw-lab-20260923/FINDINGS.md`. Pictures stay on disk under the ComfyUI output `Studio\` prefix. Nothing from this slice is on Creative Bundles. Generated and agent-judged only, not art acceptance, not licence clearance. Catalog `verified` was not flipped. q-29 and q-31 stay open.
+
+Thirteen fast-family cells completed (WAI, Anima, JANIMA, CSTati, AniFox, YumeFlux). Wave K changed the prompt because Wave J's front-seated Albedo stayed dressed and the rear cells grew a lifting hand. The wording that held is an already-open skirt with `hands, fingers` in the negative (Changli). A WAI Frieren frame looked young; the owner later said that is not a reason to drop her. Serie was also generated. Three prompts died with the process and were not resubmitted: Elsa `4dc53889-e2e0-4c22-8e66-93cbf125b4d1`, Serie-on-Anima `6ab21b16-5450-4338-af2c-c66e3054244a`, Scathach `c3b53ce6-3083-4fec-a236-1095a5fb87e2`. No many-minute model was used. Receipts are in the configured experiments root `C:/Users/jekyt/source/local-asset-studio/experiments/runs`.
+
 ## `zimage-fast` Studio-proved, Krea trigger follow-up, krea-refine on GGUF — 23 September 2026 (07:14-07:36)
 
 The overnight lab's last runs before the owner's shutdown. Evidence under `experiments/curated/overnight-20260923/` (the lab's

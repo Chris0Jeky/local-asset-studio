@@ -152,8 +152,8 @@ The first WAI receipt also recorded a 3.0 GB GPU spill into system RAM. No many-
 - File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\WAI-Illustration_00020_.png`.
 - Positive: masterpiece, best quality, amazing quality, 1girl, solo, adult woman, mature female, tall, frieren, long white hair, green eyes, pointy ears, twintails, elf, white dress, black trim, adult elf, library aisle, bookshelves, dress hiked, dress still on, no panties, parted lips, looking back, from behind, slim waist, wide hips, hands out of frame.
 - Negative: same shared negative.
-- Inspection: white hair, green eyes, pointed ear, library, white robe. The face is the youthful Frieren design and this frame reads as a minor (large eyes, small face, child proportions) even with `adult woman` and `mature female` in the prompt. Dress stayed closed. `hands out of frame` failed: one hand is on the bookshelf and that hand has extra fingers.
-- Discarded. Not a counted cell. Not the target of the next prompt. The next Frieren-series cell uses a different adult (Serie), not a younger Frieren.
+- Inspection: white hair, green eyes, pointed ear, library, white robe. The face is the usual youthful Frieren design. Dress stayed closed. `hands out of frame` failed: one hand is on the bookshelf and that hand has extra fingers.
+- At the time, this cell was set aside because the face looked young. Owner, later the same day: a render's look and the tag spelling are not a reason to drop a character who is an adult in canon. Frieren stays in the set. The note above is the inspection, not a ban. Serie was still generated as a second Frieren-series adult.
 
 ### j-shalltear-bedroom — completed, counted
 
@@ -264,7 +264,7 @@ The Anima prompt `6ab21b16` was not repeated. This is WAI, seed `2026092331`, op
 - Positive adds `serie (sousou no frieren), long blonde hair, elf, pointy ears, adult mage, tall woman, magic archive, gold trim dress` plus the open-skirt rear sentence.
 - Negative: Wave K negative (`hands, fingers, logo, letters` included).
 - Inspection: adult woman, not the discarded Frieren face. Long blonde hair, green eyes, pointed ears, a gold ring ornament, white and gold backless dress, shelves and bottles. Serie is recognizable and reads adult. The skirt is open because a hand is gripping it, and that hand has extra fingers. The hip hand looks like five fingers. So forbidding hands did not stop a lifting hand on this seed.
-- Keep: Serie as the Frieren-series adult. Do not go back to the discarded Frieren frame.
+- Keep: Serie as another Frieren-series adult. Frieren herself stays available.
 - Change later: a military or "hand on hip" pose still invents hands. Changli, below, is the clean no-hand result.
 
 ### k2-crusch-hall — completed, counted
@@ -285,3 +285,65 @@ The Anima prompt `6ab21b16` was not repeated. This is WAI, seed `2026092331`, op
 - Positive: changli (wuthering waves), long pink hair, hair ornament, adult counselor, palace hall, white and red dress, plus the open-skirt rear sentence. No animal ears.
 - Inspection: adult woman. Pink hair, red eyes, hairpins, red backless dress, palace columns. Changli's costume reads. The skirt is open and the hips are bare with the dress still on. No hands are in frame. This is the Wave K hand fix actually holding, together with the open-skirt leak that Albedo's closed dress missed.
 - Keep: this wording. YumeFlux, palace, open skirt, arms out of frame, `hands, fingers` in the negative.
+
+### k2-tamarinne-stage — completed, counted
+
+- Preset `anifox-v2-baseline`, seed `2026092334`, steps 24, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `a0de86e1-0ae8-40e4-9c2d-4875f5938ab2`. ComfyUI prompt `13317147-ed35-4dc0-8a26-950b8ab65071`. 103.3 s. The receipt says GPU memory spilled 6.5 GB into system RAM.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\AniFox-v2-Baseline_00005_.png`.
+- Positive: tamarinne (epic seven), pink hair, twintails, frilled idol dress, microphone, stage lights, adult idol, plus the open-skirt rear sentence.
+- Inspection: adult woman. Pink twintails, black bows, frilled white skirt lifted, stage truss and a screen showing the same idol. Danbooru has only 12 posts for `tamarinne (epic seven)`, so the face is a generic pink idol rather than a proven likeness. The costume, stage, and adult body are what the prompt asked for. Hands are out of the way. The skirt leak fired. No second girl in the scene; the extra figure is on the screen.
+- Keep: AniFox stage plus an open frilled skirt when the hands stay down. Do not claim a strong Tamarinne face from this one frame.
+
+### k2-scathach-castle — not a result
+
+Studio job `0c0fc66f-ae64-464e-8bca-b3ade33fbf9e` was `running` on ComfyUI prompt `c3b53ce6-3083-4fec-a236-1095a5fb87e2` when the process died after the Tamarinne spill. No output file. That prompt is not resubmitted. Fate is already covered by the Artoria cell. Animagine was the preset in flight, so this continuation has no completed Animagine cell.
+
+`k2-blackswan-train` and `k2-yinlin-teahouse` were not posted. One Obsession and Pearly are not run in this continuation: the SDXL jobs were already spilling several gigabytes, and a following job killed Studio.
+
+### k2-blackswan-wai — completed, counted
+
+- Preset `wai`, seed `2026092341`, steps 24, CFG 5, euler ancestral / normal, `nsfw_girls.safetensors` at 0.7.
+- Studio job `e6df40a9-ed98-4862-b970-9716998e8e75`. ComfyUI prompt `ad63a1a1-4f2b-48b0-87b4-849a18dc4eaf`. 54.6 s.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\WAI-Illustration_00023_.png`.
+- Positive: black swan (honkai: star rail), very long purple hair, veil, purple eyes, purple dress, night train, city lights, plus the open-skirt rear sentence (`backless dress, open skirt, bare hips, arms behind back, no hands visible`).
+- Negative: Wave K negative, including `child, loli, shota` and `hands, fingers, logo, letters`.
+- Inspection: adult woman. Very long pale-purple hair, a floral veil, purple backless dress, night city through a window. Black Swan reads. The place drifted from a train car to a high window over the city, but the night-city light is there. A high slit shows the hip. One arm crosses the lower back and the hand itself is hidden, so the extra-finger problem did not appear. Adult reading is clear.
+- Keep: WAI plus the open-skirt rear sentence for an adult Honkai: Star Rail look. Name the carriage if the next cell must be inside a train.
+
+## Counted cells
+
+Thirteen completed cells with a recipe, a Studio job id, a ComfyUI prompt id, a timing, and an inspection. The Frieren library cell is included after the owner's note the same day. No many-minute model (Qwen, FLUX.2, HiDream, Hunyuan, Wan, Trellis, Klein, z-image, Krea) was used. Fast families: WAI, Anima, JANIMA, CSTati, AniFox, YumeFlux.
+
+| Cell | Counted | Why |
+| --- | --- | --- |
+| j-albedo-tavern | yes | Adult Albedo. Front skirt lift failed. Clasped hand grew a finger. |
+| j-frieren-library | yes | Youthful Frieren face, closed dress, extra finger on the bookshelf hand. Owner later the same day: that look is not a reason to drop her. |
+| j-shalltear-bedroom | yes | Adult Shalltear. Rear leak worked. A lifting hand grew a finger. |
+| j-elsa-inn | no | Prompt known, process died, no file. Not resubmitted. |
+| j-wiz-shop | yes | Adult Wiz. Flat hands on the thighs had five fingers. |
+| j-makima-office | yes | Adult Makima. Thigh hand grew a finger. Papers grew glyphs. |
+| j-artoria-castle | yes | Adult Saber. Rear dress lift worked. Lifting hand grew a finger. |
+| j-jane-alley | yes | Adult Jane. Shorts down. Hip hand grew a finger. Jacket grew letters. |
+| k-albedo-rear | yes | No hands. Dress stayed closed. |
+| k-serie-archive | no | Anima prompt in flight when the process died. Not resubmitted. |
+| k2-serie-wai | yes | Adult Serie, not the discarded Frieren face. A lifting hand returned. |
+| k2-crusch-hall | yes | Adult Crusch. Uniform put both hands on the hips. |
+| k2-changli-palace | yes | Adult Changli. Open skirt and no hands. Best of Wave K. |
+| k2-tamarinne-stage | yes | Adult idol. Weak face likeness (12 Danbooru posts). Skirt open, hands down. |
+| k2-scathach-castle | no | Animagine prompt in flight when the process died. Not resubmitted. |
+| k2-blackswan-wai | yes | Adult Black Swan. City night instead of a train interior. Hand hidden. |
+
+Wave K exists because of Wave J: Albedo's closed front seat, Shalltear's lifting hand, Jane's invented letters, and the discarded Frieren frame.
+
+## What the next session should change
+
+- Start from the Changli wording when the goal is a costume leak without fingers: open skirt, backless, arms behind the back, `hands, fingers` in the negative.
+- Do not use that negative with a military uniform. Crusch still posed akimbo.
+- Planted hands on the thighs (Wiz) are the only in-frame hand pose that showed five fingers.
+- Frieren stays in the set. The library cell's closed dress and bookshelf hand are what to change next, not the character.
+- Name the room if the place matters. "Night train" became a window over a city.
+- Restart ComfyUI after any receipt that reports a multi-gigabyte GPU spill. The next job in the same process died three times. Elsa `4dc53889-e2e0-4c22-8e66-93cbf125b4d1`, Serie `6ab21b16-5450-4338-af2c-c66e3054244a`, and Scathach `c3b53ce6-3083-4fec-a236-1095a5fb87e2` must not be resubmitted.
+- One Obsession, Pearly, and a finished Animagine cell are still open. They are fast families, but they should be one job after a fresh ComfyUI start, not queued behind a spill.
+
+Generated is not accepted and not licensed. Catalog `verified` stays false. q-29 and q-31 stay open. These cells are not on Creative Bundles.
