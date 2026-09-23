@@ -28,6 +28,8 @@ quality-88 JPEG copies for viewing. Every run here was inspected by eye; none is
 | `anima-artist-stack` variant "Artist tags, no adapters": every slot pruned, @synswt/@koukouya/@kyano tags, cfg 3, dpmpp_2m_sde_gpu (Studio job) | [anima-artist-tags-no-adapters](../../../examples/anime-fantasy-atelier/anima-artist-tags-no-adapters.jpg) | 832x1216, 30 steps, cfg 3, seed 975436216244440 | 20.1 s |
 | `anima-artist-stack` variant "Reference stack 1328x1776": the six-adapter reference at the reference size and seed (Studio job) | [anima-reference-stack-1328x1776](../../../examples/anime-fantasy-atelier/anima-reference-stack-1328x1776.jpg) | 1328x1776, 30 steps, euler_ancestral/simple, cfg 4, seed 975436216244440 | 66.4 s |
 
+*Correction, 23 September 2026 (agent review, [docs/quality/QUALITY-BACKLOG.md](../../../docs/quality/QUALITY-BACKLOG.md)):* the `anime-detail-fix` row's hand still has six digits at full resolution; the `krea-refine` row fixed the fox faces but changed the fox count and added snow specks because it ran on the preset's example prompt.
+
 The Krea target-stack probes reproduce the owner's reference image settings (civitai image 142028671:
 15 steps, Euler a, simple, cfg 1) with two of its three LoRAs; the third (koukouya style) is not
 installed. The 4-step distill LoRA gave results on par with 15 steps at 3.5x the speed and is the

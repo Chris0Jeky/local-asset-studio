@@ -72,7 +72,7 @@ owner decision. Open issue: #14.
 
 ## G3 — Character sheets, figures, poses, in-betweens
 
-**Proven primitives.** `anime-detail-fix` repaired a six-finger hand (job 14caa4fb, 36.2 s, only the two crops changed);
+**Proven primitives.** `anime-detail-fix` repaired a six-finger hand (job 14caa4fb, 36.2 s, only the two crops changed); *(correction, 23 September 2026: at full resolution six digits remain after that job; see [quality/QUALITY-BACKLOG.md](quality/QUALITY-BACKLOG.md))*
 `anime-esrgan` upscales; `character_krita.py` carried a protected edit into a real Krita 5.2.16 document (4,032 changed
 pixels, 94,272 preserved); Godot 4.7.2 played a four-frame cycle at 479 ms against a 480 ms target with the Khronos
 GLB validator; actor-scoped edit planning exists with a completed 12-attempt pilot (0 accepted).
