@@ -95,6 +95,34 @@ def main():
                 narrow.evaluate("document.querySelector('#uxTransfer').hidden=true")
             narrow.close()
             checks.append({'name':'Prompt Lab handoff panel stays in the first viewport and costs nothing when hidden','cases':transfer})
+            # #853: the same app owner must reject empty wording in every presentation.
+            # Keep the fixture's original valid prompt for subsequent generation/lineage checks.
+            original_prompt = page.locator('#positive').input_value()
+            prompt_cases = []
+            for width, height in [(1440, 900), (390, 844)]:
+                page.set_viewport_size({'width': width, 'height': height})
+                for layout in ['focus', 'studio', 'immersive']:
+                    page.select_option('#workshopLayout', layout)
+                    page.fill('#positive', '   ')
+                    assert page.locator('#generate').is_disabled(), (width, layout)
+                    # The specific blocker is summarized in the dock; details are
+                    # intentionally collapsed until the user chooses Review checks.
+                    page.wait_for_function("document.querySelector('#workshopReadiness').textContent.includes('Add a prompt to generate.')")
+                    assert page.locator('#workshopReadiness').is_visible(), (width, layout)
+                    page.click('#workshopReview')
+                    blocker = page.locator('[data-readiness-code="continuation-wording"]')
+                    blocker.wait_for(state='visible')
+                    assert blocker.is_visible(), (width, layout)
+                    assert 'Add a prompt to generate.' in blocker.inner_text()
+                    blocker.locator('[data-ux-resolve="wording"]').click()
+                    assert page.locator('#positive').evaluate('(el)=>el===document.activeElement')
+                    page.fill('#positive', original_prompt)
+                    assert not page.locator('#generate').is_disabled(), (width, layout)
+                    assert not [row for row in fixture.POSTS if row['path'] == '/api/jobs']
+                    prompt_cases.append({'width': width, 'layout': layout})
+            page.set_viewport_size({'width': 1440, 'height': 900})
+            page.select_option('#workshopLayout', 'focus')
+            checks.append({'name': 'empty wording blocks the actual run handler with an explicit repair action', 'cases': prompt_cases})
             # Preserve input identity, source and pending draft through presentation changes.
             page.evaluate("window.keptPrompt=document.querySelector('#positive');window.keptGenerate=document.querySelector('#generate');window.keptReference=document.querySelector('#reference')")
             page.fill('#positive','A private draft that must not disappear')
