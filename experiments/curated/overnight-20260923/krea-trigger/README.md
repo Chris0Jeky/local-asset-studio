@@ -26,8 +26,8 @@ for text at full resolution in two halves.
 **The trigger word is painted wherever it sits.** Moving it to the end does not help, and dropping TextFusion made it rarer but
 did not stop it (1/2). With no trigger, neither seed has text. The Niji Sweet Spot look (lavender hair, soft painterly cel shading,
 the gold-trimmed witch) is still present without the trigger, as far as the pictures show; the LoRA acts through its weights. So
-the untested hypothesis in #880 is half right: the trigger is rendered as text, and TextFusion (built for rendering text) makes it
-more likely, but it is not the only cause.
+the untested hypothesis in #880 is half right: the trigger is rendered as text. It was rarer without TextFusion here (1/2 against
+2/2 over two seeds), which is too few to say TextFusion makes it more likely; it is at most not the only cause.
 
 Every clean picture is `keep`, and every picture with text is `fixable` (crop or inpaint). Speed: 57-131 s per prompt, most of it
 the CPU text encode.
