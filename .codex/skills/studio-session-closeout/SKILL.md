@@ -30,7 +30,7 @@ Godot, or that produced execution evidence. Do NOT use for a docs-only session (
    threads resolved, runtime PIDs stopped and ports free, preserved outputs, disk headroom, credits
    spent (normally none), open human choices. It is gitignored evidence; quote from it in the handoff.
 4. Stop owned runtimes in order: Studio server, then isolated backends, then primary ComfyUI; confirm
-   no listener on 8191, 8192, 8194, 8188 that you started.
+   no listener on 8191, 8192, 8194, 8196, 8188 that you started.
 5. Tear down finished worktrees (plain `git worktree remove`, never forced) and confirm `main` is clean.
 6. Hand off: changed / verified / NOT verified / residual risk, open `HUMAN_TODO.md` items, and the
    next safe slice. If harness files changed, note the `~/.claude/ESTATE.md` row that must follow.

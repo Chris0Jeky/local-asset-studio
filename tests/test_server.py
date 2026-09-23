@@ -107,6 +107,16 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(job['status'],'partial');self.assertEqual(job['prompt_ids'],['first']);self.assertNotIn('pending_submission',job)
         self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/prompt','/history/first'])
 
+    def test_host_commit_gate_covers_qwen_image_21_at_any_size(self):
+        """The 7B model and its 9.35 GB encoder need the headroom below 1 MP and in the size-less edit graph too."""
+        loader={'class_type':'UNETLoader','inputs':{'unet_name':'qwen_image_2.1_int8_convrot.safetensors'}}
+        for graph in ({'1':loader,'5':{'class_type':'EmptyQwenImageLayeredLatentImage','inputs':{'width':832,'height':1248}}},{'1':loader}):
+            with self.subTest(nodes=sorted(graph)):self.assertTrue(server.Studio.host_commit_required({'id':'qwen21-t2i'},graph))
+        self.assertTrue(server.Studio.host_commit_required({'id':'qwen21-edit','backend_id':'qwen21'},{}))
+        sdxl={'1':{'class_type':'CheckpointLoaderSimple','inputs':{'ckpt_name':'wai.safetensors'}},'5':{'class_type':'EmptyLatentImage','inputs':{'width':832,'height':1248}}}
+        self.assertFalse(server.Studio.host_commit_required({'id':'wai'},sdxl))
+        self.assertFalse(server.Studio.host_commit_required({'id':'klein','host_commit_heavy':True},{'1':{'class_type':'UNETLoader','inputs':{'unet_name':'flux-2-klein-9b.safetensors'}},'5':{'class_type':'EmptyLatentImage','inputs':{'width':832,'height':1248}}}))
+
     def test_host_commit_gate_ignores_nonheavy_qwen_encoder_and_observation(self):
         (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'enforce_host_commit_headroom':True}))
         graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['clip_name']='qwen_3_4b.safetensors'

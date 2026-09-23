@@ -23,7 +23,7 @@ class FixtureStudio:
     def __init__(self,root,**config):
         self.root=root;self.comfy_root=root/'comfy';self.jobs={};self.lock=threading.Lock()
         self.config={'comfy_root':str(self.comfy_root),'python':str(root/'python.exe'),
-                     'hidream_root':str(root/'isolated/ComfyUI'),**config}
+                     'hidream_root':str(root/'isolated/ComfyUI'),'qwen21_root':str(root/'qwen21/ComfyUI'),**config}
         self.production=SimpleNamespace(list=lambda:[])
     def _write_json_atomic(self,path,data):
         path.parent.mkdir(parents=True,exist_ok=True)
@@ -40,7 +40,7 @@ class BackendSafetyTests(unittest.TestCase):
         for profile in self.manager.profiles.values():
             for item in self.manager.readiness(profile)['requirements']:
                 path=Path(item['path'])
-                if item['role']=='Transformers overlay':path.mkdir(parents=True,exist_ok=True)
+                if item['role'] in ('Transformers overlay','Comfy Kitchen overlay'):path.mkdir(parents=True,exist_ok=True)
                 else:path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'inert fixture')
     def tearDown(self):self.temp.cleanup()
     def process(self,pid=123,created=1):
@@ -79,6 +79,36 @@ class BackendSafetyTests(unittest.TestCase):
             with self.subTest(role=item['role']):
                 current=self.manager.readiness(profile);self.assertFalse(current['ready']);self.assertIn(item['role'],current['message'])
             path.write_bytes(body)
+    def test_qwen21_needs_its_overlay_and_three_pack_files_inside_the_isolated_root(self):
+        profile=self.manager.profiles['qwen21'];report=self.manager.readiness(profile)
+        self.assertEqual((profile['port'],profile['url']),(8196,'http://127.0.0.1:8196'))
+        self.assertTrue(report['ready']);self.assertEqual(len(contracts.QWEN21_FILES),3)
+        roles=[item['role'] for item in report['requirements']]
+        self.assertEqual(roles,['Python interpreter','ComfyUI entry','Studio launcher','Comfy Kitchen overlay','diffusion','text encoder','decoder'])
+        for item in report['requirements'][3:]:
+            self.assertTrue(Path(item['path']).resolve().is_relative_to(Path(profile['root']).resolve()),item)
+        overlay=Path(profile['root'])/'python_packages/comfy_kitchen';overlay.rmdir();overlay.write_bytes(b'not a package')
+        current=self.manager.readiness(profile);self.assertFalse(current['ready']);self.assertIn('Comfy Kitchen overlay',current['message'])
+        overlay.unlink();overlay.mkdir()
+        for role,relative in contracts.QWEN21_FILES:
+            path=Path(profile['root'])/relative;body=path.read_bytes();path.write_bytes(b'')
+            with self.subTest(role=role):
+                current=self.manager.readiness(profile);self.assertFalse(current['ready']);self.assertIn(role,current['message'])
+            path.write_bytes(body)
+    def test_qwen21_launch_is_owned_only_through_its_exact_comfy_root(self):
+        profile=self.manager.profiles['qwen21'];argv=[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']]
+        self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
+        for bad in (argv[:-1]+[str(self.root/'isolated/ComfyUI')],argv[:3]+['--install-root',profile['root']],argv+['--comfy-root',profile['root']]):
+            with self.subTest(bad=bad):self.assertFalse(BackendManager.matches_configured_process(profile,profile['python'],bad,profile['root']))
+    def test_qwen21_switch_launches_its_launcher_with_the_isolated_root(self):
+        self.manager.operation={'id':'test-switch','status':'running'};self.manager.busy=True
+        launched=Mock(pid=4321);launched.poll.return_value=1
+        with patch.object(self.manager,'request',side_effect=lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE),              patch.object(self.manager,'process',return_value=None),patch.object(self.manager,'activate') as activate,              patch('backends.subprocess.Popen',return_value=launched) as popen:
+            self.manager._switch('qwen21')
+        profile=self.manager.profiles['qwen21']
+        self.assertEqual(popen.call_args.args[0],[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']])
+        self.assertEqual(popen.call_args.kwargs['cwd'],profile['root'])
+        activate.assert_not_called();self.assertEqual(self.manager.operation['status'],'failed')
     def test_missing_target_stops_before_thread_or_process_work(self):
         profile=self.manager.profiles['h3'];(Path(profile['root'])/contracts.H3_FILES[1][1]).unlink()
         with patch('backends.threading.Thread') as thread,patch.object(self.manager,'process') as process:

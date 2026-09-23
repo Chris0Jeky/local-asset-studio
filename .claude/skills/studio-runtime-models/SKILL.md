@@ -8,7 +8,7 @@ description: "Change how Local Asset Studio reaches its local runtimes and model
 ## Use when / Do NOT use when
 
 Use for `app/backends.py`, `app/model_library.py`, `scripts/Start-Studio.ps1`, `scripts/h3-launch.py`,
-`scripts/h3_mmap_loader.py`, `scripts/hidream-launch.py`, `runtime-patches/`, `models/*.json` and
+`scripts/h3_mmap_loader.py`, `scripts/hidream-launch.py`, `scripts/qwen21-launch.py`, `runtime-patches/`, `models/*.json` and
 `config/example.json`. Do NOT use for presets or graphs (`studio-preset-slice`), for proving a run
 (`studio-execution-evidence`), or for Krita/Blender/Godot paths (`studio-native-adapter`).
 
@@ -18,7 +18,7 @@ Use for `app/backends.py`, `app/model_library.py`, `scripts/Start-Studio.ps1`, `
   change is a documented patch in `runtime-patches/` with before/after SHA-256 and the ComfyUI commit.
 - Backend switches are explicit, one at a time, and recorded in `.runtime/backend-state.json`;
   `psutil` stops only processes the Studio owns. Ports are fixed: 8188 primary, 8191 Studio, 8192
-  HiDream, 8194 H3 loader.
+  HiDream, 8194 H3 loader, 8196 Qwen-Image 2.1 (isolated ComfyUI v0.37.0).
 - A model enters `models/library.json` only with sha256, byte count and a relative path in a supported
   folder; weights never enter Git. `.safetensors` with a huggingface/civitai URL installs automatically;
   `.gguf`, `.pth`, `.pt` and `.onnx` are pin-only (presence and size reported, installer refuses), and a

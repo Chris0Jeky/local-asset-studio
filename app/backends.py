@@ -34,6 +34,7 @@ class BackendManager:
         config=studio.config;primary=Path(config.get('comfy_root',studio.comfy_root)).resolve()
         python=Path(config.get('python','C:/AI/ComfyUI_windows_portable/python_embeded/python.exe')).resolve()
         isolated=Path(config.get('hidream_root','C:/AI/experiments/hidream-o1/ComfyUI')).resolve()
+        qwen21=Path(config.get('qwen21_root','C:/AI/experiments/qwen-image-21/ComfyUI')).resolve()
         self.profiles={
             'primary':{'id':'primary','name':'Main library','root':str(primary),'url':config.get('comfy_url','http://127.0.0.1:8188'),
                        'python':str(python),'port':8188,'entry':str(primary/'main.py'),
@@ -46,6 +47,9 @@ class BackendManager:
             'h3':{'id':'h3','name':'H3 loader experiment','root':str(primary),'url':'http://127.0.0.1:8194',
                   'python':str(python),'port':8194,'entry':str(studio.root/'scripts/h3-launch.py'),
                   'description':'Opt-in encoder and diffusion loader; uses the main model folders without editing installed ComfyUI code'},
+            'qwen21':{'id':'qwen21','name':'Qwen-Image 2.1 · isolated','root':str(qwen21),'url':'http://127.0.0.1:8196',
+                      'python':str(python),'port':8196,'entry':str(studio.root/'scripts/qwen21-launch.py'),
+                      'description':'ComfyUI v0.37.0 checkout with its own Comfy Kitchen overlay; the ROCm Torch installation is shared unchanged'},
         }
         ports=[]
         for profile in self.profiles.values():

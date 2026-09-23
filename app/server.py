@@ -506,6 +506,9 @@ class Studio:
     @staticmethod
     def host_commit_required(preset, graph):
         explicit = preset.get('host_commit_heavy') is True
+        # Qwen-Image 2.1 loads its 7B model and a 9.35 GB int8 text encoder whatever the canvas (2.1-6.5 GiB of commit
+        # was left at 832x1248, docs/QWEN-IMAGE-21.md), and its edit graph has no width/height, so size never exempts it.
+        size_independent = preset.get('backend_id') == 'qwen21'
         model_bound = False; megapixels = 0.0
         for node in graph.values():
             inputs = node.get('inputs', {})
@@ -514,11 +517,12 @@ class Studio:
                 if isinstance(value, str):
                     value = value.lower()
                     if 'qwen-image-edit-2511' in value or 'flux-2' in value or 'flux2-' in value: model_bound = True
+                    if 'qwen_image_2.1' in value or 'qwen-image-2.1' in value: size_independent = True
             width,height=inputs.get('width'),inputs.get('height')
             if isinstance(width,(int,float)) and not isinstance(width,bool) and isinstance(height,(int,float)) and not isinstance(height,bool): megapixels=max(megapixels,float(width)*float(height)/(1024**2))
             scaled=inputs.get('megapixels')
             if node.get('class_type')=='ImageScaleToTotalPixels' and isinstance(scaled,(int,float)) and not isinstance(scaled,bool): megapixels=max(megapixels,float(scaled))
-        return (explicit or model_bound) and megapixels >= 1.0
+        return size_independent or ((explicit or model_bound) and megapixels >= 1.0)
 
     def host_commit_preflight(self, preset, graph, refresh=False):
         if not self.config.get('enforce_host_commit_headroom') or not self.host_commit_required(preset, graph): return None

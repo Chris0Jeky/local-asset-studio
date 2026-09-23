@@ -6,7 +6,7 @@ approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 
 [sandbox_workspace_write]
-# The Studio talks to ComfyUI on 127.0.0.1:8188/8192/8194 and serves on 8191.
+# The Studio talks to ComfyUI on 127.0.0.1:8188/8192/8194/8196 and serves on 8191.
 network_access = true
 
 [features]

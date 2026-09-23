@@ -13,6 +13,13 @@ H3_FILES = (
     ('preview adapter', 'models/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors'),
 )
 
+# docs/QWEN-IMAGE-21.md: the Comfy-Org pack files the recipes load, inside the isolated checkout.
+QWEN21_FILES = (
+    ('diffusion', 'models/diffusion_models/qwen_image_2.1_int8_convrot.safetensors'),
+    ('text encoder', 'models/text_encoders/qwen3vl_8b_int8_convrot.safetensors'),
+    ('decoder', 'models/vae/qwen_image_2.1_vae_bf16.safetensors'),
+)
+
 
 def loopback_port(url):
     """Managed launchers support one explicit IPv4 loopback listener, not proxies."""
@@ -51,7 +58,8 @@ def endpoint_ready(value):
 def readiness(profile, repo_root):
     """Check the selected launcher plus its declared baseline files, without loading them.
 
-    H3's five-file contract follows docs/H3-WINDOWS.md. Other families retain
+    H3's five-file contract follows docs/H3-WINDOWS.md and Qwen-Image 2.1's three files
+    docs/QWEN-IMAGE-21.md. Other families retain
     per-preset model validation: this is not a second general model manager.
     """
     root = Path(profile['root'])
@@ -59,6 +67,9 @@ def readiness(profile, repo_root):
                 ('ComfyUI entry', root / 'main.py', False),
                 ('Studio launcher', Path(profile['entry']), False)]
     if profile['id'] == 'hidream':required.append(('Transformers overlay', root / 'python_packages/transformers', True))
+    if profile['id'] == 'qwen21':
+        required.append(('Comfy Kitchen overlay', root / 'python_packages/comfy_kitchen', True))
+        required.extend((role, root / path, False) for role, path in QWEN21_FILES)
     if profile['id'] == 'h3':
         required.append(('isolated loader', Path(repo_root) / 'scripts/h3_mmap_loader.py', False))
         required.extend((role, root / path, False) for role, path in H3_FILES)

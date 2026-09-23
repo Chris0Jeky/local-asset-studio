@@ -1,0 +1,122 @@
+[
+ {
+  "label": "default",
+  "flags": [],
+  "steps": 8,
+  "size": [
+   832,
+   1248
+  ],
+  "cold": [
+   "8bb78940-4404-46d8-b4ab-90aeeab82d0a",
+   313.6,
+   "success"
+  ],
+  "warm": [
+   "5d9db1b9-4482-42a0-90e4-9ed6b35c7a19",
+   248.9,
+   "success"
+  ],
+  "last_s_per_it": 17.69,
+  "min_commit_headroom_gb": 6.5,
+  "start_commit_headroom_gb": 39.8
+ },
+ {
+  "label": "no-fast-disk",
+  "flags": [
+   "--disable-fast-disk"
+  ],
+  "steps": 8,
+  "size": [
+   832,
+   1248
+  ],
+  "cold": [
+   "ec831ed0-92a3-4586-bf19-ccefd3a591c8",
+   217.4,
+   "success"
+  ],
+  "warm": [
+   "f1d202e8-1a7d-43b2-aa80-d72d900c6f8c",
+   202.5,
+   "success"
+  ],
+  "last_s_per_it": 12.48,
+  "min_commit_headroom_gb": 5.6,
+  "start_commit_headroom_gb": 41.1
+ },
+ {
+  "label": "no-dynamic-vram",
+  "flags": [
+   "--disable-fast-disk",
+   "--disable-dynamic-vram"
+  ],
+  "steps": 8,
+  "size": [
+   832,
+   1248
+  ],
+  "cold": [
+   "e868a6b9-6d7e-4e09-9b38-cacc977dc05a",
+   270.7,
+   "success"
+  ],
+  "warm": [
+   "a5b79150-596e-497c-b242-7f3d4d79ebc0",
+   226.8,
+   "success"
+  ],
+  "last_s_per_it": 13.9,
+  "min_commit_headroom_gb": 2.1,
+  "start_commit_headroom_gb": 35.9
+ },
+ {
+  "label": "reserve3",
+  "flags": [
+   "--disable-fast-disk",
+   "--reserve-vram",
+   "3"
+  ],
+  "steps": 8,
+  "size": [
+   832,
+   1248
+  ],
+  "cold": [
+   "e08be653-0c61-4a15-8ee2-94fb6e7ca0ee",
+   66.2,
+   "success"
+  ],
+  "warm": [
+   "b5c1d68d-f857-4c1f-8763-c4489b9df08a",
+   72.4,
+   "success"
+  ],
+  "last_s_per_it": 1.0,
+  "min_commit_headroom_gb": 3.5,
+  "start_commit_headroom_gb": 35.5
+ },
+ {
+  "label": "reserve3",
+  "flags": [
+   "--disable-fast-disk",
+   "--reserve-vram",
+   "3"
+  ],
+  "steps": 8,
+  "size": [
+   832,
+   1248
+  ],
+  "cold": [
+   null,
+   64.5,
+   "success"
+  ],
+  "warm": null,
+  "last_s_per_it": 0.68,
+  "note": "Recorded by hand from .runtime/bench-reserve3.log: the benchmark was stopped during its warm run to hand the GPU to another lane, so no bench record or prompt IDs were written. Cold run \"Prompt executed in 64.52 seconds\" including both model loads; 8 steps in 6 s (1.47 it/s). Text encoder left 3,974.88 MB resident (6,574.15 MB at the default reserve); diffusion 6,920.54 MB loaded completely. GPU Process Memory counters during the warm run: this process 10,658 MB dedicated / 78 MB shared, dwm 2,306 MB dedicated.",
+  "min_commit_headroom_gb": null,
+  "start_commit_headroom_gb": null
+ }
+]
