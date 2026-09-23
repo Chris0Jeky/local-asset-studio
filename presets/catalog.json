@@ -5362,7 +5362,7 @@
       },
       "backend_id": "primary",
       "source": "https://huggingface.co/Comfy-Org/Krea-2",
-      "description": "A global polish pass for a finished Krea 2 image: the picture is encoded with the Qwen VAE and re-sampled at denoise 0.35 with the 4-step distill LoRA in slot 3, keeping TextFusion and Niji Sweet Spot in slots 1-2 so the style stays put. It tightens small details and faces that came out mushy (the style-lab foxes) without changing the composition. Raise denoise towards 0.5 to redraw more; the source's own prompt belongs in the positive text.",
+      "description": "A global polish pass for a finished Krea 2 image: the picture is encoded with the Qwen VAE and re-sampled at denoise 0.25 with the 4-step distill LoRA in slot 3, keeping TextFusion and Niji Sweet Spot in slots 1-2 so the style stays put. It tightens small details and faces that came out mushy (the style-lab foxes) without changing the composition. Measured 23 September 2026 on the fox shrine with its own prompt (experiments/curated/overnight-20260923/krea-refine-foxes/): 0.25 kept all four foxes with clearer faces on 3 of 3 seeds (2 keep, 1 fixable), while 0.35 lost foxes or doubled one on 3 of 3 (2 reject, 1 fixable), so 0.25 is the default. Raise denoise towards 0.5 to redraw more; the source's own prompt belongs in the positive text.",
       "stages": [
         "Reference image",
         "Qwen VAE encode",
@@ -5373,9 +5373,9 @@
       ],
       "variants": [
         {
-          "name": "Light touch (denoise 0.25)",
+          "name": "Stronger (denoise 0.35, the old default)",
           "controls": {
-            "denoise": 0.25
+            "denoise": 0.35
           }
         },
         {
@@ -5394,7 +5394,7 @@
           }
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval."
+      "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval. Default changed to denoise 0.25 on 23 September 2026 after six Studio jobs on Studio/krea-style-lab_00001_.png with the shrine's own prompt (denoise 0.25: jobs 36e5d833, 0cba57ec, 0887896e; 0.35: jobs 9602e836, 36537036, f5427eb8; 338-420 s each on the fp8 build), judged with the source in shuffled groups. Not art acceptance."
     },
     {
       "id": "sdxl-inpaint-fix",

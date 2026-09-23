@@ -1,0 +1,12 @@
+{
+ "upload": {
+  "file": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png",
+  "sha256": "f66874e65012b864351648be3c3ac514e1aff7637932ec8072e0c36dfb4e3dc7",
+  "bytes": 1536856,
+  "width": 1024,
+  "height": 1024,
+  "original_name": "fox-shrine-source.png"
+ },
+ "source": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-style-lab_00001_.png",
+ "source_sha256": "f66874e65012b864351648be3c3ac514e1aff7637932ec8072e0c36dfb4e3dc7"
+}

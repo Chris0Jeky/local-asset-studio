@@ -1,0 +1,590 @@
+[
+ {
+  "label": "d025-2026092381",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-refine",
+   "controls": {
+    "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+    "seed": 2026092381,
+    "denoise": 0.25,
+    "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:31:50.334115",
+  "comfy_pid": 46488,
+  "commit_pct_before": 49.7,
+  "free_ram_gb_before": 14.1,
+  "route": "studio",
+  "config": "denoise-0.25",
+  "seed": 2026092381,
+  "job_id": "36e5d833-e116-42f3-b7bc-bea0e3882a6b",
+  "prompt_ids": [
+   "134ddf43-32a2-4f44-bc34-89e78474d4db"
+  ],
+  "wall_seconds": 340.2,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 219,
+    "s_per_step_tqdm": 54.75,
+    "s_per_step_steady": 48.84
+   }
+  ],
+  "peak_dedicated_mb": 14036,
+  "peak_shared_mb": 5571,
+  "spilled": true,
+  "gpu_samples": 227,
+  "peak_commit_pct": 79.8,
+  "comfy_executed_seconds": 337.21,
+  "log_lines": [
+   "05:31:51 [INFO] Requested to load WanVAE",
+   "05:31:51 [INFO] loaded completely; 12084.47 MB usable, 242.03 MB loaded, full load: True",
+   "05:31:59 [INFO] Requested to load Krea2TEModel_",
+   "05:31:59 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "05:32:01 [INFO] Requested to load Krea2",
+   "05:32:27 [INFO] loaded completely; 14253.27 MB usable, 12532.86 MB loaded, full load: True",
+   "05:37:20 [INFO] Requested to load WanVAE",
+   "05:37:20 [INFO] Unloaded partially: 2812.77 MB freed, 9720.13 MB remains loaded, 252.00 MB buffer reserved, lowvram patches: 142",
+   "05:37:21 [INFO] loaded completely; 2309.88 MB usable, 242.03 MB loaded, full load: True",
+   "05:37:27 [INFO] Prompt executed in 337.21 seconds"
+  ],
+  "timeline_file": "timelines/d025-2026092381.json",
+  "outputs": [
+   {
+    "filename": "krea-refine_00002_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092381,
+    "prompt_id": "134ddf43-32a2-4f44-bc34-89e78474d4db",
+    "media_type": "image",
+    "asset_id": "4f0a34eafdd05e228b12c82ff9544120"
+   }
+  ],
+  "elapsed_seconds": 338.4555666446686,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 5.4 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+   "seed": 2026092381,
+   "denoise": 0.25,
+   "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "134ddf43-32a2-4f44-bc34-89e78474d4db",
+    "seed": 2026092381,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 5841313792,
+     "peak_dedicated_bytes": 14717792256,
+     "samples": 35,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/d025-2026092381.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00002_.png",
+    "sha256": "9d2cbb05b2b1ad175d3138a0112dcd978f956c9994c427d85758e19ce981192d"
+   }
+  ],
+  "finished_at": "2026-09-23 05:37:30.525545"
+ },
+ {
+  "label": "d025-2026092382",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-refine",
+   "controls": {
+    "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+    "seed": 2026092382,
+    "denoise": 0.25,
+    "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:37:30.541301",
+  "comfy_pid": 46488,
+  "commit_pct_before": 42.9,
+  "free_ram_gb_before": 15.9,
+  "route": "studio",
+  "config": "denoise-0.25",
+  "seed": 2026092382,
+  "job_id": "0cba57ec-b2ad-477e-887c-786a7fb8b60f",
+  "prompt_ids": [
+   "38c19e49-f1ef-4884-85de-8e324dea8823"
+  ],
+  "wall_seconds": 373.4,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 243,
+    "s_per_step_tqdm": 60.75,
+    "s_per_step_steady": 54.3
+   }
+  ],
+  "peak_dedicated_mb": 14805,
+  "peak_shared_mb": 1807,
+  "spilled": true,
+  "gpu_samples": 249,
+  "peak_commit_pct": 77.3,
+  "comfy_executed_seconds": 371.59,
+  "log_lines": [
+   "05:37:31 [INFO] Requested to load WanVAE",
+   "05:37:31 [INFO] loaded completely; 12070.47 MB usable, 242.03 MB loaded, full load: True",
+   "05:37:47 [INFO] Requested to load Krea2TEModel_",
+   "05:37:47 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "05:37:48 [INFO] Requested to load Krea2",
+   "05:38:12 [INFO] loaded completely; 14253.27 MB usable, 12532.86 MB loaded, full load: True",
+   "05:43:41 [INFO] Requested to load WanVAE",
+   "05:43:41 [INFO] loaded completely; 10670.47 MB usable, 242.03 MB loaded, full load: True",
+   "05:43:42 [INFO] Prompt executed in 371.59 seconds"
+  ],
+  "timeline_file": "timelines/d025-2026092382.json",
+  "outputs": [
+   {
+    "filename": "krea-refine_00003_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092382,
+    "prompt_id": "38c19e49-f1ef-4884-85de-8e324dea8823",
+    "media_type": "image",
+    "asset_id": "6464b552d5ad59c6841dbcfc336a1303"
+   }
+  ],
+  "elapsed_seconds": 372.6719925403595,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 1.8 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+   "seed": 2026092382,
+   "denoise": 0.25,
+   "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "38c19e49-f1ef-4884-85de-8e324dea8823",
+    "seed": 2026092382,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 1894473728,
+     "peak_dedicated_bytes": 15524163584,
+     "samples": 38,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/d025-2026092382.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00003_.png",
+    "sha256": "68822ef29ae2cd14efb369c821429a5fa45014168716bd3957b18574a03c0b07"
+   }
+  ],
+  "finished_at": "2026-09-23 05:43:43.993718"
+ },
+ {
+  "label": "d025-2026092383",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-refine",
+   "controls": {
+    "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+    "seed": 2026092383,
+    "denoise": 0.25,
+    "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:43:44.018876",
+  "comfy_pid": 46488,
+  "commit_pct_before": 50.0,
+  "free_ram_gb_before": 11.9,
+  "route": "studio",
+  "config": "denoise-0.25",
+  "seed": 2026092383,
+  "job_id": "0887896e-82e5-489e-a484-8b0bc2ed6156",
+  "prompt_ids": [
+   "227fe636-9370-429f-8654-0e6f053d6baa"
+  ],
+  "wall_seconds": 373.2,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 254,
+    "s_per_step_tqdm": 63.5,
+    "s_per_step_steady": 56.79
+   }
+  ],
+  "peak_dedicated_mb": 14804,
+  "peak_shared_mb": 5499,
+  "spilled": true,
+  "gpu_samples": 249,
+  "peak_commit_pct": 80.3,
+  "comfy_executed_seconds": 369.11,
+  "log_lines": [
+   "05:43:44 [INFO] Requested to load Krea2TEModel_",
+   "05:43:45 [INFO] loaded completely; 14022.66 MB usable, 4999.47 MB loaded, full load: True",
+   "05:43:46 [INFO] Requested to load Krea2",
+   "05:44:08 [INFO] loaded completely; 14253.27 MB usable, 12532.86 MB loaded, full load: True",
+   "05:46:22 [WARNING] Civitai Link: Connection error: Connection error",
+   "05:46:26 [WARNING] Civitai Link: Connection error: Connection error",
+   "05:46:35 [WARNING] Civitai Link: Connection error: Connection error",
+   "05:49:46 [INFO] Requested to load WanVAE",
+   "05:49:46 [INFO] Unloaded partially: 2380.77 MB freed, 10152.13 MB remains loaded, 252.00 MB buffer reserved, lowvram patches: 130",
+   "05:49:46 [INFO] loaded completely; 2214.68 MB usable, 242.03 MB loaded, full load: True",
+   "05:49:53 [INFO] Prompt executed in 369.11 seconds"
+  ],
+  "timeline_file": "timelines/d025-2026092383.json",
+  "outputs": [
+   {
+    "filename": "krea-refine_00004_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092383,
+    "prompt_id": "227fe636-9370-429f-8654-0e6f053d6baa",
+    "media_type": "image",
+    "asset_id": "4192d3e2ad645f3681589aa3bbde237b"
+   }
+  ],
+  "elapsed_seconds": 370.0126860141754,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 4.3 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+   "seed": 2026092383,
+   "denoise": 0.25,
+   "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "227fe636-9370-429f-8654-0e6f053d6baa",
+    "seed": 2026092383,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 4578828288,
+     "peak_dedicated_bytes": 15523631104,
+     "samples": 38,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/d025-2026092383.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00004_.png",
+    "sha256": "ef0317c72c123a5cff5f0bcba6648affeebc32a2e4b0c97efa8bcf89261a61dc"
+   }
+  ],
+  "finished_at": "2026-09-23 05:49:57.224090"
+ },
+ {
+  "label": "d035-2026092381",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-refine",
+   "controls": {
+    "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+    "seed": 2026092381,
+    "denoise": 0.35,
+    "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:49:57.240469",
+  "comfy_pid": 46488,
+  "commit_pct_before": 43.1,
+  "free_ram_gb_before": 12.0,
+  "route": "studio",
+  "config": "denoise-0.35",
+  "seed": 2026092381,
+  "job_id": "9602e836-e10f-4eef-97e4-4b973141c591",
+  "prompt_ids": [
+   "57b583dd-bc86-4055-ba7d-98f5ecf3d622"
+  ],
+  "wall_seconds": 394.5,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 268,
+    "s_per_step_tqdm": 67.0,
+    "s_per_step_steady": 57.22
+   }
+  ],
+  "peak_dedicated_mb": 14805,
+  "peak_shared_mb": 1807,
+  "spilled": true,
+  "gpu_samples": 263,
+  "peak_commit_pct": 78.2,
+  "comfy_executed_seconds": 392.27,
+  "log_lines": [
+   "05:49:58 [INFO] Requested to load WanVAE",
+   "05:49:58 [INFO] loaded completely; 12070.47 MB usable, 242.03 MB loaded, full load: True",
+   "05:50:08 [INFO] Requested to load Krea2TEModel_",
+   "05:50:08 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "05:50:09 [INFO] Requested to load Krea2",
+   "05:50:36 [INFO] loaded completely; 14253.27 MB usable, 12532.86 MB loaded, full load: True",
+   "05:56:28 [INFO] Requested to load WanVAE",
+   "05:56:29 [INFO] loaded completely; 10670.47 MB usable, 242.03 MB loaded, full load: True",
+   "05:56:29 [INFO] Prompt executed in 392.27 seconds"
+  ],
+  "timeline_file": "timelines/d035-2026092381.json",
+  "outputs": [
+   {
+    "filename": "krea-refine_00005_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092381,
+    "prompt_id": "57b583dd-bc86-4055-ba7d-98f5ecf3d622",
+    "media_type": "image",
+    "asset_id": "67d211b28b10558ea5b6e89027f00bcb"
+   }
+  ],
+  "elapsed_seconds": 393.2239453792572,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 1.8 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+   "seed": 2026092381,
+   "denoise": 0.35,
+   "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "57b583dd-bc86-4055-ba7d-98f5ecf3d622",
+    "seed": 2026092381,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 1894473728,
+     "peak_dedicated_bytes": 15524163584,
+     "samples": 40,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/d035-2026092381.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00005_.png",
+    "sha256": "32310e35a2e91b00bb8bf904811b16397f8ebb168e31fe96f0b6434032c3bc7c"
+   }
+  ],
+  "finished_at": "2026-09-23 05:56:31.749156"
+ },
+ {
+  "label": "d035-2026092382",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-refine",
+   "controls": {
+    "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+    "seed": 2026092382,
+    "denoise": 0.35,
+    "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:56:31.767367",
+  "comfy_pid": 46488,
+  "commit_pct_before": 51.2,
+  "free_ram_gb_before": 10.7,
+  "route": "studio",
+  "config": "denoise-0.35",
+  "seed": 2026092382,
+  "job_id": "36537036-d1b1-4654-9d3f-135742b1b1d1",
+  "prompt_ids": [
+   "d10aa461-75e9-4712-aa42-eb8b3fa6e23a"
+  ],
+  "wall_seconds": 385.2,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 248,
+    "s_per_step_tqdm": 62.0,
+    "s_per_step_steady": 55.68
+   }
+  ],
+  "peak_dedicated_mb": 14804,
+  "peak_shared_mb": 5427,
+  "spilled": true,
+  "gpu_samples": 257,
+  "peak_commit_pct": 80.6,
+  "comfy_executed_seconds": 381.93,
+  "log_lines": [
+   "05:56:32 [INFO] Requested to load Krea2TEModel_",
+   "05:56:47 [INFO] loaded completely; 14022.66 MB usable, 4999.47 MB loaded, full load: True",
+   "05:56:48 [INFO] Requested to load Krea2",
+   "05:57:12 [INFO] loaded completely; 14253.27 MB usable, 12532.86 MB loaded, full load: True",
+   "05:58:04 [WARNING] Civitai Link: Connection error: Connection error",
+   "05:58:10 [WARNING] Civitai Link: Connection error: Connection error",
+   "05:58:19 [WARNING] Civitai Link: Connection error: Connection error",
+   "06:02:45 [INFO] Requested to load WanVAE",
+   "06:02:45 [INFO] Unloaded partially: 2380.77 MB freed, 10152.13 MB remains loaded, 252.00 MB buffer reserved, lowvram patches: 130",
+   "06:02:46 [INFO] loaded completely; 2214.68 MB usable, 242.03 MB loaded, full load: True",
+   "06:02:53 [INFO] Prompt executed in 381.93 seconds"
+  ],
+  "timeline_file": "timelines/d035-2026092382.json",
+  "outputs": [
+   {
+    "filename": "krea-refine_00006_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092382,
+    "prompt_id": "d10aa461-75e9-4712-aa42-eb8b3fa6e23a",
+    "media_type": "image",
+    "asset_id": "ef7cff99caf95943b267d210a643ed64"
+   }
+  ],
+  "elapsed_seconds": 384.06765627861023,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 5.3 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+   "seed": 2026092382,
+   "denoise": 0.35,
+   "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "d10aa461-75e9-4712-aa42-eb8b3fa6e23a",
+    "seed": 2026092382,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 5690318848,
+     "peak_dedicated_bytes": 15523631104,
+     "samples": 40,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/d035-2026092382.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00006_.png",
+    "sha256": "10f187c7f5c3864743aa571ab81be01035e7f88ea6c3245a8a2abcdcbb757726"
+   }
+  ],
+  "finished_at": "2026-09-23 06:02:56.984812"
+ },
+ {
+  "label": "d035-2026092383",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-refine",
+   "controls": {
+    "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+    "seed": 2026092383,
+    "denoise": 0.35,
+    "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 06:02:57.014851",
+  "comfy_pid": 46488,
+  "commit_pct_before": 43.7,
+  "free_ram_gb_before": 16.3,
+  "route": "studio",
+  "config": "denoise-0.35",
+  "seed": 2026092383,
+  "job_id": "f5427eb8-4594-482d-985c-9126ef7c9e03",
+  "prompt_ids": [
+   "76e8630c-d3b8-4837-b281-3dce73c94073"
+  ],
+  "wall_seconds": 421.3,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 278,
+    "s_per_step_tqdm": 69.5,
+    "s_per_step_steady": 63.96
+   }
+  ],
+  "peak_dedicated_mb": 14805,
+  "peak_shared_mb": 5563,
+  "spilled": true,
+  "gpu_samples": 281,
+  "peak_commit_pct": 80.6,
+  "comfy_executed_seconds": 418.69,
+  "log_lines": [
+   "06:02:58 [INFO] Requested to load WanVAE",
+   "06:02:58 [INFO] loaded completely; 12070.47 MB usable, 242.03 MB loaded, full load: True",
+   "06:03:10 [INFO] Requested to load Krea2TEModel_",
+   "06:03:10 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "06:03:11 [INFO] Requested to load Krea2",
+   "06:03:44 [INFO] loaded completely; 14253.27 MB usable, 12532.86 MB loaded, full load: True",
+   "06:09:48 [INFO] Requested to load WanVAE",
+   "06:09:48 [INFO] Unloaded partially: 2380.77 MB freed, 10152.13 MB remains loaded, 252.00 MB buffer reserved, lowvram patches: 130",
+   "06:09:49 [INFO] loaded completely; 2213.88 MB usable, 242.03 MB loaded, full load: True",
+   "06:09:55 [INFO] Prompt executed in 418.69 seconds"
+  ],
+  "timeline_file": "timelines/d035-2026092383.json",
+  "outputs": [
+   {
+    "filename": "krea-refine_00007_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092383,
+    "prompt_id": "76e8630c-d3b8-4837-b281-3dce73c94073",
+    "media_type": "image",
+    "asset_id": "fffd9e4fcf8d520c848e08371fba2c73"
+   }
+  ],
+  "elapsed_seconds": 420.4213590621948,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 5.3 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style",
+   "seed": 2026092383,
+   "denoise": 0.35,
+   "reference": "37fd60b5f51947ef8105897f68a97d17_fox-shrine-source.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "76e8630c-d3b8-4837-b281-3dce73c94073",
+    "seed": 2026092383,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 5681930240,
+     "peak_dedicated_bytes": 15524163584,
+     "samples": 43,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/d035-2026092383.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00007_.png",
+    "sha256": "2fdf496da5462528f7e2a3bacb3dc295f6421b9fe2c51e8203f8a606ff5991a9"
+   }
+  ],
+  "finished_at": "2026-09-23 06:09:58.328266"
+ }
+]
