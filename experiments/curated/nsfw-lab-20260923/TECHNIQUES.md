@@ -81,6 +81,8 @@ Do not copy the page's weight syntax `(tag:1.2)` onto Anima. These five stay on 
 
 All five completed. The bent-over crop, the seiza, the squat with hands behind the head, and the seated rear all held. The portrait still made a sheer panel, and the face stayed the most recognizable. The squat is the front pose that keeps hands off furniture. The bent-over crop is the one to reuse when the hips are the subject and hands are allowed.
 
+Transfer after that: the squat held on Yinlin and Scathach. The bent-over crop held on Frieren, hands on a see-through white dress. It missed Albedo's hands because the wings cover that spot. Wiz held the seiza. Artoria held the seated rear. A finished wave is a checkpoint. The next wave puts Albedo in the squat, and gives the bent-over crop to Luna and Serie.
+
 ## M2 measured
 
 All nine jobs completed. About 26–38 seconds each. No spill line was required to finish the queue.
