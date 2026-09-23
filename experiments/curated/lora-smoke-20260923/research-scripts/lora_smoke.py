@@ -2,7 +2,8 @@
 
 Each run is the shipped preset API graph (workflows/api/{wai,noob,pony}-api.json) with LoRA slot 8 set to one LoRA at one strength
 (model and clip) and slot 9 left at 0. Per checkpoint: one fixed seed, one prompt, one negative, one no-LoRA control, and two
-strengths per LoRA. A trigger token is appended only when the civitai version lists one (recorded per run as `trigger`).
+strengths per LoRA. A trigger token is appended where the LoRA table below names one (recorded per run as `trigger`); the two
+Masterpiece LoRAs' civitai trigger was not appended (#857), so trigger advice for them is untested.
 Straight to ComfyUI on 127.0.0.1:8188: POST /prompt, poll /history, one job at a time, never a resubmission of an uncertain prompt.
 Before every submission the GPU lease file named by $LEASE must say free_for == "lora-smoke"; otherwise the script stops.
 
