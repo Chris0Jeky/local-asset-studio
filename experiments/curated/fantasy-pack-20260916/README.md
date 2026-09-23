@@ -1,5 +1,12 @@
 # Fantasy character pack, first four-step batch — 16 September 2026 (02:07-02:10)
 
+> **Local-only sheets (23 September 2026).** On the owner's decision, the contact sheets and traced depth maps from this
+> research moved out of the public repository into `examples/combine-research/` (gitignored; `MANIFEST.json` there is the
+> tracked record with sha256, size and former path; `python scripts/lab-media.py restore --folder combine-research --from-ref
+> dce6ccc085c2` rebuilds them). The source pictures were fan art of a student-canon character with fanservice framing, which
+> #403's adult-only rule refuses; later pose and replace-character work uses adult or original characters. The text
+> evidence below is unchanged.
+
 The brief's first deliverable ([docs/FANTASY-CHARACTER-BRIEF.md](../../../docs/FANTASY-CHARACTER-BRIEF.md)) run once through the Studio's own
 path (POST /api/jobs: prepare -> worker -> ComfyUI, the shape the page submits; `pack_lookb.py` next to this file, results in `pack_lookb.json`),
 on the owner's chosen **look B**: `anima-v1-baseline` with slot 1 `nsfw_girls_anima.safetensors` at 1.0 (the other five slots at 0), seed
@@ -95,7 +102,7 @@ same graph and LoRA as above, 832x1216, one image per seed. **Chain**: image 1 i
 the pose and costume but lost the face (job `18a4f441…`, Workspace asset `7a8a5d27…`, staged through POST /api/assets/reference the way
 *Continue with this* does) - and image 2 the portrait; the wording as above with "clean rendering and its plain light background".
 **Cross**: image 1 the pack's full-body render, image 2 the owner's anime SHARK character (short black hair with red tips, red eyes, a black
-choker), to see whether identity crosses styles and whether image 1's clothes hold. Sheets `examples/fantasy-pack/pose-then-face.jpg` and
+choker), to see whether identity crosses styles and whether image 1's clothes hold. Sheets `examples/combine-research/pose-then-face.jpg` and
 `replace-cross-style.jpg`.
 
 | Group / seed | Prompt | s | Output | Inspected (agent's reading, not acceptance) |
@@ -126,7 +133,7 @@ the board (image 1, slot role `composition`), the three fills replaced.
 | `7051b297-a569-4dba-9a88-558bc867a5df` / `5bb9f587-6e37-492f-b712-b4afe36f6e38` | 2026091301, 832x1216 (= research seed 1) | 104.9 | `Combine/Klein-9B-replace_00002_.png` | the same transfer as the research render at this seed: the fringe, a gold earring and the calm face on the full-body scene with coat, scarf, satchel, lantern, boots and platform kept; not pixel-identical to the research render because the recipe's template words the sentences differently, but the same picture |
 | `2752190c-3681-4130-a5d2-6f96ec63d5fb` / `bc74e671-d71d-45e1-840d-0d2fc92acdd5` | 2026091302, 1024x1536 (the recipe's default canvas) | 624.2 | `Combine/Klein-9B-replace_00001_.png` | at the default 1024x1536 canvas the transfer holds: the portrait's face with a slight smile, the fringe and earrings, the framing a little wider than image 1 (more platform on the left), the pose and scene the same; the 624 s elapsed includes this job's wait behind a research render in ComfyUI's queue and the CPU contention of three concurrent test suites, not a render time |
 
-Sheet `examples/fantasy-pack/replace-through-the-studio.jpg` (research seed 1 beside the two Studio jobs). An earlier Studio job for seed 1
+Sheet `examples/combine-research/replace-through-the-studio.jpg` (research seed 1 beside the two Studio jobs). An earlier Studio job for seed 1
 (`02d7c0e4…`) was never submitted: the Studio's own guard found ComfyUI busy with the research batch and gave up, as designed; it was
 abandoned from the page, not resubmitted.
 

@@ -15,7 +15,7 @@ import argparse, hashlib, html, json, re, subprocess, sys
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-FOLDERS=('nsfw-lab','civitai-intake')
+FOLDERS=('nsfw-lab','civitai-intake','combine-research')
 
 def _root(args):
     return Path(args.repo_root).resolve() if getattr(args,'repo_root',None) else ROOT
@@ -52,7 +52,11 @@ def comfy_output(root):
 def from_ref(root,ref,folder,entry):
     """Exact bytes of the file as it was committed on another git ref."""
     if ref.startswith('-'): return None,'a git ref may not start with - (it would be read as an option)'
-    result=subprocess.run(['git','show','%s:examples/%s/%s'%(ref,folder,target(root,folder,entry).name)],cwd=root,capture_output=True)
+    # An entry that was tracked elsewhere before it became local-only names that path as former_path.
+    former=str(entry.get('former_path') or '')
+    if former and (not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._/-]*',former) or '..' in former): return None,'former_path is not a plain repository path: %r'%former
+    path=former or 'examples/%s/%s'%(folder,target(root,folder,entry).name)
+    result=subprocess.run(['git','show','%s:%s'%(ref,path)],cwd=root,capture_output=True)
     if result.returncode!=0: return None,(result.stderr.decode('utf-8','replace').strip() or 'git show failed')
     return result.stdout,None
 
@@ -163,7 +167,7 @@ def index(args):
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('command',choices=('verify','restore','index'))
-    parser.add_argument('--folder',action='append',choices=FOLDERS,help='default: both lab folders')
+    parser.add_argument('--folder',action='append',choices=FOLDERS,help='default: every local-only folder')
     parser.add_argument('--from-ref',help='restore exact bytes from a git ref instead of the job PNGs')
     parser.add_argument('--comfy-output',help='ComfyUI output folder; default comes from config/local.json')
     parser.add_argument('--repo-root',help='repository root holding examples/<folder>/MANIFEST.json; default is this checkout')

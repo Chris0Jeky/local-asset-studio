@@ -19,7 +19,7 @@ import tempfile
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-FOLDERS=('nsfw-lab','civitai-intake')
+FOLDERS=('nsfw-lab','civitai-intake','combine-research')
 SOURCES=('presets/nsfw-intel.json','presets/recipes.json','app/static/bundle-showcase.json')
 IMAGE_SUFFIXES={'.jpg','.jpeg','.png','.webp','.gif','.bmp','.tif','.tiff','.avif'}
 REFERENCE=re.compile(r'/api/examples/('+'|'.join(FOLDERS)+r')/([A-Za-z0-9][A-Za-z0-9._-]*)')
@@ -173,9 +173,24 @@ class LabMediaTool(unittest.TestCase):
         code,report=run('restore','--repo-root',str(self.root),'--folder','nsfw-lab','--from-ref=--upload-pack=touch')
         self.assertEqual(code,1,report);self.assertIn('may not start with -',report)
 
-    def git_repo(self):
+    def test_restore_from_a_ref_reads_an_entrys_former_path(self):
+        """A picture tracked elsewhere before it became local-only is rebuilt from where that commit held it."""
+        old=self.root/'examples/style-pose';old.mkdir(parents=True);(old/'sheet.jpg').write_bytes(self.payload)
+        self.write([dict(self.entry,former_path='examples/style-pose/sheet.jpg')])
+        git=self.git_repo(default=b'the default path holds different bytes');(old/'sheet.jpg').unlink()
+        code,report=run('restore','--repo-root',str(self.root),'--folder','nsfw-lab','--from-ref',git)
+        self.assertEqual(code,0,report);self.assertEqual((self.folder/'a-cell.jpg').read_bytes(),self.payload)
+
+    def test_a_former_path_that_escapes_the_repository_is_refused(self):
+        for former in ('../outside.jpg','examples/../../x.jpg','-flag','C:/x.jpg'):
+            with self.subTest(former=former):
+                self.write([dict(self.entry,former_path=former)])
+                code,report=run('restore','--repo-root',str(self.root),'--folder','nsfw-lab','--from-ref','HEAD')
+                self.assertEqual(code,1,report);self.assertIn('former_path is not a plain repository path',report)
+
+    def git_repo(self,default=None):
         """Commit the picture in a throwaway repo so --from-ref has a ref to read it from."""
-        self.place()
+        self.place(default)
         for command in (['init','-q'],['config','user.email','t@example.com'],['config','user.name','t'],
                         ['add','-A'],['-c','commit.gpgsign=false','commit','-qm','media']):
             subprocess.run(['git']+command,cwd=self.root,check=True,capture_output=True)

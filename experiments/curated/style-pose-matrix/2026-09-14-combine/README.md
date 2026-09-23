@@ -1,10 +1,17 @@
 # Combine two pictures with FLUX.2 Klein 4B — 14 September 2026 (late night)
 
+> **Local-only sheets (23 September 2026).** On the owner's decision, the contact sheets and traced depth maps from this
+> research moved out of the public repository into `examples/combine-research/` (gitignored; `MANIFEST.json` there is the
+> tracked record with sha256, size and former path; `python scripts/lab-media.py restore --folder combine-research --from-ref
+> dce6ccc085c2` rebuilds them). The source pictures were fan art of a student-canon character with fanservice framing, which
+> #403's adult-only rule refuses; later pose and replace-character work uses adult or original characters. The text
+> evidence below is unchanged.
+
 Research renders straight against ComfyUI (`Research/next-*` outputs, prompt IDs below), all on the installed
 `flux-2-klein-4b-fp8.safetensors` + `qwen_3_4b` + `flux2-vae`, 6 Euler steps on the Flux2 schedule at CFG 1.0, seed
 2026091407, 1024×1536 canvas, every reference scaled to 1.0 megapixel and chained as `ReferenceLatent` nodes in the
 order image 1 → image 2 (→ image 3). Exact graphs: `klein-4b-graphs/<name>.graph.json`. Sheet:
-`examples/style-pose/combine-klein-research.jpg` (four rows, labelled).
+`examples/combine-research/combine-klein-research.jpg` (four rows, labelled).
 
 Pictures: image 1 = the owner's throne witch (`e0e988933f3c…_Nova_00004_.png.png`, 832×1216); pose picture A = the
 owner's imported Santa-outfit fan picture (`4e25744e…_yande.re_1249734…`, 1053×1500); picture B = the imported
@@ -60,7 +67,7 @@ loading another model); a warm run is 14–46 s.
 Job `aebf406f…` (22:54, through the page): image 1 = picture B (the "SHARK" crop-top), pose picture = a newly imported
 bent-over maid fan picture (`6895e9e0…_yande.re_1250070…`), fills "Ellen Joe in pink shorts and top with attractive silhouette"
 and "leaning forwards, seen from the back, one hand on the hip moving the shorts slightly", plus "not include the tail",
-seeds 2026091411–14, 148.5 s for four. Sheet `examples/style-pose/combine-klein-owner-run.jpg`. Every seed wore a cap the
+seeds 2026091411–14, 148.5 s for four. Sheet `examples/combine-research/combine-klein-owner-run.jpg`. Every seed wore a cap the
 source does not have (the shipped keep sentence said "her hat") and seed 2026091414 drew two figures.
 
 Fix rendered against ComfyUI with the catalog graph, same pictures, seeds and fills, keep sentence "Keep the face, the
@@ -74,10 +81,10 @@ hair, the outfit and its colours, and image 1's rendering style. One figure only
 | 2026091413 | `f73b9c0b-56fc-46f9-bbeb-91e5d8e08e7b` (`Research/combine-fix_00003_.png`) | 21.0 | same; the source's "?" speech bubble kept |
 | 2026091414 | `a27ae00d-cf23-40b8-8e9a-ce328fa26a76` (`Research/combine-fix_00004_.png`) | 21.1 | same; speech bubble kept |
 
-Sheet `examples/style-pose/combine-klein-owner-fix.jpg`. The lean stayed mild in both runs because the fill said
+Sheet `examples/combine-research/combine-klein-owner-fix.jpg`. The lean stayed mild in both runs because the fill said
 "leaning forwards". Stronger words, same pictures and seeds (`bent forward at the waist, seen from behind, both hands on
 the hips, looking back over her shoulder`; prompts `9c2635a7-a13b-48c5-83c4-114ee7333eeb`, `4241c6f4-c9d5-43d0-a847-5a45e1acb2d1`,
-`Research/combine-bend_0000[12]_.png`, sheet `examples/style-pose/combine-klein-owner-bend.jpg`): the look-back and the
+`Research/combine-bend_0000[12]_.png`, sheet `examples/combine-research/combine-klein-owner-bend.jpg`): the look-back and the
 hands were honoured, the deep waist bend of the pose picture still was not. The words decide what moves; an extreme
 bend is beyond what 6 steps of the 4B model reproduced here.
 
@@ -88,7 +95,7 @@ The owner called the 4B results "incredibly bad" and asked for a baseline that p
 exact wordings, graph edits and seeds in `research-scripts/matrix.py` (Klein variants), `structural.py` (OpenPose + IP-Adapter),
 `qwen_pose.py`, `prove_fix.py` and `prove_bend.py` next to this file (they run straight against ComfyUI on 8188 from the repo's
 graphs; the input file names are the owner's uploads). Sheets:
-`examples/style-pose/combine-klein4b-matrix.jpg`, `combine-klein9b-matrix.jpg`, `combine-klein9b-pose-first.jpg`, `combine-qwen-2ref.jpg`,
+`examples/combine-research/combine-klein4b-matrix.jpg`, `combine-klein9b-matrix.jpg`, `combine-klein9b-pose-first.jpg`, `combine-qwen-2ref.jpg`,
 `combine-openpose-ipadapter.jpg`.
 
 | Variant | Seed | Prompt ID | s | Output | Result |
@@ -136,7 +143,7 @@ The owner's verdict on the pose-first result: "so so" — a much bigger step, bu
 renders the first Qwen one (`qwen-pose_00001_.png`, above) most resembled the objective, and 14.5 minutes is too slow. Scripts next to this
 file: `qwen_pose2.py` (Qwen Image Edit 2511 Q4_K_M + Lightning, references appended as `ReferenceLatent` at a chosen size), `klein_skeleton.py`
 (FLUX.2 Klein 9B, the shipped 9B graph with an annotator or a blank canvas as image 1), `sheet_round2.py`, `prove_depth.py` (the Studio proving
-run). Same two pictures, seeds 2026091411+. Sheet: `examples/style-pose/combine-pose-round2.jpg`.
+run). Same two pictures, seeds 2026091411+. Sheet: `examples/combine-research/combine-pose-round2.jpg`.
 
 **Why Qwen is slow here, measured.** The ComfyUI log for the first Qwen run shows the model fully loaded in 65 s and the four Lightning steps
 taking 13 min. Halving both references (the stock `TextEncodeQwenImageEditPlus` node rescales every reference to ~1 MP for its latents, so
@@ -184,7 +191,8 @@ Same two pictures and seeds 2026091411-13, research renders straight against Com
 different image 1 per variant: the depth map painted, a PIL-drawn skeleton, a PIL-drawn capsule mannequin; hand and camera words; 8 steps;
 the Q8 GGUF), `lora_pose.py` (four civitai LoRAs for Klein 9B, downloaded and SHA-256-verified tonight, pinned in `models/library.json`),
 `restart_probe.py` (the slow state), `twopass.py` (depth Combine then Change one thing as one Studio journey), `sheet_round3.py`. Prepared
-images 1 (`pose3-*.png`) and exact graphs (`pose3-*.graph.json`) are next to the scripts. Sheet: `examples/style-pose/combine-pose-round3.jpg`.
+images 1 (`pose3-*.png`: the drawn ones next to the scripts, the traced depth maps and generated mannequin local-only in
+`examples/combine-research/`) and exact graphs (`pose3-*.graph.json`) are next to the scripts. Sheet: `examples/combine-research/combine-pose-round3.jpg`.
 
 **The slow state is a ComfyUI-process condition that only a restart clears (`restart_probe.json`).** The night's per-prompt log shows a healthy
 Klein 9B render at 6.2-6.6 s/step (87-120 s) and the slow state at 53-63 s/step (377-460 s), with identical model-load lines; two of the three
@@ -277,7 +285,7 @@ of `pose_sources.py` (`0.86 * h`). Proving run through the Studio (`prove_depthc
 
 | the same recipe at the default `depth_cut` 100 (no-op check, `prove_depthcut_noop.json`) | 2026091441 | `216239b8-981f-426a-9d50-b2b02ef8f7fb` / `6879ee82-cabe-4387-9580-ed8fa82ecc8a` | 90.5 | `Combine/Klein-9B-depth_00004_.png` | **byte-identical to the 15 September uncut output `Klein-9B-depth_00001_.png`** (PIL difference: bbox None, max 0): the composite is a no-op at 100 on the real runtime, so the recorded run stays reproducible |
 
-Exact submitted recipes (`/api/jobs/<id>/recipe`, graph included): `prove_depthcut.recipe.json`, `prove_depthcut_noop.recipe.json`. Sheet: `examples/style-pose/combine-depth-cut-control.jpg` (uncut vs cut, same seed). Not verified: the control by clicking through the page
+Exact submitted recipes (`/api/jobs/<id>/recipe`, graph included): `prove_depthcut.recipe.json`, `prove_depthcut_noop.recipe.json`. Sheet: `examples/combine-research/combine-depth-cut-control.jpg` (uncut vs cut, same seed). Not verified: the control by clicking through the page
 (the API run uses the page's prepare and worker path); any other pose picture; art acceptance (HUMAN_TODO q-28).
 
 ## Copy Pose as a recipe, 16 September 2026 (02:05)
@@ -293,7 +301,7 @@ exact recipe `prove_copypose.recipe.json`):
 | --- | --- | --- | --- | --- | --- |
 | the shipped recipe, the SHARK character on Picture to keep (image 1), the fan picture on Pose picture (image 2), fills replaced | 2026091471 | `61dd5375-aa6c-42ca-b1e0-12466689857e` / `1fbea73e-e37c-4753-b94c-039552b2640c` | 58.5 (warm) | `Combine/Klein-9B-copypose_00001_.png` | **the deep bend, crossed legs and look-back with the character's own light background and framing kept**, bare feet, no tights, heels or tail; face, hair and pink shorts kept, the lettering partly hidden by the bend, the character picture's speech bubble kept (as in research) |
 
-Sheet: `examples/style-pose/combine-copypose-proving.jpg` (image 1, image 2, the output). Not verified: the recipe by clicking through the
+Sheet: `examples/combine-research/combine-copypose-proving.jpg` (image 1, image 2, the output). Not verified: the recipe by clicking through the
 page (the API run uses the page's prepare and worker path); the engine switch depth -> Copy Pose by clicking; any other pair; art acceptance
 (HUMAN_TODO q-28 (e), which is now a choice between two shipped recipes).
 
@@ -309,7 +317,7 @@ hand-drawn proving run `26448d58`; `prove_pose_editor.json`, exact recipe `prove
 | --- | --- | --- | --- | --- | --- |
 | the page-rendered guide (8 px strokes) on the shipped skeleton recipe | 2026091461 | `8b571dd4-ba0f-403b-9f3d-35019cb1e3a3` / `2a80b266-d1cd-46df-8ccd-32a8ed7a65e1` | 66.5 | `Combine/Klein-9B-skeleton_00002_.png` | **the drawn pose as with the hand-drawn figure: deep bend, the arm raised behind the head, one leg straight and one crossing, look-back, bare feet, face and hair kept**; the lettering hidden by the bend (garbled on the hand-drawn run of the same seed) |
 
-Sheet: `examples/style-pose/pose-editor-proving.jpg` (guide, its output, the hand-drawn figure, its output). Thin 8 px lines carry the pose as
+Sheet: `examples/combine-research/pose-editor-proving.jpg` (guide, its output, the hand-drawn figure, its output). Thin 8 px lines carry the pose as
 well as the 14 px ones on this seed. Not verified: drawing in the panel by hand in a browser and pressing *Use this pose* then Generate as one
 journey (the use-case driver covers the panel up to the attached guide with zero generations; this run submitted the same request shape by
 API); other seeds; art acceptance (HUMAN_TODO q-28 (d)).
@@ -330,7 +338,7 @@ released just before (see CURRENT_STATE, the RAM measurement), so the first run 
 | `combine-klein-9b-copypose`, seed 2026091472 | `572794b6-4681-4457-8a2f-9eec373fa387` / `37f19109-b8ef-4060-a451-70837585bc2c` | 132.9 | `Combine/Klein-9B-copypose_00002_.png` | **the picture's bend and look-back with the character's own light background kept**, both hands between the knees on this seed, bare feet, lettering intact |
 | the same, seed 2026091473 | `069c5efe-e412-482d-83e6-4477b2633c4e` / `b3c4ff76-5bd3-4dff-9e29-b18e3626ed02` | 143.2 | `Combine/Klein-9B-copypose_00003_.png` | **held again**: bend from behind, a hand on the knee, face looking down in profile, bare feet, lettering intact |
 
-Sheets: `examples/style-pose/combine-depth-cut-sweep.jpg` (80 / 86 / 92 / 100), `pose-editor-audition.jpg` (seeds 61-63), `combine-copypose-audition.jpg`
+Sheets: `examples/combine-research/combine-depth-cut-sweep.jpg` (80 / 86 / 92 / 100), `pose-editor-audition.jpg` (seeds 61-63), `combine-copypose-audition.jpg`
 (seeds 71-73). What it settles: on this pair each of the three tested cuts (80, 86, 92) removed the heel and 92 lost the least of the figure, so the
 recipe hint now says 86-92 (the values between them were not run); the page-rendered guide carried the pose on 3 of 3 seeds like the hand-drawn one; Copy Pose held on 3 of 3 seeds through the
 Studio as it did in research. Not verified: other pairs; art acceptance (HUMAN_TODO q-28).

@@ -1,5 +1,5 @@
 """Contact sheet for pose round two (15 September 2026): the two sources, the owner's preferred first-round Qwen render, and every
-round-two render, one row per route, each tile labelled. Writes examples/style-pose/combine-pose-round2.jpg."""
+round-two render, one row per route, each tile labelled. Writes examples/combine-research/combine-pose-round2.jpg (local-only, gitignored)."""
 import os, json
 from PIL import Image, ImageDraw
 REPO = r"C:/Users/jekyt/Desktop/Printer Config/Others/Git/local-asset-studio"
@@ -34,4 +34,4 @@ for ims in tiles:
     for label, im in ims:
         sheet.paste(im, (x, y + LABEL)); d.text((x + 4, y + 4), label, fill="black"); x += im.width + PAD
     y += H + LABEL + PAD
-dest = REPO + "/examples/style-pose/combine-pose-round2.jpg"; sheet.save(dest, quality=82); print(dest, sheet.size)
+dest = REPO + "/examples/combine-research/combine-pose-round2.jpg"; sheet.save(dest, quality=82); print(dest, sheet.size)
