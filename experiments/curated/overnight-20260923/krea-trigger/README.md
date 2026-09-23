@@ -56,7 +56,8 @@ in two halves. Style was scored against the triggered look.
 - Every clean picture with the Niji look is `keep`. The two with text are `fixable` (inpaint or crop). The three Niji-off
   pictures are `fixable` on style: a weaker version of the look, not a broken picture.
 - Speed: 39-139 s per prompt (spread in `followup/results.json`). The first seed of each configuration pays for the CPU text
-  encode. The 133 s of `none-0.0` seed 98 was not examined.
+  encode. `none-0.0` seed 98 (133 s) ran straight after the `zimage-fast` Studio proof (07:32-07:33), so it probably reloaded the
+  Krea model; that was not measured.
 
 ## Recommendation (not applied here)
 
