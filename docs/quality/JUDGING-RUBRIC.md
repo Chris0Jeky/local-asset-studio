@@ -95,7 +95,7 @@ Apply these corrections every time:
   belongs to scores at most 3. A 4 means you would ship it without touching that defect. Judges most often erred by
   naming merged fingers or blotchy skin and still scoring 4.
 - **R2. Count the props.** A named prop that is missing, duplicated or not held as the brief asks caps `adherence` at 3.
-- **R3. One extra finger on an otherwise readable hand is `anatomy` 3**, because a hand inpaint fixes it. Keep 1–2 for
+- **R3. One extra finger on an otherwise readable hand is `anatomy` 3**, with a masked hand inpaint as the named fix. Keep 1–2 for
   unreadable hands, several broken hands or a broken face.
 - **R4. A small signature glyph in the outer edge**, removable by a crop that does not touch the subject, is
   `technical` 4. Name the crop as the fix.

@@ -110,7 +110,8 @@ Bold marks a disagreement with the owner.
 4. **Eyes and "flat" are under-named on stylised failures.** Both judges rejected the owner's Restyle. They named the
    throne and the burnt palette, but neither named the crude eyes.
 5. **Harshness on a single extra finger.** Judge 1 rejected the NoobAI portrait for its six-fingered hand. The owner
-   called it "has potential", and the studio's hand pass fixed that exact hand in 36 s (job `14caa4fb`). The rubric's own
+   called it "has potential". The atelier record says the Studio's hand pass fixed that exact hand (job `14caa4fb`), but at
+   full resolution the review agent still counts six digits after that pass (see the quality backlog). The rubric's own
    anchor ("a 1 looks like fused or extra fingers") pushed judge 1 there.
 6. **Strict on corner signature glyphs.** Stray glyphs in a corner cost the Krea/Niji favourites a full point in
    `technical`, which dropped two T5 pictures below the T3 WAI render. The owner never mentioned the glyphs.
@@ -125,7 +126,7 @@ These notes are added to [JUDGING-RUBRIC.md](JUDGING-RUBRIC.md) under *Calibrati
 - **R1. Score after naming.** If the worst defect you named needs a fix before the picture is usable, the criterion it
   belongs to scores at most 3. A 4 means you would ship it without touching that defect.
 - **R2. Props are counted.** A named prop missing, duplicated or not held as the brief asks caps `adherence` at 3.
-- **R3. One extra finger on an otherwise readable hand is `anatomy` 3, not 1 or 2.** A hand inpaint fixes it. Keep 1–2
+- **R3. One extra finger on an otherwise readable hand is `anatomy` 3, not 1 or 2.** A masked hand inpaint is the named fix. Keep 1–2
   for hands that are unreadable blobs, several broken hands, or a broken face.
 - **R4. A small signature glyph in the outer edge that a crop removes without touching the subject is `technical` 4**,
   with the crop named as the fix.
