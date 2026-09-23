@@ -3219,6 +3219,117 @@
       "execution_note": "Single local execution at the controls in experiments/curated/workflow-lab; not an art approval or all-settings guarantee."
     },
     {
+      "id": "krea-portrait-gguf",
+      "name": "Krea 2 Retro Anime - Portrait (GGUF, fast)",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/krea-portrait-gguf-api.json",
+      "verified": false,
+      "commercial_note": "Krea 2 Community terms apply; free weights do not mean unrestricted use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "modality": "image",
+      "family": "Krea 2 Turbo",
+      "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "er_sde",
+          "res_multistep",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "sgm_uniform",
+          "normal"
+        ]
+      },
+      "description": "The Krea Turbo retro-anime portrait on the Q5_K_M GGUF build with the text encoder on the CPU: the same picture as the fp8 preset in a fraction of the time. Measured 23 September 2026 (experiments/curated/overnight-20260923/krea-gguf/): with the Krea text encoder on the GPU the fp8 build spilled into shared memory and sampled at 38-66 s/step (175-544 s per image); this GGUF build with the encoder on the CPU sampled at 2.37-2.45 s/step, 77-101 s per new prompt (the CPU encode is 53-77 s of it) and 38 s when consecutive prompts share the text, and was blind-indistinguishable from fp8 on three showcase seeds and one retro-LoRA case. Keep the encoder on the CPU: the GGUF with the encoder on the GPU ran 112 s/step because ComfyUI kept part of the encoder resident. Free official retro-anime adapter on Krea Turbo FP8. A separate interpretation of your reference, with literal prompts and no hidden prompt enhancement.",
+      "stages": [
+        "Prompt",
+        "Krea Turbo Q5_K_M GGUF (text encoder on CPU) + retro LoRA",
+        "8-step sampling",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "variants": [
+        {
+          "name": "Without style adapter",
+          "controls": {
+            "lora": 0
+          }
+        },
+        {
+          "name": "Retro anime",
+          "controls": {
+            "lora": 1
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        },
+        {
+          "name": "Fast 8-step euler",
+          "controls": {
+            "steps": 8,
+            "sampler": "euler",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "Target 15-step euler_a",
+          "controls": {
+            "steps": 15,
+            "sampler": "euler_ancestral",
+            "scheduler": "simple"
+          }
+        }
+      ],
+      "backend_id": "primary"
+    },
+    {
       "id": "krea-environment",
       "name": "Krea 2 Retro Anime - Environment",
       "category": "Anime flagship",
@@ -4830,6 +4941,164 @@
         }
       ],
       "execution_note": "Executed 2026-09-12 through Studio job db02f6b1-8346-4361-a432-7734fc72d2c2 (variant '4-step audition': TextFusion 1.0 + Niji Sweet Spot 1.0 + 4-step LoRA 0.85, NIJISIS slot pruned at 0; 197 s at 768x1152); image inspected. The 15-step target settings were proven by direct ComfyUI probes (941 s), not through this preset. Not an art approval. Full target stack (TextFusion + Niji Sweet Spot + koukouya, 15 steps, 832x1248) executed 2026-09-12 as job 7d589f47-7172-44fb-9541-4ab0602eafce in 827.6 s and inspected."
+    },
+    {
+      "id": "krea-anime-atelier-gguf",
+      "name": "Krea 2 Anime Atelier (GGUF, fast)",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/krea-anime-atelier-gguf-api.json",
+      "verified": false,
+      "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "lora3": [
+        "12",
+        "strength_model"
+      ],
+      "lora3_name": [
+        "12",
+        "lora_name"
+      ],
+      "lora4": [
+        "13",
+        "strength_model"
+      ],
+      "lora4_name": [
+        "13",
+        "lora_name"
+      ],
+      "modality": "image",
+      "family": "Krea 2 Turbo",
+      "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "er_sde",
+          "res_multistep",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "sgm_uniform",
+          "normal"
+        ]
+      },
+      "backend_id": "primary",
+      "description": "The owner's Krea anime stack on the Q5_K_M GGUF build with the text encoder on the CPU. Measured 23 September 2026 (experiments/curated/overnight-20260923/krea-gguf/): with the Krea text encoder on the GPU the fp8 build spilled into shared memory and sampled at 38-66 s/step (175-544 s per image); this GGUF build with the encoder on the CPU sampled at 2.37-2.45 s/step, 77-101 s per new prompt (the CPU encode is 53-77 s of it) and 38 s when consecutive prompts share the text, and was blind-indistinguishable from fp8 on three showcase seeds and one retro-LoRA case. Keep the encoder on the CPU: the GGUF with the encoder on the GPU ran 112 s/step because ComfyUI kept part of the encoder resident. The owner's anime stack on Krea Turbo: four hot-swappable LoRA slots feeding one sampler. A slot left at strength 0 is pruned before submission, so an unused slot adds no compute; every authored slot must still name an installed file. Write natural-language paragraphs and keep each LoRA trigger where its card says (@NJSW33T and @NIJISIS at the start, fal style phrases at the end).",
+      "stages": [
+        "Prompt",
+        "Krea Turbo Q5_K_M GGUF (text encoder on CPU) + 4 LoRA slots",
+        "15-step euler_ancestral",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "variants": [
+        {
+          "name": "Target stack (Niji Sweet Spot + TextFusion)",
+          "controls": {
+            "lora": 1.0,
+            "lora2": 1.0,
+            "lora3": 0,
+            "lora4": 0,
+            "steps": 15,
+            "sampler": "euler_ancestral",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "NIJISIS painterly",
+          "controls": {
+            "lora2": 0,
+            "lora3": 1.0,
+            "positive": "@NIJISIS, medium close-up portrait at eye level with a shallow depth of field, warm lantern light crossing cool moonlight, a young witch with long lavender hair and amber eyes in a wide-brimmed hat and a deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower, drifting motes of light and open grimoires floating around her, calm half-smile, one hand steadying her hat while the wind lifts the cloak, painterly anime illustration with soft cel shading and delicate line work"
+          }
+        },
+        {
+          "name": "Oil fantasy",
+          "controls": {
+            "lora3": 0,
+            "lora4": 1.0,
+            "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors",
+            "positive": "@NJSW33T, medium close-up portrait at eye level with a shallow depth of field, warm lantern light crossing cool moonlight, a young witch with long lavender hair and amber eyes in a wide-brimmed hat and a deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower, drifting motes of light and open grimoires floating around her, calm half-smile, one hand steadying her hat while the wind lifts the cloak, painterly anime illustration with soft cel shading and delicate line work baroque dreamscape oil style"
+          }
+        },
+        {
+          "name": "Fast 8-step euler",
+          "controls": {
+            "steps": 8,
+            "sampler": "euler"
+          }
+        },
+        {
+          "name": "4-step audition",
+          "controls": {
+            "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+            "lora4": 0.85,
+            "steps": 4
+          }
+        },
+        {
+          "name": "Landscape 1152x768",
+          "controls": {
+            "width": 1152,
+            "height": 768
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
     },
     {
       "id": "krea-style-lab",

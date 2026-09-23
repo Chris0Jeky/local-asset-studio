@@ -1,0 +1,42 @@
+{
+ "portrait-s01-B.png": {
+  "config": "gguf",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\gguf-portrait_00001_.png"
+ },
+ "portrait-s01-D.png": {
+  "config": "fp8",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\fp8-portrait_00001_.png"
+ },
+ "portrait-s01-C.png": {
+  "config": "fp8-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\fp8-cpute-portrait_00001_.png"
+ },
+ "portrait-s01-A.png": {
+  "config": "gguf-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\gguf-cpute-portrait_00001_.png"
+ },
+ "portrait-s02-A.png": {
+  "config": "fp8-noTE",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\fp8-portrait-probe_00001_.png"
+ },
+ "portrait-s02-B.png": {
+  "config": "gguf-noTE",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\gguf-portrait-probe_00001_.png"
+ },
+ "action-s02-A.png": {
+  "config": "gguf-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\gguf-cpute-action_00001_.png"
+ },
+ "action-s02-B.png": {
+  "config": "fp8",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\fp8-action_00001_.png"
+ },
+ "hands-s07-B.png": {
+  "config": "gguf-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\gguf-cpute-hands_00001_.png"
+ },
+ "hands-s07-A.png": {
+  "config": "fp8",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\fp8-hands_00001_.png"
+ }
+}
