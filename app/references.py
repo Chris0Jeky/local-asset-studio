@@ -177,6 +177,7 @@ def prune_empty_board(preset, graph):
             if (edge := link(value))}
     for key in auxiliary - used:
         if working.get(key, {}).get('class_type') in ('IPAdapterModelLoader', 'CLIPVisionLoader'):
+            if key in protected: refuse()
             working.pop(key)
     graph.clear()
     graph.update(working)
