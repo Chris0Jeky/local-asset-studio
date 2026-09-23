@@ -24,7 +24,7 @@ Score each criterion from 1 to 5. **3** means usable with a fix; **5** means no 
 | Key | What it asks | A 1 looks like |
 | --- | --- | --- |
 | `adherence` | Does it show what the brief asked for: subject, count, props, outfit, setting? | wrong subject, or a key element missing |
-| `anatomy` | Hands, fingers, limbs, joints, face, eyes, symmetry (animals too) | fused or extra fingers, broken limbs, melted face |
+| `anatomy` | Hands, fingers, limbs, joints, face, eyes, symmetry (animals too) | unreadable or fused hands, broken limbs, melted face (one extra finger on an otherwise readable hand is a 3, see R3) |
 | `style` | Does it match the named look: the preset's intent, the LoRA, the style picture? | wrong medium; semi-real where anime was asked |
 | `technical` | Artefacts: noise, banding, seams, garbled text, over-saturation, burn, tiling, blur, stray signature marks | an artefact visible at thumbnail size |
 | `composition` | Would it work as a game asset or illustration: silhouette, framing, clean background when asked, crop? | subject cut off, cluttered, unreadable |
@@ -85,8 +85,9 @@ Measured on 23 September 2026 ([CALIBRATION-2026-09-23.md](CALIBRATION-2026-09-2
 compared with the owner's own verdicts on 19 pictures:
 
 - **They found the owner's named defects well**: the six fingers, the fused foxes, the lost throne.
-- **They ranked quality poorly**: Spearman 0.29 and 0.50 against the owner's tiers.
-- **Both chose the starting look the owner did not choose.**
+- **They ranked quality poorly**: Spearman 0.29 and 0.50 against the owner's tiers, and their verdicts (11 and 12 of 15)
+  matched the owner less often than a judge that always says "fixable" would (13 of 15).
+- **Asked to choose, both picked the starting look the owner did not pick.**
 
 Apply these corrections every time:
 

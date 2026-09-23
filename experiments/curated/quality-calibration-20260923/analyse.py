@@ -1,6 +1,6 @@
 """Re-run the 23 September 2026 calibration analysis from the committed records.
 
-    python experiments/curated/quality-calibration-20260923/analyse.py [records.jsonl]
+    python experiments/curated/quality-calibration-20260923/analyse.py [records.jsonl] [--corrected]
 
 Reads docs/quality/CALIBRATION-2026-09-23.judgements.jsonl (both blind judges), maps each picture to the owner tier
 that was pre-registered before judging (below), and prints verdict agreement, Spearman rank correlation, pair
@@ -11,7 +11,7 @@ import itertools, json, os, sys
 from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-RECORDS = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "docs", "quality", "CALIBRATION-2026-09-23.judgements.jsonl")
+RECORDS = os.path.join(ROOT, "docs", "quality", "CALIBRATION-2026-09-23.judgements.jsonl")
 
 # Owner tiers by output filename (5 great/very good, 4 good, 3 okay/potential/experiment, 1 mess/not good).
 TIERS = {
@@ -26,6 +26,32 @@ TIERS = {
 CHOICES = [("Anima-v1-Baseline_00002_.png", "Anima-v1-Baseline_00001_.png"),
            ("seed-2026091103-large.png", "seed-2026091104-large.png")]
 OK = {5: {"keep", "fixable"}, 4: {"keep", "fixable"}, 3: {"fixable"}, 1: {"reject"}}
+
+# --corrected: the POST-HOC check. Re-apply rubric notes R1-R5 to each judge's OWN named defects (no new looking) and
+# recompute. Written from these same pictures, so it shows consistency with the owner, not generalisation.
+# (judge prefix, filename) -> (score changes, rule and the judge's own words it rests on)
+ADJ = {
+    ("blind-1", "krea-anime-atelier_00001_.png"): ({"technical": 4}, "R4: the only named defect is a corner glyph"),
+    ("blind-2", "krea-anime-atelier_00001_.png"): ({"anatomy": 3}, "R1: 'glove is elongated and mitten-like'"),
+    ("blind-1", "witch-target-stack-4step_00001_.png"): ({"technical": 4}, "R4: corner glyph only"),
+    ("blind-2", "witch-target-stack-4step_00001_.png"): ({"technical": 4}, "R4: corner glyph only"),
+    ("blind-1", "witch-target-ersde-4step_00001_.png"): ({"technical": 3}, "R1: 'knees are flat lavender blocks'"),
+    ("blind-2", "witch-target-ersde-4step_00001_.png"): ({"technical": 3}, "R1: 'white paint blotch on the lower hand, smears on both knees'"),
+    ("blind-2", "witch-airy-watercolor-short-4step_00001_.png"): ({"anatomy": 3}, "R1: 'her right hand is lost'"),
+    ("blind-1", "WAI-Illustration_00012_.png"): ({"anatomy": 3}, "R1: 'the upper hand shows a thumb and two fingers, the rest lost'"),
+    ("blind-2", "WAI-Illustration_00012_.png"): ({"anatomy": 3}, "R1: 'over-long thumb with the other fingers merged'"),
+    ("blind-1", "witch-nijisis-baseline_00001_.png"): ({"technical": 3, "composition": 3}, "R1: 'blotchy paint patches', 'boots cut off by the left edge'"),
+    ("blind-2", "witch-nijisis-baseline_00001_.png"): ({"technical": 3, "composition": 3}, "R1: 'mottled paint blotches', 'boots cut by the left edge'"),
+    ("blind-2", "anima-artist-stack_00004_.png"): ({"adherence": 3}, "R2: 'two lanterns instead of one lantern plus compass'"),
+    ("blind-1", "noob_00004_.png"): ({"anatomy": 3}, "R3: one extra digit on a readable hand"),
+    ("blind-1", "pony_00002_.png"): ({"anatomy": 2, "adherence": 3, "composition": 3}, "R5: 'face is a featureless shadowed profile'; back view where a cowboy shot was asked"),
+    ("blind-1", "Anima-v1-Baseline_00002_.png"): ({"anatomy": 3}, "R1: 'fingerless pink sliver'"),
+    ("blind-2", "Anima-v1-Baseline_00002_.png"): ({"anatomy": 3}, "R1: 'reading as a hidden or missing hand'"),
+}
+
+def verdict(s):
+    v = [x for x in s.values() if x is not None]
+    return "keep" if all(x >= 4 for x in v) else "fixable" if all(x >= 3 for x in v) else "reject"
 
 def mean(s):
     v = [x for x in s.values() if x is not None]
@@ -45,11 +71,23 @@ def spearman(a, b):
     cov = sum((x - ma) * (y - mb) for x, y in zip(ra, rb))
     return cov / ((sum((x - ma) ** 2 for x in ra) * sum((y - mb) ** 2 for y in rb)) ** .5)
 
+CORRECTED = "--corrected" in sys.argv[1:]
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+if args:
+    RECORDS = args[0]
 judges = defaultdict(dict)
 for line in open(RECORDS, encoding="utf-8"):
     if line.strip():
         r = json.loads(line)
-        judges[r.get("judge_instance", r["judge"])][os.path.basename(r["image"])] = r
+        name = r.get("judge_instance", r["judge"]); fn = os.path.basename(r["image"])
+        if CORRECTED:
+            chg = ADJ.get((name.split(" ")[0], fn))
+            if chg:
+                r = dict(r, scores=dict(r["scores"], **chg[0]))
+                r["verdict"] = verdict(r["scores"])
+        judges[name][fn] = r
+if CORRECTED:
+    print("POST-HOC: rubric notes R1-R5 applied to the judges' own named defects (see ADJ); not a validation.")
 
 for name, recs in sorted(judges.items()):
     items = [k for k in TIERS if k in recs]

@@ -5,8 +5,8 @@ blind, every picture the owner has judged in their own words, and the two were c
 
 **Short answer.** Agent judges are reliable at finding a named defect: both found the six fingers and the broken foxes,
 and both rejected the Restyle the owner rejected. They are not reliable at ranking quality or choosing a look. Their
-ranking agrees with the owner's only weakly (Spearman 0.29 and 0.50), and both picked the starting look the owner did
-*not* pick. The rubric scores faults, not appeal. Use agent pre-reviews to find and name problems; keep the choice
+ranking agrees with the owner's only weakly (Spearman 0.29 and 0.50). Asked to choose, both picked the starting look
+the owner did *not* pick; by mean score one of them preferred it and the other's gap is a tie. The rubric scores faults, not appeal. Use agent pre-reviews to find and name problems; keep the choice
 between two clean pictures with the owner.
 
 ## Method
@@ -43,12 +43,14 @@ Records, both judges, unblinded, with each picture's path, SHA-256 and the owner
 
 | Measure | Judge 1 | Judge 2 | What it says |
 | --- | --- | --- | --- |
-| Verdict matches the owner's tier (15 tiered pictures) | 11 / 15 | 12 / 15 | **not informative on its own**: a judge that always said "fixable" would score 13 / 15, because most owner verdicts are mid-range |
+| Verdict matches the owner's tier (15 tiered pictures) | 11 / 15 | 12 / 15 | **both judges score below a trivial baseline**: a judge that always said "fixable" would score 13 / 15, because most owner verdicts are mid-range. On verdicts alone, these judges did worse than a constant |
 | Rank correlation with the owner's tiers (Spearman) | 0.50 | 0.29 | weak; this is the honest headline |
 | Picture pairs ordered like the owner (of 78 with different tiers) | 50 right, 16 wrong, 12 tied | 42 right, 23 wrong, 13 tied | better than chance, far from reliable |
 | Rejects what the owner called bad (Restyle, Pony) | 1 of 2 (Pony "fixable") | 2 of 2 | good |
-| Starting look: picks the owner's B over A | no (picked A) | no (picked A) | **0 of 2** |
-| Compass: picks the owner's A over B | no (picked B) | yes | 1 of 2 (both *score* A higher) |
+| Starting look, forced choice: picks the owner's B over A | no (picked A) | no (picked A) | **0 of 2** |
+| Starting look, mean scores (tie within 0.3) | A 4.8 vs B 4.4: prefers A | A 4.8 vs B 4.6: tie | neither prefers B |
+| Compass, forced choice: picks the owner's A over B | no (picked B) | yes | 1 of 2 |
+| Compass, mean scores (tie within 0.3) | A 3.75 vs B 3.5: tie | A 4.25 vs B 3.5: prefers A | one agrees, one ties |
 | Owner-named defects also named by the judge | see below | see below | good for bodies and hands, poor for faces of animals and eyes |
 | Judge 1 against judge 2 | 14 / 19 same verdict; scores differ by 0.27 on average, 93 of 94 within one point | | the two agents agree with each other far more than with the owner |
 
@@ -100,9 +102,9 @@ Bold marks a disagreement with the owner.
    fingers and an over-long thumb behind the magic circle; mottled paint blotches on the shins; boots cut by the frame
    edge. The judges wrote the defect down, then scored its criterion 4 as if it did not need fixing.
 2. **No criterion for appeal.** The owner's words are about appeal as much as faults: "not spectacular", "the artistic
-   side is not popping", "genuinely great". The rubric has no place for that. Both judges preferred the clean, flat
-   Anima base (A, 4.8) over the softer cinematic look the owner chose (B). Their reason: B's sheen and bloom read as
-   faults.
+   side is not popping", "genuinely great". The rubric has no place for that. Asked to choose, both judges picked the clean,
+   flat Anima base (A) over the softer cinematic look the owner chose (B). Judge 1 also scored A 0.4 higher; judge 2's
+   0.2 gap is a tie. Their stated reason: B's sheen and bloom read as faults.
 3. **Animal faces get less care than human faces.** Both judges excused featureless cat and fox faces as a style
    choice. The owner did not: "their faces are morphed".
 4. **Eyes and "flat" are under-named on stylised failures.** Both judges rejected the owner's Restyle. They named the
@@ -135,7 +137,14 @@ These notes are added to [JUDGING-RUBRIC.md](JUDGING-RUBRIC.md) under *Calibrati
   choice they had to make.
 
 **Post-hoc check, not a validation.** Re-applying R1–R5 to the judges' *own named defects*, without looking again,
-changes these results:
+changes these results. Reproduce it with
+`python experiments/curated/quality-calibration-20260923/analyse.py --corrected`; each score change and the words it
+rests on are listed in that script's `ADJ` table.
+Before the corrections, both judges matched the owner's verdicts *less* often than a judge that always says
+"fixable" (11 and 12 of 15, against 13). Most of the post-hoc 15 of 15 comes from that same direction: six of the
+seven verdict flips move a picture to "fixable" (four by R1, one each by R2 and R3). Only one flip, the Pony render,
+moves to "reject" (R5). So read the verdict row as "the corrections stop the judges from being worse than a constant";
+the Spearman row is the more telling one.
 
 | Measure | Judge 1 | Judge 2 |
 | --- | --- | --- |
