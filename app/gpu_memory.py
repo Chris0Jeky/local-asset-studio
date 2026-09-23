@@ -105,6 +105,30 @@ def launch_reserve_gib(reading=None, exclude_pids=()):
     return {'reserve_gib': reserve, 'others_bytes': others, 'adapter': adapter, 'basis': 'measured', 'unknown_reason': None}
 
 
+def others_bytes(reading, pid):
+    """Dedicated memory every other process holds on `pid`'s adapter, or None when the reading has no adapters."""
+    adapters = reading.get('adapters') if isinstance(reading, dict) else None
+    adapter = select_adapter(adapters, pid) if adapters else None
+    if adapter is None: return None
+    return sum(p['dedicated_bytes'] for other, p in adapters[adapter].items() if other != pid)
+
+
+def holders(reading, pid, top=3):
+    """The largest other dedicated-memory holders on `pid`'s adapter as `[{pid, name, dedicated_bytes}]`, largest first."""
+    adapters = reading.get('adapters') if isinstance(reading, dict) else None
+    adapter = select_adapter(adapters, pid) if adapters else None
+    if adapter is None: return []
+    ranked = sorted(((other, p['dedicated_bytes']) for other, p in adapters[adapter].items() if other != pid), key=lambda item: -item[1])[:top]
+    rows = []
+    for other, value in ranked:
+        try:
+            import psutil
+            name = psutil.Process(other).name()
+        except Exception: name = None
+        rows.append({'pid': other, 'name': name, 'dedicated_bytes': value})
+    return rows
+
+
 def spill(pid, reading=None):
     """A running ComfyUI process's dedicated and shared GPU memory; `spilled` when shared use shows WDDM paging."""
     if pid is None: return {'pid': None, 'dedicated_bytes': None, 'shared_bytes': None, 'spilled': None, 'unknown_reason': 'No ComfyUI process to measure'}

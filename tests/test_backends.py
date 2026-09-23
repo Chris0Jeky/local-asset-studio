@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 from urllib.error import URLError
 from test_server import server, FakeStudio, GRAPH, PRESET
+import backends
 from backends import PRIMARY_RESERVE_VRAM, BackendManager
 import gpu_memory
 from runtime_recovery import RuntimeRecovery
@@ -56,6 +57,15 @@ class BackendTests(unittest.TestCase):
         self.assertNotIn('--disable-pinned-memory',BackendManager.primary_argv(profile))
         profile['disable_pinned_memory']=True
         self.assertIn('--disable-pinned-memory',BackendManager.primary_argv(profile))
+
+    def test_primary_launch_loads_the_vram_guard_unless_configured_off(self):
+        profile=self.studio.backends.profiles['primary'];self.assertTrue(profile['vram_guard'])
+        argv=BackendManager.primary_argv(profile)
+        self.assertEqual(argv[argv.index('--extra-model-paths-config')+1],str(backends.VRAM_GUARD_PATHS))
+        self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
+        self.studio.config['primary_vram_guard']=False
+        self.assertFalse(BackendManager(self.studio).profiles['primary']['vram_guard'])
+        for other in ('hidream','h3','qwen21'):self.assertNotIn('vram_guard',self.studio.backends.profiles[other])
 
     def test_default_primary_reserve_is_the_measured_fixed_0_6(self):
         profile=self.studio.backends.profiles['primary']
