@@ -65,8 +65,9 @@ def entries():
                 choices={'sampler':['euler','euler_ancestral','dpmpp_2m'],'scheduler':['simple','normal','beta']},
                 verified=False,model_files=MODEL_FILES,source=SOURCE,commercial_note=NOTE)
     steps=[{'name':'25-step template','controls':{'steps':25}},{'name':'40-step model card','controls':{'steps':40}}]
-    size=dict(width=['5','width'],height=['5','height'],dimension_limits=[512,2752],dimension_multiple=32,max_pixels=2048*2048,
+    size=dict(width=['5','width'],height=['5','height'],dimension_limits=[512,2752],dimension_multiple=32,
               resolution_choices=[[1024,1024],[832,1248],[1248,832],[2048,2048],[1792,2400],[2400,1792],[1696,2528],[2528,1696],[1536,2752],[2752,1536]])
+    size['max_pixels']=max(w*h for w,h in size['resolution_choices'])   # 1792 x 2400 = 4,300,800: every native 2K size must pass the pixel budget
     sizes=[{'name':'Portrait 832 × 1248','controls':{'width':832,'height':1248}},{'name':'Square 1024','controls':{'width':1024,'height':1024}},
            {'name':'Native 2K square','controls':{'width':2048,'height':2048}}]
     return [

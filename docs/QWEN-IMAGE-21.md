@@ -15,7 +15,7 @@ Torch/ROCm environment's ComfyUI packages, which this repository forbids, so 2.1
 | ComfyUI checkout | `C:\AI\experiments\qwen-image-21\ComfyUI` | tag `v0.37.0`, commit `73c9bad4d21e7addbe1d13bc92eee0f1431b017d`, shallow clone, no custom nodes |
 | Package overlay | `…\ComfyUI\python_packages` | `pip install --no-deps --target`: comfy-kitchen 0.2.35, comfy-aimdo 0.5.5, comfyui-frontend-package 1.52.7; wheel SHA-256 in `C:\AI\experiments\qwen-image-21\wheels\SHA256SUMS` |
 | Python and Torch | the portable `python_embeded` | shared, unchanged: Python 3.12.10, torch 2.9.1+rocm7.2.1, transformers 5.15.1 |
-| Launcher | `scripts/qwen21-launch.py` | puts the overlay first on `sys.path`, listens on `127.0.0.1:8196`, `--reserve-vram 3 --disable-fast-disk --disable-pinned-memory` (measured; see *Speed* below) |
+| Launcher | `scripts/qwen21-launch.py` | puts the overlay first on `sys.path`, listens on `127.0.0.1:8196`, `--reserve-vram 3 --disable-fast-disk --disable-pinned-memory` (every *Speed* row below ran through this launcher, so pinned memory was off in all of them) |
 | Studio profile | `qwen21` in `app/backends.py` | *Qwen-Image 2.1 · isolated*; readiness checks the overlay and the three pack files (`app/backend_contracts.py`) |
 | Weights | `…\ComfyUI\models\{diffusion_models,text_encoders,vae}` | Comfy-Org pack at revision `5dc5850e`, pinned in `models/library.json` |
 

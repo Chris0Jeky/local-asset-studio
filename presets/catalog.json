@@ -7228,7 +7228,7 @@
         2752
       ],
       "dimension_multiple": 32,
-      "max_pixels": 4194304,
+      "max_pixels": 4300800,
       "resolution_choices": [
         [
           1024,
@@ -7386,7 +7386,7 @@
         2752
       ],
       "dimension_multiple": 32,
-      "max_pixels": 4194304,
+      "max_pixels": 4300800,
       "resolution_choices": [
         [
           1024,
