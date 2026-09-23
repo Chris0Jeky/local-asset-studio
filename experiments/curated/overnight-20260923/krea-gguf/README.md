@@ -116,3 +116,21 @@ Single-configuration showcase pictures (open judgements, GGUF + CPU encoder):
 - The CPU encode time depends on the CPU and on what else is running.
 - The effect of the two unexpected tensors is untested.
 - None of this is art acceptance or licence clearance. The Krea 2 Community License terms are recorded, not cleared.
+
+## Update, 23 September 2026 05:14-05:26: the target stack on GGUF, and Studio proofs
+
+The "not verified" lines above about the atelier target stack and the unproved presets are kept as written at the time; this
+section supersedes them. Records: `gguf-proofs.json` (flat summary), `results.json` + `graphs/gguf-cpute-atelier-target-stack.json`
++ `timelines/` for the direct run, `proofs/` for the two Studio jobs, `prove_gguf_presets.py` for the proof script.
+
+| run | job / prompt | settings | time | s/step | shared-memory peak | agent verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| Target-stack recipe `krea-atelier-target-stack`, direct | – / `976da1a8` | 832x1248, 15 steps euler_ancestral, TextFusion 1.0 + Niji Sweet Spot 1.0 + koukouya 1.0, seed 20260912 | 173.2 s (CPU encode 76.8, sampling 86.5, decode 7.2); fp8 Studio job `7d589f47`: 827.6 s on 12 September | 4.66 | 1813 MiB (decode) | fixable: `@NJSW33T` painted as visible text; the cat has no face |
+| `krea-portrait-gguf` Studio proof, authored defaults | `c6049b90` / `268f4be5` | 768x1152, 8 steps, retro-anime LoRA 1.0, seed 2026091103 | 133.3 s | 3.5 | 79 MiB (no spill) | keep: near-identical to the fp8 preset's output of the same defaults |
+| `krea-anime-atelier-gguf` Studio proof, authored defaults | `29e468ca` / `6a856a23` | 768x1152, 15 steps, TextFusion + Niji Sweet Spot, seed 281715418 | 114.6 s | 3.43 | 4.35 GiB (the Studio reports 4.3 GB), within the last 6 s of the job | fixable: a faint `@NJSW33T`-style watermark on the cloak |
+
+Both Studio proofs ran through `POST /api/jobs` on the Studio restarted to serve #873's catalog, and the presets are marked
+`verified: true` with notes that say exactly the above. **Two of two Niji Sweet Spot runs on GGUF painted the trigger word into
+the picture.** Hypothesis, untested: the trigger at the start of the prompt is rendered as text, helped by the TextFusion LoRA
+(built for text rendering). The fp8 renders of the same recipes were not re-checked for it. Next step: a fixed-seed test of the
+trigger position (start / end / omitted) with TextFusion on and off. The preset's trigger advice is unchanged until that runs.

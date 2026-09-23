@@ -1,0 +1,197 @@
+[
+ {
+  "label": "krea-portrait-gguf",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-portrait-gguf",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:21:57.621149",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.9,
+  "free_ram_gb_before": 4.7,
+  "route": "studio",
+  "preset_id": "krea-portrait-gguf",
+  "config": "studio-proof",
+  "job_id": "c6049b90-0942-4ec1-b76e-4b9455749ec8",
+  "prompt_ids": [
+   "268f4be5-e0c2-40fa-92b5-9746ee74c663"
+  ],
+  "wall_seconds": 136.0,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 28,
+    "s_per_step_tqdm": 3.5,
+    "s_per_step_steady": 3.38
+   }
+  ],
+  "peak_dedicated_mb": 13674,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 90,
+  "peak_commit_pct": 60.5,
+  "comfy_executed_seconds": 132.27,
+  "log_lines": [
+   "05:22:00 [INFO] Requested to load Krea2TEModel_",
+   "05:22:00 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "05:22:27 [WARNING] Civitai Link: Connection error: Connection error",
+   "05:22:32 [WARNING] Civitai Link: Connection error: Connection error",
+   "05:22:41 [WARNING] Civitai Link: Connection error: Connection error",
+   "05:23:28 [INFO] Requested to load Krea2",
+   "05:23:40 [INFO] loaded completely; 14259.27 MB usable, 8839.99 MB loaded, full load: True",
+   "05:24:09 [INFO] Requested to load WanVAE",
+   "05:24:09 [INFO] loaded completely; 11355.98 MB usable, 242.03 MB loaded, full load: True",
+   "05:24:10 [INFO] Prompt executed in 132.27 seconds"
+  ],
+  "timeline_file": "timelines/krea-portrait-gguf.json",
+  "outputs": [
+   {
+    "filename": "krea-portrait-gguf_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091103,
+    "prompt_id": "268f4be5-e0c2-40fa-92b5-9746ee74c663",
+    "media_type": "image",
+    "asset_id": "a7aa82c54e585d78a092641abb7f16ed"
+   }
+  ],
+  "elapsed_seconds": 133.28870224952698,
+  "failure": null,
+  "message": "Complete",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "268f4be5-e0c2-40fa-92b5-9746ee74c663",
+    "seed": 2026091103,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82571264,
+     "peak_dedicated_bytes": 14338674688,
+     "samples": 15,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/krea-portrait-gguf.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-portrait-gguf_00001_.png",
+    "sha256": "13dd708e33bcb48579a76a41988fe6398294804d8f96739a920ed781cbe0f425"
+   }
+  ],
+  "finished_at": "2026-09-23 05:24:13.684238",
+  "backend_id": "primary",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "runtime_note": "recorded after the run, 05:40 on 23 September 2026: .runtime/backend-state.json active \"primary\" (operation f9507a62, primary PID 46488 relaunched at the end of the coordinator's Qwen window before these jobs, which is the comfy_pid in each record); the preset declares backend_id \"primary\" in presets/catalog.json; ComfyUI 0.35.0 argv --reserve-vram 0.6 --disable-pinned-memory"
+ },
+ {
+  "label": "krea-anime-atelier-gguf",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:24:13.700533",
+  "comfy_pid": 46488,
+  "commit_pct_before": 48.8,
+  "free_ram_gb_before": 11.3,
+  "route": "studio",
+  "preset_id": "krea-anime-atelier-gguf",
+  "config": "studio-proof",
+  "job_id": "29e468ca-884d-44d7-a04b-c54e9aa5030a",
+  "prompt_ids": [
+   "6a856a23-67fa-42f3-b3f9-6cf686b991d5"
+  ],
+  "wall_seconds": 117.7,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 52,
+    "s_per_step_tqdm": 3.47,
+    "s_per_step_steady": 3.43
+   }
+  ],
+  "peak_dedicated_mb": 13197,
+  "peak_shared_mb": 4453,
+  "spilled": true,
+  "gpu_samples": 79,
+  "peak_commit_pct": 62.2,
+  "comfy_executed_seconds": 112.67,
+  "log_lines": [
+   "05:25:04 [INFO] Requested to load Krea2",
+   "05:25:08 [INFO] loaded completely; 14018.66 MB usable, 8839.99 MB loaded, full load: True",
+   "05:26:06 [INFO] Prompt executed in 112.67 seconds"
+  ],
+  "timeline_file": "timelines/krea-anime-atelier-gguf.json",
+  "outputs": [
+   {
+    "filename": "krea-anime-atelier-gguf_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 281715418,
+    "prompt_id": "6a856a23-67fa-42f3-b3f9-6cf686b991d5",
+    "media_type": "image",
+    "asset_id": "1e3acdecb49f5d1897293c65cf156e7a"
+   }
+  ],
+  "elapsed_seconds": 114.64042854309082,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 4.3 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "6a856a23-67fa-42f3-b3f9-6cf686b991d5",
+    "seed": 281715418,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 4669005824,
+     "peak_dedicated_bytes": 13837955072,
+     "samples": 13,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/krea-anime-atelier-gguf.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-anime-atelier-gguf_00001_.png",
+    "sha256": "6f0798fe18ae50312d381abc07eb88d28aa1a6a3ff38ec4c2802bcae96288551"
+   }
+  ],
+  "finished_at": "2026-09-23 05:26:11.459560",
+  "backend_id": "primary",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "runtime_note": "recorded after the run, 05:40 on 23 September 2026: .runtime/backend-state.json active \"primary\" (operation f9507a62, primary PID 46488 relaunched at the end of the coordinator's Qwen window before these jobs, which is the comfy_pid in each record); the preset declares backend_id \"primary\" in presets/catalog.json; ComfyUI 0.35.0 argv --reserve-vram 0.6 --disable-pinned-memory"
+ }
+]

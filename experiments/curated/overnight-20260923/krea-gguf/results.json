@@ -1534,5 +1534,146 @@
    "ws_execution_seconds": 543.51
   },
   "finished_at": "2026-09-23 04:32:16.180856"
+ },
+ {
+  "label": "gguf-cpute-atelier-target-stack",
+  "status": "success",
+  "graph_sha256": "224597efa4cb7c03a85b409f0cb561365425b78fb45e0dd663e0173d64bff594",
+  "graph_file": "graphs/gguf-cpute-atelier-target-stack.json",
+  "submitted_at": "2026-09-23 05:10:54.629989",
+  "comfy_pid": 46488,
+  "commit_pct_before": 38.7,
+  "free_ram_gb_before": 17.9,
+  "config": "gguf-cpute",
+  "case": "krea-atelier-target-stack",
+  "seed": 20260912,
+  "probe": "recipe krea-atelier-target-stack on GGUF",
+  "prompt_id": "976da1a8-c551-413c-bac7-3a9352b7c9a2",
+  "wall_seconds": 174.8,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 73,
+    "s_per_step_tqdm": 4.87,
+    "s_per_step_steady": 4.67
+   }
+  ],
+  "peak_dedicated_mb": 14643,
+  "peak_shared_mb": 1813,
+  "spilled": true,
+  "gpu_samples": 116,
+  "peak_commit_pct": 62.6,
+  "comfy_executed_seconds": 173.25,
+  "log_lines": [
+   "05:10:56 [INFO] Requested to load Krea2TEModel_",
+   "05:10:56 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "05:12:14 [INFO] Requested to load Krea2",
+   "05:12:26 [INFO] loaded completely; 14703.34 MB usable, 8839.99 MB loaded, full load: True",
+   "05:13:40 [INFO] Requested to load WanVAE",
+   "05:13:40 [INFO] loaded completely; 2997.33 MB usable, 242.03 MB loaded, full load: True",
+   "05:13:47 [INFO] Prompt executed in 173.25 seconds"
+  ],
+  "timeline_file": "timelines/gguf-cpute-atelier-target-stack.json",
+  "history_execution_seconds": 173.24,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-gguf\\gguf-cpute-atelier-target-stack_00001_.png",
+    "sha256": "e0559290a14e57d80f1e05855a865fb9d282447848c362364cc33b65df6b272c"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "VAELoader",
+     "seconds": 0.69
+    },
+    {
+     "node": "6",
+     "class_type": "EmptyLatentImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPLoader",
+     "seconds": 1.31
+    },
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 76.82
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "1",
+     "class_type": "UnetLoaderGGUF",
+     "seconds": 0.11
+    },
+    {
+     "node": "10",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.06
+    },
+    {
+     "node": "11",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.25
+    },
+    {
+     "node": "12",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.26
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 86.5
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 7.15
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 4.78,
+     "s_per_step_steady": 4.661,
+     "step_seconds": [
+      4.78,
+      4.65,
+      4.62,
+      4.65,
+      4.66,
+      4.76,
+      4.62,
+      4.67,
+      4.67,
+      4.63,
+      4.61,
+      4.66,
+      4.62,
+      4.76
+     ]
+    }
+   ],
+   "cached_nodes": [],
+   "ws_execution_seconds": 173.24
+  },
+  "finished_at": "2026-09-23 05:13:50.001826"
  }
 ]

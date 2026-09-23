@@ -3236,7 +3236,7 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-portrait-gguf-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Krea 2 Community terms apply; free weights do not mean unrestricted use.",
       "positive": [
         "4",
@@ -3339,7 +3339,8 @@
           }
         }
       ],
-      "backend_id": "primary"
+      "backend_id": "primary",
+      "execution_note": "Executed 2026-09-23 05:21:57 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/krea-gguf/prove_gguf_presets.py): job c6049b90-0942-4ec1-b76e-4b9455749ec8, prompt 268f4be5-e0c2-40fa-92b5-9746ee74c663, 133.3 s including the model load and the CPU text encode, sampling 3.5 s/step, no shared-memory spill (79 MB), output Studio/krea-portrait-gguf_00001_.png: near-identical to the fp8 preset's output of the same defaults (Studio/krea-portrait_00007_), hands and face clean (agent-judged keep). Not art acceptance."
     },
     {
       "id": "krea-environment",
@@ -4960,7 +4961,7 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-anime-atelier-gguf-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
       "positive": [
         "4",
@@ -5045,7 +5046,7 @@
         ]
       },
       "backend_id": "primary",
-      "description": "The owner's Krea anime stack (four hot-swappable LoRA slots) on the Q5_K_M GGUF build with the text encoder on the CPU. On this PC the Studio's fp8 Krea presets spilled into shared GPU memory once the text encoder had been on the GPU and sampled at 38-66 s/step on 23 September 2026 (experiments/curated/overnight-20260923/krea-gguf/). Keep the encoder on the CPU: the GGUF with the encoder on the GPU ran 112 s/step because ComfyUI kept part of the encoder resident. Measured on the portrait graph: 2.37-2.45 s/step without LoRAs and 3.53 s/step with one LoRA, plus 53-77 s of CPU encoding per new prompt. This preset's own defaults (15 steps with TextFusion and Niji Sweet Spot) have not been timed on GGUF yet. A slot left at strength 0 is pruned before submission; every authored slot must still name an installed file. Write natural-language paragraphs and keep each LoRA trigger where its card says (@NJSW33T and @NIJISIS at the start, fal style phrases at the end).",
+      "description": "The owner's Krea anime stack (four hot-swappable LoRA slots) on the Q5_K_M GGUF build with the text encoder on the CPU. On this PC the Studio's fp8 Krea presets spilled into shared GPU memory once the text encoder had been on the GPU and sampled at 38-66 s/step on 23 September 2026 (experiments/curated/overnight-20260923/krea-gguf/). Keep the encoder on the CPU: the GGUF with the encoder on the GPU ran 112 s/step because ComfyUI kept part of the encoder resident. Measured on the portrait graph: 2.37-2.45 s/step without LoRAs and 3.53 s/step with one LoRA, plus 53-77 s of CPU encoding per new prompt. The target-stack recipe (832x1248, 15 steps euler_ancestral, TextFusion + Niji Sweet Spot + koukouya) took 173 s on this build (prompt 976da1a8: CPU encode 77 s, 4.66 s/step, decode 7 s) against 828 s for the fp8 preset on 12 September; its render carried the @NJSW33T trigger as visible text, so keep an eye on trigger words. A slot left at strength 0 is pruned before submission; every authored slot must still name an installed file. Write natural-language paragraphs and keep each LoRA trigger where its card says (@NJSW33T and @NIJISIS at the start, fal style phrases at the end).",
       "stages": [
         "Prompt",
         "Krea Turbo Q5_K_M GGUF (text encoder on CPU) + 4 LoRA slots",
@@ -5110,7 +5111,8 @@
           "name": "3-seed audition",
           "batch_count": 3
         }
-      ]
+      ],
+      "execution_note": "Executed 2026-09-23 05:24:13 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/krea-gguf/prove_gguf_presets.py): job 29e468ca-884d-44d7-a04b-c54e9aa5030a, prompt 6a856a23-67fa-42f3-b3f9-6cf686b991d5, 114.6 s (15 steps at 3.43 s/step with TextFusion + Niji Sweet Spot; the decode spilled 4.35 GiB into shared memory, shown by the Studio as 4.3 GB; the lab's 1.5 s GPU timeline puts the spill within the last 6 s of the job), output Studio/krea-anime-atelier-gguf_00001_.png: every briefed element present, hands and eyes clean, but a faint '@NJSW33T'-style trigger watermark is painted on the cloak (agent-judged fixable); the target-stack run 976da1a8 painted the same trigger as visible text. Hypothesis, untested: the trigger at the start of the prompt is rendered as text, helped by the TextFusion LoRA's text rendering; the next step is a trigger-position and TextFusion on/off test on a fixed seed. Not art acceptance."
     },
     {
       "id": "krea-style-lab",
