@@ -285,3 +285,139 @@ The Anima prompt `6ab21b16` was not repeated. This is WAI, seed `2026092331`, op
 - Positive: changli (wuthering waves), long pink hair, hair ornament, adult counselor, palace hall, white and red dress, plus the open-skirt rear sentence. No animal ears.
 - Inspection: adult woman. Pink hair, red eyes, hairpins, red backless dress, palace columns. Changli's costume reads. The skirt is open and the hips are bare with the dress still on. No hands are in frame. This is the Wave K hand fix actually holding, together with the open-skirt leak that Albedo's closed dress missed.
 - Keep: this wording. YumeFlux, palace, open skirt, arms out of frame, `hands, fingers` in the negative.
+
+## Wave L plan — 23 September continuation
+
+Plans only. A line here is not a result until a still file exists and the fields below it are filled. No prompt id already written above is repeated. Dead ids that stay dead: `4dc53889-e2e0-4c22-8e66-93cbf125b4d1` (Elsa), `6ab21b16-5450-4338-af2c-c66e3054244a` (Serie on Anima), and the Animagine Scathach id `c3b53ce6-3083-4fec-a236-1095a5fb87e2` if it was the one that died with no file. Empty Wave K receipts are not resumed.
+
+These are adult-coded leads. Each series that already has a counted cell gets a further cell, and the four named-but-not-finished adults are new jobs. The positives are not the Wave K sentence (`backless dress, open skirt, bare hips, arms behind back`). Fast families only. Steps 20, 832×1216. No many-minute model.
+
+Shared negative: `worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota, logo, letters`.
+
+| Cell | Series | Preset | Seed | Intended change |
+| --- | --- | --- | --- | --- |
+| l-narberal-hall | Overlord | cstati-v3-baseline | 2026092351 | Further adult. Front stand, maid dress and apron still on, hands on thighs. |
+| l-luna-guild | Konosuba | wai | 2026092352 | Further adult. Seated at the guild desk, robe on, hands flat on the desk. |
+| l-priscilla-throne | Re:Zero | cstati-v3-baseline | 2026092353 | Further adult. Seated on a throne, red dress on, fan in the lap. Not Elsa's dead prompt. |
+| l-himeno-rooftop | Chainsaw Man | wai | 2026092354 | Further adult. Changed after Luna: wide full body, both hands in pockets, no hand near the face. |
+| l-scathach-yard | Fate | anifox-v2-baseline | 2026092355 | The unfinished Scathach, as a new AniFox job. Standing, spear, outfit on. Not Animagine. |
+| l-zhuyuan-street | Zenless Zone Zero | yumeflux-ilv1-baseline | 2026092356 | Further adult. Night street, jacket open, shirt and pants on, hands on thighs. |
+| l-blackswan-ballroom | Honkai: Star Rail | wai | 2026092357 | The unfinished Black Swan, as a new job. Seated in a ballroom, gown and gloves on. Not the empty train receipt. |
+| l-tamarinne-stage | Epic Seven | anifox-v2-baseline | 2026092358 | The unfinished Tamarinne, as a new job. Front stand, stage dress on, singing. Not the empty stage receipt. |
+| l-ubel-road | Frieren | anima-v1-baseline | 2026092359 | Further adult in the series. Standing on a road, coat on. Not Serie, and not the dead Anima prompt. |
+| l-yinlin-teahouse | Wuthering Waves | janima-v1-baseline | 2026092360 | The unfinished Yinlin, as a new job. Seated in a teahouse, dress on. Not the empty teahouse receipt. |
+
+SDXL cells are submitted first, one at a time. Anima and JANIMA wait until those receipts are done, because a model switch after a spill killed the queue on 23 September. A follow-up cell after these inspections will change pose, costume, expression, silhouette, camera, place, or adapter because of a judgement written in this continuation.
+
+## Wave L results
+
+Fast families, steps 20, 832×1216. Generated is not accepted and not licensed. Imperfect stills stay in the record.
+
+### l-narberal-hall — completed, counted
+
+- Preset `cstati-v3-baseline`, seed `2026092351`, steps 20, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `872bb18d-f99a-443c-963c-63409bc7d9ae`. ComfyUI prompt `677d8652-bf0d-4c93-a92c-716f648ec52d`. 28.4 s. No spill line.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\CSTati-v3-Baseline_00007_.png`.
+- Positive: narberal gamma, battle maid, black dress, white apron, mansion hall, standing, front view, hands on thighs.
+- Inspection: adult woman. Black hair, yellow eyes, maid headdress, yellow bow, black dress, white apron, dark mansion. Narberal reads clearly. The frame is a close lean, so the full standing silhouette is cropped at the lap. Both hands are on the thighs. The near hand's fingers are long and the count is messy where they overlap. The dress and apron stay on.
+- Keep: CSTati front maid for an Overlord adult. The still stays even though the finger count is messy.
+- Change next: do not use a close crop when the question is the whole costume. Luna, next, is the seated test.
+
+### l-luna-guild — completed, counted
+
+- Preset `wai`, seed `2026092352`, steps 20, CFG 5, euler ancestral / normal, `nsfw_girls.safetensors` at 0.7.
+- Studio job `5bb35721-e191-415a-93e8-a8adc224f7d8`. ComfyUI prompt `0ac4d893-0e68-4269-a737-9633fd28fd52`. 32.2 s. The receipt says GPU memory spilled 3.7 GB into system RAM.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\WAI-Illustration_00027_.png`.
+- Positive: luna (konosuba), glasses, guild desk, seated, hands flat on the desk.
+- Inspection: adult woman. Long blue hair, blue eyes, red glasses, blue hair ornaments, white robe, guild interior. Luna reads clearly. The robe is open at the chest and still on. One hand pinches the glasses. The other lies flat on the desk. Asking for both hands on the desk did not stop a face gesture.
+- Keep: WAI seated guild portrait for Luna. Adult reading is clear.
+- Change the next unsubmitted cell: Himeno will not ask for hands on the knees. She gets a wide full-body shot with both hands in her pockets and no hand near the face, because this glasses hand is the active-hand failure and Narberal's crop hid the costume.
+
+### l-priscilla-throne — completed, counted
+
+- Preset `cstati-v3-baseline`, seed `2026092353`, steps 20, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `afd22199-a317-4fc4-b189-33fb30af94cd`. ComfyUI prompt `2ad9ed78-4412-4e3d-b543-31e517c79e69`. 36.2 s. The receipt says GPU memory spilled 6.0 GB into system RAM. The queue stopped here so ComfyUI could be restarted before the next job. This prompt is not resubmitted.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\CSTati-v3-Baseline_00008_.png`.
+- Positive: priscilla barielle, red dress, folding fan, throne, both hands holding a closed fan in her lap.
+- Inspection: adult woman. Orange hair, red eyes, red dress with black fur trim, open red fan, gold throne. Priscilla reads clearly. The dress stays on, with a high slit. The fan is raised in one hand, not closed in the lap, and the other hand rests on the arm of the throne. A small horn-shaped hair ornament was invented. Adult reading is clear.
+- Keep: CSTati throne and fan for Priscilla. The still stays.
+- Change later: a prop in the lap becomes a raised prop. That agrees with Luna. Pocketed hands are the Himeno test.
+
+### l-himeno-rooftop — completed, counted
+
+Changed before submit because Luna raised a hand to her glasses and Narberal's frame cropped the costume. This cell asks for a wide full body, both hands in pockets, and no hand near the face.
+
+- Preset `wai`, seed `2026092354`, steps 20, CFG 5, euler ancestral / normal, `nsfw_girls.safetensors` at 0.7.
+- Studio job `7a0d0d76-ab3b-4392-82c1-816356d51139`. ComfyUI prompt `b7d2516e-5bb5-4fe7-b95b-7f934e27f5e9`. 28.4 s. No spill line. ComfyUI had been restarted after Priscilla's 6.0 GB spill.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\WAI-Illustration_00028_.png`.
+- Positive: himeno (chainsaw man), eyepatch, white shirt, black necktie, dark pants, rooftop at dusk, full body, wide shot, both hands inside her pants pockets, no hand near the face.
+- Inspection: adult woman. Short black hair, eyepatch, green eye, white shirt, black tie, black trousers, dress shoes, night rooftop and a city. Himeno reads clearly. The wide shot holds: the shoes and the railing are in frame. No hand is near the face, so that part of the Luna change worked. Both pockets did not: one hand is tucked at the hip, and the other lies flat on the ledge. Shirt and pants stay on.
+- Keep: the wide rooftop and the ban on a face hand. The still stays, including the ledge hand.
+- Change later: pockets are not a reliable park. A ledge or a thigh still draws the second hand.
+
+### l-scathach-yard — completed, counted
+
+New AniFox job. Not the dead Animagine prompt.
+
+- Preset `anifox-v2-baseline`, seed `2026092355`, steps 20, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `621e2e6e-46a7-4a33-8017-00d77b53df92`. ComfyUI prompt `e7de8278-221b-4da2-811f-f5f10ae1eefe`. 30.2 s. Spill 3.7 GB.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\AniFox-v2-Baseline_00007_.png`.
+- Positive: scathach (fate), long purple hair, red eyes, spear, castle training yard, outfit still on, both hands on the spear shaft.
+- Inspection: adult woman. Long pink-purple hair, red eyes, red spear, castle towers, black outfit with a high slit and a metal shoulder plate. Scathach reads clearly. One hand grips the spear. The other hangs open at her side, so "both hands on the spear" missed. The outfit stays on. Adult reading is clear.
+- Keep: AniFox spear and castle for Scathach. The still stays.
+
+### l-zhuyuan-street — completed, counted
+
+- Preset `yumeflux-ilv1-baseline`, seed `2026092356`, steps 20, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `445e7734-dad0-4c01-9701-852cc8347c7d`. ComfyUI prompt `6d2e8987-d288-43bc-89ff-ccfb5b9f1ee8`. 32.2 s. Spill 5.6 GB. The queue stopped here for a restart. This prompt is not resubmitted.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\YumeFlux-ILv1-Baseline_00006_.png`.
+- Positive: zhu yuan, police jacket, night city street, jacket open, shirt and pants on, hands on thighs.
+- Inspection: adult woman. Dark hair tied up, blue eyes, open police jacket, white shirt, black pants, night street. Zhu Yuan reads as the public-security officer. Both hands rest on the thighs. The fingers are long and the count is uneven. Shirt and pants stay on. Background signs are stylized glyphs even with `logo, letters` in the negative. Distant pedestrians are silhouettes.
+- Keep: YumeFlux night street and the open jacket over a shirt. The still stays.
+
+### l-blackswan-ballroom — completed, counted
+
+New WAI job. Not the empty train receipt.
+
+- Preset `wai`, seed `2026092357`, steps 20, CFG 5, euler ancestral / normal, `nsfw_girls.safetensors` at 0.7.
+- Studio job `da6ad455-4e67-4aaa-b842-dbb653e10586`. ComfyUI prompt `8a93cf18-d10b-4f02-b4fc-6e1af81cd65d`. 26.3 s. No spill line. ComfyUI had been restarted after Zhu Yuan's 5.6 GB spill.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\WAI-Illustration_00029_.png`.
+- Positive: black swan (honkai: star rail), veil, purple evening gown, black gloves, ballroom, gloved hands folded in her lap.
+- Inspection: adult woman. Long pale-purple hair, veil, purple eyes, purple gown with a flower emblem, chandelier hall. Black Swan reads clearly. The gown stays on. The lap-hands sentence failed the same way Luna's desk hands failed: one gloved finger is at her lips, and the other hand rests on the bench. Adult reading is clear.
+- Keep: WAI ballroom gown for Black Swan. The still stays, including the shush.
+- Change the unsubmitted Yinlin and Übel cells: no hand near the face. Yinlin's teacup is dropped, because a prop in the hands became a face gesture here and on Luna and Priscilla.
+
+### l-tamarinne-stage — completed, counted
+
+New AniFox job. Not the empty stage receipt.
+
+- Preset `anifox-v2-baseline`, seed `2026092358`, steps 20, CFG 5, euler ancestral / karras, `nsfw_girls.safetensors` at 0.7.
+- Studio job `84217db5-be3c-4e55-89b7-37af2a7e6e06`. ComfyUI prompt `3b7042bf-909b-4a31-a4d1-a8a4c2de8152`. 30.2 s. No spill line.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\AniFox-v2-Baseline_00008_.png`.
+- Positive: tamarinne (epic seven), pink stage dress, microphone, concert stage, one arm raised.
+- Inspection: adult woman on a lit stage, long pink hair, headset mic, black white and pink stage dress. The dress stays on. Both arms are raised and the hands leave the top of the frame, so there is no finger count to fail. The face is a generic smiling idol. With only a handful of Danbooru posts, the likeness was expected to be weak, and it is. A second pink-haired face is painted on the screen behind her.
+- Keep: the stage dress and the arms-out-of-frame pose. The still stays. Likeness is the open problem, not a reason to drop the frame.
+
+### l-ubel-road — completed, counted
+
+Changed before submit because Black Swan turned lap-hands into a finger at the lips. This cell asks for hands behind the back and no hand near the face. Not Serie's dead Anima prompt.
+
+- Preset `anima-v1-baseline`, seed `2026092359`, steps 20, CFG 4.5, euler / simple, slot 1 `nsfw_girls_anima` at 0.85, other slots 0.
+- Studio job `b24a6081-8f4d-4893-9099-2d21b95285b1`. ComfyUI prompt `beb477e1-2749-4ffe-984b-081a4afa55ea`. 24.2 s. No spill line. ComfyUI had been restarted after the clothed batch's 4.6 GB spill.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\Anima-v1-Baseline_00041_.png`.
+- Positive: ubel (sousou no frieren), short blue hair, dark coat, white shirt, country road, full body, both hands behind her back, no hand near the face.
+- Inspection: adult woman. Short blue hair, blue eyes, long dark coat, white shirt, high-waisted dark trousers, boots, a dirt road through fields. Übel's short blue hair and coat read. The full body is in frame. No hand is near the face, and both hands are hidden behind the back, so the Black Swan change held. Coat and shirt stay on. Adult reading is clear.
+- Keep: hands behind the back when a face gesture is the failure. The still stays.
+
+### l-yinlin-teahouse — completed, counted
+
+New JANIMA job. Not the empty teahouse receipt. The teacup was removed before submit for the same reason as Übel.
+
+- Preset `janima-v1-baseline`, seed `2026092360`, steps 20, CFG 4.5, euler / simple, slot 5 `nsfw_girls_anima` at 0.85, other slots 0.
+- Studio job `8c5cfc8a-5760-4360-a30c-9ba7089cc179`. ComfyUI prompt `d6d0e2ce-dd66-4ccb-9ab1-8b2f17486f35`. 22.2 s. No spill line.
+- File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\JANIMA-v1-Baseline_00004_.png`.
+- Positive: yinlin (wuthering waves), purple dress, teahouse, seated, wide shot, both hands hidden in her lap, no hand near the face.
+- Inspection: adult woman. Long dark hair, purple eyes, purple halter gown, gold jewelry, pavilion with a tea set on the table. Yinlin reads clearly. The dress stays on. No hand is near the face. The hands are clasped low in the lap rather than fully hidden, and the overlapping fingers are hard to count. That is still the lap, not a shush. Adult reading is clear.
+- Keep: JANIMA teahouse and the ban on a face hand. The still stays, including the clasped fingers.
+
+No many-minute model was used. One Obsession and Pearly were not run. The new NSFW positives are front stands, seated portraits, a spear, a stage, and a road. None of them repeats the Wave K sentence `backless dress, open skirt, bare hips, arms behind back, no hands visible`.

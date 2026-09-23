@@ -1,5 +1,17 @@
 # Current state — 23 September 2026
 
+## Franchise labs, fast families only — 23 September 2026 (20:25 local)
+
+Executed through Studio on the primary. Notes are `experiments/curated/nsfw-lab-20260923/FINDINGS.md` and `experiments/curated/style-lab-20260923/FINDINGS.md`. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. No Creative Bundle entry. No many-minute model. Pictures stay under the ComfyUI `output/Studio` folder.
+
+NSFW jobs, all completed with a still: Narberal `872bb18d` / `677d8652`, Luna `5bb35721` / `0ac4d893`, Priscilla `afd22199` / `2ad9ed78`, Himeno `7a0d0d76` / `b7d2516e`, Scathach `621e2e6e` / `e7de8278`, Zhu Yuan `445e7734` / `6d2e8987`, Black Swan `da6ad455` / `8a93cf18`, Tamarinne `84217db5` / `3b7042bf`, Übel `b24a6081` / `beb477e1`, Yinlin `8c5cfc8a` / `d6d0e2ce`.
+
+Clothed jobs, LoRA strength 0: Megumin hat `b333516d` / `9ca15bc7`, Momo shoe `3152f80e` / `52c59ee8`, Zero Two background `92831cc0` / `1eb2789d`, Alya coat `d0ab2ae1` / `db711304`, Hina walk `061a5427` / `ad8424de`, Frieren meadow `8e38a9e7` / `ddf512fc`. The Frieren face still reads youthful, so that cell stays clothed.
+
+Receipts are under `C:/Users/jekyt/source/local-asset-studio/experiments/runs` because `experiments_root` points there. ComfyUI spilled 6.0 GB on Priscilla and 5.6 GB on Zhu Yuan; both times the queue was empty before a restart. Dead prompt ids from earlier the same day were not resubmitted.
+
+Not run: One Obsession, Pearly, and any many-minute workflow.
+
 ## `zimage-fast` Studio-proved, Krea trigger follow-up, krea-refine on GGUF — 23 September 2026 (07:14-07:36)
 
 The overnight lab's last runs before the owner's shutdown. Evidence under `experiments/curated/overnight-20260923/` (the lab's
