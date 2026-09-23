@@ -32,6 +32,37 @@ Score each criterion from 1 to 5. **3** means usable with a fix; **5** means no 
 
 Write `null` for a criterion that does not apply: `control` without a control input, `anatomy` for a pure object.
 
+**R9. `control` for a pose, depth or reference input is graded, never a binary 2 or 5.** The coordinator ruled this on
+23 September 2026. The ruling is stated in full here; its only other copy is the overnight session's local protocol file
+(`.runtime/overnight/PROTOCOL.md`, gitignored). The owner may override it.
+
+| Score | The control input was… |
+| --- | --- |
+| 1 | ignored |
+| 2 | followed only as a trace |
+| 3 | kept in stance or silhouette, but a named key part is missing (write that part in `worst_defect`) |
+| 4 | followed, with one minor deviation |
+| 5 | followed exactly |
+
+Why: on the Style+Pose pack the two judges agreed on all 18 verdicts but on none of the 18 `control` scores. Both saw the
+same outcomes: the raised arm was lost at 0.7 and held at 0.9–1.0 on two seeds. One judge scored every picture 2 or 5. The
+other scored 1 where the pose was ignored, 3 where only the stance was kept, and 4 where it was followed
+([second-judge/stylepose-pack.md](second-judge/stylepose-pack.md)).
+
+**R8b. A correction pass (R8) that leaves the named defect untouched scores `adherence` 2, and is a reject.** It is never
+`adherence` 3 or "fixable": running a different setting or route is a new configuration, not a fix of this picture. The
+coordinator ruled this on 23 September 2026 (the only other copy of the ruling is the local, gitignored
+`.runtime/overnight/PROTOCOL.md`), and the owner may override it.
+
+Worked examples, both from the detector hand repair
+([second-judge/hand-fix.md](second-judge/hand-fix.md)):
+
+- **noob4:** the six-digit hand was redrawn, and still has six digits, at every setting.
+- **CSTati:** the detector found no hand, so the output is pixel-identical to the source and both mitten hands remain.
+
+Why: on that experiment the two judges agreed on what every setting did, but on only 2 of 12 verdicts. In 9 of the 10
+differences, one judge had scored an untouched defect as `adherence` 3, "fixable".
+
 ## The verdict
 
 - **keep**: every score is at least 4.
