@@ -68,6 +68,8 @@ Speed: 8-26 s per repair through the Studio (26 s includes the WAI checkpoint lo
 
 - One picture, one hand and one box mask. A tighter or looser mask, and other defects (a mitten hand, a fused grip), are untested.
 - The feathered graph has not been through the Studio yet.
-- The grown mask repaints 12 px beyond the transparent region, blended; the region is never hard-cut. A user who needs a pixel
-  outside the region untouched should know this.
+- The repaint reaches beyond the transparent region, fading out. The mask is grown by 12 px and then blurred with a
+  49-tap Gaussian (radius 24, sigma 8), and on a straight edge it stays above 0.5 for 12 px, above 0.1 for 22 px, above 0.01
+  for 30 px and above 1/255 for 33 px beyond the painted edge. Protected pixels up to about 33 px away can therefore change
+  slightly. Inside the painted edge the mask is 0.94, not 1.
 - None of this is art acceptance. q-2 stays the owner's.
