@@ -86,3 +86,11 @@ adoption.
 - One picture, one hand, three seeds.
 - Other feather widths.
 - Whether the seam shows on busier backgrounds.
+
+## Studio proof (the lab's #885)
+
+The feathered `anime-masked-repair` recipe run through the Studio (job `1f9b3e11…`, prompt `c83c97f5…`, output
+`Studio/Anime-Masked-Repair_00007_.png`) is **pixel-identical** (mean difference 0.00) to the research render at seed …61
+judged "keep" above. Judged again under R8 as a correction pass it is a **keep**: five digits, gesture and shading kept,
+the light streak continuous across the old mask edge (seam excess p90 2.0, the lowest of the 19 repairs), and pixels more
+than 20 px outside the mask unchanged (mean difference 0.002). The record is the last line of the JSONL.
