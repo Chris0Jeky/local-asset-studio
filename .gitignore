@@ -63,3 +63,9 @@ examples/civitai-intake/*.jpeg
 examples/civitai-intake/*.png
 examples/civitai-intake/*.webp
 examples/civitai-intake/index.html
+# Combine research sheets built on fan pictures of a student-canon character: local-only since 23 September 2026
+examples/combine-research/*.jpg
+examples/combine-research/*.jpeg
+examples/combine-research/*.png
+examples/combine-research/*.webp
+examples/combine-research/index.html

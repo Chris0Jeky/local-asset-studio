@@ -47,7 +47,7 @@ route since 15 September 2026 (later that night). The graph turns the pose pictu
 that map is image 1, so only the body position reaches the model: the person, costume, shoes and colours of the pose
 picture never do. On the owner's own pair (the SHARK crop-top character, the bent-over maid picture) FLUX.2 Klein 9B held
 the deep waist bend and the crossed legs on 3 of 4 seeds with the face, hair, crop top, lettering and pink shorts kept,
-bare feet, no tights and no tail, in 90-115 s warm (`examples/style-pose/combine-pose-round2.jpg`; the fourth seed bent
+bare feet, no tights and no tail, in 90-115 s warm (`examples/combine-research/combine-pose-round2.jpg`; the fourth seed bent
 only moderately). Proved through the Studio's own path: job `22ff6394…`, output `Combine/Klein-9B-depth_00001_.png`. Two things the
 research settled: both 2D skeleton detectors (OpenPose, DWPose) fail on that pose picture, the depth map does not; and a
 blank image 1 plus the pose in words gives perfect identity but never the deep bend, so the structural image, not the
@@ -61,7 +61,7 @@ seeds (`pose_sources.py` painted the map from row 0.86·h down). Audition three 
 route (16 September 2026). It runs the shipped 9B graph with the civitai *Copy Pose* LoRA (`KleinBase9B_PoseTransfer`, strength 1.0,
 model only) and turns the order round: **your character is image 1** and is kept, with its own background, framing and rendering,
 and **the pose picture is image 2**, from which only the pose is taken. On the owner's pair (pose round three,
-`examples/style-pose/combine-pose-round3.jpg`) 3 of 3 seeds held the deep bend, crossed legs and look-back with the face,
+`examples/combine-research/combine-pose-round3.jpg`) 3 of 3 seeds held the deep bend, crossed legs and look-back with the face,
 lettering, pink shorts and the character's white background kept and nothing of the pose picture leaking, 75-80 s warm. It wants the
 real pose picture: a depth map as image 2 copied the map's black ground and a grey ghost figure on 3 of 3 seeds. Three fills in the
 wording's reading order: who is in image 1, image 1's clothes and colours, image 2's pose with the hands and the camera. Choose it
@@ -76,7 +76,7 @@ the other way round from the 4B recipe: the **pose picture is image 1** and is k
 and **your character is image 2** and is swapped into it. Three bracketed fills: who is in image 2, image 1's pose in a
 few words, and your character's clothes and colours. The last one is not optional: without it image 1's black shorts and
 heels leaked in our test; with it FLUX.2 Klein 9B held a deep waist bend on 4 of 4 seeds on the owner's own pictures
-(`examples/style-pose/combine-klein9b-pose-first.jpg`). A shoe or stocking from image 1 can still ghost in, lettering
+(`examples/combine-research/combine-klein9b-pose-first.jpg`). A shoe or stocking from image 1 can still ghost in, lettering
 can garble; audition three seeds. About 100-200 s warm; the 9B model is non-commercial (private experiments only). Why
 this order: the Klein models keep image 1's structure, so the 4B recipe below (character first, pose in words) can only
 give a mild pose, and putting the pose picture first on 4B just brings the character's own pose back; the research table
@@ -120,7 +120,7 @@ The rendered guide is `studio.coco18-lines/v1`: the same limb list and colours a
 thinner strokes (`stroke = min(w, h) // 128`, so 8 px on a 1024×1536 canvas against the research figure's 14 px
 lines and 12 px joint dots). **Proved 16 September (04:10):** a guide rendered by this endpoint from the bent-forward
 starting figure put the character into the drawn pose through the skeleton recipe on the Studio's own path (job `8b571dd4…`, 66.5 s,
-seed 2026091461, the same figure and seed as the hand-drawn proving run `26448d58…`; sheet `examples/style-pose/pose-editor-proving.jpg`):
+seed 2026091461, the same figure and seed as the hand-drawn proving run `26448d58…`; sheet `examples/combine-research/pose-editor-proving.jpg`):
 the thin 8 px strokes carried the pose as well as the 14 px research figure did. The research figure itself carried the pose on 3 of 3
 seeds. Not yet measured: drawing in the panel by hand and pressing *Use this pose* then Generate as one browser journey (the use-case
 driver covers the panel up to the attached guide with zero generations; the proving run submitted the same request shape by API).
@@ -155,23 +155,23 @@ pose pictures). Do not append the source description: it names the source's pose
 picture: a third leaked its shorts and lettering; the second slot exists so you can try, and the hint says so. The pose
 picture's clothing can still leak a detail ("SHARK" lettering appeared on the robe once), so say "no lettering" or pick a
 plainer picture. About 30–45 s warm. Research table and the exact graphs:
-`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`; sheet `examples/style-pose/combine-klein-research.jpg`;
+`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`; sheet `examples/combine-research/combine-klein-research.jpg`;
 proving run through the page in `CURRENT_STATE.md` and the catalog's `execution_note`.
 
 The owner's first run through this route (job `aebf406f…`, 22:54 the same night: the "SHARK" crop-top picture on image 1, a
-bent-over fan picture as the pose, four seeds; sheet `examples/style-pose/combine-klein-owner-run.jpg`) showed two faults
+bent-over fan picture as the pose, four seeds; sheet `examples/combine-research/combine-klein-owner-run.jpg`) showed two faults
 in the prepared wording, not in the route: the keep sentence had been written for the witch and said "her hat", so
 every seed invented a cap, and one seed drew two figures. The sentence is now subject-neutral ("Keep the face, the hair,
 the outfit and its colours") and asks for one figure; the same four seeds re-rendered with the owner's own fills gave
 four single figures, no hats, tail left out, seen from behind with hands on hips
-(`examples/style-pose/combine-klein-owner-fix.jpg`, prompts `a20e6df1`, `39e6ce34`, `f73b9c0b`, `a27ae00d`, 21 s each
+(`examples/combine-research/combine-klein-owner-fix.jpg`, prompts `a20e6df1`, `39e6ce34`, `f73b9c0b`, `a27ae00d`, 21 s each
 warm). The lean stayed mild because the fill said "leaning forwards": the picture guides, the words decide, so say how
 far the figure bends and what each hand does; the board hint now says so. A test keeps the sentence free of `her`, `his`,
 `hat`, `robe` and `witch` outside the fills. Starting from the *Combine two pictures* card instead of *Continue with this*
 now blocks until you choose the picture you keep (the server refuses to queue the authored example picture), and the
 board describes itself as a pose picture rather than a style board. Stronger pose words ("bent forward at the waist,
 seen from behind, both hands on the hips, looking back over her shoulder") moved the look-back and the hands but not the
-deep waist bend (`examples/style-pose/combine-klein-owner-bend.jpg`): say what should move, and expect a mild pose from
+deep waist bend (`examples/combine-research/combine-klein-owner-bend.jpg`): say what should move, and expect a mild pose from
 the 4B model when the pose picture is extreme.
 
 **Change one thing (FLUX.2 Klein 4B, keeps the rest)** now leads *Continue with this → Edit* (it was the 11-minute Qwen

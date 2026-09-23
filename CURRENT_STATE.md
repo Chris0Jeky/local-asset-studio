@@ -245,7 +245,7 @@ receipts root, exact recipes committed beside the scripts, sheets in `examples/s
   guide on the server (`POST /api/pose/render` -> `studio_workflow.pose_raster`, stored like an upload, every joint manual with no detector
   confidence) and puts it on Picture 1 of `combine-klein-9b-skeleton` through the engine-switch path. Proved: a guide rendered by that
   endpoint from the bent-forward starting figure gave the drawn pose through the skeleton recipe (job `8b571dd4…`, 66.5 s, the same figure and
-  seed as the hand-drawn run `26448d58…`; sheet `examples/style-pose/pose-editor-proving.jpg`): thin 8 px strokes carry the pose as well as the
+  seed as the hand-drawn run `26448d58…`; sheet `examples/combine-research/pose-editor-proving.jpg`): thin 8 px strokes carry the pose as well as the
   14 px research figure. The worker filed #467 (a Windows clock-tick dependency in a trace-stream test).
 - **Failed jobs say when a retry is safe (PR #465, #350):** an IndexError whose traceback names ComfyUI's `free_memory` (the first load of a different
   model family in a session) is recorded as `model_swap_fault` with the action *run the same job again with the same seed*; nothing is retried
@@ -282,7 +282,7 @@ Related groundwork merged: #447 documents pose-artifact boundaries, #448 adds lo
 Same two pictures, seeds 2026091411-13, every render tabled with prompt IDs in
 `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` (section "Pose round three"), scripts next to it
 (`pose_sources.py`, `lora_pose.py`, `restart_probe.py`, `twopass.py`, `prove_skeleton.py`, `sheet_round3.py`), sheet
-`examples/style-pose/combine-pose-round3.jpg`.
+`examples/combine-research/combine-pose-round3.jpg`.
 
 - **The slow state (Klein 9B at 53-63 s/step instead of 6.5) is a ComfyUI-process condition that only a restart clears.** Two of the
   night's three Qwen runs were followed by fast Klein renders, the third by slow ones that survived a 20-minute idle gap; `POST /free`
@@ -327,7 +327,7 @@ other than the owner's; the ankle crop as a Studio control (specified on #427, n
 The owner's verdict on the pose-first result: "so so", a much bigger step but not the complete pose change they meant; of the round-one
 renders the Qwen one most resembled the objective, at 14.5 minutes; and the Studio's workflow itself is in doubt for this kind of experimenting.
 Round two, same two pictures, every render tabled with prompt IDs in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`
-(section "Pose round two"), sheet `examples/style-pose/combine-pose-round2.jpg`, scripts next to the README (`qwen_pose2.py`,
+(section "Pose round two"), sheet `examples/combine-research/combine-pose-round2.jpg`, scripts next to the README (`qwen_pose2.py`,
 `klein_skeleton.py`, `sheet_round2.py`, `prove_depth.py`):
 
 - **Qwen's time is the model's weight path, not the references.** The log shows 65 s of loading and 10-13 min of four Lightning steps;
@@ -370,7 +370,7 @@ this private experimental use; the licence facts in `models/library.json` and th
 The owner ran the Combine route on their own pictures (the "SHARK" crop-top character, a bent-over fan picture as the
 pose), called the results "incredibly bad" and asked for a baseline that proves the workflow and a Studio that can
 reproduce it. Twenty-two research renders on that pair (table with every prompt ID in
-`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`, sheets `examples/style-pose/combine-klein4b-matrix.jpg`,
+`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`, sheets `examples/combine-research/combine-klein4b-matrix.jpg`,
 `combine-klein9b-matrix.jpg`, `combine-klein9b-pose-first.jpg`, `combine-qwen-2ref.jpg`, `combine-openpose-ipadapter.jpg`)
 showed why: the Klein models keep image 1's structure, so asking for a pose in words while the character is image 1
 gives a mild pose at best on 4B and 9B alike (steps, the AniEdit LoRA and reference order changed nothing on 4B). With
@@ -398,7 +398,7 @@ expression of the third image" typed into the keep sentence of a one-picture rec
 the Edit route greeted the user with the 11-minute Qwen recipe, and restyling a Klein output appended the previous
 instruction as "The picture shows: …", compounding the wording. Fifteen research renders (tabled in
 `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`, sheet
-`examples/style-pose/combine-klein-research.jpg`) found that Klein 4B moves a character into another picture's pose in
+`examples/combine-research/combine-klein-research.jpg`) found that Klein 4B moves a character into another picture's pose in
 30–45 s **when the wording names the subject and the pose** (abstract "the character from image 1" left her where she
 was or swapped the base picture), that appending the source description undoes the pose, that a third picture leaks its
 costume, and that borrowing a look from a picture trades colour drift against look strength.
@@ -413,7 +413,7 @@ instruction-role source prompt as a description; restyling a picture with the re
 wording and seed give the same picture; the second-picture panel offers *Use its pose → Combine*. Proving run through the
 page as a first-time user (library → witch → Continue with this → Combine → Prepare → Pull the owner's Santa picture into
 Picture 1 → replace the two fills → Generate): job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`, output
-`Combine/Klein_00001_.png`, sheet `examples/style-pose/combine-klein-proving.jpg`; the use-case matrix gained
+`Combine/Klein_00001_.png`, sheet `examples/combine-research/combine-klein-proving.jpg`; the use-case matrix gained
 `combine-character-with-another-pose` (9 intended / 10 taken / 5 clicks / 0 dead ends, fixture mode, 12/12 cases pass).
 The renamed edit recipe was proved the same way (*Continue with this → Edit*, fill replaced with "replace her witch hat
 with a red Santa hat …"): job `1004f972-e1d9-489e-bbda-60182bd18216`, 35.3 s, hat replaced, the rest kept. After the
@@ -422,9 +422,9 @@ Codex review the bracketed fills are refused on every route (server and readines
 The owner's first Combine run (job `aebf406f-ff76-414c-8500-388e02a98fe2`, 22:54: the "SHARK" crop-top picture kept,
 a bent-over fan picture as the pose, four seeds, 148.5 s) worked as a route and exposed the prepared wording: its keep
 sentence said "her hat" (written for the witch), so all four seeds invented a cap, and one seed drew two figures
-(`examples/style-pose/combine-klein-owner-run.jpg`). Fixed: the sentence is subject-neutral and asks for one figure;
+(`examples/combine-research/combine-klein-owner-run.jpg`). Fixed: the sentence is subject-neutral and asks for one figure;
 the same four seeds with the owner's fills re-rendered against ComfyUI gave four single, hatless figures from behind
-(`examples/style-pose/combine-klein-owner-fix.jpg`, prompts `a20e6df1`, `39e6ce34`, `f73b9c0b`, `a27ae00d`, 21 s warm;
+(`examples/combine-research/combine-klein-owner-fix.jpg`, prompts `a20e6df1`, `39e6ce34`, `f73b9c0b`, `a27ae00d`, 21 s warm;
 not re-run through the page, the graph is the catalog's with the fills replaced). Two Codex-lane pilot jobs from
 12 September (`0cbaae1b…` flux-edit, `a2908800…` qwen-2ref) that every restart re-marked *uncertain* had their
 tracking stopped with the reason recorded (ComfyUI lists neither prompt; no output after the restart; nothing
@@ -437,7 +437,7 @@ guidance still listed a hat, and the plain Create route submitted the authored e
 was attached (`Studio.prepare()` now refuses a board or declared restyle/combine recipe without its source picture, and
 the readiness list says *Add the picture you keep to Picture to keep (image 1)* with a button; the continuation route
 keeps its own refusal). Stronger pose words on the owner's case honoured a look-back and hands on hips but not the deep
-waist bend of the pose picture (`examples/style-pose/combine-klein-owner-bend.jpg`); the hint says so.
+waist bend of the pose picture (`examples/combine-research/combine-klein-owner-bend.jpg`); the hint says so.
 Not verified: art acceptance (HUMAN_TODO q-27 e), the look recipe through the page, Klein 9B and AniEdit 9B (downloads
 still running through the VPN), a third board picture with explicit "take only … from image 3" wording.
 
