@@ -6,7 +6,7 @@ Executed through Studio on the primary. Notes are `experiments/curated/nsfw-lab-
 
 NSFW jobs, all completed with a still: Narberal `872bb18d` / `677d8652`, Luna `5bb35721` / `0ac4d893`, Priscilla `afd22199` / `2ad9ed78`, Himeno `7a0d0d76` / `b7d2516e`, Scathach `621e2e6e` / `e7de8278`, Zhu Yuan `445e7734` / `6d2e8987`, Black Swan `da6ad455` / `8a93cf18`, Tamarinne `84217db5` / `3b7042bf`, Übel `b24a6081` / `beb477e1`, Yinlin `8c5cfc8a` / `d6d0e2ce`.
 
-Clothed jobs, LoRA strength 0: Megumin hat `b333516d` / `9ca15bc7`, Momo shoe `3152f80e` / `52c59ee8`, Zero Two background `92831cc0` / `1eb2789d`, Alya coat `d0ab2ae1` / `db711304`, Hina walk `061a5427` / `ad8424de`, Frieren meadow `8e38a9e7` / `ddf512fc`. The Frieren face still reads youthful, so that cell stays clothed.
+Clothed jobs, LoRA strength 0: Megumin hat `b333516d` / `9ca15bc7`, Momo shoe `3152f80e` / `52c59ee8`, Zero Two background `92831cc0` / `1eb2789d`, Alya coat `d0ab2ae1` / `db711304`, Hina walk `061a5427` / `ad8424de`, Frieren meadow `8e38a9e7` / `ddf512fc`. The meadow still exists. Owner correction, 20:42 local: a youthful face on Frieren, or on another adult-in-canon character, does not move them to the clothed lab and does not change the next prompt. The library cell `ef9cf294` / `457d0611` is counted.
 
 Receipts are under `C:/Users/jekyt/source/local-asset-studio/experiments/runs` because `experiments_root` points there. ComfyUI spilled 6.0 GB on Priscilla and 5.6 GB on Zhu Yuan; both times the queue was empty before a restart. Dead prompt ids from earlier the same day were not resubmitted.
 

@@ -35,7 +35,7 @@ Shared negative: `nude, nsfw, explicit, sexual, erotic, underwear, lingerie, cle
 | s2-zerotwo-bg | Darling in the Franxx, clothed | anifox-v2-baseline | 2026092363 | Same coat and horns, simple solid grey background. |
 | s2-alya-coat | Alya, clothed | wai | 2026092364 | Further cell. Winter coat and scarf over the uniform, outdoors, book in one arm. |
 | s2-hina-walk | Blue Archive, clothed | cstati-v3-baseline | 2026092365 | Further cell. Walking with a school bag and a long coat, gate behind her. |
-| s2-frieren-field | Frieren, clothed | wai | 2026092366 | The 23 September library face stays in this lab. White robe, staff, meadow, standing. No NSFW adapter. |
+| s2-frieren-field | Frieren, clothed | wai | 2026092366 | Clothed meadow already run. A youthful face does not keep her in this lab. |
 
 ## Wave S2 results
 
@@ -95,11 +95,11 @@ Further clothed cell. Walking, coat, school bag.
 
 ### s2-frieren-field — completed, counted
 
-The 23 September library face stays in this lab. White robe, staff, meadow. No NSFW adapter.
+Clothed meadow that already ran. It is not a rule that Frieren belongs here.
 
 - Preset `wai`, seed `2026092366`, steps 20, CFG 5, euler ancestral / normal, both LoRA strengths 0.
 - Studio job `8e38a9e7-e705-412a-b369-0e3afa5a84ca`. ComfyUI prompt `ddf512fc-2ce9-4d64-8ffa-922adc842b77`. 28.2 s. Spill 4.6 GB.
 - File: `C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\WAI-Illustration_00032_.png`.
 - Positive: frieren, long white hair, green eyes, pointy ears, white robe with black trim, staff, flower meadow, boots, fully clothed.
-- Inspection: clothed stand in a flower field. White hair in twintails, green eyes, pointed ears, white robe with gold trim over a striped shirt, brown boots, both hands on a staff. The face still reads youthful. That is why this cell is in the clothed lab and why there is no nude follow-up. The still stays.
-- Keep: clothed meadow for this face. Do not move it to the NSFW lab.
+- Inspection: clothed stand in a flower field. White hair in twintails, green eyes, pointed ears, white robe with gold trim over a striped shirt, brown boots, both hands on a staff. The face is the usual youthful Frieren design. The still stays as a clothed costume experiment.
+- Owner correction, 23 September 2026, 20:42 local: that face is not a reason to keep Frieren, or any adult-in-canon character with a youthful design, out of the NSFW lab, and it is not a reason to change the next prompt. Further Frieren cells go in the NSFW notes.
