@@ -96,6 +96,23 @@ The tenth difference is the Yume 0.6 style call above.
 leaves the named defect untouched scores `adherence` 2 and is a reject. Its worked examples come from this experiment:
 noob4, where six digits remain, and CSTati, where the output is pixel-identical because nothing was detected.
 
+**After the lab's rescore.** The lab then rescored its records to R8b in #890: the 10 outputs that left their named defect
+untouched are now rejects with `adherence` 2. Agreement after the rescore:
+
+| Measure | Result |
+| --- | --- |
+| Picture verdicts | **10 of 12** agree |
+| Criteria exactly equal | 49 of 72 |
+| … adherence | 11 of 12 |
+
+Two differences remain, both on Yume:
+
+- **Yume at 0.4.** The lab gives a reject: its named defect is the viewer-right hand, and that hand is still a mitten.
+  This judge's record reads the same hand as "still a block", but it counted both hands and credited the partial finger
+  separation on the other one, so it gave `adherence` 3, fixable. Measured against the lab's named hand alone, R8b would
+  make this a reject too. The blind record is left as written.
+- **Yume at 0.6.** The style call described above.
+
 Across the night's lab-against-review comparisons:
 
 | Experiment | Picture verdicts agreeing |
@@ -107,7 +124,7 @@ Across the night's lab-against-review comparisons:
 | Restyle | 8 of 9 |
 | Krea refine foxes | 3 of 6 |
 | Style+Pose pack | 18 of 18 |
-| Hand fix | 2 of 12 |
+| Hand fix | 2 of 12; 10 of 12 after the lab's R8b rescore |
 
 The three lowest are all correction passes. Each time, the judges agreed on what the pictures show and split on how to
 score a pass that did not do its job.
