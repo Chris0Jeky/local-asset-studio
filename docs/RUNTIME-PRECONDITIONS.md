@@ -388,6 +388,11 @@ and after the `grok` process exited both ComfyUI and the Studio were still servi
 closing the handle killed the `Start-Process` child and left the `Win32_Process.Create` child running, and the in-job check
 read true inside that job and false in a Claude Code shell.
 
+**Which launch paths are in a job (read 23 September 2026, 22:30).** `explorer.exe` is in no job, so `Start Studio.cmd`
+opened from Explorer never needs the relaunch. A PowerShell tab in Windows Terminal 1.18 reported `IsProcessInJob` false
+(chain `python.exe` → `powershell.exe` → `WindowsTerminal.exe`). WebStorm's terminal (`OpenConsole.exe` under
+`webstorm64.exe`) and Claude Code's own `claude.exe` processes are in jobs, so a launch from them takes the WMI path.
+
 **What an agent should still do.** Start or restart the Studio only through `Start-Studio.ps1` (or `Start Studio.cmd`),
 never by launching `app/server.py` or ComfyUI's `main.py` directly from an agent command: a direct launch stays in the job.
 Deaths remain possible for other reasons; when one happens, check whether the launching command's task has ended before
