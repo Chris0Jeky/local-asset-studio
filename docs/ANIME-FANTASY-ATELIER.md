@@ -282,8 +282,8 @@ press **Generate** explicitly. Opening either action does not start a render or 
   six-digit NoobAI hand (`experiments/curated/overnight-20260923/hand-inpaint/`, straight against ComfyUI with this
   preset's own submitted graphs): the old 0.4 default left the extra digit on 3 of 3 seeds, 0.6 gave five digits on
   3 of 3 with the gesture and painterly shading kept, and the old hard mask edge left a visible seam where it cut
-  the background light streak, which the feathered mask removed. The preset stays unverified until one Studio
-  proof of the feathered graph is inspected and recorded.
+  the background light streak, which the feathered mask removed. Proved through the Studio on 23 September 2026
+  (job `1f9b3e11`, 27 s): five digits and no seam on the same hand at the new defaults.
 - **`sdxl-inpaint-fix`** (**WAI • Fooocus inpaint repair**) — the same manual RGBA upload as
   `anime-masked-repair`, but the repaint runs through the **Fooocus inpaint patch** that is already installed,
   so the model is conditioned on the surrounding picture instead of re-imagining the hole from noise. That is
