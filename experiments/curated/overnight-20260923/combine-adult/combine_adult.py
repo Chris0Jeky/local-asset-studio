@@ -1,9 +1,9 @@
 """Re-prove the four lead Combine routes on an adult original pair (23 September 2026, overnight lab; review judge request, PR #862).
 
-    python combine_adult.py pose-source        # one WAI render of an adult original figure in a dynamic lunge (the pose picture)
-    python combine_adult.py stage              # upload the character + pose picture to the Studio, draw the skeleton guide
+    python combine_adult.py pose-source        # v1: one WAI render meant as a lunge (rejected, see README)
+    python combine_adult.py pose-source-v2     # v2: three WAI renders of an adult OC in a wide stance, one arm up
+    python combine_adult.py stage [pose-label] [keypoints.json]   # defaults: pose-source-v2-2026092346, keypoints-v2-2026092346.json
     python combine_adult.py run [route ...]    # Studio jobs (POST /api/jobs): 4 routes x 3 seeds, one at a time
-    python combine_adult.py seal               # blind copies per route-seed group are not useful here; see README (open judging)
 
 Every earlier proof of these routes used the owner's imported fan pictures of Ellen Joe, which are now excluded as inputs. This run
 uses only original adult characters: the character is the fantasy pack's three-quarter portrait (Anima v1 look B,
@@ -105,5 +105,7 @@ if __name__ == '__main__':
     cmd = sys.argv[1]
     if cmd == 'pose-source': pose_source()
     elif cmd == 'pose-source-v2': pose_source('v2', (2026092344, 2026092345, 2026092346))
-    elif cmd == 'stage': stage(sys.argv[2], sys.argv[3])
+    elif cmd == 'stage': stage(sys.argv[2] if len(sys.argv) > 2 else 'pose-source-v2-2026092346',
+                               sys.argv[3] if len(sys.argv) > 3 else str(HERE / 'keypoints-v2-2026092346.json'))
     elif cmd == 'run': run(sys.argv[2:])
+    else: raise SystemExit('unknown command %r (pose-source, pose-source-v2, stage, run)' % cmd)
