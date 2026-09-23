@@ -378,8 +378,11 @@ Earlier deaths blamed on the spill or on loading Anima fit the same shape and ar
 
 **Fix.** `scripts/Start-Studio.ps1` checks `IsProcessInJob` on itself. Inside a job it starts itself again through
 WMI `Win32_Process.Create` (hidden window, `-Detached`), which creates the process in the same interactive session but
-outside any job, waits for it, relays its log (`.runtime/start-studio-detached-*.log`), and succeeds only when
-`/api/identity` answers for this workspace. Outside a job nothing changes. Reproduced with a harness job carrying Grok's flags:
+outside any job, waits for it, relays any error it threw (`.runtime/start-studio-detached-*.log`), and succeeds only when
+`/api/identity` answers for this workspace. The copy's output is deliberately not redirected: capturing it pipes the nested
+ComfyUI launcher, whose `Start-Process` child inherits the pipe and keeps it open, and the first version of this fix hung that
+way from a Grok command. Verified afterwards from a headless `grok` call running `Start-Studio.ps1`: exit 0 in under a minute,
+and after the `grok` process exited both ComfyUI and the Studio were still serving, with `IsProcessInJob` false for each. Outside a job nothing changes. Reproduced with a harness job carrying Grok's flags:
 closing the handle killed the `Start-Process` child and left the `Win32_Process.Create` child running, and the in-job check
 read true inside that job and false in a Claude Code shell.
 
