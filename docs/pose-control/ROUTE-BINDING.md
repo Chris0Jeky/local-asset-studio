@@ -150,9 +150,11 @@ contains no detector (tests walk every node back from `SaveImage`), and the guid
 `ControlNetApplyAdvanced.image`. Research renders and the exact settings are in
 `experiments/curated/style-pose-matrix/2026-09-22-sdxl-skeleton/README.md`. Still open:
 
-1. a Studio proving run of `wai-skeleton` (its catalog entry stays `verified: false` until then);
-2. binding-JSON consumption by `prepare`, if a later route needs more than slot-level identity;
-3. human visual review and the bounded comparison under #446.
+1. binding-JSON consumption by `prepare`, if a later route needs more than slot-level identity;
+2. human visual review and the bounded comparison under #446.
+
+The Studio proving run of `wai-skeleton` is done (job `6a342bbf`, prompt `9f3bea4a`, 23 September 2026), and its
+catalog entry is `verified: true`.
 
 No private pose or character bytes are committed by this contract. A valid hash proves content identity, not
 rights clearance, geometry correctness, artistic acceptance or route promotion. HUMAN_TODO q-28 remains open.

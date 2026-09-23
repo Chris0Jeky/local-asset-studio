@@ -34,6 +34,14 @@ Plan, not yet a result: the Studio proving run of `wai-skeleton` (`research-scri
 branch is in the checkout the Studio serves; until then the catalog entry stays `verified: false`. Nothing here is
 art acceptance or licence clearance; HUMAN_TODO items unchanged.
 
+Correction, 23 September 2026: that Studio proving run has now happened, after #843 merged and the Studio restarted.
+`prove_wai_skeleton.py --guide render` drew the action skeleton through `POST /api/pose/render` (byte-identical to the
+committed `skeleton-action.openpose.png`) and made one `POST /api/jobs`. Job `6a342bbf-995f-466e-9e51-2bf169b11460`,
+prompt `9f3bea4a-b7f4-4a68-b1e9-c766ab213816`, `created_at` 2026-09-23 02:41:36, seed 2026092201, 832x1216, 36.4 s
+on the primary. An agent inspected it: the pose follows the guide and the clean WAI finish is kept. `wai-skeleton`
+is now `verified: true` with that execution note (#855). This is generated and agent-inspected only, not art
+acceptance or licence clearance.
+
 ## Operator disposition publication candidate — 22 September 2026
 
 Stop tracking and local abandonment now use the existing scoped observation-state
