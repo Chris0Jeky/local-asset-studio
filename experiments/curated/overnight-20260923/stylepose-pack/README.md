@@ -15,7 +15,7 @@ board, a standing pose and an action pose, at pose strengths 0.7, 0.9 and 1.0, o
 
 | pose | strength 0.7 | 0.9 (authored) | 1.0 |
 | --- | --- | --- | --- |
-| standing (walk, hand at the scarf) | held 3/3 | held 3/3 | held 3/3 |
+| standing (walk, hand at the scarf) | held 3/3 (second judge: 1/3) | held 3/3 (second judge: 2/3) | held 3/3 (second judge: 2/3) |
 | action (one arm raised overhead, wide stance) | raised arm lost 3/3 | held 2/3 | held 2/3 |
 
 **Every one of the 18 renders is a `reject` on the finish.** The colours are burned into neon teal, magenta and hot orange blocks,
@@ -24,6 +24,10 @@ normal look (compare the census `wai` output). The coat, scarf, brass buttons, e
 are adult.
 
 - **The pose route works:** 0.9 and 1.0 hold even the raised arm on 2 of 3 seeds, and 0.7 loses it every time.
+- *Second judge (#891), 23 September 2026:* it agrees with all 18 rejects for the burn, but counts the standing pose held on
+  5 of 9, not 9 of 9. Seed 73 stands square with both arms down at every strength, and at 0.7 seed 71 drops the hand from the
+  strap. It also found red or pink hair on seed 73, red legs where dark trousers were asked, mismatched boots, and ghost
+  extra fingers on `WAI_00029_` and `WAI_00032_`. My pose counts were read from the strips and were too generous.
 - **The style route does not work with this board at the default weight.** The PR #311 notes for this adapter say that
   over-driven style boards saturate; the IP-Adapter at 0.7 `linear` with a single painterly Anima portrait over-drives WAI's
   palette here.

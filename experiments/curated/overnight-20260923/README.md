@@ -15,7 +15,10 @@ holds the text evidence and original-character sheets only.
 | [combine-adult](combine-adult/) | the Combine routes on an adult original pair | drawn skeleton 3/3 keep; Copy Pose 2 keep + 1 fixable; the depth route lost the face on 2/3 | #875 |
 | [combine-scale](combine-scale/) | is the depth face loss a portrait-scale effect | no: the same seeds fail with a full-body character picture | #883 |
 | [hand-inpaint](hand-inpaint/) | a correction pass that fixes a six-digit hand | masked repaint at 0.6 with a feathered mask: five digits 3/3 with no seam; the old 0.4 fixed 0/3 | #881 |
-| [klein-restyle](klein-restyle/) | the q-27 foot and colour defects | naming the true colours and the footwear fixed both, 3/3 | #883 |
+| [klein-restyle](klein-restyle/) | the q-27 foot and colour defects | naming the true colours and the footwear went with both fixes, 3/3 (an association: both changed together) | #883 |
+| [krea-refine-foxes](krea-refine-foxes/) | krea-refine on the fox shrine with its own prompt | 0.25 kept the foxes (3/3 by the lab, 2/3 by the second judge #889); 0.35 lost foxes on 3/3; the default is now 0.25 | #886 |
+| [hand-fix](hand-fix/) | does the automatic detector hand route fix hands when turned up | no: 0 of 4 defects fixed at any setting (missed hands, the wrong hand, six redrawn as six, off-style at 0.6) | #890 |
+| [stylepose-pack](stylepose-pack/) | Style + Pose on the pack's own adult original | poses mostly held, but all 18 renders burned neon at style weight 0.7 (second judge #891: standing held 5/9, not 9/9) | #890 |
 
 Shared tooling: `labkit.py` (lease and queue guard, evidence records, GPU timelines, websocket timings, sealing), `crop.py` and
 `strip.py` (full-resolution crops), `addjudge.py` and `judge_batch.py` (protocol-shaped judgements with the R7 check),

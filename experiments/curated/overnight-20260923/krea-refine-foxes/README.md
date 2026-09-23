@@ -29,6 +29,9 @@ resolution. Original content (foxes, a shrine): Git-safe.
 - **0.25 does what the preset promises:** it tightens the fox faces (readable eyes and muzzles, closed-eye smiles) and keeps the
   count, the shrine, the tree, the petals and the watercolour finish.
 - **0.35 is too strong for small repeated subjects:** it recomposed the fox group on every seed.
+- *Second judge (#889), 23 September 2026:* it agrees that 0.25 is the better default (means 4.22 against 3.78), but reads
+  seed 83 at 0.25 as a fox head on a red cord post with no body, so all four foxes survive on 2 of 3 seeds by its count,
+  not 3 of 3. Under R8a a lost or merged subject scores control 2, and it counts against control only.
 - **Speed.** 338-420 s per job, because the fp8 Krea build sampled with up to 5.6 GB of the ComfyUI process in WDDM shared
   memory (timelines in `timelines/`). A GGUF + CPU-encoder variant of this preset should bring that under a minute and a half
   (see `../krea-gguf/`), but it was not run here.
