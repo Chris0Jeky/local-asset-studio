@@ -1,0 +1,110 @@
+{
+ "masked-0.4-2026092361": {
+  "max_jump": 3.93,
+  "at_x": 180,
+  "median_jump": 1.29,
+  "jump_at_box_edge": 3.93
+ },
+ "masked-0.6-2026092361": {
+  "max_jump": 6.81,
+  "at_x": 180,
+  "median_jump": 2.05,
+  "jump_at_box_edge": 6.81
+ },
+ "fooocus-0.5-2026092361": {
+  "max_jump": 6.14,
+  "at_x": 188,
+  "median_jump": 2.68,
+  "jump_at_box_edge": 2.08
+ },
+ "fooocus-0.7-2026092361": {
+  "max_jump": 7.83,
+  "at_x": 188,
+  "median_jump": 3.11,
+  "jump_at_box_edge": 3.33
+ },
+ "fooocus-1.0-2026092361": {
+  "max_jump": 8.23,
+  "at_x": 166,
+  "median_jump": 3.98,
+  "jump_at_box_edge": 3.98
+ },
+ "masked-0.4-2026092362": {
+  "max_jump": 5.63,
+  "at_x": 180,
+  "median_jump": 1.63,
+  "jump_at_box_edge": 5.63
+ },
+ "masked-0.6-2026092362": {
+  "max_jump": 8.39,
+  "at_x": 180,
+  "median_jump": 3.33,
+  "jump_at_box_edge": 8.39
+ },
+ "fooocus-0.5-2026092362": {
+  "max_jump": 6.43,
+  "at_x": 165,
+  "median_jump": 2.81,
+  "jump_at_box_edge": 2.84
+ },
+ "fooocus-0.7-2026092362": {
+  "max_jump": 13.4,
+  "at_x": 170,
+  "median_jump": 5.17,
+  "jump_at_box_edge": 5.6
+ },
+ "fooocus-1.0-2026092362": {
+  "max_jump": 6.59,
+  "at_x": 165,
+  "median_jump": 3.14,
+  "jump_at_box_edge": 4.75
+ },
+ "masked-0.4-2026092363": {
+  "max_jump": 6.0,
+  "at_x": 180,
+  "median_jump": 1.8,
+  "jump_at_box_edge": 6.0
+ },
+ "masked-0.6-2026092363": {
+  "max_jump": 8.73,
+  "at_x": 180,
+  "median_jump": 2.35,
+  "jump_at_box_edge": 8.73
+ },
+ "fooocus-0.5-2026092363": {
+  "max_jump": 6.05,
+  "at_x": 166,
+  "median_jump": 2.71,
+  "jump_at_box_edge": 2.49
+ },
+ "fooocus-0.7-2026092363": {
+  "max_jump": 5.76,
+  "at_x": 165,
+  "median_jump": 2.91,
+  "jump_at_box_edge": 2.58
+ },
+ "fooocus-1.0-2026092363": {
+  "max_jump": 6.27,
+  "at_x": 178,
+  "median_jump": 3.88,
+  "jump_at_box_edge": 4.14
+ },
+ "feathered-0.6-2026092361": {
+  "max_jump": 4.2,
+  "at_x": 166,
+  "median_jump": 1.09,
+  "jump_at_box_edge": 1.16
+ },
+ "feathered-0.6-2026092362": {
+  "max_jump": 6.09,
+  "at_x": 150,
+  "median_jump": 1.22,
+  "jump_at_box_edge": 1.22
+ },
+ "feathered-0.6-2026092363": {
+  "max_jump": 5.79,
+  "at_x": 164,
+  "median_jump": 1.46,
+  "jump_at_box_edge": 1.48
+ }
+}

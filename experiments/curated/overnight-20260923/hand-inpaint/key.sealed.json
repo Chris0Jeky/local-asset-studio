@@ -1,0 +1,74 @@
+{
+ "s1-C.png": {
+  "config": "masked-0.4",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00001_.png"
+ },
+ "s1-A.png": {
+  "config": "masked-0.6",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00002_.png"
+ },
+ "s1-E.png": {
+  "config": "fooocus-0.5",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00001_.png"
+ },
+ "s1-D.png": {
+  "config": "fooocus-0.7",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00002_.png"
+ },
+ "s1-F.png": {
+  "config": "fooocus-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00003_.png"
+ },
+ "s1-B.png": {
+  "config": "original",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00004_.png"
+ },
+ "s2-D.png": {
+  "config": "masked-0.4",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00003_.png"
+ },
+ "s2-E.png": {
+  "config": "masked-0.6",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00004_.png"
+ },
+ "s2-A.png": {
+  "config": "fooocus-0.5",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00004_.png"
+ },
+ "s2-C.png": {
+  "config": "fooocus-0.7",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00005_.png"
+ },
+ "s2-F.png": {
+  "config": "fooocus-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00006_.png"
+ },
+ "s2-B.png": {
+  "config": "original",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00004_.png"
+ },
+ "s3-D.png": {
+  "config": "masked-0.4",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00005_.png"
+ },
+ "s3-B.png": {
+  "config": "masked-0.6",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00006_.png"
+ },
+ "s3-F.png": {
+  "config": "fooocus-0.5",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00007_.png"
+ },
+ "s3-A.png": {
+  "config": "fooocus-0.7",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00008_.png"
+ },
+ "s3-E.png": {
+  "config": "fooocus-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00009_.png"
+ },
+ "s3-C.png": {
+  "config": "original",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00004_.png"
+ }
+}

@@ -1,0 +1,1822 @@
+[
+ {
+  "label": "masked-0.4-2026092361",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anime-masked-repair",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092361,
+    "denoise": 0.4,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:13:50.807344",
+  "comfy_pid": 46488,
+  "commit_pct_before": 47.9,
+  "free_ram_gb_before": 10.4,
+  "route": "studio",
+  "config": "masked-0.4",
+  "seed": 2026092361,
+  "preset_id": "anime-masked-repair",
+  "job_id": "6f5231ad-4269-476a-bec7-e1c0c52f60de",
+  "prompt_ids": [
+   "ff8844d2-8d81-4a2d-a7e6-ad97f4695cac"
+  ],
+  "wall_seconds": 27.4,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.25,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 13657,
+  "peak_shared_mb": 1790,
+  "spilled": true,
+  "gpu_samples": 18,
+  "peak_commit_pct": 58.3,
+  "comfy_executed_seconds": 25.76,
+  "log_lines": [
+   "05:14:03 [INFO] Requested to load SDXLClipModel",
+   "05:14:03 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "05:14:04 [INFO] Requested to load AutoencoderKL",
+   "05:14:04 [INFO] loaded completely; 5724.63 MB usable, 159.56 MB loaded, full load: True",
+   "05:14:04 [INFO] Requested to load SDXL",
+   "05:14:06 [INFO] loaded completely; 12714.66 MB usable, 4897.05 MB loaded, full load: True",
+   "05:14:15 [INFO] Unloaded partially: 1403.35 MB freed, 3493.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:14:15 [INFO] Unloaded partially: 60.00 MB freed, 3433.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:14:16 [INFO] Prompt executed in 25.76 seconds"
+  ],
+  "timeline_file": "timelines/masked-0.4-2026092361.json",
+  "outputs": [
+   {
+    "filename": "Anime-Masked-Repair_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092361,
+    "prompt_id": "ff8844d2-8d81-4a2d-a7e6-ad97f4695cac",
+    "media_type": "image",
+    "asset_id": "1043e1c9b2905c3dbd09efec4921addc"
+   }
+  ],
+  "elapsed_seconds": 26.23073935508728,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 1.7 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092361,
+   "denoise": 0.4,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "ff8844d2-8d81-4a2d-a7e6-ad97f4695cac",
+    "seed": 2026092361,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 1877434368,
+     "peak_dedicated_bytes": 10590556160,
+     "samples": 4,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/masked-0.4-2026092361.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00001_.png",
+    "sha256": "10aedaeaa01ddba6f1887dd25432ae7c13be82033602cf43b029b8ea309b73f0"
+   }
+  ],
+  "finished_at": "2026-09-23 05:14:18.189232"
+ },
+ {
+  "label": "masked-0.6-2026092361",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anime-masked-repair",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092361,
+    "denoise": 0.6,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:14:18.204569",
+  "comfy_pid": 46488,
+  "commit_pct_before": 49.8,
+  "free_ram_gb_before": 14.2,
+  "route": "studio",
+  "config": "masked-0.6",
+  "seed": 2026092361,
+  "preset_id": "anime-masked-repair",
+  "job_id": "c1ce3e4b-3e6a-4e83-a49f-aa3be636fdf7",
+  "prompt_ids": [
+   "875531fe-e9bf-447b-8025-329f71d27887"
+  ],
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 13887,
+  "peak_shared_mb": 1615,
+  "spilled": true,
+  "gpu_samples": 9,
+  "peak_commit_pct": 59.5,
+  "comfy_executed_seconds": 9.09,
+  "log_lines": [
+   "05:14:18 [INFO] loaded completely; 14092.08 MB usable, 4897.05 MB loaded, full load: True",
+   "05:14:26 [INFO] Unloaded partially: 1838.35 MB freed, 3058.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:14:27 [INFO] Prompt executed in 9.09 seconds"
+  ],
+  "timeline_file": "timelines/masked-0.6-2026092361.json",
+  "outputs": [
+   {
+    "filename": "Anime-Masked-Repair_00002_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092361,
+    "prompt_id": "875531fe-e9bf-447b-8025-329f71d27887",
+    "media_type": "image",
+    "asset_id": "3ae0ef2a89ef53679178c6a121195dbc"
+   }
+  ],
+  "elapsed_seconds": 10.108861684799194,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092361,
+   "denoise": 0.6,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "875531fe-e9bf-447b-8025-329f71d27887",
+    "seed": 2026092361,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 6857560064,
+     "samples": 2,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/masked-0.6-2026092361.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00002_.png",
+    "sha256": "d5f35ff7ec7d9de84de22ef8399ca49e9e687b19e060c3e3c1eed076288942fc"
+   }
+  ],
+  "finished_at": "2026-09-23 05:14:30.559540"
+ },
+ {
+  "label": "fooocus-0.5-2026092361",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092361,
+    "denoise": 0.5,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:14:30.597824",
+  "comfy_pid": 46488,
+  "commit_pct_before": 49.7,
+  "free_ram_gb_before": 13.6,
+  "route": "studio",
+  "config": "fooocus-0.5",
+  "seed": 2026092361,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "e8999741-14a5-4db2-b18c-2b5fe3eb8ec9",
+  "prompt_ids": [
+   "f7f25d39-4e41-4b60-9b8e-c0a9d47289c3"
+  ],
+  "wall_seconds": 15.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 14289,
+  "peak_shared_mb": 207,
+  "spilled": false,
+  "gpu_samples": 11,
+  "peak_commit_pct": 62.1,
+  "comfy_executed_seconds": 12.29,
+  "log_lines": [
+   "05:14:32 [INFO] Requested to load SDXL",
+   "05:14:35 [INFO] loaded completely; 14092.08 MB usable, 4897.05 MB loaded, full load: True",
+   "05:14:42 [INFO] Unloaded partially: 1871.18 MB freed, 3025.90 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 734",
+   "05:14:43 [INFO] Prompt executed in 12.29 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-0.5-2026092361.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092361,
+    "prompt_id": "f7f25d39-4e41-4b60-9b8e-c0a9d47289c3",
+    "media_type": "image",
+    "asset_id": "61a18915cade5c0fb4fa988022c427d0"
+   }
+  ],
+  "elapsed_seconds": 14.178215503692627,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092361,
+   "denoise": 0.5,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "f7f25d39-4e41-4b60-9b8e-c0a9d47289c3",
+    "seed": 2026092361,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 8109027328,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-0.5-2026092361.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00001_.png",
+    "sha256": "77f2278983c749aa3bb56eb21ad6389ca4fe9eed6400c685f6af8e09683b33ea"
+   }
+  ],
+  "finished_at": "2026-09-23 05:14:45.911680"
+ },
+ {
+  "label": "fooocus-0.7-2026092361",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092361,
+    "denoise": 0.7,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:14:45.927676",
+  "comfy_pid": 46488,
+  "commit_pct_before": 54.2,
+  "free_ram_gb_before": 10.5,
+  "route": "studio",
+  "config": "fooocus-0.7",
+  "seed": 2026092361,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "5c2d90cc-2893-4164-b438-a3fdb5eda8cc",
+  "prompt_ids": [
+   "643feecb-36f8-4a4f-a566-5013bbb16deb"
+  ],
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 7787,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 54.6,
+  "comfy_executed_seconds": 8.2,
+  "log_lines": [
+   "05:14:47 [INFO] loaded completely; 14072.14 MB usable, 4897.05 MB loaded, full load: True",
+   "05:14:53 [INFO] Unloaded partially: 1933.70 MB freed, 2963.39 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 1468",
+   "05:14:54 [INFO] Prompt executed in 8.20 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-0.7-2026092361.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00002_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092361,
+    "prompt_id": "643feecb-36f8-4a4f-a566-5013bbb16deb",
+    "media_type": "image",
+    "asset_id": "7565737801dc52ffae6bc3bce90807eb"
+   }
+  ],
+  "elapsed_seconds": 10.139508247375488,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092361,
+   "denoise": 0.7,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "643feecb-36f8-4a4f-a566-5013bbb16deb",
+    "seed": 2026092361,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 6939848704,
+     "samples": 2,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-0.7-2026092361.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00002_.png",
+    "sha256": "162c236f551d0f42746fdd6b3957f4992605588e54d4ac3784ccf10e0a5092a4"
+   }
+  ],
+  "finished_at": "2026-09-23 05:14:58.233502"
+ },
+ {
+  "label": "fooocus-1.0-2026092361",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092361,
+    "denoise": 1.0,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:14:58.284876",
+  "comfy_pid": 46488,
+  "commit_pct_before": 54.2,
+  "free_ram_gb_before": 10.3,
+  "route": "studio",
+  "config": "fooocus-1.0",
+  "seed": 2026092361,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "9d2c9924-72da-43aa-82b4-9aa5f9504f80",
+  "prompt_ids": [
+   "e6699d2c-1c44-42c5-9ab0-742800448199"
+  ],
+  "wall_seconds": 9.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 12197,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 7,
+  "peak_commit_pct": 61.9,
+  "comfy_executed_seconds": 7.84,
+  "log_lines": [
+   "05:14:59 [INFO] loaded completely; 14072.14 MB usable, 4897.05 MB loaded, full load: True",
+   "05:15:05 [INFO] Unloaded partially: 1933.70 MB freed, 2963.39 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 2202",
+   "05:15:06 [INFO] Prompt executed in 7.84 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-1.0-2026092361.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00003_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092361,
+    "prompt_id": "e6699d2c-1c44-42c5-9ab0-742800448199",
+    "media_type": "image",
+    "asset_id": "5276bba4ef505b1ba17aa6e4053085ee"
+   }
+  ],
+  "elapsed_seconds": 8.088497638702393,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092361,
+   "denoise": 1.0,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "e6699d2c-1c44-42c5-9ab0-742800448199",
+    "seed": 2026092361,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 11035717632,
+     "samples": 2,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-1.0-2026092361.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00003_.png",
+    "sha256": "0652ff2d351d751bd8c5323ebec0e7d7af6ce3d01fd8c8e4df72ccd8ad776c67"
+   }
+  ],
+  "finished_at": "2026-09-23 05:15:07.640652"
+ },
+ {
+  "label": "masked-0.4-2026092362",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anime-masked-repair",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092362,
+    "denoise": 0.4,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:15:07.678575",
+  "comfy_pid": 46488,
+  "commit_pct_before": 54.1,
+  "free_ram_gb_before": 10.6,
+  "route": "studio",
+  "config": "masked-0.4",
+  "seed": 2026092362,
+  "preset_id": "anime-masked-repair",
+  "job_id": "fe1986ed-1fa8-44c3-a5e1-d65952856ba2",
+  "prompt_ids": [
+   "b952d214-408f-4b82-8543-56df055d4eb1"
+  ],
+  "wall_seconds": 15.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 14203,
+  "peak_shared_mb": 847,
+  "spilled": true,
+  "gpu_samples": 11,
+  "peak_commit_pct": 58.9,
+  "comfy_executed_seconds": 10.34,
+  "log_lines": [
+   "05:15:09 [INFO] loaded completely; 14092.14 MB usable, 4897.05 MB loaded, full load: True",
+   "05:15:17 [INFO] Unloaded partially: 1813.35 MB freed, 3083.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:15:18 [INFO] Prompt executed in 10.34 seconds"
+  ],
+  "timeline_file": "timelines/masked-0.4-2026092362.json",
+  "outputs": [
+   {
+    "filename": "Anime-Masked-Repair_00003_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092362,
+    "prompt_id": "b952d214-408f-4b82-8543-56df055d4eb1",
+    "media_type": "image",
+    "asset_id": "5653c91c083355f5a537353cd362cc5e"
+   }
+  ],
+  "elapsed_seconds": 12.15563416481018,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 0.8 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092362,
+   "denoise": 0.4,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "b952d214-408f-4b82-8543-56df055d4eb1",
+    "seed": 2026092362,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 887840768,
+     "peak_dedicated_bytes": 14892511232,
+     "samples": 3,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/masked-0.4-2026092362.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00003_.png",
+    "sha256": "e0f3b2200b2268eb5dd5159b9cd80decc7849c30e4d750cbfd136a4162c2c390"
+   }
+  ],
+  "finished_at": "2026-09-23 05:15:23.003818"
+ },
+ {
+  "label": "masked-0.6-2026092362",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anime-masked-repair",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092362,
+    "denoise": 0.6,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:15:23.042174",
+  "comfy_pid": 46488,
+  "commit_pct_before": 50.0,
+  "free_ram_gb_before": 13.6,
+  "route": "studio",
+  "config": "masked-0.6",
+  "seed": 2026092362,
+  "preset_id": "anime-masked-repair",
+  "job_id": "d247aec0-7c7d-410b-89ce-d7deef3b4730",
+  "prompt_ids": [
+   "651a9772-2e49-4f12-8889-b0a38d6a957b"
+  ],
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 14120,
+  "peak_shared_mb": 1359,
+  "spilled": true,
+  "gpu_samples": 9,
+  "peak_commit_pct": 59.5,
+  "comfy_executed_seconds": 9.25,
+  "log_lines": [
+   "05:15:23 [INFO] loaded completely; 14086.14 MB usable, 4897.05 MB loaded, full load: True",
+   "05:15:31 [INFO] Unloaded partially: 1738.35 MB freed, 3158.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:15:32 [INFO] Prompt executed in 9.25 seconds"
+  ],
+  "timeline_file": "timelines/masked-0.6-2026092362.json",
+  "outputs": [
+   {
+    "filename": "Anime-Masked-Repair_00004_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092362,
+    "prompt_id": "651a9772-2e49-4f12-8889-b0a38d6a957b",
+    "media_type": "image",
+    "asset_id": "318bfa0516dd58e89c3f41b4de76f828"
+   }
+  ],
+  "elapsed_seconds": 10.117855548858643,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092362,
+   "denoise": 0.6,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "651a9772-2e49-4f12-8889-b0a38d6a957b",
+    "seed": 2026092362,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 6656233472,
+     "samples": 2,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/masked-0.6-2026092362.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00004_.png",
+    "sha256": "5c1f22e637401e68bdc3c7fe0f4fd8e59efc116216079567358f3d82cc742b6c"
+   }
+  ],
+  "finished_at": "2026-09-23 05:15:35.342679"
+ },
+ {
+  "label": "fooocus-0.5-2026092362",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092362,
+    "denoise": 0.5,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:15:35.392471",
+  "comfy_pid": 46488,
+  "commit_pct_before": 50.2,
+  "free_ram_gb_before": 13.4,
+  "route": "studio",
+  "config": "fooocus-0.5",
+  "seed": 2026092362,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "b63fab3c-b741-46b8-89fa-0d3846a45c2a",
+  "prompt_ids": [
+   "e2f0074d-5de1-488b-930f-0e78ed551164"
+  ],
+  "wall_seconds": 15.4,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 14360,
+  "peak_shared_mb": 463,
+  "spilled": false,
+  "gpu_samples": 11,
+  "peak_commit_pct": 62.2,
+  "comfy_executed_seconds": 11.81,
+  "log_lines": [
+   "05:15:36 [INFO] Requested to load SDXL",
+   "05:15:40 [INFO] loaded completely; 14086.14 MB usable, 4897.05 MB loaded, full load: True",
+   "05:15:46 [INFO] Unloaded partially: 1619.90 MB freed, 3277.18 MB remains loaded, 15.64 MB buffer reserved, lowvram patches: 662",
+   "05:15:47 [INFO] Prompt executed in 11.81 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-0.5-2026092362.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00004_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092362,
+    "prompt_id": "e2f0074d-5de1-488b-930f-0e78ed551164",
+    "media_type": "image",
+    "asset_id": "b0af53586d705c05a95ca550a9a60e2e"
+   }
+  ],
+  "elapsed_seconds": 12.18796706199646,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092362,
+   "denoise": 0.5,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "e2f0074d-5de1-488b-930f-0e78ed551164",
+    "seed": 2026092362,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 8451395584,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-0.5-2026092362.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00004_.png",
+    "sha256": "eed448e55751be56c0f71bc08079df4270bf600a09688a803fef33c2711e889f"
+   }
+  ],
+  "finished_at": "2026-09-23 05:15:50.765319"
+ },
+ {
+  "label": "fooocus-0.7-2026092362",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092362,
+    "denoise": 0.7,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:15:50.797719",
+  "comfy_pid": 46488,
+  "commit_pct_before": 53.9,
+  "free_ram_gb_before": 10.5,
+  "route": "studio",
+  "config": "fooocus-0.7",
+  "seed": 2026092362,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "eff2cf48-b973-47c6-9dfc-4e54b9187b47",
+  "prompt_ids": [
+   "d50d6a3f-0ff1-4bcf-bd11-7f0cfe9eead4"
+  ],
+  "wall_seconds": 9.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 14239,
+  "peak_shared_mb": 847,
+  "spilled": true,
+  "gpu_samples": 7,
+  "peak_commit_pct": 62.3,
+  "comfy_executed_seconds": 7.8,
+  "log_lines": [
+   "05:15:51 [INFO] loaded completely; 14072.72 MB usable, 4897.05 MB loaded, full load: True",
+   "05:15:57 [INFO] Unloaded partially: 1632.41 MB freed, 3264.67 MB remains loaded, 15.64 MB buffer reserved, lowvram patches: 1332",
+   "05:15:58 [INFO] Prompt executed in 7.80 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-0.7-2026092362.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00005_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092362,
+    "prompt_id": "d50d6a3f-0ff1-4bcf-bd11-7f0cfe9eead4",
+    "media_type": "image",
+    "asset_id": "45195982a3795b28ab62ccaae57e8c61"
+   }
+  ],
+  "elapsed_seconds": 8.171929359436035,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092362,
+   "denoise": 0.7,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "d50d6a3f-0ff1-4bcf-bd11-7f0cfe9eead4",
+    "seed": 2026092362,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 7053127680,
+     "samples": 2,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-0.7-2026092362.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00005_.png",
+    "sha256": "2cd574adab8bdffa32e7a29b1bb24a27847ec4cceecd76b7e090ad9dc94ebbc6"
+   }
+  ],
+  "finished_at": "2026-09-23 05:16:00.117383"
+ },
+ {
+  "label": "fooocus-1.0-2026092362",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092362,
+    "denoise": 1.0,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:16:00.130972",
+  "comfy_pid": 46488,
+  "commit_pct_before": 53.9,
+  "free_ram_gb_before": 10.6,
+  "route": "studio",
+  "config": "fooocus-1.0",
+  "seed": 2026092362,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "dc09cdff-ddb1-4c6c-8187-c640b7541789",
+  "prompt_ids": [
+   "3951eb66-20ea-4080-b724-97ba290b5d20"
+  ],
+  "wall_seconds": 9.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 13991,
+  "peak_shared_mb": 847,
+  "spilled": true,
+  "gpu_samples": 7,
+  "peak_commit_pct": 61.9,
+  "comfy_executed_seconds": 7.73,
+  "log_lines": [
+   "05:16:01 [INFO] loaded completely; 14072.72 MB usable, 4897.05 MB loaded, full load: True",
+   "05:16:07 [INFO] Unloaded partially: 1632.41 MB freed, 3264.67 MB remains loaded, 15.64 MB buffer reserved, lowvram patches: 2002",
+   "05:16:07 [INFO] Prompt executed in 7.73 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-1.0-2026092362.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00006_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092362,
+    "prompt_id": "3951eb66-20ea-4080-b724-97ba290b5d20",
+    "media_type": "image",
+    "asset_id": "4fa7fff0c0d0546bb40dd91e2bdd8a62"
+   }
+  ],
+  "elapsed_seconds": 8.096719741821289,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 0.8 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092362,
+   "denoise": 1.0,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "3951eb66-20ea-4080-b724-97ba290b5d20",
+    "seed": 2026092362,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 887840768,
+     "peak_dedicated_bytes": 14670213120,
+     "samples": 2,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-1.0-2026092362.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00006_.png",
+    "sha256": "5c5915f53ff08cf3ca88960867529b31302b0454cf40ba6609251ab64b1cc702"
+   }
+  ],
+  "finished_at": "2026-09-23 05:16:09.474001"
+ },
+ {
+  "label": "masked-0.4-2026092363",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anime-masked-repair",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092363,
+    "denoise": 0.4,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:16:09.513497",
+  "comfy_pid": 46488,
+  "commit_pct_before": 54.0,
+  "free_ram_gb_before": 10.6,
+  "route": "studio",
+  "config": "masked-0.4",
+  "seed": 2026092363,
+  "preset_id": "anime-masked-repair",
+  "job_id": "6770d510-4fc7-4d24-a6b3-a1acfe4edfd0",
+  "prompt_ids": [
+   "884315d5-d2ce-413c-b2ae-9344efc40fea"
+  ],
+  "wall_seconds": 15.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 13991,
+  "peak_shared_mb": 847,
+  "spilled": true,
+  "gpu_samples": 11,
+  "peak_commit_pct": 58.4,
+  "comfy_executed_seconds": 10.28,
+  "log_lines": [
+   "05:16:12 [INFO] loaded completely; 14092.72 MB usable, 4897.05 MB loaded, full load: True",
+   "05:16:19 [INFO] Unloaded partially: 1613.35 MB freed, 3283.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:16:19 [INFO] Prompt executed in 10.28 seconds"
+  ],
+  "timeline_file": "timelines/masked-0.4-2026092363.json",
+  "outputs": [
+   {
+    "filename": "Anime-Masked-Repair_00005_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092363,
+    "prompt_id": "884315d5-d2ce-413c-b2ae-9344efc40fea",
+    "media_type": "image",
+    "asset_id": "18e42c6be4df58969ca9c645c5814559"
+   }
+  ],
+  "elapsed_seconds": 12.14502763748169,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 0.8 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092363,
+   "denoise": 0.4,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "884315d5-d2ce-413c-b2ae-9344efc40fea",
+    "seed": 2026092363,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 887840768,
+     "peak_dedicated_bytes": 14670213120,
+     "samples": 3,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/masked-0.4-2026092363.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00005_.png",
+    "sha256": "e06af3567c4c8e273d85375572a44cd6235d605c59165b2bdfd0fcb286b5c76c"
+   }
+  ],
+  "finished_at": "2026-09-23 05:16:24.828044"
+ },
+ {
+  "label": "masked-0.6-2026092363",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anime-masked-repair",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092363,
+    "denoise": 0.6,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:16:24.842476",
+  "comfy_pid": 46488,
+  "commit_pct_before": 50.3,
+  "free_ram_gb_before": 13.5,
+  "route": "studio",
+  "config": "masked-0.6",
+  "seed": 2026092363,
+  "preset_id": "anime-masked-repair",
+  "job_id": "c7e37394-8295-493c-bbaa-d3bdaf68ad2c",
+  "prompt_ids": [
+   "ef985186-ba05-4889-9ff7-0b8c1a41cfef"
+  ],
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10299,
+  "peak_shared_mb": 463,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 54.6,
+  "comfy_executed_seconds": 8.69,
+  "log_lines": [
+   "05:16:25 [INFO] loaded completely; 14086.14 MB usable, 4897.05 MB loaded, full load: True",
+   "05:16:32 [INFO] Unloaded partially: 1613.35 MB freed, 3283.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:16:33 [INFO] Prompt executed in 8.69 seconds"
+  ],
+  "timeline_file": "timelines/masked-0.6-2026092363.json",
+  "outputs": [
+   {
+    "filename": "Anime-Masked-Repair_00006_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092363,
+    "prompt_id": "ef985186-ba05-4889-9ff7-0b8c1a41cfef",
+    "media_type": "image",
+    "asset_id": "fb5b00a43c2c56cf99b57efe54431ce4"
+   }
+  ],
+  "elapsed_seconds": 10.13621711730957,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092363,
+   "denoise": 0.6,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "ef985186-ba05-4889-9ff7-0b8c1a41cfef",
+    "seed": 2026092363,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 7032156160,
+     "samples": 2,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/masked-0.6-2026092363.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anime-Masked-Repair_00006_.png",
+    "sha256": "4c82dd010b8c0e39e664a7da3f7f4a2aac13b1d669affc2a0913c9f42e6b40f1"
+   }
+  ],
+  "finished_at": "2026-09-23 05:16:37.145227"
+ },
+ {
+  "label": "fooocus-0.5-2026092363",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092363,
+    "denoise": 0.5,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:16:37.182307",
+  "comfy_pid": 46488,
+  "commit_pct_before": 50.1,
+  "free_ram_gb_before": 13.6,
+  "route": "studio",
+  "config": "fooocus-0.5",
+  "seed": 2026092363,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "45d53887-29a2-459b-990b-c91bc5ae7348",
+  "prompt_ids": [
+   "2c6674aa-5146-47d2-9f6e-55ca8876d47f"
+  ],
+  "wall_seconds": 15.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 8034,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 11,
+  "peak_commit_pct": 55.5,
+  "comfy_executed_seconds": 11.3,
+  "log_lines": [
+   "05:16:38 [INFO] Requested to load SDXL",
+   "05:16:41 [INFO] loaded completely; 14086.14 MB usable, 4897.05 MB loaded, full load: True",
+   "05:16:47 [INFO] Unloaded partially: 1644.92 MB freed, 3252.16 MB remains loaded, 15.64 MB buffer reserved, lowvram patches: 678",
+   "05:16:48 [INFO] Prompt executed in 11.30 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-0.5-2026092363.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00007_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092363,
+    "prompt_id": "2c6674aa-5146-47d2-9f6e-55ca8876d47f",
+    "media_type": "image",
+    "asset_id": "ca38961240c353888f779b598c147d7a"
+   }
+  ],
+  "elapsed_seconds": 12.180437803268433,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092363,
+   "denoise": 0.5,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "2c6674aa-5146-47d2-9f6e-55ca8876d47f",
+    "seed": 2026092363,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 8424665088,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-0.5-2026092363.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00007_.png",
+    "sha256": "3095cfb3466ded96fba4622ea1d448421bc93c01451a107cc20bed7dbeee6376"
+   }
+  ],
+  "finished_at": "2026-09-23 05:16:52.493252"
+ },
+ {
+  "label": "fooocus-0.7-2026092363",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092363,
+    "denoise": 0.7,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:16:52.520969",
+  "comfy_pid": 46488,
+  "commit_pct_before": 53.8,
+  "free_ram_gb_before": 10.6,
+  "route": "studio",
+  "config": "fooocus-0.7",
+  "seed": 2026092363,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "9e98615d-7a9c-4785-942a-4060ce696609",
+  "prompt_ids": [
+   "0d0936fe-5bf3-4296-b68c-8bd1d949d0c0"
+  ],
+  "wall_seconds": 9.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 14078,
+  "peak_shared_mb": 719,
+  "spilled": true,
+  "gpu_samples": 7,
+  "peak_commit_pct": 62.1,
+  "comfy_executed_seconds": 7.77,
+  "log_lines": [
+   "05:16:53 [INFO] loaded completely; 14061.50 MB usable, 4897.05 MB loaded, full load: True",
+   "05:16:59 [INFO] Unloaded partially: 1644.92 MB freed, 3252.16 MB remains loaded, 15.64 MB buffer reserved, lowvram patches: 1356",
+   "05:17:00 [INFO] Prompt executed in 7.77 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-0.7-2026092363.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00008_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092363,
+    "prompt_id": "0d0936fe-5bf3-4296-b68c-8bd1d949d0c0",
+    "media_type": "image",
+    "asset_id": "8ecc677540055e62a33d836396bb4ff2"
+   }
+  ],
+  "elapsed_seconds": 8.096535205841064,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092363,
+   "denoise": 0.7,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "0d0936fe-5bf3-4296-b68c-8bd1d949d0c0",
+    "seed": 2026092363,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 8263749632,
+     "samples": 2,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-0.7-2026092363.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00008_.png",
+    "sha256": "2efe27f89f5231bcac94d916f5d83e0b664cbe74e9710591738103bbcb0330c4"
+   }
+  ],
+  "finished_at": "2026-09-23 05:17:01.840808"
+ },
+ {
+  "label": "fooocus-1.0-2026092363",
+  "status": "completed",
+  "intent": {
+   "preset_id": "sdxl-inpaint-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026092363,
+    "denoise": 1.0,
+    "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:17:01.855365",
+  "comfy_pid": 46488,
+  "commit_pct_before": 54.0,
+  "free_ram_gb_before": 10.6,
+  "route": "studio",
+  "config": "fooocus-1.0",
+  "seed": 2026092363,
+  "preset_id": "sdxl-inpaint-fix",
+  "job_id": "93a0a61c-2fd2-4eb0-9549-0bec7dc7e68d",
+  "prompt_ids": [
+   "2a15a339-c28d-4953-9b65-9ff15594dbad"
+  ],
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 24,
+    "last_step": 24,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.25,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 8034,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 55.2,
+  "comfy_executed_seconds": 8.21,
+  "log_lines": [
+   "05:17:02 [INFO] loaded completely; 14061.50 MB usable, 4897.05 MB loaded, full load: True",
+   "05:17:09 [INFO] Unloaded partially: 1644.92 MB freed, 3252.16 MB remains loaded, 15.64 MB buffer reserved, lowvram patches: 2034",
+   "05:17:10 [INFO] Prompt executed in 8.21 seconds"
+  ],
+  "timeline_file": "timelines/fooocus-1.0-2026092363.json",
+  "outputs": [
+   {
+    "filename": "SDXL-Inpaint-Fix_00009_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092363,
+    "prompt_id": "2a15a339-c28d-4953-9b65-9ff15594dbad",
+    "media_type": "image",
+    "asset_id": "e8cb8d3fe06e59f3a36a27c442995635"
+   }
+  ],
+  "elapsed_seconds": 10.150848865509033,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+   "seed": 2026092363,
+   "denoise": 1.0,
+   "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "2a15a339-c28d-4953-9b65-9ff15594dbad",
+    "seed": 2026092363,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 7053127680,
+     "samples": 2,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/fooocus-1.0-2026092363.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\SDXL-Inpaint-Fix_00009_.png",
+    "sha256": "4b378fd269e35b40ec112c09a819e0c770b489e6e5d65d7b2efe9781c0edb57d"
+   }
+  ],
+  "finished_at": "2026-09-23 05:17:14.152234"
+ },
+ {
+  "label": "feathered-0.6-2026092361",
+  "status": "success",
+  "graph_sha256": "728e052832c01e6660e84ea7f7f1f42f76c1b3898b05e9d1616c6184bef19328",
+  "graph_file": "graphs/feathered-0.6-2026092361.json",
+  "submitted_at": "2026-09-23 05:30:58.649671",
+  "comfy_pid": 46488,
+  "commit_pct_before": 53.1,
+  "free_ram_gb_before": 9.6,
+  "config": "feathered-0.6",
+  "seed": 2026092361,
+  "prompt_id": "212b3467-f380-4ce2-ba60-e9b86456070b",
+  "wall_seconds": 28.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 13439,
+  "peak_shared_mb": 1359,
+  "spilled": true,
+  "gpu_samples": 19,
+  "peak_commit_pct": 58.4,
+  "comfy_executed_seconds": 26.12,
+  "log_lines": [
+   "05:31:13 [INFO] Requested to load SDXLClipModel",
+   "05:31:13 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "05:31:14 [INFO] Requested to load AutoencoderKL",
+   "05:31:14 [INFO] loaded completely; 5646.68 MB usable, 159.56 MB loaded, full load: True",
+   "05:31:14 [INFO] Requested to load SDXL",
+   "05:31:16 [INFO] loaded completely; 12536.04 MB usable, 4897.05 MB loaded, full load: True",
+   "05:31:23 [INFO] Unloaded partially: 1458.35 MB freed, 3438.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:31:24 [INFO] Prompt executed in 26.12 seconds"
+  ],
+  "timeline_file": "timelines/feathered-0.6-2026092361.json",
+  "history_execution_seconds": 26.12,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-inpaint\\feathered-0.6-2026092361_00001_.png",
+    "sha256": "017678d203f1251937440d1ca5ff03aae851e2308a2b0a2148ee9427ed1fd932"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "LoadImage",
+     "seconds": 0.51
+    },
+    {
+     "node": "40",
+     "class_type": "GrowMask",
+     "seconds": 0.05
+    },
+    {
+     "node": "41",
+     "class_type": "MaskToImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "42",
+     "class_type": "ImageBlur",
+     "seconds": 0.08
+    },
+    {
+     "node": "43",
+     "class_type": "ImageToMask",
+     "seconds": 0.0
+    },
+    {
+     "node": "1",
+     "class_type": "CheckpointLoaderSimple",
+     "seconds": 15.08
+    },
+    {
+     "node": "8",
+     "class_type": "VAEEncode",
+     "seconds": 0.31
+    },
+    {
+     "node": "9",
+     "class_type": "SetLatentNoiseMask",
+     "seconds": 0.0
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.08
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.07
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 7.83
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 2.03
+    },
+    {
+     "node": "10",
+     "class_type": "ImageCompositeMasked",
+     "seconds": 0.02
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.21
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.09,
+     "s_per_step_steady": 0.23,
+     "step_seconds": [
+      0.09,
+      0.24,
+      0.23,
+      0.22,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.22,
+      0.23,
+      0.22,
+      0.24,
+      0.22,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23
+     ]
+    }
+   ],
+   "cached_nodes": [],
+   "ws_execution_seconds": 26.28
+  },
+  "finished_at": "2026-09-23 05:31:27.477471"
+ },
+ {
+  "label": "feathered-0.6-2026092362",
+  "status": "success",
+  "graph_sha256": "0b68c901c2102ecb36de2a1cb4287cf324ea2561a57e25f2cf58451c11174724",
+  "graph_file": "graphs/feathered-0.6-2026092362.json",
+  "submitted_at": "2026-09-23 05:31:27.511164",
+  "comfy_pid": 46488,
+  "commit_pct_before": 50.0,
+  "free_ram_gb_before": 14.8,
+  "config": "feathered-0.6",
+  "seed": 2026092362,
+  "prompt_id": "84ae73ff-96d8-4a9e-85d8-9df9f1c15876",
+  "wall_seconds": 10.2,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 14325,
+  "peak_shared_mb": 1231,
+  "spilled": true,
+  "gpu_samples": 7,
+  "peak_commit_pct": 60.0,
+  "comfy_executed_seconds": 9.21,
+  "log_lines": [
+   "05:31:28 [INFO] loaded completely; 14103.29 MB usable, 4897.05 MB loaded, full load: True",
+   "05:31:35 [INFO] Unloaded partially: 1893.35 MB freed, 3003.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:31:36 [INFO] Prompt executed in 9.21 seconds"
+  ],
+  "timeline_file": "timelines/feathered-0.6-2026092362.json",
+  "history_execution_seconds": 9.21,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-inpaint\\feathered-0.6-2026092362_00001_.png",
+    "sha256": "0b56a69851c1a8b96322224bbd189e0c840c7c41ab0e60daa6d4ce1ec6d4befd"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 7.39
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 1.73
+    },
+    {
+     "node": "10",
+     "class_type": "ImageCompositeMasked",
+     "seconds": 0.02
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.08,
+     "s_per_step_steady": 0.243,
+     "step_seconds": [
+      0.08,
+      0.23,
+      0.25,
+      0.24,
+      0.24,
+      0.24,
+      0.25,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.25,
+      0.24,
+      0.24,
+      0.25,
+      0.23,
+      0.24,
+      0.25,
+      0.24,
+      0.25,
+      0.24,
+      0.25,
+      0.24,
+      0.25,
+      0.24,
+      0.24,
+      0.24
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8",
+    "9",
+    "40",
+    "41",
+    "42",
+    "43"
+   ],
+   "ws_execution_seconds": 9.21
+  },
+  "finished_at": "2026-09-23 05:31:38.260373"
+ },
+ {
+  "label": "feathered-0.6-2026092363",
+  "status": "success",
+  "graph_sha256": "f21337c0b4502b77ff861cfcb4554410f64924b31c7ef987a9be6453eff75c1d",
+  "graph_file": "graphs/feathered-0.6-2026092363.json",
+  "submitted_at": "2026-09-23 05:31:38.303585",
+  "comfy_pid": 46488,
+  "commit_pct_before": 49.9,
+  "free_ram_gb_before": 13.9,
+  "config": "feathered-0.6",
+  "seed": 2026092363,
+  "prompt_id": "d467432f-a49b-4d3a-a3c0-9a60d37388bb",
+  "wall_seconds": 10.2,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 14186,
+  "peak_shared_mb": 1231,
+  "spilled": true,
+  "gpu_samples": 7,
+  "peak_commit_pct": 59.5,
+  "comfy_executed_seconds": 9.21,
+  "log_lines": [
+   "05:31:38 [INFO] loaded completely; 14103.29 MB usable, 4897.05 MB loaded, full load: True",
+   "05:31:46 [INFO] Unloaded partially: 1678.35 MB freed, 3218.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "05:31:47 [INFO] Prompt executed in 9.21 seconds"
+  ],
+  "timeline_file": "timelines/feathered-0.6-2026092363.json",
+  "history_execution_seconds": 9.21,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-inpaint\\feathered-0.6-2026092363_00001_.png",
+    "sha256": "c0b26806ee1924546801a312b9d889d15337c353f79fea472a01cb996717bebf"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 7.57
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecode",
+     "seconds": 1.55
+    },
+    {
+     "node": "10",
+     "class_type": "ImageCompositeMasked",
+     "seconds": 0.02
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.2
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.07,
+     "s_per_step_steady": 0.247,
+     "step_seconds": [
+      0.07,
+      0.24,
+      0.25,
+      0.25,
+      0.24,
+      0.25,
+      0.26,
+      0.24,
+      0.27,
+      0.24,
+      0.24,
+      0.25,
+      0.24,
+      0.25,
+      0.24,
+      0.25,
+      0.25,
+      0.26,
+      0.24,
+      0.25,
+      0.24,
+      0.24,
+      0.25,
+      0.25,
+      0.24,
+      0.24,
+      0.25
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "8",
+    "9",
+    "40",
+    "41",
+    "42",
+    "43"
+   ],
+   "ws_execution_seconds": 9.34
+  },
+  "finished_at": "2026-09-23 05:31:49.064510"
+ }
+]

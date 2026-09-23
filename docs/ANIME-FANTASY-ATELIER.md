@@ -275,10 +275,15 @@ press **Generate** explicitly. Opening either action does not start a render or 
 - **`anime-masked-repair`** — a manual local option when a detector crop is the wrong shape. Select it from
   **Anime quality**, then upload a real **RGBA PNG** with both dimensions divisible by 8: retain the image in RGB, leave every protected area
   opaque, and make only the broken hand or other repair area transparent. Prepare refuses JPG, WebP, RGB-only and fully opaque uploads before queueing; it does not pad or crop an unaligned source. The existing core `LoadImage` alpha
-  output drives the latent noise mask and final composite, so the workflow re-samples that manual region with
-  WAI v17 at its authored 0.4 denoise and composites it over the supplied source. Studio preserves the uploaded
-  RGBA bytes when staging the input, but it has no mask painter or automatic hand-anatomy guarantee. This preset
-  is unverified until one deliberately submitted Krea-source repair is inspected and recorded.
+  output is grown by 12 px and feathered (a blurred edge), and that soft mask drives both the latent noise mask
+  and the final composite, so the workflow re-samples the manual region with WAI v17 at its authored 0.6 denoise
+  and blends it into the supplied source without a seam. Studio preserves the uploaded RGBA bytes when staging the
+  input, but it has no mask painter or automatic hand-anatomy guarantee. Measured 23 September 2026 on the
+  six-digit NoobAI hand (`experiments/curated/overnight-20260923/hand-inpaint/`, straight against ComfyUI with this
+  preset's own submitted graphs): the old 0.4 default left the extra digit on 3 of 3 seeds, 0.6 gave five digits on
+  3 of 3 with the gesture and painterly shading kept, and the old hard mask edge left a visible seam where it cut
+  the background light streak, which the feathered mask removed. The preset stays unverified until one Studio
+  proof of the feathered graph is inspected and recorded.
 - **`sdxl-inpaint-fix`** (**WAI • Fooocus inpaint repair**) — the same manual RGBA upload as
   `anime-masked-repair`, but the repaint runs through the **Fooocus inpaint patch** that is already installed,
   so the model is conditioned on the surrounding picture instead of re-imagining the hole from noise. That is
@@ -303,7 +308,7 @@ press **Generate** explicitly. Opening either action does not start a render or 
 | Situation | Preset | Why |
 | --- | --- | --- |
 | A face or hand a YOLO detector can find, anywhere in the picture | `anime-detail-fix` | Fully automatic: it crops, repaints and pastes back. No mask to prepare. An undetected hand is an unfixable hand. |
-| Detector fires but the crop is the wrong shape, and the fix is small | `anime-masked-repair` | Manual region, low denoise (0.4), the least invasive of the three. |
+| Detector fires but the crop is the wrong shape, or a hand needs its fingers redrawn in place | `anime-masked-repair` | Manual region, feathered edge, denoise 0.6: fixed a six-digit hand on 3 of 3 seeds without changing the gesture (23 Sep). |
 | The region has to be genuinely redrawn — a mangled hand, a missing prop, a hole the detector crop cannot contain | `sdxl-inpaint-fix` | The Fooocus patch is what survives a high denoise without inventing a new subject. |
 | The source is a Krea 2 Turbo, Anima Turbo or z_image_turbo render | none of these | The Fooocus patch does not work on distilled merges; see the note below. |
 | The whole Krea 2 image is soft rather than locally broken | `krea-refine` | Global img2img polish; no mask. |

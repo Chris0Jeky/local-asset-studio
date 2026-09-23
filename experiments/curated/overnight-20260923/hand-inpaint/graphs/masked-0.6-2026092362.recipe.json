@@ -1,0 +1,303 @@
+{
+ "version": 2,
+ "preset_id": "anime-masked-repair",
+ "controls": {
+  "positive": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background",
+  "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark",
+  "seed": 2026092362,
+  "denoise": 0.6,
+  "reference": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+ },
+ "batch_count": 1,
+ "created_at": 1790136923.0983307,
+ "workflow": {
+  "1": {
+   "class_type": "CheckpointLoaderSimple",
+   "inputs": {
+    "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+   }
+  },
+  "2": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background"
+   }
+  },
+  "3": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark"
+   }
+  },
+  "4": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+   }
+  },
+  "5": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "seed": 2026092362,
+    "steps": 28,
+    "cfg": 5,
+    "sampler_name": "dpmpp_2m",
+    "scheduler": "karras",
+    "positive": [
+     "2",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "latent_image": [
+     "9",
+     0
+    ],
+    "denoise": 0.6
+   }
+  },
+  "6": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "5",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "7": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "10",
+     0
+    ],
+    "filename_prefix": "Studio/Anime-Masked-Repair"
+   }
+  },
+  "8": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "4",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "9": {
+   "class_type": "SetLatentNoiseMask",
+   "inputs": {
+    "samples": [
+     "8",
+     0
+    ],
+    "mask": [
+     "4",
+     1
+    ]
+   }
+  },
+  "10": {
+   "class_type": "ImageCompositeMasked",
+   "inputs": {
+    "destination": [
+     "4",
+     0
+    ],
+    "source": [
+     "6",
+     0
+    ],
+    "x": 0,
+    "y": 0,
+    "resize_source": false,
+    "mask": [
+     "4",
+     1
+    ]
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "651a9772-2e49-4f12-8889-b0a38d6a957b",
+   "seed": 2026092362,
+   "graph": {
+    "1": {
+     "class_type": "CheckpointLoaderSimple",
+     "inputs": {
+      "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+     }
+    },
+    "2": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, slender fingers, clean painterly shading, same colours, seamless with the surrounding art, 1girl, adult woman, elf, white hair, white robe, raised hand, warm rim light, dark background"
+     }
+    },
+    "3": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, six fingers, fused fingers, deformed hands, blurry, text, watermark"
+     }
+    },
+    "4": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "e8195781c9c94f71a0b02eb065004617_noob4-hand-mask.png.png"
+     }
+    },
+    "5": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "seed": 2026092362,
+      "steps": 28,
+      "cfg": 5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "positive": [
+       "2",
+       0
+      ],
+      "negative": [
+       "3",
+       0
+      ],
+      "latent_image": [
+       "9",
+       0
+      ],
+      "denoise": 0.6
+     }
+    },
+    "6": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "5",
+       0
+      ],
+      "vae": [
+       "1",
+       2
+      ]
+     }
+    },
+    "7": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "10",
+       0
+      ],
+      "filename_prefix": "Studio/Anime-Masked-Repair"
+     }
+    },
+    "8": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "4",
+       0
+      ],
+      "vae": [
+       "1",
+       2
+      ]
+     }
+    },
+    "9": {
+     "class_type": "SetLatentNoiseMask",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "mask": [
+       "4",
+       1
+      ]
+     }
+    },
+    "10": {
+     "class_type": "ImageCompositeMasked",
+     "inputs": {
+      "destination": [
+       "4",
+       0
+      ],
+      "source": [
+       "6",
+       0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+       "4",
+       1
+      ]
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 82534400,
+    "peak_dedicated_bytes": 6656233472,
+    "samples": 2,
+    "spilled": false
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "Anime-Masked-Repair_00004_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092362,
+   "prompt_id": "651a9772-2e49-4f12-8889-b0a38d6a957b",
+   "media_type": "image",
+   "asset_id": "318bfa0516dd58e89c3f41b4de76f828"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

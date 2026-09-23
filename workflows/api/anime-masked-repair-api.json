@@ -55,7 +55,7 @@
         "9",
         0
       ],
-      "denoise": 0.4
+      "denoise": 0.6
     }
   },
   "6": {
@@ -102,8 +102,8 @@
         0
       ],
       "mask": [
-        "4",
-        1
+        "14",
+        0
       ]
     }
   },
@@ -122,9 +122,50 @@
       "y": 0,
       "resize_source": false,
       "mask": [
+        "14",
+        0
+      ]
+    }
+  },
+  "11": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
         "4",
         1
+      ],
+      "expand": 12,
+      "tapered_corners": true
+    }
+  },
+  "12": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "11",
+        0
       ]
+    }
+  },
+  "13": {
+    "class_type": "ImageBlur",
+    "inputs": {
+      "image": [
+        "12",
+        0
+      ],
+      "blur_radius": 24,
+      "sigma": 8.0
+    }
+  },
+  "14": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "13",
+        0
+      ],
+      "channel": "red"
     }
   }
 }

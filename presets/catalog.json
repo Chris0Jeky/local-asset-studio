@@ -1925,12 +1925,13 @@
         ]
       },
       "backend_id": "primary",
-      "description": "Localized manual repair for a finished image. Upload a same-size RGBA PNG with the picture retained in RGB: keep every protected area opaque and make only the hand or other repair region transparent. The existing core mask graph resamples that transparent region at the authored 0.4 denoise and composites it over the original; it does not detect hands or paint masks for you.",
+      "description": "Localized manual repair for a finished image. Upload a same-size RGBA PNG with the picture retained in RGB: keep every protected area opaque and make only the hand or other repair region transparent. The core mask graph grows that transparent region by 12 px and blurs its edge, resamples it at the authored 0.6 denoise and composites it back through the same soft mask, so no seam is left at the region's border; it does not detect hands or paint masks for you. Measured 23 September 2026 on a six-digit hand (experiments/curated/overnight-20260923/hand-inpaint/): 0.4 left the extra digit on 3 of 3 seeds, 0.6 gave five digits on 3 of 3 with the gesture and style kept, and the hard mask edge left a visible seam that the feathered mask removed.",
       "stages": [
         "RGBA source with manual transparent repair region",
         "VAE encode",
         "Latent alpha mask",
-        "WAI resample at authored 0.4 denoise",
+        "Mask grown 12 px and feathered",
+        "WAI resample at authored 0.6 denoise",
         "Composite over source",
         "PNG"
       ],
