@@ -157,6 +157,21 @@ class BackendSafetyTests(unittest.TestCase):
             with self.subTest(queue=busy),patch.object(self.manager,'request',return_value=busy),patch('backends.threading.Thread') as thread:
                 with self.assertRaises(ValueError):self.manager.switch('hidream')
                 thread.assert_not_called()
+    def test_stopped_record_absent_from_history_and_offline_endpoints_lets_switch_proceed(self):
+        """The live case: prompts known, gone from the running ComfyUI's history, other backends not running at all."""
+        import errno
+        from urllib.error import URLError
+        self.studio.jobs={'a':{'id':'aaaa1111','status':'uncertain','prompt_ids':['p1','p2'],'tracking_disposition':{'status':'stopped','reason':'r'}}}
+        seen=[]
+        def replies(profile,route,timeout=2):
+            seen.append((profile['id'],route))
+            if profile['id']!='primary':raise URLError(ConnectionRefusedError(errno.ECONNREFUSED,'refused'))
+            return {} if route.startswith('/history/') else IDLE
+        with patch.object(self.manager,'request',side_effect=replies),patch.object(self.manager,'process',return_value=None),patch('backends.threading.Thread') as thread:
+            self.manager.switch('hidream')
+        thread.assert_called_once()
+        self.assertIn(('primary','/history/p1'),seen);self.assertIn(('primary','/history/p2'),seen)
+
     def test_stopped_record_with_a_result_still_in_comfy_history_blocks_switch(self):
         """Switching would stop the process holding the only descriptor Resume observation could still record."""
         self.studio.jobs={'a':{'id':'aaaa1111','status':'uncertain','prompt_ids':['p1'],'tracking_disposition':{'status':'stopped','reason':'r'}}}
