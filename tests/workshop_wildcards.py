@@ -79,5 +79,18 @@ async def exercise_wildcards(page, checks, posts):
     await page.evaluate("selectPreset('anima-portrait')")
     await page.locator('#promptWildcards').wait_for(state='visible')
     assert not await page.locator('#promptWildcards').evaluate('(n)=>n.open')
+    # An authored variant can replace wording without repainting the wildcard host.
+    await page.locator('#promptWildcards > summary').click()
+    await page.evaluate("window.retainedWildcard=document.querySelector('#wildcardChips [data-wildcard]')")
+    await page.evaluate("applyRecipe({preset_id:'anima-portrait',name:'Same preset variation',controls:{positive:'Same-preset authored wording'}})")
+    assert await page.evaluate("retainedWildcard===document.querySelector('#wildcardChips [data-wildcard]')"), 'The regression must exercise the no-repaint recipe path'
+    assert not await page.locator('#promptWildcards').evaluate('(n)=>n.open'), 'A same-preset recipe change closes optional helpers too'
+    assert await page.locator('#positive').input_value() == 'Same-preset authored wording'
+    await page.focus('#positive')
+    await page.keyboard.press('Tab')
+    assert await page.locator('#promptWildcards > summary').evaluate('(n)=>n===document.activeElement')
+    await page.keyboard.press('Tab')
+    assert not await page.evaluate("!!document.activeElement.closest('#wildcardChips')")
+    checks.append('same-preset authored recipe changes close helpers without repainting their host or sending a job')
     assert {row['path'] for row in posts[first_request:]} <= {'/api/estimate'}, 'Helper interaction may estimate only, not stage, install, switch or submit'
     checks.append('new lists collapse; missing/text-free recipes hide helpers; active typing retains focus; only read-only timing requests')

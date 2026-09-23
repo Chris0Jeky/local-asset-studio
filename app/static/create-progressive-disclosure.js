@@ -45,6 +45,8 @@
       observer.observe(host,{childList:true,attributes:true,attributeFilter:['hidden']});
       details.__createContextObserver=observer;
     }
+    // Same-preset authored variants change wording without repainting the host.
+    document.addEventListener('studio:recipe',refresh);
     details.addEventListener('keydown',event=>{
       if(event.key!=='Escape'||!details.open)return;
       event.preventDefault();event.stopPropagation();details.open=false;summary.focus();
