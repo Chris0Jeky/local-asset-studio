@@ -29,9 +29,11 @@
   }
   function closeNav(){document.body.classList.remove('studio-nav-open');syncNavigation();}
   window.addEventListener('resize',syncNavigation);
-  sidebar.addEventListener('focusout',()=>queueMicrotask(()=>{
-    if(!sidebar.contains(document.activeElement)&&document.activeElement!==$('#studioNavToggle'))closeNav();
-  }));
+  // Observe the settled destination, including departure from the toggle. A blur
+  // microtask can run while activeElement is body, before native Tab sets focus.
+  document.addEventListener('focusin',event=>{
+    if(document.body.classList.contains('studio-nav-open')&&!sidebar.contains(event.target)&&event.target!==$('#studioNavToggle'))closeNav();
+  });
   function setView(id){
     // The workbench inserts Overview after shell setup; keep diagnostics outside hidden views.
     if(workerNotice&&main.firstElementChild!==workerNotice)main.prepend(workerNotice);

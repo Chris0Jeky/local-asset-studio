@@ -137,6 +137,41 @@ class EntryPoints(unittest.TestCase):
                 self.page.keyboard.press('Enter')
                 self.assertTrue(self.page.locator('main').evaluate('(n)=>n===document.activeElement'))
 
+    def test_mobile_menu_closes_after_focus_passes_its_toggle(self):
+        self.page.set_viewport_size({'width':390, 'height':844})
+        for workflow in (False, True):
+            with self.subTest(workflow=workflow):
+                self.page.set_content(shell_html(workflow))
+                toggle=self.page.locator('#studioNavToggle')
+                quick=self.page.locator('#studioQuickCreate')
+                sidebar=self.page.locator('#studioSidebar')
+                toggle.focus();self.page.keyboard.press('Enter')
+                self.assertEqual(toggle.get_attribute('aria-expanded'),'true')
+                self.page.locator('#studioSidebar a').last.focus()
+                self.page.keyboard.press('Tab')
+                self.assertTrue(toggle.evaluate('(n)=>n===document.activeElement'))
+                self.assertEqual(toggle.get_attribute('aria-expanded'),'true','The toggle remains an explicit close action')
+                self.page.keyboard.press('Tab')
+                self.assertTrue(quick.evaluate('(n)=>n===document.activeElement'))
+                self.assertEqual(toggle.get_attribute('aria-expanded'),'false','Genuine departure must close the overlay without moving focus')
+                self.assertTrue(sidebar.evaluate('(n)=>n.inert'))
+                self.assertEqual(sidebar.get_attribute('aria-hidden'),'true')
+                # Space on the focused toggle still closes it, rather than reopening.
+                toggle.focus();self.page.keyboard.press('Enter')
+                self.page.locator('#studioSidebar a').last.focus();self.page.keyboard.press('Tab')
+                self.page.keyboard.press('Space')
+                self.assertTrue(toggle.evaluate('(n)=>n===document.activeElement'))
+                self.assertEqual(toggle.get_attribute('aria-expanded'),'false')
+                # Re-entering the sidebar with Shift+Tab is not a departure.
+                self.page.keyboard.press('Enter')
+                self.page.locator('#studioSidebar a').last.focus();self.page.keyboard.press('Tab')
+                self.page.keyboard.press('Shift+Tab')
+                self.assertTrue(self.page.evaluate("!!document.activeElement.closest('#studioSidebar')"))
+                self.assertEqual(toggle.get_attribute('aria-expanded'),'true')
+                self.page.locator('main button').focus()
+                self.assertTrue(self.page.locator('main button').evaluate('(n)=>n===document.activeElement'))
+                self.assertEqual(toggle.get_attribute('aria-expanded'),'false')
+
     def test_mobile_create_and_sidebar_focus_for_each_shell(self):
         self.page.set_viewport_size({'width': 390, 'height': 844})
         for workflow in (False, True):
