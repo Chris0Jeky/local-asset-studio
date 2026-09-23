@@ -52,7 +52,7 @@
     },
     {
       "name": "nsfw_character",
-      "use": "Adult Danbooru tags only: 2B, Kafka, Darkness, Aqua, Cynthia, Asuna, Yelan, Raiden, Tifa, Yor, Acheron."
+      "use": "Adult Danbooru tags only: 2B, Kafka, Darkness, Aqua, Cynthia, Yelan, Raiden, Tifa, Yor, Acheron."
     },
     {
       "name": "nsfw_anatomy",
@@ -322,14 +322,6 @@
       "job_id": "9554b24d-674f-4255-b2b6-f24887b2bfb3"
     },
     {
-      "id": "c-asuna-lingerie-smirk",
-      "axis": "franchise-casual",
-      "url": "/api/examples/nsfw-lab/c-asuna-lingerie-smirk.jpg",
-      "prompt_id": "90de8c98-c26c-4a03-8e7f-740daccba4dd",
-      "note": "Asuna orange hair, black lace, smirk.",
-      "job_id": "380f6ddb-75a7-489a-a423-b7953142059d"
-    },
-    {
       "id": "c-yelan-masturbate-tongue",
       "axis": "franchise-explicit",
       "url": "/api/examples/nsfw-lab/c-yelan-masturbate-tongue.jpg",
@@ -586,14 +578,6 @@
       "job_id": "84910d84-cfd1-4e32-a3e4-d01e0122dbb2"
     },
     {
-      "id": "g-asuna-inn",
-      "axis": "scene",
-      "url": "/api/examples/nsfw-lab/g-asuna-inn.jpg",
-      "prompt_id": "7957f35b-b567-4f57-b22b-604019ef9718",
-      "note": "Nightgown smirk. Modest.",
-      "job_id": "d63da220-fc56-427f-93ab-06ac386431a7"
-    },
-    {
       "id": "g-raiden-shrine",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-raiden-shrine.jpg",
@@ -608,14 +592,6 @@
       "prompt_id": "73c6b2a3-1a2d-4d40-9ea5-7328151535fe",
       "note": "Towel slipping, locker room.",
       "job_id": "2e62856e-4f50-4bc1-b5d2-60904025eea9"
-    },
-    {
-      "id": "i-asuna-tavern",
-      "axis": "scene",
-      "url": "/api/examples/nsfw-lab/i-asuna-tavern.jpg",
-      "prompt_id": "41e39c07-9d64-47ae-baa8-e5554bf1757d",
-      "note": "Asuna tavern, skirt up, smirk, crowd facing away.",
-      "job_id": "bcbab259-2c33-4cec-8e51-405e1e735088"
     },
     {
       "id": "i-kafka-train-lift",
