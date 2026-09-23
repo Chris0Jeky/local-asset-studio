@@ -1,6 +1,6 @@
 # NSFW hentai lab orchestrator — 21 September 2026
 
-Owner request (this session): experiment a lot with anime-style NSFW/hentai generation — prompts, body features, details, wildcards, poses, adapters/LoRAs — inspect, document, build a knowledge library and a visual collection, optionally add hideable Create intel. Overnight. Adult original characters only. Do not merge HUMAN_TODO q-29 (parked Codex programme). Do not tick owner creative items.
+Owner request (this session): experiment a lot with anime-style NSFW/hentai generation — prompts, body features, details, wildcards, poses, adapters/LoRAs — inspect, document, build a knowledge library and a visual collection, optionally add hideable Create intel. Overnight. Planned as adult original characters only; named franchise characters were later allowed as a lab lever (hard rules below, owner decision q-31). q-29's programme was merged on 21 September. Do not tick owner creative items.
 
 Related GitHub (Refs, never Closes until acceptance is complete):
 - #439 first controlled adult-character qualification campaign (this lab is a local execution slice)
@@ -14,10 +14,12 @@ Related GitHub (Refs, never Closes until acceptance is complete):
 ## Hard rules
 
 - Adult only. Negatives always include `child, loli, shota`. No real people. **Named franchise characters are a lab
-  lever (owner decision q-31, 23 September 2026):** adult-coded Danbooru character tags (2B, Kafka, Darkness, Aqua,
-  Cynthia, Asuna, Yelan, Raiden, Tifa, and Yor and Acheron in `presets/wildcards/nsfw_character.txt`) may be used, each
-  with an adult qualifier. A character whose canon is child-coded or ambiguous is never used (Megumin and similar were
-  skipped on purpose), whatever the tag says. The plan originally said "no named franchise characters"; waves C onward
+  lever (owner decision q-31, 23 September 2026):** Danbooru tags for characters who are adults in canon (2B, Kafka,
+  Darkness, Cynthia, Yelan, Raiden, Tifa, and Yor and Acheron in `presets/wildcards/nsfw_character.txt`) may be used,
+  each with an adult qualifier. A character who is a minor for most of their canon, or whose age is ambiguous, is never
+  used, whatever the tag or an "adult" qualifier says: Megumin was skipped on purpose, and **Asuna (a high-school
+  student for most of Sword Art Online) was retired on 23 September 2026** from the wildcard list and the lab cells in
+  `presets/nsfw-intel.json`. Aqua (age never stated) is listed for the owner to confirm under the "ambiguous" clause. The plan originally said "no named franchise characters"; waves C onward
   used them before the decision, and nothing was deleted.
 - Fast families only: Anima, AniFox, WAI, CSTati, YumeFlux, JANIMA, One Obsession, Pearly Mix, Animagine. Skip Qwen / FLUX.2 32B / H3 / Wan / Hunyuan / Trellis / HiDream / Klein 9B / z-image / extra Krea.
 - One seed per cell unless the cell *is* a seed audition. Never resubmit an uncertain job.
