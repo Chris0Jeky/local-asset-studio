@@ -9,13 +9,15 @@ import sys
 from spoken_brief_compile import *
 from spoken_brief_transport import *
 from spoken_brief_runtime import *
+from spoken_brief_runtime import _resolve_voice_profile
 
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description='Compile a Markdown handoff and render one LAS narration WAV.')
     commands = result.add_subparsers(dest='command', required=True)
-    for name in ('plan', 'run'):
-        command = commands.add_parser(name)
+    for name in ('preview', 'plan', 'run'):
+        command = commands.add_parser(name, help='Print a read-only compiler manifest; no generation or pack writes.'
+                                      if name == 'preview' else None)
         command.add_argument('pack', help='Pack directory, COMPRESSED.md, or INDEX.md')
         command.add_argument('--profile-id', default=DEFAULT_PROFILE_ID)
         command.add_argument('--delivery-id', default=DEFAULT_DELIVERY_ID)
@@ -41,7 +43,15 @@ def main(argv=None) -> int:
             'profile_registry': arguments.profile_registry,
             'speaker_id': arguments.speaker_id,
         }
-        if arguments.command == 'plan':
+        if arguments.command == 'preview':
+            binding = _resolve_voice_profile(
+                arguments.profile_id, arguments.delivery_id, arguments.profile_registry,
+                arguments.speaker_id, executable=False,
+            )
+            value = compile_source(
+                resolve_source(arguments.pack), speaker_id=binding['speaker_id'], voice_profile=binding,
+            )
+        elif arguments.command == 'plan':
             value = plan(arguments.pack, **common)
         else:
             value = run(
