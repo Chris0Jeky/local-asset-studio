@@ -97,6 +97,9 @@
     let snapshot=null,last=null,localKey='',viewEpoch=0;
     const block=(title,value)=>{const section=element('section');section.append(element('h4',title));const pre=element('pre',value.length>32000?value.slice(0,32000)+'\n[Preview limited. Export includes full retained text.]':value);section.append(pre);return section;};
     function render(value){
+      // Keep the displayed and exported historical receipt identical. The server's
+      // mutable current preview is not retained as part of this past mutation.
+      if(value.receipt){const {current,...receipt}=value.receipt;value={...value,receipt};}
       last=value;panel.hidden=false;snapshot=value.record;
       const key=Shelf.canonical(value.record);
       if(key!==localKey){
@@ -113,7 +116,7 @@
       results.replaceChildren(element('h4','Historical server receipt — a past mutation, not current asset state'));
       if(value.receipt?.status==='applied'){
         results.append(element('p','Confirmed historical request '+value.receipt.request_id+'. Its complete target set is unchanged.'));
-        const {current,...historical}=value.receipt;results.append(block('Immutable receipt fields',JSON.stringify(historical,null,2)));
+        results.append(block('Immutable receipt fields',JSON.stringify(value.receipt,null,2)));
       }else results.append(element('p',value.receipt_error?'Receipt unavailable: '+value.receipt_error:value.receipt?.status==='unknown'?'Receipt unknown. The earlier request may still complete; this does not authorize a new request or an automatic retry.':'No pending command to inspect.'));
       results.append(element('h4','Current lifecycle — a separate observation'));
       if(value.observation)results.append(element('p','Observed '+new Date(value.observation.observed_at*1000).toLocaleString()+'. Receipt and lifecycle are separate reads, not an atomic combined snapshot. No automatic refresh occurs.'));
