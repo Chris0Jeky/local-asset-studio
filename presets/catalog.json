@@ -610,7 +610,7 @@
       "category": "Characters",
       "graph": "workflows/api/wai-api.json",
       "visual": "workflows/comfyui/18 - WAI v17 Illustration.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
       "positive": [
         "2",
@@ -739,7 +739,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job b69ec018-c789-44f3-94d8-971854c0226e (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
+      "execution_note": "Executed 2026-09-12 through Studio job b69ec018-c789-44f3-94d8-971854c0226e (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee. Changed 23 September 2026 (HOLD PR): the decoder is now VAEDecodeTiled 512/64 instead of VAEDecode (experiments/curated/overnight-20260923/sdxl-vae-decode/: a blind tie on quality, 1.3 s median decode against 2.4-6.8 s); unverified until a Studio proof of the new graph is inspected."
     },
     {
       "id": "wai-pose",
@@ -886,7 +886,7 @@
       "category": "Characters",
       "graph": "workflows/api/anime-api.json",
       "visual": "workflows/comfyui/07 - Animagine XL Anime.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -1015,7 +1015,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job d14cb0b0-87b0-4c92-9795-74c61a7f8f13 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
+      "execution_note": "Executed 2026-09-12 through Studio job d14cb0b0-87b0-4c92-9795-74c61a7f8f13 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee. Changed 23 September 2026 (HOLD PR): the decoder is now VAEDecodeTiled 512/64 instead of VAEDecode (experiments/curated/overnight-20260923/sdxl-vae-decode/: a blind tie on quality, 1.3 s median decode against 2.4-6.8 s); unverified until a Studio proof of the new graph is inspected."
     },
     {
       "id": "pose",
@@ -1071,7 +1071,7 @@
       "category": "Characters",
       "graph": "workflows/api/pony-api.json",
       "visual": "workflows/comfyui/15 - Pony Stylized Characters.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -1200,7 +1200,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job 3103565f-5bfa-4ed7-a2ab-dcf28097a994 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
+      "execution_note": "Executed 2026-09-12 through Studio job 3103565f-5bfa-4ed7-a2ab-dcf28097a994 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee. Changed 23 September 2026 (HOLD PR): the decoder is now VAEDecodeTiled 512/64 instead of VAEDecode (experiments/curated/overnight-20260923/sdxl-vae-decode/: a blind tie on quality, 1.3 s median decode against 2.4-6.8 s); unverified until a Studio proof of the new graph is inspected."
     },
     {
       "id": "noob",
@@ -1208,7 +1208,7 @@
       "category": "Experimental",
       "graph": "workflows/api/noob-api.json",
       "visual": "workflows/comfyui/14 - NoobAI Hobby Illustration.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Author terms prohibit commercialization including generated products.",
       "positive": [
         "2",
@@ -1337,7 +1337,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job c24fd256-4c28-441d-ac2d-344ba9bc47c5 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
+      "execution_note": "Executed 2026-09-12 through Studio job c24fd256-4c28-441d-ac2d-344ba9bc47c5 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee. Changed 23 September 2026 (HOLD PR): the decoder is now VAEDecodeTiled 512/64 instead of VAEDecode (experiments/curated/overnight-20260923/sdxl-vae-decode/: a blind tie on quality, 1.3 s median decode against 2.4-6.8 s); unverified until a Studio proof of the new graph is inspected."
     },
     {
       "id": "zimage",
@@ -3776,7 +3776,7 @@
       "category": "Anime quality",
       "collection": "modular-illustration-baselines",
       "graph": "workflows/api/cstati-v3-baseline-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Local base-model execution and file hashes are recorded; adapter terms, licensing and art acceptance remain separate and unverified.",
       "positive": ["2", "text"], "negative": ["3", "text"], "width": ["4", "width"], "height": ["4", "height"], "seed": ["5", "seed"], "steps": ["5", "steps"], "cfg": ["5", "cfg"], "denoise": ["5", "denoise"], "sampler": ["5", "sampler_name"], "scheduler": ["5", "scheduler"],
       "lora": ["8", "strength_model"], "lora_name": ["8", "lora_name"], "lora2": ["9", "strength_model"], "lora2_name": ["9", "lora_name"],
@@ -3785,7 +3785,7 @@
       "modality": "image", "family": "CSTati v3 (SDXL)",
       "description": "Executed and inspected base control. Fixed CSTati v3 checkpoint with a fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 4. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
       "stages": ["CSTati v3 checkpoint", "Two optional SDXL LoRA slots", "Prompt + seed", "30-step sampling", "PNG"],
-      "execution_note": "Executed 2026-09-13: Studio job 0b245661-1de8-4574-9f57-a51bb4bbdc6c, ComfyUI prompt f0349550-e7f8-4d14-91ad-aad2ef799c92, one 832x1216 PNG at seed 2026091301, 30 steps, all LoRA strengths zero. Output inspected; hand detail and leg/foot overlap remain unresolved. Exact recipe, graph, runtime and model/output hashes: experiments/curated/goal-baselines-20260913. Experiment only; no art acceptance, adapter-stack or licensing claim."
+      "execution_note": "Executed 2026-09-13: Studio job 0b245661-1de8-4574-9f57-a51bb4bbdc6c, ComfyUI prompt f0349550-e7f8-4d14-91ad-aad2ef799c92, one 832x1216 PNG at seed 2026091301, 30 steps, all LoRA strengths zero. Output inspected; hand detail and leg/foot overlap remain unresolved. Exact recipe, graph, runtime and model/output hashes: experiments/curated/goal-baselines-20260913. Experiment only; no art acceptance, adapter-stack or licensing claim. Changed 23 September 2026 (HOLD PR): the decoder is now VAEDecodeTiled 512/64 instead of VAEDecode (experiments/curated/overnight-20260923/sdxl-vae-decode/: a blind tie on quality, 1.3 s median decode against 2.4-6.8 s); unverified until a Studio proof of the new graph is inspected."
     },
     {
       "id": "yumeflux-ilv1-baseline",
@@ -3793,7 +3793,7 @@
       "category": "Anime quality",
       "collection": "modular-illustration-baselines",
       "graph": "workflows/api/yumeflux-ilv1-baseline-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Local base-model execution and file hashes are recorded; adapter terms, licensing and art acceptance remain separate and unverified.",
       "positive": ["2", "text"], "negative": ["3", "text"], "width": ["4", "width"], "height": ["4", "height"], "seed": ["5", "seed"], "steps": ["5", "steps"], "cfg": ["5", "cfg"], "denoise": ["5", "denoise"], "sampler": ["5", "sampler_name"], "scheduler": ["5", "scheduler"],
       "lora": ["8", "strength_model"], "lora_name": ["8", "lora_name"], "lora2": ["9", "strength_model"], "lora2_name": ["9", "lora_name"],
@@ -3802,7 +3802,7 @@
       "modality": "image", "family": "YumeFlux ILv1 (SDXL)",
       "description": "Executed and inspected base control. Fixed YumeFlux ILv1 checkpoint with the same fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 4. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
       "stages": ["YumeFlux ILv1 checkpoint", "Two optional SDXL LoRA slots", "Prompt + seed", "30-step sampling", "PNG"],
-      "execution_note": "Executed 2026-09-13: Studio job 4403908b-bedb-489d-a9ce-9f19e6136bab, ComfyUI prompt e0dd0159-dc25-4b64-8833-2d18fd6158ae, one 832x1216 PNG at seed 2026091301, 30 steps, all LoRA strengths zero. Output inspected; hand detail and leg/foot overlap remain unresolved. Exact recipe, graph, runtime and model/output hashes: experiments/curated/goal-baselines-20260913. Experiment only; no art acceptance, adapter-stack or licensing claim."
+      "execution_note": "Executed 2026-09-13: Studio job 4403908b-bedb-489d-a9ce-9f19e6136bab, ComfyUI prompt e0dd0159-dc25-4b64-8833-2d18fd6158ae, one 832x1216 PNG at seed 2026091301, 30 steps, all LoRA strengths zero. Output inspected; hand detail and leg/foot overlap remain unresolved. Exact recipe, graph, runtime and model/output hashes: experiments/curated/goal-baselines-20260913. Experiment only; no art acceptance, adapter-stack or licensing claim. Changed 23 September 2026 (HOLD PR): the decoder is now VAEDecodeTiled 512/64 instead of VAEDecode (experiments/curated/overnight-20260923/sdxl-vae-decode/: a blind tie on quality, 1.3 s median decode against 2.4-6.8 s); unverified until a Studio proof of the new graph is inspected."
     },
     {
       "id": "anifox-v2-baseline",
