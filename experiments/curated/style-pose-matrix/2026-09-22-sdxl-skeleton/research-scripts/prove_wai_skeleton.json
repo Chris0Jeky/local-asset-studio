@@ -1,0 +1,62 @@
+{
+ "id": "6a342bbf-995f-466e-9e51-2bf169b11460",
+ "status": "completed",
+ "preset_id": "wai-skeleton",
+ "prompt_ids": [
+  "9f3bea4a-b7f4-4a68-b1e9-c766ab213816"
+ ],
+ "outputs": [
+  {
+   "filename": "WAI-Skeleton_00001_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092201,
+   "prompt_id": "9f3bea4a-b7f4-4a68-b1e9-c766ab213816",
+   "media_type": "image",
+   "asset_id": "e412b7ae07465898b972581eccb8e9be"
+  }
+ ],
+ "elapsed_seconds": 36.40147829055786,
+ "error": null,
+ "references": [
+  {
+   "file": "ad685e5030d14072a13a2680fb82cd02_drawn-pose.png",
+   "sha256": "17b2b72ad83568af8786536260e55ea5247b420c83bb4dbed3192e377d17a349",
+   "bytes": 9770,
+   "width": 832,
+   "height": 1216,
+   "role": "pose",
+   "slot": 1,
+   "contribution": "",
+   "avoid": "",
+   "transform": {
+    "policy": "Precomputed OpenPose skeleton: the picture goes straight to ControlNetApplyAdvanced (no detector) and ComfyUI scales it to the canvas; draw it at the recipe's width and height"
+   }
+  }
+ ],
+ "created_at": 1790127696.9152203,
+ "seed": 2026092201,
+ "guide": {
+  "file": "ad685e5030d14072a13a2680fb82cd02_drawn-pose.png",
+  "sha256": "17b2b72ad83568af8786536260e55ea5247b420c83bb4dbed3192e377d17a349",
+  "bytes": 9770,
+  "width": 832,
+  "height": 1216,
+  "original_name": "drawn-pose",
+  "artifact_id": "4ffa77a9e266fb5d642b4c8a4f9e9da621d2cfce9f2889e7c167c1ae1ee0a65a",
+  "artifact": {
+   "id": "4ffa77a9e266fb5d642b4c8a4f9e9da621d2cfce9f2889e7c167c1ae1ee0a65a",
+   "schema": "studio.pose-artifact/v1",
+   "file": "4ffa77a9e266fb5d642b4c8a4f9e9da621d2cfce9f2889e7c167c1ae1ee0a65a.pose.json",
+   "sha256": "f7250decc0c9ec8ca316cadac2af6d3ca569919f4b5b6199d8b3e51d043f7cd4",
+   "bytes": 1731,
+   "url": "/api/pose/artifacts/4ffa77a9e266fb5d642b4c8a4f9e9da621d2cfce9f2889e7c167c1ae1ee0a65a",
+   "authority": "none",
+   "review": "unreviewed"
+  },
+  "renderer": "studio.coco18-openpose-xinsir/v1",
+  "generation_submitted": false,
+  "matches_committed_bytes": true
+ },
+ "guide_source": "render"
+}
