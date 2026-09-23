@@ -72,14 +72,14 @@ show:
 
 Because of points 1 and 2, the same six-finger picture is "fixable" to the lab and "reject" to this judge.
 
-**Proposed rule R8, for correction passes.**
+**Rule R8, for correction passes.** Proposed here, adopted by the coordinator on 23 September 2026, and now in the [rubric](../JUDGING-RUBRIC.md).
 
 - `adherence` scores whether the named defect was fixed.
 - `control` scores whether everything else was kept: gesture, style and the rest of the picture.
 - `anatomy` follows R3 as usual.
 
-Under R8 a pass that leaves the defect is a reject, whatever the rest looks like. The owner or the coordinator decides
-whether to adopt it.
+Under R8 a pass that leaves the defect is a reject, whatever the rest looks like. The owner may still override the
+adoption.
 
 ## Not verified
 
