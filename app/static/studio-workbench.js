@@ -274,8 +274,9 @@
     const sx=el.width/poseCanvas.width,sy=el.height/poseCanvas.height,stroke=Math.max(3,Math.round(Math.min(el.width,el.height)/48));
     ctx.fillStyle='#000';ctx.fillRect(0,0,el.width,el.height);ctx.lineCap='round';ctx.lineWidth=stroke;
     // A joint marked unknown is omitted, and so is every limb that touches it: exactly what the server renders.
-    for(const [from,to] of StudioPoseEditor.LIMBS){const a=posePoints[from],b=posePoints[to];if(!a||!b)continue;
-      ctx.strokeStyle=StudioPoseEditor.COLORS[to];ctx.beginPath();ctx.moveTo(a.x*sx,a.y*sy);ctx.lineTo(b.x*sx,b.y*sy);ctx.stroke();}
+    // Limb colours follow the renderer this recipe's guide is drawn with (the SDXL OpenPose drawing shades each limb).
+    for(const [from,to,colour] of StudioPoseEditor.limbColours(StudioPoseEditor.guideRenderer(selected))){const a=posePoints[from],b=posePoints[to];if(!a||!b)continue;
+      ctx.strokeStyle=colour;ctx.beginPath();ctx.moveTo(a.x*sx,a.y*sy);ctx.lineTo(b.x*sx,b.y*sy);ctx.stroke();}
     posePoints.forEach((point,index)=>{if(!point)return;
       ctx.beginPath();ctx.arc(point.x*sx,point.y*sy,stroke,0,Math.PI*2);ctx.fillStyle=StudioPoseEditor.COLORS[index];ctx.fill();
       if(index===poseJoint){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=stroke;}});
@@ -294,7 +295,7 @@
     if(poseBusy)return 'The drawing is being rendered.';
     if(posePositionDirty())return 'Set the typed joint position or reset its fields before continuing.';
     if(combineBusy())return 'Finish the attachment in progress first.';
-    if(selected.id===POSE_RECIPE)return '';
+    if(selected.id===POSE_RECIPE||StudioPoseEditor.drawsGuide(selected))return '';
     const target=catalog?.presets.find(p=>p.id===POSE_RECIPE);
     if(!target)return 'The drawn-skeleton recipe is not in this catalog.';
     if(!continuationState||!continuationSource)return 'Open this pair through Continue with this, then draw the pose.';
@@ -302,8 +303,10 @@
     if(['reference','lastReference'].some(id=>q('#'+id).files?.length))return 'Finish attaching the chosen picture first.';
     return StudioContinuation.combinePoseReplacementReason(selected,target,referenceRecords)||target.runtime_block||'';
   }
+  // The panel serves every Combine recipe and any recipe that declares its own drawn-guide slot (an SDXL skeleton recipe).
+  function poseActive(){return !!selected&&(!!StudioContinuation.combineKind(selected)||StudioPoseEditor.drawsGuide(selected));}
   function posePositionDirty(){
-    if(!StudioContinuation.combineKind(selected)||!posePoints?.[poseJoint]||posePositionSignature!==JSON.stringify([poseJoint,posePoints[poseJoint],poseCanvas]))return false;
+    if(!poseActive()||!posePoints?.[poseJoint]||posePositionSignature!==JSON.stringify([poseJoint,posePoints[poseJoint],poseCanvas]))return false;
     try{const value=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),point=posePoints[poseJoint];
       return value.x!==Math.round(point.x*100)/100||value.y!==Math.round(point.y*100)/100;
     }catch(_){return true;}
@@ -322,7 +325,7 @@
   }
   function syncPoseActions(){
     const reason=poseBlockedReason(),use=q('#uxPoseUse'),unknown=q('#uxPoseUnknown'),undo=q('#uxPoseUndo'),redo=q('#uxPoseRedo');
-    const replacing=selected?.id!==POSE_RECIPE;
+    const replacing=selected?.id!==POSE_RECIPE&&!StudioPoseEditor.drawsGuide(selected);
     use.textContent=replacing?'Replace pose picture with drawing':'Use this pose';
     use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';
     q('#uxPoseReason').textContent=reason||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays. Describe this pose before Generate; the old pose picture’s wording is not kept.':'');
@@ -337,7 +340,7 @@
     if(poseBusy)unknown.title=undo.title=redo.title='The drawing is being rendered.';
   }
   function syncPoseEditor(){
-    const active=!!selected&&!!StudioContinuation.combineKind(selected);
+    const active=poseActive();
     posePanel.hidden=!active;if(!active)return;
     const next=poseCanvasSize();
     if(!posePoints){posePoints=StudioPoseEditor.fromPreset('standing',next);poseHome=StudioPoseEditor.fromPreset('standing',next);poseTimeline.reset();poseCanvas=next;}
@@ -407,12 +410,14 @@
   async function usePose(){
     if(poseBusy||!posePoints)return;
     const blocked=poseBlockedReason();if(blocked){poseStatus(blocked);syncPoseActions();return;}
-    const stamp=setupStamp(),switching=selected.id!==POSE_RECIPE,request=StudioPoseEditor.serialize(posePoints,poseCanvas),drawing=JSON.stringify(request);
+    const stamp=setupStamp(),inPlace=StudioPoseEditor.drawsGuide(selected),switching=selected.id!==POSE_RECIPE&&!inPlace,request=StudioPoseEditor.serialize(posePoints,poseCanvas),drawing=JSON.stringify(request);
+    // A replacement always lands on the Klein skeleton recipe, so only an in-place guide recipe picks another renderer.
+    const body=StudioPoseEditor.renderRequest(request,StudioPoseEditor.guideRenderer(selected));
     poseDrag=-1;poseBusy=true;syncReady();
     try{
-      const response=await post('/api/pose/render',request);
+      const response=await post('/api/pose/render',body);
       if(stamp!==setupStamp()||setupBusy()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
-      const result=StudioPoseEditor.guideResponse(response,request);
+      const result=StudioPoseEditor.guideResponse(response,body);
       if(switching)switchCombineEngine(POSE_RECIPE,result);
       else{
         const previous=referenceRecords[0]?.parent_asset;
@@ -420,7 +425,7 @@
         Object.assign(referenceRecords[0],result,{parent_asset:null,missing:false});
         if(previous!==continuationState?.source_asset_id)releaseParentAsset(previous);
       }
-      if(StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
+      if(!inPlace&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
       renderReferenceSlots();draftDirty=true;saveDraft();syncCreate();
       poseStatus('Your drawing is on Picture 1. No generation was submitted.');
       announce('Your drawn pose is on Picture 1'+(switching?', and this pair is now on '+selected.name+'.':'.')+' Check the wording, then press Generate.');

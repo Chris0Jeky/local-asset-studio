@@ -2,7 +2,7 @@
 import math
 
 from studio_workflow import pose_artifact, pose_artifact_store
-from studio_workflow.pose_raster import RENDERER, render_png
+from studio_workflow.pose_raster import RENDERER, RENDERERS, render_png
 
 MAX_BODY_BYTES = 16 * 1024          # a bounded 18-joint document, not an upload channel
 CANVAS_LIMITS = (64, 1536)          # server.py's own recipe grid defaults (dimension_limits)
@@ -27,9 +27,16 @@ def _coordinate(value, limit):
     return float(value)
 
 
+def renderer(payload):
+    """The guide renderer a recipe asked for: the Klein thin-line guide unless an SDXL OpenPose recipe names its own (#445)."""
+    value = payload.get("renderer", RENDERER) if isinstance(payload, dict) else RENDERER
+    if value not in RENDERERS: raise ValueError("Unknown pose guide renderer; use one of " + ", ".join(RENDERERS))
+    return value
+
+
 def edits(payload):
     """Validate one drawn pose and return its canvas plus {joint: [x, y] | None}. Pure; no file is written."""
-    if not isinstance(payload, dict) or set(payload) != {"width", "height", "keypoints"}: raise ValueError("A pose needs width, height and keypoints, and nothing else")
+    if not isinstance(payload, dict) or set(payload) - {"renderer"} != {"width", "height", "keypoints"}: raise ValueError("A pose needs width, height and keypoints (and optionally renderer), and nothing else")
     width, height = _canvas(payload["width"], "width"), _canvas(payload["height"], "height")
     points = payload["keypoints"]
     if not isinstance(points, list) or len(points) != len(pose_artifact.JOINTS): raise ValueError(f"A pose has exactly {len(pose_artifact.JOINTS)} joints, in COCO-18 order")
@@ -59,8 +66,8 @@ def read_artifact(studio, artifact_id):
 
 def render(studio, payload):
     """Store an editable artifact plus its rendered upload. No generation is submitted."""
-    drawn = artifact(payload)
+    drawn = artifact(payload); chosen = renderer(payload)
     editable = pose_artifact_store.publish(studio.experiments, drawn)
-    stored = studio.upload(FILENAME, "image/png", render_png(drawn))
+    stored = studio.upload(FILENAME, "image/png", render_png(drawn, renderer=chosen))
     return dict(stored, artifact_id=drawn["id"], artifact=editable,
-                renderer=RENDERER, generation_submitted=False)
+                renderer=chosen, generation_submitted=False)

@@ -23,6 +23,20 @@ family. `Krea2_TextFusion_Refusal_Reduction` is recommended off the hot path; th
 Details: `docs/research/LORA-DISK-AUDIT-2026-09-23.md`. A smoke pass is not art acceptance, and a civitai flag is
 not licence clearance.
 
+## SDXL drawn-skeleton route `wai-skeleton` — research 22–23 September 2026 (#761, #445)
+
+Executed straight against ComfyUI (not the Studio), 23:35 on 22 September to 00:30 on 23 September: 63 WAI v17 /
+Animagine XL 4 pictures from two skeletons drawn by the pose editor's code, prompt IDs and timings in
+`experiments/curated/style-pose-matrix/2026-09-22-sdxl-skeleton/README.md`. Result: Xinsir OpenPose at strength 0.8
+over all steps holds the drawn pose with the WAI look intact; the guide must be drawn in the controlnet_aux
+convention (new renderer `studio.coco18-openpose-xinsir/v1`, 99.94–99.99 % pixel agreement with the installed
+controlnet_aux 1.1.5 drawing), since thin Klein lines lost the bent figure on 3 of 3 seeds. Union and Animagine were
+not adopted. Two Animagine prompts failed once with the known `free_memory` IndexError and succeeded on one retry.
+
+Plan, not yet a result: the Studio proving run of `wai-skeleton` (`research-scripts/prove_wai_skeleton.py`) once the
+branch is in the checkout the Studio serves; until then the catalog entry stays `verified: false`. Nothing here is
+art acceptance or licence clearance; HUMAN_TODO items unchanged.
+
 ## Operator disposition publication candidate — 22 September 2026
 
 Stop tracking and local abandonment now use the existing scoped observation-state

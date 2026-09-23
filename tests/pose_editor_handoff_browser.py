@@ -15,6 +15,7 @@ import studio_use_cases as ux
 
 ROOT = Path(__file__).resolve().parents[1]
 SKELETON = 'combine-klein-9b-skeleton'
+SDXL = 'wai-skeleton'
 SNAPSHOT = '''() => ({recipe:selected.id, keep:lastUploaded, parents:[...parentAssets],
   claim:JSON.parse(JSON.stringify(continuationState)), refs:JSON.parse(JSON.stringify(referenceRecords)),
   controls:values(), batch:document.querySelector('#batch').value,
@@ -65,6 +66,26 @@ def precision_checks(page, check):
     check(page.locator('#uxPoseX').input_value() == '0', 'Coordinate zero remains a valid authored joint')
     page.locator('#uxPoseY').fill('123.4501'); page.locator('#uxPosePositionApply').click()
     check(page.locator('#uxPoseY').input_value() == '123.45' and page.locator('#uxPoseUse').is_enabled(), 'A rounded no-op clears the field hold without adding a geometry change')
+
+
+def sdxl_in_place(page, origin, out, check, drawings, posts):
+    """#445/#761: an SDXL skeleton recipe draws in place: its own renderer, its own pose slot, no recipe switch, no job."""
+    run = ux.CaseRun(dict(id='pose-handoff-sdxl-in-place'), page, origin, False, out / 'setup')
+    run.boot('#create'); run.select_preset(SDXL)
+    page.wait_for_function("selected.id==='" + SDXL + "' && !document.querySelector('#uxPoseEditor').hidden")
+    check(page.locator('#uxPoseUse').inner_text() == 'Use this pose', 'The SDXL recipe draws in place, not as a replacement')
+    check(page.locator('#generate').is_disabled(), 'Generate waits for a guide on the pose slot')
+    count_before = posts.count('/api/pose/render')
+    page.locator('#uxPoseStart').select_option('bent')
+    page.locator('#uxPoseUse').click()
+    page.wait_for_function("selected.id==='" + SDXL + "' && referenceRecords[0]?.file?.endsWith('_drawn-pose.png')")
+    check(drawings[-1].get('renderer') == 'studio.coco18-openpose-xinsir/v1', 'The guide request names the recipe renderer')
+    check(set(drawings[-1]) == {'width', 'height', 'keypoints', 'renderer'}, 'The request carries the drawing and nothing else')
+    state = page.evaluate("({role:referenceRecords[0].role,renderer:referenceRecords[0].renderer,reference:typeof uploaded!=='undefined'?uploaded:null})")
+    check(state['role'] == 'pose' and state['renderer'] == 'studio.coco18-openpose-xinsir/v1', 'The pose slot holds the OpenPose guide')
+    check(state['reference'] is None, 'The single-reference control is left alone')
+    check(page.locator('#generate').is_enabled(), 'Generate is ready and was never pressed')
+    check(posts.count('/api/pose/render') == count_before + 1, 'One render, no retry')
 
 
 def main(argv=None):
@@ -214,6 +235,26 @@ def main(argv=None):
                     finally:
                         context.close()
                     print(('PASS ' if row['passed'] else 'FAIL ') + name + ': ' + row.get('error', str(len(row['assertions'])) + ' assertions'), flush=True)
+                context = browser.new_context(viewport={'width': 1536, 'height': 1060}, reduced_motion='reduce')
+                page = context.new_page(); page.set_default_timeout(8000)
+                row = dict(case='sdxl-in-place', viewport=1536, assertions=[], passed=False); records.append(row)
+                page.on('pageerror', lambda error: errors.append('sdxl-in-place: ' + str(error)))
+                page.on('request', lambda request: posts.append(urlsplit(request.url).path) if request.method == 'POST' else None)
+                page.on('request', lambda request: drawings.append(request.post_data_json) if request.method == 'POST' and urlsplit(request.url).path == '/api/pose/render' else None)
+                def check_sdxl(condition, message):
+                    if not condition: raise AssertionError(message)
+                    row['assertions'].append(message)
+                try:
+                    sdxl_in_place(page, origin, args.out, check_sdxl, drawings, posts)
+                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); page.screenshot(path=str(args.out / 'sdxl-in-place.png'))
+                    row['passed'] = True
+                except Exception as exc:
+                    row['error'] = str(exc)
+                    try: page.screenshot(path=str(args.out / 'sdxl-in-place-failure.png'))
+                    except Exception: pass
+                finally:
+                    context.close()
+                print(('PASS ' if row['passed'] else 'FAIL ') + 'sdxl-in-place: ' + row.get('error', str(len(row['assertions'])) + ' assertions'), flush=True)
             finally:
                 browser.close()
     finally:
