@@ -2391,6 +2391,7 @@
       "licence": "civitai flags RentCivit only; derivatives not allowed",
       "notes": [
         "pure utility: at 0.6 and 0.85 it kept the Pony control's frame and style and removed a candle-in-the-palm confusion; one seed only",
+        "blind review 2026-09-23 at full resolution: both strengths drew six digit tips on the raised hand, so this seed does not show a hand fix (docs/quality/pre-reviews/q-32.md)",
         "evidence: experiments/curated/lora-smoke-20260923/README.md"
       ],
       "observed": [

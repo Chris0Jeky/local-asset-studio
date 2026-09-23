@@ -116,6 +116,11 @@ Hands Pony at 0.6 (a pure utility; at this seed it removed the control's candle-
 style change); Dramatic Lighting at 0.6 (a clean lighting lift). **Drop:** Dramatic Lighting at 0.85 (bob,
 smudge, youthful face).
 
+*Blind review, 23 September 2026 (agent-judged, [docs/quality/pre-reviews/q-32.md](../../../docs/quality/pre-reviews/q-32.md)).*
+At full resolution, both Hands Pony strengths drew six digit tips on the raised hand. The candle is gone, but the hand
+is not fixed. Dramatic Lighting 0.6 swaps the orb for a book. The keep list above is kept as written; read it with
+these two findings.
+
 **Prompt conventions that mattered:**
 - The Pony score prefix plus `rating_safe`, with `rating_explicit, rating_questionable` in the negative, kept every
   Pony render clothed.
