@@ -32,6 +32,23 @@ Score each criterion from 1 to 5. **3** means usable with a fix; **5** means no 
 
 Write `null` for a criterion that does not apply: `control` without a control input, `anatomy` for a pure object.
 
+**R9. `control` for a pose, depth or reference input is graded, never a binary 2 or 5.** The coordinator ruled this on
+23 September 2026. The ruling is stated in full here; its only other copy is the overnight session's local protocol file
+(`.runtime/overnight/PROTOCOL.md`, gitignored). The owner may override it.
+
+| Score | The control input was… |
+| --- | --- |
+| 1 | ignored |
+| 2 | followed only as a trace |
+| 3 | kept in stance or silhouette, but a named key part is missing (write that part in `worst_defect`) |
+| 4 | followed, with one minor deviation |
+| 5 | followed exactly |
+
+Why: on the Style+Pose pack the two judges agreed on all 18 verdicts but on none of the 18 `control` scores. Both saw the
+same outcomes: the raised arm was lost at 0.7 and held at 0.9–1.0 on two seeds. One judge scored every picture 2 or 5. The
+other scored 1 where the pose was ignored, 3 where only the stance was kept, and 4 where it was followed
+([second-judge/stylepose-pack.md](second-judge/stylepose-pack.md)).
+
 ## The verdict
 
 - **keep**: every score is at least 4.
