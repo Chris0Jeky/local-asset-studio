@@ -1,0 +1,101 @@
+[
+ {
+  "label": "wai",
+  "total": 50.3,
+  "to_sampler": 33.699659,
+  "sampling": 10.0,
+  "decode_save": 5.0,
+  "shared_sampling_mb": null,
+  "shared_decode_mb": null
+ },
+ {
+  "label": "anime",
+  "total": 43.4,
+  "to_sampler": 19.179636,
+  "sampling": 9.0,
+  "decode_save": 13.0,
+  "shared_sampling_mb": 158,
+  "shared_decode_mb": 4047
+ },
+ {
+  "label": "pony",
+  "total": 42.3,
+  "to_sampler": 19.746678,
+  "sampling": 9.0,
+  "decode_save": 13.0,
+  "shared_sampling_mb": 79,
+  "shared_decode_mb": 4431
+ },
+ {
+  "label": "noob",
+  "total": 46.3,
+  "to_sampler": 23.266898,
+  "sampling": 9.0,
+  "decode_save": 13.0,
+  "shared_sampling_mb": 79,
+  "shared_decode_mb": 4991
+ },
+ {
+  "label": "cstati-v3-baseline",
+  "total": 44.5,
+  "to_sampler": 20.784125,
+  "sampling": 10.0,
+  "decode_save": 13.0,
+  "shared_sampling_mb": 79,
+  "shared_decode_mb": 4607
+ },
+ {
+  "label": "yumeflux-ilv1-baseline",
+  "total": 38.4,
+  "to_sampler": 16.264087,
+  "sampling": 9.0,
+  "decode_save": 13.0,
+  "shared_sampling_mb": 79,
+  "shared_decode_mb": 5119
+ },
+ {
+  "label": "anima-portrait",
+  "total": 34.2,
+  "to_sampler": 13.761567,
+  "sampling": 16.0,
+  "decode_save": 3.0,
+  "shared_sampling_mb": 102,
+  "shared_decode_mb": 3018
+ },
+ {
+  "label": "anima-artist-stack",
+  "total": 34.3,
+  "to_sampler": 9.350925,
+  "sampling": null,
+  "decode_save": null,
+  "shared_sampling_mb": null,
+  "shared_decode_mb": null
+ },
+ {
+  "label": "janima-v1-baseline",
+  "total": 32.2,
+  "to_sampler": 7.883856,
+  "sampling": null,
+  "decode_save": null,
+  "shared_sampling_mb": null,
+  "shared_decode_mb": null
+ },
+ {
+  "label": "zimage",
+  "total": 308.1,
+  "to_sampler": 39.484214,
+  "sampling": 246.0,
+  "decode_save": 21.0,
+  "shared_sampling_mb": 715,
+  "shared_decode_mb": 1803
+ },
+ {
+  "label": "krea-portrait",
+  "total": 209.3,
+  "to_sampler": 12.469947,
+  "sampling": 183.0,
+  "decode_save": 12.0,
+  "shared_sampling_mb": 1487,
+  "shared_decode_mb": 5377
+ }
+]

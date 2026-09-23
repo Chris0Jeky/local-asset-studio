@@ -1,0 +1,209 @@
+{
+ "version": 2,
+ "preset_id": "anime",
+ "controls": {},
+ "batch_count": 1,
+ "created_at": 1790129020.9000542,
+ "workflow": {
+  "1": {
+   "class_type": "CheckpointLoaderSimple",
+   "inputs": {
+    "ckpt_name": "animagine-xl-4.0-opt.safetensors"
+   }
+  },
+  "2": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "1girl, original character, safe, solo, chibi, full body, standing, looking at viewer, silver hair, long hair, violet eyes, hair ornament, dark blue mage robe, detached sleeves, boots, holding staff, white background, simple background, character sprite, masterpiece, high score, great score, absurdres"
+   }
+  },
+  "3": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry"
+   }
+  },
+  "4": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 1024,
+    "height": 1024,
+    "batch_size": 1
+   }
+  },
+  "5": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "seed": 2026091103,
+    "steps": 28,
+    "cfg": 5.0,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "normal",
+    "positive": [
+     "2",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "latent_image": [
+     "4",
+     0
+    ],
+    "denoise": 1.0
+   }
+  },
+  "6": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "5",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "7": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "6",
+     0
+    ],
+    "filename_prefix": "Expansion/Animagine"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "759f3f24-c539-46b3-9fe2-1a68d28a3f60",
+   "seed": 2026091103,
+   "graph": {
+    "1": {
+     "class_type": "CheckpointLoaderSimple",
+     "inputs": {
+      "ckpt_name": "animagine-xl-4.0-opt.safetensors"
+     }
+    },
+    "2": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "1girl, original character, safe, solo, chibi, full body, standing, looking at viewer, silver hair, long hair, violet eyes, hair ornament, dark blue mage robe, detached sleeves, boots, holding staff, white background, simple background, character sprite, masterpiece, high score, great score, absurdres"
+     }
+    },
+    "3": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry"
+     }
+    },
+    "4": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "5": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "seed": 2026091103,
+      "steps": 28,
+      "cfg": 5.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "positive": [
+       "2",
+       0
+      ],
+      "negative": [
+       "3",
+       0
+      ],
+      "latent_image": [
+       "4",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "6": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "5",
+       0
+      ],
+      "vae": [
+       "1",
+       2
+      ]
+     }
+    },
+    "7": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "6",
+       0
+      ],
+      "filename_prefix": "Expansion/Animagine"
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 4243312640,
+    "peak_dedicated_bytes": 12239695872,
+    "samples": 5,
+    "spilled": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "Animagine_00007_.png",
+   "subfolder": "Expansion",
+   "type": "output",
+   "seed": 2026091103,
+   "prompt_id": "759f3f24-c539-46b3-9fe2-1a68d28a3f60",
+   "media_type": "image",
+   "asset_id": "000bfb6c401b5c7d9b94546f224f7fae"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}
