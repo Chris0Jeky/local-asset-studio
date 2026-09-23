@@ -111,17 +111,29 @@ on that seed) and *3-seed audition*. No preprocessor: the skeleton is already th
 OpenPose/DWPose on a stick figure is what this route exists to avoid. When a seed turns the background dark, try the
 next seed before raising strength.
 
-## Studio proof
+## Studio proof plan (22 September; done, see the proof section below)
 
 `research-scripts/prove_wai_skeleton.py` submits one `wai-skeleton` job through POST /api/jobs with the guide drawn by
-POST /api/pose/render. Not run yet: the running Studio serves the main checkout, which does not contain this branch.
+POST /api/pose/render. Not run yet at the time: the running Studio serves the main checkout, which does not contain this branch.
 The catalog entry stays `verified: false` until that run is recorded here and in its `execution_note`.
 
 ## Files
 
 - `research-scripts/make_skeletons.py`, `run_grid.py`, `contact_sheet.py`, `prove_wai_skeleton.py`
+- `research-scripts/prove_wai_skeleton.json`, `prove_wai_skeleton.recipe.json`: the Studio proof's job record and exported recipe
 - `research-scripts/grid.json`: every cell with seed, settings, prompt ID, ComfyUI status, time and output file
 - `research-scripts/skeletons.json`, `skeleton-*.png`: the four guides
 - `examples/style-pose/sdxl-skeleton-grid-action.jpg`, `sdxl-skeleton-grid-bent.jpg`, `sdxl-skeleton-compare.jpg`
 
 The full-size renders stay in ComfyUI's `output/Research/sdxl-skeleton/` on this PC (not in Git).
+
+## Studio proof — 23 September 2026 (02:41)
+
+`research-scripts/prove_wai_skeleton.py --guide render` through the running Studio after the #843 merge and a
+restart: the action skeleton drawn by `POST /api/pose/render` with `studio.coco18-openpose-xinsir/v1` (sha256
+`17b2b72a…`, byte-identical to `skeleton-action.openpose.png`), then one `POST /api/jobs`. Job
+`6a342bbf-995f-466e-9e51-2bf169b11460`, prompt `9f3bea4a-b7f4-4a68-b1e9-c766ab213816`, seed 2026092201, 832x1216,
+36.4 s on the primary backend; `prove_wai_skeleton.json` and `prove_wai_skeleton.recipe.json` beside the script.
+Inspected: the raised arm over the head, the hand on the hip, the straight standing leg and the bent raised knee
+all follow the guide; WAI's clean finish on white is kept; hands and boots are clean. `wai-skeleton` is now
+`verified: true`. Generated and inspected by an agent — not art acceptance or licence clearance.

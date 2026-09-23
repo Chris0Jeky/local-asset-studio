@@ -2222,6 +2222,179 @@
         "creator strength 0.7-1.0",
         "installed 2026-09-14 through scripts/civitai-fetch.py with a SHA-verified receipt; Illustrious-base LoRA, filed under the WAI v17 family the Style + Pose recipes use"
       ]
+    },
+    "illustrious_masterpieces_v3.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "Aesthetic Masterpiece v3 (Illustrious)",
+      "trigger": "masterpiece, best quality, very aesthetic",
+      "trigger_position": "end",
+      "strength": [
+        0.3,
+        0.6
+      ],
+      "default": 0.4,
+      "role": "style",
+      "source": "https://civitai.com/models/929497?modelVersionId=2247497",
+      "sha256": "8d9ee4bd2a16c2c72c1e176d247d379c59312585ea3d154e55492ca34d0313fe",
+      "bytes": 228509780,
+      "licence": "civitai flags Image/RentCivit/Rent (no Sell)",
+      "notes": [
+        "quality words go at the END of the prompt (creator card)",
+        "smoke 2026-09-23 at seed 2026092301: 0.4 gave a softer, more illustrative finish with the orb over two open palms and no artifacts; 0.6 was moodier with one awkward palm, so 0.4 is the default",
+        "evidence: experiments/curated/lora-smoke-20260923/README.md"
+      ],
+      "observed": [
+        "703b8be2-d675-4d88-90e4-0c3664902957",
+        "3492b32d-b9f8-48bb-8d72-6b3fc8a9e1f1"
+      ]
+    },
+    "illustriousXLv01_stabilizer_v1.198.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "Stabilizer illus01 v1.198",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        0.4,
+        0.6
+      ],
+      "default": 0.5,
+      "role": "style",
+      "source": "https://civitai.com/models/971952?modelVersionId=2055853",
+      "sha256": "c502b406ef9bf74c924637d50d606a13d9bfe2362c00e8b4ba00440ef64acf22",
+      "bytes": 45448508,
+      "licence": "civitai flags RentCivit only; derivatives not allowed; sharing merges made with it is prohibited by the author",
+      "notes": [
+        "a DoRA the author means for pretrained bases at strength 1 and loads FIRST; on WAI (a merge) it shifts the finish toward painterly semi-real",
+        "smoke 2026-09-23: 0.5 improved the hand-orb interaction and kept the character; 0.7 drifted further to a 2.5D look that loses the WAI style",
+        "evidence: experiments/curated/lora-smoke-20260923/README.md"
+      ],
+      "observed": [
+        "c5f7e402-e99a-4dbc-bd8e-3c323fb3376b",
+        "76142942-8b57-4111-a4a9-b53e9a083d48"
+      ]
+    },
+    "iLLC0lorL1nes.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "Velvet's Mythic Colorful Lines",
+      "trigger": "C0lorL1nes",
+      "trigger_position": "end",
+      "strength": [
+        0.5,
+        0.7
+      ],
+      "default": 0.6,
+      "role": "style",
+      "source": "https://civitai.com/models/599757?modelVersionId=2620790",
+      "sha256": "147a4f0c5d5511a97e999800d0fd3bf92f88025778f8cf219a320c22b9ac6102",
+      "bytes": 228467964,
+      "licence": "civitai flags RentCivit/Image/Rent/Sell/SellMerge",
+      "notes": [
+        "smoke 2026-09-23: 0.6 adds glowing teal/green line accents and bolder colour while keeping the character; 0.85 shifts the palette (navy to teal, gold to brass), so stay near 0.6",
+        "evidence: experiments/curated/lora-smoke-20260923/README.md"
+      ],
+      "observed": [
+        "3ebfe3fe-56d3-4b8d-92f3-5de6ed9952d2",
+        "e76b1034-945f-4189-a63f-be139a88979b"
+      ]
+    },
+    "illustrious_flat_color_v2.safetensors": {
+      "family": "NoobAI XL 1.1",
+      "label": "Flat Color v2 (Illustrious build)",
+      "trigger": "flat color, no lineart",
+      "trigger_position": "end",
+      "strength": [
+        0.6,
+        0.9
+      ],
+      "default": 0.85,
+      "role": "style",
+      "source": "https://civitai.com/models/1132089?modelVersionId=1311848",
+      "sha256": "1e18995b9664e600feb47837d9af04c1be51ecd426ac137f7b340dec63fa05bf",
+      "bytes": 228488132,
+      "licence": "civitai flags Image/RentCivit/Rent (no Sell); NoobAI outputs stay hobby/non-commercial under the checkpoint terms",
+      "notes": [
+        "every NoobAI build of this LoRA is v-pred; the installed NoobAI 1.1 is eps, so the Illustrious build stands in (Illustrious v0.1 is the eps parent)",
+        "smoke 2026-09-23: clean flat-colour cel look at 0.6 and 0.85 with no wrong-base symptoms; 0.85 was the most coherent stylised NoobAI result",
+        "evidence: experiments/curated/lora-smoke-20260923/README.md"
+      ],
+      "observed": [
+        "d90820c3-1169-46f7-bdb5-76a7960d3afe",
+        "164ff66c-4751-4532-ac5c-2568e42b78e9"
+      ]
+    },
+    "illustrious_noobai_epsilon_pred_1_masterpieces_v1.safetensors": {
+      "family": "NoobAI XL 1.1",
+      "label": "Aesthetic Masterpiece v1 (NoobAI eps)",
+      "trigger": "masterpiece, best quality, very aesthetic",
+      "trigger_position": "end",
+      "strength": [
+        0.3,
+        0.6
+      ],
+      "default": 0.4,
+      "role": "style",
+      "source": "https://civitai.com/models/929497?modelVersionId=1070123",
+      "sha256": "bc283af9511a60a8c9eb1880dcfffbc43740b32d173471ada5083bfb2d627b2a",
+      "bytes": 228506692,
+      "licence": "civitai flags Image/RentCivit/Rent (no Sell); NoobAI outputs stay hobby/non-commercial under the checkpoint terms",
+      "notes": [
+        "trained on NoobAI eps 1.0; matches the installed eps 1.1",
+        "smoke 2026-09-23: keeps the NoobAI anime look with a warmer painterly finish at 0.4 and 0.6; a faint red/cyan fringe on outlines at both strengths",
+        "evidence: experiments/curated/lora-smoke-20260923/README.md"
+      ],
+      "observed": [
+        "2a8701b8-851a-40f9-bdfc-0f72832d68bd",
+        "801410cb-29db-4c11-b2fb-1b68fe2b3b33"
+      ]
+    },
+    "g0th1cPXL.safetensors": {
+      "family": "Pony V6",
+      "label": "Gothic Neon v1.0 (Pony)",
+      "trigger": "g0thicPXL, glowing, neon",
+      "trigger_position": "end",
+      "strength": [
+        0.6,
+        0.9
+      ],
+      "default": 0.85,
+      "role": "style",
+      "source": "https://civitai.com/models/888231?modelVersionId=398847",
+      "sha256": "0b75417915a8dbae05fc767d75b53755a96e62df060324b98faae6a091b60b4b",
+      "bytes": 228453668,
+      "licence": "civitai flags RentCivit only; derivatives not allowed",
+      "notes": [
+        "smoke 2026-09-23 appended only g0thicPXL: no neon appeared at 0.6 or 0.85, the look was gothic painterly with a rose window; add the card's \"glowing, neon\" words for neon (untested)",
+        "0.85 held the orb in both hands with an adult-reading face, the closest to the brief of the Pony set",
+        "evidence: experiments/curated/lora-smoke-20260923/README.md"
+      ],
+      "observed": [
+        "0c8655e1-2cf7-468c-a22b-27641426b375",
+        "06f0b24e-a192-4a88-b5cf-5cd5babefcd1"
+      ]
+    },
+    "Hand_pony_style_v1.safetensors": {
+      "family": "Pony V6",
+      "label": "Hands v1.0 (Pony)",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        0.6,
+        0.85
+      ],
+      "default": 0.6,
+      "role": "detail",
+      "source": "https://civitai.com/models/200255?modelVersionId=1356581",
+      "sha256": "40045916027cca0b85cc62c0db8585367fd240cc6c5bc538a8af043e0dfe1299",
+      "bytes": 456484940,
+      "licence": "civitai flags RentCivit only; derivatives not allowed",
+      "notes": [
+        "pure utility: at 0.6 and 0.85 it kept the Pony control's frame and style and removed a candle-in-the-palm confusion; one seed only",
+        "evidence: experiments/curated/lora-smoke-20260923/README.md"
+      ],
+      "observed": [
+        "c311be06-7c63-4e83-952f-31936761c26a",
+        "5e36b6ac-9f66-4f91-b36f-c83ae59e1a24"
+      ]
     }
   },
   "guidance": {

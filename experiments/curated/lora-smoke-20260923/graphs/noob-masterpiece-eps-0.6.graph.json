@@ -1,0 +1,118 @@
+{
+ "1": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "NoobAI-XL-v1.1.safetensors"
+  }
+ },
+ "2": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "9",
+    1
+   ],
+   "text": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, elf, fantasy mage, long silver hair, green eyes, dark blue robe with gold trim, long sleeves, holding a glowing crystal orb with both hands, upper body, looking at viewer, library, bookshelves, candlelight, depth of field"
+  }
+ },
+ "3": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "9",
+    1
+   ],
+   "text": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral, nsfw"
+  }
+ },
+ "4": {
+  "class_type": "EmptyLatentImage",
+  "inputs": {
+   "width": 832,
+   "height": 1216,
+   "batch_size": 1
+  }
+ },
+ "5": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "9",
+    0
+   ],
+   "seed": 2026092301,
+   "steps": 28,
+   "cfg": 5.5,
+   "sampler_name": "euler_ancestral",
+   "scheduler": "normal",
+   "positive": [
+    "2",
+    0
+   ],
+   "negative": [
+    "3",
+    0
+   ],
+   "latent_image": [
+    "4",
+    0
+   ],
+   "denoise": 1.0
+  }
+ },
+ "6": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "5",
+    0
+   ],
+   "vae": [
+    "1",
+    2
+   ]
+  }
+ },
+ "7": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "6",
+    0
+   ],
+   "filename_prefix": "Research/lora-smoke-noob-masterpiece-eps-0.6"
+  }
+ },
+ "8": {
+  "class_type": "LoraLoader",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "clip": [
+    "1",
+    1
+   ],
+   "lora_name": "illustrious_noobai_epsilon_pred_1_masterpieces_v1.safetensors",
+   "strength_model": 0.6,
+   "strength_clip": 0.6
+  }
+ },
+ "9": {
+  "class_type": "LoraLoader",
+  "inputs": {
+   "model": [
+    "8",
+    0
+   ],
+   "clip": [
+    "8",
+    1
+   ],
+   "lora_name": "manga-ink-screentone.safetensors",
+   "strength_model": 0,
+   "strength_clip": 0
+  }
+ }
+}

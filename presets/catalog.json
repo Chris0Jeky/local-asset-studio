@@ -796,7 +796,19 @@
       "family": "WAI v17 (Illustrious)",
       "description": "Draw the pose on this screen (Draw the pose) or attach a coloured OpenPose stick figure; Xinsir's SDXL OpenPose ControlNet holds WAI v17 to it. The skeleton goes straight to the ControlNet: no detector reads it. The character, clothes and setting come from the prompt.",
       "graph": "workflows/api/wai-skeleton-api.json",
-      "verified": false,
+      "verified": true,
+      "execution_note": {
+        "job_id": "6a342bbf-995f-466e-9e51-2bf169b11460",
+        "prompt_id": "9f3bea4a-b7f4-4a68-b1e9-c766ab213816",
+        "date": "2026-09-23",
+        "seed": 2026092201,
+        "width": 832,
+        "height": 1216,
+        "elapsed_seconds": 36.4,
+        "backend": "primary (ComfyUI 0.35.0 on 8188)",
+        "guide": "the action skeleton drawn by POST /api/pose/render with renderer studio.coco18-openpose-xinsir/v1 (sha256 17b2b72a..., byte-identical to the committed skeleton-action.openpose.png)",
+        "status": "execution observed through the Studio (POST /api/jobs); output inspected by the agent: the raised arm, the hand on the hip, the straight standing leg and the bent raised knee follow the guide, WAI's clean anime finish kept, hands and boots clean. Evidence: experiments/curated/style-pose-matrix/2026-09-22-sdxl-skeleton/research-scripts/prove_wai_skeleton.json and .recipe.json. Not art acceptance or licence clearance."
+      },
       "commercial_note": "WAI v17: the HF mirror agreement is verified; creator authentication and the original commercial terms remain unresolved. The Xinsir OpenPose ControlNet card declares Apache-2.0 (models/library.json). A drawn skeleton carries no third-party pixels; a successful render is not legal clearance.",
       "positive": [
         "2",

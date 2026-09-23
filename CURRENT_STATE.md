@@ -20,6 +20,31 @@ Studio's own argv through `C:/AI/Start-ComfyUI.ps1 -ArgumentsFile`), per-job GPU
 at 13.1 GB; its fix is a smaller quantization (next slice). Both renders completed; neither is inspected
 as art.
 
+## LoRA smokes on WAI, NoobAI and Pony; LoRA disk audit — 23 September 2026 (00:04-01:57)
+
+**Executed.** Eleven SDXL-family LoRAs from the civitai shortlists were downloaded with
+`scripts/civitai-fetch.py` (00:09-00:40, 2,645.8 MB). Every receipt's SHA-256 matches the listing, and all eleven
+are pinned in `models/library.json`. The NoobAI builds match the installed eps checkpoint; the v-pred-only Flat
+Color and MeMaXL NoobAI builds were skipped. Then 25 renders ran straight against primary ComfyUI (01:42-01:56)
+under the GPU lease: one no-LoRA control plus two strengths per LoRA on WAI v17 (5 LoRAs), NoobAI-XL 1.1 (3) and
+Pony V6 (3), all at seed `2026092301`. The first NoobAI and first Pony controls each failed once with the known
+`CheckpointLoaderSimple` / `free_memory` IndexError before sampling. Each was retried once and succeeded. An
+agent inspected every image; no LoRA collapsed.
+
+**Smoke winners.** WAI: Masterpiece v3 at 0.4, Stabilizer illus01 at 0.5 and Velvet Colorful Lines at 0.6.
+NoobAI (hobby/non-commercial): Flat Color (Illustrious build) at 0.85 and Masterpiece eps at 0.4. Pony: Gothic
+Neon at 0.85 and Hands at 0.6, with Dramatic Lighting at 0.6 also kept as a lighting option. Loser: the NoobAI
+Stabilizer, which went semi-real without style words and dropped the orb at 1.0. Seven of these have
+`presets/settings-kb.json` entries with their prompt IDs; Dramatic Lighting and the two utilities (Micro Details,
+Hands Illu) are recorded only in the curated README.
+Evidence: `experiments/curated/lora-smoke-20260923/README.md`; sheets in `examples/lora-smoke/`.
+
+**Audit (#762), no files touched.** All 85 LoRAs on disk were hashed. The 77 pinned files match their pins. Eight
+files are unpinned orphans (Klein and Z-Image), seven are nsfw-flagged on civitai, and two pins carry the wrong
+family. `Krea2_TextFusion_Refusal_Reduction` is recommended off the hot path; the decision is HUMAN_TODO q-32.
+Details: `docs/research/LORA-DISK-AUDIT-2026-09-23.md`. A smoke pass is not art acceptance, and a civitai flag is
+not licence clearance.
+
 ## SDXL drawn-skeleton route `wai-skeleton` — research 22–23 September 2026 (#761, #445)
 
 Executed straight against ComfyUI (not the Studio), 23:35 on 22 September to 00:30 on 23 September: 63 WAI v17 /
@@ -33,6 +58,14 @@ not adopted. Two Animagine prompts failed once with the known `free_memory` Inde
 Plan, not yet a result: the Studio proving run of `wai-skeleton` (`research-scripts/prove_wai_skeleton.py`) once the
 branch is in the checkout the Studio serves; until then the catalog entry stays `verified: false`. Nothing here is
 art acceptance or licence clearance; HUMAN_TODO items unchanged.
+
+Correction, 23 September 2026: that Studio proving run has now happened, after #843 merged and the Studio restarted.
+`prove_wai_skeleton.py --guide render` drew the action skeleton through `POST /api/pose/render` (byte-identical to the
+committed `skeleton-action.openpose.png`) and made one `POST /api/jobs`. Job `6a342bbf-995f-466e-9e51-2bf169b11460`,
+prompt `9f3bea4a-b7f4-4a68-b1e9-c766ab213816`, `created_at` 2026-09-23 02:41:36, seed 2026092201, 832x1216, 36.4 s
+on the primary. An agent inspected it: the pose follows the guide and the clean WAI finish is kept. `wai-skeleton`
+is now `verified: true` with that execution note (#855). This is generated and agent-inspected only, not art
+acceptance or licence clearance.
 
 ## Operator disposition publication candidate — 22 September 2026
 

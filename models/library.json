@@ -2340,6 +2340,7 @@
       ]
     },
     {
+<<<<<<< HEAD
       "id": "qwen-image-21-diffusion",
       "name": "Qwen-Image 2.1 / 7B diffusion (int8 ConvRot)",
       "file": "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
@@ -2383,6 +2384,193 @@
       "license": "qwen-research (non-commercial)",
       "terms": "Qwen Research License Agreement (release 20 September 2026, https://huggingface.co/Qwen/Qwen-Image-2.1/blob/main/LICENSE, read 22 September 2026): non-commercial research or evaluation use only; commercial use needs a separate licence from Qwen; redistribution must keep the Qwen notice. Loaded only by the isolated qwen21 backend (ComfyUI v0.37.0 checkout, docs/QWEN-IMAGE-21.md); the file lives in that checkout's models folder, not the primary one.",
       "trigger": ""
+=======
+      "id": "illustriousxlv01-stabilizer-v1-198",
+      "name": "Stabilizer IL/NAI/CK / illus01 v1.198",
+      "file": "loras/illustriousXLv01_stabilizer_v1.198.safetensors",
+      "source": "https://civitai.com/models/971952?modelVersionId=2055853",
+      "url": "https://civitai.com/api/download/models/2055853",
+      "bytes": 45448508,
+      "sha256": "c502b406ef9bf74c924637d50d606a13d9bfe2362c00e8b4ba00440ef64acf22",
+      "license": "",
+      "terms": "civitai model 971952 / version 2055853 (illus01 v1.198), flags read from /api/v1/models/971952 on 2026-09-23: allowCommercialUse RentCivit; allowNoCredit false; derivatives NOT allowed; different licence NOT allowed. Base model 'Illustrious'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Stabilizer illus01 (Illustrious v0.1). Author: a DoRA meant for pretrained bases at strength 1; load it first; sharing merges made with it is prohibited; hidden watermark trigger words exist. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Illustrious",
+      "trigger": "",
+      "strength": [
+        0.5,
+        0.7
+      ]
+    },
+    {
+      "id": "detailed-hand-focus-style-illustriousxl-v1-1",
+      "name": "Hands XL + SD 1.5 + F1D + Pony + Illustrious + zit + ZIB / Hands Illu v1.1",
+      "file": "loras/detailed_hand_focus_style_illustriousXL_v1.1.safetensors",
+      "source": "https://civitai.com/models/200255?modelVersionId=2212079",
+      "url": "https://civitai.com/api/download/models/2212079",
+      "bytes": 456485084,
+      "sha256": "66e5a79120e47a9625dca3fb9db0607e1a267a0de9bb5aa0b0633637c5098730",
+      "license": "",
+      "terms": "civitai model 200255 / version 2212079 (Hands Illu v1.1), flags read from /api/v1/models/200255 on 2026-09-23: allowCommercialUse RentCivit; allowNoCredit false; derivatives NOT allowed; different licence allowed. Base model 'Illustrious'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Hands Illu v1.1. Hand-focus utility, no trigger. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Illustrious",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "illustrious-masterpieces-v3",
+      "name": "Aesthetic Quality Modifiers - Masterpiece / v3.0 [illustrious]",
+      "file": "loras/illustrious_masterpieces_v3.safetensors",
+      "source": "https://civitai.com/models/929497?modelVersionId=2247497",
+      "url": "https://civitai.com/api/download/models/2247497",
+      "bytes": 228509780,
+      "sha256": "8d9ee4bd2a16c2c72c1e176d247d379c59312585ea3d154e55492ca34d0313fe",
+      "license": "",
+      "terms": "civitai model 929497 / version 2247497 (v3.0 [illustrious]), flags read from /api/v1/models/929497 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'Illustrious'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Aesthetic Masterpiece v3.0 [illustrious], trained on Illustrious v0.1; quality tags at the end of the prompt. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Illustrious",
+      "trigger": "masterpiece, best quality, very aesthetic",
+      "strength": [
+        0.3,
+        0.6
+      ]
+    },
+    {
+      "id": "addmicrodetails-illustrious-v7",
+      "name": "Add Micro Details - Concept (Illustrious | Pony | NoobAI) / v7.0_Illustrious",
+      "file": "loras/AddMicroDetails_Illustrious_v7.safetensors",
+      "source": "https://civitai.com/models/1377820?modelVersionId=3206748",
+      "url": "https://civitai.com/api/download/models/3206748",
+      "bytes": 228470764,
+      "sha256": "ea7c78d35d465961cda9b9b99b25c1403192204712e391bcb8d6dd014bda9e67",
+      "license": "",
+      "terms": "civitai model 1377820 / version 3206748 (v7.0_Illustrious), flags read from /api/v1/models/1377820 on 2026-09-23: allowCommercialUse Image, RentCivit, Sell, Rent, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'Illustrious'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Add Micro Details v7.0_Illustrious. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Illustrious",
+      "trigger": "addmicrodetails",
+      "strength": [
+        0.3,
+        0.5
+      ]
+    },
+    {
+      "id": "illc0lorl1nes",
+      "name": "Velvet's Mythic Fantasy Styles | Flux + Pony + illustrious + / illustrious Colorful Line",
+      "file": "loras/iLLC0lorL1nes.safetensors",
+      "source": "https://civitai.com/models/599757?modelVersionId=2620790",
+      "url": "https://civitai.com/api/download/models/2620790",
+      "bytes": 228467964,
+      "sha256": "147a4f0c5d5511a97e999800d0fd3bf92f88025778f8cf219a320c22b9ac6102",
+      "license": "",
+      "terms": "civitai model 599757 / version 2620790 (illustrious Colorful Line), flags read from /api/v1/models/599757 on 2026-09-23: allowCommercialUse RentCivit, Image, Rent, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'Illustrious'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Velvet's Mythic Fantasy Styles, illustrious Colorful Line. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Illustrious",
+      "trigger": "C0lorL1nes",
+      "strength": [
+        0.6,
+        0.85
+      ]
+    },
+    {
+      "id": "noobai-ep11-stabilizer-v0-205-fp16",
+      "name": "Stabilizer IL/NAI/CK / nbep11 v0.205",
+      "file": "loras/noobai_ep11_stabilizer_v0.205_fp16.safetensors",
+      "source": "https://civitai.com/models/971952?modelVersionId=1764869",
+      "url": "https://civitai.com/api/download/models/1764869",
+      "bytes": 88008084,
+      "sha256": "2537f78755e87eaaf732e6b2175f717a51cc20c60967279bf6389d3f19ff6be1",
+      "license": "",
+      "terms": "civitai model 971952 / version 1764869 (nbep11 v0.205), flags read from /api/v1/models/971952 on 2026-09-23: allowCommercialUse RentCivit; allowNoCredit false; derivatives NOT allowed; different licence NOT allowed. Base model 'NoobAI'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Stabilizer nbep11 = NoobAI-XL eps 1.1, the installed NoobAI checkpoint. NoobAI outputs stay hobby/non-commercial under the checkpoint terms whatever this LoRA allows. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "NoobAI",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "illustrious-noobai-epsilon-pred-1-masterpieces-v1",
+      "name": "Aesthetic Quality Modifiers - Masterpiece / v1.0 [noobai-e-pred-1]",
+      "file": "loras/illustrious_noobai_epsilon_pred_1_masterpieces_v1.safetensors",
+      "source": "https://civitai.com/models/929497?modelVersionId=1070123",
+      "url": "https://civitai.com/api/download/models/1070123",
+      "bytes": 228506692,
+      "sha256": "bc283af9511a60a8c9eb1880dcfffbc43740b32d173471ada5083bfb2d627b2a",
+      "license": "",
+      "terms": "civitai model 929497 / version 1070123 (v1.0 [noobai-e-pred-1]), flags read from /api/v1/models/929497 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'NoobAI'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Aesthetic Masterpiece v1.0 [noobai-e-pred-1], trained on NoobAI-XL eps 1.0 (eps, like the installed 1.1). NoobAI outputs stay hobby/non-commercial. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "NoobAI",
+      "trigger": "masterpiece, best quality, very aesthetic",
+      "strength": [
+        0.3,
+        0.6
+      ]
+    },
+    {
+      "id": "illustrious-flat-color-v2",
+      "name": "Flat Color - Style / v2.0 [Illustrious]",
+      "file": "loras/illustrious_flat_color_v2.safetensors",
+      "source": "https://civitai.com/models/1132089?modelVersionId=1311848",
+      "url": "https://civitai.com/api/download/models/1311848",
+      "bytes": 228488132,
+      "sha256": "1e18995b9664e600feb47837d9af04c1be51ecd426ac137f7b340dec63fa05bf",
+      "license": "",
+      "terms": "civitai model 1132089 / version 1311848 (v2.0 [Illustrious]), flags read from /api/v1/models/1132089 on 2026-09-23: allowCommercialUse Image, RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'Illustrious'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Flat Color v2.0 [Illustrious]. Chosen for the NoobAI eps smoke because every NoobAI build of Flat Color and MeMaXL is v-pred; Illustrious v0.1 is the eps parent of NoobAI eps. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Illustrious",
+      "trigger": "flat color, no lineart",
+      "strength": [
+        0.6,
+        0.85
+      ]
+    },
+    {
+      "id": "g0th1cpxl",
+      "name": "Vixon's Anima/Pony Styles - Gothic Neon / gothic neon v1.0",
+      "file": "loras/g0th1cPXL.safetensors",
+      "source": "https://civitai.com/models/888231?modelVersionId=398847",
+      "url": "https://civitai.com/api/download/models/398847",
+      "bytes": 228453668,
+      "sha256": "0b75417915a8dbae05fc767d75b53755a96e62df060324b98faae6a091b60b4b",
+      "license": "",
+      "terms": "civitai model 888231 / version 398847 (gothic neon v1.0), flags read from /api/v1/models/888231 on 2026-09-23: allowCommercialUse RentCivit; allowNoCredit true; derivatives NOT allowed; different licence NOT allowed. Base model 'Pony'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Gothic Neon v1.0 (Pony). Pony score tags belong in Pony prompts only. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Pony",
+      "trigger": "g0thicPXL, glowing, neon,",
+      "strength": [
+        0.6,
+        0.85
+      ]
+    },
+    {
+      "id": "s1-dramatic-lighting-v3",
+      "name": "S1 Dramatic Lighting / Pony v3",
+      "file": "loras/S1_Dramatic_Lighting_v3.safetensors",
+      "source": "https://civitai.com/models/661736?modelVersionId=1280045",
+      "url": "https://civitai.com/api/download/models/1280045",
+      "bytes": 228465884,
+      "sha256": "db68bdc26324af7234ba45f465fcd2e4853ee668f988ec0a9c88cf67c6a259e7",
+      "license": "",
+      "terms": "civitai model 661736 / version 1280045 (Pony v3), flags read from /api/v1/models/661736 on 2026-09-23: allowCommercialUse RentCivit; allowNoCredit true; derivatives allowed; different licence allowed. Base model 'Pony'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. S1 Dramatic Lighting Pony v3. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Pony",
+      "trigger": "s1_dram",
+      "strength": [
+        0.6,
+        0.85
+      ]
+    },
+    {
+      "id": "hand-pony-style-v1",
+      "name": "Hands XL + SD 1.5 + F1D + Pony + Illustrious + zit + ZIB / Hand Pony v1.0",
+      "file": "loras/Hand_pony_style_v1.safetensors",
+      "source": "https://civitai.com/models/200255?modelVersionId=1356581",
+      "url": "https://civitai.com/api/download/models/1356581",
+      "bytes": 456484940,
+      "sha256": "40045916027cca0b85cc62c0db8585367fd240cc6c5bc538a8af043e0dfe1299",
+      "license": "",
+      "terms": "civitai model 200255 / version 1356581 (Hand Pony v1.0), flags read from /api/v1/models/200255 on 2026-09-23: allowCommercialUse RentCivit; allowNoCredit false; derivatives NOT allowed; different licence allowed. Base model 'Pony'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Hands Pony v1.0. Hand-focus utility, no trigger. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Pony",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+>>>>>>> origin/main
     }
   ],
   "collections": [
