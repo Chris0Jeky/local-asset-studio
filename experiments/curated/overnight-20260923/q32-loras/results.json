@@ -1,0 +1,3068 @@
+[
+ {
+  "label": "wai-control-portrait",
+  "status": "success",
+  "graph_sha256": "72562046a0e569ff71fb649944bdee631378359725061e756af2d7bd4004417d",
+  "graph_file": "graphs/wai-control-portrait.json",
+  "submitted_at": "2026-09-23 04:36:47.673749",
+  "comfy_pid": 56556,
+  "commit_pct_before": 50.6,
+  "free_ram_gb_before": 15.6,
+  "config": "wai-control",
+  "base": "wai",
+  "case": "portrait",
+  "seed": 2026092301,
+  "prompt_id": "c13c7ee3-8efb-4901-b678-d6a2e064c44f",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10365,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 8,
+  "peak_commit_pct": 50.3,
+  "comfy_executed_seconds": 10.24,
+  "log_lines": [
+   "04:36:47 [INFO] Requested to load SDXLClipModel",
+   "04:36:48 [INFO] loaded completely; 11154.34 MB usable, 1560.80 MB loaded, full load: True",
+   "04:36:49 [INFO] loaded completely; 12239.94 MB usable, 4897.05 MB loaded, full load: True",
+   "04:36:57 [INFO] Prompt executed in 10.24 seconds"
+  ],
+  "timeline_file": "timelines/wai-control-portrait.json",
+  "history_execution_seconds": 10.24,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\wai-control-portrait_00001_.png",
+    "sha256": "6cb8798ec4e476ed33d9a44edf137c0d7549c32bb37b690e3d75ec7170e00b4d"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.69
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.11
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.13
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.23
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.236,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.24
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.057,
+     "step_seconds": [
+      0.16,
+      0.11,
+      0.14,
+      0.13,
+      0.13,
+      0.16,
+      0.15,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 10.24
+  },
+  "finished_at": "2026-09-23 04:37:00.464142"
+ },
+ {
+  "label": "masterpiece04-portrait",
+  "status": "success",
+  "graph_sha256": "2953779af2ca53324dbbfc99f232ea984d0a7a6a585207d6a00c10e20177605a",
+  "graph_file": "graphs/masterpiece04-portrait.json",
+  "submitted_at": "2026-09-23 04:37:00.519561",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.6,
+  "free_ram_gb_before": 19.3,
+  "config": "masterpiece04",
+  "base": "wai",
+  "case": "portrait",
+  "seed": 2026092301,
+  "lora": "illustrious_masterpieces_v3.safetensors",
+  "strength": 0.4,
+  "prompt_id": "76f770d4-e066-49fd-838e-89aa0dbc256a",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10590,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 10,
+  "peak_commit_pct": 57.3,
+  "comfy_executed_seconds": 13.79,
+  "log_lines": [
+   "04:37:01 [INFO] Requested to load SDXLClipModel",
+   "04:37:02 [INFO] loaded completely; 8964.75 MB usable, 1560.80 MB loaded, full load: True",
+   "04:37:02 [INFO] Requested to load SDXL",
+   "04:37:05 [INFO] loaded completely; 12314.11 MB usable, 4897.05 MB loaded, full load: True",
+   "04:37:14 [INFO] Prompt executed in 13.79 seconds"
+  ],
+  "timeline_file": "timelines/masterpiece04-portrait.json",
+  "history_execution_seconds": 13.79,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\masterpiece04-portrait_00001_.png",
+    "sha256": "27c55fe1e96b610be1fb81ff8c94f31de34416f290f4b2fc511bc44652457921"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.69
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.13
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.1
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 10.61
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.2
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.24,
+     "s_per_step_steady": 0.241,
+     "step_seconds": [
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.24,
+      0.24,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.25
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.055,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 13.79
+  },
+  "finished_at": "2026-09-23 04:37:15.287055"
+ },
+ {
+  "label": "microdetails05-portrait",
+  "status": "success",
+  "graph_sha256": "59678f15a3684e6cad43c5adc07322082351ed7ff62aa3d3d5af8087d25e22c8",
+  "graph_file": "graphs/microdetails05-portrait.json",
+  "submitted_at": "2026-09-23 04:37:15.319019",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.4,
+  "free_ram_gb_before": 13.6,
+  "config": "microdetails05",
+  "base": "wai",
+  "case": "portrait",
+  "seed": 2026092301,
+  "lora": "AddMicroDetails_Illustrious_v7.safetensors",
+  "strength": 0.5,
+  "prompt_id": "e60f27b9-7a2f-4b9a-b1b1-0b624723ab93",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10550,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 10,
+  "peak_commit_pct": 57.3,
+  "comfy_executed_seconds": 12.99,
+  "log_lines": [
+   "04:37:16 [INFO] Requested to load SDXLClipModel",
+   "04:37:16 [INFO] loaded completely; 8936.96 MB usable, 1560.80 MB loaded, full load: True",
+   "04:37:17 [INFO] Requested to load SDXL",
+   "04:37:19 [INFO] loaded completely; 12282.75 MB usable, 4897.05 MB loaded, full load: True",
+   "04:37:28 [INFO] Prompt executed in 12.99 seconds"
+  ],
+  "timeline_file": "timelines/microdetails05-portrait.json",
+  "history_execution_seconds": 12.98,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\microdetails05-portrait_00001_.png",
+    "sha256": "5264e0d5b2bb1de5b09717a70173a6f1dae2b184b3db9ee4f332c14fdd60db24"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.7
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.03
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.1
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 9.9
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.19
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.237,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.055,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 12.99
+  },
+  "finished_at": "2026-09-23 04:37:30.112865"
+ },
+ {
+  "label": "wai-control-action",
+  "status": "success",
+  "graph_sha256": "7fdaa720283459d0f1101c9cb8b1b3408a87fd0ac6ccac6d43b8ce1caea85ede",
+  "graph_file": "graphs/wai-control-action.json",
+  "submitted_at": "2026-09-23 04:37:30.128612",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.4,
+  "free_ram_gb_before": 13.6,
+  "config": "wai-control",
+  "base": "wai",
+  "case": "action",
+  "seed": 2026092302,
+  "prompt_id": "19ffe885-2b5d-4be2-adb6-e6bf411a2408",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10570,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 56.4,
+  "comfy_executed_seconds": 10.43,
+  "log_lines": [
+   "04:37:30 [INFO] Requested to load SDXLClipModel",
+   "04:37:30 [INFO] loaded completely; 8935.88 MB usable, 1560.80 MB loaded, full load: True",
+   "04:37:32 [INFO] loaded completely; 12282.38 MB usable, 4897.05 MB loaded, full load: True",
+   "04:37:40 [INFO] Prompt executed in 10.43 seconds"
+  ],
+  "timeline_file": "timelines/wai-control-action.json",
+  "history_execution_seconds": 10.43,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\wai-control-action_00001_.png",
+    "sha256": "666ce11a825a07bee2059bc1d8fb14340bffe98547b6b6ad894209d4c586742f"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.58
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.1
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.48
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.2
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.239,
+     "step_seconds": [
+      0.23,
+      0.24,
+      0.23,
+      0.24,
+      0.24,
+      0.25,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.25,
+      0.25,
+      0.25
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.055,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 10.43
+  },
+  "finished_at": "2026-09-23 04:37:42.917349"
+ },
+ {
+  "label": "masterpiece04-action",
+  "status": "success",
+  "graph_sha256": "7e63eefc19f858895f49533a73370342b38c3bf257022a6dc5d91eb08040de47",
+  "graph_file": "graphs/masterpiece04-action.json",
+  "submitted_at": "2026-09-23 04:37:42.932735",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.6,
+  "free_ram_gb_before": 19.2,
+  "config": "masterpiece04",
+  "base": "wai",
+  "case": "action",
+  "seed": 2026092302,
+  "lora": "illustrious_masterpieces_v3.safetensors",
+  "strength": 0.4,
+  "prompt_id": "6f2a43b2-03cc-4e61-9a0a-04f134c919a7",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 10590,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 10,
+  "peak_commit_pct": 57.3,
+  "comfy_executed_seconds": 12.6,
+  "log_lines": [
+   "04:37:43 [INFO] Requested to load SDXLClipModel",
+   "04:37:43 [INFO] loaded completely; 8947.74 MB usable, 1560.80 MB loaded, full load: True",
+   "04:37:44 [INFO] Requested to load SDXL",
+   "04:37:46 [INFO] loaded completely; 12291.81 MB usable, 4897.05 MB loaded, full load: True",
+   "04:37:55 [INFO] Prompt executed in 12.60 seconds"
+  ],
+  "timeline_file": "timelines/masterpiece04-action.json",
+  "history_execution_seconds": 12.6,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\masterpiece04-action_00001_.png",
+    "sha256": "b17a35156b1ff74415c41350e7e80802d7b3b111058746a34aab063e62322533"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.09
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.96
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.1
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 10.22
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.17
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.248,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.24
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.054,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 12.6
+  },
+  "finished_at": "2026-09-23 04:37:57.699162"
+ },
+ {
+  "label": "microdetails05-action",
+  "status": "success",
+  "graph_sha256": "2c3caae1719e420b9a0ec6b22f8f2869de12279295a454a09233f7220b91225a",
+  "graph_file": "graphs/microdetails05-action.json",
+  "submitted_at": "2026-09-23 04:37:57.749796",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.4,
+  "free_ram_gb_before": 13.5,
+  "config": "microdetails05",
+  "base": "wai",
+  "case": "action",
+  "seed": 2026092302,
+  "lora": "AddMicroDetails_Illustrious_v7.safetensors",
+  "strength": 0.5,
+  "prompt_id": "a4b80dd8-3f26-4505-9546-1fa660e87430",
+  "wall_seconds": 12.2,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10590,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 57.3,
+  "comfy_executed_seconds": 11.65,
+  "log_lines": [
+   "04:37:57 [INFO] Requested to load SDXLClipModel",
+   "04:37:58 [INFO] loaded completely; 8936.83 MB usable, 1560.80 MB loaded, full load: True",
+   "04:37:58 [INFO] Requested to load SDXL",
+   "04:38:01 [INFO] loaded completely; 12282.25 MB usable, 4897.05 MB loaded, full load: True",
+   "04:38:09 [INFO] Prompt executed in 11.65 seconds"
+  ],
+  "timeline_file": "timelines/microdetails05-action.json",
+  "history_execution_seconds": 11.65,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\microdetails05-action_00001_.png",
+    "sha256": "2b22258af371bb6e2421d341775d4ecff91722311f287a891faf43d95796c6f9"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.11
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.83
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.09
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 9.37
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.17
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.236,
+     "step_seconds": [
+      0.23,
+      0.24,
+      0.23,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.054,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 11.65
+  },
+  "finished_at": "2026-09-23 04:38:10.514999"
+ },
+ {
+  "label": "wai-control-hands",
+  "status": "success",
+  "graph_sha256": "4fa83fca092a870a36870f04e050b815a82f86a60fa2be52f933216efc8a186b",
+  "graph_file": "graphs/wai-control-hands.json",
+  "submitted_at": "2026-09-23 04:38:10.531331",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.4,
+  "free_ram_gb_before": 13.4,
+  "config": "wai-control",
+  "base": "wai",
+  "case": "hands",
+  "seed": 2026092307,
+  "prompt_id": "b74cb283-9705-4f27-b58f-952ca69f7afb",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10570,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 56.4,
+  "comfy_executed_seconds": 10.5,
+  "log_lines": [
+   "04:38:10 [INFO] Requested to load SDXLClipModel",
+   "04:38:11 [INFO] loaded completely; 8935.96 MB usable, 1560.80 MB loaded, full load: True",
+   "04:38:12 [INFO] loaded completely; 12277.61 MB usable, 4897.05 MB loaded, full load: True",
+   "04:38:21 [INFO] Prompt executed in 10.50 seconds"
+  ],
+  "timeline_file": "timelines/wai-control-hands.json",
+  "history_execution_seconds": 10.49,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\wai-control-hands_00001_.png",
+    "sha256": "a13b5995045fd509692f7bfe6ff12bdafa6be40a474741cd6baf2aadb3451723"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.58
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.07
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.56
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.2
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.242,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.055,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 10.5
+  },
+  "finished_at": "2026-09-23 04:38:23.337542"
+ },
+ {
+  "label": "masterpiece04-hands",
+  "status": "success",
+  "graph_sha256": "3746c843e83e4a96f7997828c6d390f6c066ca5b56f4fdfc0d1aba57838d1a1c",
+  "graph_file": "graphs/masterpiece04-hands.json",
+  "submitted_at": "2026-09-23 04:38:23.377746",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.9,
+  "free_ram_gb_before": 18.9,
+  "config": "masterpiece04",
+  "base": "wai",
+  "case": "hands",
+  "seed": 2026092307,
+  "lora": "illustrious_masterpieces_v3.safetensors",
+  "strength": 0.4,
+  "prompt_id": "a9df44e6-eb68-4dcb-8c97-b6157a615483",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10550,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 10,
+  "peak_commit_pct": 57.6,
+  "comfy_executed_seconds": 13.91,
+  "log_lines": [
+   "04:38:23 [INFO] Requested to load SDXLClipModel",
+   "04:38:24 [INFO] loaded completely; 8945.87 MB usable, 1560.80 MB loaded, full load: True",
+   "04:38:25 [INFO] Requested to load SDXL",
+   "04:38:28 [INFO] loaded completely; 12285.65 MB usable, 4897.05 MB loaded, full load: True",
+   "04:38:37 [INFO] Prompt executed in 13.91 seconds"
+  ],
+  "timeline_file": "timelines/masterpiece04-hands.json",
+  "history_execution_seconds": 13.91,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\masterpiece04-hands_00001_.png",
+    "sha256": "768f7b026d8010e59d65bdcda2a90668c3d4c12d6555147763876f6d9eb734ab"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.11
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.45
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.08
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 11.04
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.17
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.237,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.25,
+      0.25,
+      0.24,
+      0.24,
+      0.25,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.054,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 13.91
+  },
+  "finished_at": "2026-09-23 04:38:38.211305"
+ },
+ {
+  "label": "microdetails05-hands",
+  "status": "success",
+  "graph_sha256": "e4db96a231513f44241c3478f9b45e3e5a74cd95fde9457e9aa86e01577bc30b",
+  "graph_file": "graphs/microdetails05-hands.json",
+  "submitted_at": "2026-09-23 04:38:38.226186",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.5,
+  "free_ram_gb_before": 13.2,
+  "config": "microdetails05",
+  "base": "wai",
+  "case": "hands",
+  "seed": 2026092307,
+  "lora": "AddMicroDetails_Illustrious_v7.safetensors",
+  "strength": 0.5,
+  "prompt_id": "68c18d18-0dbe-41bd-8e3b-61258f581c0f",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10550,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 57.5,
+  "comfy_executed_seconds": 11.52,
+  "log_lines": [
+   "04:38:38 [INFO] Requested to load SDXLClipModel",
+   "04:38:39 [INFO] loaded completely; 8935.30 MB usable, 1560.80 MB loaded, full load: True",
+   "04:38:39 [INFO] Requested to load SDXL",
+   "04:38:41 [INFO] loaded completely; 12275.58 MB usable, 4897.05 MB loaded, full load: True",
+   "04:38:49 [INFO] Prompt executed in 11.52 seconds"
+  ],
+  "timeline_file": "timelines/microdetails05-hands.json",
+  "history_execution_seconds": 11.52,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\microdetails05-hands_00001_.png",
+    "sha256": "dfa364d02543b498d23f458b844080b63644d5522d5fca8ff7713997f46ba503"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.11
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.86
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.08
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 9.21
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.18
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.232,
+     "step_seconds": [
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.055,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 11.52
+  },
+  "finished_at": "2026-09-23 04:38:51.041301"
+ },
+ {
+  "label": "noob-control-portrait",
+  "status": "success",
+  "graph_sha256": "b891ab4ce04b9918eea213a8da315874c8c134852e87035ad1cc068cbb99a3b3",
+  "graph_file": "graphs/noob-control-portrait.json",
+  "submitted_at": "2026-09-23 04:38:51.056855",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.6,
+  "free_ram_gb_before": 13.1,
+  "config": "noob-control",
+  "base": "noob",
+  "case": "portrait",
+  "seed": 2026092301,
+  "prompt_id": "97af2c11-e1e0-4151-b5c3-89d848594181",
+  "wall_seconds": 36.4,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 11427,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 25,
+  "peak_commit_pct": 71.3,
+  "comfy_executed_seconds": 35.11,
+  "log_lines": [
+   "04:39:14 [INFO] Requested to load SDXLClipModel",
+   "04:39:14 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "04:39:16 [INFO] Requested to load SDXL",
+   "04:39:17 [INFO] loaded completely; 12646.66 MB usable, 4897.05 MB loaded, full load: True",
+   "04:39:24 [INFO] Requested to load AutoencoderKL",
+   "04:39:24 [INFO] loaded completely; 5286.64 MB usable, 159.56 MB loaded, full load: True",
+   "04:39:26 [INFO] Prompt executed in 35.11 seconds"
+  ],
+  "timeline_file": "timelines/noob-control-portrait.json",
+  "history_execution_seconds": 35.11,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\noob-control-portrait_00001_.png",
+    "sha256": "060e5bf2d5af210b105e90e3a72730bbb421fab783f0b8a32ea9e8dc00009980"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "1",
+     "class_type": "CheckpointLoaderSimple",
+     "seconds": 24.92
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.17
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.09
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.56
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.31
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.05
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.245,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.055,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "4"
+   ],
+   "ws_execution_seconds": 35.11
+  },
+  "finished_at": "2026-09-23 04:39:27.956315"
+ },
+ {
+  "label": "flatcolor085-portrait",
+  "status": "success",
+  "graph_sha256": "e329859751accc7bb492f0b7733da7fdb0e16e60c17acd17d048d0553c599b93",
+  "graph_file": "graphs/flatcolor085-portrait.json",
+  "submitted_at": "2026-09-23 04:39:27.991587",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.7,
+  "free_ram_gb_before": 19.7,
+  "config": "flatcolor085",
+  "base": "noob",
+  "case": "portrait",
+  "seed": 2026092301,
+  "lora": "illustrious_flat_color_v2.safetensors",
+  "strength": 0.85,
+  "prompt_id": "dc898efb-dd70-4e1f-ab56-f82a4614b240",
+  "wall_seconds": 16.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10698,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 11,
+  "peak_commit_pct": 57.6,
+  "comfy_executed_seconds": 14.98,
+  "log_lines": [
+   "04:39:29 [INFO] Requested to load SDXLClipModel",
+   "04:39:31 [INFO] loaded completely; 8842.39 MB usable, 1560.80 MB loaded, full load: True",
+   "04:39:31 [INFO] Requested to load SDXL",
+   "04:39:35 [INFO] loaded completely; 12183.80 MB usable, 4897.05 MB loaded, full load: True",
+   "04:39:42 [INFO] Prompt executed in 14.98 seconds"
+  ],
+  "timeline_file": "timelines/flatcolor085-portrait.json",
+  "history_execution_seconds": 14.97,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\flatcolor085-portrait_00001_.png",
+    "sha256": "c9be6a76f5ac77d242fbd7e7bf82a1b98e4d9170d94df43b605b2ab222b56476"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 1.56
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.59
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.15
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 10.45
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.16
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.238,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.054,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 14.97
+  },
+  "finished_at": "2026-09-23 04:39:44.776192"
+ },
+ {
+  "label": "noob-control-action",
+  "status": "success",
+  "graph_sha256": "8556797d2c981fc4b595465eb70bb6785de01bda28047a9abb7cafbd2d747077",
+  "graph_file": "graphs/noob-control-action.json",
+  "submitted_at": "2026-09-23 04:39:44.792275",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.7,
+  "free_ram_gb_before": 13.9,
+  "config": "noob-control",
+  "base": "noob",
+  "case": "action",
+  "seed": 2026092302,
+  "prompt_id": "0054b5e9-b42b-4d9c-9a79-1a6aa7150937",
+  "wall_seconds": 12.2,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10698,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 56.7,
+  "comfy_executed_seconds": 10.15,
+  "log_lines": [
+   "04:39:44 [INFO] Requested to load SDXLClipModel",
+   "04:39:45 [INFO] loaded completely; 8827.30 MB usable, 1560.80 MB loaded, full load: True",
+   "04:39:47 [INFO] loaded completely; 12173.58 MB usable, 4897.05 MB loaded, full load: True",
+   "04:39:54 [INFO] Prompt executed in 10.15 seconds"
+  ],
+  "timeline_file": "timelines/noob-control-action.json",
+  "history_execution_seconds": 10.15,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\noob-control-action_00001_.png",
+    "sha256": "b70641f4c4f6fabf9afc6bb5abf5bc1c5f3f7811426b0fa03c89f0f48cccfc99"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.65
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.1
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.18
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.17
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.234,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.24
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.054,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 10.15
+  },
+  "finished_at": "2026-09-23 04:39:57.551817"
+ },
+ {
+  "label": "flatcolor085-action",
+  "status": "success",
+  "graph_sha256": "6f5095455f89b9fe4745e33ee6ccc4b2cadd72ff3f75ea18dbec9fae6db50f74",
+  "graph_file": "graphs/flatcolor085-action.json",
+  "submitted_at": "2026-09-23 04:39:57.567376",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.6,
+  "free_ram_gb_before": 19.7,
+  "config": "flatcolor085",
+  "base": "noob",
+  "case": "action",
+  "seed": 2026092302,
+  "lora": "illustrious_flat_color_v2.safetensors",
+  "strength": 0.85,
+  "prompt_id": "1630f8f8-b33e-4523-92de-763de4026eb9",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10698,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 10,
+  "peak_commit_pct": 57.5,
+  "comfy_executed_seconds": 12.37,
+  "log_lines": [
+   "04:39:57 [INFO] Requested to load SDXLClipModel",
+   "04:39:58 [INFO] loaded completely; 8831.30 MB usable, 1560.80 MB loaded, full load: True",
+   "04:39:58 [INFO] Requested to load SDXL",
+   "04:40:01 [INFO] loaded completely; 12174.46 MB usable, 4897.05 MB loaded, full load: True",
+   "04:40:09 [INFO] Prompt executed in 12.37 seconds"
+  ],
+  "timeline_file": "timelines/flatcolor085-action.json",
+  "history_execution_seconds": 12.36,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\flatcolor085-action_00001_.png",
+    "sha256": "f9f6a017942db910821e8d521b4c9ade5438fbf1ef622441ae6396daea9d00c2"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.09
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.16
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.09
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 9.7
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.25
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.24,
+     "s_per_step_steady": 0.238,
+     "step_seconds": [
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.26,
+      0.25
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.17,
+     "s_per_step_steady": 0.058,
+     "step_seconds": [
+      0.17,
+      0.11,
+      0.14,
+      0.13,
+      0.13,
+      0.16,
+      0.14,
+      0.12,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 12.36
+  },
+  "finished_at": "2026-09-23 04:40:12.366604"
+ },
+ {
+  "label": "noob-control-hands",
+  "status": "success",
+  "graph_sha256": "0089eda9cbe3607e8d7f858c19b140881e7654f7eb5709a102f25994bd1af47b",
+  "graph_file": "graphs/noob-control-hands.json",
+  "submitted_at": "2026-09-23 04:40:12.399581",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.7,
+  "free_ram_gb_before": 13.8,
+  "config": "noob-control",
+  "base": "noob",
+  "case": "hands",
+  "seed": 2026092307,
+  "prompt_id": "cc825ea7-1a75-46c9-bfba-fd71866a35b4",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 10698,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 56.7,
+  "comfy_executed_seconds": 10.74,
+  "log_lines": [
+   "04:40:12 [INFO] Requested to load SDXLClipModel",
+   "04:40:13 [INFO] loaded completely; 8826.44 MB usable, 1560.80 MB loaded, full load: True",
+   "04:40:14 [INFO] loaded completely; 12172.72 MB usable, 4897.05 MB loaded, full load: True",
+   "04:40:23 [INFO] Prompt executed in 10.74 seconds"
+  ],
+  "timeline_file": "timelines/noob-control-hands.json",
+  "history_execution_seconds": 10.73,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\noob-control-hands_00001_.png",
+    "sha256": "600f0c26294c51f2ed978f9f0d56b54894f0f8f0709948993040dd48beb89a14"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.73
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.08
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.7
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.16
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.25,
+     "s_per_step_steady": 0.248,
+     "step_seconds": [
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      0.24,
+      0.24,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.054,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 10.73
+  },
+  "finished_at": "2026-09-23 04:40:25.184852"
+ },
+ {
+  "label": "flatcolor085-hands",
+  "status": "success",
+  "graph_sha256": "554f8dc0505c442217ce692d8c4e004d1ccd427c3fbad57f29fc8f2e94dbc3b6",
+  "graph_file": "graphs/flatcolor085-hands.json",
+  "submitted_at": "2026-09-23 04:40:25.212153",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.8,
+  "free_ram_gb_before": 19.5,
+  "config": "flatcolor085",
+  "base": "noob",
+  "case": "hands",
+  "seed": 2026092307,
+  "lora": "illustrious_flat_color_v2.safetensors",
+  "strength": 0.85,
+  "prompt_id": "27f08c60-90ad-41eb-a8f3-335c99c28614",
+  "wall_seconds": 12.2,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 10698,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 57.4,
+  "comfy_executed_seconds": 11.75,
+  "log_lines": [
+   "04:40:25 [INFO] Requested to load SDXLClipModel",
+   "04:40:26 [INFO] loaded completely; 8829.42 MB usable, 1560.80 MB loaded, full load: True",
+   "04:40:26 [INFO] Requested to load SDXL",
+   "04:40:29 [INFO] loaded completely; 12174.08 MB usable, 4897.05 MB loaded, full load: True",
+   "04:40:36 [INFO] Prompt executed in 11.75 seconds"
+  ],
+  "timeline_file": "timelines/flatcolor085-hands.json",
+  "history_execution_seconds": 11.75,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\flatcolor085-hands_00001_.png",
+    "sha256": "b38f12f6a794d333f443213748731599b8873d94f4f5ced04c1c442d0b444092"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.09
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.04
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.09
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 9.29
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.17
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 28,
+     "seen": 28,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.236,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.23,
+      0.24,
+      0.24,
+      0.24,
+      0.23,
+      0.24,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 20,
+     "seen": 10,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.054,
+     "step_seconds": [
+      0.16,
+      0.1,
+      0.13,
+      0.13,
+      0.13,
+      0.15,
+      0.14,
+      0.11,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 11.75
+  },
+  "finished_at": "2026-09-23 04:40:37.954004"
+ },
+ {
+  "label": "pony-control-portrait",
+  "status": "success",
+  "graph_sha256": "00e9fc7bbcae5838d12cb80ee0b9d39645c5693a42f92baff46c875b0faff19a",
+  "graph_file": "graphs/pony-control-portrait.json",
+  "submitted_at": "2026-09-23 04:40:38.008814",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.6,
+  "free_ram_gb_before": 13.9,
+  "config": "pony-control",
+  "base": "pony",
+  "case": "portrait",
+  "seed": 2026092301,
+  "prompt_id": "b724cb47-c09f-42bb-9bb8-267aeae4aacb",
+  "wall_seconds": 24.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 11574,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 17,
+  "peak_commit_pct": 71.1,
+  "comfy_executed_seconds": 22.64,
+  "log_lines": [
+   "04:40:49 [INFO] Requested to load SDXLClipModel",
+   "04:40:49 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "04:40:50 [INFO] Requested to load SDXLClipModel",
+   "04:40:50 [INFO] Requested to load SDXL",
+   "04:40:52 [INFO] loaded completely; 12562.60 MB usable, 4897.05 MB loaded, full load: True",
+   "04:40:59 [INFO] Requested to load AutoencoderKL",
+   "04:40:59 [INFO] loaded completely; 5278.35 MB usable, 159.56 MB loaded, full load: True",
+   "04:41:00 [INFO] Prompt executed in 22.64 seconds"
+  ],
+  "timeline_file": "timelines/pony-control-portrait.json",
+  "history_execution_seconds": 22.64,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\pony-control-portrait_00001_.png",
+    "sha256": "b1cdd248d2f0f14be81473478f75bffdfb650b51ef2194d3090a836e0d882714"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "1",
+     "class_type": "CheckpointLoaderSimple",
+     "seconds": 12.2
+    },
+    {
+     "node": "4",
+     "class_type": "EmptyLatentImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "10",
+     "class_type": "CLIPSetLastLayer",
+     "seconds": 0.0
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.13
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.13
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.71
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.4
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.228,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.063,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.1
+     ]
+    }
+   ],
+   "cached_nodes": [],
+   "ws_execution_seconds": 22.64
+  },
+  "finished_at": "2026-09-23 04:41:02.814914"
+ },
+ {
+  "label": "gothicneon085-portrait",
+  "status": "success",
+  "graph_sha256": "4ed53715905abc41d91755922a5c8f26bf0eadf84a140dcb8ea56612a738db0f",
+  "graph_file": "graphs/gothicneon085-portrait.json",
+  "submitted_at": "2026-09-23 04:41:02.831582",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.8,
+  "free_ram_gb_before": 19.5,
+  "config": "gothicneon085",
+  "base": "pony",
+  "case": "portrait",
+  "seed": 2026092301,
+  "lora": "g0th1cPXL.safetensors",
+  "strength": 0.85,
+  "prompt_id": "7e327271-b450-484f-9265-b0c9e0b4e291",
+  "wall_seconds": 16.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10703,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 11,
+  "peak_commit_pct": 57.6,
+  "comfy_executed_seconds": 14.08,
+  "log_lines": [
+   "04:41:03 [INFO] Requested to load SDXLClipModel",
+   "04:41:04 [INFO] loaded completely; 8899.17 MB usable, 1560.80 MB loaded, full load: True",
+   "04:41:04 [INFO] Requested to load SDXL",
+   "04:41:08 [INFO] loaded completely; 12240.70 MB usable, 4897.05 MB loaded, full load: True",
+   "04:41:16 [INFO] Prompt executed in 14.08 seconds"
+  ],
+  "timeline_file": "timelines/gothicneon085-portrait.json",
+  "history_execution_seconds": 14.08,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\gothicneon085-portrait_00001_.png",
+    "sha256": "0364d3eb3d24067e1e6e4c01ca780056f8920db81aa2559f296359767a0daf21"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.71
+    },
+    {
+     "node": "10",
+     "class_type": "CLIPSetLastLayer",
+     "seconds": 0.0
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.17
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.13
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 10.76
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.24
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.226,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.062,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 14.08
+  },
+  "finished_at": "2026-09-23 04:41:19.603448"
+ },
+ {
+  "label": "pony-control-action",
+  "status": "success",
+  "graph_sha256": "66e3c2b48ffe71740cfad8f1dc63048074de83f2127eb908608289e7715d0294",
+  "graph_file": "graphs/pony-control-action.json",
+  "submitted_at": "2026-09-23 04:41:19.636145",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.7,
+  "free_ram_gb_before": 13.7,
+  "config": "pony-control",
+  "base": "pony",
+  "case": "action",
+  "seed": 2026092302,
+  "prompt_id": "2b9e562d-be57-431e-909b-5f64aebfdd99",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10664,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 56.7,
+  "comfy_executed_seconds": 10.51,
+  "log_lines": [
+   "04:41:19 [INFO] Requested to load SDXLClipModel",
+   "04:41:20 [INFO] loaded completely; 8879.47 MB usable, 1560.80 MB loaded, full load: True",
+   "04:41:22 [INFO] loaded completely; 12226.69 MB usable, 4897.05 MB loaded, full load: True",
+   "04:41:30 [INFO] Prompt executed in 10.51 seconds"
+  ],
+  "timeline_file": "timelines/pony-control-action.json",
+  "history_execution_seconds": 10.51,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\pony-control-action_00001_.png",
+    "sha256": "06da16caf2629a01c2ae11618435715d2c9494836d89ed53a743692b003943b2"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "10",
+     "class_type": "CLIPSetLastLayer",
+     "seconds": 0.02
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.74
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.09
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.33
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.25
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.22,
+     "s_per_step_steady": 0.226,
+     "step_seconds": [
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.22,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.22
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.062,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 10.51
+  },
+  "finished_at": "2026-09-23 04:41:32.438316"
+ },
+ {
+  "label": "gothicneon085-action",
+  "status": "success",
+  "graph_sha256": "0945030aba9b9ed093bc159f880c91c9c89d4ecf1e4850bd8bad4078e9b8807e",
+  "graph_file": "graphs/gothicneon085-action.json",
+  "submitted_at": "2026-09-23 04:41:32.490341",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.8,
+  "free_ram_gb_before": 19.5,
+  "config": "gothicneon085",
+  "base": "pony",
+  "case": "action",
+  "seed": 2026092302,
+  "lora": "g0th1cPXL.safetensors",
+  "strength": 0.85,
+  "prompt_id": "fbb884c4-4a89-4aed-ba5d-489d0275a682",
+  "wall_seconds": 14.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10624,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 10,
+  "peak_commit_pct": 57.4,
+  "comfy_executed_seconds": 12.16,
+  "log_lines": [
+   "04:41:32 [INFO] Requested to load SDXLClipModel",
+   "04:41:33 [INFO] loaded completely; 8888.53 MB usable, 1560.80 MB loaded, full load: True",
+   "04:41:33 [INFO] Requested to load SDXL",
+   "04:41:36 [INFO] loaded completely; 12234.82 MB usable, 4897.05 MB loaded, full load: True",
+   "04:41:44 [INFO] Prompt executed in 12.16 seconds"
+  ],
+  "timeline_file": "timelines/gothicneon085-action.json",
+  "history_execution_seconds": 12.16,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\gothicneon085-action_00001_.png",
+    "sha256": "1df855c9732ccd8678b03b3ddb84f76cdc143a51dfdec44d0debbe991d05ddb2"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.1
+    },
+    {
+     "node": "10",
+     "class_type": "CLIPSetLastLayer",
+     "seconds": 0.0
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.97
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.09
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 9.7
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.23
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.22,
+     "s_per_step_steady": 0.228,
+     "step_seconds": [
+      0.22,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.22,
+      0.22,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.061,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 12.16
+  },
+  "finished_at": "2026-09-23 04:41:47.270941"
+ },
+ {
+  "label": "pony-control-hands",
+  "status": "success",
+  "graph_sha256": "2869aa8b67be9291321eb0b51024a161c197ea06c384138f1b08c043ac5a4e4f",
+  "graph_file": "graphs/pony-control-hands.json",
+  "submitted_at": "2026-09-23 04:41:47.286465",
+  "comfy_pid": 56556,
+  "commit_pct_before": 56.7,
+  "free_ram_gb_before": 13.7,
+  "config": "pony-control",
+  "base": "pony",
+  "case": "hands",
+  "seed": 2026092307,
+  "prompt_id": "20f58ddc-a3a7-4639-a1e7-f91b3fbac877",
+  "wall_seconds": 12.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10663,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 56.7,
+  "comfy_executed_seconds": 10.6,
+  "log_lines": [
+   "04:41:47 [INFO] Requested to load SDXLClipModel",
+   "04:41:47 [INFO] loaded completely; 8906.03 MB usable, 1560.80 MB loaded, full load: True",
+   "04:41:49 [INFO] loaded completely; 12253.32 MB usable, 4897.05 MB loaded, full load: True",
+   "04:41:57 [INFO] Prompt executed in 10.60 seconds"
+  ],
+  "timeline_file": "timelines/pony-control-hands.json",
+  "history_execution_seconds": 10.6,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\pony-control-hands_00001_.png",
+    "sha256": "b52873a6ff182c84a24ca4181874d3e4e88cf977d55c03039447b4f545a951f8"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "10",
+     "class_type": "CLIPSetLastLayer",
+     "seconds": 0.02
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.7
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.1
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 8.49
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.22
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.226,
+     "step_seconds": [
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.22,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.061,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.07
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 10.6
+  },
+  "finished_at": "2026-09-23 04:42:00.054588"
+ },
+ {
+  "label": "gothicneon085-hands",
+  "status": "success",
+  "graph_sha256": "5f521d6128eda9b746032dc74fb1b51357a0e12e4b3a3b306623d1ba95319a2d",
+  "graph_file": "graphs/gothicneon085-hands.json",
+  "submitted_at": "2026-09-23 04:42:00.070493",
+  "comfy_pid": 56556,
+  "commit_pct_before": 49.8,
+  "free_ram_gb_before": 19.5,
+  "config": "gothicneon085",
+  "base": "pony",
+  "case": "hands",
+  "seed": 2026092307,
+  "lora": "g0th1cPXL.safetensors",
+  "strength": 0.85,
+  "prompt_id": "76201c57-a84b-4186-bd34-2d6a5933f95b",
+  "wall_seconds": 12.4,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 10624,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 9,
+  "peak_commit_pct": 57.4,
+  "comfy_executed_seconds": 12.03,
+  "log_lines": [
+   "04:42:00 [INFO] Requested to load SDXLClipModel",
+   "04:42:01 [INFO] loaded completely; 8909.39 MB usable, 1560.80 MB loaded, full load: True",
+   "04:42:01 [INFO] Requested to load SDXL",
+   "04:42:03 [INFO] loaded completely; 12252.52 MB usable, 4897.05 MB loaded, full load: True",
+   "04:42:12 [INFO] Prompt executed in 12.03 seconds"
+  ],
+  "timeline_file": "timelines/gothicneon085-hands.json",
+  "history_execution_seconds": 12.03,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\gothicneon085-hands_00001_.png",
+    "sha256": "dacda88e066c640478c2ed63b0026172f904641811c6f7aa5457467a4d6a1f0a"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "8",
+     "class_type": "LoraLoader",
+     "seconds": 0.09
+    },
+    {
+     "node": "10",
+     "class_type": "CLIPSetLastLayer",
+     "seconds": 0.0
+    },
+    {
+     "node": "3",
+     "class_type": "CLIPTextEncode",
+     "seconds": 1.04
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.09
+    },
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "seconds": 9.49
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.24
+    },
+    {
+     "node": "7",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "5",
+     "class_type": "KSampler",
+     "steps": 30,
+     "seen": 30,
+     "first_step_s": 0.23,
+     "s_per_step_steady": 0.226,
+     "step_seconds": [
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.22,
+      0.23,
+      0.22,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23,
+      0.23
+     ]
+    },
+    {
+     "node": "6",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.062,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "4"
+   ],
+   "ws_execution_seconds": 12.03
+  },
+  "finished_at": "2026-09-23 04:42:13.029162"
+ }
+]
