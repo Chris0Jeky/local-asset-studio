@@ -14,17 +14,20 @@ if (-not $Detached) {
         New-Item -ItemType Directory -Path $logRoot -Force | Out-Null
         $detachLog = Join-Path $logRoot ('start-studio-detached-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
         $switches = if ($NoBrowser) { ' -NoBrowser' } else { '' }
-        $command = "& '" + $PSCommandPath.Replace("'", "''") + "'" + $switches + " -Detached *> '" + $detachLog.Replace("'", "''") + "'; exit `$LASTEXITCODE"
+        # No output redirection here: capturing the copy's output would pipe the nested ComfyUI launcher, whose Start-Process child
+        # inherits that pipe and holds it open, so the copy would never return (seen from a Grok command, 23 September 2026).
+        $command = "try { & '" + $PSCommandPath.Replace("'", "''") + "'" + $switches + " -Detached } catch { `$_ | Out-String | Set-Content -LiteralPath '" + $detachLog.Replace("'", "''") + "'; exit 1 }; exit 0"
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
         $startup = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{ ShowWindow = [uint16]0 }
         $created = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "powershell.exe -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded"; CurrentDirectory = $repoRoot; ProcessStartupInformation = $startup }
         if ($created.ReturnValue -ne 0) { throw "Could not start the Studio outside this shell's job object (Win32_Process.Create returned $($created.ReturnValue))." }
         $child = Get-Process -Id $created.ProcessId -ErrorAction SilentlyContinue
-        if ($child) { $child.WaitForExit() }
+        if ($child) { $null = $child.Handle; $child.WaitForExit() }
         if (Test-Path -LiteralPath $detachLog) { Get-Content -LiteralPath $detachLog | ForEach-Object { Write-Host $_ } }
         $ready = $false
         try { $identity = Invoke-RestMethod 'http://127.0.0.1:8191/api/identity' -TimeoutSec 3; $ready = $identity.app -eq 'local-asset-studio' -and $identity.workspace -eq $repoRoot } catch { }
         if (-not $ready) { throw "Asset Studio did not become ready. See $detachLog" }
+        Write-Host 'Asset Studio ready: http://127.0.0.1:8191'
         exit 0
     }
 }
