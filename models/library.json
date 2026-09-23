@@ -2340,7 +2340,6 @@
       ]
     },
     {
-<<<<<<< HEAD
       "id": "qwen-image-21-diffusion",
       "name": "Qwen-Image 2.1 / 7B diffusion (int8 ConvRot)",
       "file": "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
@@ -2384,7 +2383,8 @@
       "license": "qwen-research (non-commercial)",
       "terms": "Qwen Research License Agreement (release 20 September 2026, https://huggingface.co/Qwen/Qwen-Image-2.1/blob/main/LICENSE, read 22 September 2026): non-commercial research or evaluation use only; commercial use needs a separate licence from Qwen; redistribution must keep the Qwen notice. Loaded only by the isolated qwen21 backend (ComfyUI v0.37.0 checkout, docs/QWEN-IMAGE-21.md); the file lives in that checkout's models folder, not the primary one.",
       "trigger": ""
-=======
+    },
+    {
       "id": "illustriousxlv01-stabilizer-v1-198",
       "name": "Stabilizer IL/NAI/CK / illus01 v1.198",
       "file": "loras/illustriousXLv01_stabilizer_v1.198.safetensors",
@@ -2570,7 +2570,6 @@
         0.6,
         1.0
       ]
->>>>>>> origin/main
     }
   ],
   "collections": [
