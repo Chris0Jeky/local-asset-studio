@@ -3,108 +3,144 @@
   "max_jump": 3.93,
   "at_x": 180,
   "median_jump": 1.29,
-  "jump_at_box_edge": 3.93
+  "jump_at_box_edge": 3.93,
+  "edge_band_max_jump": 3.93,
+  "edge_band_at_x": 180
  },
  "masked-0.6-2026092361": {
   "max_jump": 6.81,
   "at_x": 180,
   "median_jump": 2.05,
-  "jump_at_box_edge": 6.81
+  "jump_at_box_edge": 6.81,
+  "edge_band_max_jump": 6.81,
+  "edge_band_at_x": 180
  },
  "fooocus-0.5-2026092361": {
   "max_jump": 6.14,
   "at_x": 188,
   "median_jump": 2.68,
-  "jump_at_box_edge": 2.08
+  "jump_at_box_edge": 2.08,
+  "edge_band_max_jump": 6.14,
+  "edge_band_at_x": 188
  },
  "fooocus-0.7-2026092361": {
   "max_jump": 7.83,
   "at_x": 188,
   "median_jump": 3.11,
-  "jump_at_box_edge": 3.33
+  "jump_at_box_edge": 3.33,
+  "edge_band_max_jump": 7.83,
+  "edge_band_at_x": 188
  },
  "fooocus-1.0-2026092361": {
   "max_jump": 8.23,
   "at_x": 166,
   "median_jump": 3.98,
-  "jump_at_box_edge": 3.98
+  "jump_at_box_edge": 3.98,
+  "edge_band_max_jump": 7.33,
+  "edge_band_at_x": 188
  },
  "masked-0.4-2026092362": {
   "max_jump": 5.63,
   "at_x": 180,
   "median_jump": 1.63,
-  "jump_at_box_edge": 5.63
+  "jump_at_box_edge": 5.63,
+  "edge_band_max_jump": 5.63,
+  "edge_band_at_x": 180
  },
  "masked-0.6-2026092362": {
   "max_jump": 8.39,
   "at_x": 180,
   "median_jump": 3.33,
-  "jump_at_box_edge": 8.39
+  "jump_at_box_edge": 8.39,
+  "edge_band_max_jump": 8.39,
+  "edge_band_at_x": 180
  },
  "fooocus-0.5-2026092362": {
   "max_jump": 6.43,
   "at_x": 165,
   "median_jump": 2.81,
-  "jump_at_box_edge": 2.84
+  "jump_at_box_edge": 2.84,
+  "edge_band_max_jump": 4.46,
+  "edge_band_at_x": 188
  },
  "fooocus-0.7-2026092362": {
   "max_jump": 13.4,
   "at_x": 170,
   "median_jump": 5.17,
-  "jump_at_box_edge": 5.6
+  "jump_at_box_edge": 5.6,
+  "edge_band_max_jump": 11.15,
+  "edge_band_at_x": 183
  },
  "fooocus-1.0-2026092362": {
   "max_jump": 6.59,
   "at_x": 165,
   "median_jump": 3.14,
-  "jump_at_box_edge": 4.75
+  "jump_at_box_edge": 4.75,
+  "edge_band_max_jump": 5.77,
+  "edge_band_at_x": 188
  },
  "masked-0.4-2026092363": {
   "max_jump": 6.0,
   "at_x": 180,
   "median_jump": 1.8,
-  "jump_at_box_edge": 6.0
+  "jump_at_box_edge": 6.0,
+  "edge_band_max_jump": 6.0,
+  "edge_band_at_x": 180
  },
  "masked-0.6-2026092363": {
   "max_jump": 8.73,
   "at_x": 180,
   "median_jump": 2.35,
-  "jump_at_box_edge": 8.73
+  "jump_at_box_edge": 8.73,
+  "edge_band_max_jump": 8.73,
+  "edge_band_at_x": 180
  },
  "fooocus-0.5-2026092363": {
   "max_jump": 6.05,
   "at_x": 166,
   "median_jump": 2.71,
-  "jump_at_box_edge": 2.49
+  "jump_at_box_edge": 2.49,
+  "edge_band_max_jump": 3.96,
+  "edge_band_at_x": 185
  },
  "fooocus-0.7-2026092363": {
   "max_jump": 5.76,
   "at_x": 165,
   "median_jump": 2.91,
-  "jump_at_box_edge": 2.58
+  "jump_at_box_edge": 2.58,
+  "edge_band_max_jump": 3.79,
+  "edge_band_at_x": 186
  },
  "fooocus-1.0-2026092363": {
   "max_jump": 6.27,
   "at_x": 178,
   "median_jump": 3.88,
-  "jump_at_box_edge": 4.14
+  "jump_at_box_edge": 4.14,
+  "edge_band_max_jump": 6.27,
+  "edge_band_at_x": 178
  },
  "feathered-0.6-2026092361": {
   "max_jump": 4.2,
   "at_x": 166,
   "median_jump": 1.09,
-  "jump_at_box_edge": 1.16
+  "jump_at_box_edge": 1.16,
+  "edge_band_max_jump": 1.46,
+  "edge_band_at_x": 175
  },
  "feathered-0.6-2026092362": {
   "max_jump": 6.09,
   "at_x": 150,
   "median_jump": 1.22,
-  "jump_at_box_edge": 1.22
+  "jump_at_box_edge": 1.22,
+  "edge_band_max_jump": 1.61,
+  "edge_band_at_x": 176
  },
  "feathered-0.6-2026092363": {
   "max_jump": 5.79,
   "at_x": 164,
   "median_jump": 1.46,
-  "jump_at_box_edge": 1.48
+  "jump_at_box_edge": 1.48,
+  "edge_band_max_jump": 2.15,
+  "edge_band_at_x": 176
  }
 }

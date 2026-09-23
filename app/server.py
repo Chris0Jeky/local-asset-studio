@@ -265,8 +265,9 @@ class Studio:
         """Require the alpha source that a `requires_rgba_mask` graph actually uses.
 
         Every such preset drives its noise mask and final composite from the core
-        `LoadImage` MASK output, which is 1 - alpha: a fully opaque upload is an
-        empty mask and would repaint nothing, and nothing here pads or crops.
+        `LoadImage` MASK output, which is 1 - alpha, directly or through a grow and
+        feather: a fully opaque upload is still an empty mask and would repaint
+        nothing, and nothing here pads or crops.
         """
         from PIL import Image, UnidentifiedImageError
         who = preset.get("name") or preset.get("id") or "This recipe"

@@ -16,34 +16,42 @@ fingers, job `14caa4fb`) without damaging the style? This hand is the owner's st
   for that seed with only the mask changed, using core nodes: `GrowMask` (12 px, tapered) → `MaskToImage` → `ImageBlur`
   (radius 24, sigma 8) → `ImageToMask`. The soft mask drives both the noise mask and the composite.
 - **Seam measure.** `feather.py seam` (`seam.json`) works on the change image, repair minus source, where the picture's own
-  texture cancels. It takes the column-to-column jump across x 150-212 in rows 560-760, where the background light streak crosses
-  the box's right edge at x 180. A hard composite shows one large jump at x 180.
-- **Judging** (`judgements.jsonl`). Digit counts and seams were read from full-resolution crops; the per-seed crop sheet is
-  `examples/overnight-20260923/hand-inpaint-crops.jpg`. The first-pass records were shuffled blind, but they were written just
-  after the key was opened (a protocol slip), so they are all marked `blind: false`.
-  - The first pass was also re-read at the mask edge and corrected before commit: four records first written as `keep` became
-    `fixable` for the seam.
+  texture cancels. It takes the column-to-column jump in rows 560-760, where the background light streak crosses the box's right
+  edge at x 180, and reports two numbers:
+  - `max_jump` is the largest jump anywhere in x 150-212. That window also covers the redrawn fingertips, which can dominate it.
+  - `edge_band_max_jump` is the largest jump in x 175-212. That band holds the hard box edge (x 180) and the grown, feathered
+    edge (about 12 px further out, plus the blur), but not the redrawn hand, so it is each configuration's own edge.
+  A hard composite shows one large jump at x 180.
+- **Judging** (`judgements.jsonl`). The judging was **open, not blind**, and every one of the 21 records says `blind: false`:
+  - `seal` did shuffle the first pass under letters, and I first looked at the side-by-side crops under those letters;
+  - but I read the key before writing any record, so no judgement here counts as blind. `key.sealed.json` is kept only to map the
+    letters back to settings;
+  - the three feathered repairs were judged with their labels.
+  Digit counts and seams were read from full-resolution crops; the per-seed crop sheet is
+  `examples/overnight-20260923/hand-inpaint-crops.jpg`. The first pass was also re-read at the mask edge and corrected before
+  commit: four records first written as `keep` became `fixable` for the seam.
 
 The source and every repair are original content (an elf in a white robe, no famous character).
 
 ## Results
 
-| setting | five digits (seeds 61 / 62 / 63) | gesture and style kept | seam at the box edge (jump at x 180 vs median) | verdicts |
+| setting | five digits (seeds 61 / 62 / 63) | gesture and style kept | seam: largest jump at its own edge (x 175-212) | verdicts |
 | --- | --- | --- | --- | --- |
 | source | six digits on every seed | – | – | fixable |
-| `anime-masked-repair` 0.4 (shipped default) | **0 / 3** (barely changed) | yes | 3.9-6.0 vs 1.3-1.8: faint | fixable ×3 |
-| `anime-masked-repair` 0.6, hard mask | **3 / 3** | yes | **6.8-8.7** vs 2.1-3.3: a visible seam | fixable ×3 (seam) |
-| **`anime-masked-repair` 0.6, feathered mask** | **3 / 3** | yes | **1.2-1.5** vs 1.1-1.5: none | **keep ×3** |
-| `sdxl-inpaint-fix` 0.5 | 1 / 3 (one ghosted double hand) | softer, smudgier | its own mask is grown 8 px, so its edge is x 188: a 6.1 jump there on seed 61; not isolated on 62/63 | fixable, reject, fixable |
-| `sdxl-inpaint-fix` 0.7 (authored) | 2 / 3 | no: back of the hand, rougher semi-real texture | 7.8 at x 188 on seed 61; not isolated on 62/63 | fixable ×3 |
+| `anime-masked-repair` 0.4 (shipped default) | **0 / 3** (barely changed) | yes | 3.9-6.0 at x 180: faint | fixable ×3 |
+| `anime-masked-repair` 0.6, hard mask | **3 / 3** | yes | **6.8-8.7** at x 180: a visible seam | fixable ×3 (seam) |
+| **`anime-masked-repair` 0.6, feathered mask** | **3 / 3** | yes | **1.5-2.2** (x 175-176); no step at x 180 (1.2-1.5). Over the wider x 150-212 window its largest jumps are 4.2-6.1, at x 150-166 inside the redrawn fingertips | **keep ×3** |
+| `sdxl-inpaint-fix` 0.5 | 1 / 3 (one ghosted double hand) | softer, smudgier | 4.0-6.1 (x 185-188; its own mask is grown 8 px) | fixable, reject, fixable |
+| `sdxl-inpaint-fix` 0.7 (authored) | 2 / 3 | no: back of the hand, rougher semi-real texture | 3.8-11.2 (x 183-188) | fixable ×3 |
 | `sdxl-inpaint-fix` 1.0 | 0 / 3 (two hands on 2 seeds) | no | – | reject ×3 |
 
 - **The shipped `anime-masked-repair` default (0.4) is too gentle to remove an extra finger.** At 0.6 the same graph redraws the
   fingers and gave five digits on all three seeds. The raised gesture, the lighting and the painterly shading carry over from the
   surrounding picture.
 - **The hard mask edge was the second defect.** Every masked repaint left a vertical seam where the box edge cuts the background
-  light streak. With the mask grown by 12 px and blurred, the jump at the edge fell to the picture's own texture level on 3 of 3
-  seeds. Only one soft smear remains, where the new fingertips of seed 62 meet the streak.
+  light streak (a 6.8-8.7 jump at x 180). With the mask grown by 12 px and blurred, the largest jump anywhere along its own edge
+  fell to 1.5-2.2 on 3 of 3 seeds. That is still a clear improvement if the wider window's 4.2-6.1 is used instead, whose peaks sit
+  inside the redrawn fingertips. Only one soft smear remains, where the new fingertips of seed 62 meet the streak.
 - **The Fooocus patch is the wrong tool for this defect.** At 0.7 and above it re-imagines the hand: a different gesture, a
   different texture, or a second hand. That is useful for rebuilding a missing region, not for fixing fingers in place.
 
