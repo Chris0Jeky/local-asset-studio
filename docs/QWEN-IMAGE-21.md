@@ -87,10 +87,12 @@ the exported `recipe-<preset>.json` beside it), seed 2026092211, 25 steps, commi
 | Recipe | Job / prompt | Time | Peak GPU (dedicated / shared) | Result (agent-inspected) |
 | --- | --- | --- | --- | --- |
 | `qwen21-t2i`, 832 × 1248 | `be94bd02` / `457eabb0` | 52.9 s | 14.4 / 3.0 GB (cold load) | the brief as written: adult sorceress, lit brass lantern, rainy bridge, blue hour |
-| `qwen21-rgba`, 1024² | `b377572d` / `b0297f2a` | 28.2 s | 13.3 / 0.4 GB | potion icon with native alpha: 60.8 % transparent, 32 % partial through the glass, no halo |
+| `qwen21-rgba`, 1024² | `b377572d` / `b0297f2a` | 28.2 s | 13.3 / 0.4 GB | potion icon with native alpha, no halo; *fixable* per the blind second judge (#877): alpha dust (1-31) over the background and a 1-12 % see-through body; threshold alpha before packing |
 | `qwen21-edit`, 1024² | `dc8f18f8` / `027b8a22` | 78.6 s | 13.2 / 2.7 GB | the lantern cutout kept in shape and colour, redrawn with ink outlines and cel shading |
 
-All three recipes are now `verified: true`. Generated and agent-inspected only: not art acceptance, and the Qwen
+All three recipes are now `verified: true` (the route runs and returns the intended kind of output). The t2i and edit
+PNGs are saved as RGBA with faint partial alpha on part of the frame; strip or threshold alpha before any step that
+crops or packs by alpha. Generated and agent-inspected only: not art acceptance, and the Qwen
 Research License keeps them non-commercial. Still open under #739: a 2048² text-to-image run, a 3-6 reference identity
 edit, a text-heavy prompt, the LoRA status (the downloaded 2.1 Fix LoRA is untested), and a VRAM-arbitration note for
 running beside a local LLM or Spoken Briefs.
