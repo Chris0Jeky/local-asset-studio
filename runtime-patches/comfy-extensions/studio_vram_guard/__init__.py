@@ -68,6 +68,8 @@ class OthersReading:
 def install(mm, others, path=None, expected=EXPECTED, status=STATUS):
     """Wrap `mm.free_memory` and `mm.get_free_memory` once; returns `status`. Never raises."""
     if status['installed']: return status
+    if getattr(mm, '_studio_vram_guard', False):   # wrapped already, e.g. by a second import under another module name
+        status.update(installed=True, reason='already installed by an earlier import'); return status
     try:
         path = path or mm.__file__
         changed = [name for name, digest in expected.items() if function_hash(path, name) != digest]
@@ -90,7 +92,7 @@ def install(mm, others, path=None, expected=EXPECTED, status=STATUS):
             try: return original_free(memory_required, device, *args, **kwargs)
             finally: local.depth -= 1
 
-        mm.get_free_memory, mm.free_memory = get_free_memory, free_memory
+        mm.get_free_memory, mm.free_memory, mm._studio_vram_guard = get_free_memory, free_memory, True
         status.update(installed=True, reason=None)
     except Exception as exc:
         status['reason'] = 'guard not installed: ' + (str(exc) or type(exc).__name__)[:200]

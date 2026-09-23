@@ -73,6 +73,9 @@ class VramGuardTest(unittest.TestCase):
 
     def test_install_is_idempotent(self):
         self.install(); first = self.mm.free_memory; self.install(); self.assertIs(self.mm.free_memory, first)
+        second = dict(self.status, installed=False)                     # a second import has its own STATUS
+        self.guard.install(self.mm, lambda: 0, expected=self.expected, status=second)
+        self.assertIs(self.mm.free_memory, first); self.assertTrue(second['installed'])
 
     def test_others_reading_is_cached_and_zero_when_unreadable(self):
         clock = iter([0.0, 0.1, 0.2, 5.0]).__next__

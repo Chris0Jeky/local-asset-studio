@@ -418,7 +418,9 @@ processes hold, read from the same Windows counters as `app/gpu_memory.py`. Evic
 Whether a model loads completely or partially is decided exactly as before. That keeps §8's lesson: a truthful *load*
 decision forced Krea 2 into a partial load with per-step LoRA patches (2.7x slower). The guard pins the two functions'
 source hashes, stays off on any other ComfyUI version, and reports its state in the ComfyUI log, at `GET /studio/vram-guard`
-and in `/api/health` (`vram_guard`). `"primary_vram_guard": false` launches without it.
+and in `/api/health` (`vram_guard`). `"primary_vram_guard": false` launches without it. With the opt-in
+`"primary_reserve_vram": "auto"` the measured reserve already covers other processes, so evictions under the guard count
+them twice and unload more than needed (extra reloads, never a spill); leave the guard on or off by measurement there.
 
 **Measured, same desktop load (other processes 8.0-8.5 GB):**
 

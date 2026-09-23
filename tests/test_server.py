@@ -585,6 +585,11 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(len(outside.requests),4); self.assertEqual(outside._spill_unload_ineffective,42)
         with patch.object(outside,'gpu_memory_reading',return_value=quiet): self.assertIsNone(outside._evict_before_submit(job,base,2))
         self.assertIsNone(outside._spill_unload_ineffective)                                 # a quiet reading re-arms it
+        busy=FakeStudio(self.root,[{"queue_running":[["x"]],"queue_pending":[]},{"queue_running":[],"queue_pending":[]},{"devices":[{"torch_vram_total":6*1024**3}]},None,{"devices":[{"torch_vram_total":80*1024**2}]}]); job={}
+        with patch.object(busy,'gpu_memory_reading',return_value=spilling), patch.object(server.time,'sleep'):
+            self.assertEqual(busy._evict_before_submit(job,base,0)['outcome'],'skipped: ComfyUI queue busy')
+            self.assertIsNone(busy._spill_unload_ineffective)                                   # nothing was tried, so nothing is proved
+            self.assertEqual(busy._evict_before_submit(job,base,1)['outcome'],'unloaded')       # the next output still tries
 
     def test_eviction_runs_after_the_queue_wait_and_before_the_prompt_post(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{}}, enqueue=False)['id']]; order=[]

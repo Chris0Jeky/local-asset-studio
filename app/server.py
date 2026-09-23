@@ -618,7 +618,9 @@ class Studio:
             record['outcome'] = 'failed: ' + (str(exc) or type(exc).__name__)[:200]
         try: after_reading = self.gpu_memory_reading(refresh=True); record['shared_after'] = after_reading.get('shared_bytes')
         except Exception: pass
-        if record['reason'] == 'spill' and isinstance(record.get('shared_after'), int) and record['shared_after'] >= gpu_memory.SPILL_BYTES:
+        # Only an unload that actually happened (or found nothing to unload) proves the cause is outside ComfyUI; a skipped or failed one proves nothing.
+        attempted = record.get('outcome') in ('unloaded', 'nothing resident') or str(record.get('outcome', '')).startswith('release not observed')
+        if record['reason'] == 'spill' and attempted and isinstance(record.get('shared_after'), int) and record['shared_after'] >= gpu_memory.SPILL_BYTES:
             self._spill_unload_ineffective = pid
         record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
         job.setdefault('model_evictions', []).append(record)
