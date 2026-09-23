@@ -28,7 +28,11 @@ def main(label):
     queue = call('/queue')
     if queue.get('queue_running') or queue.get('queue_pending'): raise SystemExit('Primary queue is busy; nothing submitted')
     pid = comfy_pid(); import psutil; cmdline = psutil.Process(pid).cmdline()
-    log = max(Path('C:/AI/logs').glob('*-error.log'), key=lambda p: p.stat().st_mtime); offset = log.stat().st_size
+    # The launcher logs to C:/AI/logs; a Studio switch or recovery launch logs to the repo's .runtime/backends.
+    # From a .claude/worktrees/<name> checkout the running Studio's logs are in the main checkout, three levels up.
+    roots = [REPO] + ([REPO.parents[2]] if len(REPO.parents) > 2 and REPO.parent.name == 'worktrees' else [])
+    logs = list(Path('C:/AI/logs').glob('*-error.log')) + [log for root in roots for log in (root / '.runtime/backends').glob('*-error.log')]
+    log = max(logs, key=lambda p: p.stat().st_mtime); offset = log.stat().st_size
     graph = json.loads((REPO / 'workflows/api/krea-portrait-api.json').read_text(encoding='utf-8'))
     graph['9']['inputs']['filename_prefix'] = 'research/vram-spill-krea-' + label
     samples = []; stop = threading.Event()

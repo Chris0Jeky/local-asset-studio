@@ -4,5 +4,63 @@
   "status": "crashed",
   "recorded_at": "2026-09-23 02:07:45.246016",
   "note": "Primary started 22 Sep 23:15 by Start-Studio -> C:/AI/Start-ComfyUI.ps1 (--reserve-vram 0.6 --enable-manager, pinned memory ON: \"Enabled pinned memory 12994.0\"). The benchmark prompt loaded the Krea2 text encoder (\"loaded completely; 4999.47 MB loaded\") and then the process died with \"Windows fatal exception: access violation\" in torch/storage.py __getitem__ <- comfy/utils.py load_torch_file <- load_diffusion_model (krea2_turbo_fp8_scaled, 13.1 GB). No image; the prompt ID was not returned to history. Log C:/AI/logs/20260922-231528-error.log. The Studio runtime recovery relaunched ComfyUI at 02:06:52 with its own argv (--reserve-vram 0.6 --disable-pinned-memory), PID 63272, log .runtime/backends/20260923-020652-recovery-error.log."
+ },
+ {
+  "label": "before-reserve0.6-unpinned",
+  "prompt_id": "e3cec74f-d7a7-4817-9187-c78370401df0",
+  "status": "success",
+  "recorded_at": "2026-09-23 02:15:26.550311",
+  "wall_seconds": 424.0,
+  "comfy_executed_seconds": 423.47,
+  "sampling_seconds_8_steps": 283,
+  "s_per_step": 35.42,
+  "peak_dedicated_mb": 14119,
+  "peak_shared_mb": 474,
+  "samples": 211,
+  "comfy_argv_tail": [
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "load_lines": [
+   "Unloaded partially: 4999.47 MB freed, 0.00 MB remains loaded, 2273.13 MB buffer reserved",
+   "loaded completely; 14538.15 MB usable, 12532.86 MB loaded, full load: True"
+  ],
+  "log": ".runtime/backends/20260923-020652-recovery-error.log (the recovery-launched process; the script read C:/AI/logs by mistake, corrected by hand)",
+  "step_trace": "1/8 at 00:41 (41.28 s), 2/8 at 00:41, 3/8 01:30, 4/8 02:11, 5/8 02:48, 6/8 03:27, 7/8 04:04, 8/8 04:43 (35.42 s/it)"
+ },
+ {
+  "label": "after-measured-reserve",
+  "prompt_id": "b53ee807-1bd4-45c9-8f4c-446bbf544029",
+  "status": "success",
+  "recorded_at": "2026-09-23 02:38:01.619689",
+  "wall_seconds": 836.1,
+  "comfy_executed_seconds": null,
+  "sampling_seconds_8_steps": 760,
+  "s_per_step": 95.0,
+  "peak_dedicated_mb": 14165,
+  "peak_shared_mb": 4480,
+  "samples": 418,
+  "comfy_argv_tail": [
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "2.9",
+   "--disable-pinned-memory",
+   "--enable-manager"
+  ],
+  "load_lines": [
+   "\u001b[32m[INFO]\u001b[0m loaded completely;  4999.47 MB loaded, full load: True",
+   "\u001b[32m[INFO]\u001b[0m loaded partially; 12182.95 MB usable, 12119.95 MB loaded, 410.51 MB offloaded, 63.00 MB buffer reserved, lowvram patches: 53",
+   "\u001b[32m[INFO]\u001b[0m Unloaded partially: 4295.88 MB freed, 7824.07 MB remains loaded, 672.00 MB buffer reserved, lowvram patches: 186",
+   "\u001b[32m[INFO]\u001b[0m loaded completely; 3073.76 MB usable, 242.03 MB loaded, full load: True"
+  ],
+  "log": "C:\\AI\\logs\\20260923-022301-error.log"
  }
 ]

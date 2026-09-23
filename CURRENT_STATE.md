@@ -1,4 +1,24 @@
-# Current state — 22 September 2026
+# Current state — 23 September 2026
+
+## GPU memory on this card: spill measured, reserve default kept at 0.6 — 23 September 2026 (02:40)
+
+ComfyUI's free-VRAM figure ignores what dwm and other apps hold (0.9–2.3 GB for dwm alone tonight), so a
+model it logs as `loaded completely` can spill into WDDM shared memory. Measured, not inferred
+(`experiments/curated/vram-spill-20260923/`, method in `docs/RUNTIME-PRECONDITIONS.md` §8):
+
+- **Qwen-Image 2.1** (isolated v0.37.0 backend, 8 steps at 832x1248): 12.5–17.7 s/step while spilling,
+  **0.68 s/step** with `--reserve-vram 3` (the text encoder is evicted and the 7B model stays resident).
+- **Krea 2 fp8 on the primary** (`krea-portrait` graph, seed 2026091103, 8 steps): at reserve 0.6 with pinned
+  memory on, the load **crashed** (access violation in `load_torch_file`); at reserve 0.6 with pinned memory
+  off, **35.4 s/step** (prompt `e3cec74f`, 423.5 s); at the measured reserve 2.9, **95 s/step** (prompt
+  `b53ee807`, 836 s) because the model loaded partially with 53 per-step LoRA patches and still spilled 4.5 GB.
+
+So #845's measured reserve is opt-in for the primary (`"primary_reserve_vram": "auto"`) and the default is
+0.6 again; what #845 keeps: pinned memory off on the desktop start path too (Start-Studio now launches the
+Studio's own argv through `C:/AI/Start-ComfyUI.ps1 -ArgumentsFile`), per-job GPU memory peaks with a
+"Complete, but slowly: GPU memory spilled …" message, and `gpu_memory` in `/api/health`. Krea 2 still spills
+at 13.1 GB; its fix is a smaller quantization (next slice). Both renders completed; neither is inspected
+as art.
 
 ## SDXL drawn-skeleton route `wai-skeleton` — research 22–23 September 2026 (#761, #445)
 
