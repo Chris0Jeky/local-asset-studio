@@ -178,6 +178,25 @@
     if(point.y<0||point.y>c.height)fail('y','X must be 0–'+c.width+' and Y 0–'+c.height+' pixels.');
     return point;
   }
+  // Guide renderers the server knows (studio_workflow/pose_raster.RENDERERS). The thin-line guide is the one the Klein
+  // skeleton recipe was proved with; an SDXL recipe that declares pose_guide_renderer gets the controlnet_aux OpenPose
+  // drawing its Xinsir ControlNet was trained on (#445, #761).
+  const RENDERER='studio.coco18-lines/v1',RENDERERS=[RENDERER,'studio.coco18-openpose-xinsir/v1'];
+  // The limbs as each renderer draws them, for the on-page preview: [from, to, colour]. The OpenPose drawing
+  // (pose_raster.OPENPOSE_LIMBS) colours limb i with COLORS[i] at 60 %; the thin-line guide uses the end joint's colour.
+  const OPENPOSE_LIMBS=[[1,2],[1,5],[2,3],[3,4],[5,6],[6,7],[1,8],[8,9],[9,10],[1,11],[11,12],[12,13],[1,0],[0,14],[14,16],[0,15],[15,17]];
+  const shade=hex=>'#'+[1,3,5].map(i=>Math.floor(parseInt(hex.slice(i,i+2),16)*.6).toString(16).padStart(2,'0')).join('');
+  function limbColours(renderer){
+    return renderer===RENDERERS[1]?OPENPOSE_LIMBS.map(([a,b],i)=>[a,b,shade(COLORS[i])]):LIMBS.map(([a,b])=>[a,b,COLORS[b]]);
+  }
+  // A recipe the panel draws for in place: one pose slot, its own renderer, no character picture (that is Combine's job).
+  function drawsGuide(preset){
+    return !!preset&&!preset.last_reference&&RENDERERS.includes(preset.pose_guide_renderer)
+      &&Array.isArray(preset.reference_slots)&&preset.reference_slots.length===1&&preset.reference_slots[0]?.role==='pose';
+  }
+  function guideRenderer(preset){return drawsGuide(preset)?preset.pose_guide_renderer:RENDERER;}
+  // The default renderer is left out, so the Klein request stays the exact body it was before renderers existed.
+  function renderRequest(request,renderer){return renderer&&renderer!==RENDERER?Object.assign({},request,{renderer}):request;}
   // Treat rendering as a response to this exact canvas; never spread untrusted attachment metadata into a slot.
   function guideResponse(value,request){
     if(!value||typeof value!=='object'||Array.isArray(value)||!request
@@ -186,9 +205,9 @@
         ||!/^[a-f0-9]{64}$/.test(value.sha256||'')||!/^[a-f0-9]{64}$/.test(value.artifact_id||'')
         ||!Number.isInteger(value.bytes)||value.bytes<1||value.bytes>20*1024*1024
         ||value.width!==request.width||value.height!==request.height
-        ||value.renderer!=='studio.coco18-lines/v1'||value.generation_submitted!==false)
+        ||value.renderer!==(request.renderer||RENDERER)||value.generation_submitted!==false)
       throw Error('The rendered guide did not match this drawing request. The previous picture was kept.');
     return Object.fromEntries(['file','sha256','artifact_id','bytes','width','height','renderer','generation_submitted'].map(key=>[key,value[key]]));
   }
-  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,guideResponse,positionInput};
+  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,RENDERERS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,drawsGuide,guideRenderer,renderRequest,limbColours,guideResponse,positionInput};
 });

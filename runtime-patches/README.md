@@ -91,3 +91,13 @@ host commit went 60 % → 87 % and `POST /free` did not release it. **Measured: 
 move the host-commit ceiling** (#77). The narrow exit test — `full load: True` for QwenImage at
 832×1216 with two references — is still unobserved. Detail in
 [`docs/RUNTIME-PRECONDITIONS.md`](../docs/RUNTIME-PRECONDITIONS.md) §7.
+
+## Measured reserve and one launch path, 23 September 2026 (no ComfyUI source edited, no package changed)
+
+`C:/AI/Start-ComfyUI.ps1` gained an optional `-ArgumentsFile` parameter (the Studio passes
+`BackendManager.primary_argv` through it) and its standalone default gained `--disable-pinned-memory`
+(reserve briefly 4, back to 0.6 the same night after the Krea 2 measurement). SHA-256 before `0c3fbc95bcb27444…`
+(kept as `C:/AI/Start-ComfyUI.ps1.bak-20260923-reserve06`), reserve-4 interim `ac8b40b650cb5883…`
+(`…bak-20260923-reserve4`), current `aef83687601d517f…`. Why, with the measurements:
+[`docs/RUNTIME-PRECONDITIONS.md`](../docs/RUNTIME-PRECONDITIONS.md) §8.
+

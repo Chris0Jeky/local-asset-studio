@@ -6,7 +6,7 @@ The launcher reuses the installed AMD ComfyUI runtime and weights. It checks whe
 
 `config/local.json` holds this PC's paths and is ignored by Git. The defaults are in `config/example.json`. The current embedded Python/ROCm installation must not be upgraded casually: install experimental dependencies separately and preserve the working runtime.
 
-`primary_disable_pinned_memory` is false by default. Set it true only for an explicitly measured primary-runtime experiment; it adds ComfyUI's existing `--disable-pinned-memory` launcher flag and does not alter packages, models or any other backend family.
+`primary_reserve_vram` is `0.6` (GiB) by default; `"auto"` measures what other processes hold on the GPU at each launch and reserves that plus 0.7 GiB (`app/gpu_memory.py`). It helps when evicting a text encoder lets the diffusion model fit, and made Krea 2 2.7x slower by forcing a partial load (`docs/RUNTIME-PRECONDITIONS.md` §8). `primary_disable_pinned_memory` is false by default. Set it true only for an explicitly measured primary-runtime experiment; it adds ComfyUI's existing `--disable-pinned-memory` launcher flag and does not alter packages, models or any other backend family.
 
 This PC's `experiments_root` points to the original source checkout's `experiments`
 directory, preserving its existing jobs and uploads. Back up that configured path,

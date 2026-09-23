@@ -12,6 +12,7 @@ import shutil
 import socket
 import tempfile
 import threading
+import uuid
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
@@ -59,7 +60,7 @@ async def exercise(args):
                     raw=self.rfile.read(int(self.headers['Content-Length']));writes.append(json.loads(raw));self.rfile=io.BytesIO(raw)
                     if not gate.wait(8):return self._json(503,{'error':'Fixture deadline'})
                     if flags['reject']:
-                        flags['reject']=False;return self._json(400,{'error':'Collection name rejected (fixture)'})
+                        flags['reject']=False;return self._json(400,{'format':'studio.collection-error/v1','code':'collection_invalid_command','generation_submitted':False,'error':'Collection name rejected (fixture)'})
                     return super().do_POST()
                 return fixture.Handler.do_POST(self)
             def _json(self,status,data):
@@ -78,7 +79,16 @@ async def exercise(args):
                     if consent['yes']:await dialog.accept()
                     else:await dialog.dismiss()
                 page.on('dialog',confirm)
-                if args.inert:await inert_page(page,http.server_port)
+                if args.inert:
+                    await inert_page(page,http.server_port)
+                    await page.expose_function('__collectionDigest',lambda data:list(hashlib.sha256(bytes(data)).digest()))
+                    await page.evaluate("""ids=>{
+                      const proto=Object.getPrototypeOf(sessionStorage);
+                      Object.defineProperty(proto,'length',{get(){return this.data.size;}});
+                      proto.key=function(i){return [...this.data.keys()][i]??null;};
+                      let index=0;crypto.randomUUID=()=>ids[index++];
+                      Object.defineProperty(crypto,'subtle',{value:{digest:async(_,raw)=>new Uint8Array(await __collectionDigest([...new Uint8Array(raw)])).buffer}});
+                    }""",[str(uuid.uuid4()) for _ in range(50)])
                 else:await page.goto(f'http://127.0.0.1:{http.server_port}/#assets')
                 await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id && !!window.StudioReadPoller')
                 await page.evaluate("""()=>{showView('assets');const poller=window.StudioReadPoller;poller.started=false;for(const lane of poller.lanes.values()){if(lane.timer!==null)poller.clearTimeout(lane.timer);lane.timer=null;}window.collectionQaInFlight=0;const original=api;api=async(path,options)=>{if(path!=='/api/collections')return original(path,options);collectionQaInFlight++;try{return await original(path,options);}finally{collectionQaInFlight--;}};}""")
@@ -87,10 +97,10 @@ async def exercise(args):
                 async def opened(id=None):
                     # Reset independent scenarios through fixture setup, not user consent.
                     await page.evaluate("""()=>new Promise(resolve=>{const d=document.querySelector('#collectionDialog');if(!d.open){resolve();return;}d.addEventListener('close',resolve,{once:true});d.close();})""")
-                    await refresh();await page.evaluate('id=>openCollection(id)',id)
+                    await refresh();await page.evaluate('new StudioCollectionRecovery.Journal(sessionStorage,assetState.workspace_id).reset()');await page.evaluate('id=>openCollection(id)',id)
                 async def status():return await page.locator('#collectionStatus').inner_text() if await page.locator('#collectionStatus').count() else ''
                 async def settled():
-                    await page.wait_for_function('collectionQaInFlight===0')
+                    await page.wait_for_function('collectionQaInFlight===0 && !collectionSession?.busy')
                 async def submit():await page.locator('#collectionForm .primary').click()
                 await opened(a['id'])
                 check('COL-01','The dialog is named by its visible heading',await page.locator('#collectionDialog').get_attribute('aria-labelledby')=='collectionDialogTitle')
@@ -194,7 +204,7 @@ async def exercise(args):
         except Exception as e:failure=type(e).__name__+': '+str(e)
         finally:
             gate.set();read_gate.set();http.shutdown();http.server_close()
-    report={'mode':'inert storage/transport; actual collection HTTP/SQLite' if args.inert else 'native HTTP/browser; actual collection SQLite','checks':checks,'pass':sum(c['passed'] for c in checks),'fail':sum(not c['passed'] for c in checks),'errors':errors,'execution_error':failure,'writes':writes,'fixture_posts':fixture.POSTS,'hashes':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ['app/static/workspace.js','app/static/index.html','app/workspace.py']}}
+    report={'mode':'inert storage/transport; actual collection HTTP/SQLite' if args.inert else 'native HTTP/browser; actual collection SQLite','checks':checks,'pass':sum(c['passed'] for c in checks),'fail':sum(not c['passed'] for c in checks),'errors':errors,'execution_error':failure,'writes':writes,'fixture_posts':fixture.POSTS,'hashes':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ['app/static/workspace.js','app/static/index.html','app/workspace.py','app/static/collection-recovery.js']}}
     module=ROOT/'app/static/collection-editor.js'
     if module.exists():report['hashes']['app/static/collection-editor.js']=hashlib.sha256(module.read_bytes()).hexdigest()
     (args.out/'receipt.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')

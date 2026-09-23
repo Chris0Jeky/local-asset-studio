@@ -1,0 +1,516 @@
+{
+ "bent-448x448": {
+  "artifact": {
+   "authority": "none",
+   "canvas": {
+    "height": 448,
+    "width": 448
+   },
+   "id": "fbe7bad1f615687111a63d301a2bd417a022c82db2955ccfb1082d1f2604eaed",
+   "joints": {
+    "left_ankle": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 304.64,
+     "y": 380.8
+    },
+    "left_ear": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 134.4,
+     "y": 103.04
+    },
+    "left_elbow": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 246.4,
+     "y": 22.4
+    },
+    "left_eye": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 94.08,
+     "y": 134.4
+    },
+    "left_hip": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 362.88,
+     "y": 138.88
+    },
+    "left_knee": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 282.24,
+     "y": 277.76
+    },
+    "left_shoulder": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 188.16,
+     "y": 49.28
+    },
+    "left_wrist": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 197.12,
+     "y": 134.4
+    },
+    "neck": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 152.32,
+     "y": 76.16
+    },
+    "nose": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 103.04,
+     "y": 138.88
+    },
+    "right_ankle": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 89.6,
+     "y": 376.32
+    },
+    "right_ear": null,
+    "right_elbow": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 120.96,
+     "y": 120.96
+    },
+    "right_eye": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 112.0,
+     "y": 125.44
+    },
+    "right_hip": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 277.76,
+     "y": 134.4
+    },
+    "right_knee": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 219.52,
+     "y": 259.84
+    },
+    "right_shoulder": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 134.4,
+     "y": 62.72
+    },
+    "right_wrist": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 138.88,
+     "y": 138.88
+    }
+   },
+   "parent_id": "0239741ac6f29892efc7eef8636a2d21221a982f4f46a2a6a344223465911fb5",
+   "review": "unreviewed",
+   "schema": "studio.pose-artifact/v1",
+   "source": {
+    "coordinate_space": "pixels",
+    "format": "openpose-coco18",
+    "person_index": 0,
+    "sha256": "39d654eadd65fccdcefe4e3e631d0394e47badb5040aeb9711d1b602aaa117c9"
+   }
+  },
+  "height": 448,
+  "width": 448
+ },
+ "bent-832x1216": {
+  "artifact": {
+   "authority": "none",
+   "canvas": {
+    "height": 1216,
+    "width": 832
+   },
+   "id": "0830201eadeeca2ae02cecbe11f4c69aef4d3c957aea9252020c6e03097dc2e5",
+   "joints": {
+    "left_ankle": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 565.76,
+     "y": 1033.6
+    },
+    "left_ear": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 249.6,
+     "y": 279.68
+    },
+    "left_elbow": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 457.6,
+     "y": 60.8
+    },
+    "left_eye": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 174.72,
+     "y": 364.8
+    },
+    "left_hip": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 673.92,
+     "y": 376.96
+    },
+    "left_knee": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 524.16,
+     "y": 753.92
+    },
+    "left_shoulder": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 349.44,
+     "y": 133.76
+    },
+    "left_wrist": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 366.08,
+     "y": 364.8
+    },
+    "neck": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 282.88,
+     "y": 206.72
+    },
+    "nose": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 191.36,
+     "y": 376.96
+    },
+    "right_ankle": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 166.4,
+     "y": 1021.44
+    },
+    "right_ear": null,
+    "right_elbow": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 224.64,
+     "y": 328.32
+    },
+    "right_eye": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 208.0,
+     "y": 340.48
+    },
+    "right_hip": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 515.84,
+     "y": 364.8
+    },
+    "right_knee": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 407.68,
+     "y": 705.28
+    },
+    "right_shoulder": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 249.6,
+     "y": 170.24
+    },
+    "right_wrist": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 257.92,
+     "y": 376.96
+    }
+   },
+   "parent_id": "e022047c49faf44a3e0b7003547dee7b1535d7492808833a0861c947229bc82d",
+   "review": "unreviewed",
+   "schema": "studio.pose-artifact/v1",
+   "source": {
+    "coordinate_space": "pixels",
+    "format": "openpose-coco18",
+    "person_index": 0,
+    "sha256": "7e723e4523c22e4eeccf9fca4608a62f623dbedf469236da7e5c7580f8cbf644"
+   }
+  },
+  "height": 1216,
+  "width": 832
+ },
+ "standing-1024x1536": {
+  "artifact": {
+   "authority": "none",
+   "canvas": {
+    "height": 1536,
+    "width": 1024
+   },
+   "id": "3037d1cb9981d3af1a6bb43165a538b3918ba9592fc7758d0ff8c5855bcd474d",
+   "joints": {
+    "left_ankle": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 573.44,
+     "y": 1320.96
+    },
+    "left_ear": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 563.2,
+     "y": 184.32
+    },
+    "left_elbow": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 624.64,
+     "y": 476.16
+    },
+    "left_eye": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 537.6,
+     "y": 165.89
+    },
+    "left_hip": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 563.2,
+     "y": 721.92
+    },
+    "left_knee": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 573.44,
+     "y": 1013.76
+    },
+    "left_shoulder": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 593.92,
+     "y": 307.2
+    },
+    "left_wrist": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 645.12,
+     "y": 645.12
+    },
+    "neck": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 512.0,
+     "y": 291.84
+    },
+    "nose": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 512.0,
+     "y": 184.32
+    },
+    "right_ankle": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 450.56,
+     "y": 1320.96
+    },
+    "right_ear": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 460.8,
+     "y": 184.32
+    },
+    "right_elbow": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 399.36,
+     "y": 476.16
+    },
+    "right_eye": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 486.4,
+     "y": 165.89
+    },
+    "right_hip": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 460.8,
+     "y": 721.92
+    },
+    "right_knee": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 450.56,
+     "y": 1013.76
+    },
+    "right_shoulder": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 430.08,
+     "y": 307.2
+    },
+    "right_wrist": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 378.88,
+     "y": 645.12
+    }
+   },
+   "parent_id": "a0933899f228edfefa1ae69b0fdc38c44778bc6ede9ccc07ced75a49c5bcad42",
+   "review": "unreviewed",
+   "schema": "studio.pose-artifact/v1",
+   "source": {
+    "coordinate_space": "pixels",
+    "format": "openpose-coco18",
+    "person_index": 0,
+    "sha256": "fa991fe21a278523288563480dbcdd8457c6a1f2c550bc5c86179f3da9fa8b46"
+   }
+  },
+  "height": 1536,
+  "width": 1024
+ },
+ "standing-832x1216": {
+  "artifact": {
+   "authority": "none",
+   "canvas": {
+    "height": 1216,
+    "width": 832
+   },
+   "id": "3f9e67c1cfccd79e616d228d6867e2a62a5dc30b7df724191f44f5bdd2364cbb",
+   "joints": {
+    "left_ankle": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 465.92,
+     "y": 1045.76
+    },
+    "left_ear": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 457.6,
+     "y": 145.92
+    },
+    "left_elbow": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 507.52,
+     "y": 376.96
+    },
+    "left_eye": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 436.8,
+     "y": 131.33
+    },
+    "left_hip": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 457.6,
+     "y": 571.52
+    },
+    "left_knee": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 465.92,
+     "y": 802.56
+    },
+    "left_shoulder": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 482.56,
+     "y": 243.2
+    },
+    "left_wrist": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 524.16,
+     "y": 510.72
+    },
+    "neck": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 416.0,
+     "y": 231.04
+    },
+    "nose": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 416.0,
+     "y": 145.92
+    },
+    "right_ankle": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 366.08,
+     "y": 1045.76
+    },
+    "right_ear": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 374.4,
+     "y": 145.92
+    },
+    "right_elbow": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 324.48,
+     "y": 376.96
+    },
+    "right_eye": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 395.2,
+     "y": 131.33
+    },
+    "right_hip": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 374.4,
+     "y": 571.52
+    },
+    "right_knee": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 366.08,
+     "y": 802.56
+    },
+    "right_shoulder": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 349.44,
+     "y": 243.2
+    },
+    "right_wrist": {
+     "confidence": null,
+     "origin": "manual",
+     "x": 307.84,
+     "y": 510.72
+    }
+   },
+   "parent_id": "e022047c49faf44a3e0b7003547dee7b1535d7492808833a0861c947229bc82d",
+   "review": "unreviewed",
+   "schema": "studio.pose-artifact/v1",
+   "source": {
+    "coordinate_space": "pixels",
+    "format": "openpose-coco18",
+    "person_index": 0,
+    "sha256": "7e723e4523c22e4eeccf9fca4608a62f623dbedf469236da7e5c7580f8cbf644"
+   }
+  },
+  "height": 1216,
+  "width": 832
+ }
+}

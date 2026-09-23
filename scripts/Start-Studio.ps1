@@ -33,7 +33,17 @@ $savedBackend = $null
 if (Test-Path -LiteralPath $backendStatePath) { $savedBackend = Get-Content -LiteralPath $backendStatePath -Raw | ConvertFrom-Json }
 if (-not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3','qwen21')) {
     if (-not (Test-Path -LiteralPath $studioConfig.comfy_launcher)) { throw 'ComfyUI is offline and its launcher is missing. Check config/local.json.' }
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $studioConfig.comfy_launcher -NoBrowser
+    # Start the same runtime the Studio's own switch/recovery launches: arguments from BackendManager.primary_argv,
+    # with the configured --reserve-vram and pinned-memory setting (docs/RUNTIME-PRECONDITIONS.md section 8).
+    $launcherArgs = @()
+    if ((Get-Content -LiteralPath $studioConfig.comfy_launcher -Raw) -match 'ArgumentsFile') {
+        $argsFile = Join-Path $repoRoot '.runtime\primary-comfy-args.json'
+        New-Item -ItemType Directory -Path (Split-Path $argsFile -Parent) -Force | Out-Null
+        & $studioConfig.python -s (Join-Path $repoRoot 'scripts\primary-comfy-args.py') | Set-Content -LiteralPath $argsFile -Encoding UTF8
+        if ($LASTEXITCODE -ne 0) { throw 'Could not compute the ComfyUI launch arguments; see scripts/primary-comfy-args.py.' }
+        $launcherArgs = @('-ArgumentsFile', $argsFile)
+    }
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $studioConfig.comfy_launcher -NoBrowser @launcherArgs
     if ($LASTEXITCODE -ne 0) { throw 'ComfyUI did not start; inspect its logs.' }
 }
 $studioUrl = 'http://127.0.0.1:8191'

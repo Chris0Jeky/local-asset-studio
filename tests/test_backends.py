@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 from urllib.error import URLError
 from test_server import server, FakeStudio, GRAPH, PRESET
 from backends import PRIMARY_RESERVE_VRAM, BackendManager
+import gpu_memory
 from runtime_recovery import RuntimeRecovery
 
 
@@ -30,14 +31,25 @@ class BackendTests(unittest.TestCase):
             self.assertFalse(BackendManager.matches_configured_process(profile,profile['python'],bad,profile['root']))
         self.assertFalse(BackendManager.matches_configured_process(profile,str(self.root/'foreign.exe'),argv,profile['root']))
 
-    def test_primary_launch_reserves_the_measured_vram_amount(self):
-        # 2 GB put Qwen Q4_K_M on the partial-load boundary (#77); 0.6 GB (614 MiB) is ~86 MiB under
-        # ComfyUI's own Windows default for this 16,304 MB card, 600+100 MiB (model_management.py:863-867).
-        profile=self.studio.backends.profiles['primary'];argv=BackendManager.primary_argv(profile)
+    def test_opt_in_auto_reserve_covers_what_other_processes_hold_on_the_gpu(self):
+        # "auto" (opt-in since the Krea 2 measurement, docs/RUNTIME-PRECONDITIONS.md section 8):
+        # 3.02 GiB held elsewhere + the 0.7 GiB margin -> 3.8.
+        self.assertEqual(self.studio.backends.profiles['primary']['reserve_vram'],0.6);self.assertEqual(PRIMARY_RESERVE_VRAM,0.6)
+        profile=dict(self.studio.backends.profiles['primary'],reserve_vram='auto')
+        reading={'adapters':{'0x0_0x102fb_0':{2304:{'dedicated_bytes':2282*2**20,'shared_bytes':0},30868:{'dedicated_bytes':811*2**20,'shared_bytes':0}}},'unknown_reason':None}
+        with patch('backends.gpu_memory.read',return_value=reading):argv=BackendManager.primary_argv(profile)
         self.assertEqual(argv.count('--reserve-vram'),1)
-        self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
-        self.assertEqual(PRIMARY_RESERVE_VRAM,'0.6')
+        self.assertEqual(argv[argv.index('--reserve-vram')+1],'3.8')
         self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
+        with patch('backends.gpu_memory.read',return_value={'adapters':None,'unknown_reason':'counters unavailable'}):argv=BackendManager.primary_argv(profile)
+        self.assertEqual(argv[argv.index('--reserve-vram')+1],format(gpu_memory.FALLBACK_GIB,'g'))
+
+    def test_configured_primary_reserve_is_used_verbatim_and_validated(self):
+        profile=dict(self.studio.backends.profiles['primary'],reserve_vram=BackendManager.configured_reserve('0.6'))
+        with patch('backends.gpu_memory.read') as read:argv=BackendManager.primary_argv(profile)
+        read.assert_not_called();self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
+        for bad in (True,-1,13,'many',float('nan'),None,[1]):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):BackendManager.configured_reserve(bad)
 
     def test_primary_pinned_memory_flag_is_explicit_and_default_off(self):
         profile=self.studio.backends.profiles['primary']
@@ -45,17 +57,25 @@ class BackendTests(unittest.TestCase):
         profile['disable_pinned_memory']=True
         self.assertIn('--disable-pinned-memory',BackendManager.primary_argv(profile))
 
+    def test_default_primary_reserve_is_the_measured_fixed_0_6(self):
+        profile=self.studio.backends.profiles['primary']
+        with patch('backends.gpu_memory.read') as read:argv=BackendManager.primary_argv(profile)
+        read.assert_not_called();self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
+
     def test_switch_actually_launches_primary_with_the_reserve_flag(self):
         # primary_argv alone would stay green if the call site were reverted; assert what Popen receives.
-        manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid')
+        manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid');manager.profiles['primary']['reserve_vram']='auto'
         manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
         launched=MagicMock(pid=4321);launched.poll.return_value=1
+        reserve={'reserve_gib':3.8,'basis':'measured','others_bytes':3*2**30,'adapter':'a','unknown_reason':None}
         with patch.object(manager,'available',return_value=True),patch.object(manager,'_idle',return_value=True), \
              patch.object(manager,'process',return_value=None),patch.object(manager,'configured_processes',return_value=[]), \
+             patch('backends.gpu_memory.launch_reserve_gib',return_value=reserve), \
              patch('backends.subprocess.Popen',return_value=launched) as popen:
             manager._switch('primary')
         argv=popen.call_args.args[0]
-        self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
+        self.assertEqual(argv[argv.index('--reserve-vram')+1],'3.8')
+        self.assertEqual(manager.operation['launch_reserve']['reserve_gib'],3.8);self.assertEqual(manager.snapshot()['last_launch_reserve']['basis'],'measured')
         self.assertEqual(argv[:3],[manager.profiles['primary']['python'],'-s',manager.profiles['primary']['entry']])
         self.assertEqual(manager.operation['status'],'failed');self.assertFalse(manager.busy)
 

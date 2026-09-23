@@ -790,6 +790,85 @@
       "visual": "workflows/comfyui/19 - WAI v17 Pose Control.json"
     },
     {
+      "id": "wai-skeleton",
+      "name": "WAI v17 \u00b7 drawn pose skeleton (Xinsir OpenPose, no detector)",
+      "category": "Characters",
+      "family": "WAI v17 (Illustrious)",
+      "description": "Draw the pose on this screen (Draw the pose) or attach a coloured OpenPose stick figure; Xinsir's SDXL OpenPose ControlNet holds WAI v17 to it. The skeleton goes straight to the ControlNet: no detector reads it. The character, clothes and setting come from the prompt.",
+      "graph": "workflows/api/wai-skeleton-api.json",
+      "verified": false,
+      "commercial_note": "WAI v17: the HF mirror agreement is verified; creator authentication and the original commercial terms remain unresolved. The Xinsir OpenPose ControlNet card declares Apache-2.0 (models/library.json). A drawn skeleton carries no third-party pixels; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "pose_strength": [
+        "10",
+        "strength"
+      ],
+      "reference_slots": [
+        {
+          "role": "pose",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "9",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "Precomputed OpenPose skeleton: the picture goes straight to ControlNetApplyAdvanced (no detector) and ComfyUI scales it to the canvas; draw it at the recipe's width and height"
+      },
+      "reference_board_label": "Pose skeleton",
+      "reference_board_hint": "A coloured stick figure on black. Draw the pose on this screen: Use this pose renders it in the controlnet_aux OpenPose convention Xinsir's ControlNet was trained on (studio.coco18-openpose-xinsir/v1) and puts it here; a thin-line drawing of the same joints lost the pose on 4 of 6 research seeds. An OpenPose skeleton exported by another editor also works. A photo or an illustration is the wrong input here: use a Style + Pose recipe, which runs the detector. Describe the character in the prompt; the pose words can stay short.",
+      "pose_guide_renderer": "studio.coco18-openpose-xinsir/v1",
+      "stages": [
+        "WAI v17 (Illustrious SDXL)",
+        "Drawn skeleton -> Xinsir OpenPose SDXL ControlNet (ControlNetApplyAdvanced, no detector), strength 0.8 from 0 to 100 % of the steps",
+        "28 Euler ancestral steps at CFG 5 on 832x1216; about 30-45 s a picture warm on the 9070 XT (this ComfyUI reloads the checkpoint for each prompt, about 40 s more)"
+      ],
+      "variants": [
+        {
+          "name": "Pose firmer (1.0)",
+          "controls": {
+            "pose_strength": 1.0
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "modality": "image",
+      "source": "https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0"
+    },
+    {
       "id": "anime",
       "name": "Animagine \u2022 anime character",
       "category": "Characters",
@@ -3613,9 +3692,9 @@
       "bindings_extra": {"lora": [["8", "strength_clip"]], "lora2": [["9", "strength_clip"]]},
       "choices": {"sampler": ["euler_ancestral", "euler", "dpmpp_2m"], "scheduler": ["karras", "normal", "simple"]},
       "modality": "image", "family": "AniFox v2 (SDXL)",
-      "description": "Prepared, not rendered. Fixed AniFox v2 checkpoint with the same fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 5. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
+      "description": "Fixed AniFox v2 checkpoint with the same fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 5. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
       "stages": ["AniFox v2 checkpoint", "Two optional SDXL LoRA slots", "Prompt + seed", "30-step sampling", "PNG"],
-      "execution_note": "Checkpoint bytes copied 2026-09-21 from a local download; SHA-256 matches the existing library pin. No live generation, quality review or rights acceptance is claimed."
+      "execution_note": "Checkpoint bytes copied 2026-09-21 from a local download; SHA-256 matches the existing library pin. Generated through the Studio on 2026-09-21, among other recipe runs in presets/recipes.json; the showcase recipe anifox-v2-showcase ran as job 43561247-70a8-4342-a768-81f5601a7fab, ComfyUI prompt cadc8403-bb7c-4ec5-bbbc-852ba0b230f1, 36.4 s on the primary backend (experiments/curated/civitai-intake-20260921/README.md). That run used the showcase prompt, not this preset's control prompt, and was not accepted (extra tail mass, extra fingers). Generated is not verified, accepted or licensed."
     },
     {
       "id": "anima-v1-baseline",
@@ -3661,9 +3740,9 @@
       "lora": ["10", "strength_model"], "lora_name": ["10", "lora_name"], "lora2": ["11", "strength_model"], "lora2_name": ["11", "lora_name"], "lora3": ["12", "strength_model"], "lora3_name": ["12", "lora_name"], "lora4": ["13", "strength_model"], "lora4_name": ["13", "lora_name"], "lora5": ["14", "strength_model"], "lora5_name": ["14", "lora_name"], "lora6": ["15", "strength_model"], "lora6_name": ["15", "lora_name"],
       "choices": {"sampler": ["euler", "euler_ancestral", "dpmpp_2m_sde_gpu"], "scheduler": ["simple", "normal", "beta"]},
       "modality": "image", "family": "One Obsession Anima v2.0", "dimension_multiple": 16,
-      "description": "Prepared, not rendered. One Obsession Anima v2.0 as a diffusion model with the existing Anima encoder and Qwen VAE. Six optional model-only adapter slots default to 0 and are pruned until a recipe turns them on.",
+      "description": "One Obsession Anima v2.0 as a diffusion model with the existing Anima encoder and Qwen VAE. Six optional model-only adapter slots default to 0 and are pruned until a recipe turns them on.",
       "stages": ["One Obsession Anima v2.0 diffusion model", "Six optional Anima adapter slots", "Prompt + seed", "30-step sampling", "Qwen VAE", "PNG"],
-      "execution_note": "Schema/contract work only. The UNET was copied from a local download on 2026-09-21; no live generation, quality review or rights acceptance is claimed."
+      "execution_note": "The UNET was copied from a local download on 2026-09-21. Generated through the Studio on 2026-09-21, among other recipe runs in presets/recipes.json; the showcase recipe oneobsession-anima-v20-showcase ran as job 2079b0b2-44a1-44db-9b9b-57b0693982fe, ComfyUI prompt a5bbe7d9-91ef-4edd-975c-3a82ede5675b, 40.4 s on the primary backend (experiments/curated/civitai-intake-20260921/README.md). That run used the showcase prompt, not this preset's control prompt; it was not accepted. Generated is not verified, accepted or licensed."
     },
     {
       "id": "pearly-anima-mix-v10-baseline",
@@ -3677,9 +3756,9 @@
       "lora": ["10", "strength_model"], "lora_name": ["10", "lora_name"], "lora2": ["11", "strength_model"], "lora2_name": ["11", "lora_name"], "lora3": ["12", "strength_model"], "lora3_name": ["12", "lora_name"], "lora4": ["13", "strength_model"], "lora4_name": ["13", "lora_name"], "lora5": ["14", "strength_model"], "lora5_name": ["14", "lora_name"], "lora6": ["15", "strength_model"], "lora6_name": ["15", "lora_name"],
       "choices": {"sampler": ["euler", "euler_ancestral", "dpmpp_2m_sde_gpu"], "scheduler": ["simple", "normal", "beta"]},
       "modality": "image", "family": "Pearly Anima Mix v1.0", "dimension_multiple": 16,
-      "description": "Prepared, not rendered. Pearly Anima Mix v1.0 as a diffusion model with the existing Anima encoder and Qwen VAE. Slot 2 and 3 author the Pearly esearu and PetiFlow adapters at strength 0. Strength 0 removes a slot from the submitted graph.",
+      "description": "Pearly Anima Mix v1.0 as a diffusion model with the existing Anima encoder and Qwen VAE. Slot 2 and 3 author the Pearly esearu and PetiFlow adapters at strength 0. Strength 0 removes a slot from the submitted graph.",
       "stages": ["Pearly Anima Mix v1.0 diffusion model", "Six optional Anima adapter slots", "Prompt + seed", "30-step sampling", "Qwen VAE", "PNG"],
-      "execution_note": "Schema/contract work only. The UNET was copied from a local download on 2026-09-21; no live generation, quality review or rights acceptance is claimed."
+      "execution_note": "The UNET was copied from a local download on 2026-09-21. Generated through the Studio on 2026-09-21, among other recipe runs in presets/recipes.json; the showcase recipe pearly-anima-mix-v10-showcase ran as job 0c0108fb-d82c-4550-9460-1502ae1d7fb7, ComfyUI prompt a201fd59-b3cc-4101-9e61-6827cc78b8c3, 26.2 s on the primary backend (experiments/curated/civitai-intake-20260921/README.md). That run used the showcase prompt, not this preset's control prompt; it was not accepted. Generated is not verified, accepted or licensed."
     },
     {
       "id": "wan22-t2v",
