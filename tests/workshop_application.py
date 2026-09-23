@@ -105,7 +105,13 @@ def main():
                     page.select_option('#workshopLayout', layout)
                     page.fill('#positive', '   ')
                     assert page.locator('#generate').is_disabled(), (width, layout)
+                    # The specific blocker is summarized in the dock; details are
+                    # intentionally collapsed until the user chooses Review checks.
+                    page.wait_for_function("document.querySelector('#workshopReadiness').textContent.includes('Add a prompt to generate.')")
+                    assert page.locator('#workshopReadiness').is_visible(), (width, layout)
+                    page.click('#workshopReview')
                     blocker = page.locator('[data-readiness-code="continuation-wording"]')
+                    blocker.wait_for(state='visible')
                     assert blocker.is_visible(), (width, layout)
                     assert 'Add a prompt to generate.' in blocker.inner_text()
                     blocker.locator('[data-ux-resolve="wording"]').click()
