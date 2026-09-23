@@ -34,7 +34,10 @@ The numbers in brackets are each picture's mean score.
   build draws a slightly different picture from the same seed.
 - **Defects shared by every configuration:**
   - the portrait's irises are plain yellow, without the rings the prompt asks for;
-  - the two gloved hands on the sword hilt merge into one black mass.
+  - the two black-gloved hands overlap on the sword hilt as one dark silhouette, so no fingers can be counted. The grip
+    still reads as two-handed. This judge scored it `anatomy` 4 (worth noting, no fix needed), and the lab scored it the
+    same. Anyone who reads it as fused hands under the rubric's `anatomy` 1 example would reject all three configurations
+    alike, so the tie between them would stand.
 
 ## Agreement with the lab's judge
 
