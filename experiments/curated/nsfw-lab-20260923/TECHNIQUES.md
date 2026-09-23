@@ -65,6 +65,22 @@ Measured:
 
 Use T6 when a light garment will not hike. Expect gloss more than transparency on a dark dress.
 
+## T6 page poses
+
+The version page (Civitai model 1425150, version 1610854) has seven examples and four distinct poses. All of them put `seethroughILL` on the prompt and the LoRA at strength 1. The poses, not the original characters, are what transferred:
+
+| Pose | What the example does | Lab cell |
+| --- | --- | --- |
+| Bent over, from behind, hands on the butt, bike shorts, foreshortening | The rear crop the page is known for. Hands are part of the pose, so the no-hands ban stays off. | `p-changli-bentover` |
+| Seiza, from behind, ass focus, tongue out | A seated rear. The page used it on a robe. | `p-shalltear-seiza` |
+| Squat, facing the viewer, hands behind the head, spread legs, bodysuit | A front pose that keeps the hands off the furniture. | `p-makima-squat` |
+| Sitting, facing away, pencil skirt, close ass crop | A clothed rear sit. | `p-zhuyuan-skirt` |
+| Upper-body portrait, veil, flowy dress, looking at the viewer | The mild example. Tests the LoRA on a face crop. | `p-blackswan-portrait` |
+
+Do not copy the page's weight syntax `(tag:1.2)` onto Anima. These five stay on Illustrious presets.
+
+All five completed. The bent-over crop, the seiza, the squat with hands behind the head, and the seated rear all held. The portrait still made a sheer panel, and the face stayed the most recognizable. The squat is the front pose that keeps hands off furniture. The bent-over crop is the one to reuse when the hips are the subject and hands are allowed.
+
 ## M2 measured
 
 All nine jobs completed. About 26–38 seconds each. No spill line was required to finish the queue.
