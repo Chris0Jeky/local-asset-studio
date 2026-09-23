@@ -42,6 +42,7 @@ Records with SHA-256 and crop coordinates:
 | Does the compass read at 128 px, and how much cleanup does A need? | compass-first-batch README | **It reads, but it is not yet an icon.** Both exports keep an off-white background, a grey drop shadow and about 4,300 anti-aliased colours. A needs about 10–15 minutes of cleanup: background to alpha, a 16–32 colour palette. B also needs its garbled W and S redrawn. |
 | Is the NoobAI Masterpiece colour fringe real? | lora-smoke README | **Yes.** A red/cyan fringe on the edges at both strengths, confirmed at full resolution. It ties the control, so there is no gain to set against it ([q-32](pre-reviews/q-32.md)). |
 | Is the `wai-skeleton` dark background acceptable at 0.8, and is the Studio proof clean? | CURRENT_STATE, sdxl-skeleton README | **Yes to both.** The proof (`6a342bbf`) is clean on white. On seed 03 at 0.8 the leak reads as a mid-grey backdrop (fixable). The bent-skeleton renders were not judged: that skeleton was estimated from an excluded fan picture. |
+| Does the pilot profile marked "needs review" keep the canon, and are the ten rejections right? | CURRENT_STATE, character-reference-pilot README | **The profile passes on everything visible**: the looped top section, the ornament with gold balls, blue eyes, bangs, frilled collar and the whole standard costume, in a strict side view with complete boots. Its hands are not visible, and the canon has no side view, so the owner confirms. Nine of the ten rejections hold at thumbnail level. The tenth, `606882fb` (rear view missing the lilac underskirt and the V boot tops), is strict: fixable under R1. No pictures committed (a named franchise character). |
 
 ## Partly answered
 
@@ -95,7 +96,6 @@ Records with SHA-256 and crop coordinates:
 | Question | Why |
 | --- | --- |
 | Depth-cut value; subject isolation; speech-bubble and lettering leaks; Q8 against Q6 | every render uses the excluded student-canon fan pair (the q-28 note) |
-| The character-pilot profile marked "requires review" | not reached tonight; the pilot's pictures live in `C:/AI/character-lab/pilot-20260912/` |
 | Wan 2.2 video coherence; TRELLIS and Hunyuan3D meshes | video and 3D need frame or turntable review; not reached tonight |
 
 ## Found on the way
