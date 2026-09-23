@@ -86,7 +86,10 @@ class CompositionScalarSafetyTests(unittest.TestCase):
     def test_credential_query_variants_refuse_without_echoing_values(self):
         keys = ('x-api-key', 'civitai_api_key', 'providerApiKey', 'auth', 'bearer', 'jwt',
                 'session', 'session_id', 'cookie', 'set-cookie', 'sig', 'signature',
-                'credential', 'credentials', 'passwd', 'pwd', 'X-Amz-Credential', 'X-Amz-Signature')
+                'credential', 'credentials', 'passwd', 'pwd', 'X-Amz-Credential', 'X-Amz-Signature',
+                'secret_key', 'secretKey', 'SECRET_KEY', 'secretkey', 'client_secret_key',
+                'civitaiSecretKey', 'aws_secret_access_key', 'token_value', 'session_cookie_value',
+                'credential_value', 'AUTH_HEADER', 'APIKeyValue')
         for source in ('model', 'gallery'):
             for key in keys:
                 with self.subTest(source=source, key=key):
@@ -105,7 +108,8 @@ class CompositionScalarSafetyTests(unittest.TestCase):
     def test_benign_scope_parameters_survive_unchanged(self):
         value = request()
         query = value['image_pages'][0]['receipt']['query']
-        query.update(period='Week', sort='Most Reactions', limit=100, customFilter=['a', 'b'])
+        query.update(period='Week', sort='Most Reactions', limit=100, customFilter=['a', 'b'],
+                     author='example', monkeyCount=1, keyframe=2)
         result = C.normalize(value)
         self.assertEqual(result['source_receipts'][1]['query'], query)
         self.assert_no_authority(result)

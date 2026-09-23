@@ -85,8 +85,15 @@ def normalize_query(value: Any) -> dict[str, Any]:
     for key, raw in value.items():
         need(token(key, 128), 'Invalid source query key')
         compact = re.sub(r'[^a-z0-9]', '', key.casefold())
-        need(compact not in SENSITIVE_QUERY and not compact.startswith('authorization')
-             and not compact.endswith(('apikey', 'token', 'secret', 'password', 'credential', 'signature')),
+        # Check named components before collapsing separators, including camelCase
+        # and acronym boundaries (secret_key, tokenValue, APIKeyValue).
+        words = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2', key)
+        words = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', words)
+        components = set(re.findall(r'[a-z0-9]+', words.casefold()))
+        need(not components.intersection(SENSITIVE_QUERY)
+             and compact not in SENSITIVE_QUERY and not compact.startswith('authorization')
+             and not compact.endswith(('apikey', 'token', 'secret', 'password', 'credential',
+                                       'signature', 'secretkey', 'accesskey', 'privatekey')),
              'Source receipt cannot retain a sensitive query parameter')
         if isinstance(raw, list):
             need(len(raw) <= 64, 'Source query list is oversized')
