@@ -163,3 +163,44 @@ class GraphValidationTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+def autogrow(template, **inputs):
+    """TextEncodeQwenImage21-shaped node (ComfyUI v0.37.0): a V3 Autogrow group of IMAGE inputs."""
+    info={'Source':{'input':{},'output':['IMAGE']},
+          'Enc':{'input':{'optional':{'images':['COMFY_AUTOGROW_V3',{'template':template}]}},'output':['CONDITIONING']}}
+    return {'source':{'class_type':'Source','inputs':{}},'enc':{'class_type':'Enc','inputs':inputs}},info
+
+
+class AutogrowTests(unittest.TestCase):
+    NAMES={'input':{'required':{'image':['IMAGE',{}]}},'names':['image_%d'%i for i in range(1,17)],'min':0}
+
+    def test_named_members_expand_and_min_zero_requires_none(self):
+        graph,info=autogrow(self.NAMES,**{'images.image_1':['source',0]})
+        fields,required=pipeline.expanded_input_contract(info['Enc'],graph['enc']['inputs'])
+        self.assertNotIn('images',fields);self.assertEqual(required,set())
+        self.assertEqual(sorted(fields),sorted('images.image_%d'%i for i in range(1,17)))
+        pipeline.graph_check(graph,info);pipeline.graph_check(autogrow(self.NAMES)[0],info)
+
+    def test_prefix_members_follow_range_and_required_minimum(self):
+        template={'input':{'required':{'image':['IMAGE',{}]}},'prefix':'img','min':2,'max':3}
+        graph,info=autogrow(template,**{'images.img0':['source',0],'images.img1':['source',0]})
+        fields,required=pipeline.expanded_input_contract(info['Enc'],graph['enc']['inputs'])
+        self.assertEqual(sorted(fields),['images.img0','images.img1','images.img2']);self.assertEqual(required,{'images.img0','images.img1'})
+        pipeline.graph_check(graph,info)
+        del graph['enc']['inputs']['images.img1']
+        with self.assertRaisesRegex(ValueError,'Missing required input: images.img1'):pipeline.graph_check(graph,info)
+
+    def test_optional_template_input_ignores_minimum(self):
+        template={'input':{'optional':{'image':['IMAGE',{}]}},'prefix':'img','min':2,'max':2}
+        graph,info=autogrow(template)
+        self.assertEqual(pipeline.expanded_input_contract(info['Enc'],{})[1],set())
+
+    def test_members_outside_the_template_and_bad_templates_are_refused(self):
+        graph,info=autogrow(self.NAMES,**{'images.image_17':['source',0]})
+        with self.assertRaises(ValueError):pipeline.graph_check(graph,info)
+        for template in ({'input':{'required':{'image':['IMAGE',{}]}},'names':['a','a'],'min':0},
+                         {'input':{'required':{'image':['IMAGE',{}]}},'prefix':'img','min':-1,'max':2},
+                         {'input':{},'names':['a'],'min':0},{'names':['a'],'min':0}):
+            with self.subTest(template=template),self.assertRaisesRegex(ValueError,'Invalid autogrow'):
+                pipeline.expanded_input_contract(autogrow(template)[1]['Enc'],{})
