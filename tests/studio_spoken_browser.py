@@ -78,6 +78,56 @@ class SpokenBrowserTests(unittest.TestCase):
         self.assertTrue(all(path.startswith(('/api/spoken-briefs/bookmark?', '/api/spoken-briefs/review?')) for path in posts), posts)
         self.assertFalse(self.errors, self.errors)
 
+    def test_voice_main_links_to_listening_after_shell_replaces_topbar(self):
+        self.page.route('**/api/voice-baseline', lambda route: route.fulfill(
+            json={'capabilities': {'configured': False}, 'projects': []}))
+        for width in (1280, 390):
+            with self.subTest(width=width):
+                self.page.set_viewport_size({'width': width, 'height': 900})
+                self.page.goto(self.origin + '/voice.html')
+                self.page.locator('.studio-sidebar').wait_for(state='attached')
+                link = self.page.locator('main a[href="/spoken-briefs.html"]')
+                self.assertEqual(1, link.count(), 'The listening entry must survive shared-shell mounting')
+                self.assertTrue(link.is_visible())
+                link.focus(); self.page.keyboard.press('Enter')
+                self.page.wait_for_url('**/spoken-briefs.html')
+                self.page.wait_for_function("!document.querySelector('#discover').disabled")
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+        self.assert_no_inference()
+
+    def test_listening_return_link_reaches_existing_production_document(self):
+        # Navigation itself also works without script execution or API side effects.
+        with self.browser.new_context(java_script_enabled=False) as context:
+            page = context.new_page(); page.goto(self.origin + '/spoken-briefs.html')
+            link = page.locator('nav a').nth(1)
+            self.assertEqual('/#production', link.get_attribute('href'))
+            with page.expect_navigation() as navigation:
+                link.click()
+            self.assertEqual(200, navigation.value.status)
+            self.assertEqual(self.origin + '/#production', page.url)
+            self.assertEqual(1, page.locator('#productionView').count())
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+
+    def test_native_voice_failure_disables_prepare_until_explicit_refresh(self):
+        for width in (1280, 390):
+            with self.subTest(width=width):
+                self.page.set_viewport_size({'width': width, 'height': 900})
+                self.page.route('**/api/voice-baseline', lambda route: route.fulfill(
+                    status=503, content_type='text/html', body='<!doctype html>Unavailable'))
+                self.page.goto(self.origin + '/voice.html')
+                self.page.wait_for_function("document.querySelector('#voiceStatus').textContent.length > 0")
+                self.assertTrue(self.page.locator('#voicePrepare').is_disabled())
+                self.assertIn('unavailable', self.page.locator('#voiceStatus').inner_text().lower())
+                self.assertIn('unavailable', self.page.locator('#voiceTakes').inner_text().lower())
+                self.page.unroute('**/api/voice-baseline')
+                self.page.route('**/api/voice-baseline', lambda route: route.fulfill(
+                    json={'capabilities': {'configured': True}, 'projects': []}))
+                self.page.locator('#voiceRefresh').click()
+                self.page.wait_for_function("!document.querySelector('#voicePrepare').disabled")
+                self.page.unroute('**/api/voice-baseline')
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+        self.assert_no_inference()
+
     def test_initial_page_and_archive_inspection_never_write_or_autoplay(self):
         self.assertFalse(any('/archives' in path for _, path in self.traffic))
         self.inspect()

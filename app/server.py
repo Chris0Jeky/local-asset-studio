@@ -59,7 +59,9 @@ PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit i
 HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the prompt; Stop tracking ends observation sooner
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
-GPU_SAMPLE_EVERY = 5                    # empty history polls between GPU memory samples (app/gpu_memory.py)
+GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
+GPU_SAMPLE_SECONDS = 0.5                 # sampler thread cadence: a VAE decode's overflow into shared memory lasts about 3 s
+GPU_SETTLE_SECONDS = 3                   # after a prompt that spilled, how long shared memory may take to drain before it counts as lingering
 EVICT_WAIT_SECONDS = 30                  # ceiling for ComfyUI to act on /free before the next prompt is posted anyway
 MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt", ".sft", ".bin")
 HOST_COMMIT_MINIMUM = 32 * 1024**3
@@ -128,6 +130,7 @@ class Studio:
         # desktop holds; three SDXL checkpoints in one process spilled 0, 3.7 and 6.0 GB into shared memory (23 Sep 2026). Unload first.
         self.evict_on_model_change = self.config.get("unload_models_on_change", True) is not False
         self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
+        self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values():
@@ -494,21 +497,80 @@ class Studio:
             self._gpu_memory = gpu_memory.spill(pid); self._gpu_memory_at = time.monotonic()
         return dict(self._gpu_memory)
 
-    def _sample_gpu_memory(self, job, submission):
-        """Keep the peak shared (WDDM-paged) GPU memory seen while a prompt runs; spilling makes every step page weights."""
+    def _sample_gpu_memory(self, job, submission, sampler=None):
+        """Keep the peak shared (WDDM-paged) GPU memory seen while a prompt runs; spilling makes every step page weights.
+
+        `sampler` (gpu_memory.Sampler) carries what its thread saw since the last call; only this thread writes the job."""
         try: reading = self.gpu_memory_reading(refresh=True)
-        except Exception: return
-        if reading.get('shared_bytes') is None: return
+        except Exception: reading = {}
+        batch = sampler.take() if sampler is not None else None
+        if reading.get('shared_bytes') is None and not batch: return
         peak = submission.setdefault('gpu_memory', {'peak_shared_bytes': 0, 'peak_dedicated_bytes': 0, 'samples': 0, 'spilled': False})
-        peak['samples'] += 1; peak['peak_shared_bytes'] = max(peak['peak_shared_bytes'], reading['shared_bytes'])
-        peak['peak_dedicated_bytes'] = max(peak['peak_dedicated_bytes'], reading['dedicated_bytes'] or 0)
-        if reading.get('spilled') and not peak['spilled']:
+        if reading.get('shared_bytes') is not None:
+            peak['samples'] += 1; peak['peak_shared_bytes'] = max(peak['peak_shared_bytes'], reading['shared_bytes'])
+            peak['peak_dedicated_bytes'] = max(peak['peak_dedicated_bytes'], reading['dedicated_bytes'] or 0)
+        if batch:
+            peak['samples'] += batch['samples']; peak['peak_dedicated_bytes'] = max(peak['peak_dedicated_bytes'], batch['peak_dedicated_bytes'])
+            if batch['peak_shared_bytes'] > peak['peak_shared_bytes']:
+                peak['peak_shared_bytes'] = batch['peak_shared_bytes']
+                if batch.get('holders'): peak['top_holders'] = batch['holders']
+        if peak['peak_shared_bytes'] >= gpu_memory.SPILL_BYTES and not peak['spilled']:
             peak['spilled'] = True; job['gpu_spill'] = True
 
+    def vram_guard_status(self):
+        """Whether the running primary ComfyUI loaded the Studio VRAM guard, from the report it writes at start. Never raises."""
+        try: report = json.loads((self.root / '.runtime/vram-guard.json').read_text(encoding='utf-8'))
+        except (OSError, ValueError): report = None
+        if not isinstance(report, dict): return {'installed': None, 'reason': 'No report: ComfyUI was started without the guard or before it existed'}
+        try: pid = self.gpu_memory_reading().get('pid')
+        except Exception: pid = None
+        if pid is not None and report.get('pid') != pid: return {'installed': None, 'reason': 'The report belongs to an earlier ComfyUI process; this one was started without the guard'}
+        return {'installed': report.get('installed') is True, 'reason': report.get('reason'), 'pid': report.get('pid')}
+
+    def _start_gpu_sampler(self):
+        """A gpu_memory.Sampler on the active ComfyUI process, or None when its PID is unknown. Never raises."""
+        try:
+            pid = self.gpu_memory_reading(refresh=True).get('pid')
+            return gpu_memory.Sampler(pid, GPU_SAMPLE_SECONDS).start() if pid is not None and sys.platform == 'win32' else None
+        except Exception: return None
+
+    def _settle_gpu_memory(self, submission):
+        """After a prompt that spilled: did shared memory drain (an overflow while it ran) or linger (the next prompt pages too)?"""
+        peak = submission.get('gpu_memory') or {}
+        if not peak.get('spilled'): return
+        deadline = time.monotonic() + GPU_SETTLE_SECONDS; shared = None
+        while True:
+            try: shared = self.gpu_memory_reading(refresh=True).get('shared_bytes')
+            except Exception: shared = None
+            if shared is None or shared < gpu_memory.SPILL_BYTES or time.monotonic() >= deadline: break
+            time.sleep(0.25)
+        peak['settled_shared_bytes'] = shared; peak['lingering'] = shared is not None and shared >= gpu_memory.SPILL_BYTES
+
     @staticmethod
-    def graph_model_files(graph):
-        """Model filenames an API graph loads (string inputs with a model suffix); links and numbers are ignored."""
+    def spill_message(job):
+        """The completion message for a job whose prompts spilled, naming the largest other GPU holder when it is known."""
+        peaks = [s.get('gpu_memory') or {} for s in job.get('submissions', [])]
+        worst = max(peaks, key=lambda p: p.get('peak_shared_bytes', 0), default={})
+        holders = worst.get('top_holders') or []; others = ''
+        if holders:
+            first = holders[0]; name = first.get('name') or 'PID ' + str(first.get('pid'))
+            if name.lower() == 'dwm.exe': name = 'dwm.exe (the Windows desktop)'
+            others = f" The largest other GPU user was {name} with {first.get('dedicated_bytes', 0) / 2**30:.1f} GB."
+        gib = worst.get('peak_shared_bytes', 0) / 2**30
+        if any(p.get('lingering') for p in peaks):
+            left = max((p.get('settled_shared_bytes') or 0) for p in peaks) / 2**30
+            return (f"Complete, but slowly: GPU memory spilled {gib:.1f} GB into system RAM and {left:.1f} GB was still there after the job, "
+                    f"so the next job will page too.{others} The Studio unloads ComfyUI's models before the next job; if the spill stays, "
+                    "close GPU-heavy apps or restart ComfyUI.")
+        return f"Complete. GPU memory overflowed {gib:.1f} GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.{others}"
+
+    @staticmethod
+    def graph_model_files(graph, skip_loras=False):
+        """Model filenames an API graph loads (string inputs with a model suffix); links and numbers are ignored.
+
+        `skip_loras` leaves out LoRA loader nodes: a LoRA change re-patches the resident model in place and needs no unload."""
         return frozenset(v.replace("\\", "/") for node in (graph or {}).values() if isinstance(node, dict)
+                         and not (skip_loras and 'lora' in str(node.get("class_type", "")).lower())
                          for v in (node.get("inputs") or {}).values() if isinstance(v, str) and v.lower().endswith(MODEL_FILE_SUFFIXES))
 
     def _evict_before_submit(self, job, graph, index):
@@ -516,7 +578,7 @@ class Studio:
 
         Returns the evidence dict it appended to the job, or None when nothing was needed. Never raises: an eviction that cannot
         happen leaves the submission exactly as it was before this step existed."""
-        url = (job.get('comfy_url') or self.comfy_url).rstrip('/'); models = self.graph_model_files(graph)
+        url = (job.get('comfy_url') or self.comfy_url).rstrip('/'); models = self.graph_model_files(graph, skip_loras=True)
         backends = getattr(self, 'backends', None)
         if not self.evict_on_model_change or url != self.comfy_url or (backends is not None and getattr(backends, 'active', 'primary') != 'primary'): return None
         try: reading = self.gpu_memory_reading(refresh=True)
@@ -525,17 +587,24 @@ class Studio:
         dropped = sorted(last['models'] - models) if last and last['url'] == url and last['pid'] == pid and models else []
         spilling = bool(reading.get('spilled'))
         self._resident = {'url': url, 'pid': pid, 'models': models}
-        if not dropped and not spilling: return None
+        if dropped or not spilling: self._spill_unload_ineffective = None
+        # An unload that already left this process spilling says the cause is outside ComfyUI; repeating it only costs reloads.
+        if not dropped and (not spilling or self._spill_unload_ineffective == pid): return None
         record = {'index': index, 'reason': 'model change' if dropped else 'spill', 'dropped_models': dropped[:8], 'shared_before': reading.get('shared_bytes'),
                   'dedicated_before': reading.get('dedicated_bytes'), 'requested_at': time.time()}
         def torch_reserved():
-            devices = (self._request("/system_stats", timeout=5) or {}).get("devices") or [{}]
-            value = devices[0].get("torch_vram_total"); return value if isinstance(value, (int, float)) else None
+            stats = self._request("/system_stats", timeout=5)
+            devices = stats.get("devices") if isinstance(stats, dict) else None
+            first = devices[0] if isinstance(devices, list) and devices and isinstance(devices[0], dict) else {}
+            value = first.get("torch_vram_total"); return value if isinstance(value, (int, float)) and not isinstance(value, bool) else None
         try:
             queue = self._request("/queue", timeout=5)
+            before = None
             if not isinstance(queue, dict) or queue.get("queue_running") or queue.get("queue_pending"): record['outcome'] = 'skipped: ComfyUI queue busy'
+            elif (before := torch_reserved()) is not None and before <= 1024 ** 3:
+                record['torch_reserved_before'] = before; record['outcome'] = 'nothing resident'
             else:
-                before = torch_reserved(); record['torch_reserved_before'] = before
+                record['torch_reserved_before'] = before
                 self._request("/free", method="POST", data={"unload_models": True}, timeout=30, allow_empty=True)
                 # The flag is read between prompts: a prompt posted before the worker wakes would run with the old models still loaded.
                 released = lambda value: value is not None and (value <= 1024 ** 3 or (before is not None and value <= before * 0.5))
@@ -545,10 +614,14 @@ class Studio:
                     if after is None: time.sleep(3); break   # unobservable: give the idle worker a moment, then submit
                 record['torch_reserved_after'] = after
                 record['outcome'] = 'unloaded' if released(after) else 'requested; release not observed' if after is None else 'release not observed within ' + str(EVICT_WAIT_SECONDS) + ' s'
-        except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError, HTTPException) as exc:
-            record['outcome'] = 'failed: ' + str(exc)[:200]
+        except Exception as exc:   # a malformed or failing ComfyUI answer is evidence, never a reason to fail the job
+            record['outcome'] = 'failed: ' + (str(exc) or type(exc).__name__)[:200]
         try: after_reading = self.gpu_memory_reading(refresh=True); record['shared_after'] = after_reading.get('shared_bytes')
         except Exception: pass
+        # Only an unload that actually happened (or found nothing to unload) proves the cause is outside ComfyUI; a skipped or failed one proves nothing.
+        attempted = record.get('outcome') in ('unloaded', 'nothing resident') or str(record.get('outcome', '')).startswith('release not observed')
+        if record['reason'] == 'spill' and attempted and isinstance(record.get('shared_after'), int) and record['shared_after'] >= gpu_memory.SPILL_BYTES:
+            self._spill_unload_ineffective = pid
         record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
         job.setdefault('model_evictions', []).append(record)
         return record
@@ -1307,7 +1380,7 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
         except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
 
     def inspect_preset(self, preset_id, graph=None):
@@ -1619,9 +1692,7 @@ class Studio:
             job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
             if not self._wait_history(job, submission): return
         job["status"] = "completed"; job["message"] = "Complete"
-        if job.get('gpu_spill'):
-            peak = max(s.get('gpu_memory', {}).get('peak_shared_bytes', 0) for s in job.get('submissions', []))
-            job["message"] = f"Complete, but slowly: GPU memory spilled {peak / 2**30:.1f} GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job."
+        if job.get('gpu_spill'): job["message"] = self.spill_message(job)
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
 
     def _prompt_listed(self, job, prompt_id):
@@ -1638,6 +1709,12 @@ class Studio:
         return False
 
     def _wait_history(self, job, submission):
+        sampler = self._start_gpu_sampler()
+        try: return self._observe_history(job, submission, sampler)
+        finally:
+            if sampler is not None: sampler.stop()
+
+    def _observe_history(self, job, submission, sampler=None):
         prompt_id = submission["prompt_id"]
         deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0
         while time.monotonic() < deadline:
@@ -1655,7 +1732,7 @@ class Studio:
                 return False
             if history:
                 # A prompt that finishes between samples (or before the first) still gets one reading at completion.
-                self._sample_gpu_memory(job, submission)
+                self._sample_gpu_memory(job, submission, sampler); self._settle_gpu_memory(submission)
                 status = history.get("status", {})
                 if status.get("status_str") == "error":
                     errors = [m[1] for m in status.get("messages", []) if isinstance(m, list) and len(m) > 1 and m[0] == "execution_error" and isinstance(m[1], dict)]
@@ -1680,7 +1757,7 @@ class Studio:
                                 if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
                 submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
             empty_polls += 1
-            if empty_polls % GPU_SAMPLE_EVERY == 1: self._sample_gpu_memory(job, submission)
+            if empty_polls % GPU_SAMPLE_EVERY == 1: self._sample_gpu_memory(job, submission, sampler)
             if empty_polls % HISTORY_QUEUE_CHECK_EVERY == 0:
                 # A prompt in neither the queue nor the history is gone (restart, cleared queue); do not wait out the ceiling.
                 unlisted = 0 if self._prompt_listed(job, prompt_id) else unlisted + 1

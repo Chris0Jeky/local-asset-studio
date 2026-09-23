@@ -4,10 +4,13 @@
   const $ = id => document.getElementById(id), prefix = '/api/spoken-briefs';
   const findings = {pronunciation:'Pronunciation', omissions_repetitions:'Omissions / repetitions', delivery:'Delivery', fatigue:'Listening fatigue'};
   const url = (route, query={}) => prefix + route + (Object.keys(query).length ? '?' + new URLSearchParams(query) : '');
+  const unavailable = () => Error('Spoken Brief API unavailable. Check that Studio is running, then reload this page.');
   async function request(route, query={}, body) {
-    const response = await fetch(url(route, query), {method:body === undefined ? 'GET' : 'POST', cache:'no-store',
+    let response;
+    try { response = await fetch(url(route, query), {method:body === undefined ? 'GET' : 'POST', cache:'no-store',
       credentials:'same-origin', redirect:'error', headers:body === undefined ? {} : {'Content-Type':'application/json'},
-      body:body === undefined ? undefined : JSON.stringify(body)});
+      body:body === undefined ? undefined : JSON.stringify(body)}); } catch (_) { throw unavailable(); }
+    if (!/^application\/json(?:\s*;|$)/i.test(response.headers.get('Content-Type') || '') || !response.body) throw unavailable();
     const reader = response.body.getReader(), parts=[]; let bytes=0;
     try {
       while (true) {
@@ -19,12 +22,13 @@
     } finally { reader.releaseLock(); }
     const raw = new Uint8Array(bytes); let offset=0;
     for (const part of parts) { raw.set(part,offset); offset += part.length; }
-    const value = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));
-    if (!response.ok) throw Error(value.error || `Request refused (${response.status})`);
+    let value;
+    try { value = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw)); } catch (_) { throw unavailable(); }
+    if (!response.ok) throw Error(value?.error || `Request refused (${response.status})`);
     return value;
   }
   const session = new SpokenReview.ReviewSession(request), drafts = new Map();
-  let playerBinding=null, pendingSeek=null, loop=null, chosenReview=null, discoveryTicket=0, discardDraft=false;
+  let playerBinding=null, pendingSeek=null, loop=null, chosenReview=null, discoveryTicket=0, discardDraft=false, reviewBaseline=null;
   const status = text => { $('status').textContent=text; };
   const option = (value,text) => { const e=document.createElement('option'); e.value=value; e.textContent=text; return e; };
   const seconds = sample => (sample/48000).toFixed(3) + ' s';
@@ -45,11 +49,14 @@
     for (const [value,text] of [['not-reviewed','Not reviewed'],['acceptable','Acceptable'],['needs-work','Needs work']]) select.append(option(value,text));
     wrapper.append(select); $('findings').append(wrapper);
   }
+  const reviewFields = () => ({target:$('reviewTarget').value, decision:$('decision').value, reviewer:$('reviewer').value,
+    reason:$('reason').value, findings:Object.fromEntries(Object.keys(findings).map(k=>[k,$('finding-'+k).value]))});
   function retainDraft() {
     const key=draftKey(); if (!key || discardDraft) return true;
+    const draft=reviewFields();
+    if (JSON.stringify(draft) === reviewBaseline) { drafts.delete(key); return true; }
     if (!drafts.has(key) && drafts.size >= 64) { status('The in-tab draft limit is reached. Discard this draft explicitly before switching.'); return false; }
-    drafts.set(key, {target:$('reviewTarget').value, decision:$('decision').value, reviewer:$('reviewer').value,
-      reason:$('reason').value, findings:Object.fromEntries(Object.keys(findings).map(k=>[k,$('finding-'+k).value]))});
+    drafts.set(key, draft);
     return true; // In-tab drafts are bounded; never evict silently.
   }
   function resetPlayer() { $('player').pause(); $('player').removeAttribute('src'); $('player').load(); playerBinding=null; pendingSeek=null; }
@@ -132,6 +139,7 @@
     $('humanSummary').textContent='Unreviewed · no owner record selected.'; $('reviewDetail').textContent='No record selected.';
     $('linkReport').checked=false; $('linkReport').disabled=true; chosenReview=null;
     const draft=drafts.get(draftKey()); $('reviewForm').reset(); discardDraft=false;
+    reviewBaseline=JSON.stringify(reviewFields());
     if (draft) {
       $('reviewTarget').value=draft.target; $('decision').value=draft.decision; $('reviewer').value=draft.reviewer; $('reason').value=draft.reason;
       for (const k of Object.keys(findings)) $('finding-'+k).value=draft.findings[k];
@@ -161,9 +169,13 @@
   $('resume').onclick=()=>selectAudio('master',session.current.snapshot.playback.sample);
   $('savePosition').onclick=async()=>{
     if (!playerReady()) { status('Load the selected audio and let seeking finish before saving its position. No save was sent.'); buttons(); return; }
+    const rate=Number($('rate').value);
+    if (!String($('rate').value).trim() || !Number.isFinite(rate) || rate<.5 || rate>3) {
+      status('Choose a playback speed from 0.5 to 3 before saving. No save was sent.'); $('rate').focus(); return;
+    }
     const a=session.current.snapshot.archive, segment=a.segments.find(x=>x.id===playerBinding.target);
     const sample=Math.min(a.master.samples,Math.max(0,Math.round($('player').currentTime*48000)+(segment?.start_sample||0)));
-    const pending=session.bookmark({sample,rate:Number($('rate').value),loop}); buttons();
+    const pending=session.bookmark({sample,rate,loop}); buttons();
     try { const out=await pending; if(out.current) savedText(); status(`Bookmark saved for ${out.key}.${out.current ? '' : ' Inspect that archive again before saving.'}`); }
     catch(e) { status(e.message); } finally { buttons(); }
   };
@@ -222,5 +234,5 @@
     $('configuration').textContent=value.enabled ? 'Archive access enabled. Discovery and all saves are explicit.'
       : 'Archive access is disabled. Set spoken_briefs.archive_root to an absolute local directory in config/local.json, then restart Studio.';
     status('No archive has been opened. No generation is available on this page.');
-  }).catch(e=>{ $('configuration').textContent=e.message; status('Archive access unavailable. Other Studio tools are unchanged.'); });
+  }).catch(e=>{ $('discover').disabled=true; $('configuration').textContent=e.message; status('Archive access unavailable. Other Studio tools are unchanged.'); });
 })();
