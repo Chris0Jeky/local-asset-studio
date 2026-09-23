@@ -1,0 +1,225 @@
+{
+ "version": 2,
+ "preset_id": "qwen21-t2i",
+ "controls": {
+  "seed": 2026092211
+ },
+ "batch_count": 1,
+ "created_at": 1790136381.526181,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+    "type": "qwen_image",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "TextEncodeQwenImage21",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "prompt": "Anime key visual of an adult silver-haired sorceress in a midnight-blue travelling coat, holding a glowing brass lantern on a rainy stone bridge at blue hour. Clean linework, layered cel shading, teal and warm amber light.",
+    "negative_prompt": "",
+    "resolution": 1024
+   }
+  },
+  "5": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 832,
+    "height": 1248,
+    "batch_size": 1
+   }
+  },
+  "6": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "4",
+     1
+    ],
+    "latent_image": [
+     "5",
+     0
+    ],
+    "seed": 2026092211,
+    "steps": 25,
+    "cfg": 1.0,
+    "sampler_name": "euler",
+    "scheduler": "simple",
+    "denoise": 1.0
+   }
+  },
+  "7": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "6",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "8": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "7",
+     0
+    ],
+    "filename_prefix": "Studio/qwen21-t2i"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "457eabb0-b209-493d-9861-86a4be99543a",
+   "seed": 2026092211,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "TextEncodeQwenImage21",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "prompt": "Anime key visual of an adult silver-haired sorceress in a midnight-blue travelling coat, holding a glowing brass lantern on a rainy stone bridge at blue hour. Clean linework, layered cel shading, teal and warm amber light.",
+      "negative_prompt": "",
+      "resolution": 1024
+     }
+    },
+    "5": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 832,
+      "height": 1248,
+      "batch_size": 1
+     }
+    },
+    "6": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "4",
+       1
+      ],
+      "latent_image": [
+       "5",
+       0
+      ],
+      "seed": 2026092211,
+      "steps": 25,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+     }
+    },
+    "7": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "6",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "8": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "7",
+       0
+      ],
+      "filename_prefix": "Studio/qwen21-t2i"
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 3190411264,
+    "peak_dedicated_bytes": 15142391808,
+    "samples": 7,
+    "spilled": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "qwen21-t2i_00001_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092211,
+   "prompt_id": "457eabb0-b209-493d-9861-86a4be99543a",
+   "media_type": "image",
+   "asset_id": "5e3336290e505ea08edeb558128d95ff"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

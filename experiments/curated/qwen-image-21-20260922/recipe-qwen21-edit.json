@@ -1,0 +1,260 @@
+{
+ "version": 2,
+ "preset_id": "qwen21-edit",
+ "controls": {
+  "seed": 2026092211,
+  "reference": "ddad3c8de9504c08b011c00d81f18501_studio-lantern-cutout.png.png"
+ },
+ "batch_count": 1,
+ "created_at": 1790136498.3064728,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+    "type": "qwen_image",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "TextEncodeQwenImage21",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "prompt": "Keep the object, its shape and its colours. Redraw it as a clean anime game prop illustration with crisp ink outlines and soft cel shading on a plain light background.",
+    "negative_prompt": "",
+    "resolution": 1024,
+    "vae": [
+     "3",
+     0
+    ],
+    "images.image_1": [
+     "10",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "9",
+     0
+    ],
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "4",
+     1
+    ],
+    "latent_image": [
+     "4",
+     2
+    ],
+    "seed": 2026092211,
+    "steps": 25,
+    "cfg": 1.0,
+    "sampler_name": "euler",
+    "scheduler": "simple",
+    "denoise": 1.0
+   }
+  },
+  "7": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "6",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "8": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "7",
+     0
+    ],
+    "filename_prefix": "Studio/qwen21-edit"
+   }
+  },
+  "9": {
+   "class_type": "QwenImage21Cache",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "device": "auto",
+    "dtype": "default"
+   }
+  },
+  "10": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "ddad3c8de9504c08b011c00d81f18501_studio-lantern-cutout.png.png"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "027b8a22-61da-4b96-a3d1-3888fd5036d6",
+   "seed": 2026092211,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "TextEncodeQwenImage21",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "prompt": "Keep the object, its shape and its colours. Redraw it as a clean anime game prop illustration with crisp ink outlines and soft cel shading on a plain light background.",
+      "negative_prompt": "",
+      "resolution": 1024,
+      "vae": [
+       "3",
+       0
+      ],
+      "images.image_1": [
+       "10",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "9",
+       0
+      ],
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "4",
+       1
+      ],
+      "latent_image": [
+       "4",
+       2
+      ],
+      "seed": 2026092211,
+      "steps": 25,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+     }
+    },
+    "7": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "6",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "8": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "7",
+       0
+      ],
+      "filename_prefix": "Studio/qwen21-edit"
+     }
+    },
+    "9": {
+     "class_type": "QwenImage21Cache",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "device": "auto",
+      "dtype": "default"
+     }
+    },
+    "10": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "ddad3c8de9504c08b011c00d81f18501_studio-lantern-cutout.png.png"
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 2805268480,
+    "peak_dedicated_bytes": 13889392640,
+    "samples": 9,
+    "spilled": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "qwen21-edit_00001_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092211,
+   "prompt_id": "027b8a22-61da-4b96-a3d1-3888fd5036d6",
+   "media_type": "image",
+   "asset_id": "1410df8ed8fe5a29b5b8b6f70f900b77"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

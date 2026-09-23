@@ -438,8 +438,13 @@ def seal(items, folder, rng_seed=None):
     to `key.sealed.json`. Judge from `blind/` only; read the key after writing every judgement.
     """
     import shutil
+    folder = Path(folder)
+    # A key that judgements were written against must never be reshuffled (review of #875): the stable blind filenames would
+    # silently point the existing scores at different originals.
+    if (folder / 'judgements.jsonl').exists() and (folder / 'key.sealed.json').exists():
+        raise SystemExit('%s: key.sealed.json already has judgements against it; refusing to reshuffle' % folder.name)
     # Blind copies can show famous characters, so they live outside Git: <repo>/.runtime/lab-scratch/blind/<experiment>/.
-    folder = Path(folder); blind = REPO / '.runtime' / 'lab-scratch' / 'blind' / folder.name; blind.mkdir(parents=True, exist_ok=True)
+    blind = REPO / '.runtime' / 'lab-scratch' / 'blind' / folder.name; blind.mkdir(parents=True, exist_ok=True)
     rng = random.Random(rng_seed if rng_seed is not None else time.time_ns())
     key, groups = {}, {}
     for it in items: groups.setdefault(it['group'], []).append(it)

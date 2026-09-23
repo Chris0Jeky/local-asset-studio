@@ -1,0 +1,550 @@
+{
+ "version": 2,
+ "preset_id": "combine-klein-9b-copypose",
+ "controls": {
+  "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings; keep that character's face, hair and rendering style and the clothes with their colours (a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots); only the pose and framing change, to image 2's: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+  "last_reference": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+  "seed": 2026092343
+ },
+ "batch_count": 1,
+ "created_at": 1790135954.190976,
+ "workflow": {
+  "1": {
+   "class_type": "UnetLoaderGGUF",
+   "inputs": {
+    "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+    "type": "flux2",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "flux2-vae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings; keep that character's face, hair and rendering style and the clothes with their colours (a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots); only the pose and framing change, to image 2's: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+    "clip": [
+     "2",
+     0
+    ]
+   }
+  },
+  "5": {
+   "class_type": "ConditioningZeroOut",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "CFGGuider",
+   "inputs": {
+    "model": [
+     "40",
+     0
+    ],
+    "positive": [
+     "23",
+     0
+    ],
+    "negative": [
+     "18",
+     0
+    ],
+    "cfg": 1.0
+   }
+  },
+  "7": {
+   "class_type": "RandomNoise",
+   "inputs": {
+    "noise_seed": 2026092343
+   }
+  },
+  "8": {
+   "class_type": "KSamplerSelect",
+   "inputs": {
+    "sampler_name": "euler"
+   }
+  },
+  "9": {
+   "class_type": "Flux2Scheduler",
+   "inputs": {
+    "steps": 6,
+    "width": 1024,
+    "height": 1536
+   }
+  },
+  "10": {
+   "class_type": "EmptyFlux2LatentImage",
+   "inputs": {
+    "width": 1024,
+    "height": 1536,
+    "batch_size": 1
+   }
+  },
+  "11": {
+   "class_type": "SamplerCustomAdvanced",
+   "inputs": {
+    "noise": [
+     "7",
+     0
+    ],
+    "guider": [
+     "6",
+     0
+    ],
+    "sampler": [
+     "8",
+     0
+    ],
+    "sigmas": [
+     "9",
+     0
+    ],
+    "latent_image": [
+     "10",
+     0
+    ]
+   }
+  },
+  "12": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "11",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "13": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "filename_prefix": "Combine/Klein-9B-copypose",
+    "images": [
+     "12",
+     0
+    ]
+   }
+  },
+  "14": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png"
+   }
+  },
+  "15": {
+   "class_type": "ImageScaleToTotalPixels",
+   "inputs": {
+    "image": [
+     "14",
+     0
+    ],
+    "upscale_method": "lanczos",
+    "megapixels": 1.0,
+    "resolution_steps": 1
+   }
+  },
+  "16": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "15",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "17": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ],
+    "latent": [
+     "16",
+     0
+    ]
+   }
+  },
+  "18": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "5",
+     0
+    ],
+    "latent": [
+     "16",
+     0
+    ]
+   }
+  },
+  "20": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png"
+   }
+  },
+  "21": {
+   "class_type": "ImageScaleToTotalPixels",
+   "inputs": {
+    "image": [
+     "20",
+     0
+    ],
+    "upscale_method": "lanczos",
+    "megapixels": 1.0,
+    "resolution_steps": 1
+   }
+  },
+  "22": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "21",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "23": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "17",
+     0
+    ],
+    "latent": [
+     "22",
+     0
+    ]
+   }
+  },
+  "40": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "lora_name": "KleinBase9B_PoseTransfer.safetensors",
+    "strength_model": 1.0,
+    "model": [
+     "1",
+     0
+    ]
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "55c8e1cd-ec8c-4af0-aee6-80e4423ac4cd",
+   "seed": 2026092343,
+   "graph": {
+    "1": {
+     "class_type": "UnetLoaderGGUF",
+     "inputs": {
+      "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings; keep that character's face, hair and rendering style and the clothes with their colours (a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots); only the pose and framing change, to image 2's: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+      "clip": [
+       "2",
+       0
+      ]
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "CFGGuider",
+     "inputs": {
+      "model": [
+       "40",
+       0
+      ],
+      "positive": [
+       "23",
+       0
+      ],
+      "negative": [
+       "18",
+       0
+      ],
+      "cfg": 1.0
+     }
+    },
+    "7": {
+     "class_type": "RandomNoise",
+     "inputs": {
+      "noise_seed": 2026092343
+     }
+    },
+    "8": {
+     "class_type": "KSamplerSelect",
+     "inputs": {
+      "sampler_name": "euler"
+     }
+    },
+    "9": {
+     "class_type": "Flux2Scheduler",
+     "inputs": {
+      "steps": 6,
+      "width": 1024,
+      "height": 1536
+     }
+    },
+    "10": {
+     "class_type": "EmptyFlux2LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1536,
+      "batch_size": 1
+     }
+    },
+    "11": {
+     "class_type": "SamplerCustomAdvanced",
+     "inputs": {
+      "noise": [
+       "7",
+       0
+      ],
+      "guider": [
+       "6",
+       0
+      ],
+      "sampler": [
+       "8",
+       0
+      ],
+      "sigmas": [
+       "9",
+       0
+      ],
+      "latent_image": [
+       "10",
+       0
+      ]
+     }
+    },
+    "12": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "11",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "13": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "filename_prefix": "Combine/Klein-9B-copypose",
+      "images": [
+       "12",
+       0
+      ]
+     }
+    },
+    "14": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png"
+     }
+    },
+    "15": {
+     "class_type": "ImageScaleToTotalPixels",
+     "inputs": {
+      "image": [
+       "14",
+       0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+     }
+    },
+    "16": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "15",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "17": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ],
+      "latent": [
+       "16",
+       0
+      ]
+     }
+    },
+    "18": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "5",
+       0
+      ],
+      "latent": [
+       "16",
+       0
+      ]
+     }
+    },
+    "20": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png"
+     }
+    },
+    "21": {
+     "class_type": "ImageScaleToTotalPixels",
+     "inputs": {
+      "image": [
+       "20",
+       0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+     }
+    },
+    "22": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "21",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "23": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "17",
+       0
+      ],
+      "latent": [
+       "22",
+       0
+      ]
+     }
+    },
+    "40": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "lora_name": "KleinBase9B_PoseTransfer.safetensors",
+      "strength_model": 1.0,
+      "model": [
+       "1",
+       0
+      ]
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 2446053376,
+    "peak_dedicated_bytes": 12919402496,
+    "samples": 12,
+    "spilled": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "Klein-9B-copypose_00006_.png",
+   "subfolder": "Combine",
+   "type": "output",
+   "seed": 2026092343,
+   "prompt_id": "55c8e1cd-ec8c-4af0-aee6-80e4423ac4cd",
+   "media_type": "image",
+   "asset_id": "867389e98d7a5f8db789ca4315a71c6f"
+  }
+ ],
+ "parent_assets": [],
+ "references": [
+  {
+   "file": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png",
+   "sha256": "fd6c3db4c974c833a7c6780531382531622363c0a6f2631b821a5972fc965df4",
+   "bytes": 280692,
+   "width": 832,
+   "height": 1216,
+   "role": "pose",
+   "slot": 1,
+   "contribution": "",
+   "avoid": "",
+   "transform": {
+    "policy": "FLUX.2 Klein reference latents with the Copy Pose LoRA at 1.0: your character is image 1 (kept, re-posed), the pose picture is image 2 (only its pose is taken), each scaled to ~1 megapixel and VAE-encoded"
+   }
+  }
+ ],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

@@ -1,0 +1,86 @@
+{
+ "wai-portrait-A.png": {
+  "config": "wai-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\wai-control-portrait_00001_.png"
+ },
+ "wai-portrait-C.png": {
+  "config": "masterpiece04",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\masterpiece04-portrait_00001_.png"
+ },
+ "wai-portrait-B.png": {
+  "config": "microdetails05",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\microdetails05-portrait_00001_.png"
+ },
+ "wai-action-C.png": {
+  "config": "wai-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\wai-control-action_00001_.png"
+ },
+ "wai-action-B.png": {
+  "config": "masterpiece04",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\masterpiece04-action_00001_.png"
+ },
+ "wai-action-A.png": {
+  "config": "microdetails05",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\microdetails05-action_00001_.png"
+ },
+ "wai-hands-A.png": {
+  "config": "wai-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\wai-control-hands_00001_.png"
+ },
+ "wai-hands-C.png": {
+  "config": "masterpiece04",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\masterpiece04-hands_00001_.png"
+ },
+ "wai-hands-B.png": {
+  "config": "microdetails05",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\microdetails05-hands_00001_.png"
+ },
+ "noob-portrait-A.png": {
+  "config": "noob-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\noob-control-portrait_00001_.png"
+ },
+ "noob-portrait-B.png": {
+  "config": "flatcolor085",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\flatcolor085-portrait_00001_.png"
+ },
+ "noob-action-B.png": {
+  "config": "noob-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\noob-control-action_00001_.png"
+ },
+ "noob-action-A.png": {
+  "config": "flatcolor085",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\flatcolor085-action_00001_.png"
+ },
+ "noob-hands-B.png": {
+  "config": "noob-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\noob-control-hands_00001_.png"
+ },
+ "noob-hands-A.png": {
+  "config": "flatcolor085",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\flatcolor085-hands_00001_.png"
+ },
+ "pony-portrait-A.png": {
+  "config": "pony-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\pony-control-portrait_00001_.png"
+ },
+ "pony-portrait-B.png": {
+  "config": "gothicneon085",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\gothicneon085-portrait_00001_.png"
+ },
+ "pony-action-A.png": {
+  "config": "pony-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\pony-control-action_00001_.png"
+ },
+ "pony-action-B.png": {
+  "config": "gothicneon085",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\gothicneon085-action_00001_.png"
+ },
+ "pony-hands-A.png": {
+  "config": "pony-control",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\pony-control-hands_00001_.png"
+ },
+ "pony-hands-B.png": {
+  "config": "gothicneon085",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\q32-loras\\gothicneon085-hands_00001_.png"
+ }
+}

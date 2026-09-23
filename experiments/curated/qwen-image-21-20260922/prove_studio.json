@@ -1,0 +1,81 @@
+[
+ {
+  "id": "be94bd02-2575-4e4b-a28d-2b4e110b6fbc",
+  "status": "completed",
+  "preset_id": "qwen21-t2i",
+  "prompt_ids": [
+   "457eabb0-b209-493d-9861-86a4be99543a"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-t2i_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092211,
+    "prompt_id": "457eabb0-b209-493d-9861-86a4be99543a",
+    "media_type": "image",
+    "asset_id": "5e3336290e505ea08edeb558128d95ff"
+   }
+  ],
+  "elapsed_seconds": 52.88161563873291,
+  "error": null,
+  "created_at": 1790136381.526181,
+  "comfy_url": null,
+  "controls": {
+   "seed": 2026092211
+  }
+ },
+ {
+  "id": "b377572d-f227-4acc-8e17-fc5ad7e85155",
+  "status": "completed",
+  "preset_id": "qwen21-rgba",
+  "prompt_ids": [
+   "b0297f2a-15d8-428c-ae41-c1212c957e29"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-rgba_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092211,
+    "prompt_id": "b0297f2a-15d8-428c-ae41-c1212c957e29",
+    "media_type": "image",
+    "asset_id": "4878d949ecf259b381ddd93fb76a11a3"
+   }
+  ],
+  "elapsed_seconds": 28.216362237930298,
+  "error": null,
+  "created_at": 1790136453.2600756,
+  "comfy_url": null,
+  "controls": {
+   "seed": 2026092211
+  }
+ },
+ {
+  "id": "dc8f18f8-2094-444b-868c-fbe5d2aa3c1d",
+  "status": "completed",
+  "preset_id": "qwen21-edit",
+  "prompt_ids": [
+   "027b8a22-61da-4b96-a3d1-3888fd5036d6"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-edit_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092211,
+    "prompt_id": "027b8a22-61da-4b96-a3d1-3888fd5036d6",
+    "media_type": "image",
+    "asset_id": "1410df8ed8fe5a29b5b8b6f70f900b77"
+   }
+  ],
+  "elapsed_seconds": 78.56437420845032,
+  "error": null,
+  "created_at": 1790136498.3064728,
+  "comfy_url": null,
+  "controls": {
+   "seed": 2026092211,
+   "reference": "ddad3c8de9504c08b011c00d81f18501_studio-lantern-cutout.png.png"
+  }
+ }
+]
