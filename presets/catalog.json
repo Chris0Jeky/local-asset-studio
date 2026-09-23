@@ -3236,7 +3236,7 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-portrait-gguf-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Krea 2 Community terms apply; free weights do not mean unrestricted use.",
       "positive": [
         "4",
@@ -3339,7 +3339,8 @@
           }
         }
       ],
-      "backend_id": "primary"
+      "backend_id": "primary",
+      "execution_note": "Executed 2026-09-23 05:21:57 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/krea-gguf/prove_gguf_presets.py): job c6049b90-0942-4ec1-b76e-4b9455749ec8, prompt 268f4be5-e0c2-40fa-92b5-9746ee74c663, 133.3 s including the model load and the CPU text encode, sampling 3.5 s/step, no shared-memory spill (79 MB), output Studio/krea-portrait-gguf_00001_.png: near-identical to the fp8 preset's output of the same defaults (Studio/krea-portrait_00007_), hands and face clean (agent-judged keep). Not art acceptance."
     },
     {
       "id": "krea-environment",
@@ -4960,7 +4961,7 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-anime-atelier-gguf-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
       "positive": [
         "4",
@@ -5110,7 +5111,8 @@
           "name": "3-seed audition",
           "batch_count": 3
         }
-      ]
+      ],
+      "execution_note": "Executed 2026-09-23 05:24:13 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/krea-gguf/prove_gguf_presets.py): job 29e468ca-884d-44d7-a04b-c54e9aa5030a, prompt 6a856a23-67fa-42f3-b3f9-6cf686b991d5, 114.6 s (15 steps at 3.43 s/step with TextFusion + Niji Sweet Spot; the decode spilled 4.4 GB into shared memory for about 5 s), output Studio/krea-anime-atelier-gguf_00001_.png: every briefed element present, hands and eyes clean, but a faint '@NJSW33T'-style trigger watermark is painted on the cloak (agent-judged fixable). Not art acceptance."
     },
     {
       "id": "krea-style-lab",

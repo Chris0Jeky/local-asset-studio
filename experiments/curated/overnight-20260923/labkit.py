@@ -45,6 +45,7 @@ def lease_holder():
 
 def guard():
     """Raise SystemExit unless the lab holds the lease and both queues are idle."""
+    if (REPO / '.runtime' / 'lab-scratch' / 'PAUSE').exists(): raise SystemExit('lab paused (.runtime/lab-scratch/PAUSE); nothing submitted')
     holder = lease_holder()
     if holder != 'overnight-lab': raise SystemExit('GPU lease holder is %r, not overnight-lab; nothing submitted' % holder)
     queue = http(COMFY + '/queue')
