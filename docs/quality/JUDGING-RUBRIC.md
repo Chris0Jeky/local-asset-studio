@@ -120,8 +120,8 @@ Apply these corrections every time:
   fixed.
 
 - **R8a. A correction pass that removes, merges or replaces part of the subject scores `control` 2**, so it is a reject,
-  not fixable (ruled by the coordinator on 23 September 2026; recorded in the overnight PROTOCOL.md; the owner may
-  override).
+  not fixable. The coordinator ruled this on 23 September 2026. The ruling is stated in full here; its only other copy is
+  the overnight session's local protocol file (`.runtime/overnight/PROTOCOL.md`, gitignored). The owner may override it.
   - Trying a lower strength is a different configuration, not a fix of this picture.
   - The lost part counts against `control` only, never against `adherence` as well.
 
