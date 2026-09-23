@@ -150,6 +150,12 @@ class BackendSafetyTests(unittest.TestCase):
             self.studio.jobs={'a':dict(stopped,tracking_disposition=disposition)}
             with self.subTest(disposition=disposition):self.assertTrue(self.manager._local_work())
         self.studio.jobs={'a':dict(stopped,status='running')};self.assertTrue(self.manager._local_work())
+        # A stopped record never hides a prompt that is still live in a ComfyUI queue: the endpoint check refuses.
+        self.studio.jobs={'a':stopped}
+        for busy in ({'queue_running':[['still-running']],'queue_pending':[]},{'queue_running':[],'queue_pending':[['still-queued']]}):
+            with self.subTest(queue=busy),patch.object(self.manager,'request',return_value=busy),patch('backends.threading.Thread') as thread:
+                with self.assertRaises(ValueError):self.manager.switch('hidream')
+                thread.assert_not_called()
     def test_failed_intent_write_releases_gate(self):
         with patch.object(self.manager,'request',return_value=IDLE),patch.object(self.manager,'_save',side_effect=OSError('disk full')),patch('backends.threading.Thread') as thread:
             with self.assertRaises(OSError):self.manager.switch('hidream')
