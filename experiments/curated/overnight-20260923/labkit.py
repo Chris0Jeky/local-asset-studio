@@ -102,6 +102,7 @@ def prune_loras(graph):
 
 
 CLIENT_ID = 'overnight-lab'
+GPU_INTERVAL = 1.5  # seconds between GPU memory samples; experiments timing short phases set it lower (0.25)
 
 
 def log_time(entry):
@@ -196,7 +197,7 @@ class Sampler:
         while not self.stop.is_set():
             r = gpu_memory.spill(self.pid)
             if r.get('dedicated_bytes') is not None: self.gpu.append((time.time(), r['dedicated_bytes'], r['shared_bytes']))
-            c = commit_pct(); self.commit.append(c[0]); time.sleep(1.5)
+            c = commit_pct(); self.commit.append(c[0]); time.sleep(GPU_INTERVAL)
     def _log(self):
         while not self.stop.is_set():
             self.poll_logs(); time.sleep(2)

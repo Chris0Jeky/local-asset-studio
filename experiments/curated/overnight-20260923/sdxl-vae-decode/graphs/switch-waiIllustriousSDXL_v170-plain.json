@@ -1,0 +1,86 @@
+{
+ "1": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+  }
+ },
+ "2": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "1",
+    1
+   ],
+   "text": "1girl, solo, adult woman, original character, alchemist, long green wool coat, leather apron, long sleeves, holding a glass flask up with right hand, left hand on an open book, fingers, workshop, shelves of jars, warm window light, upper body, masterpiece, best quality, amazing quality"
+  }
+ },
+ "3": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "1",
+    1
+   ],
+   "text": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, nipples, explicit, sex, underwear, lingerie, loli, child, young, teenage, school uniform"
+  }
+ },
+ "4": {
+  "class_type": "EmptyLatentImage",
+  "inputs": {
+   "width": 832,
+   "height": 1216,
+   "batch_size": 1
+  }
+ },
+ "5": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "seed": 2026092307,
+   "steps": 30,
+   "cfg": 5.0,
+   "sampler_name": "euler_ancestral",
+   "scheduler": "normal",
+   "positive": [
+    "2",
+    0
+   ],
+   "negative": [
+    "3",
+    0
+   ],
+   "latent_image": [
+    "4",
+    0
+   ],
+   "denoise": 1.0
+  }
+ },
+ "6": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "5",
+    0
+   ],
+   "vae": [
+    "1",
+    2
+   ]
+  }
+ },
+ "7": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "6",
+    0
+   ],
+   "filename_prefix": "Research/overnight-20260923/sdxl-vae-decode/switch-waiIllustriousSDXL_v170-plain"
+  }
+ }
+}

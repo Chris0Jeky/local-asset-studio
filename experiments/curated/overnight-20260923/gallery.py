@@ -44,7 +44,7 @@ def main(argv):
             if '/mask-' in str(path).replace('\\', '/') or not path.exists(): continue
             j = judged.get(str(path).lower())
             if j and j.get('verdict') == 'skipped': continue
-            case = suite.by_id(r['case']) if r.get('case') else None
+            case = next((c for c in suite.SUITE if c['id'] == r.get('case')), None)
             thumb = thumbs / (path.stem + '.jpg')
             im = Image.open(path).convert('RGB'); im.thumbnail((360, 540)); im.save(thumb, quality=85)
             try: rel = path.relative_to(out).as_posix()
