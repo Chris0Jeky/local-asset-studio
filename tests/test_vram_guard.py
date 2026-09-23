@@ -92,6 +92,24 @@ class VramGuardTest(unittest.TestCase):
         self.assertEqual(module.__name__, 'studio_gpu_memory'); self.assertTrue(callable(module.others_bytes))
 
 
+class GuardReportTest(unittest.TestCase):
+    def test_report_round_trip_and_stale_or_missing_reports(self):
+        import json
+        from server import Studio
+        guard = load_guard()
+        with tempfile.TemporaryDirectory() as tmp:
+            fake = types.SimpleNamespace(root=Path(tmp), gpu_memory_reading=lambda: {'pid': 4242})
+            self.assertIsNone(Studio.vram_guard_status(fake)['installed'])                         # nothing written yet
+            guard.write_report({'installed': True, 'reason': None}, repo=tmp, pid=4242)
+            self.assertEqual(Studio.vram_guard_status(fake), {'installed': True, 'reason': None, 'pid': 4242})
+            guard.write_report({'installed': False, 'reason': 'ComfyUI changed free_memory'}, repo=tmp, pid=4242)
+            self.assertEqual(Studio.vram_guard_status(fake)['reason'], 'ComfyUI changed free_memory')
+            fake.gpu_memory_reading = lambda: {'pid': 5151}                                     # a later ComfyUI, launched without it
+            self.assertIn('earlier ComfyUI process', Studio.vram_guard_status(fake)['reason'])
+            (Path(tmp) / '.runtime/vram-guard.json').write_text('[', encoding='utf-8')
+            self.assertIsNone(Studio.vram_guard_status(fake)['installed'])
+
+
 class GpuMemoryHoldersTest(unittest.TestCase):
     READING = {'adapters': {'0x0_0x1_0': {10: {'dedicated_bytes': 6 * GIB, 'shared_bytes': 0}, 2288: {'dedicated_bytes': 5 * GIB, 'shared_bytes': 0},
                                          77: {'dedicated_bytes': GIB, 'shared_bytes': 0}},

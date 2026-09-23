@@ -558,6 +558,34 @@ class ServerTests(unittest.TestCase):
         with patch.object(off,'gpu_memory_reading',return_value=spilling): self.assertIsNone(off._evict_before_submit({},graph,0))
         self.assertEqual(off.requests,[])
 
+    def test_eviction_follow_ups_lora_change_nothing_resident_malformed_stats_and_outside_spill(self):
+        """#901: a LoRA change needs no unload, an empty GPU is recorded as such, bad stats never escape, a spill an unload cannot clear is not chased."""
+        idle={"queue_running":[],"queue_pending":[]}; quiet={'pid':42,'shared_bytes':0,'dedicated_bytes':9*1024**3,'spilled':False}
+        base={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"wai.safetensors"}}}
+        with_lora=dict(base,**{"9":{"class_type":"LoraLoader","inputs":{"lora_name":"detail.safetensors","strength_model":0.5}}})
+        self.assertEqual(server.Studio.graph_model_files(with_lora,skip_loras=True),frozenset({"wai.safetensors"}))
+        s=FakeStudio(self.root,[idle,{"devices":[{"torch_vram_total":300*1024**2}]}]); job={}
+        with patch.object(s,'gpu_memory_reading',return_value=quiet):
+            self.assertIsNone(s._evict_before_submit(job,with_lora,0)); self.assertIsNone(s._evict_before_submit(job,base,1))   # LoRA dropped: no unload
+            record=s._evict_before_submit(job,{"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"cstati.safetensors"}}},2)
+        self.assertEqual((record['outcome'],record['torch_reserved_before']),('nothing resident',300*1024**2))
+        self.assertEqual([r[0][0] for r in s.requests],["/queue","/system_stats"])        # nothing to unload, so no /free
+        for body in ([{"devices":{"0":{}}}],[["not","a","dict"]],[{"devices":[None]}]):
+            with self.subTest(body=body):
+                bad=FakeStudio(self.root,[idle]+body+[None]+body); bad._resident={'url':bad.comfy_url,'pid':42,'models':frozenset({'old.safetensors'})}
+                with patch.object(bad,'gpu_memory_reading',return_value=quiet), patch.object(server.time,'sleep'):
+                    self.assertEqual(bad._evict_before_submit({},base,0)['outcome'],'requested; release not observed')
+        boom=FakeStudio(self.root,[idle,KeyError('devices')]); boom._resident={'url':boom.comfy_url,'pid':42,'models':frozenset({'old.safetensors'})}
+        with patch.object(boom,'gpu_memory_reading',return_value=quiet): self.assertTrue(boom._evict_before_submit({},base,0)['outcome'].startswith('failed: '))
+        spilling=dict(quiet,shared_bytes=4*1024**3,spilled=True)
+        outside=FakeStudio(self.root,[idle,{"devices":[{"torch_vram_total":6*1024**3}]},None,{"devices":[{"torch_vram_total":80*1024**2}]}]); job={}
+        with patch.object(outside,'gpu_memory_reading',return_value=spilling), patch.object(server.time,'sleep'):
+            self.assertEqual(outside._evict_before_submit(job,base,0)['outcome'],'unloaded')
+            self.assertIsNone(outside._evict_before_submit(job,base,1))                     # the unload left the spill: an outside cause
+        self.assertEqual(len(outside.requests),4); self.assertEqual(outside._spill_unload_ineffective,42)
+        with patch.object(outside,'gpu_memory_reading',return_value=quiet): self.assertIsNone(outside._evict_before_submit(job,base,2))
+        self.assertIsNone(outside._spill_unload_ineffective)                                 # a quiet reading re-arms it
+
     def test_eviction_runs_after_the_queue_wait_and_before_the_prompt_post(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{}}, enqueue=False)['id']]; order=[]
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),self._http_response(b'{')]

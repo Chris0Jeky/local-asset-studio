@@ -13,7 +13,7 @@ would have loaded it completely, because a truthful load decision turned Krea 2'
 one at 2.7x the time per step (section 8).
 
 The wrapped functions are compared with the source hashes they were written for. Any other ComfyUI version
-leaves the guard off and says so in the log and at GET /studio/vram-guard.
+leaves the guard off and says so in the log, at GET /studio/vram-guard and in the Studio's /api/health (`vram_guard`).
 """
 import ast
 import hashlib
@@ -97,6 +97,17 @@ def install(mm, others, path=None, expected=EXPECTED, status=STATUS):
     return status
 
 
+def write_report(status=STATUS, repo=REPO, pid=None):
+    """Leave the install outcome where the Studio's /api/health reads it (.runtime/vram-guard.json); never raises."""
+    try:
+        import json
+        path = Path(repo) / '.runtime' / 'vram-guard.json'; path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({'installed': status['installed'], 'reason': status['reason'], 'pid': os.getpid() if pid is None else pid,
+                                    'written_at': time.time()}), encoding='utf-8')
+    except Exception as exc:
+        logging.warning('Studio VRAM guard: could not write its report: %s', exc)
+
+
 def _register_route():
     try:
         from aiohttp import web
@@ -118,4 +129,5 @@ if os.environ.get('STUDIO_VRAM_GUARD_IMPORT_ONLY') != '1':
         logging.info('Studio VRAM guard on: model evictions count VRAM other processes hold')
     else:
         logging.warning('Studio VRAM guard off: %s', STATUS['reason'])
+    write_report()
     _register_route()

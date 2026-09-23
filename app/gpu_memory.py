@@ -13,6 +13,7 @@ import ctypes
 import math
 import os
 import re
+import threading
 
 GIB = 1024 ** 3
 # ComfyUI's own Windows margin for 16 GB cards (600 + 100 MiB, model_management.py EXTRA_RESERVED_VRAM).
@@ -142,6 +143,47 @@ def spill(pid, reading=None):
     if usage is None: return {'pid': pid, 'dedicated_bytes': None, 'shared_bytes': None, 'spilled': None, 'unknown_reason': 'The ComfyUI process holds no GPU memory'}
     return {'pid': pid, 'adapter': adapter, 'dedicated_bytes': usage['dedicated_bytes'], 'shared_bytes': usage['shared_bytes'],
             'spilled': usage['shared_bytes'] >= SPILL_BYTES, 'unknown_reason': None}
+
+
+class Sampler:
+    """Samples one process's GPU memory on its own thread while a prompt runs.
+
+    A VAE decode's overflow into shared memory lasts about 3 s (23 September 2026), so the Studio's 10 s poll cadence missed
+    most of them. The thread touches only this object; `take()` hands the peaks since the last call to the caller's thread,
+    so no job state is shared across threads. At each new shared-memory peak it keeps the largest other holders."""
+    def __init__(self, pid, interval=0.5, reader=None):
+        self.pid, self.interval, self._reader = pid, interval, reader
+        self._lock, self._stop, self._peak = threading.Lock(), threading.Event(), None
+        self._thread = threading.Thread(target=self._run, name='gpu-memory-sampler', daemon=True)
+
+    def start(self): self._thread.start(); return self
+
+    def stop(self):
+        self._stop.set()
+        if self._thread.is_alive(): self._thread.join(timeout=5)
+
+    def _run(self):
+        while not self._stop.wait(self.interval): self.sample()
+
+    def sample(self):
+        """One reading folded into the pending peaks; failures record nothing."""
+        try:
+            reading = (self._reader or read)(); usage = spill(self.pid, reading)
+            if usage.get('shared_bytes') is None: return
+            top = holders(reading, self.pid) if usage['shared_bytes'] >= SPILL_BYTES else None
+        except Exception: return
+        with self._lock:
+            peak = self._peak or {'peak_shared_bytes': 0, 'peak_dedicated_bytes': 0, 'samples': 0, 'holders': None}
+            peak['samples'] += 1; peak['peak_dedicated_bytes'] = max(peak['peak_dedicated_bytes'], usage['dedicated_bytes'] or 0)
+            if usage['shared_bytes'] > peak['peak_shared_bytes']:
+                peak['peak_shared_bytes'] = usage['shared_bytes']
+                if top: peak['holders'] = top
+            self._peak = peak
+
+    def take(self):
+        """The peaks seen since the previous call, or None."""
+        with self._lock: peak, self._peak = self._peak, None
+        return peak
 
 
 if __name__ == '__main__':
