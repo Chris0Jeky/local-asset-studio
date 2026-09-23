@@ -134,7 +134,9 @@ rechecks after waiting for the queue and immediately before each `/prompt`, and 
 in the run state. It fails closed when that Windows reading is unavailable for a qualifying graph.
 The gate performs no restart, `/free`, paging change, or other automatic memory action. Qwen Plus
 reference scalers at 1 MP qualify even where the output canvas is smaller; a Qwen text encoder by
-itself does not.
+itself does not. Qwen-Image 2.1 (the isolated `qwen21` backend) qualifies at **any** size: its 7B model and 9.35 GB int8
+text encoder left only 2.1-6.5 GiB of commit at 832 × 1248, and its edit graph has no width or height
+(`docs/QWEN-IMAGE-21.md`).
 
 What #77 measured (`C:/AI/character-lab/pilot-20260912/cache-release-{before,after}.json`):
 
