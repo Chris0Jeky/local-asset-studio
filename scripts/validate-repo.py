@@ -148,7 +148,7 @@ for asset in library['assets']:
 # Local-only example media: examples/<folder>/MANIFEST.json is the tracked record, the pictures never are.
 # A /api/examples/<folder>/<file> reference must have a manifest entry; presence on this PC is not required,
 # because a fresh clone has no JPEGs until scripts/lab-media.py restore runs.
-LOCAL_MEDIA=('nsfw-lab','civitai-intake')
+LOCAL_MEDIA=('nsfw-lab','civitai-intake','combine-research')
 IMAGE_SUFFIXES={'.jpg','.jpeg','.png','.webp','.gif','.bmp','.tif','.tiff','.avif'}
 manifest_files={}
 for folder in LOCAL_MEDIA:

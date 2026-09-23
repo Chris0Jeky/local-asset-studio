@@ -1,5 +1,5 @@
 """Contact sheet for pose round three (15 September 2026): one row per question, the prepared image 1 at the left of each row, every seed
-labelled. Writes examples/style-pose/combine-pose-round3.jpg."""
+labelled. Writes examples/combine-research/combine-pose-round3.jpg (local-only, gitignored)."""
 import os
 from PIL import Image, ImageDraw
 REPO = r"C:/Users/jekyt/Desktop/Printer Config/Others/Git/local-asset-studio"
@@ -37,4 +37,4 @@ for ims in tiles:
     for label, im in ims:
         sheet.paste(im, (x, y + LABEL)); d.text((x + 4, y + 4), label, fill="black"); x += im.width + PAD
     y += H + LABEL + PAD
-dest = REPO + "/examples/style-pose/combine-pose-round3.jpg"; sheet.save(dest, quality=80); print(dest, sheet.size)
+dest = REPO + "/examples/combine-research/combine-pose-round3.jpg"; sheet.save(dest, quality=80); print(dest, sheet.size)

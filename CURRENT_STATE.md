@@ -181,8 +181,8 @@ Not verified: live click-through on 8191 (still serving the older checkout); art
   research render): the fantasy pack's portrait face, fringe and gold earrings on its full-body scene with coat, scarf, satchel, lantern, boots and
   platform kept. Research first, straight against ComfyUI: 3 of 3 seeds on that pair (116-132 s); 3 of 3 restoring the face on the depth Combine's
   own output, so the pack's posed full body is *pose route, then face route* and identity no longer depends on the seed; 2 of 2 carrying the owner's
-  anime SHARK character into the painterly station scene in image 1's clothes (one stray glyph on one seed). Sheets in `examples/fantasy-pack/`
-  (`full-body-keeps-face.jpg`, `pose-then-face.jpg`, `replace-cross-style.jpg`, `replace-through-the-studio.jpg`), recipes 7 and 8 in the pack
+  anime SHARK character into the painterly station scene in image 1's clothes (one stray glyph on one seed). Sheets: `examples/fantasy-pack/full-body-keeps-face.jpg`;
+  local-only since 23 September 2026 in `examples/combine-research/` (`pose-then-face.jpg`, `replace-cross-style.jpg`, `replace-through-the-studio.jpg`), recipes 7 and 8 in the pack
   folder, HUMAN_TODO q-30 (f) and (g).
 - **The idle cache release works end to end (PR #470):** the Studio restarted on main at 03:47; after the last job ended at 04:04 the release fired at
   04:14:32 (`/api/health` `cache_release`: count 1, no error); ComfyUI's python went from 5.3 GB resident with the 9B models loaded to 463 MB. The

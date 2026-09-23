@@ -191,7 +191,8 @@ Same two pictures and seeds 2026091411-13, research renders straight against Com
 different image 1 per variant: the depth map painted, a PIL-drawn skeleton, a PIL-drawn capsule mannequin; hand and camera words; 8 steps;
 the Q8 GGUF), `lora_pose.py` (four civitai LoRAs for Klein 9B, downloaded and SHA-256-verified tonight, pinned in `models/library.json`),
 `restart_probe.py` (the slow state), `twopass.py` (depth Combine then Change one thing as one Studio journey), `sheet_round3.py`. Prepared
-images 1 (`pose3-*.png`) and exact graphs (`pose3-*.graph.json`) are next to the scripts. Sheet: `examples/combine-research/combine-pose-round3.jpg`.
+images 1 (`pose3-*.png`: the drawn ones next to the scripts, the traced depth maps and generated mannequin local-only in
+`examples/combine-research/`) and exact graphs (`pose3-*.graph.json`) are next to the scripts. Sheet: `examples/combine-research/combine-pose-round3.jpg`.
 
 **The slow state is a ComfyUI-process condition that only a restart clears (`restart_probe.json`).** The night's per-prompt log shows a healthy
 Klein 9B render at 6.2-6.6 s/step (87-120 s) and the slow state at 53-63 s/step (377-460 s), with identical model-load lines; two of the three

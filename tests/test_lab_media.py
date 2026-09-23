@@ -177,7 +177,7 @@ class LabMediaTool(unittest.TestCase):
         """A picture tracked elsewhere before it became local-only is rebuilt from where that commit held it."""
         old=self.root/'examples/style-pose';old.mkdir(parents=True);(old/'sheet.jpg').write_bytes(self.payload)
         self.write([dict(self.entry,former_path='examples/style-pose/sheet.jpg')])
-        git=self.git_repo();(old/'sheet.jpg').unlink()
+        git=self.git_repo(default=b'the default path holds different bytes');(old/'sheet.jpg').unlink()
         code,report=run('restore','--repo-root',str(self.root),'--folder','nsfw-lab','--from-ref',git)
         self.assertEqual(code,0,report);self.assertEqual((self.folder/'a-cell.jpg').read_bytes(),self.payload)
 
@@ -188,9 +188,9 @@ class LabMediaTool(unittest.TestCase):
                 code,report=run('restore','--repo-root',str(self.root),'--folder','nsfw-lab','--from-ref','HEAD')
                 self.assertEqual(code,1,report);self.assertIn('former_path is not a plain repository path',report)
 
-    def git_repo(self):
+    def git_repo(self,default=None):
         """Commit the picture in a throwaway repo so --from-ref has a ref to read it from."""
-        self.place()
+        self.place(default)
         for command in (['init','-q'],['config','user.email','t@example.com'],['config','user.name','t'],
                         ['add','-A'],['-c','commit.gpgsign=false','commit','-qm','media']):
             subprocess.run(['git']+command,cwd=self.root,check=True,capture_output=True)
