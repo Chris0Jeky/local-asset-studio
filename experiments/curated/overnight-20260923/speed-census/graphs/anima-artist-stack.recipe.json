@@ -1,0 +1,371 @@
+{
+ "version": 2,
+ "preset_id": "anima-artist-stack",
+ "controls": {},
+ "batch_count": 1,
+ "created_at": 1790129281.73749,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "anima-base-v1.0.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen_3_06b_base.safetensors",
+    "type": "stable_diffusion",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "qwen_image_vae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "text": "1girl, solo, @40u40uya, @hu45h11w, @k144d, a young witch with long silver hair and amber eyes, wide-brimmed hat, deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower at dusk, hanging lanterns, drifting motes of light, wind lifting her hair and cloak, looking at viewer, calm half-smile, painterly, textured brushwork, high contrast, vivid, film grain, depth of field, detailed background, detailed foreground"
+   }
+  },
+  "5": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "text": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia"
+   }
+  },
+  "6": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 832,
+    "height": 1216,
+    "batch_size": 1
+   }
+  },
+  "7": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "15",
+     0
+    ],
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "5",
+     0
+    ],
+    "latent_image": [
+     "6",
+     0
+    ],
+    "seed": 975436216244440,
+    "steps": 30,
+    "cfg": 4.0,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "simple",
+    "denoise": 1.0
+   }
+  },
+  "8": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "7",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "9": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "8",
+     0
+    ],
+    "filename_prefix": "Studio/anima-artist-stack"
+   }
+  },
+  "10": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "lora_name": "anima-xilmo-000020.safetensors",
+    "strength_model": 0.7
+   }
+  },
+  "11": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "10",
+     0
+    ],
+    "lora_name": "anima-huashijw_v2_step10000.safetensors",
+    "strength_model": 0.6
+   }
+  },
+  "12": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "11",
+     0
+    ],
+    "lora_name": "anima-koukouya_v2_step2500.safetensors",
+    "strength_model": 0.3
+   }
+  },
+  "13": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "12",
+     0
+    ],
+    "lora_name": "anima-ke-ta_style_v1.safetensors",
+    "strength_model": 0.7
+   }
+  },
+  "14": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "13",
+     0
+    ],
+    "lora_name": "anima-newanimastyle-v1.safetensors",
+    "strength_model": 1.0
+   }
+  },
+  "15": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "14",
+     0
+    ],
+    "lora_name": "anima-kieed_v9_step6000.safetensors",
+    "strength_model": 0.5
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "954ebe85-3888-4cd6-93be-d1ed21543e41",
+   "seed": 975436216244440,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "anima-base-v1.0.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_06b_base.safetensors",
+      "type": "stable_diffusion",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "1girl, solo, @40u40uya, @hu45h11w, @k144d, a young witch with long silver hair and amber eyes, wide-brimmed hat, deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower at dusk, hanging lanterns, drifting motes of light, wind lifting her hair and cloak, looking at viewer, calm half-smile, painterly, textured brushwork, high contrast, vivid, film grain, depth of field, detailed background, detailed foreground"
+     }
+    },
+    "5": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia"
+     }
+    },
+    "6": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 832,
+      "height": 1216,
+      "batch_size": 1
+     }
+    },
+    "7": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "15",
+       0
+      ],
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "6",
+       0
+      ],
+      "seed": 975436216244440,
+      "steps": 30,
+      "cfg": 4.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "simple",
+      "denoise": 1.0
+     }
+    },
+    "8": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "7",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "9": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "8",
+       0
+      ],
+      "filename_prefix": "Studio/anima-artist-stack"
+     }
+    },
+    "10": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "lora_name": "anima-xilmo-000020.safetensors",
+      "strength_model": 0.7
+     }
+    },
+    "11": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "10",
+       0
+      ],
+      "lora_name": "anima-huashijw_v2_step10000.safetensors",
+      "strength_model": 0.6
+     }
+    },
+    "12": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "11",
+       0
+      ],
+      "lora_name": "anima-koukouya_v2_step2500.safetensors",
+      "strength_model": 0.3
+     }
+    },
+    "13": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "12",
+       0
+      ],
+      "lora_name": "anima-ke-ta_style_v1.safetensors",
+      "strength_model": 0.7
+     }
+    },
+    "14": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "13",
+       0
+      ],
+      "lora_name": "anima-newanimastyle-v1.safetensors",
+      "strength_model": 1.0
+     }
+    },
+    "15": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "14",
+       0
+      ],
+      "lora_name": "anima-kieed_v9_step6000.safetensors",
+      "strength_model": 0.5
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 82632704,
+    "peak_dedicated_bytes": 9075544064,
+    "samples": 5,
+    "spilled": false
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "anima-artist-stack_00005_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 975436216244440,
+   "prompt_id": "954ebe85-3888-4cd6-93be-d1ed21543e41",
+   "media_type": "image",
+   "asset_id": "af6e2a5c652c500290be2886fc2c8083"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

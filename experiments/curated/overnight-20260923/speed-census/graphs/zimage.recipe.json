@@ -1,0 +1,265 @@
+{
+ "version": 2,
+ "preset_id": "zimage",
+ "controls": {},
+ "batch_count": 1,
+ "created_at": 1790129351.5666833,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "z_image_turbo_bf16.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen_3_4b.safetensors",
+    "type": "lumina2",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "ae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "text": "Professional product photograph of a single compact teal enamel camping lantern with brass frame and warm amber light, on a charcoal stone pedestal, dark forest green seamless background, soft studio light, clean silhouette, realistic metal and enamel."
+   }
+  },
+  "5": {
+   "class_type": "ConditioningZeroOut",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "ModelSamplingAuraFlow",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "shift": 3.0
+   }
+  },
+  "7": {
+   "class_type": "EmptySD3LatentImage",
+   "inputs": {
+    "width": 1024,
+    "height": 1024,
+    "batch_size": 1
+   }
+  },
+  "8": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "6",
+     0
+    ],
+    "seed": 2026091101,
+    "steps": 8,
+    "cfg": 1.0,
+    "sampler_name": "res_multistep",
+    "scheduler": "simple",
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "5",
+     0
+    ],
+    "latent_image": [
+     "7",
+     0
+    ],
+    "denoise": 1.0
+   }
+  },
+  "9": {
+   "class_type": "VAEDecodeTiled",
+   "inputs": {
+    "samples": [
+     "8",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ],
+    "tile_size": 512,
+    "overlap": 64,
+    "temporal_size": 64,
+    "temporal_overlap": 8
+   }
+  },
+  "10": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "9",
+     0
+    ],
+    "filename_prefix": "Expansion/Z-Image"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "507a7765-88b3-4786-b79c-fccd84042235",
+   "seed": 2026091101,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z_image_turbo_bf16.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "Professional product photograph of a single compact teal enamel camping lantern with brass frame and warm amber light, on a charcoal stone pedestal, dark forest green seamless background, soft studio light, clean silhouette, realistic metal and enamel."
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 2026091101,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Expansion/Z-Image"
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 1807110144,
+    "peak_dedicated_bytes": 15279280128,
+    "samples": 32,
+    "spilled": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "Z-Image_00009_.png",
+   "subfolder": "Expansion",
+   "type": "output",
+   "seed": 2026091101,
+   "prompt_id": "507a7765-88b3-4786-b79c-fccd84042235",
+   "media_type": "image",
+   "asset_id": "46c71058f3145128ab23d458f21a55d3"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

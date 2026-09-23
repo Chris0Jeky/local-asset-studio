@@ -1,0 +1,1362 @@
+[
+ {
+  "label": "wai",
+  "status": "completed",
+  "intent": {
+   "preset_id": "wai",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:02:07.300341",
+  "comfy_pid": 56556,
+  "commit_pct_before": 40.1,
+  "free_ram_gb_before": 14.2,
+  "route": "studio",
+  "preset_id": "wai",
+  "job_id": "d7acf9f6-44af-4da5-acec-8b68b2828eb0",
+  "prompt_ids": [
+   "7a90cba2-5973-4dfe-890d-e4791d2ae3f5"
+  ],
+  "wall_seconds": 51.4,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 14191,
+  "peak_shared_mb": 1822,
+  "spilled": true,
+  "gpu_samples": 34,
+  "peak_commit_pct": 59.2,
+  "comfy_executed_seconds": 49.19,
+  "log_lines": [
+   "02:58:52 [INFO] Found comfy_kitchen backend triton: {'available': False, 'disabled': True, 'unavailable_reason': \"ImportError: No module named 'triton'\", 'capabilities': []}",
+   "03:02:41 [INFO] Requested to load SDXLClipModel",
+   "03:02:41 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "03:02:41 [INFO] Requested to load SDXL",
+   "03:02:41 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:02:51 [INFO] Requested to load AutoencoderKL",
+   "03:02:53 [INFO] Unloaded partially: 1341.22 MB freed, 3555.87 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "03:02:53 [INFO] loaded completely; 4897.14 MB usable, 159.56 MB loaded, full load: True",
+   "03:02:56 [INFO] Prompt executed in 49.19 seconds"
+  ],
+  "outputs": [
+   {
+    "filename": "WAI-Illustration_00018_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091103,
+    "prompt_id": "7a90cba2-5973-4dfe-890d-e4791d2ae3f5",
+    "media_type": "image",
+    "asset_id": "a226965753cf56898e3c2e6ac1066230"
+   }
+  ],
+  "elapsed_seconds": 50.34426760673523,
+  "failure": null,
+  "message": "Complete",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "7a90cba2-5973-4dfe-890d-e4791d2ae3f5",
+    "seed": 2026091103,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 180449280,
+     "peak_dedicated_bytes": 8562073600,
+     "samples": 6,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/wai.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\WAI-Illustration_00018_.png",
+    "sha256": "cd61b0b3044aa5d3c80fb24da4a53179dfa6ec0c9361402201e0418c50720cc4"
+   }
+  ],
+  "finished_at": "2026-09-23 03:02:58.750395",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": 0.24
+   }
+  ]
+ },
+ {
+  "label": "anime",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anime",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:03:40.820364",
+  "comfy_pid": 56556,
+  "commit_pct_before": 50.9,
+  "free_ram_gb_before": 11.3,
+  "route": "studio",
+  "preset_id": "anime",
+  "job_id": "60d51bf8-35a2-46e3-bf74-66a4f32bdb72",
+  "prompt_ids": [
+   "759f3f24-c539-46b3-9fe2-1a68d28a3f60"
+  ],
+  "wall_seconds": 45.4,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 13150,
+  "peak_shared_mb": 4047,
+  "spilled": true,
+  "gpu_samples": 30,
+  "peak_commit_pct": 65.0,
+  "comfy_executed_seconds": 41.95,
+  "log_lines": [
+   "03:02:41 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:02:51 [INFO] Requested to load AutoencoderKL",
+   "03:02:53 [INFO] Unloaded partially: 1341.22 MB freed, 3555.87 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "03:02:53 [INFO] loaded completely; 4897.14 MB usable, 159.56 MB loaded, full load: True",
+   "03:02:56 [INFO] Prompt executed in 49.19 seconds",
+   "03:04:00 [INFO] Requested to load SDXLClipModel",
+   "03:04:00 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "03:04:00 [INFO] Requested to load SDXL",
+   "03:04:01 [INFO] Unloaded partially: 1428.82 MB freed, 2127.05 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 0",
+   "03:04:01 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:04:09 [INFO] Requested to load AutoencoderKL",
+   "03:04:10 [INFO] Unloaded partially: 1958.35 MB freed, 2938.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:04:11 [INFO] loaded completely; 5105.21 MB usable, 159.56 MB loaded, full load: True",
+   "03:04:22 [INFO] Prompt executed in 41.95 seconds"
+  ],
+  "timeline_file": "timelines/anime.json",
+  "outputs": [
+   {
+    "filename": "Animagine_00007_.png",
+    "subfolder": "Expansion",
+    "type": "output",
+    "seed": 2026091103,
+    "prompt_id": "759f3f24-c539-46b3-9fe2-1a68d28a3f60",
+    "media_type": "image",
+    "asset_id": "000bfb6c401b5c7d9b94546f224f7fae"
+   }
+  ],
+  "elapsed_seconds": 43.44773840904236,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 4.0 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "759f3f24-c539-46b3-9fe2-1a68d28a3f60",
+    "seed": 2026091103,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 4243312640,
+     "peak_dedicated_bytes": 12239695872,
+     "samples": 5,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/anime.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Expansion\\Animagine_00007_.png",
+    "sha256": "3511365e12264ad940787b924bc0560f6097367d9959e9e820ad842927bd425b"
+   }
+  ],
+  "finished_at": "2026-09-23 03:04:26.234744",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.23
+   }
+  ]
+ },
+ {
+  "label": "pony",
+  "status": "completed",
+  "intent": {
+   "preset_id": "pony",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:04:26.253322",
+  "comfy_pid": 56556,
+  "commit_pct_before": 51.9,
+  "free_ram_gb_before": 9.7,
+  "route": "studio",
+  "preset_id": "pony",
+  "job_id": "a78bb55c-381e-41fb-82ca-ef5032c469be",
+  "prompt_ids": [
+   "b4cfb4ff-3e59-4412-b1ba-2ecbe33f6072"
+  ],
+  "wall_seconds": 45.4,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ],
+  "peak_dedicated_mb": 12590,
+  "peak_shared_mb": 4431,
+  "spilled": true,
+  "gpu_samples": 31,
+  "peak_commit_pct": 64.4,
+  "comfy_executed_seconds": 41.96,
+  "log_lines": [
+   "03:04:09 [INFO] Requested to load AutoencoderKL",
+   "03:04:10 [INFO] Unloaded partially: 1958.35 MB freed, 2938.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:04:11 [INFO] loaded completely; 5105.21 MB usable, 159.56 MB loaded, full load: True",
+   "03:04:22 [INFO] Prompt executed in 41.95 seconds",
+   "03:04:46 [INFO] Requested to load SDXLClipModel",
+   "03:04:46 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "03:04:46 [INFO] Requested to load SDXL",
+   "03:04:47 [INFO] Unloaded partially: 811.69 MB freed, 2127.05 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 0",
+   "03:04:47 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:04:48 [INFO] Requested to load SDXLClipModel",
+   "03:04:55 [INFO] Requested to load AutoencoderKL",
+   "03:04:57 [INFO] Unloaded partially: 1943.35 MB freed, 2953.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:04:57 [INFO] loaded completely; 5072.25 MB usable, 159.56 MB loaded, full load: True",
+   "03:05:08 [INFO] Prompt executed in 41.96 seconds"
+  ],
+  "timeline_file": "timelines/pony.json",
+  "outputs": [
+   {
+    "filename": "pony_00003_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091103,
+    "prompt_id": "b4cfb4ff-3e59-4412-b1ba-2ecbe33f6072",
+    "media_type": "image",
+    "asset_id": "69183b425cd556628b4068a397af0c98"
+   }
+  ],
+  "elapsed_seconds": 42.257553577423096,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 4.3 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "b4cfb4ff-3e59-4412-b1ba-2ecbe33f6072",
+    "seed": 2026091103,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 4645965824,
+     "peak_dedicated_bytes": 13201788928,
+     "samples": 6,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/pony.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\pony_00003_.png",
+    "sha256": "b90feb1e069f1f00d3d2834575d94a8d55108e3d0583f001fe88943efdbe961c"
+   }
+  ],
+  "finished_at": "2026-09-23 03:05:11.695942",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": 0.23
+   }
+  ]
+ },
+ {
+  "label": "noob",
+  "status": "completed",
+  "intent": {
+   "preset_id": "noob",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:05:11.733102",
+  "comfy_pid": 56556,
+  "commit_pct_before": 50.3,
+  "free_ram_gb_before": 11.0,
+  "route": "studio",
+  "preset_id": "noob",
+  "job_id": "914ec81c-6559-4a93-9d18-28b1aa0a8f40",
+  "prompt_ids": [
+   "e4a38468-a9c1-4782-a3f3-35cd5af42609"
+  ],
+  "wall_seconds": 48.5,
+  "sampler_runs": [
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 12624,
+  "peak_shared_mb": 4991,
+  "spilled": true,
+  "gpu_samples": 33,
+  "peak_commit_pct": 64.5,
+  "comfy_executed_seconds": 45.43,
+  "log_lines": [
+   "03:04:57 [INFO] loaded completely; 5072.25 MB usable, 159.56 MB loaded, full load: True",
+   "03:05:08 [INFO] Prompt executed in 41.96 seconds",
+   "03:05:19 [WARNING] Civitai Link: Connection error: Connection error",
+   "03:05:24 [WARNING] Civitai Link: Connection error: Connection error",
+   "03:05:33 [WARNING] Civitai Link: Connection error: Connection error",
+   "03:05:35 [INFO] Requested to load SDXLClipModel",
+   "03:05:35 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "03:05:35 [INFO] Requested to load SDXL",
+   "03:05:35 [INFO] Unloaded partially: 826.69 MB freed, 2127.05 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 0",
+   "03:05:35 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:05:44 [INFO] Requested to load AutoencoderKL",
+   "03:05:45 [INFO] Unloaded partially: 1523.35 MB freed, 3373.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:05:46 [INFO] loaded completely; 4905.81 MB usable, 159.56 MB loaded, full load: True",
+   "03:05:57 [INFO] Prompt executed in 45.43 seconds"
+  ],
+  "timeline_file": "timelines/noob.json",
+  "outputs": [
+   {
+    "filename": "noob_00005_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091103,
+    "prompt_id": "e4a38468-a9c1-4782-a3f3-35cd5af42609",
+    "media_type": "image",
+    "asset_id": "630ad743605f5dad8ed10f3a369facfe"
+   }
+  ],
+  "elapsed_seconds": 46.329620122909546,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 4.9 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "e4a38468-a9c1-4782-a3f3-35cd5af42609",
+    "seed": 2026091103,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 5233168384,
+     "peak_dedicated_bytes": 13236908032,
+     "samples": 6,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/noob.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00005_.png",
+    "sha256": "00a112576b988ad011b610f45c9d56f634c824ec597a5e04edade4a664c869cf"
+   }
+  ],
+  "finished_at": "2026-09-23 03:06:00.197069",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": 0.24
+   }
+  ]
+ },
+ {
+  "label": "cstati-v3-baseline",
+  "status": "completed",
+  "intent": {
+   "preset_id": "cstati-v3-baseline",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:06:00.215875",
+  "comfy_pid": 56556,
+  "commit_pct_before": 50.8,
+  "free_ram_gb_before": 11.4,
+  "route": "studio",
+  "preset_id": "cstati-v3-baseline",
+  "job_id": "1d5c667b-f125-47ec-86f0-e3de24ad5726",
+  "prompt_ids": [
+   "7d2f9491-9d3f-4432-81c7-027dffbb9a4f"
+  ],
+  "wall_seconds": 45.4,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.25
+   }
+  ],
+  "peak_dedicated_mb": 12959,
+  "peak_shared_mb": 4607,
+  "spilled": true,
+  "gpu_samples": 31,
+  "peak_commit_pct": 65.1,
+  "comfy_executed_seconds": 44.17,
+  "log_lines": [
+   "03:05:35 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:05:44 [INFO] Requested to load AutoencoderKL",
+   "03:05:45 [INFO] Unloaded partially: 1523.35 MB freed, 3373.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:05:46 [INFO] loaded completely; 4905.81 MB usable, 159.56 MB loaded, full load: True",
+   "03:05:57 [INFO] Prompt executed in 45.43 seconds",
+   "03:06:21 [INFO] Requested to load SDXLClipModel",
+   "03:06:21 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "03:06:21 [INFO] Requested to load SDXL",
+   "03:06:22 [INFO] Unloaded partially: 1246.69 MB freed, 2127.05 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 0",
+   "03:06:22 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:06:31 [INFO] Requested to load AutoencoderKL",
+   "03:06:32 [INFO] Unloaded partially: 1543.35 MB freed, 3353.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:06:33 [INFO] loaded completely; 4911.87 MB usable, 159.56 MB loaded, full load: True",
+   "03:06:44 [INFO] Prompt executed in 44.17 seconds"
+  ],
+  "timeline_file": "timelines/cstati-v3-baseline.json",
+  "outputs": [
+   {
+    "filename": "CSTati-v3-Baseline_00003_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "7d2f9491-9d3f-4432-81c7-027dffbb9a4f",
+    "media_type": "image",
+    "asset_id": "cfe9493ea5545cad80fb9b2c556ed25f"
+   }
+  ],
+  "elapsed_seconds": 44.524285554885864,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 4.5 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "7d2f9491-9d3f-4432-81c7-027dffbb9a4f",
+    "seed": 2026091301,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 4830515200,
+     "peak_dedicated_bytes": 13588729856,
+     "samples": 6,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/cstati-v3-baseline.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\CSTati-v3-Baseline_00003_.png",
+    "sha256": "80dbf7f7140fbcc122b70a88a02b72c927a9803fae81b2dd1cb57fc6b910b13d"
+   }
+  ],
+  "finished_at": "2026-09-23 03:06:45.661920",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.25
+   }
+  ]
+ },
+ {
+  "label": "yumeflux-ilv1-baseline",
+  "status": "completed",
+  "intent": {
+   "preset_id": "yumeflux-ilv1-baseline",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:06:45.735913",
+  "comfy_pid": 56556,
+  "commit_pct_before": 50.7,
+  "free_ram_gb_before": 11.8,
+  "route": "studio",
+  "preset_id": "yumeflux-ilv1-baseline",
+  "job_id": "fb448a99-a914-4c46-9e30-cda03bcc3552",
+  "prompt_ids": [
+   "40d97aba-75da-4ec0-9b72-eb86c2f4c8a8"
+  ],
+  "wall_seconds": 39.5,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ],
+  "peak_dedicated_mb": 12935,
+  "peak_shared_mb": 5119,
+  "spilled": true,
+  "gpu_samples": 27,
+  "peak_commit_pct": 64.9,
+  "comfy_executed_seconds": 38.09,
+  "log_lines": [
+   "03:06:22 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:06:31 [INFO] Requested to load AutoencoderKL",
+   "03:06:32 [INFO] Unloaded partially: 1543.35 MB freed, 3353.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:06:33 [INFO] loaded completely; 4911.87 MB usable, 159.56 MB loaded, full load: True",
+   "03:06:44 [INFO] Prompt executed in 44.17 seconds",
+   "03:07:02 [INFO] Requested to load SDXLClipModel",
+   "03:07:02 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "03:07:02 [INFO] Requested to load SDXL",
+   "03:07:02 [INFO] Unloaded partially: 1239.19 MB freed, 2114.55 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 0",
+   "03:07:02 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:07:11 [INFO] Requested to load AutoencoderKL",
+   "03:07:13 [INFO] Unloaded partially: 1548.35 MB freed, 3348.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:07:13 [INFO] loaded completely; 4913.75 MB usable, 159.56 MB loaded, full load: True",
+   "03:07:24 [INFO] Prompt executed in 38.09 seconds"
+  ],
+  "timeline_file": "timelines/yumeflux-ilv1-baseline.json",
+  "outputs": [
+   {
+    "filename": "YumeFlux-ILv1-Baseline_00002_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "40d97aba-75da-4ec0-9b72-eb86c2f4c8a8",
+    "media_type": "image",
+    "asset_id": "786e95fc33195d5889e0997dd7cfa2d1"
+   }
+  ],
+  "elapsed_seconds": 38.4282009601593,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 5.0 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "40d97aba-75da-4ec0-9b72-eb86c2f4c8a8",
+    "seed": 2026091301,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 5367386112,
+     "peak_dedicated_bytes": 12013203456,
+     "samples": 5,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/yumeflux-ilv1-baseline.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\YumeFlux-ILv1-Baseline_00002_.png",
+    "sha256": "f4b1c8fc07baae54f56ed051059c8682202c13407df9a1ef808b3a8f01d99d83"
+   }
+  ],
+  "finished_at": "2026-09-23 03:07:25.196358",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": 0.24
+   }
+  ]
+ },
+ {
+  "label": "anima-portrait",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anima-portrait",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:07:25.238433",
+  "comfy_pid": 56556,
+  "commit_pct_before": 50.8,
+  "free_ram_gb_before": 11.7,
+  "route": "studio",
+  "preset_id": "anima-portrait",
+  "job_id": "a598459e-608b-45ef-b1bc-4661f909c800",
+  "prompt_ids": [
+   "2f60f01c-212f-4707-873e-57db58b82ea3"
+  ],
+  "wall_seconds": 36.3,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 9243,
+  "peak_shared_mb": 3018,
+  "spilled": true,
+  "gpu_samples": 25,
+  "peak_commit_pct": 54.8,
+  "comfy_executed_seconds": 33.08,
+  "log_lines": [
+   "03:07:02 [INFO] Requested to load SDXL",
+   "03:07:02 [INFO] Unloaded partially: 1239.19 MB freed, 2114.55 MB remains loaded, 37.51 MB buffer reserved, lowvram patches: 0",
+   "03:07:02 [INFO] loaded completely;  4897.05 MB loaded, full load: True",
+   "03:07:11 [INFO] Requested to load AutoencoderKL",
+   "03:07:13 [INFO] Unloaded partially: 1548.35 MB freed, 3348.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:07:13 [INFO] loaded completely; 4913.75 MB usable, 159.56 MB loaded, full load: True",
+   "03:07:24 [INFO] Prompt executed in 38.09 seconds",
+   "03:07:29 [INFO] Requested to load AnimaTEModel_",
+   "03:07:29 [INFO] loaded completely;  1136.88 MB loaded, full load: True",
+   "03:07:39 [INFO] Requested to load Anima",
+   "03:07:40 [INFO] loaded completely; 12841.20 MB usable, 3988.40 MB loaded, full load: True",
+   "03:07:55 [INFO] Requested to load WanVAE",
+   "03:07:55 [INFO] loaded completely; 5505.46 MB usable, 242.03 MB loaded, full load: True",
+   "03:07:58 [INFO] Prompt executed in 33.08 seconds"
+  ],
+  "timeline_file": "timelines/anima-portrait.json",
+  "outputs": [
+   {
+    "filename": "anima-portrait_00004_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091103,
+    "prompt_id": "2f60f01c-212f-4707-873e-57db58b82ea3",
+    "media_type": "image",
+    "asset_id": "d51bef368c3e59d09db2d38e7c2458ca"
+   }
+  ],
+  "elapsed_seconds": 34.235814332962036,
+  "failure": null,
+  "message": "Complete",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "2f60f01c-212f-4707-873e-57db58b82ea3",
+    "seed": 2026091103,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 106758144,
+     "peak_dedicated_bytes": 9075544064,
+     "samples": 5,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/anima-portrait.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\anima-portrait_00004_.png",
+    "sha256": "f81dbdce82f50530789da93864e4e788fb7b2c1fbd4b2d808832ef155ec1c0c8"
+   }
+  ],
+  "finished_at": "2026-09-23 03:08:01.600222",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 1,
+    "s_per_step_tqdm": 0.03,
+    "s_per_step_steady": null
+   }
+  ],
+  "sampler_runs_unverified": "last run elapsed 1 s does not fit the job window of 16.0 s (lines lost to the log buffer)"
+ },
+ {
+  "label": "anima-artist-stack",
+  "status": "completed",
+  "intent": {
+   "preset_id": "anima-artist-stack",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:08:01.649075",
+  "comfy_pid": 56556,
+  "commit_pct_before": 48.8,
+  "free_ram_gb_before": 14.6,
+  "route": "studio",
+  "preset_id": "anima-artist-stack",
+  "job_id": "964b9944-507c-4d4e-a87a-346a6f614827",
+  "prompt_ids": [
+   "954ebe85-3888-4cd6-93be-d1ed21543e41"
+  ],
+  "wall_seconds": 36.4,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 8655,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 25,
+  "peak_commit_pct": 54.7,
+  "comfy_executed_seconds": 33.53,
+  "log_lines": [
+   "03:07:11 [INFO] Requested to load AutoencoderKL",
+   "03:07:13 [INFO] Unloaded partially: 1548.35 MB freed, 3348.74 MB remains loaded, 15.00 MB buffer reserved, lowvram patches: 0",
+   "03:07:13 [INFO] loaded completely; 4913.75 MB usable, 159.56 MB loaded, full load: True",
+   "03:07:24 [INFO] Prompt executed in 38.09 seconds",
+   "03:07:29 [INFO] Requested to load AnimaTEModel_",
+   "03:07:29 [INFO] loaded completely;  1136.88 MB loaded, full load: True",
+   "03:07:39 [INFO] Requested to load Anima",
+   "03:07:40 [INFO] loaded completely; 12841.20 MB usable, 3988.40 MB loaded, full load: True",
+   "03:07:55 [INFO] Requested to load WanVAE",
+   "03:07:55 [INFO] loaded completely; 5505.46 MB usable, 242.03 MB loaded, full load: True",
+   "03:07:58 [INFO] Prompt executed in 33.08 seconds",
+   "03:08:11 [INFO] Requested to load Anima",
+   "03:08:17 [INFO] loaded completely; 12590.02 MB usable, 3988.40 MB loaded, full load: True",
+   "03:08:35 [INFO] Prompt executed in 33.53 seconds"
+  ],
+  "timeline_file": "timelines/anima-artist-stack.json",
+  "outputs": [
+   {
+    "filename": "anima-artist-stack_00005_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 975436216244440,
+    "prompt_id": "954ebe85-3888-4cd6-93be-d1ed21543e41",
+    "media_type": "image",
+    "asset_id": "af6e2a5c652c500290be2886fc2c8083"
+   }
+  ],
+  "elapsed_seconds": 34.28063488006592,
+  "failure": null,
+  "message": "Complete",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "954ebe85-3888-4cd6-93be-d1ed21543e41",
+    "seed": 975436216244440,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82632704,
+     "peak_dedicated_bytes": 9075544064,
+     "samples": 5,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/anima-artist-stack.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\anima-artist-stack_00005_.png",
+    "sha256": "e146b83d0002e8de1f03cf69f7aca7353763e827f2ad4d13f8fdb8aab13fb419"
+   }
+  ],
+  "finished_at": "2026-09-23 03:08:38.066026",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 17,
+    "s_per_step_tqdm": 0.57,
+    "s_per_step_steady": 0.57
+   }
+  ],
+  "sampler_runs_unverified": "the job's own load/decode log lines were lost from ComfyUI's log buffer, so the run cannot be attributed"
+ },
+ {
+  "label": "janima-v1-baseline",
+  "status": "completed",
+  "intent": {
+   "preset_id": "janima-v1-baseline",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:08:38.116144",
+  "comfy_pid": 56556,
+  "commit_pct_before": 54.5,
+  "free_ram_gb_before": 10.7,
+  "route": "studio",
+  "preset_id": "janima-v1-baseline",
+  "job_id": "048c7ed2-ca79-4fda-a865-3bc65a7ae2c1",
+  "prompt_ids": [
+   "948d3400-f582-4721-90ad-4c9bea44e9e0"
+  ],
+  "wall_seconds": 33.3,
+  "sampler_runs": [],
+  "peak_dedicated_mb": 8072,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 23,
+  "peak_commit_pct": 54.7,
+  "comfy_executed_seconds": 30.47,
+  "log_lines": [
+   "03:07:24 [INFO] Prompt executed in 38.09 seconds",
+   "03:07:29 [INFO] Requested to load AnimaTEModel_",
+   "03:07:29 [INFO] loaded completely;  1136.88 MB loaded, full load: True",
+   "03:07:39 [INFO] Requested to load Anima",
+   "03:07:40 [INFO] loaded completely; 12841.20 MB usable, 3988.40 MB loaded, full load: True",
+   "03:07:55 [INFO] Requested to load WanVAE",
+   "03:07:55 [INFO] loaded completely; 5505.46 MB usable, 242.03 MB loaded, full load: True",
+   "03:07:58 [INFO] Prompt executed in 33.08 seconds",
+   "03:08:11 [INFO] Requested to load Anima",
+   "03:08:17 [INFO] loaded completely; 12590.02 MB usable, 3988.40 MB loaded, full load: True",
+   "03:08:35 [INFO] Prompt executed in 33.53 seconds",
+   "03:08:46 [INFO] Requested to load Anima",
+   "03:08:48 [INFO] loaded completely; 12584.02 MB usable, 3988.40 MB loaded, full load: True",
+   "03:09:08 [INFO] Prompt executed in 30.47 seconds"
+  ],
+  "timeline_file": "timelines/janima-v1-baseline.json",
+  "outputs": [
+   {
+    "filename": "JANIMA-v1-Baseline_00002_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "948d3400-f582-4721-90ad-4c9bea44e9e0",
+    "media_type": "image",
+    "asset_id": "f488d5e1aa1356ba9742145b299a739f"
+   }
+  ],
+  "elapsed_seconds": 32.240570306777954,
+  "failure": null,
+  "message": "Complete",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "948d3400-f582-4721-90ad-4c9bea44e9e0",
+    "seed": 2026091301,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82595840,
+     "peak_dedicated_bytes": 8502718464,
+     "samples": 5,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/janima-v1-baseline.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\JANIMA-v1-Baseline_00002_.png",
+    "sha256": "7ce0bd00c4127d7342a1618558391bc20391c1a8ace85450236aa3449e1bde4e"
+   }
+  ],
+  "finished_at": "2026-09-23 03:09:11.453465",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 2,
+    "s_per_step_tqdm": 0.07,
+    "s_per_step_steady": null
+   }
+  ],
+  "sampler_runs_unverified": "the job's own load/decode log lines were lost from ComfyUI's log buffer, so the run cannot be attributed"
+ },
+ {
+  "label": "zimage",
+  "status": "completed",
+  "intent": {
+   "preset_id": "zimage",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:09:11.515786",
+  "comfy_pid": 56556,
+  "commit_pct_before": 48.9,
+  "free_ram_gb_before": 14.1,
+  "route": "studio",
+  "preset_id": "zimage",
+  "job_id": "c9598ec7-1b24-4214-bcd0-8b2b73c09da5",
+  "prompt_ids": [
+   "507a7765-88b3-4786-b79c-fccd84042235"
+  ],
+  "wall_seconds": 309.9,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 229,
+    "s_per_step_tqdm": 28.62,
+    "s_per_step_steady": 28.68
+   }
+  ],
+  "peak_dedicated_mb": 14571,
+  "peak_shared_mb": 1803,
+  "spilled": true,
+  "gpu_samples": 207,
+  "peak_commit_pct": 78.3,
+  "comfy_executed_seconds": 307.18,
+  "log_lines": [
+   "03:08:48 [INFO] loaded completely; 12584.02 MB usable, 3988.40 MB loaded, full load: True",
+   "03:09:08 [INFO] Prompt executed in 30.47 seconds",
+   "03:09:29 [INFO] Requested to load ZImageTEModel_",
+   "03:09:29 [INFO] loaded completely;  7672.25 MB loaded, full load: True",
+   "03:09:41 [WARNING] Civitai Link: Connection error: Connection error",
+   "03:09:46 [WARNING] Civitai Link: Connection error: Connection error",
+   "03:09:51 [INFO] Requested to load Lumina2",
+   "03:09:54 [WARNING] Civitai Link: Connection error: Connection error",
+   "03:10:07 [INFO] loaded completely; 14109.97 MB usable, 11739.54 MB loaded, full load: True",
+   "03:10:11 [WARNING] Civitai Link: Connection error: Connection error",
+   "03:13:57 [INFO] Requested to load AutoencodingEngine",
+   "03:13:57 [INFO] Unloaded partially: 170.49 MB freed, 11569.07 MB remains loaded, 22.59 MB buffer reserved, lowvram patches: 0",
+   "03:13:57 [INFO] loaded completely; 1505.92 MB usable, 159.87 MB loaded, full load: True",
+   "03:14:18 [INFO] Prompt executed in 307.18 seconds"
+  ],
+  "timeline_file": "timelines/zimage.json",
+  "outputs": [
+   {
+    "filename": "Z-Image_00009_.png",
+    "subfolder": "Expansion",
+    "type": "output",
+    "seed": 2026091101,
+    "prompt_id": "507a7765-88b3-4786-b79c-fccd84042235",
+    "media_type": "image",
+    "asset_id": "46c71058f3145128ab23d458f21a55d3"
+   }
+  ],
+  "elapsed_seconds": 308.12026166915894,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 1.7 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "507a7765-88b3-4786-b79c-fccd84042235",
+    "seed": 2026091101,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 1807110144,
+     "peak_dedicated_bytes": 15279280128,
+     "samples": 32,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/zimage.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Expansion\\Z-Image_00009_.png",
+    "sha256": "9fa48954728d608b39f2e7b9d24fd925ff21aca374725116671614ea1de87988"
+   }
+  ],
+  "finished_at": "2026-09-23 03:14:21.471485",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 229,
+    "s_per_step_tqdm": 28.62,
+    "s_per_step_steady": 28.68
+   }
+  ]
+ },
+ {
+  "label": "krea-portrait",
+  "status": "completed",
+  "intent": {
+   "preset_id": "krea-portrait",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 03:14:21.530053",
+  "comfy_pid": 56556,
+  "commit_pct_before": 66.3,
+  "free_ram_gb_before": 9.3,
+  "route": "studio",
+  "preset_id": "krea-portrait",
+  "job_id": "81bf4781-8dd7-4bb4-91df-122d8787224f",
+  "prompt_ids": [
+   "8aed29b6-ad03-4899-965d-8010c17928d8"
+  ],
+  "wall_seconds": 210.7,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 135,
+    "s_per_step_tqdm": 16.88,
+    "s_per_step_steady": 19.36
+   }
+  ],
+  "peak_dedicated_mb": 14461,
+  "peak_shared_mb": 5377,
+  "spilled": true,
+  "gpu_samples": 141,
+  "peak_commit_pct": 80.2,
+  "comfy_executed_seconds": 207.53,
+  "log_lines": [
+   "03:10:07 [INFO] loaded completely; 14109.97 MB usable, 11739.54 MB loaded, full load: True",
+   "03:10:11 [WARNING] Civitai Link: Connection error: Connection error",
+   "03:13:57 [INFO] Requested to load AutoencodingEngine",
+   "03:13:57 [INFO] Unloaded partially: 170.49 MB freed, 11569.07 MB remains loaded, 22.59 MB buffer reserved, lowvram patches: 0",
+   "03:13:57 [INFO] loaded completely; 1505.92 MB usable, 159.87 MB loaded, full load: True",
+   "03:14:18 [INFO] Prompt executed in 307.18 seconds",
+   "03:14:32 [INFO] Requested to load Krea2TEModel_",
+   "03:14:32 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "03:14:34 [INFO] Requested to load Krea2",
+   "03:15:03 [INFO] loaded completely; 14208.27 MB usable, 12532.86 MB loaded, full load: True",
+   "03:17:37 [INFO] Requested to load WanVAE",
+   "03:17:37 [INFO] Unloaded partially: 2092.76 MB freed, 10440.14 MB remains loaded, 252.00 MB buffer reserved, lowvram patches: 127",
+   "03:17:38 [INFO] loaded completely; 1940.67 MB usable, 242.03 MB loaded, full load: True",
+   "03:17:49 [INFO] Prompt executed in 207.53 seconds"
+  ],
+  "timeline_file": "timelines/krea-portrait.json",
+  "outputs": [
+   {
+    "filename": "krea-portrait_00007_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091103,
+    "prompt_id": "8aed29b6-ad03-4899-965d-8010c17928d8",
+    "media_type": "image",
+    "asset_id": "513dad80304a5b51a4fceb5453554264"
+   }
+  ],
+  "elapsed_seconds": 209.33143877983093,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 5.3 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "8aed29b6-ad03-4899-965d-8010c17928d8",
+    "seed": 2026091103,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 5637918720,
+     "peak_dedicated_bytes": 15163936768,
+     "samples": 22,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/krea-portrait.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-portrait_00007_.png",
+    "sha256": "a71b70fa66baaaefb847dae4083c3375be5aea6a9e62ec7349af359571e911a8"
+   }
+  ],
+  "finished_at": "2026-09-23 03:17:52.275008",
+  "sampler_runs_contaminated": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 0.27,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.2,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 28,
+    "last_step": 28,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.21,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 0.23,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 229,
+    "s_per_step_tqdm": 28.62,
+    "s_per_step_steady": null
+   },
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 135,
+    "s_per_step_tqdm": 16.88,
+    "s_per_step_steady": 19.36
+   }
+  ]
+ }
+]
