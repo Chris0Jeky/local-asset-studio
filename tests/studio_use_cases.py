@@ -355,11 +355,13 @@ def build_handler():
             if path == '/api/pose/render':
                 # The same shape app/pose_guide.py accepts, so the journey proves what the page sends.
                 data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': {}})
-                if not isinstance(data, dict) or set(data) != {'width', 'height', 'keypoints'} or len(data['keypoints']) != 18:
+                renderers = ('studio.coco18-lines/v1', 'studio.coco18-openpose-xinsir/v1')
+                if (not isinstance(data, dict) or set(data) - {'renderer'} != {'width', 'height', 'keypoints'} or len(data['keypoints']) != 18
+                        or data.get('renderer', renderers[0]) not in renderers):
                     return self.json({'error': 'The fixture accepts one 18-joint pose and nothing else'}, 400)
                 return self.json({'file': 'f' * 32 + '_drawn-pose.png', 'sha256': 'd' * 64, 'bytes': 2048,
                                   'width': data['width'], 'height': data['height'], 'original_name': 'drawn-pose',
-                                  'artifact_id': 'e' * 64, 'renderer': 'studio.coco18-lines/v1', 'generation_submitted': False})
+                                  'artifact_id': 'e' * 64, 'renderer': data.get('renderer', renderers[0]), 'generation_submitted': False})
             if path == '/api/recipe-check':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
                 preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == data['preset_id'])
