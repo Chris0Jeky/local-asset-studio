@@ -11,21 +11,24 @@ import uuid
 from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
 from urllib.error import HTTPError
 from backend_contracts import connection_refused, endpoint_ready, loopback_port, queue_is_idle, readiness
+import gpu_memory
 
 
 class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):return None
 
 
-# --reserve-vram replaces ComfyUI's default rather than adding to it. That default is 600+100 MiB on
-# this 16,304 MB Windows card (comfy/model_management.py:863-867), so 0.6 GB is ~86 MiB under it,
-# while 2 GB left the Qwen Q4_K_M unet on the full/partial load boundary. docs/RUNTIME-PRECONDITIONS.md.
-PRIMARY_RESERVE_VRAM='0.6'
+# --reserve-vram replaces ComfyUI's default rather than adding to it (600+100 MiB on this 16,304 MB Windows
+# card, comfy/model_management.py:863-867). ComfyUI's free-VRAM figure does not subtract what dwm and other
+# apps hold, so a fixed 0.6 GB let "loaded completely" models spill into WDDM shared memory (12-18 s/step
+# instead of 0.7 on 23 September 2026). The reserve is now measured per launch (app/gpu_memory.py) unless
+# config `primary_reserve_vram` pins a number. docs/RUNTIME-PRECONDITIONS.md section 7.
+PRIMARY_RESERVE_VRAM='auto'
 
 
 class BackendManager:
     def __init__(self, studio):
-        self.studio=studio;self.busy=False;self.operation=None
+        self.studio=studio;self.busy=False;self.operation=None;self.last_launch_reserve=None
         self.state_path=studio.root/'.runtime/backend-state.json'
         config=studio.config;primary=Path(config.get('comfy_root',studio.comfy_root)).resolve()
         python=Path(config.get('python','C:/AI/ComfyUI_windows_portable/python_embeded/python.exe')).resolve()
@@ -34,6 +37,7 @@ class BackendManager:
             'primary':{'id':'primary','name':'Main library','root':str(primary),'url':config.get('comfy_url','http://127.0.0.1:8188'),
                        'python':str(python),'port':8188,'entry':str(primary/'main.py'),
                        'disable_pinned_memory':config.get('primary_disable_pinned_memory') is True,
+                       'reserve_vram':self.configured_reserve(config.get('primary_reserve_vram',PRIMARY_RESERVE_VRAM)),
                        'pidfile':str(primary.parent.parent/'comfyui.pid'),'description':'Everyday image, video and 3D workflows'},
             'hidream':{'id':'hidream','name':'HiDream O1 · isolated','root':str(isolated),'url':'http://127.0.0.1:8192',
                        'python':str(python),'port':8192,'entry':str(studio.root/'scripts/hidream-launch.py'),
@@ -82,7 +86,7 @@ class BackendManager:
             try:record['online']=endpoint_ready(self.request(profile,'/system_stats',0.8))
             except (OSError,ValueError):record['online']=False
             record['active']=self.active==profile['id'];profiles.append(record)
-        return {'active':self.active,'busy':self.busy,'operation':copy.deepcopy(self.operation),'profiles':profiles}
+        return {'active':self.active,'busy':self.busy,'operation':copy.deepcopy(self.operation),'profiles':profiles,'last_launch_reserve':copy.deepcopy(self.last_launch_reserve)}
 
     def _save(self):
         self.studio._write_json_atomic(self.state_path,{'active':self.active,'operation':self.operation})
@@ -99,8 +103,24 @@ class BackendManager:
         return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') for j in self.studio.jobs.values()) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
 
     @staticmethod
-    def primary_argv(target):
-        argv=[target['python'],'-s',target['entry'],'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1','--port',str(target['port']),'--reserve-vram',PRIMARY_RESERVE_VRAM]
+    def configured_reserve(value):
+        if value=='auto':return 'auto'
+        if isinstance(value,bool) or not isinstance(value,(int,float,str)):raise ValueError('primary_reserve_vram must be "auto" or a number of GiB')
+        try:number=float(value)
+        except ValueError:raise ValueError('primary_reserve_vram must be "auto" or a number of GiB') from None
+        if not 0<=number<=12:raise ValueError('primary_reserve_vram must be between 0 and 12 GiB')
+        return number
+
+    @staticmethod
+    def launch_reserve(target):
+        """The --reserve-vram decision for one launch: the configured number, else what other processes hold on the GPU."""
+        if target.get('reserve_vram','auto')!='auto':return {'reserve_gib':float(target['reserve_vram']),'basis':'configured','others_bytes':None,'adapter':None,'unknown_reason':None}
+        return gpu_memory.launch_reserve_gib()
+
+    @staticmethod
+    def primary_argv(target, reserve=None):
+        reserve=reserve or BackendManager.launch_reserve(target)
+        argv=[target['python'],'-s',target['entry'],'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1','--port',str(target['port']),'--reserve-vram',format(reserve['reserve_gib'],'g')]
         if target.get('disable_pinned_memory') is True:argv.append('--disable-pinned-memory')
         return argv
 
@@ -179,7 +199,8 @@ class BackendManager:
     def launch_recovery(self, profile):
         """Launch exactly one selected profile without switching or stopping any process."""
         identifier=profile['id'];stamp=time.strftime('%Y%m%d-%H%M%S')+'-recovery';logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
-        if identifier=='primary':argv=self.primary_argv(profile)
+        if identifier=='primary':
+            self.last_launch_reserve=dict(self.launch_reserve(profile),recorded_at=time.time(),profile=identifier);argv=self.primary_argv(profile,self.last_launch_reserve)
         elif identifier=='hidream':argv=[profile['python'],'-s',profile['entry'],'--install-root',str(Path(profile['root']).parent)]
         else:argv=[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']]
         with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:
@@ -291,7 +312,8 @@ class BackendManager:
                 if not owned:
                     stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
                     if identifier=='primary':
-                        argv=self.primary_argv(target)
+                        self.last_launch_reserve=dict(self.launch_reserve(target),recorded_at=time.time(),profile=identifier)
+                        argv=self.primary_argv(target,self.last_launch_reserve);self.operation['launch_reserve']=self.last_launch_reserve
                     elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
                     else:argv=[target['python'],'-s',target['entry'],'--comfy-root',target['root']]
                     with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:
