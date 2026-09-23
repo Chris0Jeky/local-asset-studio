@@ -74,4 +74,25 @@ reserve makes ComfyUI evict the text encoder before sampling, and the diffusion 
 Host commit headroom fell to 2.1-6.5 GB during these runs, because the int8 text encoder alone is 9.35 GB. Start a
 Qwen-Image 2.1 job only with at least 32 GiB of commit headroom, the same gate as the other large routes.
 The 25-step default recipe took 686.6 s wall before this launcher change (prompt `a259a112`, `research.json`).
-It has not been re-timed at the new setting.
+*Re-timed 23 September 2026:* 52.9 s through the Studio at the new setting (see *Studio proofs* below).
+
+## Studio proofs (23 September 2026)
+
+After #863 and #870 fixed the two things that had blocked every backend switch on this PC (a stopped-tracking record
+counted as live work; Windows answering a closed loopback port only after about 2.05 s, past the 2 s probe), the
+Studio switched from the primary to *Qwen-Image 2.1 · isolated* in about 40 s and back in about 40 s. Each recipe then
+ran once through `POST /api/jobs` (`experiments/curated/qwen-image-21-20260922/prove_studio.py`; `prove_studio.json` and
+the exported `recipe-<preset>.json` beside it), seed 2026092211, 25 steps, commit-headroom gate enforced:
+
+| Recipe | Job / prompt | Time | Peak GPU, GiB (dedicated / shared) | Result (agent-inspected) |
+| --- | --- | --- | --- | --- |
+| `qwen21-t2i`, 832 × 1248 | `be94bd02` / `457eabb0` | 52.9 s | 14.1 / 3.0 (cold load) | the brief as written: adult sorceress, lit brass lantern, rainy bridge, blue hour |
+| `qwen21-rgba`, 1024² | `b377572d` / `b0297f2a` | 28.2 s | 13.0 / 0.4 | potion icon with native alpha, no halo; *fixable* per the blind second judge (#877): alpha dust (1-31) over the background and a 1-12 % see-through body; threshold alpha before packing |
+| `qwen21-edit`, 1024² | `dc8f18f8` / `027b8a22` | 78.6 s | 12.9 / 2.6 | the lantern cutout kept in shape and colour, redrawn with ink outlines and cel shading |
+
+All three recipes are now `verified: true` (the route runs and returns the intended kind of output). The t2i and edit
+PNGs are saved as RGBA with faint partial alpha on part of the frame; strip or threshold alpha before any step that
+crops or packs by alpha. Generated and agent-inspected only: not art acceptance, and the Qwen
+Research License keeps them non-commercial. Still open under #739: a 2048² text-to-image run, a 3-6 reference identity
+edit, a text-heavy prompt, the LoRA status (the downloaded 2.1 Fix LoRA is untested), and a VRAM-arbitration note for
+running beside a local LLM or Spoken Briefs.
