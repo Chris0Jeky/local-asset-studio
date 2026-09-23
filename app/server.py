@@ -1594,6 +1594,8 @@ class Studio:
                     job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job)
                 return False
             if history:
+                # A prompt that finishes between samples (or before the first) still gets one reading at completion.
+                self._sample_gpu_memory(job, submission)
                 status = history.get("status", {})
                 if status.get("status_str") == "error":
                     errors = [m[1] for m in status.get("messages", []) if isinstance(m, list) and len(m) > 1 and m[0] == "execution_error" and isinstance(m[1], dict)]

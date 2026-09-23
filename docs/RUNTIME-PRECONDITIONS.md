@@ -213,22 +213,21 @@ change to only one of the two produces two different runtimes on the same port.
 | `C:/AI/Start-ComfyUI.ps1.bak-20260923-reserve06` (reserve 0.6, 12-22 September) | `0c3fbc95bcb27444797eeffe08bb4047029a55f1ad352a9f979ed26bf8ea969e` |
 | `C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2` (reserve 2, original) | `526fcda531f6d7aded268e9f69ad3fa1bc643d05f7e74e65f5b32f902ddc604c` |
 
-To revert to the 12 September reserve-2 original, with the ComfyUI queue empty and its process stopped,
-copy that backup back over the launcher and re-check the hash (§8 has the revert to the 0.6 launcher):
+**Current rollback (since 23 September 2026).** With the ComfyUI queue empty and its process stopped, restore
+the 0.6 launcher and pin the same value for the Studio's own launches, so both paths start one runtime:
 
 ```powershell
-Copy-Item "C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2" "C:/AI/Start-ComfyUI.ps1" -Force
-Get-FileHash "C:/AI/Start-ComfyUI.ps1" -Algorithm SHA256
+Copy-Item "C:/AI/Start-ComfyUI.ps1.bak-20260923-reserve06" "C:/AI/Start-ComfyUI.ps1" -Force
+Get-FileHash "C:/AI/Start-ComfyUI.ps1" -Algorithm SHA256   # expect 0c3fbc95...
 ```
 
-Since 23 September `app/backends.py` measures the reserve per launch (§8); pin `primary_reserve_vram` in
-`config/local.json` to the launcher's value when reverting, so both paths start the same runtime. The change is
-also logged in [`runtime-patches/README.md`](../runtime-patches/README.md).
+and set `"primary_reserve_vram": 0.6` in `config/local.json`. Revert both or neither. *Historical:* the
+reserve-2 original (`bak-20260912-reserve2`) predates the measured reserve and would need
+`"primary_reserve_vram": 2`. The changes are also logged in [`runtime-patches/README.md`](../runtime-patches/README.md).
 
-The two argument lists are **not** otherwise identical, and this predates the reserve change: the
-launcher (and its backup) end with `--enable-manager`, while `BackendManager.primary_argv` does not
-pass it. A Studio-started primary backend therefore runs without ComfyUI-Manager; a launcher-started
-one runs with it. Reconciling that is a separate decision, not part of this change.
+`--enable-manager` (ComfyUI-Manager) is on the desktop path only: the launcher's standalone default and
+`scripts/primary-comfy-args.py` pass it, while the Studio's switch and recovery launches do not. The ownership
+checks read only `--listen`/`--port`, so either kind of launch is adopted.
 
 ## 7. What the reserve change did and did not do
 
@@ -289,7 +288,7 @@ A model ComfyUI logs as `loaded completely` can therefore exceed the physical ca
 silently backs the overflow with shared system memory that every sampling step pages across PCIe.
 
 **Measured on Qwen-Image 2.1** (isolated backend, same graph, 8 steps at 832x1248;
-`experiments/curated/qwen-image-21-20260922/bench.json`): 17.7 s/step at the default reserve with
+`experiments/curated/vram-spill-20260923/qwen21-bench.json`): 17.7 s/step at the default reserve with
 fast-disk loading, 12.5 s/step without fast-disk, with the ComfyUI process at 15,881 MB dedicated plus
 1,537 MB **shared**; one step in eight completed in under a second, the rest waited on paging.
 With `--reserve-vram 3` ComfyUI unloaded more of the text encoder, the process sat at 10,658 MB

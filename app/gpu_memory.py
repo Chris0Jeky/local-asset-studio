@@ -4,7 +4,7 @@ ComfyUI sizes model loads from the free VRAM PyTorch reports, and on this Window
 not subtract what other processes hold (dwm alone held 2.3 GB on 23 September 2026). A load that ComfyUI logs
 as "loaded completely" can therefore overflow into WDDM shared memory, where every step pages weights across
 PCIe: Qwen-Image 2.1 ran at 12.5-17.7 s/step that way and at 0.68 s/step once `--reserve-vram` covered the
-other processes (experiments/curated/qwen-image-21-20260922/bench.json). `launch_reserve_gib` sizes the
+other processes (experiments/curated/vram-spill-20260923/qwen21-bench.json). `launch_reserve_gib` sizes the
 reserve from a live reading; `spill` reports a running ComfyUI process's shared-memory use as evidence.
 """
 from __future__ import annotations
