@@ -93,4 +93,8 @@ The feathered `anime-masked-repair` recipe run through the Studio (job `1f9b3e11
 `Studio/Anime-Masked-Repair_00007_.png`) is **pixel-identical** (mean difference 0.00) to the research render at seed …61
 judged "keep" above. Judged again under R8 as a correction pass it is a **keep**: five digits, gesture and shading kept,
 the light streak continuous across the old mask edge (seam excess p90 2.0, the lowest of the 19 repairs), and pixels more
-than 20 px outside the mask unchanged (mean difference 0.002). The record is the last line of the JSONL.
+than 20 px outside the mask unchanged (mean difference 0.002). The record is the last line of the JSONL. It carries
+the submitted settings (WAI v17, seed 2026092361, denoise 0.6, mask grow 12, blur radius 24 sigma 8, 28 steps, cfg 5,
+dpmpp_2m karras). The exact submitted graph and the run receipt are committed by #885, in
+`experiments/curated/overnight-20260923/hand-inpaint/proof/`. Merge this after #885, which also sets the preset's
+`verified` flag and execution note.
