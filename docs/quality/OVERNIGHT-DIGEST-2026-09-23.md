@@ -25,16 +25,18 @@ One page for the owner. It adds nothing new: every line points to the PR or issu
 
 ## 2. Findings, with numbers
 
-- **Moving the text encoder to the CPU cures the memory spill.** Krea: the numbers above (#873). Z-Image fp8 with the
-  CPU encoder takes 37–76 s per image, against 532 s with the encoder on the GPU and 308 s for the shipped bf16. The
-  blind judging was a tie, with 9 keeps (#893).
+- **Moving the text encoder to the CPU stops the spill while sampling.** Krea: the numbers above (#873). The decode can
+  still spill, reaching 4.35 GiB in the last seconds of the atelier Studio proof (#880). Z-Image fp8 with the CPU encoder
+  takes 37–76 s per image, against 532 s with the encoder on the GPU and 308 s for the shipped bf16. It showed no shared
+  memory at all, and the blind judging was a tie with 9 keeps (#893).
 - **Qwen-Image 2.1, the night's first spill cure:** the launcher's 3 GiB reserve took the 25-step text-to-image from
   686.6 s to 52.9 s. At 8 steps that is 0.68–1.0 s/step, against 12.5–17.7 s/step (#858, #876).
 - **krea-refine on GGUF with the CPU encoder:** 84 s for the first fox job (38 s of it CPU encoding), then 26–28 s each
   with cached text, against 338–373 s on fp8. Blind tie at 0.25 (2 keep / 1 reject each, the same seed-83 fox head on a
   post), 3 seeds, no preset yet (lab evidence, PR to follow).
-- **SDXL tiled decode at 512:** a median 1.31 s against 2.35 s, with no spill on any case (the shipped decode spilled
-  2.3 GB on 2 of 7). A blind tie on quality (#868, #867).
+- **SDXL tiled decode at 512:** on the same cached latent, a median 1.31 s against 2.35 s, with no spill on any case (the
+  shipped decode spilled 2.3 GB on 2 of 7). After a checkpoint switch it still spilled 1.2 GB on 3 of 7, taking 8–12.5 s:
+  usually spill-free, not never. A blind tie on quality (#868, #867).
 - **Combine on an adult original pair:** the drawn skeleton is keep ×3 with five-fingered hands; Copy Pose is keep, keep,
   fixable; depth loses the face on 2 of 3 seeds, a seed effect rather than scale (#875, #879, #883).
 - **Klein restyle:**
