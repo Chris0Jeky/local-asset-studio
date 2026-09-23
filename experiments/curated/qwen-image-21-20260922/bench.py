@@ -34,7 +34,7 @@ def run(graph):
 
 def main(label, extra):
     headroom = free_virtual_gb()
-    if headroom < 30: raise SystemExit(f'Only {headroom:.1f} GB commit headroom; not launching')
+    if headroom < 32: raise SystemExit(f'Only {headroom:.1f} GiB commit headroom (32 GiB is the documented gate); not launching')
     log = HERE.parent.parent.parent / '.runtime' / f'bench-{label}.log'; log.parent.mkdir(exist_ok=True)
     # The shipped launcher's argv plus the flags under test (argparse takes the last value of a repeated flag).
     code = ("import runpy,sys;sys.argv=['qwen21-launch.py','--comfy-root',%r];"
