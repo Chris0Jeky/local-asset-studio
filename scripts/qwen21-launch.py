@@ -21,6 +21,9 @@ for picture in (Path(__file__).resolve().parents[1]/'examples/references').iterd
 sys.path.insert(0,str(root/'python_packages'))
 sys.path.insert(0,str(root))
 os.chdir(root)
+# Measured 22-23 September (experiments/curated/qwen-image-21-20260922/bench.json, 832x1248, 8 steps): the v0.37 fast-disk
+# default and a 0.6 reserve left the 7B model paging through shared memory (12.5-17.7 s/step); a 3 GiB reserve evicts
+# the text encoder before sampling so the diffusion model fits (0.68-1.0 s/step). docs/QWEN-IMAGE-21.md.
 sys.argv=[str(root/'main.py'),'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb',
-          '--listen','127.0.0.1','--port','8196','--reserve-vram','0.6','--disable-pinned-memory']
+          '--listen','127.0.0.1','--port','8196','--reserve-vram','3','--disable-fast-disk','--disable-pinned-memory']
 runpy.run_path(str(root/'main.py'),run_name='__main__')

@@ -15,7 +15,7 @@ Torch/ROCm environment's ComfyUI packages, which this repository forbids, so 2.1
 | ComfyUI checkout | `C:\AI\experiments\qwen-image-21\ComfyUI` | tag `v0.37.0`, commit `73c9bad4d21e7addbe1d13bc92eee0f1431b017d`, shallow clone, no custom nodes |
 | Package overlay | `…\ComfyUI\python_packages` | `pip install --no-deps --target`: comfy-kitchen 0.2.35, comfy-aimdo 0.5.5, comfyui-frontend-package 1.52.7; wheel SHA-256 in `C:\AI\experiments\qwen-image-21\wheels\SHA256SUMS` |
 | Python and Torch | the portable `python_embeded` | shared, unchanged: Python 3.12.10, torch 2.9.1+rocm7.2.1, transformers 5.15.1 |
-| Launcher | `scripts/qwen21-launch.py` | puts the overlay first on `sys.path`, listens on `127.0.0.1:8196`, `--reserve-vram 0.6 --disable-pinned-memory` like the primary |
+| Launcher | `scripts/qwen21-launch.py` | puts the overlay first on `sys.path`, listens on `127.0.0.1:8196`, `--reserve-vram 3 --disable-fast-disk --disable-pinned-memory` (measured; see *Speed* below) |
 | Studio profile | `qwen21` in `app/backends.py` | *Qwen-Image 2.1 · isolated*; readiness checks the overlay and the three pack files (`app/backend_contracts.py`) |
 | Weights | `…\ComfyUI\models\{diffusion_models,text_encoders,vae}` | Comfy-Org pack at revision `5dc5850e`, pinned in `models/library.json` |
 
@@ -54,3 +54,24 @@ Built by `scripts/build-qwen21-recipes.py` from Comfy-Org's day-0 templates (`im
 Choose **Qwen-Image 2.1 · isolated** in the environment selector and press **Switch environment**. As with
 HiDream, the Studio refuses while any queue is busy, stops only the exact idle configured process, and starts
 this launcher. Return to **Main library** for every other family. Do not run both families on the GPU at once.
+
+## Speed
+
+Measured on 22-23 September 2026 by `experiments/curated/qwen-image-21-20260922/bench.py`: 832 × 1248, 8 steps, one cold
+run and one warm run per launch configuration. The prompt IDs are in `bench.json`.
+
+| Launch flags | Cold run | Warm run | Last s/step |
+| --- | --- | --- | --- |
+| v0.37 defaults, `--reserve-vram 0.6` | 313.6 s | 248.9 s | 17.7 |
+| `--disable-fast-disk` | 217.4 s | 202.5 s | 12.5 |
+| `--disable-fast-disk --disable-dynamic-vram` | 270.7 s | 226.8 s | 13.9 |
+| **`--disable-fast-disk --reserve-vram 3`** (the launcher's setting) | **64.5-66.2 s** | 72.4 s | **0.68-1.0** |
+
+With a 0.6 reserve, ComfyUI does not count the VRAM that other processes hold, so the 7B model spills into
+shared memory and every step pages weights across PCIe (`docs/RUNTIME-PRECONDITIONS.md` section 8). A 3 GiB
+reserve makes ComfyUI evict the text encoder before sampling, and the diffusion model then fits.
+
+Host commit headroom fell to 2.1-6.5 GB during these runs, because the int8 text encoder alone is 9.35 GB. Start a
+Qwen-Image 2.1 job only with at least 32 GiB of commit headroom, the same gate as the other large routes.
+The 25-step default recipe took 686.6 s wall before this launcher change (prompt `a259a112`, `research.json`).
+It has not been re-timed at the new setting.
