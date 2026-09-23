@@ -1,0 +1,101 @@
+{
+ "recorded": "2026-09-23 21:24-21:39 local",
+ "host": "RX 9070 XT 16,304 MB, Windows 11, ComfyUI 40c4fcdf, --reserve-vram 0.6 --disable-pinned-memory",
+ "method": "phase_probe.py: SFW SDXL jobs through the Studio (832x1216, 20 steps), ComfyUI PID dedicated/shared GPU memory and all other processes sampled every 0.25 s through app/gpu_memory.py, aligned with the ComfyUI log",
+ "runs": {
+  "without the guard": [
+   {
+    "preset": "wai",
+    "job_id": "663d4fb6-7888-4842-b123-17b6468d7119",
+    "prompt_id": "e0f3b495-9102-4c13-b648-05e96d68d3d7",
+    "status": "completed",
+    "studio_seconds": 31.9,
+    "peak_shared_gb": 3.7,
+    "peak_dedicated_gb": 10.74,
+    "others_gb": 8.07,
+    "dwm_gb": 5.84,
+    "studio_receipt_peak_shared_gb": 0.08,
+    "model_evictions": [
+     {
+      "reason": "model change",
+      "outcome": "unloaded",
+      "waited_seconds": 1.7
+     }
+    ]
+   },
+   {
+    "preset": "cstati-v3-baseline",
+    "job_id": "e61d27ba-0aa4-43b7-ba30-c993e792571a",
+    "prompt_id": "5fe0e054-8656-4bfb-a123-83d761e6c923",
+    "status": "completed",
+    "studio_seconds": 32.6,
+    "peak_shared_gb": 3.83,
+    "peak_dedicated_gb": 10.6,
+    "others_gb": 7.97,
+    "dwm_gb": 5.84,
+    "studio_receipt_peak_shared_gb": 0.08,
+    "model_evictions": [
+     {
+      "reason": "model change",
+      "outcome": "unloaded",
+      "waited_seconds": 2.3
+     }
+    ]
+   }
+  ],
+  "with the VRAM guard": [
+   {
+    "preset": "wai",
+    "job_id": "7c38fc0b-2479-4a37-af1f-4022dd93c9fc",
+    "prompt_id": "fcec8b4b-3300-40eb-9217-65ed4b40e611",
+    "status": "completed",
+    "studio_seconds": 34.4,
+    "peak_shared_gb": 0.16,
+    "peak_dedicated_gb": 10.59,
+    "others_gb": 8.03,
+    "dwm_gb": 5.84,
+    "studio_receipt_peak_shared_gb": 0.16,
+    "model_evictions": []
+   },
+   {
+    "preset": "cstati-v3-baseline",
+    "job_id": "5810c165-07ce-4318-900b-d571f7bd800b",
+    "prompt_id": "bbe0b097-e67f-476b-b10d-df654fea0b2b",
+    "status": "completed",
+    "studio_seconds": 26.2,
+    "peak_shared_gb": 0.15,
+    "peak_dedicated_gb": 10.57,
+    "others_gb": 8.02,
+    "dwm_gb": 5.84,
+    "studio_receipt_peak_shared_gb": 0.15,
+    "model_evictions": [
+     {
+      "reason": "model change",
+      "outcome": "unloaded",
+      "waited_seconds": 0.0
+     }
+    ]
+   },
+   {
+    "preset": "wai",
+    "job_id": "cac8749e-3860-4e02-8d41-c583b4169b54",
+    "prompt_id": "342270cd-5913-4bb2-a93b-aa579d4483c1",
+    "status": "completed",
+    "studio_seconds": 28.3,
+    "peak_shared_gb": 0.08,
+    "peak_dedicated_gb": 10.57,
+    "others_gb": 8.06,
+    "dwm_gb": 5.86,
+    "studio_receipt_peak_shared_gb": 0.08,
+    "model_evictions": [
+     {
+      "reason": "model change",
+      "outcome": "unloaded",
+      "waited_seconds": 0.0
+     }
+    ]
+   }
+  ]
+ },
+ "reading": "Without the guard both SDXL jobs sampled at 8.6 GB dedicated with no spill, then overflowed 3.7-3.8 GB into shared memory during VAE decode (ComfyUI unloaded only part of the UNet) for about 3 s; the Studio receipts sampled every 10 s saw 0.08 GB. With the guard the same sequence peaked at 0.08-0.16 GB shared and warm jobs took 26-28 s instead of 32-33 s. The first guard job (34.4 s) followed a ComfyUI restart and loaded from disk."
+}

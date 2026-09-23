@@ -1,0 +1,5 @@
+# Passed by the Studio's primary launch (app/backends.py primary_argv) as --extra-model-paths-config.
+# Adds this folder as a custom_nodes path so ComfyUI imports studio_vram_guard; it adds no model folders.
+studio_runtime_extensions:
+  base_path: .
+  custom_nodes: .
