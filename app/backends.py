@@ -26,6 +26,10 @@ class _NoRedirect(HTTPRedirectHandler):
 # it turned Krea 2's full load into a partial one with per-step LoRA patches: 95 s/step against 35 s/step at
 # 0.6 (23 September 2026). 0.6 stays the default; "auto" is opt-in. docs/RUNTIME-PRECONDITIONS.md section 8.
 PRIMARY_RESERVE_VRAM=0.6
+# Loaded into the primary through --extra-model-paths-config: its evictions count what other processes hold on the GPU,
+# so a VAE decode no longer overflows into WDDM shared memory; load decisions are untouched (docs/RUNTIME-PRECONDITIONS.md
+# section 10). Config `primary_vram_guard: false` leaves it out.
+VRAM_GUARD_PATHS=Path(__file__).resolve().parents[1]/'runtime-patches/comfy-extensions/extra-paths.yaml'
 
 
 class BackendManager:
@@ -40,6 +44,7 @@ class BackendManager:
             'primary':{'id':'primary','name':'Main library','root':str(primary),'url':config.get('comfy_url','http://127.0.0.1:8188'),
                        'python':str(python),'port':8188,'entry':str(primary/'main.py'),
                        'disable_pinned_memory':config.get('primary_disable_pinned_memory') is True,
+                       'vram_guard':config.get('primary_vram_guard',True) is not False,
                        'reserve_vram':self.configured_reserve(config.get('primary_reserve_vram',PRIMARY_RESERVE_VRAM)),
                        'pidfile':str(primary.parent.parent/'comfyui.pid'),'description':'Everyday image, video and 3D workflows'},
             'hidream':{'id':'hidream','name':'HiDream O1 · isolated','root':str(isolated),'url':'http://127.0.0.1:8192',
@@ -157,6 +162,7 @@ class BackendManager:
         reserve=reserve or BackendManager.launch_reserve(target)
         argv=[target['python'],'-s',target['entry'],'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1','--port',str(target['port']),'--reserve-vram',format(reserve['reserve_gib'],'g')]
         if target.get('disable_pinned_memory') is True:argv.append('--disable-pinned-memory')
+        if target.get('vram_guard') is True and VRAM_GUARD_PATHS.is_file():argv+=['--extra-model-paths-config',str(VRAM_GUARD_PATHS)]
         return argv
 
     @staticmethod

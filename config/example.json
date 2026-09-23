@@ -4,6 +4,7 @@
   "python": "C:/AI/ComfyUI_windows_portable/python_embeded/python.exe",
   "comfy_launcher": "C:/AI/Start-ComfyUI.ps1",
   "primary_disable_pinned_memory": false,
+  "primary_vram_guard": true,
   "runtime_auto_recover": false,
   "idle_cache_release_minutes": 10,
   "unload_models_on_change": true,
