@@ -412,7 +412,8 @@ until its three bracketed fills (who is in image 2; image 1's pose; the clothes 
 variant (`combine-klein-9b-depth`, later that day), then the Copy Pose LoRA recipe (`combine-klein-9b-copypose`, 16 September: character
 as image 1, pose picture as image 2), then the pose-first one, then the replace-character recipe
 (`combine-klein-9b-replace`, 16 September: the picture to keep as image 1, the character whose face goes in as image 2, and no pose
-change), then the 4B recipe (source on image 1, two fills). The
+change), then the 4B recipe (source on image 1, two fills). Since 23 September 2026 (owner decision q-28) the order is Copy Pose,
+drawn skeleton, depth map, replace, pose-first 9B, 4B. The
 row below was measured with the pose-first 9B recipe leading; the depth variant has the same slots and fills, and the driver
 matches the fills by their wording, so the journey is the same length (not re-measured by hand; the `ux-use-cases` lane re-runs it).
 
