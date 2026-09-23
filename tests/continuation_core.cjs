@@ -33,10 +33,10 @@ test('bounded versioned envelope rejects unknown fields and malformed hashes',()
 const full=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'))).presets.find(p=>p.id==='krea-refine');
 const graph=JSON.parse(fs.readFileSync(path.join(__dirname,'..',full.graph)));
 full.defaults=Object.fromEntries(Object.entries(full).filter(([,value])=>Array.isArray(value)&&value.length===2&&graph[value[0]]&&typeof value[1]==='string').map(([key,value])=>[key,graph[value[0]].inputs[value[1]]]));
-test('full8 then light touch restores current authored distill and schedule atomically',()=>{
+test('full8 then the stronger variant restores current authored distill and schedule atomically',()=>{
   const before={...full.defaults,positive:source.positive,reference:file,seed:'9223372036854775800'};
   const eight=C.settings(full,full.variants[2].controls,before);assert.equal(eight.lora3,0);assert.equal(eight.steps,8);assert.equal(eight.denoise,.4);
-  const light=C.settings(full,full.variants[0].controls,eight);assert.equal(light.lora3,.85);assert.equal(light.steps,4);assert.equal(light.denoise,.25);
+  const light=C.settings(full,full.variants[0].controls,eight);assert.equal(light.lora3,.85);assert.equal(light.steps,4);assert.equal(light.denoise,.35);
   assert.equal(light.positive,source.positive);assert.equal(light.reference,file);assert.equal(light.seed,before.seed);assert.equal(before.steps,4);
 });
 test('same-preset examples cannot overwrite source or user-edited prompts',()=>{

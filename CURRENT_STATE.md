@@ -1,5 +1,9 @@
 # Current state — 23 September 2026
 
+## `krea-refine` default 0.35 → 0.25 after the fox-shrine refine — 23 September 2026 (05:31-06:09)
+
+Six Studio jobs of `krea-refine` on `Studio/krea-style-lab_00001_.png` with the shrine's own prompt (`experiments/curated/overnight-20260923/krea-refine-foxes/`): at denoise 0.25 (jobs `36e5d833`, `0cba57ec`, `0887896e`) all four foxes were kept with clearer faces on 3 of 3 seeds (agent-judged keep, keep, fixable); at 0.35 (jobs `9602e836`, `36537036`, `f5427eb8`) foxes were lost or doubled on 3 of 3 (reject, reject, fixable). Each job took 338-420 s on the fp8 build. The preset default is now 0.25 and the former `Light touch (denoise 0.25)` variant is now `Stronger (denoise 0.35, the old default)` (#886); the continuation test follows the rename. The preset stays `verified: true` on these Studio executions. Not art acceptance; HUMAN_TODO unchanged.
+
 ## Krea 2 Q5_K_M GGUF with the text encoder on the CPU: measured and proved — 23 September 2026 (03:32-05:26)
 
 Supersedes the "Krea 2 Q5 GGUF download in progress / comparison not run" lines further down (12 September); those stay
@@ -1218,7 +1222,7 @@ Preset shortcuts now restore the destination's complete authored sampling and ad
 applying the selected override, while preserving source, wording, size and seed. In particular,
 Krea Refine's `Full 8-step without the distill LoRA` followed by `Light touch` restores the currently
 authored 4 steps, 0.25 denoise and slot-3 distill strength 0.85 rather than retaining the disabled
-adapter. Recipe examples are exact-preset only during a continuation and cannot overwrite source or
+adapter. *(23 September 2026: that variant is now `Stronger (denoise 0.35, the old default)`, since the authored default itself became 0.25; see the section at the top.)* Recipe examples are exact-preset only during a continuation and cannot overwrite source or
 edited wording.
 
 The full repository suite passes **1,322 tests with 51 skipped**, and repository validation passes
