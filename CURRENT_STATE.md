@@ -1723,6 +1723,8 @@ divisible by eight before any job is created; valid PNG bytes remain unchanged. 
 not imply a successful Krea hand repair: the earlier unsuccessful Gentle digit trial used the NoobAI
 portrait. `HUMAN_TODO.md` retains the owner's optional creative choices and model-use decisions.
 
+*Correction, 23 September 2026 (06:11):* this is no longer current. #881 made the graph feather its mask (GrowMask 12 + ImageBlur 24/8) and raised the default denoise to 0.6, and the Studio proof on the six-digit NoobAI hand (job `1f9b3e11`, prompt `c83c97f5`, 06:11:18, 27.1 s) gave five digits with no seam, agent-judged keep. The preset is `verified: true` via #885 (`experiments/curated/overnight-20260923/hand-inpaint/proof/`). Not art acceptance.
+
 ## Offline CPU voice baseline - 12 September 2026
 
 The Voice baseline page now prepares pinned original-text takes and explicitly queues Kokoro CPU
