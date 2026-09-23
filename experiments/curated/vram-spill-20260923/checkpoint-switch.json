@@ -1,0 +1,124 @@
+{
+ "what": "Three serial SFW Studio jobs on three SDXL checkpoints in one fresh ComfyUI process, with the Studio unloading resident models before each checkpoint change (unload_models_on_change, default on).",
+ "date": "2026-09-23",
+ "comfyui_argv": "--reserve-vram 0.6 --disable-pinned-memory --enable-manager (Start-Studio.ps1 via C:/AI/Start-ComfyUI.ps1 -ArgumentsFile)",
+ "canvas": "832x1216, 20 steps, euler_ancestral, cfg 5, no LoRA",
+ "before_same_night": {
+  "note": "Grok lab batches, same flags and canvas, different prompts, no eviction",
+  "sequence_1": [
+   [
+    "cstati-v3-baseline",
+    "677d8652-bf0d-4c93-a92c-716f648ec52d",
+    0.0
+   ],
+   [
+    "wai",
+    "0ac4d893-0e68-4269-a737-9633fd28fd52",
+    3.7
+   ],
+   [
+    "cstati-v3-baseline",
+    "2ad9ed78-4412-4e3d-b543-31e517c79e69",
+    6.0
+   ]
+  ],
+  "sequence_2": [
+   [
+    "wai",
+    "b7d2516e-5bb5-4fe7-b95b-7f934e27f5e9",
+    0.0
+   ],
+   [
+    "anifox-v2-baseline",
+    "e7de8278-221b-4da2-811f-f5f10ae1eefe",
+    3.7
+   ],
+   [
+    "yumeflux-ilv1-baseline",
+    "6d2e8987-d288-43bc-89ff-ccfb5b9f1ee8",
+    5.6
+   ]
+  ],
+  "units": "GB peak shared (Studio receipt message)"
+ },
+ "after": [
+  {
+   "preset": "cstati-v3-baseline",
+   "job_id": "eb99f486-a385-4549-acf6-8b36ed5842f1",
+   "prompt_id": "e7265e19-d124-494e-a3ba-9ed1f6829c26",
+   "status": "completed",
+   "seconds": 30.443187475204468,
+   "message": "Complete",
+   "gpu_memory": {
+    "peak_shared_bytes": 165187584,
+    "peak_dedicated_bytes": 7119458304,
+    "samples": 4,
+    "spilled": false
+   },
+   "model_evictions": null
+  },
+  {
+   "preset": "wai",
+   "job_id": "7530a078-bb0d-4b4a-9e5e-d06960c15a0a",
+   "prompt_id": "a8353433-cb53-46c2-b676-04521a37bbd9",
+   "status": "completed",
+   "seconds": 29.281408548355103,
+   "message": "Complete",
+   "gpu_memory": {
+    "peak_shared_bytes": 86122496,
+    "peak_dedicated_bytes": 9153622016,
+    "samples": 4,
+    "spilled": false
+   },
+   "model_evictions": [
+    {
+     "index": 0,
+     "reason": "model change",
+     "dropped_models": [
+      "cstatiANIMEV30XL_v30.safetensors"
+     ],
+     "shared_before": 165187584,
+     "dedicated_before": 6710407168,
+     "requested_at": 1790192211.7071314,
+     "torch_reserved_before": 4219469824,
+     "torch_reserved_after": 79691776,
+     "outcome": "unloaded",
+     "shared_after": 82300928,
+     "waited_seconds": 1.0
+    }
+   ]
+  },
+  {
+   "preset": "yumeflux-ilv1-baseline",
+   "job_id": "87d68ecc-17c0-479b-94bd-f94de7873449",
+   "prompt_id": "31a7b06d-91c6-4a17-a8d9-c1f5cb5b797b",
+   "status": "completed",
+   "seconds": 31.833808660507202,
+   "message": "Complete",
+   "gpu_memory": {
+    "peak_shared_bytes": 82300928,
+    "peak_dedicated_bytes": 9208680448,
+    "samples": 4,
+    "spilled": false
+   },
+   "model_evictions": [
+    {
+     "index": 0,
+     "reason": "model change",
+     "dropped_models": [
+      "waiIllustriousSDXL_v170.safetensors"
+     ],
+     "shared_before": 82300928,
+     "dedicated_before": 6901280768,
+     "requested_at": 1790192241.7738144,
+     "torch_reserved_before": 3904897024,
+     "torch_reserved_after": 79691776,
+     "outcome": "unloaded",
+     "shared_after": 82300928,
+     "waited_seconds": 1.6
+    }
+   ]
+  }
+ ],
+ "images_inspected": false
+}
