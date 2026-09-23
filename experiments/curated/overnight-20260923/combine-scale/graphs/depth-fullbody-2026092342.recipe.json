@@ -1,0 +1,672 @@
+{
+ "version": 2,
+ "preset_id": "combine-klein-9b-depth",
+ "controls": {
+  "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "last_reference": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png",
+  "seed": 2026092342
+ },
+ "batch_count": 1,
+ "created_at": 1790137683.8441677,
+ "workflow": {
+  "1": {
+   "class_type": "UnetLoaderGGUF",
+   "inputs": {
+    "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+    "type": "flux2",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "flux2-vae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "clip": [
+     "2",
+     0
+    ]
+   }
+  },
+  "5": {
+   "class_type": "ConditioningZeroOut",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "CFGGuider",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "positive": [
+     "23",
+     0
+    ],
+    "negative": [
+     "18",
+     0
+    ],
+    "cfg": 1.0
+   }
+  },
+  "7": {
+   "class_type": "RandomNoise",
+   "inputs": {
+    "noise_seed": 2026092342
+   }
+  },
+  "8": {
+   "class_type": "KSamplerSelect",
+   "inputs": {
+    "sampler_name": "euler"
+   }
+  },
+  "9": {
+   "class_type": "Flux2Scheduler",
+   "inputs": {
+    "steps": 6,
+    "width": 1024,
+    "height": 1536
+   }
+  },
+  "10": {
+   "class_type": "EmptyFlux2LatentImage",
+   "inputs": {
+    "width": 1024,
+    "height": 1536,
+    "batch_size": 1
+   }
+  },
+  "11": {
+   "class_type": "SamplerCustomAdvanced",
+   "inputs": {
+    "noise": [
+     "7",
+     0
+    ],
+    "guider": [
+     "6",
+     0
+    ],
+    "sampler": [
+     "8",
+     0
+    ],
+    "sigmas": [
+     "9",
+     0
+    ],
+    "latent_image": [
+     "10",
+     0
+    ]
+   }
+  },
+  "12": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "11",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "13": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "filename_prefix": "Combine/Klein-9B-depth",
+    "images": [
+     "12",
+     0
+    ]
+   }
+  },
+  "14": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png"
+   }
+  },
+  "30": {
+   "class_type": "DepthAnythingV2Preprocessor",
+   "inputs": {
+    "ckpt_name": "depth_anything_v2_vitl.pth",
+    "resolution": 1024,
+    "image": [
+     "14",
+     0
+    ]
+   }
+  },
+  "15": {
+   "class_type": "ImageScaleToTotalPixels",
+   "inputs": {
+    "image": [
+     "30",
+     0
+    ],
+    "upscale_method": "lanczos",
+    "megapixels": 1.0,
+    "resolution_steps": 1
+   }
+  },
+  "16": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "35",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "17": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ],
+    "latent": [
+     "16",
+     0
+    ]
+   }
+  },
+  "18": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "5",
+     0
+    ],
+    "latent": [
+     "16",
+     0
+    ]
+   }
+  },
+  "20": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png"
+   }
+  },
+  "21": {
+   "class_type": "ImageScaleToTotalPixels",
+   "inputs": {
+    "image": [
+     "20",
+     0
+    ],
+    "upscale_method": "lanczos",
+    "megapixels": 1.0,
+    "resolution_steps": 1
+   }
+  },
+  "22": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "21",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "23": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "17",
+     0
+    ],
+    "latent": [
+     "22",
+     0
+    ]
+   }
+  },
+  "31": {
+   "class_type": "SolidMask",
+   "inputs": {
+    "value": 0.0,
+    "width": 100,
+    "height": 100
+   }
+  },
+  "32": {
+   "class_type": "SolidMask",
+   "inputs": {
+    "value": 1.0,
+    "width": 100,
+    "height": 100
+   }
+  },
+  "33": {
+   "class_type": "MaskComposite",
+   "inputs": {
+    "destination": [
+     "31",
+     0
+    ],
+    "source": [
+     "32",
+     0
+    ],
+    "x": 0,
+    "y": 100,
+    "operation": "add"
+   }
+  },
+  "34": {
+   "class_type": "EmptyImage",
+   "inputs": {
+    "width": 64,
+    "height": 64,
+    "batch_size": 1,
+    "color": 0
+   }
+  },
+  "35": {
+   "class_type": "ImageCompositeMasked",
+   "inputs": {
+    "destination": [
+     "15",
+     0
+    ],
+    "source": [
+     "34",
+     0
+    ],
+    "x": 0,
+    "y": 0,
+    "resize_source": true,
+    "mask": [
+     "33",
+     0
+    ]
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "9a6c22be-6165-4320-9148-c9078577ebc9",
+   "seed": 2026092342,
+   "graph": {
+    "1": {
+     "class_type": "UnetLoaderGGUF",
+     "inputs": {
+      "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing in a wide stance facing the viewer, knees slightly bent, right arm extended forward with an open palm, left arm raised overhead, as if casting a spell. Draw an adult woman traveller with long dark hair parted in the centre, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+      "clip": [
+       "2",
+       0
+      ]
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "CFGGuider",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "positive": [
+       "23",
+       0
+      ],
+      "negative": [
+       "18",
+       0
+      ],
+      "cfg": 1.0
+     }
+    },
+    "7": {
+     "class_type": "RandomNoise",
+     "inputs": {
+      "noise_seed": 2026092342
+     }
+    },
+    "8": {
+     "class_type": "KSamplerSelect",
+     "inputs": {
+      "sampler_name": "euler"
+     }
+    },
+    "9": {
+     "class_type": "Flux2Scheduler",
+     "inputs": {
+      "steps": 6,
+      "width": 1024,
+      "height": 1536
+     }
+    },
+    "10": {
+     "class_type": "EmptyFlux2LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1536,
+      "batch_size": 1
+     }
+    },
+    "11": {
+     "class_type": "SamplerCustomAdvanced",
+     "inputs": {
+      "noise": [
+       "7",
+       0
+      ],
+      "guider": [
+       "6",
+       0
+      ],
+      "sampler": [
+       "8",
+       0
+      ],
+      "sigmas": [
+       "9",
+       0
+      ],
+      "latent_image": [
+       "10",
+       0
+      ]
+     }
+    },
+    "12": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "11",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "13": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "filename_prefix": "Combine/Klein-9B-depth",
+      "images": [
+       "12",
+       0
+      ]
+     }
+    },
+    "14": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png"
+     }
+    },
+    "30": {
+     "class_type": "DepthAnythingV2Preprocessor",
+     "inputs": {
+      "ckpt_name": "depth_anything_v2_vitl.pth",
+      "resolution": 1024,
+      "image": [
+       "14",
+       0
+      ]
+     }
+    },
+    "15": {
+     "class_type": "ImageScaleToTotalPixels",
+     "inputs": {
+      "image": [
+       "30",
+       0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+     }
+    },
+    "16": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "35",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "17": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ],
+      "latent": [
+       "16",
+       0
+      ]
+     }
+    },
+    "18": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "5",
+       0
+      ],
+      "latent": [
+       "16",
+       0
+      ]
+     }
+    },
+    "20": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "5d0f00dd0dac44ccb4c98f8f5f773159_adult-traveller-fullbody.png.png"
+     }
+    },
+    "21": {
+     "class_type": "ImageScaleToTotalPixels",
+     "inputs": {
+      "image": [
+       "20",
+       0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+     }
+    },
+    "22": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "21",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "23": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "17",
+       0
+      ],
+      "latent": [
+       "22",
+       0
+      ]
+     }
+    },
+    "31": {
+     "class_type": "SolidMask",
+     "inputs": {
+      "value": 0.0,
+      "width": 100,
+      "height": 100
+     }
+    },
+    "32": {
+     "class_type": "SolidMask",
+     "inputs": {
+      "value": 1.0,
+      "width": 100,
+      "height": 100
+     }
+    },
+    "33": {
+     "class_type": "MaskComposite",
+     "inputs": {
+      "destination": [
+       "31",
+       0
+      ],
+      "source": [
+       "32",
+       0
+      ],
+      "x": 0,
+      "y": 100,
+      "operation": "add"
+     }
+    },
+    "34": {
+     "class_type": "EmptyImage",
+     "inputs": {
+      "width": 64,
+      "height": 64,
+      "batch_size": 1,
+      "color": 0
+     }
+    },
+    "35": {
+     "class_type": "ImageCompositeMasked",
+     "inputs": {
+      "destination": [
+       "15",
+       0
+      ],
+      "source": [
+       "34",
+       0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": true,
+      "mask": [
+       "33",
+       0
+      ]
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 82534400,
+    "peak_dedicated_bytes": 13241298944,
+    "samples": 9,
+    "spilled": false
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "Klein-9B-depth_00015_.png",
+   "subfolder": "Combine",
+   "type": "output",
+   "seed": 2026092342,
+   "prompt_id": "9a6c22be-6165-4320-9148-c9078577ebc9",
+   "media_type": "image",
+   "asset_id": "0a12ad3da74d54ce8ca3d71fa2748891"
+  }
+ ],
+ "parent_assets": [],
+ "references": [
+  {
+   "file": "b72d60be4bd64fbfa6574d550808d0e8_adult-stance-pose.png.png",
+   "sha256": "fd6c3db4c974c833a7c6780531382531622363c0a6f2631b821a5972fc965df4",
+   "bytes": 280692,
+   "width": 832,
+   "height": 1216,
+   "role": "pose",
+   "slot": 1,
+   "contribution": "",
+   "avoid": "",
+   "transform": {
+    "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+   }
+  }
+ ],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

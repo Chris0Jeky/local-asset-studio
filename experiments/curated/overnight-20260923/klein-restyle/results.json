@@ -1,0 +1,922 @@
+[
+ {
+  "label": "shipped-2026091401",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026091401,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:17:14.501596",
+  "comfy_pid": 46488,
+  "commit_pct_before": 53.9,
+  "free_ram_gb_before": 10.5,
+  "route": "studio",
+  "config": "shipped",
+  "seed": 2026091401,
+  "job_id": "4bf91b39-4d41-4158-817c-abf9dd7ecf7b",
+  "prompt_ids": [
+   "ce14e78b-e44a-4319-814f-7ba61acd3e01"
+  ],
+  "wall_seconds": 39.4,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 1.0,
+    "s_per_step_steady": 1.1
+   }
+  ],
+  "peak_dedicated_mb": 14057,
+  "peak_shared_mb": 1615,
+  "spilled": true,
+  "gpu_samples": 26,
+  "peak_commit_pct": 71.6,
+  "comfy_executed_seconds": 34.52,
+  "log_lines": [
+   "05:17:15 [INFO] Requested to load AutoencoderKL",
+   "05:17:15 [INFO] loaded completely; 6294.50 MB usable, 160.31 MB loaded, full load: True",
+   "05:17:27 [INFO] Requested to load Flux2TEModel_",
+   "05:17:27 [INFO] loaded completely;  7672.25 MB loaded, full load: True",
+   "05:17:29 [INFO] Requested to load Flux2",
+   "05:17:30 [INFO] Unloaded partially: 3130.37 MB freed, 4541.88 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:17:35 [INFO] loaded completely; 7522.51 MB usable, 3882.02 MB loaded, full load: True",
+   "05:17:44 [INFO] Requested to load AutoencoderKL",
+   "05:17:46 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:17:49 [INFO] Prompt executed in 34.52 seconds"
+  ],
+  "timeline_file": "timelines/shipped-2026091401.json",
+  "outputs": [
+   {
+    "filename": "Klein_00005_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026091401,
+    "prompt_id": "ce14e78b-e44a-4319-814f-7ba61acd3e01",
+    "media_type": "image",
+    "asset_id": "4b06b480f0405e568870cf644e75a28b"
+   }
+  ],
+  "elapsed_seconds": 36.42372465133667,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026091401,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "ce14e78b-e44a-4319-814f-7ba61acd3e01",
+    "seed": 2026091401,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 87842816,
+     "peak_dedicated_bytes": 13074059264,
+     "samples": 5,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/shipped-2026091401.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00005_.png",
+    "sha256": "6248d7c07a987780d1a437f9ebc9103af2ee38930573d5f64fdc33f0a4b30cd6"
+   }
+  ],
+  "finished_at": "2026-09-23 05:17:53.899844"
+ },
+ {
+  "label": "colours-barefoot-2026091401",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, bare feet, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026091401,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:17:53.915243",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.4,
+  "free_ram_gb_before": 5.5,
+  "route": "studio",
+  "config": "colours-barefoot",
+  "seed": 2026091401,
+  "job_id": "4b03b5e4-3ef3-49a3-b81d-c60c2e3f1d88",
+  "prompt_ids": [
+   "030d0726-b79a-435d-bca1-cb6849679dff"
+  ],
+  "wall_seconds": 21.3,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 1.17,
+    "s_per_step_steady": 1.15
+   }
+  ],
+  "peak_dedicated_mb": 12089,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 15,
+  "peak_commit_pct": 60.5,
+  "comfy_executed_seconds": 17.32,
+  "log_lines": [
+   "05:17:54 [INFO] Requested to load Flux2TEModel_",
+   "05:17:56 [INFO] loaded completely; 14092.83 MB usable, 7672.25 MB loaded, full load: True",
+   "05:17:57 [INFO] Requested to load Flux2",
+   "05:17:58 [INFO] Unloaded partially: 3557.87 MB freed, 4114.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:17:59 [INFO] loaded completely; 7520.39 MB usable, 3882.02 MB loaded, full load: True",
+   "05:18:08 [INFO] Requested to load AutoencoderKL",
+   "05:18:10 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:18:11 [INFO] Prompt executed in 17.32 seconds"
+  ],
+  "timeline_file": "timelines/colours-barefoot-2026091401.json",
+  "outputs": [
+   {
+    "filename": "Klein_00006_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026091401,
+    "prompt_id": "030d0726-b79a-435d-bca1-cb6849679dff",
+    "media_type": "image",
+    "asset_id": "f1efbfe621575ae9a8b17dfa37d0bce6"
+   }
+  ],
+  "elapsed_seconds": 18.220917463302612,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, bare feet, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026091401,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "030d0726-b79a-435d-bca1-cb6849679dff",
+    "seed": 2026091401,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12676100096,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/colours-barefoot-2026091401.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00006_.png",
+    "sha256": "b5c6f34ad5bb9dd756c36b524abb1a157b33004f139b9bb1b670eef7468bebee"
+   }
+  ],
+  "finished_at": "2026-09-23 05:18:15.270238"
+ },
+ {
+  "label": "colours-stocking-2026091401",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, a beige thigh-high stocking on the raised leg, the other leg bare, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026091401,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:18:15.290830",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.4,
+  "free_ram_gb_before": 5.5,
+  "route": "studio",
+  "config": "colours-stocking",
+  "seed": 2026091401,
+  "job_id": "f9b6db89-1205-4a1c-bab4-eb856a8760c6",
+  "prompt_ids": [
+   "a4dd1ddf-177b-4e9d-8871-560ca28e2fc5"
+  ],
+  "wall_seconds": 21.3,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 1.0,
+    "s_per_step_steady": 1.11
+   }
+  ],
+  "peak_dedicated_mb": 14249,
+  "peak_shared_mb": 335,
+  "spilled": false,
+  "gpu_samples": 15,
+  "peak_commit_pct": 70.6,
+  "comfy_executed_seconds": 16.19,
+  "log_lines": [
+   "05:18:15 [INFO] Requested to load Flux2TEModel_",
+   "05:18:17 [INFO] loaded completely; 14092.83 MB usable, 7672.25 MB loaded, full load: True",
+   "05:18:18 [INFO] Requested to load Flux2",
+   "05:18:19 [INFO] Unloaded partially: 3557.87 MB freed, 4114.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:18:20 [INFO] loaded completely; 7520.39 MB usable, 3882.02 MB loaded, full load: True",
+   "05:18:28 [INFO] Requested to load AutoencoderKL",
+   "05:18:30 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:18:31 [INFO] Prompt executed in 16.19 seconds"
+  ],
+  "timeline_file": "timelines/colours-stocking-2026091401.json",
+  "outputs": [
+   {
+    "filename": "Klein_00007_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026091401,
+    "prompt_id": "a4dd1ddf-177b-4e9d-8871-560ca28e2fc5",
+    "media_type": "image",
+    "asset_id": "ccb39593a5c755c89141fb109d986f92"
+   }
+  ],
+  "elapsed_seconds": 18.221195220947266,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, a beige thigh-high stocking on the raised leg, the other leg bare, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026091401,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "a4dd1ddf-177b-4e9d-8871-560ca28e2fc5",
+    "seed": 2026091401,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12676100096,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/colours-stocking-2026091401.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00007_.png",
+    "sha256": "961055d9422acd6e881442fe24987798bfbb751c2dd34d1b361e9fa26e508bd4"
+   }
+  ],
+  "finished_at": "2026-09-23 05:18:36.639061"
+ },
+ {
+  "label": "shipped-2026092351",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026092351,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:18:36.673913",
+  "comfy_pid": 46488,
+  "commit_pct_before": 58.0,
+  "free_ram_gb_before": 5.0,
+  "route": "studio",
+  "config": "shipped",
+  "seed": 2026092351,
+  "job_id": "b2cffbce-f644-4bcf-927f-2a1c6f21a015",
+  "prompt_ids": [
+   "00ff33d1-1019-45cd-a4d6-fb849d3a91dd"
+  ],
+  "wall_seconds": 21.3,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 1.17,
+    "s_per_step_steady": 1.44
+   }
+  ],
+  "peak_dedicated_mb": 14249,
+  "peak_shared_mb": 335,
+  "spilled": false,
+  "gpu_samples": 15,
+  "peak_commit_pct": 70.4,
+  "comfy_executed_seconds": 16.38,
+  "log_lines": [
+   "05:18:36 [INFO] Requested to load Flux2TEModel_",
+   "05:18:38 [INFO] loaded completely; 14092.83 MB usable, 7672.25 MB loaded, full load: True",
+   "05:18:39 [INFO] Requested to load Flux2",
+   "05:18:40 [INFO] Unloaded partially: 3557.87 MB freed, 4114.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:18:41 [INFO] loaded completely; 7520.39 MB usable, 3882.02 MB loaded, full load: True",
+   "05:18:50 [INFO] Requested to load AutoencoderKL",
+   "05:18:52 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:18:53 [INFO] Prompt executed in 16.38 seconds"
+  ],
+  "timeline_file": "timelines/shipped-2026092351.json",
+  "outputs": [
+   {
+    "filename": "Klein_00008_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026092351,
+    "prompt_id": "00ff33d1-1019-45cd-a4d6-fb849d3a91dd",
+    "media_type": "image",
+    "asset_id": "77ba5700577c5d0786f52ed619d2e3a3"
+   }
+  ],
+  "elapsed_seconds": 18.16980242729187,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026092351,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "00ff33d1-1019-45cd-a4d6-fb849d3a91dd",
+    "seed": 2026092351,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12676100096,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/shipped-2026092351.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00008_.png",
+    "sha256": "e376479b0062acf330ef43825b3a5e8d995a19bcff35b8dd84b67fee1e66c14e"
+   }
+  ],
+  "finished_at": "2026-09-23 05:18:57.975164"
+ },
+ {
+  "label": "colours-barefoot-2026092351",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, bare feet, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026092351,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:18:58.028858",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.6,
+  "free_ram_gb_before": 5.1,
+  "route": "studio",
+  "config": "colours-barefoot",
+  "seed": 2026092351,
+  "job_id": "18d64f1e-2d56-4348-9fb7-acd914710960",
+  "prompt_ids": [
+   "2b568f31-7b48-4bc8-8d31-425dcbe7e61b"
+  ],
+  "wall_seconds": 21.3,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 1.17,
+    "s_per_step_steady": 1.44
+   }
+  ],
+  "peak_dedicated_mb": 14249,
+  "peak_shared_mb": 335,
+  "spilled": false,
+  "gpu_samples": 15,
+  "peak_commit_pct": 70.4,
+  "comfy_executed_seconds": 16.2,
+  "log_lines": [
+   "05:18:58 [INFO] Requested to load Flux2TEModel_",
+   "05:19:00 [INFO] loaded completely; 14092.83 MB usable, 7672.25 MB loaded, full load: True",
+   "05:19:01 [INFO] Requested to load Flux2",
+   "05:19:02 [INFO] Unloaded partially: 3557.87 MB freed, 4114.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:19:02 [INFO] loaded completely; 7520.39 MB usable, 3882.02 MB loaded, full load: True",
+   "05:19:11 [INFO] Requested to load AutoencoderKL",
+   "05:19:13 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:19:14 [INFO] Prompt executed in 16.20 seconds"
+  ],
+  "timeline_file": "timelines/colours-barefoot-2026092351.json",
+  "outputs": [
+   {
+    "filename": "Klein_00009_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026092351,
+    "prompt_id": "2b568f31-7b48-4bc8-8d31-425dcbe7e61b",
+    "media_type": "image",
+    "asset_id": "a02cf14d15d4502a85064ffb2998e76d"
+   }
+  ],
+  "elapsed_seconds": 18.215596199035645,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, bare feet, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026092351,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "2b568f31-7b48-4bc8-8d31-425dcbe7e61b",
+    "seed": 2026092351,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12676100096,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/colours-barefoot-2026092351.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00009_.png",
+    "sha256": "8e3473ce2a94830959b75b386ff1d1147d8c52dba479e23901f1eea44f53d2ae"
+   }
+  ],
+  "finished_at": "2026-09-23 05:19:19.374391"
+ },
+ {
+  "label": "colours-stocking-2026092351",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, a beige thigh-high stocking on the raised leg, the other leg bare, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026092351,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:19:19.389618",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.7,
+  "free_ram_gb_before": 5.1,
+  "route": "studio",
+  "config": "colours-stocking",
+  "seed": 2026092351,
+  "job_id": "669256b6-c68f-446a-9081-d584415581ab",
+  "prompt_ids": [
+   "5ea53359-df87-482f-9fdb-9ed741883b06"
+  ],
+  "wall_seconds": 18.3,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 1.17,
+    "s_per_step_steady": 1.44
+   }
+  ],
+  "peak_dedicated_mb": 12089,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 13,
+  "peak_commit_pct": 59.4,
+  "comfy_executed_seconds": 15.89,
+  "log_lines": [
+   "05:19:19 [INFO] Requested to load Flux2TEModel_",
+   "05:19:21 [INFO] loaded completely; 14092.83 MB usable, 7672.25 MB loaded, full load: True",
+   "05:19:22 [INFO] Requested to load Flux2",
+   "05:19:23 [INFO] Unloaded partially: 3557.87 MB freed, 4114.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:19:23 [INFO] loaded completely; 7520.39 MB usable, 3882.02 MB loaded, full load: True",
+   "05:19:32 [INFO] Requested to load AutoencoderKL",
+   "05:19:34 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:19:35 [INFO] Prompt executed in 15.89 seconds"
+  ],
+  "timeline_file": "timelines/colours-stocking-2026092351.json",
+  "outputs": [
+   {
+    "filename": "Klein_00010_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026092351,
+    "prompt_id": "5ea53359-df87-482f-9fdb-9ed741883b06",
+    "media_type": "image",
+    "asset_id": "ab75d301a84e5d3b949c9488621ae784"
+   }
+  ],
+  "elapsed_seconds": 16.178629875183105,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, a beige thigh-high stocking on the raised leg, the other leg bare, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026092351,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "5ea53359-df87-482f-9fdb-9ed741883b06",
+    "seed": 2026092351,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12676100096,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/colours-stocking-2026092351.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00010_.png",
+    "sha256": "e7a2cc630fe5496ed72de8fe31b45cfd1b17684849862ae0983a636596647221"
+   }
+  ],
+  "finished_at": "2026-09-23 05:19:37.747369"
+ },
+ {
+  "label": "shipped-2026092352",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026092352,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:19:37.766378",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.6,
+  "free_ram_gb_before": 5.2,
+  "route": "studio",
+  "config": "shipped",
+  "seed": 2026092352,
+  "job_id": "8f36616d-0127-4213-9da9-dde2ad01815d",
+  "prompt_ids": [
+   "e7ba1ec9-7124-49ac-b57c-f6e598d972af"
+  ],
+  "wall_seconds": 18.3,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 1.0,
+    "s_per_step_steady": 1.1
+   }
+  ],
+  "peak_dedicated_mb": 12089,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 13,
+  "peak_commit_pct": 70.2,
+  "comfy_executed_seconds": 15.73,
+  "log_lines": [
+   "05:19:37 [INFO] Requested to load Flux2TEModel_",
+   "05:19:39 [INFO] loaded completely; 14092.83 MB usable, 7672.25 MB loaded, full load: True",
+   "05:19:40 [INFO] Requested to load Flux2",
+   "05:19:41 [INFO] Unloaded partially: 3557.87 MB freed, 4114.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:19:42 [INFO] loaded completely; 7520.39 MB usable, 3882.02 MB loaded, full load: True",
+   "05:19:50 [INFO] Requested to load AutoencoderKL",
+   "05:19:52 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:19:53 [INFO] Prompt executed in 15.73 seconds"
+  ],
+  "timeline_file": "timelines/shipped-2026092352.json",
+  "outputs": [
+   {
+    "filename": "Klein_00011_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026092352,
+    "prompt_id": "e7ba1ec9-7124-49ac-b57c-f6e598d972af",
+    "media_type": "image",
+    "asset_id": "deb454ce998758fdab33d263503056ba"
+   }
+  ],
+  "elapsed_seconds": 16.2271568775177,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026092352,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "e7ba1ec9-7124-49ac-b57c-f6e598d972af",
+    "seed": 2026092352,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12676100096,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/shipped-2026092352.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00011_.png",
+    "sha256": "f0f3d34cd7f084d8ad3fbb46af9739550183adec95bbbbe1313de833ca09c8e1"
+   }
+  ],
+  "finished_at": "2026-09-23 05:19:56.086997"
+ },
+ {
+  "label": "colours-barefoot-2026092352",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, bare feet, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026092352,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:19:56.124865",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.8,
+  "free_ram_gb_before": 5.1,
+  "route": "studio",
+  "config": "colours-barefoot",
+  "seed": 2026092352,
+  "job_id": "8529e99f-7bc9-4193-87bc-fec5bcefa8f9",
+  "prompt_ids": [
+   "78491019-5758-4b1f-a75a-d00f995b32b9"
+  ],
+  "wall_seconds": 21.3,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 7,
+    "s_per_step_tqdm": 1.17,
+    "s_per_step_steady": 1.41
+   }
+  ],
+  "peak_dedicated_mb": 14249,
+  "peak_shared_mb": 335,
+  "spilled": false,
+  "gpu_samples": 15,
+  "peak_commit_pct": 70.5,
+  "comfy_executed_seconds": 16.33,
+  "log_lines": [
+   "05:19:56 [INFO] Requested to load Flux2TEModel_",
+   "05:19:58 [INFO] loaded completely; 14092.83 MB usable, 7672.25 MB loaded, full load: True",
+   "05:19:59 [INFO] Requested to load Flux2",
+   "05:20:00 [INFO] Unloaded partially: 3557.87 MB freed, 4114.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:20:01 [INFO] loaded completely; 7520.39 MB usable, 3882.02 MB loaded, full load: True",
+   "05:20:09 [INFO] Requested to load AutoencoderKL",
+   "05:20:11 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:20:12 [INFO] Prompt executed in 16.33 seconds"
+  ],
+  "timeline_file": "timelines/colours-barefoot-2026092352.json",
+  "outputs": [
+   {
+    "filename": "Klein_00012_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026092352,
+    "prompt_id": "78491019-5758-4b1f-a75a-d00f995b32b9",
+    "media_type": "image",
+    "asset_id": "ad63733f0af7572aa99130722480a4d5"
+   }
+  ],
+  "elapsed_seconds": 18.263242721557617,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, bare feet, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026092352,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "78491019-5758-4b1f-a75a-d00f995b32b9",
+    "seed": 2026092352,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12676100096,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/colours-barefoot-2026092352.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00012_.png",
+    "sha256": "46237f786dd9e512320908114d84acead7598e8bdb44fe71b713647f869afbbd"
+   }
+  ],
+  "finished_at": "2026-09-23 05:20:17.476508"
+ },
+ {
+  "label": "colours-stocking-2026092352",
+  "status": "completed",
+  "intent": {
+   "preset_id": "restyle-klein",
+   "controls": {
+    "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, a beige thigh-high stocking on the raised leg, the other leg bare, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+    "seed": 2026092352,
+    "steps": 6,
+    "cfg": 1,
+    "width": 1040,
+    "height": 1520,
+    "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+   },
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 05:20:17.512843",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.5,
+  "free_ram_gb_before": 5.1,
+  "route": "studio",
+  "config": "colours-stocking",
+  "seed": 2026092352,
+  "job_id": "8d7a5a0c-a213-4761-8f5e-11f55a180b87",
+  "prompt_ids": [
+   "ce318c93-175e-4f7d-a18f-ea70b7dc4189"
+  ],
+  "wall_seconds": 18.3,
+  "sampler_runs": [
+   {
+    "total_steps": 6,
+    "last_step": 6,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 1.0,
+    "s_per_step_steady": 1.36
+   }
+  ],
+  "peak_dedicated_mb": 12089,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 13,
+  "peak_commit_pct": 60.7,
+  "comfy_executed_seconds": 15.85,
+  "log_lines": [
+   "05:20:17 [INFO] Requested to load Flux2TEModel_",
+   "05:20:19 [INFO] loaded completely; 14092.83 MB usable, 7672.25 MB loaded, full load: True",
+   "05:20:20 [INFO] Requested to load Flux2",
+   "05:20:21 [INFO] Unloaded partially: 3557.87 MB freed, 4114.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "05:20:22 [INFO] loaded completely; 7520.39 MB usable, 3882.02 MB loaded, full load: True",
+   "05:20:30 [INFO] Requested to load AutoencoderKL",
+   "05:20:32 [INFO] loaded completely; 6273.15 MB usable, 160.31 MB loaded, full load: True",
+   "05:20:33 [INFO] Prompt executed in 15.85 seconds"
+  ],
+  "timeline_file": "timelines/colours-stocking-2026092352.json",
+  "outputs": [
+   {
+    "filename": "Klein_00013_.png",
+    "subfolder": "Restyle",
+    "type": "output",
+    "seed": 2026092352,
+    "prompt_id": "ce318c93-175e-4f7d-a18f-ea70b7dc4189",
+    "media_type": "image",
+    "asset_id": "60e542c75af955d7aa4f58891d9c40da"
+   }
+  ],
+  "elapsed_seconds": 16.131178617477417,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long purple hair, blue eyes, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, a beige thigh-high stocking on the raised leg, the other leg bare, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality.",
+   "seed": 2026092352,
+   "steps": 6,
+   "cfg": 1,
+   "width": 1040,
+   "height": 1520,
+   "reference": "573ec938e3c7402ca1ef0187f19cc41a_Nova_00004_.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "ce318c93-175e-4f7d-a18f-ea70b7dc4189",
+    "seed": 2026092352,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12676100096,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/colours-stocking-2026092352.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Restyle\\Klein_00013_.png",
+    "sha256": "172452b8aecf86056f2bffedd989cd8f274e2a00110d9651744dfe5ad43792a0"
+   }
+  ],
+  "finished_at": "2026-09-23 05:20:35.829855"
+ }
+]
