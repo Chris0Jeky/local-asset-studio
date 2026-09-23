@@ -26,7 +26,7 @@ The digit count and the seam step are recorded per picture in
 | --- | --- | --- | --- | --- |
 | masked repair 0.4 | **0 / 3** (six remain) | yes, nearly unchanged | a step in the streak on 2 of 3 | 3 reject |
 | masked repair 0.6 | **3 / 3** | yes (one seed curls the fingers) | **visible on 3 of 3**: a vertical cut in the light streak at x ≈ 180 | 3 fixable |
-| **masked repair 0.6, feathered** | **3 / 3** | yes | **none visible on 2 of 3**; a slight streak smear on seed …62 | 2 keep, 1 fixable |
+| **masked repair 0.6, feathered** | **3 / 3** | style yes; gesture kept on 2 of 3 (seed …62 curls the fingers) | **none visible on 2 of 3**; a slight streak smear on seed …62 | 2 keep, 1 fixable |
 | Fooocus 0.5 | 1 / 3 | yes | small | 2 reject, 1 fixable |
 | Fooocus 0.7 | about 5, but a new gesture | **no**: semi-real, a different hand | varies (one hard seam) | 3 reject |
 | Fooocus 1.0 | – | **no**: a mangled hand, a second hand, or the hand gone | – | 3 reject |
@@ -40,7 +40,7 @@ Seam step, as the 90th percentile of the excess jump over the original:
 
 **Answer to the lab's claim.** Confirmed:
 
-- The feathered masked repair at 0.6 gives five digits on 3 of 3 seeds, keeps the gesture and style, and removes the
+- The feathered masked repair at 0.6 gives five digits on 3 of 3 seeds, keeps the style (and the gesture on 2 of 3), and removes the
   seam, in this judge's reading on 2 of 3 seeds, with a slight smear on the third.
 - 0.4 fixes nothing.
 - Fooocus is worse at every strength.

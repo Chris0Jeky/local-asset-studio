@@ -104,6 +104,21 @@ Apply these corrections every time:
 - **R6. Appeal is not scored.** When the owner must choose between two clean pictures (a look, a direction), describe
   the differences and do not recommend one. Agents disagreed with the owner on exactly that kind of choice.
 
+- **R8. Correction passes** (adopted by the coordinator on 23 September 2026; the owner may override).
+  - Scope: a picture that repairs another one, such as a hand inpaint, a face pass or a refine.
+  - `adherence` scores whether the named defect was fixed.
+  - `control` scores whether everything else was kept: the gesture, the style and the rest of the picture.
+  - `anatomy` follows R3 as usual.
+  - A pass that leaves the defect is a reject, however clean it looks.
+
+  Why: on the hand-inpaint experiment, two agent judges agreed on every configuration's outcome but on only 10 of 18
+  picture verdicts. One scored `adherence` against the picture's prompt, the other against the repair job
+  ([second-judge/hand-inpaint.md](second-judge/hand-inpaint.md)).
+
+  Worked example, from a slip the same experiment exposed: the review judge scored the unchanged six-finger hands
+  `anatomy 2`. Under R3 that is 3. Under R8 the verdict is still reject, because `adherence` is 2: the hand was not
+  fixed.
+
 Trust agent judging to find, locate and name defects, to reject broken outputs, and to check that a control was
 followed. Do not trust it to choose between clean looks or to say what is "spectacular". A second agent judge mostly
 repeats the first, so it does not replace the owner's eye.
