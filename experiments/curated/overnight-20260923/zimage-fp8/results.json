@@ -1,0 +1,1653 @@
+[
+ {
+  "label": "fp8-cpute-portrait",
+  "status": "success",
+  "graph_sha256": "8d7349608b31f416732f129e089ecf0dcdb10ab7014c3d62f461370d97bc0350",
+  "graph_file": "graphs/fp8-cpute-portrait.json",
+  "submitted_at": "2026-09-23 06:23:27.749685",
+  "comfy_pid": 46488,
+  "commit_pct_before": 53.3,
+  "free_ram_gb_before": 13.0,
+  "config": "fp8-cpute",
+  "case": "portrait",
+  "seed": 2026092301,
+  "prompt_id": "5e4f8ae8-a575-4954-9d29-8cbfc69e3803",
+  "wall_seconds": 76.5,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.62,
+    "s_per_step_steady": 0.72
+   }
+  ],
+  "peak_dedicated_mb": 10035,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 51,
+  "peak_commit_pct": 70.2,
+  "comfy_executed_seconds": 75.8,
+  "log_lines": [
+   "06:23:43 [INFO] Requested to load ZImageTEModel_",
+   "06:23:43 [INFO] loaded completely;  7672.25 MB loaded, full load: True",
+   "06:24:27 [INFO] Requested to load Lumina2",
+   "06:24:35 [INFO] loaded completely; 14097.11 MB usable, 5870.77 MB loaded, full load: True",
+   "06:24:42 [INFO] Requested to load AutoencodingEngine",
+   "06:24:42 [INFO] loaded completely; 5955.75 MB usable, 159.87 MB loaded, full load: True",
+   "06:24:43 [INFO] Prompt executed in 75.80 seconds"
+  ],
+  "timeline_file": "timelines/fp8-cpute-portrait.json",
+  "history_execution_seconds": 75.8,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-portrait_00001_.png",
+    "sha256": "be024c974c0b12e2cb885d763169d685a6e5dcc36cb50eda8073fa58b2f8a907"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "VAELoader",
+     "seconds": 1.18
+    },
+    {
+     "node": "7",
+     "class_type": "EmptySD3LatentImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPLoader",
+     "seconds": 15.8
+    },
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 42.35
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "1",
+     "class_type": "UNETLoader",
+     "seconds": 0.17
+    },
+    {
+     "node": "6",
+     "class_type": "ModelSamplingAuraFlow",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 14.88
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.35
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 0.724,
+     "step_seconds": [
+      0.05,
+      0.73,
+      0.72,
+      0.72,
+      0.72,
+      0.72,
+      0.72
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.063,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.13,
+      0.16,
+      0.09
+     ]
+    }
+   ],
+   "cached_nodes": [],
+   "ws_execution_seconds": 75.8
+  },
+  "finished_at": "2026-09-23 06:24:44.759676"
+ },
+ {
+  "label": "fp8-cpute-action",
+  "status": "success",
+  "graph_sha256": "67338a7491488c60faa86697ed9f4a394201c38031bdc64bf7a71f4daf8b7402",
+  "graph_file": "graphs/fp8-cpute-action.json",
+  "submitted_at": "2026-09-23 06:24:44.778538",
+  "comfy_pid": 46488,
+  "commit_pct_before": 60.7,
+  "free_ram_gb_before": 9.1,
+  "config": "fp8-cpute",
+  "case": "action",
+  "seed": 2026092302,
+  "prompt_id": "690f2cf6-a131-4338-90b8-ddcf6e103ca2",
+  "wall_seconds": 46.3,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.62,
+    "s_per_step_steady": 0.72
+   }
+  ],
+  "peak_dedicated_mb": 10007,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 31,
+  "peak_commit_pct": 62.4,
+  "comfy_executed_seconds": 44.45,
+  "log_lines": [
+   "06:25:29 [INFO] Prompt executed in 44.45 seconds"
+  ],
+  "timeline_file": "timelines/fp8-cpute-action.json",
+  "history_execution_seconds": 44.45,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-action_00001_.png",
+    "sha256": "ef3b448057ed9900f19107530bd08108accc19ee124d31079dab48c7115409f1"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 37.35
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 5.8
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.23
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 0.722,
+     "step_seconds": [
+      0.05,
+      0.72,
+      0.72,
+      0.72,
+      0.72,
+      0.72,
+      0.72
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.061,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.1,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 44.45
+  },
+  "finished_at": "2026-09-23 06:25:31.640411"
+ },
+ {
+  "label": "fp8-cpute-duo",
+  "status": "success",
+  "graph_sha256": "18e3cd05b0d6ff7062af745cbc8d7bda91d6fa6b7f434c6aa465e2699b7e7bd9",
+  "graph_file": "graphs/fp8-cpute-duo.json",
+  "submitted_at": "2026-09-23 06:25:31.695750",
+  "comfy_pid": 46488,
+  "commit_pct_before": 60.5,
+  "free_ram_gb_before": 9.2,
+  "config": "fp8-cpute",
+  "case": "duo",
+  "seed": 2026092303,
+  "prompt_id": "da1185ea-9a8a-43cb-98b0-9ff26ff0b8ae",
+  "wall_seconds": 48.4,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.62,
+    "s_per_step_steady": 0.73
+   }
+  ],
+  "peak_dedicated_mb": 10009,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 32,
+  "peak_commit_pct": 62.2,
+  "comfy_executed_seconds": 47.96,
+  "log_lines": [
+   "06:26:19 [INFO] Prompt executed in 47.96 seconds"
+  ],
+  "timeline_file": "timelines/fp8-cpute-duo.json",
+  "history_execution_seconds": 47.96,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-duo_00001_.png",
+    "sha256": "d50cf35b4fc256d7e54d00490354fe9281a11d21ca3503632efb3c2cb21fc2c2"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 40.8
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 5.84
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.24
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 0.728,
+     "step_seconds": [
+      0.05,
+      0.73,
+      0.73,
+      0.73,
+      0.73,
+      0.73,
+      0.73
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.061,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 47.96
+  },
+  "finished_at": "2026-09-23 06:26:20.600241"
+ },
+ {
+  "label": "fp8-cpute-environment",
+  "status": "success",
+  "graph_sha256": "21713fc3ed65550042a452c99ed9daa16df977153154101c9f39e2dd4a23171f",
+  "graph_file": "graphs/fp8-cpute-environment.json",
+  "submitted_at": "2026-09-23 06:26:20.637966",
+  "comfy_pid": 46488,
+  "commit_pct_before": 60.8,
+  "free_ram_gb_before": 9.0,
+  "config": "fp8-cpute",
+  "case": "environment",
+  "seed": 2026092304,
+  "prompt_id": "a1d4ef14-0f73-4160-acd8-e5c1a6551a6a",
+  "wall_seconds": 38.3,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.62,
+    "s_per_step_steady": 0.72
+   }
+  ],
+  "peak_dedicated_mb": 10007,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 26,
+  "peak_commit_pct": 62.2,
+  "comfy_executed_seconds": 36.59,
+  "log_lines": [
+   "06:26:57 [INFO] Prompt executed in 36.59 seconds"
+  ],
+  "timeline_file": "timelines/fp8-cpute-environment.json",
+  "history_execution_seconds": 36.59,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-environment_00001_.png",
+    "sha256": "b402f071096f079cd59f68870f58ab16895b8a8f6427dfa740ea7355ed64d443"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 29.45
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 5.81
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.25
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 0.723,
+     "step_seconds": [
+      0.05,
+      0.73,
+      0.72,
+      0.72,
+      0.72,
+      0.72,
+      0.72
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.062,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 36.59
+  },
+  "finished_at": "2026-09-23 06:26:59.425666"
+ },
+ {
+  "label": "fp8-cpute-pinup-swim",
+  "status": "success",
+  "graph_sha256": "e5b9ef999ced7bef77b29b60860f2bdc0e3b13d37f312f73e9caef84135d2c29",
+  "graph_file": "graphs/fp8-cpute-pinup-swim.json",
+  "submitted_at": "2026-09-23 06:26:59.466445",
+  "comfy_pid": 46488,
+  "commit_pct_before": 60.6,
+  "free_ram_gb_before": 9.1,
+  "config": "fp8-cpute",
+  "case": "pinup-swim",
+  "seed": 2026092305,
+  "prompt_id": "50be04b7-3586-46c3-8af1-7e3dcec26a75",
+  "wall_seconds": 72.4,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.62,
+    "s_per_step_steady": 0.73
+   }
+  ],
+  "peak_dedicated_mb": 10007,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 48,
+  "peak_commit_pct": 62.2,
+  "comfy_executed_seconds": 72.01,
+  "log_lines": [
+   "06:28:11 [INFO] Prompt executed in 72.01 seconds"
+  ],
+  "timeline_file": "timelines/fp8-cpute-pinup-swim.json",
+  "history_execution_seconds": 72.01,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-pinup-swim_00001_.png",
+    "sha256": "651f3818340d125549ce04efda38464ab8fd6896e87024c8d3ff8bacfdad115b"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 64.86
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 5.83
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.25
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 0.727,
+     "step_seconds": [
+      0.05,
+      0.72,
+      0.73,
+      0.73,
+      0.73,
+      0.74,
+      0.72
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.062,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.11,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 72.01
+  },
+  "finished_at": "2026-09-23 06:28:12.398788"
+ },
+ {
+  "label": "fp8-cpute-glamour",
+  "status": "success",
+  "graph_sha256": "c9d59c28eb7c23fbe47fd54e61e603640c6b00e25f30b4590db7a069061e1eb1",
+  "graph_file": "graphs/fp8-cpute-glamour.json",
+  "submitted_at": "2026-09-23 06:28:12.440063",
+  "comfy_pid": 46488,
+  "commit_pct_before": 60.7,
+  "free_ram_gb_before": 9.0,
+  "config": "fp8-cpute",
+  "case": "glamour",
+  "seed": 2026092306,
+  "prompt_id": "78fe1ad4-73da-4a14-b16c-bdab3654bb54",
+  "wall_seconds": 52.3,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.62,
+    "s_per_step_steady": 0.73
+   }
+  ],
+  "peak_dedicated_mb": 10007,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 35,
+  "peak_commit_pct": 62.3,
+  "comfy_executed_seconds": 50.84,
+  "log_lines": [
+   "06:29:03 [INFO] Prompt executed in 50.84 seconds"
+  ],
+  "timeline_file": "timelines/fp8-cpute-glamour.json",
+  "history_execution_seconds": 50.83,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-glamour_00001_.png",
+    "sha256": "6c355af731f8a64bc0ce10bcb4c75bb8453f96d6577d66cbe5f7e0e740c1594c"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 43.68
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 5.83
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.26
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 0.724,
+     "step_seconds": [
+      0.05,
+      0.72,
+      0.72,
+      0.72,
+      0.73,
+      0.72,
+      0.73
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.062,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.17,
+      0.16,
+      0.17,
+      0.1,
+      0.16,
+      0.08
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 50.83
+  },
+  "finished_at": "2026-09-23 06:29:05.222555"
+ },
+ {
+  "label": "fp8-cpute-hands",
+  "status": "success",
+  "graph_sha256": "e2f27e3bb60be93f352c6231e658a75c76676251c2e674b560b840b0527f712c",
+  "graph_file": "graphs/fp8-cpute-hands.json",
+  "submitted_at": "2026-09-23 06:29:05.251979",
+  "comfy_pid": 46488,
+  "commit_pct_before": 60.9,
+  "free_ram_gb_before": 8.9,
+  "config": "fp8-cpute",
+  "case": "hands",
+  "seed": 2026092307,
+  "prompt_id": "7c1bdc71-89b2-497e-a3bd-bbbf96da7b24",
+  "wall_seconds": 48.3,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.75,
+    "s_per_step_steady": 0.77
+   }
+  ],
+  "peak_dedicated_mb": 10007,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 32,
+  "peak_commit_pct": 62.0,
+  "comfy_executed_seconds": 47.87,
+  "log_lines": [
+   "06:29:53 [INFO] Prompt executed in 47.87 seconds"
+  ],
+  "timeline_file": "timelines/fp8-cpute-hands.json",
+  "history_execution_seconds": 47.86,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-hands_00001_.png",
+    "sha256": "41a29ae440771d2f0e8dbacf752564a2acb7ecd1076fd816f66813d2230ac69d"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 40.38
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 6.18
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 1.24
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 0.77,
+     "step_seconds": [
+      0.05,
+      0.77,
+      0.77,
+      0.77,
+      0.77,
+      0.77,
+      0.77
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 9,
+     "first_step_s": 0.16,
+     "s_per_step_steady": 0.061,
+     "step_seconds": [
+      0.16,
+      0.16,
+      0.16,
+      0.16,
+      0.17,
+      0.18,
+      0.1,
+      0.05
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 47.86
+  },
+  "finished_at": "2026-09-23 06:29:54.052344"
+ },
+ {
+  "label": "fp8-portrait",
+  "status": "success",
+  "graph_sha256": "eeff208f23678058e67809dfc05237f47791f8cb554d001cf2a5240d413a219c",
+  "graph_file": "graphs/fp8-portrait.json",
+  "submitted_at": "2026-09-23 06:29:54.300464",
+  "comfy_pid": 46488,
+  "commit_pct_before": 60.5,
+  "free_ram_gb_before": 9.1,
+  "config": "fp8",
+  "case": "portrait",
+  "seed": 2026092301,
+  "prompt_id": "092e323d-3b55-4bfe-8739-2f030136ba49",
+  "wall_seconds": 72.4,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.75,
+    "s_per_step_steady": 0.8
+   }
+  ],
+  "peak_dedicated_mb": 14745,
+  "peak_shared_mb": 1951,
+  "spilled": true,
+  "gpu_samples": 48,
+  "peak_commit_pct": 84.9,
+  "comfy_executed_seconds": 71.09,
+  "log_lines": [
+   "06:30:06 [INFO] Requested to load ZImageTEModel_",
+   "06:30:10 [INFO] loaded completely;  7672.25 MB loaded, full load: True",
+   "06:30:12 [INFO] Requested to load Lumina2",
+   "06:30:12 [INFO] Unloaded partially: 1120.37 MB freed, 6551.88 MB remains loaded, 100.00 MB buffer reserved, lowvram patches: 0",
+   "06:30:13 [INFO] loaded completely; 7489.03 MB usable, 5870.77 MB loaded, full load: True",
+   "06:30:20 [INFO] Requested to load AutoencodingEngine",
+   "06:30:21 [INFO] Unloaded partially: 680.00 MB freed, 5871.88 MB remains loaded, 100.00 MB buffer reserved, lowvram patches: 0",
+   "06:30:21 [INFO] loaded completely; 1524.49 MB usable, 159.87 MB loaded, full load: True",
+   "06:31:05 [INFO] Prompt executed in 71.09 seconds"
+  ],
+  "timeline_file": "timelines/fp8-portrait.json",
+  "history_execution_seconds": 71.09,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-portrait_00001_.png",
+    "sha256": "5fa180c7d3bc23699b414e97d9682b38ef6d2c912e432fae61a22b9d15583350"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "2",
+     "class_type": "CLIPLoader",
+     "seconds": 17.16
+    },
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 0.63
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.01
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 8.8
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 44.42
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 0.82,
+     "step_seconds": [
+      0.05,
+      0.88,
+      0.86,
+      0.87,
+      0.77,
+      0.77,
+      0.77
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 19,
+     "first_step_s": 3.61,
+     "s_per_step_steady": 2.139,
+     "step_seconds": [
+      3.61,
+      3.12,
+      2.9,
+      2.82,
+      2.81,
+      2.91,
+      2.93,
+      2.81,
+      2.78,
+      2.85,
+      3.02,
+      0.45,
+      2.8,
+      2.77,
+      0.46,
+      0.45,
+      0.46,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 71.09
+  },
+  "finished_at": "2026-09-23 06:31:07.270851"
+ },
+ {
+  "label": "fp8-action",
+  "status": "success",
+  "graph_sha256": "2d9ed94f8fdb6b040e5c823ad0e659212c64262270d54c9da88f68afc5b05788",
+  "graph_file": "graphs/fp8-action.json",
+  "submitted_at": "2026-09-23 06:31:07.299158",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.2,
+  "free_ram_gb_before": 14.8,
+  "config": "fp8",
+  "case": "action",
+  "seed": 2026092302,
+  "prompt_id": "9e37062a-ae78-4c97-a449-c5da89a0947c",
+  "wall_seconds": 532.3,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 469,
+    "s_per_step_tqdm": 58.62,
+    "s_per_step_steady": 58.54
+   }
+  ],
+  "peak_dedicated_mb": 14710,
+  "peak_shared_mb": 2593,
+  "spilled": true,
+  "gpu_samples": 355,
+  "peak_commit_pct": 61.4,
+  "comfy_executed_seconds": 531.55,
+  "log_lines": [
+   "06:31:07 [INFO] loaded completely; 8071.49 MB usable, 7672.25 MB loaded, full load: True",
+   "06:31:23 [INFO] Unloaded partially: 640.37 MB freed, 7031.88 MB remains loaded, 100.00 MB buffer reserved, lowvram patches: 0",
+   "06:39:13 [INFO] Requested to load AutoencodingEngine",
+   "06:39:13 [INFO] Unloaded partially: 1350.00 MB freed, 5681.88 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "06:39:13 [INFO] loaded completely; 1601.29 MB usable, 159.87 MB loaded, full load: True",
+   "06:39:58 [INFO] Prompt executed in 531.55 seconds"
+  ],
+  "timeline_file": "timelines/fp8-action.json",
+  "history_execution_seconds": 531.53,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-action_00001_.png",
+    "sha256": "5410c89118cfb75ef7df4bce40ff74aba0aebb9d1a88a6f881d37a7899736655"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 16.0
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 469.72
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 45.73
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 58.587,
+     "step_seconds": [
+      0.05,
+      59.85,
+      57.16,
+      56.21,
+      59.38,
+      60.75,
+      58.17
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 19,
+     "first_step_s": 3.17,
+     "s_per_step_steady": 2.276,
+     "step_seconds": [
+      3.17,
+      3.47,
+      3.1,
+      3.25,
+      2.99,
+      2.83,
+      2.85,
+      2.88,
+      2.93,
+      2.88,
+      3.04,
+      0.5,
+      3.23,
+      3.29,
+      0.46,
+      0.45,
+      0.49,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 531.53
+  },
+  "finished_at": "2026-09-23 06:40:00.115295"
+ },
+ {
+  "label": "fp8-hands",
+  "status": "success",
+  "graph_sha256": "9c7c37bc1b6f8e5c3c9b724caab7f469ab793d7535f53b6809985db037d3a4f5",
+  "graph_file": "graphs/fp8-hands.json",
+  "submitted_at": "2026-09-23 06:40:00.134314",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.7,
+  "free_ram_gb_before": 12.8,
+  "config": "fp8",
+  "case": "hands",
+  "seed": 2026092307,
+  "prompt_id": "b08e19af-19b8-44ed-b143-c3007be1c3bd",
+  "wall_seconds": 534.2,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 475,
+    "s_per_step_tqdm": 59.38,
+    "s_per_step_steady": 59.32
+   }
+  ],
+  "peak_dedicated_mb": 14700,
+  "peak_shared_mb": 2593,
+  "spilled": true,
+  "gpu_samples": 356,
+  "peak_commit_pct": 61.1,
+  "comfy_executed_seconds": 532.93,
+  "log_lines": [
+   "06:40:01 [INFO] loaded completely; 8083.49 MB usable, 7672.25 MB loaded, full load: True",
+   "06:40:13 [INFO] Unloaded partially: 600.37 MB freed, 7071.88 MB remains loaded, 100.00 MB buffer reserved, lowvram patches: 0",
+   "06:48:09 [INFO] Requested to load AutoencodingEngine",
+   "06:48:09 [INFO] Unloaded partially: 1342.50 MB freed, 5729.38 MB remains loaded, 237.50 MB buffer reserved, lowvram patches: 0",
+   "06:48:09 [INFO] loaded completely; 1582.09 MB usable, 159.87 MB loaded, full load: True",
+   "06:48:53 [INFO] Prompt executed in 532.93 seconds"
+  ],
+  "timeline_file": "timelines/fp8-hands.json",
+  "history_execution_seconds": 532.93,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-hands_00001_.png",
+    "sha256": "84fbd1f8db07ae6c3a0a992468386b481560c0357ba415d51d517eec8b59dc8c"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 13.58
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 475.51
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 43.76
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 59.695,
+     "step_seconds": [
+      0.05,
+      60.33,
+      59.33,
+      66.92,
+      59.38,
+      56.26,
+      55.96
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 19,
+     "first_step_s": 2.84,
+     "s_per_step_steady": 2.172,
+     "step_seconds": [
+      2.84,
+      2.8,
+      3.08,
+      2.81,
+      2.88,
+      2.93,
+      3.11,
+      2.87,
+      2.87,
+      2.99,
+      2.89,
+      0.46,
+      2.96,
+      2.84,
+      0.47,
+      0.46,
+      0.46,
+      0.04
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 532.93
+  },
+  "finished_at": "2026-09-23 06:48:54.867763"
+ },
+ {
+  "label": "bf16-cpute-portrait",
+  "status": "success",
+  "graph_sha256": "733b5e9da48c76acf93c48db7f72de7f8bcb76beab61baef8bc9e5ee8a97a8f0",
+  "graph_file": "graphs/bf16-cpute-portrait.json",
+  "submitted_at": "2026-09-23 06:49:11.071265",
+  "comfy_pid": 46488,
+  "commit_pct_before": 44.1,
+  "free_ram_gb_before": 17.9,
+  "config": "bf16-cpute",
+  "case": "portrait",
+  "seed": 2026092301,
+  "prompt_id": "7a28412e-616b-4c5b-a248-99430a69e979",
+  "wall_seconds": 148.5,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 8,
+    "s_per_step_tqdm": 1.0,
+    "s_per_step_steady": 1.04
+   }
+  ],
+  "peak_dedicated_mb": 14616,
+  "peak_shared_mb": 1807,
+  "spilled": true,
+  "gpu_samples": 99,
+  "peak_commit_pct": 81.9,
+  "comfy_executed_seconds": 147.03,
+  "log_lines": [
+   "06:49:22 [INFO] Requested to load ZImageTEModel_",
+   "06:49:22 [INFO] loaded completely;  7672.25 MB loaded, full load: True",
+   "06:50:49 [INFO] Requested to load Lumina2",
+   "06:50:55 [INFO] loaded completely; 14141.03 MB usable, 11739.54 MB loaded, full load: True",
+   "06:51:04 [INFO] Requested to load AutoencodingEngine",
+   "06:51:04 [INFO] Unloaded partially: 433.29 MB freed, 11306.27 MB remains loaded, 84.38 MB buffer reserved, lowvram patches: 0",
+   "06:51:05 [INFO] loaded completely; 1535.47 MB usable, 159.87 MB loaded, full load: True",
+   "06:51:38 [INFO] Prompt executed in 147.03 seconds"
+  ],
+  "timeline_file": "timelines/bf16-cpute-portrait.json",
+  "history_execution_seconds": 147.02,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\bf16-cpute-portrait_00001_.png",
+    "sha256": "f5ff0f891429a99f0d31e4bf91e7d1933dde17b6df5465d0744d1df32506b6e4"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "VAELoader",
+     "seconds": 0.58
+    },
+    {
+     "node": "7",
+     "class_type": "EmptySD3LatentImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPLoader",
+     "seconds": 11.62
+    },
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 60.73
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "1",
+     "class_type": "UNETLoader",
+     "seconds": 24.9
+    },
+    {
+     "node": "6",
+     "class_type": "ModelSamplingAuraFlow",
+     "seconds": 0.03
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 15.35
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 33.74
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.05,
+     "s_per_step_steady": 1.034,
+     "step_seconds": [
+      0.05,
+      1.07,
+      1.05,
+      1.04,
+      0.98,
+      1.0,
+      1.07
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 19,
+     "first_step_s": 2.34,
+     "s_per_step_steady": 1.653,
+     "step_seconds": [
+      2.34,
+      2.48,
+      2.64,
+      2.35,
+      2.18,
+      2.25,
+      2.06,
+      2.18,
+      2.19,
+      2.18,
+      2.19,
+      0.18,
+      2.24,
+      2.46,
+      0.18,
+      0.18,
+      0.17,
+      0.01
+     ]
+    }
+   ],
+   "cached_nodes": [],
+   "ws_execution_seconds": 147.02
+  },
+  "finished_at": "2026-09-23 06:51:40.088571"
+ },
+ {
+  "label": "bf16-cpute-action",
+  "status": "success",
+  "graph_sha256": "8bf1b9844852a93c2c461098c007d20368802d12cba5845416af2e7422992c27",
+  "graph_file": "graphs/bf16-cpute-action.json",
+  "submitted_at": "2026-09-23 06:51:40.118581",
+  "comfy_pid": 46488,
+  "commit_pct_before": 56.9,
+  "free_ram_gb_before": 17.8,
+  "config": "bf16-cpute",
+  "case": "action",
+  "seed": 2026092302,
+  "prompt_id": "b0abb0d3-2609-47ee-bddf-4b51f73527ee",
+  "wall_seconds": 80.5,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.62,
+    "s_per_step_steady": 0.74
+   }
+  ],
+  "peak_dedicated_mb": 14261,
+  "peak_shared_mb": 1807,
+  "spilled": true,
+  "gpu_samples": 54,
+  "peak_commit_pct": 75.4,
+  "comfy_executed_seconds": 78.3,
+  "log_lines": [
+   "06:51:50 [INFO] Requested to load ZImageTEModel_",
+   "06:51:50 [INFO] loaded completely;  7672.25 MB loaded, full load: True",
+   "06:52:20 [INFO] loaded completely; 13374.15 MB usable, 11739.54 MB loaded, full load: True",
+   "06:52:26 [INFO] Unloaded partially: 545.79 MB freed, 11193.77 MB remains loaded, 84.38 MB buffer reserved, lowvram patches: 0",
+   "06:52:58 [INFO] Prompt executed in 78.30 seconds"
+  ],
+  "timeline_file": "timelines/bf16-cpute-action.json",
+  "history_execution_seconds": 78.3,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\bf16-cpute-action_00001_.png",
+    "sha256": "cdbd1b4b68d6e9783fcba2c1ef12c32296e48a2ef991e72f4fd3a33dce422bbe"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "2",
+     "class_type": "CLIPLoader",
+     "seconds": 11.21
+    },
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 28.95
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 6.34
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 31.73
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.23
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.03,
+     "s_per_step_steady": 0.748,
+     "step_seconds": [
+      0.03,
+      0.75,
+      0.75,
+      0.75,
+      0.75,
+      0.75,
+      0.75
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 19,
+     "first_step_s": 2.18,
+     "s_per_step_steady": 1.593,
+     "step_seconds": [
+      2.18,
+      2.2,
+      2.15,
+      2.34,
+      2.18,
+      2.17,
+      2.17,
+      2.19,
+      2.18,
+      2.2,
+      2.22,
+      0.17,
+      2.2,
+      2.18,
+      0.17,
+      0.17,
+      0.18,
+      0.01
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 78.46
+  },
+  "finished_at": "2026-09-23 06:53:01.098740"
+ },
+ {
+  "label": "bf16-cpute-hands",
+  "status": "success",
+  "graph_sha256": "33392d6f098257ef57dbd1733b956d4836dd83f94b6a9f7288eaf3546fdf2f06",
+  "graph_file": "graphs/bf16-cpute-hands.json",
+  "submitted_at": "2026-09-23 06:53:01.145778",
+  "comfy_pid": 46488,
+  "commit_pct_before": 67.5,
+  "free_ram_gb_before": 10.3,
+  "config": "bf16-cpute",
+  "case": "hands",
+  "seed": 2026092307,
+  "prompt_id": "230bbef8-f7c4-4d20-81ec-713bbab60532",
+  "wall_seconds": 70.5,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 5,
+    "s_per_step_tqdm": 0.62,
+    "s_per_step_steady": 0.7
+   }
+  ],
+  "peak_dedicated_mb": 14261,
+  "peak_shared_mb": 1807,
+  "spilled": true,
+  "gpu_samples": 47,
+  "peak_commit_pct": 69.9,
+  "comfy_executed_seconds": 69.2,
+  "log_lines": [
+   "06:53:32 [INFO] loaded completely; 13374.15 MB usable, 11739.54 MB loaded, full load: True",
+   "06:53:38 [INFO] Unloaded partially: 545.79 MB freed, 11193.77 MB remains loaded, 84.38 MB buffer reserved, lowvram patches: 0",
+   "06:54:10 [INFO] Prompt executed in 69.20 seconds"
+  ],
+  "timeline_file": "timelines/bf16-cpute-hands.json",
+  "history_execution_seconds": 69.2,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\bf16-cpute-hands_00001_.png",
+    "sha256": "4e4e8f0e6627d69278fcaec3d61db2c12f69711672a7444b75395d207d20b73a"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 31.37
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "seconds": 6.08
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "seconds": 31.68
+    },
+    {
+     "node": "10",
+     "class_type": "SaveImage",
+     "seconds": 0.21
+    }
+   ],
+   "samplers": [
+    {
+     "node": "8",
+     "class_type": "KSampler",
+     "steps": 8,
+     "seen": 8,
+     "first_step_s": 0.03,
+     "s_per_step_steady": 0.711,
+     "step_seconds": [
+      0.03,
+      0.75,
+      0.71,
+      0.7,
+      0.71,
+      0.7,
+      0.7
+     ]
+    },
+    {
+     "node": "9",
+     "class_type": "VAEDecodeTiled",
+     "steps": 19,
+     "seen": 19,
+     "first_step_s": 2.18,
+     "s_per_step_steady": 1.589,
+     "step_seconds": [
+      2.18,
+      2.19,
+      2.17,
+      2.18,
+      2.25,
+      2.16,
+      2.16,
+      2.18,
+      2.18,
+      2.2,
+      2.17,
+      0.17,
+      2.3,
+      2.19,
+      0.18,
+      0.17,
+      0.17,
+      0.01
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "7"
+   ],
+   "ws_execution_seconds": 69.34
+  },
+  "finished_at": "2026-09-23 06:54:12.178182"
+ }
+]

@@ -1,5 +1,22 @@
 # Current state — 23 September 2026
 
+## Z-Image fp8 with the CPU text encoder, the painted Krea trigger, Style+Pose weights — 23 September 2026 (06:23-07:10)
+
+Executed straight against ComfyUI 0.35.0 on the primary unless noted; evidence under `experiments/curated/overnight-20260923/`
+(#893). Generated and agent-judged only, not art acceptance; HUMAN_TODO unchanged.
+
+- **Z-Image** (`zimage-fp8/`, 13 prompts, 06:23-06:54). The installed fp8 build with `CLIPLoader` `device: cpu` sampled at 0.72-0.77 s/step
+  and took 37-76 s per 1024x1024 image (29-65 s of it the CPU encode), with no spill. The same build with the encoder on the GPU took
+  71 s on a fresh load, then 532-533 s (58.6-59.7 s/step; the 7.7 GB encoder stayed resident). The shipped bf16 preset took 308 s in the
+  census. bf16 with the CPU encoder sampled fast, but its decode spilled (32-34 s). Blind tie on three cases (9 keeps). #893 pins the fp8
+  file and adds `zimage-fast` (`verified: false` until a Studio proof).
+- **Krea trigger** (`krea-trigger/`, 8 prompts, 06:54-07:08, blind). On `krea-anime-atelier-gguf` the `@NJSW33T` trigger was painted as text
+  with the trigger at the start 2/2, at the end 2/2, and at the start without TextFusion 1/2; with no trigger, 0/2. This supersedes
+  "a trigger-position test is the next step" in the GGUF section below. A 3-seed look comparison with and without the trigger is the
+  next step.
+- **Style+Pose** (`stylepose-pack/`, 6 Studio jobs, 07:07-07:10). Style weight 0.45 and 0.3 removed the neon burn that all 18 runs showed at
+  the default 0.7 (#890); seed 71 still misses the raised arm at every weight.
+
 ## `krea-refine` default 0.35 → 0.25 after the fox-shrine refine — 23 September 2026 (05:31-06:09)
 
 Six Studio jobs of `krea-refine` on `Studio/krea-style-lab_00001_.png` with the shrine's own prompt (`experiments/curated/overnight-20260923/krea-refine-foxes/`): at denoise 0.25 (jobs `36e5d833`, `0cba57ec`, `0887896e`) all four foxes were kept with clearer faces on 3 of 3 seeds (agent-judged keep, keep, fixable); at 0.35 (jobs `9602e836`, `36537036`, `f5427eb8`) foxes were lost or doubled on 3 of 3 (reject, reject, fixable). Each job took 338-420 s on the fp8 build. The preset default is now 0.25 and the former `Light touch (denoise 0.25)` variant is now `Stronger (denoise 0.35, the old default)` (#886); the continuation test follows the rename. The preset stays `verified: true` on these Studio executions. Not art acceptance; HUMAN_TODO unchanged.
@@ -15,7 +32,7 @@ was a blind tie with fp8 on three showcase seeds. The GGUF with the encoder on t
 atelier target-stack recipe took 173.2 s on it (prompt `976da1a8`), against 827.6 s for fp8. The new presets
 `krea-portrait-gguf` (Studio job `c6049b90`, prompt `268f4be5`, 133.3 s) and `krea-anime-atelier-gguf` (job `29e468ca`,
 prompt `6a856a23`, 114.6 s) were proved through the Studio on backend `primary` and are `verified: true` (#880). The atelier
-proof painted a faint `@NJSW33T` watermark; a trigger-position test is the next step. Generated and agent-judged only, not
+proof painted a faint `@NJSW33T` watermark; a trigger-position test is the next step. *(Done at 07:08, see the section above: the trigger word is painted wherever it sits.)* Generated and agent-judged only, not
 art acceptance; the Krea 2 Community License terms are recorded, not cleared. HUMAN_TODO unchanged.
 
 ## Qwen-Image 2.1 Studio proofs and the backend-switch fixes — 23 September 2026 (05:05–05:11)

@@ -1,0 +1,883 @@
+[
+ {
+  "label": "start-281715418",
+  "status": "success",
+  "graph_sha256": "4f83f3a4bacb374d2e6f596181a28e4d4542cd12eb46945a813aa856206bf142",
+  "graph_file": "graphs/start-281715418.json",
+  "submitted_at": "2026-09-23 06:54:12.536322",
+  "comfy_pid": 46488,
+  "commit_pct_before": 67.4,
+  "free_ram_gb_before": 10.2,
+  "config": "start",
+  "seed": 281715418,
+  "prompt_id": "3cc148b3-af5e-4c32-98ad-8caf10048de6",
+  "wall_seconds": 132.7,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 52,
+    "s_per_step_tqdm": 3.47,
+    "s_per_step_steady": 3.42
+   }
+  ],
+  "peak_dedicated_mb": 13556,
+  "peak_shared_mb": 1807,
+  "spilled": true,
+  "gpu_samples": 88,
+  "peak_commit_pct": 68.0,
+  "comfy_executed_seconds": 130.66,
+  "log_lines": [
+   "06:54:14 [INFO] Requested to load Krea2TEModel_",
+   "06:54:15 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "06:55:15 [INFO] Requested to load Krea2",
+   "06:55:27 [INFO] loaded completely; 14239.34 MB usable, 8839.99 MB loaded, full load: True",
+   "06:56:20 [INFO] Requested to load WanVAE",
+   "06:56:20 [INFO] loaded completely; 2721.56 MB usable, 242.03 MB loaded, full load: True",
+   "06:56:23 [INFO] Prompt executed in 130.66 seconds"
+  ],
+  "timeline_file": "timelines/start-281715418.json",
+  "history_execution_seconds": 130.66,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\start-281715418_00001_.png",
+    "sha256": "fb97dfbbe7faa4cf1f72dfbc12502a1267a47dc4725ac038fda69bf9af161430"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "VAELoader",
+     "seconds": 1.18
+    },
+    {
+     "node": "6",
+     "class_type": "EmptyLatentImage",
+     "seconds": 0.0
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPLoader",
+     "seconds": 1.31
+    },
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 60.43
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "1",
+     "class_type": "UnetLoaderGGUF",
+     "seconds": 0.14
+    },
+    {
+     "node": "10",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.09
+    },
+    {
+     "node": "11",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.22
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 64.95
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 2.27
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.22
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 3.4,
+     "s_per_step_steady": 3.427,
+     "step_seconds": [
+      3.4,
+      3.41,
+      3.4,
+      3.43,
+      3.53,
+      3.41,
+      3.41,
+      3.42,
+      3.41,
+      3.43,
+      3.43,
+      3.41,
+      3.43,
+      3.42
+     ]
+    }
+   ],
+   "cached_nodes": [],
+   "ws_execution_seconds": 130.81
+  },
+  "finished_at": "2026-09-23 06:56:25.732920"
+ },
+ {
+  "label": "end-281715418",
+  "status": "success",
+  "graph_sha256": "ab67378de2e9e5d5113e220799899cab8febe09b54773906f52e89bb356732fd",
+  "graph_file": "graphs/end-281715418.json",
+  "submitted_at": "2026-09-23 06:56:25.772542",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.5,
+  "free_ram_gb_before": 14.2,
+  "config": "end",
+  "seed": 281715418,
+  "prompt_id": "2b44046b-729e-4161-bdfb-614140cf6213",
+  "wall_seconds": 102.6,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 51,
+    "s_per_step_tqdm": 3.4,
+    "s_per_step_steady": 3.42
+   }
+  ],
+  "peak_dedicated_mb": 13665,
+  "peak_shared_mb": 2995,
+  "spilled": true,
+  "gpu_samples": 69,
+  "peak_commit_pct": 64.2,
+  "comfy_executed_seconds": 102.08,
+  "log_lines": [
+   "06:58:07 [INFO] Prompt executed in 102.08 seconds"
+  ],
+  "timeline_file": "timelines/end-281715418.json",
+  "history_execution_seconds": 102.08,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\end-281715418_00001_.png",
+    "sha256": "951711833e96ac9379c231155e3cc1e2092ee482102f5004bf1a0d02dfbe6577"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 49.29
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 51.33
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 1.4
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 3.42,
+     "s_per_step_steady": 3.42,
+     "step_seconds": [
+      3.42,
+      3.41,
+      3.4,
+      3.4,
+      3.41,
+      3.43,
+      3.42,
+      3.42,
+      3.42,
+      3.44,
+      3.43,
+      3.42,
+      3.43,
+      3.43
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "10",
+    "11"
+   ],
+   "ws_execution_seconds": 102.08
+  },
+  "finished_at": "2026-09-23 06:58:08.914920"
+ },
+ {
+  "label": "none-281715418",
+  "status": "success",
+  "graph_sha256": "b3117222f0bc51cd4501e0459a2d438419c8853ac9d9b3e0928196b5f9967c7d",
+  "graph_file": "graphs/none-281715418.json",
+  "submitted_at": "2026-09-23 06:58:08.946521",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.4,
+  "free_ram_gb_before": 14.0,
+  "config": "none",
+  "seed": 281715418,
+  "prompt_id": "5b3e6f98-376b-4d29-8cc9-dc3f6de6599c",
+  "wall_seconds": 106.7,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 51,
+    "s_per_step_tqdm": 3.4,
+    "s_per_step_steady": 3.41
+   }
+  ],
+  "peak_dedicated_mb": 13665,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 71,
+  "peak_commit_pct": 64.2,
+  "comfy_executed_seconds": 106.31,
+  "log_lines": [
+   "06:59:55 [INFO] Prompt executed in 106.31 seconds"
+  ],
+  "timeline_file": "timelines/none-281715418.json",
+  "history_execution_seconds": 106.31,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\none-281715418_00001_.png",
+    "sha256": "48dcbd2165962b2f8d405e018495e788f9061a4e2d7b7470348ac6a1fe8226d0"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 53.71
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 51.22
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 1.31
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 3.41,
+     "s_per_step_steady": 3.411,
+     "step_seconds": [
+      3.41,
+      3.4,
+      3.4,
+      3.4,
+      3.41,
+      3.4,
+      3.4,
+      3.4,
+      3.41,
+      3.42,
+      3.42,
+      3.43,
+      3.43,
+      3.42
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "10",
+    "11"
+   ],
+   "ws_execution_seconds": 106.31
+  },
+  "finished_at": "2026-09-23 06:59:56.155197"
+ },
+ {
+  "label": "start-noTF-281715418",
+  "status": "success",
+  "graph_sha256": "45603b09831c47b86561f396086750e84d32d2855fbcce24f33711eb917e727a",
+  "graph_file": "graphs/start-noTF-281715418.json",
+  "submitted_at": "2026-09-23 06:59:56.173819",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.5,
+  "free_ram_gb_before": 13.8,
+  "config": "start-noTF",
+  "seed": 281715418,
+  "prompt_id": "410e62a7-0739-4808-8197-737875627d04",
+  "wall_seconds": 112.6,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 50,
+    "s_per_step_tqdm": 3.33,
+    "s_per_step_steady": 3.4
+   }
+  ],
+  "peak_dedicated_mb": 13573,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 75,
+  "peak_commit_pct": 71.5,
+  "comfy_executed_seconds": 111.17,
+  "log_lines": [
+   "07:00:50 [INFO] Requested to load Krea2",
+   "07:00:54 [INFO] loaded completely; 13926.90 MB usable, 8839.99 MB loaded, full load: True",
+   "07:01:47 [INFO] Prompt executed in 111.17 seconds"
+  ],
+  "timeline_file": "timelines/start-noTF-281715418.json",
+  "history_execution_seconds": 111.17,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\start-noTF-281715418_00001_.png",
+    "sha256": "4825f6e5fb3c8408b3c4108e4abafa4d8e146686264da5d88f5ab9bfed9729b9"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 54.38
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "11",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.02
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 55.73
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 0.98
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 3.36,
+     "s_per_step_steady": 3.399,
+     "step_seconds": [
+      3.36,
+      3.36,
+      3.36,
+      3.4,
+      3.36,
+      3.41,
+      3.52,
+      3.5,
+      3.4,
+      3.37,
+      3.37,
+      3.37,
+      3.38,
+      3.37
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6"
+   ],
+   "ws_execution_seconds": 111.17
+  },
+  "finished_at": "2026-09-23 07:01:49.275558"
+ },
+ {
+  "label": "start-2026092391",
+  "status": "success",
+  "graph_sha256": "0ffdd20e9eb6de81d656afe6a20525ec5ab5d84ac17d64b373189b1e7c04429f",
+  "graph_file": "graphs/start-2026092391.json",
+  "submitted_at": "2026-09-23 07:01:49.292859",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.4,
+  "free_ram_gb_before": 13.7,
+  "config": "start",
+  "seed": 2026092391,
+  "prompt_id": "2a5859db-b6fd-4400-a55d-b1c1a1071d1f",
+  "wall_seconds": 58.4,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 51,
+    "s_per_step_tqdm": 3.4,
+    "s_per_step_steady": 3.43
+   }
+  ],
+  "peak_dedicated_mb": 13569,
+  "peak_shared_mb": 2995,
+  "spilled": true,
+  "gpu_samples": 39,
+  "peak_commit_pct": 71.4,
+  "comfy_executed_seconds": 56.87,
+  "log_lines": [
+   "07:01:49 [INFO] Requested to load Krea2",
+   "07:01:52 [INFO] loaded completely; 13920.74 MB usable, 8839.99 MB loaded, full load: True",
+   "07:02:46 [INFO] Prompt executed in 56.87 seconds"
+  ],
+  "timeline_file": "timelines/start-2026092391.json",
+  "history_execution_seconds": 56.87,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\start-2026092391_00001_.png",
+    "sha256": "1de4664755c32ad75cd21070ebbdaa2aa08e5bd880c005bcfc66c8dd0c947899"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "10",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.02
+    },
+    {
+     "node": "11",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.02
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 55.66
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 1.1
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 3.46,
+     "s_per_step_steady": 3.432,
+     "step_seconds": [
+      3.46,
+      3.42,
+      3.44,
+      3.43,
+      3.44,
+      3.44,
+      3.42,
+      3.43,
+      3.43,
+      3.43,
+      3.44,
+      3.43,
+      3.44,
+      3.42
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6"
+   ],
+   "ws_execution_seconds": 56.86
+  },
+  "finished_at": "2026-09-23 07:02:48.189007"
+ },
+ {
+  "label": "end-2026092391",
+  "status": "success",
+  "graph_sha256": "795427415bf32cb24c2b42b8201108934f2be294a5dd87219744d2d51dc9f654",
+  "graph_file": "graphs/end-2026092391.json",
+  "submitted_at": "2026-09-23 07:02:48.210287",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.4,
+  "free_ram_gb_before": 13.7,
+  "config": "end",
+  "seed": 2026092391,
+  "prompt_id": "60df4741-2bd1-4e8e-b043-b80f2ad1bcf0",
+  "wall_seconds": 98.6,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 51,
+    "s_per_step_tqdm": 3.4,
+    "s_per_step_steady": 3.41
+   }
+  ],
+  "peak_dedicated_mb": 13650,
+  "peak_shared_mb": 2995,
+  "spilled": true,
+  "gpu_samples": 66,
+  "peak_commit_pct": 64.1,
+  "comfy_executed_seconds": 96.93,
+  "log_lines": [
+   "07:04:25 [INFO] Prompt executed in 96.93 seconds"
+  ],
+  "timeline_file": "timelines/end-2026092391.json",
+  "history_execution_seconds": 96.93,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\end-2026092391_00001_.png",
+    "sha256": "714a9d82fd6b03f51e0c5e7159c5de13b0d460c6a88ea3cb1aa114c1f9a0248b"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 44.73
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 51.19
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 0.94
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 3.4,
+     "s_per_step_steady": 3.411,
+     "step_seconds": [
+      3.4,
+      3.4,
+      3.41,
+      3.39,
+      3.41,
+      3.41,
+      3.41,
+      3.42,
+      3.4,
+      3.43,
+      3.42,
+      3.42,
+      3.41,
+      3.42
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "10",
+    "11"
+   ],
+   "ws_execution_seconds": 96.93
+  },
+  "finished_at": "2026-09-23 07:04:27.303147"
+ },
+ {
+  "label": "none-2026092391",
+  "status": "success",
+  "graph_sha256": "3667d9d2bd62ab8ba0b29a4993cce21bb39217089d2bc0a3f5d644af418b6a02",
+  "graph_file": "graphs/none-2026092391.json",
+  "submitted_at": "2026-09-23 07:04:27.324163",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.4,
+  "free_ram_gb_before": 13.6,
+  "config": "none",
+  "seed": 2026092391,
+  "prompt_id": "20e055c0-dc9f-4d03-b69c-e5cf831dff8f",
+  "wall_seconds": 98.5,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 51,
+    "s_per_step_tqdm": 3.4,
+    "s_per_step_steady": 3.42
+   }
+  ],
+  "peak_dedicated_mb": 13650,
+  "peak_shared_mb": 2995,
+  "spilled": true,
+  "gpu_samples": 66,
+  "peak_commit_pct": 64.2,
+  "comfy_executed_seconds": 96.29,
+  "log_lines": [
+   "07:06:03 [INFO] Prompt executed in 96.29 seconds"
+  ],
+  "timeline_file": "timelines/none-2026092391.json",
+  "history_execution_seconds": 96.28,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\none-2026092391_00001_.png",
+    "sha256": "d6ec727d3569de79b18928cb61a63e409e2a1798e927bd33bdc6f3f1d17ae4ee"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 43.85
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 51.43
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 0.94
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.19
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 3.55,
+     "s_per_step_steady": 3.413,
+     "step_seconds": [
+      3.55,
+      3.5,
+      3.46,
+      3.4,
+      3.41,
+      3.39,
+      3.42,
+      3.41,
+      3.41,
+      3.4,
+      3.41,
+      3.4,
+      3.39,
+      3.39
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "10",
+    "11"
+   ],
+   "ws_execution_seconds": 96.42
+  },
+  "finished_at": "2026-09-23 07:06:06.320661"
+ },
+ {
+  "label": "start-noTF-2026092391",
+  "status": "success",
+  "graph_sha256": "31af925f3aa64a3f5c13c431c5d51f7fa22f6c401e10b9f3fc4207c81c936612",
+  "graph_file": "graphs/start-noTF-2026092391.json",
+  "submitted_at": "2026-09-23 07:06:06.339366",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.4,
+  "free_ram_gb_before": 13.4,
+  "config": "start-noTF",
+  "seed": 2026092391,
+  "prompt_id": "f9afb4a5-13d1-43d3-803a-5c2e6823aa21",
+  "wall_seconds": 102.4,
+  "sampler_runs": [
+   {
+    "total_steps": 15,
+    "last_step": 15,
+    "elapsed_s_tqdm": 50,
+    "s_per_step_tqdm": 3.33,
+    "s_per_step_steady": 3.36
+   }
+  ],
+  "peak_dedicated_mb": 13650,
+  "peak_shared_mb": 2995,
+  "spilled": true,
+  "gpu_samples": 68,
+  "peak_commit_pct": 71.3,
+  "comfy_executed_seconds": 101.08,
+  "log_lines": [
+   "07:06:52 [INFO] Requested to load Krea2",
+   "07:06:55 [INFO] loaded completely; 13920.74 MB usable, 8839.99 MB loaded, full load: True",
+   "07:07:47 [INFO] Prompt executed in 101.08 seconds"
+  ],
+  "timeline_file": "timelines/start-noTF-2026092391.json",
+  "history_execution_seconds": 101.08,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\start-noTF-2026092391_00001_.png",
+    "sha256": "12db2608dd9697dedb5c0b28b8966ac61974ae0c2eaa8c0676bffa5969e080eb"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 45.87
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "11",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.02
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 54.0
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 1.12
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.06
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 15,
+     "seen": 15,
+     "first_step_s": 3.34,
+     "s_per_step_steady": 3.358,
+     "step_seconds": [
+      3.34,
+      3.34,
+      3.35,
+      3.35,
+      3.35,
+      3.36,
+      3.36,
+      3.36,
+      3.36,
+      3.36,
+      3.35,
+      3.36,
+      3.37,
+      3.38
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "6"
+   ],
+   "ws_execution_seconds": 101.08
+  },
+  "finished_at": "2026-09-23 07:07:49.310418"
+ }
+]
