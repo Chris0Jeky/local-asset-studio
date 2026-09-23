@@ -8,6 +8,7 @@ import subprocess
 import threading
 import time
 import uuid
+from urllib.parse import quote
 from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
 from urllib.error import HTTPError
 from backend_contracts import connection_refused, endpoint_ready, loopback_port, queue_is_idle, readiness
@@ -105,7 +106,32 @@ class BackendManager:
 
     def _local_work(self):
         if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
-        return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') for j in self.studio.jobs.values()) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
+        # An uncertain job whose tracking the operator stopped is a closed record, not local work: switch() still refuses
+        # while its prompt is live in any ComfyUI queue (_idle) or kept in any running ComfyUI's history (_stopped_results).
+        # Resuming tracking makes it block again.
+        return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') and not self._stopped_record(j) for j in self.studio.jobs.values()) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
+
+    @staticmethod
+    def _stopped_record(job):
+        disposition=job.get('tracking_disposition')
+        return job.get('status')=='uncertain' and isinstance(disposition,dict) and disposition.get('status')=='stopped'
+
+    def _stopped_results(self):
+        """Refuse while a stopped record's prompt is still in a running ComfyUI's in-memory history.
+
+        Stopping that process would discard the only descriptor of a completed result that Resume observation could still
+        record. An endpoint that refuses connections with no listener has no history left to lose; any other failure is unknown."""
+        for job in self.studio.jobs.values():
+            if not self._stopped_record(job):continue
+            for prompt_id in job.get('prompt_ids') or []:
+                if type(prompt_id) is not str or not prompt_id:continue
+                for profile in self.profiles.values():
+                    try:history=self.request(profile,'/history/'+quote(prompt_id,safe=''))
+                    except OSError as exc:
+                        if connection_refused(exc) and self.process(profile) is None:continue
+                        raise ValueError('ComfyUI history is unknown for '+profile['name']+'; existing processes were preserved') from exc
+                    if not isinstance(history,dict):raise ValueError('ComfyUI history is unknown for '+profile['name']+'; existing processes were preserved')
+                    if prompt_id in history:raise ValueError('Job '+str(job.get('id',''))[:8]+' has a result in '+profile['name']+"'s history; resume its observation before switching")
 
     @staticmethod
     def configured_reserve(value):
@@ -265,6 +291,7 @@ class BackendManager:
             self._check_startup_processes()
             # Check every endpoint, including work submitted directly through ComfyUI.
             for profile in self.profiles.values():self._idle(profile,allow_offline=True)
+            self._stopped_results()
             previous=self.operation
             self.busy=True;self.operation={'id':uuid.uuid4().hex,'target':identifier,'status':'running','started_at':time.time(),'message':'Checking owned local runtimes'}
             try:self._save()

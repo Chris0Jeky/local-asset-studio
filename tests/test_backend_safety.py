@@ -141,6 +141,57 @@ class BackendSafetyTests(unittest.TestCase):
             with self.subTest(state=state),self.assertRaisesRegex(ValueError,'reconcile'):self.manager.switch('hidream')
         self.studio.jobs={};self.manager.busy=True
         with self.assertRaisesRegex(ValueError,'already running'):self.manager.switch('hidream')
+    def test_uncertain_job_with_stopped_tracking_does_not_block_switch(self):
+        stopped={'status':'uncertain','tracking_disposition':{'status':'stopped','reason':'not in ComfyUI queue or history'}}
+        self.studio.jobs={'a':stopped};self.assertFalse(self.manager._local_work())
+        absent=lambda profile,route,timeout=2:{} if route.startswith('/history/') else IDLE
+        with patch.object(self.manager,'request',side_effect=absent),patch('backends.threading.Thread') as thread:self.manager.switch('hidream')
+        thread.assert_called_once()
+        for disposition in (None,{'status':'resumed'},'stopped'):
+            self.studio.jobs={'a':dict(stopped,tracking_disposition=disposition)}
+            with self.subTest(disposition=disposition):self.assertTrue(self.manager._local_work())
+        self.studio.jobs={'a':dict(stopped,status='running')};self.assertTrue(self.manager._local_work())
+        # A stopped record never hides a prompt that is still live in a ComfyUI queue: the endpoint check refuses.
+        self.studio.jobs={'a':stopped}
+        for busy in ({'queue_running':[['still-running']],'queue_pending':[]},{'queue_running':[],'queue_pending':[['still-queued']]}):
+            with self.subTest(queue=busy),patch.object(self.manager,'request',return_value=busy),patch('backends.threading.Thread') as thread:
+                with self.assertRaises(ValueError):self.manager.switch('hidream')
+                thread.assert_not_called()
+    def test_stopped_record_absent_from_history_and_offline_endpoints_lets_switch_proceed(self):
+        """The live case: prompts known, gone from the running ComfyUI's history, other backends not running at all."""
+        import errno
+        from urllib.error import URLError
+        self.studio.jobs={'a':{'id':'aaaa1111','status':'uncertain','prompt_ids':['p1','p2'],'tracking_disposition':{'status':'stopped','reason':'r'}}}
+        seen=[]
+        def replies(profile,route,timeout=2):
+            seen.append((profile['id'],route))
+            if profile['id']!='primary':raise URLError(ConnectionRefusedError(errno.ECONNREFUSED,'refused'))
+            return {} if route.startswith('/history/') else IDLE
+        with patch.object(self.manager,'request',side_effect=replies),patch.object(self.manager,'process',return_value=None),patch('backends.threading.Thread') as thread:
+            self.manager.switch('hidream')
+        thread.assert_called_once()
+        self.assertIn(('primary','/history/p1'),seen);self.assertIn(('primary','/history/p2'),seen)
+
+    def test_stopped_record_with_a_result_still_in_comfy_history_blocks_switch(self):
+        """Switching would stop the process holding the only descriptor Resume observation could still record."""
+        self.studio.jobs={'a':{'id':'aaaa1111','status':'uncertain','prompt_ids':['p1'],'tracking_disposition':{'status':'stopped','reason':'r'}}}
+        kept=lambda profile,route,timeout=2:{'p1':{'status':{'status_str':'success'},'outputs':{}}} if route=='/history/p1' else IDLE
+        with patch.object(self.manager,'request',side_effect=kept),patch('backends.threading.Thread') as thread:
+            with self.assertRaisesRegex(ValueError,'resume its observation'):self.manager.switch('hidream')
+        thread.assert_not_called()
+        for failure,expect in ((TimeoutError('slow'),'history is unknown'),(ValueError('bad json'),None)):
+            def flaky(profile,route,timeout=2,failure=failure):
+                if route.startswith('/history/'):raise failure
+                return IDLE
+            with self.subTest(failure=type(failure).__name__),patch.object(self.manager,'request',side_effect=flaky),patch('backends.threading.Thread') as thread:
+                with self.assertRaises(ValueError) as caught:self.manager.switch('hidream')
+                if expect:self.assertIn(expect,str(caught.exception))
+                thread.assert_not_called()
+        for reply in ([],None):
+            with self.subTest(reply=reply),patch.object(self.manager,'request',side_effect=lambda profile,route,timeout=2,reply=reply:reply if route.startswith('/history/') else IDLE),patch('backends.threading.Thread') as thread:
+                with self.assertRaisesRegex(ValueError,'history is unknown'):self.manager.switch('hidream')
+                thread.assert_not_called()
+
     def test_failed_intent_write_releases_gate(self):
         with patch.object(self.manager,'request',return_value=IDLE),patch.object(self.manager,'_save',side_effect=OSError('disk full')),patch('backends.threading.Thread') as thread:
             with self.assertRaises(OSError):self.manager.switch('hidream')
