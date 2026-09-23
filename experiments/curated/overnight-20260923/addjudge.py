@@ -19,6 +19,7 @@ if '--prompt' in args: i = args.index('--prompt'); prompt = args[i + 1]; del arg
 if '--job' in args: i = args.index('--job'); job = args[i + 1]; del args[i:i + 2]
 folder, image, raw, verdict, worst = args[:5]
 fix = args[5] if len(args) > 5 else None; notes = args[6] if len(args) > 6 else ''
+if fix is not None and fix.strip() in ('', 'None', 'null'): fix = None  # judge_batch passes JSON null as the string None
 vals = raw.split(','); keys = ['adherence', 'anatomy', 'style', 'technical', 'composition', 'control']
 scores = dict((k, (None if v in ('-', '') else int(v))) for k, v in zip(keys, vals + ['-'] * (6 - len(vals))))
 assert verdict in ('keep', 'fixable', 'reject', 'skipped'), verdict

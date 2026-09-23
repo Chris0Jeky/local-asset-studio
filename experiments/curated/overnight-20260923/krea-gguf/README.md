@@ -36,7 +36,7 @@ Images of famous characters and the fanservice cases are not in Git. They are in
 | fp8, CPU encoder | 1 | 53.9 | 19.3 | 236.4 | 79 |
 | **GGUF, GPU encoder** (normal graph) | 1 | – | **112** | **919.9** | **1899** (3.7 GB of the encoder stayed resident) |
 | GGUF, text encoder never loaded (probe) | 1 | 0 | **2.37** | **37.6** | 79 |
-| **GGUF, CPU encoder, new text** | action, duo, environment, pinup-swim, glamour, hands, portrait again | **53-77** | **2.37-2.45** | **76.9-101.3** | 79 |
+| **GGUF, CPU encoder, new text** | action, duo, environment, pinup-swim, glamour, hands, and portrait again (a planned cached rerun that re-encoded) | **53-77** | **2.37-2.45** | **76.9-101.3** | 79 |
 | GGUF, CPU encoder, same text as the previous prompt | portrait | 0 (cached) | 2.39 | **38.0** | 79 |
 | GGUF, CPU encoder, retro-anime LoRA 1.0 (the shipped `krea-portrait` recipe) | 1 | 62.9 | 3.53 | 100.1 | 79 |
 
@@ -51,10 +51,10 @@ Images of famous characters and the fanservice cases are not in Git. They are in
   consecutive prompts share the text (the Studio's "3-seed audition" shape). Sampling is 19 s for 8 steps and decode about 5 s.
 - **fp8 got slower through the night.** It ran 16.9 s/step at 03:14 and 66 s/step at 04:24 with the same graph. Over that time
   dwm.exe grew from 0.97 to 1.62 GB of VRAM. A 12.5 GB model has almost no headroom on this card, while the 8.8 GB GGUF does.
-- **Host memory.** Commit was 57.6-58.2 % before each GGUF + CPU-encoder run and peaked at **62.4-62.8 %** during it (about
-  +3.7 GB of the ~77 GB limit), with 12.0-12.8 GB of RAM free. The fp8 runs peaked at 69-78 % commit. The CPU encoder does not
-  press the documented commit ceiling (the host-memory note: stay below ~55 % before heavy Qwen/FLUX jobs); these runs started
-  at 58 %, and that was fine for Krea.
+- **Host memory.** Commit was 57.6-62.9 % before the GGUF + CPU-encoder runs (62.9 % before the first, which followed the fp8
+  runs) and peaked at **62.4-62.8 %** during the seven suite runs, with 10.3-12.8 GB of RAM free; the retro-LoRA run peaked at
+  **70.1 %** (from 58.1 %). The fp8 runs peaked at 69-78 %. On the ~77 GB commit limit these runs stayed clear of the ceiling
+  documented in the host-memory note, though above its ~55 % starting guidance for Qwen/FLUX-class jobs.
 
 ## Results: quality (blind, rubric R1-R6)
 
@@ -94,9 +94,12 @@ Single-configuration showcase pictures (open judgements, GGUF + CPU encoder):
 
 ## Verdict and next step
 
-- **Speed.** GGUF Q5_K_M with the text encoder on the CPU is 2.4-5.6x faster per new prompt than fp8 as shipped (77-101 s
-  against 175-544 s), and 5-14x faster per repeated-text seed (38 s).
-- **Quality.** It was blind-indistinguishable on 3 suite seeds plus one LoRA case.
+- **Speed.** Same-case pairs with a fresh text encode on both sides: action 343.9 s (fp8, GPU encoder) against 97.4 s (GGUF,
+  CPU encoder) = 3.5x; hands 543.5 s against 76.9 s = 7.1x. Against tonight's best fp8 run (the census, 209.3 s at 03:14) the
+  GGUF's slowest new prompt (101.3 s) is 2.1x faster. With the text cached (consecutive prompts sharing it) GGUF takes 38.0 s,
+  against 175.2 s for fp8 with no encoder at all (4.6x).
+- **Quality.** Blind tie with fp8 on three suite seeds; the retro-LoRA case matched the fp8 census output in a labelled (not
+  blind) comparison.
 - **The trap.** GGUF with the encoder on the GPU is the worst configuration of all.
 - **Proposal (in this PR):**
   - pin the GGUF in `models/library.json` (`krea-turbo-q5km-gguf`, pin-only like every `.gguf`);

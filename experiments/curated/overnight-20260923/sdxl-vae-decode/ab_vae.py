@@ -118,4 +118,5 @@ if __name__ == '__main__':
     elif cmd == 'diff': diff()
     elif cmd == 'switch': switch()
     elif cmd == 'switch2': switch2()
-    else: seal()
+    elif cmd == 'seal': seal()
+    else: raise SystemExit('unknown command %r (render, diff, switch, switch2, seal)' % cmd)

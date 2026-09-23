@@ -1124,7 +1124,7 @@
   "config": "gguf-cpute",
   "case": "portrait",
   "seed": 2026092303,
-  "probe": "same text as the previous portrait prompt",
+  "probe": "intended as a same-text rerun, but other prompts ran in between and ComfyUI re-encoded the text (CLIPTextEncode 56.5 s): this is a NEW-TEXT timing, not a cached one; the cached timing is gguf-cpute-portrait (38.0 s)",
   "prompt_id": "7175cc3d-fe51-4b6d-bf68-835aa617f0bc",
   "wall_seconds": 82.4,
   "sampler_runs": [
@@ -1208,7 +1208,8 @@
    ],
    "ws_execution_seconds": 80.34
   },
-  "finished_at": "2026-09-23 04:15:43.590267"
+  "finished_at": "2026-09-23 04:15:43.590267",
+  "text_cached": false
  },
  {
   "label": "gguf-cpute-lora-retro",
