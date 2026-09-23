@@ -119,6 +119,16 @@ Apply these corrections every time:
   `anatomy 2`. Under R3 that is 3. Under R8 the verdict is still reject, because `adherence` is 2: the hand was not
   fixed.
 
+- **R8a. A correction pass that removes, merges or replaces part of the subject scores `control` 2**, so it is a reject,
+  not fixable. The coordinator ruled this on 23 September 2026. The ruling is stated in full here; its only other copy is
+  the overnight session's local protocol file (`.runtime/overnight/PROTOCOL.md`, gitignored). The owner may override it.
+  - Trying a lower strength is a different configuration, not a fix of this picture.
+  - The lost part counts against `control` only, never against `adherence` as well.
+
+  Why: on the krea-refine foxes, the two judges agreed which strength was better but on only 3 of 6 picture verdicts.
+  One charged a lost fox to both `adherence` and `control` and called a one-fox loss fixable; the other charged it to
+  `control` alone and called any loss a reject ([second-judge/krea-refine-foxes.md](second-judge/krea-refine-foxes.md)).
+
 Trust agent judging to find, locate and name defects, to reject broken outputs, and to check that a control was
 followed. Do not trust it to choose between clean looks or to say what is "spectacular". A second agent judge mostly
 repeats the first, so it does not replace the owner's eye.
