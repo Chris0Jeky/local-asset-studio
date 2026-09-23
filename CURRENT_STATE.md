@@ -1,5 +1,20 @@
 # Current state — 23 September 2026
 
+## Qwen-Image 2.1 Studio proofs and the backend-switch fixes — 23 September 2026 (05:05–05:11)
+
+The first live backend switches of the night. #863 stopped a stopped-tracking uncertain record from blocking switches
+(two records from 12 September had blocked them since 14 September), and #870 made a probe timeout with no listening
+socket count as offline (Windows refuses a closed loopback port only after about 2.05 s, past the 2 s probe, so every
+switch had been refused as "queue state unknown"). With both merged and the Studio restarted, the switch to
+*Qwen-Image 2.1 · isolated* completed in about 40 s and the switch back in about 40 s; the primary returned on 8188 at
+`--reserve-vram 0.6 --disable-pinned-memory`.
+
+Studio proofs, seed 2026092211, 25 steps, commit gate enforced (58.6 / 36.8 / 37.1 GiB free at submission):
+`qwen21-t2i` job `be94bd02` 52.9 s (was 686.6 s before the 3 GiB-reserve launcher), `qwen21-rgba` job `b377572d`
+28.2 s with native alpha, `qwen21-edit` job `dc8f18f8` 78.6 s. All three recipes are now `verified: true`
+(`docs/QWEN-IMAGE-21.md`, *Studio proofs*). Agent-inspected only; not art acceptance; Qwen Research License,
+non-commercial. #739 stays open for the 2048², multi-reference, text-heavy, LoRA and VRAM-arbitration items.
+
 ## GPU memory on this card: spill measured, reserve default kept at 0.6 — 23 September 2026 (02:40)
 
 ComfyUI's free-VRAM figure ignores what dwm and other apps hold (0.9–2.3 GB for dwm alone tonight), so a
