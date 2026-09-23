@@ -561,3 +561,38 @@ AniFox, seed `2026092404`, job `0744d4f9-5c10-49e8-a57e-3ffd15fd2602`, prompt `1
 ### p-blackswan-portrait — completed, counted
 
 WAI, seed `2026092405`, job `89658af5-156b-4b87-9c18-7676d84f256e`, prompt `6ad6f1ef-3d7e-4d0f-b7bd-fb1bdf7788b4`, 38.5 s, `WAI-Illustration_00044_.png`. Face crop. Veil, purple eyes, small smile. A sheer panel is on the chest. The LoRA still fires on a portrait. Identity is the strongest of the five.
+
+## Pose transfer — next wave
+
+A finished wave is a checkpoint. This one moves the two poses that held onto characters who have not had them, still with `seethroughILL` at strength 1. Bent-over crop: Albedo (the white dress T1 left closed) and Frieren. Squat with hands behind the head: Yinlin and Scathach. Seiza: Wiz, the character on the LoRA page. Seated rear: Artoria.
+
+| Cell | Job |
+| --- | --- |
+| p2-albedo-bentover | `543aa322-59c8-44ee-9dbb-cf6055cc7b4e` |
+| p2-frieren-bentover | `c4e06186-745e-4f33-a1cc-61b84795a6c6` |
+| p2-yinlin-squat | `7a94c733-f85f-4121-aba2-0fc83149b875` |
+| p2-scathach-squat | `14d3e126-75d0-4902-9ae7-705f0d302ac5` |
+| p2-wiz-seiza | `8d712d39-bc91-4093-8577-c7a59c2745d7` |
+| p2-artoria-sit | `59b54e2c-29e9-4544-85d4-0e262b1f284d` |
+
+### p2 results
+
+- Albedo bent-over, WAI, job `543aa322`, prompt `1147dd12`, 10.3 s, `WAI-Illustration_00045_.png`. Rear tavern crop, white dress see-through over the hips. The wings cover where the hands should be. Hands-on-butt did not land. Keep the still. Next pose for her is the squat.
+- Frieren bent-over, YumeFlux, job `c4e06186`, prompt `b3415c34`, 24.4 s, `YumeFlux-ILv1-Baseline_00015_.png`. Hands on the dress, see-through white cloth, looking back, library, elf ear. This is the light-dress version of the page crop. The face is the usual youthful design and the cell stays counted.
+- Yinlin squat, CSTati, job `7a94c733`, prompt `7afd1b41`, 24.3 s, `CSTati-v3-Baseline_00019_.png`. Hands behind the head, wide squat, sheer purple top. The squat transferred.
+- Scathach squat, AniFox, job `14d3e126`, prompt `21b68986`, 24.3 s, `AniFox-v2-Baseline_00013_.png`. Same squat, red bodysuit, castle, hands behind the head. The squat transferred again.
+- Wiz seiza, WAI, job `8d712d39`, prompt `f1b6f3ed`, 24.2 s, `WAI-Illustration_00046_.png`. Shop, purple robe, tongue out, kneeling, wet cloth. The page's own character holds the seiza.
+- Artoria sit, YumeFlux, job `59b54e2c`, prompt `5001966a`, 30.2 s, `YumeFlux-ILv1-Baseline_00016_.png`. Seated rear, blue dress wet and sheer, open back, ahoge. The sit transferred.
+
+Keep: Frieren's bent-over light dress, and the squat on anyone whose costume is a bodysuit or a short dress. Drop hands-on-butt when the character has wings.
+
+## Pose transfer — following wave
+
+Queued because the wave above finished. Albedo moves to the squat. Luna and Serie get Frieren's bent-over crop. Priscilla gets the squat instead of the throne.
+
+| Cell | Job |
+| --- | --- |
+| p3-albedo-squat | `bc2094e7-02b7-4aea-b803-cc933e668b0e` |
+| p3-luna-bentover | `850d49ac-735f-4f32-a413-ecec0f2a3c3b` |
+| p3-serie-bentover | `263ad942-46b8-4512-8d61-b09901be1a3c` |
+| p3-priscilla-squat | `d06d4362-b4fc-4406-b642-dd25cc2365e5` |
