@@ -6,6 +6,7 @@
   "primary_disable_pinned_memory": false,
   "runtime_auto_recover": false,
   "idle_cache_release_minutes": 10,
+  "unload_models_on_change": true,
   "observe_job_resources": false,
   "resource_observation_samples": 120,
   "resource_observation_interval_seconds": 5,
