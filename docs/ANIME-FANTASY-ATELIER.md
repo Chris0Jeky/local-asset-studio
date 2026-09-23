@@ -267,9 +267,11 @@ press **Generate** explicitly. Opening either action does not start a render or 
   `target_defect_fixed: false`). Old coupled recipes keep their embedded graphs; Studio's exact-recipe
   check refuses to silently reinterpret them through the changed binding. See the
   [binding reconciliation](reconciliation/2026-09-14-detail-denoise.md) for the measured recipe and limits.
+  *Correction, 23 September 2026 (agent review, full-resolution crop; [docs/quality/QUALITY-BACKLOG.md](quality/QUALITY-BACKLOG.md)):* after job `14caa4fb` the raised hand still has six digits (two tall fingers, a thumb across the palm, three fingers on the right), the same structure as the original. The pass redrew the hand (mean pixel change about 9 levels in its box) without fixing the count, so this is not a proven hand repair. A masked hand inpaint is the next thing to try.
 - **`krea-refine`** — a global img2img polish for Krea 2 pictures: Qwen-VAE encode, re-sample at denoise
   0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
   faces (the foxes) while keeping the composition; "Redraw" at 0.5 changes more.
+  *Correction, 23 September 2026 (agent review; [docs/quality/QUALITY-BACKLOG.md](quality/QUALITY-BACKLOG.md)):* the fox faces did get eyes and snouts, but the run also turned three or four small foxes into two large ones and scattered white snow specks over the frame. Its prompt was the preset's example ("two red foxes ... on a snowy hill under a starry night sky"), not the shrine's. Give the source picture's own prompt when refining.
 - **`anime-masked-repair`** — a manual local option when a detector crop is the wrong shape. Select it from
   **Anime quality**, then upload a real **RGBA PNG** with both dimensions divisible by 8: retain the image in RGB, leave every protected area
   opaque, and make only the broken hand or other repair area transparent. Prepare refuses JPG, WebP, RGB-only and fully opaque uploads before queueing; it does not pad or crop an unaligned source. The existing core `LoadImage` alpha

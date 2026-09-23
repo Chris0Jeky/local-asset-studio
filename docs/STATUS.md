@@ -72,10 +72,11 @@ owner decision. Open issue: #14.
 
 ## G3 — Character sheets, figures, poses, in-betweens
 
-**Proven primitives.** `anime-detail-fix` repaired a six-finger hand (job 14caa4fb, 36.2 s, only the two crops changed);
-`anime-esrgan` upscales; `character_krita.py` carried a protected edit into a real Krita 5.2.16 document (4,032 changed
+**Proven primitives.** `anime-esrgan` upscales; `character_krita.py` carried a protected edit into a real Krita 5.2.16 document (4,032 changed
 pixels, 94,272 preserved); Godot 4.7.2 played a four-frame cycle at 479 ms against a 480 ms target with the Khronos
 GLB validator; actor-scoped edit planning exists with a completed 12-attempt pilot (0 accepted).
+
+**Not proven: automatic hand repair.** `anime-detail-fix` has not fixed a hand in any recorded run. On the NoobAI six-finger portrait (job 14caa4fb) it redrew the hand and left six digits; the Gentle trial (e4e49006) did the same; on the fantasy-pack portrait (009eddad) it changed the eyes and earrings and left the hands. A masked hand inpaint is the next test. *History: until 23 September 2026 this page listed 14caa4fb under Proven primitives ("repaired a six-finger hand"); the full-resolution check that corrected it is in [quality/QUALITY-BACKLOG.md](quality/QUALITY-BACKLOG.md).*
 
 **Missing.** No character-sheet decomposition exists anywhere: no endpoint, preset or UI action addresses a sub-region
 of an asset as a first-class child. In-betweens are a research lead (LayerInbetween) with no route. Per-figure pose

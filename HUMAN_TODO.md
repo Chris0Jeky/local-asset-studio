@@ -56,6 +56,8 @@ character pack and whether the shipped defaults (style weight 0.7, pose strength
 run the *3-seed audition* variant with your own pictures, then mark keeper / needs-work in the library. Agents do not
 tick this.
 
+Agent pre-review (23 Sep 2026): docs/quality/pre-reviews/q-25.md; the owner still decides.
+
 ## Anime & fantasy atelier — open items
 
 **q-1 — koukouya Krea 2 style LoRA: done, 12 September 2026.** The owner supplied a civitai API key; it is stored
