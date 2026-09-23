@@ -209,13 +209,14 @@ change to only one of the two produces two different runtimes on the same port.
 
 | file | SHA-256 |
 | --- | --- |
-| `C:/AI/Start-ComfyUI.ps1` (`-ArgumentsFile`; standalone reserve 0.6, pinned memory off; current, §8) | `2ba8b22c9bc65be92bd45ab0a2f2f1a1685a7e6518244f0e09a7779182df6a45` |
+| `C:/AI/Start-ComfyUI.ps1` (`-ArgumentsFile`; standalone reserve 0.6, pinned memory off; current, §8) | `aef83687601d517f9e61a62efdfb77a463467fc307fd4f0ad5d2c03d761aa54e` |
 | `C:/AI/Start-ComfyUI.ps1.bak-20260923-reserve4` (`-ArgumentsFile`; standalone reserve 4, a few hours on 23 September) | `ac8b40b650cb58838fcb9c8c10095880f09dad12112b30f74c984ecec3566d36` |
 | `C:/AI/Start-ComfyUI.ps1.bak-20260923-reserve06` (reserve 0.6, 12-22 September) | `0c3fbc95bcb27444797eeffe08bb4047029a55f1ad352a9f979ed26bf8ea969e` |
 | `C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2` (reserve 2, original) | `526fcda531f6d7aded268e9f69ad3fa1bc643d05f7e74e65f5b32f902ddc604c` |
 
 **Rollback (since 23 September 2026).** The current launcher already defaults to reserve 0.6, like the Studio.
-To return to the pre-`-ArgumentsFile` launcher (pinned memory on again, which crashed a Krea 2 load in §8), with
+To return to the pre-`-ArgumentsFile` launcher (pinned memory on again; the Krea 2 load that crashed in §8 ran with it on, though §5 records the same
+`load_torch_file` access violation without pinned memory, so the two were seen together, not proven cause and effect), with
 the ComfyUI queue empty and its process stopped:
 
 ```powershell
@@ -307,14 +308,14 @@ The primary's Krea 2 fp8 route (13.1 GB of diffusion weights) was recorded at 94
   `BackendManager.primary_argv` records every launch decision (`last_launch_reserve` in the backend
   snapshot, `launch_reserve` on the switch operation).
 - `scripts/Start-Studio.ps1` no longer starts a different runtime from the Studio's own launcher: it
-  writes `scripts/primary-comfy-args.py`'s output (`BackendManager.primary_argv`, so the measured
-  reserve and `--disable-pinned-memory` from config) to `.runtime/primary-comfy-args.json` and passes it
+  writes `scripts/primary-comfy-args.py`'s output (`BackendManager.primary_argv`, so the configured
+  reserve, 0.6 by default, and `--disable-pinned-memory` from config) to `.runtime/primary-comfy-args.json` and passes it
   to `C:/AI/Start-ComfyUI.ps1 -ArgumentsFile`. Before this, the startup script omitted
   `--disable-pinned-memory`, so a Studio started from the desktop shortcut pinned about 13 GB of host
   RAM (`Enabled pinned memory 12994.0` in `C:/AI/logs/20260922-231528-error.log`) although config asks
   for it off. The desktop path keeps `--enable-manager` (ComfyUI-Manager), which the Studio's switch and
   recovery launches still do not pass; the ownership checks only read `--listen`/`--port`. Run without
-  `-ArgumentsFile`, the launcher defaults to `--reserve-vram 4 --disable-pinned-memory --enable-manager`.
+  `-ArgumentsFile`, the launcher defaults to `--reserve-vram 0.6 --disable-pinned-memory --enable-manager`.
 - Pinned host memory is not counted as a spill: the primary started with about 13 GB pinned read
   9,755 MB dedicated and 79 MB shared through the same counters.
 - Each job records the peak dedicated and shared memory of the ComfyUI process while it runs
@@ -335,7 +336,8 @@ A reserve that forces a model with a LoRA into a partial load makes ComfyUI appl
 offloaded modules and still spill during decode: 2.7x slower. A 13.1 GB model cannot fit this card with the
 desktop's VRAM in use either way; the real fix for Krea 2 is a smaller quantization, not a reserve. The
 measured reserve remains the right tool where evicting a text encoder is enough to make the diffusion
-model fit (Qwen-Image 2.1 above), so the isolated qwen21 backend uses it. The per-job spill message still
+model fit (Qwen-Image 2.1 above, measured with the benchmark's `--reserve-vram 3`); no shipped backend applies
+it automatically yet (the isolated qwen21 backend is #739's pending branch). The per-job spill message still
 reports every run that spills. HiDream (8192) and H3 (8194) keep their fixed `--reserve-vram 2`.
 
 To opt the primary into the measured reserve anyway, set `"primary_reserve_vram": "auto"` in `config/local.json`

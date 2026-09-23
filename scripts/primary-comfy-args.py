@@ -1,6 +1,7 @@
 """Print the primary ComfyUI arguments the Studio itself launches with, for Start-Studio.ps1 -> Start-ComfyUI.ps1.
 
-One source of truth: `BackendManager.primary_argv` (measured --reserve-vram, --disable-pinned-memory from config).
+One source of truth: `BackendManager.primary_argv` (the configured --reserve-vram, 0.6 unless config says "auto",
+and --disable-pinned-memory from config).
 Output is JSON: {"arguments": [...everything after the Python executable...], "python": ..., "reserve": {...}}.
 It reads config/local.json and the GPU counters only; it starts, stops and submits nothing.
 """

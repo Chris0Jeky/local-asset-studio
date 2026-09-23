@@ -33,7 +33,7 @@ if (Test-Path -LiteralPath $backendStatePath) { $savedBackend = Get-Content -Lit
 if (-not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3')) {
     if (-not (Test-Path -LiteralPath $studioConfig.comfy_launcher)) { throw 'ComfyUI is offline and its launcher is missing. Check config/local.json.' }
     # Start the same runtime the Studio's own switch/recovery launches: arguments from BackendManager.primary_argv,
-    # with --reserve-vram measured from what other processes hold on the GPU (docs/RUNTIME-PRECONDITIONS.md section 7).
+    # with the configured --reserve-vram and pinned-memory setting (docs/RUNTIME-PRECONDITIONS.md section 8).
     $launcherArgs = @()
     if ((Get-Content -LiteralPath $studioConfig.comfy_launcher -Raw) -match 'ArgumentsFile') {
         $argsFile = Join-Path $repoRoot '.runtime\primary-comfy-args.json'
