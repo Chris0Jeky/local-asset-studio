@@ -1,0 +1,86 @@
+{
+ "portrait-C.png": {
+  "config": "plain",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-portrait_00001_.png"
+ },
+ "portrait-B.png": {
+  "config": "tiled512",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-portrait_00001_.png"
+ },
+ "portrait-A.png": {
+  "config": "tiled1024",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-portrait_00001_.png"
+ },
+ "action-C.png": {
+  "config": "tiled512",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-action_00001_.png"
+ },
+ "action-B.png": {
+  "config": "tiled1024",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-action_00001_.png"
+ },
+ "action-A.png": {
+  "config": "plain",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-action_00001_.png"
+ },
+ "duo-A.png": {
+  "config": "tiled1024",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-duo_00001_.png"
+ },
+ "duo-C.png": {
+  "config": "plain",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-duo_00001_.png"
+ },
+ "duo-B.png": {
+  "config": "tiled512",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-duo_00001_.png"
+ },
+ "environment-C.png": {
+  "config": "plain",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-environment_00001_.png"
+ },
+ "environment-A.png": {
+  "config": "tiled512",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-environment_00001_.png"
+ },
+ "environment-B.png": {
+  "config": "tiled1024",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-environment_00001_.png"
+ },
+ "pinup-swim-B.png": {
+  "config": "tiled512",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-pinup-swim_00001_.png"
+ },
+ "pinup-swim-A.png": {
+  "config": "tiled1024",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-pinup-swim_00001_.png"
+ },
+ "pinup-swim-C.png": {
+  "config": "plain",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-pinup-swim_00001_.png"
+ },
+ "glamour-C.png": {
+  "config": "tiled1024",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-glamour_00001_.png"
+ },
+ "glamour-A.png": {
+  "config": "plain",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-glamour_00001_.png"
+ },
+ "glamour-B.png": {
+  "config": "tiled512",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-glamour_00001_.png"
+ },
+ "hands-A.png": {
+  "config": "plain",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\plain-hands_00001_.png"
+ },
+ "hands-B.png": {
+  "config": "tiled512",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled512-hands_00001_.png"
+ },
+ "hands-C.png": {
+  "config": "tiled1024",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\sdxl-vae-decode\\tiled1024-hands_00001_.png"
+ }
+}

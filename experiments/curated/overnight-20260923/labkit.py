@@ -102,6 +102,7 @@ def prune_loras(graph):
 
 
 CLIENT_ID = 'overnight-lab'
+GPU_INTERVAL = 1.5  # seconds between GPU memory samples; experiments timing short phases set it lower (0.25)
 
 
 def log_time(entry):
@@ -196,7 +197,7 @@ class Sampler:
         while not self.stop.is_set():
             r = gpu_memory.spill(self.pid)
             if r.get('dedicated_bytes') is not None: self.gpu.append((time.time(), r['dedicated_bytes'], r['shared_bytes']))
-            c = commit_pct(); self.commit.append(c[0]); time.sleep(1.5)
+            c = commit_pct(); self.commit.append(c[0]); time.sleep(GPU_INTERVAL)
     def _log(self):
         while not self.stop.is_set():
             self.poll_logs(); time.sleep(2)
@@ -337,6 +338,27 @@ def run_graph(graph, label, results, timeout=3600, extra=None, skip_existing=Tru
     brief['samplers'] = [dict((k, s[k]) for k in ('class_type', 'steps', 'first_step_s', 's_per_step_steady')) for s in ws.get('samplers', [])]
     brief['nodes'] = ['%s:%s' % (n['class_type'], n['seconds']) for n in ws.get('node_seconds', []) if n['seconds'] >= 0.5]
     print(json.dumps(brief), flush=True)
+    return record
+
+
+def finalize(results, label, note, timeout=3600):
+    """Complete a `submitted` record whose poller was stopped: wait for its saved prompt ID in /history, never resubmit."""
+    record = results.find(label)
+    if not record or not record.get('prompt_id'): raise SystemExit('no submitted prompt recorded for ' + label)
+    started = time.time(); history = None
+    while time.time() - started < timeout:
+        try: history = http(COMFY + '/history/' + record['prompt_id'], timeout=30).get(record['prompt_id'])
+        except (OSError, ValueError): history = None
+        if history and history.get('status', {}).get('completed') is not None: break
+        history = None; time.sleep(5)
+    if history is None: record['status'] = 'uncertain'; record['note'] = note + '; still not terminal, left alone'
+    else:
+        st = history.get('status', {}); record['status'] = st.get('status_str'); record['note'] = note
+        ts = dict((m[0], m[1].get('timestamp')) for m in st.get('messages', []) if isinstance(m, list) and len(m) == 2 and isinstance(m[1], dict))
+        if ts.get('execution_start') and (ts.get('execution_success') or ts.get('execution_error')):
+            record['history_execution_seconds'] = round(((ts.get('execution_success') or ts.get('execution_error')) - ts['execution_start']) / 1000, 2)
+        record['outputs'] = outputs_of(history)
+    record['finished_at'] = now(); results.save(); print(json.dumps({k: record.get(k) for k in ('label', 'status', 'history_execution_seconds', 'note')}))
     return record
 
 

@@ -47,12 +47,47 @@ def render(ids):
                              extra={'config': decoder, 'case': case['id'], 'seed': case['seed'], 'position_in_case': position})
 
 
+SWITCH = [('animagine-xl-4.0-opt.safetensors', ['plain', 'tiled512']), ('NoobAI-XL-v1.1.safetensors', ['tiled512', 'plain']),
+          ('waiIllustriousSDXL_v170.safetensors', ['plain', 'tiled512'])]
+
+
+def switch():
+    """The census condition: each prompt pair starts with a checkpoint switch (the previous SDXL model is still cached), then both
+    decoders run on the same cached latent, in alternating order. Case `hands` (original character), same seed."""
+    results = labkit.Results(HERE); case = suite.by_id('hands')
+    for ckpt, order in SWITCH:
+        for position, decoder in enumerate(order):
+            g = graph(decoder, case); g['1']['inputs']['ckpt_name'] = ckpt
+            g['7']['inputs']['filename_prefix'] = 'Research/overnight-20260923/sdxl-vae-decode/switch-%s-%s' % (ckpt.split('.')[0], decoder)
+            labkit.run_graph(g, 'switch-%s-%s' % (ckpt.split('.')[0], decoder), results, timeout=900,
+                             extra={'config': decoder, 'case': 'hands', 'seed': case['seed'], 'checkpoint': ckpt, 'position_in_case': position, 'condition': 'after-switch'})
+
+
+SWITCH2 = [('cstatiANIMEV30XL_v30.safetensors', ['tiled512', 'plain']), ('yumefluxXLIllustrious_ilV10.safetensors', ['plain', 'tiled512']),
+           ('animagine-xl-4.0-opt.safetensors', ['tiled512', 'plain']), ('waiIllustriousSDXL_v170.safetensors', ['tiled512', 'plain'])]
+
+
+def switch2():
+    """More after-switch rows, with GPU memory sampled every 0.25 s (review: 1.5 s sampling can miss a short decode's spill).
+    The first decoder after each switch alternates so each decoder has at least three first-after-sampling observations."""
+    labkit.GPU_INTERVAL = 0.25
+    results = labkit.Results(HERE); case = suite.by_id('hands')
+    for ckpt, order in SWITCH2:
+        for position, decoder in enumerate(order):
+            g = graph(decoder, case); g['1']['inputs']['ckpt_name'] = ckpt; tag = ckpt.split('.')[0].split('_')[0]
+            g['7']['inputs']['filename_prefix'] = 'Research/overnight-20260923/sdxl-vae-decode/switch2-%s-%s' % (tag, decoder)
+            labkit.run_graph(g, 'switch2-%s-%s' % (tag, decoder), results, timeout=900,
+                             extra={'config': decoder, 'case': 'hands', 'seed': case['seed'], 'checkpoint': ckpt, 'position_in_case': position,
+                                    'condition': 'after-switch', 'gpu_interval_s': 0.25})
+
+
 def diff():
     import numpy as np
     from PIL import Image
     results = labkit.Results(HERE); out = {}
     for case in suite.SUITE:
-        files = dict((r['config'], r['outputs'][0]['file']) for r in results.records if r.get('case') == case['id'] and r.get('outputs'))
+        files = dict((r['config'], r['outputs'][0]['file']) for r in results.records
+                     if r.get('case') == case['id'] and r.get('outputs') and not r.get('condition'))
         if 'plain' not in files: continue
         base = np.asarray(Image.open(files['plain']).convert('RGB')).astype(np.int16)
         for name in ('tiled512', 'tiled1024'):
@@ -67,9 +102,13 @@ def diff():
 
 
 def seal():
+    """Seal the main 7x3 comparison only (the after-switch rows are timing rows, not part of the blind groups), and refuse to
+    overwrite a key that judgements were already written against (review of #868)."""
+    if (HERE / 'judgements.jsonl').exists() and (HERE / 'key.sealed.json').exists():
+        raise SystemExit('key.sealed.json already has judgements against it; refusing to reshuffle')
     results = labkit.Results(HERE)
     items = [{'group': r['case'], 'config': r['config'], 'file': r['outputs'][0]['file']}
-             for r in results.records if r.get('status') == 'success' and r.get('outputs')]
+             for r in results.records if r.get('status') == 'success' and r.get('outputs') and not r.get('condition')]
     print(labkit.seal(items, HERE))
 
 
@@ -77,4 +116,6 @@ if __name__ == '__main__':
     cmd = sys.argv[1]
     if cmd == 'render': render(sys.argv[2:])
     elif cmd == 'diff': diff()
+    elif cmd == 'switch': switch()
+    elif cmd == 'switch2': switch2()
     else: seal()

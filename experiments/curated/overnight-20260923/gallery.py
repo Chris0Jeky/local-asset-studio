@@ -44,7 +44,7 @@ def main(argv):
             if '/mask-' in str(path).replace('\\', '/') or not path.exists(): continue
             j = judged.get(str(path).lower())
             if j and j.get('verdict') == 'skipped': continue
-            case = suite.by_id(r['case']) if r.get('case') else None
+            case = next((c for c in suite.SUITE if c['id'] == r.get('case')), None)
             thumb = thumbs / (path.stem + '.jpg')
             im = Image.open(path).convert('RGB'); im.thumbnail((360, 540)); im.save(thumb, quality=85)
             try: rel = path.relative_to(out).as_posix()
@@ -61,9 +61,12 @@ def main(argv):
             'experiments/curated/overnight-20260923/%s/ in the lab branch.</p>%s') % (slug, slug, slug, '\n'.join(cards))
     (out / 'index.html').write_text(page, encoding='utf-8'); print(out / 'index.html', len(cards), 'cards')
     if sheet and safe:
+        from PIL import ImageDraw
         tiles = []
         for r, path in safe:
-            im = Image.open(path).convert('RGB'); im.thumbnail((256, 384)); tiles.append(im)
+            im = Image.open(path).convert('RGB'); im.thumbnail((256, 366))
+            tile = Image.new('RGB', (256, 384), (24, 24, 24)); tile.paste(im, ((256 - im.width) // 2, 0))
+            ImageDraw.Draw(tile).text((4, 369), '%s / %s' % (r.get('config'), r.get('case')), fill=(235, 235, 235)); tiles.append(tile)
         w = 256 * min(4, len(tiles)); rows = (len(tiles) + 3) // 4
         canvas = Image.new('RGB', (w, 384 * rows), (24, 24, 24))
         for i, im in enumerate(tiles): canvas.paste(im, ((i % 4) * 256, (i // 4) * 384))
