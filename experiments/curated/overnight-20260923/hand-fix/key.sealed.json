@@ -1,0 +1,66 @@
+{
+ "noob4-D.png": {
+  "config": "authored",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\authored-noob4_00001_.png"
+ },
+ "noob4-C.png": {
+  "config": "d06",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-noob4_00001_.png"
+ },
+ "noob4-A.png": {
+  "config": "d06-g768",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-g768-noob4_00001_.png"
+ },
+ "noob4-B.png": {
+  "config": "original",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00004_.png"
+ },
+ "noob5-C.png": {
+  "config": "authored",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\authored-noob5_00001_.png"
+ },
+ "noob5-B.png": {
+  "config": "d06",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-noob5_00001_.png"
+ },
+ "noob5-A.png": {
+  "config": "d06-g768",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-g768-noob5_00001_.png"
+ },
+ "noob5-D.png": {
+  "config": "original",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\noob_00005_.png"
+ },
+ "cstati-C.png": {
+  "config": "authored",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\authored-cstati_00001_.png"
+ },
+ "cstati-D.png": {
+  "config": "d06",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-cstati_00001_.png"
+ },
+ "cstati-B.png": {
+  "config": "d06-g768",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-g768-cstati_00001_.png"
+ },
+ "cstati-A.png": {
+  "config": "original",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\CSTati-v3-Baseline_00003_.png"
+ },
+ "yume-B.png": {
+  "config": "authored",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\authored-yume_00001_.png"
+ },
+ "yume-C.png": {
+  "config": "d06",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-yume_00001_.png"
+ },
+ "yume-D.png": {
+  "config": "d06-g768",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\hand-fix\\d06-g768-yume_00001_.png"
+ },
+ "yume-A.png": {
+  "config": "original",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\YumeFlux-ILv1-Baseline_00002_.png"
+ }
+}
