@@ -169,6 +169,47 @@ next owner verdicts are the real test: record them and re-run this page's analys
 The two agent judges agree with each other much more than either agrees with the owner. A second agent opinion
 therefore does not replace the owner's eye; it mostly repeats the first opinion.
 
+## Addendum, later the same night: agent against agent on new pictures
+
+There were no new owner verdicts during the night. The only fresh evidence is how well agent judges agree with each
+other on pictures the corrections were not written from. There are two such checks.
+
+**The Style + Pose overlap (q-25).** Two blind judges scored the same four renders, with corrections R1–R6 in their
+brief.
+
+| Measure | Result |
+| --- | --- |
+| Verdicts that agree | 4 of 4 |
+| Criteria exactly equal | 17 of 24 |
+| Criteria within one point | 24 of 24 |
+
+Before the corrections, verdict agreement between judges was 14 of 19 (74 %).
+
+**The lab judge against the review judge ([second-judge/sdxl-vae-decode.md](second-judge/sdxl-vae-decode.md)).** These
+are two separately briefed agents, each with its own crops.
+
+| Measure | Result |
+| --- | --- |
+| Decode question (are three decodes one picture?) | agree on 7 of 7 subjects |
+| Picture verdicts | 5 of 7 subjects agree |
+| Criteria exactly equal | 78 of 105 |
+| Adherence exactly equal | 9 of 21 |
+
+Adherence was the weakest criterion.
+
+**What this adds.** In both disagreements that have a clear right answer, the lower score was right:
+
+- A named but tolerated defect, a hand showing only a thumb and one nail, was scored 4. That is bias 1 again, from the
+  judge that wrote R1.
+- A detail was missed: the canon eye colour.
+
+So R1 is necessary but not self-enforcing. A judge applies it more reliably to other judges' records than to its own
+first pass. **Rule R7 (proposed): before writing a record, re-read `worst_defect` and check that its criterion is at
+most 3.** It is a mechanical check. It belongs in the record script, not in a judge's memory.
+
+This is agent against agent, not agent against owner. The owner-agreement numbers above are unchanged until the owner
+judges more pictures.
+
 ## Not verified
 
 - Only 15 tiered pictures plus two pairwise choices: every number above carries wide uncertainty. One flipped verdict
