@@ -514,6 +514,57 @@ class ServerTests(unittest.TestCase):
         with patch.object(server,'urlopen',return_value=self._http_response(b'')):
             self.assertIsNone(s._request('/free',method='POST',data={},allow_empty=True))
 
+    def test_checkpoint_change_unloads_resident_models_and_waits_for_the_release(self):
+        """A graph that drops a model the previous graph loaded is preceded by /free {unload_models} and a wait until torch's reservation falls."""
+        sdxl_a={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"sdxl\\cstati.safetensors"}},"5":{"inputs":{"samples":["4",0]}}}
+        sdxl_b={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"sdxl/wai.safetensors"}},"9":{"inputs":{"lora_name":"detail.safetensors","strength":0.5}}}
+        self.assertEqual(server.Studio.graph_model_files(sdxl_a),frozenset({"sdxl/cstati.safetensors"}))
+        self.assertEqual(server.Studio.graph_model_files({"1":{"inputs":{"image":"ref.png","seed":3}}}),frozenset())
+        idle={"queue_running":[],"queue_pending":[]}; stats=lambda gib:{"devices":[{"torch_vram_total":int(gib*1024**3)}]}
+        s=FakeStudio(self.root,[idle,stats(7.2),None,stats(6.9),stats(0.3)]); reading={'pid':42,'shared_bytes':0,'dedicated_bytes':9*1024**3,'spilled':False}
+        job={}
+        with patch.object(s,'gpu_memory_reading',return_value=reading), patch.object(server.time,'sleep'):
+            self.assertIsNone(s._evict_before_submit(job,sdxl_a,0))            # first graph: nothing known to be resident
+            self.assertIsNone(s._evict_before_submit(job,sdxl_a,1)); self.assertEqual(s.requests,[])   # same checkpoint: nothing to do
+            record=s._evict_before_submit(job,sdxl_b,0)
+        self.assertEqual([r[0][0] for r in s.requests],["/queue","/system_stats","/free","/system_stats","/system_stats"])
+        self.assertEqual((s.requests[2][1]["method"],s.requests[2][1]["data"]),("POST",{"unload_models":True}))   # the node cache stays warm
+        self.assertEqual((record['reason'],record['outcome'],record['dropped_models']),('model change','unloaded',['sdxl/cstati.safetensors']))
+        self.assertEqual(job['model_evictions'],[record])
+        # Adding a LoRA to the same checkpoint drops nothing; a restarted ComfyUI (new pid) holds nothing of ours.
+        with patch.object(s,'gpu_memory_reading',return_value=reading): self.assertIsNone(s._evict_before_submit(job,dict(sdxl_b,**{"7":{"inputs":{"lora_name":"x.safetensors"}}}),0))
+        with patch.object(s,'gpu_memory_reading',return_value=dict(reading,pid=43)): self.assertIsNone(s._evict_before_submit(job,sdxl_a,0))
+        self.assertEqual(len(s.requests),5)
+
+    def test_spilling_idle_process_is_unloaded_and_failures_never_block_submission(self):
+        """An idle ComfyUI already spilling is unloaded even for the same model; busy queue, unreadable stats, errors and the off switch are recorded."""
+        idle={"queue_running":[],"queue_pending":[]}; graph={"4":{"inputs":{"ckpt_name":"a.safetensors"}}}
+        spilling={'pid':7,'shared_bytes':4*1024**3,'dedicated_bytes':12*1024**3,'spilled':True}
+        s=FakeStudio(self.root,[idle,{"devices":[{"torch_vram_total":8*1024**3}]},None,{"devices":[{}]}]); job={}
+        with patch.object(s,'gpu_memory_reading',return_value=spilling), patch.object(server.time,'sleep'):
+            record=s._evict_before_submit(job,graph,0)
+        self.assertEqual((record['reason'],record['outcome'],record['shared_before']),('spill','requested; release not observed',4*1024**3))
+        busy=FakeStudio(self.root,[{"queue_running":[["x"]],"queue_pending":[]}])
+        with patch.object(busy,'gpu_memory_reading',return_value=spilling): record=busy._evict_before_submit({},graph,0)
+        self.assertEqual(record['outcome'],'skipped: ComfyUI queue busy'); self.assertEqual(len(busy.requests),1)
+        down=FakeStudio(self.root,[URLError("refused")])
+        with patch.object(down,'gpu_memory_reading',return_value=spilling): self.assertIn('refused',down._evict_before_submit({},graph,0)['outcome'])
+        stuck=FakeStudio(self.root,[idle,{"devices":[{"torch_vram_total":8*1024**3}]},None]+[{"devices":[{"torch_vram_total":8*1024**3}]}]*200)
+        clock=iter(range(0,10000,5))
+        with patch.object(stuck,'gpu_memory_reading',return_value=spilling), patch.object(server.time,'sleep'), patch.object(server.time,'monotonic',side_effect=lambda:next(clock)):
+            self.assertEqual(stuck._evict_before_submit({},graph,0)['outcome'],'release not observed within 30 s')
+        (self.root/"config/local.json").write_text(json.dumps({"comfy_root":str(self.root/"fake-comfy"),"unload_models_on_change":False}))
+        off=FakeStudio(self.root,[])
+        with patch.object(off,'gpu_memory_reading',return_value=spilling): self.assertIsNone(off._evict_before_submit({},graph,0))
+        self.assertEqual(off.requests,[])
+
+    def test_eviction_runs_after_the_queue_wait_and_before_the_prompt_post(self):
+        s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{}}, enqueue=False)['id']]; order=[]
+        replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),self._http_response(b'{')]
+        def fake_urlopen(req,timeout=None): order.append(req.full_url.rsplit('/',1)[-1]); return replies.pop(0)
+        with patch.object(server,'urlopen',side_effect=fake_urlopen), patch.object(s,'_evict_before_submit',side_effect=lambda *a:order.append('evict')) as evict: s._run(job)
+        self.assertEqual(order,['queue','evict','prompt']); self.assertEqual(evict.call_args[0][2],0)
+
     def test_idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks(self):
         """ComfyUI answers /free with 200 and no body; a bounded queue wait ticks the release from the real loop; config edge cases."""
         s=self.studio()

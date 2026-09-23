@@ -60,6 +60,8 @@ HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the 
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 GPU_SAMPLE_EVERY = 5                    # empty history polls between GPU memory samples (app/gpu_memory.py)
+EVICT_WAIT_SECONDS = 30                  # ceiling for ComfyUI to act on /free before the next prompt is posted anyway
+MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt", ".sft", ".bin")
 HOST_COMMIT_MINIMUM = 32 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
@@ -122,6 +124,10 @@ class Studio:
         raw_minutes = self.config.get("idle_cache_release_minutes", 10)
         self.idle_release_minutes = max(0.0, float(raw_minutes)) if self._finite_number(raw_minutes) else 10.0   # 0 or a negative value switches it off
         self._last_activity = time.monotonic(); self._released_since_activity = False; self.cache_release = {"count": 0, "last_at": None, "last_error": None}
+        # ComfyUI keeps part of the previous checkpoint on the GPU when the next one loads, because its free-VRAM figure ignores what the
+        # desktop holds; three SDXL checkpoints in one process spilled 0, 3.7 and 6.0 GB into shared memory (23 Sep 2026). Unload first.
+        self.evict_on_model_change = self.config.get("unload_models_on_change", True) is not False
+        self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values():
@@ -498,6 +504,54 @@ class Studio:
         peak['peak_dedicated_bytes'] = max(peak['peak_dedicated_bytes'], reading['dedicated_bytes'] or 0)
         if reading.get('spilled') and not peak['spilled']:
             peak['spilled'] = True; job['gpu_spill'] = True
+
+    @staticmethod
+    def graph_model_files(graph):
+        """Model filenames an API graph loads (string inputs with a model suffix); links and numbers are ignored."""
+        return frozenset(v.replace("\\", "/") for node in (graph or {}).values() if isinstance(node, dict)
+                         for v in (node.get("inputs") or {}).values() if isinstance(v, str) and v.lower().endswith(MODEL_FILE_SUFFIXES))
+
+    def _evict_before_submit(self, job, graph, index):
+        """Unload ComfyUI's resident models before a graph that would leave them half-loaded, or when the idle process already spills.
+
+        Returns the evidence dict it appended to the job, or None when nothing was needed. Never raises: an eviction that cannot
+        happen leaves the submission exactly as it was before this step existed."""
+        url = (job.get('comfy_url') or self.comfy_url).rstrip('/'); models = self.graph_model_files(graph)
+        backends = getattr(self, 'backends', None)
+        if not self.evict_on_model_change or url != self.comfy_url or (backends is not None and getattr(backends, 'active', 'primary') != 'primary'): return None
+        try: reading = self.gpu_memory_reading(refresh=True)
+        except Exception: reading = {}
+        pid, last = reading.get('pid'), self._resident
+        dropped = sorted(last['models'] - models) if last and last['url'] == url and last['pid'] == pid and models else []
+        spilling = bool(reading.get('spilled'))
+        self._resident = {'url': url, 'pid': pid, 'models': models}
+        if not dropped and not spilling: return None
+        record = {'index': index, 'reason': 'model change' if dropped else 'spill', 'dropped_models': dropped[:8], 'shared_before': reading.get('shared_bytes'),
+                  'dedicated_before': reading.get('dedicated_bytes'), 'requested_at': time.time()}
+        def torch_reserved():
+            devices = (self._request("/system_stats", timeout=5) or {}).get("devices") or [{}]
+            value = devices[0].get("torch_vram_total"); return value if isinstance(value, (int, float)) else None
+        try:
+            queue = self._request("/queue", timeout=5)
+            if not isinstance(queue, dict) or queue.get("queue_running") or queue.get("queue_pending"): record['outcome'] = 'skipped: ComfyUI queue busy'
+            else:
+                before = torch_reserved(); record['torch_reserved_before'] = before
+                self._request("/free", method="POST", data={"unload_models": True}, timeout=30, allow_empty=True)
+                # The flag is read between prompts: a prompt posted before the worker wakes would run with the old models still loaded.
+                released = lambda value: value is not None and (value <= 1024 ** 3 or (before is not None and value <= before * 0.5))
+                deadline = time.monotonic() + EVICT_WAIT_SECONDS; after = before
+                while time.monotonic() < deadline and not released(after):
+                    time.sleep(0.5); after = torch_reserved()
+                    if after is None: time.sleep(3); break   # unobservable: give the idle worker a moment, then submit
+                record['torch_reserved_after'] = after
+                record['outcome'] = 'unloaded' if released(after) else 'requested; release not observed' if after is None else 'release not observed within ' + str(EVICT_WAIT_SECONDS) + ' s'
+        except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError, HTTPException) as exc:
+            record['outcome'] = 'failed: ' + str(exc)[:200]
+        try: after_reading = self.gpu_memory_reading(refresh=True); record['shared_after'] = after_reading.get('shared_bytes')
+        except Exception: pass
+        record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
+        job.setdefault('model_evictions', []).append(record)
+        return record
 
     def host_commit_reading(self, refresh=False):
         if refresh or self._host_commit is None or time.monotonic() - self._host_commit_at > 3:
@@ -1349,7 +1403,7 @@ class Studio:
             self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True)
         except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
             self.cache_release["last_error"] = str(exc)[:200]; self._released_since_activity = True; return False
-        self._released_since_activity = True
+        self._released_since_activity = True; self._resident = None
         self.cache_release.update(count=self.cache_release["count"] + 1, last_at=time.time(), last_error=None)
         return True
 
@@ -1538,6 +1592,7 @@ class Studio:
                 job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._save(job);return
             if reading:
                 job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
+            self._evict_before_submit(job, graph, i)
             job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
             self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
