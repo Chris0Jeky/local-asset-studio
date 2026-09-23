@@ -1380,6 +1380,45 @@
       "visual": "workflows/comfyui/05 - Z-Image Turbo.json"
     },
     {
+      "id": "zimage-fast",
+      "name": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)",
+      "category": "General generation",
+      "description": "Eight-step generation on the fp8 build of Z-Image Turbo with its text encoder on the CPU, so nothing spills into shared GPU memory. Measured 23 September 2026 straight against ComfyUI (experiments/curated/overnight-20260923/zimage-fp8/): 0.72-0.77 s/step and 37-76 s per 1024x1024 image, of which 29-65 s is the CPU text encode; the bf16 `zimage` preset took 308 s in the census, and fp8 with the encoder on the GPU 532 s. A blind tie with bf16 on three showcase cases. Unverified until a Studio proof.",
+      "graph": "workflows/api/zimage-fast-api.json",
+      "verified": false,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "7",
+        "width"
+      ],
+      "height": [
+        "7",
+        "height"
+      ],
+      "seed": [
+        "8",
+        "seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "cfg": [
+        "8",
+        "cfg"
+      ],
+      "denoise": [
+        "8",
+        "denoise"
+      ],
+      "modality": "image",
+      "source": "https://civitai.com/models/2169712?modelVersionId=2445746"
+    },
+    {
       "id": "sdxl",
       "name": "SDXL \u2022 general baseline",
       "category": "General generation",

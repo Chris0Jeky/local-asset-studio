@@ -33,7 +33,26 @@ are adult.
   palette here.
 - **Speed:** 18-20 s per job warm (199 s for the first, with the model loads).
 
-## Next step (not run)
+## Follow-up: style weight 0.45 and 0.3 (07:07-07:10)
+
+`stylepose_pack.py weights`: 6 Studio jobs. The action pose at pose strength 0.9 on the same three seeds, with style weight 0.45 and 0.3
+instead of 0.7. Judged open (the configuration is known), with the raised and extended hands and the faces cropped at full resolution.
+
+| style weight | burn | raised arm held (seeds 71 / 72 / 73) | verdicts |
+| --- | --- | --- | --- |
+| 0.7 (default, above) | 3 / 3 burned | no / yes / yes | reject ×3 |
+| 0.45 | **none**: muted navy, teal scarf and brown boots, close to the board | no / yes / yes | fixable (arm lost), **keep**, fixable (a claw hand) |
+| 0.3 | **none** | no / yes / yes | fixable (arm lost), **keep** (a V sign instead of an open palm), fixable (limp merged fingers) |
+
+**Lowering the style weight to 0.45 or 0.3 removes the burn completely** on this board. That leaves the route's usual defects:
+- the seed-71 pose miss (the same at every weight);
+- one hand per weight that needs a masked repair (`anime-masked-repair`).
+
+With the second judge's reading of the default run (#891), the route is usable for the pack at style weight 0.3-0.45 and pose
+strength 0.9, with a three-seed audition. Whether the preset default should drop from 0.7 is not decided here: 0.7 may suit
+other boards, and the Style + Pose matrix of 14 September used multi-picture boards.
+
+## Next step (superseded by the follow-up above)
 
 The same 18 jobs at style weight 0.4 and 0.5 (the preset's "Style lighter" variant is 0.5 with pose 0.7). Without that, this is
 not a usable pack route. The pose half of the evidence (strength 0.9 or 1.0 for dynamic poses) holds regardless.

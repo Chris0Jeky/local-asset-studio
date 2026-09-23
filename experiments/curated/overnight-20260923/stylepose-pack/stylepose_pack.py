@@ -54,5 +54,19 @@ def run():
                                   extra={'config': '%s-p%s' % (pose, strength), 'pose': pose, 'pose_strength': strength, 'seed': seed})
 
 
+def weights():
+    """Follow-up: the action pose at pose strength 0.9 (the authored value) with style weight 0.3, 0.45 and the default 0.7
+    already measured above, on the same three seeds, to find a weight that keeps the board's palette without the burn."""
+    staged = json.loads(STAGE.read_text(encoding='utf-8')); results = labkit.Results(HERE)
+    for weight in (0.3, 0.45):
+        for seed in SEEDS:
+            controls = {'positive': POSITIVE, 'negative': NEGATIVE, 'seed': seed, 'pose_strength': 0.9, 'style_weight': weight,
+                        'last_reference': staged['action']}
+            intent = {'preset_id': 'style-pose-wai', 'controls': controls, 'batch_count': 1,
+                      'references': [{'file': staged['board'], 'role': 'style'}], 'parent_assets': []}
+            labkit.run_studio(intent, 'action-p09-w%s-%d' % (str(weight).replace('.', ''), seed), results, timeout=1200,
+                              extra={'config': 'action-p0.9-w%s' % weight, 'pose': 'action', 'pose_strength': 0.9, 'style_weight': weight, 'seed': seed})
+
+
 if __name__ == '__main__':
-    {'stage': stage, 'run': run}[sys.argv[1]]()
+    {'stage': stage, 'run': run, 'weights': weights}[sys.argv[1]]()

@@ -1,0 +1,499 @@
+{
+ "version": 2,
+ "preset_id": "style-pose-wai",
+ "controls": {
+  "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+  "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+  "seed": 2026092371,
+  "pose_strength": 0.9,
+  "style_weight": 0.45,
+  "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+ },
+ "batch_count": 1,
+ "created_at": 1790143770.189758,
+ "workflow": {
+  "1": {
+   "class_type": "CheckpointLoaderSimple",
+   "inputs": {
+    "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+   }
+  },
+  "2": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality"
+   }
+  },
+  "3": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage"
+   }
+  },
+  "4": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 832,
+    "height": 1216,
+    "batch_size": 1
+   }
+  },
+  "10": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png"
+   }
+  },
+  "11": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+   }
+  },
+  "12": {
+   "class_type": "IPAdapterModelLoader",
+   "inputs": {
+    "ipadapter_file": "ip-adapter-plus_sdxl_vit-h.safetensors"
+   }
+  },
+  "13": {
+   "class_type": "CLIPVisionLoader",
+   "inputs": {
+    "clip_name": "clip-vision_vit-h.safetensors"
+   }
+  },
+  "14": {
+   "class_type": "IPAdapterEmbeds",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "ipadapter": [
+     "12",
+     0
+    ],
+    "pos_embed": [
+     "22",
+     0
+    ],
+    "weight": 0.45,
+    "weight_type": "linear",
+    "start_at": 0.0,
+    "end_at": 0.9,
+    "embeds_scaling": "V only",
+    "clip_vision": [
+     "13",
+     0
+    ]
+   }
+  },
+  "15": {
+   "class_type": "OpenposePreprocessor",
+   "inputs": {
+    "image": [
+     "11",
+     0
+    ],
+    "detect_hand": "enable",
+    "detect_body": "enable",
+    "detect_face": "enable",
+    "resolution": 1024,
+    "scale_stick_for_xinsr_cn": "enable"
+   }
+  },
+  "16": {
+   "class_type": "ControlNetLoader",
+   "inputs": {
+    "control_net_name": "xinsir-openpose-sdxl.safetensors"
+   }
+  },
+  "17": {
+   "class_type": "ControlNetApplyAdvanced",
+   "inputs": {
+    "positive": [
+     "2",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "control_net": [
+     "16",
+     0
+    ],
+    "image": [
+     "15",
+     0
+    ],
+    "strength": 0.9,
+    "start_percent": 0.0,
+    "end_percent": 0.85,
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "5": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "14",
+     0
+    ],
+    "seed": 2026092371,
+    "steps": 30,
+    "cfg": 5.0,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "normal",
+    "positive": [
+     "17",
+     0
+    ],
+    "negative": [
+     "17",
+     1
+    ],
+    "latent_image": [
+     "4",
+     0
+    ],
+    "denoise": 1.0
+   }
+  },
+  "6": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "5",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "7": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "6",
+     0
+    ],
+    "filename_prefix": "Style-Pose/WAI"
+   }
+  },
+  "19": {
+   "class_type": "IPAdapterEncoder",
+   "inputs": {
+    "ipadapter": [
+     "12",
+     0
+    ],
+    "image": [
+     "10",
+     0
+    ],
+    "weight": 1.0,
+    "clip_vision": [
+     "13",
+     0
+    ]
+   }
+  },
+  "22": {
+   "class_type": "IPAdapterCombineEmbeds",
+   "inputs": {
+    "embed1": [
+     "19",
+     0
+    ],
+    "method": "average"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "13b4fa1c-638c-4f95-a94b-1cbf1f536594",
+   "seed": 2026092371,
+   "graph": {
+    "1": {
+     "class_type": "CheckpointLoaderSimple",
+     "inputs": {
+      "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+     }
+    },
+    "2": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality"
+     }
+    },
+    "3": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage"
+     }
+    },
+    "4": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 832,
+      "height": 1216,
+      "batch_size": 1
+     }
+    },
+    "10": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png"
+     }
+    },
+    "11": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+     }
+    },
+    "12": {
+     "class_type": "IPAdapterModelLoader",
+     "inputs": {
+      "ipadapter_file": "ip-adapter-plus_sdxl_vit-h.safetensors"
+     }
+    },
+    "13": {
+     "class_type": "CLIPVisionLoader",
+     "inputs": {
+      "clip_name": "clip-vision_vit-h.safetensors"
+     }
+    },
+    "14": {
+     "class_type": "IPAdapterEmbeds",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "ipadapter": [
+       "12",
+       0
+      ],
+      "pos_embed": [
+       "22",
+       0
+      ],
+      "weight": 0.45,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 0.9,
+      "embeds_scaling": "V only",
+      "clip_vision": [
+       "13",
+       0
+      ]
+     }
+    },
+    "15": {
+     "class_type": "OpenposePreprocessor",
+     "inputs": {
+      "image": [
+       "11",
+       0
+      ],
+      "detect_hand": "enable",
+      "detect_body": "enable",
+      "detect_face": "enable",
+      "resolution": 1024,
+      "scale_stick_for_xinsr_cn": "enable"
+     }
+    },
+    "16": {
+     "class_type": "ControlNetLoader",
+     "inputs": {
+      "control_net_name": "xinsir-openpose-sdxl.safetensors"
+     }
+    },
+    "17": {
+     "class_type": "ControlNetApplyAdvanced",
+     "inputs": {
+      "positive": [
+       "2",
+       0
+      ],
+      "negative": [
+       "3",
+       0
+      ],
+      "control_net": [
+       "16",
+       0
+      ],
+      "image": [
+       "15",
+       0
+      ],
+      "strength": 0.9,
+      "start_percent": 0.0,
+      "end_percent": 0.85,
+      "vae": [
+       "1",
+       2
+      ]
+     }
+    },
+    "5": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "14",
+       0
+      ],
+      "seed": 2026092371,
+      "steps": 30,
+      "cfg": 5.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "positive": [
+       "17",
+       0
+      ],
+      "negative": [
+       "17",
+       1
+      ],
+      "latent_image": [
+       "4",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "6": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "5",
+       0
+      ],
+      "vae": [
+       "1",
+       2
+      ]
+     }
+    },
+    "7": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "6",
+       0
+      ],
+      "filename_prefix": "Style-Pose/WAI"
+     }
+    },
+    "19": {
+     "class_type": "IPAdapterEncoder",
+     "inputs": {
+      "ipadapter": [
+       "12",
+       0
+      ],
+      "image": [
+       "10",
+       0
+      ],
+      "weight": 1.0,
+      "clip_vision": [
+       "13",
+       0
+      ]
+     }
+    },
+    "22": {
+     "class_type": "IPAdapterCombineEmbeds",
+     "inputs": {
+      "embed1": [
+       "19",
+       0
+      ],
+      "method": "average"
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 2414567424,
+    "peak_dedicated_bytes": 13115404288,
+    "samples": 4,
+    "spilled": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "WAI_00046_.png",
+   "subfolder": "Style-Pose",
+   "type": "output",
+   "seed": 2026092371,
+   "prompt_id": "13b4fa1c-638c-4f95-a94b-1cbf1f536594",
+   "media_type": "image",
+   "asset_id": "d13b231b24615f509e596e3504fe9d7d"
+  }
+ ],
+ "parent_assets": [],
+ "references": [
+  {
+   "file": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+   "sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+   "bytes": 1184091,
+   "width": 832,
+   "height": 1216,
+   "role": "style",
+   "slot": 1,
+   "contribution": "",
+   "avoid": "",
+   "transform": {
+    "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+   }
+  },
+  {
+   "slot": 2,
+   "role": "style",
+   "file": null,
+   "pruned": true,
+   "contribution": "",
+   "avoid": ""
+  },
+  {
+   "slot": 3,
+   "role": "style",
+   "file": null,
+   "pruned": true,
+   "contribution": "",
+   "avoid": ""
+  }
+ ],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

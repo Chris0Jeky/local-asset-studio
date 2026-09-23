@@ -2051,5 +2051,714 @@
    }
   ],
   "finished_at": "2026-09-23 06:21:35.049576"
+ },
+ {
+  "label": "action-p09-w03-2026092371",
+  "status": "completed",
+  "intent": {
+   "preset_id": "style-pose-wai",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+    "seed": 2026092371,
+    "pose_strength": 0.9,
+    "style_weight": 0.3,
+    "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+     "role": "style"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 07:07:49.614774",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.4,
+  "free_ram_gb_before": 13.5,
+  "route": "studio",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "latent2rgb",
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "config": "action-p0.9-w0.3",
+  "pose": "action",
+  "pose_strength": 0.9,
+  "style_weight": 0.3,
+  "seed": 2026092371,
+  "job_id": "435dfecd-0bac-43de-905b-2396926f86a9",
+  "prompt_ids": [
+   "5b7afd9c-60c2-48c6-8610-ffca4ef4bc3e"
+  ],
+  "wall_seconds": 57.6,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 12,
+    "s_per_step_tqdm": 0.4,
+    "s_per_step_steady": 0.41
+   }
+  ],
+  "peak_dedicated_mb": 14391,
+  "peak_shared_mb": 749,
+  "spilled": true,
+  "gpu_samples": 38,
+  "peak_commit_pct": 74.1,
+  "comfy_executed_seconds": 55.32,
+  "log_lines": [
+   "07:08:01 [INFO] Requested to load SDXLClipModel",
+   "07:08:01 [INFO] loaded completely;  1560.80 MB loaded, full load: True",
+   "07:08:22 [INFO] Requested to load CLIPVisionModelProjection",
+   "07:08:22 [INFO] loaded completely; 12676.72 MB usable, 1208.10 MB loaded, full load: True",
+   "07:08:26 [INFO] Requested to load ControlNet",
+   "07:08:26 [INFO] Requested to load SDXL",
+   "07:08:26 [INFO] loaded completely; 10637.63 MB usable, 2386.12 MB loaded, full load: True",
+   "07:08:28 [INFO] loaded completely; 8245.18 MB usable, 4897.05 MB loaded, full load: True",
+   "07:08:41 [INFO] Requested to load AutoencoderKL",
+   "07:08:43 [INFO] Unloaded partially: 4897.05 MB freed, 0.04 MB remains loaded, 154.69 MB buffer reserved, lowvram patches: 0",
+   "07:08:43 [INFO] loaded completely; 4983.14 MB usable, 159.56 MB loaded, full load: True",
+   "07:08:45 [INFO] Prompt executed in 55.32 seconds"
+  ],
+  "timeline_file": "timelines/action-p09-w03-2026092371.json",
+  "outputs": [
+   {
+    "filename": "WAI_00043_.png",
+    "subfolder": "Style-Pose",
+    "type": "output",
+    "seed": 2026092371,
+    "prompt_id": "5b7afd9c-60c2-48c6-8610-ffca4ef4bc3e",
+    "media_type": "image",
+    "asset_id": "c9ea9c7ffd645407bb9bda4d2767e822"
+   }
+  ],
+  "elapsed_seconds": 56.766520738601685,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 0.7 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+   "seed": 2026092371,
+   "pose_strength": 0.9,
+   "style_weight": 0.3,
+   "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "5b7afd9c-60c2-48c6-8610-ffca4ef4bc3e",
+    "seed": 2026092371,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 785080320,
+     "peak_dedicated_bytes": 15089922048,
+     "samples": 7,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/action-p09-w03-2026092371.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Style-Pose\\WAI_00043_.png",
+    "sha256": "8a816bac89660d2eb48693df7fe1523b0d6d7512bdf29030ea968c5b654f8e37"
+   }
+  ],
+  "finished_at": "2026-09-23 07:08:47.218056"
+ },
+ {
+  "label": "action-p09-w03-2026092372",
+  "status": "completed",
+  "intent": {
+   "preset_id": "style-pose-wai",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+    "seed": 2026092372,
+    "pose_strength": 0.9,
+    "style_weight": 0.3,
+    "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+     "role": "style"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 07:08:47.256202",
+  "comfy_pid": 46488,
+  "commit_pct_before": 58.1,
+  "free_ram_gb_before": 10.8,
+  "route": "studio",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "latent2rgb",
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "config": "action-p0.9-w0.3",
+  "pose": "action",
+  "pose_strength": 0.9,
+  "style_weight": 0.3,
+  "seed": 2026092372,
+  "job_id": "f077a6f9-de97-48a3-a7b5-88b080070481",
+  "prompt_ids": [
+   "3361f841-3078-49a6-b6a7-fc6c91f56745"
+  ],
+  "wall_seconds": 21.4,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 12,
+    "s_per_step_tqdm": 0.4,
+    "s_per_step_steady": 0.42
+   }
+  ],
+  "peak_dedicated_mb": 13827,
+  "peak_shared_mb": 207,
+  "spilled": false,
+  "gpu_samples": 15,
+  "peak_commit_pct": 65.5,
+  "comfy_executed_seconds": 16.48,
+  "log_lines": [
+   "07:08:49 [INFO] loaded completely; 10866.71 MB usable, 4897.05 MB loaded, full load: True",
+   "07:09:03 [INFO] Unloaded partially: 198.25 MB freed, 2187.87 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "07:09:03 [INFO] Prompt executed in 16.48 seconds"
+  ],
+  "timeline_file": "timelines/action-p09-w03-2026092372.json",
+  "outputs": [
+   {
+    "filename": "WAI_00044_.png",
+    "subfolder": "Style-Pose",
+    "type": "output",
+    "seed": 2026092372,
+    "prompt_id": "3361f841-3078-49a6-b6a7-fc6c91f56745",
+    "media_type": "image",
+    "asset_id": "d3291e7818ed5a279fdbcede17580b28"
+   }
+  ],
+  "elapsed_seconds": 18.170793056488037,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+   "seed": 2026092372,
+   "pose_strength": 0.9,
+   "style_weight": 0.3,
+   "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "3361f841-3078-49a6-b6a7-fc6c91f56745",
+    "seed": 2026092372,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 11959840768,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/action-p09-w03-2026092372.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Style-Pose\\WAI_00044_.png",
+    "sha256": "5e30e28e14511c2394d74ddb729ec4cb91533b7d983729fbf88c5880b13d7064"
+   }
+  ],
+  "finished_at": "2026-09-23 07:09:08.715867"
+ },
+ {
+  "label": "action-p09-w03-2026092373",
+  "status": "completed",
+  "intent": {
+   "preset_id": "style-pose-wai",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+    "seed": 2026092373,
+    "pose_strength": 0.9,
+    "style_weight": 0.3,
+    "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+     "role": "style"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 07:09:08.750913",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.9,
+  "free_ram_gb_before": 10.6,
+  "route": "studio",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "latent2rgb",
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "config": "action-p0.9-w0.3",
+  "pose": "action",
+  "pose_strength": 0.9,
+  "style_weight": 0.3,
+  "seed": 2026092373,
+  "job_id": "009d24fd-9d78-49ef-8240-383d0a26463a",
+  "prompt_ids": [
+   "d9354056-2780-4d7c-9f82-9a474d7595d0"
+  ],
+  "wall_seconds": 21.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 12,
+    "s_per_step_tqdm": 0.4,
+    "s_per_step_steady": 0.42
+   }
+  ],
+  "peak_dedicated_mb": 11275,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 15,
+  "peak_commit_pct": 65.3,
+  "comfy_executed_seconds": 16.76,
+  "log_lines": [
+   "07:09:08 [INFO] Requested to load SDXL",
+   "07:09:09 [INFO] loaded completely; 13250.67 MB usable, 2386.12 MB loaded, full load: True",
+   "07:09:10 [INFO] loaded completely; 10857.77 MB usable, 4897.05 MB loaded, full load: True",
+   "07:09:25 [INFO] Unloaded partially: 254.50 MB freed, 2131.62 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "07:09:25 [INFO] Prompt executed in 16.76 seconds"
+  ],
+  "timeline_file": "timelines/action-p09-w03-2026092373.json",
+  "outputs": [
+   {
+    "filename": "WAI_00045_.png",
+    "subfolder": "Style-Pose",
+    "type": "output",
+    "seed": 2026092373,
+    "prompt_id": "d9354056-2780-4d7c-9f82-9a474d7595d0",
+    "media_type": "image",
+    "asset_id": "cec78c261ea75056b844e5ce2773594d"
+   }
+  ],
+  "elapsed_seconds": 18.199576377868652,
+  "failure": null,
+  "message": "Complete",
+  "controls": {
+   "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+   "seed": 2026092373,
+   "pose_strength": 0.9,
+   "style_weight": 0.3,
+   "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "d9354056-2780-4d7c-9f82-9a474d7595d0",
+    "seed": 2026092373,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 11822993408,
+     "samples": 3,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/action-p09-w03-2026092373.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Style-Pose\\WAI_00045_.png",
+    "sha256": "8d86dd1cdc541de4205d07cfa7df3f18e0533a0db999611dcd7aef6380c8ba94"
+   }
+  ],
+  "finished_at": "2026-09-23 07:09:30.087274"
+ },
+ {
+  "label": "action-p09-w045-2026092371",
+  "status": "completed",
+  "intent": {
+   "preset_id": "style-pose-wai",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+    "seed": 2026092371,
+    "pose_strength": 0.9,
+    "style_weight": 0.45,
+    "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+     "role": "style"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 07:09:30.120726",
+  "comfy_pid": 46488,
+  "commit_pct_before": 58.0,
+  "free_ram_gb_before": 10.5,
+  "route": "studio",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "latent2rgb",
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "config": "action-p0.9-w0.45",
+  "pose": "action",
+  "pose_strength": 0.9,
+  "style_weight": 0.45,
+  "seed": 2026092371,
+  "job_id": "598d2817-7fce-41d5-aadc-4e8d1bb0a7b1",
+  "prompt_ids": [
+   "13b4fa1c-638c-4f95-a94b-1cbf1f536594"
+  ],
+  "wall_seconds": 27.4,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 12,
+    "s_per_step_tqdm": 0.4,
+    "s_per_step_steady": 0.41
+   }
+  ],
+  "peak_dedicated_mb": 12508,
+  "peak_shared_mb": 2303,
+  "spilled": true,
+  "gpu_samples": 19,
+  "peak_commit_pct": 65.1,
+  "comfy_executed_seconds": 24.58,
+  "log_lines": [
+   "07:09:30 [INFO] Requested to load CLIPVisionModelProjection",
+   "07:09:30 [INFO] loaded completely; 11119.05 MB usable, 1208.10 MB loaded, full load: True",
+   "07:09:32 [INFO] Requested to load SDXL",
+   "07:09:32 [INFO] loaded completely; 11985.60 MB usable, 2386.12 MB loaded, full load: True",
+   "07:09:34 [INFO] loaded completely; 9586.23 MB usable, 4897.05 MB loaded, full load: True",
+   "07:09:48 [INFO] Unloaded partially: 317.00 MB freed, 2069.12 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "07:09:54 [INFO] Prompt executed in 24.58 seconds"
+  ],
+  "timeline_file": "timelines/action-p09-w045-2026092371.json",
+  "outputs": [
+   {
+    "filename": "WAI_00046_.png",
+    "subfolder": "Style-Pose",
+    "type": "output",
+    "seed": 2026092371,
+    "prompt_id": "13b4fa1c-638c-4f95-a94b-1cbf1f536594",
+    "media_type": "image",
+    "asset_id": "d13b231b24615f509e596e3504fe9d7d"
+   }
+  ],
+  "elapsed_seconds": 26.215567588806152,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 2.2 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+   "seed": 2026092371,
+   "pose_strength": 0.9,
+   "style_weight": 0.45,
+   "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "13b4fa1c-638c-4f95-a94b-1cbf1f536594",
+    "seed": 2026092371,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 2414567424,
+     "peak_dedicated_bytes": 13115404288,
+     "samples": 4,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/action-p09-w045-2026092371.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Style-Pose\\WAI_00046_.png",
+    "sha256": "4b33449cf3715e492ecc1a8f07ce02adcbf607e071aae01b3f8c6cad6095d595"
+   }
+  ],
+  "finished_at": "2026-09-23 07:09:57.540072"
+ },
+ {
+  "label": "action-p09-w045-2026092372",
+  "status": "completed",
+  "intent": {
+   "preset_id": "style-pose-wai",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+    "seed": 2026092372,
+    "pose_strength": 0.9,
+    "style_weight": 0.45,
+    "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+     "role": "style"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 07:09:57.579629",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.7,
+  "free_ram_gb_before": 10.6,
+  "route": "studio",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "latent2rgb",
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "config": "action-p0.9-w0.45",
+  "pose": "action",
+  "pose_strength": 0.9,
+  "style_weight": 0.45,
+  "seed": 2026092372,
+  "job_id": "a65fcd13-ea33-488a-bcc4-75b3f0498359",
+  "prompt_ids": [
+   "4d1cc0b1-ddc8-41e3-a788-d2edacda7742"
+  ],
+  "wall_seconds": 27.3,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 12,
+    "s_per_step_tqdm": 0.4,
+    "s_per_step_steady": 0.41
+   }
+  ],
+  "peak_dedicated_mb": 11280,
+  "peak_shared_mb": 2303,
+  "spilled": true,
+  "gpu_samples": 19,
+  "peak_commit_pct": 65.0,
+  "comfy_executed_seconds": 22.25,
+  "log_lines": [
+   "07:09:57 [INFO] Requested to load SDXL",
+   "07:09:57 [INFO] loaded completely; 13258.40 MB usable, 2386.12 MB loaded, full load: True",
+   "07:09:59 [INFO] loaded completely; 10875.14 MB usable, 4897.05 MB loaded, full load: True",
+   "07:10:13 [INFO] Unloaded partially: 285.75 MB freed, 2100.37 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "07:10:19 [INFO] Prompt executed in 22.25 seconds"
+  ],
+  "timeline_file": "timelines/action-p09-w045-2026092372.json",
+  "outputs": [
+   {
+    "filename": "WAI_00047_.png",
+    "subfolder": "Style-Pose",
+    "type": "output",
+    "seed": 2026092372,
+    "prompt_id": "4d1cc0b1-ddc8-41e3-a788-d2edacda7742",
+    "media_type": "image",
+    "asset_id": "7f2212aa84c65f158741445bb2842301"
+   }
+  ],
+  "elapsed_seconds": 24.24306321144104,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 2.2 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+   "seed": 2026092372,
+   "pose_strength": 0.9,
+   "style_weight": 0.45,
+   "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "4d1cc0b1-ddc8-41e3-a788-d2edacda7742",
+    "seed": 2026092372,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 2414567424,
+     "peak_dedicated_bytes": 11827851264,
+     "samples": 4,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/action-p09-w045-2026092372.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Style-Pose\\WAI_00047_.png",
+    "sha256": "624b36e65f27f33e2307cd99a8e7f8c1ff697c677676c078b754e152db99deee"
+   }
+  ],
+  "finished_at": "2026-09-23 07:10:24.950349"
+ },
+ {
+  "label": "action-p09-w045-2026092373",
+  "status": "completed",
+  "intent": {
+   "preset_id": "style-pose-wai",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+    "seed": 2026092373,
+    "pose_strength": 0.9,
+    "style_weight": 0.45,
+    "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+   },
+   "batch_count": 1,
+   "references": [
+    {
+     "file": "906acc81e98f4de399cf0d0c8b6fdd44_adult-traveller-portrait.png.png",
+     "role": "style"
+    }
+   ],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 07:10:24.966454",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.5,
+  "free_ram_gb_before": 10.6,
+  "route": "studio",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "latent2rgb",
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "config": "action-p0.9-w0.45",
+  "pose": "action",
+  "pose_strength": 0.9,
+  "style_weight": 0.45,
+  "seed": 2026092373,
+  "job_id": "eb9d3579-269a-4eb1-8b1e-653d3b42428c",
+  "prompt_ids": [
+   "f81dbe2c-2d9c-4a3f-bd19-a135086b39c3"
+  ],
+  "wall_seconds": 27.4,
+  "sampler_runs": [
+   {
+    "total_steps": 30,
+    "last_step": 30,
+    "elapsed_s_tqdm": 12,
+    "s_per_step_tqdm": 0.4,
+    "s_per_step_steady": 0.42
+   }
+  ],
+  "peak_dedicated_mb": 11281,
+  "peak_shared_mb": 2303,
+  "spilled": true,
+  "gpu_samples": 19,
+  "peak_commit_pct": 65.0,
+  "comfy_executed_seconds": 22.26,
+  "log_lines": [
+   "07:10:25 [INFO] Requested to load SDXL",
+   "07:10:25 [INFO] loaded completely; 13257.65 MB usable, 2386.12 MB loaded, full load: True",
+   "07:10:27 [INFO] loaded completely; 10875.14 MB usable, 4897.05 MB loaded, full load: True",
+   "07:10:40 [INFO] Unloaded partially: 260.75 MB freed, 2125.37 MB remains loaded, 9.38 MB buffer reserved, lowvram patches: 0",
+   "07:10:47 [INFO] Prompt executed in 22.26 seconds"
+  ],
+  "timeline_file": "timelines/action-p09-w045-2026092373.json",
+  "outputs": [
+   {
+    "filename": "WAI_00048_.png",
+    "subfolder": "Style-Pose",
+    "type": "output",
+    "seed": 2026092373,
+    "prompt_id": "f81dbe2c-2d9c-4a3f-bd19-a135086b39c3",
+    "media_type": "image",
+    "asset_id": "bbb220dbabbf516391d896a07d8e5f9e"
+   }
+  ],
+  "elapsed_seconds": 24.250380277633667,
+  "failure": null,
+  "message": "Complete, but slowly: GPU memory spilled 2.2 GB into system RAM. Close GPU-heavy apps or restart ComfyUI before the next large job.",
+  "controls": {
+   "positive": "1girl, solo, adult woman, mature female, original character, long dark hair, centre part, brown eyes, gold earrings, navy double-breasted coat, brass buttons, teal scarf, dark trousers, brown lace-up boots, full body, simple background, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, nsfw, nude, underwear, loli, child, young, teenage",
+   "seed": 2026092373,
+   "pose_strength": 0.9,
+   "style_weight": 0.45,
+   "last_reference": "56e5d745bef14086a45efa39ff20d040_pack-action-pose.png.png"
+  },
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "f81dbe2c-2d9c-4a3f-bd19-a135086b39c3",
+    "seed": 2026092373,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 2414567424,
+     "peak_dedicated_bytes": 11829415936,
+     "samples": 4,
+     "spilled": true
+    }
+   }
+  ],
+  "recipe_file": "graphs/action-p09-w045-2026092373.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Style-Pose\\WAI_00048_.png",
+    "sha256": "557395d2600d82a5ab6e97a78b9cd7917a6e895d68448d27192d4d69e7227cbf"
+   }
+  ],
+  "finished_at": "2026-09-23 07:10:52.388694"
  }
 ]

@@ -1,0 +1,34 @@
+{
+ "s1-D.png": {
+  "config": "start",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\start-281715418_00001_.png"
+ },
+ "s1-B.png": {
+  "config": "end",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\end-281715418_00001_.png"
+ },
+ "s1-A.png": {
+  "config": "none",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\none-281715418_00001_.png"
+ },
+ "s1-C.png": {
+  "config": "start-noTF",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\start-noTF-281715418_00001_.png"
+ },
+ "s2-D.png": {
+  "config": "start",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\start-2026092391_00001_.png"
+ },
+ "s2-A.png": {
+  "config": "end",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\end-2026092391_00001_.png"
+ },
+ "s2-B.png": {
+  "config": "none",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\none-2026092391_00001_.png"
+ },
+ "s2-C.png": {
+  "config": "start-noTF",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\start-noTF-2026092391_00001_.png"
+ }
+}

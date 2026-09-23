@@ -1,0 +1,38 @@
+{
+ "portrait-A.png": {
+  "config": "fp8-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-portrait_00001_.png"
+ },
+ "portrait-B.png": {
+  "config": "fp8",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-portrait_00001_.png"
+ },
+ "portrait-C.png": {
+  "config": "bf16-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\bf16-cpute-portrait_00001_.png"
+ },
+ "action-C.png": {
+  "config": "fp8-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-action_00001_.png"
+ },
+ "action-B.png": {
+  "config": "fp8",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-action_00001_.png"
+ },
+ "action-A.png": {
+  "config": "bf16-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\bf16-cpute-action_00001_.png"
+ },
+ "hands-B.png": {
+  "config": "fp8-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-cpute-hands_00001_.png"
+ },
+ "hands-C.png": {
+  "config": "fp8",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\fp8-hands_00001_.png"
+ },
+ "hands-A.png": {
+  "config": "bf16-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\zimage-fp8\\bf16-cpute-hands_00001_.png"
+ }
+}

@@ -18,7 +18,9 @@ holds the text evidence and original-character sheets only.
 | [klein-restyle](klein-restyle/) | the q-27 foot and colour defects | naming the true colours and the footwear went with both fixes, 3/3 (an association: both changed together) | #883 |
 | [krea-refine-foxes](krea-refine-foxes/) | krea-refine on the fox shrine with its own prompt | 0.25 kept the foxes (3/3 by the lab, 2/3 by the second judge #889); 0.35 lost foxes on 3/3; the default is now 0.25 | #886 |
 | [hand-fix](hand-fix/) | does the automatic detector hand route fix hands when turned up | no: 0 of 4 defects fixed at any setting (missed hands, the wrong hand, six redrawn as six, off-style at 0.6) | #890 |
-| [stylepose-pack](stylepose-pack/) | Style + Pose on the pack's own adult original | poses mostly held, but all 18 renders burned neon at style weight 0.7 (second judge #891: standing held 5/9, not 9/9) | #890 |
+| [stylepose-pack](stylepose-pack/) | Style + Pose on the pack's own adult original | poses mostly held, but all 18 renders burned neon at style weight 0.7 (second judge #891: standing held 5/9, not 9/9); at style weight 0.45 or 0.3 the burn is gone (1 keep per weight on the action pose) | #890, this PR |
+| [zimage-fp8](zimage-fp8/) | Z-Image Turbo fp8 and the text encoder on the CPU | fp8 + CPU encoder: 0.72 s/step and 37-76 s per image against 308 s shipped; with the encoder on the GPU it thrashes (532 s); a blind tie with bf16 | this PR |
+| [krea-trigger](krea-trigger/) | why the atelier stack paints @NJSW33T | the trigger word is painted wherever it sits (start 2/2, end 2/2, without TextFusion 1/2); with no trigger 0/2 | this PR |
 
 Shared tooling: `labkit.py` (lease and queue guard, evidence records, GPU timelines, websocket timings, sealing), `crop.py` and
 `strip.py` (full-resolution crops), `addjudge.py` and `judge_batch.py` (protocol-shaped judgements with the R7 check),
