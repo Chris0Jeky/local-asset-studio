@@ -26,8 +26,9 @@ It was run on four sources, all fully clothed adult original characters. Their p
 - a difference map against the source for each output, to see what was repainted;
 - all records written before the key or any lab record was read.
 
-It scored with R8 and R8a: `adherence` means the named hand defect was fixed, `control` means everything else was kept,
-and a pass that leaves the defect is a reject. The records are in [hand-fix.judgements.jsonl](hand-fix.judgements.jsonl).
+It scored with R8 and R8a. R8a enters the rubric with #891, which merges before this. Under them, `adherence` means the
+named hand defect was fixed, `control` means everything else was kept, and a pass that leaves the defect is a reject.
+Untouched defects were scored `adherence` 2, which the coordinator later adopted as R8b (see below). The records are in [hand-fix.judgements.jsonl](hand-fix.judgements.jsonl).
 No images are committed.
 
 ## Results
@@ -43,7 +44,8 @@ Notes on individual results:
 
 - **noob4.** At 0.6 the hand was redrawn more crisply, and a bright blob and sparkles appeared on the light streak beside
   the fingertips. The digit count never changed.
-- **noob5 at 0.6 + guide 768.** The fist was redrawn, and the lantern handle's ring behind the fist was mostly lost.
+- **noob5 at 0.6 (guide 512).** The fist was redrawn, and the lantern handle's ring behind the fist was mostly lost. At
+  0.6 + guide 768 the fist was redrawn with the handle kept.
 - **Changes stayed local.** On every output the change is confined to the detected hand silhouette: pixels outside the
   changed region moved by 0.01 grey levels on average, and there is no crop-box seam.
 
@@ -90,9 +92,9 @@ judge gave `adherence` 2. Both judges saw the same things:
 
 The tenth difference is the Yume 0.6 style call above.
 
-**R8 needs a worked example for untouched defects.** The rule already covers them in words: "a pass that leaves the
-defect is a reject". Adding this experiment beside the hand-inpaint example would stop the next judge from calling an
-untouched defect fixable.
+**R8b.** The coordinator adopted this split as rule R8b, now in the [rubric](../JUDGING-RUBRIC.md): a correction pass that
+leaves the named defect untouched scores `adherence` 2 and is a reject. Its worked examples come from this experiment:
+noob4, where six digits remain, and CSTati, where the output is pixel-identical because nothing was detected.
 
 Across the night's lab-against-review comparisons:
 

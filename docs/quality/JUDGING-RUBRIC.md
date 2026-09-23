@@ -49,6 +49,20 @@ same outcomes: the raised arm was lost at 0.7 and held at 0.9–1.0 on two seeds
 other scored 1 where the pose was ignored, 3 where only the stance was kept, and 4 where it was followed
 ([second-judge/stylepose-pack.md](second-judge/stylepose-pack.md)).
 
+**R8b. A correction pass (R8) that leaves the named defect untouched scores `adherence` 2, and is a reject.** It is never
+`adherence` 3 or "fixable": running a different setting or route is a new configuration, not a fix of this picture. The
+coordinator ruled this on 23 September 2026 (the only other copy of the ruling is the local, gitignored
+`.runtime/overnight/PROTOCOL.md`), and the owner may override it.
+
+Worked examples, both from the detector hand repair
+([second-judge/hand-fix.md](second-judge/hand-fix.md)):
+
+- **noob4:** the six-digit hand was redrawn, and still has six digits, at every setting.
+- **CSTati:** the detector found no hand, so the output is pixel-identical to the source and both mitten hands remain.
+
+Why: on that experiment the two judges agreed on what every setting did, but on only 2 of 12 verdicts. In 9 of the 10
+differences, one judge had scored an untouched defect as `adherence` 3, "fixable".
+
 ## The verdict
 
 - **keep**: every score is at least 4.
