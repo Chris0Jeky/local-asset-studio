@@ -204,8 +204,10 @@ Adherence was the weakest criterion.
 - A detail was missed: the canon eye colour.
 
 So R1 is necessary but not self-enforcing. A judge applies it more reliably to other judges' records than to its own
-first pass. **Rule R7 (proposed): before writing a record, re-read `worst_defect` and check that its criterion is at
-most 3.** It is a mechanical check. It belongs in the record script, not in a judge's memory.
+first pass. **Rule R7 (proposed): if a record's `fix` names something that must be done before the picture is used
+(anything other than "none needed"), then the criterion that the named defect belongs to scores at most 3, and the
+verdict cannot be `keep`.** A `keep` record may still name its worst defect; R7 only binds when the judge also says it
+needs fixing. It is a mechanical check. It belongs in the record script, not in a judge's memory.
 
 This is agent against agent, not agent against owner. The owner-agreement numbers above are unchanged until the owner
 judges more pictures.
@@ -217,4 +219,5 @@ judges more pictures.
 - The owner's verdicts came at different times, often from contact sheets rather than full-size files, and in a few
   words. A tier is our reading of those words, not the owner's own score.
 - Both judges and the review agent are the same model family, so shared blind spots do not show up as disagreement.
-- The corrections R1–R6 are untested on new pictures.
+- The corrections R1–R6 are untested against the owner on new pictures. Agents applied them to new pictures during
+  the night (see the addendum), but no owner verdict exists for those pictures yet.
