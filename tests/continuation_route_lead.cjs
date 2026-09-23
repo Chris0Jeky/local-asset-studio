@@ -30,10 +30,18 @@ assert.deepEqual(
   'the newer depth lead must keep the pose-first 9B route ahead of the 4B family fallback'
 );
 
+const copypose={id:'combine-klein-9b-copypose',name:'Combine with Klein 9B Copy Pose',family:'FLUX.2 Klein 9B',continuation_capability:capability};
+const skeleton={id:'combine-klein-9b-skeleton',name:'Combine with a drawn skeleton',family:'FLUX.2 Klein 9B',continuation_capability:capability};
+assert.deepEqual(
+  C.destinations('combine',[sourcePreset,four,nine,depth,skeleton,copypose],source).map(item=>item.id),
+  ['combine-klein-9b-copypose','combine-klein-9b-skeleton','combine-klein-9b-depth','combine-klein-9b','combine-klein'],
+  'Copy Pose leads the Combine route (owner decision q-28, 23 September 2026): Copy Pose keeps the character look and background best, the drawn skeleton is the most reliable pose'
+);
+
 assert.deepEqual(
   C.destinations('combine',[sourcePreset,four,{...nine,runtime_block:'Unavailable in this runtime'}],source).map(item=>item.id),
   ['combine-klein','combine-klein-9b'],
   'a runtime-blocked preferred route must not displace an available fallback'
 );
 
-console.log('Continuation route lead contracts passed: 3');
+console.log('Continuation route lead contracts passed: 4');
