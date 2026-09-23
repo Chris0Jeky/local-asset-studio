@@ -1,0 +1,50 @@
+{
+ "s1-A.png": {
+  "config": "start-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-start-1.0-2026092396_00001_.png"
+ },
+ "s1-B.png": {
+  "config": "none-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-none-1.0-2026092396_00001_.png"
+ },
+ "s1-C.png": {
+  "config": "start-0.7",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-start-0.7-2026092396_00001_.png"
+ },
+ "s1-D.png": {
+  "config": "none-0.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-none-0.0-2026092396_00001_.png"
+ },
+ "s2-C.png": {
+  "config": "start-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-start-1.0-2026092397_00001_.png"
+ },
+ "s2-A.png": {
+  "config": "none-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-none-1.0-2026092397_00001_.png"
+ },
+ "s2-D.png": {
+  "config": "start-0.7",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-start-0.7-2026092397_00001_.png"
+ },
+ "s2-B.png": {
+  "config": "none-0.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-none-0.0-2026092397_00001_.png"
+ },
+ "s3-A.png": {
+  "config": "start-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-start-1.0-2026092398_00001_.png"
+ },
+ "s3-D.png": {
+  "config": "none-1.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-none-1.0-2026092398_00001_.png"
+ },
+ "s3-B.png": {
+  "config": "start-0.7",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-start-0.7-2026092398_00001_.png"
+ },
+ "s3-C.png": {
+  "config": "none-0.0",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-trigger\\followup-none-0.0-2026092398_00001_.png"
+ }
+}

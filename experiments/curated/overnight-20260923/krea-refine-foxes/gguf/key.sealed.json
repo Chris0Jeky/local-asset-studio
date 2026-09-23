@@ -1,0 +1,26 @@
+{
+ "s1-A.png": {
+  "config": "gguf-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-refine-foxes\\gguf-d025-2026092381_00001_.png"
+ },
+ "s1-B.png": {
+  "config": "fp8-studio",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00002_.png"
+ },
+ "s2-A.png": {
+  "config": "gguf-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-refine-foxes\\gguf-d025-2026092382_00001_.png"
+ },
+ "s2-B.png": {
+  "config": "fp8-studio",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00003_.png"
+ },
+ "s3-B.png": {
+  "config": "gguf-cpute",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-refine-foxes\\gguf-d025-2026092383_00001_.png"
+ },
+ "s3-A.png": {
+  "config": "fp8-studio",
+  "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\krea-refine_00004_.png"
+ }
+}

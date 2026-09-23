@@ -1,5 +1,22 @@
 # Current state — 23 September 2026
 
+## `zimage-fast` Studio-proved, Krea trigger follow-up, krea-refine on GGUF — 23 September 2026 (07:14-07:36)
+
+The overnight lab's last runs before the owner's shutdown. Evidence under `experiments/curated/overnight-20260923/` (the lab's
+final PR). Generated and agent-judged only, not art acceptance; HUMAN_TODO unchanged.
+
+- **`zimage-fast`** (`zimage-fp8/proof/`). One Studio job at the authored defaults, 07:32:45: job `4f5974cc`, prompt `9bc91aa8`,
+  57 s wall, 0.75 s/step, 79 MB shared (no spill), agent-judged keep. The preset is now `verified: true`.
+- **Krea trigger follow-up** (`krea-trigger/followup/`, 12 prompts, 07:17-07:36, blind). With no trigger, no picture had text
+  (0/3), and the look held: a blind style tie with the triggered pictures on every seed. The trigger at the start painted text 1/3,
+  and at Niji 0.7 1/3. With Niji off, the picture was plainer on all three seeds. Over both runs: untriggered 0/5, triggered at the
+  start 3/5. Dropping `@NJSW33T` from the atelier prompts is recommended, not applied (the owner's call).
+- **krea-refine on GGUF** (`krea-refine-foxes/gguf/`, 3 prompts, 07:14-07:17). GGUF with the CPU encoder: 84 s on first load,
+  then 26-28 s, against 338-373 s on fp8. Blind pairs tied.
+- **Style+Pose seed 71** was rescored under R9: two records went to control 1 and reject (a walking figure).
+- **Not run:** the Klein restyle split test (colours only against foot only). The code is in `klein-restyle/klein_restyle.py`;
+  the lab paused before its first job, so the foot fix stays confounded.
+
 ## Z-Image fp8 with the CPU text encoder, the painted Krea trigger, Style+Pose weights — 23 September 2026 (06:23-07:10)
 
 Executed straight against ComfyUI 0.35.0 on the primary unless noted; evidence under `experiments/curated/overnight-20260923/`
@@ -9,11 +26,11 @@ Executed straight against ComfyUI 0.35.0 on the primary unless noted; evidence u
   and took 37-76 s per 1024x1024 image (29-65 s of it the CPU encode), with no spill. The same build with the encoder on the GPU took
   71 s on a fresh load, then 532-533 s (58.6-59.7 s/step; the 7.7 GB encoder stayed resident). The shipped bf16 preset took 308 s in the
   census. bf16 with the CPU encoder sampled fast, but its decode spilled (32-34 s). Blind tie on three cases (9 keeps). #893 pins the fp8
-  file and adds `zimage-fast` (`verified: false` until a Studio proof).
+  file and adds `zimage-fast` (`verified: false` until a Studio proof). *(Proved at 07:32, see above.)*
 - **Krea trigger** (`krea-trigger/`, 8 prompts, 06:54-07:08, blind). On `krea-anime-atelier-gguf` the `@NJSW33T` trigger was painted as text
   with the trigger at the start 2/2, at the end 2/2, and at the start without TextFusion 1/2; with no trigger, 0/2. This supersedes
   "a trigger-position test is the next step" in the GGUF section below. A 3-seed look comparison with and without the trigger is the
-  next step.
+  next step. *(Done at 07:36, see the section above: no trigger 0/3 text, same look.)*
 - **Style+Pose** (`stylepose-pack/`, 6 Studio jobs, 07:07-07:10). Style weight 0.45 and 0.3 removed the neon burn that all 18 runs showed at
   the default 0.7 (#890); seed 71 still misses the raised arm at every weight.
 
