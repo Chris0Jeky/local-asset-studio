@@ -4,7 +4,7 @@ The primary ComfyUI (v0.35.0) has no Qwen-Image-2.1 model class. This checkout a
 upgrading the shared runtime: the three packages v0.37.0 pins newer (comfy-kitchen, comfy-aimdo,
 the frontend) live in the checkout's own python_packages overlay. docs/QWEN-IMAGE-21.md.
 """
-import argparse, os, runpy, sys
+import argparse, os, runpy, shutil, sys
 from pathlib import Path
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--comfy-root',default='C:/AI/experiments/qwen-image-21/ComfyUI')
@@ -14,6 +14,10 @@ if not (root/'main.py').is_file() or not (root/'comfy/text_encoders/qwen_image21
     parser.error('The isolated ComfyUI checkout is missing or predates Qwen-Image-2.1; see docs/QWEN-IMAGE-21.md')
 if not (root/'python_packages/comfy_kitchen').is_dir():
     parser.error('Isolated dependencies are missing; see docs/QWEN-IMAGE-21.md')
+# The recipes' authored example pictures, as Start-Studio.ps1 stages them for the primary; existing files are kept.
+(root/'input').mkdir(exist_ok=True)
+for picture in (Path(__file__).resolve().parents[1]/'examples/references').iterdir():
+    if picture.is_file() and not (root/'input'/picture.name).exists():shutil.copyfile(picture,root/'input'/picture.name)
 sys.path.insert(0,str(root/'python_packages'))
 sys.path.insert(0,str(root))
 os.chdir(root)
