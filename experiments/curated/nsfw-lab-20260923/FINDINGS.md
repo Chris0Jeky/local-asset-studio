@@ -596,3 +596,22 @@ Queued because the wave above finished. Albedo moves to the squat. Luna and Seri
 | p3-luna-bentover | `850d49ac-735f-4f32-a413-ecec0f2a3c3b` |
 | p3-serie-bentover | `263ad942-46b8-4512-8d61-b09901be1a3c` |
 | p3-priscilla-squat | `d06d4362-b4fc-4406-b642-dd25cc2365e5` |
+
+### p3 results
+
+- Albedo squat, WAI, job `bc2094e7`, prompt `6c46cb62`, 26.5 s, `WAI-Illustration_00047_.png`. Hands behind the head. Wings sit out to the sides instead of covering the hands. White dress is see-through. The squat fixed the wing problem.
+- Luna bent-over, YumeFlux, job `850d49ac`, prompt `f4a76734`, 26.3 s, `YumeFlux-ILv1-Baseline_00017_.png`. Hands on the robe, see-through white cloth, glasses, guild table. The crop transferred. The glasses did not steal a hand because the hands were already on the body.
+- Serie bent-over, CSTati, job `263ad942`, prompt `eedc7769`, 28.2 s, `CSTati-v3-Baseline_00020_.png`. Hands on a see-through white-and-gold dress, elf ear, blonde hair. The place drifted to a bed. The crop held.
+- Priscilla squat, AniFox, job `d06d4362`, prompt `a2f42800`, 26.3 s, `AniFox-v2-Baseline_00014_.png`. Hands behind the head, not on the throne arms. The squat beat the throne. Dress stays on and open at the chest.
+
+Keep: squat for wings and for a throne. Bent-over light cloth for Luna and Serie as well as Frieren.
+
+## Pose transfer — still running
+
+The squat now goes to Jane, whose jacket stack brought the hands back, and to Black Swan. Narberal gets the bent-over light-cloth crop.
+
+| Cell | Job |
+| --- | --- |
+| p4-jane-squat | `b77fc33a-5174-4bcc-8f0b-182ab4fe557c` |
+| p4-blackswan-squat | `60808b27-b99b-4f24-aa2a-22b37a9a2285` |
+| p4-narberal-bentover | `2f132d78-e9e8-45b7-bc31-b218c2eb55bf` |
