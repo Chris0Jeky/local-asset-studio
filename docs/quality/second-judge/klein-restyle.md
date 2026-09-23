@@ -55,6 +55,8 @@ words from the source picture rather than from its prompt. The prompt says "long
 
 ## Agreement with the lab's judge
 
+The lab's records are in its PR #883 (`experiments/curated/overnight-20260923/klein-restyle/judgements.jsonl` there); merge that first so this comparison can be traced in the tree.
+
 | Measure | Result |
 | --- | --- |
 | Picture verdicts | **8 of 9** agree |
@@ -71,7 +73,7 @@ Across the night's five lab-against-review comparisons:
 | VAE decode | 5 of 7 subjects |
 | Krea GGUF | 15 of 15 |
 | Combine | 12 of 12 |
-| Hand inpaint | 10 of 18 |
+| Hand inpaint | 10 of 18 (records in #882, `second-judge/hand-inpaint.md`) |
 | Restyle | 8 of 9 |
 
 Composition is the criterion where the two judges differ most consistently: the lab is one point more generous.
