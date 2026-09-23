@@ -1,0 +1,311 @@
+[
+ {
+  "label": "gguf-d025-2026092381",
+  "status": "success",
+  "graph_sha256": "52032b16bfc20448927e5e960d1b71e82650ef649d49e7b6e98be6fed3837da6",
+  "graph_file": "graphs/gguf-d025-2026092381.json",
+  "submitted_at": "2026-09-23 07:14:26.794940",
+  "comfy_pid": 46488,
+  "commit_pct_before": 57.7,
+  "free_ram_gb_before": 9.8,
+  "config": "gguf-cpute-d025",
+  "seed": 2026092381,
+  "prompt_id": "673e1ae1-30ea-47ae-8b30-dde7fc09f537",
+  "wall_seconds": 84.5,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 25,
+    "s_per_step_tqdm": 6.25,
+    "s_per_step_steady": 5.42
+   }
+  ],
+  "peak_dedicated_mb": 14510,
+  "peak_shared_mb": 2191,
+  "spilled": true,
+  "gpu_samples": 56,
+  "peak_commit_pct": 64.9,
+  "comfy_executed_seconds": 83.88,
+  "log_lines": [
+   "07:14:28 [INFO] Requested to load WanVAE",
+   "07:14:28 [INFO] loaded completely; 12080.54 MB usable, 242.03 MB loaded, full load: True",
+   "07:14:29 [INFO] Requested to load Krea2TEModel_",
+   "07:14:29 [INFO] loaded completely;  4999.47 MB loaded, full load: True",
+   "07:15:08 [INFO] Requested to load Krea2",
+   "07:15:19 [INFO] loaded completely; 14003.96 MB usable, 8839.99 MB loaded, full load: True",
+   "07:15:50 [INFO] Prompt executed in 83.88 seconds"
+  ],
+  "timeline_file": "timelines/gguf-d025-2026092381.json",
+  "history_execution_seconds": 83.87,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-refine-foxes\\gguf-d025-2026092381_00001_.png",
+    "sha256": "993fc6d065f45b5d1ca17304d7056c5e18a18d9ba5bfb2ce4a20c886563611ba"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "3",
+     "class_type": "VAELoader",
+     "seconds": 1.26
+    },
+    {
+     "node": "6",
+     "class_type": "LoadImage",
+     "seconds": 0.05
+    },
+    {
+     "node": "16",
+     "class_type": "VAEEncode",
+     "seconds": 0.29
+    },
+    {
+     "node": "2",
+     "class_type": "CLIPLoader",
+     "seconds": 1.33
+    },
+    {
+     "node": "4",
+     "class_type": "CLIPTextEncode",
+     "seconds": 38.23
+    },
+    {
+     "node": "5",
+     "class_type": "ConditioningZeroOut",
+     "seconds": 0.0
+    },
+    {
+     "node": "1",
+     "class_type": "UnetLoaderGGUF",
+     "seconds": 0.07
+    },
+    {
+     "node": "10",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.04
+    },
+    {
+     "node": "11",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.2
+    },
+    {
+     "node": "12",
+     "class_type": "LoraLoaderModelOnly",
+     "seconds": 0.19
+    },
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 37.61
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 4.51
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.08
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 4,
+     "seen": 4,
+     "first_step_s": 5.4,
+     "s_per_step_steady": 5.429,
+     "step_seconds": [
+      5.4,
+      5.41,
+      5.45
+     ]
+    }
+   ],
+   "cached_nodes": [],
+   "ws_execution_seconds": 83.87
+  },
+  "finished_at": "2026-09-23 07:15:51.841176"
+ },
+ {
+  "label": "gguf-d025-2026092382",
+  "status": "success",
+  "graph_sha256": "40e5f14efac582606729625a1c7375bfcab00da5eab188c71e79ca34cd954f4a",
+  "graph_file": "graphs/gguf-d025-2026092382.json",
+  "submitted_at": "2026-09-23 07:15:51.870515",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.6,
+  "free_ram_gb_before": 12.6,
+  "config": "gguf-cpute-d025",
+  "seed": 2026092382,
+  "prompt_id": "d928e989-50fd-43ab-a96a-226e94fb92cd",
+  "wall_seconds": 28.3,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 22,
+    "s_per_step_tqdm": 5.5,
+    "s_per_step_steady": 5.53
+   }
+  ],
+  "peak_dedicated_mb": 14510,
+  "peak_shared_mb": 2191,
+  "spilled": true,
+  "gpu_samples": 19,
+  "peak_commit_pct": 65.3,
+  "comfy_executed_seconds": 27.66,
+  "log_lines": [
+   "07:16:19 [INFO] Prompt executed in 27.66 seconds"
+  ],
+  "timeline_file": "timelines/gguf-d025-2026092382.json",
+  "history_execution_seconds": 27.66,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-refine-foxes\\gguf-d025-2026092382_00001_.png",
+    "sha256": "5bc053bd70addf42e650f58d066b0e9ccc5abd37f41d7989b509e6e2d747c7f2"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 22.47
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 5.1
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 4,
+     "seen": 4,
+     "first_step_s": 5.72,
+     "s_per_step_steady": 5.43,
+     "step_seconds": [
+      5.72,
+      5.5,
+      5.36
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "10",
+    "11",
+    "12",
+    "16"
+   ],
+   "ws_execution_seconds": 27.66
+  },
+  "finished_at": "2026-09-23 07:16:20.708737"
+ },
+ {
+  "label": "gguf-d025-2026092383",
+  "status": "success",
+  "graph_sha256": "d8c25ebdaf441e49f8ae1376177c550763d3fa6c9cd34c6de2b70936b459eee4",
+  "graph_file": "graphs/gguf-d025-2026092383.json",
+  "submitted_at": "2026-09-23 07:16:20.730124",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.7,
+  "free_ram_gb_before": 12.4,
+  "config": "gguf-cpute-d025",
+  "seed": 2026092383,
+  "prompt_id": "ebfe3fe4-9b88-4216-be59-58e55786baf5",
+  "wall_seconds": 28.4,
+  "sampler_runs": [
+   {
+    "total_steps": 4,
+    "last_step": 4,
+    "elapsed_s_tqdm": 21,
+    "s_per_step_tqdm": 5.25,
+    "s_per_step_steady": 5.4
+   }
+  ],
+  "peak_dedicated_mb": 14510,
+  "peak_shared_mb": 2191,
+  "spilled": true,
+  "gpu_samples": 19,
+  "peak_commit_pct": 64.9,
+  "comfy_executed_seconds": 26.55,
+  "log_lines": [
+   "07:16:47 [INFO] Prompt executed in 26.55 seconds"
+  ],
+  "timeline_file": "timelines/gguf-d025-2026092383.json",
+  "history_execution_seconds": 26.55,
+  "outputs": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\overnight-20260923\\krea-refine-foxes\\gguf-d025-2026092383_00001_.png",
+    "sha256": "05dc140ea6d7b2fe63397241a2126d9c93de9166aa5f087cee13aeca5d9dc869"
+   }
+  ],
+  "ws": {
+   "node_seconds": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "seconds": 21.83
+    },
+    {
+     "node": "8",
+     "class_type": "VAEDecode",
+     "seconds": 4.64
+    },
+    {
+     "node": "9",
+     "class_type": "SaveImage",
+     "seconds": 0.07
+    }
+   ],
+   "samplers": [
+    {
+     "node": "7",
+     "class_type": "KSampler",
+     "steps": 4,
+     "seen": 4,
+     "first_step_s": 5.38,
+     "s_per_step_steady": 5.405,
+     "step_seconds": [
+      5.38,
+      5.39,
+      5.42
+     ]
+    }
+   ],
+   "cached_nodes": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "10",
+    "11",
+    "12",
+    "16"
+   ],
+   "ws_execution_seconds": 26.55
+  },
+  "finished_at": "2026-09-23 07:16:49.625955"
+ }
+]

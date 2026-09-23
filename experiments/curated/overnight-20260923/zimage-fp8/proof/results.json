@@ -1,0 +1,100 @@
+[
+ {
+  "label": "zimage-fast-proof",
+  "status": "completed",
+  "intent": {
+   "preset_id": "zimage-fast",
+   "controls": {},
+   "batch_count": 1,
+   "references": [],
+   "parent_assets": []
+  },
+  "submitted_at": "2026-09-23 07:32:45.672254",
+  "comfy_pid": 46488,
+  "commit_pct_before": 59.6,
+  "free_ram_gb_before": 11.7,
+  "route": "studio",
+  "studio_active_backend": "primary",
+  "comfy_version": "0.35.0",
+  "comfy_argv_tail": [
+   "latent2rgb",
+   "--listen",
+   "127.0.0.1",
+   "--port",
+   "8188",
+   "--reserve-vram",
+   "0.6",
+   "--disable-pinned-memory"
+  ],
+  "config": "studio-proof-defaults",
+  "preset_id": "zimage-fast",
+  "backend_id": "primary",
+  "job_id": "4f5974cc-e4f1-4151-b9f2-93c56b6daef2",
+  "prompt_ids": [
+   "9bc91aa8-fc59-432e-ac79-0cb0ce0bd5af"
+  ],
+  "wall_seconds": 57.5,
+  "sampler_runs": [
+   {
+    "total_steps": 8,
+    "last_step": 8,
+    "elapsed_s_tqdm": 6,
+    "s_per_step_tqdm": 0.75,
+    "s_per_step_steady": 0.75
+   }
+  ],
+  "peak_dedicated_mb": 11482,
+  "peak_shared_mb": 79,
+  "spilled": false,
+  "gpu_samples": 38,
+  "peak_commit_pct": 72.7,
+  "comfy_executed_seconds": 54.95,
+  "log_lines": [
+   "07:33:03 [INFO] Requested to load ZImageTEModel_",
+   "07:33:03 [INFO] loaded completely;  7672.25 MB loaded, full load: True",
+   "07:33:24 [INFO] Requested to load Lumina2",
+   "07:33:32 [INFO] loaded completely; 14141.03 MB usable, 5870.77 MB loaded, full load: True",
+   "07:33:39 [INFO] Requested to load AutoencodingEngine",
+   "07:33:39 [INFO] loaded completely; 5505.67 MB usable, 159.87 MB loaded, full load: True",
+   "07:33:40 [INFO] Prompt executed in 54.95 seconds"
+  ],
+  "timeline_file": "timelines/zimage-fast-proof.json",
+  "outputs": [
+   {
+    "filename": "Z-Image-Fast_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091101,
+    "prompt_id": "9bc91aa8-fc59-432e-ac79-0cb0ce0bd5af",
+    "media_type": "image",
+    "asset_id": "46002b661afb5c758e46519d12473505"
+   }
+  ],
+  "elapsed_seconds": 56.815833568573,
+  "failure": null,
+  "message": "Complete",
+  "controls": {},
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "9bc91aa8-fc59-432e-ac79-0cb0ce0bd5af",
+    "seed": 2026091101,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82534400,
+     "peak_dedicated_bytes": 12040065024,
+     "samples": 7,
+     "spilled": false
+    }
+   }
+  ],
+  "recipe_file": "graphs/zimage-fast-proof.recipe.json",
+  "output_files": [
+   {
+    "file": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Z-Image-Fast_00001_.png",
+    "sha256": "77fc776960f3e582a4a3d1cef5a4b386938c77e2191c5d2449f5add7f47d388d"
+   }
+  ],
+  "finished_at": "2026-09-23 07:33:43.209275"
+ }
+]

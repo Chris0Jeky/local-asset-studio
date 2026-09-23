@@ -1383,9 +1383,9 @@
       "id": "zimage-fast",
       "name": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)",
       "category": "General generation",
-      "description": "Eight-step generation on the fp8 build of Z-Image Turbo with its text encoder on the CPU, so nothing spills into shared GPU memory. Measured 23 September 2026 straight against ComfyUI (experiments/curated/overnight-20260923/zimage-fp8/): 0.72-0.77 s/step and 37-76 s per 1024x1024 image, of which 29-65 s is the CPU text encode; the bf16 `zimage` preset took 308 s in the census, and fp8 with the encoder on the GPU took 71 s on a fresh load, then 532 s once the 7.7 GB encoder stayed resident. A blind tie with bf16 on three showcase cases. Unverified until a Studio proof.",
+      "description": "Eight-step generation on the fp8 build of Z-Image Turbo with its text encoder on the CPU, so nothing spills into shared GPU memory. Measured 23 September 2026 straight against ComfyUI (experiments/curated/overnight-20260923/zimage-fp8/): 0.72-0.77 s/step and 37-76 s per 1024x1024 image, of which 29-65 s is the CPU text encode; the bf16 `zimage` preset took 308 s in the census, and fp8 with the encoder on the GPU took 71 s on a fresh load, then 532 s once the 7.7 GB encoder stayed resident. A blind tie with bf16 on three showcase cases. Studio-proved on 23 September 2026 (57 s).",
       "graph": "workflows/api/zimage-fast-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "4",
@@ -1416,7 +1416,8 @@
         "denoise"
       ],
       "modality": "image",
-      "source": "https://civitai.com/models/2169712?modelVersionId=2445746"
+      "source": "https://civitai.com/models/2169712?modelVersionId=2445746",
+      "execution_note": "Executed 2026-09-23 07:32:45 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/zimage-fp8/prove_zimage_fast.py): job 4f5974cc-e4f1-4151-b9f2-93c56b6daef2, prompt 9bc91aa8-fc59-432e-ac79-0cb0ce0bd5af, 56.8 s including the model loads and the CPU text encode, sampling 0.75 s/step, no shared-memory spill (79 MB), backend primary, output Studio/Z-Image-Fast_00001_.png: the lantern product shot with the same composition as the bf16 preset's census output, agent-judged keep (the forest background is not the briefed seamless backdrop, as with bf16). Not art acceptance."
     },
     {
       "id": "sdxl",

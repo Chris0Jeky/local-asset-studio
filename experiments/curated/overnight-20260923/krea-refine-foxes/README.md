@@ -50,3 +50,15 @@ note extended.
 - One source picture and three seeds per setting.
 - Only the fox group was judged in detail; the background was checked at the whole-frame level.
 - No art acceptance.
+
+## Follow-up: the same refine on the GGUF build with the CPU text encoder (07:14-07:17)
+
+`gguf_refine.py`: 3 direct prompts. Each seed's exact Studio-submitted 0.25 graph (`graphs/d025-<seed>.recipe.json`) was run with only
+the diffusion loader (`UnetLoaderGGUF`, `krea2_turbo-Q5_K_M.gguf`) and the encoder device (`CLIPLoader device: cpu`) changed. The
+records are in `gguf/`.
+- **Speed:** **84 s** for the first job (38 s CPU encode, 4 steps at 5.4 s/step, 4.5 s decode), then **26-28 s** per job with the
+  text cached. The fp8 Studio runs of the same graphs took 338-373 s.
+- **Quality:** judged blind in pairs (GGUF against the fp8 Studio output of the same seed, R8/R8a), and the pairs are near-identical
+  on every seed. GGUF: keep, keep, reject; fp8: keep, keep, reject. The reject is the same seed-83 fox reduced to a head on a
+  post (R8a control 2), in both builds; that agrees with the second judge's 2/3 reading (#889).
+- **Next step:** a `krea-refine-gguf` preset with a Studio proof. Not proposed in this PR (three seeds, no Studio run).

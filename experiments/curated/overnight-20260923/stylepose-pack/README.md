@@ -41,11 +41,12 @@ instead of 0.7. Judged open (the configuration is known), with the raised and ex
 | style weight | burn | raised arm held (seeds 71 / 72 / 73) | verdicts |
 | --- | --- | --- | --- |
 | 0.7 (default, above) | 3 / 3 burned | no / yes / yes | reject ×3 |
-| 0.45 | **none**: muted navy, teal scarf and brown boots, close to the board | no / yes / yes | fixable (arm lost), **keep**, fixable (a claw hand) |
-| 0.3 | **none** | no / yes / yes | fixable (arm lost), **keep** (a V sign instead of an open palm), fixable (limp merged fingers) |
+| 0.45 | **none**: muted navy, teal scarf and brown boots, close to the board | no / yes / yes | reject (R9: a walking figure, control 1), **keep**, fixable (a claw hand) |
+| 0.3 | **none** | no / yes / yes | reject (R9: a walking figure, control 1), **keep** (a V sign instead of an open palm), fixable (limp merged fingers) |
 
 **Lowering the style weight to 0.45 or 0.3 removes the burn completely** on this board. That leaves the route's usual defects:
-- the seed-71 pose miss (the same at every weight);
+- the seed-71 pose miss (the same at every weight). The second judge (#895) reads it as neither the arm nor the stance kept, a
+  walking figure, so under R9 those two records are control 1 and reject (rescored, with a note);
 - one hand per weight that needs a masked repair (`anime-masked-repair`).
 
 With the second judge's reading of the default run (#891), the route is usable for the pack at style weight 0.3-0.45 and pose
