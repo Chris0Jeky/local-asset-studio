@@ -1478,3 +1478,28 @@ P37 held 7/7, promoted G5, and corrected E1's demotion to Illustrious-only. This
 | p38-kawakami-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092473 | `d830fd37-efd0-45ae-9e63-7bd74e492898` |
 | p38-juniper-smirkwink | E2 squat recipe | wai | 2026092474 | `9e44f90f-728c-4317-8d34-9e7cd55c9afc` |
 | p38-tifa-grinwink-anima | p34-tifa-smirk-anima | anima-v1-baseline | 2026092601 | `ea97342b-b646-48ef-a3cd-aad0e190e0a8` |
+
+### p38 results
+
+All seven completed, 17.7–27.3 s each. No spill line on any receipt. G5 ported to both families. The eyes tag proved garment-neutral on bunny suits 2/2 — structured garments survive where the minimal bikini rewrote. E2 fired on both new adults (Kawakami drifted to seated, the expression held). E1 held on the Anima crawl.
+
+- p38-kafka-bunny-anima, Anima, seed `2026092622`, job `8585132d`, prompt `07d7b33a`, 17.7 s, `Anima-v1-Baseline_00061_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, violet light, adult. Lever: G5 with no sheer LoRA — black bunny suit with ears, bowtie, leotard, stockings; G5 ports to Anima. Eyes closed, the Anima squat pattern. Hands: hidden. Cloth: black latex glossy. Parted lips show. Keep-or-change: keep.
+- p38-yor-bunny-janima, JANIMA, seed `2026092623`, job `e0a28020`, prompt `e70eb6e9`, 19.2 s, `JANIMA-v1-Baseline_00024_.png`. Identity: Yor reads, black hair, red eyes, headband, gold earrings, lamp interior, adult. Lever: G5 with no sheer LoRA — red bunny suit with ears, bowtie, leotard, cottontail; G5 ports to JANIMA. Hands: hidden. Cloth: red latex glossy and wet. Parted lips, blush, sweat, eyes open. Keep-or-change: keep.
+- p38-kafka-bunny-eyes, WAI, seed `2026092445`, job `dfd4ce4f`, prompt `6edd6d06`, 27.3 s, `WAI-Illustration_00085_.png`. Identity: same Kafka read, rooftop, adult. Lever: `bedroom eyes` added — heavy-lidded glowing eyes; tag fired, and the bunny suit stayed intact — garment-neutral, unlike the bikini rewrite. Hands: hidden. Squat held. Keep-or-change: keep.
+- p38-yor-bunny-eyes, CSTati, seed `2026092446`, job `ee3eb02c`, prompt `d183d6fa`, 24.2 s, `CSTati-v3-Baseline_00069_.png`. Identity: same Yor read, ballroom, adult. Lever: same addition — eyes heavy; tag fired, suit intact, no teddy rewrite. Garment-neutral 2/2. Hands: hidden. Squat held. Keep-or-change: keep.
+- p38-kawakami-smirkwink, YumeFlux, seed `2026092473`, job `d830fd37`, prompt `dd6d6ee8`, 22.4 s, `YumeFlux-ILv1-Baseline_00057_.png`. Identity: Kawakami reads, black hair, glasses, teacher blouse and black skirt, lamp interior, adult. Lever: E2 first try — smirk and wink both show through the glasses. Pose drift: seated on a bed, not squatting — arms still behind the head, the expression held. Hands: hidden. Cloth: white blouse translucent, black skirt glossy. Keep-or-change: keep; the drift is the note, reseed next.
+- p38-juniper-smirkwink, WAI, seed `2026092474`, job `9e44f90f`, prompt `fd2780e7`, 22.2 s, `WAI-Illustration_00086_.png`. Identity: Juniper reads, blonde updo, lab coat, lab screens, adult. Lever: E2 first try — both show. Squat held at a low angle. Hands: hidden. Cloth: white top sheer, green skirt glossy and wet, lab coat. Keep-or-change: keep.
+- p38-tifa-grinwink-anima, Anima, seed `2026092601`, job `ea97342b`, prompt `59c8513b`, 24.3 s, `Anima-v1-Baseline_00062_.png`. Identity: same Tifa read, bar, adult. Lever: `smirk` to `grin, winking` — toothy grin with one eye closed; E1 holds on the Anima crawl. Crawl held. Hands: one flat, normal-looking. Cloth: white tank, black glossy skirt. Keep-or-change: keep.
+
+## Sheer-off G5, Kawakami reseed, Lenora, E2 on bent-overs — p39 wave
+
+P38 held 6.5/7 — every lever fired, Kawakami's squat drifted to seated. This wave runs G5 with the sheer stack off at the same seed (does the bunny suit still read latex-glossy, and does anything drift?), reseeds Kawakami at a new seed to test the drift, runs E2 on one more new adult (Lenora from Pokemon, adult-in-canon), and takes E2 to the bent-over for the first time on two looking-at-viewer page crops. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p39-kafka-bunny-nolora | p37-kafka-bunny | wai | 2026092445 | `fd3fb95e-854b-430d-80ea-fbbf4f98ef2f` |
+| p39-yor-bunny-nolora | p37-yor-bunny | cstati-v3-baseline | 2026092446 | `ef8e56b6-afd9-4d3c-8587-3bcbbde89321` |
+| p39-kawakami-reseed | p38-kawakami-smirkwink | yumeflux-ilv1-baseline | 2026092475 | `508069a8-692b-4a1f-b83b-25be4f824c64` |
+| p39-lenora-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092476 | `2b1668e8-2f7a-4735-99b7-bbc93c0be5c5` |
+| p39-tifa-smirkwink-bentover | p6-tifa-lips | anifox-v2-baseline | 2026092441 | `651cee05-168d-4319-b1cf-219613820f97` |
+| p39-narberal-smirkwink-bentover | p6-narberal-lips | cstati-v3-baseline | 2026092433 | `86522a2a-6cee-4eff-b7f1-fb0ef84c1495` |

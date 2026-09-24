@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p38 judged 6.5/7, G5 ports, p39 queued — 24 September 2026 (14:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P38: G5 ported to both families (`8585132d`, `e0a28020`); eyes garment-neutral on bunny suits 2/2 (`dfd4ce4f`, `ee3eb02c` — structured garments survive); E2 on two more new adults (Kawakami `d830fd37` drifted to seated, Juniper `9e44f90f` clean); E1 held on the Anima crawl (`ea97342b`, E1 closed except Illustrious squats). P39 queued: sheer-off G5 reruns (Kafka `fd3fb95e`, Yor `ef8e56b6`), Kawakami reseed (`508069a8`), Lenora (`2b1668e8`), E2 on bent-overs (Tifa `651cee05`, Narberal `86522a2a`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p37 judged 7/7, G5 promoted, E1 corrected, p38 queued — 24 September 2026 (13:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
