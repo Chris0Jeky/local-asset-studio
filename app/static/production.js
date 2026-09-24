@@ -26,8 +26,39 @@ async function refreshProduction(force=false){
     if(force||signature!==productionSignature){productionSignature=signature;renderProduction();}
   }catch(e){productionMessage(e.message,true);}finally{productionRefreshing=false;}
 }
+// Your plans filters (#940): presentation over the list already fetched. They never
+// start, stop, re-read or change a plan; a hidden plan keeps its detail and records.
+const PLAN_FILTER_KEY='studio.production.filters',PLAN_RECENT_SECONDS=7*86400;
+const PLAN_TYPES={all:null,comparison:['comparison'],scene:['av'],voice:['voice'],export:['native','articulated']};
+const PLAN_TYPE_NOUNS={all:'plans',comparison:'comparisons',scene:'scenes',voice:'voice takes',export:'exports'};
+const PLAN_ACTIVE=new Set(['planned','queued','running','observing','awaiting_review','uncertain']);
+let planFilter={type:'all',status:'active'};
+function cleanPlanFilter(value){return {type:Object.hasOwn(PLAN_TYPES,value?.type)?value.type:'all',status:value?.status==='all'?'all':'active'};}
+// The newest thing known about a plan: its creation, its stage jobs, its review.
+function planActivity(p){const known=[p?.created_at,p?.state?.review?.at,...(p?.stages||[]).flatMap(s=>[s?.job?.created_at,s?.job?.started_at,s?.job?.finished_at])].map(Number).filter(t=>Number.isFinite(t)&&t>0);return known.length?Math.max(...known):null;}
+function planGroups(plans,filter=planFilter,now=Date.now()/1000){
+  const kinds=PLAN_TYPES[filter.type],typed=plans.filter(p=>!kinds||kinds.includes(p.kind));
+  if(filter.status==='all')return {recent:typed,older:[],hidden:plans.length-typed.length};
+  const recent=[],older=[],active=typed.filter(p=>PLAN_ACTIVE.has(p.state?.status));
+  // A plan with no readable date cannot be shown to be old, so it stays in view.
+  for(const p of active){const at=planActivity(p);(at!==null&&now-at>PLAN_RECENT_SECONDS?older:recent).push(p);}
+  return {recent,older,hidden:plans.length-active.length};
+}
+function planFilterPhrase(filter=planFilter){return (filter.status==='active'?'active ':'')+PLAN_TYPE_NOUNS[filter.type]+(filter.status==='active'?' from the last 7 days':'');}
+function syncPlanFilter(){const type=$('#planType'),status=$('#planStatus');if(type)type.value=planFilter.type;if(status)status.value=planFilter.status;}
+function setPlanFilter(next){planFilter=cleanPlanFilter({...planFilter,...next});syncPlanFilter();try{localStorage.setItem(PLAN_FILTER_KEY,JSON.stringify(planFilter));}catch(err){}renderProduction();}
+function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStorage.getItem(PLAN_FILTER_KEY)||'{}'));}catch(err){}syncPlanFilter();}
+function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>';}
+function renderPlanList(){
+  const list=$('#productionList');if(!productionPlans.length){list.innerHTML=PRODUCTION_EMPTY;return;}
+  const groups=planGroups(productionPlans),shown=groups.recent.length+groups.older.length,showAll='<button data-plan-show-all>Show all</button>';
+  const olderOpen=list.querySelector?.('.plan-older')?.open||groups.older.some(p=>p.id===productionId);
+  const hidden=groups.hidden+' '+(groups.hidden===1?'plan':'plans')+' hidden by these filters.';
+  if(!shown){list.innerHTML='<div class="production-empty plan-filter-empty"><p><b>No '+esc(planFilterPhrase())+'.</b> '+hidden+'</p>'+showAll+'</div>';return;}
+  list.innerHTML=groups.recent.map(planButton).join('')+(groups.older.length?'<details class="plan-older"'+(olderOpen?' open':'')+'><summary>Older ('+groups.older.length+')</summary>'+groups.older.map(planButton).join('')+'</details>':'')+(groups.hidden?'<p class="plan-filter-note">Showing '+esc(planFilterPhrase())+'; '+hidden+' '+showAll+'</p>':'');
+}
 function renderProduction(){
-  $('#productionList').innerHTML=productionPlans.map(p=>'<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(p.state.status.replaceAll('_',' '))+' · '+(p.kind==='comparison'?p.stages.length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>').join('')||PRODUCTION_EMPTY;
+  renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   if(p.kind==='av'){
     $('#productionDetail').innerHTML='<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>';
@@ -214,8 +245,10 @@ function restoreProductionIntro(){
   try{intro.open=localStorage.getItem(PRODUCTION_INTRO_KEY)!=='closed';}catch(err){}
   intro.ontoggle=()=>{try{localStorage.setItem(PRODUCTION_INTRO_KEY,intro.open?'open':'closed');}catch(err){}};
 }
-restoreProductionIntro();
-$('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
+restoreProductionIntro();restorePlanFilter();
+if($('#planType'))$('#planType').onchange=()=>setPlanFilter({type:$('#planType').value});
+if($('#planStatus'))$('#planStatus').onchange=()=>setPlanFilter({status:$('#planStatus').value});
+$('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}if(e.target.closest('[data-plan-show-all]')){setPlanFilter({type:'all',status:'all'});return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
 $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindComparison=e.target.checked;renderProduction();}};
 // Workspace review of a single candidate image: the same revision-guarded
 // /api/assets/update command the asset dialog sends, never a new endpoint. It
