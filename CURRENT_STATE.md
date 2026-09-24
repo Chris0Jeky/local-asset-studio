@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p86 judged 6/6, G22 promoted, one receipt 404 file-judged, p87 queued — 25 September 2026 (20:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P86 held 6/6: G22 lab coat promoted on the opening pair (Kafka `4ab42cde`, Yor `3c921d64`, coat over blouse, stethoscope a prop); eyes half-lidded on Kafka and neutral on Yor (`9fa9b55b`, `452459c8`); bent-over (`4cc56e3e`) and seiza hold — the seiza receipt (`c49c8f61`) 404s at judgment while its still sits completed on disk, judged from the file with prompt id recorded as unrecovered. P87 queued, seven cells: G22 sheer-off x2 (`b19ca15a`, `9d0f0968`), crawl (`7ea65fde`), portrait (`5d6563d9`), seated rear (`02d503b1`), ports x2 with no sheer LoRA (`585e15bf`, `e0f0cca2`). No spill line on any live receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p85 judged 6/6, G21 closed, CFG sweep flat, G22 open, p86 queued — 25 September 2026 (20:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.

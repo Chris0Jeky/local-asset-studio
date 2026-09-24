@@ -2654,6 +2654,29 @@ P85 held 6/6 — G21 closed on all eleven reads, the CFG sweep shows no structur
 | p86-kafka-labcoat-bentover | p86-kafka-labcoat | wai | 2026092684 | `4cc56e3e-ab39-4b62-ae9e-4bd7f6c86352` |
 | p86-yor-labcoat-seiza | p86-yor-labcoat | cstati-v3-baseline | 2026092685 | `c49c8f61-f5a0-4650-a8ca-65ede1267f6c` |
 
+Five receipts live (26.9–35.0 s each, no spill) plus one file-only read: the seiza receipt 404s at judgment while `CSTati-v3-Baseline_00176_.png` sits completed on disk, so it is judged from the file with prompt id and seconds recorded as unrecovered. G22 measured 6 (open pair promotes, eyes 2/2, bent-over and seiza hold).
+
+- p86-kafka-labcoat, WAI, seed `2026092445`, job `4ab42cde`, prompt `cbbe268a`, 35.0 s, `WAI-Illustration_00181_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white lab coat, red-trim blouse, dark skirt, clinic violet, night, adult. Lever: outfit to lab coat — full read, coat over the blouse, stethoscope a prop. Squat held. Hands: behind the back. Cloth: white coat glossy. Keep-or-change: keep; G22 1/2.
+- p86-yor-labcoat, CSTati, seed `2026092446`, job `3c921d64`, prompt `9b881513`, 33.2 s, `CSTati-v3-Baseline_00174_.png`. Identity: Yor reads, black hair, white lab coat, stethoscope, black skirt, lamp, night, adult. Lever: outfit to lab coat — full read again. Squat held. Hands: hidden behind the head. Cloth: white coat glossy. Keep-or-change: keep; G22 2/2, promotes.
+- p86-kafka-labcoat-eyes, WAI, seed `2026092445`, job `9fa9b55b`, prompt `93a3b5c4`, 28.9 s, `WAI-Illustration_00182_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white coat and stethoscope, clinic violet, night, adult. Lever: `bedroom eyes` on lab coat at the same seed — half-lidded, coat intact. Squat held. Hands: behind the back. Cloth: white coat glossy. Keep-or-change: keep; G22 eyes 1/2.
+- p86-yor-labcoat-eyes, CSTati, seed `2026092446`, job `452459c8`, prompt `db297cd1`, 26.9 s, `CSTati-v3-Baseline_00175_.png`. Identity: Yor reads, black hair, white coat and stethoscope, black skirt, lamp, night, adult. Lever: `bedroom eyes` on lab coat at the same seed — reads neutral, eyes open, coat intact. Squat held. Hands: hidden behind the head. Cloth: white coat glossy. Keep-or-change: keep; G22 eyes 2/2.
+- p86-kafka-labcoat-bentover, WAI, seed `2026092684`, job `4cc56e3e`, prompt `cbd16c7f`, 27.2 s, `WAI-Illustration_00183_.png`. Identity: Kafka reads, magenta hair, white coat, dark skirt, clinic violet, night, adult. Lever: lab coat on the bent-over — leaning over the desk, hand on the butt, coat and skirt intact. Keep-or-change: keep.
+- p86-yor-labcoat-seiza, CSTati, seed `2026092685`, job `c49c8f61`, prompt id unrecovered (receipt 404), seconds unrecovered, `CSTati-v3-Baseline_00176_.png`. Identity: Yor reads, black hair in a bun, white coat and stethoscope, black skirt, lamp, night, adult. Lever: lab coat on the seiza — kneeling looking back, tongue out, coat and skirt intact. Judged from the file. Keep-or-change: keep.
+
+## G22 sheer-off, crawl, portrait, seated rear, ports — p87 wave
+
+P86 held 6/6 — G22 promoted on the opening pair with eyes 2/2, bent-over and seiza holding (one receipt 404 with the still on disk, judged from the file). This wave closes in on G22 (sheer-off x2 at the same seeds, crawl for Kafka, portrait and seated rear for Yor) plus G22 ports x2 with no sheer LoRA. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p87-kafka-labcoat-nolora | p86-kafka-labcoat | wai | 2026092445 | `b19ca15a-db93-42b8-9379-4f14c8a40317` |
+| p87-yor-labcoat-nolora | p86-yor-labcoat | cstati-v3-baseline | 2026092446 | `9d0f0968-b78b-4335-bd58-58941ba415fe` |
+| p87-kafka-labcoat-crawl | p86-kafka-labcoat | wai | 2026092686 | `7ea65fde-2a48-4f28-b8cb-e50ab949ed2c` |
+| p87-yor-labcoat-portrait | p86-yor-labcoat | cstati-v3-baseline | 2026092687 | `5d6563d9-54c1-4ac2-ad9d-9b8d0bb59967` |
+| p87-yor-labcoat-seated | p86-yor-labcoat | cstati-v3-baseline | 2026092688 | `02d503b1-c6b2-4bca-8188-e133d22a7ff0` |
+| p87-kafka-labcoat-anima | p86-kafka-labcoat | anima-v1-baseline | 2026092689 | `585e15bf-0483-40a4-8936-730b13877403` |
+| p87-yor-labcoat-janima | p86-yor-labcoat | janima-v1-baseline | 2026092690 | `e0f0cca2-d078-47f5-9b22-967e64f3e76c` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
