@@ -1551,3 +1551,27 @@ P40 held 5/6 — G6 promoted, both combos confirmed front-face-only, E2 generali
 | p41-yor-qipao-eyes | p40-yor-qipao | cstati-v3-baseline | 2026092446 | `b32123e0-4539-4086-816a-fe7b8eac449b` |
 | p41-wicke-smirkwink | E2 squat recipe | wai | 2026092479 | `ac485e5f-2772-4142-98bf-f1e5b8d2e116` |
 | p41-burnice-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092480 | `c150c051-c620-43c9-9d49-ee74fc7c662a` |
+
+### p41 results
+
+All six completed, 23.4–27.4 s each. No spill line on any receipt. G6 ported to both families. The eyes tag held neutral on the structured qipao 2/2. E2 generalization reached 10/10 (Wicke's hair missed blonde, the expression held).
+
+- p41-kafka-qipao-anima, Anima, seed `2026092624`, job `a12a4540`, prompt `c0319823`, 24.3 s, `Anima-v1-Baseline_00063_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, violet light, adult. Lever: G6 with no sheer LoRA — black qipao with collar and slits; G6 ports to Anima. Eyes closed, the Anima squat pattern. Hands: hidden. Cloth: black satin glossy. Parted lips show. Keep-or-change: keep.
+- p41-yor-qipao-janima, JANIMA, seed `2026092625`, job `5eb6eecf`, prompt `3f661d44`, 23.4 s, `JANIMA-v1-Baseline_00025_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold earrings, lamp interior, adult. Lever: G6 with no sheer LoRA — red floral qipao with collar knots and slits; G6 ports to JANIMA. Hands: hidden. Cloth: red satin glossy and wet. Parted lips, blush, sweat, eyes open. Keep-or-change: keep.
+- p41-kafka-qipao-eyes, WAI, seed `2026092445`, job `13331c04`, prompt `fe8a7a7a`, 27.4 s, `WAI-Illustration_00089_.png`. Identity: same Kafka read, rooftop, adult. Lever: `bedroom eyes` added — tag fired, qipao intact; neutral as predicted. Hands: hidden. Squat held. Keep-or-change: keep.
+- p41-yor-qipao-eyes, CSTati, seed `2026092446`, job `b32123e0`, prompt `3c7ecf5e`, 24.3 s, `CSTati-v3-Baseline_00075_.png`. Identity: same Yor read, ballroom, adult. Lever: same addition — eyes heavy; tag fired, qipao intact. Neutral 2/2. Hands: hidden. Squat held. Keep-or-change: keep.
+- p41-wicke-smirkwink, WAI, seed `2026092479`, job `ac485e5f`, prompt `f042df82`, 24.3 s, `WAI-Illustration_00090_.png`. Identity: weak — white Aether uniform, cap, blue eyes match, but dark bob misses Wicke's blonde hair; adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: white uniform glossy and wet. Keep-or-change: keep; the hair is the note, not a discard.
+- p41-burnice-smirkwink, AniFox, seed `2026092480`, job `c150c051`, prompt `6dc76432`, 24.2 s, `AniFox-v2-Baseline_00068_.png`. Identity: Burnice reads well, red hair with dark streaks, yellow eyes, punk jacket, bar interior, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: black jacket glossy, mesh top sheer, skirt glossy and wet. Keep-or-change: keep.
+
+## Sheer-off G6, G7 maid, Caesar, Jade — p42 wave
+
+P41 held 6/6 — G6 ported, eyes neutral on the qipao, E2 generalization at 10/10. This wave runs G6 with the sheer stack off at the same seed (structured qipao should hold stable like G5), opens a seventh garment (maid-outfit swap on the two G-series seeds with the sheer stack on), and runs E2 on two more new adults (Caesar from Zenless Zone Zero, Jade from Honkai: Star Rail — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p42-kafka-qipao-nolora | p40-kafka-qipao | wai | 2026092445 | `8c339616-0a4e-4a26-b221-a174238ac9e2` |
+| p42-yor-qipao-nolora | p40-yor-qipao | cstati-v3-baseline | 2026092446 | `3ebcb8c2-3e51-4bfa-a26f-9cbeabeab48a` |
+| p42-kafka-maid | p5-kafka-squat | wai | 2026092445 | `588c5636-d396-4686-9851-27bd50740ed6` |
+| p42-yor-maid | p5-yor-squat | cstati-v3-baseline | 2026092446 | `752bdde9-59af-42c3-9747-d0532b65a6e5` |
+| p42-caesar-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092481 | `5d4a959d-f054-4b82-aec1-d4d5b3b124ad` |
+| p42-jade-smirkwink | E2 squat recipe | wai | 2026092482 | `ae5bbcc2-598e-460e-8a2d-52e0999210e4` |
