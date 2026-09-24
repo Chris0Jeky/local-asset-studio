@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p26 judged, T18 and G1 promoted, p27 queued — 24 September 2026 (08:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P26 held 6/6: cowboy near-no-op on the Anima crawl (Tifa `b953385c`), from below fires on the JANIMA squat (Yor `f6a44985`), lingerie swap fired hard on both (Yor `46ad68f7`, Tifa `97eb4ec8`, G1), grin for smile fired on both portraits (Kafka `3958452c`, Nero `b5328a8e`, T18). P27 queued: lingerie on ports (Yor `75beb73d`, Tifa `e42c1e28`), grin on two squats (Jane `8982f6de`, Elesa `2ad383b9`), remaining port cameras (Tifa close-up `8fa6d1a7`, Yor cowboy `da228512`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p25 judged, X1 and T17 closed, p26 queued — 24 September 2026 (07:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.

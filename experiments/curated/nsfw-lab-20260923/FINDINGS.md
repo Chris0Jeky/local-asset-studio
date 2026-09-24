@@ -1187,3 +1187,27 @@ P25 held 6/6 and closed X1 and T17. This wave opens three new questions: camera 
 | p26-tifa-lingerie | p5-tifa-bentover | anifox-v2-baseline | 2026092441 | `97eb4ec8-375e-4852-b7f5-a487f9f1e5c9` |
 | p26-kafka-grin | p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `3958452c-7552-4a29-b7d0-e61c56248ddc` |
 | p26-nero-grin | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `b5328a8e-35f4-451a-b7c2-12b323e66297` |
+
+### p26 results
+
+All six completed, 23.3–27.3 s each. No spill line on any receipt. `cowboy shot` is a near-no-op on the Anima crawl (no side rotation, unlike Illustrious), while `from below` fires on the JANIMA squat exactly as on Illustrious. The lingerie swap fired hard on both cells. `grin` for `smile` fired on both portraits.
+
+- p26-tifa-cowboy-anima, Anima, seed `2026092601`, job `b953385c`, prompt `e4c8ce87`, 24.3 s, `Anima-v1-Baseline_00051_.png`. Identity: same Tifa read, bar, adult. Lever: `cowboy shot` changed almost nothing; no side rotation, composition near-identical to p22. Crawl held. Hands: one flat, normal-looking. Cloth: same tank and glossy skirt. Mouth slightly open. Keep-or-change: keep.
+- p26-yor-below-janima, JANIMA, seed `2026092604`, job `f6a44985`, prompt `35f6907b`, 23.3 s, `JANIMA-v1-Baseline_00014_.png`. Identity: same Yor read, lamp interior, adult. Lever: `from below` dropped the camera low, hips foreground, face smaller at top; fired as on Illustrious. Squat held. Hands: hidden. Cloth: same glossy red dress. Mouth slightly open. Keep-or-change: keep.
+- p26-yor-lingerie, CSTati, seed `2026092446`, job `46ad68f7`, prompt `af2c053e`, 27.3 s, `CSTati-v3-Baseline_00054_.png`. Identity: Yor reads, black hair, red eyes, gold accessories, lamp interior, adult. Lever: red dress to red lingerie — the swap fired, sheer robe and lingerie under the LoRA. Squat held, hands behind the head. Hands: hidden. Mouth closed where p5 was slightly open; the garment moved the face a little. Keep-or-change: keep.
+- p26-tifa-lingerie, AniFox, seed `2026092441`, job `97eb4ec8`, prompt `a8a4658d`, 24.3 s, `AniFox-v2-Baseline_00049_.png`. Identity: Tifa reads, black hair, red eyes, bar, adult. Lever: tank and skirt to white lingerie — the swap fired hardest of the night, fully translucent under the sheer LoRA. Bent-over held, looking back. Hands: both on the hips, normal-looking. Keep-or-change: keep.
+- p26-kafka-grin, CSTati, seed `2026092542`, job `3958452c`, prompt `0c6f7859`, 24.3 s, `CSTati-v3-Baseline_00055_.png`. Identity: same Kafka read, train, adult. Lever: `grin` for `smile` — a teeth-baring grin, clearly different from p16. Hands: not visible. Cloth: same translucent white shirt. Eyes came out pink, not the prompted yellow; drift note. Keep-or-change: keep.
+- p26-nero-grin, AniFox, seed `2026092544`, job `b5328a8e`, prompt `4937e6dd`, 24.2 s, `AniFox-v2-Baseline_00050_.png`. Identity: same Nero read, throne room, adult. Lever: `grin` for `smile` — a big toothy grin. Hands: not visible. Cloth: same glossy red-and-white with a translucent chest. Keep-or-change: keep.
+
+## Port lingerie, squat grins, port cameras — p27 wave
+
+P26 held 6/6 and promoted T18. This wave runs lingerie on the ports at new seeds (does the garment read without the sheer LoRA?), swaps `parted lips` for `grin` on two held squats at the same seed (T18's smaller-face test), and runs the remaining two port cameras (`close-up` on the Anima crawl, `cowboy shot` on the JANIMA squat, both at the same seed). Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p27-yor-lingerie-janima | G1 | janima-v1-baseline | 2026092613 | `75beb73d-b6bd-4373-b46c-ffc575f6c295` |
+| p27-tifa-lingerie-anima | G1 | anima-v1-baseline | 2026092614 | `e42c1e28-7675-403a-b2cf-2ee4c3a8186c` |
+| p27-jane-grin | p6-jane-lips | yumeflux-ilv1-baseline | 2026092431 | `8982f6de-17d7-4fed-9f72-5dfc50fcbefe` |
+| p27-elesa-grin | p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `2ad383b9-6bc1-4142-926a-22e570fcc2c7` |
+| p27-tifa-closeup-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `8fa6d1a7-163a-4698-96c0-35c1e0f788c8` |
+| p27-yor-cowboy-janima | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `da228512-9b69-4aba-9fa2-2c0b01a583a7` |

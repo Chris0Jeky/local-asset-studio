@@ -286,7 +286,23 @@ P24 extended the ports to the seiza words: `p24-morgan-seiza-anima` (Anima, job 
 
 P25 closed the ports with the seated and portrait words: `p25-sae-seated-anima` (Anima, job `aefdbb82`, prompt `082a3766`, `Anima-v1-Baseline_00049_.png`, 17.3 s), `p25-nessa-seated-janima` (JANIMA, job `d4ef121f`, prompt `73db1fb7`, `JANIMA-v1-Baseline_00012_.png`, 19.2 s, `109` numerals on the top), `p25-kafka-portrait-anima` (Anima, job `f1e29498`, prompt `b9e77eb7`, `Anima-v1-Baseline_00050_.png`, 17.3 s), `p25-yelan-portrait-janima` (JANIMA, job `08440813`, prompt `e5d4c0c8`, `JANIMA-v1-Baseline_00013_.png`, 19.3 s). No sheer panel without the LoRA, as expected — framing and face are what ported. X1 now covers all six stacks on both families.
 
-Next lever (p26, queued): cameras on the ports, a lingerie garment swap on two held cells, and `grin` for `smile` on two held portraits.
+## T18 — grin for smile on a held portrait
+
+Use when a held T16 still should grin instead of smile. Swap `smile` for `grin` at the same seed. No negative change. A teeth-baring grin replaces the closed smile; pose, hands, and cloth stay put.
+
+Held: `p26-kafka-grin` (CSTati, job `3958452c`, prompt `0c6f7859`, `CSTati-v3-Baseline_00055_.png`, 24.3 s, eyes drifted yellow to pink), `p26-nero-grin` (AniFox, job `b5328a8e`, prompt `4937e6dd`, `AniFox-v2-Baseline_00050_.png`, 24.2 s). Two characters held it, so it promotes.
+
+Breaks it: nothing yet. Untested on squats and crawls, where the mouth tag is `parted lips`, not `smile`.
+
+## G1 — lingerie garment swap (Illustrious, with the sheer stack)
+
+Swap the outfit noun for lingerie at the same seed and the sheer LoRA does the rest: red lingerie under a sheer robe (`p26-yor-lingerie`, CSTati, job `46ad68f7`, prompt `af2c053e`, `CSTati-v3-Baseline_00054_.png`, 27.3 s), white lingerie fully translucent, the hardest transparency of the night (`p26-tifa-lingerie`, AniFox, job `97eb4ec8`, prompt `a8a4658d`, `AniFox-v2-Baseline_00049_.png`, 24.3 s). Poses and hands hold; the garment can move the face a little (Yor's mouth closed). Untested without the sheer LoRA and off the Illustrious family.
+
+## T10 on the ports (X1 cameras)
+
+First two reads: `cowboy shot` is a near-no-op on the Anima crawl — no side rotation, unlike Illustrious (`p26-tifa-cowboy-anima`, Anima, job `b953385c`, prompt `e4c8ce87`, `Anima-v1-Baseline_00051_.png`, 24.3 s). `from below` fires on the JANIMA squat exactly as on Illustrious (`p26-yor-below-janima`, JANIMA, job `f6a44985`, prompt `35f6907b`, `JANIMA-v1-Baseline_00014_.png`, 23.3 s). Camera behavior is family-dependent; do not assume an Illustrious read ports.
+
+Next lever (p27, queued): lingerie on the ports, `grin` for `parted lips` on two held squats, and the remaining two port cameras.
 
 ## M2 measured
 
