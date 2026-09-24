@@ -1719,3 +1719,27 @@ P47 held 6/6 — G9 ported, eyes neutral on the nurse uniform, E2 generalization
 | p48-yor-police | p5-yor-squat | cstati-v3-baseline | 2026092446 | `57118102-69dc-458d-b402-cdda1c717fdb` |
 | p48-eula-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092540 | `8dfbbd9b-1958-4ab8-831c-2f4e0864cf9a` |
 | p48-herta-smirkwink | E2 squat recipe | wai | 2026092547 | `278952a7-4526-44bd-b26e-5f0b14fef51d` |
+
+### p48 results
+
+All six completed, 22.4–30.3 s each. No spill line on any receipt. G9 held sheer-off 2/2 and closes. G10 split: Yor reads full police, Kafka reads generic cop-play with no badge, cap, or blue — the nouns under-specify on WAI, so G10 waits for the badge fix. E2 generalization reached 24/24.
+
+- p48-kafka-nurse-nolora, WAI, seed `2026092445`, job `612924fe`, prompt `851a381d`, 22.4 s, `WAI-Illustration_00105_.png`. Identity: Kafka reads, magenta hair, rooftop, adult. Lever: sheer stack off — nurse cap, white/pink uniform, garter stockings all stable; nothing drifted. Squat held. Hands: hidden. Cloth: white and pink nurse, glossy. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p48-yor-nurse-nolora, CSTati, seed `2026092446`, job `09dd7c7d`, prompt `4510a469`, 30.3 s, `CSTati-v3-Baseline_00087_.png`. Identity: Yor reads, black hair, red eyes, gold earrings, ballroom, adult. Lever: sheer stack off — nurse cap, pink/white uniform, name tag all stable. Squat held. Hands: hidden. Cloth: pink and white nurse, glossy. Mouth closed. Keep-or-change: keep.
+- p48-kafka-police, WAI, seed `2026092445`, job `83179448`, prompt `cdcdcfc9`, 30.3 s, `WAI-Illustration_00106_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: outfit to police uniform — white shirt, tie, black leather hotpants, but no badge, cap, or blue; the police read is weak. Squat held. Hands: hidden. Cloth: white shirt sheer, black leather glossy and wet. Mouth slightly open, eyes heavy. Keep-or-change: keep; half-hold, nouns need badge and cap.
+- p48-yor-police, CSTati, seed `2026092446`, job `57118102`, prompt `dd67297d`, 28.2 s, `CSTati-v3-Baseline_00088_.png`. Identity: Yor reads, black hair, red eyes, headband, gold earrings, ballroom, adult. Lever: outfit to police uniform — blue shirt with badge and patches, tie, black pants; full police read. Squat held. Hands: hidden. Cloth: blue shirt glossy, black pants glossy. Mouth closed. Keep-or-change: keep; G10 1.5/2, waits for the Kafka fix.
+- p48-eula-smirkwink, AniFox, seed `2026092540`, job `8dfbbd9b`, prompt `33bee8e8`, 30.3 s, `AniFox-v2-Baseline_00070_.png`. Identity: Eula reads strongly, light blue hair, knight uniform, lamp interior, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: blue and white knight uniform glossy with sheer panels. Keep-or-change: keep.
+- p48-herta-smirkwink, WAI, seed `2026092547`, job `278952a7`, prompt `d1ce7185`, 30.3 s, `WAI-Illustration_00107_.png`. Identity: Herta reads, silver hair with purple flower, halo ring, station lab, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white and purple dress glossy with sheer panels. Keep-or-change: keep.
+
+## G10 badge fix, eyes on police, Rina, Serval, Beidou — p49 wave
+
+P48 held 5.5/6 — G9 closed sheer-off, G10 split on police signifiers, E2 generalization at 24/24. This wave strengthens the G10 nouns with badge and police cap on both G-series seeds at the same seed (Kafka's fix, Yor's consistency check), adds `bedroom eyes` to Yor's held police cell, and runs E2 on three more new adults (Rina from Zenless Zone Zero, Serval from Honkai: Star Rail, Beidou from Genshin Impact — all adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p49-kafka-police-badge | p48-kafka-police | wai | 2026092445 | `0bd14c1f-05b8-493b-ba14-082be0dc748b` |
+| p49-yor-police-badge | p48-yor-police | cstati-v3-baseline | 2026092446 | `1b818157-d4a0-4234-8334-98c57113d7a0` |
+| p49-yor-police-eyes | p48-yor-police | cstati-v3-baseline | 2026092446 | `c7570c0f-4caa-4e06-a46e-c71f2a2eba53` |
+| p49-rina-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092548 | `8f7fc0b6-e6a4-47b4-9ca3-4605c3e132e1` |
+| p49-serval-smirkwink | E2 squat recipe | wai | 2026092549 | `ebe392fe-9a09-4e40-b9c3-e60cf60a97a1` |
+| p49-beidou-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092550 | `5c1dea5b-71be-4c5a-8b41-1f4113b63519` |

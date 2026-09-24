@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p48 judged 5.5/6, G9 closed, G10 waits on nouns, p49 queued — 24 September 2026 (19:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P48: G9 closed sheer-off (`612924fe`, `09dd7c7d`); G10 split 1.5/2 — Yor full police (`57118102`), Kafka weak cop-play with no badge/cap/blue (`83179448`, nouns under-specify, no promotion yet); E2 generalization 24/24 (Eula `8dfbbd9b`, Herta `278952a7`). P49 queued: G10 badge fix (Kafka `0bd14c1f`, Yor `1b818157`), eyes on Yor's police cell (`c7570c0f`), three new adults (Rina `8f7fc0b6`, Serval `ebe392fe`, Beidou `5c1dea5b`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p47 judged 6/6, G9 ports, E2 at 22/22, p48 queued — 24 September 2026 (18:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
