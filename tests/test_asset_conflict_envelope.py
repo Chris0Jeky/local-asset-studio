@@ -55,6 +55,23 @@ console.log(s.run('JSON.stringify(assetRevisionConflict('+JSON.stringify({status
         self.assertEqual((status, replay['status']), (200, 'applied'))
         self.assertEqual(self.store.get(self.asset)['metadata_revision'], 1)
 
+    def test_long_registered_title_keeps_conflict_comparison(self):
+        # An AV project name may reach 1,000 characters; register() copies it past the 200-character edit limit.
+        source = Path(self.temp.name) / 'image.png'
+        asset = self.store.register({'id': 'av', 'preset_name': '界' * 1000, 'outputs': [{'filename': 'image.png'}]}, 0, source)
+        self.assertEqual(self.store.get(asset)['title'], '界' * 1000 + ' · 1')
+        scope = self.store.snapshot()['workspace_id']
+        winner, stale = (dict(self.command(workspace_id=scope), ids=[asset], expected_revisions={asset: 0}) for _ in range(2))
+        self.assertEqual(self.request('POST', '/api/assets/update', winner)[0], 200)
+        status, data, _ = self.request('POST', '/api/assets/update', stale)
+        self.assertEqual(status, 409)
+        self.assertEqual(self.project(status, data, stale)['current'], data['current'])
+        excessive = self.store.register({'id': 'huge', 'preset_name': 'x' * 5000, 'outputs': [{'filename': 'image.png'}]}, 0, source)
+        title = self.store.get(excessive)['title']
+        self.assertEqual((len(title), title[-4:]), (1024, ' · 1'))
+        current = dict(data['current'][0], title='x' * 1025)
+        self.assertIsNone(self.project(status, dict(data, current=[current]), stale))
+
     def test_actual_missing_target_cannot_become_rebase_authority(self):
         command = self.command(workspace_id=self.store.snapshot()['workspace_id'])
         with self.store.connection() as db:
