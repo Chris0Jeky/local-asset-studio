@@ -17,6 +17,19 @@ BASELINE_CASES = {
     'yumeflux-ilv1-base': 'yumeflux-ilv1-base',
     'janima-v1-base': 'janima-v1-base',
 }
+TILED_DECODE = {'tile_size': 512, 'overlap': 64, 'temporal_size': 64, 'temporal_overlap': 8}
+
+
+def undo_declared_tiled_decode(graph):
+    """The graph with #888's VAEDecodeTiled (exact declared parameters) put back to the VAEDecode it replaced."""
+    restored = {}
+    for key, node in graph.items():
+        inputs = node.get('inputs', {})
+        if node.get('class_type') == 'VAEDecodeTiled' and {k: inputs.get(k) for k in TILED_DECODE} == TILED_DECODE \
+                and set(inputs) == {'samples', 'vae', *TILED_DECODE}:
+            node = {**node, 'class_type': 'VAEDecode', 'inputs': {'samples': inputs['samples'], 'vae': inputs['vae']}}
+        restored[key] = node
+    return restored
 
 
 class RecipeEvidenceTests(unittest.TestCase):
@@ -83,6 +96,10 @@ class RecipeEvidenceTests(unittest.TestCase):
                 for key, value in recipe['controls'].items():
                     binder._bind_control(graph, preset, key, value)
                 Studio.prune_disabled_loras(None, graph)
+                if preset.get('verified') is False:
+                    # #888 moved these presets to a tiled decode pending new Studio proofs and marked them unverified.
+                    # Until re-verified, the declared decode swap is the only divergence allowed from the evidence run.
+                    graph = undo_declared_tiled_decode(graph)
                 self.assertEqual(graph, archived_workflow)
 
     @unittest.skipUnless(shutil.which('node'), 'Node is required for the shipped renderer contract')
