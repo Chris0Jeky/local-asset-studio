@@ -427,7 +427,7 @@ class Production:
         if not isinstance(payload,dict):raise ValueError('Export intent must be an object')
         kind=payload.get('kind');ids=payload.get('ids');options=payload.get('options',{})
         if kind not in ('atlas','ora','godot'):raise ValueError('Choose atlas, ORA or Godot')
-        if not isinstance(ids,list) or not 1<=len(ids)<=33 or len(set(ids))!=len(ids):raise ValueError('Select ordered images, plus an optional GLB for Godot')
+        if not isinstance(ids,list) or not 1<=len(ids)<=33 or not all(type(i) is str and i for i in ids) or len(set(ids))!=len(ids):raise ValueError('Select ordered images, plus an optional GLB for Godot')
         assets=[self.studio.assets.get(i) for i in ids]
         if any(a['trashed_at'] for a in assets):raise ValueError('Restore assets before exporting')
         if sum(a['bytes'] for a in assets)>512*1024**2:raise ValueError('Export source files exceed the 512 MiB budget')
