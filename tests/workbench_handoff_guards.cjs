@@ -26,7 +26,7 @@ function secondPictureHarness(sourceExists, localFile = false) {
     ? "[{id:'source',title:'Source',review:'unreviewed',sha256:'a'.repeat(64),media_type:'image',trashed_at:null}]"
     : '[]';
   vm.runInNewContext([
-    "const file={name:'look.png',size:20,lastModified:1};let secondPicture=" + (localFile ? "{file}" : "{asset:{id:'style',title:'Style'}}") + ",pendingStyle=null;",
+    "const file={name:'look.png',size:20,lastModified:1};let pickerBusy=false;let secondPicture=" + (localFile ? "{file}" : "{asset:{id:'style',title:'Style'}}") + ",pendingStyle=null;",
     "const continuationState={source_asset_id:'source'};",
     "const boardDestination=()=>({id:'restyle-recipe'});",
     "const nodes=new Map();const q=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'',innerHTML:'',textContent:''});return nodes.get(selector);};",
@@ -145,7 +145,7 @@ const replaceSecondPictureSource = between("  q('#uxSecondReplace').onclick=asyn
 function replaceHarness() {
   const context = {};
   vm.runInNewContext([
-    "let secondPicture={asset:{id:'replacement',title:'Replacement'}},continuationState={source_asset_id:'source'};",
+    "let pickerBusy=false,handoffBusy=false,submitting=false,restoring=false,referencePending=0;let secondPicture={asset:{id:'replacement',title:'Replacement'}},continuationState={source_asset_id:'source'};",
     "const selected={id:'recipe'};let stamp='before',finish,uploaded='old-upload',draftDirty=false;",
     "const notices=[];const nodes=new Map();const q=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'',files:[]});return nodes.get(selector);};",
     "const window={confirm:()=>true};const dismissSecondPicture=()=>{secondPicture=null};",
@@ -153,7 +153,7 @@ function replaceHarness() {
     "const post=()=>new Promise(resolve=>{finish=resolve});",
     "let replaceCount=0,saveCount=0,syncCount=0;",
     "const replaceParentAsset=()=>{replaceCount++};const saveDraft=()=>{saveCount++};const syncCreate=()=>{syncCount++};",
-    "const announce=(message,error=false)=>notices.push({message,error});const secondName=item=>item.asset.title;",
+    "const announce=(message,error=false)=>notices.push({message,error});const secondName=item=>item.asset.title;const syncReady=()=>{};",
     "const legacyReferenceChange=null;const DataTransfer=function(){};const Event=function(){};",
     replaceSecondPictureSource,
     "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.finish=value=>finish(value);",

@@ -14,6 +14,7 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
+from source_slot_choices_browser import exercise_source_choices
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -44,6 +45,8 @@ async def run(args):
                 await page.goto(f'http://127.0.0.1:{server.server_port}/#create')
             await page.wait_for_function('!!catalog && !!selected && schemaAvailable')
             await page.wait_for_function("assetState.assets.some(a=>a.id==='asset-0')")
+            await exercise_source_choices(page, check)
+            await page.set_viewport_size({'width':1440, 'height':1100})
             await page.evaluate("""() => {
               window.__writes=[];window.__contextFails=false;window.__delayStyle=false;
               const original=api;
