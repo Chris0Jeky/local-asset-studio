@@ -1,13 +1,74 @@
 from __future__ import annotations
 
+import importlib.util
 import unittest
+from pathlib import Path
 
 from large_job_prep_test_support import (
     GIB, LargeJobPreparationTestCase, PreparationError, Process, Studio, observation,
 )
 
 
+SPEC = importlib.util.spec_from_file_location("asset_server_prep", Path(__file__).parents[1] / "app/server.py")
+server = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(server)
+
+
 class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
+    def test_restart_holds_the_switch_gate_so_new_jobs_are_refused(self):
+        studio = Studio(self.root, [
+            observation(commit=20 * GIB),
+            observation(commit=20 * GIB),
+            observation(commit=40 * GIB),
+        ])
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        def wait(timeout):
+            studio.backends.current = None
+            studio.backends.configured = []
+        original.wait = wait
+        original_launch = studio.backends.launch_recovery
+        def launch(profile):
+            pid = original_launch(profile)
+            studio.backends.system_ready = False
+            return pid
+        studio.backends.launch_recovery = launch
+        attempts = []
+        def sleep(seconds):
+            # A browser request lands while the relaunched backend is still loading.
+            attempts.append(studio.backends.busy)
+            with self.assertRaisesRegex(server.StudioError, "backend switch is running"):
+                server.Studio.prepare(studio, {"preset_id": "demo", "controls": {}})
+            studio.backends.system_ready = True
+            self.clock.value += seconds
+        self.clock.sleep = sleep
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "ready_after_restart")
+        self.assertEqual(attempts, [True])
+        self.assertFalse(studio.backends.busy)
+        self.assertEqual(studio.jobs, {})
+        self.assertEqual(studio.prepare_calls, 1)
+        self.assertEqual(studio.backends.launches, 1)
+
+    def test_switch_gate_already_held_refuses_restart_before_termination(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+        studio.config["enable_large_job_backend_restart"] = True
+        original_recheck = type(self.controller(studio))._recheck
+        controller = self.controller(studio)
+        calls = {"count": 0}
+        def recheck(expected_identity, expected_profile_id):
+            calls["count"] += 1
+            value = original_recheck(controller, expected_identity, expected_profile_id)
+            if calls["count"] == 3:
+                studio.backends.busy = True  # a switch claimed the gate first
+            return value
+        controller._recheck = recheck
+        result = controller.run(self.request(allow_restart=True))
+        self.assertEqual(result["state"], "unknown")
+        self.assertIn("busy", result["final"]["reason"])
+        self.assertFalse(studio.backends.current.terminated)
+        self.assertEqual(studio.backends.launches, 0)
+        self.assertTrue(studio.backends.busy)  # someone else's gate is never released by us
+
     def test_successful_verified_restart_uses_new_creation_identity(self):
         studio = Studio(self.root, [
             observation(commit=20 * GIB),
@@ -121,7 +182,9 @@ class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
         self.assertEqual(result["phase"], "refused")
         self.assertEqual(studio.backends.launches, 1)
         self.assertEqual(result["actions"][1]["state"], "startup_failed")
+        self.assertEqual(result["state"], "unknown")
         self.assertFalse(result["final"]["ready"])
+        self.assertFalse(studio.backends.busy)
 
     def test_idle_policy_requires_separate_opt_in_and_cannot_restart(self):
         studio = Studio(self.root, [observation(commit=20 * GIB)])

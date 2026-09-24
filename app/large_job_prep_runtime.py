@@ -191,6 +191,26 @@ class RuntimeMixin:
             return self._backend_snapshot(
                 expected_identity=expected_identity, expected_profile_id=expected_profile_id
             )
+
+    def _claim_backend(self, expected_identity: dict[str, Any], expected_profile_id: str) -> tuple[dict[str, Any], Any]:
+        """Recheck and take the switch gate in one critical section.
+
+        ``backends.busy`` is the gate ``Studio.prepare``, ``switch``, reference jobs and
+        runtime recovery already honour, so no new job or recovery launch can start
+        while the owned backend is being stopped and relaunched.
+        """
+        with self.studio.lock:
+            backend, process = self._recheck(expected_identity, expected_profile_id)
+            manager = self.studio.backends
+            if manager.busy:
+                raise PreparationError("Backend manager became busy; lifecycle action was refused")
+            manager.busy = True
+        return backend, process
+
+    def _release_backend(self) -> None:
+        with self.studio.lock:
+            self.studio.backends.busy = False
+
     def _after_action(self, context: dict[str, Any], expected_identity: dict[str, Any],
                       expected_profile_id: str) -> dict[str, Any]:
         backend, _ = self._recheck(expected_identity, expected_profile_id)

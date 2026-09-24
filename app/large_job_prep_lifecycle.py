@@ -54,7 +54,26 @@ class LifecycleMixin:
     def _restart(self, journal: dict[str, Any], receipt: dict[str, Any], context: dict[str, Any],
                  current: dict[str, Any]) -> dict[str, Any]:
         expected = current["backend"]["process"]
-        backend, process = self._recheck(expected, current["backend"]["profile_id"])
+        backend, process = self._claim_backend(expected, current["backend"]["profile_id"])
+        try:
+            restarted = self._restart_held(journal, receipt, expected, backend, process)
+        finally:
+            # Released on readiness and on every failure; the snapshot below rechecks the gate.
+            self._release_backend()
+
+        if self._active_work():
+            raise PreparationError("New Studio work arrived after restart; readiness was not granted")
+        observation = self.observer(self.studio)
+        evaluation = self._evaluate(
+            context["workflow_identity"], context["_profile"], observation, context["reservations"]
+        )
+        final_backend, _ = self._backend_snapshot(
+            expected_identity=restarted["process"], expected_profile_id=restarted["profile_id"]
+        )
+        return {"observation": observation, "evaluation": evaluation, "backend": final_backend}
+
+    def _restart_held(self, journal: dict[str, Any], receipt: dict[str, Any], expected: dict[str, Any],
+                      backend: dict[str, Any], process: Any) -> dict[str, Any]:
         profile = self.studio.backends.profiles[self.studio.backends.active]
         action = {
             "kind": "restart",
@@ -131,14 +150,4 @@ class LifecycleMixin:
             raise
         action.update(state="ready", ready_at=self.clock(), new_process=restarted["process"])
         self._persist(journal, receipt)
-
-        if self._active_work():
-            raise PreparationError("New Studio work arrived after restart; readiness was not granted")
-        observation = self.observer(self.studio)
-        evaluation = self._evaluate(
-            context["workflow_identity"], context["_profile"], observation, context["reservations"]
-        )
-        final_backend, _ = self._backend_snapshot(
-            expected_identity=restarted["process"], expected_profile_id=restarted["profile_id"]
-        )
-        return {"observation": observation, "evaluation": evaluation, "backend": final_backend}
+        return restarted
