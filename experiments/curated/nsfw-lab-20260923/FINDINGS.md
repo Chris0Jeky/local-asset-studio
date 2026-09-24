@@ -2262,6 +2262,30 @@ Submit note (honest): the Yor-eyes cell below went out with the sheer stack OFF 
 | p69-nicole-smallbust | B1 recipe | cstati-v3-baseline | 2026092631 | `db093101-cc99-4c8c-b2ed-f669acaef170` |
 | p69-grace-smallbust | B1 recipe | wai | 2026092632 | `cae1541f-bd8d-4d0d-b830-dce7f3c317eb` |
 
+### p69 results
+
+All six completed, 16.3–28.2 s each, no spill. G15 sheer-off 2/2 (nothing drifted); Yor combined read holds (eyes show, opaque); B1 Jane and Grace clean, Nicole partial.
+
+- p69-yor-labcoat-eyes-combined, CSTati, seed `2026092446`, job `bb06e405`, prompt `9f5641d3`, 16.3 s, `CSTati-v3-Baseline_00129_.png`. Identity: Yor reads, coat over a pinkish blouse and black skirt, monitors and lamp night, adult. Lever: sheer-off+eyes combined (submit slip, judged as combined only) — half-lidded eyes show, outfit intact and opaque. Squat held. Hands: hidden behind the head. Cloth: blouse opaque, black skirt glossy. Keep-or-change: keep as a combined read; does NOT count toward G15 eyes-neutral.
+- p69-kafka-labcoat-nolora, WAI, seed `2026092445`, job `6f1f5ffa`, prompt `7e3f5271`, 28.2 s, `WAI-Illustration_00142_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white coat over a white blouse and dark skirt, monitors and beaker, night, adult. Lever: sheer-off rerun at the same seed — coat, blouse, and skirt stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: white blouse opaque glossy, dark skirt glossy. Keep-or-change: keep; G15 sheer-off 1/2.
+- p69-yor-labcoat-nolora, CSTati, seed `2026092446`, job `093a0526`, prompt `0a952280`, 26.3 s, `CSTati-v3-Baseline_00130_.png`. Identity: Yor reads, coat over a pinkish blouse and black skirt, monitors and lamp night, adult. Lever: sheer-off rerun at the same seed — coat, blouse, and skirt stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: blouse opaque, black skirt glossy. Keep-or-change: keep; G15 sheer-off 2/2.
+- p69-jane-smallbust, AniFox, seed `2026092630`, job `b018f5fe`, prompt `68b5f60d`, 26.3 s, `AniFox-v2-Baseline_00091_.png`. Identity: Jane reads, black hair, black and white criminal-consultant outfit with tie, neon alley night, adult. Lever: B1 first try — bust reads modest under the jacket. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: dark jacket and top glossy, no sheer panel. Keep-or-change: keep; B1 clean.
+- p69-nicole-smallbust, CSTati, seed `2026092631`, job `db093101`, prompt `8a8840b7`, 26.3 s, `CSTati-v3-Baseline_00131_.png`. Identity: Nicole reads, pink twintail hair, white crop top under a black jacket, black shorts, lamp night, adult. Lever: B1 first try — bust reads moderate in the crop top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white top translucent-sheer, black jacket and shorts glossy; oversized chest glyph is garnish. Keep-or-change: keep as a partial.
+- p69-grace-smallbust, WAI, seed `2026092632`, job `cae1541f`, prompt `aaf19cea`, 24.3 s, `WAI-Illustration_00143_.png`. Identity: Grace reads, brown hair with goggles on the head, black and orange engineer suit, workshop lamp night, adult. Lever: B1 first try — bust reads modest in the engineer suit. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black suit glossy latex. Keep-or-change: keep; B1 clean.
+
+## Clean Yor-eyes rerun, G16 cheerleader open, B1 Yanagi through Miyabi — p70 wave
+
+P69 held 6/6 — G15 sheer-off 2/2 (nothing drifted); Yor combined read holds but counts for nothing on eyes-neutral; B1 Jane and Grace clean, Nicole partial (B1 now 6 clean, 12 partial, 1 break across 19 faces). This wave runs the clean Yor-eyes-with-sheer rerun (new prompt wording, same seed — the eyes test G15 still owes), opens G16 with a red and white cheerleader uniform with a pleated skirt on both G-series seeds, and runs B1 on three more cleared adults (Yanagi, Rina, Miyabi — all cleared for new cells). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p70-yor-labcoat-eyes | p68-yor-labcoat-labfix | cstati-v3-baseline | 2026092446 | `6fa103ad-9d16-4c2f-9dd8-ef8653cfc0ca` |
+| p70-kafka-cheer | p5-kafka-squat | wai | 2026092445 | `bb1a9b05-6d94-403b-8db6-09d7d3f930f6` |
+| p70-yor-cheer | p5-yor-squat | cstati-v3-baseline | 2026092446 | `70526c9e-a410-4017-8b09-1a6050f53417` |
+| p70-yanagi-smallbust | B1 recipe | anifox-v2-baseline | 2026092633 | `40aea6ee-c229-46e2-b9c3-341b0b7bbdb4` |
+| p70-rina-smallbust | B1 recipe | cstati-v3-baseline | 2026092634 | `31a29a49-6569-4778-a4dd-061c6340b3d0` |
+| p70-miyabi-smallbust | B1 recipe | wai | 2026092635 | `44638612-8570-45fc-a8a8-ce26a8c3f12b` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.

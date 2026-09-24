@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p69 judged 6/6, G15 sheer-off 2/2, B1 at 19 faces, p70 queued — 25 September 2026 (04:05 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P69 held 6/6: G15 sheer-off 2/2 (Kafka `6f1f5ffa`, Yor `093a0526`, nothing drifted); Yor combined read holds as combined only (`bb06e405`, counts nothing toward eyes-neutral); B1 Jane and Grace clean (`b018f5fe`, `cae1541f`), Nicole partial (`db093101`; B1 now 6 clean, 12 partial, 1 break across 19 faces). P70 queued: clean Yor-eyes rerun (`6fa103ad`), G16 cheerleader open (Kafka `bb1a9b05`, Yor `70526c9e`), B1 on Yanagi (`40aea6ee`), Rina (`31a29a49`), Miyabi (`44638612`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p68 judged 6/6, G15 ports and place-fix, B1 at 16 faces, p69 queued — 25 September 2026 (03:40 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
