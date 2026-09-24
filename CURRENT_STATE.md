@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p61 judged 6/6, E2 at 69/69, B1 canonical-bust wave queued — 25 September 2026 (00:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P61 held 6/6: E2 generalization 69/69 first try (Trigger `10684cf7`, Vivian `f66c3467`, Nekomata `524d903f`, Dialyn `e77cec6a`, Ju Fufu `9f435ebd`, Yuzuha `b10f9e12`, smirk and wink showing on all six, likeness notes on all six new faces). Owner direction adopted as stack B1: canonically small-breasted cleared adults keep their small bust on the E2 squat (`small breasts` added after `blush`). P62 queued: B1 measurement on six (Anby `3b1f8f17`, Soldier 11 `c1cedd05`, Sanhua `6e799d30`, Nekomata `c8e572dd`, Trigger `5dc3803b`, Dialyn `2f45a6fb`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p60 judged 6/6, G13 closed, E2 at 63/63, p61 queued — 25 September 2026 (00:20 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.

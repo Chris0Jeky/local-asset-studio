@@ -2068,6 +2068,30 @@ P60 held 6/6 — G13 closed, E2 generalization at 63/63 first try. This wave bur
 | p61-jufufu-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092600 | `9f435ebd-6446-4c4c-9fb4-1f6489634706` |
 | p61-yuzuha-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092601 | `b10f9e12-425c-4382-a036-6b0db79cf56a` |
 
+### p61 results
+
+All six completed, 24.3–32.3 s each, no spill. E2 generalization reached 69/69 first try.
+
+- p61-trigger-smirkwink, AniFox, seed `2026092596`, job `10684cf7`, prompt `4265fdf0`, 28.2 s, `AniFox-v2-Baseline_00079_.png`. Identity: Trigger reads, short silver hair, red eyes, black and white tactical coat, sniper rifle prop at the side, neon street night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: white shirt translucent-sheer over the chest, black coat and pants glossy; fake sign letters in the background are garnish. Keep-or-change: keep.
+- p61-vivian-smirkwink, CSTati, seed `2026092597`, job `f66c3467`, prompt `fe01eb00`, 32.3 s, `CSTati-v3-Baseline_00113_.png`. Identity: Vivian reads as a dark purple-haired singer in a black and teal dress on a concert stage at night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: black dress glossy with a sheer chest panel; stage lights read concert, fake glyphs on the pendant are garnish. Keep-or-change: keep.
+- p61-nekomata-smirkwink, WAI, seed `2026092598`, job `524d903f`, prompt `54f05ce7`, 28.4 s, `WAI-Illustration_00132_.png`. Identity: Nekomata reads, blonde hair with cat ears and tail, orange eyes, black and yellow street outfit, neon alley night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: black top glossy, no sheer panel on this heavier top; fake chest letters are garnish. Keep-or-change: keep.
+- p61-dialyn-smirkwink, YumeFlux, seed `2026092599`, job `e77cec6a`, prompt `8bbebd6d`, 26.3 s, `YumeFlux-ILv1-Baseline_00072_.png`. Identity: Dialyn reads as a dark teal-haired performer in a black and gold dress under stage lights at night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: dark teal dress glossy latex, gold jewelry intact; bare arms, no sheer panel. Keep-or-change: keep.
+- p61-jufufu-smirkwink, AniFox, seed `2026092600`, job `9f435ebd`, prompt `1a6d08c6`, 24.2 s, `AniFox-v2-Baseline_00080_.png`. Identity: Ju Fufu reads, orange hair with tiger ears and striped tail, white and orange martial outfit, dojo courtyard lamp night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: white top translucent-sheer, white pants glossy; orange paw-mark chest glyph is garnish. Keep-or-change: keep.
+- p61-yuzuha-smirkwink, CSTati, seed `2026092601`, job `b10f9e12`, prompt `c77f760a`, 24.3 s, `CSTati-v3-Baseline_00114_.png`. Identity: Yuzuha reads as a pink-haired young woman in a white and blue casual dress on a festival street at night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: white dress translucent-sheer over the chest, black bottoms glossy; fake lantern letters are garnish. Keep-or-change: keep.
+
+## B1 canonical-bust lever, owner direction — p62 wave
+
+Owner direction, 25 September 2026 (early hours): run pools of bodies more in line with how the original character is — still exaggerated silhouette, poses, and costumes, but characters with notably small breasts keep their more canonical small bust, while staying highly attractive. Adopted as stack B1: the E2 squat recipe with `small breasts` added after `blush`, everything else unchanged, on adult-cleared characters whose official designs read small-busted (Anby, Soldier 11, Sanhua, Nekomata, Trigger, Dialyn). New seeds, no seed+preset+prompt reuse. The open question is whether the bust tag holds the squat, the smirk-wink combo, and the sheer-stack cloth behavior, or whether the bust inflates back to the lab default. B1 promotes after two characters hold it. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p62-anby-smallbust | E2 squat recipe | anifox-v2-baseline | 2026092602 | `3b1f8f17-6996-4204-abc0-e7b37adb044e` |
+| p62-soldier11-smallbust | E2 squat recipe | cstati-v3-baseline | 2026092603 | `c1cedd05-953b-40a1-8ce7-a82f24565280` |
+| p62-sanhua-smallbust | E2 squat recipe | wai | 2026092604 | `6e799d30-44f5-4de1-b6bc-46e0b7a6eb43` |
+| p62-nekomata-smallbust | E2 squat recipe | yumeflux-ilv1-baseline | 2026092605 | `c8e572dd-3a94-457b-b0ac-44199e7279a5` |
+| p62-trigger-smallbust | E2 squat recipe | anifox-v2-baseline | 2026092606 | `5dc3803b-33fb-4cca-89bd-b903b675a216` |
+| p62-dialyn-smallbust | E2 squat recipe | cstati-v3-baseline | 2026092607 | `2f45a6fb-244c-4ea0-81ad-ece30e54f315` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
