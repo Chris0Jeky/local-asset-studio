@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p92 judged 6/6, G24 measured 8, hakama beats the hike, p93 queued — 25 September 2026 (21:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P92 held 6/6 (26.9–33.1 s, all receipts live, no spill): G24 eyes half-lidded on Kafka and neutral on Yor with the two-piece intact (`739cc659`, `202fb888`); hakama beats the hike on the bent-over (`874cde71`); seiza holds (`a4109534`); sheer-off 2/2 drift nothing (`574fcefd`, `9d6d0718`). P93 queued, seven cells: miko crawl (`b19770bf`), portrait (`55c545ac`) and seated rear (`2635d33b`) to close G24, ports x2 with no sheer LoRA (`0603610b`, `955a6cd4`), C1 `from below` on the miko pair (`adb0f91c`, `05850da0`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p91 judged 6/6, close-up on three garments, G24 promoted, p92 queued — 25 September 2026 (21:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.

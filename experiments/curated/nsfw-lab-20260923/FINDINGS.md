@@ -2792,6 +2792,29 @@ P91 held 6/6 — C1 `close-up` now measured on three garments, G24 promoted on t
 | p92-kafka-miko-nolora | p91-kafka-miko | wai | 2026092445 | `574fcefd-72fb-40ae-8418-130f20a61a8b` |
 | p92-yor-miko-nolora | p91-yor-miko | cstati-v3-baseline | 2026092446 | `9d6d0718-4b1a-4a80-9808-bf456c5e54e1` |
 
+All six completed, 26.9–33.1 s each, all receipts live, no spill. G24 measured 8 (eyes half-lidded on Kafka and neutral on Yor with the two-piece intact, hakama beats the hike on the bent-over, seiza holds, sheer-off 2/2 drift nothing).
+
+- p92-kafka-miko-eyes, WAI, seed `2026092445`, job `739cc659`, prompt `28c908f5`, 33.1 s, `WAI-Illustration_00198_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white haori and red hakama, shrine violet, night, adult. Lever: `bedroom eyes` on miko at the same seed — half-lidded, two-piece intact. Squat held. Hands: hidden behind the head. Cloth: white top glossy, red hakama glossy. Keep-or-change: keep; G24 eyes 1/2.
+- p92-yor-miko-eyes, CSTati, seed `2026092446`, job `202fb888`, prompt `042a637e`, 28.9 s, `CSTati-v3-Baseline_00191_.png`. Identity: Yor reads, black hair with rose ornaments, white haori and red hakama with bells, shrine lantern, night, adult. Lever: `bedroom eyes` on miko at the same seed — reads neutral, eyes open, two-piece intact. Squat held. Hands: hidden behind the head. Cloth: white top glossy. Keep-or-change: keep; G24 eyes 2/2.
+- p92-kafka-miko-bentover, WAI, seed `2026092698`, job `874cde71`, prompt `fcd3f4a2`, 29.0 s, `WAI-Illustration_00199_.png`. Identity: Kafka reads, magenta ponytail, white haori and red hakama, shrine violet, night, adult. Lever: miko on the bent-over — back view, both hands on the butt, hakama intact over the rear, the hike beaten. Cloth: red hakama glossy. Keep-or-change: keep.
+- p92-yor-miko-seiza, CSTati, seed `2026092699`, job `a4109534`, prompt `117f8cbd`, 28.8 s, `CSTati-v3-Baseline_00192_.png`. Identity: Yor reads, black hair in a bun with rose ornament, white haori and red hakama, moonlit shrine, night, adult. Lever: miko on the seiza — tongue out, looking back, feet visible, two-piece intact. Keep-or-change: keep.
+- p92-kafka-miko-nolora, WAI, seed `2026092445`, job `574fcefd`, prompt `db4030cb`, 26.9 s, `WAI-Illustration_00200_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white haori and red hakama, shrine violet, night, adult. Lever: sheer-off rerun at the miko seed — two-piece intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white top glossy, red hakama glossy. Keep-or-change: keep; G24 sheer-off 1/2.
+- p92-yor-miko-nolora, CSTati, seed `2026092446`, job `9d6d0718`, prompt `816487f7`, 28.8 s, `CSTati-v3-Baseline_00193_.png`. Identity: Yor reads, black hair, white haori and red hakama with bells, shrine lantern, night, adult. Lever: sheer-off rerun at the miko seed — two-piece intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white top glossy. Keep-or-change: keep; G24 sheer-off 2/2.
+
+## G24 crawl, portrait, seated rear, ports, from-below — p93 wave
+
+P92 held 6/6 — G24 measured 8 with eyes, bent-over (hakama beats the hike), seiza and sheer-off all holding. This wave closes G24 (crawl for Kafka, portrait and seated rear for Yor, ports x2 with no sheer LoRA) plus C1 `from below` on the miko pair. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p93-kafka-miko-crawl | p91-kafka-miko | wai | 2026092700 | `b19770bf-0bf0-41ef-b395-a15e6f7a944a` |
+| p93-yor-miko-portrait | p91-yor-miko | cstati-v3-baseline | 2026092701 | `55c545ac-7bf2-4ee7-a88e-06e8ffcb79af` |
+| p93-yor-miko-seated | p91-yor-miko | cstati-v3-baseline | 2026092702 | `2635d33b-a7db-4476-9636-0cac1ddf765a` |
+| p93-kafka-miko-anima | p91-kafka-miko | anima-v1-baseline | 2026092703 | `0603610b-588b-4eda-9ca6-ad14f5dd6250` |
+| p93-yor-miko-janima | p91-yor-miko | janima-v1-baseline | 2026092704 | `955a6cd4-e0b3-4d4c-b2a4-cd1670cf6c6b` |
+| p93-kafka-miko-frombelow | p91-kafka-miko | wai | 2026092445 | `adb0f91c-4ed6-4182-a462-7fd4006fdaa0` |
+| p93-yor-miko-frombelow | p91-yor-miko | cstati-v3-baseline | 2026092446 | `05850da0-91be-4c5a-a934-d01262917720` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
