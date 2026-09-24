@@ -335,7 +335,7 @@ async function refreshHealth() {
   try {
     const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
     if(typeof renderRecovery==='function')renderRecovery(h.recovery);
-    const failure=$('#workerFailure'),lost=h.worker_failure;if(failure){failure.hidden=!lost;failure.title=lost?String(lost.id):'';failure.textContent=lost?'Failure record not saved for job '+String(lost.id).slice(0,8)+' ('+lost.action+'). Nothing was resubmitted. Check that no other program is holding files in the experiments folder, then restart the Studio to clear this notice.':'';}
+    const failure=$('#workerFailure'),lost=h.worker_failure;if(failure){failure.hidden=!lost;failure.title=lost?String(lost.id):'';failure.textContent=lost?'Failure record not saved for job '+String(lost.id).slice(0,8)+' ('+lost.action+'). Nothing was resubmitted. Once no other program is holding files in the runs folder, open this job and note its prompt ID, or use Resume observation, before restarting the Studio.':'';}
     if(h.devices?.[0]) $('#hardware').textContent=h.devices[0].name.replace(/^cuda:\d+ /,'').replace(' : native','') + ' · ' + (h.devices[0].vram_total/1024**3).toFixed(0) + ' GB VRAM';
     if(h.comfy_url) $('#comfyLink').href=safeUrl(h.comfy_url);
     updateReady();

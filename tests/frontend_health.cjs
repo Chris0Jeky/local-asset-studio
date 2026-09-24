@@ -73,6 +73,8 @@ const respondHealth = async payload => {
   assert.match(element('#workerFailure').textContent, /job failed-p \(production\)/);
   assert.equal(element('#workerFailure').title, 'failed-project', 'the full id stays one hover away');
   assert.match(element('#workerFailure').textContent, /Nothing was resubmitted/);
+  assert.match(element('#workerFailure').textContent, /note its prompt ID, or use Resume observation, before restarting/, 'evidence is kept before any restart');
+  assert.doesNotMatch(element('#workerFailure').textContent, /restart the Studio to clear/);
   assert.match(element('#workerFailure').textContent, /not saved/i);
   assert.equal(state().disabled, false, 'a contained recording error is not a dead worker');
   pending = vm.runInContext('health()', context); await Promise.resolve();
