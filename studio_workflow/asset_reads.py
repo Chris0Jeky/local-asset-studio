@@ -73,6 +73,15 @@ def _matches(pattern, value):
     return type(value) is str and pattern.fullmatch(value) is not None
 
 
+def _is_media_type(value):
+    # One reader/writer contract for legacy stored values: the bounded read
+    # projection lists decoded text of 1..32 characters, so the exact filter
+    # must accept that same value space instead of a narrower legacy pattern.
+    # Control characters stay refused on both sides; they cannot be selected
+    # and a stored one keeps the documented asset_read_unavailable refusal.
+    return type(value) is str and 1 <= len(value) <= 32 and value.isprintable()
+
+
 def _integer(value, minimum=0, maximum=MAX_REVISION):
     return type(value) is int and minimum <= value <= maximum
 
@@ -134,7 +143,7 @@ def normalize_filters(value=None):
     result = dict(DEFAULT_FILTERS, **value)
     require(type(result['visibility']) is str and result['visibility'] in ('active','trash','all'), 'Invalid visibility filter')
     kind = result['media_type']
-    require(kind is None or type(kind) is str and re.fullmatch(r'[a-z][a-z0-9_-]{0,31}',kind), 'Invalid media type filter')
+    require(kind is None or _is_media_type(kind), 'Invalid media type filter')
     review = result['review']
     require(review is None or type(review) is str and review in REVIEWS, 'Invalid review filter')
     require(result['favorite'] is None or type(result['favorite']) is bool, 'Favorite filter must be boolean')
@@ -199,7 +208,7 @@ def _summary(row):
         except UnicodeError as exc:
             raise AssetReadError('An asset scalar has invalid text encoding', **error) from exc
     require(_matches(ENTITY,value['id']) and _matches(HEX64,value['sha256'])
-            and type(value['media_type']) is str and 1 <= len(value['media_type']) <= 32
+            and _is_media_type(value['media_type'])
             and value['review'] in REVIEWS and value['favorite'] in (0,1)
             and _finite(value['created_at']) and _integer(value['bytes'])
             and _integer(value['metadata_revision'])
