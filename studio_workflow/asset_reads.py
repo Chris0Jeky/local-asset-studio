@@ -45,11 +45,11 @@ def _projection(db):
     return ','.join([
     f"'{encoding}' AS _text_encoding",
     *[f"CASE WHEN typeof(a.{key})='text' AND length(CAST(a.{key} AS BLOB))<={limit*width} "
-      f"THEN a.{key} END AS {key}" for key,limit in
+      f"THEN CAST(a.{key} AS BLOB) END AS {key}" for key,limit in
       {'id':128,'sha256':64,'media_type':32,'review':32,'preset_id':128}.items()],
     # SQLite's TEXT substr stops at NUL. Byte prefixes preserve labels and must
     # never silently turn a corrupt identity into another valid identity.
-    *[f"CASE WHEN typeof(a.{key})='text' THEN substr(CAST(a.{key} AS BLOB),1,{4*(limit+1)}) END AS {key},"
+    *[f"CASE WHEN typeof(a.{key})='text' THEN coalesce(substr(CAST(a.{key} AS BLOB),1,{4*(limit+1)}),X'') END AS {key},"
       f"length(CAST(a.{key} AS BLOB)) AS {key}_bytes" for key,limit in DISPLAY_LIMITS.items()],
     *[f"CASE WHEN typeof(a.{key})='integer' THEN a.{key} END AS {key}"
       for key in ('bytes','metadata_revision','favorite')],
@@ -188,6 +188,16 @@ def _summary(row):
     encoding = value.pop('_text_encoding')
     preset_null, trashed_null = value.pop('preset_id_null'), value.pop('trashed_at_null')
     error = {'code':'asset_read_unavailable','status':503}
+    # Decode bounded scalar bytes here, not in SQLite's implicit TEXT converter.
+    # Corrupt stored text must become the same typed refusal as other bad metadata.
+    for key in ('id','sha256','media_type','review','preset_id'):
+        raw = value[key]
+        if raw is None: continue
+        require(type(raw) is bytes, 'An asset scalar is not text', **error)
+        try:
+            value[key] = raw.decode(encoding)
+        except UnicodeError as exc:
+            raise AssetReadError('An asset scalar has invalid text encoding', **error) from exc
     require(_matches(ENTITY,value['id']) and _matches(HEX64,value['sha256'])
             and type(value['media_type']) is str and 1 <= len(value['media_type']) <= 32
             and value['review'] in REVIEWS and value['favorite'] in (0,1)
@@ -277,7 +287,7 @@ class AssetReads:
             stamp = _state(db)
             marks = ','.join('?' for _ in ids)
             rows = db.execute('SELECT '+_projection(db)+' FROM assets AS a WHERE a.id IN ('+marks+')',ids)
-            found = {row['id']:_summary(row) for row in rows}
+            found = {item['id']:item for item in map(_summary,rows)}
             items = []
             for key in ids:
                 asset = found.get(key)

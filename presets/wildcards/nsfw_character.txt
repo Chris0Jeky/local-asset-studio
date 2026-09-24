@@ -2,6 +2,7 @@
 # Only adult-coded subjects. No Megumin, no child Pokemon, no child Genshin/HSR.
 2b (nier:automata), yorha no. 2 type b, mole under mouth, short white hair, adult android
 kafka (honkai: star rail), purple hair, sunglasses, adult woman
+asuna (sao), long orange hair, adult woman
 darkness (konosuba), blonde hair, blue eyes, adult crusader
 aqua (konosuba), long blue hair, blue eyes, adult goddess
 cynthia (pokemon), very long blonde hair, hair over one eye, adult champion
@@ -11,3 +12,18 @@ tifa lockhart, black hair, adult woman
 yor briar, black hair, gold eyes, adult woman
 acheron (honkai: star rail), long purple hair, adult woman
 2b (nier:automata), black blindfold, adult
+# 23 Sep 2026 continuation. Adult-coded only. See experiments/curated/nsfw-lab-20260923/FINDINGS.md.
+albedo (overlord), long black hair, yellow eyes, horns, white dress, adult woman
+shalltear bloodfallen, long silver hair, red eyes, purple dress, adult woman
+wiz (konosuba), long light brown hair, witch hat, purple robe, adult woman
+# frieren is an adult in canon. A 23 Sep WAI frame looked young; that is a composition note, not a ban.
+frieren, long white hair, pointy ears, adult woman
+serie (sousou no frieren), long blonde hair, elf, adult woman
+elsa granhiert, black hair, purple eyes, black dress, adult woman
+crusch karsten, green hair, yellow eyes, military uniform, adult woman
+makima (chainsaw man), long red hair, yellow eyes, white shirt, black tie, adult woman
+artoria pendragon (fate), blonde hair, green eyes, ahoge, blue dress, adult woman
+jane doe (zenless zone zero), short grey hair, rat ears, red jacket, adult woman
+black swan (honkai: star rail), very long purple hair, veil, purple dress, adult woman
+changli (wuthering waves), long pink hair, red dress, adult woman
+tamarinne (epic seven), pink hair, twintails, idol dress, adult woman

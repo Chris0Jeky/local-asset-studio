@@ -236,7 +236,8 @@ class Production:
             if not isinstance(rationale,str) or len(rationale)>2000:raise ValueError('Variant rationale must be text up to 2000 characters')
             sources=entry.get('sources',[])
             if not isinstance(sources,list) or any(not isinstance(s,str) for s in sources):raise ValueError('Variant sources must be a list of URLs')
-            result.append({'label':label,'controls':copy.deepcopy(controls),'rationale':rationale,'sources':sources[:12]})
+            if len(sources)>12:raise ValueError('Every variant takes at most 12 sources')
+            result.append({'label':label,'controls':copy.deepcopy(controls),'rationale':rationale,'sources':list(sources)})
         return result
 
     def _verify_character_reference_inputs(self, graph, bundle, character_source):

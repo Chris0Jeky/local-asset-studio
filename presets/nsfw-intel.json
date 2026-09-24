@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "updated": "2026-09-21",
+  "updated": "2026-09-23",
   "title": "Anime NSFW lab notes",
-  "caveat": "Local observations from one-seed cells. Generated is not accepted art and not licence clearance. Adult original characters or adult-coded franchise looks only (no Megumin, no child Pokemon/Genshin/HSR).",
+  "caveat": "Local observations from one-seed cells. Generated is not accepted art and not licence clearance. Adult original characters or adult-coded franchise looks only (no Megumin, no child Pokemon/Genshin/HSR, no school casts). The 23 Sep continuation is experiments/curated/nsfw-lab-20260923/FINDINGS.md.",
   "families": {
     "Anima": {
       "undress": "nsfw_girls_anima at 0.7-0.85 undresses reliably on anima-v1-baseline.",
@@ -52,7 +52,7 @@
     },
     {
       "name": "nsfw_character",
-      "use": "Adult Danbooru tags only: 2B, Kafka, Darkness, Aqua, Cynthia, Yelan, Raiden, Tifa, Yor, Acheron."
+      "use": "Adult Danbooru tags only. 21 Sep: 2B, Kafka, Darkness, Aqua, Cynthia, Asuna, Yelan, Raiden, Tifa, Yor, Acheron. 23 Sep adds Albedo, Shalltear, Wiz, Frieren, Serie, Crusch, Makima, Artoria, Jane, Black Swan, Changli, Tamarinne. A youthful face on an adult character is a composition note, not a drop."
     },
     {
       "name": "nsfw_anatomy",
@@ -85,7 +85,7 @@
       "note": "High-gloss wet skin on AniFox."
     }
   ],
-  "hands": "Wave A: hands on thighs + five fingers + neat hands showed five-finger hands. Raised arms still grow extras. Extra fingers in the negative is not enough by itself.",
+  "hands": "Wave A: hands on thighs + five fingers + neat hands showed five-finger hands. Raised arms still grow extras. Extra fingers in the negative is not enough by itself. 23 Sep: hands out of frame still drew a lifting hand (Shalltear, Artoria, Jane). Flat hands on the thighs had five fingers (Wiz, JANIMA). arms behind back plus hands and fingers in the negative removed the hands on Changli and on Albedo's rear view, and the skirt stayed closed until the prompt said open skirt, bare hips. A military uniform put the hands back on the hips (Crusch).",
   "gallery": "/static/nsfw-lab.html",
   "receipt": "experiments/curated/nsfw-lab-20260921/FINDINGS.md",
   "examples": [
@@ -320,6 +320,14 @@
       "prompt_id": "b3c3b90b-9dda-4b25-94be-7658c081225e",
       "note": "Cynthia hair clip, looking back. Extra fingers.",
       "job_id": "9554b24d-674f-4255-b2b6-f24887b2bfb3"
+    },
+    {
+      "id": "c-asuna-lingerie-smirk",
+      "axis": "franchise-casual",
+      "url": "/api/examples/nsfw-lab/c-asuna-lingerie-smirk.jpg",
+      "prompt_id": "90de8c98-c26c-4a03-8e7f-740daccba4dd",
+      "note": "Asuna orange hair, black lace, smirk.",
+      "job_id": "380f6ddb-75a7-489a-a423-b7953142059d"
     },
     {
       "id": "c-yelan-masturbate-tongue",
@@ -578,6 +586,14 @@
       "job_id": "84910d84-cfd1-4e32-a3e4-d01e0122dbb2"
     },
     {
+      "id": "g-asuna-inn",
+      "axis": "scene",
+      "url": "/api/examples/nsfw-lab/g-asuna-inn.jpg",
+      "prompt_id": "7957f35b-b567-4f57-b22b-604019ef9718",
+      "note": "Nightgown smirk. Modest.",
+      "job_id": "d63da220-fc56-427f-93ab-06ac386431a7"
+    },
+    {
       "id": "g-raiden-shrine",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-raiden-shrine.jpg",
@@ -592,6 +608,14 @@
       "prompt_id": "73c6b2a3-1a2d-4d40-9ea5-7328151535fe",
       "note": "Towel slipping, locker room.",
       "job_id": "2e62856e-4f50-4bc1-b5d2-60904025eea9"
+    },
+    {
+      "id": "i-asuna-tavern",
+      "axis": "scene",
+      "url": "/api/examples/nsfw-lab/i-asuna-tavern.jpg",
+      "prompt_id": "41e39c07-9d64-47ae-baa8-e5554bf1757d",
+      "note": "Asuna tavern, skirt up, smirk, crowd facing away.",
+      "job_id": "bcbab259-2c33-4cec-8e51-405e1e735088"
     },
     {
       "id": "i-kafka-train-lift",

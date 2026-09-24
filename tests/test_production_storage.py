@@ -280,6 +280,13 @@ class ProductionStorageTests(unittest.TestCase):
                 self.assert_blocked(p);self.assertTrue(other.exists())
         self.inert()
 
+    def test_directory_rejects_non_hex_identity_and_accepts_valid(self):
+        for identifier in (None, 123, 'ABCDEF'*5+'AB', 'a'*31, '../'+'a'*29):
+            with self.subTest(identifier=identifier):
+                with self.assertRaisesRegex(ValueError, 'Unknown experiment storage identity'):
+                    project_storage.directory(self.lab.root, identifier)
+        self.assertEqual(project_storage.directory(self.lab.root, 'a'*32), self.lab.root/('a'*32))
+
     def test_large_new_plan_is_rejected_before_mkdir(self):
         p={'kind':'comparison','name':'x'*project_storage.PLAN_LIMIT,'sha256':'a'*64}
         with self.assertRaisesRegex(ValueError,'publication limit'):

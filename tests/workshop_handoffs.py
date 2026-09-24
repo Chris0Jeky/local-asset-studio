@@ -15,6 +15,8 @@ from http.server import ThreadingHTTPServer
 from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
+from workshop_browser_core import immersive_css
+from workshop_wildcards import WILDCARDS, exercise_wildcards
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -22,6 +24,9 @@ ROOT = Path(__file__).resolve().parents[1]
 async def run(args):
     args.output.mkdir(parents=True, exist_ok=True)
     fixture.POSTS.clear()
+    previous_wildcards = fixture.CATALOG.get("wildcards")
+    if args.case in ("all", "wildcards"):
+        fixture.CATALOG["wildcards"] = WILDCARDS
     server = ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -34,15 +39,20 @@ async def run(args):
             page.on('pageerror', lambda e: errors.append(str(e)))
             if args.inert:
                 await inert_page(page, server.server_port)
-                for name in ('workshop.css', 'bundle-explorer.css'):
+                for name in ('workshop.css', 'bundle-explorer.css', 'studio-navigation.css', 'create-progressive-disclosure.css'):
                     await page.add_style_tag(content=(ROOT/'app/static'/name).read_text())
-                for name in ('workshop.js', 'bundle-core.js', 'bundle-explorer.js'):
+                await page.add_style_tag(content=immersive_css())
+                for name in ('presentation-context.js', 'workshop.js', 'create-progressive-disclosure.js', 'bundle-core.js', 'bundle-explorer.js'):
                     await page.add_script_tag(content=(ROOT/'app/static'/name).read_text())
             else:
                 await page.goto(f'http://127.0.0.1:{server.server_port}/#create')
             await page.wait_for_function('!!selected && !!document.querySelector("#workshopRecipeChange") && !!document.querySelector("#bundleLauncher")')
             await page.evaluate("showView('create')")
             await page.wait_for_timeout(150)
+            if args.case in ('all', 'wildcards'):
+                await exercise_wildcards(page, checks, fixture.POSTS)
+                await page.set_viewport_size({'width':1440, 'height':900})
+                await page.select_option('#workshopLayout', 'focus')
             if args.case in ('all', 'disclosure'):
                 await page.evaluate("document.querySelector('#negativeWrap').open=false")
                 await page.wait_for_function("sessionStorage.getItem('studio-negative-collapsed')==='1'")
@@ -99,6 +109,10 @@ async def run(args):
             await page.screenshot(path=str(args.output/'handoff.png'))
             await browser.close()
     finally:
+        if previous_wildcards is None:
+            fixture.CATALOG.pop("wildcards", None)
+        else:
+            fixture.CATALOG["wildcards"] = previous_wildcards
         server.shutdown();server.server_close();thread.join(timeout=5)
         (args.output/'report.json').write_text(json.dumps({'native_origin':not args.inert,'live_comfyui':False,'checks':checks,'page_errors':errors}, indent=2)+'\n')
     print(json.dumps(checks, indent=2))
@@ -108,5 +122,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', type=Path, default=ROOT/'.runtime/workshop-handoffs')
     parser.add_argument('--inert', action='store_true')
-    parser.add_argument('--case', choices=('all','bundle','disclosure'), default='all')
+    parser.add_argument('--case', choices=('all','bundle','disclosure','wildcards'), default='all')
     asyncio.run(run(parser.parse_args()))

@@ -1470,10 +1470,14 @@ class Studio:
         """Release ComfyUI's model cache once per idle stretch: only after the configured idle time, only on an idle ComfyUI queue."""
         if self.idle_release_minutes <= 0 or self._released_since_activity: return False
         if time.monotonic() - self._last_activity < self.idle_release_minutes * 60: return False
+        backends = getattr(self, 'backends', None)
+        if backends is not None and (getattr(backends, 'busy', False) or getattr(backends, 'active', 'primary') != 'primary'): return False
+        # Pin both calls to the endpoint checked here: a switch that activates another backend mid-tick retargets comfy_url.
+        url = self.comfy_url
         try:
-            queue = self._request("/queue", timeout=5)
+            queue = self._request("/queue", timeout=5, base_url=url)
             if not isinstance(queue, dict) or any(type(queue.get(key)) is not list or queue.get(key) for key in ("queue_running", "queue_pending")): return False
-            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True)
+            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True, base_url=url)
         except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
             self.cache_release["last_error"] = str(exc)[:200]; self._released_since_activity = True; return False
         self._released_since_activity = True; self._resident = None
@@ -2017,7 +2021,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/jobs/"):
                 job = self.studio.jobs.get(path.rsplit("/", 1)[-1]); return self._json(200, self.studio.public(job)) if job else self._json(404, {"error":"Unknown job"})
             if path.startswith("/api/image/"):
-                _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); image = job and job.get("outputs", [])[int(index)]
+                _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); index = int(index); outputs = job.get("outputs", []) if job else []; image = outputs[index] if 0 <= index < len(outputs) else None
                 if not image: return self._json(404, {"error":"Unknown image"})
                 if image.get("asset_id"): return self._local_file(self.studio.assets.file(image["asset_id"]))
                 return self._media(image, job)
