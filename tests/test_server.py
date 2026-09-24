@@ -511,8 +511,12 @@ class ServerTests(unittest.TestCase):
         s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"ok":True}]); s._last_activity-=11*60
         s.backends=Mock(active='hidream')
         self.assertFalse(s._idle_tick()); self.assertEqual(s.requests,[]); self.assertFalse(s._released_since_activity); self.assertEqual(s.cache_release["count"],0)
-        s.backends.active='primary'
+        s.backends.active='primary'; s.backends.busy=True
+        self.assertFalse(s._idle_tick()); self.assertEqual(s.requests,[])            # a switch is running: never touch it
+        s.backends.busy=False
         self.assertTrue(s._idle_tick()); self.assertEqual([r[0][0] for r in s.requests],["/queue","/free"])
+        # Both calls are pinned to the endpoint checked by the guard, so a mid-tick switch cannot retarget /free.
+        self.assertEqual([r[1].get("base_url") for r in s.requests],[s.comfy_url,s.comfy_url])
 
     def test_empty_comfy_response_is_only_allowed_for_free(self):
         """An empty 200 is the /free contract, not a global substitute for required JSON."""
