@@ -2522,6 +2522,28 @@ P79 held 7/7 — G19 measured 10 with sheer-off, crawl and portrait all holding,
 | p80-kafka-wedding | — | wai | 2026092445 | `dac04dac-c25a-418c-a7ae-2291e94bb2a9` |
 | p80-yor-wedding | — | cstati-v3-baseline | 2026092446 | `9c12cc27-472c-49f4-8081-59f378be1ebb` |
 
+All six completed, 26.5–28.9 s each, no spill. G19 closed on all eleven reads (seated rear holds); G20 promoted on the opening pair (full bridal read on both, squats held); B1 Vivian, Dialyn and Ju Fufu all clean (B1 now 22 clean, 16 partial, 1 break across 39 faces).
+
+- p80-yor-bunny-seated, CSTati, seed `2026092668`, job `db287044`, prompt `6eaf40e2`, 26.5 s, `CSTati-v3-Baseline_00156_.png`. Identity: Yor reads, black hair in a bun, bunny ears, black bunny suit with cottontail, casino warm light, night, adult. Lever: bunny on the seated rear — seated facing away, looking back over the shoulder, rear in black vinyl. Keep-or-change: keep; G19 closed.
+- p80-vivian-smallbust, WAI, seed `2026092669`, job `c290236f`, prompt `7923ffdf`, 26.8 s, `WAI-Illustration_00165_.png`. Identity: Vivian reads, long pink hair, white and purple gothic dress with chains, opera house violet, night, adult. Lever: B1 first try — bust reads modest in the dark corset top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: dark dress glossy. Keep-or-change: keep; B1 clean.
+- p80-dialyn-smallbust, CSTati, seed `2026092670`, job `947c8b27`, prompt `19e47d62`, 26.8 s, `CSTati-v3-Baseline_00157_.png`. Identity: Dialyn reads, short silver hair, maid headdress, black and white maid dress, mansion hall warm light, night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: maid dress glossy. Keep-or-change: keep; B1 clean.
+- p80-jufufu-smallbust, YumeFlux, seed `2026092671`, job `d373d7ba`, prompt `cdd466b7`, 26.8 s, `YumeFlux-ILv1-Baseline_00082_.png`. Identity: Ju Fufu reads, short orange hair, tiger ears and tail, black qipao with orange trim, chinatown lanterns, night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black qipao glossy. Keep-or-change: keep; B1 clean.
+- p80-kafka-wedding, WAI, seed `2026092445`, job `dac04dac`, prompt `e3f7f980`, 28.9 s, `WAI-Illustration_00166_.png`. Identity: Kafka reads, magenta hair, white lace bridal bodysuit with veil and stockings, chapel violet, night, adult. Lever: outfit to wedding — full bridal read. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; G20 1/2.
+- p80-yor-wedding, CSTati, seed `2026092446`, job `9c12cc27`, prompt `3f7d9b18`, 26.8 s, `CSTati-v3-Baseline_00158_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: outfit to wedding — full bridal read again. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G20 2/2, promotes.
+
+## G20 eyes, bent-over, seiza, crawl, B1 Yuzuha — p81 wave
+
+P80 held 6/6 — G19 closed on all eleven reads, G20 promoted on the opening pair, B1 Vivian, Dialyn and Ju Fufu clean (B1 now 22 clean, 16 partial, 1 break across 39 faces). This wave measures G20: `bedroom eyes` x2 at the same seeds plus wedding on the bent-over, seiza and crawl, with a B1 first try on Yuzuha. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p81-kafka-wedding-eyes | p80-kafka-wedding | wai | 2026092445 | `0d36565c-1acb-427a-8269-78cf0c1be6d5` |
+| p81-yor-wedding-eyes | p80-yor-wedding | cstati-v3-baseline | 2026092446 | `0eba196f-20e9-4ee5-b563-bb6b7c1b71f4` |
+| p81-kafka-wedding-bentover | p80-kafka-wedding | wai | 2026092672 | `8d594b16-087c-4c7a-9f72-7d71a519e15f` |
+| p81-yor-wedding-seiza | p80-yor-wedding | cstati-v3-baseline | 2026092675 | `b689d91c-6b96-453a-8fbc-cd4853ea6b1e` |
+| p81-kafka-wedding-crawl | p80-kafka-wedding | wai | 2026092673 | `ca02aeaa-dc77-4166-b8e9-3391d008a639` |
+| p81-yuzuha-smallbust | — | anifox-v2-baseline | 2026092674 | `bae0bb7a-8642-4161-8f19-03ba0b91bdc5` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.

@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p80 judged 6/6, G19 closed, G20 promoted, B1 at 39 faces, p81 queued — 25 September 2026 (18:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P80 held 6/6 (26.5–28.9 s, no spill): G19 closed on all eleven reads with the bunny seated rear (Yor `db287044`); G20 wedding dress promoted on the opening pair (Kafka `dac04dac`, Yor `9c12cc27`, full bridal read, squats held); B1 Vivian (`c290236f`), Dialyn (`947c8b27`) and Ju Fufu (`d373d7ba`) all clean (B1 now 22 clean, 16 partial, 1 break across 39 faces). P81 queued, six cells: G20 `bedroom eyes` x2 (Kafka `0d36565c`, Yor `0eba196f`), wedding bent-over (`8d594b16`), seiza (`b689d91c`) and crawl (`ca02aeaa`), B1 on Yuzuha (`bae0bb7a`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p79 judged 7/7, G19 measured 10, B1 at 36 faces, G20 open, p80 queued — 25 September 2026 (18:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
