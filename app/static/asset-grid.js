@@ -69,8 +69,9 @@
     const doc=grid.ownerDocument,focused=doc.activeElement;
     let state=grids.get(grid);
     const previous=state?[...state.rows.keys()]:[],sameWorkspace=!!state && state.workspace===options.workspaceId;
-    let focusId=null,focusRole=null;
-    if(state && grid.contains(focused)){
+    let focusId=null,focusRole=null,focusGroup=null,focusAction=null;
+    if(state && grid.contains(focused))for(const [key,section] of state.groups)if(section.actions.contains(focused)){focusGroup=key;focusAction=focused.dataset?.groupReview??null;break;}
+    if(state && grid.contains(focused) && focusGroup===null){
       for(const [id,row] of state.rows){
         if(!row.node.contains(focused))continue;
         focusId=id;
@@ -100,10 +101,14 @@
       if(grouped)for(const group of groups){
         let section=state.groups.get(group.key);
         if(!section){
-          const node=doc.createElement('section'),heading=doc.createElement('h4'),label=doc.createTextNode(''),count=doc.createElement('small'),items=doc.createElement('div');
-          node.className='asset-group';items.className='asset-group-items';
-          heading.append(label,count);node.append(heading,items);section={node,label,count,items};
+          const node=doc.createElement('section'),heading=doc.createElement('h4'),label=doc.createTextNode(''),count=doc.createElement('small'),actions=doc.createElement('div'),items=doc.createElement('div');
+          node.className='asset-group';items.className='asset-group-items';actions.className='asset-group-actions';actions.hidden=true;
+          // The heading is a programmatic focus target for when a group's own actions disappear.
+          heading.tabIndex=-1;heading.append(label,count);node.append(heading,actions,items);section={node,heading,label,count,actions,actionsHTML:'',items};
         }
+        // Group actions are caller-escaped markup, replaced only when it changes so a focused control survives.
+        const actionsHTML=options.groupActionsHTML?.(group)||'';
+        if(section.actionsHTML!==actionsHTML){section.actions.innerHTML=actionsHTML;section.actionsHTML=actionsHTML;section.actions.hidden=!actionsHTML;}
         if(section.label.nodeValue!==group.label)section.label.nodeValue=group.label;
         if(section.count.textContent!==String(group.assets.length))section.count.textContent=group.assets.length;
         place(grid,section.node,cursor);cursor=section.node.nextElementSibling;sections.set(group.key,section);
@@ -125,7 +130,10 @@
     }
     if(ownedFocus && (!focused.isConnected || doc.activeElement!==focused)){
       let target=null;
-      if(sameWorkspace && focusRole){
+      if(sameWorkspace && focusGroup!==null){
+        const section=state.groups.get(focusGroup);
+        target=section?[...section.actions.querySelectorAll('[data-group-review]')].find(b=>b.dataset.groupReview===focusAction)||section.heading:null;
+      }else if(sameWorkspace && focusRole){
         const id=nextFocus(previous,nextIds,focusId);
         target=state.rows.get(id)?.node.querySelector(selectors[focusRole]);
       }else if(sameWorkspace && focused.isConnected)target=focused;
