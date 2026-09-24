@@ -14,7 +14,7 @@ function harness({emptySecond = false, min = 1} = {}) {
   vm.runInContext([
     `let selected={reference_slots:[{role:'style'},{role:'style'}],reference_board:{min:${min}},last_reference:true};`,
     "let parentAssets=['source','other'],parentByInput={lastReference:'source'},uploaded=null,lastUploaded='source.png';",
-    "const nodes=new Map(),$=id=>{if(!nodes.has(id))nodes.set(id,{value:'',files:[],parentElement:null,addEventListener(){}});return nodes.get(id)};",
+    "const document={activeElement:null,querySelector:id=>$(id)};const nodes=new Map(),$=id=>{if(!nodes.has(id))nodes.set(id,{value:'',files:[],parentElement:null,addEventListener(){},querySelectorAll(){return []}});return nodes.get(id)};",
     "const notices=[],readiness=[],message=text=>notices.push(text),updateReady=()=>readiness.push(referencesReady()),esc=String;",
     "const StudioContinuation={sourceInput:()=> 'last_reference'};",
     "const requests=[],api=(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject})),post=(url,body)=>api(url,{body});",
