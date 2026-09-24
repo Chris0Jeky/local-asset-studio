@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p77 judged 7/7, G18 closed, G19 promoted, B1 at 31 faces, p78 queued — 25 September 2026 (18:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P77 held 7/7 (26.3–28.4 s, no spill): G18 closed 8/8 on the sheer-off reruns (Kafka `3a8b9880`, Yor `94d8c6b6`, nothing drifted) and the santa seated rear (Yor `bac444b2`); G19 bunny suit promoted on the opening pair (Kafka `1264b365`, Yor `26ba5851`, full suit read, squats held); B1 Yixuan (`a3c31e47`) and Phoebe (`be100e4f`) both clean (B1 now 14 clean, 16 partial, 1 break across 31 faces). P78 queued, six cells: G19 `bedroom eyes` x2 (Kafka `a3226b09`, Yor `b5b69ae5`), bunny bent-over (`c94026f9`) and seiza (`8fdc9abe`), B1 on Sparkle (`c7da953f`) and Zhezhi (`c598a85c`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p76 judged 6/6, G18 ports/eyes closed, G19 bunny open, p77 queued — 25 September 2026 (17:45 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.

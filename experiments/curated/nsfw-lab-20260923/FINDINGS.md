@@ -2453,6 +2453,29 @@ P76 held 6/6 — G18 ports and eyes closed on santa, crawl confirms T12, portrai
 | p77-kafka-bunny | — | wai | 2026092445 | `1264b365-1cea-4b4f-8579-8016895ad0f0` |
 | p77-yor-bunny | — | cstati-v3-baseline | 2026092446 | `26ba5851-3c0d-4e17-a215-93944aec2e39` |
 
+All seven completed, 26.3–28.4 s each, no spill. G18 closed 8/8 (sheer-off reruns drift nothing on either family, santa seated rear holds); G19 promoted on the opening pair (full bunny read on both, squats held); B1 Yixuan and Phoebe both clean (B1 now 14 clean, 16 partial, 1 break across 31 faces).
+
+- p77-kafka-santa-nolora, WAI, seed `2026092445`, job `3a8b9880`, prompt `ed0f8109`, 28.4 s, `WAI-Illustration_00157_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, bow collar, red santa dress, snowy trees and lights, night, adult. Lever: sheer-off rerun at the santa seed — dress intact and opaque, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: red dress glossy; black gloves and thigh-highs invented. Keep-or-change: keep; G18 sheer-off 1/2.
+- p77-yor-santa-nolora, CSTati, seed `2026092446`, job `94d8c6b6`, prompt `cfdc8013`, 28.3 s, `CSTati-v3-Baseline_00148_.png`. Identity: Yor reads, black hair, red santa dress with fur trim and pom-poms, santa hat, cabin lantern, night, adult. Lever: sheer-off rerun at the santa seed — dress intact and opaque, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 sheer-off 2/2, G18 closed.
+- p77-yor-santa-seated, CSTati, seed `2026092656`, job `bac444b2`, prompt `d884db3e`, 26.3 s, `CSTati-v3-Baseline_00149_.png`. Identity: Yor reads, black hair in a bun with rose pin, santa hat, red santa dress with back cutout and knot, cabin window and snow, night, adult. Lever: santa on the seated rear — seated facing away, looking back over the shoulder, rear in red. Keep-or-change: keep.
+- p77-yixuan-smallbust, AniFox, seed `2026092657`, job `a3c31e47`, prompt `6a022c8d`, 26.3 s, `AniFox-v2-Baseline_00097_.png`. Identity: Yixuan reads, black hair with gold ornaments, white and teal martial robe with gold rings, mountain temple, night, adult. Lever: B1 first try — bust reads modest in the dark high-collar robe. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: robe glossy. Keep-or-change: keep; B1 clean.
+- p77-phoebe-smallbust, YumeFlux, seed `2026092658`, job `be100e4f`, prompt `39f156ae`, 26.3 s, `YumeFlux-ILv1-Baseline_00080_.png`. Identity: Phoebe reads, short blonde hair, white and gold acolyte dress, cathedral, night, adult. Lever: B1 first try — bust reads modest in the white top and gold bodice. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: gold bodice glossy. Keep-or-change: keep; B1 clean.
+- p77-kafka-bunny, WAI, seed `2026092445`, job `1264b365`, prompt `670eff0a`, 26.4 s, `WAI-Illustration_00158_.png`. Identity: Kafka reads, magenta hair, black bunny suit, bow collar, bunny ears, nightclub violet, night, adult. Lever: outfit to bunny — full read, glossy suit, fishnets, heels. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 1/2.
+- p77-yor-bunny, CSTati, seed `2026092446`, job `26ba5851`, prompt `c8503e10`, 26.4 s, `CSTati-v3-Baseline_00150_.png`. Identity: Yor reads, black hair with rose ornament, black bunny suit, bow collar, bunny ears, cottontail, casino warm light, night, adult. Lever: outfit to bunny — full read again, fishnets. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 2/2, promotes.
+
+## G19 eyes, bent-over, seiza, B1 Sparkle/Zhezhi — p78 wave
+
+P77 held 7/7 — G18 closed on all eight reads, G19 promoted on the opening pair, B1 Yixuan and Phoebe clean (B1 now 14 clean, 16 partial, 1 break across 31 faces). This wave measures G19: `bedroom eyes` x2 at the same seeds plus bunny on the bent-over (Kafka) and the seiza (Yor), with B1 first tries on Sparkle and Zhezhi. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p78-kafka-bunny-eyes | p77-kafka-bunny | wai | 2026092445 | `a3226b09-e5de-487e-97df-4ae985d5d78d` |
+| p78-yor-bunny-eyes | p77-yor-bunny | cstati-v3-baseline | 2026092446 | `b5b69ae5-1ed1-464a-b603-dbf68d998b03` |
+| p78-kafka-bunny-bentover | p77-kafka-bunny | wai | 2026092659 | `c94026f9-9e5e-4a42-a990-e5836c7e6c32` |
+| p78-yor-bunny-seiza | p77-yor-bunny | cstati-v3-baseline | 2026092660 | `8fdc9abe-dd0a-40a5-b0a2-48f70c4ef64e` |
+| p78-sparkle-smallbust | — | wai | 2026092661 | `c7da953f-752a-4047-bf65-b98e858663d4` |
+| p78-zhezhi-smallbust | — | wai | 2026092662 | `c598a85c-b7a4-4fc7-908e-25b040690e01` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
