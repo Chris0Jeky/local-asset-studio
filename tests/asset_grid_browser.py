@@ -102,6 +102,14 @@ async def exercise(args):
                 await page.locator(f'[data-asset-check="{ids[0]}"]').focus()
                 await page.evaluate('document.querySelector("#assetSort").value="newest";renderAssets();')
                 check('GRID-39', 'Several cards share a retained group and reorder without losing focus', await page.evaluate('document.querySelectorAll("#assetGrid .asset-group").length===1 && document.querySelector("#assetGrid .asset-group h4 small").textContent==="3" && card(gridIds[0])===keptCard && keptImage.isConnected && document.activeElement===keptCheck && JSON.stringify([...document.querySelectorAll("#assetGrid [data-asset-check]")].map(n=>n.dataset.assetCheck))===JSON.stringify(visibleAssets().map(a=>a.id))'))
+                check('GRID-40', 'A group offers three keyboard triage buttons naming its unreviewed count', await page.evaluate('document.querySelectorAll("#assetGrid .asset-group-actions [data-group-review]").length===3 && document.querySelector("#assetGrid .asset-group-actions").textContent.startsWith("Mark 3 unreviewed as") && !document.querySelector("#assetGrid .asset-group-actions").hidden'))
+                await page.evaluate('window.groupPrompts=[];window.savedConfirm=window.confirm;window.confirm=m=>{groupPrompts.push(m);return false;};void 0')
+                await page.locator('#assetGrid [data-group-review="rejected"]').focus();await page.keyboard.press('Enter')
+                await page.wait_for_function('groupPrompts.length===1 && !assetBulkReviewBusy')
+                check('GRID-41', 'Enter on a group action asks with count and decision; declining sends nothing', await page.evaluate('groupPrompts[0].startsWith("Mark 3 unreviewed pictures in \'Grid QA\' as Rejected?") && groupPrompts[0].includes("changed back individually")') and not any(p['path']=='/api/assets/update' for p in fixture.POSTS))
+                await page.evaluate('window.confirm=savedConfirm;assetState.assets.forEach(a=>{a.review="rejected";});renderAssets();')
+                check('GRID-42', 'A focused group action that disappears hands focus to its group heading', await page.evaluate('document.querySelector("#assetGrid .asset-group-actions").hidden && document.activeElement===document.querySelector("#assetGrid .asset-group h4")'))
+                await refresh()
                 await page.select_option('#assetGroup', 'none')
                 check('GRID-38', 'Ungrouping retains source nodes and removes old group containers', await page.evaluate('card(gridIds[0])===keptCard && keptImage.isConnected && !document.querySelector("#assetGrid .asset-group") && keptCard.parentElement.id==="assetGrid"'))
                 await page.select_option('#assetSort', 'newest')
@@ -210,7 +218,7 @@ async def exercise(args):
              'posts':fixture.POSTS,'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ['app/static/workspace.js','app/static/asset-grid.js'] if (ROOT/f).is_file()}}
     (args.out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({k:receipt[k] for k in ['mode','pass','fail','errors','execution_error']},indent=2))
-    if failure or errors or len(checks)!=39 or (receipt['fail'] and not args.baseline):raise SystemExit(1)
+    if failure or errors or len(checks)!=42 or (receipt['fail'] and not args.baseline):raise SystemExit(1)
 
 
 if __name__=='__main__':
