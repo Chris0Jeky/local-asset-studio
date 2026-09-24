@@ -1331,3 +1331,27 @@ P31 ran 5/6 with E1's second squat break, demoting the combo to portraits-only. 
 | p32-nero-smirk | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `8f1e3010-3955-4903-b6b2-1c6fd8d61115` |
 | p32-kafka-turtle | p5-kafka-squat | wai | 2026092445 | `1e34560c-a1ce-48a5-b5f4-2b3b2afbbd7e` |
 | p32-yor-turtle | p5-yor-squat | cstati-v3-baseline | 2026092446 | `e1db26d7-96c7-4343-8864-5cd983f51308` |
+
+### p32 results
+
+All six completed, 14.2–24.3 s each. No spill line on any receipt. The E1 combo held on both crawls, so the demotion is squats-only: E1 holds on portraits and crawls. `smirk` for `smile` fired on both portraits, and the turtleneck swap fired on both squats.
+
+- p32-sabrina-combo, AniFox, seed `2026092498`, job `bfdad04f`, prompt `f0fe8a65`, 14.2 s, `AniFox-v2-Baseline_00059_.png`. Identity: same Sabrina read, gym hall, adult. Lever: `parted lips` to `grin, winking` — both show on the crawl face. Crawl held. Hands: crossed, normal-looking. Cloth: same dark dress covering. Keep-or-change: keep.
+- p32-sonia-combo, YumeFlux, seed `2026092513`, job `6b375de2`, prompt `ab6c5201`, 22.2 s, `YumeFlux-ILv1-Baseline_00052_.png`. Identity: same Sonia read, lab, adult. Lever: same combo — grin and wink both show. Crawl held. Hands: one flat, one tucked. Cloth: green jacket hiked, rear bare. Keep-or-change: keep.
+- p32-kafka-smirk, CSTati, seed `2026092542`, job `8ee40481`, prompt `3c49e122`, 24.3 s, `CSTati-v3-Baseline_00060_.png`. Identity: same Kafka read, train, adult. Lever: `smirk` for `smile` — an asymmetric closed-lip smirk, clearly distinct. Portrait held. Hands: not visible. Cloth: same translucent white shirt. Eyes pink again, same drift as the grin cell. Keep-or-change: keep.
+- p32-nero-smirk, AniFox, seed `2026092544`, job `8f1e3010`, prompt `74239b11`, 22.3 s, `AniFox-v2-Baseline_00060_.png`. Identity: same Nero read, throne room, adult. Lever: `smirk` for `smile` — an asymmetric smirk. Portrait held. Hands: not visible. Cloth: same glossy red-and-white with a translucent chest. Keep-or-change: keep.
+- p32-kafka-turtle, WAI, seed `2026092445`, job `1e34560c`, prompt `2d4cc56b`, 24.2 s, `WAI-Illustration_00078_.png`. Identity: Kafka reads, magenta hair, sunglasses on head, rooftop, adult. Lever: shirt and jacket to black turtleneck sweater — the swap fired, ribbed knit with glossy black bottoms. Squat held, hands behind the head. Hands: hidden. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p32-yor-turtle, CSTati, seed `2026092446`, job `e1db26d7`, prompt `d44490be`, 22.2 s, `CSTati-v3-Baseline_00061_.png`. Identity: Yor reads, black hair, red eyes, ballroom, adult. Lever: red dress to red turtleneck sweater dress — the swap fired, glossy and wet. Squat held, hands behind the head. Hands: hidden. Mouth closed. Keep-or-change: keep.
+
+## Small-face smirks, port turtlenecks, smirk-wink — p33 wave
+
+P32 held 6/6 and promoted T19 and G3. This wave takes T19 to a squat and a crawl (`parted lips` to `smirk` at the same seed), runs G3 on the ports at new seeds with no sheer LoRA, and tests the smirk-plus-wink combo as the single lever on two portraits at the same seed. Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p33-jane-smirk | p6-jane-lips | yumeflux-ilv1-baseline | 2026092431 | `06ce7180-f66f-49a9-a8de-1969cca1af66` |
+| p33-sabrina-smirk | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `fdfdac0a-697a-49bb-b9ec-ee78f8451691` |
+| p33-kafka-turtle-anima | G3 | anima-v1-baseline | 2026092618 | `71ddacef-c5b5-47da-bf5e-522d796e7051` |
+| p33-yor-turtle-janima | G3 | janima-v1-baseline | 2026092619 | `b46c5d49-ab60-4529-aff8-9bbe2ff7b9e3` |
+| p33-kafka-smirkwink | p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `f2c7a4b7-1b86-4c66-91fa-cc3918beb7bc` |
+| p33-nero-smirkwink | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `156f8c32-f564-4f62-b6f2-1af401174ed5` |
