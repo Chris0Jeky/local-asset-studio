@@ -103,11 +103,15 @@ Danbooru names were checked against `https://danbooru.donmai.us/tags.json` on 23
 | Pokemon | `jessie (pokemon)` | (unchecked) | Adult Team Rocket member. Tag check 24 September returned 403, so no count. |
 | Genshin | `raiden shogun` | (unchecked) | Adult god, Inazuma shogun. |
 | Genshin | `yelan (genshin impact)` | (unchecked) | Adult intelligence agent. |
-| Zenless Zone Zero | `evelyn chevalier` | (unchecked) | Adult bodyguard. |
 | Pokemon | `lusamine (pokemon)` | (unchecked) | Adult Aether president, mother of two teens. |
 | Pokemon | `caitlin (pokemon)` | (unchecked) | Adult Elite Four member. |
 | Pokemon | `nessa (pokemon)` | (unchecked) | Adult gym leader and model. |
 | Pokemon | `sabrina (pokemon)` | (unchecked) | Adult gym leader. |
+| Sword Art Online | `asuna (sword art online)` | (21 Sep lab) | Owner-confirmed acceptable 24 September (PR #915). Adult qualifier required. |
+| Pokemon | `sonia (pokemon)` | (unchecked) | Adult research assistant. |
+| Pokemon | `olivia (pokemon)` | (unchecked) | Adult island kahuna. |
+| Pokemon | `erika (pokemon)` | (unchecked) | Adult gym leader. |
+| NieR:Automata | `2b (nier:automata)` | (21 Sep lab) | Adult android. |
 
 ### Additional, aged up characters
 
@@ -806,3 +810,137 @@ P10 proved bare words hold the crawl and the lab defaults stand (CFG 5, 20 steps
 | p11-caitlin-crawl | cstati-v3-baseline | 2026092496 | `a7c44f5f-c6e6-4dd1-8153-a50bd71ebf6e` |
 | p11-nessa-crawl | yumeflux-ilv1-baseline | 2026092497 | `a63affee-851d-4583-9d62-2ac096004428` |
 | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `285eb14d-5f26-4e1a-bb7b-f941cfe60414` |
+
+### p11 results
+
+All eight completed, 28.3–40.4 s each. No spill line on any receipt. T12 words-only held 8/8 across all four presets. New garment finding: the crawl fully hikes loose dresses (Raiden's and Caitlin's rears are bare), while bodysuits, briefs, and fitted separates stay covered.
+
+- p11-raiden-crawl, WAI, seed `2026092491`, job `59d30c3a`, prompt `26a37a33`, 40.4 s, `WAI-Illustration_00055_.png`. Identity: Raiden reads, long purple hair, purple eyes, palace tatami, adult. Lever: crawl held, face toward viewer, mouth slightly open. Hands: forearms planted, one hand visible with normal fingers. Cloth: purple dress hiked fully, rear bare; top covers. Keep-or-change: keep; loose dresses hike completely on the crawl.
+- p11-yelan-crawl, CSTati, seed `2026092492`, job `ed934d82`, prompt `e28156ca`, 32.4 s, `CSTati-v3-Baseline_00029_.png`. Identity: Yelan reads, dark blue hair, green eyes, earrings, casino, adult. Lever: crawl held, face toward viewer. Hands: one arm extended and planted. Cloth: blue bodysuit stayed on, glossy. Keep-or-change: keep.
+- p11-evelyn-crawl, YumeFlux, seed `2026092493`, job `b8794fde`, prompt `0361a830`, 32.3 s, `YumeFlux-ILv1-Baseline_00027_.png`. Identity: adult woman, brown hair, hotel suite, adult. Lever: crawl held, eyes down, mouth slightly open. Hands: crossed under the chin, normal-looking fingers. Cloth: black dress covers. Keep-or-change: keep.
+- p11-jade-crawl, AniFox, seed `2026092494`, job `5d7df879`, prompt `fc670afe`, 30.3 s, `AniFox-v2-Baseline_00032_.png`. Identity: adult woman, dark hair, green-and-white dress, marble office, adult. Lever: crawl held, eyes closed, mouth slightly open. Hands: one flat with five fingers, one fist-ish. Cloth: dress hiked at the back but covers the hips. Keep-or-change: keep.
+- p11-lusamine-crawl, WAI, seed `2026092495`, job `c3d4677c`, prompt `022d7ca5`, 32.3 s, `WAI-Illustration_00056_.png`. Identity: adult woman, blonde hair, green-and-white dress, villa, adult. Lever: crawl held, face toward viewer. Hands: tucked under the chin, curled fingers. Cloth: green dress covers. Keep-or-change: keep.
+- p11-caitlin-crawl, CSTati, seed `2026092496`, job `a7c44f5f`, prompt `bcbdee94`, 28.3 s, `CSTati-v3-Baseline_00030_.png`. Identity: adult woman, blonde hair, white gown, bedroom, adult. Lever: crawl held, face toward viewer. Hands: crossed under the chin, normal fingers. Cloth: white gown hiked fully like Raiden's, rear bare. Keep-or-change: keep; second confirmation of the hike rule.
+- p11-nessa-crawl, YumeFlux, seed `2026092497`, job `a63affee`, prompt `8c3a3b79`, 34.4 s, `YumeFlux-ILv1-Baseline_00028_.png`. Identity: Nessa reads strongly, dark skin, beaded blue-black hair, stadium, adult. Lever: crawl held. Hands: crossed, normal-looking. Cloth: red-and-white gym uniform covers. Keep-or-change: keep.
+- p11-sabrina-crawl, AniFox, seed `2026092498`, job `285eb14d`, prompt `7adc48d1`, 28.3 s, `AniFox-v2-Baseline_00033_.png`. Identity: adult woman, black hair, red eyes, gym hall, adult. Lever: crawl held. Hands: both flat with normal five-finger counts. Cloth: black-and-red dress covers the hips. Keep-or-change: keep.
+
+## Remaining adults — p12 wave
+
+P11 held 8/8 and set the T12 hike rule. This wave runs the ten ambition-list adults with no T7/T8/T12 cell yet, spread across all three stacks: four crawls (words-only, elbow LoRA at 0), three bent-overs and three squats (see-through LoRA at 1 with `parted lips`). One lever per cell: the character. Queued in one burst.
+
+| Cell | Stack | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p12-himeno-crawl | T12 | wai | 2026092501 | `696a8855-235f-45ff-83ef-537176b983ef` |
+| p12-morgan-bentover | T8 | cstati-v3-baseline | 2026092502 | `e0523564-9d26-4fa5-9fb2-ff9cb7f5a919` |
+| p12-nero-squat | T7 | yumeflux-ilv1-baseline | 2026092503 | `e875b8fe-a28e-4647-b7dc-27d06aba47a7` |
+| p12-jeanne-crawl | T12 | anifox-v2-baseline | 2026092504 | `5a6ee378-a776-4bb2-aaff-8713587eb048` |
+| p12-caesar-squat | T7 | wai | 2026092505 | `277f968e-9c8f-42c8-9e85-2d1190c59deb` |
+| p12-burnice-bentover | T8 | cstati-v3-baseline | 2026092506 | `da022cd3-b36b-40e4-961c-69e933d6245b` |
+| p12-carlotta-crawl | T12 | yumeflux-ilv1-baseline | 2026092507 | `ef743679-da32-4db8-a033-9bb72649ba54` |
+| p12-bellona-squat | T7 | anifox-v2-baseline | 2026092508 | `7a433ef0-6e01-4c09-a356-8ad05c8849ab` |
+| p12-destina-bentover | T8 | wai | 2026092509 | `fc0a3abf-7b7e-4eb6-9ccf-f27f739b1c82` |
+| p12-tenebria-crawl | T12 | cstati-v3-baseline | 2026092510 | `695653e7-9aa1-4293-8e1e-0122460136bf` |
+
+### p12 results
+
+All ten completed, 24.2–26.4 s each. No spill line on any receipt. T7/T8/T12 held 10/10 on the last unrun ambition-list adults. Every name on the ambition list now has a T7, T8, or T12 cell.
+
+- p12-himeno-crawl, WAI, seed `2026092501`, job `696a8855`, prompt `8ab991f4`, 26.3 s, `WAI-Illustration_00057_.png`. Identity: Himeno reads, short black hair, eyepatch, green eye, rooftop dusk, adult. Lever: crawl held. Hands: one under the chin, one planted. Cloth: white shirt and black pants cover. Mouth slightly open. Keep-or-change: keep.
+- p12-morgan-bentover, CSTati, seed `2026092502`, job `e0523564`, prompt `2c1ddc0f`, 26.4 s, `CSTati-v3-Baseline_00031_.png`. Identity: adult woman, throne room; hair came out pale blue-white, not the prompted dark blue — likeness loose. Lever: bent-over held, looking back. Hands: both on the dress, normal-looking. Cloth: white parts translucent, blue glossy. Mouth slightly open. Keep-or-change: keep; hair drift is the note.
+- p12-nero-squat, YumeFlux, seed `2026092503`, job `e875b8fe`, prompt `591e1ca0`, 26.3 s, `YumeFlux-ILv1-Baseline_00029_.png`. Identity: Nero reads strongly, blonde hair, green eyes, ahoge, red dress, colosseum, adult. Lever: squat held, mouth parted. Hands: hidden. Cloth: red dress glossy and wet. Keep-or-change: keep.
+- p12-jeanne-crawl, AniFox, seed `2026092504`, job `5a6ee378`, prompt `5e75b28f`, 26.4 s, `AniFox-v2-Baseline_00034_.png`. Identity: Jeanne reads, blonde braid, armor headpiece, cathedral, adult. Lever: crawl held. Hands: gauntleted and planted. Cloth: battle dress hiked at the rear (bare hips above the thigh-highs), partial hike. Keep-or-change: keep.
+- p12-caesar-squat, WAI, seed `2026092505`, job `277f968e`, prompt `f279a954`, 24.3 s, `WAI-Illustration_00058_.png`. Identity: adult woman, red hair, biker jacket, choker, garage, orange light, adult. Lever: squat held, mouth parted. Hands: hidden. Cloth: white top translucent over the chest, black pants glossy. The choker carries fake letters though `logo, letters` was in the negative. Keep-or-change: keep.
+- p12-burnice-bentover, CSTati, seed `2026092506`, job `da022cd3`, prompt `48f19bd9`, 32.3 s, `CSTati-v3-Baseline_00032_.png`. Identity: adult woman, red-and-white hair, bar, adult. Lever: bent-over held, looking back in profile. Hands: both on the skirt, normal-looking. Cloth: black outfit glossy. Mouth slightly open. Keep-or-change: keep.
+- p12-carlotta-crawl, YumeFlux, seed `2026092507`, job `ef743679`, prompt `d20163b9`, 24.3 s, `YumeFlux-ILv1-Baseline_00030_.png`. Identity: adult woman, light blue hair, white-and-gold outfit, conservatory, adult. Lever: crawl held. Hands: one flat with five fingers, one tucked. Cloth: white-and-gold outfit covers. Keep-or-change: keep.
+- p12-bellona-squat, AniFox, seed `2026092508`, job `7a433ef0`, prompt `b973d8f2`, 24.2 s, `AniFox-v2-Baseline_00035_.png`. Identity: adult woman, black hair, pirate coat with anchor belt, ship deck at night, adult. Lever: squat held, mouth parted. Hands: hidden. Cloth: white blouse translucent, black skirt glossy. Keep-or-change: keep.
+- p12-destina-bentover, WAI, seed `2026092509`, job `fc0a3abf`, prompt `9c64a61d`, 24.2 s, `WAI-Illustration_00059_.png`. Identity: adult woman, pink hair, white-and-teal dress, chapel, adult. Lever: bent-over held over the pews, hands on the dress. Hands normal-looking. Cloth: white dress translucent over the hips. Mouth slightly open. Keep-or-change: keep.
+- p12-tenebria-crawl, CSTati, seed `2026092510`, job `695653e7`, prompt `b387a6c9`, 24.2 s, `CSTati-v3-Baseline_00033_.png`. Identity: adult woman, dark purple hair, dark outfit, tower hall, adult. Lever: crawl held, eyes closed. Hands: one tucked, one extended. Cloth: dark outfit covers. Mouth slightly open. Keep-or-change: keep.
+
+## Asuna returns — p13 wave
+
+P12 held 10/10 and covered the ambition list. Asuna is owner-confirmed acceptable (PR #915) and never ran the new stacks, so she gets T7 and T8; Sonia, Olivia, and Erika close the Pokemon adult shortlist; Acheron runs her first cell this night. One lever per cell: the character. Queued in one burst.
+
+| Cell | Stack | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p13-asuna-squat | T7 | wai | 2026092511 | `898b0c9a-22b7-4869-abe1-88f44d429276` |
+| p13-asuna-bentover | T8 | cstati-v3-baseline | 2026092512 | `ae24b137-e16c-41f2-95b2-906c26bf5aca` |
+| p13-sonia-crawl | T12 | yumeflux-ilv1-baseline | 2026092513 | `d0a5140d-238c-462b-a580-f1c4a535beae` |
+| p13-olivia-bentover | T8 | anifox-v2-baseline | 2026092514 | `9a2e37f0-9ff5-4f2b-83ca-d50fae064900` |
+| p13-erika-squat | T7 | wai | 2026092515 | `34c8a909-a32e-4a8d-826f-4ab83b42c600` |
+| p13-acheron-crawl | T12 | cstati-v3-baseline | 2026092516 | `ef7916cc-25bd-4c09-8d2c-73937f53a7bb` |
+
+### p13 results
+
+All six completed, 24.2–30.4 s each. No spill line on any receipt. Asuna held both new stacks; the Pokemon adult shortlist is closed.
+
+- p13-asuna-squat, WAI, seed `2026092511`, job `898b0c9a`, prompt `97464380`, 26.3 s, `WAI-Illustration_00060_.png`. Identity: Asuna reads, long orange hair, white-and-red dress, inn room, adult. Lever: T7 held, mouth slightly open. Hands: hidden. Cloth: white dress glossy and wet, fairly opaque. Keep-or-change: keep.
+- p13-asuna-bentover, CSTati, seed `2026092512`, job `ae24b137`, prompt `2055439f`, 30.2 s, `CSTati-v3-Baseline_00034_.png`. Identity: Asuna, orange hair, tavern, adult. Lever: T8 held with extreme foreshortening, deep bend, upside-down face looking back. Hands: both on the skirt, normal-looking. Cloth: black skirt glossy, white blouse. Mouth slightly open. Keep-or-change: keep.
+- p13-sonia-crawl, YumeFlux, seed `2026092513`, job `d0a5140d`, prompt `5b8b5f67`, 30.4 s, `YumeFlux-ILv1-Baseline_00031_.png`. Identity: adult woman, blonde hair with heart clips, green jacket, lab, adult. Lever: crawl held. Hands: tucked. Cloth: green jacket hiked, bare thighs at the rear, partial hike. Keep-or-change: keep.
+- p13-olivia-bentover, AniFox, seed `2026092514`, job `9a2e37f0`, prompt `666e87ea`, 24.2 s, `AniFox-v2-Baseline_00036_.png`. Identity: Olivia reads, dark skin, black bob, beach resort, adult. Lever: T8 held, looking back. Hands: both on the skirt, normal-looking. Cloth: orange skirt glossy and wet, white top translucent-ish. Mouth slightly open. Keep-or-change: keep.
+- p13-erika-squat, WAI, seed `2026092515`, job `34c8a909`, prompt `3003ed3f`, 24.3 s, `WAI-Illustration_00061_.png`. Identity: adult woman, black bob, red kimono, tea house, adult. Lever: T7 held. Hands: hidden. Cloth: red kimono glossy. Mouth slightly open. Keep-or-change: keep.
+- p13-acheron-crawl, CSTati, seed `2026092516`, job `ef7916cc`, prompt `07f1c68f`, 24.2 s, `CSTati-v3-Baseline_00035_.png`. Identity: Acheron reads, grey hair, purple eyes, train car, adult. Lever: crawl held. Hands: one flat with five fingers, one tucked. Cloth: black dress covers. Keep-or-change: keep.
+
+### Many-minute cell: skipped with cause
+
+The optional last cell was scouted, not run. Both Krea text-to-image presets (`krea-portrait`, `krea-anime-atelier`) bind no negative: the graphs zero out the negative conditioning, so the lab's required `child, loli, shota` negative cannot be attached to a Krea sexual cell. The boundary fails the "if and only if", so no many-minute job ran tonight. Zero of the two allowed were used.
+
+## Eyes and seiza — p14 wave
+
+P13 held 6/6. This wave adds `bedroom eyes` to three held squats at the same seed (the tag is the only change against p6/p7), and transfers the measured M3 seiza stack (`sitting, seiza, from behind, looking back, tongue out, ass focus, dynamic angle, foreshortening, blush, sweat`; receipt `37b8802b`, YumeFlux) to three new adults on the other three presets. Queued in one burst.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p14-kafka-eyes | p6-kafka-lips | wai | 2026092445 | `5ea8871d-52bb-4f86-a3f1-65ade75438ec` |
+| p14-yor-eyes | p6-yor-lips | cstati-v3-baseline | 2026092446 | `74ff4a95-1958-40a4-b670-ed5dfd56eae8` |
+| p14-elesa-eyes | p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `32d3e18e-6210-415c-9759-6955d1970599` |
+| p14-morgan-seiza | M3 seiza stack | wai | 2026092521 | `c015140a-e5fd-431c-b679-9efa414d6298` |
+| p14-acheron-seiza | M3 seiza stack | cstati-v3-baseline | 2026092522 | `71a16b63-4c29-4425-a05e-575c49141b0a` |
+| p14-caitlin-seiza | M3 seiza stack | anifox-v2-baseline | 2026092523 | `70cb67ac-7bb6-4e2f-b6dd-8c7597a9a04e` |
+
+### p14 results
+
+All six completed, 24.3–26.2 s each. No spill line on any receipt. `bedroom eyes` fired 3/3 at the same seed without disturbing pose, hands, or cloth. The seiza stack transferred 3/3 to new adults on new presets; feet stay visible and normal, hands stay tucked.
+
+- p14-kafka-eyes, WAI, seed `2026092445`, job `5ea8871d`, prompt `21c0802c`, 24.3 s, `WAI-Illustration_00062_.png`. Identity: same Kafka read, rooftop, adult. Lever: eyes heavy-lidded and half-closed; tag fired. Hands: hidden. Cloth: same glossy shirt and darks, mouth parted. Keep-or-change: keep.
+- p14-yor-eyes, CSTati, seed `2026092446`, job `74ff4a95`, prompt `76309b98`, 24.3 s, `CSTati-v3-Baseline_00036_.png`. Identity: same Yor read, lamp interior, adult. Lever: eyes heavy-lidded; tag fired. Hands: hidden. Cloth: same glossy red dress. Keep-or-change: keep.
+- p14-elesa-eyes, YumeFlux, seed `2026092467`, job `32d3e18e`, prompt `8e8239b6`, 24.3 s, `YumeFlux-ILv1-Baseline_00032_.png`. Identity: same Elesa read, runway, adult. Lever: eyes half-lidded; tag fired. Hands: hidden. Cloth: same sheer black top. Keep-or-change: keep.
+- p14-morgan-seiza, WAI, seed `2026092521`, job `c015140a`, prompt `11a6ea89`, 26.2 s, `WAI-Illustration_00063_.png`. Identity: adult woman, pale blue-white hair with black bow, stone hall, adult. Lever: seiza held, kneeling, from behind, looking back, tongue out. Hands: tucked, not visible. Feet visible at the frame bottom, normal-looking. Cloth: blue dress translucent over the hips. Keep-or-change: keep.
+- p14-acheron-seiza, CSTati, seed `2026092522`, job `71a16b63`, prompt `c3575442`, 24.3 s, `CSTati-v3-Baseline_00037_.png`. Identity: Acheron reads, grey hair, train car, red light, adult. Lever: seiza held, looking back, tongue out. Hands: tucked. Feet visible, normal-looking. Cloth: black dress glossy. Keep-or-change: keep.
+- p14-caitlin-seiza, AniFox, seed `2026092523`, job `70cb67ac`, prompt `fca92451`, 24.3 s, `AniFox-v2-Baseline_00037_.png`. Identity: adult woman, blonde hair, white gown, villa bedroom, adult. Lever: seiza held, looking back, tongue out. Hands: tucked. Feet visible, normal-looking. Cloth: white gown translucent. Keep-or-change: keep.
+
+## Seated rear — p15 wave
+
+P14 held 6/6. The seated-rear stack was measured on M4 but never written into this checkout's notes, so the prompts below were recovered from the receipts: Zhu Yuan (AniFox, job `0744d4f9`, prompt `1982818d`, `AniFox-v2-Baseline_00012_.png`, 24.3 s) and Artoria (YumeFlux, job `59b54e2c`, prompt `5001966a`, `YumeFlux-ILv1-Baseline_00016_.png`, 30.2 s), both `sitting, facing away from viewer, ass focus, close up, blush` with the see-through head. This wave transfers that exact tail to six new adults. One lever per cell: the character. Queued in one burst.
+
+| Cell | Preset | Seed | Job |
+| --- | --- | --- | --- |
+| p15-sae-seated | wai | 2026092531 | `7882b378-a833-4c05-9cda-8fb5fd55dcaa` |
+| p15-takemi-seated | cstati-v3-baseline | 2026092532 | `f0b2c466-c402-43d4-bbea-f370feb80557` |
+| p15-nessa-seated | yumeflux-ilv1-baseline | 2026092533 | `c85354bf-a8f2-47b3-817d-8d252df1dfd1` |
+| p15-acheron-seated | anifox-v2-baseline | 2026092534 | `7c488846-6b70-4f85-a2fb-f78306ad1207` |
+| p15-morgan-seated | wai | 2026092535 | `26d4f02e-b77f-4682-abdc-a35f6a9367d2` |
+| p15-caitlin-seated | cstati-v3-baseline | 2026092536 | `5475f4e2-7a28-437c-9314-09072dc1d58e` |
+
+### p15 results
+
+All six completed, 22.3–24.3 s each. No spill line on any receipt. The seated tail held 6/6 on new adults. Hands never appear (facing away, arms forward out of frame). `close up` works with sitting even though it lost to the squat in T10.
+
+- p15-sae-seated, WAI, seed `2026092531`, job `7882b378`, prompt `dbc1ce00`, 22.3 s, `WAI-Illustration_00064_.png`. Identity: adult woman, brown bob, glasses, office at night, adult. Lever: seated rear held on an office chair, looking back in profile. Hands: not visible. Cloth: black suit pants went translucent over the rear, the hardest dark-cloth transparency of the night. Keep-or-change: keep.
+- p15-takemi-seated, CSTati, seed `2026092532`, job `f0b2c466`, prompt `56c39363`, 24.3 s, `CSTati-v3-Baseline_00038_.png`. Identity: adult woman, black bob, white coat, clinic, adult. Lever: seated rear held, facing away, no look-back. Hands: not visible. Cloth: white coat and black dress glossy. Keep-or-change: keep.
+- p15-nessa-seated, YumeFlux, seed `2026092533`, job `c85354bf`, prompt `ef5ea718`, 24.2 s, `YumeFlux-ILv1-Baseline_00033_.png`. Identity: Nessa reads, dark skin, beaded blue-black hair, stadium at night, adult. Lever: seated rear held. Hands: not visible. Cloth: white top translucent-ish, dark bottoms glossy. Keep-or-change: keep.
+- p15-acheron-seated, AniFox, seed `2026092534`, job `7c488846`, prompt `b180e024`, 24.3 s, `AniFox-v2-Baseline_00038_.png`. Identity: Acheron reads, grey hair, train car, red light, adult. Lever: seated rear held, facing away. Hands: not visible. Cloth: black dress glossy. Keep-or-change: keep.
+- p15-morgan-seated, WAI, seed `2026092535`, job `26d4f02e`, prompt `ab8fcd1a`, 22.4 s, `WAI-Illustration_00065_.png`. Identity: adult woman, pale braided hair, stone hall, adult. Lever: seated rear held, looking back in profile. Hands: not visible. Cloth: white-and-blue dress translucent. Keep-or-change: keep.
+- p15-caitlin-seated, CSTati, seed `2026092536`, job `5475f4e2`, prompt `17c0d483`, 22.3 s, `CSTati-v3-Baseline_00039_.png`. Identity: adult woman, blonde hair with pink bow, villa bedroom, adult. Lever: seated rear held, looking back in profile. Hands: not visible. Cloth: white gown translucent. Keep-or-change: keep.
+
+## Portrait — p16 wave
+
+P15 held 6/6. The M3 portrait (Black Swan, WAI, job `89658af5`, prompt `6ad6f1ef`, `WAI-Illustration_00044_.png`, 38.5 s: `upper body, portrait, looking at viewer, smile` with the see-through head) is the last untransferred measurement. This wave transfers that exact tail to six new adults. One lever per cell: the character. Queued in one burst.
+
+| Cell | Preset | Seed | Job |
+| --- | --- | --- | --- |
+| p16-2b-portrait | wai | 2026092541 | `cdf072c6-e721-49f2-b0bd-886681e2c628` |
+| p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `af845d9a-7ae3-4bd0-b0ba-659c596fc868` |
+| p16-yelan-portrait | yumeflux-ilv1-baseline | 2026092543 | `8af1e664-45b8-435b-b628-69a28c6a7a6e` |
+| p16-nero-portrait | anifox-v2-baseline | 2026092544 | `0e76aa27-3340-4cbe-ad51-02d0085d3746` |
+| p16-jessie-portrait | wai | 2026092545 | `28add1d6-be94-4986-b1a8-a67142f927bf` |
+| p16-acheron-portrait | cstati-v3-baseline | 2026092546 | `80a130e0-0167-4cdc-9841-37eb0a63d1c6` |

@@ -181,6 +181,64 @@ One variable per comparison, same seed within each. CFG 4 vs 5 vs 6 (`p10-cfg4` 
 
 Next lever: T12 words-only crawl on new adults (ambition list plus more Pokemon adults).
 
+P11 held 8/8 across all four presets: `p11-raiden-crawl` (WAI, job `59d30c3a`, prompt `26a37a33`, `WAI-Illustration_00055_.png`, 40.4 s), `p11-yelan-crawl` (CSTati, job `ed934d82`, prompt `e28156ca`, `CSTati-v3-Baseline_00029_.png`, 32.4 s), `p11-evelyn-crawl` (YumeFlux, job `b8794fde`, prompt `0361a830`, `YumeFlux-ILv1-Baseline_00027_.png`, 32.3 s), `p11-jade-crawl` (AniFox, job `5d7df879`, prompt `fc670afe`, `AniFox-v2-Baseline_00032_.png`, 30.3 s), `p11-lusamine-crawl` (WAI, job `c3d4677c`, prompt `022d7ca5`, `WAI-Illustration_00056_.png`, 32.3 s), `p11-caitlin-crawl` (CSTati, job `a7c44f5f`, prompt `bcbdee94`, `CSTati-v3-Baseline_00030_.png`, 28.3 s), `p11-nessa-crawl` (YumeFlux, job `a63affee`, prompt `8c3a3b79`, `YumeFlux-ILv1-Baseline_00028_.png`, 34.4 s), `p11-sabrina-crawl` (AniFox, job `285eb14d`, prompt `7adc48d1`, `AniFox-v2-Baseline_00033_.png`, 28.3 s).
+
+T12 garment rule: the crawl fully hikes loose dresses (Raiden's purple dress, Caitlin's white gown: rears bare) while bodysuits, briefs, and fitted separates stay covered (Yelan, Nessa, Sabrina, Evelyn, Jade, Lusamine). Prompt fitted bottoms when the rear must stay covered; prompt a loose dress when the hike is the point.
+
+Next lever: the remaining unrun adults (Himeno, Morgan, Nero, Jeanne, Caesar, Burnice, Carlotta, Bellona, Destina, Tenebria) spread across T7/T8/T12.
+
+P12 held 10/10: `p12-himeno-crawl` (WAI, job `696a8855`, prompt `8ab991f4`, `WAI-Illustration_00057_.png`), `p12-morgan-bentover` (CSTati, job `e0523564`, prompt `2c1ddc0f`, `CSTati-v3-Baseline_00031_.png`, hair drifted dark blue to pale), `p12-nero-squat` (YumeFlux, job `e875b8fe`, prompt `591e1ca0`, `YumeFlux-ILv1-Baseline_00029_.png`), `p12-jeanne-crawl` (AniFox, job `5a6ee378`, prompt `5e75b28f`, `AniFox-v2-Baseline_00034_.png`, partial dress hike), `p12-caesar-squat` (WAI, job `277f968e`, prompt `f279a954`, `WAI-Illustration_00058_.png`, fake choker letters), `p12-burnice-bentover` (CSTati, job `da022cd3`, prompt `48f19bd9`, `CSTati-v3-Baseline_00032_.png`), `p12-carlotta-crawl` (YumeFlux, job `ef743679`, prompt `d20163b9`, `YumeFlux-ILv1-Baseline_00030_.png`), `p12-bellona-squat` (AniFox, job `7a433ef0`, prompt `b973d8f2`, `AniFox-v2-Baseline_00035_.png`), `p12-destina-bentover` (WAI, job `fc0a3abf`, prompt `9c64a61d`, `WAI-Illustration_00059_.png`), `p12-tenebria-crawl` (CSTati, job `695653e7`, prompt `b387a6c9`, `CSTati-v3-Baseline_00033_.png`). The ambition list is fully covered: every name has a T7, T8, or T12 cell.
+
+Next lever: Asuna (owner-confirmed acceptable, never ran the new stacks) plus the last Pokemon adults, then one optional many-minute Krea crawl to test word-portability off the Illustrious family.
+
+P13 held 6/6: `p13-asuna-squat` (WAI, job `898b0c9a`, prompt `97464380`, `WAI-Illustration_00060_.png`, 26.3 s), `p13-asuna-bentover` (CSTati, job `ae24b137`, prompt `2055439f`, `CSTati-v3-Baseline_00034_.png`, 30.2 s, extreme foreshortening), `p13-sonia-crawl` (YumeFlux, job `d0a5140d`, prompt `5b8b5f67`, `YumeFlux-ILv1-Baseline_00031_.png`, 30.4 s, partial jacket hike), `p13-olivia-bentover` (AniFox, job `9a2e37f0`, prompt `666e87ea`, `AniFox-v2-Baseline_00036_.png`, 24.2 s), `p13-erika-squat` (WAI, job `34c8a909`, prompt `3003ed3f`, `WAI-Illustration_00061_.png`, 24.3 s), `p13-acheron-crawl` (CSTati, job `ef7916cc`, prompt `07f1c68f`, `CSTati-v3-Baseline_00035_.png`, 24.2 s).
+
+Krea is out for sexual cells: neither T2I preset binds a negative, so the required `child, loli, shota` negative cannot be attached. No many-minute job ran.
+
+Next lever: `bedroom eyes` at the same seed on three held squats, and the measured seiza stack (`sitting, seiza, from behind, looking back, tongue out, ass focus, dynamic angle, foreshortening, blush, sweat`) transferred to three new adults.
+
+## T13 — bedroom eyes on a held squat
+
+Use when a held T7 still needs heavier eyes. Add `bedroom eyes` after `blush` at the same seed. No negative change. Pose, hands, and cloth stay put.
+
+Held: `p14-kafka-eyes` (WAI, job `5ea8871d`, prompt `21c0802c`, `WAI-Illustration_00062_.png`, 24.3 s), `p14-yor-eyes` (CSTati, job `74ff4a95`, prompt `76309b98`, `CSTati-v3-Baseline_00036_.png`, 24.3 s), `p14-elesa-eyes` (YumeFlux, job `32d3e18e`, prompt `8e8239b6`, `YumeFlux-ILv1-Baseline_00032_.png`, 24.3 s). All three show heavy-lidded, half-closed eyes against their same-seed held cells.
+
+Breaks it: nothing yet. Bent-over profiles are presumably as weak a test as they were for mouths (T9); not measured, not claimed.
+
+Next lever: the seated-rear stack transfer, the last untransferred page pose.
+
+## T14 — seiza rear (measured M3, transferred p14)
+
+Use when the pose should be kneeling upright, seen from behind, face looking back with the tongue out.
+
+Positive head: `seethroughILL, see through clothes, wet clothes` at the front. Slot 2 `see_through_clothes.safetensors` at 1 beside `nsfw_girls` at 0.7. Illustrious presets only.
+
+Positive tail: `sitting, seiza, from behind, looking back, tongue out, ass focus, dynamic angle, foreshortening, blush, sweat` plus one place and one light.
+
+Negative add: `logo, letters` on top of the usual quality and `child, loli, shota` line. No `hands, fingers` ban: the hands tuck out of frame on their own.
+
+Held M3: `p-shalltear-seiza` (YumeFlux, job `37b8802b`, prompt `cd9877cc`, `YumeFlux-ILv1-Baseline_00012_.png`), `p-wiz-seiza` (AniFox, job `3cc76303`, prompt `c0652ad3`, `AniFox-v2-Baseline_00009_.png`, 26.5 s). Held p14: `p14-morgan-seiza` (WAI, job `c015140a`, prompt `11a6ea89`, `WAI-Illustration_00063_.png`, 26.2 s), `p14-acheron-seiza` (CSTati, job `71a16b63`, prompt `c3575442`, `CSTati-v3-Baseline_00037_.png`, 24.3 s), `p14-caitlin-seiza` (AniFox, job `70cb67ac`, prompt `fca92451`, `AniFox-v2-Baseline_00037_.png`, 24.3 s). Feet stay visible and normal in all three transfers.
+
+Breaks it: nothing yet. Five characters hold it across all four presets.
+
+Next lever: the seated-rear stack transfer, the last untransferred page pose.
+
+## T15 — seated rear (measured M4, transferred p15)
+
+Use when the pose should be sitting on a chair or bench, seen from behind in a close crop, hips as the subject. The hands never appear: facing away with the arms forward puts them out of frame on its own.
+
+Positive head: `seethroughILL, see through clothes, wet clothes` at the front. Slot 2 `see_through_clothes.safetensors` at 1 beside `nsfw_girls` at 0.7. Illustrious presets only.
+
+Positive tail: `sitting, facing away from viewer, ass focus, close up, blush` plus one place and one light. No seat noun needed; the model finds a chair, bench, or floor.
+
+Negative add: `logo, letters` on top of the usual quality and `child, loli, shota` line. No `hands, fingers` ban.
+
+Held M4 (prompts recovered from receipts): Zhu Yuan (AniFox, job `0744d4f9`, prompt `1982818d`, `AniFox-v2-Baseline_00012_.png`, 24.3 s), Artoria (YumeFlux, job `59b54e2c`, prompt `5001966a`, `YumeFlux-ILv1-Baseline_00016_.png`, 30.2 s). Held p15: `p15-sae-seated` (WAI, job `7882b378`, prompt `dbc1ce00`, `WAI-Illustration_00064_.png`, 22.3 s, suit pants translucent), `p15-takemi-seated` (CSTati, job `f0b2c466`, prompt `56c39363`, `CSTati-v3-Baseline_00038_.png`, 24.3 s), `p15-nessa-seated` (YumeFlux, job `c85354bf`, prompt `ef5ea718`, `YumeFlux-ILv1-Baseline_00033_.png`, 24.2 s), `p15-acheron-seated` (AniFox, job `7c488846`, prompt `b180e024`, `AniFox-v2-Baseline_00038_.png`, 24.3 s), `p15-morgan-seated` (WAI, job `26d4f02e`, prompt `ab8fcd1a`, `WAI-Illustration_00065_.png`, 22.4 s), `p15-caitlin-seated` (CSTati, job `5475f4e2`, prompt `17c0d483`, `CSTati-v3-Baseline_00039_.png`, 22.3 s).
+
+Breaks it: nothing yet. Eight characters hold it across all four presets. Note against T10: `close up` holds its framing with sitting, but lost to `squatting, spread legs` — the pose tags decide, not the camera tag.
+
+Next lever: the M3 portrait stack (Black Swan's sheer panel) transferred to new adults.
+
 ## M2 measured
 
 All nine jobs completed. About 26–38 seconds each. No spill line was required to finish the queue.

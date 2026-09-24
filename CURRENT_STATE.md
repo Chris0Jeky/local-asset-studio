@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p11–p15 judged, T13–T15 promoted, p16 queued — 24 September 2026 (03:35 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P11 held 8/8 on the T12 words-only crawl (Raiden `59d30c3a`, Yelan `ed934d82`, Evelyn `b8794fde`, Jade `5d7df879`, Lusamine `c3d4677c`, Caitlin `a7c44f5f`, Nessa `a63affee`, Sabrina `285eb14d`) and set the crawl hike rule for loose dresses. P12 held 10/10 across T7/T8/T12 and covered the whole ambition list. P13 held 6/6 (Asuna `898b0c9a` / `ae24b137`, Sonia `d0a5140d`, Olivia `9a2e37f0`, Erika `34c8a909`, Acheron `ef7916cc`); the many-minute Krea cell was skipped with cause (no negative slot, boundary fails). P14 measured bedroom eyes 3/3 (T13) and transferred seiza 3/3 (T14: Morgan, Acheron, Caitlin). P15 transferred the seated tail 6/6 (T15: Sae, Takemi, Nessa, Acheron, Morgan, Caitlin). P16 transfers the M3 portrait tail to six adults (2B `cdf072c6`, Kafka `af845d9a`, Yelan `8af1e664`, Nero `0e76aa27`, Jessie `28add1d6`, Acheron `80a130e0`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p9–p10 judged, T12 words-only crawl, p11 queued — 24 September 2026 (01:45 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
