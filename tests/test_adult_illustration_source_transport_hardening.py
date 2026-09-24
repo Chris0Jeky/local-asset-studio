@@ -310,7 +310,7 @@ class SourceTransportHardeningTests(unittest.TestCase):
             ),
             _civitai_json_response(CIVITAI_URL + "?", _civitai_payload()),
         )
-        with self.assertRaisesRegex(ValueError, "not a supported metadata endpoint"):
+        with self.assertRaisesRegex(ValueError, "empty query"):
             fetch_civitai(123, BoundedProviderTransport(exchange=exchange))
         self.assertEqual(len(exchange.calls), 1)
 

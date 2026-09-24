@@ -89,6 +89,9 @@ def metadata_redirect_url(current_url: str, location: str) -> str:
         raise ValueError("Redirect Location must be relative or absolute HTTPS")
     if location.startswith("//") and not parsed.netloc:
         raise ValueError("Redirect Location has an invalid authority")
+    if "?" in location and not location.split("?", 1)[1]:
+        # urljoin keeps or drops an empty query depending on the Python version; refuse the spelling first.
+        raise ValueError("Redirect Location has an empty query")
     return urljoin(current_url, location)
 
 
