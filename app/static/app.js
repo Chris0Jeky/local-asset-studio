@@ -396,6 +396,17 @@ async function mixedBatchAction(button) {
     throw error;
   } finally {button.disabled=false;mixedBatchBusy.delete(identifier);}
 }
+// #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
+const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
+function renderProblems(problems,open){
+  if(!problems.length)return'';
+  const newest=(a,b)=>(Number(b.job.created_at)||0)-(Number(a.job.created_at)||0);
+  const active=problems.filter(p=>!p.job.put_away).sort(newest),away=problems.filter(p=>p.job.put_away).sort(newest);
+  const shown=problemsShowAll?active:active.slice(0,PROBLEMS_SHOWN),rest=active.length-shown.length;
+  const more=rest>0?'<p class="problemsMore"><small>'+rest+' older problem(s) not shown.</small> <button type="button" data-problems-toggle="all">Show all '+active.length+'</button></p>':problemsShowAll&&active.length>PROBLEMS_SHOWN?'<p class="problemsMore"><button type="button" data-problems-toggle="all">Show newest '+PROBLEMS_SHOWN+' only</button></p>':'';
+  const awayToggle=away.length?'<p class="problemsMore"><button type="button" data-problems-toggle="away" aria-expanded="'+problemsShowPutAway+'">'+(problemsShowPutAway?'Hide put away':'Show put away ('+away.length+')')+'</button></p>'+(problemsShowPutAway?'<div class="problemsPutAway">'+away.map(p=>p.html).join('')+'</div>':''):'';
+  return '<details id="jobProblems" class="job-problems" '+(open?'open':'')+'><summary>Problems · '+active.length+' run(s)'+(away.length?' · '+away.length+' put away':'')+'</summary>'+(active.length?'':'<p><small>No open problems.</small></p>')+shown.map(p=>p.html).join('')+more+awayToggle+'</details>';
+}
 function renderJobs(signature=JSON.stringify(jobs)) {
   if(signature===jobsSignature)return; jobsSignature=signature;
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
@@ -411,11 +422,14 @@ function renderJobs(signature=JSON.stringify(jobs)) {
       const stop=job.can_stop_tracking?'<label>Reason for stopping tracking<input class="stopTrackingReason" data-stop-tracking-reason="'+esc(job.id)+'" maxlength="1000" required></label><button class="stopTracking" data-job="'+esc(job.id)+'">Stop tracking</button>':'';
       const abandonNote=job.abandonment?'<p><b>Abandoned locally</b>: '+esc(job.abandonment.reason)+'<br><small>'+esc(job.abandonment.basis==='never_submitted'?'No submission was recorded.':'Remote outcome remains unknown; no cancellation was sent.')+'</small></p>':'';
       const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
-      (['failed','partial','uncertain','abandoned'].includes(job.status)?problems:cards).push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
+      const problem=['failed','partial','uncertain','abandoned'].includes(job.status);
+      const putAway=!problem?'':job.put_away?(job.put_away_basis==='owner'?'<p class="putAwayNote"><small>Put away '+esc(new Date(job.put_away_at*1000).toLocaleString())+'. Status, prompt IDs, outputs and reservations are unchanged.</small></p>':'<p class="putAwayNote"><small>Off your desk because tracking was stopped. Resume observation brings it back.</small></p>')+(job.can_bring_back?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="false">Bring back</button>':''):job.can_put_away?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="true" title="Hide from Problems and your desk. Nothing is retried, cancelled or deleted.">Put away</button>':job.status==='uncertain'?'<p class="putAwayNote"><small>'+esc(job.can_stop_tracking?'Stop tracking before putting this away; its resume path stays open until then.':'Resolve or abandon this uncertain job before putting it away.')+'</small></p>':'';
+      const html='<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button>'+putAway+'</article>';
+      if(problem)problems.push({job,html});else cards.push(html);
     }
     job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });
-  const problemMarkup=problems.length?'<details id="jobProblems" class="job-problems" '+(problemsOpen?'open':'')+'><summary>Problems · '+problems.length+' run(s)</summary>'+problems.join('')+'</details>':'';
+  const problemMarkup=renderProblems(problems,problemsOpen);
   const host=document.getElementById?.('jobProblemsHost')||null;
   $('#gallery').className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
   $('#gallery').innerHTML=(cards.length?cards.join(''):(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
@@ -560,6 +574,9 @@ $('#gallery').onclick=async e=>{
     const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index};pinned=pinned.some(x=>x.job===p.job&&x.index===p.index)?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}
+    const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs();return;}
+    // Put away changes only the record's put_away_at; it never retries, resumes or cancels.
+    const away=e.target.closest('.putAway');if(away){away.disabled=true;try{await post('/api/jobs/'+encodeURIComponent(away.dataset.job)+'/put-away',{put_away:away.dataset.putAway==='true'});await refresh();}finally{away.disabled=false;}return;}
     const stop=e.target.closest('.stopTracking');if(stop){const reason=stop.parentElement.querySelector('[data-stop-tracking-reason]')?.value.trim();if(!reason)throw Error('Give a reason before stopping tracking.');await post('/api/jobs/'+encodeURIComponent(stop.dataset.job)+'/stop-tracking',{reason});await refresh();}
     const abandon=e.target.closest('.abandonJob');if(abandon){
       const box=abandon.closest('.abandonJobControls'),reason=box.querySelector('[data-abandon-reason]')?.value.trim(),ack=box.querySelector('[data-abandon-ack]');

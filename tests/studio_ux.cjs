@@ -50,6 +50,10 @@ test('active, attention and planned work stay distinct', () => {
   const s=U.summarize([],['planned','awaiting_review','uncertain','running'].map(status=>({state:{status}})),[{status:'partial'},{status:'running'}]);
   for(const key of ['prepared','reviewPlans','attentionPlans','activePlans','attentionJobs','activeJobs']) assert.equal(s[key].length,1,key);
 });
+test('put-away jobs leave the desk but stay counted', () => {
+  const s=U.summarize([],[],[{status:'failed',put_away:true},{status:'uncertain',put_away:true},{status:'uncertain'},{status:'running',put_away:false}]);
+  assert.equal(s.attentionJobs.length,1);assert.equal(s.putAwayJobs.length,2);assert.equal(s.activeJobs.length,1);
+});
 test('submitting jobs remain active on the overview', () => assert.equal(U.summarize([],[],[{status:'submitting'}]).activeJobs.length,1));
 test('memory allocation failures explain the cause and next action', () => {
   const failure=U.failureDetails({status:'failed',message:'Generation failed: ComfyUI reported an execution error: KSampler: bad allocation'});
