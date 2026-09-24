@@ -2544,6 +2544,28 @@ P80 held 6/6 — G19 closed on all eleven reads, G20 promoted on the opening pai
 | p81-kafka-wedding-crawl | p80-kafka-wedding | wai | 2026092673 | `ca02aeaa-dc77-4166-b8e9-3391d008a639` |
 | p81-yuzuha-smallbust | — | anifox-v2-baseline | 2026092674 | `bae0bb7a-8642-4161-8f19-03ba0b91bdc5` |
 
+All six completed, 24.8–28.1 s each, no spill. G20 measured 7 (eyes half-lidded on Kafka and neutral on Yor with dress and veil intact, bent-over/seiza/crawl transfers hold); B1 Yuzuha clean, closing the ambition roster (B1 now 23 clean, 16 partial, 1 break across 40 faces).
+
+- p81-kafka-wedding-eyes, WAI, seed `2026092445`, job `0d36565c`, prompt `316f4419`, 27.1 s, `WAI-Illustration_00167_.png`. Identity: Kafka reads, magenta hair, white bridal bodysuit with veil and stockings, chapel violet, night, adult. Lever: `bedroom eyes` on wedding at the same seed — half-lidded, dress and veil intact. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; G20 eyes 1/2.
+- p81-yor-wedding-eyes, CSTati, seed `2026092446`, job `0eba196f`, prompt `c74fdafd`, 26.9 s, `CSTati-v3-Baseline_00159_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: `bedroom eyes` on wedding at the same seed — reads neutral, eyes open, dress and veil intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G20 eyes 2/2.
+- p81-kafka-wedding-bentover, WAI, seed `2026092672`, job `8d594b16`, prompt `91c31e45`, 26.7 s, `WAI-Illustration_00168_.png`. Identity: Kafka reads, magenta hair, veil, white wedding gown, chapel violet with bouquet, night, adult. Lever: wedding on the bent-over — back view, veil on, looking back. Cloth: white gown glossy. Keep-or-change: keep.
+- p81-yor-wedding-seiza, CSTati, seed `2026092675`, job `b689d91c`, prompt `52cdc5ba`, 26.8 s, `CSTati-v3-Baseline_00160_.png`. Identity: Yor reads, black hair with rose ornament, veil, white wedding gown, chapel warm light, night, adult. Lever: wedding on the seiza — tongue out, looking back, feet visible. Keep-or-change: keep.
+- p81-kafka-wedding-crawl, WAI, seed `2026092673`, job `ca02aeaa`, prompt `b6a2824e`, 28.1 s, `WAI-Illustration_00169_.png`. Identity: Kafka reads, magenta hair, tiara and veil, white wedding gown, chapel violet, night, adult. Lever: wedding on the crawl — face to the viewer, forearms planted. Keep-or-change: keep.
+- p81-yuzuha-smallbust, AniFox, seed `2026092674`, job `bae0bb7a`, prompt `2bc0eaea`, 24.8 s, `AniFox-v2-Baseline_00099_.png`. Identity: Yuzuha reads, short pink hair, tanuki ears, green happi coat, festival street warm light, night, adult. Lever: B1 first try — bust reads modest in the white top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white top glossy; fake shirt letters noted, not a discard. Keep-or-change: keep; B1 clean.
+
+## G20 sheer-off, portrait, seated rear, from-below open — p82 wave
+
+P81 held 6/6 — G20 measured 7 with eyes, bent-over, seiza and crawl all holding, B1 Yuzuha clean closing the ambition roster (B1 now 23 clean, 16 partial, 1 break across 40 faces). This wave closes in on G20 (sheer-off x2 at the same seeds, portrait for Yor, seated rear for Kafka) and opens the camera layer with `from below` on the wedding squat pair. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p82-kafka-wedding-nolora | p80-kafka-wedding | wai | 2026092445 | `1e9434dd-9839-47a1-bbf5-444a76ddc935` |
+| p82-yor-wedding-nolora | p80-yor-wedding | cstati-v3-baseline | 2026092446 | `f81ce43b-32c1-41e1-8347-d24e65e13c2d` |
+| p82-yor-wedding-portrait | p80-yor-wedding | cstati-v3-baseline | 2026092676 | `8bdea355-e08d-4564-b4f4-da67e61f70d6` |
+| p82-kafka-wedding-seated | p80-kafka-wedding | wai | 2026092677 | `66c9a08d-1b6b-448e-8975-a29776daac2e` |
+| p82-kafka-wedding-frombelow | p80-kafka-wedding | wai | 2026092445 | `a6e3094e-e91f-4af7-9732-9448b4584c20` |
+| p82-yor-wedding-frombelow | p80-yor-wedding | cstati-v3-baseline | 2026092446 | `bdcd5d2b-8833-45db-a2b9-eb657a25f574` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.

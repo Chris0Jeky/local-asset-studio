@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p81 judged 6/6, G20 measured 7, B1 roster complete at 40 faces, p82 queued — 25 September 2026 (19:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P81 held 6/6 (24.8–28.1 s, no spill): G20 eyes half-lidded on Kafka and neutral on Yor with dress and veil intact (`0d36565c`, `0eba196f`); wedding on the bent-over (`8d594b16`), seiza (`b689d91c`) and crawl (`ca02aeaa`); B1 Yuzuha (`bae0bb7a`) clean, closing the ambition roster (B1 now 23 clean, 16 partial, 1 break across 40 faces). P82 queued, six cells: G20 sheer-off x2 (Kafka `1e9434dd`, Yor `f81ce43b`), wedding portrait (`8bdea355`) and seated rear (`66c9a08d`), camera layer opens with `from below` on the wedding squat pair (`a6e3094e`, `bdcd5d2b`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p80 judged 6/6, G19 closed, G20 promoted, B1 at 39 faces, p81 queued — 25 September 2026 (18:45 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
