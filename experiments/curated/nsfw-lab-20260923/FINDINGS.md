@@ -1283,3 +1283,27 @@ P29 held 6/6 and promoted E1 and G2. This wave takes the E1 combo to two held sq
 | p30-tifa-body-janima | G2 | janima-v1-baseline | 2026092616 | `145ff470-47aa-47d1-ae61-29cdd2d460cb` |
 | p30-yor-lingerie-eyes | p26-yor-lingerie | cstati-v3-baseline | 2026092446 | `510aa9e5-759d-4b33-8ce7-6e80f6736534` |
 | p30-tifa-lingerie-eyes | p26-tifa-lingerie | anifox-v2-baseline | 2026092441 | `d2cd04bc-eeba-41e4-8bd6-390d258ff0a7` |
+
+### p30 results
+
+Five held and one partial, 10.2–29.3 s each. No spill line on any receipt. The E1 combo held on Jane's squat but dropped the wink on Elesa's (grin fired, both eyes open) — the first combo break, watched not demoted. G2 ports to both families, and JANIMA kept both hands on the bodystocking bent-over where Illustrious lost one. `bedroom eyes` fired on the lingerie squat and mildly on the lingerie bent-over profile.
+
+- p30-jane-grinwink, YumeFlux, seed `2026092431`, job `43c4cb2c`, prompt `9e878555`, 24.2 s, `YumeFlux-ILv1-Baseline_00050_.png`. Identity: same Jane read, neon alley, adult. Lever: `parted lips` to `grin` against the judged wink cell — grin and wink both show. Squat held. Hands: hidden. Cloth: same bodysuit and jacket. Keep-or-change: keep.
+- p30-elesa-grinwink, YumeFlux, seed `2026092467`, job `29ca2e27`, prompt `06c60d07`, 10.2 s, `YumeFlux-ILv1-Baseline_00051_.png`. Identity: same Elesa read, runway, adult. Lever: same combo — grin fired, but both eyes stayed open in a joyful squint; the wink missed. Squat held. Hands: hidden. Cloth: same sheer top and yellow jacket. Keep-or-change: keep; E1's first break.
+- p30-kafka-body-anima, Anima, seed `2026092615`, job `b5f170ea`, prompt `fe321adb`, 24.2 s, `Anima-v1-Baseline_00055_.png`. Identity: Kafka reads, magenta hair, sunglasses on head, rooftop, adult. Lever: black bodystocking at a new seed — reads glossy on Anima. Squat held, hands behind the head, eyes closed unprompted. Hands: hidden. Mouth slightly open. Keep-or-change: keep.
+- p30-tifa-body-janima, JANIMA, seed `2026092616`, job `145ff470`, prompt `2ff7b224`, 23.3 s, `JANIMA-v1-Baseline_00018_.png`. Identity: Tifa reads, black hair, red eyes, bar, adult. Lever: black bodystocking at a new seed — reads glossy on JANIMA with BOTH hands on the hips, unlike the Illustrious one-hander. Bent-over held, looking back. Mouth slightly open. Keep-or-change: keep.
+- p30-yor-lingerie-eyes, CSTati, seed `2026092446`, job `510aa9e5`, prompt `dcffdbd3`, 29.3 s, `CSTati-v3-Baseline_00057_.png`. Identity: same Yor read, lamp interior, adult. Lever: `bedroom eyes` added — eyes heavy-lidded; tag fired. Squat held, lingerie unchanged. Hands: hidden. Mouth slightly open. Keep-or-change: keep.
+- p30-tifa-lingerie-eyes, AniFox, seed `2026092441`, job `d2cd04bc`, prompt `c90dc9b1`, 24.3 s, `AniFox-v2-Baseline_00056_.png`. Identity: same Tifa read, bar, adult. Lever: `bedroom eyes` added — eyes heavy in profile; tag fired mildly. Bent-over held. Hands: both on the hips, normal-looking. Cloth: same translucent white lingerie. Keep-or-change: keep.
+
+## Combo retest, G2 hands, G2 eyes — p31 wave
+
+P30 held 5.5/6 with E1's first break on a squat. This wave runs the E1 combo as the single lever on two fresh squats at the same seed (a second same-reason break demotes it), retests G2+T8 hands with the same Tifa prompt at a new seed and a Narberal bodystocking swap against the judged p6 lips cell, and adds `bedroom eyes` to the two judged G2 cells at the same seed. Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p31-kafka-combo | p5-kafka-squat | wai | 2026092445 | `408cf774-a109-490c-ba65-928cf1978c9f` |
+| p31-yor-combo | p5-yor-squat | cstati-v3-baseline | 2026092446 | `596eeb1c-f4f4-4b4e-b9a4-7006128e7a54` |
+| p31-tifa-body-reseed | p29-tifa-body | anifox-v2-baseline | 2026092617 | `84d73cb3-cbbe-44ee-867d-2511589a82ab` |
+| p31-narberal-body | p6-narberal-lips | cstati-v3-baseline | 2026092433 | `9fd279e0-3f20-41af-93d3-9c99a0c5b90f` |
+| p31-kafka-body-eyes | p29-kafka-body | wai | 2026092445 | `4fc55a03-359e-40d0-977d-ea106a326e7e` |
+| p31-tifa-body-eyes | p29-tifa-body | anifox-v2-baseline | 2026092441 | `34bbd466-9230-46fe-acd4-5bc1c762ed20` |
