@@ -2499,6 +2499,29 @@ P78 held 6/6 — G19 eyes 2/2 with the suit intact, bent-over and seiza transfer
 | p79-trigger-smallbust | — | cstati-v3-baseline | 2026092666 | `75be63aa-793d-440f-88cd-7abe735f0a45` |
 | p79-alice-smallbust | — | anifox-v2-baseline | 2026092667 | `75cb5b58-cbaf-4613-9319-5e73fd89219f` |
 
+All seven completed, 12.3–39.5 s each, no spill. G19 measured 10 (sheer-off 2/2 drift nothing, crawl and portrait transfers hold — the bodysuit gives the hike nothing to lift); B1 Nekomata, Trigger and Alice all clean (B1 now 19 clean, 16 partial, 1 break across 36 faces).
+
+- p79-kafka-bunny-nolora, WAI, seed `2026092445`, job `701ec40f`, prompt `6d99d8b5`, 12.3 s, `WAI-Illustration_00163_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, bow collar, black bunny suit with cottontail, nightclub violet, night, adult. Lever: sheer-off rerun at the bunny seed — suit intact and opaque, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 sheer-off 1/2.
+- p79-yor-bunny-nolora, CSTati, seed `2026092446`, job `ed305c9a`, prompt `36fd70b0`, 39.5 s, `CSTati-v3-Baseline_00153_.png`. Identity: Yor reads, black hair with rose ornament, bow collar, black bunny suit, casino warm light, night, adult. Lever: sheer-off rerun at the bunny seed — suit intact and opaque, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 sheer-off 2/2.
+- p79-kafka-bunny-crawl, WAI, seed `2026092663`, job `c08623d1`, prompt `a50cad9c`, 32.9 s, `WAI-Illustration_00164_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, bunny ears, black bunny suit with cottontail, fishnets, nightclub violet, night, adult. Lever: bunny on the crawl — face to the viewer, forearms planted, suit intact. Keep-or-change: keep.
+- p79-yor-bunny-portrait, CSTati, seed `2026092664`, job `bc378df1`, prompt `57b3a86f`, 26.9 s, `CSTati-v3-Baseline_00154_.png`. Identity: Yor reads, black hair with rose ornaments, bunny ears, bow collar, black bunny suit, casino warm light, night, adult. Lever: bunny on the portrait — smile. Keep-or-change: keep.
+- p79-nekomata-smallbust, YumeFlux, seed `2026092665`, job `e1988cd8`, prompt `3afbf98e`, 28.8 s, `YumeFlux-ILv1-Baseline_00081_.png`. Identity: Nekomata reads, black twin tails, cat ears, green jacket, city rooftop, night, adult. Lever: B1 first try — bust reads modest in the black top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black top glossy. Keep-or-change: keep; B1 clean.
+- p79-trigger-smallbust, CSTati, seed `2026092666`, job `75be63aa`, prompt `54562c06`, 28.8 s, `CSTati-v3-Baseline_00155_.png`. Identity: Trigger reads, short blonde hair, goggles, blue jacket, outpost warm light, night, adult. Lever: B1 first try — bust reads modest in the white top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white top glossy. Keep-or-change: keep; B1 clean.
+- p79-alice-smallbust, AniFox, seed `2026092667`, job `75cb5b58`, prompt `18aaeec3`, 26.9 s, `AniFox-v2-Baseline_00098_.png`. Identity: Alice reads, blonde hair, orange dress with black jacket, fairground and ferris wheel, night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: orange dress glossy. Keep-or-change: keep; B1 clean.
+
+## G19 seated rear, B1 Vivian/Dialyn/Ju Fufu, G20 wedding open — p80 wave
+
+P79 held 7/7 — G19 measured 10 with sheer-off, crawl and portrait all holding, B1 Nekomata, Trigger and Alice clean (B1 now 19 clean, 16 partial, 1 break across 36 faces). This wave closes G19 (seated rear for Yor), runs B1 first tries on Vivian, Dialyn and Ju Fufu, and opens G20 with wedding-dress anchors x2. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p80-yor-bunny-seated | p77-yor-bunny | cstati-v3-baseline | 2026092668 | `db287044-9a90-4573-bfdf-dfd09199d2ac` |
+| p80-vivian-smallbust | — | wai | 2026092669 | `c290236f-12d3-4c69-a5d4-58a5027c80ec` |
+| p80-dialyn-smallbust | — | cstati-v3-baseline | 2026092670 | `947c8b27-68ca-497f-9f71-90e8b0651452` |
+| p80-jufufu-smallbust | — | yumeflux-ilv1-baseline | 2026092671 | `d373d7ba-8ebf-4117-96d8-8f560c8588c9` |
+| p80-kafka-wedding | — | wai | 2026092445 | `dac04dac-c25a-418c-a7ae-2291e94bb2a9` |
+| p80-yor-wedding | — | cstati-v3-baseline | 2026092446 | `9c12cc27-472c-49f4-8081-59f378be1ebb` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
