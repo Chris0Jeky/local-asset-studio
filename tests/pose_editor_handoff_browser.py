@@ -104,6 +104,95 @@ def sdxl_in_place(page, origin, out, check, drawings, posts):
     check(posts.count('/api/pose/render') == count_before + 2, 'One explicit re-render, no implicit one')
 
 
+HOLD = '[data-readiness-code="pose-size"]'
+REPLACE_GUIDE = "guide=>{referenceRecords[0]=Object.assign({},referenceRecords[0],guide);document.querySelector('#positive').dispatchEvent(new Event('change',{bubbles:true}));}"
+
+
+def set_width(page, value):
+    page.evaluate("document.querySelector('[data-key=\"width\"]').closest('details').open=true")  # Width lives under the folded parameters.
+    page.locator('[data-key="width"]').fill(str(value))
+
+
+def hold_text(page, contains):
+    page.wait_for_function("document.querySelector('%s p')?.textContent.includes(%s)" % (HOLD, json.dumps(contains)))
+    return page.locator(HOLD + ' p').text_content()  # The blocker list sits in a folded disclosure.
+
+
+def restored_guide(page, origin, out, check, drawings, posts, spec):
+    """#947/#952 on the Klein route: a guide restored with its picture but not its drawing, a disabled Replace button, and a
+    Width change on combine-klein-9b-skeleton. The restored record is injected exactly as a saved setup or draft leaves it."""
+    run = ux.CaseRun(dict(spec, id='pose-handoff-restored-guide'), page, origin, False, out / 'setup')
+    ready, detail = ux._combine(run)
+    check(ready, 'Existing Combine source-pair journey is ready: ' + detail)
+    page.locator('[data-ux-engine="combine-klein"]').click()  # A two-picture board: its second slot can block the replacement.
+    page.wait_for_function("selected.id==='combine-klein' && !document.querySelector('#uxPoseEditor').hidden")
+    check(page.locator('#uxPoseUse').inner_text() == 'Replace pose picture with drawing', 'A picture recipe offers the replacement')
+    held, lost = 'a' * 64, 'b' * 64
+    joints = page.evaluate('StudioPoseEditor.JOINTS')
+    # Multiples of 64 across a 1024-wide canvas, so the 832-wide redraw is exact to the hundredth.
+    stored = {name: None if index == 16 else dict(x=64 * (index % 14 + 1), y=80 * (index + 1), confidence=None, origin='manual')
+              for index, name in enumerate(joints)}
+    artifact = dict(schema='studio.pose-artifact/v1', id=held, canvas=dict(width=1024, height=1536), joints=stored, parent_id=None,
+                    authority='none', review='unreviewed',
+                    source=dict(sha256='c' * 64, format='openpose-coco18', person_index=0, coordinate_space='pixels'))
+    reads = []
+    def artifact_route(route):
+        reads.append(urlsplit(route.request.url).path)
+        if route.request.url.endswith('/' + held): route.fulfill(status=200, content_type='application/json', body=json.dumps(artifact))
+        else: route.fulfill(status=400, content_type='application/json', body='{"error":"Editable pose artifact is unavailable"}')
+    page.route('**/api/pose/artifacts/*', artifact_route)
+    guide = dict(file='a' * 32 + '_drawn-pose.png', sha256='a' * 64, bytes=2048, width=1024, height=1536, artifact_id=held,
+                 renderer='studio.coco18-lines/v1', parent_asset=None, missing=False)
+    renders = posts.count('/api/pose/render')
+    page.evaluate(REPLACE_GUIDE, guide)
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('back in the editor')")
+    check(reads == ['/api/pose/artifacts/' + held], 'The restored guide reads its own stored drawing once: ' + str(reads))
+    check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == ['64', '80'], 'The editor now holds the guide drawing, not the default figure')
+    check(page.locator('#uxPoseUndo').is_enabled(), 'Loading the stored drawing is one undoable edit')
+    set_width(page, 832)
+    hold = hold_text(page, 'drawn at 1024×1536')
+    check(hold == 'The pose guide was drawn at 1024×1536; press Replace pose picture with drawing again for the new size (832×1536).',
+          'The held drawing is promised as a resize: ' + hold)
+    check(page.locator('#uxPoseReason').inner_text() == hold, 'The same hold is shown beside the button')
+    # #952: a second board picture disables the replacement; the hold names that step first and its button shows the reason.
+    page.locator('[data-ref-file="1"]').set_input_files({'name': 'extra.png', 'mimeType': 'image/png',
+                                                         'buffer': (ROOT / 'examples/references/lantern-reference.png').read_bytes()})
+    page.wait_for_function('referencePending===0 && !!referenceRecords[1]?.file')
+    check(page.locator('#uxPoseUse').is_disabled(), 'The extra board picture disables the replacement')
+    hold = hold_text(page, 'Remove the extra board picture')
+    check(hold.index('Remove the extra board picture') < hold.index('Then press Replace pose picture with drawing again'),
+          'The hold names the enabled next step before the disabled button: ' + hold)
+    check(page.locator(HOLD + ' button').text_content() == 'Show the pose editor', 'The readiness button does not name a disabled control')
+    page.evaluate("document.querySelector('%s button').click()" % HOLD)
+    check(page.evaluate('document.activeElement?.id') == 'uxPoseReason', 'Showing the step lands on the reason, not on the disabled button')
+    page.locator('[data-ref-clear="1"]').click()
+    page.wait_for_function("!document.querySelector('#uxPoseUse').disabled")
+    check(posts.count('/api/pose/render') == renders, 'Nothing rendered by itself')
+    page.locator('#uxPoseUse').click()
+    page.wait_for_function("selected.id==='%s' && referenceRecords[0]?.width===832 && !document.querySelector('%s')" % (SKELETON, HOLD))
+    expected = [None if point is None else [point['x'] * 832 / 1024, point['y']] for point in stored.values()]
+    check(drawings[-1]['width'] == 832 and drawings[-1]['keypoints'] == expected, 'The replacement redraws the restored pose at the new size, not the default figure')
+    # #952: the Klein skeleton route holds on a Width change and clears on one explicit redraw.
+    set_width(page, 1024)
+    hold = hold_text(page, 'drawn at 832×1536')
+    check(hold == 'The pose guide was drawn at 832×1536; press Use this pose again for the new size (1024×1536).', 'The skeleton route names its own button: ' + hold)
+    check(page.locator('#generate').is_disabled(), 'The stale guide holds Generate on the skeleton recipe')
+    check(posts.count('/api/pose/render') == renders + 1, 'A size change renders nothing by itself')
+    page.locator('#uxPoseUse').click()
+    page.wait_for_function("referenceRecords[0]?.width===1024 && !document.querySelector('%s')" % HOLD)
+    check(drawings[-1]['width'] == 1024 and posts.count('/api/pose/render') == renders + 2, 'One explicit redraw at the new size clears the hold')
+    # A guide whose drawing cannot be read is never promised as a resize, and the editor keeps what it holds.
+    before = [page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')]
+    page.evaluate(REPLACE_GUIDE, dict(guide, file='b' * 32 + '_drawn-pose.png', sha256='b' * 64, width=640, artifact_id=lost))
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('could not be read')")
+    hold = hold_text(page, 'does not hold that drawing')
+    check(hold == 'The pose guide was drawn at 640×1536, not the new size (1024×1536), and the editor does not hold that drawing. '
+          'Set Width and Height back to 640×1536, or redraw the pose and press Use this pose.', 'An unreadable drawing is not promised as a resize: ' + hold)
+    check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == before, 'The editor keeps its drawing when the stored one cannot be read')
+    check(reads.count('/api/pose/artifacts/' + lost) == 1, 'One read per guide, no retry loop')
+    check(posts.count('/api/pose/render') == renders + 2, 'No implicit render')
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, default=ROOT / '.runtime/pose-handoff-browser')
@@ -271,6 +360,26 @@ def main(argv=None):
                 finally:
                     context.close()
                 print(('PASS ' if row['passed'] else 'FAIL ') + 'sdxl-in-place: ' + row.get('error', str(len(row['assertions'])) + ' assertions'), flush=True)
+                context = browser.new_context(viewport={'width': 1536, 'height': 1060}, reduced_motion='reduce')
+                page = context.new_page(); page.set_default_timeout(8000)
+                row = dict(case='restored-guide', viewport=1536, assertions=[], passed=False); records.append(row)
+                page.on('pageerror', lambda error: errors.append('restored-guide: ' + str(error)))
+                page.on('request', lambda request: posts.append(urlsplit(request.url).path) if request.method == 'POST' else None)
+                page.on('request', lambda request: drawings.append(request.post_data_json) if request.method == 'POST' and urlsplit(request.url).path == '/api/pose/render' else None)
+                def check_restored(condition, message):
+                    if not condition: raise AssertionError(message)
+                    row['assertions'].append(message)
+                try:
+                    restored_guide(page, origin, args.out, check_restored, drawings, posts, spec)
+                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); page.screenshot(path=str(args.out / 'restored-guide.png'))
+                    row['passed'] = True
+                except Exception as exc:
+                    row['error'] = str(exc)
+                    try: page.screenshot(path=str(args.out / 'restored-guide-failure.png'))
+                    except Exception: pass
+                finally:
+                    context.close()
+                print(('PASS ' if row['passed'] else 'FAIL ') + 'restored-guide: ' + row.get('error', str(len(row['assertions'])) + ' assertions'), flush=True)
             finally:
                 browser.close()
     finally:
