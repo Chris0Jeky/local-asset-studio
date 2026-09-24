@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p16–p19 judged, T16 promoted, T6+T12 and T13-on-crawl measured, p20 queued — 24 September 2026 (04:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P16 transferred the portrait tail 6/6 (T16: 2B `cdf072c6`, Kafka `af845d9a`, Yelan `8af1e664`, Nero `0e76aa27`, Jessie `28add1d6`, Acheron `80a130e0`). P17 added bedroom eyes to three portraits at the same seed (Kafka `afd8d510`, Yelan `e07896f0` mild, Acheron `016892a8`) and ran the portrait on Power `da6475dc`, Quanxi `a8f70b2f`, Cynthia `530b243a`. P18 gave those four body stacks 6/6 (2B squat `4c0dccb6` / bent `6e1869cb` with pod garnish, Power crawl `6496cd38`, Quanxi crawl `a312924c`, Cynthia squat `efb11cba` / bent `cb7936c9`) and corrected the T12 garment rule: briefs and shorts leave the rear nearly bare. P19 held 6/6: the sheer stack fires on the crawl by the usual cloth rule (Raiden `92a91197` translucent, Nessa `8fc6bf44` mixed, Yelan `cf914d14` glossy) and bedroom eyes fired on all three crawl faces (Sabrina `2ac8477b`, Sonia `dbd8fc4f`, Acheron `2e0769a4`). P20 queued: eyes on three bent-over profiles (Tifa `94ab5a24`, Himeko `3f7d2a6f`, Narberal `54344d9a`) and one camera tag each on three crawls (Yelan cowboy `45f6a601`, Sabrina close-up `32d8ea3f`, Carlotta below `8f960da7`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p11–p15 judged, T13–T15 promoted, p16 queued — 24 September 2026 (03:35 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.

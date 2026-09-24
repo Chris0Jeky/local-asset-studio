@@ -183,7 +183,7 @@ Next lever: T12 words-only crawl on new adults (ambition list plus more Pokemon 
 
 P11 held 8/8 across all four presets: `p11-raiden-crawl` (WAI, job `59d30c3a`, prompt `26a37a33`, `WAI-Illustration_00055_.png`, 40.4 s), `p11-yelan-crawl` (CSTati, job `ed934d82`, prompt `e28156ca`, `CSTati-v3-Baseline_00029_.png`, 32.4 s), `p11-evelyn-crawl` (YumeFlux, job `b8794fde`, prompt `0361a830`, `YumeFlux-ILv1-Baseline_00027_.png`, 32.3 s), `p11-jade-crawl` (AniFox, job `5d7df879`, prompt `fc670afe`, `AniFox-v2-Baseline_00032_.png`, 30.3 s), `p11-lusamine-crawl` (WAI, job `c3d4677c`, prompt `022d7ca5`, `WAI-Illustration_00056_.png`, 32.3 s), `p11-caitlin-crawl` (CSTati, job `a7c44f5f`, prompt `bcbdee94`, `CSTati-v3-Baseline_00030_.png`, 28.3 s), `p11-nessa-crawl` (YumeFlux, job `a63affee`, prompt `8c3a3b79`, `YumeFlux-ILv1-Baseline_00028_.png`, 34.4 s), `p11-sabrina-crawl` (AniFox, job `285eb14d`, prompt `7adc48d1`, `AniFox-v2-Baseline_00033_.png`, 28.3 s).
 
-T12 garment rule: the crawl fully hikes loose dresses (Raiden's purple dress, Caitlin's white gown: rears bare) while bodysuits, briefs, and fitted separates stay covered (Yelan, Nessa, Sabrina, Evelyn, Jade, Lusamine). Prompt fitted bottoms when the rear must stay covered; prompt a loose dress when the hike is the point.
+T12 garment rule: the crawl fully hikes loose dresses (Raiden's purple dress, Caitlin's white gown: rears bare) while bodysuits and fitted separates stay covered (Yelan, Nessa, Sabrina, Evelyn, Jade, Lusamine). Correction beside the p11 note: briefs and shorts do not stay covered — Power's briefs and Quanxi's shorts left the rear nearly bare (`p18-power-crawl`, YumeFlux, job `6496cd38`, prompt `99a9d02f`, `YumeFlux-ILv1-Baseline_00037_.png`, 22.2 s; `p18-quanxi-crawl`, AniFox, job `a312924c`, prompt `a016cac2`, `AniFox-v2-Baseline_00041_.png`, 24.3 s). Prompt a bodysuit or fitted separates when the rear must stay covered; prompt a loose dress, briefs, or shorts when the hike is the point.
 
 Next lever: the remaining unrun adults (Himeno, Morgan, Nero, Jeanne, Caesar, Burnice, Carlotta, Bellona, Destina, Tenebria) spread across T7/T8/T12.
 
@@ -204,6 +204,12 @@ Use when a held T7 still needs heavier eyes. Add `bedroom eyes` after `blush` at
 Held: `p14-kafka-eyes` (WAI, job `5ea8871d`, prompt `21c0802c`, `WAI-Illustration_00062_.png`, 24.3 s), `p14-yor-eyes` (CSTati, job `74ff4a95`, prompt `76309b98`, `CSTati-v3-Baseline_00036_.png`, 24.3 s), `p14-elesa-eyes` (YumeFlux, job `32d3e18e`, prompt `8e8239b6`, `YumeFlux-ILv1-Baseline_00032_.png`, 24.3 s). All three show heavy-lidded, half-closed eyes against their same-seed held cells.
 
 Breaks it: nothing yet. Bent-over profiles are presumably as weak a test as they were for mouths (T9); not measured, not claimed.
+
+P19 extended the tag to crawl faces at the same seed: `p19-sabrina-eyes` (AniFox, job `2ac8477b`, prompt `19f89b23`, `AniFox-v2-Baseline_00042_.png`, 24.2 s, clear), `p19-sonia-eyes` (YumeFlux, job `dbd8fc4f`, prompt `5c7fd851`, `YumeFlux-ILv1-Baseline_00039_.png`, 24.3 s), `p19-acheron-eyes` (CSTati, job `2e0769a4`, prompt `2a397a8f`, `CSTati-v3-Baseline_00047_.png`, 24.4 s). The tag fires on front-facing crawl faces as strongly as on squats.
+
+P19 also confirmed the T6+T12 combo: the full sheer head on a held crawl at the same seed keeps the pose and fires by the usual cloth rule — light cloth transparent (`p19-raiden-sheer`, WAI, job `92a91197`, prompt `7e255e8f`, `WAI-Illustration_00071_.png`, 24.4 s; `p19-nessa-sheer`, YumeFlux, job `8fc6bf44`, prompt `6d323a9f`, `YumeFlux-ILv1-Baseline_00038_.png`, 24.3 s), dark cloth glossy (`p19-yelan-sheer`, CSTati, job `cf914d14`, prompt `5fc6db18`, `CSTati-v3-Baseline_00046_.png`, 24.2 s).
+
+P17 extended the tag to portraits at the same seed: `p17-kafka-p-eyes` (CSTati, job `afd8d510`, prompt `adc7763f`, `CSTati-v3-Baseline_00042_.png`, 14.4 s, clear), `p17-yelan-p-eyes` (YumeFlux, job `e07896f0`, prompt `1d7c654f`, `YumeFlux-ILv1-Baseline_00035_.png`, 24.2 s, mild), `p17-acheron-p-eyes` (CSTati, job `016892a8`, prompt `5e59ebd3`, `CSTati-v3-Baseline_00043_.png`, 24.2 s, clear). The tag fires on portraits, milder than on squats.
 
 Next lever: the seated-rear stack transfer, the last untransferred page pose.
 
@@ -238,6 +244,26 @@ Held M4 (prompts recovered from receipts): Zhu Yuan (AniFox, job `0744d4f9`, pro
 Breaks it: nothing yet. Eight characters hold it across all four presets. Note against T10: `close up` holds its framing with sitting, but lost to `squatting, spread legs` — the pose tags decide, not the camera tag.
 
 Next lever: the M3 portrait stack (Black Swan's sheer panel) transferred to new adults.
+
+## T16 — portrait with sheer panel (measured M3, transferred p16)
+
+Use when the face is the subject and the body below the chest only needs a sheer or glossy panel. The hands never appear: upper-body framing crops them out.
+
+Positive head: `seethroughILL, see through clothes, wet clothes` at the front. Slot 2 `see_through_clothes.safetensors` at 1 beside `nsfw_girls` at 0.7. Illustrious presets only.
+
+Positive tail: `upper body, portrait, looking at viewer, smile` plus one place and one light.
+
+Negative add: `logo, letters` on top of the usual quality and `child, loli, shota` line.
+
+Held M3 (prompt recovered from receipt): Black Swan (WAI, job `89658af5`, prompt `6ad6f1ef`, `WAI-Illustration_00044_.png`, 38.5 s). Held p16: `p16-2b-portrait` (WAI, job `cdf072c6`, prompt `567aef34`, `WAI-Illustration_00066_.png`, 26.3 s), `p16-kafka-portrait` (CSTati, job `af845d9a`, prompt `667713d1`, `CSTati-v3-Baseline_00040_.png`, 26.4 s, shirt strongly translucent), `p16-yelan-portrait` (YumeFlux, job `8af1e664`, prompt `8e5e64ac`, `YumeFlux-ILv1-Baseline_00034_.png`, 26.3 s), `p16-nero-portrait` (AniFox, job `0e76aa27`, prompt `f9dd9e37`, `AniFox-v2-Baseline_00039_.png`, 26.4 s, wet-look chest), `p16-jessie-portrait` (WAI, job `28add1d6`, prompt `5bb5cb29`, `WAI-Illustration_00067_.png`, 24.3 s), `p16-acheron-portrait` (CSTati, job `80a130e0`, prompt `23db61eb`, `CSTati-v3-Baseline_00041_.png`, 24.3 s).
+
+Breaks it: nothing yet. Seven characters hold it across all four presets.
+
+P17 held 6/6: eyes on portraits (`p17-kafka-p-eyes`, `p17-yelan-p-eyes`, `p17-acheron-p-eyes`, same seeds, tag fired on all three) and the portrait on the last unrun adults (`p17-power-portrait` WAI job `da6475dc` prompt `ce608591` `WAI-Illustration_00068_.png`; `p17-quanxi-portrait` AniFox job `a8f70b2f` prompt `3f39d9a8` `AniFox-v2-Baseline_00040_.png`; `p17-cynthia-portrait` YumeFlux job `530b243a` prompt `06311d75` `YumeFlux-ILv1-Baseline_00036_.png`).
+
+P18 held 6/6, giving the portrait-only adults body stacks: `p18-2b-squat` (WAI, job `4c0dccb6`, prompt `6e56e5f3`, `WAI-Illustration_00069_.png`, 24.3 s), `p18-2b-bentover` (CSTati, job `6e1869cb`, prompt `0bb193aa`, `CSTati-v3-Baseline_00044_.png`, 24.6 s, pod garnish from the prompt tag), `p18-cynthia-squat` (WAI, job `efb11cba`, prompt `fa29e225`, `WAI-Illustration_00070_.png`, 24.2 s), `p18-cynthia-bentover` (CSTati, job `cb7936c9`, prompt `361e8f45`, `CSTati-v3-Baseline_00045_.png`, 24.3 s, grey skirt became grey pants). Garnish note: a `pod` tag on 2B renders Pod 042 hovering behind her without disturbing the pose.
+
+Next lever (p20, queued): `bedroom eyes` on three held bent-overs at the same seed (measuring the weak-profile claim), and the camera layer on the crawl — `cowboy shot`, `close-up`, and `from below`, one tag each on a held crawl at the same seed.
 
 ## M2 measured
 

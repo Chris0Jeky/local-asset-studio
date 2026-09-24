@@ -112,6 +112,9 @@ Danbooru names were checked against `https://danbooru.donmai.us/tags.json` on 23
 | Pokemon | `olivia (pokemon)` | (unchecked) | Adult island kahuna. |
 | Pokemon | `erika (pokemon)` | (unchecked) | Adult gym leader. |
 | NieR:Automata | `2b (nier:automata)` | (21 Sep lab) | Adult android. |
+| Chainsaw Man | `power (chainsaw man)` | (unchecked) | Adult devil, repo adult shortlist. |
+| Chainsaw Man | `quanxi (chainsaw man)` | (unchecked) | Adult devil hunter, repo adult shortlist. |
+| Pokemon | `cynthia (pokemon)` | (21 Sep lab) | Adult Champion. |
 
 ### Additional, aged up characters
 
@@ -944,3 +947,99 @@ P15 held 6/6. The M3 portrait (Black Swan, WAI, job `89658af5`, prompt `6ad6f1ef
 | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `0e76aa27-3340-4cbe-ad51-02d0085d3746` |
 | p16-jessie-portrait | wai | 2026092545 | `28add1d6-be94-4986-b1a8-a67142f927bf` |
 | p16-acheron-portrait | cstati-v3-baseline | 2026092546 | `80a130e0-0167-4cdc-9841-37eb0a63d1c6` |
+
+### p16 results
+
+All six completed, 24.3–26.4 s each. No spill line on any receipt. The portrait tail held 6/6: upper-body framing, face toward the viewer, smile, and a sheer or glossy chest panel on every still. Hands never appear (cropped out).
+
+- p16-2b-portrait, WAI, seed `2026092541`, job `cdf072c6`, prompt `567aef34`, 26.3 s, `WAI-Illustration_00066_.png`. Identity: 2B reads, white bob, blindfold, black dress, ruins, adult. Lever: portrait held, smile. Hands: not visible. Cloth: chest cutout with a sheer under-panel. Keep-or-change: keep.
+- p16-kafka-portrait, CSTati, seed `2026092542`, job `af845d9a`, prompt `667713d1`, 26.4 s, `CSTati-v3-Baseline_00040_.png`. Identity: Kafka reads, magenta hair, sunglasses on head, train, adult. Lever: portrait held, smile. Hands: not visible. Cloth: white shirt strongly translucent. Keep-or-change: keep.
+- p16-yelan-portrait, YumeFlux, seed `2026092543`, job `8af1e664`, prompt `8e5e64ac`, 26.3 s, `YumeFlux-ILv1-Baseline_00034_.png`. Identity: Yelan reads, dark blue hair, green eyes, dice charm, teahouse, adult. Lever: portrait held, smile. Hands: not visible. Cloth: blue dress with a sheer chest panel. Keep-or-change: keep.
+- p16-nero-portrait, AniFox, seed `2026092544`, job `0e76aa27`, prompt `f9dd9e37`, 26.4 s, `AniFox-v2-Baseline_00039_.png`. Identity: Nero reads, blonde hair, green eyes, throne room, adult. Lever: portrait held, smile. Hands: not visible. Cloth: red dress with a wet-look translucent chest. Keep-or-change: keep.
+- p16-jessie-portrait, WAI, seed `2026092545`, job `28add1d6`, prompt `5bb5cb29`, 24.3 s, `WAI-Illustration_00067_.png`. Identity: Jessie reads strongly, R uniform, rooftop, adult. Lever: portrait held, smile. Hands: not visible. Cloth: white uniform glossy with sheen, fairly opaque. Keep-or-change: keep.
+- p16-acheron-portrait, CSTati, seed `2026092546`, job `80a130e0`, prompt `23db61eb`, 24.3 s, `CSTati-v3-Baseline_00041_.png`. Identity: Acheron reads, grey hair, purple eyes, train car, adult. Lever: portrait held, smile. Hands: not visible. Cloth: black dress with a sheer chest panel. Keep-or-change: keep.
+
+## Portrait eyes — p17 wave
+
+P16 held 6/6. This wave adds `bedroom eyes` to three held portraits at the same seed (the tag is the only change), and runs the portrait tail on the last unrun adults: Power, Quanxi, and Cynthia. Queued in one burst.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p17-kafka-p-eyes | p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `afd8d510-bd99-44c9-9a74-4792f4fbf6bd` |
+| p17-yelan-p-eyes | p16-yelan-portrait | yumeflux-ilv1-baseline | 2026092543 | `e07896f0-c6a3-42ac-b126-05c582b24893` |
+| p17-acheron-p-eyes | p16-acheron-portrait | cstati-v3-baseline | 2026092546 | `016892a8-8622-4a13-8b17-982a3543697a` |
+| p17-power-portrait | T16 | wai | 2026092551 | `da6475dc-ff42-4ea4-903f-2df8f486d5e4` |
+| p17-quanxi-portrait | T16 | anifox-v2-baseline | 2026092552 | `a8f70b2f-c8ee-4cbb-a5e8-c13ddf2d1369` |
+| p17-cynthia-portrait | T16 | yumeflux-ilv1-baseline | 2026092553 | `530b243a-bce0-4887-b475-5456f6e287d9` |
+
+### p17 results
+
+All six completed, 14.4–24.3 s each. No spill line on any receipt. `bedroom eyes` fired on all three portraits at the same seed (Yelan mild, Kafka and Acheron clear). The portrait tail held 3/3 on the last unrun adults.
+
+- p17-kafka-p-eyes, CSTati, seed `2026092542`, job `afd8d510`, prompt `adc7763f`, 14.4 s, `CSTati-v3-Baseline_00042_.png`. Identity: same Kafka read, train, adult. Lever: eyes heavier and half-lidded; tag fired. Hands: not visible. Cloth: same translucent white shirt. Keep-or-change: keep.
+- p17-yelan-p-eyes, YumeFlux, seed `2026092543`, job `e07896f0`, prompt `1d7c654f`, 24.2 s, `YumeFlux-ILv1-Baseline_00035_.png`. Identity: same Yelan read, teahouse, adult. Lever: eyes mildly heavier; tag fired mildly. Rest unchanged. Keep-or-change: keep.
+- p17-acheron-p-eyes, CSTati, seed `2026092546`, job `016892a8`, prompt `5e59ebd3`, 24.2 s, `CSTati-v3-Baseline_00043_.png`. Identity: same Acheron read, train car, adult. Lever: eyes heavier; tag fired. Rest unchanged. Keep-or-change: keep.
+- p17-power-portrait, WAI, seed `2026092551`, job `da6475dc`, prompt `ce608591`, 24.3 s, `WAI-Illustration_00068_.png`. Identity: Power reads strongly, blonde hair, red horns, orange eyes, office at night, adult. Lever: portrait held, smile. Hands: not visible. Cloth: white shirt translucent. Keep-or-change: keep.
+- p17-quanxi-portrait, AniFox, seed `2026092552`, job `a8f70b2f`, prompt `3f39d9a8`, 24.2 s, `AniFox-v2-Baseline_00040_.png`. Identity: adult woman, white hair, eyepatch, suit, bar, adult. Lever: portrait held, smile. Hands: not visible. Cloth: white shirt translucent. Keep-or-change: keep.
+- p17-cynthia-portrait, YumeFlux, seed `2026092553`, job `530b243a`, prompt `06311d75`, 24.3 s, `YumeFlux-ILv1-Baseline_00036_.png`. Identity: Cynthia reads, blonde hair with black accessories, champion chamber, adult. Lever: portrait held, smile. Hands: not visible. Cloth: white top translucent under the black coat. Keep-or-change: keep.
+
+## Portrait-only adults — p18 wave
+
+P17 held 6/6. 2B, Power, Quanxi, and Cynthia have portrait cells only, so this wave puts each on a body stack: 2B and Cynthia on the squat and the bent-over, Power and Quanxi on the crawl. One lever per cell: the stack, new for the character. Queued in one burst.
+
+| Cell | Stack | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p18-2b-squat | T7 | wai | 2026092561 | `4c0dccb6-b0e3-4f33-9a1c-7ef7f9936807` |
+| p18-2b-bentover | T8 | cstati-v3-baseline | 2026092562 | `6e1869cb-85e2-4628-af18-33bd17e8b24b` |
+| p18-power-crawl | T12 | yumeflux-ilv1-baseline | 2026092563 | `6496cd38-a540-43ff-9ed7-aeca63bb5aee` |
+| p18-quanxi-crawl | T12 | anifox-v2-baseline | 2026092564 | `a312924c-3842-457f-a4d1-087e43f25051` |
+| p18-cynthia-squat | T7 | wai | 2026092565 | `efb11cba-a799-4821-b9bc-5e72068bd16f` |
+| p18-cynthia-bentover | T8 | cstati-v3-baseline | 2026092566 | `cb7936c9-fe91-4d12-868e-e57cb25d11e5` |
+
+### p18 results
+
+All six completed, 22.2–24.6 s each. No spill line on any receipt. The portrait-only adults now have body stacks: 6/6 held. New garment note: briefs and shorts on the crawl leave the rear nearly bare (Power, Quanxi), extending the T12 hike rule.
+
+- p18-2b-squat, WAI, seed `2026092561`, job `4c0dccb6`, prompt `6e56e5f3`, 24.3 s, `WAI-Illustration_00069_.png`. Identity: 2B reads, white bob, blindfold, black dress, library ruins, adult. Lever: T7 held, mouth open. Hands: hidden behind the head. Cloth: black dress glossy and wet. Keep-or-change: keep.
+- p18-2b-bentover, CSTati, seed `2026092562`, job `6e1869cb`, prompt `0bb193aa`, 24.6 s, `CSTati-v3-Baseline_00044_.png`. Identity: 2B reads, blindfold, black dress, ruined city, adult; a pod hovers behind her, a garnish from the prompt tag. Lever: T8 held as a standing lean, looking back, mouth slightly open. Hands: both on the dress, normal-looking in gloves. Cloth: black dress glossy and wet. Keep-or-change: keep.
+- p18-power-crawl, YumeFlux, seed `2026092563`, job `6496cd38`, prompt `99a9d02f`, 22.2 s, `YumeFlux-ILv1-Baseline_00037_.png`. Identity: Power reads strongly, blonde hair, red horns, orange eyes, office, adult. Lever: T12 held, face toward the viewer, mouth open. Hands: tucked and extended, no count to fail. Cloth: white shirt; dark briefs leave the rear nearly bare, the briefs end of the hike rule. Keep-or-change: keep.
+- p18-quanxi-crawl, AniFox, seed `2026092564`, job `a312924c`, prompt `a016cac2`, 24.3 s, `AniFox-v2-Baseline_00041_.png`. Identity: Quanxi reads, white hair, eyepatch, suit, office, adult. Lever: T12 held strongly, face toward the viewer, mouth open. Hands: folded under the chin, normal-looking. Cloth: blazer and shirt; dark shorts leave the rear nearly bare. Keep-or-change: keep; one of the strongest crawls of the night.
+- p18-cynthia-squat, WAI, seed `2026092565`, job `efb11cba`, prompt `fa29e225`, 24.2 s, `WAI-Illustration_00070_.png`. Identity: Cynthia reads, blonde hair over one eye, black coat, necklace, cathedral ruins, adult. Lever: T7 held at a low angle, mouth open. Hands: hidden behind the head. Cloth: white blouse glossy, black high-waist bottom glossy and wet. Keep-or-change: keep; strong.
+- p18-cynthia-bentover, CSTati, seed `2026092566`, job `cb7936c9`, prompt `361e8f45`, 24.3 s, `CSTati-v3-Baseline_00045_.png`. Identity: Cynthia reads, blonde hair, black coat, mountain ruins, adult. Lever: T8 held, leaning forward, looking back, mouth slightly open. Hands: at the sides, normal-looking. Cloth: the grey skirt became grey pants; darks glossy. Keep-or-change: keep; garment substitution is the note.
+
+## Crawl layers — p19 wave
+
+P18 held 6/6. The crawl (T12) has never met the see-through stack (T6) or `bedroom eyes` (T13), and every crawl faces the viewer, so both layers go onto held crawls at the same seed: three get the full sheer head (`seethroughILL, see through clothes, wet clothes` plus the LoRA swap to `see_through_clothes` at 1.0), three get `bedroom eyes` after `parted lips`. The layer is the only change per cell. Queued in one burst.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p19-raiden-sheer | p11-raiden-crawl | wai | 2026092491 | `92a91197-4a9e-4625-aa2a-3a458c728c63` |
+| p19-yelan-sheer | p11-yelan-crawl | cstati-v3-baseline | 2026092492 | `cf914d14-5441-4f63-8649-96c564d75eaa` |
+| p19-nessa-sheer | p11-nessa-crawl | yumeflux-ilv1-baseline | 2026092497 | `8fc6bf44-c66d-4f88-af63-9c845ea26207` |
+| p19-sabrina-eyes | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `2ac8477b-81f5-4787-aebd-430eda3b561d` |
+| p19-sonia-eyes | p13-sonia-crawl | yumeflux-ilv1-baseline | 2026092513 | `dbd8fc4f-0b8b-4982-9886-b033ede55253` |
+| p19-acheron-eyes | p13-acheron-crawl | cstati-v3-baseline | 2026092516 | `2e0769a4-b1a1-4ea4-b3fa-8d675780a941` |
+
+### p19 results
+
+All six completed, 24.2–24.4 s each. No spill line on any receipt. The sheer stack fires on the crawl exactly as it does elsewhere: light cloth goes transparent, dark cloth goes glossy, and the pose holds. `bedroom eyes` fired on all three crawl faces at the same seed.
+
+- p19-raiden-sheer, WAI, seed `2026092491`, job `92a91197`, prompt `7e255e8f`, 24.4 s, `WAI-Illustration_00071_.png`. Identity: same Raiden read, tatami, adult. Lever: sheer head added — the pale lavender bottoms are fully translucent over the rear, the hardest crawl transparency yet. Hands: crossed under the chin, normal-looking. Cloth: translucent, not bare as in p11. Mouth slightly open. Keep-or-change: keep.
+- p19-yelan-sheer, CSTati, seed `2026092492`, job `cf914d14`, prompt `5fc6db18`, 24.2 s, `CSTati-v3-Baseline_00046_.png`. Identity: same Yelan read, casino, adult. Lever: sheer head added — the dark blue bodysuit went latex-glossy, not transparent; the dark-cloth rule again. Hands: planted, no count to fail. Cloth: glossy. Mouth slightly open. Keep-or-change: keep.
+- p19-nessa-sheer, YumeFlux, seed `2026092497`, job `8fc6bf44`, prompt `6d323a9f`, 24.3 s, `YumeFlux-ILv1-Baseline_00038_.png`. Identity: same Nessa read, stadium, adult. Lever: sheer head added — the white top went translucent and wet, dark bottoms glossy. Hands: crossed, normal-looking. Cloth: mixed sheer and gloss. Mouth slightly open. Keep-or-change: keep.
+- p19-sabrina-eyes, AniFox, seed `2026092498`, job `2ac8477b`, prompt `19f89b23`, 24.2 s, `AniFox-v2-Baseline_00042_.png`. Identity: same Sabrina read, gym hall, adult. Lever: eyes half-lidded and heavy; tag fired clearly. Hands: both flat with normal five-finger counts. Cloth: same dark dress covering. Mouth slightly open. Keep-or-change: keep.
+- p19-sonia-eyes, YumeFlux, seed `2026092513`, job `dbd8fc4f`, prompt `5c7fd851`, 24.3 s, `YumeFlux-ILv1-Baseline_00039_.png`. Identity: same Sonia read, lab, adult. Lever: eyes heavy; tag fired. Hands: tucked, not visible. Cloth: green jacket hiked, rear bare as in p13. Mouth slightly open. Keep-or-change: keep.
+- p19-acheron-eyes, CSTati, seed `2026092516`, job `2e0769a4`, prompt `2a397a8f`, 24.4 s, `CSTati-v3-Baseline_00047_.png`. Identity: same Acheron read, train car, adult. Lever: eyes heavy-lidded; tag fired. Hands: one flat with five fingers, one tucked. Cloth: same black dress covering. Mouth slightly open. Keep-or-change: keep.
+
+## Eyes on profiles, cameras on crawls — p20 wave
+
+P19 held 6/6. Two unmeasured claims remain in the notes: whether `bedroom eyes` shows on bent-over profiles (T13 says presumably weak, not measured), and how the camera tags behave on the crawl (T10 measured them on the squat and the bent-over only). Three held bent-overs get `bedroom eyes` after `parted lips` at the same seed, against the judged p6 lips stills; three held crawls get one camera tag each (`cowboy shot`, `close-up`, `from below`) after `top-down bottom-up` at the same seed. The tag is the only change per cell. Queued in one burst.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p20-tifa-eyes | p6-tifa-lips | anifox-v2-baseline | 2026092441 | `94ab5a24-082f-4109-b887-0f2724045221` |
+| p20-himeko-eyes | p6-himeko-lips | yumeflux-ilv1-baseline | 2026092443 | `3f7d2a6f-8321-4580-8d82-5a28872d0dcb` |
+| p20-narberal-eyes | p6-narberal-lips | cstati-v3-baseline | 2026092433 | `54344d9a-1ef5-495c-950c-ebfc61c12071` |
+| p20-yelan-cowboy | p11-yelan-crawl | cstati-v3-baseline | 2026092492 | `45f6a601-1aa6-43ad-a77e-b1ca560806d9` |
+| p20-sabrina-closeup | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `32d8ea3f-5e3f-4996-8391-af9bd094871e` |
+| p20-carlotta-below | p12-carlotta-crawl | yumeflux-ilv1-baseline | 2026092507 | `8f960da7-df29-4f0f-96af-4fca1a9d5681` |
