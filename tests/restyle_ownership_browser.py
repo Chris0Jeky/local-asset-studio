@@ -17,6 +17,8 @@ from asset_detail_browser import inert_page
 from source_slot_choices_browser import exercise_source_choices
 
 ROOT = Path(__file__).resolve().parents[1]
+# A cold hosted runner can miss the first page load inside the 5 s interaction budget (#911).
+FIRST_LOAD_MS = 20000
 
 
 async def run(args):
@@ -47,9 +49,9 @@ async def run(args):
                 if args.inert:
                     await inert_page(page, server.server_port)
                 else:
-                    await page.goto(f'http://127.0.0.1:{server.server_port}/#create')
-                await page.wait_for_function('!!catalog && !!selected && schemaAvailable')
-                await page.wait_for_function("assetState.assets.some(a=>a.id==='asset-0')")
+                    await page.goto(f'http://127.0.0.1:{server.server_port}/#create',timeout=FIRST_LOAD_MS)
+                await page.wait_for_function('!!catalog && !!selected && schemaAvailable',timeout=FIRST_LOAD_MS)
+                await page.wait_for_function("assetState.assets.some(a=>a.id==='asset-0')",timeout=FIRST_LOAD_MS)
                 await exercise_source_choices(page, check)
                 await page.set_viewport_size({'width':1440, 'height':1100})
                 await page.evaluate("""() => {
