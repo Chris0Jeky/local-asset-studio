@@ -10,8 +10,8 @@
         0
       ],
       "size": [
-        320,
-        280
+        340,
+        260
       ],
       "flags": {},
       "order": 0,
@@ -45,18 +45,19 @@
       },
       "widgets_values": [
         "animagine-xl-4.0-opt.safetensors"
-      ]
+      ],
+      "title": "Load Checkpoint"
     },
     {
       "id": 2,
       "type": "CLIPTextEncode",
       "pos": [
-        360,
+        390,
         0
       ],
       "size": [
-        320,
-        280
+        340,
+        260
       ],
       "flags": {},
       "order": 1,
@@ -82,18 +83,19 @@
       },
       "widgets_values": [
         "1girl, original character, safe, solo, chibi, full body, standing, looking at viewer, silver hair, long hair, violet eyes, hair ornament, dark blue mage robe, detached sleeves, boots, holding staff, white background, simple background, character sprite, masterpiece, high score, great score, absurdres"
-      ]
+      ],
+      "title": "CLIP Text Encode (Prompt)"
     },
     {
       "id": 3,
       "type": "CLIPTextEncode",
       "pos": [
-        720,
+        780,
         0
       ],
       "size": [
-        320,
-        280
+        340,
+        260
       ],
       "flags": {},
       "order": 2,
@@ -119,18 +121,19 @@
       },
       "widgets_values": [
         "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry"
-      ]
+      ],
+      "title": "CLIP Text Encode (Prompt)"
     },
     {
       "id": 4,
       "type": "EmptyLatentImage",
       "pos": [
-        1080,
+        1170,
         0
       ],
       "size": [
-        320,
-        280
+        340,
+        260
       ],
       "flags": {},
       "order": 3,
@@ -152,7 +155,8 @@
         1024,
         1024,
         1
-      ]
+      ],
+      "title": "Empty Latent Image"
     },
     {
       "id": 5,
@@ -162,8 +166,8 @@
         340
       ],
       "size": [
-        320,
-        280
+        340,
+        260
       ],
       "flags": {},
       "order": 4,
@@ -210,18 +214,19 @@
         "euler_ancestral",
         "normal",
         1.0
-      ]
+      ],
+      "title": "KSampler"
     },
     {
       "id": 6,
-      "type": "VAEDecode",
+      "type": "VAEDecodeTiled",
       "pos": [
-        360,
+        390,
         340
       ],
       "size": [
-        320,
-        280
+        340,
+        260
       ],
       "flags": {},
       "order": 5,
@@ -248,20 +253,26 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "VAEDecode"
+        "Node name for S&R": "VAEDecodeTiled"
       },
-      "widgets_values": []
+      "widgets_values": [
+        512,
+        64,
+        64,
+        8
+      ],
+      "title": "VAE Decode (Tiled)"
     },
     {
       "id": 7,
       "type": "SaveImage",
       "pos": [
-        720,
+        780,
         340
       ],
       "size": [
-        320,
-        280
+        340,
+        260
       ],
       "flags": {},
       "order": 6,
@@ -275,7 +286,7 @@
       ],
       "outputs": [
         {
-          "name": "IMAGE",
+          "name": "images",
           "type": "IMAGE",
           "links": []
         }
@@ -285,13 +296,14 @@
       },
       "widgets_values": [
         "Expansion/Animagine"
-      ]
+      ],
+      "title": "Save Image"
     },
     {
       "id": 8,
       "type": "LoraLoader",
       "pos": [
-        1080,
+        1170,
         340
       ],
       "size": [
@@ -337,14 +349,14 @@
         0,
         0
       ],
-      "title": "Style LoRA slot 1 (off at strength 0)"
+      "title": "Load LoRA (Model and CLIP)"
     },
     {
       "id": 9,
       "type": "LoraLoader",
       "pos": [
-        1440,
-        340
+        0,
+        680
       ],
       "size": [
         340,
@@ -390,7 +402,7 @@
         0,
         0
       ],
-      "title": "Style LoRA slot 2 (off at strength 0)"
+      "title": "Load LoRA (Model and CLIP)"
     }
   ],
   "links": [
@@ -501,6 +513,15 @@
   ],
   "groups": [],
   "config": {},
-  "extra": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7,
+      "offset": [
+        40,
+        40
+      ]
+    },
+    "studio_title": "Animagine \u2022 anime character"
+  },
   "version": 0.4
 }
