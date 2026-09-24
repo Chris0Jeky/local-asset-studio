@@ -1,8 +1,11 @@
 import importlib.util
+import json
 import tempfile
+import time
 import unittest
 import uuid
 from pathlib import Path
+from unittest.mock import patch
 
 SPEC = importlib.util.spec_from_file_location('asset_workspace', Path(__file__).parents[1] / 'app/workspace.py')
 workspace = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(workspace)
@@ -74,3 +77,35 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(len(self.store.setups()),1)
         self.assertEqual(self.store.setups()[0]['name'],'Browser A')
         self.assertEqual(self.store.setups()[0]['recipe']['parent_assets'],[self.asset])
+
+    def test_concurrent_setup_save_preserves_original_without_integrity_error(self):
+        # A lost race hides the winner's row from the existence check; the INSERT OR IGNORE
+        # path must then keep the original: identical payload returns normally, anything else
+        # raises WorkspaceError, never sqlite3.IntegrityError.
+        recipe={'preset':'test'}; identifier='race-0'
+        with self.store.connection() as db: db.execute("INSERT INTO setups VALUES (?,?,?,?)", (identifier,'Original',json.dumps(recipe),time.time()))
+        with self.assertRaisesRegex(workspace.WorkspaceError,'original was preserved'):
+            self.store.save_setup({'id':identifier,'name':'Late','recipe':{'preset':'other'}})
+        state={'hide':True}
+        class _Missing:
+            def fetchone(self): return None
+        class _RacedDb:
+            def __init__(self,inner): self._inner=inner
+            def execute(self,sql,*args,**kwargs):
+                if state['hide'] and isinstance(sql,str) and sql.startswith('SELECT name,recipe'): state['hide']=False; return _Missing()
+                return self._inner.execute(sql,*args,**kwargs)
+            def __getattr__(self,name): return getattr(self._inner,name)
+        class _RacedConnection:
+            def __init__(self,inner): self._inner=inner
+            def __enter__(self): return _RacedDb(self._inner.__enter__())
+            def __exit__(self,*exc): return self._inner.__exit__(*exc)
+        real_connection=workspace.AssetWorkspace.connection
+        def raced_connection(store_self): return _RacedConnection(real_connection(store_self))
+        with patch.object(workspace.AssetWorkspace,'connection',raced_connection):
+            self.assertEqual(self.store.save_setup({'id':identifier,'name':'Original','recipe':recipe}),{'id':identifier,'name':'Original'})
+        self.assertEqual(self.store.setups()[0]['name'],'Original')
+        state['hide']=True
+        with patch.object(workspace.AssetWorkspace,'connection',raced_connection):
+            with self.assertRaisesRegex(workspace.WorkspaceError,'original was preserved'):
+                self.store.save_setup({'id':identifier,'name':'Late','recipe':{'preset':'other'}})
+        self.assertEqual(self.store.setups()[0]['recipe'],recipe)

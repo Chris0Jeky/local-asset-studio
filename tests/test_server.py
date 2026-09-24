@@ -1067,4 +1067,15 @@ class ServerTests(unittest.TestCase):
             job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual(job['outputs'][0]['filename'],'demo_00001_.png');self.assertIn('locked',job['outputs'][0]['snapshot_error'])
 
+    def test_image_route_rejects_negative_and_overflow_index(self):
+        s=self.studio(); identifier='image-job'; s.jobs[identifier]={'id':identifier,'outputs':[{'filename':'a.png'},{'filename':'b.png'}]}
+        for index in ('-1','2'):
+            with self.subTest(index=index):
+                handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path=f'/api/image/{identifier}/{index}'
+                handler._safe_host=lambda:True; seen={}
+                handler._json=lambda status,obj:seen.update(status=status,obj=obj)
+                def fail(*args,**kwargs): raise AssertionError('out-of-range image must 404, not serve media')
+                handler._media=fail; handler._local_file=fail; handler.do_GET()
+                self.assertEqual(seen,{'status':404,'obj':{'error':'Unknown image'}})
+
 if __name__ == "__main__": unittest.main()

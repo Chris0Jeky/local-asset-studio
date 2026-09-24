@@ -2017,7 +2017,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/jobs/"):
                 job = self.studio.jobs.get(path.rsplit("/", 1)[-1]); return self._json(200, self.studio.public(job)) if job else self._json(404, {"error":"Unknown job"})
             if path.startswith("/api/image/"):
-                _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); image = job and job.get("outputs", [])[int(index)]
+                _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); index = int(index); outputs = job.get("outputs", []) if job else []; image = outputs[index] if 0 <= index < len(outputs) else None
                 if not image: return self._json(404, {"error":"Unknown image"})
                 if image.get("asset_id"): return self._local_file(self.studio.assets.file(image["asset_id"]))
                 return self._media(image, job)
