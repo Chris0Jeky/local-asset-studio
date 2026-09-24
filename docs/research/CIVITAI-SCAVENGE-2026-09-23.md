@@ -27,7 +27,7 @@
 7. **Klein anatomy/edit gap (#764):** Anatomy/Quality Fixer `2324991` (652👍 SFW), Base→Turbo `2324315`, Body Weight `2318844`, Skeleton Pose Extractor `2413760` (pairs #761 OpenPose work), Ultimate 6-in-1 `2543188`, dual Klein+Qwen edit WF `2579807`.
 8. **Character sheet / multi-ref (LAS studio):** Illustrious turnaround `2925755` (**SFW lvl1**, new), Krea2 Helper `2933017`, Anima/Krea2 sheet `2626052`; plus Qwen multi-view WFs above — fills sheet gap beyond evergreen `100435`.
 9. **Z-Image Turbo depth:** Official Turbo `2168935` (8663👍 SFW) still canonical; DemonAlone all-mode WF `2221604`; Radiant Realism `2395852`; Asian Consistent Character `2175402`; ControlNet 6GB WF `2192289` (16GB AMD-friendly).
-10. **AMD/ROCm:** Prefer FP8/GGUF + Lightning; launch `--use-pytorch-cross-attention` (gfx1201); **strip SageAttention / Triton / DLSS / RTX VSR / Nunchaku** from imported WFs. Lonecat Pro Grade Illustrious/Pony/SDXL `2282970` / `2189190` and Klein/Z-Image WFs are strong but often NVIDIA-node heavy — sanitize before LAS import. MiniMax AMD HIP tip WF `2857584` is low-signal (7👍) but AMD-tagged.
+10. **AMD/ROCm:** Prefer FP8/GGUF + Lightning; no attention flag needed (PyTorch attention is already selected on gfx1201; see [RUNTIME-PRECONDITIONS](../RUNTIME-PRECONDITIONS.md) §4); **strip SageAttention / Triton / DLSS / RTX VSR / Nunchaku** from imported WFs. Lonecat Pro Grade Illustrious/Pony/SDXL `2282970` / `2189190` and Klein/Z-Image WFs are strong but often NVIDIA-node heavy — sanitize before LAS import. MiniMax AMD HIP tip WF `2857584` is low-signal (7👍) but AMD-tagged.
 
 ---
 
@@ -40,7 +40,7 @@
 | commentCount / multi-base versions | Secondary | Creator/WF trust |
 | downloadCount | Noted only | Popularity ≠ quality |
 | nsfwLevel | Flag every row | SFW queue quarantine |
-| NEW vs prior 138 ids | Gate | Skip B1–B4 primaries |
+| NEW vs prior 138 ids | Gate | Skip B1–B4 primaries. Review note (25 Sep): several "new" rows below repeat earlier-pack IDs (`1280702`, `1754132`, `723360`, `810000`, `1324671`, `669571`, `2925755`); check an ID against the 21 September packs before queuing it |
 
 Period focus: **Week** + **Month** for hot; **Year** only for gap utilities not in prior pack.
 
@@ -67,7 +67,7 @@ Smoke winners already covered: Masterpiece, Stabilizer, Velvet, Gothic Neon, Han
 | Krekkov Style | Goofy Ai | `1133519` | v1.0 | Illustrious | 3519 | 0.9994 | NSFW-capable gallery | [1133519](https://civitai.com/models/1133519) |
 | Takorin Style | ILXL & Anima | `878386` | v2.0 | Illustrious | 1788 | 1.0 | SFW-leaning / soft | [878386](https://civitai.com/models/878386) |
 | Create Concept - Concept (Illustrious | Pony | Flux.1 D | `1324671` | v3.0_Illustrious | Illustrious | 1508 | 0.9993 | NSFW-capable gallery | [1324671](https://civitai.com/models/1324671) |
-| Niji anime style [illustrious|Flux|Pony] | `1261988` | illustrious v3.0 | Illustrious | 2754 | 0.9989 | SFW-leaning / soft | [1261988](https://civitai.com/models/1261988) |
+| Niji anime style [illustrious\|Flux\|Pony] | `1261988` | illustrious v3.0 | Illustrious | 2754 | 0.9989 | SFW-leaning / soft | [1261988](https://civitai.com/models/1261988) |
 
 **VRAM (16GB AMD):** SDXL Illustrious + 1–2 LoRAs @0.6–0.85 + Xinsir OpenPose/Union = daily driver. Avoid stacking Micro Details + Smooth + style + CN all at once.
 
@@ -106,7 +106,7 @@ Month Most Liked Noob/Pony lists are **heavily Enigmata character-NSFW**. Do **n
 | Dataset generator Qwen2.1 | `2957451` | v1.0 | 9 | SFW | [2957451](https://civitai.com/models/2957451) |
 | Qwen Image 2.1 Fixed Workflow v1.0 | `2957353` | v1.0 | 4 | SFW | [2957353](https://civitai.com/models/2957353) |
 | Wikked Qwen 2.1 Workflow | `2956679` | v1.0 | 6 | SFW | [2956679](https://civitai.com/models/2956679) |
-| Qwen Image 2.1 in ComfyUI | Qwen Text-to-Image | `2955609` | v1.0 | 6 | SFW | [2955609](https://civitai.com/models/2955609) |
+| Qwen Image 2.1 in ComfyUI \| Qwen Text-to-Image | `2955609` | v1.0 | 6 | SFW | [2955609](https://civitai.com/models/2955609) |
 
 **Note:** Prior pack already listed enhancer WF `2951814` — still valid; this wave adds **inpaint / AIO / sheet / dataset** coverage for #739.
 
@@ -166,7 +166,7 @@ Month Most Liked Noob/Pony lists are **heavily Enigmata character-NSFW**. Do **n
 | Z-image turbo TXT2IMG, IMG2IMG, inpaint, outpain | `2221604` | Workflows | 118 | SFW-leaning / soft | [2221604](https://civitai.com/models/2221604) |
 | Z Image (Turbo & Base) Workflow | `2170134` | Workflows | 317 | SFW-leaning / soft | [2170134](https://civitai.com/models/2170134) |
 | Z-Image Turbo UltraReal workflow | `2190193` | Workflows | 274 | SFW-leaning / soft | [2190193](https://civitai.com/models/2190193) |
-| [Z-Image-Turbo] Asian Consistent Character | Ins | `2175402` | LORA | 238 | SFW-leaning / soft | [2175402](https://civitai.com/models/2175402) |
+| [Z-Image-Turbo] Asian Consistent Character \| Ins | `2175402` | LORA | 238 | SFW-leaning / soft | [2175402](https://civitai.com/models/2175402) |
 | Z-Image Turbo Radiant Realism Pro (Realistic, Ma | `2395852` | LORA | 186 | SFW-leaning / soft | [2395852](https://civitai.com/models/2395852) |
 | Z-Image Turbo Lightning | `2409672` | LORA | 204 | NSFW-capable gallery | [2409672](https://civitai.com/models/2409672) |
 | Z_Image_turbo Controlnet (6G VRAM can run it!) | `2192289` | Workflows | 164 | SFW-leaning / soft | [2192289](https://civitai.com/models/2192289) |
@@ -214,7 +214,7 @@ Evergreen still primary: Character Design Sheet `100435` (YeiYeiArt) — already
 
 | Practice | Detail |
 |---|---|
-| Attention | `--use-pytorch-cross-attention` on gfx1201 (RX 9070 XT); fallback `--use-split-cross-attention` if AOTriton issues |
+| Attention | Nothing to add: PyTorch attention is already selected on gfx1201 (RX 9070 XT). Never use `--use-split-cross-attention`, which disables the AOTriton path ([RUNTIME-PRECONDITIONS](../RUNTIME-PRECONDITIONS.md) §4) |
 | Strip from WFs | **SageAttention, Triton, DLSS, RTX VSR, Nunchaku/SVDQ, torch.compile inductor** |
 | Quant | FP8 / GGUF Q4–Q5 for Klein, Qwen Edit, FLUX.2-dev; Z-Image Turbo native is light |
 | VRAM budget | 16GB: one diffusion + one TE + ≤2 LoRAs + optional CN; don't BF16-stack Edit |
