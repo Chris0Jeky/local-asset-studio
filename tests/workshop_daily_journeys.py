@@ -67,6 +67,25 @@ class DailyJourneys(entry.EntryPoints):
         self.assertIn('Continue with this', copy)
         self.assertEqual(self.page.locator('#gallery a').get_attribute('href'), '/#assets')
 
+    def test_desk_hides_put_away_jobs_and_always_counts_them(self):
+        # #940: the put-away note must follow a populated desk too, not only the empty fallback.
+        home = region(source('studio-workbench.js'), '  function renderHome(', "  q('#uxRefreshHome').onclick")
+        self.page.set_content('''<div id="uxHomeHealth"></div><div id="uxStats"></div><div id="uxAttention"></div><div id="uxRecent"></div><script>'''
+            + source('studio-core.js') + '''</script><script>
+const q=s=>document.querySelector(s),U=StudioUX,escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function assetPreview(){return '';}
+let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{assets:[]},plans:[{id:'plan-1',name:'Live plan',kind:'comparison',state:{status:'running'}}],
+  jobs:[{id:'open-job',preset_name:'Open failure',status:'failed'},{id:'away-job',preset_name:'Old failure',status:'failed',put_away:true},{id:'stopped-job',preset_name:'Stopped uncertain',status:'uncertain',put_away:true}]};
+</script><script>'''+home+'''renderHome();</script>''')
+        desk = self.page.locator('#uxAttention').inner_text()
+        self.assertIn('Live plan', desk); self.assertIn('Open failure', desk)
+        self.assertNotIn('Old failure', desk); self.assertNotIn('Stopped uncertain', desk)
+        self.assertIn('2 run(s) put away', desk)
+        self.page.evaluate("homeData={...homeData,plans:[],jobs:homeData.jobs.filter(j=>j.put_away)};homeSignature='';renderHome()")
+        desk = self.page.locator('#uxAttention').inner_text()
+        self.assertIn('A clear desk', desk); self.assertIn('2 run(s) put away', desk)
+        self.assertEqual(self.page.locator('#uxAttention a[href="/#create"]').count(), 2)
+
     def load_picker(self):
         production = region(source('studio-workbench.js'), '  // Pull any existing image', '  // Drafts are data only')
         self.page.set_content('''<button id="uxPullAsset">Pull from library</button><script>

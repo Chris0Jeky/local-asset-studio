@@ -16,7 +16,7 @@ PAGE_ARGUMENTS = {
     'cursor': {'type': 'string', 'pattern': r'^[A-Za-z0-9_-]+$', 'maxLength': asset_reads.MAX_CURSOR},
     'filters': {'type': 'object', 'additionalProperties': False, 'properties': {
         'visibility': {'type': 'string', 'enum': ['active', 'trash', 'all']},
-        'media_type': {'type': ['string', 'null'], 'pattern': r'^[a-z][a-z0-9_-]{0,31}$', 'maxLength': 32},
+        'media_type': {'type': ['string', 'null'], 'pattern': r'^[^\x00-\x1f\x7f]+$', 'minLength': 1, 'maxLength': 32},
         'review': {'type': ['string', 'null'], 'enum': [*asset_reads.REVIEWS, None]},
         'favorite': {'type': ['boolean', 'null']},
         'collection_id': {**ASSET_ID, 'type': ['string', 'null']}}}}

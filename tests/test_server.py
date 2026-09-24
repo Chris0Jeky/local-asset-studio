@@ -1149,4 +1149,49 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(s.workspace_snapshot()["assets"][0]["prompt_excerpt"],"native positive")
         del s.jobs[created["id"]]; self.assertIsNone(s.workspace_snapshot()["assets"][0]["prompt_excerpt"])
 
+    @staticmethod
+    def _windows_refusal(source, target):
+        err=PermissionError(13,'Access is denied',str(source),None,str(target)); err.winerror=5; return err
+
+    def test_atomic_json_write_outlasts_a_transient_windows_refusal(self):
+        s=self.studio(); path=self.root/'state.json'; path.write_text('{}'); original=Path.replace; calls=[]
+        def replace(source,target):
+            calls.append(target)
+            if len(calls)==1: raise self._windows_refusal(source,target)
+            return original(source,target)
+        with patch.object(Path,'replace',replace),patch.object(server.file_replace.time,'sleep') as sleep: s._write_json_atomic(path,{'status':'failed'})
+        self.assertEqual((len(calls),sleep.call_count),(2,1));self.assertEqual(json.loads(path.read_text()),{'status':'failed'})
+        self.assertEqual(list(self.root.glob('*.tmp')),[])
+
+    def test_locked_run_folder_before_submission_is_a_plain_language_safe_retry(self):
+        # Live 24 Sep 2026: another program held state.json open through every save attempt of the first write.
+        s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]; original=Path.replace; refusals=[]
+        def replace(source,target):
+            if Path(target).name=='state.json' and len(refusals)<=len(server.file_replace.DELAYS):
+                refusals.append(self._windows_refusal(source,target)); raise refusals[-1]
+            return original(source,target)
+        with patch.object(Path,'replace',replace),patch.object(server.file_replace.time,'sleep'),patch.object(server,'urlopen',side_effect=AssertionError('nothing may reach ComfyUI')) as request:
+            with self.assertRaises(PermissionError) as caught: s._run(job)
+            s.record_job_failure(job,caught.exception)
+        request.assert_not_called();self.assertEqual(len(refusals),len(server.file_replace.DELAYS)+1)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['failure']['kind'],'record_write_locked')
+        self.assertEqual(job['failure']['action'],'Safe to generate again with the same settings.')
+        self.assertIn('Nothing was sent to ComfyUI',job['failure']['summary'])
+        saved=json.loads((s.runs/job['id']/'state.json').read_text());self.assertEqual(saved['failure'],job['failure'])
+        self.assertEqual(saved['prompt_ids'],[])
+
+    def test_lock_wording_needs_a_never_submitted_job_and_its_own_run_folder(self):
+        s=self.studio()
+        def fresh(**extra):
+            job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]; job.update(status='waiting',**extra); return job
+        cases=[]
+        job=fresh(pending_submission={}); cases.append((job,self._windows_refusal(s.runs/job['id']/'state.json.a.tmp',s.runs/job['id']/'state.json'),'uncertain'))
+        job=fresh(); cases.append((job,self._windows_refusal(self.root/'elsewhere.tmp',self.root/'elsewhere.json'),'failed'))
+        job=fresh(); cases.append((job,PermissionError(13,'Permission denied',str(s.runs/job['id']/'state.json')),'failed'))
+        job=fresh(); cases.append((job,OSError('disk full'),'failed'))
+        for job,exc,status in cases:
+            with self.subTest(exc=str(exc)):
+                s.record_job_failure(job,exc)
+                self.assertEqual(job['status'],status);self.assertNotIn('failure',job)
+
 if __name__ == "__main__": unittest.main()

@@ -89,6 +89,9 @@ def metadata_redirect_url(current_url: str, location: str) -> str:
         raise ValueError("Redirect Location must be relative or absolute HTTPS")
     if location.startswith("//") and not parsed.netloc:
         raise ValueError("Redirect Location has an invalid authority")
+    if "?" in location and not location.split("?", 1)[1]:
+        # urljoin keeps or drops an empty query depending on the Python version; refuse the spelling first.
+        raise ValueError("Redirect Location has an empty query")
     return urljoin(current_url, location)
 
 
@@ -120,7 +123,7 @@ def endpoint_provider(url: str, label: str = "metadata URL") -> str:
             raise ValueError("Hugging Face metadata endpoint requires blobs=true only")
         return "huggingface"
     if host in {"civitai.com", "www.civitai.com"}:
-        if CIVITAI_METADATA_PATH.fullmatch(parsed.path) is None or parsed.query:
+        if CIVITAI_METADATA_PATH.fullmatch(parsed.path) is None or "?" in url:
             raise ValueError("Civitai URL is not a supported metadata endpoint")
         return "civitai"
     raise ValueError(f"{label} host is not supported")

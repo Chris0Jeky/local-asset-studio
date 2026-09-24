@@ -133,3 +133,19 @@ validation and global-writer exclusion. The first eight regression methods cause
 observation workflow runs the new suite on both Windows and Ubuntu. #716 remains
 open for multi-file saves/restart normalization, runtime/backend and production
 owners, lower-authority metadata and stronger platform qualification.
+
+## Put away (#940)
+
+`POST /api/jobs/<id>/put-away` with `{"put_away": true|false}` publishes through the
+same bounded writer and changes exactly one field: it adds or removes `put_away_at`.
+Status, message, prompt IDs, submissions, outputs, reservations and tracking stay as
+recorded; nothing is queued, submitted, resumed or cancelled. It is accepted only for a
+settled failed, partial, abandoned or tracking-stopped uncertain job with no unknown
+pending submission; an uncertain job keeps its resume path and must be stopped first.
+Bringing a job back is refused only while the job is active again. The job snapshot
+derives `put_away`: an owner put-away counts only while the job stays eligible (a
+resumed job reappears), and a stopped-tracking uncertain job counts as put away with
+`put_away_basis: "tracking_stopped"` without any new record, so Stop tracking alone
+takes it off the Overview desk; Resume observation brings it back. The Create Problems
+panel shows the newest five open problems, a count of the rest, and a
+"Show put away (N)" toggle. `tests/test_job_put_away.py` covers it.
