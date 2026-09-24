@@ -49,4 +49,30 @@ assert.equal(recipeParent.children.length,1,'Mounting twice must not create anot
 assert.equal(referenceParent.children.length,1,'Mounting twice must not create another wrapper');
 assert.equal(result.recipe,document.querySelector('#recipeNotesHelp'));
 assert.equal(result.references,document.querySelector('#referenceBoardHelp'));
+// Post-Prepare guidance is an existing renderer, not a second state owner.
+const continuationParent=new Element('section','uxContinuation');
+const guidance=new Element('div','uxContinuationGuidance');
+guidance.textContent='Retained route explanation';
+continuationParent.append(guidance);document.body.append(continuationParent);
+result=Disclosure.mount(document);
+assert.ok(result.continuation,'Existing continuation guidance needs an optional disclosure');
+assert.equal(result.continuation.id,'continuationGuidanceHelp');
+assert.equal(result.continuation.open,false);
+assert.equal(result.continuation.hidden,false);
+assert.equal(result.continuation.children[1],guidance);
+result.continuation.open=true;
+Disclosure.mount(document);
+assert.equal(continuationParent.children.length,1);
+assert.equal(result.continuation.open,true,'Idempotent mounting preserves an explicit reading choice');
+
+// The shell can request the adapter before studio-workbench creates its context.
+const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+const late=new Document(),callbacks=[];late.readyState='loading';
+late.addEventListener=(type,fn,options)=>{assert.equal(type,'DOMContentLoaded');assert.equal(options.once,true);callbacks.push(fn);};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../app/static/create-progressive-disclosure.js'),'utf8'),{document:late});
+assert.equal(callbacks.length,1,'Initial parser-time mount must retry once after the context is created');
+const lateContext=new Element('section','uxContinuation'),lateGuidance=new Element('div','uxContinuationGuidance');
+lateGuidance.textContent='Created by the following workbench script';lateContext.append(lateGuidance);late.body.append(lateContext);
+callbacks[0]();
+assert.equal(late.querySelector('#continuationGuidanceHelp').children[1],lateGuidance);
 console.log('create progressive disclosure contracts passed');
