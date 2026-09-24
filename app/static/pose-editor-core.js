@@ -209,5 +209,13 @@
       throw Error('The rendered guide did not match this drawing request. The previous picture was kept.');
     return Object.fromEntries(['file','sha256','artifact_id','bytes','width','height','renderer','generation_submitted'].map(key=>[key,value[key]]));
   }
-  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,RENDERERS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,drawsGuide,guideRenderer,renderRequest,limbColours,guideResponse,positionInput};
+  // An attached drawn guide is a picture of one canvas. Once Width or Height move on, the recipe would stretch the old
+  // PNG to the new size (ControlNet, Klein reference-latent scaling), so the guide is stale until it is drawn again (#844).
+  // Only a drawn-pose file counts: an uploaded picture keeps its own size and the recipe scales it as authored.
+  function guideSizeReason(records,canvas,action){
+    const c=canvasOf(canvas),stale=(Array.isArray(records)?records:[]).find(r=>r&&!r.missing&&/^[a-f0-9]{32}_drawn-pose\.png$/.test(r.file||'')
+      &&Number.isInteger(r.width)&&Number.isInteger(r.height)&&(r.width!==c.width||r.height!==c.height));
+    return stale?'The pose guide was drawn at '+stale.width+'×'+stale.height+'; press '+(action||'Use this pose')+' again for the new size ('+c.width+'×'+c.height+').':'';
+  }
+  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,RENDERERS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,drawsGuide,guideRenderer,renderRequest,limbColours,guideResponse,guideSizeReason,positionInput};
 });

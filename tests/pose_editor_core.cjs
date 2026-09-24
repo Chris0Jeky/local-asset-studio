@@ -98,6 +98,23 @@ test('serialisation is pixel coordinates, nulls for the unknown, and the canvas 
   assert.throws(()=>P.serialize(drawn,{width:'wide',height:10}),/width and a height/);
 });
 
+test('an attached drawn guide holds Generate once Width or Height move off its canvas (#844)',()=>{
+  const guide={file:'a'.repeat(32)+'_drawn-pose.png',width:1024,height:1536,renderer:'studio.coco18-lines/v1',missing:false};
+  assert.equal(P.guideSizeReason([guide],CANVAS),'','a guide drawn at this canvas is current');
+  assert.equal(P.guideSizeReason([guide],{width:832,height:1216}),'The pose guide was drawn at 1024×1536; press Use this pose again for the new size (832×1216).');
+  assert.match(P.guideSizeReason([guide],{width:1024,height:1024}),/drawn at 1024×1536/,'one changed axis is enough');
+  assert.match(P.guideSizeReason([{},guide],{width:1024,height:1024},'Replace pose picture with drawing'),/press Replace pose picture with drawing again/,'the hold names the button on screen');
+  assert.equal(P.guideSizeReason([Object.assign({},guide,{width:832,height:1216})],{width:832,height:1216}),'','drawing again at the new size clears the hold');
+  const upload=Object.assign({},guide,{file:'b'.repeat(32)+'_upload.png',width:512,height:768});
+  assert.equal(P.guideSizeReason([upload],CANVAS),'','an uploaded picture keeps its own size and is not a stale guide');
+  assert.equal(P.guideSizeReason([Object.assign({},guide,{missing:true})],{width:832,height:1216}),'','a missing guide is the references blocker, not this one');
+  assert.equal(P.guideSizeReason(null,CANVAS),'');
+  const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  assert.match(workbench,/StudioPoseEditor\.guideSizeReason\(referenceRecords,poseCanvasSize\(\)/,'readiness compares the attached guide with the canvas Use this pose would render');
+  assert.match(workbench,/items\.push\(\{code:'pose-size',message:staleGuide,action:'pose-size'\}\)/,'the stale guide is a Generate readiness blocker');
+  assert.match(workbench,/q\('#uxPoseReason'\)\.textContent=reason\|\|poseSizeHold\(\)/,'the pose panel shows the same hold beside Use this pose');
+});
+
 // The panel itself needs a DOM this sandbox does not have (canvas, pointer capture, dialogs); what is pinned
 // here is the wiring around the pure module, the way tests/frontend_handoffs.cjs pins the picker's.
 test('the workbench sends the drawing to the guide endpoint and to no generation route',()=>{
