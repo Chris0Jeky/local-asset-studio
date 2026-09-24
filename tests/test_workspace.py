@@ -81,6 +81,21 @@ class WorkspaceTests(unittest.TestCase):
         saved=self.store.save_setup({'name':'Boundary','recipe':recipe}); self.assertEqual(saved['name'],'Boundary')
         self.assertEqual(self.store.setups()[0]['recipe'],recipe)
 
+    def test_save_setup_rejects_non_object_body_and_bad_ids_without_storing(self):
+        for body in ([], 'setup', 123, None, True):
+            with self.subTest(body=repr(body)):
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'must be an object'):
+                    self.store.save_setup(body)
+        recipe = {'preset': 'test'}
+        for bad_id in ('', 0, 123, None, ['a'], {'a': 1}, 'x' * 129):
+            with self.subTest(bad_id=repr(bad_id)):
+                with self.assertRaises(workspace.WorkspaceError):
+                    self.store.save_setup({'id': bad_id, 'name': 'Bad id', 'recipe': recipe})
+        self.assertEqual(self.store.setups(), [])
+        saved = self.store.save_setup({'id': 'x' * 128, 'name': 'Boundary id', 'recipe': recipe})
+        self.assertEqual(saved['id'], 'x' * 128)
+        self.assertEqual(len(self.store.setups()), 1)
+
     def test_file_rejects_escaped_absolute_and_missing_snapshots(self):
         outside=self.store.root.parent/'outside.png'; outside.write_bytes(b'outside bytes')
         elsewhere=self.store.root.parent/'elsewhere.png'; elsewhere.write_bytes(b'elsewhere bytes')

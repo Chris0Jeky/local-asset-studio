@@ -554,14 +554,20 @@
   };
   q('#uxSecondRestyle').onclick=useSecondPicture('restyle');q('#uxSecondCombine').onclick=useSecondPicture('combine');
   q('#uxSecondReplace').onclick=async()=>{
-    const item=secondPicture;if(pickerBusy||!item||!continuationState)return;
+    const item=secondPicture;if(pickerBusy||handoffBusy||submitting||restoring||referencePending||!item||!continuationState)return;
     if(!window.confirm('Start from this picture instead? The continuation ends and Create resets to the recipe defaults. The original stays in your library.'))return;
-    pickerBusy=true;
+    pickerBusy=true;syncReady();
     try{
-      dismissSecondPicture();selectPreset(selected.id,true,true);
-      if(item.file){const transfer=new DataTransfer();transfer.items.add(item.file);q('#reference').files=transfer.files;legacyReferenceChange?.call(q('#reference'),new Event('change'));}
-      else if(selected.reference_slots?.length)await attachReferenceAsset(0,item.asset.id);
-      else{const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id:item.asset.id});if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. It was not applied.');uploaded=result.file;q('#reference').value='';replaceParentAsset('reference',null,item.asset.id);}
+      if(item.file){const transfer=new DataTransfer();transfer.items.add(item.file);selectPreset(selected.id,true,true);q('#reference').files=transfer.files;legacyReferenceChange?.call(q('#reference'),new Event('change'));}
+      else{
+        // Keep the reviewed draft live until a verified copy is ready. The reset and
+        // existing source owner then commit synchronously, with no second request.
+        const stamp=workbenchStamp(),epoch=selectionEpoch,refs=referenceEpoch,result=await post('/api/assets/reference',{id:item.asset.id});
+        if(epoch!==selectionEpoch||refs!==referenceEpoch||stamp!==workbenchStamp()||secondPicture!==item)throw Error('The workbench changed while the picture was being copied. It was not applied.');
+        if(result?.parent_asset!==item.asset.id||result?.sha256!==item.asset.sha256||result?.context?.asset_id!==item.asset.id||result?.context?.sha256!==item.asset.sha256||!StudioContinuation.normalize({...continuationState,reference_file:result?.file,source_asset_id:item.asset.id,source_sha256:item.asset.sha256}))throw Error('The replacement attachment could not be verified. The current source was kept.');
+        selectPreset(selected.id,true,true);attachContinuationSource(result);
+      }
+      dismissSecondPicture();
       draftDirty=true;saveDraft();syncCreate();announce('Continuation ended. '+secondName(item)+' is now the reference; the prompt is the recipe default.');
     }catch(error){announce(error.message,true);}
     finally{pickerBusy=false;syncReady();}

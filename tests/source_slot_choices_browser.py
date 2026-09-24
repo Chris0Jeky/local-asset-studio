@@ -52,6 +52,52 @@ async def exercise_source_choices(page, check):
         check('offering a choice preserves all draft fields and stages nothing', before == await page.evaluate('__choiceSnapshot()') and not await page.evaluate('__choiceCalls.length'))
         return before
 
+    # A replacement is destructive only after copying succeeds. A failed read must
+    # not consume the source, its wording, or the explicit decision surface.
+    before = await offer()
+    await page.evaluate('__choiceFailure=true')
+    page.once('dialog', lambda dialog: dialog.accept())
+    await page.locator('#uxSecondReplace').click()
+    await page.wait_for_function("document.querySelector('#uxNotice').textContent.includes('Synthetic copy unavailable')")
+    check('failed source replacement retains the complete live draft and choice', before == await page.evaluate('__choiceSnapshot()') and not await page.locator('#uxSecondPicture').is_hidden())
+
+    for field in ('contribution', 'avoid', 'role'):
+        await offer()
+        await page.evaluate('__choiceDelay=true;delete window.__choiceRelease')
+        await page.locator('[data-ux-second-slot="1"]').click()
+        await page.wait_for_function("typeof window.__choiceRelease==='function'")
+        control = page.locator(f'[data-ref-{field}="0"]')
+        if field == 'role':
+            await control.select_option('costume')
+            await control.focus()
+        else:
+            await control.fill('Keep this later reference wording')
+            await control.evaluate('(n)=>n.setSelectionRange(5,9,"backward")')
+        await page.evaluate('__choiceRelease()')
+        await page.wait_for_function("referencePending===0 && referenceRecords[1]?.parent_asset==='asset-1'")
+        check(f'delayed copy retains the active {field} field', await control.evaluate('(n)=>n===document.activeElement'))
+        if field != 'role':
+            check(f'delayed copy retains {field} selection and wording', await control.evaluate('(n)=>n.value==="Keep this later reference wording" && n.selectionStart===5 && n.selectionEnd===9 && n.selectionDirection==="backward"'))
+
+    # A stale confirmation may not replace wording edited while its copy runs.
+    await offer()
+    await page.evaluate('__choiceDelay=true;delete window.__choiceRelease')
+    page.once('dialog', lambda dialog: dialog.accept())
+    await page.locator('#uxSecondReplace').click()
+    await page.wait_for_function("typeof window.__choiceRelease==='function'")
+    await page.fill('#positive', 'Newer wording after replacement confirmation')
+    before = await page.evaluate('__choiceSnapshot()')
+    await page.evaluate('__choiceRelease()')
+    await page.wait_for_function("document.querySelector('#uxNotice').textContent.includes('workbench changed')")
+    check('stale source replacement leaves newer wording and source intact', before == await page.evaluate('__choiceSnapshot()') and not await page.locator('#uxSecondPicture').is_hidden())
+    check('stale source replacement retains prompt focus', await page.locator('#positive').evaluate('(n)=>n===document.activeElement'))
+
+    # Reordering keeps field ownership on the same record, never its old index.
+    await page.evaluate("__choiceReset('qwen-3ref')")
+    await page.locator('[data-ref-avoid="1"]').fill('Follow this reference record')
+    await page.evaluate("document.querySelector('[data-ref-down=\"1\"]').click()")
+    check('reference field focus follows its record through reorder', await page.locator('[data-ref-avoid="2"]').evaluate('(n)=>n===document.activeElement && n.value==="Follow this reference record"'))
+
     for width in (1440, 390):
         await page.set_viewport_size({'width':width,'height':900})
         for count in (1, 2, 3):

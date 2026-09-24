@@ -3,7 +3,11 @@
   const api=factory(root);
   if(typeof module==='object'&&module.exports)module.exports=api;
   root.CreateProgressiveDisclosure=api;
-  if(root.document)api.mount(root.document);
+  if(root.document){
+    api.mount(root.document);
+    // The following workbench script creates the continuation context during parsing.
+    if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>api.mount(root.document),{once:true});
+  }
 })(typeof globalThis!=='undefined'?globalThis:this,function(root){
   'use strict';
   function sync(details,target){
@@ -58,7 +62,8 @@
   }
   function mount(document){
     return {recipe:wrap(document,'recipeNotes','recipeNotesHelp','Recipe details, provenance and sources'),
-            references:wrap(document,'referenceBoardNote','referenceBoardHelp','How are these references used?'),wildcards:wildcards(document)};
+            references:wrap(document,'referenceBoardNote','referenceBoardHelp','How are these references used?'),
+            continuation:wrap(document,'uxContinuationGuidance','continuationGuidanceHelp','How this continuation works'),wildcards:wildcards(document)};
   }
   return{mount,observe,sync,wrap};
 });

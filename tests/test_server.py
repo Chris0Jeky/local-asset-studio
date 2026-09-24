@@ -298,6 +298,21 @@ class ServerTests(unittest.TestCase):
         handler.headers={"Host":"evil.example:8191","Origin":"http://evil.example:8191"}
         self.assertFalse(handler._safe_host())
 
+    def test_malformed_setup_and_export_bodies_are_400_not_500(self):
+        studio=self.studio();sent=[]
+        for path,body in (('/api/setups',[]),
+                          ('/api/setups','named-setup'),
+                          ('/api/setups',{'id':123,'name':'Bad id','recipe':{'preset':'test'}}),
+                          ('/api/production-export',{'kind':'atlas','ids':[{'a':1}]}),
+                          ('/api/production-export',{'kind':'atlas','ids':[1]})):
+            with self.subTest(path=path,body=repr(body)):
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path=path
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body=body:body
+                sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent[0][0],400,sent)
+        self.assertEqual(studio.assets.setups(),[])
+
     def test_numbers_reject_bool_nan_and_fractional_integers(self):
         for bad in (True, float("nan"), float("inf"), 1.5, "3.2"):
             with self.assertRaises(server.StudioError): server.number(bad, "seed", 0, 99, integer=True)

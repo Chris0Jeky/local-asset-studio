@@ -143,30 +143,51 @@ test('a current copy commits once', async () => {
 const replaceSecondPictureSource = between("  q('#uxSecondReplace').onclick=async()=>{", '\n  // A modal handoff carries IDs');
 
 function replaceHarness() {
-  const context = {};
+  const context = {StudioContinuation:require('../app/static/continuation-core.js')};
   vm.runInNewContext([
-    "let pickerBusy=false,handoffBusy=false,submitting=false,restoring=false,referencePending=0;let secondPicture={asset:{id:'replacement',title:'Replacement'}},continuationState={source_asset_id:'source'};",
-    "const selected={id:'recipe'};let stamp='before',finish,uploaded='old-upload',draftDirty=false;",
+    "let pickerBusy=false,handoffBusy=false,submitting=false,restoring=false,referencePending=0;let secondPicture={asset:{id:'replacement',sha256:'b'.repeat(64),title:'Replacement'}},continuationState={version:1,intent:'edit',preset_id:'recipe',reference_file:'a'.repeat(32)+'_old.png',source_asset_id:'source',source_sha256:'a'.repeat(64),template_sha256:'c'.repeat(64)};",
+    "const selected={id:'recipe'};let selectionEpoch=0,referenceEpoch=0,stamp='before',finish,fail,uploaded='old-upload',draftDirty=false;",
     "const notices=[];const nodes=new Map();const q=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'',files:[]});return nodes.get(selector);};",
     "const window={confirm:()=>true};const dismissSecondPicture=()=>{secondPicture=null};",
-    "const selectPreset=()=>{stamp='reset'};const workbenchStamp=()=>stamp;",
-    "const post=()=>new Promise(resolve=>{finish=resolve});",
-    "let replaceCount=0,saveCount=0,syncCount=0;",
+    "const selectPreset=()=>{stamp='reset';selectionEpoch++;continuationState=null};const workbenchStamp=()=>stamp;",
+    "const post=()=>new Promise((resolve,reject)=>{finish=resolve;fail=reject});",
+    "let replaceCount=0,saveCount=0,syncCount=0;const attachContinuationSource=result=>{uploaded=result.file;replaceCount++};",
     "const replaceParentAsset=()=>{replaceCount++};const saveDraft=()=>{saveCount++};const syncCreate=()=>{syncCount++};",
     "const announce=(message,error=false)=>notices.push({message,error});const secondName=item=>item.asset.title;const syncReady=()=>{};",
     "const legacyReferenceChange=null;const DataTransfer=function(){};const Event=function(){};",
     replaceSecondPictureSource,
-    "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.finish=value=>finish(value);",
+    "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.finish=value=>finish(value);this.fail=error=>fail(error);this.draft=()=>JSON.stringify({stamp,continuationState,secondPicture});",
     "this.state=()=>JSON.stringify({uploaded,draftDirty,replaceCount,saveCount,syncCount});this.notices=notices;",
   ].join('\n'), context);
   return context;
 }
 
+const replacement=()=>({file:'b'.repeat(32)+'_replacement.png',sha256:'b'.repeat(64),parent_asset:'replacement',context:{asset_id:'replacement',sha256:'b'.repeat(64)}});
+
+test('replacement staging and failures retain the original draft and decision',async()=>{
+  const h=replaceHarness(),before=h.draft(),pending=h.start();
+  assert.equal(h.draft(),before,'do not reset the live draft before a copy is ready');
+  h.fail(Error('copy failed'));await pending;
+  assert.equal(h.draft(),before);
+  assert.match(h.notices.at(-1).message,/copy failed/);
+});
+for(const [name,change] of [
+  ['file path',r=>r.file='../outside.png'],
+  ['parent identity',r=>r.parent_asset='other'],
+  ['file digest',r=>r.sha256='d'.repeat(64)],
+  ['context identity',r=>r.context.asset_id='other'],
+  ['context digest',r=>r.context.sha256='d'.repeat(64)],
+  ['missing context',r=>delete r.context],
+])test(`invalid replacement ${name} preserves the live draft`,async()=>{
+  const h=replaceHarness(),before=h.draft(),pending=h.start(),result=replacement();change(result);h.finish(result);await pending;
+  assert.equal(h.draft(),before);assert.match(h.notices.at(-1).message,/could not be verified/);
+});
+
 test('a delayed replacement copy cannot overwrite a newer workbench state', async () => {
   const harness = replaceHarness();
   const pending = harness.start();
   harness.setStamp('changed');
-  harness.finish({file:'replacement.png'});
+  harness.finish(replacement());
   await pending;
   assert.deepEqual(JSON.parse(harness.state()), {
     uploaded:'old-upload',draftDirty:false,replaceCount:0,saveCount:0,syncCount:0,
@@ -178,10 +199,10 @@ test('a delayed replacement copy cannot overwrite a newer workbench state', asyn
 test('a current replacement copy commits once', async () => {
   const harness = replaceHarness();
   const pending = harness.start();
-  harness.finish({file:'replacement.png'});
+  harness.finish(replacement());
   await pending;
   assert.deepEqual(JSON.parse(harness.state()), {
-    uploaded:'replacement.png',draftDirty:true,replaceCount:1,saveCount:1,syncCount:1,
+    uploaded:'b'.repeat(32)+'_replacement.png',draftDirty:true,replaceCount:1,saveCount:1,syncCount:1,
   });
   assert.equal(harness.notices.length, 1);
   assert.equal(harness.notices[0].error, false);
