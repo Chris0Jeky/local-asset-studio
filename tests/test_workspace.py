@@ -67,6 +67,12 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(workspace.AssetWorkspace(self.root).setups()[0]['recipe'],recipe)
         self.store.save_setup({'id':saved['id'],'action':'delete'})
         self.assertEqual(self.store.setups(),[])
+        # Deliberately idempotent (#923): the saved-setups list can be stale (another tab already deleted the
+        # row), and a repeat delete must still let app.js reload the list instead of showing an error.
+        kept=self.store.save_setup({'name':'Kept','recipe':{'preset':'test'}})
+        for identifier in (saved['id'],'never-stored'):
+            self.assertEqual(self.store.save_setup({'id':identifier,'action':'delete'}),{'id':identifier,'deleted':True})
+        self.assertEqual([s['id'] for s in self.store.setups()],[kept['id']])
 
     def test_save_setup_validation_rejects_invalid_without_storing(self):
         self.assertEqual(self.store.setups(),[])

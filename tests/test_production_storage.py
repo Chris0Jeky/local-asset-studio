@@ -280,6 +280,21 @@ class ProductionStorageTests(unittest.TestCase):
                 self.assert_blocked(p);self.assertTrue(other.exists())
         self.inert()
 
+    def test_marker_symlink_blocks_even_when_dangling(self):
+        for dangling in (True,False):
+            with self.subTest(dangling=dangling):
+                p=self.create();marker=self.plan_path(p).parent/project_storage.MARKER;other=self.root/('marker-target-%s'%dangling)
+                if not dangling:other.write_text('{}')
+                self.assertFalse(marker.exists())
+                try:marker.symlink_to(other)
+                except (OSError,NotImplementedError):self.skipTest('symlink privilege unavailable')
+                self.assertEqual(marker.exists(),not dangling)
+                plan=self.lab._get(p['id'])['plan']
+                self.assertEqual(project_storage.problem(self.lab.root,p['id'],plan),'Project creation is incomplete; its marker was retained')
+                self.assertIsNone(project_storage.problem(self.lab.root,p['id'],plan,preparing=True))
+                self.assert_blocked(p);self.assertTrue(marker.is_symlink());self.assertEqual(other.exists(),not dangling)
+        self.inert()
+
     def test_directory_rejects_non_hex_identity_and_accepts_valid(self):
         for identifier in (None, 123, 'ABCDEF'*5+'AB', 'a'*31, '../'+'a'*29):
             with self.subTest(identifier=identifier):

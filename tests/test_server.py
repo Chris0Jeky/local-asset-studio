@@ -313,6 +313,19 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(sent[0][0],400,sent)
         self.assertEqual(studio.assets.setups(),[])
 
+    def test_malformed_edit_campaign_bodies_are_400_not_500(self):
+        from scripts import character_edit_campaign as campaigns
+        studio=self.studio();sent=[];good=campaigns.create('owner',3,campaign_id='3'*32)
+        for body in ([],'campaign',[['campaign',good]],{'campaign':[good]},{'campaign':dict(good,campaign_id={'a':1})},
+                     {'campaign':dict(good,max_generation_attempts=[3])},{'campaign':dict(good,campaign_sha256=['x'])}):
+            with self.subTest(body=repr(body)[:120]):
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/production/campaigns'
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body=body:body
+                sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent[0][0],400,sent)
+        with studio.production.connect() as db:self.assertIsNone(db.execute('SELECT 1 FROM character_edit_campaigns').fetchone())
+
     def test_numbers_reject_bool_nan_and_fractional_integers(self):
         for bad in (True, float("nan"), float("inf"), 1.5, "3.2"):
             with self.assertRaises(server.StudioError): server.number(bad, "seed", 0, 99, integer=True)
