@@ -1,5 +1,15 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p59 judged 6/6, G13 ports and eyes, E2 at 59/59, GameRant intake done, p60 queued — 25 September 2026 (00:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running; Seed still held (source conflict).
+
+P59 held 6/6: G13 ported 2/2 (Kafka `260273f3`, Yor `1145433e`) and held eyes-neutral 2/2 (Kafka `6d7bc016`, Yor `5cd821fa`) — only sheer-off reruns remain to close; E2 generalization 59/59 (Navia `c069f4b0`, Bellona `30dc1fe2`). GameRant ZZZ table evaluated: 10 more ZZZ names cleared to the adult matrix (Astra Yao, Soldier 11, Trigger, Vivian, Nekomata, Dialyn, Ju Fufu, Yuzuha, Yixuan, Alice) plus 4 HSR (Acheron, Sparkle, Jingliu, Yukong) and 4 WuWa (Sanhua, Jinhsi, Zhezhi, Phoebe); already-run cells corroborated (Ellen 18, Nicole 20-23, Rina 27-30, Grace 27-28, Yanagi 30-35, Miyabi 20-25, Caesar/Burnice mid-20s). SFW pool roster opened in the style-lab notes for the held names (Corin 16, Lucia 16-19, Orphie clone 8-11, Zhao child-sized, Qingyi, Soukaku, Billy, Banyue, Yidhari, plus the four source-conflicted names Ye Shunguang, Sunna, Nangong Yu, Seed) — roster only, no SFW cells queued. P60 queued: G13 sheer-off close (Kafka `a865f29f`, Yor `588a6b69`), four more new adults (Soldier 11 `c891452f`, Astra Yao `5e265203`, Acheron `38a6f8a6`, Sanhua `16d0f2d0`). No spill line on any receipt this session.
+
+## NSFW lab overnight: p58 judged 6/6, G13 promoted, E2 at 57/57, p59 queued — 24 September 2026 (23:45 local)
+
+P58 held 6/6: G13 racing-queen opened 2/2 with the full read on both seeds (Kafka `20fcc4a0`, Yor `e108e7b6`), so G13 promotes; E2 generalization 57/57 (Nero `4f287fb5`, Jeanne `ef7500c6`, Carlotta `d83b4628`, Shorekeeper `f72df13c`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p57 judged 6/6, G12 closed, E2 at 53/53, Seed held, p58 queued — 24 September 2026 (23:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running; Seed evaluated and held (see FINDINGS intake block).

@@ -103,3 +103,25 @@ Clothed meadow that already ran. It is not a rule that Frieren belongs here.
 - Positive: frieren, long white hair, green eyes, pointy ears, white robe with black trim, staff, flower meadow, boots, fully clothed.
 - Inspection: clothed stand in a flower field. White hair in twintails, green eyes, pointed ears, white robe with gold trim over a striped shirt, brown boots, both hands on a staff. The face is the usual youthful Frieren design. The still stays as a clothed costume experiment.
 - Owner correction, 23 September 2026, 20:42 local: that face is not a reason to keep Frieren, or any adult-in-canon character with a youthful design, out of the NSFW lab, and it is not a reason to change the next prompt. Further Frieren cells go in the NSFW notes.
+## SFW character pool — GameRant intake (24 September 2026, night)
+
+Roster only. The clothed lab stays paused for generation per the standing rule; no SFW cells were queued with this intake and none run overnight. Owner call to resume SFW generation. These are the names held out of the NSFW pool with their reasons (see the nsfw-lab-20260923 intake block for the full evaluation). All ZZZ unless noted.
+
+| Name | Age evidence | Why SFW-only |
+| --- | --- | --- |
+| Corin | 16 per GameRant (matches deleted-tweet claim) | Affirmative minor. |
+| Lucia | 16-19 per GameRant | Range includes under-18. |
+| Manato | 17-19 per GameRant (male) | Range includes under-18; also out of scope for the female pool. |
+| Orphie clone (Magus 35-37) | 8-11 per GameRant | Child. SFW only. |
+| Ye Shunguang | Teen per zerozoneshop, early 20s per GameRant | Source conflict; under-18 risk unresolved. |
+| Sunna | 17-19 per zerozoneshop, early 20s per GameRant | Source conflict; under-18 risk unresolved. |
+| Nangong Yu | 17-19 per zerozoneshop, early 20s per GameRant | Source conflict; under-18 risk unresolved. |
+| Seed (Flora) | ~17 via r/SeedMains timeline math, early 20s per GameRant | Source conflict; under-18 risk unresolved. Prior hold stands. |
+| Zhao | Early 20s at 118 cm (3ft10, child-sized) | Childlike presumption, no counter-knowledge. |
+| Qingyi | Unknown; young-looking android | Unknown plus youthful markers. |
+| Soukaku | Unknown; legally a minor per the Ellen thread | Legal-minor marker. |
+| Billy Kid | Unknown; non-human, no age basis | No adult basis at all. |
+| Banyue | Unknown | No adult basis; verify identity. |
+| Pan Yinhu | Unknown (male) | No adult basis; also out of scope for the female pool. |
+| Yidhari | 21 per GameRant, identity unverified | Confirm female identity before any NSFW move. |
+| Ellen Joe | 18 per GameRant; cleared to NSFW on the trust-event evidence | Listed for completeness: NSFW-cleared, not SFW-routed.
