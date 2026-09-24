@@ -1623,3 +1623,27 @@ P43 held 6/6 — G7 ported, eyes neutral on the maid outfit, E2 generalization a
 | p44-yor-miko | p5-yor-squat | cstati-v3-baseline | 2026092446 | `619b2bfe-51d2-438f-b824-5377297820cb` |
 | p44-nicole-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092485 | `331b057e-b9c3-4a25-8171-35044d497995` |
 | p44-topaz-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092486 | `57558ae4-5609-4625-8841-1d532511f6c7` |
+
+### p44 results
+
+All six completed, 10.3–44.6 s each. No spill line on any receipt. G7 held sheer-off 2/2 and closes. G8 fired on both squats and promotes. E2 generalization reached 16/16 (Nicole's hair missed dark brown, the expression held).
+
+- p44-kafka-maid-nolora, WAI, seed `2026092445`, job `82ed49d3`, prompt `9f5d98ea`, 26.5 s, `WAI-Illustration_00096_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: sheer stack off — maid headdress, collar, bodice, frills, stockings all stable; nothing drifted. Squat held. Hands: hidden. Cloth: black and white maid, glossy. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p44-yor-maid-nolora, CSTati, seed `2026092446`, job `596a2f77`, prompt `2366ea56`, 32.4 s, `CSTati-v3-Baseline_00079_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold roses, ballroom, adult. Lever: sheer stack off — headdress, choker, dress with frills, stockings all stable. Squat held. Hands: hidden. Cloth: black and white maid, glossy. Mouth closed. Keep-or-change: keep.
+- p44-kafka-miko, WAI, seed `2026092445`, job `edd6aabb`, prompt `b3208c2d`, 32.5 s, `WAI-Illustration_00097_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: outfit to red and white shrine maiden — haori with red trim, red hakama with bow all fire; G8 1/2. Squat held. Hands: hidden. Cloth: white top sheer, red hakama glossy and wet. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p44-yor-miko, CSTati, seed `2026092446`, job `619b2bfe`, prompt `07b8398a`, 30.4 s, `CSTati-v3-Baseline_00080_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold roses, ballroom, adult. Lever: outfit to red and white shrine maiden — top, hakama, choker all fire; G8 2/2, promotes. Squat held. Hands: hidden. Cloth: white and red miko with translucent panels, glossy and wet. Mouth closed. Keep-or-change: keep.
+- p44-nicole-smirkwink, CSTati, seed `2026092485`, job `331b057e`, prompt `adba579e`, 10.3 s, `CSTati-v3-Baseline_00081_.png`. Identity: weak — office jacket, night city match, but long pink hair misses Nicole's dark brown; adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: white blouse translucent, black jacket and skirt glossy and wet. Keep-or-change: keep; the hair is the note, not a discard.
+- p44-topaz-smirkwink, YumeFlux, seed `2026092486`, job `57558ae4`, prompt `2cfa4fd2`, 44.6 s, `YumeFlux-ILv1-Baseline_00062_.png`. Identity: Topaz reads, silver-white bob with red underlayer, IPC uniform, lamp interior, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white uniform translucent panels, black glossy bottoms. Keep-or-change: keep.
+
+## G8 on ports, eyes on G8, Lisa, Grace — p45 wave
+
+P44 held 6/6 — G7 closed sheer-off, G8 promoted, E2 generalization at 16/16. This wave ports G8 to both families at new seeds with no sheer LoRA, adds `bedroom eyes` to both G8 cells at the same seed (structured miko outfit should hold neutral like G5–G7), and runs E2 on two more new adults (Lisa from Genshin Impact, Grace from Zenless Zone Zero — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p45-kafka-miko-anima | G8 | anima-v1-baseline | 2026092628 | `99c8df86-675f-4d4d-9e59-5c29ede77a9e` |
+| p45-yor-miko-janima | G8 | janima-v1-baseline | 2026092629 | `422e2492-ef4b-4b4b-9117-97690bc0c38b` |
+| p45-kafka-miko-eyes | p44-kafka-miko | wai | 2026092445 | `3c759af1-fd41-47be-9010-45cdd7757625` |
+| p45-yor-miko-eyes | p44-yor-miko | cstati-v3-baseline | 2026092446 | `d3b3a0b1-2757-437c-aa52-113381a66471` |
+| p45-lisa-smirkwink | E2 squat recipe | wai | 2026092487 | `ce1a09a1-f3d4-4ae2-87aa-0fab738fb5f0` |
+| p45-grace-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092488 | `a999928a-1e2e-4f01-971a-8d60f1183b37` |

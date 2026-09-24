@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p44 judged 6/6, G7 closed, G8 promoted, p45 queued — 24 September 2026 (17:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P44 held 6/6: G7 closed sheer-off (`82ed49d3`, `596a2f77`); G8 miko fired on both (`edd6aabb`, `619b2bfe`, G8 promoted); E2 generalization 16/16 (Nicole `331b057e` weak hair, Topaz `57558ae4` clean). P45 queued: G8 on ports (Kafka `99c8df86`, Yor `422e2492`), eyes on G8 cells (Kafka `3c759af1`, Yor `d3b3a0b1`), two more new adults (Lisa `ce1a09a1`, Grace `a999928a`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p43 judged 6/6, G7 ports, E2 at 14/14, p44 queued — 24 September 2026 (16:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
