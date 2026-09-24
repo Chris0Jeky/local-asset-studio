@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p47 judged 6/6, G9 ports, E2 at 22/22, p48 queued — 24 September 2026 (18:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P47 held 6/6: G9 ported to both families (`5b6e76eb`, `b430006e` — JANIMA eyes closed again, garment holds); eyes neutral on the nurse uniform 2/2 (`9c422b26`, `2c3f6a85`); E2 generalization 22/22 (Jean `5aba17bd`, Natasha `7cf63e3d`). P48 queued: sheer-off G9 reruns (Kafka `612924fe`, Yor `09dd7c7d`), G10 police swap (Kafka `83179448`, Yor `57118102`), two more new adults (Eula `8dfbbd9b`, Herta `278952a7`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p46 judged 6/6, G8 closed, G9 promoted, p47 queued — 24 September 2026 (18:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.

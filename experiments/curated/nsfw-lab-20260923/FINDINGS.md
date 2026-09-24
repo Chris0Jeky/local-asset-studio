@@ -1695,3 +1695,27 @@ P46 held 6/6 — G8 closed sheer-off, G9 promoted, E2 generalization at 20/20. T
 | p47-yor-nurse-eyes | p46-yor-nurse | cstati-v3-baseline | 2026092446 | `2c3f6a85-67b6-4163-9f09-263e326f1b15` |
 | p47-jean-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092499 | `5aba17bd-78a7-4b80-a1e3-3ad72d04fc90` |
 | p47-natasha-smirkwink | E2 squat recipe | wai | 2026092500 | `7cf63e3d-e820-44a8-bf69-e28f6816c3ae` |
+
+### p47 results
+
+All six completed, 30.3–52.5 s each. No spill line on any receipt. G9 ported to both families (JANIMA eyes closed again — variance, garment holds). The eyes tag held neutral on the structured nurse uniform 2/2. E2 generalization reached 22/22.
+
+- p47-kafka-nurse-anima, Anima, seed `2026092630`, job `5b6e76eb`, prompt `08550c47`, 52.5 s, `Anima-v1-Baseline_00066_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, violet light, adult. Lever: G9 with no sheer LoRA — nurse cap and white/pink uniform; G9 ports to Anima. Eyes closed, the Anima squat pattern. Hands: hidden. Cloth: white and pink nurse, glossy. Parted lips show. Keep-or-change: keep.
+- p47-yor-nurse-janima, JANIMA, seed `2026092631`, job `b430006e`, prompt `19ad0f5a`, 41.3 s, `JANIMA-v1-Baseline_00028_.png`. Identity: Yor reads, black hair, lamp interior, adult. Lever: G9 with no sheer LoRA — nurse cap and white/pink uniform; G9 ports to JANIMA. Eyes closed again — JANIMA eye variance, garment holds. Hands: hidden. Cloth: white and pink nurse, glossy. Parted lips show. Keep-or-change: keep.
+- p47-kafka-nurse-eyes, WAI, seed `2026092445`, job `9c422b26`, prompt `cf5ec1d4`, 41.5 s, `WAI-Illustration_00103_.png`. Identity: same Kafka read, rooftop, adult. Lever: `bedroom eyes` added — heavy-lidded eyes; tag fired, nurse intact; neutral as predicted. Hands: hidden. Squat held. Keep-or-change: keep.
+- p47-yor-nurse-eyes, CSTati, seed `2026092446`, job `2c3f6a85`, prompt `8a50bc20`, 38.5 s, `CSTati-v3-Baseline_00086_.png`. Identity: same Yor read, ballroom, adult. Lever: same addition — eyes heavy; tag fired, nurse intact. Neutral 2/2. Hands: hidden. Squat held. Keep-or-change: keep.
+- p47-jean-smirkwink, YumeFlux, seed `2026092499`, job `5aba17bd`, prompt `9223cd6a`, 34.5 s, `YumeFlux-ILv1-Baseline_00063_.png`. Identity: Jean reads well, blonde ponytail, knight uniform with gold eagle, lamp interior, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: white and blue uniform, glossy. Keep-or-change: keep.
+- p47-natasha-smirkwink, WAI, seed `2026092500`, job `7cf63e3d`, prompt `c4ae1811`, 30.3 s, `WAI-Illustration_00104_.png`. Identity: Natasha reads, purple hair, doctor coat over dark dress, clinic lamp, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white coat, dark dress glossy. Keep-or-change: keep.
+
+## Sheer-off G9, G10 police, Eula, Herta — p48 wave
+
+P47 held 6/6 — G9 ported, eyes neutral on the nurse uniform, E2 generalization at 22/22. This wave runs G9 with the sheer stack off at the same seed (structured nurse uniform should hold stable like G5–G8), opens a tenth garment (police-uniform swap on the two G-series seeds with the sheer stack on), and runs E2 on two more new adults (Eula from Genshin Impact, Herta from Honkai: Star Rail — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p48-kafka-nurse-nolora | p46-kafka-nurse | wai | 2026092445 | `612924fe-ce90-469f-a2c3-1dc5b27cae2a` |
+| p48-yor-nurse-nolora | p46-yor-nurse | cstati-v3-baseline | 2026092446 | `09dd7c7d-3a74-4284-9f20-a6e698f700d8` |
+| p48-kafka-police | p5-kafka-squat | wai | 2026092445 | `83179448-29d7-47e8-a517-90ecf4705205` |
+| p48-yor-police | p5-yor-squat | cstati-v3-baseline | 2026092446 | `57118102-69dc-458d-b402-cdda1c717fdb` |
+| p48-eula-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092540 | `8dfbbd9b-1958-4ab8-831c-2f4e0864cf9a` |
+| p48-herta-smirkwink | E2 squat recipe | wai | 2026092547 | `278952a7-4526-44bd-b26e-5f0b14fef51d` |
