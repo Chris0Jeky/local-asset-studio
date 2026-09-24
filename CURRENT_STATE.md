@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p70 judged 6/6, G15 closed, G16 promoted, B1 at 22 faces, p71 queued — 25 September 2026 (04:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P70 held 6/6: G15 closed with the clean Yor-eyes rerun (`6fa103ad`, all four reads complete); G16 promoted on the opening pair (Kafka `bb1a9b05`, Yor `70526c9e`, pleated skirts stay structured); B1 Yanagi and Miyabi clean (`40aea6ee`, `44638612`), Rina partial (`31a29a49`; B1 now 8 clean, 13 partial, 1 break across 22 faces). P71 queued: G16 ports (Kafka `c1a5bc35`, Yor `9f6df1ed`), G16 eyes (Kafka `70fbd70d`, Yor `ae6435ad`), B1 on Yuzuha (`8925a67f`) and Alice (`ef2fa048`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p69 judged 6/6, G15 sheer-off 2/2, B1 at 19 faces, p70 queued — 25 September 2026 (04:05 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.

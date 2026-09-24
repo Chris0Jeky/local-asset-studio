@@ -2286,6 +2286,30 @@ P69 held 6/6 — G15 sheer-off 2/2 (nothing drifted); Yor combined read holds bu
 | p70-rina-smallbust | B1 recipe | cstati-v3-baseline | 2026092634 | `31a29a49-6569-4778-a4dd-061c6340b3d0` |
 | p70-miyabi-smallbust | B1 recipe | wai | 2026092635 | `44638612-8570-45fc-a8a8-ce26a8c3f12b` |
 
+### p70 results
+
+All six completed, 24.2–28.4 s each, no spill. G15 closes with the clean Yor-eyes rerun (garment+place 2/2, ports 2/2, eyes 2/2, sheer 2/2); G16 opened 2/2 and promotes; B1 Yanagi and Miyabi clean, Rina partial.
+
+- p70-yor-labcoat-eyes, CSTati, seed `2026092446`, job `6fa103ad`, prompt `23f9852b`, 28.4 s, `CSTati-v3-Baseline_00132_.png`. Identity: Yor reads, coat over a white blouse and black skirt, monitors and lamp night, adult. Lever: clean `bedroom eyes` with the sheer stack on — half-lidded red eyes show, outfit intact, blouse sheer. Squat held. Hands: hidden behind the head. Cloth: white blouse sheer, black skirt glossy. Keep-or-change: keep; G15 eyes 2/2, G15 closes.
+- p70-kafka-cheer, WAI, seed `2026092445`, job `bb1a9b05`, prompt `f480dff8`, 26.3 s, `WAI-Illustration_00144_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer top with a pleated skirt, stadium night, adult. Lever: outfit to cheerleader — full read, pleated skirt stays structured in the squat. Squat held. Hands: hidden behind the head. Cloth: red top glossy, pleated skirt glossy. Keep-or-change: keep; G16 1/2.
+- p70-yor-cheer, CSTati, seed `2026092446`, job `70526c9e`, prompt `bc8869e4`, 26.5 s, `CSTati-v3-Baseline_00133_.png`. Identity: Yor reads, black hair, headband, red and white cheer top with a pleated skirt, stadium lamps, adult. Lever: outfit to cheerleader — full read again, skirt stays down. Squat held. Hands: hidden behind the head. Cloth: red top glossy, pleated skirt structured. Keep-or-change: keep; G16 2/2, promotes.
+- p70-yanagi-smallbust, AniFox, seed `2026092633`, job `40aea6ee`, prompt `ffdb63fb`, 26.3 s, `AniFox-v2-Baseline_00092_.png`. Identity: Yanagi reads, blonde hair, black and white investigator uniform with tie, neon street night, adult. Lever: B1 first try — bust reads modest under the shirt. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white shirt translucent-sheer, black jacket and pants glossy. Keep-or-change: keep; B1 clean.
+- p70-rina-smallbust, CSTati, seed `2026092634`, job `31a29a49`, prompt `76a6486a`, 28.3 s, `CSTati-v3-Baseline_00134_.png`. Identity: Rina reads, dark blue hair, maid headdress, black and white french maid uniform, mansion lamp night, adult. Lever: B1 first try — bust reads moderate in the white bodice. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white bodice glossy, black dress glossy. Keep-or-change: keep as a partial.
+- p70-miyabi-smallbust, WAI, seed `2026092635`, job `44638612`, prompt `7f242f64`, 24.2 s, `WAI-Illustration_00145_.png`. Identity: Miyabi reads, dark blue hair with fox ears, black and white void-hunter uniform with green tie, neon street night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black uniform glossy. Keep-or-change: keep; B1 clean.
+
+## G16 ports and eyes, B1 Yuzuha and Alice — p71 wave
+
+P70 held 6/6 — G15 closed (all four reads), G16 promoted on the opening pair, B1 Yanagi and Miyabi clean and Rina partial (B1 now 8 clean, 13 partial, 1 break across 22 faces). This wave ports G16 to both families with no sheer LoRA, adds `bedroom eyes` to both cheer cells at the same seed, and runs B1 on two more cleared adults (Yuzuha, Alice — both cleared for new cells). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p71-kafka-cheer-anima | p70-kafka-cheer | anima-v1-baseline | 2026092644 | `c1a5bc35-b8a4-439e-90d5-59f6286ed1d1` |
+| p71-yor-cheer-janima | p70-yor-cheer | janima-v1-baseline | 2026092645 | `9f6df1ed-8120-403f-8c4e-7b6d6192e5e0` |
+| p71-kafka-cheer-eyes | p70-kafka-cheer | wai | 2026092445 | `70fbd70d-7c2b-4f72-837c-3e789ba5acbc` |
+| p71-yor-cheer-eyes | p70-yor-cheer | cstati-v3-baseline | 2026092446 | `ae6435ad-9b75-4f06-86b9-0b8efc0ad691` |
+| p71-yuzuha-smallbust | B1 recipe | anifox-v2-baseline | 2026092636 | `8925a67f-3cdf-47af-a38f-d9f1d344377d` |
+| p71-alice-smallbust | B1 recipe | cstati-v3-baseline | 2026092637 | `ef2fa048-3a23-404f-898a-2a8bacd002de` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
