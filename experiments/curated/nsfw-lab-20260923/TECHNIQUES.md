@@ -313,13 +313,21 @@ Swap the outfit nouns for a black bodystocking at the same seed: glossy latex on
 
 ## T19 — smirk for smile on a held portrait
 
-Swap `smile` for `smirk` at the same seed: an asymmetric closed-lip smirk replaces the smile; pose, hands, and cloth stay put. Held: `p32-kafka-smirk` (CSTati, job `8ee40481`, prompt `3c49e122`, `CSTati-v3-Baseline_00060_.png`, 24.3 s, eyes drifted yellow to pink again), `p32-nero-smirk` (AniFox, job `8f1e3010`, prompt `74239b11`, `AniFox-v2-Baseline_00060_.png`, 22.3 s). Two characters held it, so it promotes. Untested on smaller faces.
+Swap `smile` for `smirk` at the same seed: an asymmetric closed-lip smirk replaces the smile; pose, hands, and cloth stay put. Held: `p32-kafka-smirk` (CSTati, job `8ee40481`, prompt `3c49e122`, `CSTati-v3-Baseline_00060_.png`, 24.3 s, eyes drifted yellow to pink again), `p32-nero-smirk` (AniFox, job `8f1e3010`, prompt `74239b11`, `AniFox-v2-Baseline_00060_.png`, 22.3 s). Two characters held it, so it promotes. P33 took it to smaller faces (`parted lips` to `smirk` at the same seed): `p33-jane-smirk` (YumeFlux, job `06ce7180`, prompt `fdcee27b`, `YumeFlux-ILv1-Baseline_00053_.png`, 22.4 s), `p33-sabrina-smirk` (AniFox, job `fdfdac0a`, prompt `05b0f975`, `AniFox-v2-Baseline_00061_.png`, 24.2 s, clasped fists). P34 took it to the ports: `p34-tifa-smirk-anima` (Anima, job `d9e1a7ca`, prompt `2e33d1e6`, `Anima-v1-Baseline_00057_.png`, 24.3 s), `p34-yor-smirk-janima` (JANIMA, job `e697719c`, prompt `9a4f7ddd`, `JANIMA-v1-Baseline_00020_.png`, 23.3 s, eyes open).
 
 ## G3 — turtleneck garment swap (Illustrious, with the sheer stack)
 
-Swap the outfit nouns for a turtleneck sweater at the same seed: black ribbed knit with glossy black bottoms (`p32-kafka-turtle`, WAI, job `1e34560c`, prompt `2d4cc56b`, `WAI-Illustration_00078_.png`, 24.2 s), red sweater dress glossy and wet (`p32-yor-turtle`, CSTati, job `e1db26d7`, prompt `d44490be`, `CSTati-v3-Baseline_00061_.png`, 22.2 s). Squats held, hands hidden. Two characters held it, so it promotes. Untested off the Illustrious family.
+Swap the outfit nouns for a turtleneck sweater at the same seed: black ribbed knit with glossy black bottoms (`p32-kafka-turtle`, WAI, job `1e34560c`, prompt `2d4cc56b`, `WAI-Illustration_00078_.png`, 24.2 s), red sweater dress glossy and wet (`p32-yor-turtle`, CSTati, job `e1db26d7`, prompt `d44490be`, `CSTati-v3-Baseline_00061_.png`, 22.2 s). Squats held, hands hidden. Two characters held it, so it promotes. P33 ported it with no sheer LoRA: `p33-kafka-turtle-anima` (Anima, job `71ddacef`, prompt `2af504ec`, `Anima-v1-Baseline_00056_.png`, 24.2 s, eyes closed), `p33-yor-turtle-janima` (JANIMA, job `b46c5d49`, prompt `5b6a3dd7`, `JANIMA-v1-Baseline_00019_.png`, 25.3 s, eyes closed). G3 ports; the closed eyes are the Anima/JANIMA squat pattern, not the garment.
 
-Next lever (p33, queued): T19 on a squat and a crawl, G3 on the ports, and the smirk-plus-wink combo on two portraits.
+## E2 — smirk plus winking (portrait combo, tested as the single lever)
+
+Against a judged `smile` portrait at the same seed, swap `smile` for `smirk, winking`: both show, an asymmetric smirk with one eye closed. Held: `p33-kafka-smirkwink` (CSTati, job `f2c7a4b7`, prompt `9a264495`, `CSTati-v3-Baseline_00062_.png`, 27.4 s), `p33-nero-smirkwink` (AniFox, job `156f8c32`, prompt `bc8b96ef`, `AniFox-v2-Baseline_00062_.png`, 26.3 s). Two characters held it, so it promotes. P34 took it to smaller faces (`parted lips` to `smirk, winking` at the same seed): `p34-jane-smirkwink` (YumeFlux, job `1aba70ec`, prompt `e9ae8a73`, `YumeFlux-ILv1-Baseline_00054_.png`, 24.3 s), `p34-sabrina-smirkwink` (AniFox, job `a6bca311`, prompt `47a274c5`, `AniFox-v2-Baseline_00063_.png`, 22.3 s). Both held at the first try — but E1 ran 2/4 on squats, so E2's squat needs more data before it claims the pose.
+
+## G4 — bikini garment swap (Illustrious, with the sheer stack)
+
+Swap the outfit nouns for a bikini at the same seed: black bikini under an open white shirt (`p34-kafka-bikini`, WAI, job `dd477cfe`, prompt `c24a47e1`, `WAI-Illustration_00079_.png`, 25.3 s), red bikini with an open shirt and sash (`p34-yor-bikini`, CSTati, job `88ec4fd6`, prompt `46677019`, `CSTati-v3-Baseline_00063_.png`, 22.2 s). Squats held, hands hidden, both glossy and wet. Two characters held it, so it promotes. Untested off the Illustrious family.
+
+Next lever (p35, queued): E2 on two more squats, G4 on the ports, and `bedroom eyes` on the two G4 cells.
 
 ## M2 measured
 

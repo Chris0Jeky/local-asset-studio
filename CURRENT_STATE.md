@@ -1,5 +1,17 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p34 judged 6/6, G4 promoted, p35 queued — 24 September 2026 (12:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P34 held 6/6: E2 held on squat and crawl at first try (Jane `1aba70ec`, Sabrina `a6bca311`), T19 fired on both ports (Tifa `d9e1a7ca`, Yor `e697719c`), bikini swap fired on both squats (Kafka `dd477cfe`, Yor `88ec4fd6`, G4). P35 queued: E2 on two more squats (Elesa `bbf7893e`, Kafka `5a4e5b8c`), G4 on ports (Kafka `f5ed108f`, Yor `88a217e9`), eyes on G4 cells (Kafka `44caf971`, Yor `326ed110`). No spill line on any receipt this session.
+
+## NSFW lab overnight: p33 judged 6/6, E2 promoted, p34 queued — 24 September 2026 (11:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P33 held 6/6: smirk fired on squat and crawl (Jane `06ce7180`, Sabrina `fdfdac0a`), G3 ported to both families (Kafka `71ddacef`, Yor `b46c5d49`), smirk-wink combo fired on both portraits (Kafka `f2c7a4b7`, Nero `156f8c32`, E2). P34 queued: E2 on squat and crawl (Jane `1aba70ec`, Sabrina `a6bca311`), T19 on ports (Tifa `d9e1a7ca`, Yor `e697719c`), bikini swap on two squats (Kafka `dd477cfe`, Yor `88ec4fd6`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p32 judged 6/6, T19 and G3 promoted, p33 queued — 24 September 2026 (11:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.

@@ -1355,3 +1355,51 @@ P32 held 6/6 and promoted T19 and G3. This wave takes T19 to a squat and a crawl
 | p33-yor-turtle-janima | G3 | janima-v1-baseline | 2026092619 | `b46c5d49-ab60-4529-aff8-9bbe2ff7b9e3` |
 | p33-kafka-smirkwink | p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `f2c7a4b7-1b86-4c66-91fa-cc3918beb7bc` |
 | p33-nero-smirkwink | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `156f8c32-f564-4f62-b6f2-1af401174ed5` |
+
+### p33 results
+
+All six completed, 22.4–27.4 s each. No spill line on any receipt. `smirk` fired on the squat and the crawl. G3 ports to both families with eyes closed on both (the Anima/JANIMA squat pattern). The smirk-plus-wink combo fired on both portraits.
+
+- p33-jane-smirk, YumeFlux, seed `2026092431`, job `06ce7180`, prompt `fdcee27b`, 22.4 s, `YumeFlux-ILv1-Baseline_00053_.png`. Identity: same Jane read, neon alley, adult. Lever: `smirk` for `parted lips` — an asymmetric smirk on the smaller face. Squat held. Hands: hidden. Cloth: same bodysuit and jacket. Keep-or-change: keep.
+- p33-sabrina-smirk, AniFox, seed `2026092498`, job `fdfdac0a`, prompt `05b0f975`, 24.2 s, `AniFox-v2-Baseline_00061_.png`. Identity: same Sabrina read, gym hall, adult. Lever: `smirk` for `parted lips` — a smirk on the crawl face. Crawl held. Hands: clasped fists. Cloth: same dark dress covering. Keep-or-change: keep.
+- p33-kafka-turtle-anima, Anima, seed `2026092618`, job `71ddacef`, prompt `2af504ec`, 24.2 s, `Anima-v1-Baseline_00056_.png`. Identity: Kafka reads, magenta hair, rooftop, adult. Lever: black turtleneck at a new seed — reads on Anima, eyes closed unprompted. Squat held, hands behind the head. Hands: hidden. Mouth slightly open. Keep-or-change: keep.
+- p33-yor-turtle-janima, JANIMA, seed `2026092619`, job `b46c5d49`, prompt `5b6a3dd7`, 25.3 s, `JANIMA-v1-Baseline_00019_.png`. Identity: Yor reads, headband, lamp interior, adult. Lever: red turtleneck at a new seed — reads on JANIMA, eyes closed too. Squat held, hands behind the head. Hands: hidden. Mouth slightly open. Keep-or-change: keep.
+- p33-kafka-smirkwink, CSTati, seed `2026092542`, job `f2c7a4b7`, prompt `9a264495`, 27.4 s, `CSTati-v3-Baseline_00062_.png`. Identity: same Kafka read, train, adult. Lever: `smile` to `smirk, winking` — both show. Portrait held. Hands: not visible. Cloth: same translucent white shirt. Keep-or-change: keep.
+- p33-nero-smirkwink, AniFox, seed `2026092544`, job `156f8c32`, prompt `bc8b96ef`, 26.3 s, `AniFox-v2-Baseline_00062_.png`. Identity: same Nero read, throne room, adult. Lever: same combo — smirk and wink both show. Portrait held. Hands: not visible. Cloth: same glossy red-and-white with a translucent chest. Keep-or-change: keep.
+
+## Small-face E2, port smirks, bikinis — p34 wave
+
+P33 held 6/6 and promoted E2. This wave takes E2 to a squat and a crawl (`parted lips` to `smirk, winking` at the same seed — E1 broke on squats, so E2's smaller faces are the question), takes T19 to the ports at the same seed, and swaps two held outfits for bikinis at the same seed (Kafka's shirt and jacket to black, Yor's red dress to red). Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p34-jane-smirkwink | p6-jane-lips | yumeflux-ilv1-baseline | 2026092431 | `1aba70ec-81dc-4c7c-8216-e08a545e200c` |
+| p34-sabrina-smirkwink | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `a6bca311-cd76-412a-ae44-8c6778a838b1` |
+| p34-tifa-smirk-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `d9e1a7ca-fd11-4b03-b1ff-082046e8a786` |
+| p34-yor-smirk-janima | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `e697719c-5687-4d75-be5d-0ccefc09b3cb` |
+| p34-kafka-bikini | p5-kafka-squat | wai | 2026092445 | `dd477cfe-2f1b-44ee-b5f8-221478f5e7a7` |
+| p34-yor-bikini | p5-yor-squat | cstati-v3-baseline | 2026092446 | `88ec4fd6-5853-453e-a480-5f753517f109` |
+
+### p34 results
+
+All six completed, 22.2–25.3 s each. No spill line on any receipt. E2 held on the squat and the crawl at the first try — but E1 taught that one squat hold proves nothing, so the squat needs more data. T19 fired on both ports. The bikini swap fired on both squats.
+
+- p34-jane-smirkwink, YumeFlux, seed `2026092431`, job `1aba70ec`, prompt `e9ae8a73`, 24.3 s, `YumeFlux-ILv1-Baseline_00054_.png`. Identity: same Jane read, neon alley, adult. Lever: `parted lips` to `smirk, winking` — both show on the squat face. Squat held. Hands: hidden. Cloth: same bodysuit and jacket. Keep-or-change: keep.
+- p34-sabrina-smirkwink, AniFox, seed `2026092498`, job `a6bca311`, prompt `47a274c5`, 22.3 s, `AniFox-v2-Baseline_00063_.png`. Identity: same Sabrina read, gym hall, adult. Lever: same combo — smirk and wink both show. Crawl held. Hands: clasped. Cloth: same dark dress covering. Keep-or-change: keep.
+- p34-tifa-smirk-anima, Anima, seed `2026092601`, job `d9e1a7ca`, prompt `2e33d1e6`, 24.3 s, `Anima-v1-Baseline_00057_.png`. Identity: same Tifa read, bar, adult. Lever: `smirk` for `parted lips` — a smirk on Anima. Crawl held. Hands: one flat, normal-looking. Cloth: same tank and glossy skirt. Keep-or-change: keep.
+- p34-yor-smirk-janima, JANIMA, seed `2026092604`, job `e697719c`, prompt `9a4f7ddd`, 23.3 s, `JANIMA-v1-Baseline_00020_.png`. Identity: same Yor read, lamp interior, adult. Lever: `smirk` for `parted lips` — a smirk on JANIMA with eyes open. Squat held. Hands: hidden. Cloth: same glossy red dress. Keep-or-change: keep.
+- p34-kafka-bikini, WAI, seed `2026092445`, job `dd477cfe`, prompt `c24a47e1`, 25.3 s, `WAI-Illustration_00079_.png`. Identity: Kafka reads, magenta hair, sunglasses on head, rooftop, adult. Lever: shirt and jacket to black bikini under an open white shirt — the swap fired, glossy and wet. Squat held, hands behind the head. Hands: hidden. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p34-yor-bikini, CSTati, seed `2026092446`, job `88ec4fd6`, prompt `46677019`, 22.2 s, `CSTati-v3-Baseline_00063_.png`. Identity: Yor reads, black hair, red eyes, ballroom, adult. Lever: red dress to red bikini with an open shirt and sash — the swap fired, glossy and wet. Squat held, hands behind the head. Hands: hidden. Mouth closed. Keep-or-change: keep.
+
+## E2 squat data, port bikinis, bikini eyes — p35 wave
+
+P34 held 6/6 and promoted G4. E2's squat stands at one hold, and E1's lesson says that proves nothing, so this wave runs E2 on two more squats (Elesa broke E1, Kafka held it — both at the same seed), runs G4 on the ports at new seeds with no sheer LoRA, and adds `bedroom eyes` to the two judged G4 cells at the same seed. Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p35-elesa-smirkwink | p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `bbf7893e-98f0-43a5-ad9e-0148e7ee9025` |
+| p35-kafka-smirkwink | p5-kafka-squat | wai | 2026092445 | `5a4e5b8c-ae12-4803-b4ba-52c4c161a9c9` |
+| p35-kafka-bikini-anima | G4 | anima-v1-baseline | 2026092620 | `f5ed108f-6102-4510-ab53-383c61ac2af8` |
+| p35-yor-bikini-janima | G4 | janima-v1-baseline | 2026092621 | `88a217e9-14b8-49ef-b32a-c9d9f63f3f52` |
+| p35-kafka-bikini-eyes | p34-kafka-bikini | wai | 2026092445 | `44caf971-df52-4c4b-959d-9e5855387e6a` |
+| p35-yor-bikini-eyes | p34-yor-bikini | cstati-v3-baseline | 2026092446 | `326ed110-a454-429a-ae36-4dcd83650467` |
