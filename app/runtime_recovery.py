@@ -96,7 +96,7 @@ class RuntimeRecovery:
     def _fresh_work(self):
         if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
         # Retained uncertain records intentionally do not suppress recovery of a truly dead runtime.
-        jobs = self.studio.jobs.values()
+        jobs = list(self.studio.jobs.values())
         if any(job.get("status") in ("queued", "waiting", "submitting", "running") for job in jobs): return True
         return any(item.get("state", {}).get("status") in ("queued", "running", "observing") for item in self.studio.production.list())
 
