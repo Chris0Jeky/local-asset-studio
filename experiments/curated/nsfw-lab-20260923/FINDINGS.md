@@ -1671,3 +1671,27 @@ P45 held 6/6 — G8 ported, eyes neutral on the miko outfit, E2 generalization a
 | p46-yor-nurse | p5-yor-squat | cstati-v3-baseline | 2026092446 | `1b960258-20c0-4981-8cca-0d3c6ff942bb` |
 | p46-ningguang-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092489 | `a581e775-09cb-4ed6-8c08-81446a8245f1` |
 | p46-bronya-smirkwink | E2 squat recipe | wai | 2026092490 | `504e6cd7-5bfd-4522-a279-8be516ed6221` |
+
+### p46 results
+
+All six completed, 28.2–32.5 s each. No spill line on any receipt. G8 held sheer-off 2/2 and closes. G9 fired on both squats and promotes. E2 generalization reached 20/20.
+
+- p46-kafka-miko-nolora, WAI, seed `2026092445`, job `0a92ad22`, prompt `52e53e34`, 32.5 s, `WAI-Illustration_00100_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: sheer stack off — haori, obi bow, hakama all stable; nothing drifted. Squat held. Hands: hidden. Cloth: red and white miko, glossy. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p46-yor-miko-nolora, CSTati, seed `2026092446`, job `b514dd52`, prompt `a5c1e30e`, 30.3 s, `CSTati-v3-Baseline_00084_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold roses, ballroom, adult. Lever: sheer stack off — miko top, hakama, obi all stable. Squat held. Hands: hidden. Cloth: white and red miko, glossy. Mouth closed. Keep-or-change: keep.
+- p46-kafka-nurse, WAI, seed `2026092445`, job `ca431745`, prompt `e12d7a09`, 30.3 s, `WAI-Illustration_00101_.png`. Identity: Kafka reads, magenta hair, rooftop, adult. Lever: outfit to white and pink nurse uniform — cap, dress with buttons, name tag all fire; G9 1/2. Squat held. Hands: hidden. Cloth: white and pink nurse, glossy and wet. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p46-yor-nurse, CSTati, seed `2026092446`, job `1b960258`, prompt `f7ab5680`, 28.2 s, `CSTati-v3-Baseline_00085_.png`. Identity: Yor reads, black hair, red eyes, headband under cap, gold earrings, ballroom, adult. Lever: outfit to white and pink nurse uniform — cap, dress, name tag all fire; G9 2/2, promotes. Squat held. Hands: hidden. Cloth: pink and white nurse, glossy and wet. Mouth closed. Keep-or-change: keep.
+- p46-ningguang-smirkwink, AniFox, seed `2026092489`, job `a581e775`, prompt `bc7cbe40`, 30.4 s, `AniFox-v2-Baseline_00069_.png`. Identity: Ningguang reads well, white hair, red eyes, gold hairpins, white and gold dress, jade chamber night, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: white and gold dress glossy with sheer panels. Keep-or-change: keep.
+- p46-bronya-smirkwink, WAI, seed `2026092490`, job `504e6cd7`, prompt `e385eca9`, 28.3 s, `WAI-Illustration_00102_.png`. Identity: Bronya reads, silver hair, officer uniform, fortress violet, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white uniform glossy, black stockings. Keep-or-change: keep.
+
+## G9 on ports, eyes on G9, Jean, Natasha — p47 wave
+
+P46 held 6/6 — G8 closed sheer-off, G9 promoted, E2 generalization at 20/20. This wave ports G9 to both families at new seeds with no sheer LoRA, adds `bedroom eyes` to both G9 cells at the same seed (structured nurse uniform should hold neutral like G5–G8), and runs E2 on two more new adults (Jean from Genshin Impact, Natasha from Honkai: Star Rail — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p47-kafka-nurse-anima | G9 | anima-v1-baseline | 2026092630 | `5b6e76eb-1c4c-4990-8968-8432e22658b4` |
+| p47-yor-nurse-janima | G9 | janima-v1-baseline | 2026092631 | `b430006e-4c8e-4b67-aa40-ddaf8397521e` |
+| p47-kafka-nurse-eyes | p46-kafka-nurse | wai | 2026092445 | `9c422b26-df6e-4d23-a5ea-9cae8a1f54b6` |
+| p47-yor-nurse-eyes | p46-yor-nurse | cstati-v3-baseline | 2026092446 | `2c3f6a85-67b6-4163-9f09-263e326f1b15` |
+| p47-jean-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092499 | `5aba17bd-78a7-4b80-a1e3-3ad72d04fc90` |
+| p47-natasha-smirkwink | E2 squat recipe | wai | 2026092500 | `7cf63e3d-e820-44a8-bf69-e28f6816c3ae` |
