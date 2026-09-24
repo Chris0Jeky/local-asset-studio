@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p84 judged 6/6, G21 measured 8, pleats beat the hike, p85 queued — 25 September 2026 (19:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P84 held 6/6 (26.7–29.0 s, no spill): G21 eyes half-lidded on Kafka and neutral on Yor with the uniform intact (`c0d302fe`, `d61c9a55`); pleated skirt beats the hike on the bent-over (`d78922b5`); seiza holds (`7b7c1b86`); sheer-off 2/2 drift nothing (`1c0dce10`, `c76380b2`). P85 queued, six cells: cheer crawl (`79f7c08e`), portrait (`2a1de733`) and seated rear (`f8049d9f`) to close G21, plus the CFG 4 vs 5 vs 6 sweep on one Yor cheer squat prompt and seed (`94b0f596`, `194e150d`, `73ce0929`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p83 judged 6/6, C1 measured 6, G21 promoted, p84 queued — 25 September 2026 (19:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.

@@ -2610,6 +2610,28 @@ P83 held 6/6 — C1 measured 6 with cowboy and close-up both holding, G21 promot
 | p84-kafka-cheer-nolora | p83-kafka-cheer | wai | 2026092445 | `1c0dce10-4c9c-4b85-b4e3-ddb713c88ffa` |
 | p84-yor-cheer-nolora | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `c76380b2-a17a-4544-b3b0-87ed24b4b2e1` |
 
+All six completed, 26.7–29.0 s each, no spill. G21 measured 8 (eyes half-lidded on Kafka and neutral on Yor with the uniform intact, pleated skirt beats the hike on the bent-over, seiza holds, sheer-off 2/2 drift nothing).
+
+- p84-kafka-cheer-eyes, WAI, seed `2026092445`, job `c0d302fe`, prompt `a8a5942d`, 29.0 s, `WAI-Illustration_00176_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform with pleated skirt, pom-poms, stadium violet, night, adult. Lever: `bedroom eyes` on cheer at the same seed — half-lidded, uniform intact. Squat held. Hands: holding pom-poms. Cloth: red uniform glossy. Keep-or-change: keep; G21 eyes 1/2.
+- p84-yor-cheer-eyes, CSTati, seed `2026092446`, job `d61c9a55`, prompt `c6ebabf4`, 26.9 s, `CSTati-v3-Baseline_00167_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: `bedroom eyes` on cheer at the same seed — reads neutral, eyes open, uniform intact. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep; G21 eyes 2/2.
+- p84-kafka-cheer-bentover, WAI, seed `2026092678`, job `d78922b5`, prompt `c7a35fe3`, 26.8 s, `WAI-Illustration_00177_.png`. Identity: Kafka reads, magenta ponytail, red and white cheer uniform with pleated skirt, pom-pom, stadium violet, night, adult. Lever: cheer on the bent-over — back view, pleats intact over the rear, the hike beaten. Cloth: red uniform glossy. Keep-or-change: keep.
+- p84-yor-cheer-seiza, CSTati, seed `2026092679`, job `7b7c1b86`, prompt `b149408e`, 26.8 s, `CSTati-v3-Baseline_00168_.png`. Identity: Yor reads, black hair with rose ornament, red and white cheer uniform with pleated skirt, stadium floodlight, night, adult. Lever: cheer on the seiza — tongue out, looking back, feet visible, pleats intact. Keep-or-change: keep.
+- p84-kafka-cheer-nolora, WAI, seed `2026092445`, job `1c0dce10`, prompt `76535176`, 26.8 s, `WAI-Illustration_00178_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, pom-pom, stadium violet, night, adult. Lever: sheer-off rerun at the cheer seed — uniform intact, nothing drifted. Squat held. Hands: one behind the head, one holding a pom-pom. Cloth: red uniform glossy; fake top letters noted, not a discard. Keep-or-change: keep; G21 sheer-off 1/2.
+- p84-yor-cheer-nolora, CSTati, seed `2026092446`, job `c76380b2`, prompt `4c3099af`, 26.7 s, `CSTati-v3-Baseline_00169_.png`. Identity: Yor reads, black hair, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: sheer-off rerun at the cheer seed — uniform intact, nothing drifted. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep; G21 sheer-off 2/2.
+
+## G21 crawl, portrait, seated rear, CFG sweep — p85 wave
+
+P84 held 6/6 — G21 measured 8 with eyes, bent-over (pleats beat the hike), seiza and sheer-off all holding. This wave closes G21 (crawl for Kafka, portrait for Yor, seated rear for Kafka) and runs the controlled setting sweep: same Yor cheer squat prompt and seed, CFG 4 vs 5 vs 6 on CSTati. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p85-kafka-cheer-crawl | p83-kafka-cheer | wai | 2026092681 | `79f7c08e-0e37-46b2-8417-e5d6583e9672` |
+| p85-yor-cheer-portrait | p83-yor-cheer | cstati-v3-baseline | 2026092682 | `2a1de733-c7b2-44b9-9daf-026eda481bc9` |
+| p85-kafka-cheer-seated | p83-kafka-cheer | wai | 2026092683 | `f8049d9f-7b58-4fcd-89e5-a274177de97a` |
+| p85-sweep-cfg4 | — | cstati-v3-baseline | 2026092680 | `94b0f596-ed1c-4dbb-8f1e-c9c2e518792e` |
+| p85-sweep-cfg5 | — | cstati-v3-baseline | 2026092680 | `194e150d-eb2c-4747-8cbc-20371ffc7e19` |
+| p85-sweep-cfg6 | — | cstati-v3-baseline | 2026092680 | `73ce0929-7901-4954-b862-7ddc8155a4a8` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
