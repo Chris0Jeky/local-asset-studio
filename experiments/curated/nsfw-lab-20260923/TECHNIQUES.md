@@ -293,7 +293,7 @@ Use when a held T16 still should grin instead of smile. Swap `smile` for `grin` 
 
 Held: `p26-kafka-grin` (CSTati, job `3958452c`, prompt `0c6f7859`, `CSTati-v3-Baseline_00055_.png`, 24.3 s, eyes drifted yellow to pink), `p26-nero-grin` (AniFox, job `b5328a8e`, prompt `4937e6dd`, `AniFox-v2-Baseline_00050_.png`, 24.2 s). Two characters held it, so it promotes.
 
-Breaks it: nothing yet. P27 swapped `parted lips` for `grin` on two held squats at the same seed: `p27-jane-grin` (YumeFlux, job `8982f6de`, prompt `d00dd6c3`, `YumeFlux-ILv1-Baseline_00046_.png`, 25.3 s), `p27-elesa-grin` (YumeFlux, job `2ad383b9`, prompt `44623460`, `YumeFlux-ILv1-Baseline_00047_.png`, 8.1 s). P28 closed it on crawls: `p28-sabrina-grin` (AniFox, job `44b7acab`, prompt `3625d318`, `AniFox-v2-Baseline_00053_.png`, 10.2 s, clasped fists), `p28-sonia-grin` (YumeFlux, job `cc6498d1`, prompt `e4ed0907`, `YumeFlux-ILv1-Baseline_00049_.png`, 24.3 s). T18 now covers every front face. Untested on the ported family and on profiles.
+Breaks it: nothing yet. P27 swapped `parted lips` for `grin` on two held squats at the same seed: `p27-jane-grin` (YumeFlux, job `8982f6de`, prompt `d00dd6c3`, `YumeFlux-ILv1-Baseline_00046_.png`, 25.3 s), `p27-elesa-grin` (YumeFlux, job `2ad383b9`, prompt `44623460`, `YumeFlux-ILv1-Baseline_00047_.png`, 8.1 s). P28 closed it on crawls: `p28-sabrina-grin` (AniFox, job `44b7acab`, prompt `3625d318`, `AniFox-v2-Baseline_00053_.png`, 10.2 s, clasped fists), `p28-sonia-grin` (YumeFlux, job `cc6498d1`, prompt `e4ed0907`, `YumeFlux-ILv1-Baseline_00049_.png`, 24.3 s). P29 took it to the ports: `p29-tifa-grin-anima` (Anima, job `9e2e4ae7`, prompt `6048bb0d`, `Anima-v1-Baseline_00054_.png`, 24.3 s), `p29-yor-grin-janima` (JANIMA, job `a1ab5d2b`, prompt `d2a6345a`, `JANIMA-v1-Baseline_00017_.png`, 23.4 s, eyes shut laughing). T18 now covers every front face on all six presets. Untested on profiles.
 
 ## G1 — lingerie garment swap (Illustrious, with the sheer stack)
 
@@ -303,7 +303,15 @@ Swap the outfit noun for lingerie at the same seed and the sheer LoRA does the r
 
 First two reads: `cowboy shot` is a near-no-op on the Anima crawl — no side rotation, unlike Illustrious (`p26-tifa-cowboy-anima`, Anima, job `b953385c`, prompt `e4c8ce87`, `Anima-v1-Baseline_00051_.png`, 24.3 s). `from below` fires on the JANIMA squat exactly as on Illustrious (`p26-yor-below-janima`, JANIMA, job `f6a44985`, prompt `35f6907b`, `JANIMA-v1-Baseline_00014_.png`, 23.3 s). Camera behavior is family-dependent; do not assume an Illustrious read ports. P27 finished the 2×2: `close-up` is a near-no-op on the Anima crawl (`p27-tifa-closeup-anima`, job `8fa6d1a7`, prompt `5ba0eebe`, `Anima-v1-Baseline_00053_.png`, 22.9 s), `cowboy shot` is mild on the JANIMA squat (`p27-yor-cowboy-janima`, job `da228512`, prompt `acc6f47f`, `JANIMA-v1-Baseline_00016_.png`, 23.3 s). Port rule: `from below` fires on the squat, everything else is mild or dead.
 
-Next lever (p29, queued): `grin` on the ports, the grin-plus-wink combo against the judged wink cells, and a bodystocking garment swap on two held cells.
+## E1 — grin plus winking (portrait combo, tested as the single lever)
+
+Against a judged `smile, winking` portrait at the same seed, swap `smile` for `grin`: both tags show, a toothy grin with one eye closed. Held: `p29-kafka-grinwink` (CSTati, job `4000025b`, prompt `a809de65`, `CSTati-v3-Baseline_00056_.png`, 27.3 s), `p29-nero-grinwink` (AniFox, job `5c541003`, prompt `9adc1798`, `AniFox-v2-Baseline_00054_.png`, 24.3 s). Two characters held it, so it promotes. Untested on smaller faces.
+
+## G2 — bodystocking garment swap (Illustrious, with the sheer stack)
+
+Swap the outfit nouns for a black bodystocking at the same seed: glossy latex on the bent-over (`p29-tifa-body`, AniFox, job `e1f6de3a`, prompt `ba25a5e5`, `AniFox-v2-Baseline_00055_.png`, 10.2 s, hands-on-butt weakened to one hand), translucent under an open shirt on the squat (`p29-kafka-body`, WAI, job `ca30a1c6`, prompt `e529b88a`, `WAI-Illustration_00075_.png`, 24.2 s). Two characters held it, so it promotes. Watch the hands on T8: the one-piece seems to cost a hand. Untested off the Illustrious family.
+
+Next lever (p30, queued): the E1 combo on two held squats, G2 on the ports, and `bedroom eyes` on the two G1 lingerie cells.
 
 ## M2 measured
 

@@ -1259,3 +1259,27 @@ P28 held 6/6 and closed T10 and T18 on Illustrious. This wave takes `grin` to th
 | p29-nero-grinwink | p22-nero-wink | anifox-v2-baseline | 2026092544 | `5c541003-4c64-46c8-b089-40b4efd42992` |
 | p29-tifa-body | p5-tifa-bentover | anifox-v2-baseline | 2026092441 | `e1f6de3a-1d8c-4f1a-9b95-51b4f145e699` |
 | p29-kafka-body | p5-kafka-squat | wai | 2026092445 | `ca30a1c6-e411-4ac4-a7d3-5e60e45aefe5` |
+
+### p29 results
+
+All six completed, 10.2–27.3 s each. No spill line on any receipt. `grin` fired on both ports (Yor's eyes shut laughing on JANIMA). The grin-plus-wink combo fired on both portraits. The bodystocking swap fired on both cells, with Tifa's hands-on-butt weakening to one hand.
+
+- p29-tifa-grin-anima, Anima, seed `2026092601`, job `9e2e4ae7`, prompt `6048bb0d`, 24.3 s, `Anima-v1-Baseline_00054_.png`. Identity: same Tifa read, bar, adult. Lever: `grin` for `parted lips` — a toothy grin on Anima. Crawl held. Hands: one flat, normal-looking. Cloth: same tank and glossy skirt. Keep-or-change: keep.
+- p29-yor-grin-janima, JANIMA, seed `2026092604`, job `a1ab5d2b`, prompt `d2a6345a`, 23.4 s, `JANIMA-v1-Baseline_00017_.png`. Identity: same Yor read, lamp interior, adult. Lever: `grin` for `parted lips` — a toothy grin, both eyes shut laughing. Squat held. Hands: hidden. Cloth: same glossy red dress. Keep-or-change: keep.
+- p29-kafka-grinwink, CSTati, seed `2026092542`, job `4000025b`, prompt `a809de65`, 27.3 s, `CSTati-v3-Baseline_00056_.png`. Identity: same Kafka read, train, adult. Lever: `smile` to `grin` against the judged wink cell — grin and wink both show. Portrait held. Hands: not visible. Cloth: same translucent white shirt. Keep-or-change: keep.
+- p29-nero-grinwink, AniFox, seed `2026092544`, job `5c541003`, prompt `9adc1798`, 24.3 s, `AniFox-v2-Baseline_00054_.png`. Identity: same Nero read, throne room, adult. Lever: same combo — toothy grin with one eye closed. Portrait held. Hands: not visible. Cloth: same glossy red-and-white with a translucent chest. Keep-or-change: keep.
+- p29-tifa-body, AniFox, seed `2026092441`, job `e1f6de3a`, prompt `ba25a5e5`, 10.2 s, `AniFox-v2-Baseline_00055_.png`. Identity: Tifa reads, black hair, red eyes, bar, adult. Lever: tank and skirt to black bodystocking — the swap fired, glossy latex. Bent-over held, looking back in profile. Hands: one on the hip, the other arm down; hands-on-butt weakened. Cloth: bodystocking glossy. Mouth slightly open. Keep-or-change: keep.
+- p29-kafka-body, WAI, seed `2026092445`, job `ca30a1c6`, prompt `e529b88a`, 24.2 s, `WAI-Illustration_00075_.png`. Identity: Kafka reads, magenta hair, sunglasses on head, rooftop, adult. Lever: shirt and jacket to black bodystocking under an open white shirt — the swap fired, translucent. Squat held, hands behind the head. Hands: hidden. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+
+## Squat combos, port bodystocking, lingerie eyes — p30 wave
+
+P29 held 6/6 and promoted E1 and G2. This wave takes the E1 combo to two held squats (`parted lips` to `grin` against the judged wink cells at the same seed), runs G2 on the ports at new seeds with no sheer LoRA, and adds `bedroom eyes` to the two judged G1 lingerie cells at the same seed. Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p30-jane-grinwink | p23-jane-wink | yumeflux-ilv1-baseline | 2026092431 | `43c4cb2c-0c17-4a5a-8245-6c55999118d3` |
+| p30-elesa-grinwink | p23-elesa-wink | yumeflux-ilv1-baseline | 2026092467 | `29ca2e27-f2d9-4d08-8fff-51c324bba33e` |
+| p30-kafka-body-anima | G2 | anima-v1-baseline | 2026092615 | `b5f170ea-960d-4d58-ad33-8995f2bad513` |
+| p30-tifa-body-janima | G2 | janima-v1-baseline | 2026092616 | `145ff470-47aa-47d1-ae61-29cdd2d460cb` |
+| p30-yor-lingerie-eyes | p26-yor-lingerie | cstati-v3-baseline | 2026092446 | `510aa9e5-759d-4b33-8ce7-6e80f6736534` |
+| p30-tifa-lingerie-eyes | p26-tifa-lingerie | anifox-v2-baseline | 2026092441 | `d2cd04bc-eeba-41e4-8bd6-390d258ff0a7` |
