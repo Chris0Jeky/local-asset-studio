@@ -64,9 +64,9 @@ Smoke winners already covered: Masterpiece, Stabilizer, Velvet, Gothic Neon, Han
 | Dark Fantasy 90's anime style Krea2/Anima/illustriousXL | `1108959` | Krea2 | Krea 2 | 1252 | 1.0 | SFW-leaning / soft | [1108959](https://civitai.com/models/1108959) |
 | 90s anime aesthetic Krea2/Anima/illustriousXL/ZImageTur | `1357076` | Krea2 | Krea 2 | 1127 | 1.0 | SFW-leaning / soft | [1357076](https://civitai.com/models/1357076) |
 | NEW FANTASY CORE - ILL-FLUX-PONY-SDXL- ZIT(detailer) | `810000` | V4 NFC-ILL | Illustrious | 2206 | 0.9991 | SFW-leaning / soft | [810000](https://civitai.com/models/810000) |
-| Krekkov Style | Goofy Ai | `1133519` | v1.0 | Illustrious | 3519 | 0.9994 | NSFW-capable gallery | [1133519](https://civitai.com/models/1133519) |
-| Takorin Style | ILXL & Anima | `878386` | v2.0 | Illustrious | 1788 | 1.0 | SFW-leaning / soft | [878386](https://civitai.com/models/878386) |
-| Create Concept - Concept (Illustrious | Pony | Flux.1 D | `1324671` | v3.0_Illustrious | Illustrious | 1508 | 0.9993 | NSFW-capable gallery | [1324671](https://civitai.com/models/1324671) |
+| Krekkov Style \| Goofy Ai | `1133519` | v1.0 | Illustrious | 3519 | 0.9994 | NSFW-capable gallery | [1133519](https://civitai.com/models/1133519) |
+| Takorin Style \| ILXL & Anima | `878386` | v2.0 | Illustrious | 1788 | 1.0 | SFW-leaning / soft | [878386](https://civitai.com/models/878386) |
+| Create Concept - Concept (Illustrious \| Pony \| Flux.1 D | `1324671` | v3.0_Illustrious | Illustrious | 1508 | 0.9993 | NSFW-capable gallery | [1324671](https://civitai.com/models/1324671) |
 | Niji anime style [illustrious\|Flux\|Pony] | `1261988` | illustrious v3.0 | Illustrious | 2754 | 0.9989 | SFW-leaning / soft | [1261988](https://civitai.com/models/1261988) |
 
 **VRAM (16GB AMD):** SDXL Illustrious + 1–2 LoRAs @0.6–0.85 + Xinsir OpenPose/Union = daily driver. Avoid stacking Micro Details + Smooth + style + CN all at once.
