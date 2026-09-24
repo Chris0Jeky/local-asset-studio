@@ -1575,3 +1575,27 @@ P41 held 6/6 — G6 ported, eyes neutral on the qipao, E2 generalization at 10/1
 | p42-yor-maid | p5-yor-squat | cstati-v3-baseline | 2026092446 | `752bdde9-59af-42c3-9747-d0532b65a6e5` |
 | p42-caesar-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092481 | `5d4a959d-f054-4b82-aec1-d4d5b3b124ad` |
 | p42-jade-smirkwink | E2 squat recipe | wai | 2026092482 | `ae5bbcc2-598e-460e-8a2d-52e0999210e4` |
+
+### p42 results
+
+All six completed, 26.3–28.3 s each. No spill line on any receipt. G6 held sheer-off 2/2 and closes. G7 fired on both squats and promotes. E2 generalization reached 12/12 on new adults.
+
+- p42-kafka-qipao-nolora, WAI, seed `2026092445`, job `8c339616`, prompt `c55f4f17`, 26.3 s, `WAI-Illustration_00091_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: sheer stack off — black qipao stable with collar knots and slits; nothing drifted. Squat held. Hands: hidden. Cloth: black satin glossy. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p42-yor-qipao-nolora, CSTati, seed `2026092446`, job `3ebcb8c2`, prompt `0f0c9949`, 28.3 s, `CSTati-v3-Baseline_00076_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold roses, ballroom, adult. Lever: sheer stack off — red qipao stable with collar, trim, and slits; the model added black thigh-highs as garnish, not a rewrite. Squat held. Hands: hidden. Cloth: red satin glossy. Mouth closed. Keep-or-change: keep.
+- p42-kafka-maid, WAI, seed `2026092445`, job `588c5636`, prompt `14147e70`, 28.3 s, `WAI-Illustration_00092_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: outfit to black and white maid — blouse, bodice, skirt, bow, sheer panels all fire; G7 1/2. Squat held. Hands: hidden. Cloth: white blouse translucent, black glossy and wet. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p42-yor-maid, CSTati, seed `2026092446`, job `752bdde9`, prompt `fde214f1`, 26.3 s, `CSTati-v3-Baseline_00077_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold roses, ballroom, adult. Lever: outfit to black and white maid — dress, white trim, sleeves, choker all fire; G7 2/2, promotes. Squat held. Hands: hidden. Cloth: black dress glossy and wet. Mouth closed. Keep-or-change: keep.
+- p42-caesar-smirkwink, YumeFlux, seed `2026092481`, job `5d4a959d`, prompt `a007cc5e`, 26.3 s, `YumeFlux-ILv1-Baseline_00060_.png`. Identity: Caesar reads, red hair, yellow eyes, biker jacket, lamp interior, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: white top fully translucent, black jacket glossy, wet. Keep-or-change: keep.
+- p42-jade-smirkwink, WAI, seed `2026092482`, job `ae5bbcc2`, prompt `598265d4`, 26.3 s, `WAI-Illustration_00093_.png`. Identity: Jade reads well, dark violet hair, green eyes, black and gold IPC dress with jade pendant, casino violet light, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: black and gold dress glossy with sheer panels. Keep-or-change: keep.
+
+## G7 on ports, eyes on G7, Evelyn, Ruan Mei — p43 wave
+
+P42 held 6/6 — G6 closed sheer-off, G7 promoted, E2 generalization at 12/12. This wave ports G7 to both families at new seeds with no sheer LoRA, adds `bedroom eyes` to both G7 cells at the same seed (structured maid outfit should hold neutral like G5 and G6), and runs E2 on two more new adults (Evelyn from Zenless Zone Zero, Ruan Mei from Honkai: Star Rail — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p43-kafka-maid-anima | G7 | anima-v1-baseline | 2026092626 | `35799e4a-52e5-44b9-aa5e-2332a55ba825` |
+| p43-yor-maid-janima | G7 | janima-v1-baseline | 2026092627 | `9b0a4015-682f-494d-807c-bbf752edc202` |
+| p43-kafka-maid-eyes | p42-kafka-maid | wai | 2026092445 | `1abf1fd0-e8c7-4135-a8dc-a79887e07144` |
+| p43-yor-maid-eyes | p42-yor-maid | cstati-v3-baseline | 2026092446 | `9bcff43b-d2e7-4223-968a-88a434948fd5` |
+| p43-evelyn-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092483 | `97ae2fc6-b43a-432d-8ffd-ecd6b262f7ba` |
+| p43-ruanmei-smirkwink | E2 squat recipe | wai | 2026092484 | `c36a1bcb-90e1-4f2b-9906-0ff03adf2bd5` |
