@@ -52,3 +52,20 @@ class StudioUXTests(unittest.TestCase):
             with self.subTest(file=file.name):
                 for forbidden in ['eval(', 'new Function(', '@import ', 'https://', 'http://']:
                     self.assertNotIn(forbidden, source)
+
+
+class StudioUXLoadOrderTests(unittest.TestCase):
+    def test_pages_load_studio_core_before_scripts_that_use_it(self):
+        # prompt-lab.js used to load first; its profile fetch could resolve before studio-core.js arrived
+        # and leave "StudioUX is not defined" as the page status (24 Sep 2026 QA).
+        import re
+        static = ROOT / 'app/static'
+        for page in sorted(static.glob('*.html')):
+            scripts = re.findall(r'<script src="([^"]+)"', page.read_text(encoding='utf-8'))
+            names = [s.rsplit('/', 1)[-1] for s in scripts]
+            # Direct `StudioUX.x` uses need the core first; `window.StudioUX?.x` tolerates its absence. Pages without
+            # the core (workflow-studio) reach studio-shell's use only on the main page, so only ordering is checked.
+            users = [n for n in names if n != 'studio-core.js' and (static / n).is_file() and re.search(r'(?<![\w.])StudioUX\.', (static / n).read_text(encoding='utf-8'))]
+            if not users or 'studio-core.js' not in names: continue
+            with self.subTest(page=page.name):
+                self.assertLess(names.index('studio-core.js'), min(names.index(n) for n in users), names)
