@@ -68,6 +68,22 @@ class WorkspaceTests(unittest.TestCase):
         self.store.save_setup({'id':saved['id'],'action':'delete'})
         self.assertEqual(self.store.setups(),[])
 
+    def test_file_rejects_escaped_absolute_and_missing_snapshots(self):
+        outside=self.store.root.parent/'outside.png'; outside.write_bytes(b'outside bytes')
+        elsewhere=self.store.root.parent/'elsewhere.png'; elsewhere.write_bytes(b'elsewhere bytes')
+        for path in ('../outside.png', str(elsewhere.resolve())):
+            with self.subTest(path=path):
+                with self.store.connection() as db: db.execute('UPDATE assets SET path=? WHERE id=?', (path, self.asset))
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'Asset snapshot is unavailable'): self.store.file(self.asset)
+        with self.store.connection() as db: db.execute('UPDATE assets SET path=? WHERE id=?', ('media/missing.png', self.asset))
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'Asset snapshot is unavailable'): self.store.file(self.asset)
+
+    def test_snapshot_file_rejects_empty_source_without_leaving_files(self):
+        empty=self.root/'empty.png'; empty.write_bytes(b'')
+        before=set(p.name for p in self.store.media.iterdir())
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'The output file is empty'): self.store.snapshot_file(empty)
+        self.assertEqual(set(p.name for p in self.store.media.iterdir()), before)
+
     def test_repeated_migration_is_idempotent_but_never_replaces_another_setup(self):
         recipe={'preset':'test','parent_assets':[self.asset]}
         payload={'id':'legacy-0','name':'Browser A','recipe':recipe}
