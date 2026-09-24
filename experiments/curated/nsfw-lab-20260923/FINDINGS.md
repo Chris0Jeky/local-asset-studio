@@ -1211,3 +1211,27 @@ P26 held 6/6 and promoted T18. This wave runs lingerie on the ports at new seeds
 | p27-elesa-grin | p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `2ad383b9-6bc1-4142-926a-22e570fcc2c7` |
 | p27-tifa-closeup-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `8fa6d1a7-163a-4698-96c0-35c1e0f788c8` |
 | p27-yor-cowboy-janima | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `da228512-9b69-4aba-9fa2-2c0b01a583a7` |
+
+### p27 results
+
+All six completed, 8.1–26.3 s each. No spill line on any receipt. Lingerie reads opaque on both ported families without the sheer LoRA. `grin` fired on both squats. Port cameras stay weak: `close-up` is a near-no-op on the Anima crawl, `cowboy shot` is mild on the JANIMA squat.
+
+- p27-yor-lingerie-janima, JANIMA, seed `2026092613`, job `75beb73d`, prompt `902aa970`, 26.3 s, `JANIMA-v1-Baseline_00015_.png`. Identity: Yor reads, headband, earrings, lamp interior, adult. Lever: red lingerie at a new seed — the garment reads opaque with no sheer LoRA. Squat held, hands behind the head. Hands: hidden. Mouth slightly open. Keep-or-change: keep.
+- p27-tifa-lingerie-anima, Anima, seed `2026092614`, job `e42c1e28`, prompt `d7a7f9c6`, 21.3 s, `Anima-v1-Baseline_00052_.png`. Identity: Tifa reads, black hair, red eyes, bar, adult. Lever: white lingerie at a new seed — reads opaque with sheen. Bent-over held, looking back. Hands: both on the hips, normal-looking. Mouth slightly open. Keep-or-change: keep.
+- p27-jane-grin, YumeFlux, seed `2026092431`, job `8982f6de`, prompt `d00dd6c3`, 25.3 s, `YumeFlux-ILv1-Baseline_00046_.png`. Identity: same Jane read, neon alley, adult. Lever: `grin` for `parted lips` — a big toothy grin on the smaller face. Squat held. Hands: hidden. Cloth: same bodysuit and jacket. Keep-or-change: keep.
+- p27-elesa-grin, YumeFlux, seed `2026092467`, job `2ad383b9`, prompt `44623460`, 8.1 s, `YumeFlux-ILv1-Baseline_00047_.png`. Identity: same Elesa read, runway, adult. Lever: `grin` for `parted lips` — a toothy grin. Squat held. Hands: hidden. Cloth: same sheer top and yellow jacket. Keep-or-change: keep.
+- p27-tifa-closeup-anima, Anima, seed `2026092601`, job `8fa6d1a7`, prompt `5ba0eebe`, 22.9 s, `Anima-v1-Baseline_00053_.png`. Identity: same Tifa read, bar, adult. Lever: `close-up` changed almost nothing on the Anima crawl; face marginally bigger at most. Crawl held. Hands: one partially cropped at the frame edge. Cloth: same tank and glossy skirt. Mouth slightly open. Keep-or-change: keep.
+- p27-yor-cowboy-janima, JANIMA, seed `2026092604`, job `da228512`, prompt `acc6f47f`, 23.3 s, `JANIMA-v1-Baseline_00016_.png`. Identity: same Yor read, lamp interior, adult. Lever: `cowboy shot` reframed mildly on the JANIMA squat, no waist widening. Squat held. Hands: hidden. Cloth: same glossy red dress. Mouth slightly open. Keep-or-change: keep.
+
+## Last T10/T18 cells — p28 wave
+
+P27 held 6/6. Three cells were never measured on Illustrious: `cowboy shot` on the squat (p8 ran it on bent-overs only), `close-up` on the bent-over (p8 ran it on squats only), and `grin` on the crawl (T18's last face). Two cells each, all at the same seed against judged stills. Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p28-sae-cowboy | p7-sae-squat | wai | 2026092465 | `ec2e8da7-ca95-47cc-ae07-1f8f962dd17d` |
+| p28-jessie-cowboy | p7-jessie-squat | anifox-v2-baseline | 2026092468 | `4998789e-a75a-4e64-804e-fe6c9002047d` |
+| p28-diantha-closeup | p7-diantha-bentover | yumeflux-ilv1-baseline | 2026092463 | `6c14e61e-101b-4e10-9c1c-6bedd2f9e6d2` |
+| p28-skyla-closeup | p7-skyla-bentover | anifox-v2-baseline | 2026092464 | `1006fabb-7ec9-4afb-9187-d73ff74a03f8` |
+| p28-sabrina-grin | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `44b7acab-9343-4818-b415-6605732b319f` |
+| p28-sonia-grin | p13-sonia-crawl | yumeflux-ilv1-baseline | 2026092513 | `cc6498d1-5ce1-4dc7-a3c7-ee43c8a836ba` |

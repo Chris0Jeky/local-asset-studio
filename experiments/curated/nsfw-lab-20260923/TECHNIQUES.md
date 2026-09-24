@@ -292,17 +292,17 @@ Use when a held T16 still should grin instead of smile. Swap `smile` for `grin` 
 
 Held: `p26-kafka-grin` (CSTati, job `3958452c`, prompt `0c6f7859`, `CSTati-v3-Baseline_00055_.png`, 24.3 s, eyes drifted yellow to pink), `p26-nero-grin` (AniFox, job `b5328a8e`, prompt `4937e6dd`, `AniFox-v2-Baseline_00050_.png`, 24.2 s). Two characters held it, so it promotes.
 
-Breaks it: nothing yet. Untested on squats and crawls, where the mouth tag is `parted lips`, not `smile`.
+Breaks it: nothing yet. P27 swapped `parted lips` for `grin` on two held squats at the same seed: `p27-jane-grin` (YumeFlux, job `8982f6de`, prompt `d00dd6c3`, `YumeFlux-ILv1-Baseline_00046_.png`, 25.3 s), `p27-elesa-grin` (YumeFlux, job `2ad383b9`, prompt `44623460`, `YumeFlux-ILv1-Baseline_00047_.png`, 8.1 s). The smaller face still grins. Untested on crawls.
 
 ## G1 — lingerie garment swap (Illustrious, with the sheer stack)
 
-Swap the outfit noun for lingerie at the same seed and the sheer LoRA does the rest: red lingerie under a sheer robe (`p26-yor-lingerie`, CSTati, job `46ad68f7`, prompt `af2c053e`, `CSTati-v3-Baseline_00054_.png`, 27.3 s), white lingerie fully translucent, the hardest transparency of the night (`p26-tifa-lingerie`, AniFox, job `97eb4ec8`, prompt `a8a4658d`, `AniFox-v2-Baseline_00049_.png`, 24.3 s). Poses and hands hold; the garment can move the face a little (Yor's mouth closed). Untested without the sheer LoRA and off the Illustrious family.
+Swap the outfit noun for lingerie at the same seed and the sheer LoRA does the rest: red lingerie under a sheer robe (`p26-yor-lingerie`, CSTati, job `46ad68f7`, prompt `af2c053e`, `CSTati-v3-Baseline_00054_.png`, 27.3 s), white lingerie fully translucent, the hardest transparency of the night (`p26-tifa-lingerie`, AniFox, job `97eb4ec8`, prompt `a8a4658d`, `AniFox-v2-Baseline_00049_.png`, 24.3 s). Poses and hands hold; the garment can move the face a little (Yor's mouth closed). P27 ran it on the ports at new seeds with no sheer LoRA: red lingerie reads opaque on JANIMA (`p27-yor-lingerie-janima`, job `75beb73d`, prompt `902aa970`, `JANIMA-v1-Baseline_00015_.png`, 26.3 s), white lingerie reads opaque with sheen on Anima (`p27-tifa-lingerie-anima`, job `e42c1e28`, prompt `d7a7f9c6`, `Anima-v1-Baseline_00052_.png`, 21.3 s). G1 ports; only the translucency stays Illustrious-only.
 
 ## T10 on the ports (X1 cameras)
 
-First two reads: `cowboy shot` is a near-no-op on the Anima crawl — no side rotation, unlike Illustrious (`p26-tifa-cowboy-anima`, Anima, job `b953385c`, prompt `e4c8ce87`, `Anima-v1-Baseline_00051_.png`, 24.3 s). `from below` fires on the JANIMA squat exactly as on Illustrious (`p26-yor-below-janima`, JANIMA, job `f6a44985`, prompt `35f6907b`, `JANIMA-v1-Baseline_00014_.png`, 23.3 s). Camera behavior is family-dependent; do not assume an Illustrious read ports.
+First two reads: `cowboy shot` is a near-no-op on the Anima crawl — no side rotation, unlike Illustrious (`p26-tifa-cowboy-anima`, Anima, job `b953385c`, prompt `e4c8ce87`, `Anima-v1-Baseline_00051_.png`, 24.3 s). `from below` fires on the JANIMA squat exactly as on Illustrious (`p26-yor-below-janima`, JANIMA, job `f6a44985`, prompt `35f6907b`, `JANIMA-v1-Baseline_00014_.png`, 23.3 s). Camera behavior is family-dependent; do not assume an Illustrious read ports. P27 finished the 2×2: `close-up` is a near-no-op on the Anima crawl (`p27-tifa-closeup-anima`, job `8fa6d1a7`, prompt `5ba0eebe`, `Anima-v1-Baseline_00053_.png`, 22.9 s), `cowboy shot` is mild on the JANIMA squat (`p27-yor-cowboy-janima`, job `da228512`, prompt `acc6f47f`, `JANIMA-v1-Baseline_00016_.png`, 23.3 s). Port rule: `from below` fires on the squat, everything else is mild or dead.
 
-Next lever (p27, queued): lingerie on the ports, `grin` for `parted lips` on two held squats, and the remaining two port cameras.
+Next lever (p28, queued): `cowboy shot` on two Illustrious squats, `close-up` on two Illustrious bent-overs, and `grin` on two crawls — the three untested T10/T18 cells.
 
 ## M2 measured
 
