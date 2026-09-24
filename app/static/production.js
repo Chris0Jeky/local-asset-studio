@@ -34,8 +34,10 @@ const PLAN_TYPE_NOUNS={all:'plans',comparison:'comparisons',scene:'scenes',voice
 const PLAN_ACTIVE=new Set(['planned','queued','running','observing','awaiting_review','uncertain']);
 let planFilter={type:'all',status:'active'};
 function cleanPlanFilter(value){return {type:Object.hasOwn(PLAN_TYPES,value?.type)?value.type:'all',status:value?.status==='all'?'all':'active'};}
-// The newest thing known about a plan: its creation, its stage jobs, its review.
-function planActivity(p){const known=[p?.created_at,p?.state?.review?.at,...(p?.stages||[]).flatMap(s=>[s?.job?.created_at,s?.job?.started_at,s?.job?.finished_at])].map(Number).filter(t=>Number.isFinite(t)&&t>0);return known.length?Math.max(...known):null;}
+// The newest thing known about a plan: its creation, its own run (voice, scene and export plans have
+// no stages), its attempts, its stage jobs and its review.
+function planActivity(p){const stamps=r=>[r?.created_at,r?.started_at,r?.finished_at,r?.at],state=p?.state||{};
+  const known=[p?.created_at,state.started_at,state.finished_at,state.review?.at,...Object.values(state.attempts&&typeof state.attempts==='object'?state.attempts:{}).flatMap(stamps),...(p?.stages||[]).flatMap(s=>stamps(s?.job))].map(Number).filter(t=>Number.isFinite(t)&&t>0);return known.length?Math.max(...known):null;}
 function planGroups(plans,filter=planFilter,now=Date.now()/1000){
   const kinds=PLAN_TYPES[filter.type],typed=plans.filter(p=>!kinds||kinds.includes(p.kind));
   if(filter.status==='all')return {recent:typed,older:[],hidden:plans.length-typed.length};

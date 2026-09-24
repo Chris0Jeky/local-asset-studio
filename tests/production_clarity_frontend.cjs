@@ -113,12 +113,13 @@ const now=Date.now()/1000,day=86400;
 const plan=(id,kind,status,age,extra={})=>({id:id.repeat(32),name:kind+' '+status+' '+age,kind,created_at:now-age*day,stages:[],budget:{reserved:0,allowance:1},state:{status,message:'Fixture.',artifacts:[]},...extra});
 const fixtures=[plan('1','comparison','planned',1),plan('2','comparison','awaiting_review',12),plan('3','comparison','reviewed',1),
   plan('4','voice','uncertain',2),plan('5','av','completed',30),plan('6','native','failed',3),plan('7','articulated','planned',1),
-  plan('8','comparison','running',20,{stages:[{label:'A',job:{created_at:now-20*day,finished_at:now-day}}]}),plan('9','voice','planned',0,{created_at:undefined})];
+  plan('8','comparison','running',20,{stages:[{label:'A',job:{created_at:now-20*day,finished_at:now-day}}]}),plan('9','voice','planned',0,{created_at:undefined}),
+  plan('a','voice','running',15,{state:{status:'running',message:'Fixture.',started_at:now-3600,attempts:{}}}),plan('b','native','uncertain',15,{state:{status:'uncertain',message:'Fixture.',attempts:{'0':{finished_at:now-2*day}}}})];
 const ids=html=>[...html.matchAll(/data-project="(.)\1{31}"/g)].map(m=>m[1]).join('');
 run(`productionPlans=${JSON.stringify(fixtures)};productionId=null;setPlanFilter({type:'all',status:'active'});`);
 let listed=$('#productionList').innerHTML;
 const [recentPart,olderPart]=listed.split('<details class="plan-older"');
-assert.equal(ids(recentPart),'14789','Active and recent: planned, uncertain, recent stage activity and an undated plan');
+assert.equal(ids(recentPart),'14789ab','Active and recent: planned, uncertain, recent stage, run or attempt activity, and an undated plan');
 assert.match(olderPart,/^[^>]*><summary>Older \(1\)<\/summary>/,'Older active work is collapsed with its count');
 assert.equal(ids(olderPart.split('</details>')[0]),'2','A 12-day-old comparison awaiting review is older, not gone');
 assert.match(listed,/Showing active plans from the last 7 days; 3 plans hidden by these filters\. <button data-plan-show-all>Show all<\/button>/,'The list says what is filtered');
@@ -126,18 +127,18 @@ assert.equal(JSON.parse(stored.get('studio.production.filters')).status,'active'
 run(`productionId=${JSON.stringify('2'.repeat(32))};renderProduction();`);
 assert.match($('#productionList').innerHTML,/<details class="plan-older" open>/,'The chosen older plan keeps its group open');
 run(`productionId=null;setPlanFilter({type:'export'});`);
-assert.equal(ids($('#productionList').innerHTML),'7','Exports cover native and articulated plans; the failed export is inactive');
+assert.equal(ids($('#productionList').innerHTML),'7b','Exports cover native and articulated plans; the failed export is inactive');
 assert.equal($('#planType').value,'export');
 run(`setPlanFilter({type:'scene'});`);
 listed=$('#productionList').innerHTML;
 assert.equal(ids(listed),'','A completed 30-day-old scene is not active');
-assert.match(listed,/No active scenes from the last 7 days\.<\/b> 9 plans hidden by these filters\./,'The empty state names the filter');
+assert.match(listed,/No active scenes from the last 7 days\.<\/b> 11 plans hidden by these filters\./,'The empty state names the filter');
 assert.match(listed,/data-plan-show-all/,'and offers one-click Show all');
 run(`$('#productionList').onclick({target:{closest:selector=>selector==='[data-plan-show-all]'?{}:null}});`);
 assert.deepEqual(JSON.parse(stored.get('studio.production.filters')),{type:'all',status:'all'},'Show all clears both filters and remembers it');
-assert.equal(ids($('#productionList').innerHTML),'123456789','All shows every plan, in the fetched order, with nothing collapsed');
+assert.equal(ids($('#productionList').innerHTML),'123456789ab','All shows every plan, in the fetched order, with nothing collapsed');
 assert.doesNotMatch($('#productionList').innerHTML,/plan-older|plan-filter-note/);
-run(`setPlanFilter({type:'voice'});`);assert.equal(ids($('#productionList').innerHTML),'49','Type filtering alone keeps every voice status');
+run(`setPlanFilter({type:'voice'});`);assert.equal(ids($('#productionList').innerHTML),'49a','Type filtering alone keeps every voice status');
 run(`setPlanFilter({type:'toString',status:'nonsense'});`);
 assert.deepEqual(JSON.parse(stored.get('studio.production.filters')),{type:'all',status:'active'},'An unknown choice falls back to the default, never to a prototype key');
 run(`setPlanFilter({type:'all',status:'active'});`);
