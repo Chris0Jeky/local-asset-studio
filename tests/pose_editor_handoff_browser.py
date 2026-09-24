@@ -86,6 +86,22 @@ def sdxl_in_place(page, origin, out, check, drawings, posts):
     check(state['reference'] is None, 'The single-reference control is left alone')
     check(page.locator('#generate').is_enabled(), 'Generate is ready and was never pressed')
     check(posts.count('/api/pose/render') == count_before + 1, 'One render, no retry')
+    # #844: the attached guide is a picture of one canvas; a new Width holds Generate until the guide is drawn again.
+    drawn = page.evaluate('[referenceRecords[0].width,referenceRecords[0].height]')
+    resized = drawn[0] - 192 if drawn[0] > 512 else drawn[0] + 192
+    page.evaluate("document.querySelector('[data-key=\"width\"]').closest('details').open=true")  # Width lives under the folded parameters.
+    page.locator('[data-key="width"]').fill(str(resized))
+    page.wait_for_function('!!document.querySelector(\'[data-readiness-code="pose-size"]\')')
+    check(page.locator('#generate').is_disabled(), 'A changed Width holds Generate on the stale guide')
+    hold = page.locator('[data-readiness-code="pose-size"] p').text_content()  # The blocker list sits in a folded disclosure.
+    check(page.locator('#uxPoseReason').inner_text() == hold, 'The same hold is shown beside Use this pose')
+    check('drawn at %d×%d' % tuple(drawn) in hold and 'Use this pose' in hold, 'The hold names the drawn size and the button that clears it: ' + hold)
+    check(posts.count('/api/pose/render') == count_before + 1, 'A size change renders nothing by itself')
+    page.locator('#uxPoseUse').click()
+    page.wait_for_function('referenceRecords[0]?.width===%d && !document.querySelector(\'[data-readiness-code="pose-size"]\')' % resized)
+    check(drawings[-1]['width'] == resized and drawings[-1]['height'] == drawn[1], 'Use this pose again renders the guide at the new size')
+    check(page.locator('#generate').is_enabled(), 'The re-drawn guide releases Generate, which was never pressed')
+    check(posts.count('/api/pose/render') == count_before + 2, 'One explicit re-render, no implicit one')
 
 
 def main(argv=None):

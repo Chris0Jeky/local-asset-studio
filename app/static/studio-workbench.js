@@ -105,9 +105,7 @@
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
     const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
     if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
-    // A guide drawn for another Width/Height would be stretched to this canvas; drawing it again at this size clears the hold (#844).
-    const staleGuide=poseActive()?StudioPoseEditor.guideSizeReason(referenceRecords,poseCanvasSize(),selected.id!==POSE_RECIPE&&!StudioPoseEditor.drawsGuide(selected)?'Replace pose picture with drawing':'Use this pose'):'';
-    if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
+    const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
     // The continuation names the exact empty slot; the generic reference line would only repeat it.
@@ -309,6 +307,8 @@
   }
   // The panel serves every Combine recipe and any recipe that declares its own drawn-guide slot (an SDXL skeleton recipe).
   function poseActive(){return !!selected&&(!!StudioContinuation.combineKind(selected)||StudioPoseEditor.drawsGuide(selected));}
+  // A guide drawn for another Width/Height would be stretched to this canvas; drawing it again at this size clears the hold (#844).
+  function poseSizeHold(){return poseActive()?StudioPoseEditor.guideSizeReason(referenceRecords,poseCanvasSize(),selected.id!==POSE_RECIPE&&!StudioPoseEditor.drawsGuide(selected)?'Replace pose picture with drawing':'Use this pose'):'';}
   function posePositionDirty(){
     if(!poseActive()||!posePoints?.[poseJoint]||posePositionSignature!==JSON.stringify([poseJoint,posePoints[poseJoint],poseCanvas]))return false;
     try{const value=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),point=posePoints[poseJoint];
@@ -332,7 +332,7 @@
     const replacing=selected?.id!==POSE_RECIPE&&!StudioPoseEditor.drawsGuide(selected);
     use.textContent=replacing?'Replace pose picture with drawing':'Use this pose';
     use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';
-    q('#uxPoseReason').textContent=reason||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays. Describe this pose before Generate; the old pose picture’s wording is not kept.':'');
+    q('#uxPoseReason').textContent=reason||poseSizeHold()||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays. Describe this pose before Generate; the old pose picture’s wording is not kept.':'');
     const positionPending=posePositionDirty();
     q('#uxPoseStart').disabled=poseBusy||positionPending;syncPosePosition();
     q('#uxPoseJoints').querySelectorAll('button').forEach(button=>{button.disabled=poseBusy||positionPending;});

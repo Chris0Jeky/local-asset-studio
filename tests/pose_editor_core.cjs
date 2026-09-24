@@ -112,6 +112,7 @@ test('an attached drawn guide holds Generate once Width or Height move off its c
   const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
   assert.match(workbench,/StudioPoseEditor\.guideSizeReason\(referenceRecords,poseCanvasSize\(\)/,'readiness compares the attached guide with the canvas Use this pose would render');
   assert.match(workbench,/items\.push\(\{code:'pose-size',message:staleGuide,action:'pose-size'\}\)/,'the stale guide is a Generate readiness blocker');
+  assert.match(workbench,/q\('#uxPoseReason'\)\.textContent=reason\|\|poseSizeHold\(\)/,'the pose panel shows the same hold beside Use this pose');
 });
 
 // The panel itself needs a DOM this sandbox does not have (canvas, pointer capture, dialogs); what is pinned
