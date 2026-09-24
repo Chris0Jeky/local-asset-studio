@@ -1767,3 +1767,27 @@ P49 held 6/6 — G10 promoted with the badge-and-cap noun rule, eyes neutral on 
 | p50-yor-police-badge-eyes | p49-yor-police-badge | cstati-v3-baseline | 2026092446 | `69a3e773-85cb-46a9-a597-12e4fa22d262` |
 | p50-shenhe-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092554 | `a6fa097f-3b99-4190-837c-bda737b5a12c` |
 | p50-mavuika-smirkwink | E2 squat recipe | wai | 2026092555 | `55427810-f74d-4fb6-8dec-4986ecc49223` |
+
+### p50 results
+
+All six completed, 26.3–51.7 s each, no spill. G10 ported 2/2 with the badged recipe and held eyes-neutral on both badged cells — only the sheer-off reruns remain to close it. E2 generalization reached 29/29.
+
+- p50-kafka-police-anima, Anima, seed `2026092632`, job `957e6cee`, prompt `aab53ff3`, 28.4 s, `Anima-v1-Baseline_00067_.png`. Identity: Kafka reads, pink-magenta hair, rooftop city night, adult. Lever: G10 port with the badged recipe — police cap with badge emblem, gold chest badge, blue shirt, tie; full police read. Squat held. Hands: hidden. Eyes closed, the Anima squat pattern. Cloth: blue shirt glossy, black shorts glossy. Keep-or-change: keep.
+- p50-yor-police-janima, JANIMA, seed `2026092633`, job `f3552dde`, prompt `be341496`, 27.2 s, `JANIMA-v1-Baseline_00029_.png`. Identity: Yor reads, black hair, red eyes, lamp interior, adult. Lever: G10 port with the badged recipe — cap, gold chest badge, blue uniform; full police read. Squat held. Hands: hidden. Eyes open, parted-lips heat. Cloth: blue shirt glossy, black bottoms glossy, garter straps as garnish. Keep-or-change: keep; G10 ports 2/2.
+- p50-kafka-police-badge-eyes, WAI, seed `2026092445`, job `f8dd8319`, prompt `fdee4deb`, 51.7 s, `WAI-Illustration_00110_.png`. Identity: Kafka reads, rooftop night, adult. Lever: `bedroom eyes` on the badged recipe — heavy half-closed eyes, cap, badge, and tie all intact. Squat held. Hands: hidden. Cloth: white shirt sheer, black skirt glossy and wet. Keep-or-change: keep.
+- p50-yor-police-badge-eyes, CSTati, seed `2026092446`, job `69a3e773`, prompt `01bb2ae1`, 26.3 s, `CSTati-v3-Baseline_00092_.png`. Identity: Yor reads, ballroom, adult. Lever: `bedroom eyes` on the badged recipe — half-lidded red eyes, cap, chest badge, and patches intact. Squat held. Hands: hidden. Cloth: blue shirt sheer over the chest, black pants glossy. Keep-or-change: keep; badged eyes-neutral 2/2.
+- p50-shenhe-smirkwink, YumeFlux, seed `2026092554`, job `a6fa097f`, prompt `8a155911`, 26.4 s, `YumeFlux-ILv1-Baseline_00064_.png`. Identity: Shenhe reads, long silver hair, black and red adeptus dress, Liyue shrine night, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: black and red dress glossy and wet with sheer side panels. Keep-or-change: keep.
+- p50-mavuika-smirkwink, WAI, seed `2026092555`, job `55427810`, prompt `3eef563b`, 26.3 s, `WAI-Illustration_00111_.png`. Identity: Mavuika reads, long red-orange hair, dark archon bodysuit with white sleeves, lamp interior, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: dark bodysuit glossy and wet. Keep-or-change: keep.
+
+## G10 sheer-off close, Ganyu, Xilonen, Robin, Yanagi — p51 wave
+
+P50 held 6/6 — G10 ported 2/2 and held eyes-neutral on both badged cells, E2 generalization at 29/29. This wave closes G10 with the sheer stack off at the same seed on both G-series seeds (the structured uniform should hold stable like G5–G9), and runs E2 on four more new adults (Ganyu and Xilonen from Genshin Impact, Robin from Honkai: Star Rail, Yanagi from Zenless Zone Zero — all adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p51-kafka-police-nolora | p49-kafka-police-badge | wai | 2026092445 | `80c406f8-5e26-481a-abb8-c198de6b322e` |
+| p51-yor-police-nolora | p49-yor-police-badge | cstati-v3-baseline | 2026092446 | `36accaa9-bcb2-461c-8d7c-7e86f60ec87a` |
+| p51-ganyu-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092556 | `92e496de-6956-4841-bd64-5fe1a5a56a95` |
+| p51-xilonen-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092557 | `7f9947a2-1d0d-4b8c-af46-b07999c53cce` |
+| p51-robin-smirkwink | E2 squat recipe | wai | 2026092558 | `be379a79-7828-4c6d-b91e-4f45a99e96f9` |
+| p51-yanagi-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092559 | `ddd11956-ea16-4861-a681-64d87bc3ef15` |

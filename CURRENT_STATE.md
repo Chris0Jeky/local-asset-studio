@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p50 judged 6/6, G10 ports and badged eyes, E2 at 29/29, p51 queued — 24 September 2026 (20:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P50 held 6/6: G10 ported 2/2 with the badged recipe (Kafka `957e6cee`, Yor `f3552dde`) and held eyes-neutral on both badged cells (Kafka `f8dd8319`, Yor `69a3e773`) — only sheer-off reruns remain to close; E2 generalization 29/29 (Shenhe `a6fa097f`, Mavuika `55427810`). P51 queued: G10 sheer-off close (Kafka `80c406f8`, Yor `36accaa9`), four more new adults (Ganyu `92e496de`, Xilonen `7f9947a2`, Robin `be379a79`, Yanagi `ddd11956`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p49 judged 6/6, G10 promoted, E2 at 27/27, p50 queued — 24 September 2026 (19:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
