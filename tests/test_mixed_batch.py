@@ -203,6 +203,21 @@ class MixedBatchTests(unittest.TestCase):
         self.assertTrue(self.studio.queue.empty());self.assertEqual(len(self.studio.jobs),1);self.no_posts_since(2)
         restarted=FakeStudio(self.root,[])
         self.assertEqual(restarted.production.get(identifier)['state'],first['state']);self.assertEqual(restarted.requests,[])
+    def test_put_away_keeps_a_disposed_mixed_batch_reconcilable(self):
+        # #940: put_away_at is presentation state, not submission evidence the disposition hashed.
+        identifier=self.owning_project();lab=self.studio.production
+        self.command('dispose',self.payload('dispose-0001',reason='Retain evidence',acknowledge_unknown=True))
+        self.assertTrue(server.mixed_batch.disposed(self.job));self.assertTrue(lab.get(identifier)['can_reconcile_batch'])
+        self.assertTrue(self.studio.put_away_job(self.job['id'],True)['put_away'])
+        self.assertTrue(server.mixed_batch.disposed(self.job));self.assertTrue(lab.get(identifier)['can_reconcile_batch'])
+        restarted=FakeStudio(self.root,[])
+        self.assertIn('put_away_at',restarted.jobs[self.job['id']])
+        self.assertTrue(server.mixed_batch.disposed(restarted.jobs[self.job['id']]))
+        self.assertTrue(restarted.production.get(identifier)['can_reconcile_batch'])
+        first=lab.resume(identifier);self.assertEqual(first['state']['status'],'failed')
+        self.assertEqual(first['state']['attempts']['0']['status'],'abandoned')
+        self.assertFalse(self.studio.put_away_job(self.job['id'],False)['put_away'])
+        self.assertTrue(server.mixed_batch.disposed(self.job));self.assertTrue(self.studio.queue.empty());self.no_posts_since(2)
     def test_unresolved_mixed_project_is_held_before_clock_or_preflight(self):
         identifier=self.owning_project();lab=self.studio.production;before=lab.get(identifier)
         with patch.object(lab,'_comparison_clock',side_effect=AssertionError('No clock charge')):

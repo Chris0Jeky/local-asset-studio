@@ -374,6 +374,34 @@ async function explicitLocalAbandonment() {
   assert.match(element('#gallery').innerHTML,/Remote outcome remains unknown/);
 }
 
+// #940: Problems shows the newest five open problems; put-away ones stay one toggle away.
+async function problemsPanelPutAway() {
+  const {element, requests, run} = sandbox({}, {});
+  const failed=i=>`{id:'f${i}',preset_name:'Failed ${i}',status:'failed',message:'OOM',outputs:[],prompt_ids:[],created_at:${i},can_put_away:true,put_away:false}`;
+  run(`jobs=[${[1,2,3,4,5,6,7].map(failed).join(',')},{id:'away',preset_name:'Put away one',status:'failed',message:'Old',outputs:[],prompt_ids:[],created_at:0,put_away:true,put_away_basis:'owner',put_away_at:100,can_bring_back:true},{id:'tracking',preset_name:'Still tracked',status:'uncertain',message:'Unknown',outputs:[],prompt_ids:['p'],created_at:9,can_stop_tracking:true,can_put_away:false,put_away:false}];renderJobs();`);
+  let html=element('#gallery').innerHTML;
+  assert.match(html,/Problems · 8 run\(s\) · 1 put away/);
+  assert.equal((html.match(/data-put-away="true"/g)||[]).length,4,'Newest five shown; the tracked uncertain job offers no Put away');
+  assert.match(html,/Stop tracking before putting this away/);
+  assert.match(html,/3 older problem\(s\) not shown/);assert.doesNotMatch(html,/Failed 3/);
+  assert.doesNotMatch(html,/Put away one/);assert.match(html,/Show put away \(1\)/);
+  assert.equal(requests.length,0,'Rendering sends nothing');
+  const toggle=value=>({target:{closest:selector=>selector==='[data-problems-toggle]'?{dataset:{problemsToggle:value}}:null}});
+  await element('#gallery').onclick(toggle('away'));html=element('#gallery').innerHTML;
+  assert.match(html,/Put away one/);assert.match(html,/data-put-away="false"/);assert.match(html,/Hide put away/);
+  await element('#gallery').onclick(toggle('all'));html=element('#gallery').innerHTML;
+  assert.match(html,/Failed 1/);assert.match(html,/Show newest 5 only/);
+  assert.equal(requests.length,0,'Toggles are local presentation only');
+  const button={dataset:{job:'f7',putAway:'true'},disabled:false};
+  await element('#gallery').onclick({target:{closest:selector=>selector==='.putAway'?button:null}});
+  assert.deepEqual(requests.filter(r=>r.url.endsWith('/put-away')),[{url:'/api/jobs/f7/put-away',data:{put_away:true}}]);
+  assert.equal(button.disabled,false);
+  const back={dataset:{job:'away',putAway:'false'},disabled:false};
+  await element('#gallery').onclick({target:{closest:selector=>selector==='.putAway'?back:null}});
+  assert.deepEqual(requests.filter(r=>r.url.endsWith('/put-away')).at(-1),{url:'/api/jobs/away/put-away',data:{put_away:false}});
+  assert.ok(requests.every(r=>!/\/(resume|stop-tracking|abandon)$|^\/api\/jobs$/.test(r.url)),'Put away never resumes, stops, abandons or submits');
+}
+
 // #117: an unavailable check may keep a source claim in memory but clear the attachment.
 // Named setup persistence must not turn that uncertainty into an unattributed durable parent.
 async function unresolvedInputLineageCannotBeSaved() {
@@ -495,6 +523,7 @@ async function recipeSwapDuringUploadNeverSubmits() {
   await recipeSwapDuringUploadNeverSubmits();
   await unstagedLocalFilesCannotBeSaved();
   await explicitLocalAbandonment();
+  await problemsPanelPutAway();
   await check('qwen-1ref', null, 1);
   await check('qwen-3ref', null, 3);
   await check('plain', null, 0);

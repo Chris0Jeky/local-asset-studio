@@ -738,6 +738,15 @@ class Studio:
         result["mixed_batch"] = mixed_batch.snapshot(job)
         result["can_abandon"] = submission_evidence.abandonable(job)
         result["abandon_requires_acknowledgement"] = result["can_abandon"] and not result["never_submitted"]
+        # Put away (#940) is presentation state: an owner put-away counts only while the job stays
+        # settled, and a stopped-tracking uncertain job already left the desk by the owner's own act.
+        owner = "put_away_at" in job and Studio._put_away_error(job) is None
+        stopped = Studio._tracking_stopped(job) and job.get("status") == "uncertain"
+        result["put_away_at"] = job.get("put_away_at")
+        result["put_away"] = owner or stopped
+        result["put_away_basis"] = "owner" if owner else "tracking_stopped" if stopped else None
+        result["can_put_away"] = not result["put_away"] and Studio._put_away_error(job) is None
+        result["can_bring_back"] = "put_away_at" in job and job.get("status") not in Studio.ACTIVE_JOB_STATUSES
         return result
 
     @staticmethod
@@ -1287,6 +1296,41 @@ class Studio:
             prospective = self._retained_operator_disposition(job, prospective, 'abandonment')
             self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
+            return self.public(job)
+
+    ACTIVE_JOB_STATUSES = ("queued", "waiting", "submitting", "running")
+    PUT_AWAY_STATUSES = ("failed", "partial", "uncertain", "abandoned")
+
+    @staticmethod
+    def _put_away_error(job):
+        status = job.get("status")
+        if status not in Studio.PUT_AWAY_STATUSES: return "Only a failed, partial, uncertain or abandoned job can be put away"
+        if "pending_submission" in job and status != "abandoned": return "A submission outcome is still unknown; resolve or abandon it before putting it away"
+        if status == "uncertain" and not Studio._tracking_stopped(job): return "Stop tracking this uncertain job before putting it away; its resume path stays open until then"
+        return None
+
+    def put_away_job(self, job_id, put_away):
+        """Hide or restore a settled problem record (#940).
+
+        Only `put_away_at` changes: status, message, reservations, prompt IDs, outputs and
+        tracking stay exactly as recorded, and nothing is queued, submitted or resumed.
+        """
+        if type(put_away) is not bool: raise StudioError("put_away must be true or false")
+        with self.lock:
+            job = self.jobs.get(job_id)
+            if not job: raise StudioError("Unknown job")
+            if put_away == ("put_away_at" in job): return self.public(job)
+            if put_away:
+                error = self._put_away_error(job)
+                if error: raise StudioError(error)
+                prospective = dict(job, put_away_at=time.time())
+            else:
+                # An active job's record belongs to the worker until it settles again.
+                if job.get("status") in self.ACTIVE_JOB_STATUSES: raise StudioError("This job is queued or being observed; wait for it to settle")
+                prospective = {k: v for k, v in job.items() if k != "put_away_at"}
+            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            if put_away: job["put_away_at"] = prospective["put_away_at"]
+            else: job.pop("put_away_at", None)
             return self.public(job)
 
     def _load_jobs(self):
@@ -2103,6 +2147,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.abandon_job(parts[3], payload.get('reason'), payload.get('acknowledge_unknown', False)))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
                 return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_json().get("reason")))
+            if self.path.startswith("/api/jobs/") and self.path.endswith("/put-away"):
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown put-away route')
+                payload = self._body_json()
+                if not isinstance(payload, dict): raise StudioError('Put-away command must be an object')
+                return self._json(200, self.studio.put_away_job(parts[3], payload.get('put_away')))
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
