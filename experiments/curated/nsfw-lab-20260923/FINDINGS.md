@@ -1307,3 +1307,27 @@ P30 held 5.5/6 with E1's first break on a squat. This wave runs the E1 combo as 
 | p31-narberal-body | p6-narberal-lips | cstati-v3-baseline | 2026092433 | `9fd279e0-3f20-41af-93d3-9c99a0c5b90f` |
 | p31-kafka-body-eyes | p29-kafka-body | wai | 2026092445 | `4fc55a03-359e-40d0-977d-ea106a326e7e` |
 | p31-tifa-body-eyes | p29-tifa-body | anifox-v2-baseline | 2026092441 | `34bbd466-9230-46fe-acd4-5bc1c762ed20` |
+
+### p31 results
+
+Five held and one partial, 24.2–24.8 s each. No spill line on any receipt. The E1 combo held on Kafka's squat but dropped the wink on Yor's — the second same-reason break, so E1 demotes to portraits-only (squats ran 2/4). G2+T8 hands are seed luck, not a garment rule: both hands at the new Tifa seed and on Narberal, while the same-seed eyes cell repeated the one-hander. `bedroom eyes` fired on the bodystocking squat and mildly on the profile.
+
+- p31-kafka-combo, WAI, seed `2026092445`, job `408cf774`, prompt `6ef6dfd0`, 24.2 s, `WAI-Illustration_00076_.png`. Identity: same Kafka read, rooftop, adult. Lever: E1 combo appended — grin and wink both show. Squat held. Hands: hidden. Cloth: same translucent shirt and jacket. Keep-or-change: keep.
+- p31-yor-combo, CSTati, seed `2026092446`, job `596eeb1c`, prompt `45124d9a`, 24.3 s, `CSTati-v3-Baseline_00058_.png`. Identity: same Yor read, ballroom, adult. Lever: same combo — grin fired, both eyes open; the wink missed exactly as on Elesa. Squat held. Hands: hidden. Cloth: same glossy red dress. Keep-or-change: keep; E1's second break, demoting the squat extension.
+- p31-tifa-body-reseed, AniFox, seed `2026092617`, job `84d73cb3`, prompt `1afbb545`, 24.3 s, `AniFox-v2-Baseline_00057_.png`. Identity: Tifa reads, black hair, red eyes, bar, adult. Lever: same bodystocking prompt at a new seed — BOTH hands on the hips this time. Bent-over held, looking back. Mouth slightly open. Cloth: bodystocking glossy. Keep-or-change: keep.
+- p31-narberal-body, CSTati, seed `2026092433`, job `9fd279e0`, prompt `8d451c12`, 24.2 s, `CSTati-v3-Baseline_00059_.png`. Identity: Narberal reads, maid headdress, mansion hall, adult. Lever: dress and apron to black bodystocking against the judged lips cell — the swap fired with maid accents kept. Bent-over held, both hands on the hips. Mouth slightly open. Keep-or-change: keep.
+- p31-kafka-body-eyes, WAI, seed `2026092445`, job `4fc55a03`, prompt `cbd7ca7a`, 24.3 s, `WAI-Illustration_00077_.png`. Identity: same Kafka read, rooftop, adult. Lever: `bedroom eyes` added — eyes heavy-lidded; tag fired. Squat held, bodystocking unchanged. Hands: hidden. Mouth slightly open. Keep-or-change: keep.
+- p31-tifa-body-eyes, AniFox, seed `2026092441`, job `34bbd466`, prompt `df8bae52`, 24.8 s, `AniFox-v2-Baseline_00058_.png`. Identity: same Tifa read, bar, adult. Lever: `bedroom eyes` added — eyes heavy in profile; tag fired mildly. Bent-over held. Hands: one on the hip, one arm down — the seed-2441 one-hander repeated. Cloth: same glossy bodystocking. Keep-or-change: keep.
+
+## Crawl combos, smirks, turtlenecks — p32 wave
+
+P31 ran 5/6 with E1's second squat break, demoting the combo to portraits-only. This wave still tests the combo on two crawl faces (`parted lips` to `grin, winking` at the same seed — crawls were never measured), swaps `smile` for `smirk` on two held portraits at the same seed, and swaps two held outfits for turtleneck sweaters at the same seed (Kafka's shirt and jacket to black, Yor's red dress to red). Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p32-sabrina-combo | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `bfdad04f-57e7-4c55-b70c-677ab4010c6e` |
+| p32-sonia-combo | p13-sonia-crawl | yumeflux-ilv1-baseline | 2026092513 | `6b375de2-f8c8-4b08-bf5c-9c5a325dc2b7` |
+| p32-kafka-smirk | p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `8ee40481-9f27-46ed-988a-ac3054896ecd` |
+| p32-nero-smirk | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `8f1e3010-3955-4903-b6b2-1c6fd8d61115` |
+| p32-kafka-turtle | p5-kafka-squat | wai | 2026092445 | `1e34560c-a1ce-48a5-b5f4-2b3b2afbbd7e` |
+| p32-yor-turtle | p5-yor-squat | cstati-v3-baseline | 2026092446 | `e1db26d7-96c7-4343-8864-5cd983f51308` |

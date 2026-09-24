@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p31 judged 5/6, E1 demoted to portraits, p32 queued — 24 September 2026 (10:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P31: E1 held on Kafka (`408cf774`) but missed the wink on Yor (`596eeb1c`), the second same-reason break, so E1 demotes to portraits-only; G2 hands are seed luck (Tifa reseed `84d73cb3` both hands, Narberal `9fd279e0` both hands); eyes fired on G2 cells (Kafka `4fc55a03`, Tifa `34bbd466` mild). P32 queued: E1 combo on two crawls (Sabrina `bfdad04f`, Sonia `6b375de2`), smirk on two portraits (Kafka `8ee40481`, Nero `8f1e3010`), turtleneck swap on two squats (Kafka `1e34560c`, Yor `e1db26d7`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p30 judged 5.5/6, E1 first break, p31 queued — 24 September 2026 (10:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
