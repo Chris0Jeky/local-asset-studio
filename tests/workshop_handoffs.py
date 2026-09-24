@@ -17,6 +17,7 @@ import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 from workshop_browser_core import immersive_css
 from workshop_wildcards import WILDCARDS, exercise_wildcards
+from workshop_continuation_help import exercise_continuation_help
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -49,6 +50,10 @@ async def run(args):
             await page.wait_for_function('!!selected && !!document.querySelector("#workshopRecipeChange") && !!document.querySelector("#bundleLauncher")')
             await page.evaluate("showView('create')")
             await page.wait_for_timeout(150)
+            if args.case in ('all', 'continuation'):
+                await exercise_continuation_help(page, checks, fixture.POSTS)
+                await page.set_viewport_size({'width':1440, 'height':900})
+                await page.select_option('#workshopLayout', 'focus')
             if args.case in ('all', 'wildcards'):
                 await exercise_wildcards(page, checks, fixture.POSTS)
                 await page.set_viewport_size({'width':1440, 'height':900})
@@ -122,5 +127,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', type=Path, default=ROOT/'.runtime/workshop-handoffs')
     parser.add_argument('--inert', action='store_true')
-    parser.add_argument('--case', choices=('all','bundle','disclosure','wildcards'), default='all')
+    parser.add_argument('--case', choices=('all','bundle','disclosure','wildcards','continuation'), default='all')
     asyncio.run(run(parser.parse_args()))
