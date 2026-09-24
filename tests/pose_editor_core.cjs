@@ -151,6 +151,13 @@ test('a restored guide\'s stored drawing comes back as editor points, only for t
   history.record(before,before);const adopted=P.adopt(before,points);
   assert.deepEqual(adopted,points);assert.ok(history.canUndo,'loading a stored drawing is one undoable edit');
   assert.deepEqual(history.undo(adopted,adopted).points,before);
+  const held={id,points,canvas:{width:832,height:1216}};
+  assert.ok(P.holds(points,{width:832,height:1216},held),'the adopted drawing is held');
+  assert.ok(P.holds(P.resize(P.resize(points,held.canvas,{width:640,height:1216}),{width:640,height:1216},{width:512,height:960}),{width:512,height:960},held),'a held drawing stays held through canvas changes');
+  assert.ok(!P.holds(before,{width:832,height:1216},held),'after Undo the editor no longer holds the guide');
+  assert.ok(!P.holds(P.nudge(points,4,1,0,{width:832,height:1216},.01),{width:832,height:1216},held),'any edit breaks the match');
+  assert.ok(!P.holds(P.setUnknown(points,4),{width:832,height:1216},held),'an omitted joint breaks the match');
+  assert.ok(!P.holds(points,{width:832,height:1216},null),'nothing adopted, nothing held');
 });
 
 // The panel itself needs a DOM this sandbox does not have (canvas, pointer capture, dialogs); what is pinned
@@ -164,10 +171,10 @@ test('the workbench sends the drawing to the guide endpoint and to no generation
   assert.match(workbench,/POSE_RECIPE='combine-klein-9b-skeleton'/,'the drawing belongs to the proved drawn-skeleton recipe');
   assert.match(workbench,/switchCombineEngine\(POSE_RECIPE,result\)/,'explicit replacement uses the checked new guide through the shared switch path');
   assert.match(workbench,/StudioPoseEditor\.guideResponse\(response,body\)/,'response validation precedes attachment');
-  assert.match(workbench,/guideResponse\(response,body\);poseSource=result\.artifact_id/,'a rendered guide is the drawing the editor holds');
+  assert.match(workbench,/guideResponse\(response,body\);poseHeld=\{id:result\.artifact_id,points:/,'a rendered guide is the drawing the editor holds');
   assert.match(workbench,/api\('\/api\/pose\/artifacts\/'\+id\)/,'a restored guide reads its own stored drawing, a GET that renders and submits nothing');
   assert.match(workbench,/StudioPoseEditor\.fromArtifact\(value,guide\)/,'the stored drawing is checked against the attached guide before it is loaded');
-  assert.match(workbench,/\{artifact:poseSource,loading:poseLoading,blocked:poseBlockedReason\(\)\}/,'the hold knows what the editor holds and why its button is disabled');
+  assert.match(workbench,/\{artifact:poseHeldArtifact\(\),loading:poseLoading\?\.artifact_id,blocked:poseBlockedReason\(\)\}/,'the hold knows what the editor holds and why its button is disabled');
   assert.match(workbench,/combineSwitchReason\(selected,target,referenceRecords\)/,'ordinary engine switches retain their representation guard');
   assert.doesNotMatch(workbench,/post\('\/api\/jobs'/,'the workbench submits no generation of its own');
   const html=fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');

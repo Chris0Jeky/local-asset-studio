@@ -149,8 +149,23 @@ def restored_guide(page, origin, out, check, drawings, posts, spec):
     check(reads == ['/api/pose/artifacts/' + held], 'The restored guide reads its own stored drawing once: ' + str(reads))
     check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == ['64', '80'], 'The editor now holds the guide drawing, not the default figure')
     check(page.locator('#uxPoseUndo').is_enabled(), 'Loading the stored drawing is one undoable edit')
+    # Undo puts the old figure back: the editor no longer holds the guide, so the hold must not promise a resize.
+    page.locator('#uxPoseUndo').click()
+    check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] != ['64', '80'], 'Undo returns to the previous drawing')
     set_width(page, 832)
-    hold = hold_text(page, 'drawn at 1024×1536')
+    hold = hold_text(page, 'does not hold that drawing')
+    check(hold == 'The pose guide was drawn at 1024×1536, not the new size (832×1536), and the editor does not hold that drawing. '
+          'Set Width and Height back to 1024×1536, or redraw the pose and press Replace pose picture with drawing.', 'After Undo the hold promises no resize: ' + hold)
+    check(reads == ['/api/pose/artifacts/' + held], 'Undo does not pull the stored drawing back over the user choice')
+    page.locator('#uxPoseRedo').click()
+    hold = hold_text(page, 'again for the new size')
+    check(reads == ['/api/pose/artifacts/' + held], 'Redo restores the held drawing without another read')
+    page.locator('#uxPoseStart').select_option('standing')
+    hold = hold_text(page, 'does not hold that drawing')
+    # Restoring the same setup again is a new record: it reads the same stored drawing once more.
+    page.evaluate(REPLACE_GUIDE, guide)
+    hold = hold_text(page, 'again for the new size')
+    check(reads == ['/api/pose/artifacts/' + held] * 2, 'A second restore of the same guide reads its drawing again: ' + str(reads))
     check(hold == 'The pose guide was drawn at 1024×1536; press Replace pose picture with drawing again for the new size (832×1536).',
           'The held drawing is promised as a resize: ' + hold)
     check(page.locator('#uxPoseReason').inner_text() == hold, 'The same hold is shown beside the button')

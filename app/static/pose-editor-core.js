@@ -241,7 +241,14 @@
     if(known(points)<2)fail();
     return points;
   }
+  // Whether the editor still holds a guide's drawing: the drawing adopted or rendered for it (held.points on held.canvas),
+  // followed through any canvas change, to a hundredth of a pixel. Undo, Start from or any edit breaks the match.
+  function holds(points,canvas,held){
+    if(!held||!Array.isArray(held.points)||!Array.isArray(points))return false;
+    const now=resize(held.points,held.canvas,canvas),near=(a,b)=>Math.abs(a-b)<=.01;
+    return JOINTS.every((_,i)=>{const a=at(points,i),b=now[i];return a===null&&b===null||!!a&&!!b&&near(a.x,b.x)&&near(a.y,b.y);});
+  }
   // Replacing the whole drawing (a restored guide's pose) is one undoable edit, like choosing a Start from figure.
   function adopt(points,next){return publish(points,copy(next),true);}
-  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,RENDERERS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,drawsGuide,guideRenderer,renderRequest,limbColours,guideResponse,drawnGuide,guideSizeReason,fromArtifact,adopt,positionInput};
+  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,RENDERERS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,drawsGuide,guideRenderer,renderRequest,limbColours,guideResponse,drawnGuide,guideSizeReason,fromArtifact,adopt,holds,positionInput};
 });
