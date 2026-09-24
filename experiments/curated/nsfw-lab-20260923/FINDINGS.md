@@ -2724,6 +2724,29 @@ P88 held 6/6 — G23 promoted on the opening pair with eyes 2/2, C1 `from below`
 | p89-kafka-nurse-crawl | p88-kafka-nurse | wai | 2026092693 | `d8860a6c-3c9c-4a33-86c1-d7f80756b9d6` |
 | p89-yor-nurse-portrait | p88-yor-nurse | cstati-v3-baseline | 2026092694 | `0ac89bd6-d829-4d4f-84e8-8968659bbf69` |
 
+All six completed, 25.0–29.3 s each, all receipts live, no spill. G23 measured 10 (bent-over and seiza hold, sheer-off 2/2 drift nothing, crawl and portrait transfers hold).
+
+- p89-kafka-nurse-bentover, WAI, seed `2026092691`, job `f695a966`, prompt `ff39e28e`, 29.3 s, `WAI-Illustration_00189_.png`. Identity: Kafka reads, magenta hair, nurse cap with red cross, white nurse dress, ward violet, night, adult. Lever: nurse on the bent-over — leaning forward with hands on knees, cap and dress intact. Keep-or-change: keep.
+- p89-yor-nurse-seiza, CSTati, seed `2026092692`, job `2a7b6092`, prompt `0618f8aa`, 26.8 s, `CSTati-v3-Baseline_00183_.png`. Identity: Yor reads, black hair in a bun, nurse cap, white nurse dress, armband, lamp, night, adult. Lever: nurse on the seiza — kneeling looking back, tongue out, feet visible, cap and dress intact. Keep-or-change: keep.
+- p89-kafka-nurse-nolora, WAI, seed `2026092445`, job `80430c21`, prompt `d5a6d117`, 26.9 s, `WAI-Illustration_00190_.png`. Identity: Kafka reads, magenta hair, white nurse dress and cap with red cross, armband, stockings, ward violet, night, adult. Lever: sheer-off rerun at the nurse seed — dress and cap intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G23 sheer-off 1/2.
+- p89-yor-nurse-nolora, CSTati, seed `2026092446`, job `b50f5071`, prompt `dd8f426a`, 25.0 s, `CSTati-v3-Baseline_00184_.png`. Identity: Yor reads, black hair, white nurse dress and cap, armband, lamp, night, adult. Lever: sheer-off rerun at the nurse seed — dress and cap intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G23 sheer-off 2/2.
+- p89-kafka-nurse-crawl, WAI, seed `2026092693`, job `d8860a6c`, prompt `646f5eb4`, 26.8 s, `WAI-Illustration_00191_.png`. Identity: Kafka reads, magenta hair, nurse cap with red cross, white nurse dress, armband, ward violet, night, adult. Lever: nurse on the crawl — face to the viewer, forearms planted, cap and dress intact. Keep-or-change: keep.
+- p89-yor-nurse-portrait, CSTati, seed `2026092694`, job `0ac89bd6`, prompt `88dcf46f`, 26.8 s, `CSTati-v3-Baseline_00185_.png`. Identity: Yor reads, black hair with rose ornaments, nurse cap, white nurse dress, armband, lamp, night, adult. Lever: nurse on the portrait — smile, cap and armband. Keep-or-change: keep.
+
+## G23 seated rear, ports, C1 cowboy on nurse and cheer — p90 wave
+
+P89 held 6/6 — G23 measured 10 with bent-over, seiza, sheer-off, crawl and portrait all holding. This wave closes in on G23 (seated rear for Kafka, ports x2 with no sheer LoRA) and extends C1 `cowboy shot` to the nurse and cheer squat pairs. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p90-kafka-nurse-seated | p88-kafka-nurse | wai | 2026092695 | `56748706-5e0c-4226-b79b-f1d30d59c7ad` |
+| p90-kafka-nurse-anima | p88-kafka-nurse | anima-v1-baseline | 2026092696 | `0e684820-e595-46b7-9364-1bb211fddfab` |
+| p90-yor-nurse-janima | p88-yor-nurse | janima-v1-baseline | 2026092697 | `3e8e7e14-0042-40e4-b219-09e7513b710b` |
+| p90-kafka-nurse-cowboy | p88-kafka-nurse | wai | 2026092445 | `0ef2864d-a058-4962-8bca-0d7f9d8797c4` |
+| p90-yor-nurse-cowboy | p88-yor-nurse | cstati-v3-baseline | 2026092446 | `9ea787d3-5f8a-49d9-8072-6a4ca85d6785` |
+| p90-kafka-cheer-cowboy | p83-kafka-cheer | wai | 2026092445 | `4765b21b-d04f-4764-b517-98c9c480a43d` |
+| p90-yor-cheer-cowboy | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `d944ea2a-b185-48f1-b70a-793a9a5348c0` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
