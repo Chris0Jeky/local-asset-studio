@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p21 judged, T10 closed on all families, p22 queued — 24 September 2026 (05:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P21 held 6/6: cameras on the seiza are all mild (Morgan cowboy `5e1d7c63`, Acheron close-up `a0bd39ea`, Caitlin below `582bb7c5`); on the portrait `close-up` genuinely tightens to the face (Yelan `1f8135c4`), `cowboy shot` widens mildly to the waist (Kafka `c2501341`), `from below` gives a mild low angle (Nero `f5976ae5`). P22 queued: words-only crawl and squat ported to Anima and JANIMA (Tifa `34fe04cd`, Jessie `71279329`, Kafka `0d0672e6`, Yor `4156379b`; first JANIMA submits refused `lora6`, reposted clean) plus `winking` on two held portraits (Kafka `2c3416dc`, Nero `e877dbf5`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p20 judged, T10 on crawl and T13 on profiles measured, p21 queued — 24 September 2026 (05:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.

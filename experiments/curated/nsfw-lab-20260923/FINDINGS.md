@@ -1067,3 +1067,27 @@ P20 held 6/6 and extended T10 to the crawl. The seiza (T14) and the portrait (T1
 | p21-kafka-cowboy | p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `c2501341-80e2-4295-b9a5-c989d038182c` |
 | p21-yelan-closeup | p16-yelan-portrait | yumeflux-ilv1-baseline | 2026092543 | `1f8135c4-8964-41f0-9578-cb542aa264e5` |
 | p21-nero-below | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `f5976ae5-54ba-45b2-8fc8-90814342fe04` |
+
+### p21 results
+
+All six completed, 22.2–24.3 s each. No spill line on any receipt. Cameras on the seiza are all mild: the kneeling pose tags decide. On the portrait, `close-up` genuinely tightens to the face (no competing pose tags), `cowboy shot` widens mildly to the waist, and `from below` gives a mild low angle. T10 is now measured on every pose family.
+
+- p21-morgan-cowboy, WAI, seed `2026092521`, job `5e1d7c63`, prompt `58054be2`, 22.2 s, `WAI-Illustration_00072_.png`. Identity: same Morgan read, stone hall, adult. Lever: `cowboy shot` tightened the seiza only mildly; feet stay in frame, tongue out, looking back. Hands: tucked. Cloth: blue dress translucent. Keep-or-change: keep.
+- p21-acheron-closeup, CSTati, seed `2026092522`, job `a0bd39ea`, prompt `b35e1657`, 24.2 s, `CSTati-v3-Baseline_00050_.png`. Identity: same Acheron read, train car, red light, adult. Lever: `close-up` reframed weakly; still a full seiza with a slightly bigger face. Hands: tucked. Feet visible, normal-looking. Cloth: black dress glossy. Keep-or-change: keep.
+- p21-caitlin-below, AniFox, seed `2026092523`, job `582bb7c5`, prompt `85c0cf10`, 24.3 s, `AniFox-v2-Baseline_00045_.png`. Identity: same Caitlin read, villa bedroom, adult. Lever: `from below` barely registered; the pose is already low, so the camera stayed put. Seiza held, tongue out. Hands: tucked. Cloth: white gown translucent. Keep-or-change: keep.
+- p21-kafka-cowboy, CSTati, seed `2026092542`, job `c2501341`, prompt `7f078583`, 24.2 s, `CSTati-v3-Baseline_00051_.png`. Identity: same Kafka read, train, adult. Lever: `cowboy shot` widened the portrait mildly to the waist; smile held. Hands: not visible. Cloth: white shirt strongly translucent. Keep-or-change: keep.
+- p21-yelan-closeup, YumeFlux, seed `2026092543`, job `1f8135c4`, prompt `35f54ac7`, 24.3 s, `YumeFlux-ILv1-Baseline_00042_.png`. Identity: same Yelan read, teahouse, adult. Lever: `close-up` genuinely tightened to the face, the one camera tag that beats a tail. Hands: not visible. Cloth: blue dress with a sheer chest panel. Keep-or-change: keep; the face-crop tag for portraits.
+- p21-nero-below, AniFox, seed `2026092544`, job `f5976ae5`, prompt `c0f61cf5`, 24.3 s, `AniFox-v2-Baseline_00046_.png`. Identity: same Nero read, throne room, adult. Lever: `from below` gave a mild low angle, chest prominent in the foreground; smile held. Hands: not visible. Cloth: white-and-red glossy with a translucent chest. Keep-or-change: keep.
+
+## Cross-family ports and winking — p22 wave
+
+P21 held 6/6 and closed T10 on every pose family. The words-only stacks (T7 without the sheer head, T12) have never run off the Illustrious family, so the crawl and the squat go onto Anima and JANIMA at new seeds: CFG 4.5, euler / simple, Anima slot 1 at 0.85, JANIMA slot 5 at 0.85, family score-style negative minus `hands, fingers` (the stacks carry no hand ban). No see-through LoRA anywhere near these presets. The remaining two cells add `winking` to two held portraits at the same seed. The first JANIMA submits were refused as "Unsupported controls: lora6" (JANIMA binds five slots, Anima six); both failed before any prompt id and were posted clean without the key. Queued in one burst.
+
+| Cell | Preset | Seed | Job |
+| --- | --- | --- | --- |
+| p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `34fe04cd-dcec-4b20-8d67-0b86954d0d46` |
+| p22-jessie-crawl-janima | janima-v1-baseline | 2026092602 | `71279329-8f59-419c-ad88-a9b3f26c7d91` |
+| p22-kafka-squat-anima | anima-v1-baseline | 2026092603 | `0d0672e6-df66-4d3c-9c63-303af56e913f` |
+| p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `4156379b-d445-4c3f-827a-51897849a7dd` |
+| p22-kafka-wink | cstati-v3-baseline | 2026092542 | `2c3416dc-0b31-422f-bfd1-197484dfcd0e` |
+| p22-nero-wink | anifox-v2-baseline | 2026092544 | `e877dbf5-e342-4800-8743-20c0006ed2fc` |
