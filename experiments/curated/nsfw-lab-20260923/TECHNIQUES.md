@@ -266,7 +266,21 @@ P17 held 6/6: eyes on portraits (`p17-kafka-p-eyes`, `p17-yelan-p-eyes`, `p17-ac
 
 P18 held 6/6, giving the portrait-only adults body stacks: `p18-2b-squat` (WAI, job `4c0dccb6`, prompt `6e56e5f3`, `WAI-Illustration_00069_.png`, 24.3 s), `p18-2b-bentover` (CSTati, job `6e1869cb`, prompt `0bb193aa`, `CSTati-v3-Baseline_00044_.png`, 24.6 s, pod garnish from the prompt tag), `p18-cynthia-squat` (WAI, job `efb11cba`, prompt `fa29e225`, `WAI-Illustration_00070_.png`, 24.2 s), `p18-cynthia-bentover` (CSTati, job `cb7936c9`, prompt `361e8f45`, `CSTati-v3-Baseline_00045_.png`, 24.3 s, grey skirt became grey pants). Garnish note: a `pod` tag on 2B renders Pod 042 hovering behind her without disturbing the pose.
 
-Next lever (p22, queued): cross-family ports — the words-only crawl and squat on Anima and JANIMA at new seeds — plus `winking` on two held portraits at the same seed.
+## T17 — winking on a held portrait
+
+Use when a held T16 still should wink. Add `winking` after `smile` at the same seed. No negative change. One eye closes, the other stays open; pose, hands, and cloth stay put.
+
+Held: `p22-kafka-wink` (CSTati, job `2c3416dc`, prompt `e83be89d`, `CSTati-v3-Baseline_00052_.png`, 27.4 s), `p22-nero-wink` (AniFox, job `e877dbf5`, prompt `f28b0deb`, `AniFox-v2-Baseline_00047_.png`, 24.3 s). Two characters held it, so it promotes.
+
+Breaks it: nothing yet. Untested on squats and crawls, where the face is smaller.
+
+## X1 — words-only ports to Anima and JANIMA
+
+The T7 and T12 word tails hold off the Illustrious family with no adapter at all. Settings: CFG 4.5, euler / simple, 832×1216, 20 steps, Anima slot 1 at 0.85 (six slots), JANIMA slot 5 at 0.85 (five slots — `lora6` is refused), family score-style negative minus `hands, fingers`. Never the see-through LoRA on these presets.
+
+Held: `p22-tifa-crawl-anima` (Anima, job `34fe04cd`, prompt `53b8ba3f`, `Anima-v1-Baseline_00043_.png`, 24.2 s), `p22-jessie-crawl-janima` (JANIMA, job `71279329`, prompt `cc5bfe9c`, `JANIMA-v1-Baseline_00006_.png`, 26.2 s), `p22-kafka-squat-anima` (Anima, job `0d0672e6`, prompt `9ea9de79`, `Anima-v1-Baseline_00044_.png`, 14.4 s, eyes closed unprompted), `p22-yor-squat-janima` (JANIMA, job `4156379b`, prompt `48515740`, `JANIMA-v1-Baseline_00007_.png`, 14.2 s).
+
+Next lever (p23, queued): the bent-over words on Anima and JANIMA, `winking` on held squats, and `bedroom eyes` on the two p22 ports at the same seed.
 
 ## M2 measured
 

@@ -1091,3 +1091,27 @@ P21 held 6/6 and closed T10 on every pose family. The words-only stacks (T7 with
 | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `4156379b-d445-4c3f-827a-51897849a7dd` |
 | p22-kafka-wink | cstati-v3-baseline | 2026092542 | `2c3416dc-0b31-422f-bfd1-197484dfcd0e` |
 | p22-nero-wink | anifox-v2-baseline | 2026092544 | `e877dbf5-e342-4800-8743-20c0006ed2fc` |
+
+### p22 results
+
+All six completed, 14.2–27.4 s each. No spill line on any receipt. The words-only crawl and squat port cleanly to Anima and JANIMA at new seeds: 4/4 held with no sheer head anywhere near those presets. `winking` fired on both portraits at the same seed.
+
+- p22-tifa-crawl-anima, Anima, seed `2026092601`, job `34fe04cd`, prompt `53b8ba3f`, 24.2 s, `Anima-v1-Baseline_00043_.png`. Identity: Tifa reads, black hair, red eyes, bar, adult. Lever: T12 words ported — crawl held, face toward the viewer, mouth slightly open. Hands: one flat with normal fingers, one tucked. Cloth: white tank, black skirt glossy. Keep-or-change: keep.
+- p22-jessie-crawl-janima, JANIMA, seed `2026092602`, job `71279329`, prompt `cc5bfe9c`, 26.2 s, `JANIMA-v1-Baseline_00006_.png`. Identity: Jessie reads, crimson hair, blue eyes, rooftop at night, adult. Lever: T12 words ported — crawl held, face toward the viewer, mouth slightly open. Hands: crossed under the chin, normal-looking. Cloth: white uniform covers. Keep-or-change: keep.
+- p22-kafka-squat-anima, Anima, seed `2026092603`, job `0d0672e6`, prompt `9ea9de79`, 14.4 s, `Anima-v1-Baseline_00044_.png`. Identity: Kafka reads, magenta hair, sunglasses on head, rooftop, adult. Lever: T7 words ported — squat held, hands behind the head, eyes closed unprompted, mouth slightly open. Hands: hidden. Cloth: white shirt, black jacket, dark shorts glossy. Keep-or-change: keep.
+- p22-yor-squat-janima, JANIMA, seed `2026092604`, job `4156379b`, prompt `48515740`, 14.2 s, `JANIMA-v1-Baseline_00007_.png`. Identity: Yor reads strongly, headband, gold earrings, red dress, lamp interior, adult. Lever: T7 words ported — squat held, hands behind the head, mouth slightly open. Hands: hidden. Cloth: red dress glossy. Keep-or-change: keep; strong.
+- p22-kafka-wink, CSTati, seed `2026092542`, job `2c3416dc`, prompt `e83be89d`, 27.4 s, `CSTati-v3-Baseline_00052_.png`. Identity: same Kafka read, train, adult. Lever: `winking` added — one eye closed, one open; tag fired. Hands: not visible. Cloth: same translucent white shirt. Keep-or-change: keep.
+- p22-nero-wink, AniFox, seed `2026092544`, job `e877dbf5`, prompt `f28b0deb`, 24.3 s, `AniFox-v2-Baseline_00047_.png`. Identity: same Nero read, throne room, adult. Lever: `winking` added — one eye closed; tag fired. Hands: not visible. Cloth: same glossy red-and-white with a translucent chest. Keep-or-change: keep.
+
+## Bent-over ports, winks, cross-family eyes — p23 wave
+
+P22 held 6/6 and promoted T17. This wave ports the bent-over words (T8 without the sheer head) to Anima and JANIMA at new seeds, puts `winking` on two held squats at the same seed (T17's smaller-face test), and adds `bedroom eyes` to the two judged p22 ports at the same seed (the first expression layer on the ported family). Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p23-narberal-bent-anima | X1 | anima-v1-baseline | 2026092605 | `7d19abbc-b703-4e39-a54a-6b2b136a6103` |
+| p23-tifa-bent-janima | X1 | janima-v1-baseline | 2026092606 | `59a5e1c7-e7c9-43c0-835c-8d3adb89424d` |
+| p23-jane-wink | p6-jane-lips | yumeflux-ilv1-baseline | 2026092431 | `d597cd2c-a630-45cd-a7bd-06a8999a4b94` |
+| p23-elesa-wink | p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `c50cf68e-625d-4cf5-ae1f-d4aad14abf67` |
+| p23-tifa-eyes-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `bc40f5b5-d389-4d09-a457-e0fc7621078e` |
+| p23-yor-eyes-janima | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `7a8dd04e-dc0c-4ed7-984d-e1302fcf4a42` |
