@@ -277,6 +277,14 @@ class PlannedSweepTests(unittest.TestCase):
             lab.create(self.intent([self.variant('A',steps=8),self.variant('B',steps=15)],max_generations=1))
         self.assertEqual(lab.list(),[]);self.assertFalse(studio.jobs);self.assertEqual(studio.queue.qsize(),0)
 
+    def test_variant_sources_beyond_twelve_are_refused_while_twelve_are_kept(self):
+        studio=FakeStudio(self.root,[]);lab=studio.production
+        too_many=dict(self.variant('Too many',steps=8));too_many['sources']=['https://example.invalid/%d'%i for i in range(13)]
+        with self.assertRaisesRegex(ValueError,'at most 12 sources'):lab.create(self.intent([too_many]))
+        twelve=['https://example.invalid/%d'%i for i in range(12)]
+        exact=dict(self.variant('Twelve',steps=8));exact['sources']=twelve
+        project=lab.create(self.intent([exact]));self.assertEqual(project['variants'][0]['sources'],twelve)
+
     def test_plan_route_offers_documented_variants_without_reserving_anything(self):
         studio=FakeStudio(self.root,[]);lab=studio.production
         offer=lab.plan({'preset_id':'planned','controls':{'seed':3},'mode':'grid','limit':4})
