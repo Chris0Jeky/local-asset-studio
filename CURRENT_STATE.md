@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p63 judged 6/6, E2 at 75/75, G14 opens, p64 queued — 25 September 2026 (01:35 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P63 held 6/6: E2 generalization 75/75 first try (Yixuan `974ed6c5`, Alice `d28b4722`, Sparkle `c8349e88`, Jingliu `eba89652`, Yukong `38d65d55`, Jinhsi `4e6ff44d`, smirk and wink showing on all six, likeness notes on all six new faces). P64 queued: last E2 burn-down pair (Zhezhi `fa36e824`, Phoebe `0f5b29e9`), G14 wedding-dress open (Kafka `ca287062`, Yor `37b0c53c`), B1 closed-garment retests (Trigger zipped coat `eca8e632`, Dialyn long sleeves `a4660ff7`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p62 judged 5.5/6, B1 promotes soft, p63 queued — 25 September 2026 (01:10 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.

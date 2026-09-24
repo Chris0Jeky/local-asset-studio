@@ -2116,6 +2116,30 @@ P62 held 5.5/6 — B1 promotes as a soft lever (Anby, Sanhua clean; Soldier 11, 
 | p63-yukong-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092612 | `38d65d55-9b86-487d-9c2d-8588277ab5ce` |
 | p63-jinhsi-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092613 | `4e6ff44d-e640-4997-baf6-3b22e0db7499` |
 
+### p63 results
+
+All six completed, 26.3–32.4 s each, no spill. E2 generalization reached 75/75 first try.
+
+- p63-yixuan-smirkwink, AniFox, seed `2026092608`, job `974ed6c5`, prompt `b9c8519d`, 26.3 s, `AniFox-v2-Baseline_00083_.png`. Identity: Yixuan reads as a black-haired martial master in a white and teal robe with gold jewelry at a mountain temple at night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: white robe translucent-sheer, black skirt glossy. Keep-or-change: keep.
+- p63-alice-smirkwink, CSTati, seed `2026092609`, job `d28b4722`, prompt `9dc16ed1`, 30.3 s, `CSTati-v3-Baseline_00117_.png`. Identity: Alice reads as a blonde idol in a teal and black dress on a concert stage at night, adult; first-run face, youthful-face composition note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden out of frame at top. Cloth: teal top glossy, no sheer panel. Keep-or-change: keep.
+- p63-sparkle-smirkwink, WAI, seed `2026092610`, job `c8349e88`, prompt `fd20e375`, 26.3 s, `WAI-Illustration_00134_.png`. Identity: Sparkle reads, red-brown hair, bell choker, red and black jester dress, theater stage night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: red dress glossy, white chest panel sheer. Keep-or-change: keep.
+- p63-jingliu-smirkwink, YumeFlux, seed `2026092611`, job `eba89652`, prompt `1e4b8982`, 26.3 s, `YumeFlux-ILv1-Baseline_00074_.png`. Identity: Jingliu reads, long white hair, red eyes, black and red swordmaster robe with red tassels, snow courtyard night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: black robe glossy with sheer brown chest panels. Keep-or-change: keep.
+- p63-yukong-smirkwink, AniFox, seed `2026092612`, job `38d65d55`, prompt `e9e16305`, 31.4 s, `AniFox-v2-Baseline_00084_.png`. Identity: Yukong reads, dark blue hair with fox ears, white and blue helm-master uniform, space station night, adult; first-run foxian face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: white top sheer, dark bodice with glossy sheer panels. Keep-or-change: keep.
+- p63-jinhsi-smirkwink, CSTati, seed `2026092613`, job `4e6ff44d`, prompt `d8e93199`, 32.4 s, `CSTati-v3-Baseline_00118_.png`. Identity: Jinhsi reads, pale hair in a bun with hairpin, white and teal and gold magistrate robe, palace lamp night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: white robe sheer over the chest, black and teal dress glossy. Keep-or-change: keep.
+
+## G14 wedding-dress open, Zhezhi, Phoebe, B1 closed-garment retests — p64 wave
+
+P63 held 6/6 — E2 generalization at 75/75 first try. This wave finishes the ambition-list E2 burn-down with the last two never-run adults (Zhezhi and Phoebe from Wuthering Waves), opens G14 with a white wedding dress (veil back so the face stays clear, gloves on) on both G-series seeds, and retests B1 in closed garments (Trigger's coat zipped up, Dialyn's dress with long sleeves and high neckline) against the p62 open-coat break. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p64-zhezhi-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092614 | `fa36e824-5660-4532-914e-9c911d79845b` |
+| p64-phoebe-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092615 | `0f5b29e9-cddb-4f62-bd77-21630fe6ac3b` |
+| p64-kafka-wedding | p5-kafka-squat | wai | 2026092445 | `ca287062-8fa3-47bc-9c3d-6f07e50c9aaf` |
+| p64-yor-wedding | p5-yor-squat | cstati-v3-baseline | 2026092446 | `37b0c53c-dc7d-40fd-9143-e2374a503d0f` |
+| p64-trigger-closedcoat | p62-trigger-smallbust | anifox-v2-baseline | 2026092616 | `eca8e632-473b-4ff1-87d5-abda6282f29c` |
+| p64-dialyn-longsleeve | p62-dialyn-smallbust | yumeflux-ilv1-baseline | 2026092617 | `a4660ff7-6856-4e6f-a37a-46b127399d40` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
