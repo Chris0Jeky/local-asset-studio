@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p62 judged 5.5/6, B1 promotes soft, p63 queued — 25 September 2026 (01:10 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P62 measured B1 2 clean holds (Anby `3b1f8f17`, Sanhua `6e799d30`), 3 partial reductions (Soldier 11 `c1cedd05`, Nekomata `c8e572dd`, Dialyn `2f45a6fb`), 1 break (Trigger `5dc3803b` — coat rewrote open over a bra-like top, G4-rewrite class). B1 promotes as a soft lever: the tag fires, strength varies by garment; next test pairs it with structured closed garments. P63 queued: E2 burn-down on six more new adults (Yixuan `974ed6c5`, Alice `d28b4722`, Sparkle `c8349e88`, Jingliu `eba89652`, Yukong `38d65d55`, Jinhsi `4e6ff44d`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p61 judged 6/6, E2 at 69/69, B1 canonical-bust wave queued — 25 September 2026 (00:45 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.

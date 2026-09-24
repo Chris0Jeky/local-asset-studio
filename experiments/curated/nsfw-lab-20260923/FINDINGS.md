@@ -2092,6 +2092,30 @@ Owner direction, 25 September 2026 (early hours): run pools of bodies more in li
 | p62-trigger-smallbust | E2 squat recipe | anifox-v2-baseline | 2026092606 | `5dc3803b-33fb-4cca-89bd-b903b675a216` |
 | p62-dialyn-smallbust | E2 squat recipe | cstati-v3-baseline | 2026092607 | `2f45a6fb-244c-4ea0-81ad-ece30e54f315` |
 
+### p62 results
+
+All six completed, 24.2–24.5 s each, no spill. B1 measured 2 clean holds, 3 partials, 1 break — it promotes as a soft lever (two characters hold it), with the garment caveat below.
+
+- p62-anby-smallbust, AniFox, seed `2026092602`, job `3b1f8f17`, prompt `723880d4`, 24.3 s, `AniFox-v2-Baseline_00081_.png`. Identity: Anby reads, short silver hair, red eyes, spiked choker, grey soldier jacket, neon street night, adult. Lever: `small breasts` added — bust reads modest under the jacket, clearly smaller than her p54 read. Squat held. Hands: hidden behind the head. Cloth: grey jacket and black top glossy, no sheer panel; fake sign letters are garnish. Keep-or-change: keep; B1 1/2.
+- p62-soldier11-smallbust, CSTati, seed `2026092603`, job `c1cedd05`, prompt `1f510135`, 24.3 s, `CSTati-v3-Baseline_00115_.png`. Identity: Soldier 11 reads, short orange hair, green eyes, green and orange uniform, night base, adult. Lever: `small breasts` — bust reads moderate, reduced from the p60 read but not fully small. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: green jacket and black crop top glossy; midriff bare, dog-tag and badge props read military. Keep-or-change: keep as a partial; the tag softens but does not dictate.
+- p62-sanhua-smallbust, WAI, seed `2026092604`, job `6e799d30`, prompt `69f94c02`, 24.3 s, `WAI-Illustration_00133_.png`. Identity: Sanhua reads, blue hair with eyepatch, blue earrings, dark blue bodyguard suit, office lamp night, adult. Lever: `small breasts` — open collar shows a modest bust, clearly smaller than her p60 read, still attractive. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: dark blue suit glossy latex, tie and belt intact. Keep-or-change: keep; B1 2/2, promotes as a soft lever.
+- p62-nekomata-smallbust, YumeFlux, seed `2026092605`, job `c8e572dd`, prompt `4ae15b4b`, 24.2 s, `YumeFlux-ILv1-Baseline_00073_.png`. Identity: Nekomata reads, blonde hair with cat ears, striped tail between the boots, black and yellow street outfit, neon alley night, adult. Lever: `small breasts` — bust reads moderate, only mildly reduced from p61. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black top glossy, no sheer panel; fake chest glyph is garnish. Keep-or-change: keep as a partial.
+- p62-trigger-smallbust, AniFox, seed `2026092606`, job `5dc3803b`, prompt `1fa2dde4`, 24.2 s, `AniFox-v2-Baseline_00082_.png`. Identity: Trigger reads, short silver hair, sniper rifle and robot props, neon street night, adult. Lever: `small breasts` — BREAKS: the tactical coat rewrote to an open coat over a bra-like top and the bust reads moderate-full, not small. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black bra top and bottoms glossy; the garment rewrite is the failure, same class as G4's bikini rewrite. Keep-or-change: keep the still, mark the lever broken here — open coats plus minimal tops inflate past the tag.
+- p62-dialyn-smallbust, CSTati, seed `2026092607`, job `2f45a6fb`, prompt `f37fd217`, 24.5 s, `CSTati-v3-Baseline_00116_.png`. Identity: Dialyn reads as a dark teal-haired performer in a black and gold bra-top dress under stage lights at night, adult. Lever: `small breasts` — bust reads moderate, reduced from p61, but the dress lost its sleeves and neckline (garment drift to bra top with bare arms). Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black and teal top glossy, gold jewelry intact. Keep-or-change: keep as a partial with the drift noted.
+
+## E2 burn-down, Yixuan through Jinhsi — p63 wave
+
+P62 held 5.5/6 — B1 promotes as a soft lever (Anby, Sanhua clean; Soldier 11, Nekomata, Dialyn partial reductions; Trigger breaks on a garment rewrite). This wave continues the E2 burn-down on six more uncleared-never-run adults (Yixuan and Alice from Zenless Zone Zero, Sparkle, Jingliu, and Yukong from Honkai: Star Rail, Jinhsi from Wuthering Waves — all adult-in-canon per the cleared matrix). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p63-yixuan-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092608 | `974ed6c5-e8bf-4a4d-a1f7-7e3205b103b1` |
+| p63-alice-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092609 | `d28b4722-c58d-4f69-bccc-c1cdbc91bc3c` |
+| p63-sparkle-smirkwink | E2 squat recipe | wai | 2026092610 | `c8349e88-9fde-4ddf-a517-bf042eaced02` |
+| p63-jingliu-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092611 | `eba89652-be6c-4f0f-b035-08be0b1205ac` |
+| p63-yukong-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092612 | `38d65d55-9b86-487d-9c2d-8588277ab5ce` |
+| p63-jinhsi-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092613 | `4e6ff44d-e640-4997-baf6-3b22e0db7499` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
