@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p87 judged 7/7, G22 closed, second LoRA deferred on 403, G23 open, p88 queued — 25 September 2026 (20:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P87 held 7/7 (10.2–31.1 s, all receipts live, no spill): G22 closed on all thirteen reads with the sheer-off pair (`b19ca15a`, `9d0f0968`), crawl (`7ea65fde`), portrait (`5d6563d9`), seated rear (`02d503b1`) and ports x2 with no sheer LoRA (`585e15bf`, `e0f0cca2`). Second Illustrious adapter deferred: the Civitai models API returns 403 from this host with and without the token, so no version id can be verified tonight — retry when egress allows, nothing from unverified sources. P88 queued, six cells: G23 nurse open anchors (Kafka `8cbd871f`, Yor `e1ea863a`), `bedroom eyes` x2 (`8828ec8e`, `89e5449c`), C1 `from below` on the cheer squat pair (`e7144856`, `24e0c58a`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p86 judged 6/6, G22 promoted, one receipt 404 file-judged, p87 queued — 25 September 2026 (20:15 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
