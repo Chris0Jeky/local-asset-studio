@@ -1115,3 +1115,27 @@ P22 held 6/6 and promoted T17. This wave ports the bent-over words (T8 without t
 | p23-elesa-wink | p7-elesa-squat | yumeflux-ilv1-baseline | 2026092467 | `c50cf68e-625d-4cf5-ae1f-d4aad14abf67` |
 | p23-tifa-eyes-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `bc40f5b5-d389-4d09-a457-e0fc7621078e` |
 | p23-yor-eyes-janima | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `7a8dd04e-dc0c-4ed7-984d-e1302fcf4a42` |
+
+### p23 results
+
+All six completed, 10.1–25.3 s each. No spill line on any receipt. The bent-over words port clean to Anima and JANIMA (X1 now covers T7/T8/T12). `winking` fired on both squats at the same seed, so T17 is not portrait-only. `bedroom eyes` fired on both ported-family cells at the same seed.
+
+- p23-narberal-bent-anima, Anima, seed `2026092605`, job `7d19abbc`, prompt `ce56ce98`, 23.7 s, `Anima-v1-Baseline_00045_.png`. Identity: Narberal reads, maid headdress, mansion hall, adult. Lever: T8 words ported — bent-over held, looking back with the face half-turned away. Hands: both on the dress, normal-looking. Cloth: dark dress glossy. Keep-or-change: keep.
+- p23-tifa-bent-janima, JANIMA, seed `2026092606`, job `59a5e1c7`, prompt `77ea4f90`, 21.3 s, `JANIMA-v1-Baseline_00008_.png`. Identity: Tifa reads, black hair, red eyes, bar, adult. Lever: T8 words ported — bent-over held, looking back, mouth slightly open. Hands: both on the skirt, normal-looking. Cloth: white tank, black skirt glossy. Keep-or-change: keep.
+- p23-jane-wink, YumeFlux, seed `2026092431`, job `d597cd2c`, prompt `49361148`, 25.3 s, `YumeFlux-ILv1-Baseline_00043_.png`. Identity: same Jane read, neon alley, adult. Lever: `winking` added — one eye closed; tag fired on the smaller squat face. Hands: hidden. Cloth: same glossy black bodysuit and red jacket. Background signs are stylized glyphs again despite the negative. Keep-or-change: keep.
+- p23-elesa-wink, YumeFlux, seed `2026092467`, job `c50cf68e`, prompt `a9aff584`, 10.1 s, `YumeFlux-ILv1-Baseline_00044_.png`. Identity: same Elesa read, runway, adult. Lever: `winking` added — one eye closed; tag fired. Hands: hidden under the jacket. Cloth: same sheer black top and glossy yellow jacket. Mouth slightly open. Keep-or-change: keep.
+- p23-tifa-eyes-anima, Anima, seed `2026092601`, job `bc40f5b5`, prompt `cc5d2a34`, 24.2 s, `Anima-v1-Baseline_00046_.png`. Identity: same Tifa read, bar, adult. Lever: `bedroom eyes` added — eyes heavy-lidded; tag fired on Anima. Hands: tucked, not visible. Cloth: same tank and glossy skirt. Mouth slightly open. Keep-or-change: keep.
+- p23-yor-eyes-janima, JANIMA, seed `2026092604`, job `7a8dd04e`, prompt `cb0d0344`, 25.3 s, `JANIMA-v1-Baseline_00009_.png`. Identity: same Yor read, lamp interior, adult. Lever: `bedroom eyes` added — eyes heavy-lidded; tag fired on JANIMA. Hands: hidden. Cloth: same glossy red dress. Mouth slightly open. Keep-or-change: keep.
+
+## Winks on crawls and ports, seiza ports — p24 wave
+
+P23 held 6/6. `winking` goes onto two held crawls at the same seed (T17's last face-size test) and onto the two judged p22 ports at the same seed (the tag's first run on the ported family), and the seiza words (T14 without the sheer head) port to Anima and JANIMA at new seeds. Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p24-sabrina-wink | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `6c109fb7-3b8f-4ad1-872f-faf07bc21a01` |
+| p24-sonia-wink | p13-sonia-crawl | yumeflux-ilv1-baseline | 2026092513 | `8c862ced-48e3-427a-955b-d39c5743f170` |
+| p24-yor-wink-janima | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `49c902d2-be86-440e-ae0a-f28824720c56` |
+| p24-tifa-wink-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `8e2f6fd6-025f-4e50-92c3-de6da9125125` |
+| p24-morgan-seiza-anima | X1 | anima-v1-baseline | 2026092607 | `2277c030-33ce-498f-85df-bc8f4d2bc13c` |
+| p24-acheron-seiza-janima | X1 | janima-v1-baseline | 2026092608 | `7c155bc9-62f1-4cd6-ac67-cfabf91d7bb2` |

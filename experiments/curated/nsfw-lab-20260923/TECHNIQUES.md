@@ -272,7 +272,7 @@ Use when a held T16 still should wink. Add `winking` after `smile` at the same s
 
 Held: `p22-kafka-wink` (CSTati, job `2c3416dc`, prompt `e83be89d`, `CSTati-v3-Baseline_00052_.png`, 27.4 s), `p22-nero-wink` (AniFox, job `e877dbf5`, prompt `f28b0deb`, `AniFox-v2-Baseline_00047_.png`, 24.3 s). Two characters held it, so it promotes.
 
-Breaks it: nothing yet. Untested on squats and crawls, where the face is smaller.
+Breaks it: nothing yet. P23 extended it to squats at the same seed: `p23-jane-wink` (YumeFlux, job `d597cd2c`, prompt `49361148`, `YumeFlux-ILv1-Baseline_00043_.png`, 25.3 s), `p23-elesa-wink` (YumeFlux, job `c50cf68e`, prompt `a9aff584`, `YumeFlux-ILv1-Baseline_00044_.png`, 10.1 s). The smaller face still winks. Untested on crawls.
 
 ## X1 — words-only ports to Anima and JANIMA
 
@@ -280,7 +280,9 @@ The T7 and T12 word tails hold off the Illustrious family with no adapter at all
 
 Held: `p22-tifa-crawl-anima` (Anima, job `34fe04cd`, prompt `53b8ba3f`, `Anima-v1-Baseline_00043_.png`, 24.2 s), `p22-jessie-crawl-janima` (JANIMA, job `71279329`, prompt `cc5bfe9c`, `JANIMA-v1-Baseline_00006_.png`, 26.2 s), `p22-kafka-squat-anima` (Anima, job `0d0672e6`, prompt `9ea9de79`, `Anima-v1-Baseline_00044_.png`, 14.4 s, eyes closed unprompted), `p22-yor-squat-janima` (JANIMA, job `4156379b`, prompt `48515740`, `JANIMA-v1-Baseline_00007_.png`, 14.2 s).
 
-Next lever (p23, queued): the bent-over words on Anima and JANIMA, `winking` on held squats, and `bedroom eyes` on the two p22 ports at the same seed.
+P23 extended the ports to the bent-over words: `p23-narberal-bent-anima` (Anima, job `7d19abbc`, prompt `ce56ce98`, `Anima-v1-Baseline_00045_.png`, 23.7 s), `p23-tifa-bent-janima` (JANIMA, job `59a5e1c7`, prompt `77ea4f90`, `JANIMA-v1-Baseline_00008_.png`, 21.3 s). X1 now covers T7, T8, and T12. Expression layers fire on the ported family too: `p23-tifa-eyes-anima` (Anima, job `bc40f5b5`, prompt `cc5d2a34`, `Anima-v1-Baseline_00046_.png`, 24.2 s), `p23-yor-eyes-janima` (JANIMA, job `7a8dd04e`, prompt `cb0d0344`, `JANIMA-v1-Baseline_00009_.png`, 25.3 s).
+
+Next lever (p24, queued): `winking` on held crawls and on the p22 ports, and the seiza words on Anima and JANIMA.
 
 ## M2 measured
 
