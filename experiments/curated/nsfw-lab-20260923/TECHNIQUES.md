@@ -151,6 +151,36 @@ Use one camera tag at a time, added to the exact held prompt at the same seed, p
 
 Next lever: a second Illustrious adapter from civitai.red with a pose or cloth effect we do not already have, tested on/off at the same seed.
 
+## T11 — elbow all-fours LoRA (external until a cell measures it)
+
+File `loras/elbowallfours_il_v1.safetensors`, Illustrious, Civitai model 2536873 version 2851096, 228457476 bytes, SHA-256 `6ff1e7fe5a6df8cbca2f91c2ee6a80112a95a5d7a4890146d0de6f1cffe6cf5c` (verified against the on-disk bytes after `scripts/civitai-fetch.py`). Trigger `elbowallfours`, strength 1, in front of the prompt, with `all fours, top-down bottom-up`. Slot 2 beside `nsfw_girls` at 0.7. Illustrious presets only. Page: https://civitai.red/models/2536873/elbow-all-fours?modelVersionId=2851096
+
+Picked because the example page shows an elbows-and-knees floor pose the lab has never run (we have bent-over, squat, seiza, seated rear, portrait). Rejected first: model 2510611 "On all fours", whose examples are furry/anthro and would risk leaking muzzles and paws. The example here wears a school uniform; our cells prompt adult characters in their own adult garments, so the pose is what transfers, not the uniform.
+
+Test: same prompt and seed with the LoRA at 1 and at 0 on two characters, so the adapter is the only change. Hands on the ground are the open question: T3 says props grow face hands, and floor-planted hands are untested.
+
+Measured 24 September: the WORDS hold the pose, the LoRA is optional. On/off pairs at the same seed are near-identical in pose; the LoRA at 1 changes details only (gloves, face). Floor-planted forearms did not grow face hands.
+
+## T12 — elbow all-fours (words)
+
+Use when the pose should be elbows and knees on the floor, face toward the viewer. This is the floor pose the lab was missing; it reads even without any pose LoRA.
+
+Positive head: `elbowallfours, all fours, top-down bottom-up` at the front, then the usual quality line, the adult character, one floor noun (`rug floor`, `rooftop floor`), and `blush, parted lips, sweat, slim waist, wide hips`. Slot 2 may hold the elbow LoRA at 1 or sit at 0; the measured cells say 0 poses the same, so words-only is the default and saves the load.
+
+Negative add: `logo, letters` on top of the usual quality and `child, loli, shota` line. No `hands, fingers` ban: the forearms are part of the pose, planted on the floor.
+
+Held: `p9-tifa-crawl-on` (AniFox, job `fb348e70`, prompt `d7566255`, `AniFox-v2-Baseline_00022_.png`, 36.3 s), `p9-tifa-crawl-off` (AniFox, job `4a2f0147`, prompt `42fc24dc`, `AniFox-v2-Baseline_00023_.png`, 10.2 s), `p9-jessie-crawl-on` (AniFox, job `db8d3025`, prompt `63976c2d`, `AniFox-v2-Baseline_00024_.png`, 10.1 s), `p9-jessie-crawl-off` (AniFox, job `d74dd2b2`, prompt `c1c8bcf5`, `AniFox-v2-Baseline_00025_.png`, 10.1 s).
+
+Breaks it: nothing yet. The trigger word `elbowallfours` stayed in all four prompts including the LoRA-off cells, so whether the bare words `all fours, top-down bottom-up` suffice alone is the next single-lever test.
+
+P10 answered it: bare words hold the crawl (`p10-notrigger`, AniFox, job `06c438f2`, prompt `b5e9a235`, `AniFox-v2-Baseline_00031_.png`, 10.1 s). T12 is words-only from here: drop `elbowallfours` from the head.
+
+## S1 — CFG and steps sweep (AniFox, crawl prompt)
+
+One variable per comparison, same seed within each. CFG 4 vs 5 vs 6 (`p10-cfg4` job `6164ec19` prompt `8f8e9cb4`, `p10-cfg5` job `e23e54ad` prompt `cf1435b7`, `p10-cfg6` job `15e62093` prompt `6d4e5546`, all `AniFox-v2-Baseline_00026_`–`00028_.png`, 8.1–8.2 s): pose, cloth, hands, and face essentially unchanged, only the face angle drifts slightly. Steps 20 vs 28 (`p10-steps20` job `da711b46` prompt `16fe635e`, `p10-steps28` job `9cff976d` prompt `da3fb699`, `AniFox-v2-Baseline_00029_`–`00030_.png`, 10.2 s each): same pose, marginally cleaner shading at 28 for the same seconds here. Keep the lab defaults: CFG 5, 20 steps. Do not re-sweep per pose without a failure to explain.
+
+Next lever: T12 words-only crawl on new adults (ambition list plus more Pokemon adults).
+
 ## M2 measured
 
 All nine jobs completed. About 26–38 seconds each. No spill line was required to finish the queue.

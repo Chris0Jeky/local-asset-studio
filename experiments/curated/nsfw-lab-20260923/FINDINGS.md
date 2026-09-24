@@ -101,6 +101,13 @@ Danbooru names were checked against `https://danbooru.donmai.us/tags.json` on 23
 | Pokemon | `elesa (pokemon)` | (unchecked) | Adult model and gym leader. Tag check 24 September returned 403, so no count. |
 | Pokemon | `skyla (pokemon)` | (unchecked) | Adult pilot and gym leader. Tag check 24 September returned 403, so no count. |
 | Pokemon | `jessie (pokemon)` | (unchecked) | Adult Team Rocket member. Tag check 24 September returned 403, so no count. |
+| Genshin | `raiden shogun` | (unchecked) | Adult god, Inazuma shogun. |
+| Genshin | `yelan (genshin impact)` | (unchecked) | Adult intelligence agent. |
+| Zenless Zone Zero | `evelyn chevalier` | (unchecked) | Adult bodyguard. |
+| Pokemon | `lusamine (pokemon)` | (unchecked) | Adult Aether president, mother of two teens. |
+| Pokemon | `caitlin (pokemon)` | (unchecked) | Adult Elite Four member. |
+| Pokemon | `nessa (pokemon)` | (unchecked) | Adult gym leader and model. |
+| Pokemon | `sabrina (pokemon)` | (unchecked) | Adult gym leader. |
 
 ### Additional, aged up characters
 
@@ -122,7 +129,8 @@ Canonically under 18, school students, etc, made 18.
 | Child Epic Seven | Child units. The four tags above are the adult shortlist only. |
 | Asa Mitaka and the Chainsaw Man school cast | High school. Makima, Himeno, Power, and Quanxi are the adult shortlist. |
 | Persona 5 Phantom Thieves school cast | Joker, Ann, Makoto, Haru, Futaba, Ryuji, Yusuke, Sumire: high-school students. Sae, Takemi, Kawakami, and Chihaya are the adult shortlist. |
-| Pokemon school-age trainers | Hilda, Rosa, Serena, Dawn, May, and the other teen player companions. Cynthia, Diantha, Elesa, Skyla, and Jessie are the adult shortlist. |
+| Pokemon school-age trainers | Hilda, Rosa, Serena, Dawn, May, and the other teen player companions. Cynthia, Diantha, Elesa, Skyla, Jessie, Lusamine, Caitlin, Nessa, and Sabrina are the adult shortlist. |
+| Genshin child and teen cast | Klee, Qiqi, Diona, Sayu, Nahida, and the other child or teen-coded characters. Raiden and Yelan are the adult shortlist. |
 
 ## Wave J — first continuation wave
 
@@ -737,3 +745,64 @@ All six completed, 30.3–38.4 s each. No spill line on any receipt. `from below
 - p8-skyla-cowboy, AniFox, seed `2026092464`, job `0cf01575`, prompt `f1f392e5`, 30.3 s, `AniFox-v2-Baseline_00021_.png`. Identity: same Skyla read, propeller ornament, airport, adult. Lever: same tighter rear crop, face in profile. Hands: both on the suit, normal-looking. Cloth: blue suit glossy with slight translucency, mouth slightly open. Keep-or-change: keep.
 - p8-elesa-closeup, YumeFlux, seed `2026092467`, job `01903e63`, prompt `de275c32`, 32.3 s, `YumeFlux-ILv1-Baseline_00026_.png`. Identity: same Elesa read, stronger face presence, adult. Lever: framing only slightly tighter; the squat pose tags beat `close-up`, still a full squat. Hands: hidden. Cloth: black top sheer, mouth parted. Keep-or-change: keep; a real face crop needs the pose tags trimmed, a different experiment.
 - p8-chihaya-closeup, CSTati, seed `2026092466`, job `38716e1c`, prompt `db35471a`, 30.3 s, `CSTati-v3-Baseline_00028_.png`. Identity: same Chihaya read, bigger face, adult. Lever: same weak reframing, still a full squat. Hands: hidden. Cloth: robe translucent, mouth parted. Keep-or-change: keep.
+
+## Second adapter — p9 wave (elbow all-fours on/off)
+
+T11 (`elbowallfours_il_v1.safetensors`, model 2536873 version 2851096, sha256 `6ff1e7fe…`, trigger `elbowallfours`, strength 1) against the same prompt and seed with the LoRA at 0, on two characters, all on AniFox. The adapter strength is the only change within each pair. No `seethroughILL` head in these prompts, so the new LoRA is unconfounded. First submit was refused as "Unknown LoRA file" on Studio's stale 120 s schema cache; ComfyUI already listed the file live, and the same burst was accepted after the TTL expired. No ComfyUI or Studio restart was needed. Queued in one burst.
+
+| Cell | Preset | Seed | lora2 | Job |
+| --- | --- | --- | --- | --- |
+| p9-tifa-crawl-on | anifox-v2-baseline | 2026092471 | 1.0 | `fb348e70-281f-424c-8ab9-a39f8bc5fde2` |
+| p9-tifa-crawl-off | anifox-v2-baseline | 2026092471 | 0 | `4a2f0147-fe37-41c5-956e-a8e25e11933b` |
+| p9-jessie-crawl-on | anifox-v2-baseline | 2026092472 | 1.0 | `db8d3025-b46d-4d81-bbba-b3a3cc6edfbb` |
+| p9-jessie-crawl-off | anifox-v2-baseline | 2026092472 | 0 | `d74dd2b2-9c4e-4cf9-8d39-a225fa696a2c` |
+
+### p9 results
+
+All four completed (36.3 s first with the model load, then 10.1–10.2 s warm). No spill line on any receipt. Verdict: the WORDS carry the elbow all-fours pose on AniFox, not the LoRA. On and off pairs are near-identical in pose at the same seed; the LoRA at 1 changes details only (gloves on, slightly different face). Floor-planted forearms did not grow face hands, answering the T3 floor question.
+
+- p9-tifa-crawl-on, AniFox, seed `2026092471`, job `fb348e70`, prompt `d7566255`, 36.3 s, `AniFox-v2-Baseline_00022_.png`. Identity: Tifa reads, black hair, red eyes, white tank, black skirt, bar back room, adult. Lever: elbows and knees planted, top-down bottom-up, face toward the viewer, mouth slightly open. Hands: forearms planted, gloved hands at the frame edge, no count to fail. Cloth: opaque tank and skirt with sheen (no see-through head in this prompt). Keep-or-change: keep; compare with off.
+- p9-tifa-crawl-off, AniFox, seed `2026092471`, job `4a2f0147`, prompt `42fc24dc`, 10.2 s, `AniFox-v2-Baseline_00023_.png`. Identity: same Tifa read. Lever: LoRA at 0, same seed — pose nearly identical to on, so the words hold it. Hands: bare forearm planted. Cloth: same opaque. Keep-or-change: keep; words-only is the stack.
+- p9-jessie-crawl-on, AniFox, seed `2026092472`, job `db8d3025`, prompt `63976c2d`, 10.1 s, `AniFox-v2-Baseline_00024_.png`. Identity: Jessie reads strongly, R logo, green earrings, rooftop at night, adult. Lever: elbow all-fours with the LoRA on. Hands: gloved and planted. Cloth: white uniform opaque with sheen. Keep-or-change: keep.
+- p9-jessie-crawl-off, AniFox, seed `2026092472`, job `d74dd2b2`, prompt `c1c8bcf5`, 10.1 s, `AniFox-v2-Baseline_00025_.png`. Identity: same Jessie read. Lever: LoRA at 0 — pose identical to on, words carry it. Hands: bare arms planted. Cloth: same. Keep-or-change: keep.
+
+Observation, not a claim (N=2): both on-cells show gloves, both off-cells show bare arms. It may be the LoRA, or the character tags rendering better with it. Not pursued tonight.
+
+## Setting sweep — p10 wave
+
+Poses are stable (T7/T8/T9/T12), so one controlled sweep on the crawl prompts, all on AniFox with the elbow LoRA at 0: CFG 4 vs 5 vs 6 at one seed, steps 20 vs 28 at another seed, plus the trigger-drop cell (p9 Jessie's prompt and seed minus the `elbowallfours` word). One variable per comparison. Queued in one burst.
+
+| Cell | Seed | CFG | Steps | Job |
+| --- | --- | --- | --- | --- |
+| p10-cfg4 | 2026092481 | 4 | 20 | `6164ec19-f651-4871-9bde-af503611d5a6` |
+| p10-cfg5 | 2026092481 | 5 | 20 | `e23e54ad-393f-4a67-84b8-48e71f695d8c` |
+| p10-cfg6 | 2026092481 | 6 | 20 | `15e62093-db77-4664-a8af-1848c189f5df` |
+| p10-steps20 | 2026092482 | 5 | 20 | `da711b46-d3c1-4de2-8fb3-83582a7dd034` |
+| p10-steps28 | 2026092482 | 5 | 28 | `9cff976d-8f0c-4f53-b039-32abf5b4016b` |
+| p10-notrigger | 2026092472 | 5 | 20 | `06c438f2-9b3c-42c2-a12f-8e15f35bef4c` |
+
+### p10 results
+
+All six completed, 8.1–10.2 s each (warm AniFox is fast). No spill line on any receipt. CFG 4 vs 5 vs 6 at the same seed changes almost nothing: pose, cloth, hands, and face stay put, only the face angle drifts slightly. Steps 28 over 20 at the same seed changes little either (marginally cleaner shading, same elapsed time here). The trigger word is unnecessary: bare `all fours, top-down bottom-up` holds the crawl. Keep the lab defaults: CFG 5, 20 steps.
+
+- p10-cfg4, AniFox, seed `2026092481`, job `6164ec19`, prompt `8f8e9cb4`, 8.2 s, `AniFox-v2-Baseline_00026_.png`. Identity: Jessie reads, R logo, rooftop, adult. Lever: CFG 4 — elbow crawl held, face half-turned away. Hands: forearms planted. Cloth: white uniform opaque. Keep-or-change: keep as the sweep low end.
+- p10-cfg5, AniFox, seed `2026092481`, job `e23e54ad`, prompt `cf1435b7`, 8.1 s, `AniFox-v2-Baseline_00027_.png`. Identity: same. Lever: CFG 5 — same pose, face slightly more toward the viewer. Keep-or-change: keep; the default stays.
+- p10-cfg6, AniFox, seed `2026092481`, job `15e62093`, prompt `6d4e5546`, 8.1 s, `AniFox-v2-Baseline_00028_.png`. Identity: same. Lever: CFG 6 — same pose, marginally crisper uniform. Keep-or-change: keep; no reason to move the default.
+- p10-steps20, AniFox, seed `2026092482`, job `da711b46`, prompt `16fe635e`, 10.2 s, `AniFox-v2-Baseline_00029_.png`. Identity: Tifa reads, tank, bar room, adult. Lever: 20 steps — crawl held, face toward viewer. Hands planted. Keep-or-change: keep.
+- p10-steps28, AniFox, seed `2026092482`, job `9cff976d`, prompt `da3fb699`, 10.2 s, `AniFox-v2-Baseline_00030_.png`. Identity: same. Lever: 28 steps — same pose, slightly different arm and face, marginally cleaner shading, same seconds. Keep-or-change: keep; no reason to pay for 28.
+- p10-notrigger, AniFox, seed `2026092472`, job `06c438f2`, prompt `b5e9a235`, 10.1 s, `AniFox-v2-Baseline_00031_.png`. Identity: Jessie reads strongly, rooftop, adult. Lever: `elbowallfours` word dropped, LoRA at 0 — crawl held, face toward viewer. Hands planted. Cloth opaque. Keep-or-change: keep; T12 goes words-only without the trigger.
+
+## Crawl transfer — p11 wave
+
+P10 proved bare words hold the crawl and the lab defaults stand (CFG 5, 20 steps). This wave moves T12 words-only onto eight new adults: four from the ambition list (Raiden, Yelan, Evelyn, Jade) and four more Pokemon adults (Lusamine, Caitlin, Nessa, Sabrina). One lever per cell: the character. No trigger word, elbow LoRA at 0, presets rotated. Queued in one burst.
+
+| Cell | Preset | Seed | Job |
+| --- | --- | --- | --- |
+| p11-raiden-crawl | wai | 2026092491 | `59d30c3a-8d4a-4707-b51f-8bde90f01de9` |
+| p11-yelan-crawl | cstati-v3-baseline | 2026092492 | `ed934d82-5227-4ea5-85a9-ed7e0d9bf5ed` |
+| p11-evelyn-crawl | yumeflux-ilv1-baseline | 2026092493 | `b8794fde-7a1d-4a53-a882-ebcd33aa252a` |
+| p11-jade-crawl | anifox-v2-baseline | 2026092494 | `5d7df879-543d-4d21-888d-364c5f3e9c31` |
+| p11-lusamine-crawl | wai | 2026092495 | `c3d4677c-6b12-4996-b136-6c697c48fb11` |
+| p11-caitlin-crawl | cstati-v3-baseline | 2026092496 | `a7c44f5f-c6e6-4dd1-8153-a50bd71ebf6e` |
+| p11-nessa-crawl | yumeflux-ilv1-baseline | 2026092497 | `a63affee-851d-4583-9d62-2ac096004428` |
+| p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `285eb14d-5f26-4e1a-bb7b-f941cfe60414` |

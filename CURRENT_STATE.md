@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p9–p10 judged, T12 words-only crawl, p11 queued — 24 September 2026 (01:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P9 tested the elbow LoRA on/off at the same seed on AniFox: Tifa on `fb348e70` / `d7566255` vs off `4a2f0147` / `42fc24dc`, Jessie on `db8d3025` / `63976c2d` vs off `d74dd2b2` / `c1c8bcf5`. The words hold the crawl, the LoRA adds details only, so T12 is words-only (elbow LoRA stays installed at 0). P10 swept CFG 4/5/6 (`6164ec19` / `8f8e9cb4`, `e23e54ad` / `cf1435b7`, `15e62093` / `6d4e5546`) and steps 20/28 (`da711b46` / `16fe635e`, `9cff976d` / `da3fb699`) plus the trigger-drop cell (`06c438f2` / `b5e9a235`): no meaningful change anywhere, defaults stay CFG 5 / 20 steps, trigger word dropped. P11 moves T12 onto eight new adults: Raiden `59d30c3a`, Yelan `ed934d82`, Evelyn `b8794fde`, Jade `5d7df879`, Lusamine `c3d4677c`, Caitlin `a7c44f5f`, Nessa `a63affee`, Sabrina `285eb14d`. No spill line on any receipt this session.
+
 ## NSFW lab overnight: p7–p8 judged, second adapter picked — 24 September 2026 (00:35 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
