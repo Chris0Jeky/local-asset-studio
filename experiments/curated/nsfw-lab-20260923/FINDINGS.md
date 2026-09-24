@@ -1850,6 +1850,30 @@ P52 held 6/6 — G11 promoted on the opening pair, E2 generalization at 37/37. T
 | p53-aglaea-smirkwink | E2 squat recipe | wai | 2026092570 | `1b1941ad-f936-4b4a-a521-67447d9bf085` |
 | p53-emilie-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092571 | `69caca53-11da-4cbb-a21c-3dcaa31724fe` |
 
+### p53 results
+
+All six completed, 25.3–29.3 s each, no spill. G11 ported 2/2 and held eyes-neutral 2/2 — only the sheer-off reruns remain to close it. E2 generalization reached 39/39.
+
+- p53-kafka-secretary-anima, Anima, seed `2026092634`, job `f66c35b1`, prompt `e609336d`, 28.5 s, `Anima-v1-Baseline_00068_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, office tower night, adult. Lever: G11 port — black blazer, white blouse, black pencil skirt. Squat held. Hands: hidden. Eyes closed, the Anima squat pattern. Cloth: white blouse opaque glossy, black skirt glossy. Keep-or-change: keep; G11 ports 1/2.
+- p53-yor-secretary-janima, JANIMA, seed `2026092635`, job `c5bd82b9`, prompt `62672fe9`, 25.3 s, `JANIMA-v1-Baseline_00030_.png`. Identity: Yor reads, black hair, headband, lamp office, adult. Lever: G11 port — black blazer suit, white blouse, pencil skirt. Squat held. Hands: hidden. Eyes closed, JANIMA eye variance. Cloth: white blouse opaque, black suit glossy. Keep-or-change: keep; G11 ports 2/2.
+- p53-kafka-secretary-eyes, WAI, seed `2026092445`, job `ca5dcff0`, prompt `1d553754`, 29.3 s, `WAI-Illustration_00116_.png`. Identity: Kafka reads, office night, adult. Lever: `bedroom eyes` — half-lidded heavy eyes, blazer, blouse, tie, and skirt all intact. Squat held. Hands: hidden. Cloth: white blouse sheer, black skirt glossy and wet. Keep-or-change: keep; G11 eyes 1/2.
+- p53-yor-secretary-eyes, CSTati, seed `2026092446`, job `11c8bf6a`, prompt `e4902d85`, 26.3 s, `CSTati-v3-Baseline_00097_.png`. Identity: Yor reads, ballroom lamp, adult. Lever: `bedroom eyes` — half-lidded red eyes, suit intact. Squat held. Hands: hidden. Cloth: white blouse sheer and open, black skirt glossy. Keep-or-change: keep; G11 eyes 2/2.
+- p53-aglaea-smirkwink, WAI, seed `2026092570`, job `1b1941ad`, prompt `82d85a4f`, 26.3 s, `WAI-Illustration_00117_.png`. Identity: Aglaea reads, blonde hair, gold headpiece, white and gold and blue dress, palace night, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: white and gold dress sheer and wet. Keep-or-change: keep.
+- p53-emilie-smirkwink, CSTati, seed `2026092571`, job `69caca53`, prompt `eca71963`, 26.3 s, `CSTati-v3-Baseline_00098_.png`. Identity: Emilie reads, short green hair, white and green perfumer dress, workshop lamp, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white and green dress sheer and wet. Keep-or-change: keep.
+
+## G11 sheer-off close, Anby, Belle, Koleda, Piper — p54 wave
+
+P53 held 6/6 — G11 ported 2/2 and held eyes-neutral 2/2, E2 generalization at 39/39. This wave closes G11 with the sheer stack off at the same seed on both G-series seeds, and runs E2 on four newly-cleared ZZZ adults (Anby, Belle, Koleda, Piper — owner-confirmed eligible in the evening intake). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p54-kafka-secretary-nolora | p52-kafka-secretary | wai | 2026092445 | `52728e6f-d517-45d7-b41b-a37ea2bc03a6` |
+| p54-yor-secretary-nolora | p52-yor-secretary | cstati-v3-baseline | 2026092446 | `c0ba6529-c68f-46c4-9e55-e3f85a531510` |
+| p54-anby-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092572 | `aa77851b-a3bd-4c50-8fa8-a3cf09c009c6` |
+| p54-belle-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092573 | `5b52a95f-e3d1-41ba-ae73-aa3ab4408874` |
+| p54-koleda-smirkwink | E2 squat recipe | wai | 2026092574 | `8d3b7a73-cebf-4c24-bc59-191699d50e8c` |
+| p54-piper-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092575 | `1b3df6ab-341e-40cf-9997-ba94925a8243` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
@@ -1877,3 +1901,5 @@ Broader correction on already-run ZZZ cells: the guide's blanket statement (no c
 Wildcards and tags deliberately NOT extended: `presets/wildcards/nsfw_character.txt` and the `nsfw_character` entry in `presets/nsfw-intel.json` list only cleared adults, so none of the 15 were added — adding unconfirmed-age names there would put them one click from generation. Same reasoning removed the pre-existing Aqua line from both files while Aqua's confirmation stays open: Aqua sexual cells are banned until the owner confirms her, so she should not sit in the NSFW character wildcard meanwhile. Recorded here, not silently.
 
 Correction, same evening (owner decision, recorded from the owner's message): the owner confirmed Aqua — "clearly an adult and a goddess canonically and already portrayed maturely" — and ruled that ambiguity about a stated number is not by itself a reason to remove characters. Aqua stays: her wildcard and intel lines were restored, and she may run sexual cells again. The same ruling clears the 8 pending names above (Anby, Belle, Lucy, Koleda, Piper, Aria, Cissia, Promeia): they are added to the adult head matrix as owner-confirmed eligible. It also clears new cells for the already-run five (Jane, Nicole, Rina, Grace, Yanagi). What the ruling does NOT clear: Ye Shunguang, Sunna, and Nangong stay excluded (teen estimates are affirmative under-18 evidence, not ambiguity), Ellen Joe stays dropped (student), Billy Kid and Pyrois stay excluded (non-human with no age / unknown). The head matrix above now carries all 15 verdicts.
+
+Follow-up, same evening: the owner challenged the Ellen exclusion, claiming she is a college student, 18+, an undercover spy, with no maturity ambiguity — and separately claimed research shows all ZZZ characters are at least 18 or ambiguous. Held, not cleared: the claim contradicts the owner's own pasted guide (which hedges every ZZZ age as unconfirmed community estimates, including 16–19 teen ranges) and the pre-existing head-matrix record (high-school student), and no source was given. Clearing Ellen needs a citable source (HoYoverse bio, character story, or in-game text showing college/18+), not an assertion — the same evidence bar the Aqua clearance met. A verified adult college student is not in the school-cast class, so the door is open on evidence. The "all at least 18" reading also cannot stand next to the guide's own teen estimates for Ye Shunguang, Sunna, and Nangong; those stay excluded regardless.

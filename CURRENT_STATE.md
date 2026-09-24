@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p53 judged 6/6, G11 ports and eyes, E2 at 39/39, p54 queued — 24 September 2026 (21:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed, ZZZ intake cleared per the owner's evening ruling.
+
+P53 held 6/6: G11 ported 2/2 (Kafka `f66c35b1`, Yor `c5bd82b9`) and held eyes-neutral 2/2 (Kafka `ca5dcff0`, Yor `11c8bf6a`) — only sheer-off reruns remain to close; E2 generalization 39/39 (Aglaea `1b1941ad`, Emilie `69caca53`). P54 queued: G11 sheer-off close (Kafka `52728e6f`, Yor `c0ba6529`), first cells for four newly-cleared ZZZ names (Anby `aa77851b`, Belle `5b52a95f`, Koleda `8d3b7a73`, Piper `1b3df6ab`). Owner follow-up: Ellen exclusion challenged (owner claims college 18+ undercover); held pending a source — see the intake block. No spill line on any receipt this session.
+
 ## NSFW lab overnight: p52 judged 6/6, G11 promoted, E2 at 37/37, ZZZ intake cleared by owner, p53 queued — 24 September 2026 (21:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed by the owner (see below), not pending anymore.
