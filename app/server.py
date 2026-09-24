@@ -734,10 +734,12 @@ class Studio:
         return self.public(job)
 
     def workspace_snapshot(self):
-        """The Workspace snapshot; assets registered before excerpts were stored take one from their loaded job (a dict lookup each)."""
-        data = self.assets.snapshot()
+        """The Workspace snapshot; assets registered before excerpts were stored take one from their loaded job (a dict lookup each).
+
+        Called unbound by the handler, so a studio that carries only a Workspace (the HTTP tests) still serves it."""
+        data = self.assets.snapshot(); jobs = getattr(self, "jobs", None) or {}
         for asset in data["assets"]:
-            job = self.jobs.get(asset.get("job_id")) if asset.get("prompt_excerpt") is None else None
+            job = jobs.get(asset.get("job_id")) if asset.get("prompt_excerpt") is None else None
             if job: asset["prompt_excerpt"] = prompt_excerpt(job)
         return data
 
@@ -1968,7 +1970,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/identity": return self._json(200, self.studio.identity())
             if path == '/api/backends':
                 result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
-            if path == "/api/workspace": return self._json(200, self.studio.workspace_snapshot())
+            if path == "/api/workspace": return self._json(200, Studio.workspace_snapshot(self.studio))
             if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope()))
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
