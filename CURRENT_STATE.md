@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p39 judged 5/6, G5 closed, E2 front-face boundary, p40 queued — 24 September 2026 (14:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P39: G5 closed sheer-off (`fd3fb95e`, `ef8e56b6`); Kawakami squats clean at the reseed (`508069a8`, drift was seed luck); Lenora holds E2 with a weak likeness (`2b1668e8`); E2's wink unmeasurable on both bent-over profiles (`651cee05`, `86522a2a` — front-face boundary). P40 queued: G6 qipao swap (Kafka `ea0acd17`, Yor `a8f3eee7`), E1 on bent-overs (Tifa `a8ce14d8`, Narberal `ab419131`), two more new adults (Drasna `6d69cf54`, Kahili `8c6c856c`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p38 judged 6.5/7, G5 ports, p39 queued — 24 September 2026 (14:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.

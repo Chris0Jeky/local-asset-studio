@@ -1503,3 +1503,27 @@ P38 held 6.5/7 — every lever fired, Kawakami's squat drifted to seated. This w
 | p39-lenora-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092476 | `2b1668e8-2f7a-4735-99b7-bbc93c0be5c5` |
 | p39-tifa-smirkwink-bentover | p6-tifa-lips | anifox-v2-baseline | 2026092441 | `651cee05-168d-4319-b1cf-219613820f97` |
 | p39-narberal-smirkwink-bentover | p6-narberal-lips | cstati-v3-baseline | 2026092433 | `86522a2a-6cee-4eff-b7f1-fb0ef84c1495` |
+
+### p39 results
+
+All six completed, 8.2–24.8 s each. No spill line on any receipt. G5 held sheer-off 2/2 and closes. Kawakami squats clean at the new seed — the seated read was seed luck. Lenora holds E2 with a weak likeness. E2's wink is unmeasurable on both bent-over profiles: front-face boundary.
+
+- p39-kafka-bunny-nolora, WAI, seed `2026092445`, job `fd3fb95e`, prompt `18ee08bf`, 20.2 s, `WAI-Illustration_00087_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: sheer stack off — black bunny suit still full latex-glossy with ears, bowtie, cottontail, stockings; nothing drifted. Squat held. Hands: hidden. Cloth: black latex glossy. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p39-yor-bunny-nolora, CSTati, seed `2026092446`, job `ef8e56b6`, prompt `41a76826`, 24.4 s, `CSTati-v3-Baseline_00070_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold roses, ballroom, adult. Lever: sheer stack off — red suit still full latex with ears, bowtie, cottontail, stockings. Squat held. Hands: hidden. Cloth: red latex glossy. Mouth closed. Keep-or-change: keep.
+- p39-kawakami-reseed, YumeFlux, seed `2026092475`, job `508069a8`, prompt `7a174f3e`, 24.2 s, `YumeFlux-ILv1-Baseline_00058_.png`. Identity: same Kawakami read, lamp interior, adult. Lever: new seed — she squats properly with spread legs; the seated read was seed luck. E2 held again. Hands: hidden. Cloth: blouse translucent, skirt glossy. Keep-or-change: keep.
+- p39-lenora-smirkwink, AniFox, seed `2026092476`, job `2b1668e8`, prompt `a794e628`, 24.3 s, `AniFox-v2-Baseline_00065_.png`. Identity: weak — dark skin, yellow apron, lamp interior match, but teal curls and orange headband miss Lenora's short black hair; adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: yellow apron glossy, red top, dark leggings glossy and wet. Keep-or-change: keep; the likeness is the note, not a discard.
+- p39-tifa-smirkwink-bentover, AniFox, seed `2026092441`, job `651cee05`, prompt `aabf5b09`, 8.2 s, `AniFox-v2-Baseline_00066_.png`. Identity: same Tifa read, bar, adult. Lever: `parted lips` to `smirk, winking` — smirk shows in profile, wink unmeasurable; E2 needs a front face. Bent-over held. Hands: both on the skirt, normal-looking. Cloth: white tank sheer-patched, black skirt glossy. Keep-or-change: keep; partial on the wink.
+- p39-narberal-smirkwink-bentover, CSTati, seed `2026092433`, job `86522a2a`, prompt `f0ab67ba`, 24.8 s, `CSTati-v3-Baseline_00071_.png`. Identity: same Narberal read, mansion hall, adult. Lever: same swap — smirk shows, wink unmeasurable in profile; second same-read partial. Bent-over held. Hands: both on the dress, normal-looking. Cloth: black dress glossy. Keep-or-change: keep; partial on the wink.
+
+## G6 qipao, E1 on bent-overs, Drasna, Kahili — p40 wave
+
+P39 held 5/6 — G5 closed sheer-off, Kawakami's drift was seed luck, and E2's wink proved unmeasurable on bent-over profiles. This wave opens a sixth garment (qipao swap on the two G-series seeds with the sheer stack on), runs E1 on the same two bent-over page crops (does its wink die in profile too, or does the toothy grin change the read?), and runs E2 on two more new adults (Drasna and Kahili from Pokemon, both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p40-kafka-qipao | p5-kafka-squat | wai | 2026092445 | `ea0acd17-2812-4410-b219-d3829769d11a` |
+| p40-yor-qipao | p5-yor-squat | cstati-v3-baseline | 2026092446 | `a8f3eee7-bdbe-4555-8c39-a43fc318f0f4` |
+| p40-tifa-grinwink-bentover | p6-tifa-lips | anifox-v2-baseline | 2026092441 | `a8ce14d8-910a-4c1b-ac32-bc916b4cd4db` |
+| p40-narberal-grinwink-bentover | p6-narberal-lips | cstati-v3-baseline | 2026092433 | `ab419131-773d-4e12-b541-2d31315bc482` |
+| p40-drasna-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092477 | `6d69cf54-3d3a-4e40-8a41-b034df644aeb` |
+| p40-kahili-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092478 | `8c6c856c-e396-4b80-8c9a-d50ae4a4ea54` |
