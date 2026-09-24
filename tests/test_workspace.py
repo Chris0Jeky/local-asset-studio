@@ -68,6 +68,19 @@ class WorkspaceTests(unittest.TestCase):
         self.store.save_setup({'id':saved['id'],'action':'delete'})
         self.assertEqual(self.store.setups(),[])
 
+    def test_save_setup_validation_rejects_invalid_without_storing(self):
+        self.assertEqual(self.store.setups(),[])
+        with self.assertRaisesRegex(workspace.WorkspaceError,'Name and recipe are required'): self.store.save_setup({'name':'','recipe':{'preset':'test'}})
+        with self.assertRaisesRegex(workspace.WorkspaceError,'Setup name must be text up to 120 characters'): self.store.save_setup({'name':'x'*121,'recipe':{'preset':'test'}})
+        with self.assertRaisesRegex(workspace.WorkspaceError,'Name and recipe are required'): self.store.save_setup({'name':'OK','recipe':'not-a-dict'})
+        overhead=len(json.dumps({'preset':'test','pad':''})); limit=128*1024
+        over={'preset':'test','pad':'x'*(limit-overhead+1)}; self.assertEqual(len(json.dumps(over)),limit+1)
+        with self.assertRaisesRegex(workspace.WorkspaceError,'Saved setup is too large'): self.store.save_setup({'name':'Big','recipe':over})
+        self.assertEqual(self.store.setups(),[])
+        recipe={'preset':'test','pad':'x'*(limit-overhead)}; self.assertEqual(len(json.dumps(recipe)),limit)   # exactly 128 KiB is accepted
+        saved=self.store.save_setup({'name':'Boundary','recipe':recipe}); self.assertEqual(saved['name'],'Boundary')
+        self.assertEqual(self.store.setups()[0]['recipe'],recipe)
+
     def test_file_rejects_escaped_absolute_and_missing_snapshots(self):
         outside=self.store.root.parent/'outside.png'; outside.write_bytes(b'outside bytes')
         elsewhere=self.store.root.parent/'elsewhere.png'; elsewhere.write_bytes(b'elsewhere bytes')
