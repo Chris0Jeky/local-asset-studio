@@ -1427,3 +1427,28 @@ P35 held 5.5/6 and gave G4 a sheer caveat: the ports read true bikinis with no s
 | p36-sonia-smirkwink | p28-sonia-grin | yumeflux-ilv1-baseline | 2026092513 | `8fe76874-6e1c-4042-8d7b-16d72d13ca21` |
 | p36-kafka-smirkwink-anima | p35-kafka-bikini-anima | anima-v1-baseline | 2026092620 | `a90a1833-4aae-4fc6-8f92-736cc583063e` |
 | p36-yor-smirkwink-janima | p35-yor-bikini-janima | janima-v1-baseline | 2026092621 | `8ef02041-8237-4e52-a0f0-50ebdb1a9002` |
+
+### p36 results
+
+All six completed, 10.2–26.2 s each. No spill line on any receipt. The sheer-off rule measured 2/2: both G4 cells read true bikinis with the stack off. E2 held on Yor's squat where E1 broke, on Sonia's crawl for the second crawl point, and on both ports. E2 and G4 both close.
+
+- p36-kafka-bikini-nolora, WAI, seed `2026092445`, job `cacea430`, prompt `feb49c74`, 26.2 s, `WAI-Illustration_00082_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: sheer stack off — a true black bikini, no robe; the LoRA was the robe cause. Squat held. Hands: hidden. Cloth: black bikini glossy and wet. Mouth slightly open. Keep-or-change: keep.
+- p36-yor-bikini-nolora, CSTati, seed `2026092446`, job `26dd4c09`, prompt `04268c0f`, 26.2 s, `CSTati-v3-Baseline_00065_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold roses, ballroom lamps, adult. Lever: sheer stack off — a true red bikini, no teddy, no obi. Squat held. Hands: hidden. Cloth: red bikini glossy and wet. Keep-or-change: keep.
+- p36-yor-smirkwink, CSTati, seed `2026092446`, job `9405f04d`, prompt `2bd19ca3`, 10.2 s, `CSTati-v3-Baseline_00066_.png`. Identity: Yor reads, black hair, red eyes, headband, gold roses, red dress, ballroom, adult. Lever: `parted lips` to `smirk, winking` — both show where E1 dropped the wink; E2 is not E1. Squat held. Hands: hidden. Cloth: red dress glossy and wet. Keep-or-change: keep; the discriminating cell.
+- p36-sonia-smirkwink, YumeFlux, seed `2026092513`, job `8fe76874`, prompt `8452f93a`, 24.2 s, `YumeFlux-ILv1-Baseline_00056_.png`. Identity: Sonia reads, orange-blonde ponytail, heart clips, green jacket, lab, adult. Lever: `grin` to `smirk, winking` — both show; E2's second crawl. Crawl held. Hands: one planted, normal-looking. Cloth: jacket hiked, rear bare, the hike rule. Keep-or-change: keep.
+- p36-kafka-smirkwink-anima, Anima, seed `2026092620`, job `a90a1833`, prompt `97e94df2`, 26.2 s, `Anima-v1-Baseline_00059_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, violet light, adult. Lever: `parted lips` to `smirk, winking` — both show; E2 ports to Anima. Squat held. Hands: hidden. Cloth: black bikini glossy and wet. Keep-or-change: keep.
+- p36-yor-smirkwink-janima, JANIMA, seed `2026092621`, job `8ef02041`, prompt `cb48bc93`, 25.5 s, `JANIMA-v1-Baseline_00022_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold earrings, choker, lamp interior, adult. Lever: same swap — both show; E2 ports to JANIMA. Squat held. Hands: hidden. Cloth: red bikini glossy and wet. Keep-or-change: keep.
+
+## New adults, G5 bunny suits, E1 on ports — p37 wave
+
+P36 held 6/6 and closed E2 and G4. This wave spends the closure three ways: three new adults get the closed E2 squat recipe (Tae Takemi and Ichiko Ohya from Persona 5, Olivia from Pokemon — all adult-in-canon), the G-series opens a fifth garment (bunny-suit swap on the two held G4 seeds with the sheer stack on, matching G1–G4's first run), and E1 gets its port test (grin for smirk on the two held E2 port cells at the same seed — does the E1/E2 discrimination survive off-Illustrious?). Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p37-tae-smirkwink | E2 squat recipe | wai | 2026092470 | `76a74ba8-e61a-412c-819b-27fcd96130df` |
+| p37-ohya-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092471 | `633bdf15-9a46-4e5f-b062-e7bbea95f496` |
+| p37-olivia-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092472 | `1fe3f4b1-7d9c-4b6c-9fee-49138360c6c0` |
+| p37-kafka-bunny | p5-kafka-squat | wai | 2026092445 | `ecb9ec29-6e9d-4d15-9d6c-b623d4d712d5` |
+| p37-yor-bunny | p5-yor-squat | cstati-v3-baseline | 2026092446 | `0546fb53-d834-4904-889b-34d3954b99d8` |
+| p37-kafka-grinwink-anima | p36-kafka-smirkwink-anima | anima-v1-baseline | 2026092620 | `becf1af9-6216-4ed5-a663-6157df193b0a` |
+| p37-yor-grinwink-janima | p36-yor-smirkwink-janima | janima-v1-baseline | 2026092621 | `a05f79a8-d99d-4fd7-8abf-d6e59f4e96a8` |

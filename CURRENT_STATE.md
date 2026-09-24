@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p36 judged 6/6, E2 and G4 closed, p37 queued — 24 September 2026 (13:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P36 held 6/6: sheer-off rule measured 2/2 on true bikinis (`cacea430`, `26dd4c09`, G4 closed); E2 held where E1 broke on Yor (`9405f04d`), on Sonia's crawl (`8fe76874`), and on both ports (`a90a1833`, `8ef02041`, E2 closed: portraits 2/2, squats 4/4, crawls 2/2, ports 2/2). P37 queued: three new adults on the E2 squat recipe (Tae `76a74ba8`, Ohya `633bdf15`, Olivia `1fe3f4b1`), G5 bunny-suit swap (Kafka `ecb9ec29`, Yor `0546fb53`), E1 on ports (Kafka `becf1af9`, Yor `a05f79a8`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p35 judged 5.5/6, E2 claims the squat, p36 queued — 24 September 2026 (12:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
