@@ -13,9 +13,10 @@ from pathlib import Path
 from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
-FENCE = re.compile(r'^(```|~~~).*?^\1', re.S | re.M)
+FENCE = re.compile(r'^ {0,3}(```|~~~).*?^ {0,3}\1', re.S | re.M)
 INLINE_CODE = re.compile(r'`[^`\n]*`')
 LINK = re.compile(r'\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)')
+DEFINITION = re.compile(r'^ {0,3}\[[^\]\n]+\]:[ \t]*<?([^\s>]+)>?', re.M)
 EXTERNAL = re.compile(r'^(?:[a-z][a-z0-9+.-]*:|#|//)', re.I)
 NUL = chr(0)
 
@@ -35,7 +36,7 @@ def ignored(paths):
 
 def broken_links(path):
     text = INLINE_CODE.sub('', FENCE.sub('', path.read_text(encoding='utf-8', errors='replace')))
-    for target in LINK.findall(text):
+    for target in LINK.findall(text) + DEFINITION.findall(text):
         if EXTERNAL.match(target): continue
         target = unquote(target.split('#', 1)[0].split('?', 1)[0])
         if target and not (path.parent / target).exists(): yield target
@@ -54,8 +55,9 @@ class MarkdownLinkTests(unittest.TestCase):
     def test_scanner_ignores_code_and_external_targets(self):
         with tempfile.TemporaryDirectory() as folder:
             probe = Path(folder) / 'probe.md'
-            probe.write_text('[a](https://x.test/y) [b](#top) `[c](nope.md)`\n```\n[d](nope.md)\n```\n[e](missing-page.md) [f](probe.md#x)\n', encoding='utf-8')
-            self.assertEqual(list(broken_links(probe)), ['missing-page.md'])
+            probe.write_text('[a](https://x.test/y) [b](#top) `[c](nope.md)`\n```\n[d](nope.md)\n```\n  ```\n  [g](nope.md)\n  ```\n'
+                             '[e](missing-page.md) [f](probe.md#x) [h][ref] [i][ok]\n\n[ref]: gone.md\n[ok]: probe.md "t"\n[web]: https://x.test\n', encoding='utf-8')
+            self.assertEqual(list(broken_links(probe)), ['missing-page.md', 'gone.md'])
 
     def test_gitignored_local_only_targets_are_recognised(self):
         self.assertEqual(ignored(['examples/local-only/sheet.jpg', 'docs/README.md']), {'examples/local-only/sheet.jpg'})
