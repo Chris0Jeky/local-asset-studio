@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p82 judged 6/6, G20 closed, C1 from-below opens, G21 open, p83 queued — 25 September 2026 (19:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P82 held 6/6 (10.1–28.3 s, no spill): G20 closed on all eleven reads with the sheer-off pair (`1e9434dd`, `f81ce43b`), portrait (`8bdea355`) and seated rear (`66c9a08d`); C1 `from below` opens measured 2/2 on the wedding squat pair (Kafka `a6e3094e`, Yor `bdcd5d2b`). P83 queued, six cells: C1 `cowboy shot` x2 (`fe938462`, `b54c0780`) and `close-up` x2 (`f8e79e7f`, `5ebf0083`) on the wedding squat pair, G21 cheerleader open anchors (Kafka `422c0a27`, Yor `59e0e5c3`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p81 judged 6/6, G20 measured 7, B1 roster complete at 40 faces, p82 queued — 25 September 2026 (19:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
