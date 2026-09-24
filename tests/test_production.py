@@ -84,6 +84,14 @@ class ProductionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Krita changed'):studio.production.run(changed['id'])
         execute.assert_not_called()
 
+    def test_native_rejects_unhashable_and_non_string_ids_as_value_error(self):
+        studio=FakeStudio(self.root,[])
+        for ids in ([{'a': 1}], [1], [None], [''], [b'bytes'], [['nested']]):
+            with self.subTest(ids=repr(ids)):
+                with self.assertRaisesRegex(ValueError, 'Select ordered images'):
+                    studio.production.native({'kind': 'atlas', 'ids': ids})
+        self.assertEqual(studio.production.list(), [])
+
     def test_branch_budget_and_start_are_atomic_and_not_reset(self):
         studio=FakeStudio(self.root,[]);lab=studio.production
         parent=lab.create(self.intent());child=lab.create(self.intent(parent_project=parent['id']))
