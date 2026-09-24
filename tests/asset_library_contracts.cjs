@@ -61,5 +61,44 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
   await test('Awaiting review has its own scope count and empty-state explanation',()=>{
     const s=library();s.run("assetState.assets[0].review='selected';setAssetScope('unreviewed')");s.el('#assetSearch').value='no match';s.run('renderAssets()');assert.match(s.el('#assetVisibleCount').textContent,/0 of 2/);s.run("for(const a of assetState.assets)a.review='selected';renderAssets()");assert.match(s.el('#assetGrid').innerHTML,/No assets awaiting review/);
   });
+  const sourced=(options={})=>{
+    const s=setup({autoOpen:false,...options});s.el('#assetType').value='all';s.el('#assetSort').value='newest';
+    s.run(`assetState.assets=[['m0',null,1],['m1',null,2],['g0','lab p71 · G16',3],['g1','lab p71 · G16',4]].map(([id,label,at])=>({id,workspace_id:assetState.workspace_id,title:'Anima · 1',preset_name:'Anima',output_index:0,prompt_excerpt:'prompt of '+id,run_label:label,notes:'',tags:[],review:'unreviewed',favorite:false,media_type:'image',created_at:at,url:'/fixture.png',collections:[],metadata_revision:0,source:{},lineage:[],bytes:1,filename:'f.png',sha256:'a'}));renderAssets();`);
+    return s;
+  };
+  const shown=s=>JSON.parse(s.run('JSON.stringify(visibleAssets().map(a=>a.id))'));
+  const memory=()=>({values:new Map(),getItem(key){return this.values.get(key)??null;},setItem(key,value){this.values.set(key,String(value));}});
+  await test('Without labelled assets every source is shown and the source filter stays hidden',()=>{
+    const s=library();assert.equal(s.run('assetSource()'),'all');assert.equal(s.el('#assetSource').hidden,true);assert.equal(s.run('visibleAssets().length'),3);assert.doesNotMatch(s.el('#assetVisibleCount').textContent,/hidden/);
+  });
+  await test('Labelled assets default the library and Review next to Mine',()=>{
+    const s=sourced();assert.equal(s.el('#assetSource').hidden,false);assert.equal(s.el('#assetSource').value,'mine');assert.deepEqual(shown(s),['m1','m0']);
+    assert.match(s.el('#assetVisibleCount').textContent,/^2 assets · 2 agent runs hidden$/);assert.match(s.el('#reviewNext').textContent,/2 unreviewed/);
+    s.run('startReviewQueue()');assert.equal(s.run('JSON.stringify(assetQueue.ids)'),'["m1","m0"]');
+  });
+  await test('The source choice persists like grouping and survives a missing store',()=>{
+    const store=memory();let s=sourced({localStorage:store});s.el('#assetSource').value='agent';s.el('#assetSource').onchange();
+    assert.deepEqual(shown(s),['g1','g0']);assert.equal(store.values.get('studio.assets.source'),'agent');assert.match(s.el('#assetVisibleCount').textContent,/2 of yours hidden/);
+    s=sourced({localStorage:store});assert.equal(s.run('assetSource()'),'agent');assert.deepEqual(shown(s),['g1','g0']);
+    s.run("chooseAssetSource('all')");assert.equal(shown(s).length,4);assert.equal(store.values.get('studio.assets.source'),'all');
+    s.el('#assetSearch').value='p71';s.run('renderAssets()');assert.deepEqual(shown(s),['g1','g0']);
+    s=sourced();s.run("chooseAssetSource('agent')");assert.deepEqual(shown(s),['g1','g0']);
+  });
+  await test('A source filter that hides the whole view offers every source in one click',()=>{
+    const s=sourced();s.run('assetState.assets=assetState.assets.filter(a=>a.run_label);renderAssets()');
+    assert.match(s.el('#assetGrid').innerHTML,/None of your own runs here/);assert.match(s.el('#assetGrid').innerHTML,/data-asset-source="all"/);
+    s.run("chooseAssetSource('all')");assert.deepEqual(shown(s),['g1','g0']);
+  });
+  await test('Default titles carry the prompt excerpt; renamed titles and markup do not leak',()=>{
+    const s=sourced();s.run("chooseAssetSource('all')");let html=s.el('#assetGrid').innerHTML;
+    assert.match(html,/class="asset-card-prompt"[^>]*>prompt of m0</);assert.match(html,/class="asset-run-label"[^>]*>lab p71 · G16</);
+    s.run("assetState.assets[0].title='My knight';assetState.assets[1].prompt_excerpt='<b>x</b>';assetState.assets[2].run_label='<i>';renderAssets()");html=s.el('#assetGrid').innerHTML;
+    assert.doesNotMatch(html,/prompt of m0/);assert.match(html,/&lt;b&gt;x&lt;\/b&gt;/);assert.doesNotMatch(html,/<b>x|<i>/);
+  });
+  await test('The review dialog shows the prompt text and run label',()=>{
+    const s=sourced();s.run("chooseAssetSource('all');openAsset('g0')");const html=s.el('#assetDetails').innerHTML;
+    assert.match(html,/Prompt text: prompt of g0/);assert.match(html,/Run label: lab p71 · G16/);
+    s.run("openAsset('m0')");assert.doesNotMatch(s.el('#assetDetails').innerHTML,/Run label/);
+  });
   console.log(`Asset library contracts: ${passed} passed, ${failed} failed`);if(failed)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});

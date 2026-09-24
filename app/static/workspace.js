@@ -11,6 +11,16 @@ let assetRetainedDetail = null, assetRecoveryError = '', assetRecoveryLoadError 
 // Queue, grouping and reason chips are projections over the same saved review states; the server schema is unchanged.
 let assetGroupMode = 'none', assetSearchTimer = null, assetQueue = null, assetBulkReviewBusy = false;
 const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.assets.group';
+// Source is a view preference like grouping: an asset with a run label (set by API callers, never by Create) is an agent run (#939).
+// Until the operator chooses, the library shows Mine once any labelled asset exists; with none, every source is shown.
+const assetSourceModes = ['mine','agent','all'], assetSourceStorageKey = 'studio.assets.source';
+let assetSourceMode = null;
+function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='';}
+function assetSource(){return !assetState.assets.some(assetIsAgentRun)?'all':assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
+function assetSourceFilter(list, source=assetSource()){return source==='all'?list:list.filter(a=>assetIsAgentRun(a)===(source==='agent'));}
+// A title still equal to the registered default ("<recipe> · N") says nothing; the prompt excerpt does.
+function assetDefaultTitle(asset){return asset.title===(asset.preset_name||'Untitled')+' · '+(Number(asset.output_index)+1);}
+function assetSubtitle(asset){return typeof asset.prompt_excerpt==='string' && asset.prompt_excerpt && assetDefaultTitle(asset)?asset.prompt_excerpt:'';}
 const assetReviewLabels = {unreviewed:'Unreviewed',selected:'Keeper',needs_work:'Needs work',rejected:'Rejected'};
 const assetReviewShortcuts = {k:'selected',w:'needs_work',x:'rejected'};
 const assetReasonTags = ['hands','face','style off','composition','anatomy','artifacts','crop'];
@@ -322,7 +332,7 @@ function assetScopeAssets() {
 function assetFiltersActive(){return !!$('#assetSearch').value.trim() || $('#assetType').value!=='all';}
 function visibleAssets() {
   const query=$('#assetSearch').value.trim().toLowerCase(), type=$('#assetType').value;
-  const list=assetScopeAssets().filter(a=>(type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,...a.tags].join(' ').toLowerCase().includes(query));
+  const list=assetSourceFilter(assetScopeAssets()).filter(a=>(type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,a.run_label||'',a.prompt_excerpt||'',...a.tags].join(' ').toLowerCase().includes(query));
   const sort=$('#assetSort').value;
   return list.sort((a,b)=>sort==='title'?a.title.localeCompare(b.title):sort==='oldest'?a.created_at-b.created_at:b.created_at-a.created_at);
 }
@@ -352,10 +362,14 @@ function assetSelectionInfo(visible=visibleAssets()) {
   return {entries,visible:entries.filter(e=>e.visible).length,hidden:entries.filter(e=>!e.visible).length,missing:entries.filter(e=>!e.asset).length};
 }
 function assetEmptyState() {
-  const scope=assetScopeAssets(),collection=assetScope.startsWith('collection:');
+  const everySource=assetScopeAssets(),scope=assetSourceFilter(everySource),collection=assetScope.startsWith('collection:');
   let title,description,action='<button data-scope="all" data-asset-browse-scope>Browse all assets</button>';
   if(collection && !assetState.collections.some(c=>'collection:'+c.id===assetScope)){
     title='Collection unavailable';description='This collection is no longer in the loaded Workspace. Your original assets are not deleted with a collection.';
+  }else if(!scope.length && everySource.length){
+    const mine=assetSource()==='mine';
+    title=mine?'None of your own runs here':'No agent runs here';description='This view holds '+everySource.length+(mine?' agent-run':' of your own')+' assets, hidden by the source filter.';
+    action='<button data-asset-source="all">Show all sources</button>';
   }else if(scope.length && assetFiltersActive()){
     title='No matching assets';description='This view contains '+scope.length+' assets, but none match your search and media filter. Your selection is unchanged.';
     action='<button data-asset-clear-filters>Clear filters in this view</button>';
@@ -398,12 +412,14 @@ function assetPreview(asset, detail=false) {
   if(asset.media_type==='audio')return detail?'<audio controls src="'+url+'"></audio>':'<span class="asset-type-placeholder">♫<small>Audio</small></span>';
   return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder">◇<small>3D model</small></span>';
 }
-function assetCardHTML(a) {return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button><div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
+function assetCardHTML(a) {return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
   observeAssetWorkspaceIdentity();
-  const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope);
+  const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope), source=assetSource();
+  const inScope=assetScopeAssets(), sourced=assetSourceFilter(inScope,source), sourceHidden=inScope.length-sourced.length;
   $('#assetTotal').textContent=assetState.assets.filter(a=>!a.trashed_at).length;
-  $('#assetVisibleCount').textContent=assetFiltersActive()?assets.length+' of '+assetScopeAssets().length+' assets':assets.length+' assets';
+  $('#assetSource').hidden=!assetState.assets.some(assetIsAgentRun);$('#assetSource').value=source;
+  $('#assetVisibleCount').textContent=(assetFiltersActive()?assets.length+' of '+sourced.length+' assets':assets.length+' assets')+(sourceHidden?' · '+sourceHidden+(source==='mine'?' agent runs hidden':' of yours hidden'):'');
   $('#clearAssetFilters').hidden=!assetFiltersActive();
   $('#selectVisible').disabled=!assets.length;
   $('#selectVisible').textContent=assets.length>assetSelectionLimit?'Select first '+assetSelectionLimit+' of '+assets.length:'Select visible';
@@ -612,7 +628,7 @@ function openAsset(id) {
   // a position that no longer describes what is on screen would skip a queued asset on the next decision.
   if(assetQueue){const at=assetQueue.ids.indexOf(id);if(at>=0)assetQueue.index=at;else{assetQueue=null;assetMessage('Left the review queue to open an asset outside it. Review next starts a fresh queue.');}}
   renderAssetReasons();renderAssetSiblings(a);renderAssetQueue();
-  $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p><details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
+  $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p>'+(a.prompt_excerpt?'<p class="asset-prompt-excerpt">Prompt text: '+esc(a.prompt_excerpt)+'</p>':'')+(assetIsAgentRun(a)?'<p>Run label: '+esc(a.run_label)+'</p>':'')+'<details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
   $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at?'Restore':'Move to Trash';
   $('#assetDownload').href=a.url+'?download';
   $('#assetHandoffs').innerHTML=a.media_type==='image'?'<button data-handoff="reference">Edit image</button><button data-handoff="anime-detail-fix" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button data-handoff="krea-refine" title="Open Krea image refinement; review settings before generating">Refine image</button><button data-handoff="wan22-i2v">Animate</button><button data-handoff="trellis-auto-cutout">Make 3D</button><button data-handoff="anime-upscale">Upscale</button>':'';
@@ -643,6 +659,8 @@ $('#workspaceRefresh').onclick=()=>refreshAssets(true);
 // Typing repaints once the operator pauses; every other control is immediate.
 $('#assetSearch').oninput=()=>{clearTimeout(assetSearchTimer);assetSearchTimer=setTimeout(()=>{assetSearchTimer=null;renderAssets();},150);};
 $('#assetType').onchange=renderAssets;$('#assetSort').onchange=renderAssets;
+function chooseAssetSource(value){assetSourceMode=assetSourceModes.includes(value)?value:null;try{localStorage.setItem(assetSourceStorageKey,assetSourceMode||'');}catch(error){}renderAssets();}
+$('#assetSource').onchange=()=>chooseAssetSource($('#assetSource').value);
 $('#assetGroup').onchange=()=>{assetGroupMode=assetGroupModes.includes($('#assetGroup').value)?$('#assetGroup').value:'none';try{localStorage.setItem(assetGroupStorageKey,assetGroupMode);}catch(error){}renderAssets();};
 $('#reviewNext').onclick=()=>startReviewQueue();
 $('#selectVisible').onclick=()=>{const assets=visibleAssets();assetSelection=new Set(assets.slice(0,assetSelectionLimit).map(a=>a.id));renderAssets();assetMessage(assets.length>assetSelectionLimit?'Selected the first '+assetSelectionLimit+' of '+assets.length+' matching assets in the current sort order. Choose smaller groups for the rest.':'Selected '+assets.length+' visible assets. Any earlier selection was replaced.');};
@@ -731,6 +749,7 @@ document.addEventListener('click',async e=>{
     if(e.target.closest('[data-queue-exit]')){assetQueue=null;renderAssetQueue();assetMessage('Left the review queue. Saved reviews are unchanged.');return;}
     const bulkReview=e.target.closest('[data-review-bulk]');if(bulkReview){await bulkReviewSelected(bulkReview.dataset.reviewBulk);return;}
     if(e.target.closest('[data-asset-clear-filters]')){clearAssetFilters();return;}
+    const sourceChoice=e.target.closest('[data-asset-source]');if(sourceChoice){chooseAssetSource(sourceChoice.dataset.assetSource);return;}
     if(e.target.closest('[data-asset-import]')){$('#importAssets').click();return;}
     const scope=e.target.closest('[data-scope]');if(scope){if(scope.hasAttribute?.('data-asset-browse-scope')){$('#assetSearch').value='';$('#assetType').value='all';}setAssetScope(scope.dataset.scope);}
     const open=e.target.closest('[data-asset-open]');if(open)openAsset(open.dataset.assetOpen);
@@ -757,4 +776,5 @@ try{
 }catch(error){assetRecoveryError=assetRecoveryLoadError=error.message;}
 // Grouping is a local view preference only; losing it never loses an asset or a review.
 try{const stored=localStorage.getItem(assetGroupStorageKey);if(assetGroupModes.includes(stored)){assetGroupMode=stored;$('#assetGroup').value=stored;}}catch(error){}
+try{const stored=localStorage.getItem(assetSourceStorageKey);if(assetSourceModes.includes(stored))assetSourceMode=stored;}catch(error){}
 renderAssetReasons();renderLibraryRecovery();
