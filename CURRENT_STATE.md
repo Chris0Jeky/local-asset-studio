@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p73 judged 6/6 mixed, obi beats hike, p74 queued — 25 September 2026 (05:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P73 held 6/6, the first mixed wave: kimono ports 2/2 (Kafka `b2b3dd83`, Yor `d409429d`), kimono on bent-over (`ee8c6b05`), seiza (`72d0d5a6`), portrait (`d9e46e27`), and crawl (`96cda2ea`) — the knotted obi holds the dress shut, beating the T12 hike rule. P74 queued: G17 eyes (Kafka `724732e1`, Yor `adb2d952`), G17 sheer-off close (Kafka `520145d1`, Yor `53f451da`), kimono seated rear (Yor `1ea3a333`), B1 on Jingliu (`2dcb836e`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p72 judged 6/6, G16 closed, G17 promoted, B1 at 26 faces, p73 queued mixed — 25 September 2026 (05:20 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.

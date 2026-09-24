@@ -2358,6 +2358,30 @@ P72 held 6/6 — G16 closed (both sheer states, both ports, eyes-neutral), G17 p
 | p73-kafka-kimono-seiza | p72-kafka-kimono | yumeflux-ilv1-baseline | 2026092642 | `72d0d5a6-f379-431c-bfa3-e6482041dc76` |
 | p73-yor-kimono-portrait | p72-yor-kimono | anifox-v2-baseline | 2026092643 | `d9e46e27-a950-4797-9f7b-848717d47acd` |
 
+### p73 results
+
+All six completed, 26.2–35.1 s each, no spill. First mixed wave holds 6/6: kimono ports 2/2, kimono transfers to all four poses — and the obi beats the T12 hike.
+
+- p73-kafka-kimono-anima, Anima, seed `2026092646`, job `b2b3dd83`, prompt `655470c3`, 28.6 s, `Anima-v1-Baseline_00074_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white and red kimono with a black obi and gold cord, geta sandals, shrine violet, adult. Lever: G17 port — full kimono read with no sheer LoRA. Squat held. Hands: hidden behind the head. Eyes closed, the Anima squat pattern. Cloth: kimono and obi opaque. Keep-or-change: keep; G17 ports 1/2.
+- p73-yor-kimono-janima, JANIMA, seed `2026092647`, job `d409429d`, prompt `b67ea9e8`, 26.2 s, `JANIMA-v1-Baseline_00036_.png`. Identity: Yor reads, black hair, headband, red kimono with a white obi, torii and lanterns, night, adult. Lever: G17 port — full kimono read with no sheer LoRA. Squat held. Hands: hidden behind the head. Eyes open. Cloth: kimono and obi opaque. Keep-or-change: keep; G17 ports 2/2.
+- p73-kafka-kimono-bentover, WAI, seed `2026092640`, job `ee8c6b05`, prompt `9b26a07d`, 35.1 s, `WAI-Illustration_00149_.png`. Identity: Kafka reads, magenta hair in a ponytail, red kimono with a black obi, shrine night, adult. Lever: kimono on the bent-over — full transfer, both hands on the hips and butt, looking back over the shoulder. Cloth: red kimono glossy. Keep-or-change: keep.
+- p73-yor-kimono-crawl, CSTati, seed `2026092641`, job `96cda2ea`, prompt `14029dd3`, 34.3 s, `CSTati-v3-Baseline_00140_.png`. Identity: Yor reads, black hair, headband, white kimono with a red obi bow, shrine floor night, adult. Lever: kimono on the crawl, the obi test — forearms planted, face to the viewer, and the kimono top stays shut: the obi beats the T12 hike, rear covered in sheer white. Cloth: white kimono translucent-sheer. New rule: a knotted obi holds a loose dress shut on the crawl. Keep-or-change: keep.
+- p73-kafka-kimono-seiza, YumeFlux, seed `2026092642`, job `72d0d5a6`, prompt `ab50eaa8`, 30.5 s, `YumeFlux-ILv1-Baseline_00078_.png`. Identity: Kafka reads, magenta ponytail, white and red kimono with a big red bow obi, shrine lantern night, adult. Lever: kimono on the seiza — tongue out, looking back, feet visible and normal. Cloth: white kimono translucent-sheer. Keep-or-change: keep.
+- p73-yor-kimono-portrait, AniFox, seed `2026092643`, job `d9e46e27`, prompt `69924bdf`, 32.4 s, `AniFox-v2-Baseline_00095_.png`. Identity: Yor reads, headband, gold rose ornament, red and white kimono, shrine garden pond and lanterns, adult; most recognizable face of the wave. Lever: kimono on the portrait — gentle smile, kimono and obi intact. Cloth: red kimono glossy. Keep-or-change: keep.
+
+## G17 eyes and sheer-off, kimono seated rear, B1 Jingliu — p74 wave
+
+P73 held 6/6 — kimono ports 2/2, kimono on all four transfer poses, obi-beats-hike rule measured. This wave adds `bedroom eyes` to both kimono cells at the same seed, closes with the sheer stack off at the same seed on both G-series seeds, transfers the kimono to the last pose (seated rear, Yor), and runs B1 on Jingliu (cleared for new cells). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p74-kafka-kimono-eyes | p72-kafka-kimono | wai | 2026092445 | `724732e1-a45c-46a5-8f31-6fc1436bebc7` |
+| p74-yor-kimono-eyes | p72-yor-kimono | cstati-v3-baseline | 2026092446 | `adb2d952-a6ba-4654-8d40-d404c2e6312d` |
+| p74-kafka-kimono-nolora | p72-kafka-kimono | wai | 2026092445 | `520145d1-b140-407f-8b48-f7b101f7d6c8` |
+| p74-yor-kimono-nolora | p72-yor-kimono | cstati-v3-baseline | 2026092446 | `53f451da-fa5e-4b6b-a81d-db4330c98fa2` |
+| p74-yor-kimono-seated | p72-yor-kimono | cstati-v3-baseline | 2026092648 | `1ea3a333-5504-4cfe-a78c-85e663909861` |
+| p74-jingliu-smallbust | B1 recipe | wai | 2026092649 | `2dcb836e-8cce-421c-83d6-6fed17b779f4` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
