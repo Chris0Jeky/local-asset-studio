@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import uuid
 
+import file_replace
+
 MAX_BYTES = 16 * 1024 * 1024
 DIRECTORY_SYNC_SUPPORTED = os.name != 'nt'
 
@@ -59,7 +61,7 @@ def publish(path: Path, value: dict, sync_parent=sync_parent_directory) -> dict:
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
-        temp.replace(path)
+        file_replace.replace(temp, path)  # Transient Windows refusals only; the temp stays owned until it succeeds.
         owner = None  # The temp entry is gone; never unlink a later occupant.
         directory_synced = sync_parent(path.parent)
         return {'content_synced': True, 'directory_synced': directory_synced}

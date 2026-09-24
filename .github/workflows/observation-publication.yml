@@ -4,6 +4,8 @@ on:
     paths:
       - 'app/server.py'
       - 'app/observation_state.py'
+      - 'app/file_replace.py'
+      - 'tests/test_file_replace.py'
       - 'tests/test_observation*.py'
       - 'tests/test_operator_disposition_publication.py'
       - 'tests/test_reference_hold_observation_admission.py'
@@ -36,6 +38,7 @@ jobs:
       - run: git log -1 --format=%H
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m unittest discover -s tests -p 'test_observation*.py' -v
+      - run: python -m unittest discover -s tests -p test_file_replace.py -v
       - run: python -m unittest discover -s tests -p test_operator_disposition_publication.py -v
       - run: python -m unittest discover -s tests -p test_reference_hold_observation_admission.py -v
       - run: python -m unittest discover -s tests -p test_server.py -v

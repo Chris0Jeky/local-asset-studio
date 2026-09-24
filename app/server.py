@@ -42,6 +42,7 @@ from runtime_recovery import RuntimeRecovery
 import prompting
 import submission_evidence
 import observation_state
+import file_replace
 import job_resources
 import continuation
 import pose_guide
@@ -1087,7 +1088,7 @@ class Studio:
     def _write_json_atomic(self, path, value):
         temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
         temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
-        temp.replace(path)
+        file_replace.replace(temp, path)   # a reader holding the target open on Windows refuses briefly
 
     _sync_parent_directory = staticmethod(observation_state.sync_parent_directory)
 
@@ -1458,9 +1459,17 @@ class Studio:
                 self._save(job); return
             if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed'):
                 uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
+                locked = not uncertain and submission_evidence.never_submitted(job) and self._run_folder_lock(job, exc)
                 job['status'] = 'uncertain' if uncertain else 'failed'
                 job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
+                if locked: job['failure'] = {'kind': 'record_write_locked', 'title': "The Studio could not write this job's record", 'summary': "Another program had the run folder's file open. Nothing was sent to ComfyUI.", 'action': 'Safe to generate again with the same settings.', 'detail': str(exc)[:300]}
             self._save(job)
+
+    def _run_folder_lock(self, job, exc):
+        """A transient Windows refusal on a file inside this job's own run folder (another program held it open)."""
+        if not file_replace.transient(exc) or not isinstance(job.get('id'), str): return False
+        folder = self.runs / job['id']
+        return any(isinstance(name, (str, Path)) and Path(name).parent == folder for name in (exc.filename, getattr(exc, 'filename2', None)))
 
     def cache_release_status(self):
         idle = time.monotonic() - self._last_activity
