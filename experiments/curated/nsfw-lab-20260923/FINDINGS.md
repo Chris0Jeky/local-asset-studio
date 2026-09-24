@@ -1599,3 +1599,27 @@ P42 held 6/6 — G6 closed sheer-off, G7 promoted, E2 generalization at 12/12. T
 | p43-yor-maid-eyes | p42-yor-maid | cstati-v3-baseline | 2026092446 | `9bcff43b-d2e7-4223-968a-88a434948fd5` |
 | p43-evelyn-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092483 | `97ae2fc6-b43a-432d-8ffd-ecd6b262f7ba` |
 | p43-ruanmei-smirkwink | E2 squat recipe | wai | 2026092484 | `c36a1bcb-90e1-4f2b-9906-0ff03adf2bd5` |
+
+### p43 results
+
+All six completed, 25.5–29.2 s each. No spill line on any receipt. G7 ported to both families. The eyes tag held neutral on the structured maid outfit 2/2. E2 generalization reached 14/14.
+
+- p43-kafka-maid-anima, Anima, seed `2026092626`, job `35799e4a`, prompt `7630370b`, 28.5 s, `Anima-v1-Baseline_00064_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, violet light, adult. Lever: G7 with no sheer LoRA — maid headdress, collar, black and white frilled dress; G7 ports to Anima. Eyes heavy-lidded. Hands: hidden. Cloth: black latex with white frills, glossy. Parted lips show. Keep-or-change: keep.
+- p43-yor-maid-janima, JANIMA, seed `2026092627`, job `9b0a4015`, prompt `e508e191`, 25.5 s, `JANIMA-v1-Baseline_00026_.png`. Identity: Yor reads, black hair, gold earrings, lamp interior, adult. Lever: G7 with no sheer LoRA — full maid outfit with headdress, corset lacing, lace garters; G7 ports to JANIMA. Eyes closed this time — JANIMA eye variance, the garment holds. Hands: hidden. Cloth: black and white maid, glossy. Parted lips show. Keep-or-change: keep.
+- p43-kafka-maid-eyes, WAI, seed `2026092445`, job `1abf1fd0`, prompt `68da2dac`, 29.2 s, `WAI-Illustration_00094_.png`. Identity: same Kafka read, rooftop, adult. Lever: `bedroom eyes` added — heavy-lidded eyes; tag fired, maid intact; neutral as predicted. Hands: hidden. Squat held. Keep-or-change: keep.
+- p43-yor-maid-eyes, CSTati, seed `2026092446`, job `9bcff43b`, prompt `317ebfab`, 26.3 s, `CSTati-v3-Baseline_00078_.png`. Identity: same Yor read, ballroom, adult. Lever: same addition — eyes heavy; tag fired, maid intact. Neutral 2/2. Hands: hidden. Squat held. Keep-or-change: keep.
+- p43-evelyn-smirkwink, YumeFlux, seed `2026092483`, job `97ae2fc6`, prompt `b78a4be7`, 28.4 s, `YumeFlux-ILv1-Baseline_00061_.png`. Identity: Evelyn reads, dark brown hair, red eyes, black bodyguard suit with tie, lamp interior, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: black suit glossy with sheer blouse panels. Keep-or-change: keep.
+- p43-ruanmei-smirkwink, WAI, seed `2026092484`, job `c36a1bcb`, prompt `41efdf66`, 29.0 s, `WAI-Illustration_00095_.png`. Identity: Ruan Mei reads well, black hair, dark researcher dress with floral and pearl details, station lab, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: dark dress glossy with sheer panels. Keep-or-change: keep.
+
+## Sheer-off G7, G8 miko, Nicole, Topaz — p44 wave
+
+P43 held 6/6 — G7 ported, eyes neutral on the maid outfit, E2 generalization at 14/14. This wave runs G7 with the sheer stack off at the same seed (structured maid outfit should hold stable like G5 and G6), opens an eighth garment (shrine-maiden swap on the two G-series seeds with the sheer stack on), and runs E2 on two more new adults (Nicole from Zenless Zone Zero, Topaz from Honkai: Star Rail — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p44-kafka-maid-nolora | p42-kafka-maid | wai | 2026092445 | `82ed49d3-ed13-486e-ab7b-80e08411b461` |
+| p44-yor-maid-nolora | p42-yor-maid | cstati-v3-baseline | 2026092446 | `596a2f77-22bb-42d5-bdcb-0ad24b3fed2f` |
+| p44-kafka-miko | p5-kafka-squat | wai | 2026092445 | `edd6aabb-fcbf-4674-a549-3310638bfeba` |
+| p44-yor-miko | p5-yor-squat | cstati-v3-baseline | 2026092446 | `619b2bfe-51d2-438f-b824-5377297820cb` |
+| p44-nicole-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092485 | `331b057e-b9c3-4a25-8171-35044d497995` |
+| p44-topaz-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092486 | `57558ae4-5609-4625-8841-1d532511f6c7` |
