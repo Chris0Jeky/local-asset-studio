@@ -175,6 +175,8 @@ test('the workbench sends the drawing to the guide endpoint and to no generation
   assert.match(workbench,/api\('\/api\/pose\/artifacts\/'\+id\)/,'a restored guide reads its own stored drawing, a GET that renders and submits nothing');
   assert.match(workbench,/StudioPoseEditor\.fromArtifact\(value,guide\)/,'the stored drawing is checked against the attached guide before it is loaded');
   assert.match(workbench,/\{artifact:poseHeldArtifact\(\),loading:poseLoading\?\.artifact_id,blocked:poseBlockedReason\(\)\}/,'the hold knows what the editor holds and why its button is disabled');
+  assert.match(workbench,/if\(poseLoading\)return 'The attached pose guide’s drawing is loading into the editor\.';/,'Use this pose waits for an in-flight read');
+  assert.match(workbench,/const edited=!StudioPoseEditor\.holds\(posePoints,poseCanvas,before\)/,'an edit made during the read wins over the late stored drawing');
   assert.match(workbench,/combineSwitchReason\(selected,target,referenceRecords\)/,'ordinary engine switches retain their representation guard');
   assert.doesNotMatch(workbench,/post\('\/api\/jobs'/,'the workbench submits no generation of its own');
   const html=fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');

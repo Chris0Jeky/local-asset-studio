@@ -135,10 +135,11 @@ def restored_guide(page, origin, out, check, drawings, posts, spec):
     artifact = dict(schema='studio.pose-artifact/v1', id=held, canvas=dict(width=1024, height=1536), joints=stored, parent_id=None,
                     authority='none', review='unreviewed',
                     source=dict(sha256='c' * 64, format='openpose-coco18', person_index=0, coordinate_space='pixels'))
-    reads = []
+    reads, slow, waiting = [], 'c' * 64, []
     def artifact_route(route):
         reads.append(urlsplit(route.request.url).path)
-        if route.request.url.endswith('/' + held): route.fulfill(status=200, content_type='application/json', body=json.dumps(artifact))
+        if route.request.url.endswith('/' + slow): waiting.append(route)
+        elif route.request.url.endswith('/' + held): route.fulfill(status=200, content_type='application/json', body=json.dumps(artifact))
         else: route.fulfill(status=400, content_type='application/json', body='{"error":"Editable pose artifact is unavailable"}')
     page.route('**/api/pose/artifacts/*', artifact_route)
     guide = dict(file='a' * 32 + '_drawn-pose.png', sha256='a' * 64, bytes=2048, width=1024, height=1536, artifact_id=held,
@@ -206,6 +207,16 @@ def restored_guide(page, origin, out, check, drawings, posts, spec):
     check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == before, 'The editor keeps its drawing when the stored one cannot be read')
     check(reads.count('/api/pose/artifacts/' + lost) == 1, 'One read per guide, no retry loop')
     check(posts.count('/api/pose/render') == renders + 2, 'No implicit render')
+    # A slow read holds the button, and an edit made meanwhile is kept over the late stored drawing.
+    page.evaluate(REPLACE_GUIDE, dict(guide, file='c' * 32 + '_drawn-pose.png', sha256='c' * 64, width=1024, artifact_id=slow))
+    page.wait_for_function("document.querySelector('#uxPoseReason').textContent.includes('is loading')")
+    check(len(waiting) == 1 and page.locator('#uxPoseUse').is_disabled(), 'Use this pose waits for the stored drawing')
+    page.locator('#uxPoseStart').select_option('bent')
+    edited = [page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')]
+    waiting[0].fulfill(status=200, content_type='application/json', body=json.dumps(dict(artifact, id=slow)))
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('your drawing was kept')")
+    check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == edited, 'The edit made during the read is not overwritten')
+    check(page.locator('#uxPoseUse').is_enabled() and posts.count('/api/pose/render') == renders + 2, 'The button is released; nothing rendered')
 
 
 def main(argv=None):

@@ -296,6 +296,7 @@
     if(!selected)return 'Choose a Combine recipe first.';
     if(StudioPoseEditor.known(posePoints||[])<2)return 'Mark at least two joints: a guide with fewer draws no limb.';
     if(poseBusy)return 'The drawing is being rendered.';
+    if(poseLoading)return 'The attached pose guide’s drawing is loading into the editor.';
     if(posePositionDirty())return 'Set the typed joint position or reset its fields before continuing.';
     if(combineBusy())return 'Finish the attachment in progress first.';
     if(selected.id===POSE_RECIPE||StudioPoseEditor.drawsGuide(selected))return '';
@@ -372,12 +373,15 @@
     const guide=StudioPoseEditor.drawnGuide(referenceRecords),id=guide?.artifact_id;
     if(!guide||poseSeen.has(guide)||guide===poseLoading||poseBusy||poseDrag>=0||posePositionDirty())return;
     if(!/^[a-f0-9]{64}$/.test(id||'')||id===poseHeldArtifact()){poseSeen.add(guide);return;}
-    poseLoading=guide;let loaded=null;
+    // An edit made while the read is in flight wins over the stored drawing; the button waits for the read.
+    poseLoading=guide;let loaded=null;const before={points:StudioPoseEditor.resize(posePoints,poseCanvas,poseCanvas),canvas:{...poseCanvas}};syncPoseActions();
     api('/api/pose/artifacts/'+id).then(value=>{loaded=StudioPoseEditor.fromArtifact(value,guide);}).catch(()=>{}).then(()=>{
       if(poseLoading===guide)poseLoading=null;
       // A newer guide, a render in flight or an unfinished edit wins; a later sync reads this guide again.
       const current=StudioPoseEditor.drawnGuide(referenceRecords)===guide&&!poseBusy&&poseDrag<0&&!posePositionDirty()&&poseActive();
-      if(loaded&&current){
+      const edited=!StudioPoseEditor.holds(posePoints,poseCanvas,before);
+      if(loaded&&current&&edited){poseSeen.add(guide);poseStatus('You changed the drawing while the attached guide’s drawing was loading, so your drawing was kept.');}
+      else if(loaded&&current){
         const next=StudioPoseEditor.resize(loaded,guide,poseCanvas);
         pushPose();poseEdit(StudioPoseEditor.adopt(posePoints,next));poseHeld={id,points:next,canvas:{...poseCanvas}};poseSeen.add(guide);
         poseStatus('The attached pose guide’s drawing is back in the editor. Undo returns to the previous drawing. Nothing was submitted.');
