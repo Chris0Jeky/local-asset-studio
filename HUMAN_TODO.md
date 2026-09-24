@@ -177,3 +177,15 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
 
 **Answer (owner message, 24 September 2026, evening):** Aqua confirmed � "clearly an adult and a goddess canonically and already portrayed maturely" � and a missing stated number is not by itself a removal reason. So (a) the 8 pending ZZZ names are cleared as owner-confirmed eligible, (b) new cells for Jane, Nicole, Rina, Grace, and Yanagi are cleared, (c) Aqua stays with her wildcard line restored.
+
+## Session 24–25 September 2026: two owner actions
+
+- [ ] **studio-restart-0925**: restart the Studio (`Start Studio.cmd`) once the lab session is idle, so the running server loads today's merged `app/` changes. After the restart:
+  - the Windows file-lock retry and plainer failure banner (#945);
+  - Put away on Problems (#950);
+  - the library's *Mine / Agent runs* filter and prompt subtitles (#959; its first open adds two columns to the Workspace database, and this was proved on a copy of your 1,205-asset database);
+  - the Prompt Lab load fix (#951);
+  - the pose-size hold (#947).
+
+  The current banner about job `60934d27` also clears after the restart. Agents did not restart it because another session was using the GPU.
+- [ ] **prepare-large-job-proof (#306)**: #960 merged the prepare-large-job command. It is **off by default** (`config/local.json` flags are false). Its acceptance still needs your approval for one live Windows proof: dry run and refusal cases, memory counters before and after `/free`, and a backend restart only if you approve that step. Say whether to run it, and when the GPU is free.
