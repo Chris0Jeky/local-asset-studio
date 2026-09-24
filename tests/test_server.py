@@ -506,6 +506,18 @@ class ServerTests(unittest.TestCase):
         down=FakeStudio(self.root,[URLError("refused")]); down._last_activity-=11*60
         self.assertFalse(down._idle_tick()); self.assertIn("refused",down.cache_release["last_error"]); self.assertFalse(down._idle_tick()); self.assertEqual(len(down.requests),1)
 
+    def test_idle_tick_only_releases_the_primary_backend(self):
+        """An active isolated backend is never posted /free or /queue; switching back to primary releases once."""
+        s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"ok":True}]); s._last_activity-=11*60
+        s.backends=Mock(active='hidream')
+        self.assertFalse(s._idle_tick()); self.assertEqual(s.requests,[]); self.assertFalse(s._released_since_activity); self.assertEqual(s.cache_release["count"],0)
+        s.backends.active='primary'; s.backends.busy=True
+        self.assertFalse(s._idle_tick()); self.assertEqual(s.requests,[])            # a switch is running: never touch it
+        s.backends.busy=False
+        self.assertTrue(s._idle_tick()); self.assertEqual([r[0][0] for r in s.requests],["/queue","/free"])
+        # Both calls are pinned to the endpoint checked by the guard, so a mid-tick switch cannot retarget /free.
+        self.assertEqual([r[1].get("base_url") for r in s.requests],[s.comfy_url,s.comfy_url])
+
     def test_empty_comfy_response_is_only_allowed_for_free(self):
         """An empty 200 is the /free contract, not a global substitute for required JSON."""
         s=self.studio()

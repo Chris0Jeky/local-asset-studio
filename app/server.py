@@ -1470,10 +1470,14 @@ class Studio:
         """Release ComfyUI's model cache once per idle stretch: only after the configured idle time, only on an idle ComfyUI queue."""
         if self.idle_release_minutes <= 0 or self._released_since_activity: return False
         if time.monotonic() - self._last_activity < self.idle_release_minutes * 60: return False
+        backends = getattr(self, 'backends', None)
+        if backends is not None and (getattr(backends, 'busy', False) or getattr(backends, 'active', 'primary') != 'primary'): return False
+        # Pin both calls to the endpoint checked here: a switch that activates another backend mid-tick retargets comfy_url.
+        url = self.comfy_url
         try:
-            queue = self._request("/queue", timeout=5)
+            queue = self._request("/queue", timeout=5, base_url=url)
             if not isinstance(queue, dict) or any(type(queue.get(key)) is not list or queue.get(key) for key in ("queue_running", "queue_pending")): return False
-            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True)
+            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True, base_url=url)
         except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
             self.cache_release["last_error"] = str(exc)[:200]; self._released_since_activity = True; return False
         self._released_since_activity = True; self._resident = None
