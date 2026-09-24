@@ -868,11 +868,18 @@ class Production:
             if job['status']!='completed':
                 status='interrupted' if job['status']=='not_submitted' and submission_evidence.never_submitted(job) else 'uncertain' if job['status']=='uncertain' else 'failed'
                 self._mutate(identifier,status=status,message=job['message']);return
-        artifacts=self.contact_sheet(identifier)
-        self._mutate(identifier,status='awaiting_review',finished_at=time.time(),artifacts=artifacts,message='Comparison finished. Review candidates and record your choice.')
+        try:artifacts=self.contact_sheet(identifier)
+        except Exception as exc:
+            artifacts=[]
+            self._mutate(identifier,status='awaiting_review',finished_at=time.time(),artifacts=artifacts,message=f'Comparison finished. The contact sheet could not be built ({type(exc).__name__}); review the candidates directly and record your choice.')
+        else:self._mutate(identifier,status='awaiting_review',finished_at=time.time(),artifacts=artifacts,message='Comparison finished. Review candidates and record your choice.')
 
     def contact_sheet(self, identifier):
         from PIL import Image,ImageDraw,ImageOps
+        try:from PIL import UnidentifiedImageError
+        except ImportError:UnidentifiedImageError=OSError
+        try:from workspace import WorkspaceError
+        except ImportError:WorkspaceError=ValueError
         project=self._get(identifier);records=[]
         for index,stage in enumerate(project['plan']['stages']):
             attempt=project['state']['attempts'].get(str(index),{})
@@ -880,14 +887,24 @@ class Production:
             for output in job.get('outputs',[]):
                 if output.get('asset_id') and output.get('media_type')=='image':records.append((stage['label'],output['asset_id']))
         if not records:return []
-        records=records[:16];columns=min(4,len(records));rows=(len(records)+columns-1)//columns
+        records=records[:16];skipped=0;drawable=[];thumbs=[]
+        for label,asset_id in records:
+            try:path=self.studio.assets.file(asset_id)
+            except (WorkspaceError,OSError):skipped+=1;continue
+            try:
+                with Image.open(path) as src:thumb=ImageOps.contain(src.convert('RGB'),(304,320))
+            except (OSError,UnidentifiedImageError,ValueError):skipped+=1;continue
+            drawable.append((label,asset_id));thumbs.append((label,thumb))
+        if not drawable:return []
+        columns=min(4,len(drawable));rows=(len(drawable)+columns-1)//columns
         sheet=Image.new('RGB',(columns*320,rows*356),'#20222c');draw=ImageDraw.Draw(sheet)
-        for i,(label,asset_id) in enumerate(records):
-            with Image.open(self.studio.assets.file(asset_id)) as src:thumb=ImageOps.contain(src.convert('RGB'),(304,320))
+        for i,(label,thumb) in enumerate(thumbs):
             x=(i%columns)*320;y=(i//columns)*356
             sheet.paste(thumb,(x+(320-thumb.width)//2,y+(320-thumb.height)//2));draw.text((x+12,y+330),label,fill='white')
         target=self.root/identifier/'comparison.png';sheet.save(target)
-        self.studio._write_json_atomic(target.with_suffix('.json'),{'labels':records,'note':'Thumbnails only; inspect originals for detail. Labels do not imply preference.'})
+        sidecar={'labels':drawable,'note':'Thumbnails only; inspect originals for detail. Labels do not imply preference.'}
+        if skipped:sidecar['skipped']=skipped
+        self.studio._write_json_atomic(target.with_suffix('.json'),sidecar)
         return [{'path':target.name,'url':f'/api/production/{identifier}/files/{target.name}','sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'role':'comparison'}]
 
     def review(self, identifier, payload):
