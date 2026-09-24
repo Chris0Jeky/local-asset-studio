@@ -2188,6 +2188,30 @@ P65 held 6/6 — G14 ported 2/2 and held eyes-neutral 2/2, B1 partial on both ne
 | p66-ellen-closeup | E2 squat recipe | anifox-v2-baseline | 2026092622 | `845b03c6-1af0-42f2-ba2a-4c221f75734a` |
 | p66-belle-below | E2 squat recipe | yumeflux-ilv1-baseline | 2026092623 | `674ed5c1-3af9-4e79-a294-110e1c4486fb` |
 
+### p66 results
+
+All six completed, 24.3–26.3 s each, no spill. G14 closed with the sheer-off reruns (nothing drifted); solo camera tags confirm the T10 rule on new faces (from_below fires, cowboy shot dead on the squat, close-up weak on the squat).
+
+- p66-kafka-wedding-nolora, WAI, seed `2026092445`, job `9f66628b`, prompt `412e91e0`, 26.3 s, `WAI-Illustration_00137_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white lace wedding bodysuit with veil, chapel night, adult. Lever: sheer-off rerun at the same seed — bodysuit, veil, and stockings stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: white lace opaque glossy. Keep-or-change: keep; G14 sheer-off 1/2.
+- p66-yor-wedding-nolora, CSTati, seed `2026092446`, job `077ae44e`, prompt `9f9bd886`, 24.3 s, `CSTati-v3-Baseline_00123_.png`. Identity: Yor reads, black hair, red eyes, gold rose hair ornaments, white wedding dress with veil, chapel lamps, adult. Lever: sheer-off rerun at the same seed — dress and veil stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: white dress opaque glossy. Keep-or-change: keep; G14 sheer-off 2/2, G14 closes.
+- p66-kafka-below, WAI, seed `2026092620`, job `9c0ae805`, prompt `44bd9ea3`, 26.3 s, `WAI-Illustration_00138_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and black hunter coat, space station night, adult. Lever: `from below` alone on the squat — strong low angle, hips and thighs fill the foreground, face smaller at top. Squat held. Hands: hidden behind the head. Cloth: white shirt sheer, black coat and pants glossy; the wink is unmeasurable at this angle, same profile rule as bent-overs. Keep-or-change: keep.
+- p66-yor-cowboy, CSTati, seed `2026092621`, job `7b7cd022`, prompt `ab748216`, 24.3 s, `CSTati-v3-Baseline_00124_.png`. Identity: Yor reads, black hair, headband, red assassin dress, night garden lamps, adult. Lever: `cowboy shot` alone on the squat — dead tag, full squat frames exactly as without it. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; confirms the T10 rule (cowboy shot works on the bent-over only).
+- p66-ellen-closeup, AniFox, seed `2026092622`, job `845b03c6`, prompt `d5a7abb9`, 26.3 s, `AniFox-v2-Baseline_00088_.png`. Identity: Ellen reads, maid headdress, shark tail, black and white maid uniform, housekeeping hall lamp night, adult. Lever: `close-up` alone on the squat — weak, framing tightens only slightly to a full squat with a bigger face. Smirk and wink show. Hands: hidden behind the head. Cloth: black maid top glossy, white apron. Keep-or-change: keep; confirms the T10 rule (close-up works on the portrait only).
+- p66-belle-below, YumeFlux, seed `2026092623`, job `674ed5c1`, prompt `94ba4443`, 26.2 s, `YumeFlux-ILv1-Baseline_00076_.png`. Identity: Belle reads as a dark-haired young woman in a black and orange video-store uniform among arcade screens at night, adult. Lever: `from below` alone on the squat — mild low angle, weaker than Kafka's read on WAI. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black and orange top glossy. Keep-or-change: keep; camera strength is family-dependent, same as the T10 port rule.
+
+## G15 lab-coat open, B1 Lucy through Aria — p67 wave
+
+P66 held 6/6 — G14 closed (both sheer states, both ports, eyes-neutral), solo camera tags confirm T10 on new faces. This wave opens G15 with a white lab coat over a blouse and pencil skirt on both G-series seeds, and runs B1 on four more cleared adults (Lucy, Koleda, Piper, Aria — all owner-confirmed eligible). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p67-kafka-labcoat | p5-kafka-squat | wai | 2026092445 | `809b74eb-e999-46e2-95d4-af6948525bd6` |
+| p67-yor-labcoat | p5-yor-squat | cstati-v3-baseline | 2026092446 | `d0730f4e-4238-4379-8a69-3baef6af6767` |
+| p67-lucy-smallbust | B1 recipe | anifox-v2-baseline | 2026092624 | `2cdc4a4a-d770-4714-a87a-32739cbcd9cc` |
+| p67-koleda-smallbust | B1 recipe | cstati-v3-baseline | 2026092625 | `199338fa-3f97-4a77-b27f-b6ba6e848775` |
+| p67-piper-smallbust | B1 recipe | wai | 2026092626 | `f7296472-9389-4d18-b460-65711726aa32` |
+| p67-aria-smallbust | B1 recipe | yumeflux-ilv1-baseline | 2026092627 | `ee2fb693-c5d8-4ded-b1fb-7569d18f0faa` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
