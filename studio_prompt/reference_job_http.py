@@ -62,4 +62,5 @@ def extend_handler(base):
             except (ValueError,TypeError,KeyError,IndexError,RecursionError,OSError,sqlite3.Error) as exc:return self._reference_error(exc)
             finally:
                 if held is not None:held.release()
-    return ReferenceJobHandler
+    from .resource_cleanup_http import extend_handler as extend_cleanup
+    return extend_cleanup(ReferenceJobHandler)
