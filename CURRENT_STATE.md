@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab closeout: p93 judged 7/7, G24 closed, all 552 cells organised and saved — 25 September 2026 (night local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P93 held 7/7, judged from the files (all receipts 404, job store cleared; files 20:13–20:15, no prompt ids recorded): G24 CLOSES (crawl-as-bend, portrait, seated rear, Anima/JANIMA ports x2, all intact), C1 `from below` measured on the miko pair. Session organisation: 552 judged cells (waves p10–p93) each have a contact JPEG in `examples/nsfw-lab/` (gitignored) with a tracked `MANIFEST.json` entry (670/670 `verify` ok) plus `index.html`; full PNGs hardlink-sorted under `ComfyUI/output/Studio-lab-20260923/` (`by-wave/`, `by-character/`); resume map in `experiments/curated/nsfw-lab-20260923/INDEX.md`. To resume: read INDEX.md, pick the next lever from TECHNIQUES.md, queue 6–10 cells. Still open: second LoRA adapter (Civitai 403), q-29/q-31, four source conflicts, fresh PR for this branch (PR #899 merged 24 September 2026 15:26 UTC).
+
 ## NSFW lab overnight: p92 judged 6/6, G24 measured 8, hakama beats the hike, p93 queued — 25 September 2026 (21:45 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
