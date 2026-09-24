@@ -336,5 +336,25 @@ class AssetReadTests(unittest.TestCase):
             self.expect_error('asset_read_unavailable',self.page)
         self.assertLess(max(sizes),1024,'A corrupt scalar was materialized without a SQL bound')
 
+    def test_legacy_media_type_lists_in_page_and_exact_filter(self):
+        with self.store.connection() as db:
+            db.execute("UPDATE assets SET media_type='image/png' WHERE id='asset-000006'")
+        unfiltered = self.page()
+        self.assertIn('image/png', [a['media_type'] for a in unfiltered['assets']],
+                      'A listed legacy media type must be exactly filterable')
+        selected = self.page(filters={'media_type': 'image/png'})
+        self.assertEqual([a['id'] for a in selected['assets']], ['asset-000006'])
+        self.assertIsNone(selected['next_cursor'])
+        for bad in ('x'*33, 'bad\x01type'):
+            with self.subTest(filter=repr(bad)):
+                self.expect_error('asset_read_invalid', self.page, filters={'media_type': bad})
+        with self.store.connection() as db:
+            db.execute('UPDATE assets SET media_type=? WHERE id=?', ('x'*33, 'asset-000006'))
+        before = self.store.snapshot()
+        self.expect_error('asset_read_unavailable', self.page)
+        with self.store.connection() as db:
+            self.assertEqual(db.execute("SELECT media_type FROM assets WHERE id='asset-000006'").fetchone()[0], 'x'*33)
+        self.assertEqual(self.store.snapshot(), before, 'Reading must not repair or rewrite stored text')
+
 
 if __name__=='__main__':unittest.main()
