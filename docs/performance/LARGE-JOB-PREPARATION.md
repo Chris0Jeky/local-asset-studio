@@ -62,7 +62,10 @@ converted to `unknown`; the action is not replayed. Receipts are bounded to 32 i
 2. Prove the selected listener is exactly one configured process using PID plus
    creation time, then prove the real Comfy queue is empty.
 3. Prepare the exact graph and bind its runtime identity to an exact #178 stage
-   profile. Missing profiles or counters remain `unknown`.
+   profile: the `resource_admission_profiles` entry keyed by that identity's
+   `identity_sha256`, validated by `resource_admission.profile_for`. A workflow bound
+   to a backend other than the selected one is refused. Missing profiles or counters
+   remain `unknown`.
 4. Account for active Studio reservations and evaluate the same RAM, Windows commit
    and VRAM dimensions as resource admission.
 5. If already safe, return Ready without an action. A dry run stops here after
