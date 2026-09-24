@@ -73,10 +73,11 @@ class WorkspaceTests(unittest.TestCase):
         with self.assertRaisesRegex(workspace.WorkspaceError,'Name and recipe are required'): self.store.save_setup({'name':'','recipe':{'preset':'test'}})
         with self.assertRaisesRegex(workspace.WorkspaceError,'Setup name must be text up to 120 characters'): self.store.save_setup({'name':'x'*121,'recipe':{'preset':'test'}})
         with self.assertRaisesRegex(workspace.WorkspaceError,'Name and recipe are required'): self.store.save_setup({'name':'OK','recipe':'not-a-dict'})
-        with self.assertRaisesRegex(workspace.WorkspaceError,'Saved setup is too large'): self.store.save_setup({'name':'Big','recipe':{'preset':'test','pad':'x'*(128*1024)}})
+        overhead=len(json.dumps({'preset':'test','pad':''})); limit=128*1024
+        over={'preset':'test','pad':'x'*(limit-overhead+1)}; self.assertEqual(len(json.dumps(over)),limit+1)
+        with self.assertRaisesRegex(workspace.WorkspaceError,'Saved setup is too large'): self.store.save_setup({'name':'Big','recipe':over})
         self.assertEqual(self.store.setups(),[])
-        overhead=len(json.dumps({'preset':'test','pad':''})); pad=128*1024-overhead-10; recipe={'preset':'test','pad':'x'*pad}
-        self.assertLess(len(json.dumps(recipe)),128*1024)
+        recipe={'preset':'test','pad':'x'*(limit-overhead)}; self.assertEqual(len(json.dumps(recipe)),limit)   # exactly 128 KiB is accepted
         saved=self.store.save_setup({'name':'Boundary','recipe':recipe}); self.assertEqual(saved['name'],'Boundary')
         self.assertEqual(self.store.setups()[0]['recipe'],recipe)
 
