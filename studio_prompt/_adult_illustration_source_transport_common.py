@@ -120,7 +120,7 @@ def endpoint_provider(url: str, label: str = "metadata URL") -> str:
             raise ValueError("Hugging Face metadata endpoint requires blobs=true only")
         return "huggingface"
     if host in {"civitai.com", "www.civitai.com"}:
-        if CIVITAI_METADATA_PATH.fullmatch(parsed.path) is None or parsed.query:
+        if CIVITAI_METADATA_PATH.fullmatch(parsed.path) is None or "?" in url:
             raise ValueError("Civitai URL is not a supported metadata endpoint")
         return "civitai"
     raise ValueError(f"{label} host is not supported")
