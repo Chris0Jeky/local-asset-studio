@@ -1139,3 +1139,27 @@ P23 held 6/6. `winking` goes onto two held crawls at the same seed (T17's last f
 | p24-tifa-wink-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `8e2f6fd6-025f-4e50-92c3-de6da9125125` |
 | p24-morgan-seiza-anima | X1 | anima-v1-baseline | 2026092607 | `2277c030-33ce-498f-85df-bc8f4d2bc13c` |
 | p24-acheron-seiza-janima | X1 | janima-v1-baseline | 2026092608 | `7c155bc9-62f1-4cd6-ac67-cfabf91d7bb2` |
+
+### p24 results
+
+All six completed, 14.2–26.3 s each. No spill line on any receipt. `winking` fired on both crawls and on both ported-family cells, so T17 now covers portraits, squats, crawls, Anima, and JANIMA. The seiza words port clean to both families. X1 now covers T7, T8, T12, and T14.
+
+- p24-sabrina-wink, AniFox, seed `2026092498`, job `6c109fb7`, prompt `86e8d666`, 24.3 s, `AniFox-v2-Baseline_00048_.png`. Identity: same Sabrina read, gym hall, adult. Lever: `winking` added — one eye closed; tag fired on the crawl face. Hands: both flat, normal-looking. Cloth: same dark dress covering. Mouth slightly open. Keep-or-change: keep.
+- p24-sonia-wink, YumeFlux, seed `2026092513`, job `8c862ced`, prompt `97f63169`, 24.2 s, `YumeFlux-ILv1-Baseline_00045_.png`. Identity: same Sonia read, lab, adult. Lever: `winking` added — one eye closed; tag fired. Hands: tucked. Cloth: green jacket hiked, rear bare as in p13. Mouth slightly open. Keep-or-change: keep.
+- p24-yor-wink-janima, JANIMA, seed `2026092604`, job `49c902d2`, prompt `24e7e951`, 26.3 s, `JANIMA-v1-Baseline_00010_.png`. Identity: same Yor read, lamp interior, adult. Lever: `winking` added — one eye closed; tag fired on JANIMA. Hands: hidden. Cloth: same glossy red dress. Mouth slightly open. Keep-or-change: keep.
+- p24-tifa-wink-anima, Anima, seed `2026092601`, job `8e2f6fd6`, prompt `97648803`, 21.4 s, `Anima-v1-Baseline_00047_.png`. Identity: same Tifa read, bar, adult. Lever: `winking` added — one eye closed; tag fired on Anima. Hands: one flat, normal-looking. Cloth: same tank and glossy skirt. Mouth slightly open. Keep-or-change: keep.
+- p24-morgan-seiza-anima, Anima, seed `2026092607`, job `2277c030`, prompt `2df2eda3`, 14.2 s, `Anima-v1-Baseline_00048_.png`. Identity: Morgan reads, pale blue-white hair, stone hall, violet light, adult. Lever: T14 words ported — seiza held, looking back, tongue out. Hands: tucked. Feet hidden under the dress. Cloth: white-and-blue dress with open sides. Keep-or-change: keep.
+- p24-acheron-seiza-janima, JANIMA, seed `2026092608`, job `7c155bc9`, prompt `f8fcc977`, 19.6 s, `JANIMA-v1-Baseline_00011_.png`. Identity: Acheron reads, grey hair, train car, red light, adult. Lever: T14 words ported — seiza held, looking back, tongue out. Hands: tucked. Feet visible in dark stockings, normal-looking. Cloth: black dress glossy. Keep-or-change: keep.
+
+## Seated and portrait ports, winks on look-backs — p25 wave
+
+P24 held 6/6. The last two word-tails port to Anima and JANIMA at new seeds: the seated rear (T15) and the portrait (T16, sheer panel not expected without the LoRA — framing and face are the test). The remaining two cells put `winking` on two held seiza look-backs at the same seed (T17's profile test). Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p25-sae-seated-anima | X1 | anima-v1-baseline | 2026092609 | `aefdbb82-27c1-4e88-9c28-82c5f3e7072c` |
+| p25-nessa-seated-janima | X1 | janima-v1-baseline | 2026092610 | `d4ef121f-35ba-41a4-996a-af2ca07e80b7` |
+| p25-kafka-portrait-anima | X1 | anima-v1-baseline | 2026092611 | `f1e29498-b28e-4d6f-9e83-f4957c67eb2a` |
+| p25-yelan-portrait-janima | X1 | janima-v1-baseline | 2026092612 | `08440813-99ef-4704-9171-5bba2e8976ba` |
+| p25-morgan-wink | p14-morgan-seiza | wai | 2026092521 | `13db274d-7e6b-4e16-b971-ad50708224f8` |
+| p25-acheron-wink | p14-acheron-seiza | cstati-v3-baseline | 2026092522 | `22ba91ae-8af0-4562-9c36-71482975b3f8` |

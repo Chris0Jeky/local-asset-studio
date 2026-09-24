@@ -272,7 +272,7 @@ Use when a held T16 still should wink. Add `winking` after `smile` at the same s
 
 Held: `p22-kafka-wink` (CSTati, job `2c3416dc`, prompt `e83be89d`, `CSTati-v3-Baseline_00052_.png`, 27.4 s), `p22-nero-wink` (AniFox, job `e877dbf5`, prompt `f28b0deb`, `AniFox-v2-Baseline_00047_.png`, 24.3 s). Two characters held it, so it promotes.
 
-Breaks it: nothing yet. P23 extended it to squats at the same seed: `p23-jane-wink` (YumeFlux, job `d597cd2c`, prompt `49361148`, `YumeFlux-ILv1-Baseline_00043_.png`, 25.3 s), `p23-elesa-wink` (YumeFlux, job `c50cf68e`, prompt `a9aff584`, `YumeFlux-ILv1-Baseline_00044_.png`, 10.1 s). The smaller face still winks. Untested on crawls.
+Breaks it: nothing yet. P23 extended it to squats at the same seed: `p23-jane-wink` (YumeFlux, job `d597cd2c`, prompt `49361148`, `YumeFlux-ILv1-Baseline_00043_.png`, 25.3 s), `p23-elesa-wink` (YumeFlux, job `c50cf68e`, prompt `a9aff584`, `YumeFlux-ILv1-Baseline_00044_.png`, 10.1 s). P24 extended it to crawls and to the ported family: `p24-sabrina-wink` (AniFox, job `6c109fb7`, prompt `86e8d666`, `AniFox-v2-Baseline_00048_.png`, 24.3 s), `p24-sonia-wink` (YumeFlux, job `8c862ced`, prompt `97f63169`, `YumeFlux-ILv1-Baseline_00045_.png`, 24.2 s), `p24-yor-wink-janima` (JANIMA, job `49c902d2`, prompt `24e7e951`, `JANIMA-v1-Baseline_00010_.png`, 26.3 s), `p24-tifa-wink-anima` (Anima, job `8e2f6fd6`, prompt `97648803`, `Anima-v1-Baseline_00047_.png`, 21.4 s). T17 now covers every front face on all six presets. Untested on look-back profiles.
 
 ## X1 — words-only ports to Anima and JANIMA
 
@@ -282,7 +282,9 @@ Held: `p22-tifa-crawl-anima` (Anima, job `34fe04cd`, prompt `53b8ba3f`, `Anima-v
 
 P23 extended the ports to the bent-over words: `p23-narberal-bent-anima` (Anima, job `7d19abbc`, prompt `ce56ce98`, `Anima-v1-Baseline_00045_.png`, 23.7 s), `p23-tifa-bent-janima` (JANIMA, job `59a5e1c7`, prompt `77ea4f90`, `JANIMA-v1-Baseline_00008_.png`, 21.3 s). X1 now covers T7, T8, and T12. Expression layers fire on the ported family too: `p23-tifa-eyes-anima` (Anima, job `bc40f5b5`, prompt `cc5d2a34`, `Anima-v1-Baseline_00046_.png`, 24.2 s), `p23-yor-eyes-janima` (JANIMA, job `7a8dd04e`, prompt `cb0d0344`, `JANIMA-v1-Baseline_00009_.png`, 25.3 s).
 
-Next lever (p24, queued): `winking` on held crawls and on the p22 ports, and the seiza words on Anima and JANIMA.
+P24 extended the ports to the seiza words: `p24-morgan-seiza-anima` (Anima, job `2277c030`, prompt `2df2eda3`, `Anima-v1-Baseline_00048_.png`, 14.2 s), `p24-acheron-seiza-janima` (JANIMA, job `7c155bc9`, prompt `f8fcc977`, `JANIMA-v1-Baseline_00011_.png`, 19.6 s). X1 now covers T7, T8, T12, and T14.
+
+Next lever (p25, queued): the seated and portrait words on Anima and JANIMA, and `winking` on two held seiza look-backs.
 
 ## M2 measured
 
