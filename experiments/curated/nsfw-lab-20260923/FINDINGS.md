@@ -1403,3 +1403,27 @@ P34 held 6/6 and promoted G4. E2's squat stands at one hold, and E1's lesson say
 | p35-yor-bikini-janima | G4 | janima-v1-baseline | 2026092621 | `88a217e9-14b8-49ef-b32a-c9d9f63f3f52` |
 | p35-kafka-bikini-eyes | p34-kafka-bikini | wai | 2026092445 | `44caf971-df52-4c4b-959d-9e5855387e6a` |
 | p35-yor-bikini-eyes | p34-yor-bikini | cstati-v3-baseline | 2026092446 | `326ed110-a454-429a-ae36-4dcd83650467` |
+
+### p35 results
+
+All six completed, 23.3–27.4 s each. No spill line on any receipt. E2 held on both squats — including Elesa, who broke E1 — so E2 claims the squat at 3/3 plus the crawl. G4 ported clean to both families with no sheer LoRA. `bedroom eyes` fired on both G4 cells, but the Yor cell redrew its garment at the same seed: the tag is not garment-neutral there.
+
+- p35-elesa-smirkwink, YumeFlux, seed `2026092467`, job `bbf7893e`, prompt `528e7e44`, 26.4 s, `YumeFlux-ILv1-Baseline_00055_.png`. Identity: Elesa reads strong, blonde hair, headphones, yellow and black jacket, runway backstage, violet light, adult. Lever: `parted lips` to `smirk, winking` — both show on the squat face; the E1 breaker holds E2. Squat held. Hands: hidden. Cloth: white top sheer over a black bra, glossy and wet. Keep-or-change: keep.
+- p35-kafka-smirkwink, WAI, seed `2026092445`, job `5a4e5b8c`, prompt `1b1e9dc1`, 24.2 s, `WAI-Illustration_00080_.png`. Identity: Kafka reads, magenta hair, sunglasses on head, white shirt, black jacket, rooftop, adult. Lever: same swap — smirk and wink both show. Squat held. Hands: hidden. Cloth: shirt sheer-glossy, wet. Keep-or-change: keep.
+- p35-kafka-bikini-anima, Anima, seed `2026092620`, job `f5ed108f`, prompt `ab8632f7`, 26.2 s, `Anima-v1-Baseline_00058_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, violet light, adult. Lever: G4 with no sheer LoRA — a clean black bikini on the squat; G4 ports to Anima. Eyes near-closed, the Anima squat pattern again. Hands: hidden. Cloth: black bikini glossy and wet. Keep-or-change: keep.
+- p35-yor-bikini-janima, JANIMA, seed `2026092621`, job `88a217e9`, prompt `377d9567`, 23.3 s, `JANIMA-v1-Baseline_00021_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold earrings, choker, lamp interior, adult. Lever: G4 with no sheer LoRA — a clean red bikini on the squat; G4 ports to JANIMA. Parted lips, blush, sweat all show, eyes open. Hands: hidden. Cloth: red bikini glossy and wet. Keep-or-change: keep.
+- p35-kafka-bikini-eyes, WAI, seed `2026092445`, job `44caf971`, prompt `5b8e40f7`, 27.4 s, `WAI-Illustration_00081_.png`. Identity: same Kafka read, rooftop, adult. Lever: `bedroom eyes` added — heavy-lidded glowing eyes; tag fired. Garment drift: the sheer stack added a translucent white overshirt over the intact black bikini. Hands: hidden. Squat held. Keep-or-change: keep; the bikini survived, the robe is the note.
+- p35-yor-bikini-eyes, CSTati, seed `2026092446`, job `326ed110`, prompt `c666ef14`, 24.2 s, `CSTati-v3-Baseline_00064_.png`. Identity: Yor reads, black hair, red eyes, gold roses, ballroom lamps, adult. Lever: `bedroom eyes` added — eyes heavy; tag fired. Break: at the same seed the red bikini redrew as a red sheer one-piece with a black obi sash — G4 shape lost, so the eyes tag is not garment-neutral on this cell. Hands: hidden. Squat held. Keep-or-change: keep the still, note the break.
+
+## Sheer-off bikinis, E2 where E1 broke, E2 on ports — p36 wave
+
+P35 held 5.5/6 and gave G4 a sheer caveat: the ports read true bikinis with no sheer LoRA, while the sheer stack drifts (WAI robe) and rewrites (CSTati teddy) swimwear. This wave reruns both G4 cells with the sheer stack off at the same seed (LoRA to 0, head dropped — the stack is the lever), runs E2 on Yor's squat where E1 broke and on Sonia's crawl for a second crawl point, and swaps `parted lips` for E2 on the two held port bikinis at the same seed. Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p36-kafka-bikini-nolora | p34-kafka-bikini | wai | 2026092445 | `cacea430-cbdb-49f2-82b1-7969c2e33774` |
+| p36-yor-bikini-nolora | p34-yor-bikini | cstati-v3-baseline | 2026092446 | `26dd4c09-87df-4480-89ae-1e5822559f6a` |
+| p36-yor-smirkwink | p6-yor-lips | cstati-v3-baseline | 2026092446 | `9405f04d-72af-427c-afea-40266fb38ec8` |
+| p36-sonia-smirkwink | p28-sonia-grin | yumeflux-ilv1-baseline | 2026092513 | `8fe76874-6e1c-4042-8d7b-16d72d13ca21` |
+| p36-kafka-smirkwink-anima | p35-kafka-bikini-anima | anima-v1-baseline | 2026092620 | `a90a1833-4aae-4fc6-8f92-736cc583063e` |
+| p36-yor-smirkwink-janima | p35-yor-bikini-janima | janima-v1-baseline | 2026092621 | `8ef02041-8237-4e52-a0f0-50ebdb1a9002` |

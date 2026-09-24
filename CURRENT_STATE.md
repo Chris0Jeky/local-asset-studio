@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p35 judged 5.5/6, E2 claims the squat, p36 queued — 24 September 2026 (12:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P35: E2 held on both squats including Elesa the E1 breaker (`bbf7893e`, `5a4e5b8c`, E2 claims the squat at 3/3); G4 ported clean to Anima and JANIMA (`f5ed108f`, `88a217e9`); bedroom eyes fired on both G4 cells but Yor's bikini rewrote to a sheer one-piece at the same seed (`44caf971` drift, `326ed110` break — sheer stack off for true bikinis). P36 queued: sheer-off G4 reruns (Kafka `cacea430`, Yor `26dd4c09`), E2 on Yor's squat (`9405f04d`) and Sonia's crawl (`8fe76874`), E2 on port bikinis (Kafka `a90a1833`, Yor `8ef02041`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p34 judged 6/6, G4 promoted, p35 queued — 24 September 2026 (12:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
