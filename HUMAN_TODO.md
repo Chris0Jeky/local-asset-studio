@@ -180,12 +180,17 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
 ## Session 24–25 September 2026: two owner actions
 
-- [ ] **studio-restart-0925**: restart the Studio (`Start Studio.cmd`) once the lab session is idle, so the running server loads today's merged `app/` changes. After the restart:
+- [ ] **studio-restart-0925**: restart the Studio once the lab session is idle, so the running server loads today's merged Python changes:
   - the Windows file-lock retry and plainer failure banner (#945);
   - Put away on Problems (#950);
-  - the library's *Mine / Agent runs* filter and prompt subtitles (#959; its first open adds two columns to the Workspace database, and this was proved on a copy of your 1,205-asset database);
-  - the Prompt Lab load fix (#951);
-  - the pose-size hold (#947).
+  - the library's *Mine / Agent runs* filter and prompt subtitles (#959; its first open adds two columns to the Workspace database, and this was proved on a copy of your 1,205-asset database).
 
-  The current banner about job `60934d27` also clears after the restart. Agents did not restart it because another session was using the GPU.
+  Static-page fixes (the Prompt Lab load fix #951, the pose-size hold #947) are already live, because pages are served from disk. `Start Studio.cmd` alone does **not** restart a running Studio; it reuses the one it finds.
+
+  To restart:
+  1. Check that no job is running (Create → Recent runs) and no Runs & review plan is running.
+  2. Stop the Python process whose command line is `app\server.py`, for example in PowerShell: `Get-CimInstance Win32_Process | ? CommandLine -like '*app\server.py*' | % { Stop-Process -Id $_.ProcessId }`.
+  3. Double-click `Start Studio.cmd`.
+
+  The current banner about job `60934d27` clears after the restart. Agents did not restart it because another session was using the GPU.
 - [ ] **prepare-large-job-proof (#306)**: #960 merged the prepare-large-job command. It is **off by default** (`config/local.json` flags are false). Its acceptance still needs your approval for one live Windows proof: dry run and refusal cases, memory counters before and after `/free`, and a backend restart only if you approve that step. Say whether to run it, and when the GPU is free.
