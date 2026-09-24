@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p67 judged 5.5/6, G15 at 1.5/2, B1 at 14 faces, p68 queued — 25 September 2026 (03:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P67 held 5.5/6: G15 at 1.5/2 (Kafka `809b74eb` full lab read; Yor `d0730f4e` garment holds, place reads office — needs equipment nouns); B1 Koleda clean (`199338fa`), Lucy/Piper/Aria partial (`2cdc4a4a`, `f7296472`, `ee2fb693`; B1 now 3 clean, 10 partial, 1 break across 14 faces). P68 queued: G15 ports (Kafka `37d0b80a`, Yor `d4df9293`), Kafka eyes (`6b8835c4`), Yor lab-place fix (`497b66c3`), B1 on Cissia (`84b8259f`) and Promeia (`40c369b2`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p66 judged 6/6, G14 closed, camera layer measured, p67 queued — 25 September 2026 (02:50 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
