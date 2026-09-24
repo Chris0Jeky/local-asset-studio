@@ -119,10 +119,19 @@ class RuntimeMixin:
                   reservations: dict[str, Any]) -> dict[str, Any]:
         ledger = resource_admission.ReservationLedger()
         if any(reservations["totals"].values()):
-            ledger.restore("existing-reservations", {
-                "identity_sha256": "aggregate",
-                "reservation": reservations["totals"],
-            })
+            # The merged ledger restores only validated, hash-bound receipts, so the
+            # aggregate of reservations held elsewhere is expressed as one.
+            owner = "existing-reservations"
+            record = {
+                "schema": resource_admission.SCHEMA,
+                "owner_id": owner,
+                "kind": "aggregate",
+                "state": "reserved",
+                "identity_sha256": resource_admission._digest({"owners": reservations["owners"]}),
+                "reservation": {key: reservations["totals"][key] for key in resource_admission.DIMENSIONS},
+            }
+            record["receipt_sha256"] = resource_admission._digest(record)
+            ledger.restore(owner, record)
         raw = ledger.admit("large-job-preparation", identity, profile, observation)
         return {
             "decision": raw["decision"],
@@ -143,6 +152,9 @@ class RuntimeMixin:
         identity = resource_admission.workflow_identity(
             self.studio, preset, graph, observation.get("runtime") or {}
         )
+        if identity.get("backend_id") != first_backend["profile_id"]:
+            # Releasing or restarting the selected backend proves nothing for a job bound elsewhere.
+            raise PreparationError("The prepared workflow targets a backend other than the selected owned backend")
         try:
             profile = resource_admission.profile_for(self.studio, identity)
         except ValueError as exc:
