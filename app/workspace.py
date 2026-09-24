@@ -436,7 +436,14 @@ class AssetWorkspace:
             return [dict(r, recipe=json.loads(r["recipe"])) for r in db.execute("SELECT * FROM setups ORDER BY created_at DESC")]
 
     def save_setup(self, payload):
-        identifier = payload.get("id") or uuid.uuid4().hex
+        if not isinstance(payload, dict):
+            raise WorkspaceError("Setup request must be an object")
+        if "id" in payload:
+            identifier = payload["id"]
+            if not isinstance(identifier, str) or not identifier or len(identifier) > 128:
+                raise WorkspaceError("Setup ID must be a non-empty string up to 128 characters")
+        else:
+            identifier = uuid.uuid4().hex
         with self.connection() as db:
             if payload.get("action") == "delete":
                 db.execute("DELETE FROM setups WHERE id=?", (identifier,))
