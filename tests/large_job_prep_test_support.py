@@ -2,14 +2,21 @@ from __future__ import annotations
 
 import copy
 import json
+import sys
 import tempfile
 import threading
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-import resource_admission
-from large_job_preparation import LargeJobPreparation, PreparationError
+# Standalone runs (one test module) must not depend on another module having
+# put app/ on the path first.
+APP = str(Path(__file__).resolve().parents[1] / "app")
+if APP not in sys.path:
+    sys.path.insert(0, APP)
+
+import resource_admission  # noqa: E402
+from large_job_preparation import LargeJobPreparation, PreparationError  # noqa: E402
 
 GIB = 1024 ** 3
 
