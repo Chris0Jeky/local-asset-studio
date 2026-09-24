@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p64 judged 6/6, G14 promoted, E2 at 77/77 complete, p65 queued — 25 September 2026 (02:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P64 held 6/6: E2 burn-down complete at 77/77 (Zhezhi `fa36e824`, Phoebe `0f5b29e9`); G14 promoted on the opening pair (Kafka `ca287062`, Yor `37b0c53c` — veil back, gloves, full wedding read); B1 closed-garment retests confirm the caveat twice (Trigger zipped coat `eca8e632`, Dialyn long sleeves `a4660ff7`, both moderate). P65 queued: G14 ports (Kafka `e6a7b947`, Yor `0ca9d9dd`), G14 eyes (Kafka `4be448bd`, Yor `a05f4f31`), B1 on Ellen (`1627685e`) and Belle (`3abd8f5c`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p63 judged 6/6, E2 at 75/75, G14 opens, p64 queued — 25 September 2026 (01:35 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.

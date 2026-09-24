@@ -2140,6 +2140,30 @@ P63 held 6/6 — E2 generalization at 75/75 first try. This wave finishes the am
 | p64-trigger-closedcoat | p62-trigger-smallbust | anifox-v2-baseline | 2026092616 | `eca8e632-473b-4ff1-87d5-abda6282f29c` |
 | p64-dialyn-longsleeve | p62-dialyn-smallbust | yumeflux-ilv1-baseline | 2026092617 | `a4660ff7-6856-4e6f-a37a-46b127399d40` |
 
+### p64 results
+
+All six completed, 24.5–56.7 s each, no spill. E2 generalization reached 77/77 first try (burn-down complete); G14 opened 2/2 and promotes; B1 closed-garment retests confirm the garment caveat.
+
+- p64-zhezhi-smirkwink, AniFox, seed `2026092614`, job `fa36e824`, prompt `6d07196c`, 36.4 s, `AniFox-v2-Baseline_00085_.png`. Identity: Zhezhi reads as a dark blue-haired artist in a white and blue dress at a studio lamp at night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: white dress translucent-sheer, the hardest transparency of the night. Keep-or-change: keep.
+- p64-phoebe-smirkwink, CSTati, seed `2026092615`, job `0f5b29e9`, prompt `dcf3da1d`, 52.8 s, `CSTati-v3-Baseline_00119_.png`. Identity: Phoebe reads as a blonde acolyte in a gold and white dress in a cathedral at night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: gold dress glossy, white top sheer. Keep-or-change: keep.
+- p64-kafka-wedding, WAI, seed `2026092445`, job `ca287062`, prompt `bd7f5df3`, 56.7 s, `WAI-Illustration_00135_.png`. Identity: Kafka reads, long magenta hair, white lace wedding bodysuit with veil back and gloves, chapel night, adult. Lever: outfit to wedding dress — veil back so the face stays clear, full read. Squat held. Hands: hidden in long gloves behind the head. Cloth: white lace bodysuit sheer-glossy. Keep-or-change: keep; G14 1/2.
+- p64-yor-wedding, CSTati, seed `2026092446`, job `37b0c53c`, prompt `29dcd6ad`, 28.3 s, `CSTati-v3-Baseline_00120_.png`. Identity: Yor reads, long black hair, red eyes, gold hair ornaments, white wedding dress with veil back and long gloves, chapel lamp night, adult. Lever: outfit to wedding dress — veil back, face clear, full read again. Squat held. Hands: hidden in gloves behind the head. Cloth: white dress glossy with sheer panels. Keep-or-change: keep; G14 2/2, promotes.
+- p64-trigger-closedcoat, AniFox, seed `2026092616`, job `eca8e632`, prompt `dd6b3f69`, 28.3 s, `AniFox-v2-Baseline_00086_.png`. Identity: Trigger reads, short silver hair, closed black and white coat over a white shirt and tie, sniper rifle prop, neon street night, adult. Lever: B1 in a closed garment — coat reads zipped shut and the bust reads moderate, smaller than the p62 open-coat break but not fully small. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white shirt translucent-sheer, black coat and pants glossy. Keep-or-change: keep as a partial-plus; the closed garment confirms the B1 caveat (garment does the work with the tag).
+- p64-dialyn-longsleeve, YumeFlux, seed `2026092617`, job `a4660ff7`, prompt `61d3098a`, 30.4 s, `YumeFlux-ILv1-Baseline_00075_.png`. Identity: Dialyn reads as a dark teal-haired performer in a black and gold long-sleeve dress with a high choker neckline under stage lights at night, adult. Lever: B1 in a closed garment — sleeves and neckline held, bust reads moderate. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: dark teal dress glossy latex, gold jewelry intact. Keep-or-change: keep as a partial; same caveat.
+
+## G14 ports and eyes, Ellen and Belle B1 — p65 wave
+
+P64 held 6/6 — E2 burn-down complete at 77/77, G14 promoted on the opening pair, B1's garment caveat confirmed twice. This wave ports G14 to both families with no sheer LoRA, adds `bedroom eyes` to both wedding cells at the same seed, and runs B1 on two more canonically modest-busted cleared adults (Ellen, in-game adulthood line + 18–19 consensus; Belle, owner-confirmed eligible — both adult-in-canon per the cleared matrix). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p65-kafka-wedding-anima | p64-kafka-wedding | anima-v1-baseline | 2026092640 | `e6a7b947-4543-4a46-a157-3b8c94b2ac7e` |
+| p65-yor-wedding-janima | p64-yor-wedding | janima-v1-baseline | 2026092641 | `0ca9d9dd-a8c5-4c3c-beb7-46dedac56dbe` |
+| p65-kafka-wedding-eyes | p64-kafka-wedding | wai | 2026092445 | `4be448bd-58ce-4bbd-99d7-79b56c48ea02` |
+| p65-yor-wedding-eyes | p64-yor-wedding | cstati-v3-baseline | 2026092446 | `a05f4f31-8306-48f0-b2f9-b4a140a48505` |
+| p65-ellen-smallbust | B1 recipe | anifox-v2-baseline | 2026092618 | `1627685e-7141-4638-bdf3-839aa54e82dd` |
+| p65-belle-smallbust | B1 recipe | cstati-v3-baseline | 2026092619 | `3abd8f5c-692a-419f-9042-693d96335a8d` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
