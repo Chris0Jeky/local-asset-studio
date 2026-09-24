@@ -168,6 +168,40 @@ class WorkspaceUpdateGuardTests(unittest.TestCase):
             self.store.update(payload)
         self.assertAssetUnchanged(revision, title)
 
+    def test_scalar_field_shapes_refused_atomically(self):
+        cases = (
+            ('title', 123, 'title must be text up to 200 characters'),
+            ('title', ['x'], 'title must be text up to 200 characters'),
+            ('title', None, 'title must be text up to 200 characters'),
+            ('title', 'x' * 201, 'title must be text up to 200 characters'),
+            ('notes', 5, 'notes must be text up to 8000 characters'),
+            ('notes', {'a': 1}, 'notes must be text up to 8000 characters'),
+            ('notes', 'x' * 8001, 'notes must be text up to 8000 characters'),
+            ('favorite', 1, 'Favorite must be true or false'),
+            ('favorite', 0, 'Favorite must be true or false'),
+            ('favorite', 'true', 'Favorite must be true or false'),
+            ('favorite', None, 'Favorite must be true or false'),
+            ('review', 'accepted', 'Unknown review state'),
+            ('review', ['selected'], 'Unknown review state'),
+            ('tags', 'ink', 'Use up to 30 tags'),
+            ('tags', {'ink': True}, 'Use up to 30 tags'),
+            ('tags', ['t%d' % i for i in range(31)], 'Use up to 30 tags'),
+            ('tags', ['ink', 1], 'Tag must be text up to 60 characters'),
+            ('tags', ['x' * 61], 'Tag must be text up to 60 characters'),
+            ('tags', [['nested']], 'Tag must be text up to 60 characters'),
+        )
+        for field, value, message in cases:
+            with self.subTest(field=field, value=repr(value)[:40]):
+                before = self.store.get(self.asset)
+                overrides = {field: value}
+                if field != 'title':
+                    overrides['title'] = 'Should not apply'
+                with self.assertRaisesRegex(workspace.WorkspaceError, message):
+                    self.store.update(self.valid_payload(**overrides))
+                after = self.store.get(self.asset)
+                for key in ('metadata_revision', 'title', 'notes', 'favorite', 'review', 'tags'):
+                    self.assertEqual(after[key], before[key], key)
+
     def test_valid_payload_succeeds_control(self):
         revision, _ = self.snapshot_asset()
         payload = self.valid_payload()
