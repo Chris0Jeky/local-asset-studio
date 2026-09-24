@@ -2770,6 +2770,28 @@ P90 held 7/7 — G23 closed on all thirteen reads, C1 `cowboy shot` now measured
 | p91-kafka-miko | — | wai | 2026092445 | `201672f7-3303-4bf4-bb10-c845b29874d9` |
 | p91-yor-miko | — | cstati-v3-baseline | 2026092446 | `7e889c75-ce96-4baf-9ab1-8e14c7d60210` |
 
+All six completed, 26.9–33.0 s each, all receipts live, no spill. C1 `close-up` holds 2/2 on the nurse pair and 2/2 on the cheer pair, now measured on three garments; G24 promoted on the opening pair (full miko read on both, two-piece separate, bells as ornaments).
+
+- p91-kafka-nurse-closeup, WAI, seed `2026092445`, job `6e3f7594`, prompt `b4811eaf`, 33.0 s, `WAI-Illustration_00195_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white nurse dress and cap, armband, ward violet, night, adult. Lever: `close-up` on the nurse squat — tighter framing, cap and dress intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep.
+- p91-yor-nurse-closeup, CSTati, seed `2026092446`, job `5bb1bd8d`, prompt `daf2c68d`, 29.0 s, `CSTati-v3-Baseline_00188_.png`. Identity: Yor reads, black hair, white nurse dress and cap, armband, lamp, night, adult. Lever: `close-up` on the nurse squat — same, intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep.
+- p91-kafka-cheer-closeup, WAI, seed `2026092445`, job `154694cf`, prompt `f45f2479`, 26.9 s, `WAI-Illustration_00196_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, pom-poms, stadium violet, night, adult. Lever: `close-up` on the cheer squat — tighter torso framing, uniform and pom-poms intact. Squat held. Hands: holding pom-poms. Cloth: red uniform glossy. Keep-or-change: keep.
+- p91-yor-cheer-closeup, CSTati, seed `2026092446`, job `dc9af572`, prompt `24cf6a9d`, 30.7 s, `CSTati-v3-Baseline_00189_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: `close-up` on the cheer squat — same, uniform and pom-poms intact. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep.
+- p91-kafka-miko, WAI, seed `2026092445`, job `201672f7`, prompt `2938429c`, 31.0 s, `WAI-Illustration_00197_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white haori and red hakama with bell on the bow, shrine violet, night, adult. Lever: outfit to miko — full read, two-piece separate, bell an ornament. Squat held. Hands: hidden behind the head. Cloth: white top glossy, red hakama glossy. Keep-or-change: keep; G24 1/2.
+- p91-yor-miko, CSTati, seed `2026092446`, job `7e889c75`, prompt `45be1c33`, 30.9 s, `CSTati-v3-Baseline_00190_.png`. Identity: Yor reads, black hair with rose ornaments, white haori and red hakama with bells, shrine lantern, night, adult. Lever: outfit to miko — full read again, two-piece separate. Squat held. Hands: hidden behind the head. Cloth: white top glossy. Keep-or-change: keep; G24 2/2, promotes.
+
+## G24 eyes, bent-over, seiza, sheer-off — p92 wave
+
+P91 held 6/6 — C1 `close-up` now measured on three garments, G24 promoted on the opening pair. This wave measures G24: `bedroom eyes` x2 at the same seeds plus miko on the bent-over (hakama vs the hike) and the seiza, with the sheer-off reruns. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p92-kafka-miko-eyes | p91-kafka-miko | wai | 2026092445 | `739cc659-59db-4032-9d76-ff0857f26dd9` |
+| p92-yor-miko-eyes | p91-yor-miko | cstati-v3-baseline | 2026092446 | `202fb888-392e-4b7c-917d-af56829d5e7a` |
+| p92-kafka-miko-bentover | p91-kafka-miko | wai | 2026092698 | `874cde71-ddf4-467a-97f7-d3cc1ab53b84` |
+| p92-yor-miko-seiza | p91-yor-miko | cstati-v3-baseline | 2026092699 | `a4109534-51cc-4029-8fa0-b218a068bf71` |
+| p92-kafka-miko-nolora | p91-kafka-miko | wai | 2026092445 | `574fcefd-72fb-40ae-8418-130f20a61a8b` |
+| p92-yor-miko-nolora | p91-yor-miko | cstati-v3-baseline | 2026092446 | `9d6d0718-4b1a-4a80-9808-bf456c5e54e1` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.

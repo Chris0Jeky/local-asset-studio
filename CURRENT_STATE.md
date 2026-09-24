@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p91 judged 6/6, close-up on three garments, G24 promoted, p92 queued — 25 September 2026 (21:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P91 held 6/6 (26.9–33.0 s, all receipts live, no spill): C1 `close-up` holds 2/2 on the nurse pair (`6e3f7594`, `5bb1bd8d`) and 2/2 on the cheer pair (`154694cf`, `dc9af572`), now measured on three garments; G24 shrine maiden promoted on the opening pair (Kafka `201672f7`, Yor `7e889c75`, two-piece reads separate, bells as ornaments). P92 queued, six cells: G24 `bedroom eyes` x2 (`739cc659`, `202fb888`), miko bent-over (`874cde71`, hakama vs the hike) and seiza (`a4109534`), sheer-off x2 (`574fcefd`, `9d6d0718`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p90 judged 7/7, G23 closed, cowboy on three garments, G24 open, p91 queued — 25 September 2026 (21:15 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
