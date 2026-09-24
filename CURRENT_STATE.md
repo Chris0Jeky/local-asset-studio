@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p78 judged 6/6, G19 measured 6, B1 at 33 faces, p79 queued — 25 September 2026 (18:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P78 held 6/6 (10.2–33.1 s, no spill): G19 `bedroom eyes` 2/2 with the suit intact (Kafka `a3226b09`, Yor `b5b69ae5`); bunny on the bent-over (Kafka `c94026f9`) and the seiza (Yor `8fdc9abe`, tongue out, feet visible); B1 Sparkle (`c7da953f`) and Zhezhi (`c598a85c`) both clean (B1 now 16 clean, 16 partial, 1 break across 33 faces). P79 queued, seven cells: G19 sheer-off x2 (Kafka `701ec40f`, Yor `ed305c9a`), bunny crawl (`c08623d1`) and portrait (`bc378df1`), B1 on Nekomata (`e1988cd8`), Trigger (`75be63aa`) and Alice (`75cb5b58`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p77 judged 7/7, G18 closed, G19 promoted, B1 at 31 faces, p78 queued — 25 September 2026 (18:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.

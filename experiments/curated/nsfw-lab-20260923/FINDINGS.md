@@ -2476,6 +2476,29 @@ P77 held 7/7 — G18 closed on all eight reads, G19 promoted on the opening pair
 | p78-sparkle-smallbust | — | wai | 2026092661 | `c7da953f-752a-4047-bf65-b98e858663d4` |
 | p78-zhezhi-smallbust | — | wai | 2026092662 | `c598a85c-b7a4-4fc7-908e-25b040690e01` |
 
+All six completed, 10.2–33.1 s each, no spill. G19 measured 6 (eyes 2/2 with the suit intact, bent-over and seiza transfers hold); B1 Sparkle and Zhezhi both clean (B1 now 16 clean, 16 partial, 1 break across 33 faces).
+
+- p78-kafka-bunny-eyes, WAI, seed `2026092445`, job `a3226b09`, prompt `a0e3252d`, 30.3 s, `WAI-Illustration_00159_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, bow collar, black bunny suit, nightclub violet, night, adult. Lever: `bedroom eyes` on bunny at the same seed — half-lidded yellow eyes, suit, cottontail and fishnets intact. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 eyes 1/2.
+- p78-yor-bunny-eyes, CSTati, seed `2026092446`, job `b5b69ae5`, prompt `27e19d98`, 31.0 s, `CSTati-v3-Baseline_00151_.png`. Identity: Yor reads, black hair with rose ornament, bow collar, black bunny suit, casino warm light, night, adult. Lever: `bedroom eyes` on bunny at the same seed — half-lidded red eyes, suit, cottontail and fishnets intact. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 eyes 2/2.
+- p78-kafka-bunny-bentover, WAI, seed `2026092659`, job `c94026f9`, prompt `fd26934e`, 31.0 s, `WAI-Illustration_00160_.png`. Identity: Kafka reads, magenta ponytail, bunny ears, black bunny suit with cottontail, fishnets, nightclub bar, night, adult. Lever: bunny on the bent-over — back view, both hands on the butt. Cloth: black suit glossy. Keep-or-change: keep.
+- p78-yor-bunny-seiza, CSTati, seed `2026092660`, job `8fdc9abe`, prompt `3bf3d437`, 28.9 s, `CSTati-v3-Baseline_00152_.png`. Identity: Yor reads, black hair with rose ornament, bunny ears, black bunny suit with cottontail, fishnets, casino warm light, night, adult. Lever: bunny on the seiza — tongue out, looking back, feet visible. Keep-or-change: keep.
+- p78-sparkle-smallbust, WAI, seed `2026092661`, job `c7da953f`, prompt `99404c27`, 33.1 s, `WAI-Illustration_00161_.png`. Identity: Sparkle reads, pink and white hair with red bows, red and white jester dress with mask ornament, stage violet, night, adult. Lever: B1 first try — bust reads modest in the red top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; B1 clean.
+- p78-zhezhi-smallbust, WAI, seed `2026092662`, job `c598a85c`, prompt `f52bbd9c`, 10.2 s, `WAI-Illustration_00162_.png`. Identity: Zhezhi reads, green hair with hairpin, teal painter dress with gold knots, lamp, night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: teal dress glossy. Keep-or-change: keep; B1 clean.
+
+## G19 sheer-off, crawl, portrait, B1 Nekomata/Trigger/Alice — p79 wave
+
+P78 held 6/6 — G19 eyes 2/2 with the suit intact, bent-over and seiza transfers hold, B1 Sparkle and Zhezhi clean (B1 now 16 clean, 16 partial, 1 break across 33 faces). This wave closes in on G19 (sheer-off x2 at the same seeds, crawl for Kafka, portrait for Yor) with B1 first tries on Nekomata, Trigger and Alice. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p79-kafka-bunny-nolora | p77-kafka-bunny | wai | 2026092445 | `701ec40f-e7be-42a8-abaa-dbaff8c20622` |
+| p79-yor-bunny-nolora | p77-yor-bunny | cstati-v3-baseline | 2026092446 | `ed305c9a-0242-4c11-858c-1d2c10b2567d` |
+| p79-kafka-bunny-crawl | p77-kafka-bunny | wai | 2026092663 | `c08623d1-f2eb-4ed2-85ef-ee178d219445` |
+| p79-yor-bunny-portrait | p77-yor-bunny | cstati-v3-baseline | 2026092664 | `bc378df1-627a-47fb-b148-8a4bc1538f86` |
+| p79-nekomata-smallbust | — | yumeflux-ilv1-baseline | 2026092665 | `e1988cd8-6278-4824-8a90-9c3cac41e7fa` |
+| p79-trigger-smallbust | — | cstati-v3-baseline | 2026092666 | `75be63aa-793d-440f-88cd-7abe735f0a45` |
+| p79-alice-smallbust | — | anifox-v2-baseline | 2026092667 | `75cb5b58-cbaf-4613-9319-5e73fd89219f` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
