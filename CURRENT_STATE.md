@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p56 judged 6/6, G12 ports and eyes, E2 at 49/49, p57 queued — 24 September 2026 (23:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P56 held 6/6: G12 ported 2/2 (Kafka `9184d6ae`, Yor `819ff9c7`) and held eyes-neutral 2/2 (Kafka `a12c2fbf`, Yor `566f86d6`) — only sheer-off reruns remain to close; E2 generalization 49/49 (Ellen `946a55ef`, Aria `60b3e3eb` with a likeness note). P57 queued: G12 sheer-off close (Kafka `e389422d`, Yor `186018dc`), four more new adults (Cissia `fb97e5e6`, Promeia `78ec616a`, Camellya `699dc75e`, Morgan `20be8e0c`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p55 judged 6/6, G12 promoted, E2 at 47/47, Ellen cleared on evidence, p56 queued — 24 September 2026 (22:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared on the trust-event evidence (see below).

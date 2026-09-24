@@ -1923,6 +1923,30 @@ P55 held 6/6 — G12 promoted on the opening pair, E2 generalization at 47/47. T
 | p56-ellen-smirkwink | E2 squat recipe | wai | 2026092580 | `946a55ef-255a-4456-95db-35fadc992bad` |
 | p56-aria-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092581 | `60b3e3eb-4b42-4cf8-8cd8-ab041c173cac` |
 
+### p56 results
+
+All six completed, 25.3–32.3 s each, no spill. G12 ported 2/2 and held eyes-neutral 2/2 — only the sheer-off reruns remain to close it. E2 generalization reached 49/49, including Ellen's first lab cell after her evidence clearance.
+
+- p56-kafka-flight-anima, Anima, seed `2026092636`, job `9184d6ae`, prompt `668ebf23`, 26.2 s, `Anima-v1-Baseline_00069_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, airport lounge violet, adult. Lever: G12 port — dark blue blazer, white top, blue neck scarf, pencil skirt. Squat held. Hands: hidden. Eyes closed, the Anima squat pattern. Cloth: white top opaque, dark blue suit glossy. Keep-or-change: keep; G12 ports 1/2.
+- p56-yor-flight-janima, JANIMA, seed `2026092637`, job `819ff9c7`, prompt `07945d07`, 25.3 s, `JANIMA-v1-Baseline_00031_.png`. Identity: Yor reads, black hair, headband, lamp lounge, adult. Lever: G12 port — dark blue blazer suit, scarf, pencil skirt. Squat held. Hands: hidden. Eyes closed, JANIMA eye variance. Cloth: dark blue suit glossy opaque. Keep-or-change: keep; G12 ports 2/2.
+- p56-kafka-flight-eyes, WAI, seed `2026092445`, job `a12c2fbf`, prompt `cb19fcab`, 31.3 s, `WAI-Illustration_00122_.png`. Identity: Kafka reads, airport lounge, adult. Lever: `bedroom eyes` — half-lidded heavy eyes, blouse, scarf, and buttoned skirt all intact. Squat held. Hands: hidden. Cloth: white blouse sheer, dark skirt glossy. Keep-or-change: keep; G12 eyes 1/2.
+- p56-yor-flight-eyes, CSTati, seed `2026092446`, job `566f86d6`, prompt `96b35242`, 32.3 s, `CSTati-v3-Baseline_00103_.png`. Identity: Yor reads, lamp lounge, adult. Lever: `bedroom eyes` — half-lidded red eyes, suit intact. Squat held. Hands: hidden. Cloth: white blouse sheer, dark skirt glossy. Keep-or-change: keep; G12 eyes 2/2.
+- p56-ellen-smirkwink, WAI, seed `2026092580`, job `946a55ef`, prompt `9f48f9ba`, 30.6 s, `WAI-Illustration_00123_.png`. Identity: Ellen reads strongly, black hair with red underlayer, red eyes, shark tail, maid headdress and uniform, housekeeping lamp interior, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: white maid top sheer, black and white uniform glossy. Keep-or-change: keep.
+- p56-aria-smirkwink, CSTati, seed `2026092581`, job `60b3e3eb`, prompt `5553c436`, 28.3 s, `CSTati-v3-Baseline_00104_.png`. Identity: Aria reads generically — white hair, red eyes, tactical outfit, hollow ruins, adult; true likeness unverifiable for this new character. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: purple and dark tactical top glossy with sheer panels, black bottoms glossy. Keep-or-change: keep, likeness note.
+
+## G12 sheer-off close, Cissia, Promeia, Camellya, Morgan — p57 wave
+
+P56 held 6/6 — G12 ported 2/2 and held eyes-neutral 2/2, E2 generalization at 49/49. This wave closes G12 with the sheer stack off at the same seed on both G-series seeds, and runs E2 on four more new adults (Cissia and Promeia from Zenless Zone Zero — owner-confirmed eligible; Camellya from Wuthering Waves and Morgan le Fay from Fate — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p57-kafka-flight-nolora | p55-kafka-flight | wai | 2026092445 | `e389422d-0f93-4688-919d-4db9bf610e9c` |
+| p57-yor-flight-nolora | p55-yor-flight | cstati-v3-baseline | 2026092446 | `186018dc-6479-4db3-98c9-9412f3acc87b` |
+| p57-cissia-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092582 | `fb97e5e6-46a4-436b-9605-1fe385a30d6a` |
+| p57-promeia-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092583 | `78ec616a-0f85-4c04-b439-41716d85a4fc` |
+| p57-camellya-smirkwink | E2 squat recipe | wai | 2026092584 | `699dc75e-9838-4a36-b70d-64469914e6b6` |
+| p57-morgan-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092585 | `20be8e0c-ed72-441a-ab92-fef2868ba4c2` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
