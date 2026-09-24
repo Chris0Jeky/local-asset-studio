@@ -2430,6 +2430,29 @@ P75 held 6/6 — G18 promoted on the opening pair, santa on the bent-over and th
 | p76-kafka-santa-crawl | p75-kafka-santa | wai | 2026092654 | `e924cb2e-1d85-4844-94af-c65b6eeed31e` |
 | p76-yor-santa-portrait | p75-yor-santa | cstati-v3-baseline | 2026092655 | `26f71ee9-aec5-4b9c-afaa-9a24f14ae6f4` |
 
+All six completed, 24.3–42.4 s each, no spill. G18 measured 6/8: ports closed on both families with no sheer LoRA, `bedroom eyes` holds on santa 2/2 with the dress intact, crawl confirms T12 on a short unbelted dress (rule confirmation, not a stack fail), portrait holds. B1 unchanged at 12 clean, 16 partial, 1 break across 29 faces (no B1 cells this wave).
+
+- p76-kafka-santa-anima, Anima, seed `2026092644`, job `c5fca2ea`, prompt `40875e32`, 28.3 s, `Anima-v1-Baseline_00075_.png`. Identity: Kafka reads, magenta hair, red santa dress with fur trim, santa hat, bell collar, belt, snowy street, night, adult. Lever: G18 port with no sheer LoRA — full read, trim reads fur, hat stays on. Squat held, eyes closed in the Anima pattern. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 ports 1/2.
+- p76-yor-santa-janima, JANIMA, seed `2026092645`, job `552f6282`, prompt `404b7f8d`, 24.3 s, `JANIMA-v1-Baseline_00037_.png`. Identity: Yor reads, black hair, red santa dress with fur trim and pom-poms, snowflake print, santa hat, cabin, night, adult. Lever: G18 port with no sheer LoRA — full read again, eyes open. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 ports 2/2, closed.
+- p76-kafka-santa-eyes, WAI, seed `2026092445`, job `8352a033`, prompt `7f3adb68`, 42.4 s, `WAI-Illustration_00155_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red santa dress, bell collar, snowy street, night, adult. Lever: `bedroom eyes` on santa at the same seed — half-lidded, dress intact. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 eyes 1/2.
+- p76-yor-santa-eyes, CSTati, seed `2026092446`, job `6bd5ea48`, prompt `2d167cc1`, 32.4 s, `CSTati-v3-Baseline_00146_.png`. Identity: Yor reads, black hair, half-lidded red eyes, red santa dress, cabin lantern, night, adult. Lever: `bedroom eyes` on santa at the same seed — dress intact. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 eyes 2/2, closed.
+- p76-kafka-santa-crawl, WAI, seed `2026092654`, job `e924cb2e`, prompt `67c396b2`, 28.3 s, `WAI-Illustration_00156_.png`. Identity: Kafka reads, magenta hair, santa hat, red santa dress, snowy street, night, adult. Lever: santa on the crawl — face to the viewer, forearms planted, short unbelted skirt ridden up over the rear. T12 confirmed as predicted. Keep-or-change: keep as a rule confirmation.
+- p76-yor-santa-portrait, CSTati, seed `2026092655`, job `26f71ee9`, prompt `7668583b`, 28.3 s, `CSTati-v3-Baseline_00147_.png`. Identity: Yor reads, black hair, red santa dress with fur trim, santa hat with pom, cabin window and snow, night, adult. Lever: santa on the portrait — gentle smile, trim reads fur. Keep-or-change: keep.
+
+## G18 sheer-off, santa seated rear, B1 Yixuan/Phoebe, G19 bunny open — p77 wave
+
+P76 held 6/6 — G18 ports and eyes closed on santa, crawl confirms T12, portrait holds (B1 unchanged at 12/16/1 across 29 faces). This wave closes G18 (sheer-off x2 at the santa seeds, santa seated rear for Yor) and opens G19 with bunny-suit anchors x2, plus B1 first tries on Yixuan and Phoebe. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p77-kafka-santa-nolora | p75-kafka-santa | wai | 2026092445 | `3a8b9880-20ef-4a09-9c4d-ac97dfab3d25` |
+| p77-yor-santa-nolora | p75-yor-santa | cstati-v3-baseline | 2026092446 | `94d8c6b6-5568-4cda-94a5-53583e4adc68` |
+| p77-yor-santa-seated | p75-yor-santa | cstati-v3-baseline | 2026092656 | `bac444b2-47fd-482b-a7f9-9ddda1e861b9` |
+| p77-yixuan-smallbust | — | anifox-v2-baseline | 2026092657 | `a3c31e47-9eab-479f-a493-84c9e5ff32aa` |
+| p77-phoebe-smallbust | — | yumeflux-ilv1-baseline | 2026092658 | `be100e4f-4f44-4fdc-85e2-b6d1395e2346` |
+| p77-kafka-bunny | — | wai | 2026092445 | `1264b365-1cea-4b4f-8579-8016895ad0f0` |
+| p77-yor-bunny | — | cstati-v3-baseline | 2026092446 | `26ba5851-3c0d-4e17-a215-93944aec2e39` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.

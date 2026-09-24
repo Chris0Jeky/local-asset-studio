@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p76 judged 6/6, G18 ports/eyes closed, G19 bunny open, p77 queued — 25 September 2026 (17:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P76 held 6/6 (24.3–42.4 s, no spill): G18 santa ports closed on Anima (`c5fca2ea`) and JANIMA (`552f6282`) with no sheer LoRA; `bedroom eyes` holds on santa 2/2 with the dress intact (Kafka `8352a033`, Yor `6bd5ea48`); santa crawl (`e924cb2e`) confirms T12 on a short unbelted dress — rule confirmation, not a stack fail; santa portrait holds (Yor `26f71ee9`). G18 stands measured 6/8; B1 unchanged at 12 clean, 16 partial, 1 break across 29 faces. P77 queued, seven cells: G18 sheer-off close (Kafka `3a8b9880`, Yor `94d8c6b6`), santa seated rear (Yor `bac444b2`), B1 on Yixuan (`a3c31e47`) and Phoebe (`be100e4f`), G19 bunny-suit open anchors (Kafka `1264b365`, Yor `26ba5851`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p75 judged 6/6 mixed, G18 promoted, B1 at 29 faces, p76 queued — 25 September 2026 (06:35 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
