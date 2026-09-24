@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p85 judged 6/6, G21 closed, CFG sweep flat, G22 open, p86 queued — 25 September 2026 (20:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P85 held 6/6 (10.2–41.1 s, no spill): G21 closed on all eleven reads with the crawl (`79f7c08e`), portrait (`2a1de733`) and seated rear (`f8049d9f`); CFG 4 vs 5 vs 6 sweep on one Yor cheer squat prompt and seed shows no structural change (`94b0f596`, `194e150d`, `73ce0929`), CFG 5 stays the default. P86 queued, six cells: G22 lab-coat open anchors (Kafka `4ab42cde`, Yor `3c921d64`), `bedroom eyes` x2 (`9fa9b55b`, `452459c8`), bent-over (`4cc56e3e`) and seiza (`c49c8f61`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p84 judged 6/6, G21 measured 8, pleats beat the hike, p85 queued — 25 September 2026 (19:45 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.

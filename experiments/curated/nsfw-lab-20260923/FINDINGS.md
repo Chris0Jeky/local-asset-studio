@@ -2632,6 +2632,28 @@ P84 held 6/6 — G21 measured 8 with eyes, bent-over (pleats beat the hike), sei
 | p85-sweep-cfg5 | — | cstati-v3-baseline | 2026092680 | `194e150d-eb2c-4747-8cbc-20371ffc7e19` |
 | p85-sweep-cfg6 | — | cstati-v3-baseline | 2026092680 | `73ce0929-7901-4954-b862-7ddc8155a4a8` |
 
+All six completed, 10.2–41.1 s each, no spill. G21 closed on all eleven reads (crawl, portrait and seated rear hold); the CFG 4 vs 5 vs 6 sweep shows no structural change, CFG 5 stays the default.
+
+- p85-kafka-cheer-crawl, WAI, seed `2026092681`, job `79f7c08e`, prompt `1d9997e6`, 41.1 s, `WAI-Illustration_00179_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, stadium violet, night, adult. Lever: cheer on the crawl — face to the viewer, forearms planted, uniform intact. Keep-or-change: keep.
+- p85-yor-cheer-portrait, CSTati, seed `2026092682`, job `2a1de733`, prompt `a43719ab`, 28.9 s, `CSTati-v3-Baseline_00170_.png`. Identity: Yor reads, black hair with rose ornament, red and white cheer uniform, pom-pom up, stadium floodlight, night, adult. Lever: cheer on the portrait — smile; fake top letters noted, not a discard. Keep-or-change: keep.
+- p85-kafka-cheer-seated, WAI, seed `2026092683`, job `f8049d9f`, prompt `a65444c0`, 29.0 s, `WAI-Illustration_00180_.png`. Identity: Kafka reads, magenta ponytail, red and white cheer uniform with pleated skirt, stadium violet, night, adult. Lever: cheer on the seated rear — seated facing away, looking back, pleats intact over the rear. Keep-or-change: keep; G21 closed.
+- p85-sweep-cfg4, CSTati, seed `2026092680`, job `94b0f596`, prompt `f018829e`, 28.9 s, `CSTati-v3-Baseline_00171_.png`. Identity: Yor reads, black hair with rose ornament, red and white cheer uniform, stadium floodlight, night, adult. Lever: CFG 4 on the fixed cheer squat prompt — squat, uniform and hands hold, reads slightly softer. Keep-or-change: keep as the sweep low end.
+- p85-sweep-cfg5, CSTati, seed `2026092680`, job `194e150d`, prompt `daa9414a`, 10.2 s, `CSTati-v3-Baseline_00172_.png`. Identity: Yor reads as above. Lever: CFG 5 reference — identical composition, base contrast. Keep-or-change: keep; CFG 5 stays the default.
+- p85-sweep-cfg6, CSTati, seed `2026092680`, job `73ce0929`, prompt `6cd462d5`, 10.2 s, `CSTati-v3-Baseline_00173_.png`. Identity: Yor reads as above. Lever: CFG 6 on the fixed prompt — identical composition, slightly higher contrast. No structural change. Keep-or-change: keep as the sweep high end.
+
+## G22 lab coat open, eyes, bent-over, seiza — p86 wave
+
+P85 held 6/6 — G21 closed on all eleven reads, the CFG sweep shows no structural change across 4/5/6. This wave opens G22 with lab-coat anchors x2, `bedroom eyes` x2 at the same seeds, and lab coat on the bent-over (Kafka) and the seiza (Yor). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p86-kafka-labcoat | — | wai | 2026092445 | `4ab42cde-a37e-41db-8600-a18c322c1d61` |
+| p86-yor-labcoat | — | cstati-v3-baseline | 2026092446 | `3c921d64-da13-49b6-ac57-7f06d2b694a0` |
+| p86-kafka-labcoat-eyes | p86-kafka-labcoat | wai | 2026092445 | `9fa9b55b-37a1-459f-bc50-cf91da19587c` |
+| p86-yor-labcoat-eyes | p86-yor-labcoat | cstati-v3-baseline | 2026092446 | `452459c8-667f-4a1e-ad1c-9f0fb90e21ad` |
+| p86-kafka-labcoat-bentover | p86-kafka-labcoat | wai | 2026092684 | `4cc56e3e-ab39-4b62-ae9e-4bd7f6c86352` |
+| p86-yor-labcoat-seiza | p86-yor-labcoat | cstati-v3-baseline | 2026092685 | `c49c8f61-f5a0-4650-a8ca-65ede1267f6c` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
