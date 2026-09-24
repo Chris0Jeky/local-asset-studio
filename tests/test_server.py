@@ -1118,6 +1118,37 @@ class ServerTests(unittest.TestCase):
                 handler._media=fail; handler._local_file=fail; handler.do_GET()
                 self.assertEqual(seen,{'status':404,'obj':{'error':'Unknown image'}})
 
+    def test_run_label_is_bounded_stored_on_the_job_and_copied_to_its_assets(self):
+        (self.root/'fake-comfy/output').mkdir(); (self.root/'fake-comfy/output/ok.png').write_bytes(png())
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"p1"},{"p1":{"status":{"status_str":"success"},"outputs":{"9":{"images":[{"filename":"ok.png","subfolder":"","type":"output"}]}}}}]
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{"positive":"a  lantern\nin the fog"},"label":"  nsfw-lab p71 · G16 ports  "})
+        self.assertEqual(created["label"],"nsfw-lab p71 · G16 ports")
+        self.assertEqual(json.loads((s.runs/created["id"]/"state.json").read_text(encoding="utf-8"))["label"],"nsfw-lab p71 · G16 ports")
+        self.assertNotIn("label",json.loads((s.runs/created["id"]/"recipe.json").read_text(encoding="utf-8")))
+        s._run(s.jobs[created["id"]]); self.assertEqual(s.jobs[created["id"]]["status"],"completed")
+        asset=s.assets.get(s.jobs[created["id"]]["outputs"][0]["asset_id"])
+        self.assertEqual((asset["run_label"],asset["prompt_excerpt"],asset["title"]),("nsfw-lab p71 · G16 ports","a lantern in the fog","Demo · 1"))
+        self.assertEqual(self.studio().jobs[created["id"]]["label"],"nsfw-lab p71 · G16 ports")
+        mine=self.studio().create_job({"preset_id":"demo","controls":{}},enqueue=False)
+        self.assertIsNone(mine["label"]); self.assertNotIn("label",json.loads((s.runs/mine["id"]/"state.json").read_text(encoding="utf-8")))
+
+    def test_invalid_run_labels_are_refused_before_any_job_exists(self):
+        s=self.studio()
+        for label in ("","   ","x"*81,"line\nbreak","tab\there","bell\x07",7,["lab"],{"a":1},True):
+            with self.subTest(label=label), self.assertRaisesRegex(server.StudioError,"label must be printable text of 1 to 80 characters"):
+                s.create_job({"preset_id":"demo","controls":{},"label":label},enqueue=False)
+        self.assertEqual(s.jobs,{}); self.assertEqual(list(s.runs.iterdir()),[])
+        self.assertEqual(s.create_job({"preset_id":"demo","controls":{},"label":"x"*80},enqueue=False)["label"],"x"*80)
+
+    def test_workspace_snapshot_derives_missing_prompt_excerpts_from_loaded_jobs(self):
+        s=self.studio(); created=s.create_job({"preset_id":"demo","controls":{}},enqueue=False); job=s.jobs[created["id"]]
+        source=self.root/"legacy.png"; source.write_bytes(png()); job["outputs"]=[{"filename":"legacy.png","media_type":"image"}]
+        asset=s.assets.register(job,0,source)
+        with s.assets.connection() as db: db.execute("UPDATE assets SET prompt_excerpt=NULL WHERE id=?",(asset,))
+        self.assertIsNone(s.assets.get(asset)["prompt_excerpt"])
+        self.assertEqual(s.workspace_snapshot()["assets"][0]["prompt_excerpt"],"native positive")
+        del s.jobs[created["id"]]; self.assertIsNone(s.workspace_snapshot()["assets"][0]["prompt_excerpt"])
+
     @staticmethod
     def _windows_refusal(source, target):
         err=PermissionError(13,'Access is denied',str(source),None,str(target)); err.winerror=5; return err

@@ -18,6 +18,29 @@ collection leaves the assets available in All assets.
 count. The choice is remembered in this browser only; it changes nothing that is
 saved with an asset.
 
+**Source** (*Mine / Agent runs / All sources*) appears once any asset carries a
+run label. Agent runs are assets whose job was submitted with a `label` (see
+below); everything else, including every asset registered before labels existed,
+counts as Mine. Until you choose, the library shows **Mine**; the choice is
+remembered in this browser like grouping. The count line says how many assets
+the source hides, and **Review next** queues only the assets in the current
+source, scope and filters.
+
+When an asset still has its registered title (*recipe · N*), its card shows the
+first 60 characters of the job's positive prompt under the title; the asset
+dialog shows that excerpt and the run label for every asset that has one. New
+assets store the excerpt when they are registered; older assets take it from
+their job record while that job is still in the runs folder.
+
+**Run labels for scripts and agents.** `POST /api/jobs` accepts an optional
+`label`: printable text of 1 to 80 characters after trimming, with no line
+breaks, tabs or other control characters; anything else is refused with HTTP 400
+and no job is created. The label is kept in the job's `state.json` (not in
+`recipe.json`, so re-running a recipe does not inherit it), returned with the
+job, and copied to every asset registered from it as the read-only `run_label`
+field. The Create page never sends one. Label every lab or batch run, for example
+`"label": "lab p71 · G16 ports"`, so its outputs stay out of Mine.
+
 Open an asset to rename it, tag it, record notes or choose a review state.
 **Selected** is your creative selection; it does not certify model licensing,
 anatomy, topology or engine import. Favorites are a separate shortcut. The
