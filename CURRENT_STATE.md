@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p75 judged 6/6 mixed, G18 promoted, B1 at 29 faces, p76 queued — 25 September 2026 (06:35 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P75 held 6/6: G18 promoted on the opening pair (Kafka `0b9b3c12`, Yor `168a5923`, fur reads fur, hats stay on); santa on bent-over (`2f073f1c`) and seiza (`f11d4c8a`) both hold; B1 Yukong clean (`cf3648dd`), Jinhsi partial (`d497a5e0`; B1 now 12 clean, 16 partial, 1 break across 29 faces). P76 queued: G18 santa ports (Kafka `c5fca2ea`, Yor `552f6282`), santa eyes (Kafka `8352a033`, Yor `6bd5ea48`), santa crawl (`e924cb2e`) and portrait (`26f71ee9`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p74 judged 6/6, G17 closed, kimono on all poses, p75 queued mixed — 25 September 2026 (06:10 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.

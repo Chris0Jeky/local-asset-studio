@@ -2406,6 +2406,30 @@ P74 held 6/6 — G17 closed on all four reads, kimono on all six poses (squat, p
 | p75-yukong-smallbust | B1 recipe | anifox-v2-baseline | 2026092650 | `cf3648dd-37fc-4308-87ce-47d0a9c6d36b` |
 | p75-jinhsi-smallbust | B1 recipe | yumeflux-ilv1-baseline | 2026092651 | `d497a5e0-6d4d-40eb-acab-c631dc13b7aa` |
 
+### p75 results
+
+All six completed, 26.3–32.4 s each, no spill. G18 opened 2/2 and promotes (fur trim reads fur, hats stay on); santa transfers to the bent-over and the seiza; B1 Yukong clean, Jinhsi partial.
+
+- p75-kafka-santa, WAI, seed `2026092445`, job `0b9b3c12`, prompt `b46dad7e`, 32.4 s, `WAI-Illustration_00153_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red santa dress with fur trim, santa hat, belt, snowy street and trees, night, adult. Lever: outfit to santa — full read, trim reads fur, hat stays on. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 1/2.
+- p75-yor-santa, CSTati, seed `2026092446`, job `168a5923`, prompt `8cd5c91b`, 28.2 s, `CSTati-v3-Baseline_00144_.png`. Identity: Yor reads, black hair, headband, red santa dress with fur trim, santa hat, belt, cabin stone and lantern, night, adult. Lever: outfit to santa — full read again, trim reads fur, hat stays on. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 2/2, promotes.
+- p75-kafka-santa-bentover, WAI, seed `2026092652`, job `2f073f1c`, prompt `6ce2c8ba`, 28.5 s, `WAI-Illustration_00154_.png`. Identity: Kafka reads, magenta ponytail, red santa dress with a back cutout, santa hat, snowy street and trees, night, adult. Lever: santa on the bent-over — full transfer, both hands on the butt, looking back, hat stays on. Cloth: red dress glossy. Keep-or-change: keep.
+- p75-yor-santa-seiza, CSTati, seed `2026092653`, job `f11d4c8a`, prompt `f79c3558`, 26.3 s, `CSTati-v3-Baseline_00145_.png`. Identity: Yor reads, black hair with a santa hat, red santa dress, cabin stone, night, adult. Lever: santa on the seiza — tongue out, looking back, feet visible, hat stays on. Cloth: red dress glossy. Keep-or-change: keep.
+- p75-yukong-smallbust, AniFox, seed `2026092650`, job `cf3648dd`, prompt `2220d53f`, 28.3 s, `AniFox-v2-Baseline_00096_.png`. Identity: Yukong reads, dark blue hair with fox ears, white and blue helm-master uniform, space station night, adult. Lever: B1 first try — bust reads modest in the white top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white top translucent-sheer, dark uniform glossy. Keep-or-change: keep; B1 clean.
+- p75-jinhsi-smallbust, YumeFlux, seed `2026092651`, job `d497a5e0`, prompt `11a655a0`, 28.4 s, `YumeFlux-ILv1-Baseline_00079_.png`. Identity: Jinhsi reads, pale hair in a bun, white and gold magistrate robe, lamp night, adult. Lever: B1 first try — bust reads moderate. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white robe translucent-sheer. Keep-or-change: keep as a partial.
+
+## G18 santa ports, eyes, crawl, portrait — p76 wave
+
+P75 held 6/6 — G18 promoted on the opening pair, santa on the bent-over and the seiza, B1 Yukong clean and Jinhsi partial (B1 now 12 clean, 16 partial, 1 break across 29 faces). This wave ports G18 to both families with no sheer LoRA (squat anchors), adds `bedroom eyes` to both santa cells at the same seed, and transfers the santa to the crawl (Kafka — short dress, the hike question again) and the portrait (Yor). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p76-kafka-santa-anima | p75-kafka-santa | anima-v1-baseline | 2026092644 | `c5fca2ea-7a15-46f1-b155-77fcee715274` |
+| p76-yor-santa-janima | p75-yor-santa | janima-v1-baseline | 2026092645 | `552f6282-feb3-4e10-997f-79ddd4d63474` |
+| p76-kafka-santa-eyes | p75-kafka-santa | wai | 2026092445 | `8352a033-c17e-41b5-af70-312f660b1056` |
+| p76-yor-santa-eyes | p75-yor-santa | cstati-v3-baseline | 2026092446 | `6bd5ea48-c0d9-4365-be9d-e99d1ef53765` |
+| p76-kafka-santa-crawl | p75-kafka-santa | wai | 2026092654 | `e924cb2e-1d85-4844-94af-c65b6eeed31e` |
+| p76-yor-santa-portrait | p75-yor-santa | cstati-v3-baseline | 2026092655 | `26f71ee9-aec5-4b9c-afaa-9a24f14ae6f4` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
