@@ -132,8 +132,8 @@ async def run(args):
             page.set_default_timeout(5000)
             page.on('pageerror',lambda e:errors.append(str(e)))
             if args.inert:await inert_page(page,server.server_port)
-            else:await page.goto(f'http://127.0.0.1:{server.server_port}/#assets')
-            await page.wait_for_function('!!catalog && !!selected')
+            else:await page.goto(f'http://127.0.0.1:{server.server_port}/#assets',timeout=20000)  # cold-runner first load (#911)
+            await page.wait_for_function('!!catalog && !!selected',timeout=20000)
             await page.evaluate("showView('assets')")
             await page.wait_for_selector('[data-asset-open="asset-0"]')
             # Observe the existing API promise without changing requests, results,

@@ -164,8 +164,8 @@ def main():
                     page.set_content(raw)
                     page.evaluate("StudioShell.setView('workflows')")
                 else:
-                    page.goto(origin + '/workflow-studio.html')
-                page.locator('.wf-goal').nth(6).wait_for()
+                    page.goto(origin + '/workflow-studio.html', timeout=20000)  # cold-runner first load (#911)
+                page.locator('.wf-goal').nth(6).wait_for(timeout=20000)
                 assert page.locator('.wf-goal').count() == 7
                 assert page.locator('[data-studio-route="workflows"]').get_attribute('aria-current') == 'page'
                 assert studio.calls == 0
