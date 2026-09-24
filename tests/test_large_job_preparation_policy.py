@@ -34,6 +34,8 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=20 * GIB)])
         result = self.controller(studio).run(self.request())
         self.assertEqual(result["phase"], "restart_not_authorized")
+        # /free ran, so the top-level state can never read as a no-op refusal.
+        self.assertEqual(result["state"], "unknown")
         self.assertFalse(result["final"]["ready"])
         self.assertEqual(result["actions"][0]["state"], "measured")
         self.assertFalse(result["actions"][0]["measured_relief"])
@@ -164,6 +166,13 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertEqual(result["phase"], "refused")
         self.assertIn("other than the selected", result["final"]["reason"])
         self.assertEqual(studio.free_calls, [])
+
+    def test_refusal_without_any_action_keeps_refused_state(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB)])
+        result = self.controller(studio).run(self.request(allow_release=False))
+        self.assertEqual(result["phase"], "release_not_authorized")
+        self.assertEqual(result["state"], "refused")
+        self.assertEqual(result["actions"], [])
 
     def test_request_id_content_conflict_is_refused(self):
         studio = Studio(self.root, [observation(commit=40 * GIB)])

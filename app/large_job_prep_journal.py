@@ -60,6 +60,9 @@ class JournalMixin:
 
     def _finish(self, journal: dict[str, Any], receipt: dict[str, Any], *, state: str,
                 decision: str, ready: bool, reason: str, phase: str) -> dict[str, Any]:
+        if state == "refused" and receipt.get("actions"):
+            # Once a lifecycle action was attempted, "refused" would read as "nothing happened".
+            state = "unknown"
         receipt.update(
             state=state,
             phase=phase,
