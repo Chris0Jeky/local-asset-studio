@@ -48,6 +48,8 @@ function validAssetMetadata(value) {
     typeof value.favorite==='boolean' && ['unreviewed','selected','needs_work','rejected'].includes(value.review) &&
     (value.trashed_at==null || (typeof value.trashed_at==='number' && Number.isFinite(value.trashed_at)));
 }
+// Registered titles may exceed the 200-character edit limit (REGISTERED_TITLE_MAX in app/workspace.py).
+const assetRegisteredTitleMax=1024;
 // Only a complete, matching POST conflict may release the pending command for
 // explicit comparison. A GET failure or malformed observation is not a refusal
 // receipt. Keep foreign/extra fields out of the retained conflict projection.
@@ -60,7 +62,7 @@ function assetRevisionConflict(error,command) {
   const row=data.current[0],fields=['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'];
   const text=(value,max)=>typeof value==='string' && value.length<=max*2 && [...value].length<=max;
   if(!validAssetMetadata(row) || !fields.every(k=>Object.hasOwn(row,k)) || row.id!==id || row.workspace_id!==command.workspace_id ||
-     row.metadata_revision<=command.expected_revisions[id] || !text(row.title,200) || !text(row.notes,8000) ||
+     row.metadata_revision<=command.expected_revisions[id] || !text(row.title,assetRegisteredTitleMax) || !text(row.notes,8000) ||
      row.tags.length>30 || row.tags.some(tag=>!text(tag,60)))return null;
   const metadata=Object.fromEntries(fields.map(k=>[k,k==='tags'?[...row.tags]:row[k]]));
   return {code:data.code,workspace_id:data.workspace_id,request_id:data.request_id,conflict_ids:[id],missing_ids:[],current:[metadata]};

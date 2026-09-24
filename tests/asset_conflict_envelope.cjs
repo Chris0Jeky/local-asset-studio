@@ -33,7 +33,9 @@ const invalid={
   'wrong notes type':d=>{d.current[0].notes={private:'not text'};},
   'oversized notes':d=>{d.current[0].notes='x'.repeat(8001);},
   'invalid review enum':d=>{d.current[0].review='approved';},
-  'oversized title':d=>{d.current[0].title='x'.repeat(201);},
+  'oversized title':d=>{d.current[0].title='x'.repeat(1025);},
+  'oversized astral title':d=>{d.current[0].title='😀'.repeat(1025);},
+  'wrong title type':d=>{d.current[0].title=['x'];},
   'missing lifecycle':d=>{delete d.current[0].trashed_at;},
   'invalid lifecycle':d=>{d.current[0].trashed_at='yesterday';},
   'non-finite lifecycle':d=>{d.current[0].trashed_at=Infinity;},
@@ -54,6 +56,12 @@ test('GET error cannot discharge pending evidence even with a matching conflict 
   const s=setup(),sending=begin(s),data=response(s);s.writes[0].reject(Error('lost'));await sending;
   const inspecting=s.run('checkAssetSave()');s.reads[0].reject(error(data));await inspecting;
   assert.equal(s.run('assetDetailPending?.body'),s.writes[0].options.body);assert.equal(s.run('assetDetailConflict'),null);assert.equal(s.writes.length,1);
+});
+test('registered title beyond the 200-character edit limit keeps conflict comparison',async()=>{
+  for(const title of ['P'.repeat(1000)+' · 1','😀'.repeat(1024)]){
+    const s=setup(),sending=begin(s),data=response(s);data.current[0].title=title;s.writes[0].reject(error(data));await sending;
+    assert.equal(s.run('assetDetailPending'),null);assert.equal(record(s).conflict.current[0].title,title);
+  }
 });
 test('valid POST conflict permits explicit comparison then a fresh reviewed command',async()=>{
   const s=setup(),sending=begin(s),data=response(s);data.current[0].title='界'.repeat(200);data.current[0].notes='😀'.repeat(8000);

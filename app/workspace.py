@@ -33,6 +33,9 @@ class WorkspaceError(ValueError):
 WAL_INITIALIZATION_TIMEOUT = 15
 _INITIALIZATION_LOCK = threading.Lock()
 MAX_REVISION = 2**53 - 1
+# register() copies a job name (AV project names reach 1,000 characters) into the initial title; the
+# edit limit is 200. Conflict projections in app/static/workspace.js accept up to this bound.
+REGISTERED_TITLE_MAX = 1024
 METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
 
 
@@ -182,11 +185,16 @@ class AssetWorkspace:
                 (id,job_id,output_index,title,media_type,path,filename,sha256,bytes,
                  created_at,preset_id,preset_name,source,lineage)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-                asset_id, job["id"], index, job.get("preset_name", "Untitled") + f" · {index + 1}",
+                asset_id, job["id"], index, self.registered_title(job.get("preset_name", "Untitled"), index),
                 output.get("media_type", "image"), path, output.get("filename", Path(source).name),
                 digest, size, job.get("created_at", time.time()), job.get("preset_id"),
                 job.get("preset_name"), json.dumps(output), json.dumps(job.get("parent_assets", []))))
         return asset_id
+
+    @staticmethod
+    def registered_title(name, index):
+        suffix = f" · {index + 1}"
+        return name[:REGISTERED_TITLE_MAX - len(suffix)] + suffix
 
     def _asset(self, row):
         value = dict(row)
