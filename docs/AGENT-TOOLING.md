@@ -72,6 +72,9 @@ runtime rules in `CLAUDE.md`. All three agents follow these rules; they are list
   submit work through `run_workflow`, `run_template`, `generate_image`, `emit_partner_workflow` or
   `upload_file` against the shared install: they bypass the Studio's evidence trail, its admission gates
   and its uncertain-submission handling. `partner_generate` additionally spends Comfy Cloud credits.
+- **Label agent generations.** A `POST /api/jobs` from an agent or script carries a short `label` (1-80 printable
+  characters, for example `"lab p71 · G16 ports"`); its assets then sit under *Agent runs* in the library instead
+  of burying the owner's own work under *Mine* (`docs/WORKSPACE.md`).
 - `free_memory` (ComfyUI's `/free`) is what the Studio itself sends once per idle stretch (`idle_cache_release_minutes`, default 10,
   see `docs/OPERATIONS.md`): after ten idle minutes on an empty ComfyUI queue the models cached in host RAM are released and the next
   job reloads them. Agents do not call it themselves; if the models unloaded between jobs, the Studio's `/api/health` `cache_release`
