@@ -23,7 +23,7 @@ def _hash(value):
 def _evidence(job):
     # Queue/status transitions belong to this command, not to the immutable
     # submission evidence it was authorized to inspect.
-    return _hash({k:v for k,v in job.items() if k not in ('status','message','mixed_batch_recovery','abandonment')})
+    return _hash({k:v for k,v in job.items() if k not in ('status','message','mixed_batch_recovery','abandonment','put_away_at')})
 
 
 def _shape(job):
