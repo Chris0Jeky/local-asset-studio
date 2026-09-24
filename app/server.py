@@ -30,7 +30,7 @@ from urllib.request import Request, urlopen
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from model_library import ModelLibrary
-from workspace import AssetWorkspace, WorkspaceError, digest_file
+from workspace import AssetWorkspace, WorkspaceError, digest_file, prompt_excerpt
 from references import compile_references, image_record
 from production import Production, fingerprint
 import mixed_batch
@@ -103,6 +103,12 @@ def number(value, name, lo, hi, integer=False):
     if raw < lo or raw > hi: raise StudioError(f"{name} must be between {lo} and {hi}")
     result = int(raw) if integer else float(raw)
     return result
+
+def run_label(value):
+    """An optional caller label for a run (#939): None, or trimmed printable text of 1-80 characters."""
+    if value is None: return None
+    if not isinstance(value, str) or not 1 <= len(value.strip()) <= 80 or not value.strip().isprintable(): raise StudioError("label must be printable text of 1 to 80 characters")
+    return value.strip()
 
 class Studio:
     def __init__(self, repo_root: Path):
@@ -704,6 +710,7 @@ class Studio:
 
     def _create_job(self, payload, enqueue=True, job_id=None):
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
+        label = run_label(payload.get("label")) if isinstance(payload, dict) else None
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
@@ -716,6 +723,7 @@ class Studio:
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         job["prompt_bindings"] = {key: ([preset[key]] if preset.get(key) else []) + preset.get("bindings_extra", {}).get(key, []) for key in ("positive", "negative")}
         job["parent_assets"] = parents
+        if label: job["label"] = label
         if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
@@ -725,8 +733,16 @@ class Studio:
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
 
+    def workspace_snapshot(self):
+        """The Workspace snapshot; assets registered before excerpts were stored take one from their loaded job (a dict lookup each)."""
+        data = self.assets.snapshot()
+        for asset in data["assets"]:
+            job = self.jobs.get(asset.get("job_id")) if asset.get("prompt_excerpt") is None else None
+            if job: asset["prompt_excerpt"] = prompt_excerpt(job)
+        return data
+
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1952,7 +1968,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/identity": return self._json(200, self.studio.identity())
             if path == '/api/backends':
                 result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
-            if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
+            if path == "/api/workspace": return self._json(200, self.studio.workspace_snapshot())
             if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope()))
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
