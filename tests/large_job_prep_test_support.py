@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
+import resource_admission
 from large_job_preparation import LargeJobPreparation, PreparationError
 
 GIB = 1024 ** 3
@@ -24,8 +25,10 @@ def observation(*, ram=40 * GIB, commit=40 * GIB, vram=16 * GIB, version="1"):
     }
 
 
+# Stored in the merged #178 config shape (``resource_admission_profiles``) and keyed by
+# the exact workflow/runtime identity; ``resource_admission.profile_for`` validates it.
 PROFILE = {
-    "profile_sha256": "p" * 64,
+    "schema": resource_admission.PROFILE_SCHEMA,
     "basis": "observed",
     "source": {"receipt_sha256": "a" * 64, "kind": "job-resource-observation"},
     "stages": [
@@ -116,7 +119,7 @@ class ReferenceJobs:
 class Studio:
     def __init__(self, root: Path, observations):
         self.root = root
-        self.config = {
+        self._config = {
             "enable_large_job_resource_cleanup": True,
             "enable_idle_retained_commit_cleanup": False,
             "enable_large_job_backend_restart": False,
@@ -137,9 +140,27 @@ class Studio:
         self.prepare_calls = 0
         self.created_jobs = 0
 
+    @staticmethod
+    def _prepared(recipe):
+        return {"id": recipe.get("preset_id", "demo")}, {"1": {"class_type": "Demo", "inputs": {"width": 1024}}}
+
+    def exact_identity(self, version="1"):
+        preset, graph = self._prepared({"preset_id": "demo"})
+        runtime = observation(version=version)["runtime"]
+        return resource_admission.workflow_identity(self, preset, graph, runtime)["identity_sha256"]
+
+    @property
+    def config(self):
+        # Rebind on every read so a test can move the profile to another identity.
+        key = self.profile_identity or self.exact_identity()
+        document = dict(copy.deepcopy(self.profile), identity_sha256=key)
+        self._config["resource_admission_profiles"] = {key: document}
+        return self._config
+
     def prepare(self, recipe):
         self.prepare_calls += 1
-        return {"id": recipe.get("preset_id", "demo")}, {"1": {"class_type": "Demo", "inputs": {"width": 1024}}}, Path("demo.json"), {}, 1
+        preset, graph = self._prepared(recipe)
+        return preset, graph, Path("demo.json"), {}, 1
 
     def _request(self, route, **kwargs):
         if route != "/free":

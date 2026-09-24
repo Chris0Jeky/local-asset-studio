@@ -141,6 +141,30 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertEqual(result["before"]["evaluation"]["decision"], "observed_unsafe")
         self.assertEqual(result["before"]["reservations"]["owners"], ["aux"])
 
+    def test_runtime_version_drift_leaves_the_exact_profile_unbound(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB, version="2")])
+        result = self.controller(studio).run(self.request())
+        self.assertEqual(result["phase"], "profile_unknown")
+        self.assertNotEqual(result["before"]["workflow_identity"]["identity_sha256"], studio.exact_identity())
+        self.assertEqual(studio.free_calls, [])
+
+    def test_malformed_stored_profile_refuses_without_action(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB)])
+        del studio.profile["stages"][0]["vram_bytes"]
+        result = self.controller(studio).run(self.request())
+        self.assertEqual(result["phase"], "refused")
+        self.assertIn("every resource dimension", result["final"]["reason"])
+        self.assertEqual(studio.free_calls, [])
+
+    def test_workflow_for_another_backend_never_releases_the_selected_one(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB)])
+        studio.backends.profiles["hidream"] = {"id": "hidream", "url": "http://127.0.0.1:8192"}
+        studio.backends.active = "hidream"
+        result = self.controller(studio).run(self.request())
+        self.assertEqual(result["phase"], "refused")
+        self.assertIn("other than the selected", result["final"]["reason"])
+        self.assertEqual(studio.free_calls, [])
+
     def test_request_id_content_conflict_is_refused(self):
         studio = Studio(self.root, [observation(commit=40 * GIB)])
         controller = self.controller(studio)
