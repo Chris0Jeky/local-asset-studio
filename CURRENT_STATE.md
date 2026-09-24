@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p40 judged 5/6, G6 promoted, both combos front-face-only, p41 queued — 24 September 2026 (15:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P40: G6 qipao fired on both (`ea0acd17`, `a8f3eee7`, G6 promoted); E1's wink unmeasurable on both bent-over profiles (`a8ce14d8`, `ab419131` — both combos front-face-only); E2 generalization 8/8 on new adults (Drasna `6d69cf54`, Kahili `8c6c856c`). P41 queued: G6 on ports (Kafka `a12a4540`, Yor `5eb6eecf`), eyes on G6 cells (Kafka `13331c04`, Yor `b32123e0`), two more new adults (Wicke `ac485e5f`, Burnice `c150c051`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p39 judged 5/6, G5 closed, E2 front-face boundary, p40 queued — 24 September 2026 (14:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.

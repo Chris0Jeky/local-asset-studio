@@ -1527,3 +1527,27 @@ P39 held 5/6 — G5 closed sheer-off, Kawakami's drift was seed luck, and E2's w
 | p40-narberal-grinwink-bentover | p6-narberal-lips | cstati-v3-baseline | 2026092433 | `ab419131-773d-4e12-b541-2d31315bc482` |
 | p40-drasna-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092477 | `6d69cf54-3d3a-4e40-8a41-b034df644aeb` |
 | p40-kahili-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092478 | `8c6c856c-e396-4b80-8c9a-d50ae4a4ea54` |
+
+### p40 results
+
+All six completed, 22.5–24.3 s each. No spill line on any receipt. G6 fired on both squats and promotes. E1's wink died in profile on both bent-overs — the front-face boundary now covers both combos. E2 generalization reached 8/8 on new adults.
+
+- p40-kafka-qipao, WAI, seed `2026092445`, job `ea0acd17`, prompt `4a07dc65`, 24.2 s, `WAI-Illustration_00088_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: outfit to black qipao — mandarin collar with knot, side slits, sheer skirt panel all fire; G6 1/2. Squat held. Hands: hidden. Cloth: black satin glossy and wet with sheer panels. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p40-yor-qipao, CSTati, seed `2026092446`, job `a8f3eee7`, prompt `de8c6822`, 24.2 s, `CSTati-v3-Baseline_00072_.png`. Identity: Yor reads strong, black hair, red eyes, headband, gold roses, ballroom, adult. Lever: outfit to red qipao — collar, black trim, high slits all fire; G6 2/2, promotes. Squat held. Hands: hidden. Cloth: red satin glossy and wet. Mouth closed. Keep-or-change: keep.
+- p40-tifa-grinwink-bentover, AniFox, seed `2026092441`, job `a8ce14d8`, prompt `522990f0`, 22.5 s, `AniFox-v2-Baseline_00067_.png`. Identity: same Tifa read, bar, adult. Lever: `parted lips` to `grin, winking` — toothy grin shows, wink unmeasurable in profile; E1 shares E2's front-face boundary. Bent-over held. Hands: both on the skirt, normal-looking. Cloth: white tank sheer-patched, black skirt glossy. Keep-or-change: keep; partial on the wink.
+- p40-narberal-grinwink-bentover, CSTati, seed `2026092433`, job `ab419131`, prompt `2364f559`, 24.2 s, `CSTati-v3-Baseline_00073_.png`. Identity: same Narberal read, mansion hall, adult. Lever: same swap — grin shows, wink unmeasurable; second same-read partial. Bent-over held. Hands: both on the dress, normal-looking. Cloth: black dress glossy. Keep-or-change: keep; partial on the wink.
+- p40-drasna-smirkwink, YumeFlux, seed `2026092477`, job `6d69cf54`, prompt `6a41efde`, 24.3 s, `YumeFlux-ILv1-Baseline_00059_.png`. Identity: Drasna reads well, long orange hair, black gothic dress, stone chamber, violet light, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: black dress glossy with sheer panels, wet. Keep-or-change: keep.
+- p40-kahili-smirkwink, CSTati, seed `2026092478`, job `8c6c856c`, prompt `6a525a31`, 24.2 s, `CSTati-v3-Baseline_00074_.png`. Identity: Kahili reads, blonde hair, red visor, red and white golf outfit, lamp interior, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: red golf outfit glossy and wet. Keep-or-change: keep.
+
+## G6 on ports, eyes on G6, Wicke, Burnice — p41 wave
+
+P40 held 5/6 — G6 promoted, both combos confirmed front-face-only, E2 generalization at 8/8. This wave ports G6 to both families at new seeds with no sheer LoRA, adds `bedroom eyes` to both G6 cells at the same seed (structured qipao should hold neutral like G5), and runs E2 on two more new adults (Wicke from Pokemon, Burnice from Zenless Zone Zero — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p41-kafka-qipao-anima | G6 | anima-v1-baseline | 2026092624 | `a12a4540-58fb-47e4-946b-d9579ebc7454` |
+| p41-yor-qipao-janima | G6 | janima-v1-baseline | 2026092625 | `5eb6eecf-77d2-465f-a9a5-f4226129fc4d` |
+| p41-kafka-qipao-eyes | p40-kafka-qipao | wai | 2026092445 | `13331c04-260c-4faa-ae0d-0233834e801e` |
+| p41-yor-qipao-eyes | p40-yor-qipao | cstati-v3-baseline | 2026092446 | `b32123e0-4539-4086-816a-fe7b8eac449b` |
+| p41-wicke-smirkwink | E2 squat recipe | wai | 2026092479 | `ac485e5f-2772-4142-98bf-f1e5b8d2e116` |
+| p41-burnice-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092480 | `c150c051-c620-43c9-9d49-ee74fc7c662a` |
