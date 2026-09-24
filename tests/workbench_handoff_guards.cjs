@@ -157,6 +157,7 @@ function replaceHarness() {
     "const legacyReferenceChange=null;const DataTransfer=function(){};const Event=function(){};",
     replaceSecondPictureSource,
     "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.finish=value=>finish(value);this.fail=error=>fail(error);this.draft=()=>JSON.stringify({stamp,continuationState,secondPicture});",
+    "this.setPending=value=>{referencePending=value};this.pendingCount=()=>referencePending;",
     "this.state=()=>JSON.stringify({uploaded,draftDirty,replaceCount,saveCount,syncCount});this.notices=notices;",
   ].join('\n'), context);
   return context;
@@ -194,6 +195,19 @@ test('a delayed replacement copy cannot overwrite a newer workbench state', asyn
   });
   assert.equal(harness.notices.at(-1).error, true);
   assert.match(harness.notices.at(-1).message, /workbench changed/);
+});
+
+test('a newer pending role upload prevents source replacement without losing its owner', async () => {
+  const harness=replaceHarness(),before=harness.draft(),pending=harness.start();
+  harness.setPending(1);
+  harness.finish(replacement());
+  await pending;
+  assert.equal(harness.draft(),before,'a newly pending attachment is newer work even before its record changes');
+  assert.equal(harness.pendingCount(),1,'refusing replacement must not cancel the new attachment');
+  assert.deepEqual(JSON.parse(harness.state()),{
+    uploaded:'old-upload',draftDirty:false,replaceCount:0,saveCount:0,syncCount:0,
+  });
+  assert.match(harness.notices.at(-1).message,/workbench changed/);
 });
 
 test('a current replacement copy commits once', async () => {
