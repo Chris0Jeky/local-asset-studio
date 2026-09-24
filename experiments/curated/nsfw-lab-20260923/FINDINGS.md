@@ -2334,6 +2334,30 @@ P71 held 6/6 — G16 ported 2/2 and held eyes-neutral 2/2, B1 Yuzuha clean and A
 | p72-sparkle-smallbust | B1 recipe | anifox-v2-baseline | 2026092638 | `a37dca16-888a-4370-8a9f-284f91962f34` |
 | p72-zhezhi-smallbust | B1 recipe | cstati-v3-baseline | 2026092639 | `1c5457c7-1ede-4b65-9682-cdbf006a422e` |
 
+### p72 results
+
+All six completed, 26.2–29.5 s each, no spill. G16 closed with the sheer-off reruns (nothing drifted); G17 opened 2/2 and promotes; B1 Zhezhi clean, Sparkle partial.
+
+- p72-kafka-cheer-nolora, WAI, seed `2026092445`, job `ba139c79`, prompt `879d58de`, 29.5 s, `WAI-Illustration_00147_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer top with a pleated skirt, stadium night, adult. Lever: sheer-off rerun at the same seed — top and skirt stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: red top opaque glossy, pleated skirt structured. Keep-or-change: keep; G16 sheer-off 1/2.
+- p72-yor-cheer-nolora, CSTati, seed `2026092446`, job `788edaa8`, prompt `2cb656cd`, 28.3 s, `CSTati-v3-Baseline_00137_.png`. Identity: Yor reads, black hair, headband, red and white cheer top with fake chest letters, pleated skirt, stadium night, adult. Lever: sheer-off rerun at the same seed — top and skirt stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: red top opaque glossy, pleated skirt structured. Keep-or-change: keep; G16 sheer-off 2/2, G16 closes.
+- p72-kafka-kimono, WAI, seed `2026092445`, job `f77c4084`, prompt `0a9a64cd`, 26.3 s, `WAI-Illustration_00148_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red kimono with a black obi, shrine lanterns night, adult. Lever: outfit to kimono — full read, obi knotted at the front, shrine sells the place. Squat held. Hands: hidden behind the head. Cloth: red kimono glossy, thighs bare under the skirt. Keep-or-change: keep; G17 1/2.
+- p72-yor-kimono, CSTati, seed `2026092446`, job `76a0fcae`, prompt `27351997`, 28.3 s, `CSTati-v3-Baseline_00138_.png`. Identity: Yor reads, black hair, headband, white kimono with red roses and a black obi, shrine lanterns night, adult. Lever: outfit to kimono — full read (ground reads white-with-red rather than red-and-white, garment class holds). Squat held. Hands: hidden behind the head. Cloth: white kimono glossy. Keep-or-change: keep; G17 2/2, promotes.
+- p72-sparkle-smallbust, AniFox, seed `2026092638`, job `a37dca16`, prompt `8811d897`, 26.3 s, `AniFox-v2-Baseline_00094_.png`. Identity: Sparkle reads, red-brown twintail hair, red and black jester dress, stage screens with mirror selves, night, adult. Lever: B1 first try — bust reads moderate. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep as a partial.
+- p72-zhezhi-smallbust, CSTati, seed `2026092639`, job `1c5457c7`, prompt `95f9adb7`, 26.3 s, `CSTati-v3-Baseline_00139_.png`. Identity: Zhezhi reads, dark blue hair in a bun, white and blue artist dress, studio lamp night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white dress translucent-sheer. Keep-or-change: keep; B1 clean.
+
+## First mixed wave: G17 kimono ports plus kimono on four poses — p73 wave
+
+P72 held 6/6 — G16 closed (both sheer states, both ports, eyes-neutral), G17 promoted on the opening pair, B1 Zhezhi clean and Sparkle partial (B1 now 10 clean, 15 partial, 1 break across 26 faces). This wave is the first under the pose-mix rule: two kimono squat anchors (ports, no sheer LoRA) plus the same kimono transferred to the bent-over (Kafka), the crawl (Yor), the seiza (Kafka), and the portrait (Yor). The crawl is also the obi test — T12 hikes loose dresses, so the question is whether the obi holds the kimono shut. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p73-kafka-kimono-anima | p72-kafka-kimono | anima-v1-baseline | 2026092646 | `b2b3dd83-33b9-469f-8fbd-93cb91cb1ca6` |
+| p73-yor-kimono-janima | p72-yor-kimono | janima-v1-baseline | 2026092647 | `d409429d-7654-4a88-a2f7-3e84005a8860` |
+| p73-kafka-kimono-bentover | p72-kafka-kimono | wai | 2026092640 | `ee8c6b05-0987-495a-95cd-65a07adcbd5a` |
+| p73-yor-kimono-crawl | p72-yor-kimono | cstati-v3-baseline | 2026092641 | `96cda2ea-3a96-44a9-958e-54daf8ce0625` |
+| p73-kafka-kimono-seiza | p72-kafka-kimono | yumeflux-ilv1-baseline | 2026092642 | `72d0d5a6-f379-431c-bfa3-e6482041dc76` |
+| p73-yor-kimono-portrait | p72-yor-kimono | anifox-v2-baseline | 2026092643 | `d9e46e27-a950-4797-9f7b-848717d47acd` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.

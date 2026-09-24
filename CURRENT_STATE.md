@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p72 judged 6/6, G16 closed, G17 promoted, B1 at 26 faces, p73 queued mixed — 25 September 2026 (05:20 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P72 held 6/6: G16 closed with the sheer-off reruns (Kafka `ba139c79`, Yor `788edaa8`, nothing drifted); G17 promoted on the opening pair (Kafka `f77c4084` red kimono black obi, Yor `76a0fcae` white-with-red kimono — garment class holds); B1 Zhezhi clean (`1c5457c7`), Sparkle partial (`a37dca16`; B1 now 10 clean, 15 partial, 1 break across 26 faces). P73 queued, first mixed wave: kimono squat-anchor ports (Kafka `b2b3dd83`, Yor `d409429d`), kimono on bent-over (`ee8c6b05`), crawl (`96cda2ea`, obi-vs-hike test), seiza (`72d0d5a6`), portrait (`d9e46e27`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p71 judged 6/6, G16 ports and eyes, B1 at 24 faces, p72 queued — 25 September 2026 (04:55 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
