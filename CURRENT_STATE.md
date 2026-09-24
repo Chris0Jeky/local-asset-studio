@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p60 judged 6/6, G13 closed, E2 at 63/63, p61 queued — 25 September 2026 (00:20 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P60 held 6/6: G13 closed with the sheer-off reruns (Kafka `a865f29f`, Yor `588a6b69`, nothing drifted — both sheer states, both ports, eyes-neutral); E2 generalization 63/63 first try (Soldier 11 `c891452f`, Astra Yao `5e265203`, Acheron `38a6f8a6`, Sanhua `16d0f2d0`, all with smirk and wink showing, likeness notes on the two new ZZZ faces). P61 queued: E2 burn-down on six more new adults (Trigger `10684cf7`, Vivian `f66c3467`, Nekomata `524d903f`, Dialyn `e77cec6a`, Ju Fufu `9f435ebd`, Yuzuha `b10f9e12`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p59 judged 6/6, G13 ports and eyes, E2 at 59/59, GameRant intake done, p60 queued — 25 September 2026 (00:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.

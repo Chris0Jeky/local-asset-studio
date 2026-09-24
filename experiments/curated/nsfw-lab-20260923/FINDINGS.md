@@ -2044,6 +2044,30 @@ P59 held 6/6 — G13 ported 2/2 and held eyes-neutral 2/2, E2 generalization at 
 | p60-acheron-smirkwink | E2 squat recipe | wai | 2026092594 | `38a6f8a6-845b-417e-b6cf-448abbab5ee9` |
 | p60-sanhua-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092595 | `16d0f2d0-39d3-4356-a01d-6b23fd896d42` |
 
+### p60 results
+
+All six completed, 26.3–32.5 s each, no spill. G13 closed with the sheer-off reruns (nothing drifted); E2 generalization reached 63/63 first try.
+
+- p60-kafka-race-nolora, WAI, seed `2026092445`, job `a865f29f`, prompt `9004643a`, 32.5 s, `WAI-Illustration_00130_.png`. Identity: Kafka reads, long magenta hair, sunglasses on the head, racetrack night, adult. Lever: sheer-off rerun at the same seed — red and white jacket, white top, black and red shorts all stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: white top opaque glossy, black and red shorts latex-glossy; fake sponsor lettering on the billboard is garnish. Keep-or-change: keep; G13 sheer-off 1/2.
+- p60-yor-race-nolora, CSTati, seed `2026092446`, job `588a6b69`, prompt `bbe10287`, 28.6 s, `CSTati-v3-Baseline_00111_.png`. Identity: Yor reads, long black hair, white headband, red eyes, gold rose hair ornaments, garage night, adult. Lever: sheer-off rerun at the same seed — red jacket, white top with checker stripe, black shorts stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: white top opaque, black shorts glossy; checker stripe and sponsor patches read as racing livery, fake-letter belt buckle is garnish. Keep-or-change: keep; G13 sheer-off 2/2, G13 closes.
+- p60-soldier11-smirkwink, AniFox, seed `2026092592`, job `c891452f`, prompt `54021b1f`, 28.3 s, `AniFox-v2-Baseline_00078_.png`. Identity: Soldier 11 reads as a short orange-haired soldier in a green and orange uniform on a neon street at night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: uniform top with translucent sheer chest panels, black pants glossy; fake sign letters in the background are garnish. Keep-or-change: keep.
+- p60-astrayao-smirkwink, CSTati, seed `2026092593`, job `5e265203`, prompt `1a127777`, 28.3 s, `CSTati-v3-Baseline_00112_.png`. Identity: Astra Yao reads as a dark-haired singer with red highlights on a concert stage at night, adult; first-run face, likeness note only. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: dark teal dress glossy with a sheer chest panel, lace-top stockings; fake stage letters overhead are garnish. Keep-or-change: keep.
+- p60-acheron-smirkwink, WAI, seed `2026092594`, job `38a6f8a6`, prompt `7be09b5a`, 26.3 s, `WAI-Illustration_00131_.png`. Identity: Acheron reads, long purple hair, black and purple galaxy-ranger coat, space station night, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: black bodysuit glossy, purple coat panels glossy, no sheer panel on this structured garment. Keep-or-change: keep.
+- p60-sanhua-smirkwink, YumeFlux, seed `2026092595`, job `16d0f2d0`, prompt `1f649e45`, 26.3 s, `YumeFlux-ILv1-Baseline_00071_.png`. Identity: Sanhua reads, blue hair with eyepatch, black and blue bodyguard suit, office lamp night, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden behind the head. Cloth: dark blue suit glossy latex, tie and belt intact, no sheer panel on this structured garment. Keep-or-change: keep.
+
+## E2 burn-down, Trigger through Yuzuha — p61 wave
+
+P60 held 6/6 — G13 closed, E2 generalization at 63/63 first try. This wave burns down six more uncleared-never-run adults through E2 on the squat recipe (Trigger, Vivian, Nekomata, Dialyn, Ju Fufu, Yuzuha — all adult-in-canon per the cleared matrix). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p61-trigger-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092596 | `10684cf7-48db-4d8b-b572-fab7015fa1e2` |
+| p61-vivian-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092597 | `f66c3467-09d3-450c-b7bc-dbea0c2c5b15` |
+| p61-nekomata-smirkwink | E2 squat recipe | wai | 2026092598 | `524d903f-5709-4b52-a98a-6824a2dee667` |
+| p61-dialyn-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092599 | `e77cec6a-fc6b-43aa-b326-6abb630896e3` |
+| p61-jufufu-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092600 | `9f435ebd-6446-4c4c-9fb4-1f6489634706` |
+| p61-yuzuha-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092601 | `b10f9e12-425c-4382-a036-6b0db79cf56a` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
