@@ -1235,3 +1235,27 @@ P27 held 6/6. Three cells were never measured on Illustrious: `cowboy shot` on t
 | p28-skyla-closeup | p7-skyla-bentover | anifox-v2-baseline | 2026092464 | `1006fabb-7ec9-4afb-9187-d73ff74a03f8` |
 | p28-sabrina-grin | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `44b7acab-9343-4818-b415-6605732b319f` |
 | p28-sonia-grin | p13-sonia-crawl | yumeflux-ilv1-baseline | 2026092513 | `cc6498d1-5ce1-4dc7-a3c7-ee43c8a836ba` |
+
+### p28 results
+
+All six completed, 10.2–28.3 s each. No spill line on any receipt. `cowboy shot` is a no-op on the Illustrious squat (full squat, no tightening), and `close-up` loses to the bent-over (full rear with legs, where `cowboy shot` tightened) — T10 is now closed on every Illustrious pose. `grin` fired on both crawls, closing T18 on every face.
+
+- p28-sae-cowboy, WAI, seed `2026092465`, job `ec2e8da7`, prompt `75b3ae0d`, 28.3 s, `WAI-Illustration_00074_.png`. Identity: same Sae read, office at night, adult. Lever: `cowboy shot` changed nothing; still a full squat. Hands: hidden. Cloth: white shirt translucent, suit glossy. Mouth parted. Keep-or-change: keep.
+- p28-jessie-cowboy, AniFox, seed `2026092468`, job `4998789e`, prompt `c5b28542`, 24.4 s, `AniFox-v2-Baseline_00051_.png`. Identity: same Jessie read, rooftop, adult. Lever: `cowboy shot` changed nothing; still a full squat. Hands: hidden. Cloth: white uniform translucent. Mouth parted. Keep-or-change: keep.
+- p28-diantha-closeup, YumeFlux, seed `2026092463`, job `6c14e61e`, prompt `62b031c1`, 26.3 s, `YumeFlux-ILv1-Baseline_00048_.png`. Identity: same Diantha read, boutique salon, adult. Lever: `close-up` did not tighten the bent-over; full rear with legs, unlike p8's cowboy crop. Hands: both on the dress, normal-looking. Cloth: white dress translucent. Mouth slightly open. Keep-or-change: keep.
+- p28-skyla-closeup, AniFox, seed `2026092464`, job `1006fabb`, prompt `f12aa391`, 26.3 s, `AniFox-v2-Baseline_00052_.png`. Identity: same Skyla read, airport, adult. Lever: `close-up` did not tighten; full rear with legs. Bent-over held. Hands: both on the suit, normal-looking. Cloth: blue suit glossy. Mouth slightly open. Keep-or-change: keep.
+- p28-sabrina-grin, AniFox, seed `2026092498`, job `44b7acab`, prompt `3625d318`, 10.2 s, `AniFox-v2-Baseline_00053_.png`. Identity: same Sabrina read, gym hall, adult. Lever: `grin` for `parted lips` — a toothy grin on the crawl face. Crawl held. Hands: clasped fists under the chin, no count to fail. Cloth: same dark dress covering. Keep-or-change: keep.
+- p28-sonia-grin, YumeFlux, seed `2026092513`, job `cc6498d1`, prompt `e4ed0907`, 24.3 s, `YumeFlux-ILv1-Baseline_00049_.png`. Identity: same Sonia read, lab, adult. Lever: `grin` for `parted lips` — a toothy grin. Crawl held. Hands: one flat, one tucked. Cloth: green jacket hiked, rear bare. Keep-or-change: keep.
+
+## Port grins, grin-wink combo, bodystocking — p29 wave
+
+P28 held 6/6 and closed T10 and T18 on Illustrious. This wave takes `grin` to the ports (`parted lips` to `grin` on the two judged p22 cells at the same seed), tests the grin-plus-wink combo as the single lever under test (`smile` to `grin` against the judged p22 wink cells at the same seed), and swaps two held outfits for a black bodystocking at the same seed (Tifa's tank and skirt, Kafka's shirt and jacket). Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p29-tifa-grin-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `9e2e4ae7-94d6-47a7-8335-b7c9deefaeb3` |
+| p29-yor-grin-janima | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `a1ab5d2b-ddb8-4b75-a053-27225d275225` |
+| p29-kafka-grinwink | p22-kafka-wink | cstati-v3-baseline | 2026092542 | `4000025b-4eda-4c7f-b122-5701c899d67d` |
+| p29-nero-grinwink | p22-nero-wink | anifox-v2-baseline | 2026092544 | `5c541003-4c64-46c8-b089-40b4efd42992` |
+| p29-tifa-body | p5-tifa-bentover | anifox-v2-baseline | 2026092441 | `e1f6de3a-1d8c-4f1a-9b95-51b4f145e699` |
+| p29-kafka-body | p5-kafka-squat | wai | 2026092445 | `ca30a1c6-e411-4ac4-a7d3-5e60e45aefe5` |
