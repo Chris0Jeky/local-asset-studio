@@ -78,6 +78,14 @@ Danbooru names were checked against `https://danbooru.donmai.us/tags.json` on 23
 | Zenless Zone Zero | `burnice white` | 3504 | Adult Sons of Calydon. |
 | Zenless Zone Zero | `hoshimi miyabi` | 8043 | Adult Void Hunter. |
 | Zenless Zone Zero | `evelyn chevalier` | 4476 | Adult bodyguard. |
+| Zenless Zone Zero | `anby (zenless zone zero)` | (unchecked) | Adult Cunning Hares operative. Owner-confirmed eligible 24 September (evening intake). Tag check 24 September returned 403, so no count. |
+| Zenless Zone Zero | `belle (zenless zone zero)` | (unchecked) | Adult video-store manager. Owner-confirmed eligible 24 September (evening intake). Tag check 24 September returned 403, so no count. |
+| Zenless Zone Zero | `lucy (zenless zone zero)` | (unchecked) | Adult Sons of Calydon member. Owner-confirmed eligible 24 September (evening intake). Tag check 24 September returned 403, so no count. |
+| Zenless Zone Zero | `koleda belobog` | (unchecked) | Adult Belobog president. Owner-confirmed eligible 24 September (evening intake). Tag check 24 September returned 403, so no count. |
+| Zenless Zone Zero | `piper wheel` | (unchecked) | Adult Sons of Calydon member. Owner-confirmed eligible 24 September (evening intake). Tag check 24 September returned 403, so no count. |
+| Zenless Zone Zero | `aria (zenless zone zero)` | (unchecked) | Adult-form sentient construct, ancient chrono estimate. Owner-confirmed eligible 24 September (evening intake). Tag check 24 September returned 403, so no count. |
+| Zenless Zone Zero | `cissia (zenless zone zero)` | (unchecked) | Adult External Strategy member (child only in backstory flashback). Owner-confirmed eligible 24 September (evening intake). Tag check 24 September returned 403, so no count. |
+| Zenless Zone Zero | `promeia (zenless zone zero)` | (unchecked) | Adult External Strategy member. Owner-confirmed eligible 24 September (evening intake). Tag check 24 September returned 403, so no count. |
 | Honkai: Star Rail | `kafka (honkai: star rail)` | (21 Sep lab) | Adult Stellaron Hunter. |
 | Honkai: Star Rail | `acheron (honkai: star rail)` | (wildcard) | Adult. |
 | Honkai: Star Rail | `black swan (honkai: star rail)` | 3288 | Adult Memokeeper. |
@@ -130,6 +138,8 @@ Canonically under 18, school students, etc, made 18.
 | Aura Bella Fiora, Mare Bello Fiore | Overlord children. Tags exist (`aura bella fiora` 206, `mare bello fiore` 165) and are still dropped. |
 | Beatrice | Re:Zero, child body. `beatrice (re:zero)` 1573, dropped. |
 | Ellen Joe | Zenless Zone Zero high-school student. `ellen joe` 9630, dropped. |
+| Ye Shunguang, Sunna, Nangong | Zenless Zone Zero teen estimates (16–18, 17–19, 17–19 per the community guide the owner pasted 24 September evening). Excluded: affirmative under-18 evidence, not ambiguity. |
+| Billy Kid, Pyrois | Zenless Zone Zero: non-human android with no age (Billy), unknown (Pyrois). Excluded. |
 | Child Fate servants | Illya, Jack, Nursery Rhyme, Abigail, young Lily forms, Mash (16). |
 | Child Honkai: Star Rail | Hook, Clara, Bailu, and teen-coded designs (Firefly, March 7th, Silver Wolf) are not in this matrix. |
 | Child Wuthering Waves | Encore and other child resonators. |
@@ -1815,3 +1825,55 @@ P51 held 6/6 — G10 closed with the sheer-off reruns, E2 generalization at 33/3
 | p52-chasca-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092567 | `d212bf1a-8923-42a6-a54d-1a28d8639596` |
 | p52-feixiao-smirkwink | E2 squat recipe | wai | 2026092568 | `55645ca4-b3b4-4d3d-9ce8-f365f948e91c` |
 | p52-miyabi-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092569 | `292e22cb-76dc-4106-bd5a-5e4c26dbe75d` |
+
+### p52 results
+
+All six completed, 26.3–32.4 s each, no spill. G11 opened 2/2 with the full secretary read on both seeds, so G11 promotes. E2 generalization reached 37/37.
+
+- p52-kafka-secretary, WAI, seed `2026092445`, job `22e68cbe`, prompt `4a97a6bf`, 32.4 s, `WAI-Illustration_00114_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, office tower night, adult. Lever: outfit to secretary — black blazer, white blouse, tie, black pencil skirt; full secretary read. Squat held. Hands: hidden. Cloth: white blouse sheer, black skirt glossy and wet. Keep-or-change: keep; G11 1/2.
+- p52-yor-secretary, CSTati, seed `2026092446`, job `3b539b7c`, prompt `3052fb11`, 28.4 s, `CSTati-v3-Baseline_00095_.png`. Identity: Yor reads, black hair, headband, red eyes, gold earrings, lamp office, adult. Lever: outfit to secretary — blazer, white blouse, pencil skirt; full secretary read again. Squat held. Hands: hidden. Cloth: white blouse sheer and open at the chest, black skirt glossy. Keep-or-change: keep; G11 2/2, promotes.
+- p52-citlali-smirkwink, AniFox, seed `2026092560`, job `69831394`, prompt `335d2231`, 28.4 s, `AniFox-v2-Baseline_00073_.png`. Identity: Citlali reads moderately, purple-white hair, halo headpiece, purple shaman dress, night market violet, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: purple and white top sheer, dark skirt glossy and wet. Keep-or-change: keep.
+- p52-chasca-smirkwink, CSTati, seed `2026092567`, job `d212bf1a`, prompt `e301f6b9`, 30.3 s, `CSTati-v3-Baseline_00096_.png`. Identity: Chasca reads weakly — blue hair only, no red; aviator jacket, canyon lamp, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: red top glossy, blue jacket, black bottoms glossy and wet. Keep-or-change: keep, likeness note.
+- p52-feixiao-smirkwink, WAI, seed `2026092568`, job `55645ca4`, prompt `80f7aa29`, 28.4 s, `WAI-Illustration_00115_.png`. Identity: Feixiao reads strongly, blonde hair, fox ears, forehead gem, white and teal general outfit, arena night, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white top sheer, teal and dark skirt glossy and wet. Keep-or-change: keep.
+- p52-miyabi-smirkwink, YumeFlux, seed `2026092569`, job `292e22cb`, prompt `ea295a89`, 26.3 s, `YumeFlux-ILv1-Baseline_00066_.png`. Identity: Miyabi reads, black hair, fox ears, Section 6 uniform, rooftop night, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white shirt fully sheer, black uniform glossy. Keep-or-change: keep.
+
+## G11 ports, G11 eyes, Aglaea, Emilie — p53 wave
+
+P52 held 6/6 — G11 promoted on the opening pair, E2 generalization at 37/37. This wave ports G11 to both families with no sheer LoRA, adds `bedroom eyes` to both secretary cells at the same seed, and runs E2 on two more new adults (Aglaea from Honkai: Star Rail, Emilie from Genshin Impact — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p53-kafka-secretary-anima | p52-kafka-secretary | anima-v1-baseline | 2026092634 | `f66c35b1-8490-424f-aa9f-bb90c1ed962c` |
+| p53-yor-secretary-janima | p52-yor-secretary | janima-v1-baseline | 2026092635 | `c5bd82b9-d139-4d0b-a514-cfbf34721132` |
+| p53-kafka-secretary-eyes | p52-kafka-secretary | wai | 2026092445 | `ca5dcff0-8eb7-4c2e-8da9-07585180635a` |
+| p53-yor-secretary-eyes | p52-yor-secretary | cstati-v3-baseline | 2026092446 | `11c8bf6a-59d0-495f-b157-9daaa0749f78` |
+| p53-aglaea-smirkwink | E2 squat recipe | wai | 2026092570 | `1b1941ad-f936-4b4a-a521-67447d9bf085` |
+| p53-emilie-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092571 | `69caca53-11da-4cbb-a21c-3dcaa31724fe` |
+
+## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
+
+Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
+
+| Name | Guide estimate | Verdict |
+| --- | --- | --- |
+| Ye Shunguang | 16–18 | Excluded: teen estimate. |
+| Sunna | 17–19, "almost an adult" | Excluded: teen estimate. |
+| Nangong | 17–19 | Excluded: teen estimate. |
+| Ellen Joe | 18–19 ("likely adult") | Stays dropped: high-school student (head matrix). The guide corroborates the drop. |
+| Billy Kid | Non-human android | Excluded: non-human, age N/A. |
+| Pyrois | Unknown | Excluded: unknown. |
+| Anby | 18–22 ("likely adult") | Pending owner confirmation (Aqua treatment). Unconfirmed. |
+| Belle | 18–25 ("likely adult") | Pending owner confirmation. Unconfirmed. |
+| Lucy | 18–19 ("likely adult") | Pending owner confirmation. Unconfirmed. |
+| Koleda Belobog | Early to mid-20s | Pending owner confirmation. Unconfirmed. |
+| Piper Wheel | 20–25 bio, 40+ mentally | Pending owner confirmation. Unconfirmed. |
+| Aria | 110–120 chrono, sentient construct | Pending owner confirmation. Unconfirmed and non-human; owner call. |
+| Cissia | Early 20s (a child in backstory flashback) | Pending owner confirmation. Unconfirmed. |
+| Promeia | Late 20s–early 30s | Pending owner confirmation. Unconfirmed. |
+| Nicole Demara | Early to mid-20s ("clearly adult") | Correction, not a new verdict: Nicole already ran (`p44-nicole-smirkwink`, CSTati, job `331b057e`). The cell predates this evidence and stays in history; no new Nicole cells until the owner confirms her. |
+
+Broader correction on already-run ZZZ cells: the guide's blanket statement (no confirmed ZZZ ages at all) postdates every ZZZ cell run so far — Jane (p4), Nicole (p44), Rina (p49), Caesar (p42), Burnice (p41), Grace (p45), Evelyn (p43), Yanagi (p51), Miyabi (p52). History stands; nothing is deleted. Owner-named ambition targets (Evelyn, Miyabi, Caesar, Burnice) stand as owner-authorized. New cells for Jane, Nicole, Rina, Grace, and Yanagi wait for the owner's call (open item in HUMAN_TODO.md). No new ZZZ names were queued tonight after this intake.
+
+Wildcards and tags deliberately NOT extended: `presets/wildcards/nsfw_character.txt` and the `nsfw_character` entry in `presets/nsfw-intel.json` list only cleared adults, so none of the 15 were added — adding unconfirmed-age names there would put them one click from generation. Same reasoning removed the pre-existing Aqua line from both files while Aqua's confirmation stays open: Aqua sexual cells are banned until the owner confirms her, so she should not sit in the NSFW character wildcard meanwhile. Recorded here, not silently.
+
+Correction, same evening (owner decision, recorded from the owner's message): the owner confirmed Aqua — "clearly an adult and a goddess canonically and already portrayed maturely" — and ruled that ambiguity about a stated number is not by itself a reason to remove characters. Aqua stays: her wildcard and intel lines were restored, and she may run sexual cells again. The same ruling clears the 8 pending names above (Anby, Belle, Lucy, Koleda, Piper, Aria, Cissia, Promeia): they are added to the adult head matrix as owner-confirmed eligible. It also clears new cells for the already-run five (Jane, Nicole, Rina, Grace, Yanagi). What the ruling does NOT clear: Ye Shunguang, Sunna, and Nangong stay excluded (teen estimates are affirmative under-18 evidence, not ambiguity), Ellen Joe stays dropped (student), Billy Kid and Pyrois stay excluded (non-human with no age / unknown). The head matrix above now carries all 15 verdicts.

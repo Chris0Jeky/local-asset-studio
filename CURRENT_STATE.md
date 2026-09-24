@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p52 judged 6/6, G11 promoted, E2 at 37/37, ZZZ intake cleared by owner, p53 queued — 24 September 2026 (21:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed by the owner (see below), not pending anymore.
+
+P52 held 6/6: G11 secretary opened 2/2 with the full read on both seeds (Kafka `22e68cbe`, Yor `3b539b7c`), so G11 promotes; E2 generalization 37/37 (Citlali `69831394`, Chasca `d212bf1a` with a weak-likeness note, Feixiao `55645ca4`, Miyabi `292e22cb`). ZZZ age-guide intake: 15 owner-pasted names evaluated in FINDINGS.md; the owner then confirmed Aqua and ruled a missing stated number is not by itself a removal reason — so Aqua stays (wildcard line restored), 8 ZZZ names are owner-confirmed eligible (Anby, Belle, Lucy, Koleda, Piper, Aria, Cissia, Promeia, added to the adult head matrix), and new cells for Jane, Nicole, Rina, Grace, and Yanagi are cleared. Still excluded: Ye Shunguang, Sunna, Nangong (teen estimates), Ellen Joe (student), Billy Kid and Pyrois (non-human/unknown). P53 queued: G11 ports (Kafka `f66c35b1`, Yor `c5bd82b9`), G11 eyes (Kafka `ca5dcff0`, Yor `11c8bf6a`), two more new adults (Aglaea `1b1941ad`, Emilie `69caca53`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p51 judged 6/6, G10 closed, E2 at 33/33, p52 queued — 24 September 2026 (20:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
