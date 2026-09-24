@@ -2236,6 +2236,32 @@ P67 held 5.5/6 — G15 stands 1.5/2 (Yor's place needs the fix below, garment ho
 | p68-cissia-smallbust | B1 recipe | anifox-v2-baseline | 2026092628 | `84b8259f-3e33-4bd5-9f01-32a88df43a0e` |
 | p68-promeia-smallbust | B1 recipe | cstati-v3-baseline | 2026092629 | `40c369b2-d859-49ac-b63d-21fa4d40c9fb` |
 
+### p68 results
+
+All six completed, 22.8–26.8 s each, no spill. G15 ports 2/2; Kafka eyes 1/2; Yor's lab-place fix holds (equipment nouns work); B1 Cissia clean, Promeia partial.
+
+- p68-kafka-labcoat-anima, Anima, seed `2026092642`, job `37d0b80a`, prompt `6068a8dd`, 26.4 s, `Anima-v1-Baseline_00072_.png`. Identity: Kafka reads, magenta hair, white coat over a black blouse and skirt, beakers violet night, adult. Lever: G15 port — full lab-coat read with no sheer LoRA. Squat held. Hands: hidden behind the head. Eyes closed, the Anima squat pattern. Cloth: coat, blouse, and skirt opaque. Keep-or-change: keep; G15 ports 1/2.
+- p68-yor-labcoat-janima, JANIMA, seed `2026092643`, job `d4df9293`, prompt `5f806bf1`, 22.8 s, `JANIMA-v1-Baseline_00034_.png`. Identity: Yor reads, black hair, headband, white coat over a red blouse and black skirt, monitors and beakers, night, adult. Lever: G15 port with the equipment nouns — lab reads on the port too. Squat held. Hands: hidden behind the head. Eyes open. Cloth: coat, blouse, and skirt opaque. Keep-or-change: keep; G15 ports 2/2.
+- p68-kafka-labcoat-eyes, WAI, seed `2026092445`, job `6b8835c4`, prompt `8a024cb8`, 26.8 s, `WAI-Illustration_00141_.png`. Identity: Kafka reads, coat, blouse, and skirt intact, lab night, adult. Lever: `bedroom eyes` — half-lidded eyes, outfit intact. Squat held. Hands: hidden behind the head. Cloth: white blouse sheer, coat and skirt glossy. Keep-or-change: keep; G15 eyes 1/2.
+- p68-yor-labcoat-labfix, CSTati, seed `2026092446`, job `497b66c3`, prompt `75db95f7`, 26.3 s, `CSTati-v3-Baseline_00127_.png`. Identity: Yor reads, coat over a pinkish blouse and black skirt, monitors and lamp night, adult. Lever: lab-place fix with `monitors and beakers` — screens present now, place reads lab-office. Squat held. Hands: hidden behind the head. Cloth: blouse sheer, black skirt glossy. Keep-or-change: keep; the equipment-noun rule holds, G15 garment+place now 2/2.
+- p68-cissia-smallbust, AniFox, seed `2026092628`, job `84b8259f`, prompt `ccf1c512`, 24.2 s, `AniFox-v2-Baseline_00090_.png`. Identity: Cissia reads as a dark-haired strategist in a white shirt and tie among office monitors at night, adult; first-run face, likeness note only. Lever: B1 first try — bust reads modest under the shirt. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white shirt translucent-sheer, black pants glossy. Keep-or-change: keep; B1 clean.
+- p68-promeia-smallbust, CSTati, seed `2026092629`, job `40c369b2`, prompt `486e99cb`, 26.2 s, `CSTati-v3-Baseline_00128_.png`. Identity: Promeia reads as a blonde in a dark teal and gold dress, office lamp night, adult; first-run face, likeness note only. Lever: B1 first try — bust reads moderate. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: dark dress glossy. Keep-or-change: keep as a partial.
+
+## G15 eyes-close, sheer-off close, B1 Jane through Grace — p69 wave
+
+P68 held 6/6 — G15 ports 2/2, Kafka eyes 1/2, Yor lab-place fix holds (garment+place 2/2), B1 Cissia clean and Promeia partial (B1 now 4 clean, 11 partial, 1 break across 16 faces). This wave runs Yor's eyes cell, closes G15 with the sheer stack off at the same seed on both G-series seeds, and runs B1 on three more cleared adults (Jane, Nicole, Grace — all cleared for new cells). Six cells, queued in one burst, no refusals.
+
+Submit note (honest): the Yor-eyes cell below went out with the sheer stack OFF (no `lora2_name`, no sheer head) — a submit-script branching slip, so it reads as a sheer-off+eyes combined cell, not the clean same-seed eyes test. It is judged as a combined read; a clean Yor-eyes-with-sheer rerun (new prompt, same seed) follows in the next wave before G15 eyes counts 2/2.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p69-yor-labcoat-eyes-combined | p68-yor-labcoat-labfix | cstati-v3-baseline | 2026092446 | `bb06e405-10e1-4acd-a637-e72446642c22` |
+| p69-kafka-labcoat-nolora | p67-kafka-labcoat | wai | 2026092445 | `6f1f5ffa-f356-4b13-b7e8-bb4998540d3b` |
+| p69-yor-labcoat-nolora | p68-yor-labcoat-labfix | cstati-v3-baseline | 2026092446 | `093a0526-24a1-4ff2-aae8-ac0130373c67` |
+| p69-jane-smallbust | B1 recipe | anifox-v2-baseline | 2026092630 | `b018f5fe-8c1f-498d-be93-723a39da5d6f` |
+| p69-nicole-smallbust | B1 recipe | cstati-v3-baseline | 2026092631 | `db093101-cc99-4c8c-b2ed-f669acaef170` |
+| p69-grace-smallbust | B1 recipe | wai | 2026092632 | `cae1541f-bd8d-4d0d-b830-dce7f3c317eb` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
