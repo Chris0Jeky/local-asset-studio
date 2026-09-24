@@ -37,6 +37,9 @@ MAX_REVISION = 2**53 - 1
 # edit limit is 200. Conflict projections in app/static/workspace.js accept up to this bound.
 REGISTERED_TITLE_MAX = 1024
 METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
+# Additive, nullable asset columns: a Workspace created before them opens unchanged and its assets read as NULL (#939).
+ADDITIVE_COLUMNS = ("run_label", "prompt_excerpt")
+PROMPT_EXCERPT_CHARS = 60
 
 
 def digest_file(path):
@@ -45,6 +48,19 @@ def digest_file(path):
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def prompt_excerpt(job, limit=PROMPT_EXCERPT_CHARS):
+    """The start of a job's positive prompt, whitespace-collapsed and bounded, for a library subtitle; None when unknown. Never raises."""
+    try:
+        text = (job.get("controls") or {}).get("positive")
+        if not isinstance(text, str):
+            node, name = ((job.get("prompt_bindings") or {}).get("positive") or [(None, None)])[0]
+            text = job["graph"][str(node)]["inputs"][str(name)]
+    except (AttributeError, KeyError, TypeError, IndexError, ValueError): return None
+    if not isinstance(text, str): return None
+    text = " ".join(text.split())
+    return (text if len(text) <= limit else text[:limit - 1].rstrip() + "…") or None
 
 
 class AssetWorkspace:
@@ -90,8 +106,11 @@ class AssetWorkspace:
             db.execute("BEGIN IMMEDIATE")
             db.execute("CREATE TABLE IF NOT EXISTS workspace_identity (singleton INTEGER PRIMARY KEY CHECK(singleton=1), id TEXT NOT NULL)")
             db.execute("INSERT OR IGNORE INTO workspace_identity VALUES (1,?)", (uuid.uuid4().hex,))
-            if "metadata_revision" not in {r["name"] for r in db.execute("PRAGMA table_info(assets)")}:
+            columns = {r["name"] for r in db.execute("PRAGMA table_info(assets)")}
+            if "metadata_revision" not in columns:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
+            for column in ADDITIVE_COLUMNS:
+                if column not in columns: db.execute(f"ALTER TABLE assets ADD COLUMN {column} TEXT")
             from studio_workflow.collection_commands import migrate
             migrate(db)
             from studio_workflow.asset_reads import migrate as migrate_asset_reads
@@ -180,15 +199,17 @@ class AssetWorkspace:
             return None
         path, digest, size = self.snapshot_file(source)
         output = job["outputs"][index]
+        label = job.get("label") if isinstance(job.get("label"), str) and job.get("label") else None
         with self.connection() as db:
             db.execute("""INSERT OR IGNORE INTO assets
                 (id,job_id,output_index,title,media_type,path,filename,sha256,bytes,
-                 created_at,preset_id,preset_name,source,lineage)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                 created_at,preset_id,preset_name,source,lineage,run_label,prompt_excerpt)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
                 asset_id, job["id"], index, self.registered_title(job.get("preset_name", "Untitled"), index),
                 output.get("media_type", "image"), path, output.get("filename", Path(source).name),
                 digest, size, job.get("created_at", time.time()), job.get("preset_id"),
-                job.get("preset_name"), json.dumps(output), json.dumps(job.get("parent_assets", []))))
+                job.get("preset_name"), json.dumps(output), json.dumps(job.get("parent_assets", [])),
+                label[:80] if label else None, prompt_excerpt(job)))
         return asset_id
 
     @staticmethod
