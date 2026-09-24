@@ -42,6 +42,7 @@ from runtime_recovery import RuntimeRecovery
 import prompting
 import submission_evidence
 import observation_state
+import file_replace
 import job_resources
 import continuation
 import pose_guide
@@ -1087,7 +1088,7 @@ class Studio:
     def _write_json_atomic(self, path, value):
         temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
         temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
-        temp.replace(path)
+        file_replace.replace(temp, path)   # a reader holding the target open on Windows refuses briefly
 
     _sync_parent_directory = staticmethod(observation_state.sync_parent_directory)
 
