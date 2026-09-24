@@ -335,7 +335,7 @@ async function refreshHealth() {
   try {
     const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
     if(typeof renderRecovery==='function')renderRecovery(h.recovery);
-    const failure=$('#workerFailure');if(failure){failure.hidden=!h.worker_failure;failure.textContent=h.worker_failure?'A failure record was not saved for '+h.worker_failure.action+' '+h.worker_failure.id+'. Inspect local storage and retained job records before continuing that task. No submission was retried.':'';}
+    const failure=$('#workerFailure'),lost=h.worker_failure;if(failure){failure.hidden=!lost;failure.title=lost?String(lost.id):'';failure.textContent=lost?'Failure record not saved for job '+String(lost.id).slice(0,8)+' ('+lost.action+'). Nothing was resubmitted. Check that no other program is holding files in the experiments folder, then restart the Studio to clear this notice.':'';}
     if(h.devices?.[0]) $('#hardware').textContent=h.devices[0].name.replace(/^cuda:\d+ /,'').replace(' : native','') + ' · ' + (h.devices[0].vram_total/1024**3).toFixed(0) + ' GB VRAM';
     if(h.comfy_url) $('#comfyLink').href=safeUrl(h.comfy_url);
     updateReady();

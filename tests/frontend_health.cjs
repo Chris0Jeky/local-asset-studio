@@ -70,7 +70,9 @@ const respondHealth = async payload => {
   await respondHealth({online: true, worker_alive: true, schema_available: true, missing_models: {},
     worker_failure: {action:'production',id:'failed-project',recording_error:'disk full',durable:false}}); await pending;
   assert.equal(element('#workerFailure').hidden, false);
-  assert.match(element('#workerFailure').textContent, /failed-project/);
+  assert.match(element('#workerFailure').textContent, /job failed-p \(production\)/);
+  assert.equal(element('#workerFailure').title, 'failed-project', 'the full id stays one hover away');
+  assert.match(element('#workerFailure').textContent, /Nothing was resubmitted/);
   assert.match(element('#workerFailure').textContent, /not saved/i);
   assert.equal(state().disabled, false, 'a contained recording error is not a dead worker');
   pending = vm.runInContext('health()', context); await Promise.resolve();
