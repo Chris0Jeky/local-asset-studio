@@ -63,6 +63,18 @@ the same single-asset save to each one, three at a time, and reports progress.
 Anything that fails is listed with whether it was refused or merely unconfirmed;
 no retry is sent for you. The four review states are unchanged.
 
+With **Group by recipe / day / run**, each group heading offers **Mark n
+unreviewed as Needs work / Rejected / Keeper** (tab to it; Enter activates). It
+asks first, naming the count, the group and the decision, and touches only the
+unreviewed assets the group shows under the current scope, source, search and
+media filters; already reviewed assets keep their review. The ids and their
+revisions are fixed when you confirm and sent as the ordinary metadata edit in
+batches of at most 200, each with its own revision guard. The first batch that
+conflicts (an asset changed elsewhere), is refused or goes unconfirmed stops the
+run, and the status says how many were marked; nothing is retried or overwritten.
+A Workspace change mid-run also stops it. Each review can still be changed back
+one asset at a time.
+
 **Move to Trash** removes an asset from the regular views. Open Trash and choose
 **Restore** to bring it back with its collections, notes and recipe. Trash is
 recoverable and does not reclaim disk space: source files and snapshots remain.
