@@ -2164,6 +2164,30 @@ P64 held 6/6 — E2 burn-down complete at 77/77, G14 promoted on the opening pai
 | p65-ellen-smallbust | B1 recipe | anifox-v2-baseline | 2026092618 | `1627685e-7141-4638-bdf3-839aa54e82dd` |
 | p65-belle-smallbust | B1 recipe | cstati-v3-baseline | 2026092619 | `3abd8f5c-692a-419f-9042-693d96335a8d` |
 
+### p65 results
+
+All six completed, 24.2–30.3 s each, no spill. G14 ported 2/2 and held eyes-neutral 2/2 — only the sheer-off reruns remain to close it. B1 on Ellen and Belle both land partial (modest, not fully small).
+
+- p65-kafka-wedding-anima, Anima, seed `2026092640`, job `e6a7b947`, prompt `fe8ef999`, 28.5 s, `Anima-v1-Baseline_00071_.png`. Identity: Kafka reads, magenta hair, tiara and veil, white wedding dress, chapel violet, adult. Lever: G14 port — full wedding read with no sheer LoRA. Squat held. Hands: hidden in gloves behind the head. Eyes closed, the Anima squat pattern. Cloth: white dress opaque glossy. Keep-or-change: keep; G14 ports 1/2.
+- p65-yor-wedding-janima, JANIMA, seed `2026092641`, job `0ca9d9dd`, prompt `72d009cd`, 24.2 s, `JANIMA-v1-Baseline_00033_.png`. Identity: Yor reads, black hair, red eyes, tiara and veil, white wedding dress, chapel lamps, adult. Lever: G14 port — full wedding read with no sheer LoRA. Squat held. Hands: hidden in gloves behind the head. Eyes open, no JANIMA variance this time. Cloth: white dress opaque glossy. Keep-or-change: keep; G14 ports 2/2.
+- p65-kafka-wedding-eyes, WAI, seed `2026092445`, job `4be448bd`, prompt `0526e97f`, 30.2 s, `WAI-Illustration_00136_.png`. Identity: Kafka reads, veil back, chapel, adult. Lever: `bedroom eyes` — half-lidded eyes, lace bodysuit, veil, and gloves all intact. Squat held. Hands: hidden in gloves behind the head. Cloth: white lace bodysuit sheer-glossy. Keep-or-change: keep; G14 eyes 1/2.
+- p65-yor-wedding-eyes, CSTati, seed `2026092446`, job `a05f4f31`, prompt `a6293145`, 30.3 s, `CSTati-v3-Baseline_00121_.png`. Identity: Yor reads, veil back, chapel lamps, adult. Lever: `bedroom eyes` — half-lidded red eyes, dress, veil, and gloves intact. Squat held. Hands: hidden in gloves behind the head. Cloth: white dress glossy with sheer panels. Keep-or-change: keep; G14 eyes 2/2.
+- p65-ellen-smallbust, AniFox, seed `2026092618`, job `1627685e`, prompt `029c84c2`, 28.3 s, `AniFox-v2-Baseline_00087_.png`. Identity: Ellen reads, short dark hair with red eyes, maid headdress, shark tail, black and white maid uniform, housekeeping hall lamp night, adult; first-run face, youthful-face composition note only. Lever: B1 first try — bust reads modest under the maid top, reduced from the lab default but not fully small. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black maid top glossy, white apron, no sheer panel. Keep-or-change: keep as a partial.
+- p65-belle-smallbust, CSTati, seed `2026092619`, job `3abd8f5c`, prompt `d3ab3814`, 26.3 s, `CSTati-v3-Baseline_00122_.png`. Identity: Belle reads as a dark-haired young woman in a black and orange video-store uniform among arcade screens at night, adult; first-run face, likeness note only. Lever: B1 first try — bust reads moderate, mildly reduced. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black and orange top glossy, no sheer panel on this heavier top. Keep-or-change: keep as a partial.
+
+## G14 sheer-off close, solo camera tags on the squat — p66 wave
+
+P65 held 6/6 — G14 ported 2/2 and held eyes-neutral 2/2, B1 partial on both new faces. This wave closes G14 with the sheer stack off at the same seed on both G-series seeds, and runs each camera tag alone on a held E2 squat (from_below, cowboy shot, close-up, never stacked) as the ambition-list camera layer. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p66-kafka-wedding-nolora | p64-kafka-wedding | wai | 2026092445 | `9f66628b-e010-4c5d-99e1-02591b38ac3c` |
+| p66-yor-wedding-nolora | p64-yor-wedding | cstati-v3-baseline | 2026092446 | `077ae44e-57d8-48e2-b455-1962a9a2bd45` |
+| p66-kafka-below | E2 squat recipe | wai | 2026092620 | `9c0ae805-9120-4684-97a5-ae865f50e52e` |
+| p66-yor-cowboy | E2 squat recipe | cstati-v3-baseline | 2026092621 | `7b7cd022-de22-4dd5-82c0-90f396d8fbc6` |
+| p66-ellen-closeup | E2 squat recipe | anifox-v2-baseline | 2026092622 | `845b03c6-1af0-42f2-ba2a-4c221f75734a` |
+| p66-belle-below | E2 squat recipe | yumeflux-ilv1-baseline | 2026092623 | `674ed5c1-3af9-4e79-a294-110e1c4486fb` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.

@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p65 judged 6/6, G14 ports and eyes, B1 at 10 faces, p66 queued — 25 September 2026 (02:25 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P65 held 6/6: G14 ported 2/2 (Kafka `e6a7b947`, Yor `0ca9d9dd`) and held eyes-neutral 2/2 (Kafka `4be448bd`, Yor `a05f4f31`) — only sheer-off reruns remain to close; B1 partial on both new faces (Ellen `1627685e`, Belle `3abd8f5c`; B1 now 2 clean, 7 partial, 1 break across 10 faces). P66 queued: G14 sheer-off close (Kafka `9f66628b`, Yor `077ae44e`), solo camera tags on held E2 squats (Kafka below `9c0ae805`, Yor cowboy `7b7cd022`, Ellen close-up `845b03c6`, Belle below `674ed5c1`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p64 judged 6/6, G14 promoted, E2 at 77/77 complete, p65 queued — 25 September 2026 (02:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
