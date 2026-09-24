@@ -58,7 +58,9 @@ server writes only inputs named there, and `Studio.catalog()` reads authored gra
 **`app/server.py`**: `Studio` owns state; `Handler` routes `/api/*` by prefix in `do_GET`/`do_POST` behind a
 loopback Host and same-origin check. `prepare()` validates and binds; `_work()` is the single daemon worker
 that submits to ComfyUI, polls `/history`, and persists jobs under `experiments/runs/<job-id>/` with the exact
-submitted graph. `_request()` is the sole HTTP seam to ComfyUI.
+submitted graph. `_request()` is the Studio's HTTP seam to the active ComfyUI for prompts and history; `backends.py` probes each
+profile directly (`BackendManager.request`: `/queue`, `/system_stats`) and `resource_probe.fetch_stats` reads `/system_stats` directly, so a
+test that fakes only `_request()` does not fake those.
 
 **Siblings**, each wired into `Studio`, each unit-tested: `backends.py` (explicit switches between `primary`
 8188, `hidream` isolated 8192, `h3` mmap loader 8194, `qwen21` isolated v0.37.0 8196; state in `.runtime/backend-state.json`; presets carry
