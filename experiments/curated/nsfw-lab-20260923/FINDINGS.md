@@ -1163,3 +1163,27 @@ P24 held 6/6. The last two word-tails port to Anima and JANIMA at new seeds: the
 | p25-yelan-portrait-janima | X1 | janima-v1-baseline | 2026092612 | `08440813-99ef-4704-9171-5bba2e8976ba` |
 | p25-morgan-wink | p14-morgan-seiza | wai | 2026092521 | `13db274d-7e6b-4e16-b971-ad50708224f8` |
 | p25-acheron-wink | p14-acheron-seiza | cstati-v3-baseline | 2026092522 | `22ba91ae-8af0-4562-9c36-71482975b3f8` |
+
+### p25 results
+
+All six completed, 17.3–29.3 s each. No spill line on any receipt. The seated and portrait words port clean to both families, so X1 now covers all six stacks (T7/T8/T12/T14/T15/T16). `winking` on the seiza look-backs fired mildly on both, the same mild-profile rule as T13.
+
+- p25-sae-seated-anima, Anima, seed `2026092609`, job `aefdbb82`, prompt `082a3766`, 17.3 s, `Anima-v1-Baseline_00049_.png`. Identity: Sae reads, brown bob, glasses, suit, office at night, adult. Lever: T15 words ported — seated rear held, looking back in profile. Hands: not visible. Cloth: dark suit, opaque. Keep-or-change: keep.
+- p25-nessa-seated-janima, JANIMA, seed `2026092610`, job `d4ef121f`, prompt `73db1fb7`, 19.2 s, `JANIMA-v1-Baseline_00012_.png`. Identity: Nessa reads strongly, dark skin, beaded hair, stadium, adult. Lever: T15 words ported — seated rear held, facing away. Hands: not visible. Cloth: gym uniform; `109` numerals printed on the top despite the negative. Keep-or-change: keep.
+- p25-kafka-portrait-anima, Anima, seed `2026092611`, job `f1e29498`, prompt `b9e77eb7`, 17.3 s, `Anima-v1-Baseline_00050_.png`. Identity: Kafka reads, magenta hair, train, violet light, adult. Lever: T16 words ported — portrait held, smile. Hands: not visible. Cloth: white shirt and jacket, opaque with no sheer panel, as expected without the LoRA. Keep-or-change: keep.
+- p25-yelan-portrait-janima, JANIMA, seed `2026092612`, job `08440813`, prompt `e5d4c0c8`, 19.3 s, `JANIMA-v1-Baseline_00013_.png`. Identity: Yelan reads strongly, dice charm, teahouse, adult. Lever: T16 words ported — portrait held, smile. Hands: not visible. Cloth: blue dress opaque, no sheer panel. Keep-or-change: keep; strong.
+- p25-morgan-wink, WAI, seed `2026092521`, job `13db274d`, prompt `66aff6f5`, 29.3 s, `WAI-Illustration_00073_.png`. Identity: same Morgan read, stone hall, adult. Lever: `winking` added — the near eye closed in the look-back; tag fired mildly. Seiza held, tongue out. Hands: tucked. Feet visible. Cloth: blue dress translucent. Keep-or-change: keep.
+- p25-acheron-wink, CSTati, seed `2026092522`, job `22ba91ae`, prompt `fb48f8ab`, 24.2 s, `CSTati-v3-Baseline_00053_.png`. Identity: same Acheron read, train car, red light, adult. Lever: `winking` added — one eye closed in profile; tag fired mildly. Seiza held, tongue out. Hands: tucked. Feet visible. Cloth: black dress glossy. Keep-or-change: keep.
+
+## Port cameras, lingerie, grins — p26 wave
+
+P25 held 6/6 and closed X1 and T17. This wave opens three new questions: camera tags on the ported family (`cowboy shot` on the Anima crawl, `from below` on the JANIMA squat, both at the same seed), a lingerie garment swap on two held Illustrious cells at the same seed (Yor's red dress to red lingerie, Tifa's tank and skirt to white lingerie), and `grin` for `smile` on two held portraits at the same seed. Queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p26-tifa-cowboy-anima | p22-tifa-crawl-anima | anima-v1-baseline | 2026092601 | `b953385c-49d3-47b6-880c-da976f8fc6c8` |
+| p26-yor-below-janima | p22-yor-squat-janima | janima-v1-baseline | 2026092604 | `f6a44985-af01-4e14-9611-0d4a80149324` |
+| p26-yor-lingerie | p5-yor-squat | cstati-v3-baseline | 2026092446 | `46ad68f7-63e0-40cc-86a8-fd16fdd8f5fd` |
+| p26-tifa-lingerie | p5-tifa-bentover | anifox-v2-baseline | 2026092441 | `97eb4ec8-375e-4852-b7f5-a487f9f1e5c9` |
+| p26-kafka-grin | p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `3958452c-7552-4a29-b7d0-e61c56248ddc` |
+| p26-nero-grin | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `b5328a8e-35f4-451a-b7c2-12b323e66297` |

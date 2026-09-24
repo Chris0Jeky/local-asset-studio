@@ -272,7 +272,7 @@ Use when a held T16 still should wink. Add `winking` after `smile` at the same s
 
 Held: `p22-kafka-wink` (CSTati, job `2c3416dc`, prompt `e83be89d`, `CSTati-v3-Baseline_00052_.png`, 27.4 s), `p22-nero-wink` (AniFox, job `e877dbf5`, prompt `f28b0deb`, `AniFox-v2-Baseline_00047_.png`, 24.3 s). Two characters held it, so it promotes.
 
-Breaks it: nothing yet. P23 extended it to squats at the same seed: `p23-jane-wink` (YumeFlux, job `d597cd2c`, prompt `49361148`, `YumeFlux-ILv1-Baseline_00043_.png`, 25.3 s), `p23-elesa-wink` (YumeFlux, job `c50cf68e`, prompt `a9aff584`, `YumeFlux-ILv1-Baseline_00044_.png`, 10.1 s). P24 extended it to crawls and to the ported family: `p24-sabrina-wink` (AniFox, job `6c109fb7`, prompt `86e8d666`, `AniFox-v2-Baseline_00048_.png`, 24.3 s), `p24-sonia-wink` (YumeFlux, job `8c862ced`, prompt `97f63169`, `YumeFlux-ILv1-Baseline_00045_.png`, 24.2 s), `p24-yor-wink-janima` (JANIMA, job `49c902d2`, prompt `24e7e951`, `JANIMA-v1-Baseline_00010_.png`, 26.3 s), `p24-tifa-wink-anima` (Anima, job `8e2f6fd6`, prompt `97648803`, `Anima-v1-Baseline_00047_.png`, 21.4 s). T17 now covers every front face on all six presets. Untested on look-back profiles.
+Breaks it: nothing yet. P23 extended it to squats at the same seed: `p23-jane-wink` (YumeFlux, job `d597cd2c`, prompt `49361148`, `YumeFlux-ILv1-Baseline_00043_.png`, 25.3 s), `p23-elesa-wink` (YumeFlux, job `c50cf68e`, prompt `a9aff584`, `YumeFlux-ILv1-Baseline_00044_.png`, 10.1 s). P24 extended it to crawls and to the ported family: `p24-sabrina-wink` (AniFox, job `6c109fb7`, prompt `86e8d666`, `AniFox-v2-Baseline_00048_.png`, 24.3 s), `p24-sonia-wink` (YumeFlux, job `8c862ced`, prompt `97f63169`, `YumeFlux-ILv1-Baseline_00045_.png`, 24.2 s), `p24-yor-wink-janima` (JANIMA, job `49c902d2`, prompt `24e7e951`, `JANIMA-v1-Baseline_00010_.png`, 26.3 s), `p24-tifa-wink-anima` (Anima, job `8e2f6fd6`, prompt `97648803`, `Anima-v1-Baseline_00047_.png`, 21.4 s). T17 now covers every front face on all six presets. P25 tested the look-back profiles: `p25-morgan-wink` (WAI, job `13db274d`, prompt `66aff6f5`, `WAI-Illustration_00073_.png`, 29.3 s), `p25-acheron-wink` (CSTati, job `22ba91ae`, prompt `fb48f8ab`, `CSTati-v3-Baseline_00053_.png`, 24.2 s). The near eye closes on both — mild, the same profile rule as T13. T17 is closed.
 
 ## X1 — words-only ports to Anima and JANIMA
 
@@ -284,7 +284,9 @@ P23 extended the ports to the bent-over words: `p23-narberal-bent-anima` (Anima,
 
 P24 extended the ports to the seiza words: `p24-morgan-seiza-anima` (Anima, job `2277c030`, prompt `2df2eda3`, `Anima-v1-Baseline_00048_.png`, 14.2 s), `p24-acheron-seiza-janima` (JANIMA, job `7c155bc9`, prompt `f8fcc977`, `JANIMA-v1-Baseline_00011_.png`, 19.6 s). X1 now covers T7, T8, T12, and T14.
 
-Next lever (p25, queued): the seated and portrait words on Anima and JANIMA, and `winking` on two held seiza look-backs.
+P25 closed the ports with the seated and portrait words: `p25-sae-seated-anima` (Anima, job `aefdbb82`, prompt `082a3766`, `Anima-v1-Baseline_00049_.png`, 17.3 s), `p25-nessa-seated-janima` (JANIMA, job `d4ef121f`, prompt `73db1fb7`, `JANIMA-v1-Baseline_00012_.png`, 19.2 s, `109` numerals on the top), `p25-kafka-portrait-anima` (Anima, job `f1e29498`, prompt `b9e77eb7`, `Anima-v1-Baseline_00050_.png`, 17.3 s), `p25-yelan-portrait-janima` (JANIMA, job `08440813`, prompt `e5d4c0c8`, `JANIMA-v1-Baseline_00013_.png`, 19.3 s). No sheer panel without the LoRA, as expected — framing and face are what ported. X1 now covers all six stacks on both families.
+
+Next lever (p26, queued): cameras on the ports, a lingerie garment swap on two held cells, and `grin` for `smile` on two held portraits.
 
 ## M2 measured
 

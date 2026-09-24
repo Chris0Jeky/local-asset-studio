@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p25 judged, X1 and T17 closed, p26 queued — 24 September 2026 (07:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P25 held 6/6: seated and portrait words ported (Sae `aefdbb82`, Nessa `d4ef121f`, Kafka `f1e29498`, Yelan `08440813`), winking mild on both seiza look-backs (Morgan `13db274d`, Acheron `22ba91ae`). P26 queued: cameras on ports (Tifa cowboy `b953385c`, Yor below `f6a44985`), lingerie swap on two held cells (Yor `46ad68f7`, Tifa `97eb4ec8`), grin for smile on two portraits (Kafka `3958452c`, Nero `b5328a8e`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p24 judged, T17 everywhere front-facing, X1 adds T14, p25 queued — 24 September 2026 (07:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
