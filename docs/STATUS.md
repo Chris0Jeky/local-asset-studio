@@ -2,7 +2,7 @@
 
 The one page that says where each owner goal stands; `CURRENT_STATE.md` is the evidence ledger it views. Percentages are
 the coordinator's rough estimate, set in the 13–14 September assessment ([STUDIO-REVIEW-2026-09-13.md](STUDIO-REVIEW-2026-09-13.md))
-and re-estimated after 409 PRs merged from 14 to 24 September (`gh pr list --state merged --search "merged:>=2026-09-14"`);
+and re-estimated after 409 PRs merged from 14 to 24 September (`gh pr list --state merged --limit 1000 --search "merged:>=2026-09-14"`);
 each section says what moved its number. Pointers are exact. Three states stay distinct: generated (a job completed),
 inspected/accepted (a human judged the art), licensed (the terms allow the use); an agent's judgement is never acceptance.
 
@@ -23,7 +23,7 @@ inspected/accepted (a human judged the art), licensed (the terms allow the use);
 - Combine: `combine-klein` (FLUX.2 Klein 4B, job `fb0eb95d`), and on Klein 9B `combine-klein-9b` (pose first),
   `-depth` (`22ff6394`), `-skeleton` (`26448d58`), `-copypose` (`61dd5375`, #452) and `-replace` (`7051b297`, `2752190c`, #481).
   Since the owner's q-28 answer (23 Sep) the route order is Copy Pose, drawn skeleton, depth, replace, pose-first 9B, 4B.
-- Restyle: `restyle-klein` (job `db25b173`, 16–20 s warm) leads, `restyle-wai` (`0c13590c`) is second (owner, q-27, 23 Sep).
+- Restyle: `restyle-klein` (job `db25b173`, 65.9 s including the model load; 16–20 s warm in research) leads, `restyle-wai` (`0c13590c`) is second (owner, q-27, 23 Sep).
 - Qwen-Image 2.1 on the isolated v0.37.0 backend: `qwen21-t2i` (`be94bd02`, 52.9 s), `qwen21-rgba` (`b377572d`),
   `qwen21-edit` (`dc8f18f8`) (#858, #876, [QWEN-IMAGE-21.md](QWEN-IMAGE-21.md)); #739 open for 2048², multi-reference, text, LoRA, VRAM.
 - Krea 2 Q5_K_M GGUF with the text encoder on the CPU: `krea-portrait-gguf` (`c6049b90`), `krea-anime-atelier-gguf`
@@ -56,7 +56,7 @@ bodies are made pose route, then face route. The Runs & review marks were not ch
 with/without-adapter comparison now exists: the 23 Sep LoRA smokes (#846) set 11 LoRAs on WAI, NoobAI and Pony against a
 no-LoRA control, and the three-seed retest found every candidate ties its control ([q-32 pre-review](quality/pre-reviews/q-32.md)).
 
-**Not done.** Zero owner-accepted images: live QA on 24 Sep counted 1,205 assets, 1,184 unreviewed, 0 keepers (#939).
+**Not done.** No asset is marked accepted in the library (q-30 chose representatives but left the marks unchanged): live QA on 24 Sep counted 1,205 assets, 1,184 unreviewed, 0 keepers (#939).
 The full body's fine facial features are redrawn at that scale; a face pass at portrait fidelity needs renders (backlog).
 *Correction to 14 Sep "AniFox never ran":* AniFox v2 is installed with a matching hash (21 Sep) and has run in the labs
 (105 `anifox-v2-baseline` assets, #939); no inspected baseline entry for the pack exists. q-25 (does Style + Pose stay in the pack) is open.
@@ -144,7 +144,7 @@ media records: `experiments/curated/nsfw-lab-*`. Agent tooling: [AGENT-TOOLING.m
 ## Open owner items
 
 Open in [HUMAN_TODO.md](../HUMAN_TODO.md): q-7 (first-hand pass over the UX wave), q-25 (does Style + Pose stay in the
-pack), and q-28 (a)–(d) if the owner wants to weigh in. Answered 23 September: q-27, q-28 (e), q-30, q-31, q-32, the three
+pack), and q-28 (a)–(d) if the owner wants to weigh in. Answered 23 September: q-27, q-28 (e), q-30, q-31, q-32 (its optional art judgement of the LoRA smoke winners stays open), the three
 Adaptive Studio choices; q-29 on 20 and 23 September; the ZZZ age-guide intake on 24 September. No output is licence-cleared:
 the owner set licence gating aside for private experiments (15 September); terms stay recorded in `models/library.json`.
 Creative acceptance of any generated image remains the owner's alone.
