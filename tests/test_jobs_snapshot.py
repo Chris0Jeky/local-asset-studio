@@ -106,6 +106,16 @@ class JobsSnapshotTests(unittest.TestCase):
         studio.jobs["a"] = MutatingJob(studio.jobs, {"status": "done"})
         self.assertEqual(monitor._fresh_work(), expected)
 
+    def test_reference_idle_survives_insert_during_iteration(self):
+        sys.path.insert(0, str(Path(__file__).parents[1]))
+        from studio_prompt.reference_jobs import ReferenceJobs
+        studio = SimpleNamespace(jobs={}, _tracking_stopped=lambda job: False,
+                                 _request=lambda path, timeout=5: {"queue_running": [], "queue_pending": []})
+        jobs = ReferenceJobs.__new__(ReferenceJobs)
+        jobs.studio = studio
+        studio.jobs["a"] = MutatingJob(studio.jobs, {"status": "done"})
+        self.assertIsNone(jobs._idle())
+
 
 if __name__ == "__main__":
     unittest.main()
