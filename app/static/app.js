@@ -396,17 +396,6 @@ async function mixedBatchAction(button) {
     throw error;
   } finally {button.disabled=false;mixedBatchBusy.delete(identifier);}
 }
-// #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
-const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
-function renderProblems(problems,open){
-  if(!problems.length)return'';
-  const newest=(a,b)=>(Number(b.job.created_at)||0)-(Number(a.job.created_at)||0);
-  const active=problems.filter(p=>!p.job.put_away).sort(newest),away=problems.filter(p=>p.job.put_away).sort(newest);
-  const shown=problemsShowAll?active:active.slice(0,PROBLEMS_SHOWN),rest=active.length-shown.length;
-  const more=rest>0?'<p class="problemsMore"><small>'+rest+' older problem(s) not shown.</small> <button type="button" data-problems-toggle="all">Show all '+active.length+'</button></p>':problemsShowAll&&active.length>PROBLEMS_SHOWN?'<p class="problemsMore"><button type="button" data-problems-toggle="all">Show newest '+PROBLEMS_SHOWN+' only</button></p>':'';
-  const awayToggle=away.length?'<p class="problemsMore"><button type="button" data-problems-toggle="away" aria-expanded="'+problemsShowPutAway+'">'+(problemsShowPutAway?'Hide put away':'Show put away ('+away.length+')')+'</button></p>'+(problemsShowPutAway?'<div class="problemsPutAway">'+away.map(p=>p.html).join('')+'</div>':''):'';
-  return '<details id="jobProblems" class="job-problems" '+(open?'open':'')+'><summary>Problems · '+active.length+' run(s)'+(away.length?' · '+away.length+' put away':'')+'</summary>'+(active.length?'':'<p><small>No open problems.</small></p>')+shown.map(p=>p.html).join('')+more+awayToggle+'</details>';
-}
 function renderJobs(signature=JSON.stringify(jobs)) {
   if(signature===jobsSignature)return; jobsSignature=signature;
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
@@ -436,6 +425,17 @@ function renderJobs(signature=JSON.stringify(jobs)) {
   if(host)host.innerHTML=problemMarkup;
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
   renderCompare();
+}
+// #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
+const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
+function renderProblems(problems,open){
+  if(!problems.length)return'';
+  const newest=(a,b)=>(Number(b.job.created_at)||0)-(Number(a.job.created_at)||0);
+  const active=problems.filter(p=>!p.job.put_away).sort(newest),away=problems.filter(p=>p.job.put_away).sort(newest);
+  const shown=problemsShowAll?active:active.slice(0,PROBLEMS_SHOWN),rest=active.length-shown.length;
+  const more=rest>0?'<p class="problemsMore"><small>'+rest+' older problem(s) not shown.</small> <button type="button" data-problems-toggle="all">Show all '+active.length+'</button></p>':problemsShowAll&&active.length>PROBLEMS_SHOWN?'<p class="problemsMore"><button type="button" data-problems-toggle="all">Show newest '+PROBLEMS_SHOWN+' only</button></p>':'';
+  const awayToggle=away.length?'<p class="problemsMore"><button type="button" data-problems-toggle="away" aria-expanded="'+problemsShowPutAway+'">'+(problemsShowPutAway?'Hide put away':'Show put away ('+away.length+')')+'</button></p>'+(problemsShowPutAway?'<div class="problemsPutAway">'+away.map(p=>p.html).join('')+'</div>':''):'';
+  return '<details id="jobProblems" class="job-problems" '+(open?'open':'')+'><summary>Problems · '+active.length+' run(s)'+(away.length?' · '+away.length+' put away':'')+'</summary>'+(active.length?'':'<p><small>No open problems.</small></p>')+shown.map(p=>p.html).join('')+more+awayToggle+'</details>';
 }
 async function refreshJobs(){try{const next=await api('/api/jobs'),signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
 function refresh(){return readPoller?readPoller.refresh('jobs'):refreshJobs();}
