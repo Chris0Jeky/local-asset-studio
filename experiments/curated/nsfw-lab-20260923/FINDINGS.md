@@ -1647,3 +1647,27 @@ P44 held 6/6 — G7 closed sheer-off, G8 promoted, E2 generalization at 16/16. T
 | p45-yor-miko-eyes | p44-yor-miko | cstati-v3-baseline | 2026092446 | `d3b3a0b1-2757-437c-aa52-113381a66471` |
 | p45-lisa-smirkwink | E2 squat recipe | wai | 2026092487 | `ce1a09a1-f3d4-4ae2-87aa-0fab738fb5f0` |
 | p45-grace-smirkwink | E2 squat recipe | cstati-v3-baseline | 2026092488 | `a999928a-1e2e-4f01-971a-8d60f1183b37` |
+
+### p45 results
+
+All six completed, 27.9–42.0 s each. No spill line on any receipt. G8 ported to both families. The eyes tag held neutral on the structured miko outfit 2/2. E2 generalization reached 18/18.
+
+- p45-kafka-miko-anima, Anima, seed `2026092628`, job `99c8df86`, prompt `18ed1161`, 30.6 s, `Anima-v1-Baseline_00065_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, violet light, adult. Lever: G8 with no sheer LoRA — red and white miko with obi bow; G8 ports to Anima. Eyes closed, the Anima squat pattern. Hands: hidden. Cloth: red and white miko, glossy. Parted lips show. Keep-or-change: keep.
+- p45-yor-miko-janima, JANIMA, seed `2026092629`, job `422e2492`, prompt `a532c461`, 27.9 s, `JANIMA-v1-Baseline_00027_.png`. Identity: Yor reads, black hair, red eyes, headband, gold earrings, lamp interior, adult. Lever: G8 with no sheer LoRA — white and red miko with obi; G8 ports to JANIMA. Hands: hidden. Cloth: white and red miko, glossy and wet. Parted lips, blush, sweat, eyes open. Keep-or-change: keep.
+- p45-kafka-miko-eyes, WAI, seed `2026092445`, job `3c759af1`, prompt `010fb6d5`, 42.0 s, `WAI-Illustration_00098_.png`. Identity: same Kafka read, rooftop, adult. Lever: `bedroom eyes` added — tag fired, miko intact; neutral as predicted. Hands: hidden. Squat held. Keep-or-change: keep.
+- p45-yor-miko-eyes, CSTati, seed `2026092446`, job `d3b3a0b1`, prompt `b774d39d`, 34.4 s, `CSTati-v3-Baseline_00082_.png`. Identity: same Yor read, ballroom, adult. Lever: same addition — eyes heavy; tag fired, miko intact. Neutral 2/2. Hands: hidden. Squat held. Keep-or-change: keep.
+- p45-lisa-smirkwink, WAI, seed `2026092487`, job `ce1a09a1`, prompt `54aa9fbd`, 30.3 s, `WAI-Illustration_00099_.png`. Identity: Lisa reads strongly, brown hair, green eyes, purple witch hat with rose, librarian dress, library and lamp, adult. Lever: E2 first try — smirk and wink both show. Squat held. Hands: hidden. Cloth: white and purple dress glossy with sheer panels. Keep-or-change: keep.
+- p45-grace-smirkwink, CSTati, seed `2026092488`, job `a999928a`, prompt `6718e605`, 34.4 s, `CSTati-v3-Baseline_00083_.png`. Identity: Grace reads, black hair with red highlight, engineer jacket, workshop lamp, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white top translucent, orange and black jacket, black glossy pants. Keep-or-change: keep.
+
+## Sheer-off G8, G9 nurse, Ningguang, Bronya — p46 wave
+
+P45 held 6/6 — G8 ported, eyes neutral on the miko outfit, E2 generalization at 18/18. This wave runs G8 with the sheer stack off at the same seed (structured miko outfit should hold stable like G5–G7), opens a ninth garment (nurse-uniform swap on the two G-series seeds with the sheer stack on), and runs E2 on two more new adults (Ningguang from Genshin Impact, Bronya from Honkai: Star Rail — both adult-in-canon). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p46-kafka-miko-nolora | p44-kafka-miko | wai | 2026092445 | `0a92ad22-96c6-43eb-bb1f-ca47c23a5f81` |
+| p46-yor-miko-nolora | p44-yor-miko | cstati-v3-baseline | 2026092446 | `b514dd52-6296-4b6b-a18a-b6cfa3cff8de` |
+| p46-kafka-nurse | p5-kafka-squat | wai | 2026092445 | `ca431745-8c61-4b2e-b9d2-781209998b15` |
+| p46-yor-nurse | p5-yor-squat | cstati-v3-baseline | 2026092446 | `1b960258-20c0-4981-8cca-0d3c6ff942bb` |
+| p46-ningguang-smirkwink | E2 squat recipe | anifox-v2-baseline | 2026092489 | `a581e775-09cb-4ed6-8c08-81446a8245f1` |
+| p46-bronya-smirkwink | E2 squat recipe | wai | 2026092490 | `504e6cd7-5bfd-4522-a279-8be516ed6221` |
