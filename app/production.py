@@ -895,7 +895,8 @@ class Production:
                 with Image.open(path) as src:thumb=ImageOps.contain(src.convert('RGB'),(304,320))
             except (OSError,UnidentifiedImageError,ValueError):skipped+=1;continue
             drawable.append((label,asset_id));thumbs.append((label,thumb))
-        if not drawable:return []
+        # Records exist but none can be shown: say so rather than finishing as an ordinary review with no evidence.
+        if not drawable:raise ValueError(f'No candidate snapshot could be read ({skipped} unavailable)')
         columns=min(4,len(drawable));rows=(len(drawable)+columns-1)//columns
         sheet=Image.new('RGB',(columns*320,rows*356),'#20222c');draw=ImageDraw.Draw(sheet)
         for i,(label,thumb) in enumerate(thumbs):

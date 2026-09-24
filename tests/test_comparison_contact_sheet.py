@@ -77,6 +77,8 @@ class ContactSheetFailureTests(unittest.TestCase):
         self.assertNotEqual(state['status'], 'uncertain')
         self.assertEqual(state['artifacts'], [])
         self.assertFalse((lab.root / project['id'] / 'comparison.png').exists())
+        # Every candidate unreadable must not look like an ordinary finished review.
+        self.assertIn('contact sheet could not be built (ValueError)', state['message'])
 
     def test_contact_sheet_skips_missing_image_and_records_skipped(self):
         project_id = self._run_comparison([1, 2], ['keep.png', 'gone.png'])
