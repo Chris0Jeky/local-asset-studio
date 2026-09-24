@@ -148,6 +148,7 @@ Use one camera tag at a time, added to the exact held prompt at the same seed, p
 - `from below` on the T7 squat: worm's-eye view, hips and thighs fill the foreground, face smaller at top. The hands stay hidden behind the head, so T1b's hand-return is rear-view-specific and does not apply here. Held: `p8-sae-below` (WAI, job `b1f73887`, prompt `8b778fed`, `WAI-Illustration_00054_.png`, 38.4 s), `p8-jessie-below` (AniFox, job `af62ba51`, prompt `0338c8e4`, `AniFox-v2-Baseline_00020_.png`, 32.4 s).
 - `cowboy shot` on the T8 bent-over: tighter thighs-up rear crop, legs cut, pose and hands-on-butt hold. Held: `p8-diantha-cowboy` (YumeFlux, job `50e6352f`, prompt `8dbc0496`, `YumeFlux-ILv1-Baseline_00025_.png`, 34.4 s), `p8-skyla-cowboy` (AniFox, job `0cf01575`, prompt `f1f392e5`, `AniFox-v2-Baseline_00021_.png`, 30.3 s). This is the clean framing tag for T8.
 - `close-up` on the T7 squat: weak. Framing tightens only slightly; `squatting, spread legs` wins and the still stays a full squat with a bigger face. Measured: `p8-elesa-closeup` (YumeFlux, job `01903e63`, prompt `de275c32`, `YumeFlux-ILv1-Baseline_00026_.png`, 32.3 s), `p8-chihaya-closeup` (CSTati, job `38716e1c`, prompt `db35471a`, `CSTati-v3-Baseline_00028_.png`, 30.3 s). A real face crop needs the pose tags trimmed; do not use `close-up` alone and expect a portrait.
+- On the T12 crawl (tag placed after `top-down bottom-up`, same seed): `cowboy shot` rotates to a side view instead of tightening (`p20-yelan-cowboy`, CSTati, job `45f6a601`, prompt `74e444af`, `CSTati-v3-Baseline_00049_.png`, 10.2 s); `close-up` mildly enlarges the face (`p20-sabrina-closeup`, AniFox, job `32d8ea3f`, prompt `e8763e2c`, `AniFox-v2-Baseline_00044_.png`, 24.3 s); `from below` loses entirely to `top-down bottom-up`, the camera stays overhead (`p20-carlotta-below`, YumeFlux, job `8f960da7`, prompt `b67e2056`, `YumeFlux-ILv1-Baseline_00041_.png`, 22.3 s). Same rule as the squat: the pose tags decide, not the camera tag.
 
 Next lever: a second Illustrious adapter from civitai.red with a pose or cloth effect we do not already have, tested on/off at the same seed.
 
@@ -203,7 +204,7 @@ Use when a held T7 still needs heavier eyes. Add `bedroom eyes` after `blush` at
 
 Held: `p14-kafka-eyes` (WAI, job `5ea8871d`, prompt `21c0802c`, `WAI-Illustration_00062_.png`, 24.3 s), `p14-yor-eyes` (CSTati, job `74ff4a95`, prompt `76309b98`, `CSTati-v3-Baseline_00036_.png`, 24.3 s), `p14-elesa-eyes` (YumeFlux, job `32d3e18e`, prompt `8e8239b6`, `YumeFlux-ILv1-Baseline_00032_.png`, 24.3 s). All three show heavy-lidded, half-closed eyes against their same-seed held cells.
 
-Breaks it: nothing yet. Bent-over profiles are presumably as weak a test as they were for mouths (T9); not measured, not claimed.
+Breaks it: nothing yet. P20 measured the bent-over profiles: `bedroom eyes` shows mildly on all three (`p20-tifa-eyes`, AniFox, job `94ab5a24`, prompt `26d53e41`, `AniFox-v2-Baseline_00043_.png`, 28.4 s; `p20-himeko-eyes`, YumeFlux, job `3f7d2a6f`, prompt `b68e9bc6`, `YumeFlux-ILv1-Baseline_00040_.png`, 28.2 s; `p20-narberal-eyes`, CSTati, job `54344d9a`, prompt `6309c482`, `CSTati-v3-Baseline_00048_.png`, 26.3 s). Profiles are a mild test, not a dead one: use them when the look-back is already in frame, not as the proof.
 
 P19 extended the tag to crawl faces at the same seed: `p19-sabrina-eyes` (AniFox, job `2ac8477b`, prompt `19f89b23`, `AniFox-v2-Baseline_00042_.png`, 24.2 s, clear), `p19-sonia-eyes` (YumeFlux, job `dbd8fc4f`, prompt `5c7fd851`, `YumeFlux-ILv1-Baseline_00039_.png`, 24.3 s), `p19-acheron-eyes` (CSTati, job `2e0769a4`, prompt `2a397a8f`, `CSTati-v3-Baseline_00047_.png`, 24.4 s). The tag fires on front-facing crawl faces as strongly as on squats.
 
@@ -263,7 +264,7 @@ P17 held 6/6: eyes on portraits (`p17-kafka-p-eyes`, `p17-yelan-p-eyes`, `p17-ac
 
 P18 held 6/6, giving the portrait-only adults body stacks: `p18-2b-squat` (WAI, job `4c0dccb6`, prompt `6e56e5f3`, `WAI-Illustration_00069_.png`, 24.3 s), `p18-2b-bentover` (CSTati, job `6e1869cb`, prompt `0bb193aa`, `CSTati-v3-Baseline_00044_.png`, 24.6 s, pod garnish from the prompt tag), `p18-cynthia-squat` (WAI, job `efb11cba`, prompt `fa29e225`, `WAI-Illustration_00070_.png`, 24.2 s), `p18-cynthia-bentover` (CSTati, job `cb7936c9`, prompt `361e8f45`, `CSTati-v3-Baseline_00045_.png`, 24.3 s, grey skirt became grey pants). Garnish note: a `pod` tag on 2B renders Pod 042 hovering behind her without disturbing the pose.
 
-Next lever (p20, queued): `bedroom eyes` on three held bent-overs at the same seed (measuring the weak-profile claim), and the camera layer on the crawl — `cowboy shot`, `close-up`, and `from below`, one tag each on a held crawl at the same seed.
+Next lever (p21, queued): the camera layer on the seiza and the portrait — `cowboy shot`, `close-up`, and `from below`, one tag each at the same seed on three held seizas and three held portraits.
 
 ## M2 measured
 

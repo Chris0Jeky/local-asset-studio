@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p20 judged, T10 on crawl and T13 on profiles measured, p21 queued — 24 September 2026 (05:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.
+
+P20 held 6/6: bedroom eyes shows mildly on bent-over profiles (Tifa `94ab5a24`, Himeko `3f7d2a6f`, Narberal `54344d9a`), so T13 profiles are a mild test, not a dead one. Cameras on the crawl: `cowboy shot` rotates to a side view (Yelan `45f6a601`), `close-up` mildly enlarges the face (Sabrina `32d8ea3f`), `from below` loses entirely to `top-down bottom-up` (Carlotta `8f960da7`). P21 queued: one camera tag each on three held seizas (Morgan cowboy `5e1d7c63`, Acheron close-up `a0bd39ea`, Caitlin below `582bb7c5`) and three held portraits (Kafka cowboy `c2501341`, Yelan close-up `1f8135c4`, Nero below `f5976ae5`). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p16–p19 judged, T16 promoted, T6+T12 and T13-on-crawl measured, p20 queued — 24 September 2026 (04:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua still unconfirmed, no new Aqua cells.

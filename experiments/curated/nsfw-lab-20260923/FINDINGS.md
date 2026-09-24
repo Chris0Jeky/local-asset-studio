@@ -1043,3 +1043,27 @@ P19 held 6/6. Two unmeasured claims remain in the notes: whether `bedroom eyes` 
 | p20-yelan-cowboy | p11-yelan-crawl | cstati-v3-baseline | 2026092492 | `45f6a601-1aa6-43ad-a77e-b1ca560806d9` |
 | p20-sabrina-closeup | p11-sabrina-crawl | anifox-v2-baseline | 2026092498 | `32d8ea3f-5e3f-4996-8391-af9bd094871e` |
 | p20-carlotta-below | p12-carlotta-crawl | yumeflux-ilv1-baseline | 2026092507 | `8f960da7-df29-4f0f-96af-4fca1a9d5681` |
+
+### p20 results
+
+All six completed, 10.2–28.4 s each. No spill line on any receipt. `bedroom eyes` shows mildly on all three bent-over profiles, so the T13 weak-profile claim is now measured: mild, not dead. On the crawl, `cowboy shot` rotates to a side view, `close-up` mildly enlarges the face, and `from below` loses completely to `top-down bottom-up`.
+
+- p20-tifa-eyes, AniFox, seed `2026092441`, job `94ab5a24`, prompt `26d53e41`, 28.4 s, `AniFox-v2-Baseline_00043_.png`. Identity: same Tifa read, bar, adult. Lever: eyes heavier in three-quarter profile; tag fired mildly. Hands: both on the skirt, normal-looking. Cloth: white tank sheer-patched, black skirt glossy. Mouth slightly open. Keep-or-change: keep.
+- p20-himeko-eyes, YumeFlux, seed `2026092443`, job `3f7d2a6f`, prompt `b68e9bc6`, 28.2 s, `YumeFlux-ILv1-Baseline_00040_.png`. Identity: same Himeko read, station window, adult. Lever: yellow eyes half-lidded in profile; tag fired mildly. Hands: both on the skirt, normal-looking. Cloth: white shirt sheer, red skirt glossy. Mouth slightly open. Keep-or-change: keep.
+- p20-narberal-eyes, CSTati, seed `2026092433`, job `54344d9a`, prompt `6309c482`, 26.3 s, `CSTati-v3-Baseline_00048_.png`. Identity: same Narberal read, mansion hall, adult. Lever: yellow eye heavy-lidded in profile; tag fired mildly. Hands: both on the dress, normal-looking. Cloth: same dark gloss. Mouth slightly open. Keep-or-change: keep.
+- p20-yelan-cowboy, CSTati, seed `2026092492`, job `45f6a601`, prompt `74e444af`, 10.2 s, `CSTati-v3-Baseline_00049_.png`. Identity: same Yelan read, casino, adult. Lever: `cowboy shot` rotated the crawl to a side view instead of tightening; pose held. Hands: one gloved hand planted, normal-looking. Cloth: blue bodysuit glossy. Mouth slightly open. Keep-or-change: keep.
+- p20-sabrina-closeup, AniFox, seed `2026092498`, job `32d8ea3f`, prompt `e8763e2c`, 24.3 s, `AniFox-v2-Baseline_00044_.png`. Identity: same Sabrina read, gym hall, adult. Lever: `close-up` mildly enlarged the face; pose held. Hands: both flat, normal-looking. Cloth: same dark dress covering. Mouth slightly open. Keep-or-change: keep.
+- p20-carlotta-below, YumeFlux, seed `2026092507`, job `8f960da7`, prompt `b67e2056`, 22.3 s, `YumeFlux-ILv1-Baseline_00041_.png`. Identity: same Carlotta read, conservatory, adult. Lever: `from below` lost entirely to `top-down bottom-up`; the camera stayed overhead. Pose held, eyes closed, mouth slightly open. Hands: one tucked under the chin, fist-ish. Cloth: same white-and-gold covering. Keep-or-change: keep; the pose tags decide, not the camera tag.
+
+## Cameras on seiza and portrait — p21 wave
+
+P20 held 6/6 and extended T10 to the crawl. The seiza (T14) and the portrait (T16) have never met a camera tag, so one tag each goes onto three held seizas and three held portraits at the same seed, appended after the place and light: `cowboy shot`, `close-up`, and `from below`. The tag is the only change per cell. Queued in one burst.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p21-morgan-cowboy | p14-morgan-seiza | wai | 2026092521 | `5e1d7c63-a2d6-422b-a7a1-6df92341507c` |
+| p21-acheron-closeup | p14-acheron-seiza | cstati-v3-baseline | 2026092522 | `a0bd39ea-8eb2-48b3-a7da-79ce8333ef75` |
+| p21-caitlin-below | p14-caitlin-seiza | anifox-v2-baseline | 2026092523 | `582bb7c5-25a4-453e-ac7e-9f27768aea16` |
+| p21-kafka-cowboy | p16-kafka-portrait | cstati-v3-baseline | 2026092542 | `c2501341-80e2-4295-b9a5-c989d038182c` |
+| p21-yelan-closeup | p16-yelan-portrait | yumeflux-ilv1-baseline | 2026092543 | `1f8135c4-8964-41f0-9578-cb542aa264e5` |
+| p21-nero-below | p16-nero-portrait | anifox-v2-baseline | 2026092544 | `f5976ae5-54ba-45b2-8fc8-90814342fe04` |
