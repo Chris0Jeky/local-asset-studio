@@ -2588,6 +2588,28 @@ P82 held 6/6 — G20 closed on all eleven reads, C1 `from below` opens measured 
 | p83-kafka-cheer | — | wai | 2026092445 | `422c0a27-c39f-49b2-8ef8-dc4c3371597c` |
 | p83-yor-cheer | — | cstati-v3-baseline | 2026092446 | `59e0e5c3-3419-4ef7-980f-a28ae2299ffa` |
 
+All six completed, 25.0–33.1 s each, no spill. C1 measured 6 (`cowboy shot` 2/2, `close-up` 2/2, all four keep squat, garment and hands); G21 promoted on the opening pair (full cheer read on both, pleats intact, pom-poms as props).
+
+- p83-kafka-wedding-cowboy, WAI, seed `2026092445`, job `fe938462`, prompt `88a8e854`, 33.1 s, `WAI-Illustration_00173_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white bridal bodysuit with veil, chapel violet, night, adult. Lever: `cowboy shot` on the wedding squat — mid-thigh-up framing, dress and veil intact. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; C1 cowboy 1/2.
+- p83-yor-wedding-cowboy, CSTati, seed `2026092446`, job `b54c0780`, prompt `73b9b132`, 26.9 s, `CSTati-v3-Baseline_00164_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: `cowboy shot` on the wedding squat — same framing, intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; C1 cowboy 2/2.
+- p83-kafka-wedding-closeup, WAI, seed `2026092445`, job `f8e79e7f`, prompt `4df7b409`, 26.9 s, `WAI-Illustration_00174_.png`. Identity: Kafka reads, magenta hair, white bridal bodysuit with veil, chapel violet, night, adult. Lever: `close-up` on the wedding squat — tighter torso framing, intact. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; C1 close-up 1/2.
+- p83-yor-wedding-closeup, CSTati, seed `2026092446`, job `5ebf0083`, prompt `99866b48`, 25.0 s, `CSTati-v3-Baseline_00165_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: `close-up` on the wedding squat — same, intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; C1 close-up 2/2.
+- p83-kafka-cheer, WAI, seed `2026092445`, job `422c0a27`, prompt `84c9930a`, 26.8 s, `WAI-Illustration_00175_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform with pleated skirt, pom-poms, stadium violet, night, adult. Lever: outfit to cheer — full read, pleats intact, pom-poms as props. Squat held. Hands: one behind the head, one holding a pom-pom. Cloth: red uniform glossy. Keep-or-change: keep; G21 1/2.
+- p83-yor-cheer, CSTati, seed `2026092446`, job `59e0e5c3`, prompt `5062dde7`, 26.8 s, `CSTati-v3-Baseline_00166_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform with pleated skirt, pom-poms, stadium floodlight, night, adult. Lever: outfit to cheer — full read again, pleats intact. Squat held. Hands: both holding pom-poms behind the head. Cloth: red uniform glossy; fake top letters noted, not a discard. Keep-or-change: keep; G21 2/2, promotes.
+
+## G21 eyes, bent-over, seiza, sheer-off — p84 wave
+
+P83 held 6/6 — C1 measured 6 with cowboy and close-up both holding, G21 promoted on the opening pair. This wave measures G21: `bedroom eyes` x2 at the same seeds plus cheer on the bent-over (pleated skirt vs the hike) and the seiza, with the sheer-off reruns. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p84-kafka-cheer-eyes | p83-kafka-cheer | wai | 2026092445 | `c0d302fe-9cd3-44dd-a50e-6c861c047225` |
+| p84-yor-cheer-eyes | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `d61c9a55-54c3-46be-acf8-65a5926d4503` |
+| p84-kafka-cheer-bentover | p83-kafka-cheer | wai | 2026092678 | `d78922b5-d160-4587-ba4a-e0334cc72050` |
+| p84-yor-cheer-seiza | p83-yor-cheer | cstati-v3-baseline | 2026092679 | `7b7c1b86-ead9-455c-9f13-6632973fc546` |
+| p84-kafka-cheer-nolora | p83-kafka-cheer | wai | 2026092445 | `1c0dce10-4c9c-4b85-b4e3-ddb713c88ffa` |
+| p84-yor-cheer-nolora | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `c76380b2-a17a-4544-b3b0-87ed24b4b2e1` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
