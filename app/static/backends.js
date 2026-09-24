@@ -1,4 +1,4 @@
-let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReads=0;
+let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null;
 function renderRecovery(recovery={}) {
   $('#recoveryStatus').textContent=recovery.message || (recovery.enabled ? 'Runtime recovery is watching the selected backend.' : 'Runtime recovery is disabled.');
   $('#retryRecovery').hidden=!recovery.enabled || recovery.status!=='breaker-open';
@@ -18,8 +18,9 @@ function restoreBackendEditor(snapshot){
   const focused=snapshot.focus&&input(snapshot.focus);
   if(focused){focused.focus({preventScroll:true});if(snapshot.selection)focused.setSelectionRange(...snapshot.selection);}
 }
+// An obsolete unresolved read must not hold the current polling guard.
 async function refreshBackends() {
-  const epoch=++backendReadEpoch,current=()=>epoch===backendReadEpoch;backendReads++;
+  const epoch=++backendReadEpoch,current=()=>epoch===backendReadEpoch;backendReadPending=epoch;
   try {
     const state=await api('/api/backends');if(!current())return;
     if(!Array.isArray(state?.profiles)||typeof state.active!=='string'||typeof state.busy!=='boolean'||(state.busy&&typeof state.operation?.target!=='string'))throw Error('The backend status is incomplete. Your draft was kept.');
@@ -44,7 +45,7 @@ async function refreshBackends() {
     updateReady();
     if(changed){await health();if(current()&&view==='models')await refreshLibrary();}
   } catch(e){if(current())$('#backendStatus').textContent=e.message;}
-  finally{backendReads--;}
+  finally{if(backendReadPending===epoch)backendReadPending=null;}
 }
 $('#switchBackend').onclick=async()=>{
   backendReadEpoch++;backendSwitching=true;updateReady();$('#switchBackend').disabled=true;
@@ -52,4 +53,4 @@ $('#switchBackend').onclick=async()=>{
   catch(e){backendSwitching=false;$('#switchBackend').disabled=false;$('#backendStatus').textContent=e.message;updateReady();}
 };
 $('#retryRecovery').onclick=async()=>{try{await post('/api/runtime-recovery/retry',{});await refreshBackends();}catch(e){$('#recoveryStatus').textContent=e.message;}};
-refreshBackends();setInterval(()=>{if(backendSwitching&&!backendReads)refreshBackends();},3000);
+refreshBackends();setInterval(()=>{if(backendSwitching&&backendReadPending!==backendReadEpoch)refreshBackends();},3000);

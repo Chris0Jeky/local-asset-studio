@@ -43,3 +43,21 @@ for(const result of ['success','failure'])test('superseded catalogue '+result+' 
 test('automatic polling does not supersede its own slow catalogue read',async()=>{
  const f=fixture();vm.runInContext('backendSwitching=true',f.context);const {work}=await begin(f);f.state.poll();f.state.poll();assert.equal(f.pending.length,2);f.pending[1].resolve({presets:[f.a,f.b]});await work;assert.equal(f.state.renders,1);
 });
+
+for(const stage of ['backend','catalogue'])test('a superseded '+stage+' read cannot block later busy polling',async()=>{
+ const f=fixture(),older=f.run();let oldRead=f.pending[0];
+ if(stage==='catalogue'){oldRead.resolve(f.backend());await f.tick();oldRead=f.pending[1];}
+ const newer=f.run();f.pending.at(-1).resolve({...f.backend('old'),busy:true,operation:{target:'new',message:'Switching'}});await newer;
+ const before=f.pending.length;f.state.poll();
+ assert.equal(f.pending.length,before+1,'an obsolete unresolved read must not hold the current polling owner');
+ f.pending.at(-1).resolve(f.backend('old'));await f.tick();
+ oldRead.resolve(stage==='catalogue'?{presets:[f.a,f.b]}:f.backend('stale'));await older;
+ assert.equal(f.node('#activeBackend').textContent,'old');assert.equal(f.node('#switchBackend').disabled,false);
+});
+
+test('an obsolete read finishing cannot clear the current read polling guard',async()=>{
+ const f=fixture();vm.runInContext('backendSwitching=true',f.context);
+ const older=f.run(),newer=f.run();f.pending[0].resolve(f.backend('stale'));await older;
+ f.state.poll();assert.equal(f.pending.length,2,'the current unfinished read still owns the guard');
+ f.pending[1].resolve(f.backend('old'));await newer;
+});
