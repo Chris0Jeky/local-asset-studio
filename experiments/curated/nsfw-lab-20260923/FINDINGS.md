@@ -1452,3 +1452,29 @@ P36 held 6/6 and closed E2 and G4. This wave spends the closure three ways: thre
 | p37-yor-bunny | p5-yor-squat | cstati-v3-baseline | 2026092446 | `0546fb53-d834-4904-889b-34d3954b99d8` |
 | p37-kafka-grinwink-anima | p36-kafka-smirkwink-anima | anima-v1-baseline | 2026092620 | `becf1af9-6216-4ed5-a663-6157df193b0a` |
 | p37-yor-grinwink-janima | p36-yor-smirkwink-janima | janima-v1-baseline | 2026092621 | `a05f79a8-d99d-4fd7-8abf-d6e59f4e96a8` |
+
+### p37 results
+
+All seven completed, 23.3–25.4 s each. No spill line on any receipt. E2 fired first try on all three new adults. G5 fired on both squats and promotes. E1 held on both port squats — the squat demotion is Illustrious-only.
+
+- p37-tae-smirkwink, WAI, seed `2026092470`, job `76a74ba8`, prompt `274523d3`, 25.4 s, `WAI-Illustration_00083_.png`. Identity: Tae reads, short black bob, yellow eyes, pendant, alley clinic, adult. Lever: E2 on a new adult — smirk and wink both show first try. Squat held. Hands: hidden. Cloth: white top sheer-translucent, black coat glossy, wet. Keep-or-change: keep.
+- p37-ohya-smirkwink, CSTati, seed `2026092471`, job `633bdf15`, prompt `98b93362`, 24.3 s, `CSTati-v3-Baseline_00067_.png`. Identity: Ohya reads, dark red hair, blouse and black skirt, lamp interior, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white blouse fully translucent, black skirt glossy and wet. Keep-or-change: keep.
+- p37-olivia-smirkwink, AniFox, seed `2026092472`, job `1fe3f4b1`, prompt `a447db23`, 24.4 s, `AniFox-v2-Baseline_00064_.png`. Identity: Olivia reads, tan skin, black ponytail, kahuna jewelry, Alola ruins night, adult. Lever: E2 first try — both show. Squat held. Hands: hidden. Cloth: white top sheer-glossy, dark bottoms glossy and wet. Keep-or-change: keep.
+- p37-kafka-bunny, WAI, seed `2026092445`, job `ecb9ec29`, prompt `d68ed9a2`, 24.3 s, `WAI-Illustration_00084_.png`. Identity: Kafka reads, magenta hair, sunglasses, rooftop, adult. Lever: outfit to black bunny suit — ears, bowtie, leotard, stockings all fire; G5 1/2. Squat held. Hands: hidden. Cloth: black latex glossy and wet. Mouth slightly open, eyes heavy. Keep-or-change: keep.
+- p37-yor-bunny, CSTati, seed `2026092446`, job `0546fb53`, prompt `1e9783e9`, 24.3 s, `CSTati-v3-Baseline_00068_.png`. Identity: Yor reads, black hair, red eyes, headband, gold roses, ballroom, adult. Lever: outfit to red bunny suit — ears, bowtie, leotard all fire; G5 2/2, promotes. Squat held. Hands: hidden. Cloth: red latex glossy and wet. Mouth closed. Keep-or-change: keep.
+- p37-kafka-grinwink-anima, Anima, seed `2026092620`, job `becf1af9`, prompt `95c4e628`, 24.3 s, `Anima-v1-Baseline_00060_.png`. Identity: same Kafka read, rooftop, adult. Lever: `smirk` to `grin, winking` — toothy grin with one eye closed; E1 holds on the Anima squat. Squat held. Hands: hidden. Cloth: same black bikini. Keep-or-change: keep.
+- p37-yor-grinwink-janima, JANIMA, seed `2026092621`, job `a05f79a8`, prompt `178cdf1a`, 23.3 s, `JANIMA-v1-Baseline_00023_.png`. Identity: same Yor read, lamp interior, adult. Lever: same swap — grin and wink both show; E1 holds on the JANIMA squat. Squat held. Hands: hidden. Cloth: same red bikini. Keep-or-change: keep.
+
+## G5 on ports, eyes on G5, two more adults, E1 on the Anima crawl — p38 wave
+
+P37 held 7/7, promoted G5, and corrected E1's demotion to Illustrious-only. This wave ports G5 to both families at new seeds with no sheer LoRA, adds `bedroom eyes` to both G5 cells at the same seed (is the eyes tag garment-neutral on bunny suits after the bikini rewrite?), runs E2 on two more new adults (Sadayo Kawakami from Persona 5, Aurea Juniper from Pokemon — both adult-in-canon), and runs E1 on the held Anima crawl at the same seed. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p38-kafka-bunny-anima | G5 | anima-v1-baseline | 2026092622 | `8585132d-4f25-41e9-9a8f-f975e0394da1` |
+| p38-yor-bunny-janima | G5 | janima-v1-baseline | 2026092623 | `e0a28020-5656-47f3-94bc-82dcaa16d899` |
+| p38-kafka-bunny-eyes | p37-kafka-bunny | wai | 2026092445 | `dfd4ce4f-29fc-48b1-8f58-53bebe32f44d` |
+| p38-yor-bunny-eyes | p37-yor-bunny | cstati-v3-baseline | 2026092446 | `ee3eb02c-d91d-4344-a7ac-f6d119f3dc62` |
+| p38-kawakami-smirkwink | E2 squat recipe | yumeflux-ilv1-baseline | 2026092473 | `d830fd37-efd0-45ae-9e63-7bd74e492898` |
+| p38-juniper-smirkwink | E2 squat recipe | wai | 2026092474 | `9e44f90f-728c-4317-8d34-9e7cd55c9afc` |
+| p38-tifa-grinwink-anima | p34-tifa-smirk-anima | anima-v1-baseline | 2026092601 | `ea97342b-b646-48ef-a3cd-aad0e190e0a8` |
