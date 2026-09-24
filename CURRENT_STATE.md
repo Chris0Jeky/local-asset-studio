@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p71 judged 6/6, G16 ports and eyes, B1 at 24 faces, p72 queued — 25 September 2026 (04:55 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P71 held 6/6: G16 ported 2/2 (Kafka `c1a5bc35`, Yor `9f6df1ed`) and held eyes-neutral 2/2 (Kafka `70fbd70d`, Yor `ae6435ad`) — only sheer-off reruns remain to close; B1 Yuzuha clean (`8925a67f`), Alice partial (`ef2fa048`; B1 now 9 clean, 14 partial, 1 break across 24 faces). P72 queued: G16 sheer-off close (Kafka `ba139c79`, Yor `788edaa8`), G17 kimono open (Kafka `f77c4084`, Yor `76a0fcae`), B1 on Sparkle (`a37dca16`) and Zhezhi (`1c5457c7`). Owner direction: waves mix poses from p73 (1–2 squat anchors + transfers to bent-over, crawl, seiza, seated rear, portrait). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p70 judged 6/6, G15 closed, G16 promoted, B1 at 22 faces, p71 queued — 25 September 2026 (04:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
@@ -347,12 +353,6 @@ Receipts are under `C:/Users/jekyt/source/local-asset-studio/experiments/runs` b
 Not run: One Obsession, Pearly, and any many-minute workflow.
 
 By 23:19 the same lab had queued nine more technique cells and three see-through cells. The usable writeup is `experiments/curated/nsfw-lab-20260923/TECHNIQUES.md`. The rear open-skirt stack held on Shalltear, Artoria, and mostly Black Swan and Yinlin, and it left Albedo's white dress closed. Front "hands on thighs" lost to the desk, the throne, and the wall. See-through Clothes Illustrious (`see_through_clothes.safetensors`, Civitai version 1610854, strength 1, trigger `seethroughILL`) made that white dress transparent and made darker dresses glossy. Jobs `5e462af7` / `c9500679`, `d33ff53d` / `aa4133c8`, `1a1e5192` / `3f0bb896`. Not art acceptance and not licence clearance.
-
-## Adult franchise NSFW lab continuation — 23 September 2026 (evening)
-
-Record: `experiments/curated/nsfw-lab-20260923/FINDINGS.md`. Pictures stay on disk under the ComfyUI output `Studio\` prefix. Nothing from this slice is on Creative Bundles. Generated and agent-judged only, not art acceptance, not licence clearance. Catalog `verified` was not flipped. q-29 and q-31 stay open.
-
-Thirteen fast-family cells completed (WAI, Anima, JANIMA, CSTati, AniFox, YumeFlux). Wave K changed the prompt because Wave J's front-seated Albedo stayed dressed and the rear cells grew a lifting hand. The wording that held is an already-open skirt with `hands, fingers` in the negative (Changli). A WAI Frieren frame looked young; the owner later said that is not a reason to drop her. Serie was also generated. Three prompts died with the process and were not resubmitted: Elsa `4dc53889-e2e0-4c22-8e66-93cbf125b4d1`, Serie-on-Anima `6ab21b16-5450-4338-af2c-c66e3054244a`, Scathach `c3b53ce6-3083-4fec-a236-1095a5fb87e2`. No many-minute model was used. Receipts are in the configured experiments root `C:/Users/jekyt/source/local-asset-studio/experiments/runs`.
 
 ## `zimage-fast` Studio-proved, Krea trigger follow-up, krea-refine on GGUF — 23 September 2026 (07:14-07:36)
 
