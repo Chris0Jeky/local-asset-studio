@@ -1,32 +1,55 @@
-let backendSwitching=false, backendActive=null;
+let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReads=0;
 function renderRecovery(recovery={}) {
   $('#recoveryStatus').textContent=recovery.message || (recovery.enabled ? 'Runtime recovery is watching the selected backend.' : 'Runtime recovery is disabled.');
   $('#retryRecovery').hidden=!recovery.enabled || recovery.status!=='breaker-open';
 }
+// Capture at acceptance, not request start. Empty settings are authored values too.
+function backendEditorSnapshot(){
+  const fields=[['positive',$('#positive')],['negative',$('#negative')],...controlKeys.map(key=>[key,getControl(key)]),['mode',$('#i2vMode')]].filter(([,input])=>input);
+  const active=document.activeElement,focus=fields.find(([,input])=>input===active)?.[0];
+  const selection=focus&&typeof active.selectionStart==='number'?[active.selectionStart,active.selectionEnd,active.selectionDirection]:null;
+  return {fields:fields.map(([key,input])=>[key,input.value]),focus,selection};
+}
+function restoreBackendEditor(snapshot){
+  const input=key=>key==='positive'?$('#positive'):key==='negative'?$('#negative'):key==='mode'?$('#i2vMode'):getControl(key);
+  const mode=snapshot.fields.find(([key])=>key==='mode')?.[1];
+  if(mode&&selected.i2v_modes?.some(spec=>spec.id===mode))applyI2VMode(mode,false);
+  for(const [key,value] of snapshot.fields){const target=input(key);if(target)target.value=value;}
+  const focused=snapshot.focus&&input(snapshot.focus);
+  if(focused){focused.focus({preventScroll:true});if(snapshot.selection)focused.setSelectionRange(...snapshot.selection);}
+}
 async function refreshBackends() {
+  const epoch=++backendReadEpoch,current=()=>epoch===backendReadEpoch;backendReads++;
   try {
-    const state=await api('/api/backends');backendSwitching=state.busy;
-    const select=$('#backendChoice'), keep=select.value;
+    const state=await api('/api/backends');if(!current())return;
+    if(!Array.isArray(state?.profiles)||typeof state.active!=='string'||typeof state.busy!=='boolean'||(state.busy&&typeof state.operation?.target!=='string'))throw Error('The backend status is incomplete. Your draft was kept.');
+    const changed=backendActive!==null&&backendActive!==state.active;
+    if(changed){
+      const next=await api('/api/catalog');if(!current())return;
+      if(!Array.isArray(next?.presets))throw Error('The refreshed recipe catalogue is unavailable. Your draft was kept.');
+      const id=selected?.id,replacement=id?next.presets.find(p=>p.id===id):null;
+      if(id&&!replacement)throw Error('The selected recipe is absent from the refreshed catalogue. Your draft was kept.');
+      const snapshot=backendEditorSnapshot();
+      catalog=next;if(replacement)selected=replacement;
+      renderPresets();if(selected){renderSelected();restoreBackendEditor(snapshot);}
+    }
+    backendSwitching=state.busy;
+    const select=$('#backendChoice'),keep=select.value;
     select.innerHTML=state.profiles.map(p=>'<option value="'+esc(p.id)+'" '+(!p.installed?'disabled':'')+'>'+esc(p.name)+(p.online?' · online':'')+'</option>').join('');
     select.value=state.busy?state.operation.target:(backendActive===null?state.active:(keep||state.active));
     select.disabled=state.busy;$('#switchBackend').disabled=state.busy;
     $('#backendStatus').textContent=state.operation?.message||'One model environment at a time. Switching never starts a generation.';
     renderRecovery(state.recovery);
-    if(backendActive!==null&&backendActive!==state.active){
-      const id=selected?.id, controls=selected?values():{};
-      catalog=await api('/api/catalog');selected=catalog.presets.find(p=>p.id===id)||catalog.presets[0];
-      renderPresets();renderSelected();
-      for(const [key,value] of Object.entries(controls)){const input=key==='positive'?$('#positive'):key==='negative'?$('#negative'):getControl(key);if(input)input.value=value;}
-      await health();if(view==='models')await refreshLibrary();
-    }
     backendActive=state.active;$('#activeBackend').textContent=state.profiles.find(p=>p.active)?.name||'';
     updateReady();
-  } catch(e){$('#backendStatus').textContent=e.message;}
+    if(changed){await health();if(current()&&view==='models')await refreshLibrary();}
+  } catch(e){if(current())$('#backendStatus').textContent=e.message;}
+  finally{backendReads--;}
 }
 $('#switchBackend').onclick=async()=>{
-  backendSwitching=true;updateReady();$('#switchBackend').disabled=true;
+  backendReadEpoch++;backendSwitching=true;updateReady();$('#switchBackend').disabled=true;
   try{await post('/api/backends/switch',{id:$('#backendChoice').value});await refreshBackends();}
   catch(e){backendSwitching=false;$('#switchBackend').disabled=false;$('#backendStatus').textContent=e.message;updateReady();}
 };
 $('#retryRecovery').onclick=async()=>{try{await post('/api/runtime-recovery/retry',{});await refreshBackends();}catch(e){$('#recoveryStatus').textContent=e.message;}};
-refreshBackends();setInterval(()=>{if(backendSwitching)refreshBackends();},3000);
+refreshBackends();setInterval(()=>{if(backendSwitching&&!backendReads)refreshBackends();},3000);

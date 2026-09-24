@@ -382,6 +382,7 @@
     function groupControls() {
       const controls = q('#controls'); if (!controls) return;
       const labels = [...controls.children].filter(n => n.tagName === 'LABEL'); if (!labels.length) return;
+      const focused = controls.contains(d.activeElement) ? d.activeElement : null;
       const groups = new Map();
       for (const label of labels) {
         if (label.querySelector('#i2vMode')) continue;
@@ -393,6 +394,8 @@
         groups.get(name).append(label);
       }
       for (const name of ['Seed','Canvas & duration','Sampling','Model & guidance']) if (groups.has(name)) controls.append(groups.get(name));
+      // Reparenting the existing field must not blur an editor restored by its owner.
+      if (focused && d.activeElement === d.body) focused.focus({preventScroll:true});
     }
     function applyPresentation() {
       create.dataset.workshopLayout = state.layout;
