@@ -2747,6 +2747,29 @@ P89 held 6/6 — G23 measured 10 with bent-over, seiza, sheer-off, crawl and por
 | p90-kafka-cheer-cowboy | p83-kafka-cheer | wai | 2026092445 | `4765b21b-d04f-4764-b517-98c9c480a43d` |
 | p90-yor-cheer-cowboy | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `d944ea2a-b185-48f1-b70a-793a9a5348c0` |
 
+All seven completed, 24.2–29.1 s each, all receipts live, no spill. G23 closed on all thirteen reads (seated rear holds, ports 2/2 with no sheer LoRA); C1 `cowboy shot` holds 2/2 on the nurse pair and 2/2 on the cheer pair, now measured on three garments.
+
+- p90-kafka-nurse-seated, WAI, seed `2026092695`, job `56748706`, prompt `47bc63bb`, 29.1 s, `WAI-Illustration_00192_.png`. Identity: Kafka reads, magenta ponytail, nurse cap, white nurse dress, armband, ward violet, night, adult. Lever: nurse on the seated rear — seated facing away, looking back, rear in white. Keep-or-change: keep.
+- p90-kafka-nurse-anima, Anima, seed `2026092696`, job `0e684820`, prompt `99627237`, 26.9 s, `Anima-v1-Baseline_00077_.png`. Identity: Kafka reads, magenta hair, nurse cap with red cross, white nurse dress, armband, ward violet, night, adult. Lever: G23 port with no sheer LoRA — full read, eyes closed in the Anima pattern. Squat held. Hands: hidden behind the head. Cloth: white dress flat-shaded. Keep-or-change: keep; G23 ports 1/2.
+- p90-yor-nurse-janima, JANIMA, seed `2026092697`, job `3e8e7e14`, prompt `8b30db1c`, 24.2 s, `JANIMA-v1-Baseline_00039_.png`. Identity: Yor reads, black hair, nurse cap with red cross, white nurse dress, armband, night city, night, adult. Lever: G23 port with no sheer LoRA — full read again, eyes open. Squat held. Hands: hidden behind the head. Cloth: white dress flat-shaded. Keep-or-change: keep; G23 ports 2/2, G23 closed.
+- p90-kafka-nurse-cowboy, WAI, seed `2026092445`, job `0ef2864d`, prompt `9f18e220`, 28.3 s, `WAI-Illustration_00193_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, nurse cap, white nurse dress, armband, ward violet, night, adult. Lever: `cowboy shot` on the nurse squat — mid-thigh-up framing, cap and dress intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep.
+- p90-yor-nurse-cowboy, CSTati, seed `2026092446`, job `9ea787d3`, prompt `8948626e`, 28.9 s, `CSTati-v3-Baseline_00186_.png`. Identity: Yor reads, black hair, nurse cap with red cross, white nurse dress, armband, lamp, night, adult. Lever: `cowboy shot` on the nurse squat — same framing, intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep.
+- p90-kafka-cheer-cowboy, WAI, seed `2026092445`, job `4765b21b`, prompt `b7ac309d`, 24.9 s, `WAI-Illustration_00194_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, pom-pom, stadium violet, night, adult. Lever: `cowboy shot` on the cheer squat — mid-thigh-up framing, uniform and pom-pom intact. Squat held. Hands: one behind the head, one holding a pom-pom. Cloth: red uniform glossy. Keep-or-change: keep.
+- p90-yor-cheer-cowboy, CSTati, seed `2026092446`, job `d944ea2a`, prompt `a816b15a`, 26.9 s, `CSTati-v3-Baseline_00187_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: `cowboy shot` on the cheer squat — same framing, uniform and pom-poms intact; fake top letters noted, not a discard. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep.
+
+## C1 close-up on nurse and cheer, G24 miko open — p91 wave
+
+P90 held 7/7 — G23 closed on all thirteen reads, C1 `cowboy shot` now measured on three garments. This wave extends C1 `close-up` to the nurse and cheer squat pairs and opens G24 with shrine-maiden anchors x2. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p91-kafka-nurse-closeup | p88-kafka-nurse | wai | 2026092445 | `6e3f7594-2766-4985-9c69-0fab3ef54635` |
+| p91-yor-nurse-closeup | p88-yor-nurse | cstati-v3-baseline | 2026092446 | `5bb1bd8d-48b5-4a7f-bed8-0082413e9f2e` |
+| p91-kafka-cheer-closeup | p83-kafka-cheer | wai | 2026092445 | `154694cf-2c49-44de-bdae-6ec9694cccca` |
+| p91-yor-cheer-closeup | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `dc9af572-6fb4-4dcf-a094-0c78d541ec46` |
+| p91-kafka-miko | — | wai | 2026092445 | `201672f7-3303-4bf4-bb10-c845b29874d9` |
+| p91-yor-miko | — | cstati-v3-baseline | 2026092446 | `7e889c75-ce96-4baf-9ab1-8e14c7d60210` |
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.

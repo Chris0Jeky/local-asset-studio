@@ -1,5 +1,11 @@
 # Current state — 24 September 2026
 
+## NSFW lab overnight: p90 judged 7/7, G23 closed, cowboy on three garments, G24 open, p91 queued — 25 September 2026 (21:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P90 held 7/7 (24.2–29.1 s, all receipts live, no spill): G23 closed on all thirteen reads with the seated rear (`56748706`) and ports x2 with no sheer LoRA (`0e684820`, `3e8e7e14`); C1 `cowboy shot` holds 2/2 on the nurse pair (`0ef2864d`, `9ea787d3`) and 2/2 on the cheer pair (`4765b21b`, `d944ea2a`), now measured on three garments. P91 queued, six cells: C1 `close-up` on the nurse pair (`6e3f7594`, `5bb1bd8d`) and the cheer pair (`154694cf`, `dc9af572`), G24 shrine-maiden open anchors (Kafka `201672f7`, Yor `7e889c75`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
 ## NSFW lab overnight: p89 judged 6/6, G23 measured 10, p90 queued — 25 September 2026 (21:00 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
