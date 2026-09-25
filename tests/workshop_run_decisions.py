@@ -19,7 +19,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.page.fill('#positive', 'My untouched idea')
         for layout in ('focus', 'studio', 'immersive'):
             with self.subTest(layout=layout):
-                self.page.select_option('#workshopLayout', layout)
+                self.page.select_option('#workshopLayout', layout, force=True)
                 for identity in ('generate', 'batch', 'randomSeed', 'planComparison'):
                     self.assertEqual(self.page.locator('#'+identity).count(), 1)
                     self.assertTrue(self.page.locator('#'+identity).evaluate('(n)=>n===runOriginals[n.id]'))
@@ -39,7 +39,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
             self.page.set_viewport_size({'width': width, 'height': height})
             for layout in ('focus', 'studio', 'immersive'):
                 with self.subTest(width=width, height=height, layout=layout):
-                    self.page.select_option('#workshopLayout', layout)
+                    self.page.select_option('#workshopLayout', layout, force=True)
                     for identity in ('generate', 'randomSeed', 'planComparison', 'workshopEta'):
                         self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
                         box = self.page.locator('#'+identity).bounding_box()

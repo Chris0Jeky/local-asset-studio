@@ -32,7 +32,7 @@ def main():
         for width,height in [(1440,900),(390,844)]:
             page.set_viewport_size({'width':width,'height':height})
             for layout in ('focus','studio','immersive'):
-                page.select_option('#workshopLayout',layout)
+                page.select_option('#workshopLayout', layout, force=True)
                 page.evaluate('(name)=>{selected.name=name;document.querySelector("#createView").__workshop.sync()}',long_name)
                 assert not page.locator('.wk-recipe > div').is_visible(), 'the export must not repeat the active recipe label'
                 button=page.locator('#workshopRecipeChange')
@@ -45,7 +45,7 @@ def main():
         assert page.locator('#demoArtwork').evaluate('(el)=>el.complete&&el.naturalWidth>0')
         assert page.locator('#workshopAmbienceHero').is_visible()
         for layout,skin,ambience in [('focus','atelier','none'),('studio','sakura','quiet-morning'),('immersive','retro-anime','night-shift')]:
-            page.select_option('#workshopLayout',layout);page.select_option('#workshopSkin',skin);page.select_option('#workshopAmbience',ambience)
+            page.select_option('#workshopLayout', layout, force=True);page.select_option('#workshopSkin', skin, force=True);page.select_option('#workshopAmbience', ambience, force=True)
             page.screenshot(path=str(out/f'{layout}-{skin}-{ambience}.png'))
         page.fill('#positive','Keep my experimental brief')
         page.click('#workshopRecipeChange');page.fill('#presetSearch','Refine')
@@ -55,13 +55,13 @@ def main():
         page.wait_for_function('!document.querySelector("#workshopRecipeDialog").open')
         page.locator('#reference').set_input_files(ROOT/'examples/gallery/pixel-lora-128.png')
         page.wait_for_function('!document.querySelector("#demoSource").hidden && document.querySelector("#demoSource").naturalWidth>0')
-        page.select_option('#workshopLayout','focus');page.select_option('#workshopSkin','atelier');page.select_option('#workshopAmbience','none')
+        page.select_option('#workshopLayout', 'focus', force=True);page.select_option('#workshopSkin', 'atelier', force=True);page.select_option('#workshopAmbience', 'none', force=True)
         assert page.locator('#reference').evaluate('(el)=>el.files.length')==1
         page.click('#generate')
         assert 'No job was submitted' in page.locator('#status').inner_text()
         page.click('#workshopTune');page.locator('[data-key=lora]').fill('0.5')
         assert page.locator('#demoStrength').inner_text()=='0.5'
-        page.select_option('#workshopLayout','immersive');page.select_option('#workshopSkin','retro-anime');page.select_option('#workshopAmbience','night-shift')
+        page.select_option('#workshopLayout', 'immersive', force=True);page.select_option('#workshopSkin', 'retro-anime', force=True);page.select_option('#workshopAmbience', 'night-shift', force=True)
         assert page.locator('#workshopGuidance').is_visible()
         page.locator('.wk-modebar a').first.click()
         assert page.locator('#demoNotice').is_visible()
@@ -72,8 +72,8 @@ def main():
         assert page.locator('#status').inner_text()==before
         page.set_viewport_size({'width':390,'height':844})
         for layout in ['focus','studio','immersive']:
-            page.select_option('#workshopLayout',layout)
-            page.select_option('#workshopAmbience','night-shift' if layout=='immersive' else 'none')
+            page.select_option('#workshopLayout', layout, force=True)
+            page.select_option('#workshopAmbience', 'night-shift' if layout=='immersive' else 'none', force=True)
             assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
             if layout=='immersive':
                 assert page.locator('#workshopGuidance').is_visible()

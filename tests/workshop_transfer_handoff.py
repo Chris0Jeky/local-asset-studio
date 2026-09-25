@@ -44,7 +44,7 @@ def _document():
     <section id="uxTransfer" class="panel ux-transfer"><h2>Text from Prompt Lab</h2><p id="uxTransferNotice">A reviewed Prompt Lab draft is ready.</p><pre id="uxTransferPreview">A lantern-lit city workshop.</pre><button id="uxApplyPrompt" class="primary">Apply text to the selected recipe</button><button>Dismiss</button></section>
     <section id="workshopAmbienceHero" class="wk-immersive-hero" hidden><div class="wk-hero-copy"><span class="eyebrow">LOCAL / PRIVATE / YOURS</span><h2>Turn your ideas into something real.</h2><p>The same working draft.</p></div><div class="wk-hero-art"></div></section>
     <nav class="wk-modebar"><button class="active">Generate</button><a href="#">Prompt Lab</a><a href="#">Runs & review</a></nav>
-    <div class="wk-toolbar"><div class="wk-select-controls"><label class="wk-select-control">Layout<select><option>Focus</option></select></label><label class="wk-select-control">Ambience<select><option>None</option></select></label></div><div class="wk-skin-control"><span class="wk-control-label">Skin</span><div class="wk-skin-picker"><button class="wk-skin-choice active">Atelier</button></div></div></div>
+    <details id="workshopAppearance" class="wk-appearance"><summary>Appearance</summary><div class="wk-toolbar"><div class="wk-select-controls"><label class="wk-select-control">Layout<select><option>Focus</option></select></label><label class="wk-select-control">Ambience<select><option>None</option></select></label></div><div class="wk-skin-control"><span class="wk-control-label">Skin</span><div class="wk-skin-picker"><button class="wk-skin-choice active">Atelier</button></div></div></div></details>
     <aside id="workshopSetupRail" class="wk-setup-rail"><div class="wk-rail-heading"><span class="eyebrow">RECIPE & READINESS</span><h2>Run setup</h2></div><div class="wk-recipe"><span class="wk-recipe-mark">✦</span><div><small>ACTIVE RECIPE</small><strong>Fixture recipe</strong></div><button>Change recipe</button></div><button class="wk-quick-tune">Fine-tune the recipe</button><div class="wk-setup-status"><strong>No blockers reported</strong><span>Runtime estimate unavailable</span></div></aside>
     <section class="panel editor"><label id="positiveWrap">Describe your idea<textarea id="positive">Fixture prompt</textarea></label><details class="ux-parameters"><summary>Fine-tune the recipe</summary><div id="controls"></div></details><details id="workshopChecks" class="wk-disclosure"><summary>Readiness & run details</summary></details></section>
     <aside id="workshopGuidance" class="wk-guidance"><span class="eyebrow">ONE NEXT ACTION</span><h2>Ready when you are</h2><p>The existing Generate control is enabled.</p><button>Focus Generate</button></aside>
@@ -71,7 +71,7 @@ def _rects(page):
             create: rect('#createView'), heading: rect('.ux-create-heading'),
             hero: rect('#workshopAmbienceHero'), modes: rect('.wk-modebar'),
             transfer: rect('#uxTransfer'), apply: rect('#uxApplyPrompt'),
-            toolbar: rect('.wk-toolbar'), editor: rect('#createView .editor')
+            appearance: rect('.wk-appearance'), setup: rect('#workshopSetupRail'), editor: rect('#createView .editor')
           };
         }"""
     )
@@ -118,14 +118,18 @@ def main():
                     if layout in {'focus', 'studio'}:
                         assert rects['heading']['visible'], rects
                         assert rects['transfer']['top'] >= rects['heading']['bottom'] - 1, rects
-                        next_surface = rects['hero'] if ambience == 'night-shift' else rects['toolbar']
+                        next_surface = rects['hero'] if ambience == 'night-shift' else rects['setup']
                         assert next_surface['visible'], rects
                         assert rects['transfer']['bottom'] <= next_surface['top'] + 1, rects
+                        # #772: the closed Appearance control shares the title's row, above the handoff.
+                        assert rects['appearance']['visible'], rects
+                        assert rects['appearance']['bottom'] <= rects['transfer']['top'] + 1, rects
+                        assert rects['appearance']['right'] <= rects['create']['right'] + 1, rects
                     else:
                         assert not rects['heading']['visible'], rects
                         assert rects['modes']['visible'], rects
                         assert rects['transfer']['top'] >= rects['modes']['bottom'] - 1, rects
-                        assert rects['transfer']['bottom'] <= rects['toolbar']['top'] + 1, rects
+                        assert rects['transfer']['bottom'] <= rects['appearance']['top'] + 1, rects
 
                     if width == 1440 and ambience == 'night-shift':
                         page.screenshot(path=str(args.output / f'transfer-{layout}.png'), full_page=True)

@@ -54,15 +54,15 @@ async def run(args):
             if args.case in ('all', 'backends'):
                 await exercise_backend_refresh(page, checks, fixture.POSTS)
                 await page.set_viewport_size({'width':1440, 'height':900})
-                await page.select_option('#workshopLayout', 'focus')
+                await page.select_option('#workshopLayout', 'focus', force=True)
             if args.case in ('all', 'continuation'):
                 await exercise_continuation_help(page, checks, fixture.POSTS)
                 await page.set_viewport_size({'width':1440, 'height':900})
-                await page.select_option('#workshopLayout', 'focus')
+                await page.select_option('#workshopLayout', 'focus', force=True)
             if args.case in ('all', 'wildcards'):
                 await exercise_wildcards(page, checks, fixture.POSTS)
                 await page.set_viewport_size({'width':1440, 'height':900})
-                await page.select_option('#workshopLayout', 'focus')
+                await page.select_option('#workshopLayout', 'focus', force=True)
             if args.case in ('all', 'disclosure'):
                 await page.evaluate("document.querySelector('#negativeWrap').open=false")
                 await page.wait_for_function("sessionStorage.getItem('studio-negative-collapsed')==='1'")

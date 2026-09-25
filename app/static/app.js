@@ -117,7 +117,10 @@ function renderPresets() {
   const query = $('#presetSearch').value.toLowerCase(), category = $('#categorySelect').value;
   const list = catalog.presets.filter(p => (mode === 'all' || (p.modality || 'image') === mode) && (category === 'All' || p.category === category) && [p.name,p.family,p.description,p.category].join(' ').toLowerCase().includes(query));
   $('#filteredCount').textContent = list.length;
+  // Rebuilding the list must not drop keyboard focus: a picked recipe keeps it on its own rebuilt button (#772).
+  const focused = document.activeElement?.closest?.('#presetList [data-id]')?.dataset.id;
   $('#presetList').innerHTML = list.map(p => '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '"><b>' + esc(p.name) + '</b><span>' + esc(p.description) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span><em class="badge ' + (p.verified ? 'tested' : '') + '">' + (p.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</em></div></button>').join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
+  if (focused) ([...$('#presetList').querySelectorAll('[data-id]')].find(button => button.dataset.id === focused) || $('#presetSearch'))?.focus({preventScroll:true});
 }
 function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
@@ -554,7 +557,7 @@ $('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.val
   document.addEventListener('change',e=>{if(e.target===$('#positive'))updateReady();else if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('click',e=>{if(e.target.closest('#createView')){if(typeof setTimeout==='function')setTimeout(scheduleTimeEstimate,0);else scheduleTimeEstimate();}});
 $('#recipeSelect').onchange=e=>{if(e.target.value===''){if(continuationState)applyRecipe({preset_id:selected.id,name:'Recipe defaults',controls:{}});return;}try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
-$('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();recipeChanged();};
+$('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();recipeChanged();if(input)message('Seed changed to '+input.value+'. Nothing was generated.');};
 $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');updateReady();};$('#lastReference').onchange=()=>{lastUploaded=null;releaseInputParent('lastReference');updateReady();};
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
@@ -568,10 +571,31 @@ $('#generate').onclick=async()=>{
     const job=await post('/api/jobs',intent);activeJobId=job.id;message(job.message);await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };
+// Ctrl+Enter (Cmd+Enter on a Mac) anywhere in Create does what one click on the Generate button does and nothing more:
+// it clicks the real button only while that button is visible and enabled, so the handler's busy guard, readiness gate and
+// intent snapshot still decide. A held key repeats keydown; a repeat never submits. A blocked button explains itself (#772).
+function generateShortcutBlocker(button){
+  if(submitting)return 'A run is already being submitted. Wait for it to finish.';
+  if(!button.disabled)return 'Generate is not on screen. Open Create, then press Ctrl+Enter again.';
+  return String($('#uxBlockers .ux-blocker p')?.textContent||'').trim()||'Generate is not available yet. Review the readiness checks.';
+}
+function generateShortcut(e){
+  // A field that already handled Enter (the pose X/Y inputs) keeps it; an open modal owns the keyboard, even from body.
+  if(e.key!=='Enter'||!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey||e.isComposing||e.defaultPrevented)return 'ignored';
+  const button=$('#generate'),create=$('#createView'),target=e.target;
+  if(!button||!create||create.hidden||!(target===document.body||create.contains(target))||target?.closest?.('dialog')||document.querySelector('dialog[open]'))return 'ignored';
+  e.preventDefault();
+  if(e.repeat)return 'repeat';
+  const visible=!button.closest('[hidden]')&&button.getClientRects().length>0;
+  if(submitting||button.disabled||!visible){message(generateShortcutBlocker(button),true);return 'blocked';}
+  button.click();return 'clicked';
+}
+if(typeof document!=='undefined')document.addEventListener?.('keydown',generateShortcut);
+if(typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.platform||'')){const hint=$('#generateShortcut');if(hint){hint.textContent='⌘ Enter';hint.title='Press Cmd+Enter anywhere in Create to generate';}}
 $('#gallery').onclick=async e=>{
   try{
     const mixed=e.target.closest('[data-mixed-action]');if(mixed){await mixedBatchAction(mixed);return;}
-    const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index};pinned=pinned.some(x=>x.job===p.job&&x.index===p.index)?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();}
+    const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index},unpin=pinned.some(x=>x.job===p.job&&x.index===p.index),dropped=!unpin&&pinned.length>=2;pinned=unpin?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();if(dropped)message('Side by side shows two pictures. The oldest pin was replaced by this one.');}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}
     const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs();return;}
