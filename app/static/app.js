@@ -443,13 +443,21 @@ function renderProblems(problems,open){
 async function refreshJobs(){try{const next=await api('/api/jobs'),signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
 function refresh(){return readPoller?readPoller.refresh('jobs'):refreshJobs();}
 function showView(next){view=next;['create','assets','production','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();location.hash=next;}
-function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase();$('#inventory').innerHTML=library.inventory.filter(m=>m.file.toLowerCase().includes(q)).map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';}
+const MODEL_STATUS_KEY='studio.models.status',MODEL_STATUSES=['all','action','installed'];
+function currentModelStatus(){const v=$('#modelStatus')?.value;return MODEL_STATUSES.includes(v)?v:'all';}
+function readStoredModelStatus(){try{if(typeof localStorage==='undefined')return 'all';const v=localStorage.getItem(MODEL_STATUS_KEY);return MODEL_STATUSES.includes(v)?v:'all';}catch{return 'all';}}
+function writeStoredModelStatus(value){try{if(typeof localStorage!=='undefined')localStorage.setItem(MODEL_STATUS_KEY,value);}catch{}}
+function restoreModelStatus(){const select=$('#modelStatus');if(select)select.value=readStoredModelStatus();}
+function assetNeedsAction(a){return a?.verified!==true;}
+function modelStatusMatch(a,status){if(status==='installed')return a?.verified===true;if(status==='action')return assetNeedsAction(a);return true;}
+function inventoryNeedsAction(m,assets){const match=(assets||[]).find(a=>a.file===m.file);return !!match&&match.verified!==true;}
+function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase(),status=currentModelStatus(),assets=library.assets||[];const rows=library.inventory.filter(m=>m.file.toLowerCase().includes(q)&&(status==='all'||(status==='action'?inventoryNeedsAction(m,assets):!inventoryNeedsAction(m,assets))));$('#inventory').innerHTML=rows.map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';const count=$('#modelCount');if(count)count.textContent=rows.length+' of '+library.inventory.length+(status==='action'?' need action':status==='installed'?' installed':' shown');}
 async function refreshLibrary(){
   try{
     library=await api('/api/library');const s=library.storage;
     $('#storage').innerHTML='<div><b>'+gib(s.free_bytes)+'</b><small> free on the model drive</small></div><div class="bar"><span style="width:'+Math.min(100,s.free_bytes/s.total_bytes*100)+'%"></span></div><small>Downloads keep '+gib(s.reserve_bytes)+' free for cache, outputs and system memory. Model folder: '+esc(library.model_root)+'</small>';
     const busy=library.assets.some(a=>['queued','downloading','verifying'].includes(a.download?.status)&&Date.now()/1000-a.download.updated_at<180);
-    $('#modelCards').innerHTML=library.assets.map(a=>{
+    $('#modelCards').innerHTML=library.assets.filter(a=>modelStatusMatch(a,currentModelStatus())).map(a=>{
       const d=a.download||{},active=['queued','downloading','verifying'].includes(d.status)&&Date.now()/1000-d.updated_at<180;
       const pinOnly=a.installable!==true;
       const state=a.verified?'SHA-256 verified':pinOnly?(a.present?'Present · pin only':'Pin only · not installed'):a.present?'Present · verify file':active?d.status:'Not installed';
@@ -640,7 +648,7 @@ function setupMessage(text,error=false){message(text,error);$('#setupStatus').te
 $('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
 $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
-$('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;
+$('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
 function configureReadPolling(){
   if(!window.ReadPoller||readPoller)return;
   readPoller=new window.ReadPoller();window.StudioReadPoller=readPoller;
