@@ -14,6 +14,7 @@ import re
 import threading
 import time
 
+import gpu_memory
 import host_memory
 import resource_probe
 import wan_capacity
@@ -163,6 +164,23 @@ def workflow_identity(studio, preset, graph, runtime):
     return identity
 
 
+def external_vram(studio):
+    """(bytes, None) of dedicated VRAM held by processes other than the active ComfyUI, or (None, reason). Never raises."""
+    try:
+        backends = getattr(studio, "backends", None)
+        process = backends.process(backends.profiles[backends.active]) if backends else None
+        pid = process.pid if process else None
+    except (ValueError, KeyError, AttributeError, OSError):
+        pid = None
+    if pid is None:
+        return None, "the active ComfyUI process is not identified"
+    reading = gpu_memory.read()
+    others = gpu_memory.others_bytes(reading, pid)
+    if others is None:
+        return None, (reading.get("unknown_reason") if isinstance(reading, dict) else None) or "no GPU adapter reading"
+    return others, None
+
+
 def observe(studio):
     """Take one fresh admission snapshot; missing facts remain explicit."""
     physical = resource_probe.physical_memory()
@@ -179,18 +197,28 @@ def observe(studio):
         runtime["unknown_reason"] = "ComfyUI counters unavailable: " + type(exc).__name__
     device_index = (getattr(studio, "config", {}) or {}).get(
         "resource_admission_device_index", 0)
-    vram = None
+    vram, vram_parts = None, {}
     vram_reason = runtime.get("unknown_reason")
     if type(device_index) is int and 0 <= device_index < len(runtime.get("devices") or []):
         device = runtime["devices"][device_index]
         # ComfyUI's vram_free is driver free plus torch's reserved-but-unused pool (model_management.get_free_memory);
         # torch_vram_free is only that pool (reserved minus active): near 0 when nothing is loaded or the pool is in use.
         # Taking the smaller of the two reported "no VRAM" on an empty 16 GB card (#306 live proof, 25 Sep 2026).
+        # That figure also ignores other processes' dedicated VRAM on this Windows/ROCm box (docs/RUNTIME-PRECONDITIONS.md
+        # §8: dwm alone held 2.3 GB), so subtract what they hold, measured; unmeasured means unknown, never assumed zero.
         free = _counter(device.get("vram_free_bytes"))
-        if free is not None:
-            vram, vram_reason = free, None
-        else:
+        if free is None:
             vram_reason = "Selected device returned no valid free-VRAM counter"
+        else:
+            external, external_reason = external_vram(studio)
+            total = _counter(device.get("vram_total_bytes"))
+            if external is None:
+                vram_reason = "Other processes' dedicated VRAM is unmeasured: " + external_reason
+            elif total is not None and external > total:
+                # Live 25 Sep 2026: dwm.exe's counter read 65.9 GiB on a 16 GiB card; a sum larger than the card is not evidence.
+                vram_reason = "Other processes' dedicated VRAM counters are implausible (%.1f GiB on a %.1f GiB card)" % (external / 1024 ** 3, total / 1024 ** 3)
+            else:
+                vram, vram_reason, vram_parts = max(0, free - external), None, {"comfyui_free_bytes": free, "external_bytes": external}
     elif vram_reason is None:
         vram_reason = "Configured admission device is unavailable"
     return {
@@ -202,6 +230,7 @@ def observe(studio):
             "available_bytes": vram,
             "device_index": device_index,
             "unknown_reason": vram_reason,
+            **vram_parts,
         },
         "runtime": runtime,
     }
