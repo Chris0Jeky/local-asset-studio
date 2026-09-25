@@ -589,7 +589,7 @@ function generateShortcut(e){
   if(submitting||button.disabled||!visible){message(generateShortcutBlocker(button),true);return 'blocked';}
   button.click();return 'clicked';
 }
-document.addEventListener('keydown',generateShortcut);
+if(typeof document!=='undefined')document.addEventListener?.('keydown',generateShortcut);
 if(typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.platform||'')){const hint=$('#generateShortcut');if(hint){hint.textContent='⌘ Enter';hint.title='Press Cmd+Enter anywhere in Create to generate';}}
 $('#gallery').onclick=async e=>{
   try{

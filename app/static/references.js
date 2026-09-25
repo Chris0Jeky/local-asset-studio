@@ -162,7 +162,7 @@ function pasteReference(e){
   message('Pasted into '+names.join(', ')+'.'+(ignored?' '+ignored+' more picture'+(ignored===1?' was':'s were')+' ignored: every other slot is filled.':''),!!ignored);
   return 'pasted';
 }
-document.addEventListener('paste',pasteReference);
+if(typeof document!=='undefined')document.addEventListener?.('paste',pasteReference);
 $('#previewResolvedRecipe').onclick=async()=>{
   try{const result=await post('/api/preview',{preset_id:selected.id,...continuationPayload(),controls:values(),references:attachedReferencePayload(),parent_assets:parentAssets,batch_count:$('#batch').value});$('#graphPreview').textContent=JSON.stringify(result,null,2);$('#graphPreview').closest('details').open=true;message('Resolved recipe previewed. No generation submitted.');}
   catch(e){message(e.message,true);}
