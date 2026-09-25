@@ -31,7 +31,11 @@ async function refreshProduction(force=false){
 const PLAN_FILTER_KEY='studio.production.filters',PLAN_RECENT_SECONDS=7*86400;
 const PLAN_TYPES={all:null,comparison:['comparison'],scene:['av'],voice:['voice'],export:['native','articulated']};
 const PLAN_TYPE_NOUNS={all:'plans',comparison:'comparisons',scene:'scenes',voice:'voice takes',export:'exports'};
-const PLAN_ACTIVE=new Set(['planned','queued','running','observing','awaiting_review','uncertain']);
+// Open work = StudioUX ACTIVE ∪ ATTENTION (studio-core.js, one source of truth) plus the two plan states that
+// wait on the owner. studio-core loads after this file, so it is read per render; the literal mirrors it for
+// pages and tests without it. A Studio restart turns running plans into `interrupted`, which must stay in view.
+const PLAN_OPEN_FALLBACK=['queued','submitting','running','waiting','observing','rendering','failed','partial','uncertain','interrupted','stopped'];
+function planOpenStatuses(){const ux=globalThis.StudioUX,core=Array.isArray(ux?.ACTIVE)&&Array.isArray(ux?.ATTENTION)?[...ux.ACTIVE,...ux.ATTENTION]:PLAN_OPEN_FALLBACK;return new Set([...core,'planned','awaiting_review']);}
 let planFilter={type:'all',status:'active'};
 function cleanPlanFilter(value){return {type:Object.hasOwn(PLAN_TYPES,value?.type)?value.type:'all',status:value?.status==='all'?'all':'active'};}
 // The newest thing known about a plan: its creation, its own run (voice, scene and export plans have
@@ -41,14 +45,16 @@ function planActivity(p){const stamps=r=>[r?.created_at,r?.started_at,r?.finishe
 function planGroups(plans,filter=planFilter,now=Date.now()/1000){
   const kinds=PLAN_TYPES[filter.type],typed=plans.filter(p=>!kinds||kinds.includes(p.kind));
   if(filter.status==='all')return {recent:typed,older:[],hidden:plans.length-typed.length};
-  const recent=[],older=[],active=typed.filter(p=>PLAN_ACTIVE.has(p.state?.status));
+  const open=planOpenStatuses(),recent=[],older=[],active=typed.filter(p=>open.has(p.state?.status));
   // A plan with no readable date cannot be shown to be old, so it stays in view.
   for(const p of active){const at=planActivity(p);(at!==null&&now-at>PLAN_RECENT_SECONDS?older:recent).push(p);}
   return {recent,older,hidden:plans.length-active.length};
 }
-function planFilterPhrase(filter=planFilter){return (filter.status==='active'?'active ':'')+PLAN_TYPE_NOUNS[filter.type]+(filter.status==='active'?' from the last 7 days':'');}
+function planFilterPhrase(filter=planFilter){return PLAN_TYPE_NOUNS[filter.type]+(filter.status==='active'?' in progress or needing attention':'');}
 function syncPlanFilter(){const type=$('#planType'),status=$('#planStatus');if(type)type.value=planFilter.type;if(status)status.value=planFilter.status;}
-function setPlanFilter(next){planFilter=cleanPlanFilter({...planFilter,...next});syncPlanFilter();try{localStorage.setItem(PLAN_FILTER_KEY,JSON.stringify(planFilter));}catch(err){}renderProduction();}
+function setPlanFilter(next,focus=false){planFilter=cleanPlanFilter({...planFilter,...next});syncPlanFilter();try{localStorage.setItem(PLAN_FILTER_KEY,JSON.stringify(planFilter));}catch(err){}renderProduction();
+  // Show all lives inside the list it re-renders; hand keyboard focus to the Status select instead of losing it.
+  if(focus)$('#planStatus')?.focus?.();}
 function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStorage.getItem(PLAN_FILTER_KEY)||'{}'));}catch(err){}syncPlanFilter();}
 function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>';}
 function renderPlanList(){
@@ -57,7 +63,7 @@ function renderPlanList(){
   const olderOpen=list.querySelector?.('.plan-older')?.open||groups.older.some(p=>p.id===productionId);
   const hidden=groups.hidden+' '+(groups.hidden===1?'plan':'plans')+' hidden by these filters.';
   if(!shown){list.innerHTML='<div class="production-empty plan-filter-empty"><p><b>No '+esc(planFilterPhrase())+'.</b> '+hidden+'</p>'+showAll+'</div>';return;}
-  list.innerHTML=groups.recent.map(planButton).join('')+(groups.older.length?'<details class="plan-older"'+(olderOpen?' open':'')+'><summary>Older ('+groups.older.length+')</summary>'+groups.older.map(planButton).join('')+'</details>':'')+(groups.hidden?'<p class="plan-filter-note">Showing '+esc(planFilterPhrase())+'; '+hidden+' '+showAll+'</p>':'');
+  list.innerHTML=groups.recent.map(planButton).join('')+(groups.older.length?'<details class="plan-older"'+(olderOpen?' open':'')+'><summary>Older ('+groups.older.length+')</summary>'+groups.older.map(planButton).join('')+'</details>':'')+(groups.hidden?'<p class="plan-filter-note">Showing '+esc(planFilterPhrase())+(planFilter.status==='active'?'; untouched for 7 days folds under Older':'')+'. '+hidden+' '+showAll+'</p>':'');
 }
 function renderProduction(){
   renderPlanList();
@@ -250,7 +256,7 @@ function restoreProductionIntro(){
 restoreProductionIntro();restorePlanFilter();
 if($('#planType'))$('#planType').onchange=()=>setPlanFilter({type:$('#planType').value});
 if($('#planStatus'))$('#planStatus').onchange=()=>setPlanFilter({status:$('#planStatus').value});
-$('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}if(e.target.closest('[data-plan-show-all]')){setPlanFilter({type:'all',status:'all'});return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
+$('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}if(e.target.closest('[data-plan-show-all]')){setPlanFilter({type:'all',status:'all'},true);return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
 $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindComparison=e.target.checked;renderProduction();}};
 // Workspace review of a single candidate image: the same revision-guarded
 // /api/assets/update command the asset dialog sends, never a new endpoint. It
