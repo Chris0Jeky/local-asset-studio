@@ -319,6 +319,34 @@ class AdultIllustrationBenchmarkResultTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "failure class.*status"):
             self.validate(value)
 
+    def test_owner_interactions_null_means_unmeasured(self) -> None:
+        value = valid_result()
+        value["accounting"]["owner_interactions"] = None  # type: ignore[index]
+        rehash(value)
+        self.assertEqual(self.validate(value), value)
+
+    def test_owner_interactions_zero_is_measured(self) -> None:
+        value = valid_result()
+        value["accounting"]["owner_interactions"] = 0  # type: ignore[index]
+        rehash(value)
+        self.assertEqual(self.validate(value), value)
+
+    def test_owner_interactions_rejects_bad_values(self) -> None:
+        for bad in (True, 1.0, -1, 100_001, "0"):
+            with self.subTest(bad=bad):
+                value = valid_result()
+                value["accounting"]["owner_interactions"] = bad  # type: ignore[index]
+                rehash(value)
+                with self.assertRaisesRegex(ValueError, "owner interactions"):
+                    self.validate(value)
+
+    def test_float_candidate_ordinal_is_rejected(self) -> None:
+        value = valid_result()
+        value["candidates"][0]["ordinal"] = 1.0  # type: ignore[index]
+        rehash(value)
+        with self.assertRaisesRegex(ValueError, "ordinals"):
+            self.validate(value)
+
     def test_non_synthetic_result_requires_frozen_external_evidence(self) -> None:
         value = valid_result()
         value["synthetic"] = False

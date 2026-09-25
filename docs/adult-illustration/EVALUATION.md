@@ -107,6 +107,7 @@ A result record:
 - requires non-synthetic evidence to pin route configuration, graph, source set, external campaign and authorization references;
 - retains one record for every actual candidate, including refusals, unsupported controls, no-ops, OOMs, crashes, binding faults, cancellations and uncertain submissions;
 - requires contiguous candidate ordinals and exact attempted/retained/accepted accounting;
+- records `accounting.owner_interactions` as null when unmeasured; use 0 only for a measured zero;
 - counts uncertain submissions and failed batch members against the real candidate total;
 - records candidate acceptance separately from human review, adult-envelope review, artistic acceptance and rights review;
 - contains every corpus measurement exactly once;
