@@ -161,13 +161,16 @@ class RuntimeRecovery:
             if manager.busy:
                 self._record("reconnecting", "Backend switch is active; recovery is waiting.")
                 return self.snapshot()
+            leased = self._leased()
+            if leased:
+                self._record("leased", leased)
+                return self.snapshot()
+            ready = False
             try:
                 # Windows can surface a one-second urllib timeout before it reports
                 # the connection refusal that authorizes a bounded recovery launch.
                 stats = manager.request(profile, "/system_stats", REFUSAL_PROBE_TIMEOUT)
-                if endpoint_ready(stats):
-                    self._ready(profile, stats)
-                    return self.snapshot()
+                ready = endpoint_ready(stats)
                 error = ValueError("Endpoint did not return a ready system payload")
             except (OSError, ValueError) as exc:
                 error = exc
@@ -176,6 +179,10 @@ class RuntimeRecovery:
             leased = self._leased()
             if leased:
                 self._record("leased", leased)
+                return self.snapshot()
+
+            if ready:
+                self._ready(profile, stats)
                 return self.snapshot()
 
             # A listener that cannot be proven to be this exact launcher is a hard stop.
