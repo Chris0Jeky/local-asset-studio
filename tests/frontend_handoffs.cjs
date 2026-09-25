@@ -634,8 +634,9 @@ async function pastedAndDroppedPicturesFillEmptySlots() {
   // The slot picker is cleared after each attempt, so choosing the same file again fires a new change event.
   const input = {dataset: {refFile: '0'}, files: [png('again.png')], value: 'C:\\fakepath\\again.png'};
   s.element('#referenceCards').listeners.change({target: input});
-  assert.equal(input.value, '', 'The slot picker is reset after it is read');
+  assert.notEqual(input.value, '', 'The picker keeps its File while the upload runs');
   await flush(); await flush();
+  assert.equal(input.value, '', 'The slot picker is reset once the upload settles');
   assert.equal(slots()[0], 'up-again.png');
   // A slot-less reference recipe receives the picture in its own file input, as if chosen there.
   s.run(`selectPreset('gentle-variation');`);

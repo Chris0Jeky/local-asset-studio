@@ -102,7 +102,11 @@ $('#referenceMode').onchange=e=>{
 };
 $('#referenceCards').addEventListener('change',e=>{
   const d=e.target.dataset;
-  if(d.refFile!==undefined){const file=e.target.files[0];e.target.value='';uploadRoleFile(Number(d.refFile),file);return;}
+  if(d.refFile!==undefined){
+    // The picker keeps its File while the upload runs (a newer upload owns it); once settled it is cleared, so choosing
+    // the same file again after a refusal fires a new change event (#772).
+    const input=e.target,file=input.files[0];uploadRoleFile(Number(d.refFile),file).finally(()=>{if(input.files?.[0]===file)input.value='';});return;
+  }
   for(const [key,field] of [['refRole','role'],['refContribution','contribution'],['refAvoid','avoid']])if(d[key]!==undefined)referenceRecords[Number(d[key])][field]=e.target.value;
 });
 $('#referenceCards').addEventListener('input',e=>{for(const [key,field] of [['refContribution','contribution'],['refAvoid','avoid']])if(e.target.dataset[key]!==undefined)referenceRecords[Number(e.target.dataset[key])][field]=e.target.value;});
