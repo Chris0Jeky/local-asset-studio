@@ -111,6 +111,8 @@ def endpoint_provider(url: str, label: str = "metadata URL") -> str:
     if host == "huggingface.co":
         if HF_METADATA_PATH.fullmatch(parsed.path) is None:
             raise ValueError("Hugging Face URL is not a supported metadata endpoint")
+        if parsed.query != "blobs=true":
+            raise ValueError("Hugging Face metadata endpoint requires blobs=true only")
         try:
             query = parse_qs(
                 parsed.query,
