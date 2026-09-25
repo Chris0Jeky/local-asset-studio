@@ -35,7 +35,7 @@
     persist(); render();
   }
   function edit(action) { const next = clone(doc); action(next); changed(next); }
-  function replace(next) { safeNumbers(next); document.dispatchEvent(new Event('workflow:replace')); undo = []; redo = []; doc = null; selected = null; camera = null; nameForced = true; changed(next, false); status('Draft loaded. Check connections before exporting. Nothing was queued.'); }
+  function replace(next) { safeNumbers(next); document.dispatchEvent(new Event('workflow:replace')); undo = []; redo = []; doc = null; selected = null; camera = null; nameForced = true; inspectorNode = null; changed(next, false); status('Draft loaded. Check connections before exporting. Nothing was queued.'); }
   function discard() { return !doc || window.confirm('Replace the current draft? Save a document file first to keep it.'); }
   function download(name, value) { const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2) + '\n'], {type: 'application/json'})); const a = el('a', '', {href: url, download: name}); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   function defaultValue(spec) {
@@ -166,13 +166,14 @@
   let inspectorNode = null;
   function typedInspectorField(host) {
     const active = document.activeElement;
-    if (!active?.dataset?.wfField || !host.contains(active) || active.value === active.wfRendered) return null;
+    // A number box holding a half-typed '-' or '1e' reads as '' (badInput); restoring that would blank the field.
+    if (!active?.dataset?.wfField || !host.contains(active) || active.value === active.wfRendered || (active.type === 'number' && active.validity?.badInput)) return null;
     return {node: inspectorNode, key: active.dataset.wfField, value: active.value, start: active.selectionStart, end: active.selectionEnd, direction: active.selectionDirection};
   }
   function restoreInspectorField(host, typed) {
     const input = typed && typed.node === inspectorNode && [...host.querySelectorAll('[data-wf-field]')].find(x => x.dataset.wfField === typed.key);
     if (!input) return;
-    input.value = typed.value; input.focus({preventScroll: true});
+    input.value = typed.value; input.oninput?.(); input.focus({preventScroll: true}); // oninput keeps a paired slider in step
     try { if (typeof typed.start === 'number' && typeof typed.end === 'number') input.setSelectionRange(typed.start, typed.end, typed.direction || 'none'); } catch (_) { /* number inputs have no caret */ }
   }
   function renderInspector() {

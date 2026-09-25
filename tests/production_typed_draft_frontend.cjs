@@ -6,7 +6,9 @@ const unescape=text=>String(text).replace(/&(amp|lt|gt|quot|#39);/g,(_,e)=>({amp
 const document={activeElement:null};
 // A form field as innerHTML would build it: the rendered value, a caret and focus.
 function field(tagName,id,type,value){
-  const node={tagName,id,type,value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',scrollTop:0,
+  // Browsers report a null caret for number inputs and throw on setSelectionRange.
+  const caret=type==='number'?null:value.length;
+  const node={tagName,id,type,value,selectionStart:caret,selectionEnd:caret,selectionDirection:'none',scrollTop:0,validity:{badInput:false},
     focus(){document.activeElement=node;},blur(){if(document.activeElement===node)document.activeElement=null;},
     setSelectionRange(start,end,direction='none'){if(type==='number')throw Error('InvalidStateError');node.selectionStart=start;node.selectionEnd=end;node.selectionDirection=direction;}};
   return node;
@@ -77,13 +79,30 @@ const poll=async plans=>{served=plans;await run('refreshProduction()');};
   await poll([review,{...clock,state:{...clock.state,message:'Stopped, still.'}}]);
   assert.equal($('#extendTimeMinutes').value,'12','A typed number survives a poll');
   assert.equal(document.activeElement,$('#extendTimeMinutes'),'Focus returns to a number field without a caret API');
+  // A half-typed '-' reads as '' with badInput; it must not replace the last real draft with an empty field.
+  const minus=$('#extendTimeMinutes');minus.value='';minus.validity={badInput:true};detail.oninput?.({target:minus});
+  await poll([review,{...clock,state:{...clock.state,message:'Stopped, once more.'}}]);
+  assert.equal($('#extendTimeMinutes').value,'12','A badInput number box never records an empty draft');
+  // studio-workbench.js can move productionId without a re-render: typing still belongs to the plan on screen.
+  run('productionId='+JSON.stringify(review.id));
+  type('extendTimeReason','Finish candidate B now');
+  run('productionId='+JSON.stringify(clock.id));
+  await poll([review,{...clock,state:{...clock.state,message:'Stopped, as before.'}}]);
+  assert.equal($('#extendTimeReason').value,'Finish candidate B now','A draft is keyed by the rendered plan, not productionId');
+  assert.equal($('#extendTimeMinutes').value,'12');
 
   // 5 · Sending the values drops them: the next render shows what the server holds.
   await $('#productionDetail').onclick(click({'data-project-action':{projectAction:'extend-time'}}));
-  assert.deepEqual(JSON.parse(JSON.stringify(requests.at(-1))),{url:'/api/production/'+clock.id+'/extend-time',data:{seconds:720,reason:'Finish candidate B',expected_revision:3}});
+  assert.deepEqual(JSON.parse(JSON.stringify(requests.at(-1))),{url:'/api/production/'+clock.id+'/extend-time',data:{seconds:720,reason:'Finish candidate B now',expected_revision:3}});
   await poll([review,{...clock,state:{...clock.state,time_budget:{...clock.state.time_budget,limit_seconds:1320,revision:4}}}]);
   assert.equal($('#extendTimeReason').value,'','A sent reason is not restored after the save succeeds');
   assert.equal($('#extendTimeMinutes').value,'15','A sent number is not restored after the save succeeds');
+  // Start, stop and resume move the plan on: an unsent time-extension draft from before is dropped.
+  type('extendTimeReason','An old reason');
+  await $('#productionDetail').onclick(click({'data-project-action':{projectAction:'resume'}}));
+  assert.equal(requests.at(-1).url,'/api/production/'+clock.id+'/resume');
+  await poll([review,{...clock,state:{...clock.state,message:'Stopped again.'}}]);
+  assert.equal($('#extendTimeReason').value,'','A successful resume drops the old time-extension draft');
 
   // 6 · Switching plan drops the unsent values of the plan left behind.
   run('productionId='+JSON.stringify(review.id)+';renderProduction();');
@@ -95,14 +114,23 @@ const poll=async plans=>{served=plans;await run('refreshProduction()');};
 
   // 7 · A failed save keeps the note; a successful one drops it.
   type('productionNotes','Needs a cleaner silhouette');
-  const failing=context.post;context.post=async()=>{throw Error('Review revision changed');};
+  const working=context.post;context.post=async()=>{throw Error('Review revision changed');};
   await $('#productionDetail').onclick(click({'data-project-action':{projectAction:'needs_work'}}));
   await poll([{...review,state:{...review.state,message:'Changed elsewhere.'}},clock]);
   assert.equal($('#productionNotes').value,'Needs a cleaner silhouette','A failed save keeps the unsent note');
-  context.post=failing;
+  context.post=working;
   await $('#productionDetail').onclick(click({'data-project-action':{projectAction:'needs_work'}}));
   assert.deepEqual(JSON.parse(JSON.stringify(requests.at(-1))),{url:'/api/production/'+review.id+'/review',data:{asset_id:null,notes:'Needs a cleaner silhouette',reviewer:'local-user'}});
   await poll([{...review,state:{...review.state,review:{notes:'Stored by the server'}}},clock]);
   assert.equal($('#productionNotes').value,'Stored by the server','After a successful save the server copy renders');
+
+  // 8 · Text typed while a save is in flight is newer than what was sent, so it is kept.
+  type('productionNotes','First pass');
+  let release;context.post=(url,data)=>{requests.push({url,data});return new Promise(resolve=>{release=resolve;});};
+  const saving=$('#productionDetail').onclick(click({'data-project-action':{projectAction:'needs_work'}}));
+  type('productionNotes','First pass, and the hands');
+  release({});await saving;context.post=working;
+  assert.equal(requests.at(-1).data.notes,'First pass');
+  assert.equal($('#productionNotes').value,'First pass, and the hands','Text typed during the save survives the refresh after it');
   console.log('Typed review notes and time-extension fields survive polls, Refresh and filters until sent or another plan is opened.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

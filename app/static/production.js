@@ -69,8 +69,10 @@ function renderPlanList(){
 // panel, so every field the user typed in is kept per plan and written back with its focus and caret.
 // They are dropped only when another plan is shown or the action that sends them succeeds.
 let productionDrafts={plan:null,fields:{}},productionDetailPlan=null;
-function keepProductionDraft(el){if(!el?.id||!['TEXTAREA','INPUT'].includes(el.tagName)||['checkbox','radio'].includes(el.type))return;
-  if(productionDrafts.plan!==productionId)productionDrafts={plan:productionId,fields:{}};productionDrafts.fields[el.id]=el.value;}
+// Drafts belong to the plan actually on screen: productionId can move without a re-render (studio-workbench.js).
+// A number box holding a half-typed '-' or '1e' reads as '' (badInput); recording that would blank the field.
+function keepProductionDraft(el){if(!el?.id||!productionDetailPlan||!['TEXTAREA','INPUT'].includes(el.tagName)||['checkbox','radio'].includes(el.type)||(el.type==='number'&&el.validity?.badInput))return;
+  if(productionDrafts.plan!==productionDetailPlan)productionDrafts={plan:productionDetailPlan,fields:{}};productionDrafts.fields[el.id]=el.value;}
 // `sent` maps field ids to the values an action sent; text typed while it was in flight is kept.
 function dropProductionDrafts(sent){if(!sent){productionDrafts={plan:null,fields:{}};return;}for(const [id,value] of Object.entries(sent))if(productionDrafts.fields[id]===value)delete productionDrafts.fields[id];}
 function writeProductionDetail(plan,html){
@@ -306,7 +308,8 @@ $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[d
     if(!Number.isInteger(seconds)||seconds<60||!reason)throw Error('Give at least one whole minute of additional time and a reason.');
     await post('/api/production/'+p.id+'/extend-time',{seconds,reason,expected_revision:p.state.time_budget.revision});dropProductionDrafts({extendTimeMinutes:minutes,extendTimeReason:typed});
   }
-  else if(['start','stop','resume'].includes(action))await post('/api/production/'+p.id+'/'+action,{});
+  // A plan that starts, stops or resumes moves on; a time-extension draft from before must not come back later.
+  else if(['start','stop','resume'].includes(action)){await post('/api/production/'+p.id+'/'+action,{});dropProductionDrafts();}
   if(action||choice)await refreshProduction(true);
 }catch(err){productionMessage(err.message,true);}finally{if(coordinatorAction){productionActionPending=false;actionButton.disabled=false;}}};
 function renderNativeAssets(){

@@ -4,9 +4,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const document={activeElement:null,listeners:{}};
 class Element{
   constructor(tag){this.tagName=String(tag).toUpperCase();this.children=[];this.attributes={};this.style={};this.dataset={};this.parent=null;this._value='';this.textContent='';
-    this.selectionStart=0;this.selectionEnd=0;this.selectionDirection='none';this.classList={add(){},remove(){},toggle(){}};}
+    this.selectionStart=0;this.selectionEnd=0;this.selectionDirection='none';this.validity={badInput:false};this.classList={add(){},remove(){},toggle(){}};}
   get value(){return this._value;}
-  set value(v){this._value=String(v);this.selectionStart=this.selectionEnd=this._value.length;}
+  // Browsers report a null caret for number and range inputs.
+  set value(v){this._value=String(v);this.selectionStart=this.selectionEnd=['number','range'].includes(this.type)?null:this._value.length;}
   get valueAsNumber(){return this._value===''?NaN:Number(this._value);}
   get isConnected(){let node=this;while(node.parent)node=node.parent;return node.root===true;}
   append(...nodes){for(const n of nodes){if(n&&typeof n==='object'){n.parent=this;this.children.push(n);}}}
@@ -92,6 +93,12 @@ const settle=()=>new Promise(r=>setTimeout(r,0));
   await $('#loadNodes').onclick();await settle();
   assert.equal(field('steps').value,'4','A half-typed number survives too');
   assert.equal(document.activeElement,field('steps'));
+  assert.equal(field('steps slider').value,'4','A restored number moves its slider to match');
+  // A half-typed '-' reads as '' with badInput: it is not restored as an empty field.
+  const minus=field('steps');minus.focus();minus.value='';minus.validity={badInput:true};
+  await $('#loadNodes').onclick();await settle();
+  assert.equal(field('steps').value,'20','A badInput number box is not blanked by a re-render');
+  field('steps').focus();field('steps').value='4';
   // Committing a value is not a draft: the re-render it causes shows the document, and an invalid entry still resets.
   field('steps').onchange();assert.equal(W.snapshot().nodes['1'].inputs.steps,4);assert.equal(field('steps').value,'4');
   const bad=field('steps');bad.value='2.5';bad.onchange();
@@ -100,5 +107,9 @@ const settle=()=>new Promise(r=>setTimeout(r,0));
   const two=W.snapshot();two.nodes['2']={class_type:'Sampler',inputs:{steps:9,cfg:7,text:'second'}};W.change(two);
   field('text').focus();field('text').value='unsent for node 1';
   W.inspect('2');assert.equal(field('text').value,'second','A draft is never written into another node');
+  // A document loaded while typing (Load recipe, /presets in flight) replaces node "1"; the draft is not carried into it.
+  W.inspect('1');field('text').focus();field('text').value='typed into the old node 1';
+  W.load(draft('Freshly loaded'));
+  assert.equal(field('text').value,'a lantern','A loaded document never inherits a draft typed into the same node id');
   console.log('Workflow Studio keeps typed names and inspector values through re-renders; number boxes and sliders stay in sync.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
