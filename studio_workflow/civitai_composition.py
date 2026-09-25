@@ -360,6 +360,26 @@ def semantic_observation(value: dict[str, Any]) -> bytes:
     return canonical({key: item for key, item in value.items() if key != 'receipt_sha256s'})
 
 
+def pagination_query_valid(receipt: dict[str, Any], index: int,
+                           diagnostics: list[dict[str, Any]]) -> bool:
+    """Unsupported pagination is retained evidence, never cursor-chain authority."""
+    query = receipt['query']; valid = True
+    aliases = sorted(key for key in query if key.casefold() in PAGINATION_QUERY
+                     and key not in PAGINATION_QUERY)
+    if aliases:
+        valid = False
+        diagnostics.append({'code': 'pagination_query_noncanonical',
+                            'message': 'Noncanonical pagination keys cannot establish complete coverage.',
+                            'page': index, 'host': receipt['host'], 'keys': aliases})
+    cursor = query.get('cursor')
+    if cursor not in (None, '') and not token(cursor, 1000):
+        valid = False
+        diagnostics.append({'code': 'invalid_pagination_query',
+                            'message': 'Unsupported query cursor retained without cursor-chain authority.',
+                            'page': index, 'host': receipt['host']})
+    return valid
+
+
 def cursor_chain_coverage(normalized: list[tuple[int, dict[str, Any], dict[str, Any], dict[str, Any]]],
                           diagnostics: list[dict[str, Any]]) -> bool:
     complete = True
@@ -432,6 +452,7 @@ def cursor_chain_coverage(normalized: list[tuple[int, dict[str, Any], dict[str, 
 def collect_observations(pages: list[Any], version_id: int, diagnostics: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], bool]:
     need(len(pages) <= MAX_PAGES, 'Use at most 32 retained image pages')
     receipts, normalized, seen, total, coverage = [], [], {}, 0, bool(pages)
+    chain_rows = []
     for index, raw_page in enumerate(pages):
         receipt, payload = snapshot(raw_page); receipts.append(receipt)
         need(receipt['route'] == '/api/v1/images', 'Image receipt must use /api/v1/images')
@@ -440,12 +461,13 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
         with_meta = receipt['query'].get('withMeta')
         need(with_meta is True or isinstance(with_meta, str) and with_meta.casefold() == 'true',
              'Image receipt must request metadata explicitly')
-        cursor = receipt['query'].get('cursor')
-        if cursor not in (None, ''): need(token(cursor, 1000), 'Image cursor must be a bounded string')
-        normalized.append((index, receipt, payload, source_scope(receipt)))
-    coverage = cursor_chain_coverage(normalized, diagnostics) and coverage
+        row = (index, receipt, payload, source_scope(receipt))
+        normalized.append(row)
+        if pagination_query_valid(receipt, index, diagnostics): chain_rows.append(row)
+        else: coverage = False
+    coverage = cursor_chain_coverage(chain_rows, diagnostics) and coverage
     available_cursors: dict[str, set[str]] = {}
-    for _, receipt, _, scope in normalized:
+    for _, receipt, _, scope in chain_rows:
         cursor = receipt['query'].get('cursor')
         if receipt['outcome'] == 'ok' and cursor not in (None, ''):
             available_cursors.setdefault(scope['scope_sha256'], set()).add(cursor)
@@ -469,8 +491,12 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
             diagnostics.append({'code': 'pagination_metadata_missing',
                                 'message': 'Image page omitted pagination metadata; coverage is unknown.',
                                 'page': index, 'host': receipt['host']})
+        elif not isinstance(metadata, dict):
+            coverage = False
+            diagnostics.append({'code': 'pagination_metadata_invalid',
+                                'message': 'Image pagination metadata is not an object; coverage is unknown.',
+                                'page': index, 'host': receipt['host']})
         else:
-            need(isinstance(metadata, dict), 'Civitai image page metadata must be an object')
             next_cursor = metadata.get('nextCursor')
             if next_cursor not in (None, ''):
                 if not token(next_cursor, 1000):
@@ -484,8 +510,20 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
                                         'message': 'A retained image page advertises a cursor that was not retained.',
                                         'page': index, 'host': receipt['host'], 'next_cursor': next_cursor})
             current_page, total_pages = metadata.get('currentPage'), metadata.get('totalPages')
-            more_pages = (type(current_page) is int and type(total_pages) is int
-                          and current_page < total_pages)
+            counters_present = 'currentPage' in metadata or 'totalPages' in metadata
+            counters_valid = (type(current_page) is int and type(total_pages) is int
+                              and 1 <= current_page <= total_pages)
+            if counters_present and not counters_valid:
+                coverage = False
+                diagnostics.append({'code': 'pagination_counters_invalid',
+                                    'message': 'Pagination counters must be consistent positive integers; coverage is unknown.',
+                                    'page': index, 'host': receipt['host']})
+            elif counters_valid and current_page > 1 and receipt['query'].get('cursor') in (None, ''):
+                coverage = False
+                diagnostics.append({'code': 'pagination_page_unverified',
+                                    'message': 'A later page has no incoming cursor; root coverage is unknown.',
+                                    'page': index, 'host': receipt['host']})
+            more_pages = counters_valid and current_page < total_pages
             if next_cursor in (None, '') and (metadata.get('nextPage') not in (None, '') or more_pages):
                 coverage = False
                 diagnostics.append({'code': 'pagination_incomplete',
