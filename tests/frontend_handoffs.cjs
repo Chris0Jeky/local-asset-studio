@@ -671,6 +671,89 @@ async function seedAndPinChangesAreAnnounced() {
   assert.deepEqual(JSON.parse(s.run('JSON.stringify(pinned.map(p=>p.job))')), ['b', 'c']);
 }
 
+// Models & setup: the status filter next to #modelSearch narrows the installed
+// weights (and the curated cards) to what needs action, combines with the text
+// search, and restores the stored choice. Without it every row renders always,
+// so the action-needed files stay buried among verified ones.
+async function modelStatusFilter() {
+  const {element, context, run} = sandbox({}, {});
+  context.localStorage = (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map());
+  assert.equal(run('typeof restoreModelStatus'), 'function', 'Models list has a status filter to restore; without it every weight renders with no way to surface what needs action');
+  const assets = [
+    {id:'a-verified', name:'Verified Model', family:'Test', bytes:8, file:'checkpoints/verified.safetensors', present:true, verified:true, installable:true, download:{status:'installed'}},
+    {id:'a-unverified', name:'Unverified Model', family:'Test', bytes:8, file:'checkpoints/unverified.safetensors', present:true, verified:false, installable:true, download:{}},
+    {id:'a-missing', name:'Missing Model', family:'Test', bytes:8, file:'checkpoints/missing.safetensors', present:false, verified:false, installable:true, download:{}},
+    {id:'a-failed', name:'Failed Model', family:'Test', bytes:8, file:'checkpoints/failed.safetensors', present:false, verified:false, installable:true, download:{status:'failed', message:'boom'}},
+    {id:'a-pin', name:'Pin Model', family:'Test', bytes:8, file:'adapters/pin.gguf', present:false, verified:false, installable:false, install_note:'Copy in by hand'},
+  ];
+  const inventory = [
+    {file:'checkpoints/verified.safetensors', bytes:8},
+    {file:'checkpoints/unverified.safetensors', bytes:8},
+    {file:'loras/extra.safetensors', bytes:8},
+  ];
+  run(`library=${JSON.stringify({assets, inventory, storage:{}, folders:[], collections:[]})};`);
+  run('restoreModelStatus()');
+  assert.equal(element('#modelStatus').value, 'all', 'Status filter defaults to Everything');
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /\/verified\.safetensors/);
+  assert.match(element('#inventory').innerHTML, /unverified\.safetensors/);
+  assert.match(element('#inventory').innerHTML, /extra\.safetensors/);
+  assert.match(element('#modelCount').textContent, /3 of 3 shown/);
+
+  element('#modelStatus').value = 'action';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /unverified\.safetensors/, 'Needs action keeps the present-but-unverified file buried among verified rows');
+  assert.doesNotMatch(element('#inventory').innerHTML, /\/verified\.safetensors/, 'Needs action hides SHA-256 verified files');
+  assert.doesNotMatch(element('#inventory').innerHTML, /extra\.safetensors/, 'Needs action hides installed files with no curated action');
+  assert.match(element('#modelCount').textContent, /1 of 3 need action/);
+
+  element('#modelSearch').value = 'checkpoints';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /unverified\.safetensors/);
+  assert.doesNotMatch(element('#inventory').innerHTML, /\/verified\.safetensors/);
+  element('#modelSearch').value = 'extra';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /No matching installed weights/, 'Text search narrows within the status filter instead of replacing it');
+  element('#modelSearch').value = '';
+
+  element('#modelStatus').value = 'installed';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /\/verified\.safetensors/);
+  assert.match(element('#inventory').innerHTML, /extra\.safetensors/);
+  assert.doesNotMatch(element('#inventory').innerHTML, /unverified\.safetensors/);
+  assert.match(element('#modelCount').textContent, /2 of 3 installed/);
+
+  const baseFetch = context.fetch;
+  const fixture = {storage:{free_bytes:5000000000, total_bytes:200000000000, reserve_bytes:20000000000}, model_root:'C:/models', assets, folders:[], collections:[], inventory};
+  context.fetch = async (url, options = {}) => url === '/api/library' ? {ok:true, json: async () => fixture} : baseFetch(url, options);
+  element('#modelStatus').value = 'action';
+  await run('refreshLibrary()');
+  const cards = element('#modelCards').innerHTML;
+  for (const name of ['Unverified Model', 'Missing Model', 'Failed Model', 'Pin Model']) assert.match(cards, new RegExp(name), 'Needs action keeps the card for ' + name);
+  assert.doesNotMatch(cards, /Verified Model/, 'Needs action hides the verified card');
+  assert.match(cards, /1 curated model is hidden by the/, 'A filtered card list says how many cards the filter hides');
+  element('#modelStatus').value = 'installed';
+  await run('refreshLibrary()');
+  for (const name of ['Missing Model', 'Failed Model', 'Pin Model']) assert.doesNotMatch(element('#modelCards').innerHTML, new RegExp(name), 'Installed hides ' + name);
+  assert.match(element('#modelCards').innerHTML, /are hidden by the/, 'Installed says the action cards are hidden, not absent');
+  element('#modelStatus').value = 'all';
+  await run('refreshLibrary()');
+  assert.match(element('#modelCards').innerHTML, /Verified Model/, 'Everything restores the full card list');
+
+  assert.equal(typeof element('#modelStatus').onchange, 'function', 'Changing the status filter persists the choice for the next visit');
+  element('#modelStatus').value = 'installed';
+  await element('#modelStatus').onchange();
+  assert.equal(context.localStorage.getItem('studio.models.status'), 'installed', 'The choice is stored under studio.models.status');
+  element('#modelStatus').value = 'all';
+  run('restoreModelStatus()');
+  assert.equal(element('#modelStatus').value, 'installed', 'The stored choice is restored on load');
+  context.localStorage.setItem('studio.models.status', 'bogus');
+  run('restoreModelStatus()');
+  assert.equal(element('#modelStatus').value, 'all', 'An unknown stored choice falls back to Everything');
+  { context.fetch = baseFetch; // Teardown scope: restores the shared fetch hook; closed below with the function.
+}
+}
+
 (async () => {
   await generateShortcutRoutesThroughTheButton();
   await seedAndPinChangesAreAnnounced();
@@ -700,5 +783,50 @@ async function seedAndPinChangesAreAnnounced() {
   await i2vDiagnosticEligibilityAndRetry();
   await unresolvedInputLineageCannotBeSaved();
   await avoidWordingIsVisibleWhenTheRecipeBindsIt();
+  await modelStatusFilter();
+  await windowsInventoryStatusMatchesCaseAndSeparators();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
+
+// #986: on a Windows library root an inventory row spells the same file as its
+// curated asset despite separators and case; the present-but-unverified row
+// belongs under Needs action, not Installed. On a case-sensitive root the two
+// spellings stay distinct files. (Hoisted: available to the runner above.)
+async function windowsInventoryStatusMatchesCaseAndSeparators() {
+  const {element, run} = sandbox({}, {});
+  const assets = [
+    {id:'a-win', name:'Windows Model', family:'Test', bytes:8, file:'checkpoints/foo.safetensors', present:true, verified:false, installable:true, download:{}},
+  ];
+  const inventory = [
+    {file:'Checkpoints\\Foo.safetensors', bytes:8},
+    {file:'loras/extra.safetensors', bytes:8},
+  ];
+  element('#modelSearch').value = '';
+  run(`library=${JSON.stringify({assets, inventory, storage:{}, folders:[], collections:[], model_root:'C:/models'})};`);
+  element('#modelStatus').value = 'action';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'Windows root keeps the present-but-unverified row under Needs action despite separator and case mismatch');
+  assert.doesNotMatch(element('#inventory').innerHTML, /extra\.safetensors/, 'Needs action still hides the truly uncurated file');
+  element('#modelStatus').value = 'installed';
+  run('renderInventory()');
+  assert.doesNotMatch(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'The same row is absent from Installed on a Windows root');
+  assert.match(element('#inventory').innerHTML, /extra\.safetensors/, 'Installed still lists the truly uncurated file');
+  run(`library=${JSON.stringify({assets, inventory, storage:{}, folders:[], collections:[], model_root:'//server/share/models'})};`);
+  element('#modelStatus').value = 'action';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'Forward-slash UNC roots also use Windows path matching');
+  // A case-sensitive root keeps the two spellings distinct: no canonical match,
+  // so the row reads as uncurated (Installed) rather than needing action.
+  run(`library=${JSON.stringify({assets, inventory, storage:{}, folders:[], collections:[], model_root:'/models'})};`);
+  element('#modelStatus').value = 'action';
+  run('renderInventory()');
+  assert.doesNotMatch(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'A case-sensitive root does not fold case-distinct spellings into Needs action');
+  element('#modelStatus').value = 'installed';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'A case-sensitive root still lists the case-distinct file as installed');
+  assert.equal(
+    run(`inventoryNeedsAction(${JSON.stringify({file:'checkpoints\\foo.safetensors'})},${JSON.stringify([{file:'checkpoints/foo.safetensors', verified:false}])},'/models')`),
+    false,
+    'A POSIX backslash remains a literal filename character rather than a path separator'
+  );
+}

@@ -70,7 +70,21 @@ MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt",
 HOST_COMMIT_MINIMUM = 32 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
-class StudioError(ValueError): pass
+class StudioError(ValueError):
+    code = None
+
+    def __init__(self, message, *, code=None, **details):
+        super().__init__(message)
+        if code is not None:
+            self.code = code
+        self.details = details
+
+    def response(self):
+        body = {"error": str(self)}
+        if getattr(self, "code", None):
+            body["code"] = self.code
+            body.update(self.details)
+        return body
 
 class QueueWaitUnavailable(StudioError): pass
 
@@ -1004,7 +1018,12 @@ class Studio:
         ids = payload.get("ids")
         if not isinstance(ids, list) or not 1 <= len(ids) <= 200: raise StudioError("Select 1–200 assets to export")
         assets = [self.assets.get(i) for i in dict.fromkeys(ids)]
-        if any(a["trashed_at"] for a in assets): raise StudioError("Restore trashed assets before exporting")
+        trashed = [a["id"] for a in assets if a["trashed_at"]]
+        if trashed:
+            rest = len(assets) - len(trashed)
+            message = ((f"All {len(trashed)} selected assets are in Trash. Restore them to export." if len(trashed) != 1 else "The selected asset is in Trash. Restore it to export.") if not rest else
+                       f"{len(trashed)} selected asset{'s are' if len(trashed) != 1 else ' is'} in Trash. Restore {'them' if len(trashed) != 1 else 'it'}, or export the other {rest}.")
+            raise StudioError(message, code="export_has_trashed", trashed_ids=trashed[:200])
         total = sum(a["bytes"] for a in assets)
         if shutil.disk_usage(self.experiments).free - total < 2 * 1024**3: raise StudioError("Export needs more free disk space")
         directory = self.assets.root / "exports"; directory.mkdir(exist_ok=True)
@@ -2107,7 +2126,13 @@ class Handler(BaseHTTPRequestHandler):
                 file = inside(self.studio.root / "examples", self.studio.root / "examples" / path[len("/api/examples/"):])
                 if file.suffix.lower() not in (".png", ".jpg", ".webp", ".gif", ".glb") or not file.is_file(): return self._json(404, {"error": "Example not found"})
                 data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
-            if path == "/api/jobs": return self._json(200, [self.studio.public(x) for x in sorted(self.studio.jobs.values(), key=lambda j:j["created_at"], reverse=True)])
+            if path == "/api/jobs":
+                payload = [self.studio.public(x) for x in sorted(self.studio.jobs.values(), key=lambda j:j["created_at"], reverse=True)]
+                raw = json.dumps(payload).encode()
+                etag = '"' + hashlib.sha256(raw).hexdigest() + '"'
+                if any(tag.strip().removeprefix("W/") in (etag, "*") for tag in self.headers.get("If-None-Match", "").split(",")):
+                    self.send_response(304); self.send_header("ETag", etag); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", "0"); self.end_headers(); return
+                self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("ETag", etag); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw); return
             if path.startswith("/api/jobs/") and path.endswith("/recipe"):
                 job = self.studio.jobs.get(path.split("/")[3]); return self._json(200, self.studio.export_recipe(job)) if job else self._json(404, {"error":"Unknown job"})
             if path.startswith("/api/jobs/") and path.endswith("/i2v-diagnostic"):
@@ -2217,7 +2242,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             return self._json(404, {"error":"Not found"})
         except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
-        except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})
+        except (StudioError, ValueError, json.JSONDecodeError) as exc:
+            if isinstance(exc, StudioError) and getattr(exc, "code", None): self._json(400, exc.response())
+            else: self._json(400, {"error": str(exc)})
         except OSError as exc: self._json(500, {"error": "Local operation failed: " + str(exc)[:200]})
 
 def create_server(repo_root, host=HOST, port=PORT, http_server=ThreadingHTTPServer, studio_factory=Studio):
