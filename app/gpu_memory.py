@@ -157,6 +157,23 @@ def read():
     return {'adapters': adapters, 'adapter_totals': totals, 'unknown_reason': None, 'adapter_unknown_reason': None}
 
 
+def _select_metered_adapter(reading, adapters):
+    """Select the busiest adapter without trusting an unmatched active process counter."""
+    if not adapters: return None
+    if not isinstance(reading, dict) or 'adapter_totals' not in reading:
+        return select_adapter(adapters)
+    candidates = {}
+    unmatched_active = False
+    for name, processes in adapters.items():
+        total = _adapter_total(reading, name)
+        if total is not None:
+            candidates[name] = total
+        elif any(process['dedicated_bytes'] > 0 for process in processes.values()):
+            # A missing dGPU counter must not redirect sizing to a measured but quieter iGPU.
+            unmatched_active = True
+    return max(candidates, key=candidates.get) if candidates and not unmatched_active else None
+
+
 def launch_reserve_gib(reading=None, exclude_pids=()):
     """`--reserve-vram` for a ComfyUI about to start: what every other process holds on the GPU plus ComfyUI's margin.
 
@@ -165,19 +182,7 @@ def launch_reserve_gib(reading=None, exclude_pids=()):
     """
     reading = read() if reading is None else reading
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
-    if adapters and isinstance(reading, dict) and 'adapter_totals' in reading:
-        candidates = {}
-        unmatched_active = False
-        for name, processes in adapters.items():
-            total = _adapter_total(reading, name)
-            if total is not None:
-                candidates[name] = total
-            elif any(process['dedicated_bytes'] > 0 for process in processes.values()):
-                # A missing dGPU counter must not redirect launch sizing to a measured but quieter iGPU.
-                unmatched_active = True
-        adapter = max(candidates, key=candidates.get) if candidates and not unmatched_active else None
-    else:
-        adapter = select_adapter(adapters) if adapters else None
+    adapter = _select_metered_adapter(reading, adapters)
     if adapter is None: return {'reserve_gib': FALLBACK_GIB, 'others_bytes': None, 'adapter': None, 'adapter_total_bytes': None,
                                 'excluded_pids': [], 'basis': 'fallback', 'unknown_reason':
                                 (reading or {}).get('unknown_reason') or (reading or {}).get('adapter_unknown_reason') or 'No matching GPU adapter memory reading'}
@@ -200,8 +205,14 @@ def others_bytes(reading, pid):
     zero the installed VRAM guard's perceived free memory; without a matching figure a new reading is unknown.
     """
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
-    adapter = select_adapter(adapters, pid) if adapters else None
-    if adapter is None or pid not in adapters[adapter]: return None
+    owned = [name for name, processes in (adapters or {}).items() if pid in processes]
+    if owned:
+        adapter = max(owned, key=lambda name: (adapters[name][pid]['dedicated_bytes'], adapters[name][pid].get('shared_bytes', 0)))
+    else:
+        # PDH can publish other processes before this ComfyUI PID. Until its entry appears, all selected
+        # adapter usage is external; the guard must keep accounting for it rather than silently using zero.
+        adapter = _select_metered_adapter(reading, adapters)
+    if adapter is None: return None
     total = _adapter_total(reading, adapter)
     if isinstance(reading, dict) and 'adapter_totals' in reading and total is None: return None
     values = {other: p['dedicated_bytes'] for other, p in adapters[adapter].items()}

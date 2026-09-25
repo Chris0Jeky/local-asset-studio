@@ -106,6 +106,10 @@ class GpuMemoryTests(unittest.TestCase):
                                      {DGPU_ADAPTER: 4 * GIB})
         self.assertIsNone(gpu_memory.others_bytes(sample, 40))
 
+    def test_others_still_count_before_comfy_process_counter_appears(self):
+        sample = reading_with_totals({DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: 3 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 2 * GIB)
+
     def test_reconciliation_applies_per_adapter(self):
         sample = reading_with_totals({DGPU.format(40): 2 * GIB, DGPU.format(2304): 1 * GIB,
                                       IGPU.format(11): DWM_ANOMALY, IGPU.format(12): 100 * MIB},
