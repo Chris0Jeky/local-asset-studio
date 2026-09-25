@@ -39,6 +39,7 @@ import host_memory
 import gpu_memory
 import wan_capacity
 from runtime_recovery import RuntimeRecovery
+from gpu_lease import GpuLease, GpuLeaseError
 import prompting
 import submission_evidence
 import observation_state
@@ -150,6 +151,8 @@ class Studio:
         self.production = Production(self)
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
+        # Before the worker and the recovery monitor start: both consult a lease that may have survived a Studio restart.
+        self.gpu_lease = GpuLease(self)
         from studio_prompt.reference_jobs import ReferenceJobs
         self.reference_jobs = ReferenceJobs(self)
         from studio_prompt.projects import PromptProjects
@@ -1498,6 +1501,10 @@ class Studio:
                 "note": "Static dependency inspection only. No graph was run or code installed. Bypassed nodes are included; filenames selected dynamically may be absent." if available else "ComfyUI is offline: missing node status is unknown. Model filenames were inspected locally; nothing was run."}
 
     def _wait_for_queue(self, base_url=None):
+        # The single pre-submit gate for every generation path: a job that raced a GPU lease is never posted.
+        lease = getattr(self, "gpu_lease", None)
+        refusal = lease.refusal() if lease else None
+        if refusal: raise QueueWaitUnavailable(refusal)
         deadline = time.monotonic() + PRE_SUBMIT_QUEUE_WAIT_SECONDS
         while True:
             remaining = deadline - time.monotonic()
@@ -1949,6 +1956,10 @@ class Handler(BaseHTTPRequestHandler):
         origin = self.headers.get("Origin")
         parsed = urlparse(origin or "")
         return parsed.scheme == "http" and parsed.netloc in ("127.0.0.1:8191", "localhost:8191") and not parsed.username and not parsed.password
+    def _require_gpu(self):
+        """New generation work is refused (409 gpu_leased) while another local GPU tenant holds the lease."""
+        lease = getattr(self.studio, "gpu_lease", None)
+        if lease: lease.require_available()
     def _content_length(self, limit):
         try: size = int(self.headers.get("Content-Length", ""))
         except ValueError: raise StudioError("Valid Content-Length required")
@@ -2029,7 +2040,10 @@ class Handler(BaseHTTPRequestHandler):
             path = urlparse(self.path).path
             if path == "/api/identity": return self._json(200, self.studio.identity())
             if path == '/api/backends':
-                result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
+                result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();lease=getattr(self.studio,'gpu_lease',None)
+                if lease: result['gpu_lease']=lease.snapshot()
+                return self._json(200,result)
+            if path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.snapshot())
             if path == "/api/workspace": return self._json(200, Studio.workspace_snapshot(self.studio))
             if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope()))
@@ -2114,14 +2128,18 @@ class Handler(BaseHTTPRequestHandler):
             file = inside(Path(__file__).parent / "static", Path(__file__).parent / "static" / path.lstrip("/"))
             if not file.is_file() or file.suffix not in (".html", ".js", ".css"): return self._json(404, {"error":"Not found"})
             data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
-        except WorkspaceError as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (URLError, HTTPError, OSError) as exc: self._json(502, {"error": "ComfyUI image is unavailable"})
     def do_POST(self):
         if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
         try:
             if self.path == "/api/estimate": return self._json(200, self.studio.estimate(self._body_json()))
-            if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
+            if self.path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.acquire(self._body_json()))
+            if self.path == '/api/gpu-lease/release': return self._json(200, self.studio.gpu_lease.release(self._body_json()))
+            if self.path == "/api/jobs":
+                payload = self._body_json(); self._require_gpu()
+                return self._json(201, self.studio.create_job(payload))
             if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_json().get('id')))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
@@ -2141,6 +2159,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/experiments/plan': return self._json(200, self.studio.production.plan(self._body_json()))
             if self.path.startswith('/api/production/'):
                 parts=self.path.split('/');payload=self._body_json();identifier=parts[3]
+                if parts[-1] in ('start','resume'):self._require_gpu()
                 if parts[-1]=='start':return self._json(202,self.studio.production.start(identifier))
                 if parts[-1]=='stop':return self._json(200,self.studio.production.stop(identifier))
                 if parts[-1]=='resume':return self._json(202,self.studio.production.resume(identifier))
@@ -2189,7 +2208,7 @@ class Handler(BaseHTTPRequestHandler):
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             return self._json(404, {"error":"Not found"})
-        except WorkspaceError as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})
         except OSError as exc: self._json(500, {"error": "Local operation failed: " + str(exc)[:200]})
 

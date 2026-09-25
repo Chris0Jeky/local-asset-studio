@@ -93,6 +93,13 @@ class RuntimeRecovery:
                 with self.lock: self._record("blocked", "Recovery monitor observation failed: " + str(exc)[:200])
             time.sleep(self.interval)
 
+    def _leased(self):
+        lease = getattr(self.studio, "gpu_lease", None)
+        record = lease.active() if lease else None
+        if not record: return None
+        return (f"ComfyUI is paused: the GPU is leased to {record['holder']} until "
+                f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record['expires_at']))}. Recovery resumes after release or expiry.")
+
     def _fresh_work(self):
         if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
         # Retained uncertain records intentionally do not suppress recovery of a truly dead runtime.
@@ -165,6 +172,12 @@ class RuntimeRecovery:
             except (OSError, ValueError) as exc:
                 error = exc
 
+            # A GPU lease (app/gpu_lease.py) paused this backend on purpose: never relaunch it under the holder.
+            leased = self._leased()
+            if leased:
+                self._record("leased", leased)
+                return self.snapshot()
+
             # A listener that cannot be proven to be this exact launcher is a hard stop.
             try:
                 listener = manager.process(profile)
@@ -204,7 +217,7 @@ class RuntimeRecovery:
 
             # Recheck every launch predicate while holding Studio's existing interlock.
             with self.studio.lock:
-                if manager.active != profile['id'] or manager.busy or self._fresh_work() or manager.process(profile) or manager.configured_processes(profile):
+                if manager.active != profile['id'] or manager.busy or self._leased() or self._fresh_work() or manager.process(profile) or manager.configured_processes(profile):
                     self._record("reconnecting", "Recovery launch conditions changed; no process was started.")
                     return self.snapshot()
                 pid = manager.launch_recovery(profile)
