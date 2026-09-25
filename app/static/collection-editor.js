@@ -5,6 +5,16 @@ function collectionValues(){return {name:$('#collectionName').value,description:
 function collectionSameValues(a,b){return a.name===b.name&&a.description===b.description;}
 function collectionDirty(s=collectionSession){return !!s && !collectionSameValues(collectionValues(),s.baseline);}
 function collectionStatus(text,error=false){const el=$('#collectionStatus');el.textContent=text;el.classList.toggle('error',error);}
+const COLLECTION_NAME_LIMIT=100,COLLECTION_DESC_LIMIT=1000;
+// Live guidance only: the server stays the authority on these limits.
+function collectionRefreshValidation(){
+  const {name,description}=collectionValues(),nameEmpty=!name.trim(),nameOver=name.length>COLLECTION_NAME_LIMIT,descOver=description.length>COLLECTION_DESC_LIMIT;
+  $('#collectionNameCount').textContent=name.length+' / '+COLLECTION_NAME_LIMIT;$('#collectionDescriptionCount').textContent=description.length+' / '+COLLECTION_DESC_LIMIT;
+  for(const [id,bad] of [['#collectionName',nameEmpty||nameOver],['#collectionDescription',descOver]])bad?$(id).setAttribute('aria-invalid','true'):$(id).removeAttribute('aria-invalid');
+  $('#collectionNameMessage').textContent=nameOver?'Name is '+name.length+' characters; the limit is '+COLLECTION_NAME_LIMIT+'.':nameEmpty?'Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters).':'';
+  $('#collectionDescriptionMessage').textContent=descOver?'Description is '+description.length+' characters; the limit is '+COLLECTION_DESC_LIMIT+'.':'';
+  return nameEmpty||nameOver?'#collectionName':descOver?'#collectionDescription':null;
+}
 function collectionCurrent(s){return collectionSession===s && s.epoch===collectionEpoch && $('#collectionDialog').open;}
 function collectionScope(s){return /^[0-9a-f]{32}$/.test(s.scope||'')&&assetState.workspace_id===s.scope;}
 function collectionDraft(s,value=collectionValues()){return {id:s.id,revision:s.id?s.revision:null,baseline:{...s.baseline},values:{...value},updated_at:Date.now()};}
@@ -68,7 +78,7 @@ function openCollection(id=null){
   $('#collectionDialogTitle').textContent=id?'Edit collection':'New collection';
   $('#collectionName').value=s.baseline.name;$('#collectionDescription').value=s.baseline.description;
   collectionStatus(failure?'Local recovery is unavailable: '+failure.message+' No collection write can be sent. Your input will remain visible.':recovery?'A local '+(s.pending?'unconfirmed command and draft':'draft')+' is retained in this tab for this Workspace. Restore it explicitly, or discard only the local evidence.':'Collections organize existing assets. Saving does not move files or add the current selection.',!!failure);
-  collectionCompare(s);collectionRecoveryList(s);collectionControls();
+  collectionCompare(s);collectionRecoveryList(s);collectionControls();collectionRefreshValidation();
   if(!$('#collectionDialog').open)$('#collectionDialog').showModal();$(s.restoreRequired?'#restoreCollectionDraft':'#collectionName').focus();return true;
 }
 function restoreCollectionDraft(){
@@ -81,7 +91,7 @@ function restoreCollectionDraft(){
     collectionCompare(s,s.id?assetState.collections.find(c=>c.id===s.id)??null:null);
     collectionStatus(s.pending?'Unconfirmed command restored. Inspect status or explicitly retry its exact bytes; newer typing cannot change that command.':s.stale?'Local draft restored against a changed or deleted saved collection. Both viewpoints are shown below; no rebase or write was performed.':'Local draft restored. It has not been submitted.');
   }catch(e){s.storageError=true;collectionStatus('Local recovery could not be restored: '+e.message,true);}
-  collectionControls();if(!s.storageError&&!s.restoreRequired)$('#collectionName').focus();
+  collectionControls();collectionRefreshValidation();if(!s.storageError&&!s.restoreRequired)$('#collectionName').focus();
 }
 function discardCollectionDraft(){
   const s=collectionSession;if(!s||!collectionCurrent(s)||s.busy||!collectionScope(s))return;
@@ -135,7 +145,7 @@ async function collectionRequest(s,pending,inspect=false){
       assetMessage('Collection removed. Its original assets and recipes remain in the library.');
     }else{
       s.id=result.id;s.revision=result.revision;collectionEditing=result.id;s.baseline={name:result.name,description:result.description};
-      if(unchanged){$('#collectionName').value=result.name;$('#collectionDescription').value=result.description;}
+      if(unchanged){$('#collectionName').value=result.name;$('#collectionDescription').value=result.description;collectionRefreshValidation();}
       $('#collectionDialogTitle').textContent='Edit collection';
       const current=reply.current;
       collectionCompare(s,current&&current.id===s.id&&Number.isSafeInteger(current.revision)&&typeof current.name==='string'&&typeof current.description==='string'?current:null);
@@ -161,7 +171,7 @@ async function saveCollectionChange(action){
   if(!collectionScope(s)){collectionStatus('The Workspace changed or its identity is unavailable. Keep these edits and return to the original Workspace before saving.',true);return;}
   if(action!=='delete'&&!collectionDirty(s))return;
   const snapshot=collectionValues(),saved={name:snapshot.name.trim(),description:snapshot.description.trim()};
-  if(action!=='delete'&&(!saved.name||snapshot.name.length>100||snapshot.description.length>1000)){collectionStatus('Enter a collection name (up to 100 characters) and a description of up to 1000 characters.',true);return;}
+  if(action!=='delete'&&(!saved.name||snapshot.name.length>COLLECTION_NAME_LIMIT||snapshot.description.length>COLLECTION_DESC_LIMIT)){const firstInvalid=collectionRefreshValidation();const problems=[];if(!saved.name)problems.push('Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters)');else if(snapshot.name.length>COLLECTION_NAME_LIMIT)problems.push('Name is '+snapshot.name.length+' characters; the limit is '+COLLECTION_NAME_LIMIT);if(snapshot.description.length>COLLECTION_DESC_LIMIT)problems.push('Description is '+snapshot.description.length+' characters; the limit is '+COLLECTION_DESC_LIMIT);collectionStatus(problems.join(' ')+'.',true);if(firstInvalid)$(firstInvalid).focus();return;}
   if(s.id&&(!Number.isSafeInteger(s.revision)||s.revision<1||s.revision>=Number.MAX_SAFE_INTEGER)){collectionStatus('A valid writable collection revision is unavailable. Keep these edits, then refresh and inspect the saved collection before reopening it.',true);return;}
   if(s.storageError){collectionStatus('Local recovery is unavailable. No new collection write was sent. Your visible input is kept.',true);return;}
   if(action==='delete'&&(!s.id||!window.confirm('Remove collection “'+s.baseline.name+'”? This removes membership links, but keeps all original assets and recipes. Unsaved name and description edits will be discarded only after confirmation.')))return;
@@ -206,7 +216,7 @@ $('#collectionDialog').addEventListener('close',()=>{
 for(const id of ['collectionName','collectionDescription'])$('#'+id).addEventListener('input',()=>{
   const s=collectionSession;if(!s)return;
   if(s.restoreRequired){collectionStatus('Restore or discard the retained local draft before editing it. The retained command has not changed.');collectionControls();return;}
-  s.discarded=false;const persisted=collectionPersist(s);collectionCompare(s);collectionControls();
+  s.discarded=false;const persisted=collectionPersist(s);collectionCompare(s);collectionControls();collectionRefreshValidation();
   if(!persisted||s.pending)return;
   collectionStatus(s.stale?'Your local draft is retained separately from changed saved metadata.':collectionDirty(s)?'Unsaved collection changes retained locally in this tab.':'No unsaved collection changes.');
 });

@@ -10,4 +10,4 @@ class CollectionEditor(unittest.TestCase):
         self.assertTrue(Path(__file__).with_name('collection_editor_fixture.cjs').is_file(),'the contract requires its inert DOM fixture')
         result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('collection_editor_contracts.cjs'))],capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
-        self.assertIn('"passed":16',result.stdout)
+        self.assertIn('"passed":19',result.stdout)
