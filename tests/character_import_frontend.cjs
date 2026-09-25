@@ -123,6 +123,14 @@ function harness(fixture={plan,handoff,references:[{bytes:bytes.toString('base64
     assert.equal(h.$('#cancelCharacterImport').disabled,false,'Cancel must be usable after the cancelled import');
   }
   {
+    // A preview read cannot honour Cancel, so it is not offered there.
+    h=harness();let cancelDuringRead=null;const read=h.context.api;
+    h.context.api=async(url,options={})=>{cancelDuringRead??=h.$('#cancelCharacterImport').disabled;return read(url,options);};
+    await h.load();
+    if(cancelDuringRead!==null)assert.equal(cancelDuringRead,true,'Cancel is disabled while the case preview is read');
+    assert.equal(h.$('#cancelCharacterImport').disabled,false,'Cancel returns once the read settles');
+  }
+  {
     // Cancel while the first upload is still in flight: the request is aborted, nothing uploads or registers.
     const second=Buffer.from('second synthetic reference'),pairPlan=clone(plan),pairHandoff=clone(handoff);
     pairPlan.canon.references.push({id:'back',role:'identity',path:'back.png',sha256:sha(second)});pairPlan.cases[0].reference_ids.push('back');

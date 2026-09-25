@@ -6,7 +6,8 @@
   const status=(message,error=false)=>{const target=$('#characterImportStatus');target.textContent=message;target.classList.toggle('error',error);};
   const require=(condition,message)=>{if(!condition)throw Error(message);};
   const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');
-  const lock=value=>{busy=value;$('#characterImportInputs').disabled=value;$('#cancelCharacterImport').disabled=false;};
+  // Cancel is offered only where it is honoured: the per-file read/hash/upload loop, never a preview read or the final commit.
+  const lock=value=>{busy=value;$('#characterImportInputs').disabled=value;$('#cancelCharacterImport').disabled=value;};
   const cancelMessage=(done,total)=>done>0?'Import cancelled after '+done+' of '+total+' pictures. Nothing was imported; pictures already uploaded stay ready for another try.':'Import cancelled after 0 of '+total+' pictures. Nothing was imported.';
   const requestAbort=()=>{abortRequested=true;status(uploadController?'Cancelling the upload…':'Cancelling… nothing more is uploaded; a save already sent still finishes.');try{uploadController?.abort();}catch(e){}};
   function clear(){loaded=null;attempted=false;$('#characterCaseFields').hidden=true;$('#importCharacterCase').disabled=true;$('#characterReferenceFiles').innerHTML='';$('#importCharacterCase').textContent='Import planned case';}
@@ -81,7 +82,7 @@
     }catch(e){clear();status(e.message,true);}finally{lock(false);}
   };
   $('#characterImportForm').onsubmit=async e=>{
-    e.preventDefault();if(busy||!loaded)return;lock(true);abortRequested=false;uploadController=null;
+    e.preventDefault();if(busy||!loaded)return;lock(true);abortRequested=false;uploadController=null;$('#cancelCharacterImport').disabled=false;
     try{
       if(attempted){const saved=await existing();if(saved)await show(saved,true);else status('The case is not visible yet. No import was repeated. Inspect Runs & review and the reported failure before loading corrected files.',true);return;}
       const files=[];
@@ -113,6 +114,7 @@
         uploads.push({reference_id:ref.id,file:name});
       }
       if(abortRequested)throw Error(cancelMessage(uploads.length,files.length));
+      $('#cancelCharacterImport').disabled=true;
       const value=payload(uploads);validatePayload(value);attempted=true;$('#importCharacterCase').textContent='Check saved case';status('Checking and importing this case…');
       await show(await api('/api/production',{method:'POST',headers:{'Content-Type':'application/json'},body:serialize(value)}));
     }catch(error){

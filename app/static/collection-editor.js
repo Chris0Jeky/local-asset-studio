@@ -6,15 +6,17 @@ function collectionSameValues(a,b){return a.name===b.name&&a.description===b.des
 function collectionDirty(s=collectionSession){return !!s && !collectionSameValues(collectionValues(),s.baseline);}
 function collectionStatus(text,error=false){const el=$('#collectionStatus');el.textContent=text;el.classList.toggle('error',error);}
 const COLLECTION_NAME_LIMIT=100,COLLECTION_DESC_LIMIT=1000;
+// Count characters as the server does (code points), so an emoji is one, not two.
+const collectionChars=value=>[...value].length;
 // Live guidance only: the server stays the authority on these limits. An empty name is flagged once the user
 // has typed or tried to save, not on open; hosts that embed the editor without the hint elements still work.
 function collectionRefreshValidation(showEmpty=true){
-  const {name,description}=collectionValues(),nameEmpty=!name.trim(),nameOver=name.length>COLLECTION_NAME_LIMIT,descOver=description.length>COLLECTION_DESC_LIMIT;
+  const {name,description}=collectionValues(),nameLength=collectionChars(name),descLength=collectionChars(description),nameEmpty=!name.trim(),nameOver=nameLength>COLLECTION_NAME_LIMIT,descOver=descLength>COLLECTION_DESC_LIMIT;
   const text=(id,value)=>{const node=$(id);if(node)node.textContent=value;};
-  text('#collectionNameCount',name.length+' / '+COLLECTION_NAME_LIMIT);text('#collectionDescriptionCount',description.length+' / '+COLLECTION_DESC_LIMIT);
+  text('#collectionNameCount',nameLength+' / '+COLLECTION_NAME_LIMIT);text('#collectionDescriptionCount',descLength+' / '+COLLECTION_DESC_LIMIT);
   for(const [id,bad] of [['#collectionName',(showEmpty&&nameEmpty)||nameOver],['#collectionDescription',descOver]]){const node=$(id);bad?node?.setAttribute?.('aria-invalid','true'):node?.removeAttribute?.('aria-invalid');}
-  text('#collectionNameMessage',nameOver?'Name is '+name.length+' characters; the limit is '+COLLECTION_NAME_LIMIT+'.':showEmpty&&nameEmpty?'Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters).':'');
-  text('#collectionDescriptionMessage',descOver?'Description is '+description.length+' characters; the limit is '+COLLECTION_DESC_LIMIT+'.':'');
+  text('#collectionNameMessage',nameOver?'Name is '+nameLength+' characters; the limit is '+COLLECTION_NAME_LIMIT+'.':showEmpty&&nameEmpty?'Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters).':'');
+  text('#collectionDescriptionMessage',descOver?'Description is '+descLength+' characters; the limit is '+COLLECTION_DESC_LIMIT+'.':'');
   return nameEmpty||nameOver?'#collectionName':descOver?'#collectionDescription':null;
 }
 function collectionCurrent(s){return collectionSession===s && s.epoch===collectionEpoch && $('#collectionDialog').open;}
@@ -173,7 +175,7 @@ async function saveCollectionChange(action){
   if(!collectionScope(s)){collectionStatus('The Workspace changed or its identity is unavailable. Keep these edits and return to the original Workspace before saving.',true);return;}
   if(action!=='delete'&&!collectionDirty(s))return;
   const snapshot=collectionValues(),saved={name:snapshot.name.trim(),description:snapshot.description.trim()};
-  if(action!=='delete'&&(!saved.name||snapshot.name.length>COLLECTION_NAME_LIMIT||snapshot.description.length>COLLECTION_DESC_LIMIT)){const firstInvalid=collectionRefreshValidation();const problems=[];if(!saved.name)problems.push('Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters)');else if(snapshot.name.length>COLLECTION_NAME_LIMIT)problems.push('Name is '+snapshot.name.length+' characters; the limit is '+COLLECTION_NAME_LIMIT);if(snapshot.description.length>COLLECTION_DESC_LIMIT)problems.push('Description is '+snapshot.description.length+' characters; the limit is '+COLLECTION_DESC_LIMIT);collectionStatus(problems.join(' ')+'.',true);if(firstInvalid)$(firstInvalid).focus();return;}
+  if(action!=='delete'&&(!saved.name||collectionChars(snapshot.name)>COLLECTION_NAME_LIMIT||collectionChars(snapshot.description)>COLLECTION_DESC_LIMIT)){const firstInvalid=collectionRefreshValidation();const problems=[];if(!saved.name)problems.push('Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters)');else if(snapshot.name.length>COLLECTION_NAME_LIMIT)problems.push('Name is '+snapshot.name.length+' characters; the limit is '+COLLECTION_NAME_LIMIT);if(snapshot.description.length>COLLECTION_DESC_LIMIT)problems.push('Description is '+snapshot.description.length+' characters; the limit is '+COLLECTION_DESC_LIMIT);collectionStatus(problems.join(' ')+'.',true);if(firstInvalid)$(firstInvalid).focus();return;}
   if(s.id&&(!Number.isSafeInteger(s.revision)||s.revision<1||s.revision>=Number.MAX_SAFE_INTEGER)){collectionStatus('A valid writable collection revision is unavailable. Keep these edits, then refresh and inspect the saved collection before reopening it.',true);return;}
   if(s.storageError){collectionStatus('Local recovery is unavailable. No new collection write was sent. Your visible input is kept.',true);return;}
   if(action==='delete'&&(!s.id||!window.confirm('Remove collection “'+s.baseline.name+'”? This removes membership links, but keeps all original assets and recipes. Unsaved name and description edits will be discarded only after confirmation.')))return;
