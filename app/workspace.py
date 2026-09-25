@@ -457,7 +457,12 @@ class AssetWorkspace:
                         tags = payload["tags"]
                         if not isinstance(tags, list) or len(tags) > 30:
                             raise WorkspaceError("Use up to 30 tags")
-                        changes["tags"] = json.dumps(list(dict.fromkeys(self.text(t, "Tag", 60) for t in tags if t)))
+                        valid_tags = []
+                        for tag in tags:
+                            if isinstance(tag, str) and not tag:
+                                continue
+                            valid_tags.append(self.text(tag, "Tag", 60))
+                        changes["tags"] = json.dumps(list(dict.fromkeys(valid_tags)))
                     if "run_label" in payload:
                         # A label marks an agent run; null clears it (the operator's own). Reversible like every edit.
                         try: changes["run_label"] = clean_run_label(payload["run_label"])
