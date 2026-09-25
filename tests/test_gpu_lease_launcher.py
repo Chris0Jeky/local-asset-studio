@@ -137,25 +137,27 @@ class LauncherPowerShellTests(unittest.TestCase):
                 wrapper = root / 'test.ps1'
                 wrapper.write_text(r'''
 $ErrorActionPreference = 'Stop'
-$script:Comfy = 0; $script:Studio = 0; $script:Failure = $false
+# The launcher is a nested script scope: share one explicit probe object.
+$global:LauncherProbe = @{ comfy = 0; studio = 0; failed = $false }
+$global:LauncherWorkspace = $PSScriptRoot
 function Invoke-RestMethod {
     param($Uri, $TimeoutSec)
-    if ($script:Studio -gt 0 -and $Uri.EndsWith('/api/identity')) {
-        return @{ app = 'local-asset-studio'; workspace = $PSScriptRoot }
+    if ($global:LauncherProbe.studio -gt 0 -and $Uri.EndsWith('/api/identity')) {
+        return @{ app = 'local-asset-studio'; workspace = $global:LauncherWorkspace }
     }
     throw 'Inert offline endpoint'
 }
 function Start-Process {
     param($FilePath, $ArgumentList, $WorkingDirectory, $WindowStyle,
           $RedirectStandardOutput, $RedirectStandardError, [switch]$PassThru)
-    $script:Studio += 1
+    $global:LauncherProbe.studio += 1
     return [pscustomobject]@{ Id = 999; HasExited = $false }
 }
 function Start-Sleep { param($Seconds) }
-function powershell.exe { $script:Comfy += 1; $global:LASTEXITCODE = 0 }
+function powershell.exe { $global:LauncherProbe.comfy += 1; $global:LASTEXITCODE = 0 }
 try { & (Join-Path $PSScriptRoot 'scripts/Start-Studio.ps1') -NoBrowser -Detached }
-catch { $script:Failure = $true }
-@{ comfy = $script:Comfy; studio = $script:Studio; failed = $script:Failure } | ConvertTo-Json -Compress
+catch { $global:LauncherProbe.failed = $true; Write-Host ($_ | Out-String) }
+$global:LauncherProbe | ConvertTo-Json -Compress
 ''', encoding='utf-8')
                 result = subprocess.run([POWERSHELL, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
                                          '-File', str(wrapper)], capture_output=True, text=True, timeout=20)
