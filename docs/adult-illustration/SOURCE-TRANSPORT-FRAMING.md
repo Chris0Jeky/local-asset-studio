@@ -11,13 +11,13 @@ The default exchange reads through the real stdlib HTTP parser with a byte cap. 
 | One decimal Content-Length within the cap; all declared bytes arrive | Continue to media-type, JSON and provider-identity validation |
 | Declared length exceeds the active cap | Refuse before body reading |
 | Peer closes before the declared length | Connection failure; only the existing bounded GET retry policy applies |
-| Duplicate Content-Length, including equal duplicates | Refuse instead of repairing ambiguous provider evidence |
-| Invalid Content-Length, multiple Transfer-Encoding fields, unsupported transfer coding, or both length and transfer coding | Refuse before body reading |
+| Duplicate Content-Length, including equal duplicates, on a response that may carry a body | Refuse instead of repairing ambiguous provider evidence |
+| Invalid Content-Length, multiple Transfer-Encoding fields, unsupported transfer coding, or both length and transfer coding, on a response that may carry a body | Refuse before body reading |
 | Properly framed chunked response | Retain the bounded decoded body; existing HTTP parse failures remain connection failures |
 | No framing length and no transfer coding | Retain the bounded close-delimited body |
-| Bodyless status such as 304 | Do not require the advertised representation bytes; existing cache-validator and exact-route checks still decide acceptance |
+| 1xx, 204 or 304 status | Take the no-body branch before the ambiguity and length checks: expect zero body bytes, so an advertised full-representation length is not required and does not fail as oversize; duplicate or conflicting framing headers on these statuses are not checked; existing cache-validator and exact-route checks still decide acceptance |
 
-Duplicate lengths are deliberately rejected even where a general HTTP client could normalize identical duplicates. This metadata client does not need that permissive repair.
+The ambiguity rows above apply only to responses that may carry a body. Duplicate lengths on such responses are deliberately rejected even where a general HTTP client could normalize identical duplicates. This metadata client does not need that permissive repair.
 
 No failed read is finalized into a provider snapshot or cache record. The change grants no download, installation, execution, generation, training or promotion authority. Provider-supplied model hashes still do not verify downloaded model bytes.
 
