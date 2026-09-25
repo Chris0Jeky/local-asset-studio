@@ -121,7 +121,8 @@ class LauncherLeaseGateTests(unittest.TestCase):
 class LauncherPowerShellTests(unittest.TestCase):
     def test_actual_launcher_with_all_runtime_actions_replaced(self):
         for state, expected_comfy, expected_studio in (('held', 0, 1), ('unknown', 0, 0),
-                ('missing', 1, 1), ('expired', 1, 1), ('released', 1, 1), ('late', 0, 1)):
+                ('missing', 1, 1), ('expired', 1, 1), ('released', 1, 1), ('late', 0, 1),
+                ('held-released', 1, 1), ('held-expired', 1, 1), ('held-unknown', 0, 0)):
             with self.subTest(state=state), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 for folder in ('scripts', 'app', 'config', 'examples/references', 'comfy/input', '.runtime'):
@@ -134,7 +135,7 @@ class LauncherPowerShellTests(unittest.TestCase):
                     'comfy_launcher': str(root / 'comfy/launcher.ps1')}), encoding='utf-8')
                 lease = root / '.runtime/studio-gpu-lease.json'
                 held = {'record': {'holder': 'local-qwen', 'expires_at': time.time() + 600}}
-                if state == 'held': lease.write_text(json.dumps(held), encoding='utf-8')
+                if state == 'held' or state.startswith('held-'): lease.write_text(json.dumps(held), encoding='utf-8')
                 elif state == 'expired': lease.write_text(json.dumps({'record': {'holder': 'local-qwen', 'expires_at': 1}}))
                 elif state == 'released': lease.write_text('{"record":null}')
                 elif state == 'unknown': lease.write_text('{')
@@ -143,6 +144,11 @@ class LauncherPowerShellTests(unittest.TestCase):
                         'from pathlib import Path\nimport json\n'
                         f'Path({str(lease)!r}).write_text({json.dumps(held)!r}, encoding="utf-8")\n'
                         'print(json.dumps({"arguments": []}))\n', encoding='utf-8')
+                changes = {'held-released': '{"record":null}',
+                           'held-expired': json.dumps({'record': {'holder': 'local-qwen', 'expires_at': 1}}),
+                           'held-unknown': '{'}
+                if state in changes:
+                    (root / 'probe-change.json').write_text(changes[state], encoding='utf-8')
                 wrapper = root / 'test.ps1'
                 wrapper.write_text(r'''
 $ErrorActionPreference = 'Stop'
@@ -153,6 +159,13 @@ function Invoke-RestMethod {
     param($Uri, $TimeoutSec)
     if ($global:LauncherProbe.studio -gt 0 -and $Uri.EndsWith('/api/identity')) {
         return @{ app = 'local-asset-studio'; workspace = $global:LauncherWorkspace }
+    }
+    $change = Join-Path $global:LauncherWorkspace 'probe-change.json'
+    if ($Uri.EndsWith('/system_stats') -and (Test-Path -LiteralPath $change)) {
+        # Simulate a release, expired deadline or unreadable replacement after the first gate.
+        $leasePath = Join-Path $global:LauncherWorkspace '.runtime/studio-gpu-lease.json'
+        [IO.File]::WriteAllText($leasePath, [IO.File]::ReadAllText($change), [Text.UTF8Encoding]::new($false))
+        Remove-Item -LiteralPath $change
     }
     throw 'Inert offline endpoint'
 }
@@ -172,4 +185,4 @@ $global:LauncherProbe | ConvertTo-Json -Compress
                                          '-File', str(wrapper)], capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 outcome = json.loads(result.stdout.strip().splitlines()[-1])
-                self.assertEqual(outcome, {'comfy': expected_comfy, 'studio': expected_studio, 'failed': state == 'unknown'}, result.stdout + result.stderr)
+                self.assertEqual(outcome, {'comfy': expected_comfy, 'studio': expected_studio, 'failed': state.endswith('unknown')}, result.stdout + result.stderr)
