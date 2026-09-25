@@ -592,6 +592,8 @@ async function bulkReviewGroup(key, review) {
   const owns=()=>assetState.workspace_id===workspace && assetWorkspaceEpoch===epoch;
   const where=' in \''+plan.label+'\' as '+label;
   let done=0,stop='';
+  // Disabling the focused trigger can drop focus to <body>, outside the grid's own handoff; restore it after the run.
+  const trigger=document.activeElement?.closest?.('[data-group-review]')?document.activeElement:null;
   assetBulkReviewBusy=true;assetBulkReviewControls();assetMessage('Marking 0 of '+total+where+'…');
   try {
     for(let at=0;at<total;at+=assetGroupReviewBatch){
@@ -619,6 +621,8 @@ async function bulkReviewGroup(key, review) {
     if(!owns())assetMessage('Group review stopped: the Workspace changed while it ran. '+done+' of '+total+' were confirmed'+where+' in the earlier Workspace. Nothing was marked in the Workspace now shown.',true);
     else {
       renderAssets();
+      const focused=document.activeElement;
+      if(trigger && (!focused || focused===document.body || focused===trigger && (!trigger.isConnected || trigger.disabled)))StudioAssetGrid.focusGroup?.($('#assetGrid'),key,review);
       assetMessage(stop?done+' of '+total+' marked'+where+'. Stopped: '+stop+' No retry was sent; refresh the library before marking what remains.':
         'Marked '+done+' of '+total+where+'. Each review can be changed back individually by opening the asset.',!!stop);
     }

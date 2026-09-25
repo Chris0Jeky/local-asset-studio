@@ -110,6 +110,25 @@ async def exercise(args):
                 await page.evaluate('window.confirm=savedConfirm;assetState.assets.forEach(a=>{a.review="rejected";});renderAssets();')
                 check('GRID-42', 'A focused group action that disappears hands focus to its group heading', await page.evaluate('document.querySelector("#assetGrid .asset-group-actions").hidden && document.activeElement===document.querySelector("#assetGrid .asset-group h4")'))
                 await refresh()
+                # Group writes are answered in the page (never the fixture server): a conflict, then a receipt.
+                replies=['conflict','applied']
+                async def group_reply(route):
+                    command=json.loads(route.request.post_data);kind=replies.pop(0)
+                    if kind=='conflict':
+                        body={'error':'Selected asset metadata changed or no longer exists; nothing changed in this batch','code':'asset_revision_conflict','request_id':command['request_id'],'workspace_id':command['workspace_id'],'conflict_ids':command['ids'][:1],'missing_ids':[],'current':[]}
+                        return await route.fulfill(status=409,content_type='application/json',body=json.dumps(body))
+                    body={'status':'applied','workspace_id':command['workspace_id'],'request_id':command['request_id'],'updated':command['ids'],'action':'edit','revisions':{i:command['expected_revisions'][i]+1 for i in command['ids']},'applied':{'review':command['review']},'current':[]}
+                    await route.fulfill(status=200,content_type='application/json',body=json.dumps(body))
+                await page.route('**/api/assets/update',group_reply)
+                await page.evaluate('window.savedConfirm=window.confirm;window.confirm=()=>true;void 0')
+                await page.locator('#assetGrid [data-group-review="rejected"]').focus();await page.keyboard.press('Enter')
+                await page.wait_for_function('!assetBulkReviewBusy && document.querySelector("#assetMessage").textContent.includes("Stopped")')
+                check('GRID-43', 'A stopped group mark leaves keyboard focus on its enabled group action', await page.evaluate('document.activeElement?.dataset?.groupReview==="rejected" && !document.activeElement.disabled && document.querySelector("#assetGrid").contains(document.activeElement)'))
+                await page.keyboard.press('Enter')
+                await page.wait_for_function('!assetBulkReviewBusy && document.querySelector("#assetMessage").textContent.startsWith("Marked 3 of 3")')
+                check('GRID-44', 'A completed group mark hands keyboard focus to the group heading, not the page body', await page.evaluate('document.querySelector("#assetGrid .asset-group-actions").hidden && document.activeElement===document.querySelector("#assetGrid .asset-group h4")'))
+                await page.unroute('**/api/assets/update');await page.evaluate('window.confirm=savedConfirm;void 0')
+                await refresh()
                 await page.select_option('#assetGroup', 'none')
                 check('GRID-38', 'Ungrouping retains source nodes and removes old group containers', await page.evaluate('card(gridIds[0])===keptCard && keptImage.isConnected && !document.querySelector("#assetGrid .asset-group") && keptCard.parentElement.id==="assetGrid"'))
                 await page.select_option('#assetSort', 'newest')
@@ -218,7 +237,7 @@ async def exercise(args):
              'posts':fixture.POSTS,'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ['app/static/workspace.js','app/static/asset-grid.js'] if (ROOT/f).is_file()}}
     (args.out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({k:receipt[k] for k in ['mode','pass','fail','errors','execution_error']},indent=2))
-    if failure or errors or len(checks)!=42 or (receipt['fail'] and not args.baseline):raise SystemExit(1)
+    if failure or errors or len(checks)!=44 or (receipt['fail'] and not args.baseline):raise SystemExit(1)
 
 
 if __name__=='__main__':

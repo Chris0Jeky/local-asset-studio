@@ -140,7 +140,13 @@
       (target||options.focusFallback)?.focus({preventScroll:true});
     }
   }
-  return {render,mediaKey,displayKey,nextFocus};
+  // Explicit handoff for callers whose control lost focus outside a render (a disabled button can drop focus to <body>).
+  function focusGroup(grid,key,action){
+    const section=grids.get(grid)?.groups.get(key);if(!section)return false;
+    const target=[...section.actions.querySelectorAll('[data-group-review]')].find(b=>b.dataset.groupReview===action && !b.disabled)||section.heading;
+    target.focus({preventScroll:true});return true;
+  }
+  return {render,focusGroup,mediaKey,displayKey,nextFocus};
 });
 
 // The editor is a separate browser module; Node projection tests stay side-effect free.
