@@ -298,6 +298,20 @@ class AdultIllustrationBenchmarkResultTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "promotion"):
             self.validate(value)
 
+    def test_boolean_candidate_ordinal_is_rejected(self) -> None:
+        value = valid_result()
+        value["candidates"][0]["ordinal"] = True  # type: ignore[index]
+        rehash(value)
+        with self.assertRaisesRegex(ValueError, "ordinals"):
+            self.validate(value)
+
+    def test_decision_promotion_authorized_alone_is_refused(self) -> None:
+        value = valid_result()
+        value["decision"]["promotion_authorized"] = True  # type: ignore[index]
+        rehash(value)
+        with self.assertRaisesRegex(ValueError, "promotion"):
+            self.validate(value)
+
     def test_rehashed_tampering_still_fails_semantic_validation(self) -> None:
         value = valid_result()
         value["candidates"][1]["failure_class"] = "crash"  # type: ignore[index]

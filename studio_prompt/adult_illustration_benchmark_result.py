@@ -523,7 +523,7 @@ def validate_benchmark_result(
         if candidate_id in candidate_ids:
             raise ValueError(f"duplicate candidate id {candidate_id!r}")
         candidate_ids.add(candidate_id)
-        if candidate.get("ordinal") != index:
+        if isinstance(candidate.get("ordinal"), bool) or candidate.get("ordinal") != index:
             raise ValueError("candidate ordinals must be contiguous and match array order")
         case_id = _text(candidate.get("case_id"), "candidate case id", 128)
         if case_id not in selected_cases or case_id not in case_ids:
