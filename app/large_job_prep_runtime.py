@@ -10,7 +10,7 @@ import resource_admission
 from large_job_prep_common import (
     AT_REST_JOB_STATES, AT_REST_PRODUCTION_STATES, BLOCKS_ALL, BLOCKS_RESTART,
     HISTORY_TIMEOUT_SECONDS, IN_FLIGHT_JOB_STATES, MAX_HISTORY_PROMPTS, MAX_HISTORY_RECORDS, PROMPT_ID,
-    IN_FLIGHT_PRODUCTION_STATES, TERMINAL_SUBMISSION_STATES, UNRESOLVED_JOB_STATES,
+    IN_FLIGHT_PRODUCTION_STATES, SAFE_DECISIONS, TERMINAL_SUBMISSION_STATES, UNRESOLVED_JOB_STATES,
     UNRESOLVED_PRODUCTION_STATES, PreparationError, WorkBlockedError, _blocker_summary,
     _process_identity, _queue_summary,
 )
@@ -281,10 +281,47 @@ class RuntimeMixin:
             "reservations_before": raw["reservations_before"],
         }
 
+    def _prepare_for_observation(self, recipe: dict[str, Any]) -> tuple[Any, ...]:
+        """Bind the exact workflow/profile while deferring only the host-commit gate.
+
+        Large-job preparation must observe counters and plan owned-cache release even
+        when low Windows commit is the only blocker. Every graph/control/model check
+        still runs; the deferred gate stays enforced on real submission and production
+        preflight. Studio converts its validation errors to PreparationError so the
+        receipt records a normal refusal with its message.
+        """
+        payload = copy.deepcopy(recipe)
+        deferred = getattr(self.studio, "prepare_for_large_job_preparation", None)
+        if callable(deferred):
+            return deferred(payload)
+        return self.studio.prepare(payload)
+
+    @staticmethod
+    def _with_host_commit_floor(evaluation: dict[str, Any], observation: dict[str, Any],
+                                minimum: int | None) -> dict[str, Any]:
+        if minimum is None:
+            return evaluation
+        available = (observation.get("windows_commit") or {}).get("available_bytes")
+        state = "unknown" if type(available) is not int else (
+            "safe" if available >= minimum else "unsafe"
+        )
+        evaluation["host_commit_preflight"] = {
+            "required_bytes": minimum,
+            "observed_available_bytes": available if type(available) is int else None,
+            "state": state,
+        }
+        if state != "safe" and evaluation["decision"] in SAFE_DECISIONS:
+            evaluation["decision"] = "unknown" if state == "unknown" else "observed_unsafe"
+            evaluation["state"] = "refused"
+            evaluation["reservation"] = None
+        return evaluation
+
     def _context(self, recipe: dict[str, Any]) -> dict[str, Any]:
         self._check_work("In-flight Studio work (queued, submitting or running) blocks resource cleanup")
         first_backend, _ = self._backend_snapshot()
-        preset, graph, _path, _controls, _batch = self.studio.prepare(copy.deepcopy(recipe))
+        preset, graph, _path, _controls, _batch = self._prepare_for_observation(recipe)
+        requirement = getattr(self.studio, "required_host_commit_bytes", None)
+        host_commit_minimum = requirement(preset, graph) if callable(requirement) else None
         observation = self.observer(self.studio)
         identity = resource_admission.workflow_identity(
             self.studio, preset, graph, observation.get("runtime") or {}
@@ -313,9 +350,13 @@ class RuntimeMixin:
             "reservations": reservations,
             "backend": second_backend,
             "evaluation": None,
+            "_host_commit_minimum_bytes": host_commit_minimum,
         }
         if profile is not None:
-            result["evaluation"] = self._evaluate(identity, profile, observation, reservations)
+            result["evaluation"] = self._with_host_commit_floor(
+                self._evaluate(identity, profile, observation, reservations),
+                observation, host_commit_minimum,
+            )
         result["_profile"] = profile
         return result
 
@@ -357,8 +398,9 @@ class RuntimeMixin:
         backend, _ = self._recheck(expected_identity, expected_profile_id)
         observation = self.observer(self.studio)
         profile = context["_profile"]
-        evaluation = self._evaluate(
-            context["workflow_identity"], profile, observation, context["reservations"]
+        evaluation = self._with_host_commit_floor(
+            self._evaluate(context["workflow_identity"], profile, observation, context["reservations"]),
+            observation, context.get("_host_commit_minimum_bytes"),
         )
         backend_after, _ = self._backend_snapshot(
             expected_identity=expected_identity, expected_profile_id=expected_profile_id
