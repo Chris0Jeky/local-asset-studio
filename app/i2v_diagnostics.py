@@ -399,13 +399,32 @@ def _cached_file_hash(path: Path, cache, require_current=False):
     key = str(path)
     if not require_current:
         try:
-            identity = _file_identity(path.stat())
+            current = _file_identity(path.stat())
         except OSError as exc:
             return {"path": key, "present": False, "error": str(exc)[:200]}
         previous = cache.get(key)
         previous_path = previous.get("path_identity") if isinstance(previous, dict) else None
-        if isinstance(previous_path, dict) and all(previous_path.get(field) == identity[field] for field in _CACHE_PATH_IDENTITY_FIELDS) and previous.get("sha256"):
-            return {"path": key, "present": True, **identity, "sha256": previous["sha256"]}
+        if (
+            isinstance(previous, dict)
+            and isinstance(previous_path, dict)
+            and all(previous_path.get(field) == current[field] for field in _CACHE_PATH_IDENTITY_FIELDS)
+            and previous.get("sha256")
+            and all(field in previous for field in _CACHE_RECORD_FIELDS)
+        ):
+            try:
+                with _open_model_candidate(path) as stream:
+                    fresh_stat = os.fstat(stream.fileno())
+                    fresh = _file_identity(fresh_stat)
+                    if not stat.S_ISREG(fresh_stat.st_mode):
+                        cache.pop(key, None)
+                        return {"path": key, "present": True, **fresh, "error": "Model path is not a regular file"}
+                    descriptor_changed = any(previous[field] != fresh[field] for field in _CACHE_RECORD_FIELDS)
+                    latest = _file_identity(path.stat())
+                    path_unchanged = all(current[field] == latest[field] for field in _CACHE_PATH_IDENTITY_FIELDS)
+                    if not descriptor_changed and path_unchanged and _same_file(latest, fresh):
+                        return {"path": key, "present": True, **fresh, "sha256": previous["sha256"]}
+            except OSError:
+                pass
     observed = _hash_open_file(path)
     if observed.get("sha256"):
         cache[key] = {field: observed[field] for field in _CACHE_RECORD_FIELDS}
