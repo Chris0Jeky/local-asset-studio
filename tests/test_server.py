@@ -334,6 +334,24 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(sent,[(403,{"error":"Local same-origin request required"})])
                 self.assertTrue(handler.close_connection)
 
+    def test_same_origin_unknown_post_drains_declared_body_before_404(self):
+        body=b"a"*(32*1024)
+        handler=server.Handler.__new__(server.Handler)
+        handler.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Length":str(len(body)),"Content-Type":"application/json"}
+        handler.path="/api/does-not-exist";handler.rfile=io.BytesIO(body);handler.close_connection=False
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+        handler.do_POST()
+        self.assertEqual(sent,[(404,{"error":"Not found"})])
+        self.assertEqual(handler.rfile.read(),b"")
+        self.assertFalse(handler.close_connection)
+        oversized=server.Handler.__new__(server.Handler)
+        oversized.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Length":str(1024*1024+1)}
+        oversized.path="/api/does-not-exist";oversized.rfile=io.BytesIO(b"");oversized.close_connection=False
+        sent.clear();oversized._json=lambda status,obj:sent.append((status,obj))
+        oversized.do_POST()
+        self.assertEqual(sent,[(404,{"error":"Not found"})])
+        self.assertTrue(oversized.close_connection)
+
     def test_refused_body_without_parsed_headers_closes_connection(self):
         handler=server.Handler.__new__(server.Handler)
         handler.rfile=io.BytesIO(b"");handler.close_connection=False

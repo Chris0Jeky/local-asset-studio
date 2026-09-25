@@ -2302,6 +2302,7 @@ class Handler(BaseHTTPRequestHandler):
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
+            self._drain_refused_body()
             return self._json(404, {"error":"Not found"})
         except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc:
