@@ -9,6 +9,7 @@ import socket
 import subprocess
 import threading
 import unittest
+from unittest.mock import patch
 
 import test_mixed_batch as fixtures
 from http_refusal_transport import atomic_json_post
@@ -19,7 +20,9 @@ class MixedBatchHTTPTests(unittest.TestCase):
         self.case=fixtures.MixedBatchTests();self.case.setUp();self.addCleanup(self.case.doCleanups)
         self.studio=self.case.studio;self.case.fixture.patches[0].stop()
         handler=type('MixedHandler',(fixtures.server.Handler,),{'studio':self.studio})
-        self.http=ThreadingHTTPServer(('127.0.0.1',0),handler)
+        # Binding numeric loopback needs no reverse DNS; HTTPServer.server_bind normally calls getfqdn.
+        with patch.object(socket,'getfqdn',return_value='127.0.0.1'):
+            self.http=ThreadingHTTPServer(('127.0.0.1',0),handler)
         self.thread=threading.Thread(target=self.http.serve_forever,daemon=True);self.thread.start();self.addCleanup(self.close)
         self.route='/api/jobs/'+self.case.job['id']
     def close(self):
