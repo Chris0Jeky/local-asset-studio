@@ -159,3 +159,78 @@ class WorkspaceTests(unittest.TestCase):
             with self.assertRaisesRegex(workspace.WorkspaceError,'original was preserved'):
                 self.store.save_setup({'id':identifier,'name':'Late','recipe':{'preset':'other'}})
         self.assertEqual(self.store.setups()[0]['recipe'],recipe)
+
+    def _receipt_count(self):
+        with self.store.connection() as db:
+            return db.execute("SELECT COUNT(*) FROM asset_commands").fetchone()[0]
+
+    def test_update_rejects_unknown_top_level_fields_without_changing_state(self):
+        before = self.store.get(self.asset); receipts = self._receipt_count()
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'Unknown asset command fields'):
+            self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'title': 'Kept', 'bogus_field': 1})
+        self.assertEqual(self.store.get(self.asset), before)
+        self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_rejects_payload_larger_than_128_kib_without_changing_state(self):
+        before = self.store.get(self.asset); receipts = self._receipt_count()
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'Asset command exceeds 128 KiB'):
+            self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'notes': 'x' * (140 * 1024)})
+        self.assertEqual(self.store.get(self.asset), before)
+        self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_rejects_non_finite_json_value_without_changing_state(self):
+        for bad in (float('nan'), float('inf'), float('-inf')):
+            with self.subTest(bad=repr(bad)):
+                before = self.store.get(self.asset); receipts = self._receipt_count()
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'Asset command must contain finite JSON values'):
+                    self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'notes': bad})
+                self.assertEqual(self.store.get(self.asset), before)
+                self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_rejects_non_boolean_favorite_without_changing_state(self):
+        for bad in ('yes', 1, 0, None):
+            with self.subTest(bad=repr(bad)):
+                before = self.store.get(self.asset); receipts = self._receipt_count()
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'Favorite must be true or false'):
+                    self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'favorite': bad})
+                self.assertEqual(self.store.get(self.asset), before)
+                self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_rejects_bad_title_without_changing_state(self):
+        for bad in ('t' * 201, 123, None):
+            with self.subTest(bad=repr(bad)[:40]):
+                before = self.store.get(self.asset); receipts = self._receipt_count()
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'title must be text up to 200 characters'):
+                    self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'title': bad})
+                self.assertEqual(self.store.get(self.asset), before)
+                self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_rejects_bad_notes_without_changing_state(self):
+        for bad in ('n' * 8001, 123, None):
+            with self.subTest(bad=repr(bad)[:40]):
+                before = self.store.get(self.asset); receipts = self._receipt_count()
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'notes must be text up to 8000 characters'):
+                    self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'notes': bad})
+                self.assertEqual(self.store.get(self.asset), before)
+                self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_rejects_bad_tags_without_changing_state(self):
+        with self.subTest(case='non-list'):
+            before = self.store.get(self.asset); receipts = self._receipt_count()
+            with self.assertRaisesRegex(workspace.WorkspaceError, 'Use up to 30 tags'):
+                self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': 'ink'})
+            self.assertEqual(self.store.get(self.asset), before)
+            self.assertEqual(self._receipt_count(), receipts)
+        with self.subTest(case='too-many'):
+            before = self.store.get(self.asset); receipts = self._receipt_count()
+            with self.assertRaisesRegex(workspace.WorkspaceError, 'Use up to 30 tags'):
+                self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': [f't{i}' for i in range(31)]})
+            self.assertEqual(self.store.get(self.asset), before)
+            self.assertEqual(self._receipt_count(), receipts)
+        for bad in (123, 'x' * 61):
+            with self.subTest(bad=repr(bad)[:40]):
+                before = self.store.get(self.asset); receipts = self._receipt_count()
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'Tag must be text up to 60 characters'):
+                    self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': [bad]})
+                self.assertEqual(self.store.get(self.asset), before)
+                self.assertEqual(self._receipt_count(), receipts)
