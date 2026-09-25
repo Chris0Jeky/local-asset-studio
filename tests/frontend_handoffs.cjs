@@ -629,8 +629,24 @@ async function pastedAndDroppedPicturesFillEmptySlots() {
   assert.deepEqual(paste([png('elsewhere.png')]), ['ignored', false], 'Pasting on another view is left alone');
 }
 
+// #772: a new seed and a replaced comparison pin say what happened instead of changing silently.
+async function seedAndPinChangesAreAnnounced() {
+  const s = sandbox({}, {});
+  s.run(`selectPreset('plain');`);
+  s.element('#randomSeed').onclick();
+  assert.match(s.element('#status').textContent, /^Seed changed to \d+\. Nothing was generated\.$/);
+  assert.equal(s.element('#status').textContent, 'Seed changed to ' + s.element('[data-key="seed"]').value + '. Nothing was generated.');
+  const pin = job => ({closest: selector => selector === '.pin' ? {dataset: {job, index: '0'}} : null});
+  for (const job of ['a', 'b']) await s.element('#gallery').onclick({target: pin(job)});
+  assert.doesNotMatch(s.element('#status').textContent, /oldest pin/);
+  await s.element('#gallery').onclick({target: pin('c')});
+  assert.match(s.element('#status').textContent, /oldest pin was replaced/);
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(pinned.map(p=>p.job))')), ['b', 'c']);
+}
+
 (async () => {
   await generateShortcutRoutesThroughTheButton();
+  await seedAndPinChangesAreAnnounced();
   await pastedAndDroppedPicturesFillEmptySlots();
   await recipeSwapDuringUploadNeverSubmits();
   await unstagedLocalFilesCannotBeSaved();
