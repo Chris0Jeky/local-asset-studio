@@ -175,6 +175,15 @@ def external_vram(studio):
     if pid is None:
         return None, "the active ComfyUI process is not identified"
     reading = gpu_memory.read()
+    confidence_aware = getattr(gpu_memory, "others_for_admission", None)
+    if callable(confidence_aware):
+        # A reconciled bound from disagreeing counters (issue #983) is conservative for the
+        # installed guard but is not a measurement, so admission treats it as unknown.
+        external, reason = confidence_aware(reading, pid)
+        if external is None:
+            return None, reason or ((reading.get("unknown_reason") if isinstance(reading, dict) else None)
+                                    or "no GPU adapter reading")
+        return external, None
     others = gpu_memory.others_bytes(reading, pid)
     if others is None:
         return None, (reading.get("unknown_reason") if isinstance(reading, dict) else None) or "no GPU adapter reading"

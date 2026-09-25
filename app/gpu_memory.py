@@ -228,6 +228,50 @@ def others_bytes(reading, pid):
     return others
 
 
+def others_for_admission(reading, pid):
+    """Credible measured external bytes for admission as `(bytes_or_None, reason_or_None)`.
+
+    Same adapter selection and `_reconcile` logic as `others_bytes`, but confidence-aware:
+    when process counters disagree with the adapter figure (an excluded pid or a capped
+    aggregate, issue #983) the reconciled bound stays conservative for the installed guard
+    yet is not a measurement, so admission gets `(None, reason)` instead of a precise byte
+    value. A matching sample stays measured; a missing/unmatched adapter stays unknown.
+    Readings without an `adapter_totals` field keep the older `others_bytes` contract.
+    """
+    adapters = reading.get('adapters') if isinstance(reading, dict) else None
+    if not adapters:
+        reason = None
+        if isinstance(reading, dict):
+            reason = reading.get('unknown_reason') or reading.get('adapter_unknown_reason')
+        return None, reason or 'No matching GPU adapter memory reading'
+    owned = [name for name, processes in adapters.items() if pid in processes]
+    if owned:
+        adapter = max(owned, key=lambda name: (adapters[name][pid]['dedicated_bytes'], adapters[name][pid].get('shared_bytes', 0)))
+    else:
+        adapter = _select_metered_adapter(reading, adapters)
+    if adapter is None:
+        if isinstance(reading, dict):
+            reason = reading.get('unknown_reason') or reading.get('adapter_unknown_reason')
+        else:
+            reason = None
+        return None, reason or 'No matching GPU adapter memory reading'
+    if not isinstance(reading, dict) or 'adapter_totals' not in reading:
+        others = others_bytes(reading, pid)
+        if others is None:
+            reason = reading.get('unknown_reason') if isinstance(reading, dict) else None
+            return None, reason or 'no GPU adapter reading'
+        return others, None
+    total = _adapter_total(reading, adapter)
+    if total is None:
+        reason = reading.get('adapter_unknown_reason') or reading.get('unknown_reason')
+        return None, reason or 'No matching GPU adapter memory reading'
+    values = {other: p['dedicated_bytes'] for other, p in adapters[adapter].items()}
+    excluded, others, capped = _reconcile(values, total, own_pid=pid)
+    if others is None or excluded or capped:
+        return None, 'GPU adapter and process counters disagree'
+    return others, None
+
+
 def holders(reading, pid, top=3):
     """The largest other dedicated-memory holders on `pid`'s adapter as `[{pid, name, dedicated_bytes}]`, largest first."""
     adapters = reading.get('adapters') if isinstance(reading, dict) else None

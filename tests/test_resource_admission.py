@@ -16,6 +16,13 @@ resource_probe.project_stats = lambda value: value
 wan_capacity = types.ModuleType('wan_capacity')
 wan_capacity.projection = lambda preset, graph: preset.get('wan_projection')
 gpu_memory = types.ModuleType('gpu_memory'); gpu_memory.read = lambda: {}; gpu_memory.others_bytes = lambda reading, pid: None
+def _others_for_admission(reading, pid):
+    others = gpu_memory.others_bytes(reading, pid)
+    if others is None:
+        reason = reading.get('unknown_reason') if isinstance(reading, dict) else None
+        return None, reason or 'no GPU adapter reading'
+    return others, None
+gpu_memory.others_for_admission = _others_for_admission
 with patch.dict(sys.modules, {'host_memory': host_memory, 'resource_probe': resource_probe, 'wan_capacity': wan_capacity, 'gpu_memory': gpu_memory}):
     spec = importlib.util.spec_from_file_location('resource_admission_test_target', ROOT / 'app/resource_admission.py')
     admission = importlib.util.module_from_spec(spec); spec.loader.exec_module(admission)
@@ -187,6 +194,40 @@ class ResourceAdmissionTests(unittest.TestCase):
         job = {'id': 'job', 'resource_admission': [{}] * admission.MAX_RECEIPTS}
         controller = admission.AdmissionController(studio, observer=lambda _: obs)
         with self.assertRaisesRegex(ValueError, 'retention is full'): controller._record(job, {'schema': admission.SCHEMA})
+
+    def test_external_vram_treats_counter_disagreement_as_unknown(self):
+        # Issue #983: a 4 GiB adapter with owned 2 GiB and dwm at 66 GiB reconciles to a
+        # conservative 2 GiB guard bound; admission must not treat that bound as measured.
+        studio = Studio()
+        studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
+        anomaly = {'adapters': {'adapter': {40: {'dedicated_bytes': 2 * GIB}}}, 'adapter_totals': {}}
+        with patch.object(admission.gpu_memory, 'read', return_value=anomaly), \
+                patch.object(admission.gpu_memory, 'others_bytes', return_value=2 * GIB), \
+                patch.object(admission.gpu_memory, 'others_for_admission',
+                             return_value=(None, 'GPU adapter and process counters disagree')):
+            external, reason = admission.external_vram(studio)
+        self.assertIsNone(external)
+        self.assertIn('disagree', reason)
+
+    def test_external_vram_stays_measured_for_a_matching_sample(self):
+        studio = Studio()
+        studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
+        sample = {'adapters': {'adapter': {40: {'dedicated_bytes': 1 * GIB}}}, 'adapter_totals': {}}
+        with patch.object(admission.gpu_memory, 'read', return_value=sample), \
+                patch.object(admission.gpu_memory, 'others_for_admission', return_value=(812 * 2 ** 20, None)):
+            self.assertEqual(admission.external_vram(studio), (812 * 2 ** 20, None))
+
+    def test_observe_does_not_claim_measured_vram_from_counter_disagreement(self):
+        studio = Studio()
+        studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
+        studio._request = lambda path, timeout=3, base_url=None: {
+            'devices': [{'vram_free_bytes': 12 * GIB, 'vram_total_bytes': 16 * GIB}], 'versions': {}}
+        with patch.object(admission.gpu_memory, 'read', return_value={}), \
+                patch.object(admission.gpu_memory, 'others_for_admission',
+                             return_value=(None, 'GPU adapter and process counters disagree')):
+            snapshot = admission.observe(studio)
+        self.assertIsNone(snapshot['vram']['available_bytes'])
+        self.assertIn('disagree', snapshot['vram']['unknown_reason'])
 
     def test_pre_submit_is_opt_in_and_requires_durable_job_identity(self):
         studio = Studio()

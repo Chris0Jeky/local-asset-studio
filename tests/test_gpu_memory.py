@@ -156,6 +156,37 @@ class GpuMemoryTests(unittest.TestCase):
         self.assertEqual((result['excluded_pids'], result['others_bytes'], result['basis']), ([], 4 * GIB, 'reconciled'))
         self.assertEqual(result['reserve_gib'], 4.7)
 
+    def test_admission_stays_measured_for_a_matching_sample(self):
+        sample = reading_with_totals({DGPU.format(2304): 2282 * MIB, DGPU.format(30868): 811 * MIB}, {DGPU_ADAPTER: 4 * GIB})
+        self.assertEqual(gpu_memory.others_for_admission(sample, 30868), (2282 * MIB, None))
+
+    def test_admission_is_unknown_when_process_counters_disagree(self):
+        # 4 GiB adapter, owned 2 GiB, dwm at 66 GiB: the guard keeps the conservative
+        # reconciled bound, but admission must not treat it as a measured fact.
+        sample = reading_with_totals({DGPU.format(40): 2 * GIB, DGPU.format(2304): 66 * GIB}, {DGPU_ADAPTER: 4 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 2 * GIB)
+        external, reason = gpu_memory.others_for_admission(sample, 40)
+        self.assertIsNone(external)
+        self.assertIn('disagree', reason)
+        # A collective overshoot with no single excluded pid is likewise not measured.
+        crowded = reading_with_totals({DGPU.format(7): 3 * GIB, DGPU.format(8): 3 * GIB}, {DGPU_ADAPTER: 4 * GIB})
+        external, reason = gpu_memory.others_for_admission(crowded, 7)
+        self.assertIsNone(external)
+        self.assertIn('disagree', reason)
+
+    def test_admission_is_unknown_without_a_matching_adapter(self):
+        inflated = {DGPU.format(2304): DWM_ANOMALY, DGPU.format(30868): 812 * MIB}
+        external, reason = gpu_memory.others_for_admission(reading_with_totals(inflated, None), 30868)
+        self.assertIsNone(external)
+        self.assertIsNotNone(reason)
+        unmatched = reading_with_totals(inflated, {IGPU_ADAPTER: 512 * MIB})
+        external, reason = gpu_memory.others_for_admission(unmatched, 30868)
+        self.assertIsNone(external)
+        self.assertIsNotNone(reason)
+        # Older injected readings without the new field keep their old contract.
+        legacy = reading({DGPU.format(1): 812 * MIB})
+        self.assertEqual(gpu_memory.others_for_admission(legacy, 2), (812 * MIB, None))
+
     def test_spill_is_reported_from_the_process_shared_usage(self):
         sample = reading({DGPU.format(40): 15881 * MIB, DGPU.format(2304): 2306 * MIB}, {DGPU.format(40): 1537 * MIB})
         self.assertTrue(gpu_memory.spill(40, sample)['spilled'])
