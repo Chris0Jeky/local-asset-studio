@@ -22,7 +22,7 @@ async def exercise_continuation_help(page, checks, posts):
     for width, height in [(1440, 900), (390, 844)]:
         await page.set_viewport_size({'width': width, 'height': height})
         for layout in ('focus', 'studio', 'immersive'):
-            await page.select_option('#workshopLayout', layout)
+            await page.select_option('#workshopLayout', layout, force=True)
             summary = help_box.locator('summary')
             assert not await help_box.evaluate('(n)=>n.open'), (width, layout)
             assert await page.locator('#uxContinuationOrigin').is_visible()

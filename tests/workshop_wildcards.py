@@ -18,7 +18,7 @@ async def exercise_wildcards(page, checks, posts):
     for width, height in [(1440, 900), (1365, 910), (390, 844)]:
         await page.set_viewport_size({'width': width, 'height': height})
         for layout in ('focus', 'studio', 'immersive'):
-            await page.select_option('#workshopLayout', layout)
+            await page.select_option('#workshopLayout', layout, force=True)
             await page.fill('#positive', 'Before AFTER')
             await page.focus('#positive')
             await page.keyboard.press('Tab')

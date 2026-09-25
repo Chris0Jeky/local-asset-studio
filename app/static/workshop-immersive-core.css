@@ -10,7 +10,6 @@ body.workshop-active {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     "heading"
-    "toolbar"
     "setup"
     "editor"
     "guidance"
@@ -20,7 +19,12 @@ body.workshop-active {
 .workshop .ux-create-heading {grid-area:heading}
 .workshop .wk-immersive-hero {grid-area:hero}
 .workshop .wk-modebar {grid-area:modes}
-.workshop .wk-toolbar {grid-area:toolbar}
+/* #772: Appearance is a closed popover. Focus and Studio put it at the end of the page title's row, so the recipe
+   chip and prompt are the first thing under the title; Immersive, which hides the title, keeps its own toolbar row. */
+.workshop .wk-appearance {grid-area:toolbar}
+.workshop:not([data-workshop-layout="immersive"]) .wk-appearance {grid-area:heading}
+.studio-main #createView.workshop:not([data-workshop-layout="immersive"]):has(#uxTransfer:not([hidden])) > .wk-appearance {grid-row:span 1/1}
+.workshop:not([data-workshop-layout="immersive"]) .ux-create-heading {padding-right:136px}
 .workshop .wk-setup-rail {grid-area:setup}
 .studio-main .workshop .editor {grid-area:editor}
 .workshop .wk-guidance {grid-area:guidance}
@@ -184,6 +188,12 @@ body.workshop-active[data-workshop-ambience="quiet-morning"] .wk-immersive-hero:
 .workshop [data-workshop-skin-choice="sakura"] .wk-skin-swatch {background:linear-gradient(135deg,#19141d,#513047 58%,#f2a8c9)}
 .workshop [data-workshop-skin-choice="retro-anime"] .wk-skin-swatch {background:linear-gradient(135deg,#080d1f,#1a2753 43%,#ec7bbd 68%,#6de2ee)}
 .workshop .wk-preference-notice {grid-column:1/-1}
+.workshop .wk-appearance {position:relative;z-index:30;justify-self:end;align-self:center;min-width:0;margin:0;padding:0;border:0;background:none}
+.workshop .wk-appearance>summary {list-style:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--muted);font-size:11px;letter-spacing:.06em;cursor:pointer;white-space:nowrap}
+.workshop .wk-appearance>summary::-webkit-details-marker {display:none}
+.workshop .wk-appearance>summary::after {content:"BE";font-size:10px}
+.workshop .wk-appearance>summary:hover,.workshop .wk-appearance[open]>summary {color:var(--text);border-color:var(--accent)}
+.workshop .wk-appearance>.wk-toolbar {position:absolute;top:calc(100% + 8px);right:0;width:min(640px,calc(100vw - 28px));z-index:60;box-shadow:var(--wk-shadow)}
 
 /* In Focus and Studio this stays one compact, legible setup band at desktop widths. */
 .workshop .wk-setup-rail {
@@ -247,10 +257,10 @@ body.workshop-active[data-workshop-skin="retro-anime"] .eyebrow {color:#f1a4d5}
 
 /* Ambience stays independent from layout without taxing the default Focus viewport. */
 .studio-main #createView.workshop[data-workshop-layout="focus"]:not([data-workshop-ambience="none"]) {
-  grid-template-areas:"heading" "hero" "toolbar" "setup" "editor" "guidance" "problems" "results";
+  grid-template-areas:"heading" "hero" "setup" "editor" "guidance" "problems" "results";
 }
 .studio-main #createView.workshop[data-workshop-layout="studio"]:not([data-workshop-ambience="none"]) {
-  grid-template-areas:"heading" "hero" "toolbar" "setup" "editor" "guidance" "problems" "results";
+  grid-template-areas:"heading" "hero" "setup" "editor" "guidance" "problems" "results";
 }
 
 /* Immersive Studio: three rails, one draft, existing controls. */
@@ -259,14 +269,13 @@ body.workshop-active[data-workshop-skin="retro-anime"] .eyebrow {color:#f1a4d5}
     grid-template-columns:minmax(430px,1.08fr) minmax(320px,.92fr);
     grid-template-areas:
       "heading heading"
-      "toolbar toolbar"
       "setup setup"
       "editor results"
       "problems problems";
     gap:22px 26px;
   }
   .studio-main #createView.workshop[data-workshop-layout="studio"]:not([data-workshop-ambience="none"]) {
-    grid-template-areas:"heading heading" "hero hero" "toolbar toolbar" "setup setup" "editor results" "problems problems";
+    grid-template-areas:"heading heading" "hero hero" "setup setup" "editor results" "problems problems";
   }
   .workshop[data-workshop-layout="studio"] .wk-setup-rail {max-width:none}
   .workshop[data-workshop-layout="studio"] .editor {grid-area:editor!important;max-width:none!important}

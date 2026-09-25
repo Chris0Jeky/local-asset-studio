@@ -67,8 +67,8 @@ def main() -> None:
         page.wait_for_selector('#workshopRecipeChange')
         page.wait_for_function("document.querySelector('#createView').__workshopAmbience")
 
-        page.select_option('#workshopLayout', 'immersive')
-        page.select_option('#workshopAmbience', 'night-shift')
+        page.select_option('#workshopLayout', 'immersive', force=True)
+        page.select_option('#workshopAmbience', 'night-shift', force=True)
         page.wait_for_function("createView.__workshopAmbience.snapshot().renderMode === 'poster'")
         decision = page.evaluate('createView.__workshopAmbience.snapshot()')
         assert decision['assetId'] == 'night-shift'
@@ -103,13 +103,13 @@ def main() -> None:
         page.wait_for_function("createView.__workshopAmbience.snapshot().renderMode === 'poster'")
         checks.append({'name': 'forced colours use token fallback and restore the poster'})
 
-        page.select_option('#workshopAmbience', 'none')
+        page.select_option('#workshopAmbience', 'none', force=True)
         page.wait_for_function("createView.__workshopAmbience.snapshot().renderMode === 'none'")
         assert page.locator('#workshopAmbienceHero').is_hidden()
         assert page.evaluate('submitted') == 0
         checks.append({'name': 'None removes the decorative surface without submitting'})
 
-        page.select_option('#workshopAmbience', 'night-shift')
+        page.select_option('#workshopAmbience', 'night-shift', force=True)
         page.evaluate("""
             createView.__workshopAmbience.destroy();
             document.getElementById('workshopImmersiveStyles')?.remove();

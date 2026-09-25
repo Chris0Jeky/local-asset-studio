@@ -72,6 +72,27 @@ test('immersive presentation exposes local ambience, visual skin and read-only g
   assert.doesNotMatch(js, /workshopGuidanceAction[^\n]+click\(\)/);
 });
 
+test('appearance is a closed popover in the title row; the recipe chip and prompt come first (#772)', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  assert.match(js, /el\('details', 'wk-appearance'\); appearance\.id = 'workshopAppearance'/);
+  assert.match(js, /appearance\.append\(appearanceSummary, toolbar\)/);
+  assert.match(js, /editor\.before\(hero, modebar, appearance, setupRail\)/);
+  assert.doesNotMatch(js, /appearance\.open = true/, 'Appearance is never opened for the user');
+  for (const id of ['workshopLayout', 'workshopAmbience', 'workshopSkin']) assert.ok(js.includes(id), id + ' keeps its id');
+  // Only Immersive, which hides the title, keeps a toolbar row; Focus and Studio templates give it no row at all.
+  for (const name of ['workshop-immersive-core.css', 'workshop-immersive.css']) {
+    const css = fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8');
+    for (const [, selector, body] of css.matchAll(/([^{}]+)\{([^{}]*grid-template-areas[^{}]*)\}/g))
+      if (!selector.includes('immersive')) assert.doesNotMatch(body, /toolbar/, name + ': ' + selector.trim());
+    if (name === 'workshop-immersive-core.css') {
+      assert.match(css, /\.workshop:not\(\[data-workshop-layout="immersive"\]\) \.wk-appearance \{grid-area:heading\}/);
+      assert.match(css, /\.workshop \.wk-appearance>\.wk-toolbar \{position:absolute;/);
+    }
+  }
+});
+
 test('Studio shell loads the read-only context boundary before the workshop adapter', () => {
   const fs = require('node:fs');
   const path = require('node:path');

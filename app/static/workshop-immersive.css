@@ -32,7 +32,6 @@
   grid-template-areas:
     "heading"
     "transfer"
-    "toolbar"
     "setup"
     "editor"
     "guidance"
@@ -44,7 +43,6 @@
     "heading"
     "transfer"
     "hero"
-    "toolbar"
     "setup"
     "editor"
     "guidance"
@@ -69,7 +67,6 @@
     grid-template-areas:
       "heading heading"
       "transfer transfer"
-      "toolbar toolbar"
       "setup setup"
       "editor results"
       "problems problems";
@@ -79,7 +76,6 @@
       "heading heading"
       "transfer transfer"
       "hero hero"
-      "toolbar toolbar"
       "setup setup"
       "editor results"
       "problems problems";
