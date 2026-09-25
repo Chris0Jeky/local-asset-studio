@@ -1,4 +1,9 @@
-"""Issue #804: abbreviated Hugging Face commits bind as immutable prefixes."""
+"""Issue #804: abbreviated Hugging Face commits bind as immutable prefixes.
+
+Issue #1017: a hex-named moving branch must be selected with an explicit
+``refs/heads/<hex-name>`` ref; an unqualified 7-39-hex revision stays a
+commit prefix and keeps rejecting an unrelated resolved SHA.
+"""
 from __future__ import annotations
 
 import copy
@@ -96,7 +101,69 @@ class RevisionPrefixTests(unittest.TestCase):
         value = _snapshot(HF_SHA[:7])
         mutated = copy.deepcopy(value)
         mutated["record"]["immutable_revision"] = "f" * 40
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "conflicts with requested commit"):
+            source.read_snapshot_json(_encode(mutated))
+
+
+class HexNamedBranchTests(unittest.TestCase):
+    """Issue #1017: explicit ``refs/heads/<hex-name>`` selects a hex-named branch."""
+
+    HEX_NAME = "deadbeef"
+    HEX_BRANCH = "refs/heads/deadbeef"
+
+    def test_unrelated_sha_is_not_in_hex_prefix_family(self):
+        self.assertFalse(HF_SHA.casefold().startswith(self.HEX_NAME.casefold()))
+
+    def test_namespaced_hex_branch_resolves_to_unrelated_sha(self):
+        from urllib.parse import quote
+
+        expected_url = (
+            f"https://huggingface.co/api/models/{REPO}/revision/"
+            f"{quote(self.HEX_BRANCH, safe='')}?blobs=true"
+        )
+        self.assertIn("refs%2Fheads%2Fdeadbeef", expected_url)
+        calls: list[str] = []
+
+        def transport(request):
+            calls.append(request.url)
+            self.assertEqual(request.method, "GET")
+            self.assertEqual(request.url, expected_url)
+            return source.HttpResponse(
+                request_url=request.url,
+                final_url=request.url,
+                status=200,
+                headers={"content-type": "application/json"},
+                body=_encode(_hf_payload(HF_SHA)),
+            )
+
+        value = source.snapshot_huggingface(REPO, self.HEX_BRANCH, transport)
+        self.assertEqual(value["record"]["requested_revision"], self.HEX_BRANCH)
+        self.assertEqual(value["record"]["immutable_revision"], HF_SHA)
+        self.assertEqual(value["request"]["url"], expected_url)
+        self.assertEqual(value["response"]["final_url"], expected_url)
+        self.assertFalse(value["download_authorized"])
+        self.assertFalse(value["record"]["download_authorized"])
+        self.assertEqual(calls, [expected_url])
+        self.assertEqual(source.read_snapshot_json(_encode(value)), value)
+
+    def test_unqualified_same_hex_rejects_unrelated_sha(self):
+        with self.assertRaisesRegex(ValueError, "conflict"):
+            _snapshot(self.HEX_NAME, sha=HF_SHA)
+
+    def test_stored_tampering_namespaced_to_unqualified_hex_fails(self):
+        from urllib.parse import quote
+
+        value = _snapshot(self.HEX_BRANCH, sha=HF_SHA)
+        mutated = copy.deepcopy(value)
+        mutated["record"]["requested_revision"] = self.HEX_NAME
+        unqualified_url = (
+            f"https://huggingface.co/api/models/{REPO}/revision/"
+            f"{quote(self.HEX_NAME, safe='')}?blobs=true"
+        )
+        mutated["request"]["url"] = unqualified_url
+        mutated["response"]["final_url"] = unqualified_url
+        mutated["response"]["redirect_chain"] = []
+        with self.assertRaisesRegex(ValueError, "conflicts with requested commit"):
             source.read_snapshot_json(_encode(mutated))
 
 

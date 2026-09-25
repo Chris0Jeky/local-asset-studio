@@ -12,6 +12,43 @@ When a Hugging Face sibling supplies both top-level and LFS byte-count or SHA-25
 
 Civitai returned version and nested model IDs must be positive integers, not booleans or numerically equal floats. Saved response status must likewise be an actual integer.
 
+## Hex-named branches require an explicit namespaced ref (#1017)
+
+A caller that means a moving branch whose name happens to be hexadecimal must
+request it as `refs/heads/<hex-name>` (for example `refs/heads/deadbeef`). The
+namespaced form is treated as a moving ref: it may resolve to any unrelated
+full 40-hex commit, the resolved commit is retained as `immutable_revision`,
+and the original `refs/heads/<hex-name>` binding is retained as
+`requested_revision` through stored re-entry.
+
+An unqualified 7-39-hex revision keeps the #804 commit-prefix meaning in
+source intake: the returned commit must start with it case-insensitively,
+and an unrelated SHA fails before any snapshot or claim is returned. A full
+40-hex revision remains an exact pin. Stored re-entry enforces the same rule,
+so rewriting a stored `requested_revision` from `refs/heads/deadbeef` to
+`deadbeef` fails even when the stored request and response URLs are re-pointed
+to the unqualified route. Requests percent-encode the slash
+(`refs/heads/deadbeef` to `refs%2Fheads%2Fdeadbeef`).
+
+Official endpoint evidence (25 Sep 2026, read-only GET, no mutation):
+`revision/main?blobs=true` and `revision/refs%2Fheads%2Fmain?blobs=true` on
+`google-bert/bert-base-uncased` both returned HTTP 200 and the same full SHA
+`86b5e0934494bd15c9632b12f734a8a67f723594`. This verifies the namespaced
+branch route exists on the official API; it does not prove any specific hex
+branch exists publicly.
+
+- [revision/main?blobs=true](https://huggingface.co/api/models/google-bert/bert-base-uncased/revision/main?blobs=true)
+- [revision/refs%2Fheads%2Fmain?blobs=true](https://huggingface.co/api/models/google-bert/bert-base-uncased/revision/refs%2Fheads%2Fmain?blobs=true)
+
+`HexNamedBranchTests` in `tests/test_adult_illustration_source_revision_prefix.py`
+covers this synthetically with no provider calls or model bytes: a namespaced
+hex branch resolving to an unrelated SHA succeeds and round-trips through
+stored validation with its binding intact, the unqualified same hex revision
+against the same SHA fails, and stored tampering from the namespaced ref to
+the unqualified hex fails. The success path asserts the encoded
+`refs%2Fheads%2Fdeadbeef` request URL, a single metadata GET, and retained
+`download_authorized` falsehoods.
+
 ## Generation and re-entry share the same checks
 
 Both snapshot constructors now validate their finished proposals through the existing saved-snapshot validator before returning. The explicit fetch wrapper therefore cannot finalize a contradictory proposal into its cache. These semantic failures are not retried as transport errors.
