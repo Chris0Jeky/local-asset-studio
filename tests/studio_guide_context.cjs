@@ -20,9 +20,11 @@ class Element {
   remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);this.parent=null;}
   contains(node){return node===this||this.children.some(n=>n.contains?.(node));}
   querySelector(){return null;} closest(){return null;} getClientRects(){return this.hidden?[]:[{}];}
-  matches(){return true;} focus(){} scrollIntoView(){} addEventListener(){}
+  matches(){return true;} focus(options){this.focusCalled=(this.focusCalled||0)+1;this.focusOptions=options||null;} scrollIntoView(){} addEventListener(){}
 }
-async function page(check='readiness',target=null,recommended=null) {
+async function page(check='readiness',target=null,recommended=null,opts={}) {
+  const initialURL=opts.url||'http://127.0.0.1:8191/?guide=fixture&stage=one#create';
+  const storedValue=Object.prototype.hasOwnProperty.call(opts,'stored')?opts.stored:null;
   const document=hub(), window=hub(), main=new Element('main'), controls=new Map(), calls=[], writes=[];
   const node=id=>{if(!controls.has(id)){const e=new Element();e.id=id;controls.set(id,e);}return controls.get(id);};
   const walk=(n,id)=>n.id===id?n:n.children.map(c=>walk(c,id)).find(Boolean);
@@ -32,9 +34,9 @@ async function page(check='readiness',target=null,recommended=null) {
   document.querySelectorAll=()=>[];document.defaultView={getComputedStyle:()=>({visibility:'visible'})};
   for(const id of ['createView','positive','reference','lastReference'])node(id);
   node('positive').value='Current wording';
-  let location=new URL('http://127.0.0.1:8191/?guide=fixture&stage=one#create');
+  let location=new URL(initialURL);
   const context=vm.createContext({window,document,URL,URLSearchParams,AbortController,Event,CustomEvent,Blob,
-    setInterval(){},setTimeout,clearTimeout,console,confirm:()=>true,localStorage:{getItem(){return null;},setItem(k,v){writes.push([k,v]);}},
+    setInterval(){},setTimeout,clearTimeout,console,confirm:()=>true,localStorage:{getItem(){return typeof storedValue==='string'?storedValue:(storedValue==null?null:JSON.stringify(storedValue));},setItem(k,v){writes.push([k,v]);}},
     get location(){return location;},history:{pushState(_s,_t,url){location=new URL(url,location);},replaceState(_s,_t,url){location=new URL(url,location);}},
     fetch:async(url,options={})=>{calls.push([options.method||'GET',url]);if(url==='/api/catalog')return new Promise(()=>{});
       let data;
@@ -151,4 +153,42 @@ test('recipe selection refreshes guide targets after rendering without losing ea
   await p.ready();p.run("renderSelected=()=>{throw Error('Fixture render failure');}");
   assert.throws(()=>p.run("selectPreset('b')"),/Fixture render failure/);
   assert.equal(p.evidence().dataset.state,'unknown','failed render cannot keep old success');
+});
+test('resume restores the saved stage when the URL names no step',async()=>{
+  const p=await page('manual',null,null,{url:'http://127.0.0.1:8191/?guide=fixture#create',stored:{version:2,step:0,stage:'two',job_id:''}});
+  assert.equal(p.heading(),'Two');
+  assert.match(p.panel().children.map(n=>n.textContent||'').join(' '),/Resumed at step 2/);
+  const q=await page('manual',null,null,{url:'http://127.0.0.1:8191/?guide=fixture#create',stored:{version:2,step:1}});
+  assert.equal(q.heading(),'Two');
+  assert.match(q.panel().children.map(n=>n.textContent||'').join(' '),/Resumed at step 2/);
+  const startOver=p.action('Start over');
+  assert.ok(startOver,'a Start over control is offered');
+  startOver.onclick();
+  assert.equal(p.heading(),'One');
+  assert.doesNotMatch(p.panel().children.map(n=>n.textContent||'').join(' '),/Resumed at step/);
+});
+test('an explicit URL stage or step wins over saved storage without a resume note',async()=>{
+  const p=await page('manual',null,null,{stored:{version:2,step:1,stage:'two',job_id:''}});
+  assert.equal(p.heading(),'One');
+  assert.doesNotMatch(p.panel().children.map(n=>n.textContent||'').join(' '),/Resumed at step/);
+  assert.equal(p.action('Start over'),undefined);
+  const q=await page('manual',null,null,{url:'http://127.0.0.1:8191/?guide=fixture&step=1#create',stored:{version:2,step:0,stage:'one',job_id:''}});
+  assert.equal(q.heading(),'Two');
+  assert.doesNotMatch(q.panel().children.map(n=>n.textContent||'').join(' '),/Resumed at step/);
+});
+test('corrupt or out-of-range storage restarts at the first step',async()=>{
+  for(const stored of ['not-json{{{',JSON.stringify({version:2,step:9,stage:'missing'}),JSON.stringify({version:2,step:-1}),JSON.stringify(['two'])]){
+    const p=await page('manual',null,null,{url:'http://127.0.0.1:8191/?guide=fixture#create',stored});
+    assert.equal(p.heading(),'One',String(stored));
+    assert.doesNotMatch(p.panel().children.map(n=>n.textContent||'').join(' '),/Resumed at step/,String(stored));
+  }
+});
+test('a same-page step change moves focus to the new panel heading without scrolling',async()=>{
+  const p=await page('manual');
+  p.action('Next step').onclick();
+  assert.equal(p.heading(),'Two');
+  const heading=p.panel().children.find(n=>n.tagName==='h2');
+  assert.equal(heading.tabindex,'-1');
+  assert.equal(heading.focusCalled,1);
+  assert.deepEqual({...heading.focusOptions},{preventScroll:true});
 });

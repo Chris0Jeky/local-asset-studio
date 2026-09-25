@@ -8,6 +8,7 @@
   const FOOTER = 'The guide checks readiness; it never generates, approves art or clears licences.';
   const make = (tag, text, attrs = {}) => { const n = document.createElement(tag); if (text !== null) n.textContent = text; for (const [k,v] of Object.entries(attrs)) n.setAttribute(k,v); return n; };
   const main = document.querySelector('main'); if (!main) return;
+  let refocusHeading = false;
   async function read(path, active = new Set()) {
     const controller = new AbortController(); active.add(controller);
     const timeout = setTimeout(() => controller.abort(), 10000);
@@ -22,9 +23,20 @@
     let stopped = false, busy = false, epoch = 0, autoTimer = null, shown = false, lastState = 'unknown';
     const active = new Set(), get = path => read(path, active);
     const guide = data.guides?.find(g => g.id === id); if (!guide) throw Error('Unknown guided path.');
-    let index = guide.steps.findIndex(s => s.id === params.get('stage'));
-    if (index < 0) index = Number(params.get('step') || 0);
-    if (!Number.isInteger(index) || index < 0 || index >= guide.steps.length) index = 0;
+    let stored = {};
+    try { stored = JSON.parse(localStorage.getItem('studio.guide.' + id)) || {}; } catch (_) { stored = {}; }
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) stored = {};
+    let index = 0, resumed = false;
+    const urlStage = params.get('stage'), urlStep = params.get('step');
+    if (urlStage !== null || urlStep !== null) {
+      index = guide.steps.findIndex(s => s.id === urlStage);
+      if (index < 0) index = Number(urlStep || 0);
+      if (!Number.isInteger(index) || index < 0 || index >= guide.steps.length) index = 0;
+    } else {
+      const stageIndex = typeof stored.stage === 'string' ? guide.steps.findIndex(s => s.id === stored.stage) : -1;
+      if (stageIndex >= 0) { index = stageIndex; resumed = true; }
+      else if (Number.isInteger(stored.step) && stored.step >= 0 && stored.step < guide.steps.length) { index = stored.step; resumed = true; }
+    }
     const step = guide.steps[index], targetURL = C.route(step.route, location.origin);
     const recipeStep = ['recipe','reference_recipe'].includes(step.check) && Array.isArray(guide.recommended) && guide.recommended.some(x => typeof x === 'string' && PRESET_ID.test(x));
     const panel = make('section', null, {class:'studio-guide-panel', 'aria-label':'Guided walkthrough'});
@@ -37,8 +49,6 @@
     const runLabel = make('label', 'Specific run to inspect (no execution)'); runLabel.append(run);
     run.append(make('option', 'Loading available runs', {value:''}));
     runLabel.hidden = !['output','review'].includes(step.check);
-    let stored = {};
-    try { stored = JSON.parse(localStorage.getItem('studio.guide.' + id)) || {}; } catch (_) {}
     if (typeof stored.job_id === 'string' && /^[A-Za-z0-9_-]{1,96}$/.test(stored.job_id)) {
       run.append(make('option', 'Retained run ' + stored.job_id, {value:stored.job_id})); run.value = stored.job_id;
     }
@@ -66,7 +76,7 @@
       }
       cleanup(); history.pushState(null, '', url.pathname + url.search + url.hash);
       showTool(url);
-      if (url.searchParams.get('guide') === id) mount(data, url.searchParams);
+      if (url.searchParams.get('guide') === id) { refocusHeading = true; mount(data, url.searchParams); }
     }
     function restorePosition() {
       const url = new URL(location.href); cleanup(); showTool(url);
@@ -222,9 +232,16 @@
       cleanup(); const url = new URL(location.href); ['guide','step','stage'].forEach(k => url.searchParams.delete(k));
       history.replaceState(null, '', url.pathname + url.search + url.hash);
     });
-    panel.append(progress,heading,detail,stepList,runLabel,evidence,actions,targetNote,make('small',FOOTER));
+    if (resumed) add('Start over', () => go(0), 'startOverGuide');
+    if (resumed) panel.append(progress,heading,make('p', `Resumed at step ${index + 1} of ${guide.steps.length}.`, {class:'studio-guide-resume'}),detail,stepList,runLabel,evidence,actions,targetNote,make('small',FOOTER));
+    else panel.append(progress,heading,detail,stepList,runLabel,evidence,actions,targetNote,make('small',FOOTER));
     main.prepend(panel);
     display(step.check === 'manual' ? C.evaluate('manual') : C.unknown('Reading current evidence.')); find(); persist(); runCheck();
+    if (refocusHeading) {
+      refocusHeading = false;
+      heading.setAttribute('tabindex', '-1');
+      heading.focus({preventScroll:true});
+    }
   }
   read('/api/workflow-studio/guides').then(data => mount(data, params)).catch(error => {
     main.prepend(make('p', 'Guided walkthrough unavailable: ' + error.message + ' Open Guided workflows to choose a path; the Studio remains usable.', {role:'status'}));
