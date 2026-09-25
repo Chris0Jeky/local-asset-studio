@@ -357,6 +357,8 @@ async function restoredDraftOffersStartFresh() {
   assert.equal(storage.getItem('studio.promptLab.draft'), null, 'Start fresh forgets the stored draft');
   assert.equal(second.element('draft-restored').hidden, true, 'The notice closes');
   assert.notEqual(second.element('brief').value, 'A brief I left behind', 'The brief returns to the starting text');
+  await new Promise(resolve => setTimeout(resolve, 700));
+  assert.equal(storage.getItem('studio.promptLab.draft'), null, 'Start fresh does not store the starting brief as a new draft');
   assert.ok(second.requests.every(r => !r.url.includes('/api/jobs')), 'Nothing is submitted');
 }
 // Terminal line: its absence is how the Python wrapper tells a stalled chain from a completed run.
