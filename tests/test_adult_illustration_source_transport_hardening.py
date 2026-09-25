@@ -300,6 +300,18 @@ class SourceTransportHardeningTests(unittest.TestCase):
             transport(HttpRequest(url=CIVITAI_URL + "?", headers=dict(CIVITAI_HEADERS)))
         self.assertEqual(exchange.calls, [])
 
+    def test_huggingface_encoded_blobs_query_is_refused_before_exchange(self) -> None:
+        for raw_query in ("blobs=tru%65", "blobs=%74rue"):
+            exchange = ScriptedExchange()
+            transport = BoundedProviderTransport(exchange=exchange)
+            url = (
+                "https://huggingface.co/api/models/owner/model/revision/main?"
+                + raw_query
+            )
+            with self.assertRaisesRegex(ValueError, "blobs=true only"):
+                transport(HttpRequest(url=url, headers=dict(CIVITAI_HEADERS)))
+            self.assertEqual(exchange.calls, [])
+
     def test_civitai_bare_query_redirect_is_refused_without_follow(self) -> None:
         exchange = ScriptedExchange(
             WireResponse(
