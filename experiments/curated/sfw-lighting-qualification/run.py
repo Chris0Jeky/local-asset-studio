@@ -83,13 +83,21 @@ def main(name):
         time.sleep(4)
         state = request(STUDIO + "/api/jobs/" + job_id)
         if state.get("status") in {"completed", "failed", "stopped", "abandoned", "uncertain"}:
+            recipe_error = None
             try:
                 recipe = request(STUDIO + "/api/jobs/" + job_id + "/recipe")
                 write(HERE / (name + ".recipe.json"), recipe)
-            except (OSError, ValueError):
-                pass
-            write(result_path, {"name": name, "intent": intent, "job": state,
-                                "observed_at": time.time()})
+            except (OSError, ValueError) as error:
+                recipe_error = f"{type(error).__name__}: {error}"
+            result = {"name": name, "intent": intent, "job": state,
+                      "observed_at": time.time()}
+            if recipe_error:
+                result["recipe_capture_error"] = recipe_error
+            write(result_path, result)
+            if recipe_error:
+                print(name, "recipe capture failed; reconcile the saved job and marker",
+                      file=sys.stderr, flush=True)
+                return 1
             marker.unlink()
             print(name, state.get("status"), state.get("prompt_ids"), flush=True)
             return 0 if state.get("status") == "completed" else 1
