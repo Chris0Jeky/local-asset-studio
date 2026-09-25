@@ -33,8 +33,20 @@ matching the listing and `.runtime/downloads/receipts.json`.
 
 The first run included checkpoint load time; its 67.4 seconds is not a
 LoRA-speed comparison. Mean grayscale was computed from each complete output
-with Pillow and is only a simple brightness measure. No peak VRAM was
-measured, so none is inferred.
+with Pillow and is only a simple brightness measure. The saved job submissions
+also contain sampled GPU-memory high-water marks:
+
+| Run | Samples | Peak dedicated GiB | Peak shared MiB | Spilled |
+| --- | ---: | ---: | ---: | --- |
+| Baseline | 140 | 6.881 | 161.5 | No |
+| Moderate | 42 | 6.765 | 78.8 | No |
+| Strong | 30 | 6.751 | 78.7 | No |
+| Baseline 2 | 30 | 6.633 | 78.7 | No |
+| Moderate 2 | 34 | 6.737 | 78.7 | No |
+
+These are sampled process counters from each `job.submissions[0].gpu_memory`
+receipt, not isolated measurements of the LoRA's memory cost. No causal VRAM
+difference is inferred from them.
 
 ## Visual inspection
 
