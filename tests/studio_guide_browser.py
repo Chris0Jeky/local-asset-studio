@@ -26,15 +26,22 @@ DOC=new_document({'1':{'class_type':'Sink','inputs':{'text':'Synthetic guide fix
 FAIL_HEALTH=False
 HEALTH_DELAY=0
 CALLS=[]
+HEALTH_GATE_ARMED=False
+HEALTH_GATE_START=threading.Event()
+HEALTH_GATE_RELEASE=threading.Event()
 
 class Handler(fixture.Handler):
     def do_GET(self):
-        global FAIL_HEALTH, HEALTH_DELAY
+        global FAIL_HEALTH, HEALTH_DELAY, HEALTH_GATE_ARMED
         path=urlsplit(self.path).path; CALLS.append(('GET',path))
         if path=='/api/workflow-studio/guides':return self.json(guides())
         if path=='/api/workflow-studio/nodes':return self.json(SCHEMA)
         if path=='/api/workflow-studio/documents':return self.json({'documents':[]})
         if path=='/api/health':
+            if HEALTH_GATE_ARMED:
+                HEALTH_GATE_ARMED=False
+                HEALTH_GATE_START.set()
+                HEALTH_GATE_RELEASE.wait(timeout=15)
             if HEALTH_DELAY:time.sleep(HEALTH_DELAY)
             if FAIL_HEALTH:return self.json({'error':'Synthetic unavailable health'},503)
             return self.json({'online':True,'worker_alive':True,'schema_available':True,'missing_models':{},'devices':[],'comfy_url':'http://127.0.0.1:8188'})
@@ -51,7 +58,7 @@ class Handler(fixture.Handler):
 
 
 def run(out):
-    global FAIL_HEALTH, HEALTH_DELAY
+    global FAIL_HEALTH, HEALTH_DELAY, HEALTH_GATE_ARMED
     from playwright.sync_api import sync_playwright
     out.mkdir(parents=True,exist_ok=True); checks=[]; errors=[]; history_checks=[]
     fixture.ASSETS[0]['job_id']='fixture-job'; fixture.ASSETS[0]['review']='unreviewed'
@@ -115,10 +122,16 @@ def run(out):
             page.evaluate('selected.runtime_block=null;updateReady()')
             FAIL_HEALTH=True;page.click('#checkGuideStep');page.wait_for_function('!document.querySelector("#checkGuideStep").disabled')
             check(page.locator('#guideEvidence').get_attribute('data-state')=='unknown','failed readiness is unknown rather than success')
-            FAIL_HEALTH=False;HEALTH_DELAY=.5
-            page.click('#checkGuideStep');page.fill('#positive','Changed while checking')
+            FAIL_HEALTH=False;HEALTH_DELAY=0
+            HEALTH_GATE_START.clear();HEALTH_GATE_RELEASE.clear();HEALTH_GATE_ARMED=True
+            try:
+                page.click('#checkGuideStep')
+                check(HEALTH_GATE_START.wait(timeout=15),'readiness request entered the handler before the draft changed')
+                page.fill('#positive','Changed while checking')
+            finally:
+                HEALTH_GATE_ARMED=False;HEALTH_GATE_RELEASE.set()
             page.wait_for_function('!document.querySelector("#checkGuideStep").disabled')
-            check('discarded' in page.locator('#guideEvidence').inner_text(),'late readiness cannot certify a changed draft');HEALTH_DELAY=0
+            check('discarded' in page.locator('#guideEvidence').inner_text(),'late readiness cannot certify a changed draft')
             visit('first-image','output');page.wait_for_selector('.studio-guide-target')
             check(page.evaluate('document.activeElement !== document.querySelector("#generate")') and page.locator('#generate').evaluate('n=>n.classList.contains("studio-guide-target")'),'arriving at the Generate step highlights the button without focusing it')
             page.click('#checkGuideStep');page.wait_for_selector('#guideObservedRun option[value="fixture-job"]',state='attached')
