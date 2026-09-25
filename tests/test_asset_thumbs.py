@@ -1,5 +1,6 @@
 """Workspace thumbnails: sizes, aspect, alpha, orientation, cache, refusals and bounded decodes (synthetic images only)."""
 import io
+import re
 import sys
 import tempfile
 import threading
@@ -56,6 +57,14 @@ class ThumbnailTests(unittest.TestCase):
                 _, _, image = self.thumb(self.register(source))
                 self.assertEqual(image.mode, 'RGBA'); self.assertEqual(image.getchannel('A').getextrema()[0], 0)
 
+    def test_trns_transparency_in_rgb_and_grey_pngs_is_kept(self):
+        rgb = Image.new('RGB', (64, 64), (200, 10, 10)); rgb.paste((0, 0, 0), (0, 0, 64, 20))
+        grey = Image.new('L', (64, 64), 200); grey.paste(0, (0, 0, 64, 20))
+        for source in (encoded(rgb, transparency=(0, 0, 0)), encoded(grey, transparency=0)):
+            with self.subTest(mode=Image.open(io.BytesIO(source)).mode):
+                _, _, image = self.thumb(self.register(source))
+                self.assertEqual(image.mode, 'RGBA'); self.assertEqual(image.getchannel('A').getextrema(), (0, 255))
+
     def test_exif_orientation_is_applied_before_sizing(self):
         exif = Image.Exif(); exif[0x0112] = 6  # stored landscape, displayed rotated to portrait
         _, _, image = self.thumb(self.register(encoded(Image.new('RGB', (800, 400), 'maroon'), 'JPEG', exif=exif), '.jpg'), 256)
@@ -101,6 +110,21 @@ class ThumbnailTests(unittest.TestCase):
         asset = self.register(encoded(Image.new('RGB', (100, 100))))
         with patch.object(Image, 'MAX_IMAGE_PIXELS', 1000), self.assertRaises(WorkspaceError) as caught: asset_thumbs.thumbnail(self.store, asset)
         self.assertEqual(caught.exception.status, 422)
+
+    def test_decompression_bomb_warnings_are_refused_too(self):
+        asset = self.register(encoded(Image.new('RGB', (100, 100))))  # 10,000 px: above 6,000, below the 12,000 error line
+        with patch.object(Image, 'MAX_IMAGE_PIXELS', 6000), self.assertRaises(WorkspaceError) as caught: asset_thumbs.thumbnail(self.store, asset)
+        self.assertEqual((caught.exception.status, caught.exception.code), (422, 'thumbnail_unreadable'))
+
+    def test_browser_url_version_is_pinned_to_the_rendering_version(self):
+        script = (Path(__file__).parents[1] / 'app/static/workspace.js').read_text(encoding='utf-8')
+        self.assertEqual(re.findall(r'const ASSET_THUMB_VERSION *= *(\d+);', script), [str(asset_thumbs.THUMB_VERSION)])
+        self.assertIn("'/thumb?v='+ASSET_THUMB_VERSION+'-'+encodeURIComponent(String(asset.sha256||'').slice(0,16))", script)
+        self.assertEqual(asset_thumbs.url_version('ab' * 32), f'{asset_thumbs.THUMB_VERSION}-' + 'ab' * 8)
+        tag = asset_thumbs.etag('ab' * 32, 384)
+        self.assertTrue(asset_thumbs.names_content([asset_thumbs.url_version('ab' * 32)], tag))
+        for values in (None, [], ['ab' * 32], [f'{asset_thumbs.THUMB_VERSION + 1}-' + 'ab' * 8], [asset_thumbs.url_version('cd' * 32)]):
+            self.assertFalse(asset_thumbs.names_content(values, tag), values)
 
     def test_trashed_images_keep_serving_like_their_original_file(self):
         asset = self.register(encoded(Image.new('RGB', (40, 40))))

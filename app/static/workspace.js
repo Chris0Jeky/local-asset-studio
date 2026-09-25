@@ -1,3 +1,5 @@
+// Thumbnail rendering version; keep in step with THUMB_VERSION in app/asset_thumbs.py (tests/test_asset_thumbs.py pins both).
+const ASSET_THUMB_VERSION = 1;
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
 let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0, assetObservedWorkspace;
 // The tab journal retains drafts and exact commands; Workspace owns saved metadata.
@@ -406,7 +408,9 @@ function assetSelectionCanProceed(action) {
 }
 function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=null;$('#assetSearch').value='';$('#assetType').value='all';renderAssets();$('#assetSearch').focus();}
 // Small previews use the server's cached WEBP thumbnail; detail and review views keep the original.
-function assetThumbUrl(asset) {return '/api/assets/'+encodeURIComponent(asset.id)+'/thumb';}
+// ?v=<rendering version>-<sha256 prefix> names the bytes, so only then may the server mark the response immutable
+// (an ID alone can recur across Workspaces).
+function assetThumbUrl(asset) {return '/api/assets/'+encodeURIComponent(asset.id)+'/thumb?v='+ASSET_THUMB_VERSION+'-'+encodeURIComponent(String(asset.sha256||'').slice(0,16));}
 function assetPreview(asset, detail=false) {
   const url=asset.url, alt=esc(asset.title);
   if(asset.media_type==='image')return detail?'<img loading="lazy" decoding="async" src="'+url+'" alt="'+alt+'">':'<img loading="lazy" decoding="async" src="'+esc(assetThumbUrl(asset))+'" data-full-src="'+esc(url)+'" alt="'+alt+'">';

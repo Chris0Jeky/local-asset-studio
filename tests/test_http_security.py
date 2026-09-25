@@ -6,6 +6,7 @@ import json
 import socket
 import threading
 import unittest
+import unittest.mock
 
 import test_production as fixtures
 from http_refusal_transport import atomic_json_post
@@ -95,20 +96,30 @@ class ResponseSecurityTests(unittest.TestCase):
     def test_local_asset_file_is_content_addressed_and_answers_if_none_match(self):
         path='/api/assets/'+self.asset['id']+'/file';tag='"'+self.asset['sha256']+'"'
         raw,headers=self.secured(self.request(path),200);self.assertEqual(raw,png())
-        self.assertEqual(headers['etag'],tag);self.assertEqual(headers['cache-control'],'private, max-age=31536000, immutable')
+        self.assertEqual(headers['etag'],tag);self.assertEqual(headers['cache-control'],'private, no-cache','an ID-only URL always revalidates')
         for match in (tag,'W/'+tag,'"other", '+tag,'*'):
             with self.subTest(match=match):
                 raw,headers=self.secured(self.request(path,headers={'If-None-Match':match}),304)
-                self.assertEqual(raw,b'');self.assertEqual(headers['etag'],tag);self.assertIn('immutable',headers['cache-control'])
+                self.assertEqual(raw,b'');self.assertEqual((headers['etag'],headers['cache-control']),(tag,'private, no-cache'))
         raw,_=self.secured(self.request(path,headers={'If-None-Match':'"stale"'}),200);self.assertEqual(raw,png())
         raw,headers=self.secured(self.request(path,headers={'Range':'bytes=0-7'}),206);self.assertEqual((raw,headers['etag']),(png()[:8],tag))
+        entry=self.studio.assets.file_entry
+        with unittest.mock.patch.object(self.studio.assets,'file_entry',side_effect=lambda i:(entry(i)[0],dict(entry(i)[1],sha256='not-a-digest'))):
+            raw,headers=self.secured(self.request(path,headers={'If-None-Match':'*'}),200)
+        self.assertEqual(raw,png());self.assertNotIn('etag',headers);self.assertNotIn('cache-control',headers)
     def test_local_asset_thumbnail_is_cached_webp_with_its_own_tag(self):
         import io
         from PIL import Image
         path='/api/assets/'+self.asset['id']+'/thumb'
         raw,headers=self.secured(self.request(path),200)
-        self.assertEqual(headers['content-type'],'image/webp');self.assertIn('immutable',headers['cache-control'])
+        self.assertEqual((headers['content-type'],headers['cache-control']),('image/webp','private, no-cache'))
         tag=headers['etag'];self.assertTrue(tag.startswith('"'+self.asset['sha256']+'-384-'),tag)
+        named='?v='+server.asset_thumbs.url_version(self.asset['sha256']);self.assertRegex(named,r'^\?v=\d+-[0-9a-f]{16}$')
+        _,headers=self.secured(self.request(path+named),200)
+        self.assertEqual((headers['etag'],headers['cache-control']),(tag,'private, max-age=31536000, immutable'),'only a content-named URL is immutable')
+        for other in ('?v='+self.asset['sha256'],'?v=0-'+self.asset['sha256'][:16],'?v=1-'+'0'*16):
+            _,headers=self.secured(self.request(path+other),200);self.assertEqual(headers['cache-control'],'private, no-cache',other)
+        _,headers=self.secured(self.request(path+named,headers={'If-None-Match':tag}),304);self.assertIn('immutable',headers['cache-control'])
         with Image.open(io.BytesIO(raw)) as image:self.assertEqual((image.format,image.size),('WEBP',(8,12)),'never upscaled')
         raw,_=self.secured(self.request(path,headers={'If-None-Match':tag}),304);self.assertEqual(raw,b'')
         _,headers=self.secured(self.request(path+'?w=256'),200);self.assertIn('-256-',headers['etag'])
