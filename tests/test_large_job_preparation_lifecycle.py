@@ -186,6 +186,59 @@ class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
         self.assertFalse(result["final"]["ready"])
         self.assertFalse(studio.backends.busy)
 
+    def test_termination_wait_failure_preserves_backend_and_releases_own_gate(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        original.wait_error = TimeoutError("stop timed out")
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "refused")
+        self.assertEqual(result["state"], "unknown")
+        self.assertFalse(result["final"]["ready"])
+        self.assertIn("did not stop", result["final"]["reason"])
+        self.assertFalse(result["generation_submitted"])
+        self.assertEqual(len(result["actions"]), 2)
+        restart_action = result["actions"][1]
+        self.assertEqual(restart_action["kind"], "restart")
+        self.assertEqual(restart_action["state"], "termination_failed_or_alive")
+        self.assertEqual(restart_action["error"], "TimeoutError")
+        self.assertIs(studio.backends.current, original)
+        self.assertEqual(len(studio.backends.configured), 1)
+        self.assertIs(studio.backends.configured[0], original)
+        self.assertTrue(original.terminated)
+        self.assertEqual(studio.backends.launches, 0)
+        self.assertFalse(studio.backends.busy)
+
+    def test_launch_transport_loss_without_reconciled_process_is_unknown_and_releases_gate(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        def wait(timeout):
+            studio.backends.current = None
+            studio.backends.configured = []
+        original.wait = wait
+        attempts = {"count": 0}
+        def failing_launch(profile):
+            attempts["count"] += 1
+            raise ConnectionError("transport lost")
+        studio.backends.launch_recovery = failing_launch
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "refused")
+        self.assertEqual(result["state"], "unknown")
+        self.assertFalse(result["final"]["ready"])
+        self.assertIn("retry is prohibited", result["final"]["reason"])
+        self.assertFalse(result["generation_submitted"])
+        self.assertEqual(len(result["actions"]), 2)
+        restart_action = result["actions"][1]
+        self.assertEqual(restart_action["kind"], "restart")
+        self.assertEqual(restart_action["state"], "launch_unknown")
+        self.assertEqual(restart_action["error"], "ConnectionError")
+        self.assertEqual(attempts["count"], 1)
+        self.assertEqual(studio.backends.launches, 0)
+        self.assertIsNone(studio.backends.current)
+        self.assertEqual(studio.backends.configured, [])
+        self.assertFalse(studio.backends.busy)
+
     def test_idle_policy_requires_separate_opt_in_and_cannot_restart(self):
         studio = Studio(self.root, [observation(commit=20 * GIB)])
         result = self.controller(studio).run(self.request(mode="idle_policy"))

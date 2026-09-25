@@ -199,4 +199,20 @@ class RuntimeRecoveryTests(unittest.TestCase):
         tail=[__import__("json").loads(l)["status"] for l in r.log_path.read_text(encoding="utf-8").splitlines()]
         self.assertEqual(tail,["healthy","healthy","offline","idle","idle"],"an explicit reset is logged every time")
 
+    def test_busy_switch_gate_holds_recovery_without_probe_or_launch(self):
+        manager = self.studio.backends
+        manager.busy = True
+        manager.listener = None
+        manager.matching = []
+        manager.online = False
+        self.assertEqual(self.studio.jobs, {})
+        snapshot = self.recovery.tick()
+        self.assertEqual(snapshot["status"], "reconnecting")
+        self.assertIn("waiting", snapshot["message"])
+        self.assertEqual(manager.launches, 0)
+        self.assertEqual(manager.routes, [])
+        self.assertEqual(manager.timeouts, [])
+        self.assertEqual(self.recovery.snapshot()["status"], "reconnecting")
+        self.assertTrue(manager.busy)
+
 if __name__ == "__main__": unittest.main()
