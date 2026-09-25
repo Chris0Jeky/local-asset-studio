@@ -14,9 +14,32 @@ SPEC.loader.exec_module(server)
 
 
 class LargeJobPreparationPreflightTests(LargeJobPreparationTestCase):
+    def test_ready_receipt_respects_submission_commit_floor(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB)])
+        for stage in studio.profile["stages"]:
+            stage["windows_commit_bytes"] = 10 * GIB
+        studio.required_host_commit_bytes = lambda preset, graph: 32 * GIB
+        result = self.controller(studio).run(self.request(dry_run=True))
+        self.assertEqual(result["before"]["evaluation"]["decision"], "observed_unsafe")
+        self.assertEqual(result["planned_actions"], ["release_owned_backend_cache"])
+        self.assertFalse(result["final"]["ready"])
+
+    def test_release_still_below_submission_floor_is_not_ready(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=25 * GIB)])
+        for stage in studio.profile["stages"]:
+            stage["windows_commit_bytes"] = 10 * GIB
+        studio.required_host_commit_bytes = lambda preset, graph: 32 * GIB
+        result = self.controller(studio).run(self.request())
+        self.assertEqual(len(studio.free_calls), 1)
+        self.assertEqual(result["after_release"]["evaluation"]["decision"], "observed_unsafe")
+        self.assertFalse(result["final"]["ready"])
+
     def test_low_commit_preparation_defers_only_the_host_commit_gate(self):
         studio = Studio(self.root, [observation(commit=20 * GIB)])
         low_bytes = 5 * GIB
+        studio._config["enforce_host_commit_headroom"] = True
+        studio.host_commit_required = lambda preset, graph: True
+        studio.required_host_commit_bytes = lambda preset, graph: server.Studio.required_host_commit_bytes(studio, preset, graph)
 
         def enforcing_preflight(preset, graph, refresh=False):
             if low_bytes < 32 * GIB:
@@ -28,19 +51,15 @@ class LargeJobPreparationPreflightTests(LargeJobPreparationTestCase):
 
         studio.host_commit_preflight = enforcing_preflight
 
-        def enforcing_prepare(recipe):
+        def enforcing_prepare(recipe, *, _defer_host_commit_preflight=False):
             studio.prepare_calls += 1
             preset, graph = studio._prepared(recipe)
-            studio.host_commit_preflight(preset, graph)
-            return preset, graph, Path("demo.json"), {}, 1
-
-        def deferred_prepare(recipe):
-            studio.prepare_calls += 1
-            preset, graph = studio._prepared(recipe)
+            if not _defer_host_commit_preflight:
+                studio.host_commit_preflight(preset, graph)
             return preset, graph, Path("demo.json"), {}, 1
 
         studio.prepare = enforcing_prepare
-        studio.prepare_for_large_job_preparation = deferred_prepare
+        studio.prepare_for_large_job_preparation = lambda recipe: server.Studio.prepare_for_large_job_preparation(studio, recipe)
 
         with self.assertRaises(server.StudioError) as ctx:
             studio.prepare({"preset_id": "demo", "controls": {}})
@@ -51,6 +70,7 @@ class LargeJobPreparationPreflightTests(LargeJobPreparationTestCase):
         self.assertEqual(result["phase"], "dry_run")
         self.assertEqual(result["state"], "completed")
         self.assertEqual(result["before"]["evaluation"]["decision"], "observed_unsafe")
+        self.assertEqual(result["before"]["evaluation"]["host_commit_preflight"]["state"], "unsafe")
         self.assertEqual(result["planned_actions"], ["release_owned_backend_cache"])
         self.assertEqual(studio.free_calls, [])
         self.assertEqual(studio.backends.launches, 0)
@@ -61,6 +81,7 @@ class LargeJobPreparationPreflightTests(LargeJobPreparationTestCase):
         stub = SimpleNamespace(
             config={"enforce_host_commit_headroom": True},
             host_commit_required=lambda preset, graph: True,
+            required_host_commit_bytes=lambda preset, graph: server.Studio.required_host_commit_bytes(stub, preset, graph),
             host_commit_reading=lambda refresh=False: {"available_bytes": low_bytes, "unknown_reason": None},
         )
         with self.assertRaises(server.StudioError):

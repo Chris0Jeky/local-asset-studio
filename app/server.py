@@ -692,14 +692,20 @@ class Studio:
         return size_independent or ((explicit or model_bound) and megapixels >= 1.0)
 
     def host_commit_preflight(self, preset, graph, refresh=False):
-        if not self.config.get('enforce_host_commit_headroom') or not self.host_commit_required(preset, graph): return None
+        minimum = self.required_host_commit_bytes(preset, graph)
+        if minimum is None: return None
         reading=self.host_commit_reading(refresh)
         reason=reading.get('unknown_reason');available=reading.get('available_bytes')
         if reason: raise StudioError('Host commit headroom is unavailable: '+str(reason))
-        if not isinstance(available,int) or available < HOST_COMMIT_MINIMUM:
+        if not isinstance(available,int) or available < minimum:
             actual='unknown' if not isinstance(available,int) else f'{available / 1024**3:.1f} GiB'
             raise StudioError(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission')
         return reading
+
+    def required_host_commit_bytes(self, preset, graph):
+        if self.config.get('enforce_host_commit_headroom') and self.host_commit_required(preset, graph):
+            return HOST_COMMIT_MINIMUM
+        return None
 
     def prune_disabled_loras(self, graph):
         """Drop LoRA loaders left at strength 0 and rewire whatever consumed them.
