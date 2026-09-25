@@ -80,7 +80,7 @@ def _bound_comparison(comparison, remaining_edits):
     return trimmed
 
 
-def _assemble_report(archive, evidence, lexicon, *, bound_edits):
+def _assemble_report(archive, evidence, lexicon, *, bound_edits, shared_budget=True):
     book = validate_lexicon(lexicon); observations = _observations(archive, evidence)
     targets = []; remaining_edits = MAX_COMPARISON_EDITS
     for target in _targets(archive):
@@ -89,8 +89,9 @@ def _assemble_report(archive, evidence, lexicon, *, bound_edits):
         elif observation['method'] == 'forced-alignment': status = 'not-independent'
         else:
             full = compare_text(target['text'], observation['text'], book); status = full['status']
-            comparison = _bound_comparison(full, remaining_edits) if bound_edits else full
-            if bound_edits:
+            budget = remaining_edits if shared_budget else MAX_COMPARISON_EDITS
+            comparison = _bound_comparison(full, budget) if bound_edits else full
+            if bound_edits and shared_budget:
                 remaining_edits -= len(comparison['edits'])
         targets.append({'id': target['id'], 'intended_text': target['text'],
             'text_sha256': digest_bytes(target['text'].encode('utf-8')), 'audio_sha256': target['audio_sha256'],
@@ -195,10 +196,14 @@ def load_report(run_dir, identifier):
     except (KeyError, TypeError) as exc: raise SpokenBriefError('Malformed retained QA report') from exc
     if canonical_digest(value) == canonical_digest(expected) and value['report_sha256'] == identifier:
         return value
-    # Retained pre-change reports carry full edit details with no omission
-    # marker. Verify them against the legacy full-edit projection so valid
-    # history keeps loading; anything else still fails closed below.
-    try: legacy = _assemble_report(archive, value['evidence'], value['lexicon'], bound_edits=False)
+    # Retained reports may use either the original full details or the earlier
+    # per-target bound. Verify the matching projection exactly before loading.
+    try:
+        per_target_bound = any(isinstance(target, dict)
+            and isinstance(target.get('comparison'), dict)
+            and 'edits_omitted' in target['comparison'] for target in value['targets'])
+        legacy = _assemble_report(archive, value['evidence'], value['lexicon'],
+            bound_edits=per_target_bound, shared_budget=False)
     except (KeyError, TypeError, SpokenBriefError) as exc:
         raise SpokenBriefError('Retained QA report differs from a fresh evidence projection') from exc
     if canonical_digest(value) != canonical_digest(legacy) or value['report_sha256'] != identifier:

@@ -289,6 +289,32 @@ class QATests(unittest.TestCase):
         self.assertEqual(100, loaded['targets'][-1]['comparison']['counts']['deletion'])
         self.assertEqual('empty', loaded['targets'][-1]['transcript_status'])
 
+    def test_retained_per_target_bounded_report_still_loads(self):
+        transcript = importlib.import_module('spoken_brief_transcript')
+        text = ('a ' * 100).strip()
+        archive = {'manifest_sha256': 'a' * 64, 'manifest_file_sha256': 'b' * 64,
+            'assembly_receipt_sha256': 'c' * 64, 'producer_sha256': 'd' * 64,
+            'source': {'sha256': 'e' * 64}, 'master': {'sha256': 'f' * 64},
+            'segments': [{'id': f's{i}', 'text': text, 'audio_sha256': f'{i:064x}'} for i in (1, 2)]}
+        producer = {'id': 'offline-fixture', 'revision': 'fixture-v1',
+            'runtime_sha256': 'd' * 64, 'configuration_sha256': 'e' * 64}
+        observations = [{'target': target, 'audio_sha256': audio_sha256, 'text': '',
+            'method': 'independent-asr', 'producer': producer}
+            for target, audio_sha256 in [('s1', f'{1:064x}'), ('s2', f'{2:064x}'),
+                                         ('master', archive['master']['sha256'])]]
+        evidence = {'schema_version': 1, 'manifest_sha256': archive['manifest_sha256'],
+            'master_sha256': archive['master']['sha256'], 'observations': observations}
+        retained = copy.deepcopy(self.m.build_report(archive, evidence))
+        for target in retained['targets']:
+            full = transcript.compare_text(target['intended_text'], '')
+            target['comparison'] = self.m._bound_comparison(full, self.m.MAX_COMPARISON_EDITS)
+        self.assertEqual(3 * 64, sum(len(t['comparison']['edits']) for t in retained['targets']))
+        del retained['report_sha256']
+        retained['report_sha256'] = canonical_digest(retained)
+        write_json(self.directory / 'qa' / 'reports' / (retained['report_sha256'] + '.json'), retained)
+        with patch.object(self.m, 'inspect_run', return_value=archive):
+            self.assertEqual(retained, self.m.load_report(self.directory, retained['report_sha256']))
+
     def test_many_empty_segments_share_one_report_edit_budget(self):
         from spoken_brief_exports import _json_bytes
         from spoken_brief_transport import MAX_JSON_BYTES
