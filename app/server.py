@@ -1974,6 +1974,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(416)
                 if exc.headers.get("Content-Range"): self.send_header("Content-Range", exc.headers["Content-Range"])
                 self.send_header("Content-Length", "0"); self.end_headers(); return
+        # urlopen leaves getresponse() failures unwrapped; a stalled or vanished ComfyUI is still a ComfyUI error.
+        except (TimeoutError, ConnectionError, HTTPException) as exc: raise URLError(exc) from exc
         with response:
             self.send_response(response.status)
             for key in ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "ETag", "Last-Modified"):
@@ -1981,7 +1983,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             try:
                 while chunk := response.read(64 * 1024): self.wfile.write(chunk)
-            except (BrokenPipeError, ConnectionResetError): return
+            except OSError: return  # headers are sent; a second response would corrupt the body
 
     def _cache_headers(self, etag, immutable=False):
         # `immutable` only when the URL itself names the bytes (a thumbnail's ?v=<version>-<sha256 prefix>): an asset ID

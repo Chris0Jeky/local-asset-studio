@@ -6,13 +6,15 @@ function collectionSameValues(a,b){return a.name===b.name&&a.description===b.des
 function collectionDirty(s=collectionSession){return !!s && !collectionSameValues(collectionValues(),s.baseline);}
 function collectionStatus(text,error=false){const el=$('#collectionStatus');el.textContent=text;el.classList.toggle('error',error);}
 const COLLECTION_NAME_LIMIT=100,COLLECTION_DESC_LIMIT=1000;
-// Live guidance only: the server stays the authority on these limits.
-function collectionRefreshValidation(){
+// Live guidance only: the server stays the authority on these limits. An empty name is flagged once the user
+// has typed or tried to save, not on open; hosts that embed the editor without the hint elements still work.
+function collectionRefreshValidation(showEmpty=true){
   const {name,description}=collectionValues(),nameEmpty=!name.trim(),nameOver=name.length>COLLECTION_NAME_LIMIT,descOver=description.length>COLLECTION_DESC_LIMIT;
-  $('#collectionNameCount').textContent=name.length+' / '+COLLECTION_NAME_LIMIT;$('#collectionDescriptionCount').textContent=description.length+' / '+COLLECTION_DESC_LIMIT;
-  for(const [id,bad] of [['#collectionName',nameEmpty||nameOver],['#collectionDescription',descOver]])bad?$(id).setAttribute('aria-invalid','true'):$(id).removeAttribute('aria-invalid');
-  $('#collectionNameMessage').textContent=nameOver?'Name is '+name.length+' characters; the limit is '+COLLECTION_NAME_LIMIT+'.':nameEmpty?'Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters).':'';
-  $('#collectionDescriptionMessage').textContent=descOver?'Description is '+description.length+' characters; the limit is '+COLLECTION_DESC_LIMIT+'.':'';
+  const text=(id,value)=>{const node=$(id);if(node)node.textContent=value;};
+  text('#collectionNameCount',name.length+' / '+COLLECTION_NAME_LIMIT);text('#collectionDescriptionCount',description.length+' / '+COLLECTION_DESC_LIMIT);
+  for(const [id,bad] of [['#collectionName',(showEmpty&&nameEmpty)||nameOver],['#collectionDescription',descOver]]){const node=$(id);bad?node?.setAttribute?.('aria-invalid','true'):node?.removeAttribute?.('aria-invalid');}
+  text('#collectionNameMessage',nameOver?'Name is '+name.length+' characters; the limit is '+COLLECTION_NAME_LIMIT+'.':showEmpty&&nameEmpty?'Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters).':'');
+  text('#collectionDescriptionMessage',descOver?'Description is '+description.length+' characters; the limit is '+COLLECTION_DESC_LIMIT+'.':'');
   return nameEmpty||nameOver?'#collectionName':descOver?'#collectionDescription':null;
 }
 function collectionCurrent(s){return collectionSession===s && s.epoch===collectionEpoch && $('#collectionDialog').open;}
@@ -78,7 +80,7 @@ function openCollection(id=null){
   $('#collectionDialogTitle').textContent=id?'Edit collection':'New collection';
   $('#collectionName').value=s.baseline.name;$('#collectionDescription').value=s.baseline.description;
   collectionStatus(failure?'Local recovery is unavailable: '+failure.message+' No collection write can be sent. Your input will remain visible.':recovery?'A local '+(s.pending?'unconfirmed command and draft':'draft')+' is retained in this tab for this Workspace. Restore it explicitly, or discard only the local evidence.':'Collections organize existing assets. Saving does not move files or add the current selection.',!!failure);
-  collectionCompare(s);collectionRecoveryList(s);collectionControls();collectionRefreshValidation();
+  collectionCompare(s);collectionRecoveryList(s);collectionControls();collectionRefreshValidation(false);
   if(!$('#collectionDialog').open)$('#collectionDialog').showModal();$(s.restoreRequired?'#restoreCollectionDraft':'#collectionName').focus();return true;
 }
 function restoreCollectionDraft(){
@@ -91,7 +93,7 @@ function restoreCollectionDraft(){
     collectionCompare(s,s.id?assetState.collections.find(c=>c.id===s.id)??null:null);
     collectionStatus(s.pending?'Unconfirmed command restored. Inspect status or explicitly retry its exact bytes; newer typing cannot change that command.':s.stale?'Local draft restored against a changed or deleted saved collection. Both viewpoints are shown below; no rebase or write was performed.':'Local draft restored. It has not been submitted.');
   }catch(e){s.storageError=true;collectionStatus('Local recovery could not be restored: '+e.message,true);}
-  collectionControls();collectionRefreshValidation();if(!s.storageError&&!s.restoreRequired)$('#collectionName').focus();
+  collectionControls();collectionRefreshValidation(false);if(!s.storageError&&!s.restoreRequired)$('#collectionName').focus();
 }
 function discardCollectionDraft(){
   const s=collectionSession;if(!s||!collectionCurrent(s)||s.busy||!collectionScope(s))return;

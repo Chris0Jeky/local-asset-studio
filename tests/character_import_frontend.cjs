@@ -122,5 +122,23 @@ function harness(fixture={plan,handoff,references:[{bytes:bytes.toString('base64
     assert.equal(h.requests.filter(r=>r.url==='/api/production'&&r.method==='POST').length,0,'A cancelled import must not register the case');
     assert.equal(h.$('#cancelCharacterImport').disabled,false,'Cancel must be usable after the cancelled import');
   }
+  {
+    // Cancel while the first upload is still in flight: the request is aborted, nothing uploads or registers.
+    const second=Buffer.from('second synthetic reference'),pairPlan=clone(plan),pairHandoff=clone(handoff);
+    pairPlan.canon.references.push({id:'back',role:'identity',path:'back.png',sha256:sha(second)});pairPlan.cases[0].reference_ids.push('back');
+    pairHandoff.upload_requirements.push({...pairPlan.canon.references[1],slot_index:1});
+    h=harness({plan:pairPlan,handoff:pairHandoff,references:[{bytes:bytes.toString('base64'),type:'image/png'},{bytes:second.toString('base64'),type:'image/png'}]});
+    await h.load();h.references();
+    let uploads=0;const inner=h.context.api;
+    h.context.api=(url,options={})=>{
+      if(url!=='/api/upload')return inner(url,options);
+      uploads++;
+      return new Promise((resolve,reject)=>{options.signal.addEventListener('abort',()=>reject(Object.assign(Error('aborted'),{name:'AbortError'})));h.$('#cancelCharacterImport').onclick();});
+    };
+    await h.submit();
+    assert.equal(uploads,1,'The loop stops at the aborted upload');
+    assert.match(h.$('#characterImportStatus').textContent,/Import cancelled after 0 of 2 pictures/i,'An aborted first upload counts nothing as uploaded');
+    assert.equal(h.requests.filter(r=>r.url==='/api/production'&&r.method==='POST').length,0,'An aborted import must not register the case');
+  }
   console.log('Character import controls preserve reference order, exact bytes, explicit import and no duplicate submission.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

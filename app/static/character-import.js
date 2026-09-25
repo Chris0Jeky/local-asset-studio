@@ -8,7 +8,7 @@
   const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');
   const lock=value=>{busy=value;$('#characterImportInputs').disabled=value;$('#cancelCharacterImport').disabled=false;};
   const cancelMessage=(done,total)=>done>0?'Import cancelled after '+done+' of '+total+' pictures. Nothing was imported; pictures already uploaded stay ready for another try.':'Import cancelled after 0 of '+total+' pictures. Nothing was imported.';
-  const requestAbort=()=>{abortRequested=true;try{uploadController?.abort();}catch(e){}};
+  const requestAbort=()=>{abortRequested=true;status(uploadController?'Cancelling the upload…':'Cancelling… nothing more is uploaded; a save already sent still finishes.');try{uploadController?.abort();}catch(e){}};
   function clear(){loaded=null;attempted=false;$('#characterCaseFields').hidden=true;$('#importCharacterCase').disabled=true;$('#characterReferenceFiles').innerHTML='';$('#importCharacterCase').textContent='Import planned case';}
   async function readFile(selector,label){
     const file=$(selector).files[0];require(file,label+' is required.');
