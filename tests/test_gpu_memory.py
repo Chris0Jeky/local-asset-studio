@@ -117,6 +117,14 @@ class GpuMemoryTests(unittest.TestCase):
         crowded = reading_with_totals({DGPU.format(40): int(4.8 * GIB), DGPU.format(2304): int(0.7 * GIB),
                                        DGPU.format(500): DWM_ANOMALY}, {DGPU_ADAPTER: 4 * GIB})
         self.assertEqual(gpu_memory.others_bytes(crowded, 40), int(0.7 * GIB))
+        # Another per-process reading above the whole adapter is not a credible holder even if it
+        # falls inside the looser aggregate sampling margin.
+        impossible_other = reading_with_totals({DGPU.format(40): int(4.8 * GIB), DGPU.format(2304): 5 * GIB},
+                                               {DGPU_ADAPTER: 4 * GIB})
+        self.assertIsNone(gpu_memory.others_bytes(impossible_other, 40))
+        mixed = reading_with_totals({DGPU.format(40): int(4.8 * GIB), DGPU.format(2304): int(0.7 * GIB),
+                                     DGPU.format(500): 5 * GIB}, {DGPU_ADAPTER: 4 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(mixed, 40), int(0.7 * GIB))
 
     def test_others_still_count_before_comfy_process_counter_appears(self):
         sample = reading_with_totals({DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: 3 * GIB})

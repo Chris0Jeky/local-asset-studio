@@ -96,7 +96,9 @@ def _reconcile(values, total, own_pid=None):
     if excluded or summed > limit:
         own_value = values.get(own_pid, 0) if own_pid is not None else 0
         if own_pid is not None and own_value > total:
-            credible = sum(value for pid, value in values.items() if pid != own_pid and pid not in excluded)
+            others = [(pid, value) for pid, value in values.items() if pid != own_pid]
+            credible = sum(value for pid, value in others if pid not in excluded and value <= total)
+            if not credible and any(value > total for _, value in others): return excluded, None, True
             return excluded, min(total, credible), True
         return excluded, max(0, total - values.get(own_pid, 0)), True
     return [], sum(value for pid, value in values.items() if pid != own_pid), False
