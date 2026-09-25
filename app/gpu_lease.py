@@ -42,8 +42,8 @@ def _stamp(seconds):
 class GpuLease:
     def __init__(self, studio, clock=time.time):
         self.studio = studio; self.clock = clock; self.lock = threading.RLock()
-        self.path = studio.root / ".runtime" / "gpu-lease.json"
-        self.log_path = studio.root / ".runtime" / "gpu-lease.log"
+        self.path = studio.root / ".runtime" / "studio-gpu-lease.json"
+        self.log_path = studio.root / ".runtime" / "studio-gpu-lease.log"
         self.record = None; self.last_release = None
         try: saved = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, ValueError): saved = None

@@ -87,9 +87,20 @@ class GpuLeaseTests(unittest.TestCase):
         self.assertEqual(result["stopped_now"], [{"profile": "primary", "pid": 4242, "created_at": 1000.0, "entry": "C:/fake/ComfyUI/main.py"}])
         # Every endpoint was checked idle (offline allowed), then the running one rechecked strictly before termination.
         self.assertEqual(self.studio.backends.idle_calls, [("primary", True), ("hidream", True), ("primary", False)])
-        saved = json.loads((self.studio.root / ".runtime/gpu-lease.json").read_text(encoding="utf-8"))
+        saved = json.loads((self.studio.root / ".runtime/studio-gpu-lease.json").read_text(encoding="utf-8"))
         self.assertEqual(saved["record"]["holder"], "local-qwen")
-        self.assertIn('"event": "granted"', (self.studio.root / ".runtime/gpu-lease.log").read_text(encoding="utf-8"))
+        self.assertIn('"event": "granted"', (self.studio.root / ".runtime/studio-gpu-lease.log").read_text(encoding="utf-8"))
+
+    def test_the_older_agent_coordination_file_is_never_touched(self):
+        # .runtime/gpu-lease.json is a different, older agent-coordination record (holder/queue/note,
+        # read by experiments/curated/overnight-20260923/labkit.py); the Studio lease must not share it.
+        legacy = self.studio.root / ".runtime" / "gpu-lease.json"
+        legacy.parent.mkdir(parents=True, exist_ok=True)
+        original = '{"holder": null, "queue": [], "free_for": null, "note": "keep me"}'
+        legacy.write_text(original, encoding="utf-8")
+        self.lease.acquire({"holder": "local-qwen", "ttl_seconds": 600})
+        self.lease.release({"holder": "local-qwen"})
+        self.assertEqual(legacy.read_text(encoding="utf-8"), original)
 
     def test_busy_queue_unverified_listener_studio_work_and_switch_refuse_without_stopping(self):
         manager = self.studio.backends; payload = {"holder": "local-qwen", "ttl_seconds": 600}
@@ -102,7 +113,7 @@ class GpuLeaseTests(unittest.TestCase):
         manager.work = False; manager.busy = True
         self.refused(self.lease.acquire, payload, 409, "backend_switch_active")
         self.assertEqual(manager.processes["primary"].terminated, 0); self.assertFalse(self.lease.snapshot()["held"])
-        self.assertFalse((self.studio.root / ".runtime/gpu-lease.json").exists())
+        self.assertFalse((self.studio.root / ".runtime/studio-gpu-lease.json").exists())
 
     def test_unconfirmed_exit_does_not_grant_the_lease(self):
         self.studio.backends.processes["primary"] = FakeProcess(exits=False)
@@ -146,7 +157,7 @@ class GpuLeaseTests(unittest.TestCase):
         self.now[0] += 600
         later = GpuLease(self.studio, clock=lambda: self.now[0])
         self.assertIsNone(later.active()); self.assertEqual(later.snapshot()["last_release"]["reason"], "expired")
-        (self.studio.root / ".runtime/gpu-lease.json").write_text('{"record": {"holder": "local-qwen", "expires_at": "never"}}', encoding="utf-8")
+        (self.studio.root / ".runtime/studio-gpu-lease.json").write_text('{"record": {"holder": "local-qwen", "expires_at": "never"}}', encoding="utf-8")
         self.assertIsNone(GpuLease(self.studio, clock=lambda: self.now[0]).active())
 
 
