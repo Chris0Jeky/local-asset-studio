@@ -3,18 +3,75 @@ from __future__ import annotations
 
 import copy
 from typing import Any
+from urllib.parse import quote
 
 from backend_contracts import queue_is_idle
 import resource_admission
 from large_job_prep_common import (
-    ACTIVE_JOB_STATES, TERMINAL_PRODUCTION_STATES, TERMINAL_SUBMISSION_STATES,
-    PreparationError, _process_identity, _queue_summary,
+    AT_REST_JOB_STATES, AT_REST_PRODUCTION_STATES, BLOCKS_ALL, BLOCKS_RESTART,
+    HISTORY_TIMEOUT_SECONDS, IN_FLIGHT_JOB_STATES, MAX_HISTORY_PROMPTS, MAX_HISTORY_RECORDS, PROMPT_ID,
+    IN_FLIGHT_PRODUCTION_STATES, TERMINAL_SUBMISSION_STATES, UNRESOLVED_JOB_STATES,
+    UNRESOLVED_PRODUCTION_STATES, PreparationError, WorkBlockedError, _blocker_summary,
+    _process_identity, _queue_summary,
 )
 
 
 class RuntimeMixin:
-    def _active_work(self) -> list[dict[str, str]]:
-        blockers: list[dict[str, str]] = []
+    @staticmethod
+    def _open_prompts(job: dict[str, Any]) -> list[str] | None:
+        """Retained prompt IDs whose outcome is not yet recorded; None when unreadable."""
+        ids, submissions = job.get("prompt_ids") or [], job.get("submissions") or []
+        if not isinstance(ids, list) or not isinstance(submissions, list):
+            return None
+        done = {item.get("prompt_id") for item in submissions
+                if isinstance(item, dict) and item.get("status") in TERMINAL_SUBMISSION_STATES}
+        result: list[str] = []
+        for prompt_id in ids + [item.get("prompt_id") if isinstance(item, dict) else None for item in submissions
+                                if not isinstance(item, dict) or item.get("status") not in TERMINAL_SUBMISSION_STATES]:
+            if prompt_id in done or prompt_id in result:
+                continue
+            if not isinstance(prompt_id, str):
+                return None
+            result.append(prompt_id)
+        return result
+
+    def _plan_prompts(self, state: dict[str, Any], jobs: dict[str, Any]) -> list[str] | None:
+        attempts = state.get("attempts") or {}
+        if not isinstance(attempts, dict):
+            return None
+        result: list[str] = []
+        for attempt in attempts.values():
+            if not isinstance(attempt, dict):
+                return None
+            job = jobs.get(attempt.get("job_id")) if isinstance(attempt.get("job_id"), str) else None
+            if isinstance(job, dict):
+                found = self._open_prompts(job)
+            else:
+                raw = attempt.get("prompt_ids") or []
+                found = raw + [attempt["prompt_id"]] if "prompt_id" in attempt and isinstance(raw, list) else raw
+                if not isinstance(found, list) or not all(isinstance(item, str) for item in found):
+                    found = None
+            if found is None:
+                return None
+            result.extend(item for item in found if item not in result)
+        return result
+
+    def _work_blockers(self) -> list[dict[str, Any]]:
+        """Classify every Studio record as blocking all actions, only restart, or nothing.
+
+        A restart blocker carries its open prompt IDs internally (``_prompts``; None when
+        unreadable); an unresolved record without any never touched a ComfyUI history.
+        """
+        blockers: list[dict[str, Any]] = []
+
+        def add(kind: str, identifier: Any, status: str, blocks: str, prompts: list[str] | None = None) -> None:
+            item = {"kind": kind, "id": str(identifier)[:128], "status": status[:64], "blocks": blocks}
+            if blocks == BLOCKS_RESTART:
+                if prompts == []:
+                    return
+                item["_prompts"] = prompts
+            blockers.append(item)
+
         jobs = getattr(self.studio, "jobs", {})
         if not isinstance(jobs, dict):
             raise PreparationError("Studio job state is unavailable")
@@ -23,17 +80,24 @@ class RuntimeMixin:
                 raise PreparationError("Studio job state is invalid")
             status = str(job.get("status", "unknown"))
             submissions = job.get("submissions") or []
-            unresolved = any(
-                not isinstance(item, dict) or item.get("status") not in TERMINAL_SUBMISSION_STATES
-                for item in submissions
-            )
-            if job.get("pending_submission") or status in ACTIVE_JOB_STATES or unresolved:
-                blockers.append({"kind": "studio_job", "id": str(identifier)[:128], "status": status[:64]})
+            open_submissions = [item for item in submissions if not isinstance(item, dict)
+                                or item.get("status") not in TERMINAL_SUBMISSION_STATES] if isinstance(submissions, list) else [None]
+            # A pending marker retained on a locally abandoned job is a terminal disposition (as for put-away).
+            pending = job.get("pending_submission") is not None and status != "abandoned"
+            # Only an observing receipt on an unresolved job at rest waits for Resume observation;
+            # any other open submission may still be submitting.
+            submitting = any(not isinstance(item, dict) or item.get("status") != "observing"
+                             or status not in UNRESOLVED_JOB_STATES for item in open_submissions)
+            known = status in IN_FLIGHT_JOB_STATES or status in UNRESOLVED_JOB_STATES or status in AT_REST_JOB_STATES
+            if pending or status in IN_FLIGHT_JOB_STATES or submitting or not known:
+                add("studio_job", identifier, status, BLOCKS_ALL)  # an unrecognized status fails closed
+            elif status in UNRESOLVED_JOB_STATES or open_submissions:
+                add("studio_job", identifier, status, BLOCKS_RESTART, self._open_prompts(job))
         reference_jobs = getattr(self.studio, "reference_jobs", None)
         if reference_jobs is not None:
             try:
                 if reference_jobs.busy():
-                    blockers.append({"kind": "reference_job", "id": "active", "status": "busy_or_retained"})
+                    add("reference_job", "active", "busy_or_retained", BLOCKS_ALL)
             except Exception as exc:
                 raise PreparationError("Reference-job state is unavailable") from exc
         production = getattr(self.studio, "production", None)
@@ -49,9 +113,83 @@ class RuntimeMixin:
                     raise PreparationError("Production state contains an invalid project record")
                 state = item["state"]
                 status = str(state.get("status", "unknown"))
-                if status not in TERMINAL_PRODUCTION_STATES or state.get("pending_submission"):
-                    blockers.append({"kind": "production", "id": str(item.get("id", "unknown"))[:128], "status": status[:64]})
+                identifier = item.get("id", "unknown")
+                if state.get("pending_submission") or status in IN_FLIGHT_PRODUCTION_STATES:
+                    add("production", identifier, status, BLOCKS_ALL)
+                elif status in UNRESOLVED_PRODUCTION_STATES:
+                    add("production", identifier, status, BLOCKS_RESTART, self._plan_prompts(state, jobs))
+                elif status not in AT_REST_PRODUCTION_STATES:
+                    add("production", identifier, status, BLOCKS_ALL)  # unrecognized: fail closed
         return blockers
+
+    def _history_state(self, prompt_id: str) -> str:
+        """Whether the selected backend still holds a prompt's /history; errors stay unknown."""
+        if not PROMPT_ID.fullmatch(prompt_id):
+            return "unknown"
+        manager = self.studio.backends
+        try:
+            value = manager.request(manager.profiles[manager.active], "/history/" + quote(prompt_id, safe=""),
+                                    HISTORY_TIMEOUT_SECONDS)
+        except Exception:
+            return "unknown"
+        if not isinstance(value, dict):
+            return "unknown"
+        return "history_present" if prompt_id in value else "history_absent"
+
+    def _restart_history(self, blockers: list[dict[str, Any]], verified_absent: frozenset | None
+                         ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], frozenset]:
+        """Drop restart blockers whose open prompts the selected backend no longer holds.
+
+        With ``verified_absent`` (under the Studio lock) nothing is fetched: only a record
+        already proved absent, with the same prompt IDs, passes.
+        """
+        remaining: list[dict[str, Any]] = []
+        checks: list[dict[str, Any]] = []
+        absent: set = set()
+        cache: dict[str, str] = {}
+        budget = MAX_HISTORY_PROMPTS
+        for index, item in enumerate(item for item in blockers if item["blocks"] == BLOCKS_RESTART):
+            prompts = item["_prompts"]
+            key = (item["kind"], item["id"], tuple(prompts or ()))
+            if verified_absent is not None:
+                result = "history_absent" if prompts and key in verified_absent else "unknown"
+            elif prompts is None or index >= MAX_HISTORY_RECORDS or len(set(prompts) - set(cache)) > budget:
+                result = "unknown"  # unreadable or beyond the bound: fail closed
+            else:
+                states = []
+                for prompt_id in prompts:
+                    if prompt_id not in cache:
+                        budget -= 1
+                        cache[prompt_id] = self._history_state(prompt_id)
+                    states.append(cache[prompt_id])
+                result = ("history_present" if "history_present" in states
+                          else "unknown" if "unknown" in states else "history_absent")
+            checks.append({"kind": item["kind"], "id": item["id"], "prompt_ids": len(prompts or ()), "result": result})
+            if result == "history_absent":
+                absent.add(key)
+            else:
+                remaining.append(item)
+        return remaining, checks, frozenset(absent)
+
+    def _check_work(self, message: str, *, restart: bool = False,
+                    verified_absent: frozenset | None = None) -> dict[str, Any]:
+        """Refuse on in-flight work, and before a restart on unresolved work; return the summary."""
+        blockers = self._work_blockers()
+        summary = _blocker_summary(blockers)
+        if summary["blocks_all"]:
+            raise WorkBlockedError(message, summary)
+        if not restart:
+            return summary
+        remaining, checks, absent = self._restart_history(blockers, verified_absent)
+        summary = _blocker_summary(remaining, checks)
+        if remaining:
+            raise WorkBlockedError(
+                "Unresolved Studio work may still need its ComfyUI history. Open the job and use Resume "
+                "observation to collect its result first; the restart would erase ComfyUI's record of it.",
+                summary, "restart_blocked_by_unresolved_work",
+            )
+        summary["_history_absent"] = absent
+        return summary
 
     def _backend_snapshot(self, *, expected_identity: dict[str, Any] | None = None,
                           expected_profile_id: str | None = None) -> tuple[dict[str, Any], Any]:
@@ -143,9 +281,7 @@ class RuntimeMixin:
         }
 
     def _context(self, recipe: dict[str, Any]) -> dict[str, Any]:
-        blockers = self._active_work()
-        if blockers:
-            raise PreparationError("Active, partial or uncertain Studio work blocks resource cleanup")
+        self._check_work("In-flight Studio work (queued, submitting or running) blocks resource cleanup")
         first_backend, _ = self._backend_snapshot()
         preset, graph, _path, _controls, _batch = self.studio.prepare(copy.deepcopy(recipe))
         observation = self.observer(self.studio)
@@ -163,9 +299,9 @@ class RuntimeMixin:
         second_backend, _ = self._backend_snapshot(
             expected_identity=first_backend["process"], expected_profile_id=first_backend["profile_id"]
         )
-        if self._active_work():
-            raise PreparationError("Studio work changed while preparation was being observed")
+        blockers = self._check_work("Studio work changed while preparation was being observed")
         result = {
+            "blockers": blockers,
             "workflow_identity": identity,
             "profile": None if profile is None else {
                 "profile_sha256": profile["profile_sha256"],
@@ -183,16 +319,16 @@ class RuntimeMixin:
         return result
 
     def _recheck(self, expected_identity: dict[str, Any], expected_profile_id: str) -> tuple[dict[str, Any], Any]:
-        if self._active_work():
-            raise PreparationError("New Studio work arrived; lifecycle action was refused")
+        message = "New Studio work arrived; lifecycle action was refused"
+        self._check_work(message)
         with self.studio.lock:
-            if self._active_work():
-                raise PreparationError("New Studio work arrived; lifecycle action was refused")
+            self._check_work(message)
             return self._backend_snapshot(
                 expected_identity=expected_identity, expected_profile_id=expected_profile_id
             )
 
-    def _claim_backend(self, expected_identity: dict[str, Any], expected_profile_id: str) -> tuple[dict[str, Any], Any]:
+    def _claim_backend(self, expected_identity: dict[str, Any], expected_profile_id: str,
+                       verified_absent: frozenset = frozenset()) -> tuple[dict[str, Any], Any]:
         """Recheck and take the switch gate in one critical section.
 
         ``backends.busy`` is the gate ``Studio.prepare``, ``switch``, reference jobs and
@@ -200,6 +336,10 @@ class RuntimeMixin:
         while the owned backend is being stopped and relaunched.
         """
         with self.studio.lock:
+            # Unresolved work at rest blocks only this action: a restart discards ComfyUI history.
+            # No network under the lock: only records already proved absent may pass.
+            self._check_work("New Studio work arrived; lifecycle action was refused", restart=True,
+                             verified_absent=verified_absent)
             backend, process = self._recheck(expected_identity, expected_profile_id)
             manager = self.studio.backends
             if manager.busy:
@@ -222,7 +362,6 @@ class RuntimeMixin:
         backend_after, _ = self._backend_snapshot(
             expected_identity=expected_identity, expected_profile_id=expected_profile_id
         )
-        if self._active_work():
-            raise PreparationError("Studio work changed while post-action resources were being measured")
+        self._check_work("Studio work changed while post-action resources were being measured")
         return {"observation": observation, "evaluation": evaluation, "backend": backend_after,
                 "queue_before_observation": backend["queue"]}

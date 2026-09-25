@@ -89,3 +89,85 @@ python -m unittest discover -s tests   (at b2194480)                       4628 
 Mutation checks: removing the `busy` claim fails the gate test, and removing the
 unknown-after-action rule fails three tests. Nothing was run against the live Studio or
 ComfyUI; the live acceptance described above is still owed.
+
+## Live proof finding (25 Sep 2026)
+
+The coordinator ran the owner-approved live proof on the configured PC. The command refused
+every request, including `dry_run: true`, with "Active, partial or uncertain Studio work
+blocks resource cleanup". The ComfyUI queue was empty and nothing was running. The blockers
+were five Studio jobs from 12 and 23 Sep in `uncertain`, each with one `observing`
+submission ("Restarted while remote job state was unknown; use Resume observation..."), and
+production plans in `planned`, `awaiting_review`, `interrupted` and `uncertain`. The old
+gate blocked every job in `uncertain`/`partial`, every unresolved submission and every plan
+outside `completed`/`failed`/`abandoned`/`not_submitted`. A real library always holds such
+records, so the command could never run.
+
+The gate now classifies each record by what each action can harm:
+
+| Class | Records | Blocks |
+| --- | --- | --- |
+| In-flight | job `queued`/`waiting`/`submitting`/`running`; job `pending_submission` (unless `abandoned`); an open submission that is not `observing` on an `uncertain`/`partial`/`interrupted` job; an unrecognized or missing job status; plan `queued`/`running`/`observing` or `pending_submission`; an unrecognized plan status; a busy reference job; a non-idle ComfyUI queue | every action, dry run included |
+| Unresolved at rest | job `uncertain`/`partial`/`interrupted`, or with `observing` submissions; plan `uncertain`/`interrupted`. Each counts only while it retains an open prompt ID that the selected backend may still hold in `/history` | backend restart only (phase `restart_blocked_by_unresolved_work`) |
+| At rest | plan `planned`/`awaiting_review`/`reviewed`/`published`/`stopped`/`completed`/`failed`/`abandoned`/`not_submitted`/`cancelled`; job `completed`/`failed`/`abandoned`/`not_submitted`/`cancelled`; an unresolved record with no open prompt ID | nothing |
+
+A restart discards ComfyUI `/history`, which a later Resume observation needs (#864).
+`/free` leaves history alone, so release stays allowed.
+
+**History check.** Before a restart, and in a dry run that asks for one, the command checks
+each unresolved record's open prompt IDs against the selected backend:
+
+- **Which prompt IDs count:** retained `prompt_ids` and open submission receipts, minus
+  receipts already `completed` or `failed`. For a plan, its attempts' jobs, or the attempt's
+  own prompt IDs.
+- **How it asks:** a read-only `GET /history/<prompt_id>` through the backend manager's
+  loopback request path, with a 3-second timeout.
+- **What the answer means:**
+  - A mapping without the ID means the history is already gone, so the record does not block.
+  - A mapping that contains the ID keeps the block.
+  - So does any error, timeout, non-mapping answer or unreadable prompt list.
+- **Bounds:** at most 20 records and 50 distinct prompt IDs are checked. Anything beyond the
+  bounds stays blocking.
+- **Receipt:** `blockers.history_checks` records each check as `{kind,id,prompt_ids,result}`,
+  where `result` is `history_present`, `history_absent` or `unknown`.
+- **Under the switch lock:** the recheck makes no network call. It lets through only records
+  already proved absent with the same prompt IDs. Anything new blocks.
+- **Refusal text:** "Open the job and use Resume observation to collect its result first;
+  the restart would erase ComfyUI's record of it."
+
+Every receipt carries `blockers`: the counts plus at most 20 `{kind,id,status,blocks}` items,
+with in-flight blockers listed first. It also carries `history_checked`, which is false when
+restart-level counts were not checked against history. Refusals list the blockers too.
+
+**Dry run.** A dry run with unresolved work whose history may remain drops the restart from
+`planned_actions` and sets `restart_blocked_by_unresolved_work`.
+
+**Rechecks.** The rechecks before and after `/free` use the in-flight classification. The
+pre-restart check and the recheck under the switch lock add the unresolved class. The check
+after the restart uses the in-flight classification only, because the history is already gone
+by then. The `backends.busy` hold and the `unknown` state after any attempted action are
+unchanged.
+
+```text
+python -m unittest discover -s tests -p "test_large_job_preparation*.py"   46 tests OK
+python -m unittest discover -s tests -p "test_resource_admission*.py"      21 tests OK
+python -m unittest discover -s tests -p "test_server.py"                   83 tests OK
+python scripts/validate-repo.py                                             PASS
+```
+
+Mutation checks each failed the new tests, and the tests passed again after restoration:
+
+- restoring the old all-blocking rule;
+- ignoring unresolved work before a restart;
+- treating a submitting receipt as observing;
+- dropping the recheck before `/free`;
+- disabling the in-flight plan rule;
+- treating absent history as blocking;
+- treating a history request error as absent;
+- removing the record bound;
+- fetching history under the switch lock;
+- dropping `cancelled` from the at-rest plans;
+- letting an unknown job status through;
+- using the restart level after the restart.
+
+The live proof is re-owed on this classification. Nothing here called the live Studio or
+ComfyUI.

@@ -54,15 +54,16 @@ class LifecycleMixin:
     def _restart(self, journal: dict[str, Any], receipt: dict[str, Any], context: dict[str, Any],
                  current: dict[str, Any]) -> dict[str, Any]:
         expected = current["backend"]["process"]
-        backend, process = self._claim_backend(expected, current["backend"]["profile_id"])
+        backend, process = self._claim_backend(expected, current["backend"]["profile_id"],
+                                               context.get("_history_absent", frozenset()))
         try:
             restarted = self._restart_held(journal, receipt, expected, backend, process)
         finally:
             # Released on readiness and on every failure; the snapshot below rechecks the gate.
             self._release_backend()
 
-        if self._active_work():
-            raise PreparationError("New Studio work arrived after restart; readiness was not granted")
+        # The restart already happened, so only in-flight work can still refuse readiness here.
+        self._check_work("New Studio work arrived after restart; readiness was not granted")
         observation = self.observer(self.studio)
         evaluation = self._evaluate(
             context["workflow_identity"], context["_profile"], observation, context["reservations"]

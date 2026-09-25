@@ -62,12 +62,13 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertEqual(studio.backends.launches, 0)
 
 
-    def test_unknown_or_interrupted_production_state_fails_closed(self):
+    def test_unknown_production_state_fails_closed(self):
+        # Interrupted plans block only a restart (test_large_job_preparation_classification).
         studio = Studio(self.root, [observation(commit=20 * GIB)])
-        studio.production.items = [{"id": "project-1", "state": {"status": "interrupted"}}]
+        studio.production.items = [{"id": "project-1", "state": {"status": "unrecognized"}}]
         result = self.controller(studio).run(self.request())
         self.assertEqual(result["phase"], "refused")
-        self.assertIn("Active, partial or uncertain", result["final"]["reason"])
+        self.assertIn("In-flight", result["final"]["reason"])
         self.assertEqual(studio.free_calls, [])
         second = Studio(self.root / "malformed", [observation(commit=20 * GIB)])
         second.production.items = [{"id": "project-2"}]
@@ -75,12 +76,13 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertEqual(result["phase"], "refused")
         self.assertIn("invalid project", result["final"]["reason"])
 
-    def test_uncertain_work_blocks_all_lifecycle_actions(self):
+    def test_uncertain_job_with_pending_submission_blocks_all_lifecycle_actions(self):
         studio = Studio(self.root, [observation(commit=20 * GIB)])
         studio.jobs["unknown"] = {"status": "uncertain", "pending_submission": {"index": 0}, "submissions": []}
         result = self.controller(studio).run(self.request())
         self.assertEqual(result["phase"], "refused")
-        self.assertIn("uncertain", result["final"]["reason"])
+        self.assertIn("In-flight", result["final"]["reason"])
+        self.assertEqual(result["blockers"]["items"][0]["blocks"], "all")
         self.assertEqual(studio.free_calls, [])
 
     def test_queue_change_immediately_before_free_invalidates_plan(self):

@@ -76,6 +76,11 @@ class Manager:
         self.launch_error = None
         self.system_ready = True
         self.on_queue = None
+        # Prompt IDs the selected backend still holds in /history; any other ID answers {}.
+        self.history = set()
+        self.history_error = None
+        self.history_value = None
+        self.history_requests = []
 
     def request(self, profile, route, timeout):
         self.requests.append((route, timeout))
@@ -83,6 +88,14 @@ class Manager:
             if self.on_queue:
                 self.on_queue(self)
             return copy.deepcopy(self.queue)
+        if route.startswith("/history/"):
+            prompt_id = route[len("/history/"):]
+            self.history_requests.append(prompt_id)
+            if self.history_error:
+                raise self.history_error
+            if self.history_value is not None:
+                return copy.deepcopy(self.history_value)
+            return {prompt_id: {"status": {"completed": True}}} if prompt_id in self.history else {}
         if route == "/system_stats":
             if not self.system_ready:
                 raise OSError("not ready")
