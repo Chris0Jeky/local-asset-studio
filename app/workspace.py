@@ -36,10 +36,22 @@ MAX_REVISION = 2**53 - 1
 # register() copies a job name (AV project names reach 1,000 characters) into the initial title; the
 # edit limit is 200. Conflict projections in app/static/workspace.js accept up to this bound.
 REGISTERED_TITLE_MAX = 1024
+# The editor-conflict envelope: the editor, its conflict projection and the recovery shelf validate exactly these keys.
+# run_label is not an editor field; it travels in the receipt's applied values and in every full asset read (#939).
 METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
 # Additive, nullable asset columns: a Workspace created before them opens unchanged and its assets read as NULL (#939).
 ADDITIVE_COLUMNS = ("run_label", "prompt_excerpt")
 PROMPT_EXCERPT_CHARS = 60
+RUN_LABEL_MAX = 80
+
+
+def clean_run_label(value):
+    """A run label (#939): None, or trimmed printable text of 1-80 characters; ValueError otherwise.
+    Shared by job submission (app/server.py) and the asset edit command, where None marks the asset as the operator's own."""
+    if value is None: return None
+    if not isinstance(value, str) or not 1 <= len(value.strip()) <= RUN_LABEL_MAX or not value.strip().isprintable():
+        raise ValueError(f"label must be printable text of 1 to {RUN_LABEL_MAX} characters")
+    return value.strip()
 
 
 def digest_file(path):
@@ -380,7 +392,7 @@ class AssetWorkspace:
                 any(isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= MAX_REVISION for v in expected.values())):
             raise WorkspaceError("Supply one nonnegative safe integer revision for every selected asset")
         scope = self._validate_scope(payload["workspace_id"]) if "workspace_id" in payload else None
-        allowed = {"workspace_id", "ids", "action", "request_id", "expected_revisions", "title", "notes", "tags", "favorite", "review", "collection_id"}
+        allowed = {"workspace_id", "ids", "action", "request_id", "expected_revisions", "title", "notes", "tags", "favorite", "review", "run_label", "collection_id"}
         if set(payload) - allowed:
             raise WorkspaceError("Unknown asset command fields")
         try:
@@ -446,6 +458,10 @@ class AssetWorkspace:
                         if not isinstance(tags, list) or len(tags) > 30:
                             raise WorkspaceError("Use up to 30 tags")
                         changes["tags"] = json.dumps(list(dict.fromkeys(self.text(t, "Tag", 60) for t in tags if t)))
+                    if "run_label" in payload:
+                        # A label marks an agent run; null clears it (the operator's own). Reversible like every edit.
+                        try: changes["run_label"] = clean_run_label(payload["run_label"])
+                        except ValueError as error: raise WorkspaceError("Run label must be null or printable text of 1 to 80 characters") from error
                 else:
                     raise WorkspaceError("Unknown asset action")
                 if not changes:

@@ -30,7 +30,7 @@ from urllib.request import Request, urlopen
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from model_library import ModelLibrary
-from workspace import AssetWorkspace, WorkspaceError, digest_file, prompt_excerpt
+from workspace import AssetWorkspace, WorkspaceError, clean_run_label, digest_file, prompt_excerpt
 from references import compile_references, image_record
 from production import Production, fingerprint
 import mixed_batch
@@ -108,9 +108,8 @@ def number(value, name, lo, hi, integer=False):
 
 def run_label(value):
     """An optional caller label for a run (#939): None, or trimmed printable text of 1-80 characters."""
-    if value is None: return None
-    if not isinstance(value, str) or not 1 <= len(value.strip()) <= 80 or not value.strip().isprintable(): raise StudioError("label must be printable text of 1 to 80 characters")
-    return value.strip()
+    try: return clean_run_label(value)
+    except ValueError as error: raise StudioError(str(error)) from None
 
 class Studio:
     def __init__(self, repo_root: Path):

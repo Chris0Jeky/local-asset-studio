@@ -80,6 +80,15 @@ test('concurrent tab capacity checks serialize under the shared origin lock',asy
   const r1=await record(),r2=await record();const results=await Promise.allSettled([a.put(r1,null),b.put(r2,null)]);
   assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal((await a.list()).length,S.LIMITS.records);
 });
+test('a library source mark (#939) seals with a run label or null, and an oversized label is refused',async()=>{
+  const seal=(run_label,n)=>{const command={ids:['asset-a','asset-b'],action:'edit',run_label,workspace_id:W,expected_revisions:{'asset-a':0,'asset-b':3},request_id:'request_1234567890'};
+    return S.seal('library',{version:2,workspace_id:W,operation:{command,body:JSON.stringify(command)},selection:['asset-a','asset-b']},{id:n.repeat(32),generation:1,created_at:1,updated_at:1},crypto);};
+  for(const [label,n] of [['Agent lab','a'],[null,'b'],['界'.repeat(80),'c']]){
+    const [decoded]=await S.decode(await S.encode([await seal(label,n)],crypto),crypto);
+    assert.equal(decoded.payload.operation.command.run_label,label);
+  }
+  for(const [label,n] of [['x'.repeat(81),'d'],['','e'],[7,'f']])await assert.rejects(seal(label,n),/library|bound|invalid/i);
+});
 module.exports={envelope,memory};
 test('non-ASCII fields are bounded by UTF-8 bytes, and imported library extras are refused',async()=>{
   await assert.rejects(record(envelope('😀'.repeat(17000))),/bound|limit/i);

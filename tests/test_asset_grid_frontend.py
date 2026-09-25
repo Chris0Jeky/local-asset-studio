@@ -11,4 +11,4 @@ class AssetGridFrontend(unittest.TestCase):
         result = subprocess.run([shutil.which('node'), str(Path(__file__).with_name('asset_grid_contracts.cjs'))],
                                 capture_output=True, text=True, timeout=20)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('Asset grid contracts: 9 passed', result.stdout)
+        self.assertIn('Asset grid contracts: 11 passed', result.stdout)

@@ -227,5 +227,59 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     assert.equal(s.run("assetState.assets.filter(a=>a.review!=='unreviewed').length"),0);
     assert.match(s.el('#assetMessage').textContent,/Workspace changed while it ran\. 200 of 401 were confirmed.*earlier Workspace\. Nothing was marked in the Workspace now shown/);
   });
+  // Group source marking (#939): the same confirmed, batched edit as group triage, carrying run_label instead of review.
+  const labels=s=>JSON.parse(s.run('JSON.stringify(Object.fromEntries(assetState.assets.map(a=>[a.id,a.run_label??null])))'));
+  await check('Group source marking names count and label, hides the group under Mine, and is reversible',async()=>{
+    const s=groupLibrary(3);s.run("assetState.assets.push({...assetState.assets[0],id:'other',title:'other',preset_name:'Krea'});renderAssets()");
+    const html=s.run('assetGroupSourceHTML(assetGroups(visibleAssets(),assetGroupMode)[0])');
+    assert.match(html,/data-group-source="agent"[^>]*>Mark 3 as agent runs</);assert.doesNotMatch(html,/data-group-source="mine"/);
+    s.run('globalThis.__approve=false');assert.equal(await s.run(`bulkSourceGroup(${groupKey},'agent')`),false);assert.equal(s.writes.length,0);
+    s.run('globalThis.__approve=true');
+    const p=s.run(`bulkSourceGroup(${groupKey},'agent')`);
+    assert.match(s.run('__prompts.at(-1)'),/^Mark 3 pictures in 'WAI v17 • illustration' as agent runs \(label 'Agent lab'\)\?\n\nThe Mine view hides agent runs; Mark as mine brings them back\./);
+    assert.deepEqual(s.metadata(0),{ids:['g2','g1','g0'],action:'edit',run_label:'Agent lab'});assert.deepEqual(s.payload(0).expected_revisions,{g2:0,g1:0,g0:0});
+    s.accept(0);assert.equal(await p,true);
+    assert.deepEqual(labels(s),{g0:'Agent lab',g1:'Agent lab',g2:'Agent lab',other:null});
+    assert.deepEqual(JSON.parse(s.run('JSON.stringify(visibleAssets().map(a=>a.id))')),['other']);
+    assert.match(s.el('#assetMessage').textContent,/^Marked 3 of 3 in 'WAI v17 • illustration' as agent runs\. The Mine view now hides them/);
+    s.run("chooseAssetSource('agent')");
+    assert.match(s.run('assetGroupSourceHTML(assetGroups(visibleAssets(),assetGroupMode)[0])'),/data-group-source="mine"[^>]*>Mark 3 as mine</);
+    const back=s.run(`bulkSourceGroup(${groupKey},'mine')`);assert.match(s.run('__prompts.at(-1)'),/as yours\?\n\nThis clears their run label/);
+    assert.deepEqual(s.metadata(1),{ids:['g2','g1','g0'],action:'edit',run_label:null});s.accept(1);assert.equal(await back,true);
+    assert.deepEqual(labels(s),{g0:null,g1:null,g2:null,other:null});assert.equal(s.el('#assetSource').hidden,true);
+  });
+  await check('Group source marking changes only the other source, refuses a bad label and shares the busy lock',async()=>{
+    const s=groupLibrary(3);s.run("assetState.assets[0].run_label='Night lab';chooseAssetSource('all')");
+    const plan=JSON.parse(s.run(`JSON.stringify(assetGroupSourcePlan(${groupKey},'agent'))`));assert.deepEqual(plan.ids,['g2','g1']);assert.equal(plan.unchanged,1);
+    s.el('#bulkRunLabel').value='line\nbreak';assert.equal(await s.run(`bulkSourceGroup(${groupKey},'agent')`),false);assert.equal(s.run('__prompts.length'),0);
+    assert.match(s.el('#assetMessage').textContent,/printable characters/);
+    s.el('#bulkRunLabel').value='';const p=s.run(`bulkSourceGroup(${groupKey},'agent')`);
+    assert.match(s.run('__prompts.at(-1)'),/; 1 already an agent run keeps its label\.$/);
+    assert.equal(await s.run(`bulkReviewGroup(${groupKey},'rejected')`),false);assert.equal(s.writes.length,1);
+    s.accept(0);assert.equal(await p,true);assert.deepEqual(labels(s),{g0:'Night lab',g1:'Agent lab',g2:'Agent lab'});
+    assert.match(s.el('#assetMessage').textContent,/Mark as mine reverses it\.$/);
+  });
+  await check('Bulk review names the saved reviews it would replace and writes nothing without consent',async()=>{
+    const s=library();s.run("assetState.assets.find(a=>a.id==='a').review='selected';assetState.assets.find(a=>a.id==='b').review='needs_work';assetSelection=new Set(['a','b']);renderAssets()");
+    s.run('globalThis.__prompts=[];window.confirm=m=>{__prompts.push(m);return !!globalThis.__approve;}');
+    await s.run("bulkReviewSelected('rejected')");
+    assert.equal(s.writes.length,0);assert.match(s.run('__prompts[0]'),/^Replace 2 saved reviews\? 1 keeper, 1 needs work will change to Rejected\./);
+    assert.match(s.el('#assetBulkReviewStatus').textContent,/Nothing was changed/);
+    s.run('__approve=true');const p=s.run("bulkReviewSelected('rejected')");assert.equal(s.writes.length,2);s.accept(0);s.accept(1);await p;
+    assert.equal(s.run("assetState.assets.filter(a=>a.review==='rejected').length"),2);
+    // Only unreviewed or already-matching assets: no question is asked.
+    s.run('__prompts=[]');const again=s.run("bulkReviewSelected('rejected')");s.accept(2);s.accept(3);await again;assert.equal(s.run('__prompts.length'),0);
+  });
+  await check('Bulk review revisions are fixed at the confirm, so a refresh during the run cannot turn into an overwrite',async()=>{
+    const s=groupLibrary(4);s.run("assetGroupMode='none';assetState.assets[0].review='selected';assetSelection=new Set(['g0','g1','g2','g3']);renderAssets()");
+    const p=s.run("bulkReviewSelected('rejected')");assert.match(s.run('__prompts[0]'),/^Replace 1 saved review\? 1 keeper will change to Rejected/);
+    assert.deepEqual([0,1,2].map(i=>s.payload(i).ids[0]),['g0','g1','g2']);
+    // A refresh lands before g3's turn: it was reviewed elsewhere after the confirm and moved to revision 5.
+    s.run("Object.assign(assetState.assets.find(a=>a.id==='g3'),{metadata_revision:5,review:'selected'})");
+    for(let i=0;i<3;i++)s.accept(i);await tick();
+    assert.equal(s.writes.length,4);const last=s.payload(3).ids[0];assert.equal(last,'g3');assert.deepEqual(s.payload(3).expected_revisions,{g3:0});
+    const e=Error('Selected asset metadata changed or no longer exists; nothing changed in this batch');e.status=409;e.data={code:'asset_revision_conflict'};s.writes[3].reject(e);await p;
+    assert.equal(review(s,last),'selected');assert.match(s.el('#assetBulkReviewStatus').textContent,/3 of 4 marked as Rejected\. 1 failed/);
+  });
   console.log('Asset metadata frontend contracts passed:',count);
 })().catch(e=>{console.error(e);process.exitCode=1;});

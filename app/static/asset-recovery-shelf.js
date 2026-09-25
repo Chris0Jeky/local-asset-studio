@@ -63,7 +63,7 @@
   }
   const metadataKeys=['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'];
   const formKeys=['title','tags','review','notes'];
-  const commandKeys=['ids','action','workspace_id','expected_revisions','request_id','title','notes','tags','favorite','review','collection_id'];
+  const commandKeys=['ids','action','workspace_id','expected_revisions','request_id','title','notes','tags','favorite','review','run_label','collection_id'];
   function form(v){return keys(v,formKeys)&&title(v.title)&&text(v.tags)&&text(v.notes)&&reviews.includes(v.review);}
   function ids(v){return Array.isArray(v)&&v.length<=LIMITS.ids&&v.every(id)&&new Set(v).size===v.length;}
   function metadata(v,w){
@@ -82,6 +82,8 @@
     if(Object.hasOwn(c,'tags')&&(!Array.isArray(c.tags)||c.tags.length>200||c.tags.some(t=>!text(t,256))))return false;
     if(Object.hasOwn(c,'favorite')&&typeof c.favorite!=='boolean')return false;
     if(Object.hasOwn(c,'review')&&!reviews.includes(c.review))return false;
+    // A source mark (#939): null clears the label; otherwise at most 80 characters, as the server's run-label rule.
+    if(Object.hasOwn(c,'run_label')&&c.run_label!==null&&!(typeof c.run_label==='string'&&c.run_label.trim().length>0&&[...c.run_label].length<=80&&c.run_label.length<=160))return false;
     if(!same(parse(v.body,128*1024),c))return false;
     return slot!=='detail'||same(c.ids,[target])&&['details','favorite','trash'].includes(v.kind)&&form(v.snapshot);
   }
