@@ -199,14 +199,14 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
   3. Double-click `Start Studio.cmd`.
 
   (Original text, 24 September: agents did not restart it then because another session was using the GPU.) After the 25 September restart, the Create page no longer shows the job `60934d27` failure banner.
-- [ ] **prepare-large-job-proof (#306)**: #960 merged the prepare-large-job command. It is **off by default**: the two flags are absent from `config/local.json`, and absent means off. Its acceptance still needs your approval for one live Windows proof: dry run and refusal cases, memory counters before and after `/free`, and a backend restart only if you approve that step. Say whether to run it, and when the GPU is free.
+- [x] **prepare-large-job-proof (#306)** (ticked by an agent, 25 September 2026: the owner approved the full proof, including the restart, and it ran; its receipt is [docs/verification/2026-09-25-large-job-preparation-live-proof.md](docs/verification/2026-09-25-large-job-preparation-live-proof.md). The proof found and fixed three defects (#972, #980, #982). The final run released, checked history, restarted the owned ComfyUI, recovered 2.75 GB of commit and left the owner's LLM untouched. The original config was restored byte-for-byte, so the command is off again.): #960 merged the prepare-large-job command. It is **off by default**: the two flags are absent from `config/local.json`, and absent means off. Its acceptance still needs your approval for one live Windows proof: dry run and refusal cases, memory counters before and after `/free`, and a backend restart only if you approve that step. Say whether to run it, and when the GPU is free.
 
   **Owner answer (25 September 2026, in-session question): "Full proof incl. restart"**, approved while the GPU ran the owner's local LLM (no generation is part of the proof). **First attempt, the same day:** even a dry run refused with "Active, partial or uncertain Studio work blocks resource cleanup". The Studio holds five old `uncertain` jobs from 12 and 23 September, plus planned, awaiting-review and interrupted plans; the ComfyUI queue was empty. As merged, the gate treats any such record as active, so the command could never run on this PC. A follow-up PR narrows the gate:
   - in-flight work blocks everything;
   - unresolved but idle work blocks only the restart, because a restart discards the ComfyUI history that Resume observation needs;
   - plans at rest never block.
 
-  The proof resumes once that PR merges; the owner approved running it while the GPU runs the local LLM, because no generation is involved. This item stays open until the proof receipt exists.
+  The proof resumed after that PR merged; the owner approved running it while the GPU ran the local LLM, because no generation was involved. The receipt now exists (linked above).
 
 ## Things to glance at when convenient (not blockers)
 
