@@ -25,8 +25,8 @@ the next step:
 1. **#972: the gate refused everything, even a dry run.** Five old `uncertain` jobs and planned, awaiting-review and
    interrupted plans all counted as active work. The gate now classifies each record:
    - work in flight blocks every action;
-   - unresolved work at rest blocks only the restart, and only while the selected ComfyUI still holds its `/history`;
-   - work at rest never blocks.
+   - unresolved work at rest blocks the restart until the selected ComfyUI positively shows its prompt history absent; present or unknown history remains blocking;
+   - resolved work at rest never blocks.
 2. **#980: three failed jobs from 11 September still blocked everything.** They kept a submission receipt marked
    `observing`. Such a receipt on a terminal job now blocks only the restart, with the same history check.
 3. **#982: available VRAM was misread.** It was taken as `min(vram_free, torch_vram_free)`, which reads 0 on an empty
