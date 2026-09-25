@@ -117,10 +117,12 @@ class SpokenHTTPTests(unittest.TestCase):
     def test_transfer_encoding_identity_with_body_is_rejected_deterministically(self):
         # #1022: TE: identity with a JSON body intermittently surfaced WinError 10053 on
         # Windows instead of HTTP 400, because the refusal closed with unread bytes.
-        headers = {'Origin': self.origin, 'Content-Type': 'application/json', 'Transfer-Encoding': 'identity'}
         for _ in range(10):
+            body = json.dumps(self.bookmark())
+            headers = {'Origin': self.origin, 'Content-Type': 'application/json', 'Transfer-Encoding': 'identity',
+                       'Content-Length': str(len(body.encode('utf-8')))}
             code, _, raw = self.request('/bookmark', query={'key': self.key}, method='POST',
-                body=json.dumps(self.bookmark()), headers=headers)
+                body=body, headers=headers)
             self.assertEqual(400, code)
             self.assertFalse(json.loads(raw)['generation_submitted'])
         self.assertEqual(200, self.request('/capabilities')[0])
