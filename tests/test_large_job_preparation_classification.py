@@ -193,6 +193,44 @@ class LargeJobPreparationClassificationTests(LargeJobPreparationTestCase):
                          ["history_absent", "unknown", "unknown"])
         self.assertEqual(result["blockers"]["blocks_restart"], 2)
 
+    def test_a_terminal_job_with_a_stale_observing_receipt_blocks_only_the_restart(self):
+        # Live proof, 25 Sep 2026: three jobs from 11 Sep failed with a ComfyUI execution error but kept an
+        # observing receipt. The queue check covers a prompt that is really still running; history covers the rest.
+        for status in ("failed", "completed"):
+            with self.subTest(status):
+                studio = Studio(self.root / ("stale-" + status), [observation(commit=20 * GIB), observation(commit=40 * GIB)])
+                studio.jobs["stale"] = observing_job(status=status, prompt="p-stale")
+                result = self.controller(studio).run(self.request())
+                self.assertEqual(result["phase"], "ready_after_release")
+                self.assertEqual(len(studio.free_calls), 1)
+                self.assertEqual(result["blockers"]["blocks_all"], 0)
+                self.assertEqual(result["blockers"]["blocks_restart"], 1)
+        studio = Studio(self.root / "stale-restart", [observation(commit=20 * GIB), observation(commit=20 * GIB),
+                                                      observation(commit=40 * GIB)])
+        studio.jobs["stale"] = observing_job(status="failed", prompt="p-stale")
+        studio.backends.history.add("p-stale")
+        self.restartable(studio)
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(studio.backends.launches, 0, "History still held: the restart is refused")
+        self.assertEqual(result["phase"], "restart_blocked_by_unresolved_work")
+        # History gone: the restart proceeds.
+        studio = Studio(self.root / "stale-gone", [observation(commit=20 * GIB), observation(commit=20 * GIB),
+                                                   observation(commit=40 * GIB)])
+        studio.jobs["stale"] = observing_job(status="abandoned", prompt="p-stale")
+        original = self.restartable(studio)
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "ready_after_restart")
+        self.assertTrue(original.terminated)
+        # A prompt really still in the selected backend's queue refuses /free whatever the job record says.
+        for status in ("failed", "completed", "abandoned", "not_submitted", "cancelled"):
+            with self.subTest(queue=status):
+                studio = Studio(self.root / ("stale-busy-" + status), [observation(commit=20 * GIB), observation(commit=40 * GIB)])
+                studio.jobs["stale"] = observing_job(status=status, prompt="p-stale")
+                studio.backends.queue["queue_running"] = [[0, "p-stale", {}, {}, []]]
+                result = self.controller(studio).run(self.request())
+                self.assertEqual(studio.free_calls, [])
+                self.assertFalse(result["final"]["ready"])
+
     def test_in_flight_work_refuses_everything_including_dry_run(self):
         cases = {
             "running job": lambda s: s.jobs.__setitem__("x", {"status": "running", "submissions": []}),
@@ -201,8 +239,8 @@ class LargeJobPreparationClassificationTests(LargeJobPreparationTestCase):
                 "x", dict(observing_job(), pending_submission={"index": 1})),
             "submitting receipt": lambda s: s.jobs.__setitem__(
                 "x", {"status": "uncertain", "submissions": [{"status": "submitting"}]}),
-            "observing receipt on a failed job": lambda s: s.jobs.__setitem__(
-                "x", {"status": "failed", "submissions": [{"status": "observing"}]}),
+            "submitting receipt on a failed job": lambda s: s.jobs.__setitem__(
+                "x", {"status": "failed", "submissions": [{"status": "submitting"}]}),
             "malformed receipt": lambda s: s.jobs.__setitem__("x", {"status": "uncertain", "submissions": ["bad"]}),
             "running plan": lambda s: setattr(s.production, "items", [plan("x", "running")]),
             "observing plan": lambda s: setattr(s.production, "items", [plan("x", "observing")]),

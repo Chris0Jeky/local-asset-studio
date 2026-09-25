@@ -84,10 +84,11 @@ class RuntimeMixin:
                                 or item.get("status") not in TERMINAL_SUBMISSION_STATES] if isinstance(submissions, list) else [None]
             # A pending marker retained on a locally abandoned job is a terminal disposition (as for put-away).
             pending = job.get("pending_submission") is not None and status != "abandoned"
-            # Only an observing receipt on an unresolved job at rest waits for Resume observation;
-            # any other open submission may still be submitting.
+            # An observing receipt on a job at rest (unresolved, or already terminal with a receipt that was never
+            # closed, as on the 11 Sep failed jobs) waits only on ComfyUI history; the queue check covers live prompts.
+            # Any other open submission may still be submitting.
             submitting = any(not isinstance(item, dict) or item.get("status") != "observing"
-                             or status not in UNRESOLVED_JOB_STATES for item in open_submissions)
+                             or status not in UNRESOLVED_JOB_STATES | AT_REST_JOB_STATES for item in open_submissions)
             known = status in IN_FLIGHT_JOB_STATES or status in UNRESOLVED_JOB_STATES or status in AT_REST_JOB_STATES
             if pending or status in IN_FLIGHT_JOB_STATES or submitting or not known:
                 add("studio_job", identifier, status, BLOCKS_ALL)  # an unrecognized status fails closed
