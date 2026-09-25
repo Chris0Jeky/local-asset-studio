@@ -611,20 +611,25 @@ async function bulkReviewSelected(review) {
   // Revisions are fixed with the question: a review saved elsewhere after this point conflicts instead of being overwritten.
   const ids=[...assetSelection],snapshot=assetRevisionSnapshot(ids),overwrite=assetReviewOverwritePrompt(ids,review);
   if(overwrite && !window.confirm(overwrite)){$('#assetBulkReviewStatus').textContent='Nothing was changed. Saved reviews are kept.';return;}
+  const workspace=assetState.workspace_id, workspaceEpoch=assetWorkspaceEpoch;
+  const owns=()=>assetState.workspace_id===workspace && assetWorkspaceEpoch===workspaceEpoch;
   const label=assetReviewLabels[review],failures=[];
   let done=0;
-  const status=text=>{$('#assetBulkReviewStatus').textContent=text;};
+  const status=text=>{if(owns())$('#assetBulkReviewStatus').textContent=text;};
   assetBulkReviewBusy=true;assetBulkReviewControls();status('Marking 0 of '+ids.length+' as '+label+'…');
   const queue=ids.slice();
   const worker=async()=>{
     while(queue.length){
+      if(!owns())break;
       const id=queue.shift(),record=assetState.assets.find(a=>a.id===id),entry=snapshot.find(s=>s.id===id);
       try {
-        const command=assetCommand({ids:[id],action:'edit',review},[entry],entry.workspace_id||assetState.workspace_id);
+        const command=assetCommand({ids:[id],action:'edit',review},[entry],entry.workspace_id||workspace);
         const result=validateAssetReceipt(await postAssetCommand(command),command);
+        if(!owns())break;
         applyAssetReviewReceipt(command,result);
         done++;
       } catch(error) {
+        if(!owns())break;
         const refused=error.status>=400 && error.status<500 && error.data?.code!=='asset_workspace_conflict';
         failures.push((record?.title||id)+' — '+(refused?'not applied. ':'not confirmed. ')+(error.name==='AbortError'?'The request timed out after 15 s.':error.message));
       }
@@ -633,9 +638,12 @@ async function bulkReviewSelected(review) {
   };
   try{await Promise.all(Array.from({length:Math.max(1,Math.min(3,ids.length))},worker));}
   finally {
-    assetBulkReviewBusy=false;assetBulkReviewControls();renderAssets();
-    status(failures.length?done+' of '+ids.length+' marked as '+label+'. '+failures.length+' failed and no retry was sent: '+failures.join(' · ')
-      :'Marked '+done+' of '+ids.length+' as '+label+'.');
+    assetBulkReviewBusy=false;assetBulkReviewControls();
+    if(owns()){
+      renderAssets();
+      status(failures.length?done+' of '+ids.length+' marked as '+label+'. '+failures.length+' failed and no retry was sent: '+failures.join(' · ')
+        :'Marked '+done+' of '+ids.length+' as '+label+'.');
+    }
   }
 }
 // Group triage (#939): one confirmed decision for a visible group's unreviewed assets. The ids and their revisions are
@@ -975,8 +983,9 @@ document.addEventListener('click',async e=>{
     const diagnostic=e.target.closest('[data-i2v-diagnostic]');
     if(diagnostic){
       const asset=activeAsset, epoch=assetDetailEpoch, request=++assetDiagnosticRequest;
-      if(!asset || asset.media_type!=='video' || asset.preset_id!=='wan22-i2v' || asset.job_id!==diagnostic.dataset.i2vDiagnostic)return;
-      const current=()=>assetDetailContextCurrent(asset.id,epoch) && request===assetDiagnosticRequest;
+      const workspace=assetState.workspace_id, workspaceEpoch=assetWorkspaceEpoch;
+      if(!asset || asset.workspace_id!==workspace || asset.media_type!=='video' || asset.preset_id!=='wan22-i2v' || asset.job_id!==diagnostic.dataset.i2vDiagnostic)return;
+      const current=()=>assetDetailContextCurrent(asset.id,epoch) && request===assetDiagnosticRequest && assetState.workspace_id===workspace && assetWorkspaceEpoch===workspaceEpoch;
       diagnostic.disabled=true;$('#assetDiagnostic').innerHTML='<p class="muted" role="status">Building offline report from the existing recording…</p>';
       try {const report=await api('/api/jobs/'+encodeURIComponent(asset.job_id)+'/i2v-diagnostic');if(current())renderI2VDiagnostic(report);}
       catch(err){if(current())renderI2VDiagnosticAction(asset,err.message);}

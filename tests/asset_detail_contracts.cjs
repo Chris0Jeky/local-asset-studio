@@ -98,6 +98,30 @@ async function main(){
   await test('A later diagnostic request wins within the same asset session',async()=>{
     const s=setup();const a=s.diagnostic(),b=s.diagnostic();s.reads[1].resolve({source:{filename:'new result'}});await b;const html=s.el('#assetDiagnostic').innerHTML;s.reads[0].resolve({source:{filename:'old result'}});await a;assert.equal(s.el('#assetDiagnostic').innerHTML,html);assert.match(html,/new result/);
   });
+  await test('Diagnostic late success cannot render or reread from an A dialog after Workspace B loads',async()=>{
+    const s=setup();s.el('#assetNotes').value='typed draft';
+    const p=s.diagnostic();assert.equal(s.reads.length,1);assert.equal(s.writes.length,0);
+    s.run("assetState={...assetState,workspace_id:'2'.repeat(32),assets:assetState.assets.map(a=>({...a,workspace_id:'2'.repeat(32)}))};renderAssets()");
+    assert.equal(s.el('#assetDialog').open,true);
+    const html=s.el('#assetDiagnostic').innerHTML;
+    s.reads[0].resolve({source:{filename:'old report'}});await p;
+    assert.equal(s.el('#assetDiagnostic').innerHTML,html);assert.doesNotMatch(s.el('#assetDiagnostic').innerHTML,/old report/);
+    assert.equal(s.el('#assetNotes').value,'typed draft');assert.equal(s.writes.length,0);
+    await s.diagnostic();assert.equal(s.reads.length,1);
+    assert.equal(s.el('#assetNotes').value,'typed draft');assert.equal(s.writes.length,0);
+  });
+  await test('Diagnostic late failure cannot render or reread from an A dialog after Workspace B loads',async()=>{
+    const s=setup();s.el('#assetNotes').value='typed draft';
+    const p=s.diagnostic();assert.equal(s.reads.length,1);
+    s.run("assetState={...assetState,workspace_id:'2'.repeat(32),assets:assetState.assets.map(a=>({...a,workspace_id:'2'.repeat(32)}))};renderAssets()");
+    assert.equal(s.el('#assetDialog').open,true);
+    const html=s.el('#assetDiagnostic').innerHTML;
+    s.reads[0].reject(Error('old failure'));await p;
+    assert.equal(s.el('#assetDiagnostic').innerHTML,html);assert.doesNotMatch(s.el('#assetDiagnostic').innerHTML,/old failure/);
+    assert.equal(s.el('#assetNotes').value,'typed draft');assert.equal(s.writes.length,0);
+    await s.diagnostic();assert.equal(s.reads.length,1);
+    assert.equal(s.el('#assetNotes').value,'typed draft');assert.equal(s.writes.length,0);
+  });
   console.log(`Asset detail contracts passed: ${passed}`);
 }
 if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});

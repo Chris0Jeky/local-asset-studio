@@ -281,5 +281,35 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     const e=Error('Selected asset metadata changed or no longer exists; nothing changed in this batch');e.status=409;e.data={code:'asset_revision_conflict'};s.writes[3].reject(e);await p;
     assert.equal(review(s,last),'selected');assert.match(s.el('#assetBulkReviewStatus').textContent,/3 of 4 marked as Rejected\. 1 failed/);
   });
+  await check('Bulk review late success never touches the replaced Workspace with same IDs',async()=>{
+    const s=groupLibrary(5);s.run("assetGroupMode='none';assetSelection=new Set(['g0','g1','g2','g3','g4']);renderAssets()");
+    const p=s.run("bulkReviewSelected('rejected')");
+    assert.equal(s.writes.length,3);
+    const workspaceA=s.payload(0).workspace_id;assert.equal(workspaceA,'1'.repeat(32));
+    for(let i=0;i<3;i++)assert.equal(s.payload(i).workspace_id,workspaceA);
+    s.run("assetState={...assetState,workspace_id:'2'.repeat(32),assets:assetState.assets.map(a=>({...a,workspace_id:'2'.repeat(32),review:'unreviewed',metadata_revision:0}))};renderAssets()");
+    s.el('#assetBulkReviewStatus').textContent='B progress';
+    s.accept(0);s.accept(1);s.accept(2);await p;await tick();
+    assert.equal(s.writes.length,3);
+    for(let i=0;i<3;i++)assert.equal(s.payload(i).workspace_id,workspaceA);
+    assert.equal(s.run("assetState.assets.filter(a=>a.review!=='unreviewed').length"),0);
+    assert.equal(s.el('#assetBulkReviewStatus').textContent,'B progress');
+    assert.equal(s.run('assetBulkReviewBusy'),false);
+  });
+  await check('Bulk review late failure never touches the replaced Workspace with same IDs',async()=>{
+    const s=groupLibrary(5);s.run("assetGroupMode='none';assetSelection=new Set(['g0','g1','g2','g3','g4']);renderAssets()");
+    const p=s.run("bulkReviewSelected('rejected')");
+    assert.equal(s.writes.length,3);
+    const workspaceA=s.payload(0).workspace_id;assert.equal(workspaceA,'1'.repeat(32));
+    s.run("assetState={...assetState,workspace_id:'2'.repeat(32),assets:assetState.assets.map(a=>({...a,workspace_id:'2'.repeat(32),review:'unreviewed',metadata_revision:0}))};renderAssets()");
+    s.el('#assetBulkReviewStatus').textContent='B final';
+    s.writes[0].reject(Error('A failed'));s.writes[1].reject(Error('A failed'));s.writes[2].reject(Error('A failed'));
+    await p;await tick();
+    assert.equal(s.writes.length,3);
+    for(let i=0;i<3;i++)assert.equal(s.payload(i).workspace_id,workspaceA);
+    assert.equal(s.run("assetState.assets.filter(a=>a.review!=='unreviewed').length"),0);
+    assert.equal(s.el('#assetBulkReviewStatus').textContent,'B final');
+    assert.equal(s.run('assetBulkReviewBusy'),false);
+  });
   console.log('Asset metadata frontend contracts passed:',count);
 })().catch(e=>{console.error(e);process.exitCode=1;});
