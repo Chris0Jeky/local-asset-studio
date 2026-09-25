@@ -104,6 +104,28 @@ def prune_loras(graph):
 
 CLIENT_ID = 'overnight-lab'
 GPU_INTERVAL = 1.5  # seconds between GPU memory samples; experiments timing short phases set it lower (0.25)
+RUN_LABEL_MAX = 80  # Studio bound for POST /api/jobs labels (app/workspace.py clean_run_label): trimmed printable text of 1-80 chars
+RUN_LABEL_FALLBACK = CLIENT_ID  # sent when the result key has no usable printable text (all-whitespace/controls); never None
+
+
+def studio_run_label(label, fallback=RUN_LABEL_FALLBACK):
+    """A result key as a Studio-acceptable run label (#963): bounded printable text the server stores on the job.
+
+    The server rejects unprintable, blank-after-trimming and over-80-character labels, which would turn a valid lab
+    submission into REJECTED, so arbitrary caller labels are normalized, never passed through: control characters are
+    dropped, surrounding/inner whitespace is collapsed, and the remainder is truncated to 80 characters. A label with
+    no usable text falls back to the lab client id. Clean call-site labels pass through recognizably (at most stripped).
+    """
+    try:
+        text = label if isinstance(label, str) else ('' if label is None else str(label))
+    except Exception:
+        text = ''
+    cleaned = ' '.join(''.join(ch for ch in text if ch.isprintable()).split())
+    if not cleaned:
+        return fallback
+    if len(cleaned) > RUN_LABEL_MAX:
+        cleaned = cleaned[:RUN_LABEL_MAX].rstrip() or fallback
+    return cleaned
 
 
 def log_time(entry):
@@ -377,17 +399,27 @@ def runtime_identity():
 
 
 def run_studio(intent, label, results, timeout=3600, extra=None, skip_existing=True):
-    """One Studio job (POST /api/jobs), sampled like run_graph. Records the job ID before polling; never retries."""
+    """One Studio job (POST /api/jobs), sampled like run_graph. Records the job ID before polling; never retries.
+
+    The result key `label` also names the run on the server (#959 Agent runs): a copy of `intent` carrying
+    `studio_run_label(label)` is posted, so caller-owned `intent` is never mutated and an arbitrary result key can
+    never turn a valid submission into REJECTED. `results`, file names and `skip_existing` keep the original key.
+    """
     prior = results.find(label)
     if prior and skip_existing:
         print('skip', label, prior.get('status'), flush=True); return prior
     guard(); pid = comfy_pid(); c0 = commit_pct()
+    payload = dict(intent) if isinstance(intent, dict) else intent
+    if isinstance(payload, dict):
+        payload['label'] = studio_run_label(label)
     record = {'label': label, 'status': 'submitting', 'intent': intent, 'submitted_at': now(), 'comfy_pid': pid,
               'commit_pct_before': c0[0], 'free_ram_gb_before': c0[1], 'route': 'studio'}
+    if isinstance(payload, dict):
+        record['submitted_label'] = payload['label']
     record.update(runtime_identity())
     record.update(extra or {})
     sampler = Sampler(pid).start(); started = time.time()
-    try: job = http(STUDIO + '/api/jobs', intent, timeout=120, origin=STUDIO)
+    try: job = http(STUDIO + '/api/jobs', payload, timeout=120, origin=STUDIO)
     except urllib.error.HTTPError as error:
         sampler.stop.set(); record.update(status='rejected', error=error.read().decode('utf-8', 'replace')[:3000]); results.add(record)
         print('REJECTED', label, record['error'][:800], flush=True); return record
