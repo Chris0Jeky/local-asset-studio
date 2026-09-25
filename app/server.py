@@ -2126,7 +2126,13 @@ class Handler(BaseHTTPRequestHandler):
                 file = inside(self.studio.root / "examples", self.studio.root / "examples" / path[len("/api/examples/"):])
                 if file.suffix.lower() not in (".png", ".jpg", ".webp", ".gif", ".glb") or not file.is_file(): return self._json(404, {"error": "Example not found"})
                 data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
-            if path == "/api/jobs": return self._json(200, [self.studio.public(x) for x in sorted(self.studio.jobs.values(), key=lambda j:j["created_at"], reverse=True)])
+            if path == "/api/jobs":
+                payload = [self.studio.public(x) for x in sorted(self.studio.jobs.values(), key=lambda j:j["created_at"], reverse=True)]
+                raw = json.dumps(payload).encode()
+                etag = '"' + hashlib.sha256(raw).hexdigest() + '"'
+                if any(tag.strip().removeprefix("W/") in (etag, "*") for tag in self.headers.get("If-None-Match", "").split(",")):
+                    self.send_response(304); self.send_header("ETag", etag); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", "0"); self.end_headers(); return
+                self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("ETag", etag); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw); return
             if path.startswith("/api/jobs/") and path.endswith("/recipe"):
                 job = self.studio.jobs.get(path.split("/")[3]); return self._json(200, self.studio.export_recipe(job)) if job else self._json(404, {"error":"Unknown job"})
             if path.startswith("/api/jobs/") and path.endswith("/i2v-diagnostic"):
