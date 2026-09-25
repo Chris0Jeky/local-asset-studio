@@ -189,8 +189,8 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
   To restart:
   1. Check that no job is running (Create → Recent runs) and no Runs & review plan is running.
-  2. Stop the Python process whose command line is `app\server.py`, for example in PowerShell: `Get-CimInstance Win32_Process | ? CommandLine -like '*app\server.py*' | % { Stop-Process -Id $_.ProcessId }`.
+  2. Stop the Studio server, which is the process listening on port 8191, for example in PowerShell: `Get-NetTCPConnection -LocalPort 8191 -State Listen | % { Stop-Process -Id $_.OwningProcess }`.
   3. Double-click `Start Studio.cmd`.
 
   The current banner about job `60934d27` clears after the restart. Agents did not restart it because another session was using the GPU.
-- [ ] **prepare-large-job-proof (#306)**: #960 merged the prepare-large-job command. It is **off by default** (`config/local.json` flags are false). Its acceptance still needs your approval for one live Windows proof: dry run and refusal cases, memory counters before and after `/free`, and a backend restart only if you approve that step. Say whether to run it, and when the GPU is free.
+- [ ] **prepare-large-job-proof (#306)**: #960 merged the prepare-large-job command. It is **off by default**: the two flags are absent from `config/local.json`, and absent means off. Its acceptance still needs your approval for one live Windows proof: dry run and refusal cases, memory counters before and after `/free`, and a backend restart only if you approve that step. Say whether to run it, and when the GPU is free.
