@@ -1,5 +1,8 @@
 """Real HTTP checks over synthetic, verified archives; no Studio worker."""
+import io
 import http.client
+import socket
+from email.message import Message
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import importlib
 import importlib.util
@@ -16,6 +19,7 @@ from spoken_brief_archive import inspect_run
 from spoken_brief_compile import canonical_digest
 from spoken_brief_exports import load_playback
 from spoken_brief_qa import FINDINGS
+from studio_workflow.http_body import DRAIN_LIMIT, drain_for_reset
 
 
 class InertHandler(BaseHTTPRequestHandler):
@@ -110,6 +114,43 @@ class SpokenHTTPTests(unittest.TestCase):
         self.assertEqual(400, self.mutation(headers={'Transfer-Encoding': 'identity'})[0])
         self.assertFalse((self.f.directory / 'playback.json').exists())
 
+    def test_transfer_encoding_identity_with_body_is_rejected_deterministically(self):
+        # #1022: TE: identity with a JSON body intermittently surfaced WinError 10053 on
+        # Windows instead of HTTP 400, because the refusal closed with unread bytes.
+        headers = {'Origin': self.origin, 'Content-Type': 'application/json', 'Transfer-Encoding': 'identity'}
+        for _ in range(10):
+            code, _, raw = self.request('/bookmark', query={'key': self.key}, method='POST',
+                body=json.dumps(self.bookmark()), headers=headers)
+            self.assertEqual(400, code)
+            self.assertFalse(json.loads(raw)['generation_submitted'])
+        self.assertEqual(200, self.request('/capabilities')[0])
+        self.assertFalse((self.f.directory / 'playback.json').exists())
+
+    def test_chunked_with_declared_length_is_refused_without_hang(self):
+        # Chunked framing stays rejected, but a declared length is still consumed under a
+        # bound so the refusal is delivered; chunk framing itself is never parsed.
+        target = '/api/spoken-briefs/bookmark?' + urlencode({'key': self.key})
+        payload = b'2\r\n{}\r\n0\r\n\r\n'
+        head = (f'POST {target} HTTP/1.1\r\nHost: 127.0.0.1:{self.server.server_port}\r\n'
+                f'Origin: {self.origin}\r\nContent-Type: application/json\r\n'
+                f'Transfer-Encoding: chunked\r\nContent-Length: {len(payload)}\r\nConnection: close\r\n\r\n')
+        sock = socket.create_connection(('127.0.0.1', self.server.server_port), timeout=5)
+        try:
+            sock.sendall(head.encode() + payload)
+            sock.settimeout(5)
+            response = b''
+            try:
+                while True:
+                    chunk = sock.recv(65536)
+                    if not chunk: break
+                    response += chunk
+            except ConnectionResetError:
+                pass
+            self.assertIn(b' 400 ', response.split(b'\r\n')[0])
+        finally:
+            sock.close()
+        self.assertFalse((self.f.directory / 'playback.json').exists())
+
     def test_bookmark_conflict_is_visible_and_keeps_newer_state(self):
         body = self.bookmark()
         self.assertEqual(200, self.mutation(value=body)[0])
@@ -181,6 +222,60 @@ class SpokenHTTPTests(unittest.TestCase):
             conn.request('HEAD', '/unrelated'); response = conn.getresponse(); response.read()
             self.assertEqual(501, response.status)
         finally: conn.close()
+
+
+class SpokenResetDrainTests(unittest.TestCase):
+    """Transport rule for pre-close cleanup: consume one bounded declared length even
+    when Transfer-Encoding made the framing unacceptable; never parse chunk framing."""
+
+    def fake(self, body, *, transfer_encoding='identity', lengths=()):
+        headers = Message()
+        if transfer_encoding is not None: headers['Transfer-Encoding'] = transfer_encoding
+        for length in lengths: headers['Content-Length'] = length
+        return SimpleNamespace(headers=headers, rfile=io.BytesIO(body), connection=None)
+
+    def test_declared_body_is_consumed_despite_transfer_encoding(self):
+        for coding in ('identity', 'chunked', 'gzip'):
+            with self.subTest(coding=coding):
+                handler = self.fake(b'hello', transfer_encoding=coding, lengths=('5',))
+                self.assertTrue(drain_for_reset(handler))
+                self.assertEqual(handler.rfile.read(), b'')
+
+    def test_missing_or_zero_length_reads_nothing(self):
+        handler = self.fake(b'chunk stream', transfer_encoding='chunked')
+        self.assertTrue(drain_for_reset(handler))
+        self.assertEqual(handler.rfile.tell(), 0)
+        empty = self.fake(b'', lengths=('0',))
+        self.assertTrue(drain_for_reset(empty))
+
+    def test_oversized_malformed_or_conflicting_lengths_are_left_unread(self):
+        for lengths in ((str(DRAIN_LIMIT + 1),), ('not-a-number',), ('-1',), ('2', '3'), ('9' * 5000,)):
+            with self.subTest(lengths=lengths):
+                handler = self.fake(b'x', lengths=lengths)
+                self.assertFalse(drain_for_reset(handler))
+                self.assertEqual(handler.rfile.tell(), 0)
+
+    def test_agreeing_duplicate_lengths_drain_once(self):
+        handler = self.fake(b'ab', transfer_encoding='identity', lengths=('2', '2'))
+        self.assertTrue(drain_for_reset(handler))
+        self.assertEqual(handler.rfile.read(), b'')
+
+    def test_trickle_progress_cannot_exceed_the_total_deadline(self):
+        class Trickle:
+            def __init__(self): self.calls = 0
+            def read1(self, amount): self.calls += 1; return b'x'
+        class Connection:
+            def __init__(self): self.values = []
+            def gettimeout(self): return None
+            def settimeout(self, value): self.values.append(value)
+        handler = self.fake(b'', transfer_encoding='chunked', lengths=('100',))
+        handler.rfile = Trickle(); handler.connection = Connection()
+        elapsed = [0.0]
+        def tick(): elapsed[0] += 0.6; return elapsed[0]
+        with patch('studio_workflow.http_body.time', SimpleNamespace(monotonic=tick)):
+            self.assertFalse(drain_for_reset(handler))
+        self.assertEqual(handler.rfile.calls, 1)
+        self.assertIsNone(handler.connection.values[-1])
 
 
 if __name__ == '__main__': unittest.main()

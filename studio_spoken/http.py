@@ -6,7 +6,7 @@ import re
 from urllib.parse import parse_qsl, urlsplit
 
 from .core import ArchiveAccess, AccessError, digest, fields
-from studio_workflow.http_body import drain_declared_body
+from studio_workflow.http_body import drain_for_reset
 from spoken_brief_archive import ArchiveConflict, require_archive
 from spoken_brief_compile import SpokenBriefError
 from spoken_brief_exports import PlaybackConflict
@@ -47,7 +47,9 @@ def extend_handler(base):
             self.close_connection = True
             # Windows resets a socket closed with unread request bytes, which can abort the client before it
             # reads this refusal (WinError 10053, #837; the other routes fixed it in #196/#468/#545).
-            if not getattr(self, '_spoken_body_consumed', False): drain_declared_body(self)
+            # drain_for_reset still consumes one bounded Content-Length when Transfer-Encoding made the
+            # framing unacceptable (#1022: TE: identity with a body). Rejection and close are unchanged.
+            if not getattr(self, '_spoken_body_consumed', False): drain_for_reset(self)
             status = (409 if isinstance(exc, (ArchiveConflict, PlaybackConflict))
                       else exc.status if isinstance(exc, AccessError) else 400)
             return self._json(status, {'error': str(exc)[:800], 'generation_submitted': False})
