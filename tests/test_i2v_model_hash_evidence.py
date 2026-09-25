@@ -113,19 +113,139 @@ class I2VModelHashEvidenceTests(unittest.TestCase):
         identity = i2v._file_identity(self.model.stat())
         digest = hashlib.sha256(b"cached fixture").hexdigest()
         key = str(self.model)
+        cached_descriptor = dict(identity, ctime_ns=identity["ctime_ns"] + 1)
         cache = {
             key: {
-                **identity,
-                "ctime_ns": identity["ctime_ns"] + 1,
+                **cached_descriptor,
                 "path_identity": identity,
                 "sha256": digest,
             }
         }
+        real, calls = i2v._file_identity, []
 
-        with mock.patch.object(i2v, "_hash_open_file", side_effect=AssertionError("cache miss")):
+        def windows_like(observed):
+            current = real(observed)
+            calls.append(dict(current))
+            # _cached_file_hash observes the path, validates the descriptor,
+            # then rechecks the path. Only the descriptor uses its own ctime domain.
+            if len(calls) == 2:
+                current = dict(current, ctime_ns=cached_descriptor["ctime_ns"])
+            return current
+
+        with mock.patch.object(i2v, "_file_identity", windows_like):
+            with mock.patch.object(i2v, "_hash_open_file", side_effect=AssertionError("cache miss")):
+                result = i2v._cached_file_hash(self.model, cache)
+
+        self.assertEqual(len(calls), 3, calls)
+        self.assertEqual(result["sha256"], digest)
+
+    def test_unpinned_hit_avoids_rereading_file_contents(self):
+        self.model.write_bytes(b"stable fixture bytes")
+        cache = {}
+        first = i2v._cached_file_hash(self.model, cache)
+        self.assertIn("sha256", first)
+
+        with mock.patch.object(i2v, "_hash_open_file", side_effect=AssertionError("must not rehash on a valid hit")):
             result = i2v._cached_file_hash(self.model, cache)
 
-        self.assertEqual(result["sha256"], digest)
+        self.assertEqual(result["sha256"], first["sha256"])
+        self.assertNotIn("error", result, result)
+
+    def test_unpinned_hit_rechecks_path_after_opening_descriptor(self):
+        self.model.write_bytes(b"cached fixture bytes")
+        cache = {}
+        first = i2v._cached_file_hash(self.model, cache)
+
+        class SwappedPath:
+            def __init__(self, path):
+                self.path, self.calls = path, 0
+
+            def __fspath__(self):
+                return os.fspath(self.path)
+
+            def __str__(self):
+                return str(self.path)
+
+            def stat(self):
+                self.calls += 1
+                value = self.path.stat()
+                if self.calls == 1:
+                    return value
+                return SimpleNamespace(st_size=value.st_size, st_mtime_ns=value.st_mtime_ns,
+                                       st_ctime_ns=value.st_ctime_ns, st_dev=value.st_dev,
+                                       st_ino=value.st_ino + 1,
+                                       st_birthtime_ns=getattr(value, "st_birthtime_ns", None))
+
+        swapped = SwappedPath(self.model)
+        fresh = dict(first, sha256="b" * 64)
+        with mock.patch.object(i2v, "_hash_open_file", return_value=fresh) as hashed:
+            result = i2v._cached_file_hash(swapped, cache)
+
+        self.assertEqual(swapped.calls, 2)
+        hashed.assert_called_once_with(swapped)
+        self.assertEqual(result["sha256"], fresh["sha256"])
+
+    def test_same_size_restored_mtime_rehashes_when_path_identity_matches(self):
+        original = b"original model bytes...."
+        replacement = b"replaced model bytes...."
+        self.assertEqual(len(original), len(replacement))
+        self.model.write_bytes(original)
+        cache = {}
+        first = i2v._cached_file_hash(self.model, cache)
+        stale_digest = first["sha256"]
+        self.assertEqual(stale_digest, hashlib.sha256(original).hexdigest())
+        original_stat = self.model.stat()
+
+        self.model.write_bytes(replacement)
+        os.utime(self.model, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+        current = i2v._file_identity(self.model.stat())
+        # Simulate Windows path identity stability: the path lookup still
+        # matches the cached entry even though the bytes changed in place.
+        key = str(self.model)
+        cache[key]["path_identity"] = {field: current[field] for field in i2v._CACHE_PATH_IDENTITY_FIELDS}
+
+        result = i2v._cached_file_hash(self.model, cache)
+
+        self.assertEqual(result["sha256"], hashlib.sha256(replacement).hexdigest())
+        self.assertNotEqual(result["sha256"], stale_digest)
+        self.assertNotIn("error", result, result)
+        self.assertEqual(cache[key]["sha256"], result["sha256"])
+
+    @unittest.skipUnless(os.name == "nt", "native Windows path-ctime contract")
+    def test_windows_same_size_restored_mtime_returns_current_bytes(self):
+        original = b"windows original bytes.."
+        replacement = b"windows changed bytes..."
+        self.assertEqual(len(original), len(replacement))
+        self.model.write_bytes(original)
+        cache = {}
+        first = i2v._cached_file_hash(self.model, cache)
+        old_mtime = self.model.stat().st_mtime_ns
+        old_atime = self.model.stat().st_atime_ns
+
+        self.model.write_bytes(replacement)
+        os.utime(self.model, ns=(old_atime, old_mtime))
+
+        result = i2v._cached_file_hash(self.model, cache)
+
+        self.assertEqual(self.model.read_bytes(), replacement)
+        self.assertEqual(result["sha256"], hashlib.sha256(replacement).hexdigest())
+        self.assertNotEqual(result["sha256"], first["sha256"])
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "POSIX FIFO contract")
+    def test_unpinned_fifo_replacement_does_not_reuse_stale_digest(self):
+        self.model.write_bytes(b"regular fixture bytes")
+        cache = {}
+        first = i2v._cached_file_hash(self.model, cache)
+        self.assertIn("sha256", first)
+        self.model.unlink()
+        os.mkfifo(self.model)
+
+        result = i2v._cached_file_hash(self.model, cache)
+
+        self.assertNotIn("sha256", result, result)
+        self.assertTrue(result["present"])
+        self.assertIn("regular file", result["error"].lower())
+        self.assertNotIn(str(self.model), cache)
 
     def test_cache_miss_preserves_same_domain_ctime_rewrite_detection(self):
         self.model.write_bytes(b"rewritten fixture")
