@@ -50,10 +50,14 @@ the measured `idle_policy` command.
 The recipe is passed to `Studio.prepare`, not `Studio.create_job`. The command never
 spends an allowance and always reports `generation_submitted: false`.
 
-A repeated `request_id` with identical canonical content returns the saved receipt.
-Changed content conflicts. A journal record interrupted after an action intent is
-converted to `unknown`; the action is not replayed. Receipts are bounded to 32 in
-`.runtime/large-job-preparation.json`, which is already ignored by Git.
+A repeated `request_id` with identical canonical content returns its saved receipt;
+changed content conflicts while the receipt is retained. A journal record interrupted
+after an action intent is converted to `unknown`; the action is not replayed. Receipts
+are bounded to 32 in `.runtime/large-job-preparation.json`, which is already ignored
+by Git. When full, the oldest completed or refused receipt without a lifecycle action
+can be evicted; its request ID may then be reused as a new request. Receipts with an
+action intent stay retained so a retry cannot repeat `/free` or a backend restart. If
+all 32 receipts are active, uncertain, or action-bearing, new requests fail closed.
 
 ## Decision sequence
 
