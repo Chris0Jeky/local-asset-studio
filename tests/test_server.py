@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import io
 import json
@@ -1252,5 +1253,114 @@ class ServerTests(unittest.TestCase):
             with self.subTest(exc=str(exc)):
                 s.record_job_failure(job,exc)
                 self.assertEqual(job['status'],status);self.assertNotIn('failure',job)
+
+    def test_jobs_snapshot_survives_concurrent_registration(self):
+        # Refs #923 (partial): GET /api/jobs sorted the live studio.jobs mapping
+        # without the Studio lock, so a concurrent create_job insertion could abort
+        # the poll with "dictionary changed size during iteration". The listing must
+        # snapshot under the lock; projection, sort, ETag/304, headers and body are
+        # unchanged, and encoding plus socket writes stay outside the lock.
+        # Without the fix this test raises the genuine dict-mutation RuntimeError
+        # out of do_GET; with the fix it serves a stable 200 payload.
+        studio = self.studio()
+        seeded = [studio.create_job({'preset_id': 'demo', 'controls': {}}, enqueue=False)['id'] for _ in range(3)]
+        entered = threading.Event()
+        proceed = threading.Event()
+        gate = {'armed': True}
+
+        class GatedJobs(dict):
+            # One-shot values() gate: parks the consumer mid-iteration over the
+            # REAL dict iterator, so a racing insert raises the genuine
+            # RuntimeError instead of a synthetic one.
+            def values(self):
+                if not gate['armed']:
+                    return super().values()
+                gate['armed'] = False
+                host = self
+                class Gate:
+                    def __iter__(self):
+                        iterator = iter(dict.values(host))
+                        try:
+                            first = next(iterator)
+                        except StopIteration:
+                            return
+                        entered.set()
+                        proceed.wait(10)
+                        yield first
+                        yield from iterator
+                return Gate()
+
+        studio.jobs = GatedJobs(studio.jobs)
+        errors = []
+
+        def register_while_listing():
+            try:
+                self.assertTrue(entered.wait(10))
+                if studio.lock.acquire(blocking=False):
+                    # No snapshot lock held: register for real while the listing
+                    # iterates the live mapping.
+                    studio.lock.release()
+                    studio.create_job({'preset_id': 'demo', 'controls': {}}, enqueue=False)
+                    proceed.set()
+                else:
+                    # The listing parked mid-snapshot under the lock: release it
+                    # promptly, then register through create_job as usual.
+                    proceed.set()
+                    studio.create_job({'preset_id': 'demo', 'controls': {}}, enqueue=False)
+            except Exception as exc:
+                errors.append(exc)
+                proceed.set()
+
+        def serve(headers=None):
+            handler = server.Handler.__new__(server.Handler)
+            handler.studio = studio
+            handler.path = '/api/jobs'
+            handler.headers = {'Host': '127.0.0.1:8191', **(headers or {})}
+            calls = {'status': None, 'headers': []}
+            owned = []
+            raw_buf = io.BytesIO()
+            handler.send_response = lambda status: calls.update(status=status)
+            handler.send_header = lambda key, value: calls['headers'].append((key, value))
+            handler.end_headers = lambda: None
+            handler.wfile = Mock()
+            handler.wfile.write.side_effect = lambda data: (owned.append(studio.lock._is_owned()), raw_buf.write(data))[1]
+            handler.do_GET()
+            return calls, raw_buf.getvalue(), owned
+
+        writer = threading.Thread(target=register_while_listing, daemon=True)
+        self.start.stop()
+        try:
+            writer.start()
+            try:
+                calls, raw, owned = serve()
+            finally:
+                writer.join(30)
+        finally:
+            self.start.start()
+        self.assertFalse(writer.is_alive())
+        self.assertEqual(errors, [])
+        self.assertTrue(proceed.is_set())
+        self.assertEqual(calls['status'], 200)
+        headers = dict(calls['headers'])
+        self.assertEqual(headers['Content-Type'], 'application/json')
+        self.assertEqual(headers['Cache-Control'], 'no-store')
+        self.assertEqual(headers['ETag'], '"' + hashlib.sha256(raw).hexdigest() + '"')
+        self.assertEqual(headers['Content-Length'], str(len(raw)))
+        self.assertEqual(owned, [False])
+        payload = json.loads(raw.decode())
+        self.assertEqual({entry['id'] for entry in payload}, set(seeded))
+        stamps = [entry['created_at'] for entry in payload]
+        self.assertTrue(all(earlier >= later for earlier, later in zip(stamps, stamps[1:])))
+        self.assertEqual({entry['id']: entry for entry in payload},
+                         {job_id: studio.public(studio.jobs[job_id]) for job_id in seeded})
+        # ETag/304 behavior is preserved once the mapping is quiescent.
+        second_calls, _, _ = serve()
+        etag = dict(second_calls['headers'])['ETag']
+        third_calls, third_raw, third_owned = serve(headers={'If-None-Match': etag})
+        self.assertEqual(third_calls['status'], 304)
+        self.assertEqual(dict(third_calls['headers'])['ETag'], etag)
+        self.assertEqual(dict(third_calls['headers'])['Content-Length'], '0')
+        self.assertEqual(third_raw, b'')
+        self.assertEqual(third_owned, [])
 
 if __name__ == "__main__": unittest.main()

@@ -2158,7 +2158,9 @@ class Handler(BaseHTTPRequestHandler):
                 if file.suffix.lower() not in (".png", ".jpg", ".webp", ".gif", ".glb") or not file.is_file(): return self._json(404, {"error": "Example not found"})
                 data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path == "/api/jobs":
-                payload = [self.studio.public(x) for x in sorted(self.studio.jobs.values(), key=lambda j:j["created_at"], reverse=True)]
+                with self.studio.lock:
+                    snapshot = list(self.studio.jobs.values())
+                payload = [self.studio.public(x) for x in sorted(snapshot, key=lambda j:j["created_at"], reverse=True)]
                 raw = json.dumps(payload).encode()
                 etag = '"' + hashlib.sha256(raw).hexdigest() + '"'
                 if any(tag.strip().removeprefix("W/") in (etag, "*") for tag in self.headers.get("If-None-Match", "").split(",")):
