@@ -14,6 +14,9 @@
   const text=(v,max=LIMITS.string)=>typeof v==='string'&&v.length<=max&&bytes(v)<=max;
   // Server titles count Unicode code points; storage budgets still count UTF-8 bytes.
   const title=v=>typeof v==='string'&&v.length<=400&&[...v].length<=200;
+  // Existing registered titles may reach REGISTERED_TITLE_MAX in app/workspace.py; new edits stay at 200.
+  const REGISTERED_TITLE_MAX=1024;
+  const registeredTitle=v=>typeof v==='string'&&v.length<=REGISTERED_TITLE_MAX*2&&[...v].length<=REGISTERED_TITLE_MAX;
   const integer=v=>Number.isSafeInteger(v)&&v>=0;
   const reviews=['unreviewed','selected','needs_work','rejected'];
   function canonical(value){
@@ -64,15 +67,22 @@
   const metadataKeys=['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'];
   const formKeys=['title','tags','review','notes'];
   const commandKeys=['ids','action','workspace_id','expected_revisions','request_id','title','notes','tags','favorite','review','run_label','collection_id'];
-  function form(v){return keys(v,formKeys)&&title(v.title)&&text(v.tags)&&text(v.notes)&&reviews.includes(v.review);}
+  function formTitle(v,check){return keys(v,formKeys)&&check(v.title)&&text(v.tags)&&text(v.notes)&&reviews.includes(v.review);}
+  function form(v){return formTitle(v,title);}
+  // A long registered title is retained only when unchanged: baseline matches
+  // metadata, draft/snapshot match baseline, and a long snapshot carries no new
+  // command title. New or changed titles stay at the 200-code-point edit limit.
+  function baselineOk(v,meta){return form(v)||(formTitle(v,registeredTitle)&&v.title===meta.title);}
+  function draftOk(v,base){return form(v)||(formTitle(v,registeredTitle)&&v.title===base.title);}
+  function snapshotOk(v,base,cmd){return form(v)||(formTitle(v,registeredTitle)&&v.title===base.title&&!Object.hasOwn(cmd,'title'));}
   function ids(v){return Array.isArray(v)&&v.length<=LIMITS.ids&&v.every(id)&&new Set(v).size===v.length;}
   function metadata(v,w){
     return keys(v,metadataKeys,['id','metadata_revision','title','notes','tags','review','favorite'])&&id(v.id)&&integer(v.metadata_revision)&&
-      (w===null?!Object.hasOwn(v,'workspace_id')||scope(v.workspace_id):v.workspace_id===w)&&title(v.title)&&text(v.notes)&&
+      (w===null?!Object.hasOwn(v,'workspace_id')||scope(v.workspace_id):v.workspace_id===w)&&registeredTitle(v.title)&&text(v.notes)&&
       Array.isArray(v.tags)&&v.tags.length<=200&&v.tags.every(t=>text(t,256))&&reviews.includes(v.review)&&typeof v.favorite==='boolean'&&
       (v.trashed_at==null||typeof v.trashed_at==='number'&&Number.isFinite(v.trashed_at));
   }
-  function operation(v,w,slot,target){
+  function operation(v,w,slot,target,baseline){
     if(!keys(v,slot==='detail'?['command','body','kind','snapshot']:['command','body']))return false;
     const c=v.command;
     if(!keys(c,commandKeys,['ids','action','expected_revisions','request_id'])||!ids(c.ids)||!c.ids.length||!id(c.request_id)||c.request_id.length<16||
@@ -85,7 +95,7 @@
     // A source mark (#939): null clears the label; otherwise at most 80 characters, as the server's run-label rule.
     if(Object.hasOwn(c,'run_label')&&c.run_label!==null&&!(typeof c.run_label==='string'&&c.run_label.trim().length>0&&[...c.run_label].length<=80&&c.run_label.length<=160))return false;
     if(!same(parse(v.body,128*1024),c))return false;
-    return slot!=='detail'||same(c.ids,[target])&&['details','favorite','trash'].includes(v.kind)&&form(v.snapshot);
+    return slot!=='detail'||same(c.ids,[target])&&['details','favorite','trash'].includes(v.kind)&&snapshotOk(v.snapshot,baseline,c);
   }
   function validatePayload(slot,v){
     if(!object(v)||![1,2].includes(v.version))fail('Unsupported recovery payload version.');
@@ -95,7 +105,7 @@
       if(!keys(v,['version','workspace_id','operation','selection'],['version','operation','selection'])||!ids(v.selection)||!operation(v.operation,w,slot))fail('Invalid bounded library recovery.');
     }else if(slot==='detail'){
       if(!keys(v,['version','workspace_id','id','metadata','baseline','draft','operation','conflict'],['version','id','metadata','baseline','draft','operation','conflict'])||
-         !id(v.id)||!metadata(v.metadata,w)||v.metadata.id!==v.id||!form(v.baseline)||!form(v.draft)||v.operation!==null&&!operation(v.operation,w,slot,v.id))fail('Invalid review recovery identity or field bound.');
+         !id(v.id)||!metadata(v.metadata,w)||v.metadata.id!==v.id||!baselineOk(v.baseline,v.metadata)||!draftOk(v.draft,v.baseline)||v.operation!==null&&!operation(v.operation,w,slot,v.id,v.baseline))fail('Invalid review recovery identity or field bound.');
       if(v.conflict!==null){
         const c=v.conflict;
         if(!keys(c,['workspace_id','current','confirmed_request_id'],['workspace_id','current'])||c.workspace_id!==w||!Array.isArray(c.current)||c.current.length>10||
@@ -192,5 +202,5 @@
       raw(){const raw=target().getItem(KEY);if(raw!==null&&(raw.length>LIMITS.total||bytes(raw)>LIMITS.total))fail('Raw recovery exceeds the safe export limit.');return raw;}
     };
   }
-  return {KEY,LOCK,LIMITS,parse,canonical,project,seal,encode,decode,create};
+  return {KEY,LOCK,LIMITS,REGISTERED_TITLE_MAX,parse,canonical,project,seal,encode,decode,create};
 });

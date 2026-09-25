@@ -1,5 +1,143 @@
 # Current state — 24 September 2026
 
+## NSFW lab closeout: p93 judged 7/7, G24 closed, all 552 cells organised and saved — 25 September 2026 (night local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P93 held 7/7, judged from the files (all receipts 404, job store cleared; files 20:13–20:15, no prompt ids recorded): G24 CLOSES (crawl-as-bend, portrait, seated rear, Anima/JANIMA ports x2, all intact), C1 `from below` measured on the miko pair. Session organisation: 552 judged cells (waves p10–p93) each have a contact JPEG in `examples/nsfw-lab/` (gitignored) with a tracked `MANIFEST.json` entry (670/670 `verify` ok) plus `index.html`; full PNGs hardlink-sorted under `ComfyUI/output/Studio-lab-20260923/` (`by-wave/`, `by-character/`); resume map in `experiments/curated/nsfw-lab-20260923/INDEX.md`. To resume: read INDEX.md, pick the next lever from TECHNIQUES.md, queue 6–10 cells. Still open: second LoRA adapter (Civitai 403), q-29/q-31, four source conflicts, fresh PR for this branch (PR #899 merged 24 September 2026 15:26 UTC).
+
+## NSFW lab overnight: p92 judged 6/6, G24 measured 8, hakama beats the hike, p93 queued — 25 September 2026 (21:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P92 held 6/6 (26.9–33.1 s, all receipts live, no spill): G24 eyes half-lidded on Kafka and neutral on Yor with the two-piece intact (`739cc659`, `202fb888`); hakama beats the hike on the bent-over (`874cde71`); seiza holds (`a4109534`); sheer-off 2/2 drift nothing (`574fcefd`, `9d6d0718`). P93 queued, seven cells: miko crawl (`b19770bf`), portrait (`55c545ac`) and seated rear (`2635d33b`) to close G24, ports x2 with no sheer LoRA (`0603610b`, `955a6cd4`), C1 `from below` on the miko pair (`adb0f91c`, `05850da0`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p91 judged 6/6, close-up on three garments, G24 promoted, p92 queued — 25 September 2026 (21:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P91 held 6/6 (26.9–33.0 s, all receipts live, no spill): C1 `close-up` holds 2/2 on the nurse pair (`6e3f7594`, `5bb1bd8d`) and 2/2 on the cheer pair (`154694cf`, `dc9af572`), now measured on three garments; G24 shrine maiden promoted on the opening pair (Kafka `201672f7`, Yor `7e889c75`, two-piece reads separate, bells as ornaments). P92 queued, six cells: G24 `bedroom eyes` x2 (`739cc659`, `202fb888`), miko bent-over (`874cde71`, hakama vs the hike) and seiza (`a4109534`), sheer-off x2 (`574fcefd`, `9d6d0718`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p90 judged 7/7, G23 closed, cowboy on three garments, G24 open, p91 queued — 25 September 2026 (21:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P90 held 7/7 (24.2–29.1 s, all receipts live, no spill): G23 closed on all thirteen reads with the seated rear (`56748706`) and ports x2 with no sheer LoRA (`0e684820`, `3e8e7e14`); C1 `cowboy shot` holds 2/2 on the nurse pair (`0ef2864d`, `9ea787d3`) and 2/2 on the cheer pair (`4765b21b`, `d944ea2a`), now measured on three garments. P91 queued, six cells: C1 `close-up` on the nurse pair (`6e3f7594`, `5bb1bd8d`) and the cheer pair (`154694cf`, `dc9af572`), G24 shrine-maiden open anchors (Kafka `201672f7`, Yor `7e889c75`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p89 judged 6/6, G23 measured 10, p90 queued — 25 September 2026 (21:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P89 held 6/6 (25.0–29.3 s, all receipts live, no spill): G23 bent-over (`f695a966`) and seiza (`2a7b6092`) hold; sheer-off 2/2 drift nothing (`80430c21`, `b50f5071`); crawl (`d8860a6c`) and portrait (`0ac89bd6`) hold. P90 queued, seven cells: nurse seated rear (`56748706`), G23 ports x2 with no sheer LoRA (`0e684820`, `3e8e7e14`), C1 `cowboy shot` on the nurse pair (`0ef2864d`, `9ea787d3`) and the cheer pair (`4765b21b`, `d944ea2a`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p88 judged 6/6, G23 promoted, from-below on two garments, p89 queued — 25 September 2026 (20:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P88 held 6/6 (26.8–31.1 s, all receipts live, no spill): G23 nurse promoted on the opening pair (Kafka `8cbd871f`, Yor `e1ea863a`, cap stays on); eyes half-lidded on Kafka and neutral on Yor (`8828ec8e`, `89e5449c`); C1 `from below` holds 2/2 on the cheer squat pair (`e7144856`, `24e0c58a`), now measured on two garments. P89 queued, six cells: G23 bent-over (`f695a966`) and seiza (`2a7b6092`), sheer-off x2 (`80430c21`, `b50f5071`), crawl (`d8860a6c`) and portrait (`0ac89bd6`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p87 judged 7/7, G22 closed, second LoRA deferred on 403, G23 open, p88 queued — 25 September 2026 (20:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P87 held 7/7 (10.2–31.1 s, all receipts live, no spill): G22 closed on all thirteen reads with the sheer-off pair (`b19ca15a`, `9d0f0968`), crawl (`7ea65fde`), portrait (`5d6563d9`), seated rear (`02d503b1`) and ports x2 with no sheer LoRA (`585e15bf`, `e0f0cca2`). Second Illustrious adapter deferred: the Civitai models API returns 403 from this host with and without the token, so no version id can be verified tonight — retry when egress allows, nothing from unverified sources. P88 queued, six cells: G23 nurse open anchors (Kafka `8cbd871f`, Yor `e1ea863a`), `bedroom eyes` x2 (`8828ec8e`, `89e5449c`), C1 `from below` on the cheer squat pair (`e7144856`, `24e0c58a`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p86 judged 6/6, G22 promoted, one receipt 404 file-judged, p87 queued — 25 September 2026 (20:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P86 held 6/6: G22 lab coat promoted on the opening pair (Kafka `4ab42cde`, Yor `3c921d64`, coat over blouse, stethoscope a prop); eyes half-lidded on Kafka and neutral on Yor (`9fa9b55b`, `452459c8`); bent-over (`4cc56e3e`) and seiza hold — the seiza receipt (`c49c8f61`) 404s at judgment while its still sits completed on disk, judged from the file with prompt id recorded as unrecovered. P87 queued, seven cells: G22 sheer-off x2 (`b19ca15a`, `9d0f0968`), crawl (`7ea65fde`), portrait (`5d6563d9`), seated rear (`02d503b1`), ports x2 with no sheer LoRA (`585e15bf`, `e0f0cca2`). No spill line on any live receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p85 judged 6/6, G21 closed, CFG sweep flat, G22 open, p86 queued — 25 September 2026 (20:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P85 held 6/6 (10.2–41.1 s, no spill): G21 closed on all eleven reads with the crawl (`79f7c08e`), portrait (`2a1de733`) and seated rear (`f8049d9f`); CFG 4 vs 5 vs 6 sweep on one Yor cheer squat prompt and seed shows no structural change (`94b0f596`, `194e150d`, `73ce0929`), CFG 5 stays the default. P86 queued, six cells: G22 lab-coat open anchors (Kafka `4ab42cde`, Yor `3c921d64`), `bedroom eyes` x2 (`9fa9b55b`, `452459c8`), bent-over (`4cc56e3e`) and seiza (`c49c8f61`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p84 judged 6/6, G21 measured 8, pleats beat the hike, p85 queued — 25 September 2026 (19:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P84 held 6/6 (26.7–29.0 s, no spill): G21 eyes half-lidded on Kafka and neutral on Yor with the uniform intact (`c0d302fe`, `d61c9a55`); pleated skirt beats the hike on the bent-over (`d78922b5`); seiza holds (`7b7c1b86`); sheer-off 2/2 drift nothing (`1c0dce10`, `c76380b2`). P85 queued, six cells: cheer crawl (`79f7c08e`), portrait (`2a1de733`) and seated rear (`f8049d9f`) to close G21, plus the CFG 4 vs 5 vs 6 sweep on one Yor cheer squat prompt and seed (`94b0f596`, `194e150d`, `73ce0929`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p83 judged 6/6, C1 measured 6, G21 promoted, p84 queued — 25 September 2026 (19:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P83 held 6/6 (25.0–33.1 s, no spill): C1 `cowboy shot` 2/2 (`fe938462`, `b54c0780`) and `close-up` 2/2 (`f8e79e7f`, `5ebf0083`) on the wedding squat pair, all four keeping squat, garment and hands; G21 cheerleader promoted on the opening pair (Kafka `422c0a27`, Yor `59e0e5c3`, pleats intact, pom-poms as props). P84 queued, six cells: G21 `bedroom eyes` x2 (`c0d302fe`, `d61c9a55`), cheer bent-over (`d78922b5`, pleated skirt vs the hike) and seiza (`7b7c1b86`), sheer-off x2 (`1c0dce10`, `c76380b2`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p82 judged 6/6, G20 closed, C1 from-below opens, G21 open, p83 queued — 25 September 2026 (19:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P82 held 6/6 (10.1–28.3 s, no spill): G20 closed on all eleven reads with the sheer-off pair (`1e9434dd`, `f81ce43b`), portrait (`8bdea355`) and seated rear (`66c9a08d`); C1 `from below` opens measured 2/2 on the wedding squat pair (Kafka `a6e3094e`, Yor `bdcd5d2b`). P83 queued, six cells: C1 `cowboy shot` x2 (`fe938462`, `b54c0780`) and `close-up` x2 (`f8e79e7f`, `5ebf0083`) on the wedding squat pair, G21 cheerleader open anchors (Kafka `422c0a27`, Yor `59e0e5c3`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p81 judged 6/6, G20 measured 7, B1 roster complete at 40 faces, p82 queued — 25 September 2026 (19:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P81 held 6/6 (24.8–28.1 s, no spill): G20 eyes half-lidded on Kafka and neutral on Yor with dress and veil intact (`0d36565c`, `0eba196f`); wedding on the bent-over (`8d594b16`), seiza (`b689d91c`) and crawl (`ca02aeaa`); B1 Yuzuha (`bae0bb7a`) clean, closing the ambition roster (B1 now 23 clean, 16 partial, 1 break across 40 faces). P82 queued, six cells: G20 sheer-off x2 (Kafka `1e9434dd`, Yor `f81ce43b`), wedding portrait (`8bdea355`) and seated rear (`66c9a08d`), camera layer opens with `from below` on the wedding squat pair (`a6e3094e`, `bdcd5d2b`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p80 judged 6/6, G19 closed, G20 promoted, B1 at 39 faces, p81 queued — 25 September 2026 (18:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P80 held 6/6 (26.5–28.9 s, no spill): G19 closed on all eleven reads with the bunny seated rear (Yor `db287044`); G20 wedding dress promoted on the opening pair (Kafka `dac04dac`, Yor `9c12cc27`, full bridal read, squats held); B1 Vivian (`c290236f`), Dialyn (`947c8b27`) and Ju Fufu (`d373d7ba`) all clean (B1 now 22 clean, 16 partial, 1 break across 39 faces). P81 queued, six cells: G20 `bedroom eyes` x2 (Kafka `0d36565c`, Yor `0eba196f`), wedding bent-over (`8d594b16`), seiza (`b689d91c`) and crawl (`ca02aeaa`), B1 on Yuzuha (`bae0bb7a`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p79 judged 7/7, G19 measured 10, B1 at 36 faces, G20 open, p80 queued — 25 September 2026 (18:30 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P79 held 7/7 (12.3–39.5 s, no spill): G19 sheer-off 2/2 drift nothing (Kafka `701ec40f`, Yor `ed305c9a`); bunny on the crawl (Kafka `c08623d1`) and the portrait (Yor `bc378df1`); B1 Nekomata (`e1988cd8`), Trigger (`75be63aa`) and Alice (`75cb5b58`) all clean (B1 now 19 clean, 16 partial, 1 break across 36 faces). P80 queued, six cells: G19 seated rear to close (Yor `db287044`), B1 on Vivian (`c290236f`), Dialyn (`947c8b27`) and Ju Fufu (`d373d7ba`), G20 wedding-dress open anchors (Kafka `dac04dac`, Yor `9c12cc27`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p78 judged 6/6, G19 measured 6, B1 at 33 faces, p79 queued — 25 September 2026 (18:15 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P78 held 6/6 (10.2–33.1 s, no spill): G19 `bedroom eyes` 2/2 with the suit intact (Kafka `a3226b09`, Yor `b5b69ae5`); bunny on the bent-over (Kafka `c94026f9`) and the seiza (Yor `8fdc9abe`, tongue out, feet visible); B1 Sparkle (`c7da953f`) and Zhezhi (`c598a85c`) both clean (B1 now 16 clean, 16 partial, 1 break across 33 faces). P79 queued, seven cells: G19 sheer-off x2 (Kafka `701ec40f`, Yor `ed305c9a`), bunny crawl (`c08623d1`) and portrait (`bc378df1`), B1 on Nekomata (`e1988cd8`), Trigger (`75be63aa`) and Alice (`75cb5b58`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p77 judged 7/7, G18 closed, G19 promoted, B1 at 31 faces, p78 queued — 25 September 2026 (18:00 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P77 held 7/7 (26.3–28.4 s, no spill): G18 closed 8/8 on the sheer-off reruns (Kafka `3a8b9880`, Yor `94d8c6b6`, nothing drifted) and the santa seated rear (Yor `bac444b2`); G19 bunny suit promoted on the opening pair (Kafka `1264b365`, Yor `26ba5851`, full suit read, squats held); B1 Yixuan (`a3c31e47`) and Phoebe (`be100e4f`) both clean (B1 now 14 clean, 16 partial, 1 break across 31 faces). P78 queued, six cells: G19 `bedroom eyes` x2 (Kafka `a3226b09`, Yor `b5b69ae5`), bunny bent-over (`c94026f9`) and seiza (`8fdc9abe`), B1 on Sparkle (`c7da953f`) and Zhezhi (`c598a85c`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p76 judged 6/6, G18 ports/eyes closed, G19 bunny open, p77 queued — 25 September 2026 (17:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open.
+
+P76 held 6/6 (24.3–42.4 s, no spill): G18 santa ports closed on Anima (`c5fca2ea`) and JANIMA (`552f6282`) with no sheer LoRA; `bedroom eyes` holds on santa 2/2 with the dress intact (Kafka `8352a033`, Yor `6bd5ea48`); santa crawl (`e924cb2e`) confirms T12 on a short unbelted dress — rule confirmation, not a stack fail; santa portrait holds (Yor `26f71ee9`). G18 stands measured 6/8; B1 unchanged at 12 clean, 16 partial, 1 break across 29 faces. P77 queued, seven cells: G18 sheer-off close (Kafka `3a8b9880`, Yor `94d8c6b6`), santa seated rear (Yor `bac444b2`), B1 on Yixuan (`a3c31e47`) and Phoebe (`be100e4f`), G19 bunny-suit open anchors (Kafka `1264b365`, Yor `26ba5851`). No spill line on any receipt this session. Note: PR #899 merged 24 September 2026 15:26 UTC; branch work continues and needs a fresh PR for review.
+
+## NSFW lab overnight: p75 judged 6/6 mixed, G18 promoted, B1 at 29 faces, p76 queued — 25 September 2026 (06:35 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P75 held 6/6: G18 promoted on the opening pair (Kafka `0b9b3c12`, Yor `168a5923`, fur reads fur, hats stay on); santa on bent-over (`2f073f1c`) and seiza (`f11d4c8a`) both hold; B1 Yukong clean (`cf3648dd`), Jinhsi partial (`d497a5e0`; B1 now 12 clean, 16 partial, 1 break across 29 faces). P76 queued: G18 santa ports (Kafka `c5fca2ea`, Yor `552f6282`), santa eyes (Kafka `8352a033`, Yor `6bd5ea48`), santa crawl (`e924cb2e`) and portrait (`26f71ee9`). No spill line on any receipt this session.
+
+## NSFW lab overnight: p74 judged 6/6, G17 closed, kimono on all poses, p75 queued mixed — 25 September 2026 (06:10 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P74 held 6/6: G17 closed on all four reads (Kafka eyes `724732e1`, Yor eyes `adb2d952`, sheer-off `520145d1`/`53f451da`, nothing drifted); kimono seated-rear transfer holds (`1ea3a333`, kimono on all six poses); B1 Jingliu clean (`2dcb836e`; B1 now 11 clean, 15 partial, 1 break across 27 faces). P75 queued mixed: G18 santa open anchors (Kafka `0b9b3c12`, Yor `168a5923`), santa bent-over (`2f073f1c`) and seiza (`f11d4c8a`) transfers, B1 on Yukong (`cf3648dd`) and Jinhsi (`d497a5e0`). No spill line on any receipt this session.
+
+## NSFW lab overnight: p73 judged 6/6 mixed, obi beats hike, p74 queued — 25 September 2026 (05:45 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P73 held 6/6, the first mixed wave: kimono ports 2/2 (Kafka `b2b3dd83`, Yor `d409429d`), kimono on bent-over (`ee8c6b05`), seiza (`72d0d5a6`), portrait (`d9e46e27`), and crawl (`96cda2ea`) — the knotted obi holds the dress shut, beating the T12 hike rule. P74 queued: G17 eyes (Kafka `724732e1`, Yor `adb2d952`), G17 sheer-off close (Kafka `520145d1`, Yor `53f451da`), kimono seated rear (Yor `1ea3a333`), B1 on Jingliu (`2dcb836e`). No spill line on any receipt this session.
+
+## NSFW lab overnight: p72 judged 6/6, G16 closed, G17 promoted, B1 at 26 faces, p73 queued mixed — 25 September 2026 (05:20 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P72 held 6/6: G16 closed with the sheer-off reruns (Kafka `ba139c79`, Yor `788edaa8`, nothing drifted); G17 promoted on the opening pair (Kafka `f77c4084` red kimono black obi, Yor `76a0fcae` white-with-red kimono — garment class holds); B1 Zhezhi clean (`1c5457c7`), Sparkle partial (`a37dca16`; B1 now 10 clean, 15 partial, 1 break across 26 faces). P73 queued, first mixed wave: kimono squat-anchor ports (Kafka `b2b3dd83`, Yor `d409429d`), kimono on bent-over (`ee8c6b05`), crawl (`96cda2ea`, obi-vs-hike test), seiza (`72d0d5a6`), portrait (`d9e46e27`). No spill line on any receipt this session.
+
+## NSFW lab overnight: p71 judged 6/6, G16 ports and eyes, B1 at 24 faces, p72 queued — 25 September 2026 (04:55 local)
+
+Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
+
+P71 held 6/6: G16 ported 2/2 (Kafka `c1a5bc35`, Yor `9f6df1ed`) and held eyes-neutral 2/2 (Kafka `70fbd70d`, Yor `ae6435ad`) — only sheer-off reruns remain to close; B1 Yuzuha clean (`8925a67f`), Alice partial (`ef2fa048`; B1 now 9 clean, 14 partial, 1 break across 24 faces). P72 queued: G16 sheer-off close (Kafka `ba139c79`, Yor `788edaa8`), G17 kimono open (Kafka `f77c4084`, Yor `76a0fcae`), B1 on Sparkle (`a37dca16`) and Zhezhi (`1c5457c7`). Owner direction: waves mix poses from p73 (1–2 squat anchors + transfers to bent-over, crawl, seiza, seated rear, portrait). No spill line on any receipt this session.
+
 ## NSFW lab overnight: p70 judged 6/6, G15 closed, G16 promoted, B1 at 22 faces, p71 queued — 25 September 2026 (04:30 local)
 
 Executed through Studio on the primary. Generated and agent-inspected only, not art acceptance and not licence clearance. Catalog `verified` was not changed. q-29 and q-31 stay open. Aqua confirmed; Ellen cleared and running.
@@ -347,12 +485,6 @@ Receipts are under `C:/Users/jekyt/source/local-asset-studio/experiments/runs` b
 Not run: One Obsession, Pearly, and any many-minute workflow.
 
 By 23:19 the same lab had queued nine more technique cells and three see-through cells. The usable writeup is `experiments/curated/nsfw-lab-20260923/TECHNIQUES.md`. The rear open-skirt stack held on Shalltear, Artoria, and mostly Black Swan and Yinlin, and it left Albedo's white dress closed. Front "hands on thighs" lost to the desk, the throne, and the wall. See-through Clothes Illustrious (`see_through_clothes.safetensors`, Civitai version 1610854, strength 1, trigger `seethroughILL`) made that white dress transparent and made darker dresses glossy. Jobs `5e462af7` / `c9500679`, `d33ff53d` / `aa4133c8`, `1a1e5192` / `3f0bb896`. Not art acceptance and not licence clearance.
-
-## Adult franchise NSFW lab continuation — 23 September 2026 (evening)
-
-Record: `experiments/curated/nsfw-lab-20260923/FINDINGS.md`. Pictures stay on disk under the ComfyUI output `Studio\` prefix. Nothing from this slice is on Creative Bundles. Generated and agent-judged only, not art acceptance, not licence clearance. Catalog `verified` was not flipped. q-29 and q-31 stay open.
-
-Thirteen fast-family cells completed (WAI, Anima, JANIMA, CSTati, AniFox, YumeFlux). Wave K changed the prompt because Wave J's front-seated Albedo stayed dressed and the rear cells grew a lifting hand. The wording that held is an already-open skirt with `hands, fingers` in the negative (Changli). A WAI Frieren frame looked young; the owner later said that is not a reason to drop her. Serie was also generated. Three prompts died with the process and were not resubmitted: Elsa `4dc53889-e2e0-4c22-8e66-93cbf125b4d1`, Serie-on-Anima `6ab21b16-5450-4338-af2c-c66e3054244a`, Scathach `c3b53ce6-3083-4fec-a236-1095a5fb87e2`. No many-minute model was used. Receipts are in the configured experiments root `C:/Users/jekyt/source/local-asset-studio/experiments/runs`.
 
 ## `zimage-fast` Studio-proved, Krea trigger follow-up, krea-refine on GGUF — 23 September 2026 (07:14-07:36)
 
