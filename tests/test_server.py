@@ -299,6 +299,47 @@ class ServerTests(unittest.TestCase):
         handler.headers={"Host":"evil.example:8191","Origin":"http://evil.example:8191"}
         self.assertFalse(handler._safe_host())
 
+    def test_foreign_origin_post_drains_declared_body_before_refusal(self):
+        body=b"a"*(32*1024)
+        handler=server.Handler.__new__(server.Handler)
+        handler.headers={"Host":"127.0.0.1:8191","Origin":"http://evil.example","Content-Length":str(len(body)),"Content-Type":"application/json"}
+        handler.path="/api/estimate";handler.rfile=io.BytesIO(body);handler.close_connection=False
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+        handler.do_POST()
+        self.assertEqual(sent,[(403,{"error":"Local same-origin request required"})])
+        self.assertEqual(handler.rfile.read(),b"")
+
+    def test_foreign_origin_post_drains_declared_length_but_closes_ambiguous_framing(self):
+        body=b"bad"
+        handler=server.Handler.__new__(server.Handler)
+        handler.headers={"Host":"127.0.0.1:8191","Origin":"http://evil.example",
+                         "Transfer-Encoding":"identity","Content-Length":str(len(body))}
+        handler.path="/api/estimate";handler.rfile=io.BytesIO(body);handler.close_connection=False
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+        handler.do_POST()
+        self.assertEqual(sent,[(403,{"error":"Local same-origin request required"})])
+        self.assertEqual(handler.rfile.read(),b"")
+        self.assertTrue(handler.close_connection)
+
+    def test_foreign_origin_post_closes_without_one_safe_declared_length(self):
+        cases=(({},b""),( {"Content-Length":"not-a-length"},b"x"),
+               ({"Content-Length":str(1024*1024+1)},b""),({"Content-Length":"2"},b"x"))
+        for framing,body in cases:
+            with self.subTest(framing=framing):
+                handler=server.Handler.__new__(server.Handler)
+                handler.headers={"Host":"127.0.0.1:8191","Origin":"http://evil.example",**framing}
+                handler.path="/api/estimate";handler.rfile=io.BytesIO(body);handler.close_connection=False
+                sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent,[(403,{"error":"Local same-origin request required"})])
+                self.assertTrue(handler.close_connection)
+
+    def test_refused_body_without_parsed_headers_closes_connection(self):
+        handler=server.Handler.__new__(server.Handler)
+        handler.rfile=io.BytesIO(b"");handler.close_connection=False
+        handler._drain_refused_body()
+        self.assertTrue(handler.close_connection)
+
     def test_malformed_setup_and_export_bodies_are_400_not_500(self):
         studio=self.studio();sent=[]
         for path,body in (('/api/setups',[]),
