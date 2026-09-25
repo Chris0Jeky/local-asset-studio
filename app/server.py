@@ -2117,7 +2117,13 @@ class Handler(BaseHTTPRequestHandler):
             data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
         except WorkspaceError as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
-        except (URLError, HTTPError, OSError) as exc: self._json(502, {"error": "ComfyUI image is unavailable"})
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return
+        except (URLError, HTTPError): self._json(502, {"error": "ComfyUI did not return this image. Check that ComfyUI is running (Models & setup shows its state), then reload."})
+        except OSError as exc:
+            detail = exc.strerror or type(exc).__name__
+            known = getattr(exc, "filename", None)
+            suffix = " (%s)" % Path(known).name if known else ""
+            self._json(500, {"error": "Could not read a local file%s: %s" % (suffix, detail)})
     def do_POST(self):
         if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
         try:
