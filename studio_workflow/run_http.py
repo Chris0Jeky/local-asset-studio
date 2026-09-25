@@ -4,6 +4,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from .core import MAX_BYTES, canonical, decode, need
 from .documents import DocumentError
+from .execution import RunAdmissionRefused
 from .document_runs import DocumentRuns
 from .document_http import store as document_store
 from .http_body import reject_json
@@ -74,6 +75,8 @@ def extend_handler(base):
                 result = route(self.studio, self.path, value)
                 need(len(canonical(result)) <= 2 * MAX_BYTES, 'Saved-run reply exceeds 2 MiB')
                 return self._json(200, result)
+            except RunAdmissionRefused as exc:
+                return self._json(exc.status, exc.response())
             except DocumentError as exc:
                 result = exc.result(); result.pop('generation_submitted', None)
                 return failure(exc.status, result)

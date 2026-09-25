@@ -57,10 +57,14 @@ def run_saved(studio, records, request_id, value):
              'Document workspace changed; inspect the original workspace')
         # The existing service pins runs/experiments and validates the recipe;
         # it fsyncs dispatch intent before creating the one shared-worker job.
-        from .execution import run_ticket
+        from .execution import RunAdmissionRefused, run_ticket
         try:
             dispatch = run_ticket(studio, record['report']['ticket'], approved=True)
             need(isinstance(dispatch, dict), 'Invalid retained-ticket dispatch result')
+        except RunAdmissionRefused:
+            # This typed boundary proves no new intent was written. Preserve it
+            # for the HTTP adapter rather than manufacturing an unknown outcome.
+            raise
         except Exception as exc:
             # Includes failures before dispatch whose exact phase we cannot know
             # here. Never infer "not submitted" after entering the dispatch seam.

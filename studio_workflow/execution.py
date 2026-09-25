@@ -17,6 +17,32 @@ RECIPE_KEYS = {'preset_id', 'controls', 'references', 'parent_assets', 'batch_co
 NAMESPACE = uuid.UUID('33791d36-41a5-4bc8-b793-c567ffb8a73a')
 
 
+class RunAdmissionRefused(ValueError):
+    """Definite refusal before new dispatch intent, never an execution outcome."""
+    status = 409
+    code = 'gpu_leased'
+
+    def __init__(self, error):
+        super().__init__(str(error))
+        self.details = dict(error.details)
+
+    def response(self):
+        return {'error': str(self), 'code': self.code, **self.details,
+                'dispatch_attempted': False,
+                'recovery': 'Keep the same ticket or saved run. After release or expiry, explicitly retry that original approval.'}
+
+
+def _require_gpu(studio):
+    lease = getattr(studio, 'gpu_lease', None)
+    if lease is None: return
+    try: lease.require_available()
+    except ValueError as exc:
+        # Only a proven held lease gets the pre-intent refusal contract. Storage
+        # failures and unexpected errors retain their existing unknown handling.
+        if getattr(exc, 'code', None) != 'gpu_leased': raise
+        raise RunAdmissionRefused(exc) from exc
+
+
 def _clean_run_label(value):
     # Keep guidance/qualification imports free of the runtime app package.
     # server.py puts this repository's app directory ahead of ComfyUI's own app package.
@@ -119,6 +145,9 @@ def run_ticket(studio, ticket, approved=False):
             return {'replayed': True, 'job_id': job_id, 'status': 'reconciliation_required',
                     'dispatch_attempted': False, 'message': 'Intent exists but no job record is available. Do not create a new ticket or resubmit blindly.'}
         need(job_id not in studio.jobs, 'Job exists without its request receipt; reconcile before proceeding')
+        # Recovery above never dispatches, so keep it available during a lease.
+        # New admission and enqueue share the same lock as lease acquisition.
+        _require_gpu(studio)
         current = _pins(studio, ticket['recipe'])
         need(current == ticket['pins'], 'Recipe, references, workspace or environment changed; prepare and review again')
         # Exclusive create + fsync precedes any call capable of enqueueing work.
