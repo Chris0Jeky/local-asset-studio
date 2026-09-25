@@ -1323,9 +1323,14 @@ class Studio:
         resumed["history"] = history + [{"status": "resumed", "recorded_at": time.time()}]
         prospective = dict(job)
         prospective.update(status="queued", message="Queued to resume observation of retained prompt IDs; no image will be resubmitted.", tracking_disposition=resumed)
+        # A successful explicit Resume re-opens the problem: drop the owner
+        # put-away marker from the prospective state so a later failed,
+        # partial or uncertain outcome surfaces unacknowledged again.
+        prospective.pop("put_away_at", None)
         # Keep the live stop disposition until the supported publication barriers pass.
         self._write_observation_state(self.runs / job["id"] / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
         job.update(status=prospective["status"], message=prospective["message"], tracking_disposition=resumed)
+        job.pop("put_away_at", None)
         self.queue.put(("observe", job["id"]))
         return self.public(job)
 
@@ -1914,12 +1919,17 @@ class Studio:
         if not pending:
             prospective["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}
         prospective.update(status="queued", message="Queued to resume observation; no image will be resubmitted.")
+        # A successful explicit Resume re-opens the problem: drop the owner
+        # put-away marker from the prospective state so a later failed,
+        # partial or uncertain outcome surfaces unacknowledged again.
+        prospective.pop("put_away_at", None)
         state = {key: value for key, value in prospective.items() if key != "graph"}
         state_path = self.runs / job_id / "state.json"
         # Readable replacement bytes cannot certify a failed synchronization.
         # Every failure preserves live/queue state until a later explicit retry.
         self._write_observation_state(state_path, state)
         job.update(prospective)
+        job.pop("put_away_at", None)
         self.queue.put(("observe", job_id))
         return self.public(job)
 
