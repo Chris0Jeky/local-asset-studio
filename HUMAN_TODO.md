@@ -78,6 +78,10 @@ standing pose, three seeds, pose strength 0.7 / 0.9 / 1.0, judged blind. Agents 
 
 Agent pre-review (23 Sep 2026): docs/quality/pre-reviews/q-25.md; the owner still decides.
 
+**Owner answer (25 September 2026, in-session question): "Re-test later".** This authorises the agent re-test described
+above, once the GPU is free (on 25 September it was running the owner's local LLM, so nothing was queued). q-25 stays open
+until the re-test sheet exists and the owner decides (1) and (2).
+
 ## Anime & fantasy atelier — open items
 
 **q-1 — koukouya Krea 2 style LoRA: done, 12 September 2026.** The owner supplied a civitai API key; it is stored
@@ -180,7 +184,7 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
 ## Session 24–25 September 2026: two owner actions
 
-- [ ] **studio-restart-0925**: restart the Studio once the lab session is idle, so the running server loads today's merged Python changes:
+- [ ] **studio-restart-0925** (done by an agent on 25 September 2026; agents never tick this file, so tick it once you have seen it. The restart ran after the owner said the Studio was idle and free to use apart from queueing jobs). The agent checked that no job or plan was running. It stopped the `app\server.py` listener on 8191 (PID 32744) and relaunched it with `scripts/Start-Studio.ps1 -NoBrowser`. `/api/health` answered, and `/api/workspace` assets now carry `run_label` and `prompt_excerpt`, which is the #959 migration. Original item: restart the Studio once the lab session is idle, so the running server loads today's merged Python changes:
   - the Windows file-lock retry and plainer failure banner (#945);
   - Put away on Problems (#950);
   - the library's *Mine / Agent runs* filter and prompt subtitles (#959; its first open adds two columns to the Workspace database, and this was proved on a copy of your 1,205-asset database).
@@ -194,3 +198,16 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
   The current banner about job `60934d27` clears after the restart. Agents did not restart it because another session was using the GPU.
 - [ ] **prepare-large-job-proof (#306)**: #960 merged the prepare-large-job command. It is **off by default**: the two flags are absent from `config/local.json`, and absent means off. Its acceptance still needs your approval for one live Windows proof: dry run and refusal cases, memory counters before and after `/free`, and a backend restart only if you approve that step. Say whether to run it, and when the GPU is free.
+
+  **Owner answer (25 September 2026, in-session question): "Full proof incl. restart"**, approved while the GPU ran the owner's local LLM (no generation is part of the proof). **First attempt, the same day:** even a dry run refused with "Active, partial or uncertain Studio work blocks resource cleanup". The Studio holds five old `uncertain` jobs from 12 and 23 September, plus planned, awaiting-review and interrupted plans; the ComfyUI queue was empty. As merged, the gate treats any such record as active, so the command could never run on this PC. A follow-up PR narrows the gate:
+  - in-flight work blocks everything;
+  - unresolved but idle work blocks only the restart, because a restart discards the ComfyUI history that Resume observation needs;
+  - plans at rest never block.
+
+  The proof resumes once that PR merges. This item stays open until the proof receipt exists.
+
+## Things to glance at when convenient (not blockers)
+
+[docs/OWNER-REVIEW-QUEUE.md](docs/OWNER-REVIEW-QUEUE.md) lists the design defaults, copy changes and small decisions agents made on your behalf. Each row has a place to acknowledge or object. Nothing there blocks work.
+
+**Lab backlog (owner answer, 25 September 2026, "Yes, mark them"):** once the library's *Mark as agent run* action lands, agents may bulk-mark the existing assets that are unreviewed, not favourites and not keepers as agent runs, so the library opens on your own work. This is reversible with *Mark as mine* or the *All sources* filter.
