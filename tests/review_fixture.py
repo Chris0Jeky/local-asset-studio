@@ -19,6 +19,7 @@ class FixtureAssets:
         self.root=root;self.root.mkdir(parents=True,exist_ok=True);self.records={};self.paths={}
     def get(self, identifier):return copy.deepcopy(self.records[identifier])
     def file(self, identifier):return self.paths[identifier]
+    def file_entry(self, identifier):return self.paths[identifier],self.get(identifier)
 
 
 class FixtureStudio:

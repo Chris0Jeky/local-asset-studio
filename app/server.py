@@ -43,6 +43,7 @@ import prompting
 import submission_evidence
 import observation_state
 import file_replace
+import asset_thumbs
 import job_resources
 import continuation
 import pose_guide
@@ -1982,7 +1983,12 @@ class Handler(BaseHTTPRequestHandler):
                 while chunk := response.read(64 * 1024): self.wfile.write(chunk)
             except (BrokenPipeError, ConnectionResetError): return
 
-    def _local_file(self, file, download=False):
+    def _cache_headers(self, etag):
+        # Only content-addressed responses carry these: their bytes can never change under the same URL.
+        self.send_header("ETag", etag); self.send_header("Cache-Control", "private, max-age=31536000, immutable")
+    def _local_file(self, file, download=False, etag=None, content_type=None):
+        if etag and any(tag.strip().removeprefix("W/") in (etag, "*") for tag in self.headers.get("If-None-Match", "").split(",")):
+            self.send_response(304); self._cache_headers(etag); self.end_headers(); return
         size = file.stat().st_size
         start, end = 0, size - 1
         requested = self.headers.get("Range")
@@ -1995,8 +2001,9 @@ class Handler(BaseHTTPRequestHandler):
             if start > end or start >= size:
                 self.send_response(416); self.send_header("Content-Range", f"bytes */{size}"); self.send_header("Content-Length", "0"); self.end_headers(); return
         self.send_response(206 if requested else 200)
-        self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream")
+        self.send_header("Content-Type", content_type or mimetypes.guess_type(str(file))[0] or "application/octet-stream")
         self.send_header("Content-Length", str(end - start + 1)); self.send_header("Accept-Ranges", "bytes")
+        if etag: self._cache_headers(etag)
         if requested: self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
         if download: self.send_header("Content-Disposition", f'attachment; filename="{file.name}"')
         self.end_headers()
@@ -2052,7 +2059,12 @@ class Handler(BaseHTTPRequestHandler):
                 if not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)",name): raise StudioError("Invalid upload")
                 return self._local_file(inside(self.studio.experiments/'uploads',self.studio.experiments/'uploads'/name))
             if path.startswith("/api/assets/") and path.endswith("/file"):
-                return self._local_file(self.studio.assets.file(path.split("/")[3]), urlparse(self.path).query == "download")
+                file, asset = self.studio.assets.file_entry(path.split("/")[3])
+                return self._local_file(file, urlparse(self.path).query == "download", '"' + asset["sha256"] + '"')
+            if path.startswith("/api/assets/") and path.endswith("/thumb") and len(path.split("/")) == 5:
+                size = asset_thumbs.requested_size(parse_qs(urlparse(self.path).query, keep_blank_values=True).get("w"))
+                file, etag = asset_thumbs.thumbnail(self.studio.assets, path.split("/")[3], size)
+                return self._local_file(file, etag=etag, content_type=asset_thumbs.CONTENT_TYPE)
             if path.startswith("/api/exports/"):
                 identifier = path.rsplit("/", 1)[-1]
                 if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")

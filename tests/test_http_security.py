@@ -92,6 +92,32 @@ class ResponseSecurityTests(unittest.TestCase):
         self.secured(self.request(path,headers={'Range':'bytes=999999-'}),416)
         raw,headers=self.secured(self.request(path+'?download'),200)
         self.assertIn('attachment',headers['content-disposition']);self.assertEqual(raw,png())
+    def test_local_asset_file_is_content_addressed_and_answers_if_none_match(self):
+        path='/api/assets/'+self.asset['id']+'/file';tag='"'+self.asset['sha256']+'"'
+        raw,headers=self.secured(self.request(path),200);self.assertEqual(raw,png())
+        self.assertEqual(headers['etag'],tag);self.assertEqual(headers['cache-control'],'private, max-age=31536000, immutable')
+        for match in (tag,'W/'+tag,'"other", '+tag,'*'):
+            with self.subTest(match=match):
+                raw,headers=self.secured(self.request(path,headers={'If-None-Match':match}),304)
+                self.assertEqual(raw,b'');self.assertEqual(headers['etag'],tag);self.assertIn('immutable',headers['cache-control'])
+        raw,_=self.secured(self.request(path,headers={'If-None-Match':'"stale"'}),200);self.assertEqual(raw,png())
+        raw,headers=self.secured(self.request(path,headers={'Range':'bytes=0-7'}),206);self.assertEqual((raw,headers['etag']),(png()[:8],tag))
+    def test_local_asset_thumbnail_is_cached_webp_with_its_own_tag(self):
+        import io
+        from PIL import Image
+        path='/api/assets/'+self.asset['id']+'/thumb'
+        raw,headers=self.secured(self.request(path),200)
+        self.assertEqual(headers['content-type'],'image/webp');self.assertIn('immutable',headers['cache-control'])
+        tag=headers['etag'];self.assertTrue(tag.startswith('"'+self.asset['sha256']+'-384-'),tag)
+        with Image.open(io.BytesIO(raw)) as image:self.assertEqual((image.format,image.size),('WEBP',(8,12)),'never upscaled')
+        raw,_=self.secured(self.request(path,headers={'If-None-Match':tag}),304);self.assertEqual(raw,b'')
+        _,headers=self.secured(self.request(path+'?w=256'),200);self.assertIn('-256-',headers['etag'])
+        body,_=self.secured(self.request(path+'?w=999'),400);self.assertEqual(json.loads(body)['code'],'invalid_thumbnail_size')
+        self.secured(self.request('/api/assets/'+'0'*32+'/thumb'),400)
+        clip=self.fixture.root/'clip.mp4';clip.write_bytes(b'not decoded here')
+        video=self.studio.assets.register({'id':'thumb-video','preset_name':'Clip','outputs':[{'filename':'clip.mp4','media_type':'video'}]},0,clip)
+        body,_=self.secured(self.request('/api/assets/'+video+'/thumb'),404);self.assertEqual(json.loads(body)['code'],'thumbnail_unavailable')
+        self.assertEqual(self.studio.requests,[]);self.assertTrue(self.studio.queue.empty())
     def test_proxy_full_range_and_upstream_416_are_secured_without_losing_headers(self):
         path='/api/image/'+self.job['id']+'/0'
         raw,headers=self.secured(self.request(path),200);self.assertEqual(raw,b'0123456789')
