@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from studio_prompt.adult_illustration_prompt_catalog import load_catalog  # noqa: E402
 from studio_prompt.adult_illustration_prompt_membership import (  # noqa: E402
     inspect_prompt_membership,
+    validate_prompt_membership_report,
 )
 from studio_prompt.adult_illustration_taxonomy_contracts import load_taxonomy_contracts  # noqa: E402
 from studio_prompt.adult_illustration_prompt_projection import (  # noqa: E402
@@ -113,6 +114,20 @@ def _parser() -> argparse.ArgumentParser:
         "--repo-root", default=str(Path(__file__).resolve().parents[1])
     )
     membership.add_argument("--out")
+
+    validate_membership = subparsers.add_parser(
+        "validate-membership",
+        help="recompute and verify a saved membership report",
+    )
+    validate_membership.add_argument("report")
+    validate_membership.add_argument("compiled")
+    validate_membership.add_argument("--source", required=True)
+    validate_membership.add_argument("--taxonomy-index", required=True)
+    validate_membership.add_argument("--taxonomy-source", required=True)
+    validate_membership.add_argument(
+        "--repo-root", default=str(Path(__file__).resolve().parents[1])
+    )
+    validate_membership.add_argument("--out")
     return parser
 
 
@@ -158,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
             source = _read_json(args.source)
             value = validate_prompt_projection(compiled, source, args.repo_root)
             _emit(value, args.out)
-        else:
+        elif args.command == "inspect-membership":
             compiled = _read_json(args.compiled)
             source = _read_json(args.source)
             taxonomy_index = _read_json(
@@ -171,6 +186,28 @@ def main(argv: list[str] | None = None) -> int:
                 "Taxonomy source",
             )
             value = inspect_prompt_membership(
+                compiled,
+                source,
+                taxonomy_index,
+                taxonomy_source,
+                args.repo_root,
+            )
+            _emit(value, args.out)
+        else:
+            report = _read_json(args.report)
+            compiled = _read_json(args.compiled)
+            source = _read_json(args.source)
+            taxonomy_index = _read_json(
+                args.taxonomy_index, limit=TAXONOMY_INDEX_LIMIT
+            )
+            contracts = load_taxonomy_contracts(args.repo_root)
+            taxonomy_source = _read_bounded(
+                args.taxonomy_source,
+                contracts["source"]["bounds"]["max_source_bytes"],
+                "Taxonomy source",
+            )
+            value = validate_prompt_membership_report(
+                report,
                 compiled,
                 source,
                 taxonomy_index,
