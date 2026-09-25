@@ -74,6 +74,8 @@ try { $qwen21Stats = Invoke-RestMethod 'http://127.0.0.1:8196/system_stats' -Tim
 $backendStatePath = Join-Path $repoRoot '.runtime\backend-state.json'
 $savedBackend = $null
 if (Test-Path -LiteralPath $backendStatePath) { $savedBackend = Get-Content -LiteralPath $backendStatePath -Raw | ConvertFrom-Json }
+# Probes can outlive the initial lease observation, including a held lease.
+$gpuAvailable = Test-StudioGpuLeaseAvailable
 if ($gpuAvailable -and -not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3','qwen21')) {
     if (-not (Test-Path -LiteralPath $studioConfig.comfy_launcher)) { throw 'ComfyUI is offline and its launcher is missing. Check config/local.json.' }
     # Start the same runtime the Studio's own switch/recovery launches: arguments from BackendManager.primary_argv,
