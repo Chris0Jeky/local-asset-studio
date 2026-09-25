@@ -203,6 +203,118 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertEqual(result["phase"], "interrupted")
         self.assertEqual(studio.free_calls, [])
 
+    @staticmethod
+    def _fake_receipt(request_id, state):
+        return {
+            "schema": "studio.large-job-preparation/v1",
+            "request_id": request_id,
+            "state": state,
+            "phase": "probe",
+            "marker": request_id,
+        }
+
+    def _fill_journal(self, controller, studio, states):
+        from large_job_prep_common import JOURNAL_SCHEMA
+        records = [
+            self._fake_receipt("rotate-%02d" % index, state)
+            for index, state in enumerate(states)
+        ]
+        studio._write_json_atomic(controller.path, {"schema": JOURNAL_SCHEMA, "records": records})
+        return controller._load()
+
+    def test_full_journal_evicts_oldest_terminal_first(self):
+        from large_job_prep_common import MAX_RECORDS, _digest
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        states = ["completed", "refused"] + [
+            "in_progress" if index % 3 == 0 else ("unknown" if index % 3 == 1 else "completed")
+            for index in range(2, MAX_RECORDS)
+        ]
+        journal = self._fill_journal(controller, studio, states)
+        controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        reloaded = controller._load()
+        ids = [record["request_id"] for record in reloaded["records"]]
+        self.assertEqual(len(ids), MAX_RECORDS)
+        self.assertNotIn("rotate-00", ids)
+        self.assertIn("rotate-01", ids)
+        self.assertIn("rotate-new", ids)
+        self.assertEqual(ids[-1], "rotate-new")
+        self.assertEqual(ids[0], "rotate-01")
+        for record in reloaded["records"]:
+            if record["request_id"] == "rotate-new":
+                expected = {key: value for key, value in record.items() if key != "receipt_sha256"}
+                self.assertEqual(record["receipt_sha256"], _digest(expected))
+
+    def test_protected_states_are_never_evicted(self):
+        from large_job_prep_common import MAX_RECORDS
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        states = ["in_progress", "unknown", "started", "completed"] + ["completed"] * (MAX_RECORDS - 5) + ["refused"]
+        journal = self._fill_journal(controller, studio, states)
+        controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        reloaded = controller._load()
+        ids = [record["request_id"] for record in reloaded["records"]]
+        self.assertEqual(len(ids), MAX_RECORDS)
+        self.assertEqual(ids[:3], ["rotate-00", "rotate-01", "rotate-02"])
+        self.assertNotIn("rotate-03", ids)
+        self.assertIn("rotate-new", ids)
+
+    def test_terminal_action_receipt_is_not_evicted(self):
+        from large_job_prep_common import MAX_RECORDS
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        journal = self._fill_journal(controller, studio, ["completed"] * MAX_RECORDS)
+        journal["records"][0]["actions"] = [{"kind": "free", "state": "measured"}]
+        studio._write_json_atomic(controller.path, journal)
+        controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        ids = [record["request_id"] for record in controller._load()["records"]]
+        self.assertIn("rotate-00", ids)
+        self.assertNotIn("rotate-01", ids)
+
+    def test_full_action_journal_refuses_new_request(self):
+        from large_job_prep_common import MAX_RECORDS
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        journal = self._fill_journal(controller, studio, ["completed"] * MAX_RECORDS)
+        for record in journal["records"]:
+            record["actions"] = [{"kind": "free", "state": "measured"}]
+        studio._write_json_atomic(controller.path, journal)
+        before = controller.path.read_bytes()
+        with self.assertRaisesRegex(PreparationError, "retention is full"):
+            controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        self.assertEqual(controller.path.read_bytes(), before)
+
+    def test_full_protected_journal_fails_closed_intact(self):
+        from large_job_prep_common import MAX_RECORDS
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        states = [
+            ("in_progress" if index % 3 == 0 else ("unknown" if index % 3 == 1 else "started"))
+            for index in range(MAX_RECORDS)
+        ]
+        journal = self._fill_journal(controller, studio, states)
+        before = controller.path.read_bytes()
+        with self.assertRaisesRegex(PreparationError, "retention is full"):
+            controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        self.assertEqual(controller.path.read_bytes(), before)
+        reloaded = controller._load()
+        self.assertEqual([record["request_id"] for record in reloaded["records"]],
+                         ["rotate-%02d" % index for index in range(MAX_RECORDS)])
+
+    def test_existing_request_update_does_not_rotate(self):
+        from large_job_prep_common import MAX_RECORDS
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        states = ["completed"] + ["in_progress"] * (MAX_RECORDS - 1)
+        journal = self._fill_journal(controller, studio, states)
+        updated = self._fake_receipt("rotate-05", "in_progress")
+        updated["phase"] = "updated"
+        controller._persist(journal, updated)
+        reloaded = controller._load()
+        ids = [record["request_id"] for record in reloaded["records"]]
+        self.assertEqual(len(ids), MAX_RECORDS)
+        self.assertEqual(sorted(ids), sorted("rotate-%02d" % index for index in range(MAX_RECORDS)))
+        self.assertEqual(reloaded["records"][ids.index("rotate-05")]["phase"], "updated")
 
 
 if __name__ == "__main__":
