@@ -12,11 +12,11 @@ not in Git. Generated is not accepted art and not licence clearance. Catalog
   owns 552, the rest is other Studio work).
 - Organised views (NTFS hardlinks, zero extra bytes):
   `C:/AI/ComfyUI_windows_portable/ComfyUI/output/Studio-lab-20260923/` —
-  `by-wave/p10..p93/<cell>.png` (89 waves) and
+  `by-wave/p4..p93/<cell>.png` (90 wave directories) and
   `by-character/<name>/<cell>.png` (~110 characters; `_settings` holds the six
   p10 cfg/steps ablations, which are not character cells).
 - Contact JPEGs (gitignored, served by the Studio gallery):
-  `examples/nsfw-lab/<cell>.jpg`, 552 lab cells plus the earlier 118.
+  `examples/nsfw-lab/<cell>.jpg`, 552 p4–p93 lab cells plus the earlier 118.
 - Tracked record: `examples/nsfw-lab/MANIFEST.json` (670 entries: id, file,
   sha256, bytes, size, job id, prompt id, cell, source PNG, note).
 - Clickable overview: `examples/nsfw-lab/index.html` (gitignored, rebuild with
@@ -32,9 +32,11 @@ python scripts/lab-media.py index --folder nsfw-lab     # rewrite index.html
 
 ## Lab state at closeout (24 September 2026, night)
 
-- 552 judged cells across waves p10–p93 (plus Wave J/K/L and p1–p9 prequels in
-  the same FINDINGS log). Every judged cell has a contact JPEG and a manifest
-  entry; `verify` is 670/670 ok.
+- 552 judged and archived cells across waves p4–p93 (plus Wave J/K/L and p1–p9 prequels in
+  the same FINDINGS log). Every one of the 552 archived cells has a contact JPEG and a manifest
+  entry; `verify` is 670/670 ok (552 p4–p93 plus the earlier 118). The five page-pose cells
+  and the p2/p3 prequels judged in FINDINGS are not yet in the contact archive/manifest —
+  tracked for backfill in #988.
 - G24 (miko) CLOSED at p93: crawl (bend variant), portrait, seated rear, eyes,
   bent-over, seiza, sheer-off x2 and Anima/JANIMA ports all hold; C1
   `from below` measured on the miko pair.
