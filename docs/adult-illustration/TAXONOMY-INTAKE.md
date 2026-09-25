@@ -79,7 +79,7 @@ python scripts/studio_adult_illustration_taxonomy.py lookup \
 
 `lookup` verifies the saved index content identity but cannot revalidate source bytes because it receives no source file. Its result therefore declares `source_revalidated: false`. Use `validate` before treating a persisted index as reconstructed evidence.
 
-All output writes use exclusive creation. Existing files are never overwritten. Errors are machine-readable and retain download, install, execution, generation, and training authority as false.
+All output writes create missing parent directories, then use exclusive creation. An existing output path is refused and never overwritten. Errors are machine-readable and retain download, install, execution, generation, and training authority as false.
 
 ## Parser and review invariants
 

@@ -63,6 +63,7 @@ def _read_json(path: str | Path, maximum: int = MAX_INDEX_BYTES) -> Any:
 
 def _write_new(path: str | Path, raw: bytes) -> None:
     target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
     try:
         with target.open("xb") as stream:
             stream.write(raw)
