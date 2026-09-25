@@ -3,7 +3,7 @@ from urllib.parse import urlparse, unquote
 from urllib.error import URLError
 from .core import catalog, new_document, compile_document, document, decode, need
 from .guides import guides
-from .execution import prepare_ticket, run_ticket
+from .execution import RunAdmissionRefused, prepare_ticket, run_ticket
 from .document_http import extend_handler as extend_documents
 from .run_http import extend_handler as extend_run_records
 from .http_body import reject_json
@@ -131,6 +131,8 @@ def extend_handler(base):
                 value = decode(self.rfile.read(self._content_length(1048576)))
                 result = post(path, value, self.studio)
                 return self._json(200, result)
+            except RunAdmissionRefused as exc:
+                return self._json(exc.status, exc.response())
             except (ValueError, KeyError, TypeError, IndexError, OSError, URLError, RecursionError) as exc:
                 result = {'error': str(exc)}
                 # Never advertise generation_submitted=False on an ambiguous run.
