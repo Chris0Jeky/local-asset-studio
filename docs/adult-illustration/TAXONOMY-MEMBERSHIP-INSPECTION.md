@@ -94,6 +94,19 @@ Inspection validates the exact retained source bytes before classifying source m
 
 A retained membership report can also be validated by recomputing it from the same prompt, source projection and index. Changed classifications, compiler evidence, taxonomy identity or report metadata fail closed.
 
+## Validate a retained report
+
+```console
+python scripts/studio_adult_illustration_prompt.py validate-membership \
+  experiments/runs/hot-spring-membership.json \
+  experiments/runs/hot-spring-prompt.json \
+  --source experiments/runs/hot-spring-projection.json \
+  --taxonomy-index .runtime/adult-illustration/taxonomy-index.json \
+  --taxonomy-source /reviewed/source/selected_tags.csv
+```
+
+The command rereads the retained report, the compiled prompt, the source projection, the saved index and the exact taxonomy source bytes, then recomputes the expected report with the same bounded, read-only inspection. It emits the validated report on success and exits non-zero without writing anything when the retained report is tampered or any authoritative input is stale. Pass `--out <path>` to retain the validated report with exclusive creation.
+
 ## Authority and privacy boundary
 
 Every report keeps download, install, execution, generation and training authority false. The command:

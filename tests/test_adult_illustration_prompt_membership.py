@@ -18,8 +18,12 @@ from studio_prompt.adult_illustration_prompt_membership import (
 )
 from studio_prompt.adult_illustration_prompt_projection import compile_prompt
 from studio_prompt.adult_illustration_taxonomy import build_taxonomy_index
+from studio_prompt.adult_illustration_prompt_common import (
+    _normalise_term as _compiler_normalise_term,
+)
 from studio_prompt.adult_illustration_taxonomy_contracts import (
     canonical_bytes,
+    normalise_term as _taxonomy_normalise_term,
     sha256,
 )
 from tests.test_adult_illustration_prompt_profiles import sample_projection
@@ -261,6 +265,45 @@ class PromptMembershipTests(unittest.TestCase):
         self.assertFalse(report["generation_submitted"])
 
 
+class PromptMembershipNormalisationTests(unittest.TestCase):
+    def test_compiler_and_taxonomy_normalisation_agree(self) -> None:
+        cases = [
+            "solo",
+            "mystery_tag",
+            "second mystery tag",
+            "  blocked__tag  ",
+            "Mixed_Case Tag",
+            "a\tb\nc",
+            "Stra\u00dfe_TAG",
+            "\u00c9clair_tag",
+            "tab\t_separated  term",
+        ]
+        for raw in cases:
+            with self.subTest(raw=raw):
+                self.assertEqual(
+                    _taxonomy_normalise_term(raw),
+                    _compiler_normalise_term(raw),
+                )
+
+    def test_report_normalised_matches_compiler_resolutions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _projection, compiled, index, taxonomy_source = write_fixture(root)
+            report = inspect_prompt_membership(
+                compiled, _projection, index, taxonomy_source, root
+            )
+        compiler_normalised = {
+            (item["channel"], item["input"]): item["normalised"]
+            for item in compiled["vocabulary_resolutions"]
+        }
+        for item in report["inspections"]:
+            with self.subTest(item=(item["channel"], item["input"])):
+                self.assertEqual(
+                    item["normalised"],
+                    compiler_normalised[(item["channel"], item["input"])],
+                )
+
+
 class PromptMembershipCliTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -329,6 +372,94 @@ class PromptMembershipCliTests(unittest.TestCase):
             self.assertEqual(stdout, "")
             self.assertEqual(report_path.read_bytes(), original)
             error = json.loads(stderr)
+            self.assertFalse(error["execution_authorized"])
+            self.assertFalse(error["generation_submitted"])
+
+    def _write_validate_fixture(self, root: Path) -> dict[str, Path]:
+        projection, compiled, index, taxonomy_source = write_fixture(root)
+        paths = {
+            "source": root / "source.json",
+            "compiled": root / "compiled.json",
+            "index": root / "index.json",
+            "taxonomy_source": root / "selected_tags.csv",
+            "report": root / "report.json",
+        }
+        paths["source"].write_text(json.dumps(projection), encoding="utf-8")
+        paths["compiled"].write_text(json.dumps(compiled), encoding="utf-8")
+        paths["index"].write_text(json.dumps(index), encoding="utf-8")
+        paths["taxonomy_source"].write_bytes(taxonomy_source)
+        inspect_args = [
+            "inspect-membership",
+            str(paths["compiled"]),
+            "--source",
+            str(paths["source"]),
+            "--taxonomy-index",
+            str(paths["index"]),
+            "--taxonomy-source",
+            str(paths["taxonomy_source"]),
+            "--repo-root",
+            str(root),
+            "--out",
+            str(paths["report"]),
+        ]
+        code, _stdout, stderr = self.run_cli(inspect_args)
+        self.assertEqual(code, 0, stderr)
+        return paths
+
+    def _validate_args(self, paths: dict[str, Path], root: Path) -> list[str]:
+        return [
+            "validate-membership",
+            str(paths["report"]),
+            str(paths["compiled"]),
+            "--source",
+            str(paths["source"]),
+            "--taxonomy-index",
+            str(paths["index"]),
+            "--taxonomy-source",
+            str(paths["taxonomy_source"]),
+            "--repo-root",
+            str(root),
+        ]
+
+    def test_validate_membership_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = self._write_validate_fixture(root)
+            expected = json.loads(paths["report"].read_text(encoding="utf-8"))
+            code, stdout, stderr = self.run_cli(self._validate_args(paths, root))
+            self.assertEqual(code, 0, stderr)
+            self.assertEqual(json.loads(stdout), expected)
+
+    def test_validate_membership_rejects_tampered_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = self._write_validate_fixture(root)
+            tampered = json.loads(paths["report"].read_text(encoding="utf-8"))
+            tampered["inspections"][0]["membership"]["classification"] = (
+                "not_in_pinned_source"
+            )
+            paths["report"].write_text(json.dumps(tampered), encoding="utf-8")
+            code, stdout, stderr = self.run_cli(self._validate_args(paths, root))
+            self.assertEqual(code, 2)
+            self.assertEqual(stdout, "")
+            error = json.loads(stderr)
+            self.assertEqual(error["operation"], "validate-membership")
+            self.assertIn("Changed or invalid", error["error"])
+            self.assertFalse(error["execution_authorized"])
+            self.assertFalse(error["generation_submitted"])
+
+    def test_validate_membership_rejects_stale_compiled_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = self._write_validate_fixture(root)
+            compiled = json.loads(paths["compiled"].read_text(encoding="utf-8"))
+            compiled["vocabulary_resolutions"][0]["input"] += " stale"
+            paths["compiled"].write_text(json.dumps(compiled), encoding="utf-8")
+            code, stdout, stderr = self.run_cli(self._validate_args(paths, root))
+            self.assertEqual(code, 2)
+            self.assertEqual(stdout, "")
+            error = json.loads(stderr)
+            self.assertEqual(error["operation"], "validate-membership")
             self.assertFalse(error["execution_authorized"])
             self.assertFalse(error["generation_submitted"])
 
