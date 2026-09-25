@@ -65,7 +65,7 @@
     controls();
   }
   el('ra-files').addEventListener('change',event=>{
-    epoch++;files=Array.from(event.target.files);controls();
+    epoch++;files=Array.from(event.target.files);event.target.value='';controls();
     if(files.length>4||files.some(f=>!f.size||f.size>8*1024*1024)){files=[];say('Choose one to four pictures, each at most 8 MiB.');controls();return;}
     say(handle?'Pictures selected for reviewing the saved result. No new analysis started.':'Pictures selected. Your current brief will be used when you press Analyze pictures.');
   });

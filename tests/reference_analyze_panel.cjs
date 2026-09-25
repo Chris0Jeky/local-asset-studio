@@ -87,4 +87,30 @@ async function ackResetsPerOperation(){
  const recent=el('ra-recent');recent.value=recent.value;await el('ra-recover').fire('click');
  assert.equal(el('ra-acknowledge').checked,false,'Recovering another operation must not keep the previous acknowledgement');
 }
-(async()=>{await scenario(false);await scenario(true);await scenario(false,true);await scenario(false,false,true);await scenario(false,false,false,true);await ackResetsPerOperation();console.log('Analyze: explicit dispatch, saved identity, lost reply, reload and storage refusal passed');})().catch(e=>{console.error(e);process.exitCode=1;});
+async function invalidSelectionResetsPicker(){
+ const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
+ const store=new Map();
+ const document={getElementById:el,createElement:()=>new Element(),hidden:false,addEventListener(){}};
+ const capture=()=>({json:JSON.stringify({brief:'pose'}),intent:{brief:'pose'}});
+ const context=vm.createContext({document,window:{addEventListener(){}},URLSearchParams,console,
+  crypto:require('node:crypto').webcrypto,btoa:text=>Buffer.from(text,'binary').toString('base64'),
+  setTimeout:()=>1,clearTimeout(){},sessionStorage:{getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},
+  StudioPromptDraft:{capture,matches:ticket=>ticket.json===capture().json},
+  StudioReferenceReview:{load:async()=>{}},
+  fetch:async(url)=>{if(url.endsWith('/capabilities'))return{ok:true,json:async()=>({...fixture.capabilities})};return{ok:true,json:async()=>({...fixture.completed})};}
+ });
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/reference-analyze.js'),'utf8'),context);
+ await new Promise(resolve=>setImmediate(resolve));
+ el('ra-files').files=[{size:10,name:'a.png'},{size:10,name:'b.png'},{size:10,name:'c.png'},{size:10,name:'d.png'},{size:10,name:'e.png'}];
+ el('ra-files').value='C:\\fakepath\\a.png';
+ await el('ra-files').fire('change');
+ assert.equal(el('ra-files').value,'','Invalid selection must reset the file input so stale filenames clear');
+ assert.match(el('ra-status').textContent,/one to four|8 MiB/i,'Invalid selection must show the reason and the limit');
+ assert.equal(el('ra-start').disabled,true,'Start must stay disabled after an invalid selection');
+ el('ra-files').files=[{size:10,name:'a.png'}];
+ el('ra-files').value='C:\\fakepath\\a.png';
+ await el('ra-files').fire('change');
+ assert.equal(el('ra-files').value,'','A handled valid selection must also reset the input so re-choosing the same file works');
+ assert.equal(el('ra-start').disabled,false,'Valid selection must enable Start');
+}
+(async()=>{await scenario(false);await scenario(true);await scenario(false,true);await scenario(false,false,true);await scenario(false,false,false,true);await ackResetsPerOperation();await invalidSelectionResetsPicker();console.log('Analyze: explicit dispatch, saved identity, lost reply, reload and storage refusal passed');})().catch(e=>{console.error(e);process.exitCode=1;});
