@@ -523,7 +523,12 @@ def validate_benchmark_result(
         if candidate_id in candidate_ids:
             raise ValueError(f"duplicate candidate id {candidate_id!r}")
         candidate_ids.add(candidate_id)
-        if isinstance(candidate.get("ordinal"), bool) or candidate.get("ordinal") != index:
+        ordinal = candidate.get("ordinal")
+        if (
+            isinstance(ordinal, bool)
+            or not isinstance(ordinal, int)
+            or ordinal != index
+        ):
             raise ValueError("candidate ordinals must be contiguous and match array order")
         case_id = _text(candidate.get("case_id"), "candidate case id", 128)
         if case_id not in selected_cases or case_id not in case_ids:
@@ -610,7 +615,8 @@ def validate_benchmark_result(
         raise ValueError("attempted distinct-task count does not match candidate cases")
     if accepted_tasks != len(accepted_cases):
         raise ValueError("accepted distinct-task count does not match accepted cases")
-    _count(accounting.get("owner_interactions"), "owner interactions", 100_000)
+    if accounting.get("owner_interactions") is not None:
+        _count(accounting["owner_interactions"], "owner interactions", 100_000)
     _nonnegative_number(accounting.get("wait_seconds"), "wait seconds")
     _nonnegative_number(accounting.get("cleanup_minutes"), "cleanup minutes")
 
