@@ -88,6 +88,78 @@ def drain_declared_body(handler) -> bool:
                 pass
 
 
+def drain_for_reset(handler, *, limit=DRAIN_LIMIT, timeout=DRAIN_TIMEOUT_SECONDS) -> bool:
+    """Best-effort pre-close cleanup for a request refused before its body.
+
+    Unlike drain_declared_body, this still consumes one bounded Content-Length
+    when Transfer-Encoding made the framing unacceptable, so closing does not
+    reset the connection with unread bytes (Windows WinError 10053, #1022).
+    True means no declared bytes are outstanding, not that the framing was
+    safe: the caller must still close, because with ambiguous framing the
+    consumed bytes may not align with the wire. Chunk framing is never parsed,
+    so chunked or malformed requests cannot hang this beyond the timeout.
+    """
+    headers = handler.headers
+    get_all = getattr(headers, 'get_all', None)
+    if callable(get_all):
+        lengths = get_all('Content-Length') or []
+    else:
+        raw = headers.get('Content-Length')
+        lengths = [] if raw is None else [raw]
+    if not lengths:
+        return True
+    distinct = set()
+    for entry in lengths:
+        text = entry.strip() if isinstance(entry, str) else ''
+        if not text or any(character < '0' or character > '9' for character in text):
+            return False
+        distinct.add(text.lstrip('0') or '0')
+    # Agreeing duplicates declare one length; conflicting ones stay ambiguous.
+    if len(distinct) != 1:
+        return False
+    significant = distinct.pop()
+    bound = str(limit)
+    # Compare decimal text before int conversion, as drain_declared_body does.
+    if len(significant) > len(bound) or (len(significant) == len(bound) and significant > bound):
+        return False
+    size = int(significant)
+    if not size:
+        return True
+    connection = getattr(handler, 'connection', None)
+    old_timeout = None
+    restore_timeout = False
+    reader = getattr(handler.rfile, 'read1', None)
+    if not callable(reader):
+        reader = handler.rfile.read
+    deadline = time.monotonic() + timeout
+    try:
+        has_socket_timeout = (connection is not None and hasattr(connection, 'gettimeout')
+                              and hasattr(connection, 'settimeout'))
+        if has_socket_timeout:
+            old_timeout = connection.gettimeout()
+        remaining = size
+        while remaining:
+            budget = deadline - time.monotonic()
+            if budget <= 0:
+                return False
+            if has_socket_timeout:
+                connection.settimeout(budget if old_timeout is None else min(old_timeout, budget))
+                restore_timeout = True
+            chunk = reader(min(DRAIN_CHUNK, remaining))
+            if not chunk:
+                return False
+            remaining -= len(chunk)
+        return True
+    except (OSError, TimeoutError, ValueError):
+        return False
+    finally:
+        if restore_timeout:
+            try:
+                connection.settimeout(old_timeout)
+            except (OSError, ValueError):
+                pass
+
+
 def reject_json(handler, status: int, value: dict):
     """Drain one safe declared body, closing after ambiguous or incomplete input."""
     if not drain_declared_body(handler):
