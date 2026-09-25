@@ -3,6 +3,7 @@
 Putting a job away records only `put_away_at`. It never changes status, reservations,
 prompt IDs, outputs or tracking, and never queues, submits or resumes anything.
 """
+import copy
 import importlib.util
 import json
 import tempfile
@@ -105,11 +106,145 @@ class JobPutAwayTests(unittest.TestCase):
         studio.stop_tracking(job["id"], "Stop for now")
         public = studio.put_away_job(job["id"], True)
         self.assertEqual(public["put_away_basis"], "owner"); self.assertIsNotNone(public["put_away_at"])
+        # A successful explicit Resume clears the presentation marker: the
+        # resumed observation is back on the desk while queued.
         resumed = studio.resume_job(job["id"])
         self.assertEqual(resumed["status"], "queued"); self.assertFalse(resumed["put_away"]); self.assertIsNone(resumed["put_away_basis"])
-        with self.assertRaisesRegex(server.StudioError, "settle"):
-            studio.put_away_job(job["id"], False)
+        self.assertIsNone(resumed["put_away_at"])
+        # Bring back is now idempotent because Resume already removed the marker.
+        brought_back = studio.put_away_job(job["id"], False)
+        self.assertEqual(brought_back["status"], "queued"); self.assertIsNone(brought_back["put_away_at"])
+        self.assertNotIn("put_away_at", job)
+        self.assertNotIn("put_away_at", self.state(studio, job))
+
+    def test_resume_clears_owner_marker_for_stopped_tracking_job(self):
+        studio = self.studio(); job = self.uncertain(studio)
+        studio.stop_tracking(job["id"], "Stop for now")
+        studio.put_away_job(job["id"], True)
         self.assertIn("put_away_at", job)
+        before = copy.deepcopy({k: v for k, v in job.items() if k != "put_away_at"})
+        graph = job["graph"]
+        history = studio._tracking_history(job)
+        queued = studio.queue.qsize()
+        published = []
+        real_publish = studio._write_observation_state
+
+        def capture(path, value):
+            published.append(dict(value))
+            return real_publish(path, value)
+
+        with patch.object(studio, "_write_observation_state", side_effect=capture):
+            resumed = studio.resume_job(job["id"])
+        self.assertEqual(resumed["status"], "queued")
+        self.assertIsNone(resumed["put_away_at"]); self.assertFalse(resumed["put_away"]); self.assertIsNone(resumed["put_away_basis"])
+        self.assertNotIn("put_away_at", published[-1])  # removed from the prospective state before publication
+        self.assertEqual(published[-1]["status"], "queued")
+        self.assertNotIn("put_away_at", job)  # removed from the live job only after publication succeeded
+        persisted = self.state(studio, job)
+        self.assertNotIn("put_away_at", persisted); self.assertEqual(persisted["status"], "queued")
+        self.assertEqual(studio.queue.qsize(), queued + 1)
+        self.assertEqual(studio.queue.get_nowait(), ("observe", job["id"])); self.assertTrue(studio.queue.empty())
+        # Status, prompt IDs, submissions, outputs and tracking history follow the existing Resume behavior only.
+        self.assertEqual(job["prompt_ids"], before["prompt_ids"]); self.assertEqual(job["submissions"], before["submissions"])
+        self.assertEqual(job["outputs"], before["outputs"]); self.assertIs(job["graph"], graph)
+        self.assertEqual(job["tracking_disposition"]["history"][:-1], history)
+        self.assertEqual(job["tracking_disposition"]["status"], "resumed")
+        self.assertEqual(job["tracking_disposition"]["event_id"], before["tracking_disposition"]["event_id"])
+        # A later failed/partial/uncertain outcome surfaces as an unacknowledged problem.
+        for status in ("failed", "partial"):
+            with self.subTest(status=status):
+                job["status"] = status; job["message"] = "Resumed observation settled again"; studio._save(job)
+                settled = studio.public(job)
+                self.assertFalse(settled["put_away"]); self.assertIsNone(settled["put_away_at"]); self.assertTrue(settled["can_put_away"])
+        job["status"] = "uncertain"; job["message"] = "Resumed observation was interrupted again"; studio._save(job)
+        unsettled = studio.public(job)
+        self.assertFalse(unsettled["put_away"]); self.assertIsNone(unsettled["put_away_at"])
+
+    def test_resume_clears_owner_marker_for_ordinary_known_prompt_job(self):
+        studio = self.studio(); job = self.failed(studio)
+        studio.put_away_job(job["id"], True)
+        self.assertIn("put_away_at", job)
+        before = copy.deepcopy({k: v for k, v in job.items() if k != "put_away_at"})
+        graph = job["graph"]
+        queued = studio.queue.qsize()
+        published = []
+        real_publish = studio._write_observation_state
+
+        def capture(path, value):
+            published.append(dict(value))
+            return real_publish(path, value)
+
+        with patch.object(studio, "_write_observation_state", side_effect=capture):
+            resumed = studio.resume_job(job["id"])
+        self.assertEqual(resumed["status"], "queued")
+        self.assertIsNone(resumed["put_away_at"]); self.assertFalse(resumed["put_away"]); self.assertIsNone(resumed["put_away_basis"])
+        self.assertNotIn("put_away_at", published[-1])  # removed from the prospective state before publication
+        self.assertEqual(published[-1]["status"], "queued")
+        self.assertNotIn("put_away_at", job)  # removed from the live job only after publication succeeded
+        persisted = self.state(studio, job)
+        self.assertNotIn("put_away_at", persisted); self.assertEqual(persisted["status"], "queued")
+        self.assertEqual(studio.queue.qsize(), queued + 1)
+        self.assertEqual(studio.queue.get_nowait(), ("observe", job["id"])); self.assertTrue(studio.queue.empty())
+        # Prompt IDs, submissions and outputs follow the existing Resume behavior only.
+        self.assertEqual(job["prompt_ids"], before["prompt_ids"]); self.assertEqual(job["submissions"], before["submissions"])
+        self.assertEqual(job["outputs"], before["outputs"]); self.assertIs(job["graph"], graph)
+        # A later failed/partial outcome surfaces as an unacknowledged problem.
+        for status in ("failed", "partial"):
+            with self.subTest(status=status):
+                job["status"] = status; job["message"] = "Resumed observation settled again"; studio._save(job)
+                settled = studio.public(job)
+                self.assertFalse(settled["put_away"]); self.assertIsNone(settled["put_away_at"]); self.assertTrue(settled["can_put_away"])
+
+    def test_resume_publication_failure_retains_owner_marker(self):
+        for path in ("stopped-tracking", "ordinary"):
+            with self.subTest(path=path):
+                studio = self.studio()
+                if path == "stopped-tracking":
+                    job = self.uncertain(studio); studio.stop_tracking(job["id"], "Stop for now")
+                else:
+                    job = self.failed(studio)
+                studio.put_away_job(job["id"], True)
+                marker = job["put_away_at"]
+                before = copy.deepcopy(job)
+                raw = (studio.runs / job["id"] / "state.json").read_bytes()
+                queued = studio.queue.qsize()
+                with patch.object(studio, "_write_observation_state", side_effect=OSError("disk full")):
+                    with self.assertRaisesRegex(OSError, "disk full"):
+                        studio.resume_job(job["id"])
+                self.assertEqual(job, before)  # marker and everything else retained in memory
+                self.assertEqual(job["put_away_at"], marker)
+                self.assertEqual((studio.runs / job["id"] / "state.json").read_bytes(), raw)  # and on disk
+                self.assertEqual(studio.queue.qsize(), queued)  # nothing queued
+                self.assertTrue(studio.public(job)["put_away"])
+
+    def test_resume_validation_and_worker_failures_retain_owner_marker(self):
+        studio = self.studio(); job = self.failed(studio)
+        studio.put_away_job(job["id"], True)
+        marker = job["put_away_at"]
+        # An unknown submission cannot resume as a known prompt: validation fails before any publication.
+        job["pending_submission"] = {"index": 0}; studio._save(job)
+        raw = (studio.runs / job["id"] / "state.json").read_bytes()
+        queued = studio.queue.qsize()
+        with patch.object(studio, "_write_observation_state") as publish:
+            with self.assertRaises(server.StudioError):
+                studio.resume_job(job["id"])
+        publish.assert_not_called()
+        self.assertEqual(job["put_away_at"], marker)
+        self.assertIn("pending_submission", job)
+        self.assertEqual((studio.runs / job["id"] / "state.json").read_bytes(), raw)
+        self.assertEqual(studio.queue.qsize(), queued)
+        # A dead worker refuses admission before any publication.
+        job.pop("pending_submission"); studio._save(job)
+        raw = (studio.runs / job["id"] / "state.json").read_bytes()
+        studio.worker = type("DeadWorker", (), {"ident": 1, "is_alive": lambda self: False})()
+        with patch.object(studio, "_write_observation_state") as publish:
+            with self.assertRaisesRegex(server.StudioError, "worker is unavailable"):
+                studio.resume_job(job["id"])
+        publish.assert_not_called()
+        self.assertEqual(job["put_away_at"], marker)
+        self.assertEqual((studio.runs / job["id"] / "state.json").read_bytes(), raw)
+        self.assertEqual(studio.queue.qsize(), queued)
+        self.assertTrue(studio.public(job)["put_away"])
 
     def test_active_completed_and_unknown_submission_jobs_are_refused_without_mutation(self):
         cases = {"queued": dict(status="queued"), "running": dict(status="running"), "completed": dict(status="completed"),
