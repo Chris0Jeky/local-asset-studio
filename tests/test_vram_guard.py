@@ -85,6 +85,28 @@ class VramGuardTest(unittest.TestCase):
         self.assertEqual(reading(), 3 * GIB); fake.read = lambda: 1 / 0; self.assertEqual(reading(), 3 * GIB)   # cached
         self.assertEqual(reading(), 3 * GIB); self.assertEqual(reading(), 0); self.assertEqual(status['others_bytes'], 0)
 
+    def test_anomalous_process_counter_uses_adapter_total_for_eviction(self):
+        adapter = '0x00000000_0x000102fb_0'
+        sample = {'adapters': {adapter: {10: {'dedicated_bytes': 2 * GIB},
+                                        2288: {'dedicated_bytes': 66 * GIB},
+                                        77: {'dedicated_bytes': GIB}}},
+                  'adapter_totals': {adapter: 4 * GIB}}
+        fake = types.SimpleNamespace(read=lambda: sample, others_bytes=gpu_memory.others_bytes)
+        others = self.guard.OthersReading(fake, pid=10, status=self.status)
+        self.assertTrue(self.guard.install(self.mm, others, expected=self.expected, status=self.status)['installed'])
+        self.assertEqual(self.mm.free_memory(9 * GIB, 'cuda:0'), [10 * GIB, (10 * GIB, 3 * GIB), 12 * GIB])
+        self.assertEqual(self.status['others_bytes'], 2 * GIB)
+
+    def test_missing_own_process_counter_still_counts_external_use(self):
+        adapter = '0x00000000_0x000102fb_0'
+        sample = {'adapters': {adapter: {2288: {'dedicated_bytes': 2 * GIB}}},
+                  'adapter_totals': {adapter: 3 * GIB}}
+        fake = types.SimpleNamespace(read=lambda: sample, others_bytes=gpu_memory.others_bytes)
+        others = self.guard.OthersReading(fake, pid=10, status=self.status)
+        self.assertTrue(self.guard.install(self.mm, others, expected=self.expected, status=self.status)['installed'])
+        self.assertEqual(self.mm.free_memory(9 * GIB, 'cuda:0'), [10 * GIB, (10 * GIB, 3 * GIB), 12 * GIB])
+        self.assertEqual(self.status['others_bytes'], 2 * GIB)
+
     @unittest.skipUnless(INSTALLED_MM.is_file(), 'no local ComfyUI installation')
     def test_pinned_hashes_match_the_installed_comfyui(self):
         # A ComfyUI update that changes either function turns the guard off at load; this says so before a launch does.
