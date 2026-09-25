@@ -3,12 +3,43 @@ import copy
 import hashlib
 import io
 import math
+import re
 from pathlib import Path
 
 MAX_REFERENCE_BYTES=20*1024*1024
 
 ROLES={'identity','pose','style','costume','composition','geometry','motion','mask'}
 BOARD_POLICY='native IP-Adapter CLIP-vision preprocessing (224 px centre crop)'
+
+DRAWN_POSE_FILENAME=re.compile(r'^[a-f0-9]{32}_drawn-pose\.png$')
+DRAWN_POSE_ARTIFACT_ID=re.compile(r'^[0-9a-f]{64}$')
+
+
+def apply_drawn_pose_sidecar(record, name, reference):
+    """Preserve a drawn guide's editable sidecar on a compiled record. Shared by both compiler paths.
+
+    Only a stored drawn-guide filename carries sidecar metadata; an ordinary upload never does.
+    A drawn guide without sidecar fields stays a legacy record with no invented ID. A present but
+    malformed artifact_id or renderer raises rather than attaching wrong metadata.
+    """
+    if not DRAWN_POSE_FILENAME.fullmatch(name or ''):
+        return record
+    if 'artifact_id' not in reference and 'renderer' not in reference:
+        return record
+    artifact_id=reference.get('artifact_id')
+    if 'artifact_id' in reference:
+        if not isinstance(artifact_id,str) or not DRAWN_POSE_ARTIFACT_ID.fullmatch(artifact_id):
+            raise ValueError('Drawn pose artifact_id must be 64 lowercase hex characters')
+        record['artifact_id']=artifact_id
+    if 'renderer' in reference:
+        if artifact_id is None:
+            raise ValueError('Drawn pose renderer requires artifact_id')
+        renderer=reference['renderer']
+        from studio_workflow.pose_raster import RENDERERS
+        if not isinstance(renderer,str) or renderer not in RENDERERS:
+            raise ValueError('Unknown pose guide renderer; use one of '+', '.join(RENDERERS))
+        record['renderer']=renderer
+    return record
 
 
 def board_spec(preset):
@@ -209,6 +240,7 @@ def compile_board(preset, graph, supplied, uploads):
         if reference.get('sha256') and reference['sha256']!=record['sha256']:
             raise ValueError('Reference bytes changed since this recipe was saved; reattach the intended image.')
         record.update(role=reference.get('role',slot.get('role')),slot=index+1,contribution='',avoid='',transform=transform)
+        apply_drawn_pose_sidecar(record,name,reference)
         graph[str(node)]['inputs'][field]=name
         records.append(record)
     return records
@@ -265,6 +297,7 @@ def compile_references(preset, graph, supplied, uploads):
         record.update(role=reference['role'],slot=index+1)
         node,field=slot['binding']; graph[node]['inputs'][field]=name
         record['transform']=reference_transform(preset,graph,node,record)
+        apply_drawn_pose_sidecar(record,name,reference)
         records.append(record)
     prompt_node,prompt_field=preset['positive']
     brief=graph[prompt_node]['inputs'][prompt_field]
