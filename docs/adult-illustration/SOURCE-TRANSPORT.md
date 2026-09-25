@@ -140,7 +140,14 @@ Each cache record also contains:
 - selected response headers;
 - base64-encoded raw JSON response;
 - byte count and SHA-256;
+- persisted UTC write time (`stored_at`, ISO-8601);
 - explicit false authority fields.
+
+`stored_at` is the record's own write-time field. Filesystem mtime is never
+used as a substitute. Legacy v1 records without `stored_at` remain readable;
+their receipts report age unknown. A malformed or implausibly future
+`stored_at` rejects the record instead of producing age evidence. There is no
+TTL: a cache hit may remain indefinitely.
 
 Cache reads revalidate the schema, request key, request identity, raw-byte count, SHA-256, strict JSON shape, JSON content type, final endpoint and every redirect endpoint. A tampered or stale envelope is rejected before provider parsing or network fallback.
 
@@ -169,9 +176,18 @@ A normal cache hit performs no network exchange. `--refresh` sends `If-None-Matc
 - wire and effective status;
 - final metadata URL;
 - response payload SHA-256;
+- `cache_stored_at`: persisted UTC write time for `hit`/`revalidated`, else null;
+- `cache_age_seconds`: measured seconds since `cache_stored_at` for `hit`/`revalidated`, else null;
 - `credentials_used: false`;
 - `model_bytes_downloaded: false`;
 - false download/install/execution/generation/training authority.
+
+`cache_stored_at` is `null` with `cache_age_seconds` `null` when age is
+unknown: legacy records without `stored_at`, and `miss`/`refreshed` receipts
+whose fresh 200 payload only commits to the cache on `finalize`. A 304
+revalidation retains the original payload write time, so age means time since
+this payload was stored, not time since validation. Age is informational, not
+a freshness guarantee: there is no TTL and `--refresh` behavior is unchanged.
 
 The receipt is evidence about transport behavior, not permission to use the source.
 
