@@ -6,6 +6,8 @@ Follow-up to #433 and #438, layered over #579. This is metadata validation, not 
 
 An explicit 40-hex Hugging Face revision must equal the returned commit, case-insensitively. A moving revision such as `main` or `refs/pr/7` may still resolve to a returned immutable commit. A caller who selected one exact commit must never receive a proposal for another.
 
+An abbreviated 7-39-hex Hugging Face commit is bound as an immutable prefix, not a moving ref: the returned validated 40-hex commit must start with the stripped request, case-insensitively, and a mismatch fails before any snapshot or claim is returned. Stored re-entry enforces the same prefix check. A matching prefix is not the same evidence as a full commit identity: it only confirms the resolved commit falls in the requested prefix family and carries weaker uniqueness and collision-resistance than an exact 40-hex pin. Prefer full commits for retained evidence.
+
 When a Hugging Face sibling supplies both top-level and LFS byte-count or SHA-256 claims, both claims are independently validated and must agree. A valid top-level value cannot hide an invalid LFS value. Missing metadata remains unknown, empty files remain valid, and Xet identity is not treated as an interchangeable SHA-256. Sizes must fit the existing saved-snapshot integer bound.
 
 Civitai returned version and nested model IDs must be positive integers, not booleans or numerically equal floats. Saved response status must likewise be an actual integer.
