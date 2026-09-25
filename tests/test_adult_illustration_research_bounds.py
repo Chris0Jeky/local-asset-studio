@@ -1,13 +1,18 @@
 """Bound input consumption before zero-authority research planning."""
 from __future__ import annotations
 
+import subprocess
+import sys
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 from unittest import mock
 
 from studio_prompt import adult_illustration_research as research
 from tests.test_adult_illustration_research import write_fixture
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class ResearchConsumptionBoundsTests(unittest.TestCase):
@@ -100,6 +105,91 @@ class ResearchConsumptionBoundsTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Invalid research manifest") as caught:
                 research.list_records(root, "routes")
         self.assertIs(caught.exception.__cause__, failure)
+
+    def test_direct_private_import_enforces_bounds_without_facade(self):
+        # The private implementation must be safe when imported alone: no
+        # facade import may run first in this fresh process.
+        root = self.make_root()
+        child = textwrap.dedent("""\
+            import sys
+
+            sys.path.insert(0, sys.argv[1])
+            fixture_root = sys.argv[2]
+            if "studio_prompt.adult_illustration_research" in sys.modules:
+                raise AssertionError("public facade was imported before the private impl")
+            from studio_prompt import _adult_illustration_research_impl as impl
+            if "studio_prompt.adult_illustration_research" in sys.modules:
+                raise AssertionError("importing the private impl pulled in the public facade")
+
+            import json
+            from pathlib import Path
+
+            failure = RecursionError("fixture: decoder nesting exhausted")
+            original_loads = json.loads
+            json.loads = lambda *args, **kwargs: (_ for _ in ()).throw(failure)
+            try:
+                try:
+                    impl.list_records(fixture_root, "routes")
+                except ValueError as exc:
+                    if exc.__cause__ is not failure:
+                        raise AssertionError("RecursionError was not preserved as __cause__")
+                    if "Invalid research manifest" not in str(exc):
+                        raise AssertionError("unexpected message: %r" % (exc,))
+                else:
+                    raise AssertionError("RecursionError escaped instead of ValueError")
+            finally:
+                json.loads = original_loads
+
+            path = Path(fixture_root) / "research/adult-illustration/route-candidates.json"
+            original_open = Path.open
+            reads = []
+
+            class Reader:
+                def __init__(self, handle):
+                    self.handle = handle
+
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, *args):
+                    self.handle.close()
+
+                def read(self, size=-1):
+                    reads.append(size)
+                    return self.handle.read(size)
+
+            def growing_open(candidate, mode="r", *args, **kwargs):
+                if candidate == path and mode == "rb":
+                    # Real file growth after stat but before the read.
+                    with original_open(candidate, "r+b") as writer:
+                        writer.seek(impl.MAX_MANIFEST_BYTES + 127)
+                        writer.write(b"\\0")
+                    return Reader(original_open(candidate, mode, *args, **kwargs))
+                return original_open(candidate, mode, *args, **kwargs)
+
+            Path.open = growing_open
+            try:
+                try:
+                    impl.list_records(fixture_root, "routes")
+                except ValueError:
+                    pass
+                else:
+                    raise AssertionError("grown manifest was not refused")
+            finally:
+                Path.open = original_open
+            if reads != [impl.MAX_MANIFEST_BYTES + 1]:
+                raise AssertionError("unbounded manifest read: %r" % (reads,))
+            print("private-impl bounds ok without facade")
+            """)
+        completed = subprocess.run(
+            [sys.executable, "-", str(ROOT), str(root)],
+            input=child,
+            capture_output=True,
+            text=True,
+            cwd=ROOT,
+        )
+        self.assertEqual(completed.returncode, 0, msg=completed.stderr[-4000:])
+        self.assertIn("private-impl bounds ok without facade", completed.stdout)
 
 
 if __name__ == "__main__":
