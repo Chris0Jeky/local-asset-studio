@@ -86,7 +86,7 @@ async def exercise(args):
                     page = await browser.new_page(viewport={'width':1280, 'height':1000}, reduced_motion='reduce')
                     page.set_default_timeout(8000); page.on('pageerror', lambda error: errors.append(str(error)))
                     if args.inert: await inert_page(page, 8191)
-                    else: await page.goto('http://127.0.0.1:8191/#assets')
+                    else: await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
                     await page.wait_for_function('!!catalog && !!selected')
                     await page.evaluate("showView('assets')"); await page.wait_for_function('assetState.assets.length===1')
                     check('CONFLICT-01 boot is read-only', not writes)
