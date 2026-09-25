@@ -212,7 +212,24 @@ class LargeJobPreparationClassificationTests(LargeJobPreparationTestCase):
         self.restartable(studio)
         result = self.controller(studio).run(self.request(allow_restart=True))
         self.assertEqual(studio.backends.launches, 0, "History still held: the restart is refused")
-        self.assertIn("restart", result["phase"])
+        self.assertEqual(result["phase"], "restart_blocked_by_unresolved_work")
+        # History gone: the restart proceeds.
+        studio = Studio(self.root / "stale-gone", [observation(commit=20 * GIB), observation(commit=20 * GIB),
+                                                   observation(commit=40 * GIB)])
+        studio.jobs["stale"] = observing_job(status="abandoned", prompt="p-stale")
+        original = self.restartable(studio)
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "ready_after_restart")
+        self.assertTrue(original.terminated)
+        # A prompt really still in the selected backend's queue refuses /free whatever the job record says.
+        for status in ("failed", "completed", "abandoned", "not_submitted", "cancelled"):
+            with self.subTest(queue=status):
+                studio = Studio(self.root / ("stale-busy-" + status), [observation(commit=20 * GIB), observation(commit=40 * GIB)])
+                studio.jobs["stale"] = observing_job(status=status, prompt="p-stale")
+                studio.backends.queue["queue_running"] = [[0, "p-stale", {}, {}, []]]
+                result = self.controller(studio).run(self.request())
+                self.assertEqual(studio.free_calls, [])
+                self.assertFalse(result["final"]["ready"])
 
     def test_in_flight_work_refuses_everything_including_dry_run(self):
         cases = {
