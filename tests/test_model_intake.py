@@ -101,7 +101,10 @@ class IntakePublicationTests(unittest.TestCase):
                 self.run_intake()
         self.assert_source()
         self.assertEqual(self.target.read_bytes(), b'post-publication writer')
-        self.assertEqual(self.journal()['status'], 'needs_inspection')
+        record = self.journal()
+        self.assertEqual(record['status'], 'needs_inspection')
+        self.assertNotIn('copied', [event['status'] for event in record['events']])
+        self.assertIsNone(record.get('file_identity'))
 
     def test_source_replacement_after_planning_refuses_before_journal(self):
         old = self.source.with_suffix('.old'); self.source.rename(old); self.source.write_bytes(self.body)
