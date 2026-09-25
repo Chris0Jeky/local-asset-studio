@@ -61,8 +61,7 @@ class LifecycleMixin:
             # Released on readiness and on every failure; the snapshot below rechecks the gate.
             self._release_backend()
 
-        if self._active_work():
-            raise PreparationError("New Studio work arrived after restart; readiness was not granted")
+        self._check_work("New Studio work arrived after restart; readiness was not granted", restart=True)
         observation = self.observer(self.studio)
         evaluation = self._evaluate(
             context["workflow_identity"], context["_profile"], observation, context["reservations"]

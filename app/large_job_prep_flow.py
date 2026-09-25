@@ -63,6 +63,7 @@ class FlowMixin:
                 # Keep the validated profile available to internal continuation
                 # without duplicating its full stages in the durable public receipt.
                 context["_profile"] = profile
+                receipt["blockers"] = context.pop("blockers")
                 receipt["before"] = {key: copy.deepcopy(value) for key, value in context.items() if key != "_profile"}
                 self._persist(journal, receipt)
                 if profile is None:
@@ -92,9 +93,12 @@ class FlowMixin:
                     )
                 config = getattr(self.studio, "config", {}) or {}
                 if request["dry_run"]:
+                    # Unresolved work at rest leaves /free allowed but a restart refused.
+                    restart_blocked = request["allow_restart"] and receipt["blockers"]["blocks_restart"] > 0
                     receipt["planned_actions"] = ["release_owned_backend_cache"] + (
-                        ["restart_verified_owned_backend"] if request["allow_restart"] else []
+                        ["restart_verified_owned_backend"] if request["allow_restart"] and not restart_blocked else []
                     )
+                    receipt["restart_blocked_by_unresolved_work"] = restart_blocked
                     receipt["local_authorization"] = {
                         "cleanup_enabled": config.get("enable_large_job_resource_cleanup") is True,
                         "idle_policy_enabled": config.get("enable_idle_retained_commit_cleanup") is True,
@@ -120,9 +124,11 @@ class FlowMixin:
 
                 return self._execute_cleanup(journal, receipt, request, context, before_evaluation, config)
             except PreparationError as exc:
+                if getattr(exc, "blockers", None) is not None:
+                    receipt["blockers"] = exc.blockers
                 return self._finish(
                     journal, receipt, state="refused", decision="unknown", ready=False,
-                    reason=str(exc), phase="refused",
+                    reason=str(exc), phase=getattr(exc, "phase", "refused"),
                 )
             except Exception as exc:
                 return self._finish(
