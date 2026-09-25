@@ -161,22 +161,33 @@ class RuntimeRecovery:
             if manager.busy:
                 self._record("reconnecting", "Backend switch is active; recovery is waiting.")
                 return self.snapshot()
-            try:
-                # Windows can surface a one-second urllib timeout before it reports
-                # the connection refusal that authorizes a bounded recovery launch.
-                stats = manager.request(profile, "/system_stats", REFUSAL_PROBE_TIMEOUT)
-                if endpoint_ready(stats):
-                    self._ready(profile, stats)
-                    return self.snapshot()
-                error = ValueError("Endpoint did not return a ready system payload")
-            except (OSError, ValueError) as exc:
-                error = exc
-
-            # A GPU lease (app/gpu_lease.py) paused this backend on purpose: never relaunch it under the holder.
             leased = self._leased()
             if leased:
                 self._record("leased", leased)
                 return self.snapshot()
+            ready = False
+            try:
+                # Windows can surface a one-second urllib timeout before it reports
+                # the connection refusal that authorizes a bounded recovery launch.
+                stats = manager.request(profile, "/system_stats", REFUSAL_PROBE_TIMEOUT)
+                ready = endpoint_ready(stats)
+                error = ValueError("Endpoint did not return a ready system payload")
+            except (OSError, ValueError) as exc:
+                error = exc
+
+            # Acquisition takes this same interlock before stopping a backend.
+            # Keep the final lease check and health publication indivisible to it.
+            with self.studio.lock:
+                leased = self._leased()
+                if leased:
+                    self._record("leased", leased)
+                    return self.snapshot()
+                if ready:
+                    if manager.active != profile['id'] or manager.busy:
+                        self._record("reconnecting", "Backend changed during its health probe; recovery will re-observe it.")
+                    else:
+                        self._ready(profile, stats)
+                    return self.snapshot()
 
             # A listener that cannot be proven to be this exact launcher is a hard stop.
             try:

@@ -51,17 +51,25 @@ class GpuLease:
             record = saved.get("record"); last = saved.get("last_release")
             if isinstance(last, dict): self.last_release = last
             # A lease survives a Studio restart so a restarted monitor cannot relaunch ComfyUI under a live holder.
-            if self._valid_record(record): self.record = record
+            if self._valid_record(record):
+                # Persist the absolute cap once: repeated restarts must not extend it.
+                ceiling = self.clock() + MAX_TTL_SECONDS
+                if record["expires_at"] > ceiling:
+                    record = dict(record, expires_at=ceiling)
+                    self._save(record, self.last_release)
+                else: self.record = record
         with self.lock: self._expire()
 
     @staticmethod
     def _valid_record(record):
         if not isinstance(record, dict) or not isinstance(record.get("holder"), str) or not HOLDER_PATTERN.fullmatch(record["holder"]): return False
         expires = record.get("expires_at")
-        return isinstance(expires, (int, float)) and not isinstance(expires, bool) and math.isfinite(expires)
+        return type(expires) is int or (type(expires) is float and math.isfinite(expires))
 
-    def _save(self):
-        self.studio._write_json_atomic(self.path, {"record": self.record, "last_release": self.last_release})
+    def _save(self, record, last_release):
+        # Durable state is authoritative; a failed write cannot publish a transition.
+        self.studio._write_json_atomic(self.path, {"record": record, "last_release": last_release})
+        self.record = record; self.last_release = last_release
 
     def _log(self, event, **details):
         try:
@@ -73,8 +81,8 @@ class GpuLease:
     def _expire(self):
         if self.record and self.clock() >= self.record["expires_at"]:
             holder = self.record["holder"]
-            self.last_release = {"holder": holder, "reason": "expired", "at": self.clock(), "expires_at": self.record["expires_at"]}
-            self.record = None; self._save(); self._log("expired", holder=holder)
+            last = {"holder": holder, "reason": "expired", "at": self.clock(), "expires_at": self.record["expires_at"]}
+            self._save(None, last); self._log("expired", holder=holder)
 
     def active(self):
         """The current lease record (a copy), or None once it was released or its TTL passed."""
@@ -138,6 +146,12 @@ class GpuLease:
             if self.record and self.record["holder"] != holder:
                 raise GpuLeaseError(f"The GPU is already leased to {self.record['holder']}", code="lease_held",
                                     holder=self.record["holder"], expires_at=self.record["expires_at"])
+            if self.record:
+                now = self.clock()
+                record = dict(self.record, renewed_at=now, ttl_seconds=ttl, expires_at=now + ttl)
+                self._save(record, self.last_release)
+                self._log("renewed", holder=holder, ttl_seconds=ttl, stopped_processes=[])
+                return dict(self.snapshot(), granted=True, renewed=True, stopped_now=[])
             if manager.busy: raise GpuLeaseError("A backend switch is running; nothing was stopped", code="backend_switch_active")
             if manager._local_work():
                 raise GpuLeaseError("Studio has queued, running or unreconciled work; nothing was stopped", code="studio_work_active")
@@ -168,13 +182,12 @@ class GpuLease:
                     raise GpuLeaseError(f"{profile['name']} did not confirm exit within {STOP_WAIT_SECONDS} s; the lease was not granted",
                                         status=500, code="stop_unconfirmed", stopped_processes=stopped) from exc
                 stopped.append(identity)
-            now = self.clock(); renewed = self.record is not None
-            record = dict(self.record) if renewed else {"holder": holder, "acquired_at": now, "stopped_processes": []}
-            record.update(renewed_at=now if renewed else None, ttl_seconds=ttl, expires_at=now + ttl)
-            record["stopped_processes"] = record.get("stopped_processes", []) + stopped
-            self.record = record; self._save()
-            self._log("renewed" if renewed else "granted", holder=holder, ttl_seconds=ttl, stopped_processes=stopped)
-            return dict(self.snapshot(), granted=True, renewed=renewed, stopped_now=stopped)
+            now = self.clock()
+            record = {"holder": holder, "acquired_at": now, "stopped_processes": stopped,
+                      "renewed_at": None, "ttl_seconds": ttl, "expires_at": now + ttl}
+            self._save(record, self.last_release)
+            self._log("granted", holder=holder, ttl_seconds=ttl, stopped_processes=stopped)
+            return dict(self.snapshot(), granted=True, renewed=False, stopped_now=stopped)
 
     def release(self, payload):
         """Release by the holder; idempotent when nothing is held. Relaunch stays with runtime recovery."""
@@ -185,6 +198,6 @@ class GpuLease:
             if self.record["holder"] != holder:
                 raise GpuLeaseError(f"The GPU is leased to {self.record['holder']}, not {holder}", code="lease_held",
                                     holder=self.record["holder"], expires_at=self.record["expires_at"])
-            self.last_release = {"holder": holder, "reason": "released", "at": self.clock(), "expires_at": self.record["expires_at"]}
-            self.record = None; self._save(); self._log("released", holder=holder)
+            last = {"holder": holder, "reason": "released", "at": self.clock(), "expires_at": self.record["expires_at"]}
+            self._save(None, last); self._log("released", holder=holder)
             return dict(self.snapshot(), released=True)
