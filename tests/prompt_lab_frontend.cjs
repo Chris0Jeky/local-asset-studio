@@ -321,9 +321,30 @@ async function failedRebuildMarksStale() {
   assert.match(element('state').textContent, /profile exploded/, 'The stale state keeps the reason');
   assert.match(element('status').textContent, /profile exploded/);
 }
+// A repair through rebuild() (Keep as review note, Switch profile) persists like a keystroke does.
+async function repairPathsPersistTheDraft() {
+  const storage = makeStorage();
+  const {element, run} = harness({timers: true, storage, compile: compiled()});
+  await new Promise(resolve => setTimeout(resolve, 600));
+  element('brief').value = 'A repaired brief';
+  run("rebuild('Repaired.');");
+  await new Promise(resolve => setTimeout(resolve, 700));
+  assert.match(storage.getItem('studio.promptLab.draft') || '', /A repaired brief/, 'rebuild() queues a draft save');
+}
+// A malformed or unsupported stored draft is dropped before it touches the page.
+async function malformedDraftLeavesThePageUsable() {
+  for (const intent of [{brief: 'x', task: 'image', tags: 'a,b'}, {brief: 'x', task: 'image', facets: []}, {brief: 'x', task: 'no-such-task'}, {brief: 'x', task: 'image', references: [{id: 'r', take: 'nope'}]}]) {
+    const storage = makeStorage({'studio.promptLab.draft': JSON.stringify({version: 1, profile: 'missing', intent})});
+    const {element} = harness({storage, compile: compiled()});
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(element('brief').value, '', 'A malformed draft is not applied: ' + JSON.stringify(intent));
+    assert.equal(storage.getItem('studio.promptLab.draft'), null, 'A malformed draft is cleared');
+    assert.equal(element('export-result').disabled, false, 'The page still builds after dropping it');
+  }
+}
 // Terminal line: its absence is how the Python wrapper tells a stalled chain from a completed run.
 startup(true).then(() => startup(false)).then(blockedBuildExplainsItself).then(repairsAreOfferedOnlyWhenTheyFit)
   .then(avoidTermsAreParkedNotDeleted).then(longAvoidListsAreSplitNotTruncated)
-  .then(coverageNamesTheFieldThisDialectFills).then(importedBriefRefreshesItsExplanation).then(metadataResponses).then(liveBuildIsDebounced).then(draftIsRestoredAfterReload).then(corruptDraftIsIgnored).then(storedDraftExcludesReferenceBytes).then(failedRebuildMarksStale)
+  .then(coverageNamesTheFieldThisDialectFills).then(importedBriefRefreshesItsExplanation).then(metadataResponses).then(liveBuildIsDebounced).then(draftIsRestoredAfterReload).then(corruptDraftIsIgnored).then(storedDraftExcludesReferenceBytes).then(failedRebuildMarksStale).then(repairPathsPersistTheDraft).then(malformedDraftLeavesThePageUsable)
   .then(() => console.log('Prompt Lab frontend contracts passed: profile startup, live build, plain-language blockers, HTTP failure reporting and metadata selection.'))
   .catch(error => { console.error(error); process.exitCode = 1; });

@@ -34,8 +34,11 @@
       if (!Number.isInteger(index) || index < 0 || index >= guide.steps.length) index = 0;
     } else {
       const stageIndex = typeof stored.stage === 'string' ? guide.steps.findIndex(s => s.id === stored.stage) : -1;
-      if (stageIndex >= 0) { index = stageIndex; resumed = true; }
-      else if (Number.isInteger(stored.step) && stored.step >= 0 && stored.step < guide.steps.length) { index = stored.step; resumed = true; }
+      if (stageIndex >= 0) index = stageIndex;
+      else if (Number.isInteger(stored.step) && stored.step >= 0 && stored.step < guide.steps.length) index = stored.step;
+      resumed = index > 0;
+      // Record the resolved step so browser Back returns to it instead of resuming again.
+      if (resumed) { const url = new URL(location.href); url.searchParams.set('step', String(index)); if (guide.steps[index].id) url.searchParams.set('stage', guide.steps[index].id); history.replaceState(null, '', url.pathname + url.search + url.hash); }
     }
     const step = guide.steps[index], targetURL = C.route(step.route, location.origin);
     const recipeStep = ['recipe','reference_recipe'].includes(step.check) && Array.isArray(guide.recommended) && guide.recommended.some(x => typeof x === 'string' && PRESET_ID.test(x));

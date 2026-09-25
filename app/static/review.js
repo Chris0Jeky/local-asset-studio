@@ -48,7 +48,7 @@
     const value=await response.json();if(!response.ok)throw Error(value.error||'Review request failed.');return value;
   }
   async function operation(action,extra={},after=()=>{}){
-    if(busy)return;busy=true;message(action==='export'?'Exporting…':action==='inspect'?'Loading…':'Saving…');controls();const ticket=++serial;
+    if(busy)return;busy=true;message(action==='export'?'Exporting…':['inspect','open'].includes(action)?'Loading…':'Saving…');controls();const ticket=++serial;
     try{
       const value=await request(action,extra);if(ticket!==serial)return;
       after(value);if(action==='export')state.export=value;else state=value;
