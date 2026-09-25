@@ -175,15 +175,19 @@ class RuntimeRecovery:
             except (OSError, ValueError) as exc:
                 error = exc
 
-            # A GPU lease (app/gpu_lease.py) paused this backend on purpose: never relaunch it under the holder.
-            leased = self._leased()
-            if leased:
-                self._record("leased", leased)
-                return self.snapshot()
-
-            if ready:
-                self._ready(profile, stats)
-                return self.snapshot()
+            # Acquisition takes this same interlock before stopping a backend.
+            # Keep the final lease check and health publication indivisible to it.
+            with self.studio.lock:
+                leased = self._leased()
+                if leased:
+                    self._record("leased", leased)
+                    return self.snapshot()
+                if ready:
+                    if manager.active != profile['id'] or manager.busy:
+                        self._record("reconnecting", "Backend changed during its health probe; recovery will re-observe it.")
+                    else:
+                        self._ready(profile, stats)
+                    return self.snapshot()
 
             # A listener that cannot be proven to be this exact launcher is a hard stop.
             try:
