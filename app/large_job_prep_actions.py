@@ -12,35 +12,38 @@ class ActionMixin:
                          request: dict[str, Any], context: dict[str, Any],
                          before_evaluation: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
         expected_identity = context["backend"]["process"]
-        checked, _ = self._recheck(expected_identity, context["backend"]["profile_id"])
-        release_action = {
-            "kind": "release",
-            "state": "intent_saved",
-            "recorded_at": self.clock(),
-            "process": expected_identity,
-            "queue": checked["queue"],
-            "command": {"route": "/free", "unload_models": True, "free_memory": True},
-        }
-        self._record_action(journal, receipt, release_action)
+        checked, _ = self._claim_release_gate(expected_identity, context["backend"]["profile_id"])
         try:
-            self.studio._request(
-                "/free",
-                method="POST",
-                data={"unload_models": True, "free_memory": True},
-                timeout=60,
-                base_url=checked["url"],
-                allow_empty=True,
-            )
-        except Exception as exc:
-            release_action.update(state="response_unknown", error=type(exc).__name__)
+            release_action = {
+                "kind": "release",
+                "state": "intent_saved",
+                "recorded_at": self.clock(),
+                "process": expected_identity,
+                "queue": checked["queue"],
+                "command": {"route": "/free", "unload_models": True, "free_memory": True},
+            }
+            self._record_action(journal, receipt, release_action)
+            try:
+                self.studio._request(
+                    "/free",
+                    method="POST",
+                    data={"unload_models": True, "free_memory": True},
+                    timeout=60,
+                    base_url=checked["url"],
+                    allow_empty=True,
+                )
+            except Exception as exc:
+                release_action.update(state="response_unknown", error=type(exc).__name__)
+                self._persist(journal, receipt)
+                return self._finish(
+                    journal, receipt, state="unknown", decision="unknown", ready=False,
+                    reason="The /free response was lost or failed. Its effect is unknown; restart and automatic retry were refused.",
+                    phase="release_response_unknown",
+                )
+            release_action.update(state="response_received", responded_at=self.clock())
             self._persist(journal, receipt)
-            return self._finish(
-                journal, receipt, state="unknown", decision="unknown", ready=False,
-                reason="The /free response was lost or failed. Its effect is unknown; restart and automatic retry were refused.",
-                phase="release_response_unknown",
-            )
-        release_action.update(state="response_received", responded_at=self.clock())
-        self._persist(journal, receipt)
+        finally:
+            self._release_backend()
         settle = _number(config.get("large_job_release_settle_seconds", 2), 0, 30, 2)
         if settle:
             self.sleeper(settle)
