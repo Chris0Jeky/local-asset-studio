@@ -13,4 +13,4 @@ class AssetDetailContracts(unittest.TestCase):
             capture_output=True, text=True, timeout=20,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('Asset detail contracts passed: 17', result.stdout)
+        self.assertIn('Asset detail contracts passed: 19', result.stdout)
