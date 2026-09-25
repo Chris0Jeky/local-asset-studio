@@ -119,7 +119,8 @@ recipes and their input references. Models and the ComfyUI installation remain
 separate dependencies. Existing outputs are indexed without executing workflows.
 
 Saved setups now live in the same workspace database. Existing browser setups
-are migrated on first load. Deleting a setup does not delete its past outputs.
+are migrated on first load. Deleting a saved setup requires its id and does not
+delete the setup's past outputs.
 
 The launcher uses a cheap Studio identity check, so opening it again reuses the
 server. Model/node discovery is cached for two minutes. **Models & folders →
