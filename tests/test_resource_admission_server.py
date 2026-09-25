@@ -40,6 +40,19 @@ class FakeStudio(server.Studio):
         raise AssertionError(path)
 
 
+class ObservedVramTests(unittest.TestCase):
+    def test_available_vram_is_comfyui_total_free_not_the_torch_pool(self):
+        # Live #306 proof: an empty 16 GB card reports vram_free ~15.7 GiB and torch_vram_free 0 (nothing loaded).
+        import resource_admission
+        studio = FakeStudio.__new__(FakeStudio); studio.config = {}; studio.comfy_url = "http://127.0.0.1:8188"
+        stats = {"system": {"comfyui_version": "test", "pytorch_version": "test"},
+                 "devices": [{"vram_total": 16 * GIB, "vram_free": 15 * GIB, "torch_vram_total": 0, "torch_vram_free": 0}]}
+        studio._request = lambda path, *a, **k: stats
+        observed = resource_admission.observe(studio)
+        self.assertEqual(observed["vram"]["available_bytes"], 15 * GIB)
+        self.assertIsNone(observed["vram"]["unknown_reason"])
+
+
 class ResourceAdmissionServerTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.root = Path(self.tmp.name)

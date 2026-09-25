@@ -183,13 +183,12 @@ def observe(studio):
     vram_reason = runtime.get("unknown_reason")
     if type(device_index) is int and 0 <= device_index < len(runtime.get("devices") or []):
         device = runtime["devices"][device_index]
-        candidates = [
-            _counter(device.get("vram_free_bytes")),
-            _counter(device.get("torch_vram_free_bytes")),
-        ]
-        candidates = [value for value in candidates if value is not None]
-        if candidates:
-            vram, vram_reason = min(candidates), None
+        # ComfyUI's vram_free is device free plus torch's reserved-but-unused pool (model_management.get_free_memory);
+        # torch_vram_free is only that pool, and is 0 whenever nothing is loaded (e.g. right after /free). Taking the
+        # smaller of the two reported "no VRAM" on an empty 16 GB card (#306 live proof, 25 Sep 2026).
+        free = _counter(device.get("vram_free_bytes"))
+        if free is not None:
+            vram, vram_reason = free, None
         else:
             vram_reason = "Selected device returned no valid free-VRAM counter"
     elif vram_reason is None:
