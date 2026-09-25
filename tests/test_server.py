@@ -1363,4 +1363,18 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(third_raw, b'')
         self.assertEqual(third_owned, [])
 
+    def test_import_image_registers_job_under_studio_lock(self):
+        s = self.studio()
+        ownership = []
+
+        class LockCheckingJobs(dict):
+            def __setitem__(self, key, value):
+                ownership.append(s.lock._is_owned())
+                super().__setitem__(key, value)
+
+        s.jobs = LockCheckingJobs(s.jobs)
+        imported = s.import_image('frame.png', 'image/png', png())
+        self.assertEqual(ownership, [True])
+        self.assertEqual(imported['job']['id'], next(iter(s.jobs)))
+
 if __name__ == "__main__": unittest.main()

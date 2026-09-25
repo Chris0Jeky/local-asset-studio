@@ -1032,7 +1032,9 @@ class Studio:
              'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[uploaded],
              'message':'Imported original image. No generation submitted.','graph_path':'','graph':{},
              'outputs':[{'filename':uploaded['original_name'],'uploaded_file':uploaded['file'],'type':'output','media_type':'image'}]}
-        self.index_outputs(job);self._save(job);self.jobs[identifier]=job
+        self.index_outputs(job);self._save(job)
+        with self.lock:
+            self.jobs[identifier] = job
         return {'asset':self.assets.get(job['outputs'][0]['asset_id']),'job':self.public(job)}
 
     def export_assets(self, payload):
