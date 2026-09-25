@@ -120,12 +120,13 @@ def command(studio,job_id,action,payload):
         record={'request_id':request_id,'request_sha256':request_hash,'expected_revision':payload['expected_revision'],
                 'action':action,'recorded_at':time.time(),'status':'queued' if action=='observe' else 'recorded',
                 'new_work_authorized':False,'evidence_sha256':_evidence(job)}
+        if action=='dispose':
+            record['reason']=payload['reason'].strip()
         prospective=copy.deepcopy(job)
         prospective['mixed_batch_recovery']={'version':1,'history':copy.deepcopy(history)+[record]}
         if action=='observe':
             prospective.update(status='queued',message='Queued to check known batch receipts only. The unknown submission will not be repeated.')
         else:
-            record['reason']=payload['reason'].strip()
             disposition={'basis':'mixed_batch_unknown','reason':record['reason'],'recorded_at':record['recorded_at'],
                          'event_id':request_id,'acknowledged_unknown':True,'remote_cancelled':False,'new_work_authorized':False,
                          'known':[{k:s[k] for k in ('index','prompt_id','status')} for s in receipts],

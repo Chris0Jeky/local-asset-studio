@@ -86,6 +86,16 @@ class MixedBatchTests(unittest.TestCase):
         self.assertFalse(result['abandonment']['remote_cancelled']);self.assertFalse(result['abandonment']['new_work_authorized'])
         self.assertEqual(self.job['pending_submission'],before['pending_submission']);self.assertEqual(self.job['outputs'],before['outputs'])
         self.assertEqual(result,self.command('dispose',payload));self.assertTrue(self.studio.queue.empty());self.no_posts_since(2)
+    def test_dispose_history_retains_normalized_local_reason(self):
+        payload=self.payload('dispose-0001',reason='  Keep the unknown tail  ',acknowledge_unknown=True)
+        result=self.command('dispose',payload)
+        self.assertEqual(result['status'],'abandoned')
+        self.assertEqual(result['abandonment']['reason'],'Keep the unknown tail')
+        event=next(r for r in self.job['mixed_batch_recovery']['history'] if r.get('request_id')=='dispose-0001')
+        self.assertEqual(event['reason'],result['abandonment']['reason'])
+        self.assertFalse(event['new_work_authorized']);self.assertFalse(result['abandonment']['new_work_authorized'])
+        self.assertTrue(result['abandonment']['acknowledged_unknown'])
+        self.assertTrue(self.studio.queue.empty());self.no_posts_since(2)
     def test_queued_observation_blocks_disposition_and_new_requests(self):
         self.unresolved();payload=self.payload();self.command('observe',payload)
         with self.assertRaises(ValueError):self.command('dispose',self.payload('dispose-0001',reason='Keep',acknowledge_unknown=True))
