@@ -163,8 +163,12 @@ def restored_guide(page, origin, out, check, drawings, posts, spec):
     check(reads == ['/api/pose/artifacts/' + held], 'Redo restores the held drawing without another read')
     page.locator('#uxPoseStart').select_option('standing')
     hold = hold_text(page, 'does not hold that drawing')
-    # Restoring the same setup again is a new record: it reads the same stored drawing once more.
-    page.evaluate(REPLACE_GUIDE, guide)
+    # Route the held guide through the same reference rebuild used by an engine switch.
+    # Restoring that new record must still fetch its editable drawing.
+    cycled = page.evaluate('StudioContinuation.combineReferences(selected,referenceRecords)[0]')
+    check(cycled.get('artifact_id') == held and cycled.get('renderer') == guide['renderer'],
+          'A Combine reference rebuild keeps the drawn guide sidecar')
+    page.evaluate(REPLACE_GUIDE, cycled)
     hold = hold_text(page, 'again for the new size')
     check(reads == ['/api/pose/artifacts/' + held] * 2, 'A second restore of the same guide reads its drawing again: ' + str(reads))
     check(hold == 'The pose guide was drawn at 1024×1536; press Replace pose picture with drawing again for the new size (832×1536).',

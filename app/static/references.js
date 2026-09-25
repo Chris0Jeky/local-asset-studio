@@ -6,6 +6,7 @@ function resetReferenceSlots(){referenceEpoch++;referencePending=0;referenceReco
 // Epoch changes invalidate structural edits; the per-record token also rejects an older
 // upload/copy on the same unchanged slot. Tokens are never persisted as lineage or readiness.
 const referenceAttachments=new WeakMap(),referenceChecks=new WeakMap(),referenceObservations=new Set(),referenceUploading=new Set();
+function forgetDrawnGuide(slot){delete slot.artifact_id;delete slot.renderer;}
 function beginReferenceAttachment(index){
   const slot=referenceRecords[index];
   if(!Number.isInteger(index)||index<0||!slot||!selected?.reference_slots?.[index])throw Error('The destination slot is no longer available.');
@@ -21,7 +22,7 @@ async function attachReferenceAsset(index,id){
   try{
     const result=await post('/api/assets/reference',{id});
     if(!attachment.current())throw Error('The destination slot changed while the picture was being copied. It was not applied.');
-    const slot=referenceRecords[index],previous=slot.parent_asset;Object.assign(slot,result,{missing:false});referenceChecks.delete(slot);
+    const slot=referenceRecords[index],previous=slot.parent_asset;Object.assign(slot,result,{missing:false});forgetDrawnGuide(slot);referenceChecks.delete(slot);
     if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
     replaceParentAsset('reference',previous,id);return result;
   }finally{attachment.finish();}
@@ -61,7 +62,7 @@ async function uploadRoleFile(index,file){
     if(file.size>20*1024*1024)throw Error('Reference image exceeds 20 MiB');
     const result=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});
     if(!attachment.current())return false;
-    const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});referenceChecks.delete(referenceRecords[index]);releaseParentAsset(previous);return true;
+    const slot=referenceRecords[index],previous=slot.parent_asset;Object.assign(slot,{parent_asset:null},result,{missing:false});forgetDrawnGuide(slot);referenceChecks.delete(slot);releaseParentAsset(previous);return true;
   }catch(e){if(!attachment||attachment.current()){message(e.message,true);$('#referenceSummary').textContent=e.message;}return false;}
   finally{attachment?.finish();}
 }
@@ -114,7 +115,7 @@ $('#referenceCards').onclick=e=>{
   const up=e.target.closest('[data-ref-up]'),down=e.target.closest('[data-ref-down]'),clear=e.target.closest('[data-ref-clear]');
   if(!up&&!down&&!clear)return;
   const epoch=referenceEpoch;referenceEpoch++;referencePending=0;
-  if(clear){const i=Number(clear.dataset.refClear),previous=referenceRecords[i].parent_asset;referenceRecords[i]={...referenceRecords[i],file:null,parent_asset:null,missing:false};releaseParentAsset(previous);}
+  if(clear){const i=Number(clear.dataset.refClear),previous=referenceRecords[i].parent_asset;referenceRecords[i]={...referenceRecords[i],file:null,parent_asset:null,missing:false};forgetDrawnGuide(referenceRecords[i]);releaseParentAsset(previous);}
   else{const i=Number((up||down).dataset[up?'refUp':'refDown']),j=i+(up?-1:1);[referenceRecords[i],referenceRecords[j]]=[referenceRecords[j],referenceRecords[i]];}
   // Writes still belong to the original destination. Availability reads instead follow
   // retained record identities/bytes, so editing another slot cannot waive their check.

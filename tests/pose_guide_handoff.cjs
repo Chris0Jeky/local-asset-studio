@@ -25,6 +25,32 @@ test('a new guide cannot silently discard a second reference or bypass the targe
     assert.notEqual(C.combinePoseReplacementReason(picture,target,refs),'');
   assert.notEqual(C.combinePoseReplacementReason(null,skeleton,refs),'');
 });
+test('engine switches keep a drawn guide sidecar but filter untrusted metadata',()=>{
+  // Before the fix combineReferences dropped artifact_id/renderer, so an engine switch kept the
+  // restored picture but the editor could no longer read its drawing. Two calls prove survival
+  // across successive switches; the controls prove nothing untrusted is copied.
+  const target={...skeleton,reference_slots:[{role:'pose'}]};
+  const file='a'.repeat(32)+'_drawn-pose.png';
+  for(const renderer of ['studio.coco18-lines/v1','studio.coco18-openpose-xinsir/v1']){
+    const guide={file,sha256:'c'.repeat(64),artifact_id:'d'.repeat(64),renderer,bytes:4096,width:1024,height:1536};
+    const once=C.combineReferences(target,[guide]);
+    assert.equal(once.length,1);assert.equal(once[0].file,file);
+    assert.equal(once[0].artifact_id,guide.artifact_id,renderer+' sidecar ID must survive an engine switch');
+    assert.equal(once[0].renderer,renderer,renderer+' renderer must survive an engine switch');
+    const twice=C.combineReferences(target,once);
+    assert.equal(twice[0].artifact_id,guide.artifact_id,'sidecar ID must survive a second switch');
+    assert.equal(twice[0].renderer,renderer,'renderer must survive a second switch');
+  }
+  const ordinary=C.combineReferences(target,[{file:'pose.png',sha256:'b'.repeat(64),artifact_id:'d'.repeat(64),renderer:'studio.coco18-lines/v1'}]);
+  assert.equal('artifact_id' in ordinary[0],false,'an ordinary picture must not gain a sidecar ID');
+  assert.equal('renderer' in ordinary[0],false,'an ordinary picture must not gain a renderer');
+  const invalid=C.combineReferences(target,[{file,sha256:'c'.repeat(64),artifact_id:'NOT-HEX',renderer:'studio.coco18-lines/v1'}]);
+  assert.equal('artifact_id' in invalid[0],false,'a drawn record without a valid sidecar ID must not invent one');
+  assert.equal('renderer' in invalid[0],false,'no sidecar means no renderer either');
+  const strange=C.combineReferences(target,[{file,sha256:'c'.repeat(64),artifact_id:'d'.repeat(64),renderer:'evil/v1',parent_asset:'x',role:'style',missing:false,extra:1}]);
+  assert.equal('renderer' in strange[0],false,'an undeclared renderer must stay filtered');
+  assert.equal('extra' in strange[0],false,'arbitrary metadata must stay filtered');
+});
 const request=P.serialize(P.fromPreset('standing',{width:1024,height:1536}),{width:1024,height:1536});
 const reply={file:'f'.repeat(32)+'_drawn-pose.png',sha256:'d'.repeat(64),artifact_id:'e'.repeat(64),bytes:4096,width:1024,height:1536,renderer:'studio.coco18-lines/v1',generation_submitted:false};
 test('the guide response is checked against the requested canvas and strips inherited attachment claims',()=>{

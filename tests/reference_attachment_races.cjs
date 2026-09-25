@@ -32,6 +32,28 @@ function harness() {
 }
 const result = (file, parent) => ({file,sha256:'a'.repeat(64),width:10,height:10,...(parent ? {parent_asset:parent} : {})});
 
+for (const action of ['upload','copy']) test(`replacing a drawn guide by ${action} drops its editable sidecar`, async () => {
+  const h = harness(), filename = 'b'.repeat(32) + '_drawn-pose.png';
+  h.run(`Object.assign(referenceRecords[0],{file:${JSON.stringify(filename)},artifact_id:'c'.repeat(64),renderer:'studio.coco18-lines/v1'})`);
+  const pending = action === 'upload' ? h.upload(0,'drawn-pose.png') : h.copy();
+  h.requests[0].resolve(result('d'.repeat(32) + '_drawn-pose.png',action === 'copy' ? 'style' : undefined));
+  await pending;
+  const slot = h.state().references[0];
+  assert.equal(slot.file, 'd'.repeat(32) + '_drawn-pose.png');
+  assert.equal('artifact_id' in slot, false);
+  assert.equal('renderer' in slot, false);
+});
+
+test('clearing a drawn guide drops its editable sidecar before the slot is reused', () => {
+  const h = harness();
+  h.run("Object.assign(referenceRecords[0],{file:'b'.repeat(32)+'_drawn-pose.png',artifact_id:'c'.repeat(64),renderer:'studio.coco18-lines/v1'});");
+  h.run("$('#referenceCards').onclick({target:{closest:selector=>selector==='[data-ref-clear]'?{dataset:{refClear:'0'}}:null}})");
+  const slot = h.state().references[0];
+  assert.equal(slot.file, null);
+  assert.equal('artifact_id' in slot, false);
+  assert.equal('renderer' in slot, false);
+});
+
 test('the last-started upload wins even when the older upload finishes last', async () => {
   const h = harness(), older = h.upload(0,'older.png'), newer = h.upload(0,'newer.png');
   h.requests[1].resolve(result('newer.png')); await newer;

@@ -68,7 +68,12 @@ GGUF support is a custom-node dependency of the installed backend
 - **Rule: 32 GiB of commit headroom before any Qwen job at 1 MP or above**, sampled
   during the run (section 3). Open: #77 (host allocation), #89 (access violations).
 - Speed: one `qwen-1ref` run measured 672 s on 14 September 2026 (catalog
-  description); `qwen-2ref`/`qwen-3ref` have no completed timed render recorded.
+  description). One research `qwen-2ref` Q4_K_M + Lightning four-step render at
+  832×1248 took **871.2 s** (prompt `659e4504-c868-4413-9a5e-d3c6e002cbf1`,
+  [retained row](../experiments/curated/style-pose-matrix/2026-09-14-combine/README.md));
+  `research-scripts/qwen_pose.py` loaded its graph with changed runtime inputs.
+  This single render is not a Studio-route timing distribution. No completed
+  timed `qwen-3ref` render is recorded.
 
 ## Run proof is not acceptance or clearance
 
@@ -99,5 +104,6 @@ under #739. Do not treat the downloaded 2.1 Fix LoRA as qualified: it is unteste
 
 ## Unverified
 
-- Full-load line at reserve 0.6; any `qwen-2ref`/`qwen-3ref` timing; Multiple-Angles
-  trigger and scale; no Studio proof behind the atelier `verified: false` flags.
+- Full-load line at reserve 0.6; Studio-route `qwen-2ref` timing and any
+  `qwen-3ref` timing; Multiple-Angles trigger and scale; no Studio proof behind
+  the atelier `verified: false` flags.
