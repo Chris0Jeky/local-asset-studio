@@ -85,8 +85,8 @@ class GpuLeaseTests(unittest.TestCase):
         self.assertTrue(result["granted"]); self.assertFalse(result["renewed"]); self.assertTrue(result["held"])
         self.assertEqual((result["holder"], result["expires_at"], result["remaining_seconds"]), ("local-qwen", 13_600.0, 3600.0))
         self.assertEqual(result["stopped_now"], [{"profile": "primary", "pid": 4242, "created_at": 1000.0, "entry": "C:/fake/ComfyUI/main.py"}])
-        # Every endpoint was checked idle (offline allowed), then the running one rechecked strictly before termination.
-        self.assertEqual(self.studio.backends.idle_calls, [("primary", True), ("hidream", True), ("primary", False)])
+        # Every endpoint is scanned, all listeners get strict preflight, then the stop gets its immediate recheck.
+        self.assertEqual(self.studio.backends.idle_calls, [("primary", True), ("hidream", True), ("primary", False), ("primary", False)])
         saved = json.loads((self.studio.root / ".runtime/studio-gpu-lease.json").read_text(encoding="utf-8"))
         self.assertEqual(saved["record"]["holder"], "local-qwen")
         self.assertIn('"event": "granted"', (self.studio.root / ".runtime/studio-gpu-lease.log").read_text(encoding="utf-8"))
