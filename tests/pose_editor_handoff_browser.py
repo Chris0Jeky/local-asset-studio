@@ -219,6 +219,177 @@ def restored_guide(page, origin, out, check, drawings, posts, spec):
     check(page.locator('#uxPoseUse').is_enabled() and posts.count('/api/pose/render') == renders + 2, 'The button is released; nothing rendered')
 
 
+DRAG_START = """(move=true) => {
+  const canvas = document.querySelector('#uxPoseCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = Number(document.querySelector('#uxPoseX').value);
+  const y = Number(document.querySelector('#uxPoseY').value);
+  const maxX = Number(document.querySelector('#uxPoseX').max) || 1024;
+  const maxY = Number(document.querySelector('#uxPoseY').max) || 1536;
+  const cx = rect.left + (x / maxX) * rect.width;
+  const cy = rect.top + (y / maxY) * rect.height;
+  canvas.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true, cancelable: true, clientX: cx, clientY: cy, pointerId: 7, isPrimary: true}));
+  if (move) canvas.dispatchEvent(new PointerEvent('pointermove', {bubbles: true, cancelable: true, clientX: cx + 12, clientY: cy + 12, pointerId: 7, isPrimary: true}));
+  return [cx, cy];
+}"""
+DRAG_MOVE = """([cx, cy]) => {
+  document.querySelector('#uxPoseCanvas').dispatchEvent(new PointerEvent('pointermove',
+    {bubbles: true, cancelable: true, clientX: cx + 12, clientY: cy + 12, pointerId: 7, isPrimary: true}));
+}"""
+DRAG_END = """() => {
+  const canvas = document.querySelector('#uxPoseCanvas');
+  canvas.dispatchEvent(new PointerEvent('pointerup', {bubbles: true, cancelable: true, pointerId: 7, isPrimary: true}));
+}"""
+SYNC_TICK = "document.querySelector('#positive').dispatchEvent(new Event('change',{bubbles:true}))"
+
+
+def pending_read_drag_and_draft(page, origin, out, check, drawings, posts, spec):
+    """#967: a drag or typed draft active when a held guide read resolves keeps the edit, marks the guide seen."""
+    run = ux.CaseRun(dict(spec, id='pose-handoff-pending-read'), page, origin, False, out / 'setup')
+    ready, detail = ux._combine(run)
+    check(ready, 'Existing Combine source-pair journey is ready: ' + detail)
+    page.locator('[data-ux-engine="combine-klein"]').click()
+    page.wait_for_function("selected.id==='combine-klein' && !document.querySelector('#uxPoseEditor').hidden")
+    joints = page.evaluate('StudioPoseEditor.JOINTS')
+
+    def stored(artifact_id):
+        shift = 128 if artifact_id == 'b' * 64 else 0
+        return dict(schema='studio.pose-artifact/v1', id=artifact_id, canvas=dict(width=1024, height=1536),
+                    joints={name: None if index == 16 else dict(x=64 * (index % 14 + 1) + (shift if index == 0 else 0),
+                                                               y=80 * (index + 1),
+                                                               confidence=None, origin='manual')
+                            for index, name in enumerate(joints)},
+                    parent_id=None, authority='none', review='unreviewed',
+                    source=dict(sha256='c' * 64, format='openpose-coco18', person_index=0, coordinate_space='pixels'))
+
+    drag_id, down_id, typed_id, draft_id = 'd' * 64, '7' * 64, '8' * 64, '9' * 64
+    reads, waiting = [], {}
+
+    def artifact_route(route):
+        path = urlsplit(route.request.url).path
+        reads.append(path)
+        artifact_id = path.rsplit('/', 1)[-1]
+        if artifact_id in (drag_id, down_id, typed_id, draft_id):
+            waiting.setdefault(artifact_id, []).append(route)
+        else:
+            route.fulfill(status=200, content_type='application/json', body=json.dumps(stored(artifact_id)))
+
+    page.route('**/api/pose/artifacts/*', artifact_route)
+
+    def base_guide(artifact_id, tag):
+        return dict(file=tag * 32 + '_drawn-pose.png', sha256=tag * 64, bytes=2048, width=1024, height=1536,
+                    artifact_id=artifact_id, renderer='studio.coco18-lines/v1', parent_asset=None, missing=False)
+
+    def wait_held(artifact_id):
+        for _ in range(40):
+            if waiting.get(artifact_id):
+                return
+            page.wait_for_timeout(50)
+        raise AssertionError('Held artifact read never arrived for ' + artifact_id)
+
+    # Case 1: a joint drag is active when the held read resolves.
+    page.evaluate(REPLACE_GUIDE, base_guide(drag_id, 'd'))
+    wait_held(drag_id)
+    check('is loading' in page.locator('#uxPoseReason').text_content(), 'The held guide read disables Use this pose')
+    page.evaluate(DRAG_START)
+    edited = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    waiting[drag_id][0].fulfill(status=200, content_type='application/json', body=json.dumps(stored(drag_id)))
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('your drawing was kept')")
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == edited, 'A drag-active read keeps the dragged drawing')
+    check(reads == ['/api/pose/artifacts/' + drag_id], 'The dragged-over guide reads once: ' + str(reads))
+    page.evaluate(DRAG_END)
+    page.evaluate(SYNC_TICK)
+    page.wait_for_timeout(300)
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == edited, 'A later sync does not adopt the seen guide over the drag')
+    check(reads == ['/api/pose/artifacts/' + drag_id], 'No retry after the drag ends')
+    check(page.locator('#uxPoseUse').is_enabled(), 'The button is released after the kept drag')
+
+    # Case 2: the read resolves after pointerdown but before the first movement.
+    page.evaluate(REPLACE_GUIDE, base_guide(down_id, '7'))
+    wait_held(down_id)
+    before_move = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    coords = page.evaluate(DRAG_START, False)
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == before_move,
+          'Pointerdown starts a drag without changing geometry')
+    waiting[down_id][0].fulfill(status=200, content_type='application/json', body=json.dumps(stored(down_id)))
+    page.wait_for_timeout(300)
+    page.evaluate(DRAG_MOVE, coords)
+    moved = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    check(moved != before_move, 'The first pointermove changes the drawing after the read')
+    page.evaluate(DRAG_END)
+    page.evaluate(SYNC_TICK)
+    page.wait_for_timeout(300)
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == moved,
+          'A later sync keeps a drag begun before the guide response')
+    check(reads.count('/api/pose/artifacts/' + down_id) == 1,
+          'The down-before-move guide is marked seen and read once')
+
+    # Case 3: even a typed-only draft must remain authoritative when the held read resolves.
+    page.evaluate(REPLACE_GUIDE, base_guide(typed_id, '8'))
+    wait_held(typed_id)
+    original = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    original_x = page.locator('#uxPoseX').input_value()
+    page.locator('#uxPoseX').fill('0')
+    check(original_x != '0' and page.locator('#uxPoseX').input_value() == '0',
+          'The typed position is pending without an applied geometry edit')
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == original,
+          'Typing a position does not yet change the drawing')
+    waiting[typed_id][0].fulfill(status=200, content_type='application/json', body=json.dumps(stored(typed_id)))
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('your drawing was kept')")
+    check(page.locator('#uxPoseX').input_value() == '0', 'The typed-only draft survives the held read')
+    page.locator('#uxPosePositionApply').click()
+    applied = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    check(applied != original, 'Applying the retained position changes the drawing')
+    page.evaluate(SYNC_TICK)
+    page.wait_for_timeout(300)
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == applied,
+          'The guide cannot overwrite the applied typed position on a later sync')
+    check(reads.count('/api/pose/artifacts/' + typed_id) == 1, 'The typed-over guide reads once')
+
+    # Case 4: a geometry edit plus a typed (unapplied) position draft is pending when the held read resolves.
+    page.evaluate(REPLACE_GUIDE, base_guide(draft_id, 'e'))
+    wait_held(draft_id)
+    page.wait_for_function("document.querySelector('#uxPoseReason').textContent.includes('is loading')")
+    page.locator('#uxPoseStart').select_option('bent')
+    bent = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    page.locator('#uxPoseX').fill('0')
+    waiting[draft_id][0].fulfill(status=200, content_type='application/json', body=json.dumps(stored(draft_id)))
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('your drawing was kept')")
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == bent, 'A draft-pending read keeps the edited drawing')
+    check(page.locator('#uxPoseX').input_value() == '0', 'The unapplied typed draft survives the held read')
+    check(reads.count('/api/pose/artifacts/' + draft_id) == 1, 'The drafted-over guide reads once')
+    page.evaluate(SYNC_TICK)
+    page.wait_for_timeout(300)
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == bent, 'A later sync does not adopt the seen guide over the draft')
+    check(reads.count('/api/pose/artifacts/' + draft_id) == 1, 'No retry while the draft is pending')
+    page.locator('#uxPosePositionReset').click()
+    page.evaluate(SYNC_TICK)
+    page.wait_for_timeout(300)
+    check(reads.count('/api/pose/artifacts/' + draft_id) == 1, 'Resetting the draft does not re-read the seen guide')
+
+    # Case 5: adopting guide B while guide A is held issues one GET for B.
+    page.unroute('**/api/pose/artifacts/*')
+    reads_b = []
+
+    def route_b(route):
+        path = urlsplit(route.request.url).path
+        reads_b.append(path)
+        route.fulfill(status=200, content_type='application/json',
+                      body=json.dumps(stored(path.rsplit('/', 1)[-1])))
+
+    page.route('**/api/pose/artifacts/*', route_b)
+    page.evaluate(REPLACE_GUIDE, base_guide('a' * 64, 'a'))
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('back in the editor')")
+    held_coords = [page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')]
+    check(held_coords == ['64', '80'], 'Guide A drawing is adopted first: ' + str(held_coords))
+    page.evaluate(REPLACE_GUIDE, base_guide('b' * 64, 'b'))
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('back in the editor')")
+    check(reads_b == ['/api/pose/artifacts/' + 'a' * 64, '/api/pose/artifacts/' + 'b' * 64],
+          'Adopting guide B reads once, no duplicate GET: ' + str(reads_b))
+    check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == ['192', '80'],
+          'Guide B drawing is adopted over held guide A, selected joint follows: ' + str(held_coords))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, default=ROOT / '.runtime/pose-handoff-browser')
@@ -406,6 +577,26 @@ def main(argv=None):
                 finally:
                     context.close()
                 print(('PASS ' if row['passed'] else 'FAIL ') + 'restored-guide: ' + row.get('error', str(len(row['assertions'])) + ' assertions'), flush=True)
+                context = browser.new_context(viewport={'width': 1536, 'height': 1060}, reduced_motion='reduce')
+                page = context.new_page(); page.set_default_timeout(8000)
+                row = dict(case='pending-read', viewport=1536, assertions=[], passed=False); records.append(row)
+                page.on('pageerror', lambda error: errors.append('pending-read: ' + str(error)))
+                page.on('request', lambda request: posts.append(urlsplit(request.url).path) if request.method == 'POST' else None)
+                page.on('request', lambda request: drawings.append(request.post_data_json) if request.method == 'POST' and urlsplit(request.url).path == '/api/pose/render' else None)
+                def check_pending(condition, message):
+                    if not condition: raise AssertionError(message)
+                    row['assertions'].append(message)
+                try:
+                    pending_read_drag_and_draft(page, origin, args.out, check_pending, drawings, posts, spec)
+                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); page.screenshot(path=str(args.out / 'pending-read.png'))
+                    row['passed'] = True
+                except Exception as exc:
+                    row['error'] = str(exc)
+                    try: page.screenshot(path=str(args.out / 'pending-read-failure.png'))
+                    except Exception: pass
+                finally:
+                    context.close()
+                print(('PASS ' if row['passed'] else 'FAIL ') + 'pending-read: ' + row.get('error', str(len(row['assertions'])) + ' assertions'), flush=True)
             finally:
                 browser.close()
     finally:

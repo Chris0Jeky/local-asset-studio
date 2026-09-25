@@ -377,13 +377,18 @@
     poseLoading=guide;let loaded=null;const before={points:StudioPoseEditor.resize(posePoints,poseCanvas,poseCanvas),canvas:{...poseCanvas}};syncPoseActions();
     api('/api/pose/artifacts/'+id).then(value=>{loaded=StudioPoseEditor.fromArtifact(value,guide);}).catch(()=>{}).then(()=>{
       if(poseLoading===guide)poseLoading=null;
-      // A newer guide, a render in flight or an unfinished edit wins; a later sync reads this guide again.
-      const current=StudioPoseEditor.drawnGuide(referenceRecords)===guide&&!poseBusy&&poseDrag<0&&!posePositionDirty()&&poseActive();
+      // A newer guide, an inactive editor or a render in flight wins; a later sync reads this guide again.
+      const attached=StudioPoseEditor.drawnGuide(referenceRecords)===guide&&poseActive();
+      const idle=!poseBusy;
+      const pendingPosition=posePositionDirty();
+      const current=attached&&idle&&poseDrag<0&&!pendingPosition;
       const edited=!StudioPoseEditor.holds(posePoints,poseCanvas,before);
-      if(loaded&&current&&edited){poseSeen.add(guide);poseStatus('You changed the drawing while the attached guide’s drawing was loading, so your drawing was kept.');}
+      // The same guide stayed attached and the user edited mid-read: keep even an unapplied position draft or a drag before its first move.
+      if(loaded&&attached&&idle&&(edited||pendingPosition||poseDrag>=0)){poseSeen.add(guide);poseStatus('You were editing the pose while the attached guide’s drawing was loading, so your drawing was kept.');}
       else if(loaded&&current){
         const next=StudioPoseEditor.resize(loaded,guide,poseCanvas);
-        pushPose();poseEdit(StudioPoseEditor.adopt(posePoints,next));poseHeld={id,points:next,canvas:{...poseCanvas}};poseSeen.add(guide);
+        poseHeld={id,points:next,canvas:{...poseCanvas}};poseSeen.add(guide);
+        pushPose();poseEdit(StudioPoseEditor.adopt(posePoints,next));
         poseStatus('The attached pose guide’s drawing is back in the editor. Undo returns to the previous drawing. Nothing was submitted.');
       }else if(!loaded){poseSeen.add(guide);poseStatus('The drawing behind the attached pose guide could not be read. The picture stays attached.');}
       syncReady();
