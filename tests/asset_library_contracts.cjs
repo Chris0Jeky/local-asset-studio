@@ -216,5 +216,23 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.equal(s.el('#workspaceRefresh').disabled,false);assert.equal(s.el('#workspaceRefresh').textContent,'Refresh assets');
     assert.match(s.el('#assetMessage').textContent,/Library refreshed: 3 active assets/);
   });
+  const exportStub=s=>{s.run("post = async (url, body) => api(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});");s.run("document.createElement = () => ({href:'', download:'', click(){}});");};
+  const trashedError=ids=>{const e=Error(ids.length+' selected asset is in Trash');e.status=400;e.data={error:e.message,code:'export_has_trashed',trashed_ids:ids};return e;};
+  await test('Trashed selection offers to export the rest and resends without them',async()=>{
+    const s=library();s.run("assetSelection=new Set(['a0','a1'])");exportStub(s);s.approve(true);
+    const p=bulkClick(s,'export');assert.equal(s.writes.length,1);assert.deepEqual(s.payload(0),{ids:['a0','a1']});
+    s.writes[0].reject(trashedError(['a1']));await new Promise(r=>setTimeout(r,10));
+    assert.equal(s.writes.length,2);assert.deepEqual(s.payload(1),{ids:['a0']});
+    s.writes[1].resolve({url:'/api/exports/x',count:1});await p;
+    assert.equal(s.confirmations(),1);assert.equal(s.run('assetSelection.size'),2);
+    assert.match(s.el('#assetMessage').textContent,/Export ready: 1 assets/);
+  });
+  await test('Cancelling a trashed export sends nothing more and keeps the selection',async()=>{
+    const s=library();s.run("assetSelection=new Set(['a0','a1'])");exportStub(s);s.approve(false);
+    const p=bulkClick(s,'export');assert.equal(s.writes.length,1);
+    s.writes[0].reject(trashedError(['a0']));await p;
+    assert.equal(s.writes.length,1);assert.equal(s.confirmations(),1);assert.equal(s.run('assetSelection.size'),2);
+    assert.match(s.el('#assetMessage').textContent,/Export cancelled/);
+  });
   console.log(`Asset library contracts: ${passed} passed, ${failed} failed`);if(failed)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});
