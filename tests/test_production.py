@@ -371,3 +371,10 @@ class ExperimentsClarityFrontendTests(unittest.TestCase):
                               capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         self.assertIn('state each fact once',result.stdout)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_typed_detail_values_survive_poll_refresh_and_filters_until_sent(self):
+        result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('production_typed_draft_frontend.cjs'))],
+                              capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('survive polls, Refresh and filters until sent',result.stdout)
