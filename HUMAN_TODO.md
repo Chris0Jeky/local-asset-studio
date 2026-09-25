@@ -184,7 +184,7 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
 ## Session 24–25 September 2026: two owner actions
 
-- [ ] **studio-restart-0925** (done by an agent on 25 September 2026; agents never tick this file, so tick it once you have seen it. The restart ran after the owner said the Studio was idle and free to use apart from queueing jobs). The agent checked that no job or plan was running. It stopped the `app\server.py` listener on 8191 (PID 32744) and relaunched it with `scripts/Start-Studio.ps1 -NoBrowser`. `/api/health` answered, and `/api/workspace` assets now carry `run_label` and `prompt_excerpt`, which is the #959 migration. Original item: restart the Studio once the lab session is idle, so the running server loads today's merged Python changes:
+- [x] **studio-restart-0925** (done by an agent on 25 September 2026 and ticked on verified completion. The restart ran after the owner said the Studio was idle and free to use apart from queueing jobs). The agent checked that no job or plan was running. It stopped the `app\server.py` listener on 8191 (PID 32744) and relaunched it with `scripts/Start-Studio.ps1 -NoBrowser`. `/api/health` answered, and `/api/workspace` assets now carry `run_label` and `prompt_excerpt`, which is the #959 migration. Original item: restart the Studio once the lab session is idle, so the running server loads today's merged Python changes:
   - the Windows file-lock retry and plainer failure banner (#945);
   - Put away on Problems (#950);
   - the library's *Mine / Agent runs* filter and prompt subtitles (#959; its first open adds two columns to the Workspace database, and this was proved on a copy of your 1,205-asset database).

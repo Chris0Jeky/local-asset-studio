@@ -7,7 +7,7 @@ How to answer, when convenient:
 - **Fine** — put `ok` in the *Your call* column, or just say "queue: ok 1–6" in a session.
 - **Change it** — write what you want instead. An agent turns it into an issue or a fix.
 
-Agents add a row when they make a choice like this, and never fill in *Your call* themselves. Agents never tick HUMAN_TODO either; items an agent completed say so and wait for your tick.
+Agents add a row when they make a choice like this, and never fill in *Your call* themselves. In HUMAN_TODO, agents tick an item only when they have verified its completion or you have answered it, and record how.
 
 | # | Date | Area | What an agent chose | Where to look | Why | Status | Your call |
 |---|------|------|---------------------|---------------|-----|--------|-----------|
