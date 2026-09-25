@@ -40,8 +40,67 @@ class FakeStudio(server.Studio):
         raise AssertionError(path)
 
 
+class ObservedVramTests(unittest.TestCase):
+    def test_available_vram_is_comfyui_total_free_not_the_torch_pool(self):
+        # Live #306 proof: an empty 16 GB card reports vram_free ~15.7 GiB and torch_vram_free 0 (nothing loaded).
+        import resource_admission
+        studio = FakeStudio.__new__(FakeStudio); studio.config = {}; studio.comfy_url = "http://127.0.0.1:8188"
+        stats = {"system": {"comfyui_version": "test", "pytorch_version": "test"},
+                 "devices": [{"vram_total": 16 * GIB, "vram_free": 15 * GIB, "torch_vram_total": 0, "torch_vram_free": 0}]}
+        studio._request = lambda path, *a, **k: stats
+        external = patch.object(resource_admission, "external_vram", return_value=(0, None)); external.start(); self.addCleanup(external.stop)
+        observed = resource_admission.observe(studio)
+        self.assertEqual(observed["vram"]["available_bytes"], 15 * GIB)
+        self.assertIsNone(observed["vram"]["unknown_reason"])
+        # A loaded model: the pool is part of vram_free, never a smaller bound on it.
+        stats["devices"] = [{"vram_total": 16 * GIB, "vram_free": 10 * GIB, "torch_vram_total": 6 * GIB, "torch_vram_free": 2 * GIB}]
+        self.assertEqual(resource_admission.observe(studio)["vram"]["available_bytes"], 10 * GIB)
+        # An invalid device pair is unknown (fail closed), even when the torch pool alone looks valid.
+        stats["devices"] = [{"vram_total": 16 * GIB, "vram_free": 20 * GIB, "torch_vram_total": 6 * GIB, "torch_vram_free": 2 * GIB}]
+        observed = resource_admission.observe(studio)
+        self.assertIsNone(observed["vram"]["available_bytes"])
+        self.assertIsNotNone(observed["vram"]["unknown_reason"])
+
+    def test_other_processes_dedicated_vram_is_subtracted_and_unmeasured_is_unknown(self):
+        # ComfyUI's vram_free ignores other processes on Windows/ROCm (RUNTIME-PRECONDITIONS §8); the live proof had
+        # the owner's local LLM on the card while ComfyUI still reported 15.7 GiB free.
+        import resource_admission
+        studio = FakeStudio.__new__(FakeStudio); studio.config = {}; studio.comfy_url = "http://127.0.0.1:8188"
+        stats = {"system": {"comfyui_version": "test", "pytorch_version": "test"},
+                 "devices": [{"vram_total": 16 * GIB, "vram_free": 15 * GIB, "torch_vram_total": 0, "torch_vram_free": 0}]}
+        studio._request = lambda path, *a, **k: stats
+        with patch.object(resource_admission, "external_vram", return_value=(9 * GIB, None)):
+            vram = resource_admission.observe(studio)["vram"]
+        self.assertEqual((vram["available_bytes"], vram["comfyui_free_bytes"], vram["external_bytes"]), (6 * GIB, 15 * GIB, 9 * GIB))
+        with patch.object(resource_admission, "external_vram", return_value=(16 * GIB, None)):
+            self.assertEqual(resource_admission.observe(studio)["vram"]["available_bytes"], 0)
+        with patch.object(resource_admission, "external_vram", return_value=(79 * GIB, None)):
+            vram = resource_admission.observe(studio)["vram"]
+        self.assertIsNone(vram["available_bytes"])
+        self.assertIn("implausible", vram["unknown_reason"])
+        with patch.object(resource_admission, "external_vram", return_value=(None, "counters unavailable")):
+            vram = resource_admission.observe(studio)["vram"]
+        self.assertIsNone(vram["available_bytes"])
+        self.assertIn("unmeasured", vram["unknown_reason"])
+
+    def test_external_vram_needs_the_active_comfyui_process(self):
+        import resource_admission
+        studio = FakeStudio.__new__(FakeStudio); studio.backends = None
+        self.assertEqual(resource_admission.external_vram(studio), (None, "the active ComfyUI process is not identified"))
+        class Process: pid = 42
+        class Backends:
+            profiles = {"primary": {}}; active = "primary"
+            def process(self, profile): return Process()
+        studio.backends = Backends()
+        reading = {"adapters": {"a": {42: {"dedicated_bytes": 5 * GIB}, 7: {"dedicated_bytes": 3 * GIB}}}, "unknown_reason": None}
+        with patch.object(resource_admission.gpu_memory, "read", return_value=reading):
+            self.assertEqual(resource_admission.external_vram(studio), (3 * GIB, None))
+
+
 class ResourceAdmissionServerTests(unittest.TestCase):
     def setUp(self):
+        import resource_admission
+        external = patch.object(resource_admission, "external_vram", return_value=(0, None)); external.start(); self.addCleanup(external.stop)
         self.tmp = tempfile.TemporaryDirectory(); self.root = Path(self.tmp.name)
         (self.root / "presets").mkdir(); (self.root / "workflows/api").mkdir(parents=True)
         (self.root / "config").mkdir(); (self.root / "fake-comfy/input").mkdir(parents=True)

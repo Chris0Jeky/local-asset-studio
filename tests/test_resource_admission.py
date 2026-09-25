@@ -15,7 +15,8 @@ resource_probe.physical_memory = lambda: {}
 resource_probe.project_stats = lambda value: value
 wan_capacity = types.ModuleType('wan_capacity')
 wan_capacity.projection = lambda preset, graph: preset.get('wan_projection')
-with patch.dict(sys.modules, {'host_memory': host_memory, 'resource_probe': resource_probe, 'wan_capacity': wan_capacity}):
+gpu_memory = types.ModuleType('gpu_memory'); gpu_memory.read = lambda: {}; gpu_memory.others_bytes = lambda reading, pid: None
+with patch.dict(sys.modules, {'host_memory': host_memory, 'resource_probe': resource_probe, 'wan_capacity': wan_capacity, 'gpu_memory': gpu_memory}):
     spec = importlib.util.spec_from_file_location('resource_admission_test_target', ROOT / 'app/resource_admission.py')
     admission = importlib.util.module_from_spec(spec); spec.loader.exec_module(admission)
 
