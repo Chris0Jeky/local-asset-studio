@@ -457,12 +457,14 @@ async function refreshLibrary(){
     library=await api('/api/library');const s=library.storage;
     $('#storage').innerHTML='<div><b>'+gib(s.free_bytes)+'</b><small> free on the model drive</small></div><div class="bar"><span style="width:'+Math.min(100,s.free_bytes/s.total_bytes*100)+'%"></span></div><small>Downloads keep '+gib(s.reserve_bytes)+' free for cache, outputs and system memory. Model folder: '+esc(library.model_root)+'</small>';
     const busy=library.assets.some(a=>['queued','downloading','verifying'].includes(a.download?.status)&&Date.now()/1000-a.download.updated_at<180);
-    $('#modelCards').innerHTML=library.assets.filter(a=>modelStatusMatch(a,currentModelStatus())).map(a=>{
+    const cardStatus=currentModelStatus(),shownCards=library.assets.filter(a=>modelStatusMatch(a,cardStatus)),hiddenCards=library.assets.length-shownCards.length;
+    $('#modelCards').innerHTML=shownCards.map(a=>{
       const d=a.download||{},active=['queued','downloading','verifying'].includes(d.status)&&Date.now()/1000-d.updated_at<180;
       const pinOnly=a.installable!==true;
       const state=a.verified?'SHA-256 verified':pinOnly?(a.present?'Present · pin only':'Pin only · not installed'):a.present?'Present · verify file':active?d.status:'Not installed';
       return '<article class="model-card"><span class="badge '+(a.verified?'tested':'')+'">'+esc(state)+'</span><h3>'+esc(a.name)+'</h3><p>'+esc(a.family)+' · '+gib(a.bytes)+'</p><code>'+esc(a.file)+'</code>'+(a.trigger?'<p>Trigger: <b>'+esc(a.trigger)+'</b></p>':'')+'<p>'+esc(a.license)+'</p>'+(active?'<progress max="'+a.bytes+'" value="'+(d.bytes_done||0)+'"></progress><p>'+gib(d.bytes_done)+' / '+gib(a.bytes)+'</p>':'')+(d.status==='failed'?'<p class="error">'+esc(d.message)+'</p>':'')+'<div class="model-actions"><a href="'+esc(safeUrl(a.source))+'" target="_blank" rel="noreferrer">Source ↗</a><button data-install="'+esc(a.id)+'" '+(a.verified||pinOnly||busy?'disabled':'')+' title="'+esc(pinOnly?(a.install_note||'Automatic installation eligibility is unknown; refresh the library.'):'')+'">'+(a.verified?'Installed':pinOnly?'Copy in by hand':a.present?'Verify existing file':'Install / use download')+'</button></div></article>';
-    }).join('');
+    }).join('')+(hiddenCards?'<p class="muted model-filter-note">'+hiddenCards+' curated model'+(hiddenCards===1?' is':'s are')+' hidden by the “'+esc($('#modelStatus').selectedOptions?.[0]?.textContent||cardStatus)+'” filter. <button type="button" data-model-status-all>Show everything</button></p>':'');
+    $('#modelCards').querySelector('[data-model-status-all]')?.addEventListener('click',()=>{$('#modelStatus').value='all';$('#modelStatus').onchange();});
     $('#folders').innerHTML=library.folders.map(f=>'<article class="folder"><b>'+esc(f.label)+'</b><code>'+esc(f.path)+'</code><button data-folder="'+esc(f.id)+'">Open folder</button><button data-copy="'+esc(f.path)+'">Copy path</button></article>').join('');
     $('#collections').innerHTML=(library.collections || []).map(c=>'<article class="collection"><b><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noreferrer">'+esc(c.name)+' ↗</a></b><p>'+esc(c.description)+'</p><small>'+esc(c.status || '')+'</small></article>').join('');
     renderInventory();

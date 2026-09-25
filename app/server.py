@@ -1021,7 +1021,7 @@ class Studio:
         trashed = [a["id"] for a in assets if a["trashed_at"]]
         if trashed:
             rest = len(assets) - len(trashed)
-            message = (f"All {len(trashed)} selected assets are in Trash. Restore them to export." if not rest else
+            message = ((f"All {len(trashed)} selected assets are in Trash. Restore them to export." if len(trashed) != 1 else "The selected asset is in Trash. Restore it to export.") if not rest else
                        f"{len(trashed)} selected asset{'s are' if len(trashed) != 1 else ' is'} in Trash. Restore {'them' if len(trashed) != 1 else 'it'}, or export the other {rest}.")
             raise StudioError(message, code="export_has_trashed", trashed_ids=trashed[:200])
         total = sum(a["bytes"] for a in assets)

@@ -731,6 +731,11 @@ async function modelStatusFilter() {
   const cards = element('#modelCards').innerHTML;
   for (const name of ['Unverified Model', 'Missing Model', 'Failed Model', 'Pin Model']) assert.match(cards, new RegExp(name), 'Needs action keeps the card for ' + name);
   assert.doesNotMatch(cards, /Verified Model/, 'Needs action hides the verified card');
+  assert.match(cards, /1 curated model is hidden by the/, 'A filtered card list says how many cards the filter hides');
+  element('#modelStatus').value = 'installed';
+  await run('refreshLibrary()');
+  for (const name of ['Missing Model', 'Failed Model', 'Pin Model']) assert.doesNotMatch(element('#modelCards').innerHTML, new RegExp(name), 'Installed hides ' + name);
+  assert.match(element('#modelCards').innerHTML, /are hidden by the/, 'Installed says the action cards are hidden, not absent');
   element('#modelStatus').value = 'all';
   await run('refreshLibrary()');
   assert.match(element('#modelCards').innerHTML, /Verified Model/, 'Everything restores the full card list');
