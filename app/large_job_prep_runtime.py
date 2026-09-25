@@ -281,10 +281,25 @@ class RuntimeMixin:
             "reservations_before": raw["reservations_before"],
         }
 
+    def _prepare_for_observation(self, recipe: dict[str, Any]) -> tuple[Any, ...]:
+        """Bind the exact workflow/profile while deferring only the host-commit gate.
+
+        Large-job preparation must observe counters and plan owned-cache release even
+        when low Windows commit is the only blocker. Every graph/control/model check
+        still runs; the deferred gate stays enforced on real submission and production
+        preflight. Studio converts its validation errors to PreparationError so the
+        receipt records a normal refusal with its message.
+        """
+        payload = copy.deepcopy(recipe)
+        deferred = getattr(self.studio, "prepare_for_large_job_preparation", None)
+        if callable(deferred):
+            return deferred(payload)
+        return self.studio.prepare(payload)
+
     def _context(self, recipe: dict[str, Any]) -> dict[str, Any]:
         self._check_work("In-flight Studio work (queued, submitting or running) blocks resource cleanup")
         first_backend, _ = self._backend_snapshot()
-        preset, graph, _path, _controls, _batch = self.studio.prepare(copy.deepcopy(recipe))
+        preset, graph, _path, _controls, _batch = self._prepare_for_observation(recipe)
         observation = self.observer(self.studio)
         identity = resource_admission.workflow_identity(
             self.studio, preset, graph, observation.get("runtime") or {}

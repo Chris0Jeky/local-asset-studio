@@ -40,6 +40,7 @@ import gpu_memory
 import wan_capacity
 from runtime_recovery import RuntimeRecovery
 from gpu_lease import GpuLease, GpuLeaseError
+from large_job_prep_common import PreparationError
 import prompting
 import submission_evidence
 import observation_state
@@ -401,7 +402,7 @@ class Studio:
             preparation["warning"] = "Wan22ImageToVideoLatent will center-crop the source before bilinear resampling; no letterbox is used."
         preset["_prepared_source"] = preparation
 
-    def prepare(self, payload):
+    def prepare(self, payload, *, _defer_host_commit_preflight=False):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
         self.require_worker()
         if not isinstance(payload, dict): raise StudioError("JSON object required")
@@ -506,8 +507,22 @@ class Studio:
         self.ensure_reference_inputs(graph)
         self._validate_i2v_mode_source(preset, mode, graph, controls)
         wan_capacity.enforce(graph)
-        self.host_commit_preflight(preset, graph)
+        if not _defer_host_commit_preflight:
+            self.host_commit_preflight(preset, graph)
         return preset, graph, graph_path, controls, batch
+
+    def prepare_for_large_job_preparation(self, payload):
+        """Bind the exact workflow/profile for measured preparation without the host-commit gate.
+
+        Internal to large-job preparation only: every graph/control/model check in
+        ``prepare`` still runs. Real submission (``_create_job``/pre-submit) and
+        production preflight keep calling ``prepare``/``host_commit_preflight`` with
+        enforcement on. Never exposed as a request field.
+        """
+        try:
+            return self.prepare(payload, _defer_host_commit_preflight=True)
+        except StudioError as exc:
+            raise PreparationError(str(exc) or type(exc).__name__) from exc
 
     def gpu_memory_reading(self, refresh=False):
         """The active ComfyUI process's dedicated and shared GPU memory (app/gpu_memory.py); never raises."""
