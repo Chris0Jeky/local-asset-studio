@@ -1,8 +1,7 @@
 """Guarded read-only facade for Adult Illustration research catalogs."""
 from __future__ import annotations
 
-import hashlib
-import json
+import json  # noqa: F401 -- re-exported: bounds tests patch research.json.loads.
 from itertools import islice
 from pathlib import Path
 from typing import Any, Iterable
@@ -22,64 +21,9 @@ MAX_ESTIMATED_CANDIDATES = _base.MAX_ESTIMATED_CANDIDATES
 
 
 def _read_manifest(root: Path | str, filename: str) -> tuple[dict[str, Any], str]:
-    """Read one regular manifest only after enforcing its byte bound."""
+    """Delegate to the private guarded reader (single source of truth)."""
+    return _base._read_manifest(root, filename)
 
-    directory = _base._manifest_directory(root)
-    path = directory / filename
-    if path.is_symlink():
-        raise ValueError(f"Research manifest cannot be a symlink: {filename}")
-    resolved = path.resolve(strict=True)
-    if resolved.parent != directory:
-        raise ValueError(f"Research manifest escapes its directory: {filename}")
-    if not resolved.is_file():
-        raise ValueError(f"Research manifest is not a file: {filename}")
-    info = resolved.stat()
-    if info.st_size > MAX_MANIFEST_BYTES:
-        raise ValueError(
-            f"Research manifest exceeds {MAX_MANIFEST_BYTES} bytes: {filename}"
-        )
-    with resolved.open("rb") as stream:
-        data = stream.read(MAX_MANIFEST_BYTES + 1)
-    if len(data) > MAX_MANIFEST_BYTES:
-        raise ValueError(
-            f"Research manifest exceeds {MAX_MANIFEST_BYTES} bytes: {filename}"
-        )
-    if len(data) != info.st_size:
-        raise ValueError(f"Research manifest changed while being read: {filename}")
-    try:
-        value = json.loads(
-            data.decode("utf-8"),
-            object_pairs_hook=_base._pairs,
-            parse_constant=_base._reject_constant,
-        )
-    except (
-        UnicodeError,
-        json.JSONDecodeError,
-        DuplicateKeyError,
-        ValueError,
-        RecursionError,
-    ) as exc:
-        raise ValueError(f"Invalid research manifest {filename}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ValueError(
-            f"Research manifest must contain a JSON object: {filename}"
-        )
-    if value.get("executable") is not False or value.get("authority") != "none":
-        raise ValueError(
-            "Research manifest must be non-executing with authority none: "
-            f"{filename}"
-        )
-    if not isinstance(value.get("schema"), str) or not isinstance(
-        value.get("kind"), str
-    ):
-        raise ValueError(f"Research manifest needs schema and kind: {filename}")
-    return value, hashlib.sha256(data).hexdigest()
-
-
-# The implementation resolves this name from its own module at call time. Patch the
-# guarded reader once during this side-effect-free import so every public operation
-# receives the same pre-allocation bound.
-_base._read_manifest = _read_manifest
 
 catalogs = _base.catalogs
 programme_status = _base.programme_status

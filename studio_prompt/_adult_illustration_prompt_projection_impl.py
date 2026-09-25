@@ -360,6 +360,75 @@ def _ordered_tags(
     ]
 
 
+def _validated_constraints(
+    creative: dict[str, Any],
+) -> list[dict[str, Any]]:
+    raw_constraints = creative.get("constraints")
+    if not isinstance(raw_constraints, list) or len(raw_constraints) > MAX_ITEMS:
+        raise ValueError("CreativeIntent constraints must be a bounded array")
+    expected_fields = {"id", "text", "mechanism", "priority"}
+    values: list[dict[str, Any]] = []
+    for index, constraint in enumerate(raw_constraints):
+        if not isinstance(constraint, dict) or set(constraint) != expected_fields:
+            raise ValueError(
+                f"CreativeIntent constraint {index} has missing or unknown fields"
+            )
+        constraint_id = _text(
+            constraint.get("id"),
+            f"constraint {index} id",
+            128,
+        )
+        _text(
+            constraint.get("text"),
+            f"constraint {constraint_id} text",
+        )
+        mechanism = _text(
+            constraint.get("mechanism"),
+            f"constraint {constraint_id} mechanism",
+            32,
+        )
+        if mechanism not in {"prompt", "verify", "guide", "mask"}:
+            raise ValueError(f"constraint {constraint_id!r} mechanism is unsupported")
+        priority = _text(
+            constraint.get("priority"),
+            f"constraint {constraint_id} priority",
+            16,
+        )
+        if priority not in {"hard", "soft"}:
+            raise ValueError(f"constraint {constraint_id!r} priority is unsupported")
+        values.append(constraint)
+    return values
+
+
+def _constraint_diagnostics(
+    source: dict[str, Any],
+    diagnostics: list[dict[str, Any]],
+) -> bool:
+    """Retain guide/mask constraints as explicit route-binding requirements."""
+
+    creative = source.get("creative_intent")
+    if not isinstance(creative, dict):
+        raise ValueError("CreativeIntent projection must be an object")
+    requires_binding = False
+    for constraint in _validated_constraints(creative):
+        mechanism = constraint["mechanism"]
+        if mechanism not in {"guide", "mask"}:
+            continue
+        requires_binding = True
+        constraint_id = constraint["id"]
+        _diag(
+            diagnostics,
+            "CONSTRAINT_REQUIRES_ROUTE_BINDING",
+            "requirement",
+            f"Constraint {constraint_id!r} uses {mechanism!r} and was not "
+            "converted into prompt prose.",
+            constraint_id=constraint_id,
+            mechanism=mechanism,
+            priority=constraint["priority"],
+        )
+    return requires_binding
+
+
 def _control_diagnostics(
     source: dict[str, Any], diagnostics: list[dict[str, Any]]
 ) -> bool:
@@ -383,7 +452,8 @@ def _control_diagnostics(
                 control_id=control_id,
                 mechanism=mechanism,
             )
-    return requires_binding
+    constraint_binding = _constraint_diagnostics(source, diagnostics)
+    return requires_binding or constraint_binding
 
 
 def _validate_reference(reference: Any, index: int) -> dict[str, Any]:
@@ -557,6 +627,8 @@ def _compile_instruction(
     bindings: list[dict[str, Any]],
     diagnostics: list[dict[str, Any]],
 ) -> dict[str, str | None]:
+    """Compile semantic constraints while leaving guides and masks unresolved."""
+
     lines = [
         "Create a new adult-only sensual non-explicit illustration.",
         f"Goal: {_text(creative['brief'], 'creative brief')}",
@@ -578,10 +650,10 @@ def _compile_instruction(
         )
     for key, value in creative["facets"].items():
         lines.append(f"{key.replace('_', ' ').title()}: {value}")
-    for constraint in creative["constraints"]:
-        if not isinstance(constraint, dict):
-            raise ValueError("CreativeIntent constraint must be an object")
-        text = _text(constraint.get("text"), "constraint text")
+    for constraint in _validated_constraints(creative):
+        if constraint["mechanism"] in {"guide", "mask"}:
+            continue
+        text = _text(constraint["text"], "constraint text")
         lines.append(f"Preserve: {text}")
     if creative["avoid"]:
         lines.append("Exclude: " + ", ".join(creative["avoid"]) + ".")
@@ -611,11 +683,16 @@ def _validate_taxonomy_profiles(
 
 
 def compile_prompt(
-    source_projection: Any, profile_id: str, root: Path | str
+    source_projection: Any,
+    profile_id: str,
+    root: Path | str,
+    *,
+    catalog_loader: Any = None,
 ) -> dict[str, Any]:
     """Compile reviewed intent into deterministic, non-executing profile text."""
     source = _validate_source_projection(source_projection)
-    catalog = load_catalog(root)
+    loader = catalog_loader if catalog_loader is not None else load_catalog
+    catalog = loader(root)
     taxonomy = load_prompt_taxonomy(root)
     _validate_taxonomy_profiles(taxonomy, catalog)
     if profile_id not in catalog["profiles"]:
@@ -678,7 +755,11 @@ def compile_prompt(
 
 
 def validate_prompt_projection(
-    value: Any, source_projection: Any, root: Path | str
+    value: Any,
+    source_projection: Any,
+    root: Path | str,
+    *,
+    catalog_loader: Any = None,
 ) -> dict[str, Any]:
     """Recompile a prompt projection so changed derived records fail closed."""
     if not isinstance(value, dict):
@@ -686,7 +767,9 @@ def validate_prompt_projection(
     profile_id = value.get("profile_id")
     if not isinstance(profile_id, str):
         raise ValueError("Prompt projection is missing a profile id")
-    expected = compile_prompt(source_projection, profile_id, root)
+    expected = compile_prompt(
+        source_projection, profile_id, root, catalog_loader=catalog_loader
+    )
     if _canonical(value) != _canonical(expected):
         raise ValueError("Changed or invalid prompt projection")
     return expected
