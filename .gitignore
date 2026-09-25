@@ -28,6 +28,7 @@ experiments/projects/
 experiments/diagnostics/
 experiments/pose-artifacts/
 .runtime/
+.runtime-test-source/
 .runtime-codex/
 .claude/settings.local.json
 .claude/worktrees/
