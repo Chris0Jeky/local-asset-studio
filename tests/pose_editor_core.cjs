@@ -115,6 +115,51 @@ test('an attached drawn guide holds Generate once Width or Height move off its c
   assert.match(workbench,/q\('#uxPoseReason'\)\.textContent=reason\|\|poseSizeHold\(\)/,'the pose panel shows the same hold beside Use this pose');
 });
 
+test('the hold promises a resize only for the drawing the editor holds, and names a disabled button\'s blocker first (#947, #952)',()=>{
+  const id='a'.repeat(64),guide={file:'a'.repeat(32)+'_drawn-pose.png',width:832,height:1216,artifact_id:id,missing:false},now={width:640,height:1216};
+  assert.equal(P.guideSizeReason([guide],now,'Use this pose',{artifact:id}),'The pose guide was drawn at 832×1216; press Use this pose again for the new size (640×1216).','the editor holds this guide: a redraw is a resize');
+  const unheld=P.guideSizeReason([guide],now,'Use this pose',{artifact:'b'.repeat(64)});
+  assert.equal(unheld,'The pose guide was drawn at 832×1216, not the new size (640×1216), and the editor does not hold that drawing. Set Width and Height back to 832×1216, or redraw the pose and press Use this pose.');
+  assert.doesNotMatch(unheld,/again for the new size/,'an unrelated drawing is never promised as a resize');
+  assert.match(P.guideSizeReason([Object.assign({},guide,{artifact_id:undefined})],now,'Use this pose',{artifact:''}),/does not hold that drawing/,'a guide with no retained drawing is not held either');
+  assert.equal(P.guideSizeReason([guide],now,'Use this pose',{artifact:'',loading:id}),'The pose guide was drawn at 832×1216, not the new size (640×1216). Its drawing is loading into the editor.');
+  const blocked='Remove the extra board picture before replacing the pose with a drawing.';
+  const held=P.guideSizeReason([guide],now,'Replace pose picture with drawing',{artifact:id,blocked});
+  assert.equal(held,'The pose guide was drawn at 832×1216, not the new size (640×1216). '+blocked+' Then press Replace pose picture with drawing again.');
+  assert.ok(held.indexOf(blocked)<held.indexOf('press Replace'),'the real next step comes before the disabled button');
+  assert.equal(P.guideSizeReason([guide],now,'Use this pose',{artifact:'',blocked:'Finish the attachment in progress first'}),
+    'The pose guide was drawn at 832×1216, not the new size (640×1216), and the editor does not hold that drawing. Set Width and Height back to 832×1216, or redraw the pose. Finish the attachment in progress first. Then press Use this pose.');
+  assert.equal(P.guideSizeReason([guide],{width:832,height:1216},'Use this pose',{artifact:'',blocked}),'','a current guide holds nothing, held or not');
+  assert.equal(P.drawnGuide([{},{file:'x.png'},guide]),guide);assert.equal(P.drawnGuide([Object.assign({},guide,{missing:true})]),null);assert.equal(P.drawnGuide(null),null);
+});
+
+test('a restored guide\'s stored drawing comes back as editor points, only for that exact guide (#947)',()=>{
+  const id='c'.repeat(64),guide={file:'c'.repeat(32)+'_drawn-pose.png',width:832,height:1216,artifact_id:id};
+  const joints=Object.fromEntries(P.JOINTS.map((name,i)=>[name,i===16?null:{x:10+i*40,y:20+i*60,confidence:null,origin:'manual'}]));
+  const artifact={schema:'studio.pose-artifact/v1',id,canvas:{width:832,height:1216},joints,authority:'none',review:'unreviewed'};
+  const points=P.fromArtifact(artifact,guide);
+  assert.equal(points.length,18);assert.equal(points[16],null,'an unknown joint stays unknown');
+  assert.deepEqual(points[4],{x:170,y:260});
+  assert.deepEqual(P.serialize(points,guide).keypoints[0],[10,20],'the drawing is in the guide\'s own pixels');
+  const bad=[['another artifact',Object.assign({},artifact,{id:'d'.repeat(64)})],['another canvas',Object.assign({},artifact,{canvas:{width:640,height:1216}})],
+    ['another schema',Object.assign({},artifact,{schema:'x'})],['a joint outside',Object.assign({},artifact,{joints:Object.assign({},joints,{nose:{x:900,y:1}})})],
+    ['a missing joint key',Object.assign({},artifact,{joints:Object.fromEntries(Object.entries(joints).slice(1))})],
+    ['fewer than two joints',Object.assign({},artifact,{joints:Object.fromEntries(P.JOINTS.map((n,i)=>[n,i?null:joints.nose]))})],['nothing',null]];
+  for(const [label,value] of bad)assert.throws(()=>P.fromArtifact(value,guide),/does not match/,label);
+  assert.throws(()=>P.fromArtifact(artifact,Object.assign({},guide,{artifact_id:undefined})),/does not match/,'a guide with no artifact id loads nothing');
+  const before=P.fromPreset('standing',guide),history=P.timeline(5);
+  history.record(before,before);const adopted=P.adopt(before,points);
+  assert.deepEqual(adopted,points);assert.ok(history.canUndo,'loading a stored drawing is one undoable edit');
+  assert.deepEqual(history.undo(adopted,adopted).points,before);
+  const held={id,points,canvas:{width:832,height:1216}};
+  assert.ok(P.holds(points,{width:832,height:1216},held),'the adopted drawing is held');
+  assert.ok(P.holds(P.resize(P.resize(points,held.canvas,{width:640,height:1216}),{width:640,height:1216},{width:512,height:960}),{width:512,height:960},held),'a held drawing stays held through canvas changes');
+  assert.ok(!P.holds(before,{width:832,height:1216},held),'after Undo the editor no longer holds the guide');
+  assert.ok(!P.holds(P.nudge(points,4,1,0,{width:832,height:1216},.01),{width:832,height:1216},held),'any edit breaks the match');
+  assert.ok(!P.holds(P.setUnknown(points,4),{width:832,height:1216},held),'an omitted joint breaks the match');
+  assert.ok(!P.holds(points,{width:832,height:1216},null),'nothing adopted, nothing held');
+});
+
 // The panel itself needs a DOM this sandbox does not have (canvas, pointer capture, dialogs); what is pinned
 // here is the wiring around the pure module, the way tests/frontend_handoffs.cjs pins the picker's.
 test('the workbench sends the drawing to the guide endpoint and to no generation route',()=>{
@@ -126,6 +171,12 @@ test('the workbench sends the drawing to the guide endpoint and to no generation
   assert.match(workbench,/POSE_RECIPE='combine-klein-9b-skeleton'/,'the drawing belongs to the proved drawn-skeleton recipe');
   assert.match(workbench,/switchCombineEngine\(POSE_RECIPE,result\)/,'explicit replacement uses the checked new guide through the shared switch path');
   assert.match(workbench,/StudioPoseEditor\.guideResponse\(response,body\)/,'response validation precedes attachment');
+  assert.match(workbench,/guideResponse\(response,body\);poseHeld=\{id:result\.artifact_id,points:/,'a rendered guide is the drawing the editor holds');
+  assert.match(workbench,/api\('\/api\/pose\/artifacts\/'\+id\)/,'a restored guide reads its own stored drawing, a GET that renders and submits nothing');
+  assert.match(workbench,/StudioPoseEditor\.fromArtifact\(value,guide\)/,'the stored drawing is checked against the attached guide before it is loaded');
+  assert.match(workbench,/\{artifact:poseHeldArtifact\(\),loading:poseLoading\?\.artifact_id,blocked:poseBlockedReason\(\)\}/,'the hold knows what the editor holds and why its button is disabled');
+  assert.match(workbench,/if\(poseLoading\)return 'The attached pose guide’s drawing is loading into the editor\.';/,'Use this pose waits for an in-flight read');
+  assert.match(workbench,/const edited=!StudioPoseEditor\.holds\(posePoints,poseCanvas,before\)/,'an edit made during the read wins over the late stored drawing');
   assert.match(workbench,/combineSwitchReason\(selected,target,referenceRecords\)/,'ordinary engine switches retain their representation guard');
   assert.doesNotMatch(workbench,/post\('\/api\/jobs'/,'the workbench submits no generation of its own');
   const html=fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');

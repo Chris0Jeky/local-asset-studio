@@ -92,7 +92,7 @@
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
   let readinessMarkup='',readinessChecking=false;
-  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture','pose-position':'Review joint coordinates','pose-size':'Show Use this pose'};
+  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture','pose-position':'Review joint coordinates','pose-size':'Show the pose editor'};
   // A continuation blocker names a control; the button beside it performs or shows that repair, nothing more.
   const continuationActions={source:'source-back',inputs:'references',board:'references',wording:'wording'};
   function readinessItems(){
@@ -105,7 +105,7 @@
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
     const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
     if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
-    const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
+    poseHeldShown=poseHeldArtifact();const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
     // The continuation names the exact empty slot; the generic reference line would only repeat it.
@@ -153,7 +153,8 @@
       else target=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded)).map(id=>q('#'+id))[0]||(lastMissing&&uploaded?q('#lastReference'):q('#reference'));
     }
     if(action==='pose-position')target=q('#uxPoseX');
-    if(action==='pose-size')target=q('#uxPoseUse');
+    // A disabled button cannot be the next step (#952): show the reason beside it instead.
+    if(action==='pose-size')target=q('#uxPoseUse').disabled?q('#uxPoseReason'):q('#uxPoseUse');
     if(action==='parameters')target=q('#i2vMode')||getControl('frames');
     if(action==='wording'||action==='fills')target=(!fillsBlock.hidden&&fillInputs().find(input=>!input.value.trim()))||q('#positive');
     if(action==='source')target=q(selected?.last_reference?'#lastReference':'#reference');
@@ -255,7 +256,7 @@
     +'<fieldset class="ux-pose-position"><legend id="uxPosePositionLabel">Joint position (pixels)</legend><label for="uxPoseX">X<input id="uxPoseX" type="number" min="0" step="0.01" inputmode="decimal"></label><label for="uxPoseY">Y<input id="uxPoseY" type="number" min="0" step="0.01" inputmode="decimal"></label><button type="button" id="uxPosePositionApply">Set joint position</button><button type="button" id="uxPosePositionReset">Reset fields</button></fieldset>'
     +'<div class="ux-pose-actions"><button type="button" id="uxPoseUnknown">Mark unknown</button><button type="button" id="uxPoseUndo">Undo</button><button type="button" id="uxPoseRedo">Redo</button><button type="button" id="uxPoseUse" class="primary" aria-describedby="uxPoseReason">Use this pose</button></div>'
     +'<p id="uxPoseReason" class="muted"></p><p id="uxPoseStatus" role="status"></p></div></div>';
-  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseTimeline=StudioPoseEditor.timeline(POSE_UNDO),poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
+  let posePoints=null,poseHome=null,poseHeld=null,poseHeldShown='',poseLoading=null,poseCanvas={width:1024,height:1536},poseTimeline=StudioPoseEditor.timeline(POSE_UNDO),poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
   const poseStatus=text=>{q('#uxPoseStatus').textContent=text;};
   // The canvas the recipe will actually render at: the width and height controls when they are usable, else the recipe's own.
   function poseCanvasSize(){
@@ -295,6 +296,7 @@
     if(!selected)return 'Choose a Combine recipe first.';
     if(StudioPoseEditor.known(posePoints||[])<2)return 'Mark at least two joints: a guide with fewer draws no limb.';
     if(poseBusy)return 'The drawing is being rendered.';
+    if(poseLoading)return 'The attached pose guide’s drawing is loading into the editor.';
     if(posePositionDirty())return 'Set the typed joint position or reset its fields before continuing.';
     if(combineBusy())return 'Finish the attachment in progress first.';
     if(selected.id===POSE_RECIPE||StudioPoseEditor.drawsGuide(selected))return '';
@@ -308,7 +310,9 @@
   // The panel serves every Combine recipe and any recipe that declares its own drawn-guide slot (an SDXL skeleton recipe).
   function poseActive(){return !!selected&&(!!StudioContinuation.combineKind(selected)||StudioPoseEditor.drawsGuide(selected));}
   // A guide drawn for another Width/Height would be stretched to this canvas; drawing it again at this size clears the hold (#844).
-  function poseSizeHold(){return poseActive()?StudioPoseEditor.guideSizeReason(referenceRecords,poseCanvasSize(),selected.id!==POSE_RECIPE&&!StudioPoseEditor.drawsGuide(selected)?'Replace pose picture with drawing':'Use this pose'):'';}
+  // The hold promises a resize only when the editor holds the guide's own drawing (#947), and names the blocker first when
+  // the button is disabled (#952).
+  function poseSizeHold(){return poseActive()?StudioPoseEditor.guideSizeReason(referenceRecords,poseCanvasSize(),selected.id!==POSE_RECIPE&&!StudioPoseEditor.drawsGuide(selected)?'Replace pose picture with drawing':'Use this pose',{artifact:poseHeldArtifact(),loading:poseLoading?.artifact_id,blocked:poseBlockedReason()}):'';}
   function posePositionDirty(){
     if(!poseActive()||!posePoints?.[poseJoint]||posePositionSignature!==JSON.stringify([poseJoint,posePoints[poseJoint],poseCanvas]))return false;
     try{const value=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),point=posePoints[poseJoint];
@@ -356,11 +360,40 @@
     const signature=JSON.stringify([posePoints,poseCanvas,poseJoint,display]);
     if(el.width!==display.width||el.height!==display.height){el.width=display.width;el.height=display.height;poseSignature='';}
     if(signature!==poseSignature){poseSignature=signature;renderPoseJoints();drawPose();}
-    syncPoseActions();
+    syncPoseActions();loadPoseSource();
+  }
+  // A guide restored from a saved setup, a draft or a same-tab setup load brings its picture back but not its drawing.
+  // Read the drawing behind it (its artifact_id) into the editor, so Use this pose redraws that pose and never silently
+  // replaces it with whatever figure the editor held (#947). Each attached guide record is considered once (a restore makes
+  // a new record, so it is read again); Undo or Start from never pull the stored drawing back over the user's choice.
+  // The editor "holds" a guide only while its drawing still matches the one adopted or rendered for it (poseHeld).
+  const poseSeen=new WeakSet();
+  function poseHeldArtifact(){return poseHeld&&posePoints&&StudioPoseEditor.holds(posePoints,poseCanvas,poseHeld)?poseHeld.id:'';}
+  function loadPoseSource(){
+    const guide=StudioPoseEditor.drawnGuide(referenceRecords),id=guide?.artifact_id;
+    if(!guide||poseSeen.has(guide)||guide===poseLoading||poseBusy||poseDrag>=0||posePositionDirty())return;
+    if(!/^[a-f0-9]{64}$/.test(id||'')||id===poseHeldArtifact()){poseSeen.add(guide);return;}
+    // An edit made while the read is in flight wins over the stored drawing; the button waits for the read.
+    poseLoading=guide;let loaded=null;const before={points:StudioPoseEditor.resize(posePoints,poseCanvas,poseCanvas),canvas:{...poseCanvas}};syncPoseActions();
+    api('/api/pose/artifacts/'+id).then(value=>{loaded=StudioPoseEditor.fromArtifact(value,guide);}).catch(()=>{}).then(()=>{
+      if(poseLoading===guide)poseLoading=null;
+      // A newer guide, a render in flight or an unfinished edit wins; a later sync reads this guide again.
+      const current=StudioPoseEditor.drawnGuide(referenceRecords)===guide&&!poseBusy&&poseDrag<0&&!posePositionDirty()&&poseActive();
+      const edited=!StudioPoseEditor.holds(posePoints,poseCanvas,before);
+      if(loaded&&current&&edited){poseSeen.add(guide);poseStatus('You changed the drawing while the attached guide’s drawing was loading, so your drawing was kept.');}
+      else if(loaded&&current){
+        const next=StudioPoseEditor.resize(loaded,guide,poseCanvas);
+        pushPose();poseEdit(StudioPoseEditor.adopt(posePoints,next));poseHeld={id,points:next,canvas:{...poseCanvas}};poseSeen.add(guide);
+        poseStatus('The attached pose guide’s drawing is back in the editor. Undo returns to the previous drawing. Nothing was submitted.');
+      }else if(!loaded){poseSeen.add(guide);poseStatus('The drawing behind the attached pose guide could not be read. The picture stays attached.');}
+      syncReady();
+    });
   }
   function poseEdit(next,remember=true){
     posePoints=next;if(remember)poseHome=poseHome.map((point,index)=>posePoints[index]||point);
     poseSignature='';renderPoseJoints();drawPose();syncPoseActions();
+    // Undo, Redo, Start from or any edit can make the editor stop (or start) holding the guide: Generate's hold follows.
+    if(poseHeldArtifact()!==poseHeldShown)syncReady();
   }
   function applyPosePosition(){
     if(poseBusy||!posePoints?.[poseJoint])return;
@@ -421,7 +454,7 @@
     try{
       const response=await post('/api/pose/render',body);
       if(stamp!==setupStamp()||setupBusy()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
-      const result=StudioPoseEditor.guideResponse(response,body);
+      const result=StudioPoseEditor.guideResponse(response,body);poseHeld={id:result.artifact_id,points:StudioPoseEditor.resize(posePoints,poseCanvas,poseCanvas),canvas:{...poseCanvas}};
       if(switching)switchCombineEngine(POSE_RECIPE,result);
       else{
         const previous=referenceRecords[0]?.parent_asset;
