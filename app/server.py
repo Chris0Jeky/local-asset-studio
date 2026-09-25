@@ -2202,8 +2202,13 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.acquire(self._body_json()))
             if self.path == '/api/gpu-lease/release': return self._json(200, self.studio.gpu_lease.release(self._body_json()))
             if self.path == "/api/jobs":
-                payload = self._body_json(); self._require_gpu()
-                return self._json(201, self.studio.create_job(payload))
+                payload = self._body_json()
+                # Lease acquisition uses this same interlock. Keep admission and
+                # registration indivisible, without holding the lock for HTTP I/O.
+                with self.studio.lock:
+                    self._require_gpu()
+                    result = self.studio.create_job(payload)
+                return self._json(201, result)
             if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_json().get('id')))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
