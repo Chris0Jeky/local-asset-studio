@@ -8,7 +8,7 @@ This guide keeps Local Asset Studio's active queue legible while preserving the 
 | --- | --- | --- |
 | `STATUS.md` | authored current truth | Goal status, product judgement, current gaps and recommended next slice |
 | `CURRENT_STATE.md` | chronological evidence ledger | Executed work, exact receipts, retained failures and dated handoffs |
-| `HUMAN_TODO.md` | owner decisions | Creative, licensing and owner-run acceptance choices; agents tick an item only on verified completion or a recorded owner answer |
+| `HUMAN_TODO.md` | owner decisions | Creative, licensing and owner-run acceptance choices; agents tick an item only on verified completion, or a recorded owner answer to every part with its conditions met |
 | `docs/generated/REPOSITORY-STATE.md` | generated factual projection | Captured active PRs, selected issue readiness, WIP arithmetic and SHA-bound receipts |
 
 A generated snapshot cannot decide artistic acceptance, product percentages, priority or licensing. A passing check cannot close a broad issue.
@@ -107,7 +107,7 @@ The rule now:
 - that section records the blob it actually observed and whether it still matches the identity the capture recorded. A difference is reported, never raised;
 - the capture keeps `catalog_blob_sha` and `human_todo_blob_sha` as the observation it was authored against, not as a pin the checkout must satisfy.
 
-Catalog counts remain owned by `python scripts/validate-repo.py`; open owner decisions remain owned by `HUMAN_TODO.md`, which agents surface in every summary and tick only on verified completion or a recorded owner answer.
+Catalog counts remain owned by `python scripts/validate-repo.py`; open owner decisions remain owned by `HUMAN_TODO.md`, which agents surface in every summary and tick only on verified completion, or a recorded owner answer to every part with its conditions met.
 
 Generate or check the snapshot:
 

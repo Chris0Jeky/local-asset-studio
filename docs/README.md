@@ -3,7 +3,7 @@
 One page that names every document so nothing is reachable only by grep. Three files outside this
 folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_STATE.md`](../CURRENT_STATE.md)
 (the reverse-chronological evidence ledger: executed facts separated from plans) and
-[`HUMAN_TODO.md`](../HUMAN_TODO.md) (owner decisions and actions; agents tick an item only on verified completion or a recorded owner answer). [`OWNER-REVIEW-QUEUE.md`](OWNER-REVIEW-QUEUE.md) lists non-blocking choices agents made for the owner to acknowledge.
+[`HUMAN_TODO.md`](../HUMAN_TODO.md) (owner decisions and actions; agents tick an item only on verified completion, or a recorded owner answer to every part with its conditions met). [`OWNER-REVIEW-QUEUE.md`](OWNER-REVIEW-QUEUE.md) lists non-blocking choices agents made for the owner to acknowledge.
 [`STATUS.md`](STATUS.md) is the goal-by-goal status view; read it before the ledger.
 
 ## Get started

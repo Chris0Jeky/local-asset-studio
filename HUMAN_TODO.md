@@ -1,5 +1,7 @@
 # Creative choices
 
+Agents tick an item only on directly verified completion, or when the owner has answered every part it asks and its stated conditions hold; they record how and when. A line saying "Agents do not tick this" means an agent cannot decide the item, not that a recorded owner answer cannot close it.
+
 The earlier creative choices and q-1 through q-6 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.
 
 - [x] Choose your preferred pixel-art direction: compass A, seed `2026091103` (owner, 12 September 2026). Both compass originals remain preserved; the two seeds are not a LoRA-on/off comparison and neither is accepted as a finished game asset.
@@ -196,7 +198,7 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
   2. Stop the Studio server, which is the process listening on port 8191, for example in PowerShell: `Get-NetTCPConnection -LocalPort 8191 -State Listen | % { Stop-Process -Id $_.OwningProcess }`.
   3. Double-click `Start Studio.cmd`.
 
-  The current banner about job `60934d27` clears after the restart. Agents did not restart it because another session was using the GPU.
+  (Original text, 24 September: agents did not restart it then because another session was using the GPU.) After the 25 September restart, the Create page no longer shows the job `60934d27` failure banner.
 - [ ] **prepare-large-job-proof (#306)**: #960 merged the prepare-large-job command. It is **off by default**: the two flags are absent from `config/local.json`, and absent means off. Its acceptance still needs your approval for one live Windows proof: dry run and refusal cases, memory counters before and after `/free`, and a backend restart only if you approve that step. Say whether to run it, and when the GPU is free.
 
   **Owner answer (25 September 2026, in-session question): "Full proof incl. restart"**, approved while the GPU ran the owner's local LLM (no generation is part of the proof). **First attempt, the same day:** even a dry run refused with "Active, partial or uncertain Studio work blocks resource cleanup". The Studio holds five old `uncertain` jobs from 12 and 23 September, plus planned, awaiting-review and interrupted plans; the ComfyUI queue was empty. As merged, the gate treats any such record as active, so the command could never run on this PC. A follow-up PR narrows the gate:
@@ -204,10 +206,10 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
   - unresolved but idle work blocks only the restart, because a restart discards the ComfyUI history that Resume observation needs;
   - plans at rest never block.
 
-  The proof resumes once that PR merges. This item stays open until the proof receipt exists.
+  The proof resumes once that PR merges; the owner approved running it while the GPU runs the local LLM, because no generation is involved. This item stays open until the proof receipt exists.
 
 ## Things to glance at when convenient (not blockers)
 
 [docs/OWNER-REVIEW-QUEUE.md](docs/OWNER-REVIEW-QUEUE.md) lists the design defaults, copy changes and small decisions agents made on your behalf. Each row has a place to acknowledge or object. Nothing there blocks work.
 
-**Lab backlog (owner answer, 25 September 2026, "Yes, mark them"):** once the library's *Mark as agent run* action lands, agents may bulk-mark the existing assets that are unreviewed, not favourites and not keepers as agent runs, so the library opens on your own work. This is reversible with *Mark as mine* or the *All sources* filter.
+**Lab backlog (owner answer, 25 September 2026, "Yes, mark them"):** once the library's *Mark as agent run* action lands, agents may bulk-mark the existing assets that are unreviewed, not favourites, not keepers and carry no run label yet as agent runs, so the library opens on your own work. This is reversible with *Mark as mine* or the *All sources* filter.

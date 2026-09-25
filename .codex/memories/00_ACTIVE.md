@@ -29,6 +29,6 @@ This file is a pointer, not a record. Executed evidence lives in `../../CURRENT_
 
 ## Parked or human-only
 
-- The three creative choices in `HUMAN_TODO.md`.
+- The open owner items in `HUMAN_TODO.md`.
 - Portability follow-ups recorded at the PR #39 closeout: launcher profile readiness, optional Godot
   path validation, incomplete H3 bundle detection, padded atlas limits, custom primary ports.

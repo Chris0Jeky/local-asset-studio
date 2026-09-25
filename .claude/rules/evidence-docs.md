@@ -16,8 +16,8 @@ paths:
 - `experiments/curated/` is the only experiments folder in Git. A curated entry carries the exact
   recipe JSON, the prompt ID, the backend and the reviewer's own words; contact sheets stay small
   (the validator caps tracked files at 10 MiB).
-- `HUMAN_TODO.md` items are creative or licensing choices. Surface open items in every summary. Check
-  one off only when the human stated the decision; record the date and their words.
+- `HUMAN_TODO.md` items are owner decisions and actions. Surface open items in every summary. Tick one
+  only on directly verified completion, or a recorded owner answer to every part the item asks with its stated conditions met; record the date and how (their words, or the evidence). Never infer a decision.
 - `docs/` is beginner-facing: keep commands runnable as written, keep model claims tied to the recorded
   run, and route ComfyUI-level detail to `workflows/comfyui/` rather than restating node graphs in prose.
 - Clock times come from receipts or Git, never from the session's sense of time: `created_at` in
