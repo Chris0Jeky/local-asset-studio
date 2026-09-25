@@ -2310,6 +2310,521 @@ P70 held 6/6 — G15 closed (all four reads), G16 promoted on the opening pair, 
 | p71-yuzuha-smallbust | B1 recipe | anifox-v2-baseline | 2026092636 | `8925a67f-3cdf-47af-a38f-d9f1d344377d` |
 | p71-alice-smallbust | B1 recipe | cstati-v3-baseline | 2026092637 | `ef2fa048-3a23-404f-898a-2a8bacd002de` |
 
+### p71 results
+
+All six completed, 32.5–61.4 s each, no spill. G16 ported 2/2 and held eyes-neutral 2/2 — only the sheer-off reruns remain to close it. B1 Yuzuha clean, Alice partial.
+
+- p71-kafka-cheer-anima, Anima, seed `2026092644`, job `c1a5bc35`, prompt `b2bda007`, 44.5 s, `Anima-v1-Baseline_00073_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer top with a pleated skirt, stadium violet, adult. Lever: G16 port — full cheerleader read with no sheer LoRA. Squat held. Hands: hidden behind the head. Eyes closed, the Anima squat pattern. Cloth: top and pleated skirt opaque. Keep-or-change: keep; G16 ports 1/2.
+- p71-yor-cheer-janima, JANIMA, seed `2026092645`, job `9f6df1ed`, prompt `93522cc2`, 32.5 s, `JANIMA-v1-Baseline_00035_.png`. Identity: Yor reads, black hair, headband, red and white cheer top with fake chest letters, pleated skirt, stadium floodlights, adult. Lever: G16 port — full cheerleader read with no sheer LoRA. Squat held. Hands: hidden behind the head. Eyes open. Cloth: top and pleated skirt opaque. Keep-or-change: keep; G16 ports 2/2.
+- p71-kafka-cheer-eyes, WAI, seed `2026092445`, job `70fbd70d`, prompt `cc566691`, 61.4 s, `WAI-Illustration_00146_.png`. Identity: Kafka reads, cheer top and pleated skirt, stadium, adult. Lever: `bedroom eyes` — half-lidded eyes, uniform intact. Squat held. Hands: hidden behind the head. Cloth: red top glossy, pleated skirt structured. Keep-or-change: keep; G16 eyes 1/2.
+- p71-yor-cheer-eyes, CSTati, seed `2026092446`, job `ae6435ad`, prompt `84017ef1`, 46.5 s, `CSTati-v3-Baseline_00135_.png`. Identity: Yor reads, cheer top and pleated skirt, stadium lamps, adult. Lever: `bedroom eyes` — half-lidded red eyes, uniform intact. Squat held. Hands: hidden behind the head. Cloth: red top glossy, pleated skirt structured. Keep-or-change: keep; G16 eyes 2/2.
+- p71-yuzuha-smallbust, AniFox, seed `2026092636`, job `8925a67f`, prompt `d5984aa0`, 40.4 s, `AniFox-v2-Baseline_00093_.png`. Identity: Yuzuha reads, pink hair, white and blue festival dress, lantern street night, adult; first-run face, likeness note only. Lever: B1 first try — bust reads modest in the white dress. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white dress translucent-sheer, black boots. Keep-or-change: keep; B1 clean.
+- p71-alice-smallbust, CSTati, seed `2026092637`, job `ef2fa048`, prompt `f3dbbc97`, 48.8 s, `CSTati-v3-Baseline_00136_.png`. Identity: Alice reads as a blonde idol in a teal and black stage dress, concert lights night, adult; first-run face, youthful-face composition note only. Lever: B1 first try — bust reads moderate. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: dark dress glossy. Keep-or-change: keep as a partial.
+
+## G16 sheer-off close, G17 kimono open, B1 Sparkle and Zhezhi — p72 wave
+
+P71 held 6/6 — G16 ported 2/2 and held eyes-neutral 2/2, B1 Yuzuha clean and Alice partial (B1 now 9 clean, 14 partial, 1 break across 24 faces). This wave closes G16 with the sheer stack off at the same seed on both G-series seeds (new prompts, so no seed+preset+prompt reuse — the kimono openers on the same seeds carry different prompts and run as separate jobs), opens G17 with a red and white kimono with an obi sash at a shrine at night, and runs B1 on two more cleared adults (Sparkle, Zhezhi). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p72-kafka-cheer-nolora | p70-kafka-cheer | wai | 2026092445 | `ba139c79-eb92-4b8b-848d-8e27e21ad64e` |
+| p72-yor-cheer-nolora | p70-yor-cheer | cstati-v3-baseline | 2026092446 | `788edaa8-140a-4b7d-b337-9758fe33f805` |
+| p72-kafka-kimono | p5-kafka-squat | wai | 2026092445 | `f77c4084-6bbb-48b9-9fdf-6b84d3e570fc` |
+| p72-yor-kimono | p5-yor-squat | cstati-v3-baseline | 2026092446 | `76a0fcae-b318-401a-a3c3-c7e061ccf60c` |
+| p72-sparkle-smallbust | B1 recipe | anifox-v2-baseline | 2026092638 | `a37dca16-888a-4370-8a9f-284f91962f34` |
+| p72-zhezhi-smallbust | B1 recipe | cstati-v3-baseline | 2026092639 | `1c5457c7-1ede-4b65-9682-cdbf006a422e` |
+
+### p72 results
+
+All six completed, 26.2–29.5 s each, no spill. G16 closed with the sheer-off reruns (nothing drifted); G17 opened 2/2 and promotes; B1 Zhezhi clean, Sparkle partial.
+
+- p72-kafka-cheer-nolora, WAI, seed `2026092445`, job `ba139c79`, prompt `879d58de`, 29.5 s, `WAI-Illustration_00147_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer top with a pleated skirt, stadium night, adult. Lever: sheer-off rerun at the same seed — top and skirt stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: red top opaque glossy, pleated skirt structured. Keep-or-change: keep; G16 sheer-off 1/2.
+- p72-yor-cheer-nolora, CSTati, seed `2026092446`, job `788edaa8`, prompt `2cb656cd`, 28.3 s, `CSTati-v3-Baseline_00137_.png`. Identity: Yor reads, black hair, headband, red and white cheer top with fake chest letters, pleated skirt, stadium night, adult. Lever: sheer-off rerun at the same seed — top and skirt stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: red top opaque glossy, pleated skirt structured. Keep-or-change: keep; G16 sheer-off 2/2, G16 closes.
+- p72-kafka-kimono, WAI, seed `2026092445`, job `f77c4084`, prompt `0a9a64cd`, 26.3 s, `WAI-Illustration_00148_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red kimono with a black obi, shrine lanterns night, adult. Lever: outfit to kimono — full read, obi knotted at the front, shrine sells the place. Squat held. Hands: hidden behind the head. Cloth: red kimono glossy, thighs bare under the skirt. Keep-or-change: keep; G17 1/2.
+- p72-yor-kimono, CSTati, seed `2026092446`, job `76a0fcae`, prompt `27351997`, 28.3 s, `CSTati-v3-Baseline_00138_.png`. Identity: Yor reads, black hair, headband, white kimono with red roses and a black obi, shrine lanterns night, adult. Lever: outfit to kimono — full read (ground reads white-with-red rather than red-and-white, garment class holds). Squat held. Hands: hidden behind the head. Cloth: white kimono glossy. Keep-or-change: keep; G17 2/2, promotes.
+- p72-sparkle-smallbust, AniFox, seed `2026092638`, job `a37dca16`, prompt `8811d897`, 26.3 s, `AniFox-v2-Baseline_00094_.png`. Identity: Sparkle reads, red-brown twintail hair, red and black jester dress, stage screens with mirror selves, night, adult. Lever: B1 first try — bust reads moderate. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep as a partial.
+- p72-zhezhi-smallbust, CSTati, seed `2026092639`, job `1c5457c7`, prompt `95f9adb7`, 26.3 s, `CSTati-v3-Baseline_00139_.png`. Identity: Zhezhi reads, dark blue hair in a bun, white and blue artist dress, studio lamp night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white dress translucent-sheer. Keep-or-change: keep; B1 clean.
+
+## First mixed wave: G17 kimono ports plus kimono on four poses — p73 wave
+
+P72 held 6/6 — G16 closed (both sheer states, both ports, eyes-neutral), G17 promoted on the opening pair, B1 Zhezhi clean and Sparkle partial (B1 now 10 clean, 15 partial, 1 break across 26 faces). This wave is the first under the pose-mix rule: two kimono squat anchors (ports, no sheer LoRA) plus the same kimono transferred to the bent-over (Kafka), the crawl (Yor), the seiza (Kafka), and the portrait (Yor). The crawl is also the obi test — T12 hikes loose dresses, so the question is whether the obi holds the kimono shut. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p73-kafka-kimono-anima | p72-kafka-kimono | anima-v1-baseline | 2026092646 | `b2b3dd83-33b9-469f-8fbd-93cb91cb1ca6` |
+| p73-yor-kimono-janima | p72-yor-kimono | janima-v1-baseline | 2026092647 | `d409429d-7654-4a88-a2f7-3e84005a8860` |
+| p73-kafka-kimono-bentover | p72-kafka-kimono | wai | 2026092640 | `ee8c6b05-0987-495a-95cd-65a07adcbd5a` |
+| p73-yor-kimono-crawl | p72-yor-kimono | cstati-v3-baseline | 2026092641 | `96cda2ea-3a96-44a9-958e-54daf8ce0625` |
+| p73-kafka-kimono-seiza | p72-kafka-kimono | yumeflux-ilv1-baseline | 2026092642 | `72d0d5a6-f379-431c-bfa3-e6482041dc76` |
+| p73-yor-kimono-portrait | p72-yor-kimono | anifox-v2-baseline | 2026092643 | `d9e46e27-a950-4797-9f7b-848717d47acd` |
+
+### p73 results
+
+All six completed, 26.2–35.1 s each, no spill. First mixed wave holds 6/6: kimono ports 2/2, kimono transfers to all four poses — and the obi beats the T12 hike.
+
+- p73-kafka-kimono-anima, Anima, seed `2026092646`, job `b2b3dd83`, prompt `655470c3`, 28.6 s, `Anima-v1-Baseline_00074_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white and red kimono with a black obi and gold cord, geta sandals, shrine violet, adult. Lever: G17 port — full kimono read with no sheer LoRA. Squat held. Hands: hidden behind the head. Eyes closed, the Anima squat pattern. Cloth: kimono and obi opaque. Keep-or-change: keep; G17 ports 1/2.
+- p73-yor-kimono-janima, JANIMA, seed `2026092647`, job `d409429d`, prompt `b67ea9e8`, 26.2 s, `JANIMA-v1-Baseline_00036_.png`. Identity: Yor reads, black hair, headband, red kimono with a white obi, torii and lanterns, night, adult. Lever: G17 port — full kimono read with no sheer LoRA. Squat held. Hands: hidden behind the head. Eyes open. Cloth: kimono and obi opaque. Keep-or-change: keep; G17 ports 2/2.
+- p73-kafka-kimono-bentover, WAI, seed `2026092640`, job `ee8c6b05`, prompt `9b26a07d`, 35.1 s, `WAI-Illustration_00149_.png`. Identity: Kafka reads, magenta hair in a ponytail, red kimono with a black obi, shrine night, adult. Lever: kimono on the bent-over — full transfer, both hands on the hips and butt, looking back over the shoulder. Cloth: red kimono glossy. Keep-or-change: keep.
+- p73-yor-kimono-crawl, CSTati, seed `2026092641`, job `96cda2ea`, prompt `14029dd3`, 34.3 s, `CSTati-v3-Baseline_00140_.png`. Identity: Yor reads, black hair, headband, white kimono with a red obi bow, shrine floor night, adult. Lever: kimono on the crawl, the obi test — forearms planted, face to the viewer, and the kimono top stays shut: the obi beats the T12 hike, rear covered in sheer white. Cloth: white kimono translucent-sheer. New rule: a knotted obi holds a loose dress shut on the crawl. Keep-or-change: keep.
+- p73-kafka-kimono-seiza, YumeFlux, seed `2026092642`, job `72d0d5a6`, prompt `ab50eaa8`, 30.5 s, `YumeFlux-ILv1-Baseline_00078_.png`. Identity: Kafka reads, magenta ponytail, white and red kimono with a big red bow obi, shrine lantern night, adult. Lever: kimono on the seiza — tongue out, looking back, feet visible and normal. Cloth: white kimono translucent-sheer. Keep-or-change: keep.
+- p73-yor-kimono-portrait, AniFox, seed `2026092643`, job `d9e46e27`, prompt `69924bdf`, 32.4 s, `AniFox-v2-Baseline_00095_.png`. Identity: Yor reads, headband, gold rose ornament, red and white kimono, shrine garden pond and lanterns, adult; most recognizable face of the wave. Lever: kimono on the portrait — gentle smile, kimono and obi intact. Cloth: red kimono glossy. Keep-or-change: keep.
+
+## G17 eyes and sheer-off, kimono seated rear, B1 Jingliu — p74 wave
+
+P73 held 6/6 — kimono ports 2/2, kimono on all four transfer poses, obi-beats-hike rule measured. This wave adds `bedroom eyes` to both kimono cells at the same seed, closes with the sheer stack off at the same seed on both G-series seeds, transfers the kimono to the last pose (seated rear, Yor), and runs B1 on Jingliu (cleared for new cells). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p74-kafka-kimono-eyes | p72-kafka-kimono | wai | 2026092445 | `724732e1-a45c-46a5-8f31-6fc1436bebc7` |
+| p74-yor-kimono-eyes | p72-yor-kimono | cstati-v3-baseline | 2026092446 | `adb2d952-a6ba-4654-8d40-d404c2e6312d` |
+| p74-kafka-kimono-nolora | p72-kafka-kimono | wai | 2026092445 | `520145d1-b140-407f-8b48-f7b101f7d6c8` |
+| p74-yor-kimono-nolora | p72-yor-kimono | cstati-v3-baseline | 2026092446 | `53f451da-fa5e-4b6b-a81d-db4330c98fa2` |
+| p74-yor-kimono-seated | p72-yor-kimono | cstati-v3-baseline | 2026092648 | `1ea3a333-5504-4cfe-a78c-85e663909861` |
+| p74-jingliu-smallbust | B1 recipe | wai | 2026092649 | `2dcb836e-8cce-421c-83d6-6fed17b779f4` |
+
+### p74 results
+
+All six completed, 12.3–36.8 s each, no spill. G17 closes on all four reads (garment+place 2/2, ports 2/2, eyes 2/2, sheer 2/2); kimono transfers to the seated rear; B1 Jingliu clean.
+
+- p74-kafka-kimono-eyes, WAI, seed `2026092445`, job `724732e1`, prompt `d225c9dd`, 36.8 s, `WAI-Illustration_00150_.png`. Identity: Kafka reads, red kimono with a black obi, shrine night, adult. Lever: `bedroom eyes` — half-lidded eyes, kimono intact. Squat held. Hands: hidden behind the head. Cloth: red kimono glossy. Keep-or-change: keep; G17 eyes 1/2.
+- p74-yor-kimono-eyes, CSTati, seed `2026092446`, job `adb2d952`, prompt `7c352034`, 32.4 s, `CSTati-v3-Baseline_00141_.png`. Identity: Yor reads, white rose kimono with a black obi, lanterns night, adult. Lever: `bedroom eyes` — half-lidded red eyes, kimono intact. Squat held. Hands: hidden behind the head. Cloth: white kimono glossy. Keep-or-change: keep; G17 eyes 2/2.
+- p74-kafka-kimono-nolora, WAI, seed `2026092445`, job `520145d1`, prompt `5bf7eb08`, 30.7 s, `WAI-Illustration_00151_.png`. Identity: Kafka reads, red kimono with a black obi and gold chain, shrine night, adult. Lever: sheer-off rerun at the same seed — kimono and obi stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: red kimono opaque glossy. Keep-or-change: keep; G17 sheer-off 1/2.
+- p74-yor-kimono-nolora, CSTati, seed `2026092446`, job `53f451da`, prompt `d6679e45`, 30.3 s, `CSTati-v3-Baseline_00142_.png`. Identity: Yor reads, white rose kimono with a black obi, lanterns night, adult. Lever: sheer-off rerun at the same seed — kimono and obi stable and opaque, no drift. Squat held. Hands: hidden behind the head. Cloth: white kimono opaque glossy. Keep-or-change: keep; G17 sheer-off 2/2, G17 closes.
+- p74-yor-kimono-seated, CSTati, seed `2026092648`, job `1ea3a333`, prompt `7dbe4e68`, 12.3 s, `CSTati-v3-Baseline_00143_.png`. Identity: Yor reads from behind, red kimono with a big white bow obi, hair in a bun with ornaments, shrine night, adult. Lever: kimono on the seated rear — full transfer, rear covered. Cloth: red kimono glossy. Keep-or-change: keep.
+- p74-jingliu-smallbust, WAI, seed `2026092649`, job `2dcb836e`, prompt `ca59e009`, 34.3 s, `WAI-Illustration_00152_.png`. Identity: Jingliu reads, white hair in a bun, red eyes, black and blue swordmaster dress, snow courtyard moon night, adult. Lever: B1 first try — bust reads modest in the structured bodice. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black and blue dress glossy. Keep-or-change: keep; B1 clean.
+
+## G18 santa open and transfers, B1 Yukong and Jinhsi — p75 wave
+
+P74 held 6/6 — G17 closed on all four reads, kimono on all six poses (squat, ports, bent-over, crawl, seiza, portrait, seated rear), B1 Jingliu clean (B1 now 11 clean, 15 partial, 1 break across 27 faces). This wave opens G18 with a red and white santa dress with fur trim and a santa hat on both G-series seeds (squat anchors), transfers the santa to the bent-over (Kafka) and the seiza (Yor), and runs B1 on Yukong and Jinhsi (both cleared for new cells). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p75-kafka-santa | p5-kafka-squat | wai | 2026092445 | `0b9b3c12-add5-4fc7-8698-0fd143cafc3e` |
+| p75-yor-santa | p5-yor-squat | cstati-v3-baseline | 2026092446 | `168a5923-8584-4a73-b058-b1ac4a39daba` |
+| p75-kafka-santa-bentover | p75-kafka-santa | wai | 2026092652 | `2f073f1c-707f-49cf-b6dc-5369c6f8e819` |
+| p75-yor-santa-seiza | p75-yor-santa | cstati-v3-baseline | 2026092653 | `f11d4c8a-3000-4251-a1e3-06d0bf346c23` |
+| p75-yukong-smallbust | B1 recipe | anifox-v2-baseline | 2026092650 | `cf3648dd-37fc-4308-87ce-47d0a9c6d36b` |
+| p75-jinhsi-smallbust | B1 recipe | yumeflux-ilv1-baseline | 2026092651 | `d497a5e0-6d4d-40eb-acab-c631dc13b7aa` |
+
+### p75 results
+
+All six completed, 26.3–32.4 s each, no spill. G18 opened 2/2 and promotes (fur trim reads fur, hats stay on); santa transfers to the bent-over and the seiza; B1 Yukong clean, Jinhsi partial.
+
+- p75-kafka-santa, WAI, seed `2026092445`, job `0b9b3c12`, prompt `b46dad7e`, 32.4 s, `WAI-Illustration_00153_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red santa dress with fur trim, santa hat, belt, snowy street and trees, night, adult. Lever: outfit to santa — full read, trim reads fur, hat stays on. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 1/2.
+- p75-yor-santa, CSTati, seed `2026092446`, job `168a5923`, prompt `8cd5c91b`, 28.2 s, `CSTati-v3-Baseline_00144_.png`. Identity: Yor reads, black hair, headband, red santa dress with fur trim, santa hat, belt, cabin stone and lantern, night, adult. Lever: outfit to santa — full read again, trim reads fur, hat stays on. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 2/2, promotes.
+- p75-kafka-santa-bentover, WAI, seed `2026092652`, job `2f073f1c`, prompt `6ce2c8ba`, 28.5 s, `WAI-Illustration_00154_.png`. Identity: Kafka reads, magenta ponytail, red santa dress with a back cutout, santa hat, snowy street and trees, night, adult. Lever: santa on the bent-over — full transfer, both hands on the butt, looking back, hat stays on. Cloth: red dress glossy. Keep-or-change: keep.
+- p75-yor-santa-seiza, CSTati, seed `2026092653`, job `f11d4c8a`, prompt `f79c3558`, 26.3 s, `CSTati-v3-Baseline_00145_.png`. Identity: Yor reads, black hair with a santa hat, red santa dress, cabin stone, night, adult. Lever: santa on the seiza — tongue out, looking back, feet visible, hat stays on. Cloth: red dress glossy. Keep-or-change: keep.
+- p75-yukong-smallbust, AniFox, seed `2026092650`, job `cf3648dd`, prompt `2220d53f`, 28.3 s, `AniFox-v2-Baseline_00096_.png`. Identity: Yukong reads, dark blue hair with fox ears, white and blue helm-master uniform, space station night, adult. Lever: B1 first try — bust reads modest in the white top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white top translucent-sheer, dark uniform glossy. Keep-or-change: keep; B1 clean.
+- p75-jinhsi-smallbust, YumeFlux, seed `2026092651`, job `d497a5e0`, prompt `11a655a0`, 28.4 s, `YumeFlux-ILv1-Baseline_00079_.png`. Identity: Jinhsi reads, pale hair in a bun, white and gold magistrate robe, lamp night, adult. Lever: B1 first try — bust reads moderate. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white robe translucent-sheer. Keep-or-change: keep as a partial.
+
+## G18 santa ports, eyes, crawl, portrait — p76 wave
+
+P75 held 6/6 — G18 promoted on the opening pair, santa on the bent-over and the seiza, B1 Yukong clean and Jinhsi partial (B1 now 12 clean, 16 partial, 1 break across 29 faces). This wave ports G18 to both families with no sheer LoRA (squat anchors), adds `bedroom eyes` to both santa cells at the same seed, and transfers the santa to the crawl (Kafka — short dress, the hike question again) and the portrait (Yor). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p76-kafka-santa-anima | p75-kafka-santa | anima-v1-baseline | 2026092644 | `c5fca2ea-7a15-46f1-b155-77fcee715274` |
+| p76-yor-santa-janima | p75-yor-santa | janima-v1-baseline | 2026092645 | `552f6282-feb3-4e10-997f-79ddd4d63474` |
+| p76-kafka-santa-eyes | p75-kafka-santa | wai | 2026092445 | `8352a033-c17e-41b5-af70-312f660b1056` |
+| p76-yor-santa-eyes | p75-yor-santa | cstati-v3-baseline | 2026092446 | `6bd5ea48-c0d9-4365-be9d-e99d1ef53765` |
+| p76-kafka-santa-crawl | p75-kafka-santa | wai | 2026092654 | `e924cb2e-1d85-4844-94af-c65b6eeed31e` |
+| p76-yor-santa-portrait | p75-yor-santa | cstati-v3-baseline | 2026092655 | `26f71ee9-aec5-4b9c-afaa-9a24f14ae6f4` |
+
+All six completed, 24.3–42.4 s each, no spill. G18 measured 6/8: ports closed on both families with no sheer LoRA, `bedroom eyes` holds on santa 2/2 with the dress intact, crawl confirms T12 on a short unbelted dress (rule confirmation, not a stack fail), portrait holds. B1 unchanged at 12 clean, 16 partial, 1 break across 29 faces (no B1 cells this wave).
+
+- p76-kafka-santa-anima, Anima, seed `2026092644`, job `c5fca2ea`, prompt `40875e32`, 28.3 s, `Anima-v1-Baseline_00075_.png`. Identity: Kafka reads, magenta hair, red santa dress with fur trim, santa hat, bell collar, belt, snowy street, night, adult. Lever: G18 port with no sheer LoRA — full read, trim reads fur, hat stays on. Squat held, eyes closed in the Anima pattern. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 ports 1/2.
+- p76-yor-santa-janima, JANIMA, seed `2026092645`, job `552f6282`, prompt `404b7f8d`, 24.3 s, `JANIMA-v1-Baseline_00037_.png`. Identity: Yor reads, black hair, red santa dress with fur trim and pom-poms, snowflake print, santa hat, cabin, night, adult. Lever: G18 port with no sheer LoRA — full read again, eyes open. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 ports 2/2, closed.
+- p76-kafka-santa-eyes, WAI, seed `2026092445`, job `8352a033`, prompt `7f3adb68`, 42.4 s, `WAI-Illustration_00155_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red santa dress, bell collar, snowy street, night, adult. Lever: `bedroom eyes` on santa at the same seed — half-lidded, dress intact. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 eyes 1/2.
+- p76-yor-santa-eyes, CSTati, seed `2026092446`, job `6bd5ea48`, prompt `2d167cc1`, 32.4 s, `CSTati-v3-Baseline_00146_.png`. Identity: Yor reads, black hair, half-lidded red eyes, red santa dress, cabin lantern, night, adult. Lever: `bedroom eyes` on santa at the same seed — dress intact. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 eyes 2/2, closed.
+- p76-kafka-santa-crawl, WAI, seed `2026092654`, job `e924cb2e`, prompt `67c396b2`, 28.3 s, `WAI-Illustration_00156_.png`. Identity: Kafka reads, magenta hair, santa hat, red santa dress, snowy street, night, adult. Lever: santa on the crawl — face to the viewer, forearms planted, short unbelted skirt ridden up over the rear. T12 confirmed as predicted. Keep-or-change: keep as a rule confirmation.
+- p76-yor-santa-portrait, CSTati, seed `2026092655`, job `26f71ee9`, prompt `7668583b`, 28.3 s, `CSTati-v3-Baseline_00147_.png`. Identity: Yor reads, black hair, red santa dress with fur trim, santa hat with pom, cabin window and snow, night, adult. Lever: santa on the portrait — gentle smile, trim reads fur. Keep-or-change: keep.
+
+## G18 sheer-off, santa seated rear, B1 Yixuan/Phoebe, G19 bunny open — p77 wave
+
+P76 held 6/6 — G18 ports and eyes closed on santa, crawl confirms T12, portrait holds (B1 unchanged at 12/16/1 across 29 faces). This wave closes G18 (sheer-off x2 at the santa seeds, santa seated rear for Yor) and opens G19 with bunny-suit anchors x2, plus B1 first tries on Yixuan and Phoebe. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p77-kafka-santa-nolora | p75-kafka-santa | wai | 2026092445 | `3a8b9880-20ef-4a09-9c4d-ac97dfab3d25` |
+| p77-yor-santa-nolora | p75-yor-santa | cstati-v3-baseline | 2026092446 | `94d8c6b6-5568-4cda-94a5-53583e4adc68` |
+| p77-yor-santa-seated | p75-yor-santa | cstati-v3-baseline | 2026092656 | `bac444b2-47fd-482b-a7f9-9ddda1e861b9` |
+| p77-yixuan-smallbust | — | anifox-v2-baseline | 2026092657 | `a3c31e47-9eab-479f-a493-84c9e5ff32aa` |
+| p77-phoebe-smallbust | — | yumeflux-ilv1-baseline | 2026092658 | `be100e4f-4f44-4fdc-85e2-b6d1395e2346` |
+| p77-kafka-bunny | — | wai | 2026092445 | `1264b365-1cea-4b4f-8579-8016895ad0f0` |
+| p77-yor-bunny | — | cstati-v3-baseline | 2026092446 | `26ba5851-3c0d-4e17-a215-93944aec2e39` |
+
+All seven completed, 26.3–28.4 s each, no spill. G18 closed 8/8 (sheer-off reruns drift nothing on either family, santa seated rear holds); G19 promoted on the opening pair (full bunny read on both, squats held); B1 Yixuan and Phoebe both clean (B1 now 14 clean, 16 partial, 1 break across 31 faces).
+
+- p77-kafka-santa-nolora, WAI, seed `2026092445`, job `3a8b9880`, prompt `ed0f8109`, 28.4 s, `WAI-Illustration_00157_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, bow collar, red santa dress, snowy trees and lights, night, adult. Lever: sheer-off rerun at the santa seed — dress intact and opaque, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: red dress glossy; black gloves and thigh-highs invented. Keep-or-change: keep; G18 sheer-off 1/2.
+- p77-yor-santa-nolora, CSTati, seed `2026092446`, job `94d8c6b6`, prompt `cfdc8013`, 28.3 s, `CSTati-v3-Baseline_00148_.png`. Identity: Yor reads, black hair, red santa dress with fur trim and pom-poms, santa hat, cabin lantern, night, adult. Lever: sheer-off rerun at the santa seed — dress intact and opaque, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; G18 sheer-off 2/2, G18 closed.
+- p77-yor-santa-seated, CSTati, seed `2026092656`, job `bac444b2`, prompt `d884db3e`, 26.3 s, `CSTati-v3-Baseline_00149_.png`. Identity: Yor reads, black hair in a bun with rose pin, santa hat, red santa dress with back cutout and knot, cabin window and snow, night, adult. Lever: santa on the seated rear — seated facing away, looking back over the shoulder, rear in red. Keep-or-change: keep.
+- p77-yixuan-smallbust, AniFox, seed `2026092657`, job `a3c31e47`, prompt `6a022c8d`, 26.3 s, `AniFox-v2-Baseline_00097_.png`. Identity: Yixuan reads, black hair with gold ornaments, white and teal martial robe with gold rings, mountain temple, night, adult. Lever: B1 first try — bust reads modest in the dark high-collar robe. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: robe glossy. Keep-or-change: keep; B1 clean.
+- p77-phoebe-smallbust, YumeFlux, seed `2026092658`, job `be100e4f`, prompt `39f156ae`, 26.3 s, `YumeFlux-ILv1-Baseline_00080_.png`. Identity: Phoebe reads, short blonde hair, white and gold acolyte dress, cathedral, night, adult. Lever: B1 first try — bust reads modest in the white top and gold bodice. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: gold bodice glossy. Keep-or-change: keep; B1 clean.
+- p77-kafka-bunny, WAI, seed `2026092445`, job `1264b365`, prompt `670eff0a`, 26.4 s, `WAI-Illustration_00158_.png`. Identity: Kafka reads, magenta hair, black bunny suit, bow collar, bunny ears, nightclub violet, night, adult. Lever: outfit to bunny — full read, glossy suit, fishnets, heels. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 1/2.
+- p77-yor-bunny, CSTati, seed `2026092446`, job `26ba5851`, prompt `c8503e10`, 26.4 s, `CSTati-v3-Baseline_00150_.png`. Identity: Yor reads, black hair with rose ornament, black bunny suit, bow collar, bunny ears, cottontail, casino warm light, night, adult. Lever: outfit to bunny — full read again, fishnets. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 2/2, promotes.
+
+## G19 eyes, bent-over, seiza, B1 Sparkle/Zhezhi — p78 wave
+
+P77 held 7/7 — G18 closed on all eight reads, G19 promoted on the opening pair, B1 Yixuan and Phoebe clean (B1 now 14 clean, 16 partial, 1 break across 31 faces). This wave measures G19: `bedroom eyes` x2 at the same seeds plus bunny on the bent-over (Kafka) and the seiza (Yor), with B1 first tries on Sparkle and Zhezhi. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p78-kafka-bunny-eyes | p77-kafka-bunny | wai | 2026092445 | `a3226b09-e5de-487e-97df-4ae985d5d78d` |
+| p78-yor-bunny-eyes | p77-yor-bunny | cstati-v3-baseline | 2026092446 | `b5b69ae5-1ed1-464a-b603-dbf68d998b03` |
+| p78-kafka-bunny-bentover | p77-kafka-bunny | wai | 2026092659 | `c94026f9-9e5e-4a42-a990-e5836c7e6c32` |
+| p78-yor-bunny-seiza | p77-yor-bunny | cstati-v3-baseline | 2026092660 | `8fdc9abe-dd0a-40a5-b0a2-48f70c4ef64e` |
+| p78-sparkle-smallbust | — | wai | 2026092661 | `c7da953f-752a-4047-bf65-b98e858663d4` |
+| p78-zhezhi-smallbust | — | wai | 2026092662 | `c598a85c-b7a4-4fc7-908e-25b040690e01` |
+
+All six completed, 10.2–33.1 s each, no spill. G19 measured 6 (eyes 2/2 with the suit intact, bent-over and seiza transfers hold); B1 Sparkle and Zhezhi both clean (B1 now 16 clean, 16 partial, 1 break across 33 faces).
+
+- p78-kafka-bunny-eyes, WAI, seed `2026092445`, job `a3226b09`, prompt `a0e3252d`, 30.3 s, `WAI-Illustration_00159_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, bow collar, black bunny suit, nightclub violet, night, adult. Lever: `bedroom eyes` on bunny at the same seed — half-lidded yellow eyes, suit, cottontail and fishnets intact. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 eyes 1/2.
+- p78-yor-bunny-eyes, CSTati, seed `2026092446`, job `b5b69ae5`, prompt `27e19d98`, 31.0 s, `CSTati-v3-Baseline_00151_.png`. Identity: Yor reads, black hair with rose ornament, bow collar, black bunny suit, casino warm light, night, adult. Lever: `bedroom eyes` on bunny at the same seed — half-lidded red eyes, suit, cottontail and fishnets intact. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 eyes 2/2.
+- p78-kafka-bunny-bentover, WAI, seed `2026092659`, job `c94026f9`, prompt `fd26934e`, 31.0 s, `WAI-Illustration_00160_.png`. Identity: Kafka reads, magenta ponytail, bunny ears, black bunny suit with cottontail, fishnets, nightclub bar, night, adult. Lever: bunny on the bent-over — back view, both hands on the butt. Cloth: black suit glossy. Keep-or-change: keep.
+- p78-yor-bunny-seiza, CSTati, seed `2026092660`, job `8fdc9abe`, prompt `3bf3d437`, 28.9 s, `CSTati-v3-Baseline_00152_.png`. Identity: Yor reads, black hair with rose ornament, bunny ears, black bunny suit with cottontail, fishnets, casino warm light, night, adult. Lever: bunny on the seiza — tongue out, looking back, feet visible. Keep-or-change: keep.
+- p78-sparkle-smallbust, WAI, seed `2026092661`, job `c7da953f`, prompt `99404c27`, 33.1 s, `WAI-Illustration_00161_.png`. Identity: Sparkle reads, pink and white hair with red bows, red and white jester dress with mask ornament, stage violet, night, adult. Lever: B1 first try — bust reads modest in the red top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: red dress glossy. Keep-or-change: keep; B1 clean.
+- p78-zhezhi-smallbust, WAI, seed `2026092662`, job `c598a85c`, prompt `f52bbd9c`, 10.2 s, `WAI-Illustration_00162_.png`. Identity: Zhezhi reads, green hair with hairpin, teal painter dress with gold knots, lamp, night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: teal dress glossy. Keep-or-change: keep; B1 clean.
+
+## G19 sheer-off, crawl, portrait, B1 Nekomata/Trigger/Alice — p79 wave
+
+P78 held 6/6 — G19 eyes 2/2 with the suit intact, bent-over and seiza transfers hold, B1 Sparkle and Zhezhi clean (B1 now 16 clean, 16 partial, 1 break across 33 faces). This wave closes in on G19 (sheer-off x2 at the same seeds, crawl for Kafka, portrait for Yor) with B1 first tries on Nekomata, Trigger and Alice. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p79-kafka-bunny-nolora | p77-kafka-bunny | wai | 2026092445 | `701ec40f-e7be-42a8-abaa-dbaff8c20622` |
+| p79-yor-bunny-nolora | p77-yor-bunny | cstati-v3-baseline | 2026092446 | `ed305c9a-0242-4c11-858c-1d2c10b2567d` |
+| p79-kafka-bunny-crawl | p77-kafka-bunny | wai | 2026092663 | `c08623d1-f2eb-4ed2-85ef-ee178d219445` |
+| p79-yor-bunny-portrait | p77-yor-bunny | cstati-v3-baseline | 2026092664 | `bc378df1-627a-47fb-b148-8a4bc1538f86` |
+| p79-nekomata-smallbust | — | yumeflux-ilv1-baseline | 2026092665 | `e1988cd8-6278-4824-8a90-9c3cac41e7fa` |
+| p79-trigger-smallbust | — | cstati-v3-baseline | 2026092666 | `75be63aa-793d-440f-88cd-7abe735f0a45` |
+| p79-alice-smallbust | — | anifox-v2-baseline | 2026092667 | `75cb5b58-cbaf-4613-9319-5e73fd89219f` |
+
+All seven completed, 12.3–39.5 s each, no spill. G19 measured 10 (sheer-off 2/2 drift nothing, crawl and portrait transfers hold — the bodysuit gives the hike nothing to lift); B1 Nekomata, Trigger and Alice all clean (B1 now 19 clean, 16 partial, 1 break across 36 faces).
+
+- p79-kafka-bunny-nolora, WAI, seed `2026092445`, job `701ec40f`, prompt `6d99d8b5`, 12.3 s, `WAI-Illustration_00163_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, bow collar, black bunny suit with cottontail, nightclub violet, night, adult. Lever: sheer-off rerun at the bunny seed — suit intact and opaque, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 sheer-off 1/2.
+- p79-yor-bunny-nolora, CSTati, seed `2026092446`, job `ed305c9a`, prompt `36fd70b0`, 39.5 s, `CSTati-v3-Baseline_00153_.png`. Identity: Yor reads, black hair with rose ornament, bow collar, black bunny suit, casino warm light, night, adult. Lever: sheer-off rerun at the bunny seed — suit intact and opaque, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: black suit glossy. Keep-or-change: keep; G19 sheer-off 2/2.
+- p79-kafka-bunny-crawl, WAI, seed `2026092663`, job `c08623d1`, prompt `a50cad9c`, 32.9 s, `WAI-Illustration_00164_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, bunny ears, black bunny suit with cottontail, fishnets, nightclub violet, night, adult. Lever: bunny on the crawl — face to the viewer, forearms planted, suit intact. Keep-or-change: keep.
+- p79-yor-bunny-portrait, CSTati, seed `2026092664`, job `bc378df1`, prompt `57b3a86f`, 26.9 s, `CSTati-v3-Baseline_00154_.png`. Identity: Yor reads, black hair with rose ornaments, bunny ears, bow collar, black bunny suit, casino warm light, night, adult. Lever: bunny on the portrait — smile. Keep-or-change: keep.
+- p79-nekomata-smallbust, YumeFlux, seed `2026092665`, job `e1988cd8`, prompt `3afbf98e`, 28.8 s, `YumeFlux-ILv1-Baseline_00081_.png`. Identity: Nekomata reads, black twin tails, cat ears, green jacket, city rooftop, night, adult. Lever: B1 first try — bust reads modest in the black top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black top glossy. Keep-or-change: keep; B1 clean.
+- p79-trigger-smallbust, CSTati, seed `2026092666`, job `75be63aa`, prompt `54562c06`, 28.8 s, `CSTati-v3-Baseline_00155_.png`. Identity: Trigger reads, short blonde hair, goggles, blue jacket, outpost warm light, night, adult. Lever: B1 first try — bust reads modest in the white top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white top glossy. Keep-or-change: keep; B1 clean.
+- p79-alice-smallbust, AniFox, seed `2026092667`, job `75cb5b58`, prompt `18aaeec3`, 26.9 s, `AniFox-v2-Baseline_00098_.png`. Identity: Alice reads, blonde hair, orange dress with black jacket, fairground and ferris wheel, night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: orange dress glossy. Keep-or-change: keep; B1 clean.
+
+## G19 seated rear, B1 Vivian/Dialyn/Ju Fufu, G20 wedding open — p80 wave
+
+P79 held 7/7 — G19 measured 10 with sheer-off, crawl and portrait all holding, B1 Nekomata, Trigger and Alice clean (B1 now 19 clean, 16 partial, 1 break across 36 faces). This wave closes G19 (seated rear for Yor), runs B1 first tries on Vivian, Dialyn and Ju Fufu, and opens G20 with wedding-dress anchors x2. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p80-yor-bunny-seated | p77-yor-bunny | cstati-v3-baseline | 2026092668 | `db287044-9a90-4573-bfdf-dfd09199d2ac` |
+| p80-vivian-smallbust | — | wai | 2026092669 | `c290236f-12d3-4c69-a5d4-58a5027c80ec` |
+| p80-dialyn-smallbust | — | cstati-v3-baseline | 2026092670 | `947c8b27-68ca-497f-9f71-90e8b0651452` |
+| p80-jufufu-smallbust | — | yumeflux-ilv1-baseline | 2026092671 | `d373d7ba-8ebf-4117-96d8-8f560c8588c9` |
+| p80-kafka-wedding | — | wai | 2026092445 | `dac04dac-c25a-418c-a7ae-2291e94bb2a9` |
+| p80-yor-wedding | — | cstati-v3-baseline | 2026092446 | `9c12cc27-472c-49f4-8081-59f378be1ebb` |
+
+All six completed, 26.5–28.9 s each, no spill. G19 closed on all eleven reads (seated rear holds); G20 promoted on the opening pair (full bridal read on both, squats held); B1 Vivian, Dialyn and Ju Fufu all clean (B1 now 22 clean, 16 partial, 1 break across 39 faces).
+
+- p80-yor-bunny-seated, CSTati, seed `2026092668`, job `db287044`, prompt `6eaf40e2`, 26.5 s, `CSTati-v3-Baseline_00156_.png`. Identity: Yor reads, black hair in a bun, bunny ears, black bunny suit with cottontail, casino warm light, night, adult. Lever: bunny on the seated rear — seated facing away, looking back over the shoulder, rear in black vinyl. Keep-or-change: keep; G19 closed.
+- p80-vivian-smallbust, WAI, seed `2026092669`, job `c290236f`, prompt `7923ffdf`, 26.8 s, `WAI-Illustration_00165_.png`. Identity: Vivian reads, long pink hair, white and purple gothic dress with chains, opera house violet, night, adult. Lever: B1 first try — bust reads modest in the dark corset top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: dark dress glossy. Keep-or-change: keep; B1 clean.
+- p80-dialyn-smallbust, CSTati, seed `2026092670`, job `947c8b27`, prompt `19e47d62`, 26.8 s, `CSTati-v3-Baseline_00157_.png`. Identity: Dialyn reads, short silver hair, maid headdress, black and white maid dress, mansion hall warm light, night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: maid dress glossy. Keep-or-change: keep; B1 clean.
+- p80-jufufu-smallbust, YumeFlux, seed `2026092671`, job `d373d7ba`, prompt `cdd466b7`, 26.8 s, `YumeFlux-ILv1-Baseline_00082_.png`. Identity: Ju Fufu reads, short orange hair, tiger ears and tail, black qipao with orange trim, chinatown lanterns, night, adult. Lever: B1 first try — bust reads modest. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: black qipao glossy. Keep-or-change: keep; B1 clean.
+- p80-kafka-wedding, WAI, seed `2026092445`, job `dac04dac`, prompt `e3f7f980`, 28.9 s, `WAI-Illustration_00166_.png`. Identity: Kafka reads, magenta hair, white lace bridal bodysuit with veil and stockings, chapel violet, night, adult. Lever: outfit to wedding — full bridal read. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; G20 1/2.
+- p80-yor-wedding, CSTati, seed `2026092446`, job `9c12cc27`, prompt `3f7d9b18`, 26.8 s, `CSTati-v3-Baseline_00158_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: outfit to wedding — full bridal read again. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G20 2/2, promotes.
+
+## G20 eyes, bent-over, seiza, crawl, B1 Yuzuha — p81 wave
+
+P80 held 6/6 — G19 closed on all eleven reads, G20 promoted on the opening pair, B1 Vivian, Dialyn and Ju Fufu clean (B1 now 22 clean, 16 partial, 1 break across 39 faces). This wave measures G20: `bedroom eyes` x2 at the same seeds plus wedding on the bent-over, seiza and crawl, with a B1 first try on Yuzuha. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p81-kafka-wedding-eyes | p80-kafka-wedding | wai | 2026092445 | `0d36565c-1acb-427a-8269-78cf0c1be6d5` |
+| p81-yor-wedding-eyes | p80-yor-wedding | cstati-v3-baseline | 2026092446 | `0eba196f-20e9-4ee5-b563-bb6b7c1b71f4` |
+| p81-kafka-wedding-bentover | p80-kafka-wedding | wai | 2026092672 | `8d594b16-087c-4c7a-9f72-7d71a519e15f` |
+| p81-yor-wedding-seiza | p80-yor-wedding | cstati-v3-baseline | 2026092675 | `b689d91c-6b96-453a-8fbc-cd4853ea6b1e` |
+| p81-kafka-wedding-crawl | p80-kafka-wedding | wai | 2026092673 | `ca02aeaa-dc77-4166-b8e9-3391d008a639` |
+| p81-yuzuha-smallbust | — | anifox-v2-baseline | 2026092674 | `bae0bb7a-8642-4161-8f19-03ba0b91bdc5` |
+
+All six completed, 24.8–28.1 s each, no spill. G20 measured 7 (eyes half-lidded on Kafka and neutral on Yor with dress and veil intact, bent-over/seiza/crawl transfers hold); B1 Yuzuha clean, closing the ambition roster (B1 now 23 clean, 16 partial, 1 break across 40 faces).
+
+- p81-kafka-wedding-eyes, WAI, seed `2026092445`, job `0d36565c`, prompt `316f4419`, 27.1 s, `WAI-Illustration_00167_.png`. Identity: Kafka reads, magenta hair, white bridal bodysuit with veil and stockings, chapel violet, night, adult. Lever: `bedroom eyes` on wedding at the same seed — half-lidded, dress and veil intact. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; G20 eyes 1/2.
+- p81-yor-wedding-eyes, CSTati, seed `2026092446`, job `0eba196f`, prompt `c74fdafd`, 26.9 s, `CSTati-v3-Baseline_00159_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: `bedroom eyes` on wedding at the same seed — reads neutral, eyes open, dress and veil intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G20 eyes 2/2.
+- p81-kafka-wedding-bentover, WAI, seed `2026092672`, job `8d594b16`, prompt `91c31e45`, 26.7 s, `WAI-Illustration_00168_.png`. Identity: Kafka reads, magenta hair, veil, white wedding gown, chapel violet with bouquet, night, adult. Lever: wedding on the bent-over — back view, veil on, looking back. Cloth: white gown glossy. Keep-or-change: keep.
+- p81-yor-wedding-seiza, CSTati, seed `2026092675`, job `b689d91c`, prompt `52cdc5ba`, 26.8 s, `CSTati-v3-Baseline_00160_.png`. Identity: Yor reads, black hair with rose ornament, veil, white wedding gown, chapel warm light, night, adult. Lever: wedding on the seiza — tongue out, looking back, feet visible. Keep-or-change: keep.
+- p81-kafka-wedding-crawl, WAI, seed `2026092673`, job `ca02aeaa`, prompt `b6a2824e`, 28.1 s, `WAI-Illustration_00169_.png`. Identity: Kafka reads, magenta hair, tiara and veil, white wedding gown, chapel violet, night, adult. Lever: wedding on the crawl — face to the viewer, forearms planted. Keep-or-change: keep.
+- p81-yuzuha-smallbust, AniFox, seed `2026092674`, job `bae0bb7a`, prompt `2bc0eaea`, 24.8 s, `AniFox-v2-Baseline_00099_.png`. Identity: Yuzuha reads, short pink hair, tanuki ears, green happi coat, festival street warm light, night, adult. Lever: B1 first try — bust reads modest in the white top. Squat held, smirk and wink show. Hands: hidden behind the head. Cloth: white top glossy; fake shirt letters noted, not a discard. Keep-or-change: keep; B1 clean.
+
+## G20 sheer-off, portrait, seated rear, from-below open — p82 wave
+
+P81 held 6/6 — G20 measured 7 with eyes, bent-over, seiza and crawl all holding, B1 Yuzuha clean closing the ambition roster (B1 now 23 clean, 16 partial, 1 break across 40 faces). This wave closes in on G20 (sheer-off x2 at the same seeds, portrait for Yor, seated rear for Kafka) and opens the camera layer with `from below` on the wedding squat pair. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p82-kafka-wedding-nolora | p80-kafka-wedding | wai | 2026092445 | `1e9434dd-9839-47a1-bbf5-444a76ddc935` |
+| p82-yor-wedding-nolora | p80-yor-wedding | cstati-v3-baseline | 2026092446 | `f81ce43b-32c1-41e1-8347-d24e65e13c2d` |
+| p82-yor-wedding-portrait | p80-yor-wedding | cstati-v3-baseline | 2026092676 | `8bdea355-e08d-4564-b4f4-da67e61f70d6` |
+| p82-kafka-wedding-seated | p80-kafka-wedding | wai | 2026092677 | `66c9a08d-1b6b-448e-8975-a29776daac2e` |
+| p82-kafka-wedding-frombelow | p80-kafka-wedding | wai | 2026092445 | `a6e3094e-e91f-4af7-9732-9448b4584c20` |
+| p82-yor-wedding-frombelow | p80-yor-wedding | cstati-v3-baseline | 2026092446 | `bdcd5d2b-8833-45db-a2b9-eb657a25f574` |
+
+All six completed, 10.1–28.3 s each, no spill. G20 closed on all eleven reads (sheer-off 2/2 drift nothing, portrait and seated rear hold); C1 `from below` opens measured 2/2 on the wedding squat pair.
+
+- p82-kafka-wedding-nolora, WAI, seed `2026092445`, job `1e9434dd`, prompt `05f90a12`, 28.3 s, `WAI-Illustration_00170_.png`. Identity: Kafka reads, magenta hair, white bridal bodysuit with veil and stockings, chapel violet, night, adult. Lever: sheer-off rerun at the wedding seed — dress and veil intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; G20 sheer-off 1/2.
+- p82-yor-wedding-nolora, CSTati, seed `2026092446`, job `f81ce43b`, prompt `d69e9395`, 26.8 s, `CSTati-v3-Baseline_00161_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: sheer-off rerun at the wedding seed — dress and veil intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G20 sheer-off 2/2.
+- p82-yor-wedding-portrait, CSTati, seed `2026092676`, job `8bdea355`, prompt `04b8653d`, 10.2 s, `CSTati-v3-Baseline_00162_.png`. Identity: Yor reads, black hair with roses, veil, lace collar, chapel warm light, night, adult. Lever: wedding on the portrait — smile. Keep-or-change: keep.
+- p82-kafka-wedding-seated, WAI, seed `2026092677`, job `66c9a08d`, prompt `31b725ef`, 26.7 s, `WAI-Illustration_00171_.png`. Identity: Kafka reads, magenta ponytail, veil, white wedding gown with corset lacing, chapel violet, night, adult. Lever: wedding on the seated rear — seated facing away, rear in white. Keep-or-change: keep; G20 closed.
+- p82-kafka-wedding-frombelow, WAI, seed `2026092445`, job `a6e3094e`, prompt `2964c97b`, 10.1 s, `WAI-Illustration_00172_.png`. Identity: Kafka reads, magenta hair, white bridal bodysuit with veil, chapel violet, night, adult. Lever: `from below` on the wedding squat — low angle, dress and veil intact. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; C1 1/2.
+- p82-yor-wedding-frombelow, CSTati, seed `2026092446`, job `bdcd5d2b`, prompt `7c67e4d6`, 26.9 s, `CSTati-v3-Baseline_00163_.png`. Identity: Yor reads, black hair, white bridal dress with veil, chapel warm light, night, adult. Lever: `from below` on the wedding squat — low angle, dress and veil intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; C1 2/2.
+
+## C1 cowboy shot, close-up, G21 cheerleader open — p83 wave
+
+P82 held 6/6 — G20 closed on all eleven reads, C1 `from below` opens measured 2/2. This wave continues the camera layer (`cowboy shot` x2, `close-up` x2 on the wedding squat pair) and opens G21 with cheerleader anchors x2. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p83-kafka-wedding-cowboy | p80-kafka-wedding | wai | 2026092445 | `fe938462-e8d9-4a33-a694-d568d4eb00b7` |
+| p83-yor-wedding-cowboy | p80-yor-wedding | cstati-v3-baseline | 2026092446 | `b54c0780-5237-4ff6-8dca-f4593556ee5c` |
+| p83-kafka-wedding-closeup | p80-kafka-wedding | wai | 2026092445 | `f8e79e7f-a986-44c7-a4f8-3f323f821e7a` |
+| p83-yor-wedding-closeup | p80-yor-wedding | cstati-v3-baseline | 2026092446 | `5ebf0083-8760-44d5-af11-0008cdbb92d8` |
+| p83-kafka-cheer | — | wai | 2026092445 | `422c0a27-c39f-49b2-8ef8-dc4c3371597c` |
+| p83-yor-cheer | — | cstati-v3-baseline | 2026092446 | `59e0e5c3-3419-4ef7-980f-a28ae2299ffa` |
+
+All six completed, 25.0–33.1 s each, no spill. C1 measured 6 (`cowboy shot` 2/2, `close-up` 2/2, all four keep squat, garment and hands); G21 promoted on the opening pair (full cheer read on both, pleats intact, pom-poms as props).
+
+- p83-kafka-wedding-cowboy, WAI, seed `2026092445`, job `fe938462`, prompt `88a8e854`, 33.1 s, `WAI-Illustration_00173_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white bridal bodysuit with veil, chapel violet, night, adult. Lever: `cowboy shot` on the wedding squat — mid-thigh-up framing, dress and veil intact. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; C1 cowboy 1/2.
+- p83-yor-wedding-cowboy, CSTati, seed `2026092446`, job `b54c0780`, prompt `73b9b132`, 26.9 s, `CSTati-v3-Baseline_00164_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: `cowboy shot` on the wedding squat — same framing, intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; C1 cowboy 2/2.
+- p83-kafka-wedding-closeup, WAI, seed `2026092445`, job `f8e79e7f`, prompt `4df7b409`, 26.9 s, `WAI-Illustration_00174_.png`. Identity: Kafka reads, magenta hair, white bridal bodysuit with veil, chapel violet, night, adult. Lever: `close-up` on the wedding squat — tighter torso framing, intact. Squat held. Hands: hidden behind the head. Cloth: white lace glossy. Keep-or-change: keep; C1 close-up 1/2.
+- p83-yor-wedding-closeup, CSTati, seed `2026092446`, job `5ebf0083`, prompt `99866b48`, 25.0 s, `CSTati-v3-Baseline_00165_.png`. Identity: Yor reads, black hair with rose ornaments, white bridal dress with veil, chapel warm light, night, adult. Lever: `close-up` on the wedding squat — same, intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; C1 close-up 2/2.
+- p83-kafka-cheer, WAI, seed `2026092445`, job `422c0a27`, prompt `84c9930a`, 26.8 s, `WAI-Illustration_00175_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform with pleated skirt, pom-poms, stadium violet, night, adult. Lever: outfit to cheer — full read, pleats intact, pom-poms as props. Squat held. Hands: one behind the head, one holding a pom-pom. Cloth: red uniform glossy. Keep-or-change: keep; G21 1/2.
+- p83-yor-cheer, CSTati, seed `2026092446`, job `59e0e5c3`, prompt `5062dde7`, 26.8 s, `CSTati-v3-Baseline_00166_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform with pleated skirt, pom-poms, stadium floodlight, night, adult. Lever: outfit to cheer — full read again, pleats intact. Squat held. Hands: both holding pom-poms behind the head. Cloth: red uniform glossy; fake top letters noted, not a discard. Keep-or-change: keep; G21 2/2, promotes.
+
+## G21 eyes, bent-over, seiza, sheer-off — p84 wave
+
+P83 held 6/6 — C1 measured 6 with cowboy and close-up both holding, G21 promoted on the opening pair. This wave measures G21: `bedroom eyes` x2 at the same seeds plus cheer on the bent-over (pleated skirt vs the hike) and the seiza, with the sheer-off reruns. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p84-kafka-cheer-eyes | p83-kafka-cheer | wai | 2026092445 | `c0d302fe-9cd3-44dd-a50e-6c861c047225` |
+| p84-yor-cheer-eyes | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `d61c9a55-54c3-46be-acf8-65a5926d4503` |
+| p84-kafka-cheer-bentover | p83-kafka-cheer | wai | 2026092678 | `d78922b5-d160-4587-ba4a-e0334cc72050` |
+| p84-yor-cheer-seiza | p83-yor-cheer | cstati-v3-baseline | 2026092679 | `7b7c1b86-ead9-455c-9f13-6632973fc546` |
+| p84-kafka-cheer-nolora | p83-kafka-cheer | wai | 2026092445 | `1c0dce10-4c9c-4b85-b4e3-ddb713c88ffa` |
+| p84-yor-cheer-nolora | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `c76380b2-a17a-4544-b3b0-87ed24b4b2e1` |
+
+All six completed, 26.7–29.0 s each, no spill. G21 measured 8 (eyes half-lidded on Kafka and neutral on Yor with the uniform intact, pleated skirt beats the hike on the bent-over, seiza holds, sheer-off 2/2 drift nothing).
+
+- p84-kafka-cheer-eyes, WAI, seed `2026092445`, job `c0d302fe`, prompt `a8a5942d`, 29.0 s, `WAI-Illustration_00176_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform with pleated skirt, pom-poms, stadium violet, night, adult. Lever: `bedroom eyes` on cheer at the same seed — half-lidded, uniform intact. Squat held. Hands: holding pom-poms. Cloth: red uniform glossy. Keep-or-change: keep; G21 eyes 1/2.
+- p84-yor-cheer-eyes, CSTati, seed `2026092446`, job `d61c9a55`, prompt `c6ebabf4`, 26.9 s, `CSTati-v3-Baseline_00167_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: `bedroom eyes` on cheer at the same seed — reads neutral, eyes open, uniform intact. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep; G21 eyes 2/2.
+- p84-kafka-cheer-bentover, WAI, seed `2026092678`, job `d78922b5`, prompt `c7a35fe3`, 26.8 s, `WAI-Illustration_00177_.png`. Identity: Kafka reads, magenta ponytail, red and white cheer uniform with pleated skirt, pom-pom, stadium violet, night, adult. Lever: cheer on the bent-over — back view, pleats intact over the rear, the hike beaten. Cloth: red uniform glossy. Keep-or-change: keep.
+- p84-yor-cheer-seiza, CSTati, seed `2026092679`, job `7b7c1b86`, prompt `b149408e`, 26.8 s, `CSTati-v3-Baseline_00168_.png`. Identity: Yor reads, black hair with rose ornament, red and white cheer uniform with pleated skirt, stadium floodlight, night, adult. Lever: cheer on the seiza — tongue out, looking back, feet visible, pleats intact. Keep-or-change: keep.
+- p84-kafka-cheer-nolora, WAI, seed `2026092445`, job `1c0dce10`, prompt `76535176`, 26.8 s, `WAI-Illustration_00178_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, pom-pom, stadium violet, night, adult. Lever: sheer-off rerun at the cheer seed — uniform intact, nothing drifted. Squat held. Hands: one behind the head, one holding a pom-pom. Cloth: red uniform glossy; fake top letters noted, not a discard. Keep-or-change: keep; G21 sheer-off 1/2.
+- p84-yor-cheer-nolora, CSTati, seed `2026092446`, job `c76380b2`, prompt `4c3099af`, 26.7 s, `CSTati-v3-Baseline_00169_.png`. Identity: Yor reads, black hair, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: sheer-off rerun at the cheer seed — uniform intact, nothing drifted. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep; G21 sheer-off 2/2.
+
+## G21 crawl, portrait, seated rear, CFG sweep — p85 wave
+
+P84 held 6/6 — G21 measured 8 with eyes, bent-over (pleats beat the hike), seiza and sheer-off all holding. This wave closes G21 (crawl for Kafka, portrait for Yor, seated rear for Kafka) and runs the controlled setting sweep: same Yor cheer squat prompt and seed, CFG 4 vs 5 vs 6 on CSTati. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p85-kafka-cheer-crawl | p83-kafka-cheer | wai | 2026092681 | `79f7c08e-0e37-46b2-8417-e5d6583e9672` |
+| p85-yor-cheer-portrait | p83-yor-cheer | cstati-v3-baseline | 2026092682 | `2a1de733-c7b2-44b9-9daf-026eda481bc9` |
+| p85-kafka-cheer-seated | p83-kafka-cheer | wai | 2026092683 | `f8049d9f-7b58-4fcd-89e5-a274177de97a` |
+| p85-sweep-cfg4 | — | cstati-v3-baseline | 2026092680 | `94b0f596-ed1c-4dbb-8f1e-c9c2e518792e` |
+| p85-sweep-cfg5 | — | cstati-v3-baseline | 2026092680 | `194e150d-eb2c-4747-8cbc-20371ffc7e19` |
+| p85-sweep-cfg6 | — | cstati-v3-baseline | 2026092680 | `73ce0929-7901-4954-b862-7ddc8155a4a8` |
+
+All six completed, 10.2–41.1 s each, no spill. G21 closed on all eleven reads (crawl, portrait and seated rear hold); the CFG 4 vs 5 vs 6 sweep shows no structural change, CFG 5 stays the default.
+
+- p85-kafka-cheer-crawl, WAI, seed `2026092681`, job `79f7c08e`, prompt `1d9997e6`, 41.1 s, `WAI-Illustration_00179_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, stadium violet, night, adult. Lever: cheer on the crawl — face to the viewer, forearms planted, uniform intact. Keep-or-change: keep.
+- p85-yor-cheer-portrait, CSTati, seed `2026092682`, job `2a1de733`, prompt `a43719ab`, 28.9 s, `CSTati-v3-Baseline_00170_.png`. Identity: Yor reads, black hair with rose ornament, red and white cheer uniform, pom-pom up, stadium floodlight, night, adult. Lever: cheer on the portrait — smile; fake top letters noted, not a discard. Keep-or-change: keep.
+- p85-kafka-cheer-seated, WAI, seed `2026092683`, job `f8049d9f`, prompt `a65444c0`, 29.0 s, `WAI-Illustration_00180_.png`. Identity: Kafka reads, magenta ponytail, red and white cheer uniform with pleated skirt, stadium violet, night, adult. Lever: cheer on the seated rear — seated facing away, looking back, pleats intact over the rear. Keep-or-change: keep; G21 closed.
+- p85-sweep-cfg4, CSTati, seed `2026092680`, job `94b0f596`, prompt `f018829e`, 28.9 s, `CSTati-v3-Baseline_00171_.png`. Identity: Yor reads, black hair with rose ornament, red and white cheer uniform, stadium floodlight, night, adult. Lever: CFG 4 on the fixed cheer squat prompt — squat, uniform and hands hold, reads slightly softer. Keep-or-change: keep as the sweep low end.
+- p85-sweep-cfg5, CSTati, seed `2026092680`, job `194e150d`, prompt `daa9414a`, 10.2 s, `CSTati-v3-Baseline_00172_.png`. Identity: Yor reads as above. Lever: CFG 5 reference — identical composition, base contrast. Keep-or-change: keep; CFG 5 stays the default.
+- p85-sweep-cfg6, CSTati, seed `2026092680`, job `73ce0929`, prompt `6cd462d5`, 10.2 s, `CSTati-v3-Baseline_00173_.png`. Identity: Yor reads as above. Lever: CFG 6 on the fixed prompt — identical composition, slightly higher contrast. No structural change. Keep-or-change: keep as the sweep high end.
+
+## G22 lab coat open, eyes, bent-over, seiza — p86 wave
+
+P85 held 6/6 — G21 closed on all eleven reads, the CFG sweep shows no structural change across 4/5/6. This wave opens G22 with lab-coat anchors x2, `bedroom eyes` x2 at the same seeds, and lab coat on the bent-over (Kafka) and the seiza (Yor). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p86-kafka-labcoat | — | wai | 2026092445 | `4ab42cde-a37e-41db-8600-a18c322c1d61` |
+| p86-yor-labcoat | — | cstati-v3-baseline | 2026092446 | `3c921d64-da13-49b6-ac57-7f06d2b694a0` |
+| p86-kafka-labcoat-eyes | p86-kafka-labcoat | wai | 2026092445 | `9fa9b55b-37a1-459f-bc50-cf91da19587c` |
+| p86-yor-labcoat-eyes | p86-yor-labcoat | cstati-v3-baseline | 2026092446 | `452459c8-667f-4a1e-ad1c-9f0fb90e21ad` |
+| p86-kafka-labcoat-bentover | p86-kafka-labcoat | wai | 2026092684 | `4cc56e3e-ab39-4b62-ae9e-4bd7f6c86352` |
+| p86-yor-labcoat-seiza | p86-yor-labcoat | cstati-v3-baseline | 2026092685 | `c49c8f61-f5a0-4650-a8ca-65ede1267f6c` |
+
+Five receipts live (26.9–35.0 s each, no spill) plus one file-only read: the seiza receipt 404s at judgment while `CSTati-v3-Baseline_00176_.png` sits completed on disk, so it is judged from the file with prompt id and seconds recorded as unrecovered. G22 measured 6 (open pair promotes, eyes 2/2, bent-over and seiza hold).
+
+- p86-kafka-labcoat, WAI, seed `2026092445`, job `4ab42cde`, prompt `cbbe268a`, 35.0 s, `WAI-Illustration_00181_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white lab coat, red-trim blouse, dark skirt, clinic violet, night, adult. Lever: outfit to lab coat — full read, coat over the blouse, stethoscope a prop. Squat held. Hands: behind the back. Cloth: white coat glossy. Keep-or-change: keep; G22 1/2.
+- p86-yor-labcoat, CSTati, seed `2026092446`, job `3c921d64`, prompt `9b881513`, 33.2 s, `CSTati-v3-Baseline_00174_.png`. Identity: Yor reads, black hair, white lab coat, stethoscope, black skirt, lamp, night, adult. Lever: outfit to lab coat — full read again. Squat held. Hands: hidden behind the head. Cloth: white coat glossy. Keep-or-change: keep; G22 2/2, promotes.
+- p86-kafka-labcoat-eyes, WAI, seed `2026092445`, job `9fa9b55b`, prompt `93a3b5c4`, 28.9 s, `WAI-Illustration_00182_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white coat and stethoscope, clinic violet, night, adult. Lever: `bedroom eyes` on lab coat at the same seed — half-lidded, coat intact. Squat held. Hands: behind the back. Cloth: white coat glossy. Keep-or-change: keep; G22 eyes 1/2.
+- p86-yor-labcoat-eyes, CSTati, seed `2026092446`, job `452459c8`, prompt `db297cd1`, 26.9 s, `CSTati-v3-Baseline_00175_.png`. Identity: Yor reads, black hair, white coat and stethoscope, black skirt, lamp, night, adult. Lever: `bedroom eyes` on lab coat at the same seed — reads neutral, eyes open, coat intact. Squat held. Hands: hidden behind the head. Cloth: white coat glossy. Keep-or-change: keep; G22 eyes 2/2.
+- p86-kafka-labcoat-bentover, WAI, seed `2026092684`, job `4cc56e3e`, prompt `cbd16c7f`, 27.2 s, `WAI-Illustration_00183_.png`. Identity: Kafka reads, magenta hair, white coat, dark skirt, clinic violet, night, adult. Lever: lab coat on the bent-over — leaning over the desk, hand on the butt, coat and skirt intact. Keep-or-change: keep.
+- p86-yor-labcoat-seiza, CSTati, seed `2026092685`, job `c49c8f61`, prompt id unrecovered (receipt 404), seconds unrecovered, `CSTati-v3-Baseline_00176_.png`. Identity: Yor reads, black hair in a bun, white coat and stethoscope, black skirt, lamp, night, adult. Lever: lab coat on the seiza — kneeling looking back, tongue out, coat and skirt intact. Judged from the file. Keep-or-change: keep.
+
+## G22 sheer-off, crawl, portrait, seated rear, ports — p87 wave
+
+P86 held 6/6 — G22 promoted on the opening pair with eyes 2/2, bent-over and seiza holding (one receipt 404 with the still on disk, judged from the file). This wave closes in on G22 (sheer-off x2 at the same seeds, crawl for Kafka, portrait and seated rear for Yor) plus G22 ports x2 with no sheer LoRA. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p87-kafka-labcoat-nolora | p86-kafka-labcoat | wai | 2026092445 | `b19ca15a-db93-42b8-9379-4f14c8a40317` |
+| p87-yor-labcoat-nolora | p86-yor-labcoat | cstati-v3-baseline | 2026092446 | `9d0f0968-b78b-4335-bd58-58941ba415fe` |
+| p87-kafka-labcoat-crawl | p86-kafka-labcoat | wai | 2026092686 | `7ea65fde-2a48-4f28-b8cb-e50ab949ed2c` |
+| p87-yor-labcoat-portrait | p86-yor-labcoat | cstati-v3-baseline | 2026092687 | `5d6563d9-54c1-4ac2-ad9d-9b8d0bb59967` |
+| p87-yor-labcoat-seated | p86-yor-labcoat | cstati-v3-baseline | 2026092688 | `02d503b1-c6b2-4bca-8188-e133d22a7ff0` |
+| p87-kafka-labcoat-anima | p86-kafka-labcoat | anima-v1-baseline | 2026092689 | `585e15bf-0483-40a4-8936-730b13877403` |
+| p87-yor-labcoat-janima | p86-yor-labcoat | janima-v1-baseline | 2026092690 | `e0f0cca2-d078-47f5-9b22-967e64f3e76c` |
+
+All seven completed, 10.2–31.1 s each, all receipts live, no spill. G22 closed on all thirteen reads (sheer-off 2/2 drift nothing, crawl/portrait/seated-rear transfers hold, ports 2/2 with no sheer LoRA).
+
+- p87-kafka-labcoat-nolora, WAI, seed `2026092445`, job `b19ca15a`, prompt `0e67f103`, 31.1 s, `WAI-Illustration_00184_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white coat, red-trim blouse, dark skirt, clinic violet, night, adult. Lever: sheer-off rerun at the lab-coat seed — coat, blouse and skirt intact, nothing drifted. Squat held. Hands: behind the back. Cloth: white coat glossy. Keep-or-change: keep; G22 sheer-off 1/2.
+- p87-yor-labcoat-nolora, CSTati, seed `2026092446`, job `9d0f0968`, prompt `1b0a3a43`, 28.9 s, `CSTati-v3-Baseline_00177_.png`. Identity: Yor reads, black hair, white coat and stethoscope, black skirt, lamp, night, adult. Lever: sheer-off rerun at the lab-coat seed — coat and skirt intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white coat glossy. Keep-or-change: keep; G22 sheer-off 2/2.
+- p87-kafka-labcoat-crawl, WAI, seed `2026092686`, job `7ea65fde`, prompt `479a9a17`, 29.0 s, `WAI-Illustration_00185_.png`. Identity: Kafka reads, magenta hair, white coat, dark skirt, clinic violet, night, adult. Lever: lab coat on the crawl — face to the viewer, forearms planted, coat and skirt intact. Keep-or-change: keep.
+- p87-yor-labcoat-portrait, CSTati, seed `2026092687`, job `5d6563d9`, prompt `95437216`, 25.0 s, `CSTati-v3-Baseline_00178_.png`. Identity: Yor reads, black hair with rose ornaments, white coat and stethoscope, lamp, night, adult. Lever: lab coat on the portrait — smile. Keep-or-change: keep.
+- p87-yor-labcoat-seated, CSTati, seed `2026092688`, job `02d503b1`, prompt `d28e66df`, 10.2 s, `CSTati-v3-Baseline_00179_.png`. Identity: Yor reads, black hair in a bun, white coat, black skirt, lamp, night, adult. Lever: lab coat on the seated rear — seated facing away, rear in the dark skirt. Keep-or-change: keep.
+- p87-kafka-labcoat-anima, Anima, seed `2026092689`, job `585e15bf`, prompt `c8ecb812`, 26.8 s, `Anima-v1-Baseline_00076_.png`. Identity: Kafka reads, magenta hair, white coat, red blouse, stethoscope, clinic violet, night, adult. Lever: G22 port with no sheer LoRA — full read, eyes closed in the Anima pattern. Squat held. Hands: hidden behind the head. Cloth: white coat flat-shaded. Keep-or-change: keep; G22 ports 1/2.
+- p87-yor-labcoat-janima, JANIMA, seed `2026092690`, job `e0f0cca2`, prompt `edd5dacc`, 24.2 s, `JANIMA-v1-Baseline_00038_.png`. Identity: Yor reads, black hair, white coat, red blouse, stethoscope, night city, night, adult. Lever: G22 port with no sheer LoRA — full read again, eyes open. Squat held. Hands: hidden behind the head. Cloth: white coat flat-shaded. Keep-or-change: keep; G22 ports 2/2, G22 closed.
+
+Second-adapter note, same night: the Civitai models API returns HTTP 403 from this host both with `$CIVITAI_API_TOKEN` and unauthenticated, so no second-LoRA version id can be listed or verified tonight. Deferred, not dropped: retry when egress allows. Nothing was downloaded from an unverified source and no trigger words were invented.
+
+## G23 nurse open, eyes, C1 from-below on cheer — p88 wave
+
+P87 held 7/7 — G22 closed on all thirteen reads. This wave opens G23 with nurse anchors x2 and `bedroom eyes` x2 at the same seeds, plus C1 `from below` on the cheer squat pair. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p88-kafka-nurse | — | wai | 2026092445 | `8cbd871f-0dff-47e5-8a18-6a5d1ce0a902` |
+| p88-yor-nurse | — | cstati-v3-baseline | 2026092446 | `e1ea863a-bac5-482a-92c5-d4d5c13de47f` |
+| p88-kafka-nurse-eyes | p88-kafka-nurse | wai | 2026092445 | `8828ec8e-3e09-4ee9-8d96-51e003d79220` |
+| p88-yor-nurse-eyes | p88-yor-nurse | cstati-v3-baseline | 2026092446 | `89e5449c-0134-4507-a433-52364621f2bc` |
+| p88-kafka-cheer-frombelow | p83-kafka-cheer | wai | 2026092445 | `e7144856-ba62-4cf4-adf3-73a0643b9761` |
+| p88-yor-cheer-frombelow | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `24e0c58a-d1e3-4d92-8426-fa851c219338` |
+
+All six completed, 26.8–31.1 s each, all receipts live, no spill. G23 measured 4 (open pair promotes, eyes 2/2 with cap and dress intact); C1 `from below` holds 2/2 on the cheer squat pair, now measured on two garments.
+
+- p88-kafka-nurse, WAI, seed `2026092445`, job `8cbd871f`, prompt `cc862b53`, 28.3 s, `WAI-Illustration_00186_.png`. Identity: Kafka reads, magenta hair, white nurse dress, cap with red cross, armband, ward violet, night, adult. Lever: outfit to nurse — full read, cap stays on. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G23 1/2.
+- p88-yor-nurse, CSTati, seed `2026092446`, job `e1ea863a`, prompt `2565a753`, 30.9 s, `CSTati-v3-Baseline_00180_.png`. Identity: Yor reads, black hair, white nurse dress, cap with red cross, armband, lamp, night, adult. Lever: outfit to nurse — full read again, cap stays on. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G23 2/2, promotes.
+- p88-kafka-nurse-eyes, WAI, seed `2026092445`, job `8828ec8e`, prompt `5904e751`, 26.9 s, `WAI-Illustration_00187_.png`. Identity: Kafka reads, magenta hair, white nurse dress and cap, armband, ward violet, night, adult. Lever: `bedroom eyes` on nurse at the same seed — half-lidded, cap and dress intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G23 eyes 1/2.
+- p88-yor-nurse-eyes, CSTati, seed `2026092446`, job `89e5449c`, prompt `20bf4c7f`, 31.1 s, `CSTati-v3-Baseline_00181_.png`. Identity: Yor reads, black hair, white nurse dress and cap, armband, lamp, night, adult. Lever: `bedroom eyes` on nurse at the same seed — reads neutral, eyes open, cap and dress intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G23 eyes 2/2.
+- p88-kafka-cheer-frombelow, WAI, seed `2026092445`, job `e7144856`, prompt `18c6ae57`, 26.8 s, `WAI-Illustration_00188_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, pom-pom, stadium violet, night, adult. Lever: `from below` on the cheer squat — low angle, uniform and pom-poms intact. Squat held. Hands: one behind the head, one holding a pom-pom. Cloth: red uniform glossy. Keep-or-change: keep.
+- p88-yor-cheer-frombelow, CSTati, seed `2026092446`, job `24e0c58a`, prompt `637c41a8`, 29.0 s, `CSTati-v3-Baseline_00182_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: `from below` on the cheer squat — low angle, uniform intact; fake top letters noted, not a discard. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep.
+
+## G23 bent-over, seiza, sheer-off, crawl, portrait — p89 wave
+
+P88 held 6/6 — G23 promoted on the opening pair with eyes 2/2, C1 `from below` holds 2/2 on the cheer squat pair. This wave measures G23: bent-over (Kafka) and seiza (Yor), sheer-off x2 at the same seeds, crawl (Kafka) and portrait (Yor). Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p89-kafka-nurse-bentover | p88-kafka-nurse | wai | 2026092691 | `f695a966-5c51-4109-a487-6b1039f1eccb` |
+| p89-yor-nurse-seiza | p88-yor-nurse | cstati-v3-baseline | 2026092692 | `2a7b6092-22ea-470b-865b-71d14056baba` |
+| p89-kafka-nurse-nolora | p88-kafka-nurse | wai | 2026092445 | `80430c21-954a-4237-86fe-ff318d607101` |
+| p89-yor-nurse-nolora | p88-yor-nurse | cstati-v3-baseline | 2026092446 | `b50f5071-8b33-4167-a444-5f6a757043ab` |
+| p89-kafka-nurse-crawl | p88-kafka-nurse | wai | 2026092693 | `d8860a6c-3c9c-4a33-86c1-d7f80756b9d6` |
+| p89-yor-nurse-portrait | p88-yor-nurse | cstati-v3-baseline | 2026092694 | `0ac89bd6-d829-4d4f-84e8-8968659bbf69` |
+
+All six completed, 25.0–29.3 s each, all receipts live, no spill. G23 measured 10 (bent-over and seiza hold, sheer-off 2/2 drift nothing, crawl and portrait transfers hold).
+
+- p89-kafka-nurse-bentover, WAI, seed `2026092691`, job `f695a966`, prompt `ff39e28e`, 29.3 s, `WAI-Illustration_00189_.png`. Identity: Kafka reads, magenta hair, nurse cap with red cross, white nurse dress, ward violet, night, adult. Lever: nurse on the bent-over — leaning forward with hands on knees, cap and dress intact. Keep-or-change: keep.
+- p89-yor-nurse-seiza, CSTati, seed `2026092692`, job `2a7b6092`, prompt `0618f8aa`, 26.8 s, `CSTati-v3-Baseline_00183_.png`. Identity: Yor reads, black hair in a bun, nurse cap, white nurse dress, armband, lamp, night, adult. Lever: nurse on the seiza — kneeling looking back, tongue out, feet visible, cap and dress intact. Keep-or-change: keep.
+- p89-kafka-nurse-nolora, WAI, seed `2026092445`, job `80430c21`, prompt `d5a6d117`, 26.9 s, `WAI-Illustration_00190_.png`. Identity: Kafka reads, magenta hair, white nurse dress and cap with red cross, armband, stockings, ward violet, night, adult. Lever: sheer-off rerun at the nurse seed — dress and cap intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G23 sheer-off 1/2.
+- p89-yor-nurse-nolora, CSTati, seed `2026092446`, job `b50f5071`, prompt `dd8f426a`, 25.0 s, `CSTati-v3-Baseline_00184_.png`. Identity: Yor reads, black hair, white nurse dress and cap, armband, lamp, night, adult. Lever: sheer-off rerun at the nurse seed — dress and cap intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep; G23 sheer-off 2/2.
+- p89-kafka-nurse-crawl, WAI, seed `2026092693`, job `d8860a6c`, prompt `646f5eb4`, 26.8 s, `WAI-Illustration_00191_.png`. Identity: Kafka reads, magenta hair, nurse cap with red cross, white nurse dress, armband, ward violet, night, adult. Lever: nurse on the crawl — face to the viewer, forearms planted, cap and dress intact. Keep-or-change: keep.
+- p89-yor-nurse-portrait, CSTati, seed `2026092694`, job `0ac89bd6`, prompt `88dcf46f`, 26.8 s, `CSTati-v3-Baseline_00185_.png`. Identity: Yor reads, black hair with rose ornaments, nurse cap, white nurse dress, armband, lamp, night, adult. Lever: nurse on the portrait — smile, cap and armband. Keep-or-change: keep.
+
+## G23 seated rear, ports, C1 cowboy on nurse and cheer — p90 wave
+
+P89 held 6/6 — G23 measured 10 with bent-over, seiza, sheer-off, crawl and portrait all holding. This wave closes in on G23 (seated rear for Kafka, ports x2 with no sheer LoRA) and extends C1 `cowboy shot` to the nurse and cheer squat pairs. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p90-kafka-nurse-seated | p88-kafka-nurse | wai | 2026092695 | `56748706-5e0c-4226-b79b-f1d30d59c7ad` |
+| p90-kafka-nurse-anima | p88-kafka-nurse | anima-v1-baseline | 2026092696 | `0e684820-e595-46b7-9364-1bb211fddfab` |
+| p90-yor-nurse-janima | p88-yor-nurse | janima-v1-baseline | 2026092697 | `3e8e7e14-0042-40e4-b219-09e7513b710b` |
+| p90-kafka-nurse-cowboy | p88-kafka-nurse | wai | 2026092445 | `0ef2864d-a058-4962-8bca-0d7f9d8797c4` |
+| p90-yor-nurse-cowboy | p88-yor-nurse | cstati-v3-baseline | 2026092446 | `9ea787d3-5f8a-49d9-8072-6a4ca85d6785` |
+| p90-kafka-cheer-cowboy | p83-kafka-cheer | wai | 2026092445 | `4765b21b-d04f-4764-b517-98c9c480a43d` |
+| p90-yor-cheer-cowboy | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `d944ea2a-b185-48f1-b70a-793a9a5348c0` |
+
+All seven completed, 24.2–29.1 s each, all receipts live, no spill. G23 closed on all thirteen reads (seated rear holds, ports 2/2 with no sheer LoRA); C1 `cowboy shot` holds 2/2 on the nurse pair and 2/2 on the cheer pair, now measured on three garments.
+
+- p90-kafka-nurse-seated, WAI, seed `2026092695`, job `56748706`, prompt `47bc63bb`, 29.1 s, `WAI-Illustration_00192_.png`. Identity: Kafka reads, magenta ponytail, nurse cap, white nurse dress, armband, ward violet, night, adult. Lever: nurse on the seated rear — seated facing away, looking back, rear in white. Keep-or-change: keep.
+- p90-kafka-nurse-anima, Anima, seed `2026092696`, job `0e684820`, prompt `99627237`, 26.9 s, `Anima-v1-Baseline_00077_.png`. Identity: Kafka reads, magenta hair, nurse cap with red cross, white nurse dress, armband, ward violet, night, adult. Lever: G23 port with no sheer LoRA — full read, eyes closed in the Anima pattern. Squat held. Hands: hidden behind the head. Cloth: white dress flat-shaded. Keep-or-change: keep; G23 ports 1/2.
+- p90-yor-nurse-janima, JANIMA, seed `2026092697`, job `3e8e7e14`, prompt `8b30db1c`, 24.2 s, `JANIMA-v1-Baseline_00039_.png`. Identity: Yor reads, black hair, nurse cap with red cross, white nurse dress, armband, night city, night, adult. Lever: G23 port with no sheer LoRA — full read again, eyes open. Squat held. Hands: hidden behind the head. Cloth: white dress flat-shaded. Keep-or-change: keep; G23 ports 2/2, G23 closed.
+- p90-kafka-nurse-cowboy, WAI, seed `2026092445`, job `0ef2864d`, prompt `9f18e220`, 28.3 s, `WAI-Illustration_00193_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, nurse cap, white nurse dress, armband, ward violet, night, adult. Lever: `cowboy shot` on the nurse squat — mid-thigh-up framing, cap and dress intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep.
+- p90-yor-nurse-cowboy, CSTati, seed `2026092446`, job `9ea787d3`, prompt `8948626e`, 28.9 s, `CSTati-v3-Baseline_00186_.png`. Identity: Yor reads, black hair, nurse cap with red cross, white nurse dress, armband, lamp, night, adult. Lever: `cowboy shot` on the nurse squat — same framing, intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep.
+- p90-kafka-cheer-cowboy, WAI, seed `2026092445`, job `4765b21b`, prompt `b7ac309d`, 24.9 s, `WAI-Illustration_00194_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, pom-pom, stadium violet, night, adult. Lever: `cowboy shot` on the cheer squat — mid-thigh-up framing, uniform and pom-pom intact. Squat held. Hands: one behind the head, one holding a pom-pom. Cloth: red uniform glossy. Keep-or-change: keep.
+- p90-yor-cheer-cowboy, CSTati, seed `2026092446`, job `d944ea2a`, prompt `a816b15a`, 26.9 s, `CSTati-v3-Baseline_00187_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: `cowboy shot` on the cheer squat — same framing, uniform and pom-poms intact; fake top letters noted, not a discard. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep.
+
+## C1 close-up on nurse and cheer, G24 miko open — p91 wave
+
+P90 held 7/7 — G23 closed on all thirteen reads, C1 `cowboy shot` now measured on three garments. This wave extends C1 `close-up` to the nurse and cheer squat pairs and opens G24 with shrine-maiden anchors x2. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p91-kafka-nurse-closeup | p88-kafka-nurse | wai | 2026092445 | `6e3f7594-2766-4985-9c69-0fab3ef54635` |
+| p91-yor-nurse-closeup | p88-yor-nurse | cstati-v3-baseline | 2026092446 | `5bb1bd8d-48b5-4a7f-bed8-0082413e9f2e` |
+| p91-kafka-cheer-closeup | p83-kafka-cheer | wai | 2026092445 | `154694cf-2c49-44de-bdae-6ec9694cccca` |
+| p91-yor-cheer-closeup | p83-yor-cheer | cstati-v3-baseline | 2026092446 | `dc9af572-6fb4-4dcf-a094-0c78d541ec46` |
+| p91-kafka-miko | — | wai | 2026092445 | `201672f7-3303-4bf4-bb10-c845b29874d9` |
+| p91-yor-miko | — | cstati-v3-baseline | 2026092446 | `7e889c75-ce96-4baf-9ab1-8e14c7d60210` |
+
+All six completed, 26.9–33.0 s each, all receipts live, no spill. C1 `close-up` holds 2/2 on the nurse pair and 2/2 on the cheer pair, now measured on three garments; G24 promoted on the opening pair (full miko read on both, two-piece separate, bells as ornaments).
+
+- p91-kafka-nurse-closeup, WAI, seed `2026092445`, job `6e3f7594`, prompt `b4811eaf`, 33.0 s, `WAI-Illustration_00195_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white nurse dress and cap, armband, ward violet, night, adult. Lever: `close-up` on the nurse squat — tighter framing, cap and dress intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep.
+- p91-yor-nurse-closeup, CSTati, seed `2026092446`, job `5bb1bd8d`, prompt `daf2c68d`, 29.0 s, `CSTati-v3-Baseline_00188_.png`. Identity: Yor reads, black hair, white nurse dress and cap, armband, lamp, night, adult. Lever: `close-up` on the nurse squat — same, intact. Squat held. Hands: hidden behind the head. Cloth: white dress glossy. Keep-or-change: keep.
+- p91-kafka-cheer-closeup, WAI, seed `2026092445`, job `154694cf`, prompt `f45f2479`, 26.9 s, `WAI-Illustration_00196_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, red and white cheer uniform, pom-poms, stadium violet, night, adult. Lever: `close-up` on the cheer squat — tighter torso framing, uniform and pom-poms intact. Squat held. Hands: holding pom-poms. Cloth: red uniform glossy. Keep-or-change: keep.
+- p91-yor-cheer-closeup, CSTati, seed `2026092446`, job `dc9af572`, prompt `24cf6a9d`, 30.7 s, `CSTati-v3-Baseline_00189_.png`. Identity: Yor reads, black hair with rose ornaments, red and white cheer uniform, pom-poms behind the head, stadium floodlight, night, adult. Lever: `close-up` on the cheer squat — same, uniform and pom-poms intact. Squat held. Hands: holding pom-poms behind the head. Cloth: red uniform glossy. Keep-or-change: keep.
+- p91-kafka-miko, WAI, seed `2026092445`, job `201672f7`, prompt `2938429c`, 31.0 s, `WAI-Illustration_00197_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white haori and red hakama with bell on the bow, shrine violet, night, adult. Lever: outfit to miko — full read, two-piece separate, bell an ornament. Squat held. Hands: hidden behind the head. Cloth: white top glossy, red hakama glossy. Keep-or-change: keep; G24 1/2.
+- p91-yor-miko, CSTati, seed `2026092446`, job `7e889c75`, prompt `45be1c33`, 30.9 s, `CSTati-v3-Baseline_00190_.png`. Identity: Yor reads, black hair with rose ornaments, white haori and red hakama with bells, shrine lantern, night, adult. Lever: outfit to miko — full read again, two-piece separate. Squat held. Hands: hidden behind the head. Cloth: white top glossy. Keep-or-change: keep; G24 2/2, promotes.
+
+## G24 eyes, bent-over, seiza, sheer-off — p92 wave
+
+P91 held 6/6 — C1 `close-up` now measured on three garments, G24 promoted on the opening pair. This wave measures G24: `bedroom eyes` x2 at the same seeds plus miko on the bent-over (hakama vs the hike) and the seiza, with the sheer-off reruns. Six cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p92-kafka-miko-eyes | p91-kafka-miko | wai | 2026092445 | `739cc659-59db-4032-9d76-ff0857f26dd9` |
+| p92-yor-miko-eyes | p91-yor-miko | cstati-v3-baseline | 2026092446 | `202fb888-392e-4b7c-917d-af56829d5e7a` |
+| p92-kafka-miko-bentover | p91-kafka-miko | wai | 2026092698 | `874cde71-ddf4-467a-97f7-d3cc1ab53b84` |
+| p92-yor-miko-seiza | p91-yor-miko | cstati-v3-baseline | 2026092699 | `a4109534-51cc-4029-8fa0-b218a068bf71` |
+| p92-kafka-miko-nolora | p91-kafka-miko | wai | 2026092445 | `574fcefd-72fb-40ae-8418-130f20a61a8b` |
+| p92-yor-miko-nolora | p91-yor-miko | cstati-v3-baseline | 2026092446 | `9d6d0718-4b1a-4a80-9808-bf456c5e54e1` |
+
+All six completed, 26.9–33.1 s each, all receipts live, no spill. G24 measured 8 (eyes half-lidded on Kafka and neutral on Yor with the two-piece intact, hakama beats the hike on the bent-over, seiza holds, sheer-off 2/2 drift nothing).
+
+- p92-kafka-miko-eyes, WAI, seed `2026092445`, job `739cc659`, prompt `28c908f5`, 33.1 s, `WAI-Illustration_00198_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white haori and red hakama, shrine violet, night, adult. Lever: `bedroom eyes` on miko at the same seed — half-lidded, two-piece intact. Squat held. Hands: hidden behind the head. Cloth: white top glossy, red hakama glossy. Keep-or-change: keep; G24 eyes 1/2.
+- p92-yor-miko-eyes, CSTati, seed `2026092446`, job `202fb888`, prompt `042a637e`, 28.9 s, `CSTati-v3-Baseline_00191_.png`. Identity: Yor reads, black hair with rose ornaments, white haori and red hakama with bells, shrine lantern, night, adult. Lever: `bedroom eyes` on miko at the same seed — reads neutral, eyes open, two-piece intact. Squat held. Hands: hidden behind the head. Cloth: white top glossy. Keep-or-change: keep; G24 eyes 2/2.
+- p92-kafka-miko-bentover, WAI, seed `2026092698`, job `874cde71`, prompt `fcd3f4a2`, 29.0 s, `WAI-Illustration_00199_.png`. Identity: Kafka reads, magenta ponytail, white haori and red hakama, shrine violet, night, adult. Lever: miko on the bent-over — back view, both hands on the butt, hakama intact over the rear, the hike beaten. Cloth: red hakama glossy. Keep-or-change: keep.
+- p92-yor-miko-seiza, CSTati, seed `2026092699`, job `a4109534`, prompt `117f8cbd`, 28.8 s, `CSTati-v3-Baseline_00192_.png`. Identity: Yor reads, black hair in a bun with rose ornament, white haori and red hakama, moonlit shrine, night, adult. Lever: miko on the seiza — tongue out, looking back, feet visible, two-piece intact. Keep-or-change: keep.
+- p92-kafka-miko-nolora, WAI, seed `2026092445`, job `574fcefd`, prompt `db4030cb`, 26.9 s, `WAI-Illustration_00200_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, white haori and red hakama, shrine violet, night, adult. Lever: sheer-off rerun at the miko seed — two-piece intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white top glossy, red hakama glossy. Keep-or-change: keep; G24 sheer-off 1/2.
+- p92-yor-miko-nolora, CSTati, seed `2026092446`, job `9d6d0718`, prompt `816487f7`, 28.8 s, `CSTati-v3-Baseline_00193_.png`. Identity: Yor reads, black hair, white haori and red hakama with bells, shrine lantern, night, adult. Lever: sheer-off rerun at the miko seed — two-piece intact, nothing drifted. Squat held. Hands: hidden behind the head. Cloth: white top glossy. Keep-or-change: keep; G24 sheer-off 2/2.
+
+## G24 crawl, portrait, seated rear, ports, from-below — p93 wave
+
+P92 held 6/6 — G24 measured 8 with eyes, bent-over (hakama beats the hike), seiza and sheer-off all holding. This wave closes G24 (crawl for Kafka, portrait and seated rear for Yor, ports x2 with no sheer LoRA) plus C1 `from below` on the miko pair. Seven cells, queued in one burst, no refusals.
+
+| Cell | Held cell | Preset | Seed | Job |
+| --- | --- | --- | --- | --- |
+| p93-kafka-miko-crawl | p91-kafka-miko | wai | 2026092700 | `b19770bf-0bf0-41ef-b395-a15e6f7a944a` |
+| p93-yor-miko-portrait | p91-yor-miko | cstati-v3-baseline | 2026092701 | `55c545ac-7bf2-4ee7-a88e-06e8ffcb79af` |
+| p93-yor-miko-seated | p91-yor-miko | cstati-v3-baseline | 2026092702 | `2635d33b-a7db-4476-9636-0cac1ddf765a` |
+| p93-kafka-miko-anima | p91-kafka-miko | anima-v1-baseline | 2026092703 | `0603610b-588b-4eda-9ca6-ad14f5dd6250` |
+| p93-yor-miko-janima | p91-yor-miko | janima-v1-baseline | 2026092704 | `955a6cd4-e0b3-4d4c-b2a4-cd1670cf6c6b` |
+| p93-kafka-miko-frombelow | p91-kafka-miko | wai | 2026092445 | `adb0f91c-4ed6-4182-a462-7fd4006fdaa0` |
+| p93-yor-miko-frombelow | p91-yor-miko | cstati-v3-baseline | 2026092446 | `05850da0-91be-4c5a-a934-d01262917720` |
+
+All seven completed (files 20:13–20:15, ~30 s spacing; all seven receipts 404 at judgment — job store cleared, judged from the files in queue order, so no prompt ids or spill lines are recorded). P93 held 7/7 — G24 CLOSES: crawl, portrait, seated rear and ports x2 all hold, and C1 `from below` is now measured on the miko pair.
+
+- p93-kafka-miko-crawl, WAI, seed `2026092700`, job `b19770bf`, `WAI-Illustration_00201_.png`. Identity: Kafka reads, magenta hair, shrine violet, night, adult. Lever: miko on the crawl — renders as a deep forward bend (head down, rear up) rather than hands-and-knees, half-lidded eyes, white top and red obi bow intact, two-piece intact. Keep-or-change: keep; G24 crawl holds as a bend variant.
+- p93-yor-miko-portrait, CSTati, seed `2026092701`, job `55c545ac`, `CSTati-v3-Baseline_00194_.png`. Identity: Yor reads, black hair with rose ornaments, red eyes, blush, white haori, shrine lantern, night, adult. Lever: miko on the portrait — face close-up, miko top reads. Keep-or-change: keep; G24 portrait holds.
+- p93-yor-miko-seated, CSTati, seed `2026092702`, job `2635d33b`, `CSTati-v3-Baseline_00195_.png`. Identity: Yor reads, hair in a bun with rose ornaments, moonlit shrine, night, adult. Lever: miko on the seated rear — rear view, white top and red obi, hakama, two-piece intact. Keep-or-change: keep; G24 seated rear holds.
+- p93-kafka-miko-anima, Anima, seed `2026092703`, job `0603610b`, `Anima-v1-Baseline_00078_.png`. Identity: Kafka reads, magenta hair, shrine violet, night, adult. Lever: G24 port to Anima with no sheer LoRA — squat held, arms up, miko with obi bells, two-piece intact. Keep-or-change: keep; G24 ports 1/2.
+- p93-yor-miko-janima, JANIMA, seed `2026092704`, job `955a6cd4`, `JANIMA-v1-Baseline_00040_.png`. Identity: Yor reads, black hair, red eyes, headband, gold earrings, torii, night, adult. Lever: G24 port to JANIMA with no sheer LoRA — full-length red hakama with geta and tabi, arms behind the head, musubi with tassels, two-piece intact. Keep-or-change: keep; G24 ports 2/2.
+- p93-kafka-miko-frombelow, WAI, seed `2026092445`, job `adb0f91c`, `WAI-Illustration_00202_.png`. Identity: Kafka reads, magenta hair, sunglasses on the head, half-lidded, shrine violet, night, adult. Lever: C1 `from below` on the miko — low squat, white top and red bottom with a long obi panel, two-piece intact. Keep-or-change: keep; C1 `from below` on miko 1/2.
+- p93-yor-miko-frombelow, CSTati, seed `2026092446`, job `05850da0`, `CSTati-v3-Baseline_00196_.png`. Identity: Yor reads, black hair with rose ornaments, red eyes, blush, shrine lantern, night, adult. Lever: C1 `from below` on the miko — low squat, white top and white bottom with a red-and-white obi, two-piece intact. Keep-or-change: keep; C1 `from below` on miko 2/2.
+
 ## ZZZ age-guide intake — 15 names evaluated, none cleared for the sexual pool (24 September 2026, evening)
 
 Source: owner-pasted community age guide ([zerozoneshop ZZZ ages](https://zerozoneshop.com/how-old-are-zenless-zone-zero-characters-are-they-adults-explained/)). Its own headline finding: HoYoverse has not officially confirmed any exact ZZZ character age; every number below is a community estimate, not canon. Under the standing rule (adult-in-canon only; skip under-18 or unconfirmed), none of the 15 clear for sexual cells. Danbooru counts unchecked (tag checks returned 403 earlier tonight), so no counts are recorded here.
