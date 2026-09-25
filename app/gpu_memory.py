@@ -83,7 +83,9 @@ def _reconcile(values, total, own_pid=None):
 
     Returns `(excluded_pids, others_bytes, reconciled)`. When process counters exceed the adapter figure
     beyond sampling headroom, use the adapter figure (minus a credible owned process) instead of guessing
-    which of the remaining process counters account for its actual usage.
+    which of the remaining process counters account for its actual usage. An owned counter that already
+    exceeds the adapter figure is impossible, so it is not subtracted; credible other-process usage is
+    retained up to the adapter figure instead.
     """
     if total is None: return [], sum(value for pid, value in values.items() if pid != own_pid), False
     limit = total * RECONCILE_RATIO + RECONCILE_SLOP_BYTES
@@ -92,6 +94,10 @@ def _reconcile(values, total, own_pid=None):
     if total == 0 and summed > 0: return excluded, None, False
     if own_pid is not None and own_pid in excluded: return excluded, None, False
     if excluded or summed > limit:
+        own_value = values.get(own_pid, 0) if own_pid is not None else 0
+        if own_pid is not None and own_value > total:
+            credible = sum(value for pid, value in values.items() if pid != own_pid and pid not in excluded)
+            return excluded, min(total, credible), True
         return excluded, max(0, total - values.get(own_pid, 0)), True
     return [], sum(value for pid, value in values.items() if pid != own_pid), False
 
