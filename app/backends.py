@@ -297,6 +297,9 @@ class BackendManager:
         if not self.available(self.profiles[identifier]):raise ValueError('This environment is not installed completely. '+self.readiness(self.profiles[identifier])['message'])
         with self.studio.lock:
             if self.busy:raise ValueError('A backend switch is already running; follow its current status')
+            # A switch launches a backend; while another local GPU tenant holds the lease that is refused (409 gpu_leased).
+            lease=getattr(self.studio,'gpu_lease',None)
+            if lease:lease.require_available()
             if self._local_work():raise ValueError('Finish or reconcile active Studio work before switching backends')
             self._check_retained_startup()
             self._check_startup_processes()
