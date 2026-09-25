@@ -234,3 +234,13 @@ class WorkspaceTests(unittest.TestCase):
                     self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': [bad]})
                 self.assertEqual(self.store.get(self.asset), before)
                 self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_rejects_falsey_non_string_tags_without_changing_state(self):
+        self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': ['kept']})
+        for bad in (0, False, None):
+            with self.subTest(bad=repr(bad)):
+                before = self.store.get(self.asset); receipts = self._receipt_count()
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'Tag must be text up to 60 characters'):
+                    self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': [bad]})
+                self.assertEqual(self.store.get(self.asset), before)
+                self.assertEqual(self._receipt_count(), receipts)
