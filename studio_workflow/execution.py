@@ -13,12 +13,26 @@ import uuid
 from .core import canonical, digest, need
 
 TICKET_VERSION = 'studio.run-ticket/v1'
-RECIPE_KEYS = {'preset_id', 'controls', 'references', 'parent_assets', 'batch_count', 'expected_template_sha256'}
+RECIPE_KEYS = {'preset_id', 'controls', 'references', 'parent_assets', 'batch_count', 'expected_template_sha256', 'label'}
 NAMESPACE = uuid.UUID('33791d36-41a5-4bc8-b793-c567ffb8a73a')
+
+
+def _clean_run_label(value):
+    # Keep guidance/qualification imports free of the runtime app package.
+    # server.py puts this repository's app directory ahead of ComfyUI's own app package.
+    try:
+        from workspace import clean_run_label
+    except ModuleNotFoundError as exc:
+        if exc.name != 'workspace':
+            raise
+        from app.workspace import clean_run_label
+    return clean_run_label(value)
 
 
 def _pins(studio, recipe):
     need(isinstance(recipe, dict) and set(recipe) <= RECIPE_KEYS, 'Only registered recipe fields are accepted; raw graphs are not runnable')
+    if isinstance(recipe, dict) and 'label' in recipe and recipe['label'] is not None:
+        _clean_run_label(recipe['label'])
     need(recipe.get('batch_count', 1) == 1 and type(recipe.get('batch_count', 1)) is int, 'This ticket supports one graph invocation, not a batch')
     parents = recipe.get('parent_assets', [])
     need(isinstance(parents, list) and len(parents) <= 8, 'Use up to eight parent assets')
@@ -55,6 +69,11 @@ def prepare_ticket(studio, recipe):
     with studio.lock:
         pins = _pins(studio, recipe)
         recipe = json.loads(canonical(recipe))
+        if 'label' in recipe:
+            if recipe['label'] is None:
+                del recipe['label']
+            else:
+                recipe['label'] = _clean_run_label(recipe['label'])
         recipe['batch_count'] = 1
         recipe['expected_template_sha256'] = pins['template_sha256']
         # Recompute after inserting the explicit template guard, so preparation and
@@ -74,6 +93,9 @@ def run_ticket(studio, ticket, approved=False):
     except (ValueError, TypeError, KeyError, AttributeError) as exc:
         raise ValueError('Invalid request identity') from exc
     need(request_id == ticket['request_id'], 'Use the exact prepared request identity')
+    recipe = ticket.get('recipe')
+    if isinstance(recipe, dict) and 'label' in recipe and recipe['label'] is not None:
+        _clean_run_label(recipe['label'])
     identity = digest(ticket)
     job_id = str(uuid.uuid5(NAMESPACE, request_id))
     with studio.lock:
