@@ -65,33 +65,33 @@ def _observations(archive, evidence):
     return found
 
 
-def _bound_comparison(comparison):
+def _bound_comparison(comparison, remaining_edits):
     """Bound stored edit details while keeping exact aggregates, rate and status.
 
-    Comparisons at or under the cap are returned unchanged so existing small
-    reports stay byte-for-byte projection-compatible. Larger ones keep the
-    first MAX_COMPARISON_EDITS details (the comparator emits them in a
-    deterministic order) plus an explicit edits_omitted count. The omission
-    marker is only present when details were omitted.
+    Comparisons that fit the remaining report budget are returned unchanged.
+    Larger ones keep the first details in deterministic comparator order plus
+    an explicit edits_omitted count. The marker appears only for omissions.
     """
-    if comparison is None or len(comparison['edits']) <= MAX_COMPARISON_EDITS:
+    if comparison is None or len(comparison['edits']) <= remaining_edits:
         return comparison
     trimmed = dict(comparison)
-    trimmed['edits'] = comparison['edits'][:MAX_COMPARISON_EDITS]
-    trimmed['edits_omitted'] = len(comparison['edits']) - MAX_COMPARISON_EDITS
+    trimmed['edits'] = comparison['edits'][:remaining_edits]
+    trimmed['edits_omitted'] = len(comparison['edits']) - remaining_edits
     return trimmed
 
 
 def _assemble_report(archive, evidence, lexicon, *, bound_edits):
     book = validate_lexicon(lexicon); observations = _observations(archive, evidence)
-    targets = []
+    targets = []; remaining_edits = MAX_COMPARISON_EDITS
     for target in _targets(archive):
         observation = observations.get(target['id']); comparison = None
         if observation is None: status = 'not-transcribed'
         elif observation['method'] == 'forced-alignment': status = 'not-independent'
         else:
             full = compare_text(target['text'], observation['text'], book); status = full['status']
-            comparison = _bound_comparison(full) if bound_edits else full
+            comparison = _bound_comparison(full, remaining_edits) if bound_edits else full
+            if bound_edits:
+                remaining_edits -= len(comparison['edits'])
         targets.append({'id': target['id'], 'intended_text': target['text'],
             'text_sha256': digest_bytes(target['text'].encode('utf-8')), 'audio_sha256': target['audio_sha256'],
             'transcript_status': status, 'listening_status': 'unreviewed', 'comparison': comparison,

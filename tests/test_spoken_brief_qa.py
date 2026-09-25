@@ -289,6 +289,36 @@ class QATests(unittest.TestCase):
         self.assertEqual(100, loaded['targets'][-1]['comparison']['counts']['deletion'])
         self.assertEqual('empty', loaded['targets'][-1]['transcript_status'])
 
+    def test_many_empty_segments_share_one_report_edit_budget(self):
+        from spoken_brief_exports import _json_bytes
+        from spoken_brief_transport import MAX_JSON_BYTES
+        segments = [{'id': f's{i:03}', 'text': ('a ' * 66).strip(),
+                     'audio_sha256': f'{i:064x}'} for i in range(240)]
+        archive = {'manifest_sha256': 'a' * 64, 'manifest_file_sha256': 'b' * 64,
+            'assembly_receipt_sha256': 'c' * 64, 'producer_sha256': 'd' * 64,
+            'source': {'sha256': 'e' * 64}, 'master': {'sha256': 'f' * 64},
+            'segments': segments}
+        producer = {'id': 'offline-fixture', 'revision': 'fixture-v1',
+            'runtime_sha256': 'd' * 64, 'configuration_sha256': 'e' * 64}
+        observations = [{'target': segment['id'], 'audio_sha256': segment['audio_sha256'],
+            'text': '', 'method': 'independent-asr', 'producer': producer} for segment in segments]
+        observations.append({'target': 'master', 'audio_sha256': archive['master']['sha256'],
+            'text': '', 'method': 'independent-asr', 'producer': producer})
+        evidence = {'schema_version': 1, 'manifest_sha256': archive['manifest_sha256'],
+            'master_sha256': archive['master']['sha256'], 'observations': observations}
+        report = self.m.build_report(archive, evidence)
+        comparisons = [target['comparison'] for target in report['targets']]
+        self.assertEqual(15840, comparisons[-1]['counts']['deletion'])
+        self.assertTrue(all(target['transcript_status'] == 'empty' for target in report['targets']))
+        self.assertEqual(64, sum(len(value['edits']) for value in comparisons))
+        self.assertEqual(31680 - 64, sum(value.get('edits_omitted', 0) for value in comparisons))
+        self.assertLessEqual(len(_json_bytes(report)), MAX_JSON_BYTES)
+        with patch.object(self.m, 'inspect_run', return_value=archive):
+            first = self.m.save_report(self.directory, evidence)
+            loaded = self.m.load_report(self.directory, first['id'])
+            self.assertEqual(report, loaded)
+            self.assertTrue(self.m.save_report(self.directory, evidence)['reused'])
+
     def test_review_is_separate_and_exact_audio_bound(self):
         before = (self.directory / 'receipt.json').read_bytes(); saved = self.review()
         value = self.m.load_review(self.directory, saved['id'])
