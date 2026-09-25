@@ -11,6 +11,7 @@ import unittest
 
 from large_job_prep_test_support import GIB, LargeJobPreparationTestCase, Studio, observation
 from large_job_prep_common import WorkBlockedError
+import resource_admission
 
 
 def observing_job(status="uncertain", prompt="p-1"):
@@ -381,6 +382,63 @@ class LargeJobPreparationClassificationTests(LargeJobPreparationTestCase):
         self.assertEqual((blockers["count"], blockers["blocks_all"], blockers["blocks_restart"]), (31, 1, 30))
         self.assertEqual(len(blockers["items"]), 20)
         self.assertEqual(blockers["items"][0]["id"], "zz-running")
+
+    def test_job_inserted_during_work_blocker_classification_does_not_raise(self):
+        # #956: Studio.create_job inserts under Studio.lock while preparation
+        # classifies. The reader snapshots under the lock, so the insert cannot
+        # raise RuntimeError here; any unexpected raise fails this test.
+        studio = Studio(self.root, [observation(commit=20 * GIB)])
+        studio.jobs["u"] = observing_job()
+        controller = self.controller(studio)
+        original = type(controller)._open_prompts
+
+        def classify(job):
+            if "late" not in studio.jobs:
+                studio.jobs["late"] = {"status": "running", "submissions": []}
+            return original(job)
+
+        controller._open_prompts = classify
+        blockers = controller._work_blockers()
+        self.assertTrue(any(item["id"] == "u" for item in blockers))
+        self.assertFalse(any(item["id"] == "late" for item in blockers))
+        # The next recheck sees the newly in-flight job and refuses lifecycle actions.
+        with self.assertRaises(WorkBlockedError) as caught:
+            controller._check_work("In-flight Studio work (queued, submitting or running) blocks resource cleanup")
+        self.assertEqual(caught.exception.blockers["blocks_all"], 1)
+        self.assertTrue(any(item["id"] == "late" for item in caught.exception.blockers["items"]))
+
+    def test_job_inserted_during_reservation_snapshot_does_not_raise(self):
+        # #956: same insert-during-classification race through the reservation
+        # reader. Classifying the snapshot cannot raise RuntimeError; any
+        # unexpected raise fails this test.
+        studio = Studio(self.root, [observation(commit=20 * GIB)])
+        studio.jobs["owner"] = {
+            "status": "running",
+            "submissions": [],
+            "resource_admission": [{
+                "state": "reserved",
+                "reservation": {"physical_ram_bytes": 1, "windows_commit_bytes": 1, "vram_bytes": 1},
+            }],
+        }
+        controller = self.controller(studio)
+        original = resource_admission._definitive_terminal
+
+        def definitive(job):
+            if "late" not in studio.jobs:
+                studio.jobs["late"] = {"status": "running", "submissions": []}
+            return original(job)
+
+        resource_admission._definitive_terminal = definitive
+        try:
+            snapshot = controller._reservation_snapshot()
+        finally:
+            resource_admission._definitive_terminal = original
+        self.assertNotIn("late", snapshot["owners"])
+        # The next recheck sees the newly in-flight job and refuses lifecycle actions.
+        with self.assertRaises(WorkBlockedError) as caught:
+            controller._check_work("In-flight Studio work (queued, submitting or running) blocks resource cleanup")
+        self.assertEqual(caught.exception.blockers["blocks_all"], 2)
+        self.assertTrue(any(item["id"] == "late" for item in caught.exception.blockers["items"]))
 
 
 if __name__ == "__main__":
