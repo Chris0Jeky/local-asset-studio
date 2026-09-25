@@ -492,6 +492,8 @@ class AssetWorkspace:
     def save_setup(self, payload):
         if not isinstance(payload, dict):
             raise WorkspaceError("Setup request must be an object")
+        if payload.get("action") == "delete" and "id" not in payload:
+            raise WorkspaceError("Setup ID is required to delete a setup")
         if "id" in payload:
             identifier = payload["id"]
             if not isinstance(identifier, str) or not identifier or len(identifier) > 128:
