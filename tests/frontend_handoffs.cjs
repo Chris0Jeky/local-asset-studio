@@ -605,6 +605,15 @@ async function pastedAndDroppedPicturesFillEmptySlots() {
   assert.match(s.element('#status').textContent, /3 pictures added\. 1 more was ignored/);
   await flush(); await flush();
   assert.deepEqual(slots(), ['up-y.png', 'up-x.png', 'up-z.png']);
+  // An unsupported or oversized file never takes a valid picture's slot (Codex review on #974).
+  s.run(`selectPreset('qwen-3ref');referenceRecords[0].file='kept.png';referenceRecords[2].file='kept.png';`);
+  s.element('#referenceCards').ondrop({preventDefault() {}, target: {closest: () => ({dataset: {refDrop: '0'}})}, dataTransfer: {files: [png('bad.gif', 10, 'image/gif'), png('huge.png', 21 * 1024 * 1024), png('good.png')]}});
+  assert.match(s.element('#status').textContent, /1 picture added\. 2 other files were skipped/);
+  await flush(); await flush();
+  assert.deepEqual(slots(), ['up-good.png', null, 'kept.png'], 'The valid picture takes the dropped-on slot');
+  assert.ok(!uploads().includes('bad.gif') && !uploads().includes('huge.png'));
+  s.element('#referenceCards').ondrop({preventDefault() {}, target: {closest: () => ({dataset: {refDrop: '1'}})}, dataTransfer: {files: [png('bad.gif', 10, 'image/gif')]}});
+  assert.match(s.element('#status').textContent, /Nothing was added/);
   // The slot picker is cleared after each attempt, so choosing the same file again fires a new change event.
   const input = {dataset: {refFile: '0'}, files: [png('again.png')], value: 'C:\\fakepath\\again.png'};
   s.element('#referenceCards').listeners.change({target: input});

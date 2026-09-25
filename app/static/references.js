@@ -124,18 +124,21 @@ $('#referenceCards').ondragover=e=>{e.preventDefault();};
 $('#referenceCards').ondrop=e=>{e.preventDefault();const card=e.target.closest('[data-ref-drop]');if(card)fillReferenceSlots(e.dataTransfer.files,Number(card.dataset.refDrop));};
 // Several pictures dropped or pasted at once fill the empty slots in order instead of vanishing silently (#772).
 // `first` is the card a drop landed on: it takes the first picture even when filled, exactly as a single drop did.
-// Every picture still goes through uploadRoleFile, so its size limit and the server's type check are unchanged.
+// Unsupported or oversized files are skipped before slots are assigned, so they never take a valid picture's slot;
+// every picture still goes through uploadRoleFile, so its size limit and the server's type check are unchanged.
+const referencePasteTypes=['image/png','image/jpeg','image/webp'];
 function emptyReferenceSlots(except=null){return referenceRecords.map((r,i)=>i).filter(i=>i!==except&&(!referenceRecords[i].file||referenceRecords[i].missing)&&!referenceUploading.has(referenceRecords[i]));}
 function fillReferenceSlots(files,first=null){
-  const pictures=[...(files||[])],targets=[...(first===null?[]:[first]),...emptyReferenceSlots(first)],placed=pictures.slice(0,targets.length);
+  const all=[...(files||[])],pictures=all.filter(file=>referencePasteTypes.includes(file?.type)&&file.size<=20*1024*1024),skipped=all.length-pictures.length,targets=[...(first===null?[]:[first]),...emptyReferenceSlots(first)],placed=pictures.slice(0,targets.length);
   placed.forEach((file,k)=>uploadRoleFile(targets[k],file));
   const ignored=pictures.length-placed.length;
-  if(ignored)message(placed.length+' picture'+(placed.length===1?'':'s')+' added. '+ignored+' more '+(ignored===1?'was':'were')+' ignored: '+(placed.length?'no other reference slot is empty':'every reference slot is already filled')+'. Clear a slot to add '+(ignored===1?'it':'them')+'.',true);
-  return {placed:placed.length,ignored,slots:targets.slice(0,placed.length)};
+  if(skipped&&!pictures.length)message('Use PNG, JPG or WebP pictures up to 20 MiB. Nothing was added.',true);
+  else if(skipped&&!ignored)message(placed.length+' picture'+(placed.length===1?'':'s')+' added. '+skipped+' other file'+(skipped===1?' was':'s were')+' skipped: use PNG, JPG or WebP up to 20 MiB.',true);
+  else if(ignored)message((skipped?skipped+' unsupported file'+(skipped===1?' was':'s were')+' skipped. ':'')+placed.length+' picture'+(placed.length===1?'':'s')+' added. '+ignored+' more '+(ignored===1?'was':'were')+' ignored: '+(placed.length?'no other reference slot is empty':'every reference slot is already filled')+'. Clear a slot to add '+(ignored===1?'it':'them')+'.',true);
+  return {placed:placed.length,ignored,skipped,slots:targets.slice(0,placed.length)};
 }
 // Pasting a picture on Create puts it into the first empty reference slot through the same path an upload or a drop
 // takes. A paste into a text field with text on the clipboard is never intercepted: the browser pastes the text (#772).
-const referencePasteTypes=['image/png','image/jpeg','image/webp'];
 function referenceInputEmpty(id){const input=$('#'+id);return !!input&&!input.files?.length&&!(id==='reference'?uploaded:lastUploaded);}
 function stageReferenceInput(id,file){
   const input=$('#'+id),transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;
