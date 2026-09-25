@@ -78,6 +78,31 @@ class IntakePublicationTests(unittest.TestCase):
         record = self.journal(); self.assertEqual(record['status'], 'needs_inspection')
         self.assertEqual(Path(record['partial_path']).read_bytes(), self.body)
 
+    def test_model_root_drift_before_journal_refuses_without_side_effects(self):
+        drifted = self.target.with_name('drifted.safetensors')
+        with patch.object(intake.ModelLibrary, 'destination', return_value=drifted):
+            with self.assertRaisesRegex(ValueError, 'Model root changed during intake'):
+                self.run_intake()
+        self.assert_source()
+        self.assertFalse(self.target.exists())
+        self.assertFalse(drifted.exists())
+        self.assertFalse((self.state/'intake').exists())
+
+    def test_destination_drift_after_publication_refuses_before_receipt(self):
+        publish = intake.publish_verified
+
+        def drift_after_publish(source, target, identity):
+            result = publish(source, target, identity)
+            target.write_bytes(b'post-publication writer')
+            return result
+
+        with patch.object(intake, 'publish_verified', side_effect=drift_after_publish):
+            with self.assertRaisesRegex(ValueError, 'Destination changed before receipt'):
+                self.run_intake()
+        self.assert_source()
+        self.assertEqual(self.target.read_bytes(), b'post-publication writer')
+        self.assertEqual(self.journal()['status'], 'needs_inspection')
+
     def test_source_replacement_after_planning_refuses_before_journal(self):
         old = self.source.with_suffix('.old'); self.source.rename(old); self.source.write_bytes(self.body)
         with self.assertRaisesRegex(ValueError, 'changed since'):self.run_intake()
