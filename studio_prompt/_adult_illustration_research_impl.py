@@ -107,6 +107,7 @@ def _manifest_directory(root: Path | str) -> Path:
 
 
 def _read_manifest(root: Path | str, filename: str) -> tuple[dict[str, Any], str]:
+    """Read one regular manifest only after enforcing its byte bound."""
     directory = _manifest_directory(root)
     path = directory / filename
     if path.is_symlink():
@@ -116,17 +117,32 @@ def _read_manifest(root: Path | str, filename: str) -> tuple[dict[str, Any], str
         raise ValueError(f"Research manifest escapes its directory: {filename}")
     if not resolved.is_file():
         raise ValueError(f"Research manifest is not a file: {filename}")
-    data = resolved.read_bytes()
+    info = resolved.stat()
+    if info.st_size > MAX_MANIFEST_BYTES:
+        raise ValueError(
+            f"Research manifest exceeds {MAX_MANIFEST_BYTES} bytes: {filename}"
+        )
+    with resolved.open("rb") as stream:
+        data = stream.read(MAX_MANIFEST_BYTES + 1)
     if len(data) > MAX_MANIFEST_BYTES:
-        raise ValueError(f"Research manifest exceeds {MAX_MANIFEST_BYTES} bytes: {filename}")
+        raise ValueError(
+            f"Research manifest exceeds {MAX_MANIFEST_BYTES} bytes: {filename}"
+        )
+    if len(data) != info.st_size:
+        raise ValueError(f"Research manifest changed while being read: {filename}")
     try:
-        text = data.decode("utf-8")
         value = json.loads(
-            text,
+            data.decode("utf-8"),
             object_pairs_hook=_pairs,
             parse_constant=_reject_constant,
         )
-    except (UnicodeError, json.JSONDecodeError, DuplicateKeyError, ValueError) as exc:
+    except (
+        UnicodeError,
+        json.JSONDecodeError,
+        DuplicateKeyError,
+        ValueError,
+        RecursionError,
+    ) as exc:
         raise ValueError(f"Invalid research manifest {filename}: {exc}") from exc
     if not isinstance(value, dict):
         raise ValueError(f"Research manifest must contain a JSON object: {filename}")
