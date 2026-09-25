@@ -45,7 +45,12 @@ class JournalMixin:
                 break
         else:
             if len(records) >= MAX_RECORDS:
-                raise PreparationError("Large-job preparation receipt retention is full")
+                for evict_index, candidate in enumerate(records):
+                    if candidate.get("state") in ("completed", "refused"):
+                        del records[evict_index]
+                        break
+                else:
+                    raise PreparationError("Large-job preparation receipt retention is full")
             records.append(copy.deepcopy(receipt))
         _canonical(receipt, MAX_RECEIPT_BYTES)
         _canonical(journal, MAX_JOURNAL_BYTES)
