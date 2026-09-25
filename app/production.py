@@ -425,6 +425,9 @@ class Production:
     def native(self, payload):
         from native_exports import NativeExports, krita_roundtrip
         if not isinstance(payload,dict):raise ValueError('Export intent must be an object')
+        allowed={'kind','ids','options','verify_engine','verify_krita'}
+        unknown=sorted(set(payload)-allowed)
+        if unknown:raise ValueError(f"Unknown native export field: {', '.join(unknown)}")
         kind=payload.get('kind');ids=payload.get('ids');options=payload.get('options',{})
         if kind not in ('atlas','ora','godot'):raise ValueError('Choose atlas, ORA or Godot')
         if not isinstance(ids,list) or not 1<=len(ids)<=33 or not all(type(i) is str and i for i in ids) or len(set(ids))!=len(ids):raise ValueError('Select ordered images, plus an optional GLB for Godot')
