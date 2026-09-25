@@ -136,9 +136,11 @@ media records: `experiments/curated/nsfw-lab-*`. Agent tooling: [AGENT-TOOLING.m
 
 ## Known live issues (24 Sep QA)
 
-- #939: the Asset library holds 1,205 assets, 1,184 unreviewed and 0 keepers, mostly unlabelled lab outputs; owner work is buried.
+*Correction 25 Sep 2026: #939 is CLOSED (was open in this 24 Sep snapshot); #942 is CLOSED by PR #998 — the lab passes have moved with a correction. #940 and #772 stay OPEN. This list stays the dated 24 September snapshot.*
+
+- #939 (CLOSED 25 Sep; open at this snapshot): the Asset library held 1,205 assets, 1,184 unreviewed and 0 keepers, mostly unlabelled lab outputs; owner work was buried.
 - #940: old problems, desk items and plans never leave Overview, Create → Problems or Runs & review.
-- #942: the lab pass headers atop `CURRENT_STATE.md` carry clock times not from receipts or Git; Studio entries start below them.
+- #942 (CLOSED by PR #998; 25 Sep): the lab passes no longer sit atop `CURRENT_STATE.md`; see [LEDGER.md](../experiments/curated/nsfw-lab-20260923/LEDGER.md), whose correction shows the p40–p92 header times are not execution evidence.
 - #772: the open UX QA tracker for the Studio journeys and Create layouts.
 
 ## Open owner items
