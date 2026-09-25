@@ -112,3 +112,60 @@ test('server-valid Unicode titles keep code-point limits separate from UTF-8 sto
   }
   const e=envelope();e.draft.title='😀'.repeat(201);await assert.rejects(record(e),/bound|limit|invalid/i);
 });
+test('registered 1024-code-point titles retain notes-only drafts through seal/encode/decode',async()=>{
+  for(const title of ['a'.repeat(1024),'界'.repeat(1024),'😀'.repeat(1024)]){
+    const e=envelope('notes-only edit',true);
+    for(const v of [e.metadata,e.baseline,e.draft,e.operation.snapshot])v.title=title;
+    e.operation.body=JSON.stringify(e.operation.command);
+    e.conflict={workspace_id:W,current:[{...e.metadata}]};
+    const r=await record(e),[decoded]=await S.decode(await S.encode([r],crypto),crypto);
+    assert.equal(decoded.payload.metadata.title,title);
+    assert.equal(decoded.payload.baseline.title,title);
+    assert.equal(decoded.payload.draft.title,title);
+    assert.equal(decoded.payload.draft.notes,'notes-only edit');
+    assert.equal(decoded.payload.operation.snapshot.title,title);
+    assert.ok(!Object.hasOwn(decoded.payload.operation.command,'title'));
+    assert.equal(decoded.payload.conflict.current[0].title,title);
+    assert.equal(decoded.payload.operation.body,e.operation.body);
+  }
+});
+test('a changed 201-code-point draft and command title are refused without truncation',async()=>{
+  for(const title of ['x'.repeat(201),'界'.repeat(201),'😀'.repeat(201)]){
+    const e=envelope('notes-only edit',true);
+    e.draft.title=title;e.operation.snapshot.title=title;
+    e.operation.command.title=title;e.operation.body=JSON.stringify(e.operation.command);
+    await assert.rejects(record(e),/bound|limit|invalid/i);
+    assert.equal(e.draft.title,title,'a rejected draft must not be truncated');
+    assert.equal(e.operation.command.title,title,'a rejected command must not be truncated');
+  }
+  const e=envelope('notes-only edit',true);
+  e.draft.title='y'.repeat(201);e.operation.snapshot.title='y'.repeat(201);
+  e.operation.body=JSON.stringify(e.operation.command);
+  await assert.rejects(record(e),/bound|limit|invalid/i);
+  const commandOnly=envelope('notes-only edit',true);
+  commandOnly.operation.command.title='z'.repeat(201);
+  commandOnly.operation.body=JSON.stringify(commandOnly.operation.command);
+  await assert.rejects(record(commandOnly),/bound|limit|invalid/i);
+});
+test('1025-code-point registered titles are refused',async()=>{
+  for(const title of ['z'.repeat(1025),'界'.repeat(1025),'😀'.repeat(1025)]){
+    const e=envelope('notes-only edit',true);
+    for(const v of [e.metadata,e.baseline,e.draft,e.operation.snapshot])v.title=title;
+    e.operation.body=JSON.stringify(e.operation.command);
+    await assert.rejects(record(e),/bound|limit|invalid/i);
+    const m=envelope();m.metadata.title=title;
+    await assert.rejects(record(m),/bound|limit|invalid/i);
+  }
+});
+test('shelf registered title bound matches REGISTERED_TITLE_MAX',()=>{
+  const shelfSrc=fs.readFileSync(path,'utf8');
+  const pySrc=fs.readFileSync(require('node:path').join(__dirname,'../app/workspace.py'),'utf8');
+  const wsSrc=fs.readFileSync(require('node:path').join(__dirname,'../app/static/workspace.js'),'utf8');
+  const py=pySrc.match(/REGISTERED_TITLE_MAX\s*=\s*(\d+)/);
+  const shelf=shelfSrc.match(/REGISTERED_TITLE_MAX\s*=\s*(\d+)/);
+  const ws=wsSrc.match(/assetRegisteredTitleMax\s*=\s*(\d+)/);
+  assert.ok(py&&shelf&&ws,'registered title bounds must be present in Python, shelf and workspace');
+  assert.equal(Number(shelf[1]),Number(py[1]),'shelf REGISTERED_TITLE_MAX must match app/workspace.py');
+  assert.equal(Number(ws[1]),Number(py[1]),'workspace assetRegisteredTitleMax must match app/workspace.py');
+  assert.equal(S.REGISTERED_TITLE_MAX,Number(py[1]),'exported shelf bound must match app/workspace.py');
+});
