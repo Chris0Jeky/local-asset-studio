@@ -440,6 +440,88 @@ class LargeJobPreparationClassificationTests(LargeJobPreparationTestCase):
         self.assertEqual(caught.exception.blockers["blocks_all"], 2)
         self.assertTrue(any(item["id"] == "late" for item in caught.exception.blockers["items"]))
 
+    def test_post_release_final_decision_holds_the_studio_lock(self):
+        # #956: the final backend snapshot and work check are one Studio.lock-held
+        # decision, so a concurrent switch cannot take backends.busy between them.
+        # No threads or timing: the wrapper records lock ownership on each call,
+        # and the final pair must be owned. This fails against the pre-fix code,
+        # where the final snapshot and check run outside the lock.
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=40 * GIB)])
+        controller = self.controller(studio)
+        original_snapshot = controller._backend_snapshot
+        original_check = controller._check_work
+        snapshots: list[bool] = []
+        checks: list[tuple[str, bool]] = []
+
+        def snapshot(**kwargs):
+            snapshots.append(studio.lock._is_owned())
+            return original_snapshot(**kwargs)
+
+        def check(message, **kwargs):
+            checks.append((message, studio.lock._is_owned()))
+            return original_check(message, **kwargs)
+
+        controller._backend_snapshot = snapshot
+        controller._check_work = check
+        result = controller.run(self.request())
+        self.assertEqual(result["phase"], "ready_after_release")
+        self.assertTrue(result["final"]["ready"])
+        self.assertTrue(snapshots, "expected backend snapshots to run")
+        self.assertTrue(snapshots[-1], "final post-release snapshot must hold Studio.lock")
+        self.assertEqual(checks[-1][0],
+                         "Studio work changed while post-action resources were being measured")
+        self.assertTrue(checks[-1][1], "final post-release work check must hold Studio.lock")
+        self.assertFalse(studio.backends.busy)
+        self.assertEqual([action["kind"] for action in result["actions"]], ["release"])
+        self.assertEqual(len(studio.free_calls), 1)
+        self.assertEqual(studio.backends.launches, 0)
+        self.assertFalse(studio.backends.current.terminated)
+
+    def test_post_release_switch_gate_refuses_readiness_without_clearing_the_gate(self):
+        # A switch that claims backends.busy during post-release observation must
+        # leave a non-ready receipt; our path never owned that gate, so it stays set.
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=40 * GIB)])
+        controller = self.controller(studio)
+        original_observer = controller.observer
+        calls = {"count": 0}
+
+        def observer(value):
+            outcome = original_observer(value)
+            calls["count"] += 1
+            if calls["count"] == 2:
+                studio.backends.busy = True
+            return outcome
+
+        controller.observer = observer
+        result = controller.run(self.request())
+        self.assertFalse(result["final"]["ready"])
+        self.assertNotEqual(result["phase"], "ready_after_release")
+        self.assertIn("switching", result["final"]["reason"])
+        self.assertEqual([action["kind"] for action in result["actions"]], ["release"])
+        self.assertEqual(len(studio.free_calls), 1, "no /free retry after the refused readiness")
+        self.assertEqual(studio.backends.launches, 0)
+        self.assertTrue(studio.backends.busy, "another owner's gate is never cleared")
+
+    def test_post_release_late_work_still_refuses_with_the_existing_message(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=40 * GIB)])
+        controller = self.controller(studio)
+        original_check = controller._check_work
+
+        def check(message, **kwargs):
+            if message == "Studio work changed while post-action resources were being measured":
+                studio.jobs["late"] = {"status": "running", "submissions": []}
+            return original_check(message, **kwargs)
+
+        controller._check_work = check
+        result = controller.run(self.request())
+        self.assertEqual(result["phase"], "refused")
+        self.assertFalse(result["final"]["ready"])
+        self.assertIn("Studio work changed while post-action resources were being measured",
+                      result["final"]["reason"])
+        self.assertEqual(len(studio.free_calls), 1)
+        self.assertEqual(studio.backends.launches, 0)
+        self.assertFalse(studio.backends.busy)
+
 
 if __name__ == "__main__":
     unittest.main()

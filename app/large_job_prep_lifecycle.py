@@ -69,14 +69,17 @@ class LifecycleMixin:
             self._evaluate(context["workflow_identity"], context["_profile"], observation, context["reservations"]),
             observation, context.get("_host_commit_minimum_bytes"),
         )
-        final_backend, _ = self._backend_snapshot(
-            expected_identity=restarted["process"], expected_profile_id=restarted["profile_id"]
-        )
+        # #956: the final snapshot and work check are one Studio.lock-held
+        # decision, so a concurrent switch cannot take backends.busy between them.
         # A job arriving during observation/evaluation would otherwise be missed
         # while the receipt still reports ready_after_restart. The restart already
         # happened, so only in-flight work can still refuse readiness here, and
         # this check runs after the gate release with no second terminate/launch.
-        self._check_work("Studio work changed while post-restart resources were being measured")
+        with self.studio.lock:
+            final_backend, _ = self._backend_snapshot(
+                expected_identity=restarted["process"], expected_profile_id=restarted["profile_id"]
+            )
+            self._check_work("Studio work changed while post-restart resources were being measured")
         return {"observation": observation, "evaluation": evaluation, "backend": final_backend}
 
     def _restart_held(self, journal: dict[str, Any], receipt: dict[str, Any], expected: dict[str, Any],
