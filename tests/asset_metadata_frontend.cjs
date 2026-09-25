@@ -270,5 +270,16 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     // Only unreviewed or already-matching assets: no question is asked.
     s.run('__prompts=[]');const again=s.run("bulkReviewSelected('rejected')");s.accept(2);s.accept(3);await again;assert.equal(s.run('__prompts.length'),0);
   });
+  await check('Bulk review revisions are fixed at the confirm, so a refresh during the run cannot turn into an overwrite',async()=>{
+    const s=groupLibrary(4);s.run("assetGroupMode='none';assetState.assets[0].review='selected';assetSelection=new Set(['g0','g1','g2','g3']);renderAssets()");
+    const p=s.run("bulkReviewSelected('rejected')");assert.match(s.run('__prompts[0]'),/^Replace 1 saved review\? 1 keeper will change to Rejected/);
+    assert.deepEqual([0,1,2].map(i=>s.payload(i).ids[0]),['g0','g1','g2']);
+    // A refresh lands before g3's turn: it was reviewed elsewhere after the confirm and moved to revision 5.
+    s.run("Object.assign(assetState.assets.find(a=>a.id==='g3'),{metadata_revision:5,review:'selected'})");
+    for(let i=0;i<3;i++)s.accept(i);await tick();
+    assert.equal(s.writes.length,4);const last=s.payload(3).ids[0];assert.equal(last,'g3');assert.deepEqual(s.payload(3).expected_revisions,{g3:0});
+    const e=Error('Selected asset metadata changed or no longer exists; nothing changed in this batch');e.status=409;e.data={code:'asset_revision_conflict'};s.writes[3].reject(e);await p;
+    assert.equal(review(s,last),'selected');assert.match(s.el('#assetBulkReviewStatus').textContent,/3 of 4 marked as Rejected\. 1 failed/);
+  });
   console.log('Asset metadata frontend contracts passed:',count);
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -602,18 +602,19 @@ async function bulkReviewSelected(review) {
   if(assetLibraryPending || assetLibraryBusy){assetMessage('Resolve the earlier library update before marking reviews.',true);return;}
   if(assetDetailBusy || assetDetailPending || assetDetailConflict){assetMessage('Finish the open asset save before marking the selection.',true);return;}
   if(!assetSelectionCanProceed('review'))return;
-  const overwrite=assetReviewOverwritePrompt([...assetSelection],review);
+  // Revisions are fixed with the question: a review saved elsewhere after this point conflicts instead of being overwritten.
+  const ids=[...assetSelection],snapshot=assetRevisionSnapshot(ids),overwrite=assetReviewOverwritePrompt(ids,review);
   if(overwrite && !window.confirm(overwrite)){$('#assetBulkReviewStatus').textContent='Nothing was changed. Saved reviews are kept.';return;}
-  const ids=[...assetSelection],label=assetReviewLabels[review],failures=[];
+  const label=assetReviewLabels[review],failures=[];
   let done=0;
   const status=text=>{$('#assetBulkReviewStatus').textContent=text;};
   assetBulkReviewBusy=true;assetBulkReviewControls();status('Marking 0 of '+ids.length+' as '+label+'…');
   const queue=ids.slice();
   const worker=async()=>{
     while(queue.length){
-      const id=queue.shift(),record=assetState.assets.find(a=>a.id===id);
+      const id=queue.shift(),record=assetState.assets.find(a=>a.id===id),entry=snapshot.find(s=>s.id===id);
       try {
-        const command=assetCommand({ids:[id],action:'edit',review},[record],record?.workspace_id||assetState.workspace_id);
+        const command=assetCommand({ids:[id],action:'edit',review},[entry],entry.workspace_id||assetState.workspace_id);
         const result=validateAssetReceipt(await postAssetCommand(command),command);
         applyAssetReviewReceipt(command,result);
         done++;
@@ -668,7 +669,8 @@ async function bulkReviewGroup(key, review) {
   return runAssetGroupEdit({key,plan,snapshot,changes:{review},focusAction:review,title:'Group review',
     where:' in \''+plan.label+'\' as '+assetReviewLabels[review],doneNote:()=>'Each review can be changed back individually by opening the asset.'});
 }
-function assetRevisionSnapshot(ids){return ids.map(id=>{const record=assetState.assets.find(a=>a.id===id);return {id,workspace_id:record.workspace_id,metadata_revision:record.metadata_revision};});}
+// An id missing from the loaded library keeps no revision, so assetCommand refuses it rather than guessing one.
+function assetRevisionSnapshot(ids){return ids.map(id=>{const record=assetState.assets.find(a=>a.id===id);return record?{id,workspace_id:record.workspace_id,metadata_revision:record.metadata_revision}:{id};});}
 // Group source marking (#939) reuses the same confirmed, batched, revision-fixed run as group review.
 function assetGroupSourcePlan(key, source, visible=visibleAssets()) {
   if(!assetGroupModes.includes(assetGroupMode) || !['agent','mine'].includes(source))return null;
@@ -995,9 +997,16 @@ document.addEventListener('click',async e=>{
       const ids=[...assetSelection], action=bulk.dataset.bulk;if(!ids.length)return;
       if(action==='export'){assetMessage('Building a pack with originals, recipes and metadata…');const result=await post('/api/assets/export',{ids});const link=document.createElement('a');link.href=result.url;link.download='asset-pack.zip';link.click();assetMessage('Export ready: '+result.count+' assets with recipes and provenance.');return;}
       if(action==='agent_run' || action==='mine'){
-        const run_label=action==='agent_run'?assetRunLabelChoice():null;
-        await mutateAssets({ids,action:'edit',run_label});const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();
-        assetMessage((run_label?'Marked '+ids.length+' as agent runs ('+run_label+').'+(assetSource()==='mine'?' The Mine view hides them; choose All sources or Agent runs to see them.':''):'Marked '+ids.length+' as yours; their run label is cleared.')+' Mark as '+(run_label?'mine':'agent run')+' reverses it.'+(changed?' Your changed selection was kept.':''));
+        // Only assets whose source changes are sent: an existing label is never overwritten, and clearing labels
+        // other than the default asks first, naming them.
+        const run_label=action==='agent_run'?assetRunLabelChoice():null,records=ids.map(id=>assetState.assets.find(a=>a.id===id));
+        const target=records.filter(a=>a && assetIsAgentRun(a)!==!!run_label).map(a=>a.id),kept=ids.length-target.length;
+        if(!target.length){assetMessage(run_label?'All '+ids.length+' selected assets are already agent runs; their labels are kept. Nothing was changed.':'None of the '+ids.length+' selected assets is an agent run. Nothing was changed.');return;}
+        const named=[...new Set(records.filter(a=>a && target.includes(a.id)).map(a=>a.run_label))].filter(l=>l!==assetDefaultRunLabel);
+        if(!run_label && named.length && !window.confirm('Clear the run label from '+target.length+' selected '+(target.length===1?'asset':'assets')+'?\n\nThis also clears labels other than \''+assetDefaultRunLabel+'\': '+named.slice(0,5).map(l=>'\''+l+'\'').join(', ')+(named.length>5?' and '+(named.length-5)+' more':'')+'. Mark as agent run sets only the label typed beside it; the old labels are not kept anywhere else.')){assetMessage('Nothing was changed. Run labels are kept.');return;}
+        await mutateAssets({ids:target,action:'edit',run_label});const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();
+        assetMessage((run_label?'Marked '+target.length+' as agent runs ('+run_label+').'+(kept?' '+kept+' already '+(kept===1?'an agent run kept its':'agent runs kept their')+' label.':'')+(assetSource()==='mine'?' The Mine view hides them; choose All sources or Agent runs to see them.':''):
+          'Marked '+target.length+' as yours; their run label is cleared.'+(kept?' '+kept+' already yours '+(kept===1?'was':'were')+' not changed.':''))+' Mark as '+(run_label?'mine':'agent run')+' reverses it.'+(changed?' Your changed selection was kept.':''));
         return;
       }
       const payload={ids,action,collection_id:$('#bulkCollection').value};

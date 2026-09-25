@@ -57,7 +57,9 @@ Create page never sends one. Label every lab or batch run, for example
 run before labels existed) can be marked by hand: select them and choose **Mark
 as agent run**, or, with **Group by recipe / day / run**, use a group's **Mark n
 as agent runs** (it asks first, like group triage). The label field beside the
-button defaults to *Agent lab*. **Mark as mine** clears the label again. Both are
+button defaults to *Agent lab*; assets that already carry a label keep it. **Mark as
+mine** clears the label again, and asks first, naming them, when that would clear
+labels other than *Agent lab*. Both are
 the ordinary revisioned metadata edit (`run_label`: the same 1-80 printable
 characters, or `null`), at most 200 assets per command, with a receipt; once any
 asset is labelled, the Mine view hides it.

@@ -177,6 +177,21 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     s.el('#bulkRunLabel').value='  Night lab  ';p=bulkClick(s,'agent_run');assert.equal(s.payload(1).run_label,'Night lab');s.accept(1);await p;
     assert.equal(s.run("assetState.assets.find(a=>a.id==='a1').run_label"),'Night lab');
   });
+  await test('A mixed-label selection keeps existing labels and names other labels before clearing them',async()=>{
+    const s=library(4);s.run("assetState.assets[1].run_label='Agent lab';assetState.assets[2].run_label='lab p71 · G16';assetState.assets[3].run_label='Night lab';chooseAssetSource('all');assetSelection=new Set(['a0','a1','a2','a3'])");
+    let p=bulkClick(s,'agent_run');assert.deepEqual(s.metadata(0),{ids:['a0'],action:'edit',run_label:'Agent lab'});s.accept(0);await p;
+    assert.deepEqual(JSON.parse(s.run('JSON.stringify(assetState.assets.map(a=>a.run_label))')),['Agent lab','Agent lab','lab p71 · G16','Night lab']);
+    assert.match(s.el('#assetMessage').textContent,/^Marked 1 as agent runs \(Agent lab\)\. 3 already agent runs kept their label\./);
+    s.run("assetSelection=new Set(['a1','a2'])");await bulkClick(s,'agent_run');assert.equal(s.writes.length,1);assert.match(s.el('#assetMessage').textContent,/All 2 selected assets are already agent runs; their labels are kept\. Nothing was changed/);
+    s.run("globalThis.__prompts=[];window.confirm=m=>{__prompts.push(m);return !!globalThis.__approve;};assetSelection=new Set(['a0','a1','a2','a3'])");
+    await bulkClick(s,'mine');assert.equal(s.writes.length,1);assert.match(s.el('#assetMessage').textContent,/Nothing was changed\. Run labels are kept/);
+    assert.match(s.run('__prompts[0]'),/^Clear the run label from 4 selected assets\?\n\nThis also clears labels other than 'Agent lab': 'lab p71 · G16', 'Night lab'\./);
+    s.run('__approve=true');p=bulkClick(s,'mine');assert.deepEqual(s.metadata(1),{ids:['a0','a1','a2','a3'],action:'edit',run_label:null});s.accept(1);await p;
+    // Only the default label left: clearing it asks nothing, and assets already yours are not sent.
+    s.run("__prompts=[];assetState.assets[0].run_label='Agent lab';assetSelection=new Set(['a0','a1'])");p=bulkClick(s,'mine');
+    assert.deepEqual(s.metadata(2),{ids:['a0'],action:'edit',run_label:null});s.accept(2);await p;assert.equal(s.run('__prompts.length'),0);
+    assert.match(s.el('#assetMessage').textContent,/^Marked 1 as yours; their run label is cleared\. 1 already yours was not changed\./);
+  });
   await test('A refused source command is reported and never marks the loaded assets',async()=>{
     const s=library();s.run("assetSelection=new Set(['a0'])");const p=bulkClick(s,'agent_run');
     const e=Error('Run label must be null or printable text of 1 to 80 characters');e.status=400;e.data={code:'invalid_asset_command'};s.writes[0].reject(e);await p;
