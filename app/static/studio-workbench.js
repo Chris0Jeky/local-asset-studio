@@ -383,8 +383,8 @@
       const pendingPosition=posePositionDirty();
       const current=attached&&idle&&poseDrag<0&&!pendingPosition;
       const edited=!StudioPoseEditor.holds(posePoints,poseCanvas,before);
-      // The same guide stayed attached and the user edited mid-read: keep even an unapplied position draft.
-      if(loaded&&attached&&idle&&(edited||pendingPosition)){poseSeen.add(guide);poseStatus('You were editing the pose while the attached guide’s drawing was loading, so your drawing was kept.');}
+      // The same guide stayed attached and the user edited mid-read: keep even an unapplied position draft or a drag before its first move.
+      if(loaded&&attached&&idle&&(edited||pendingPosition||poseDrag>=0)){poseSeen.add(guide);poseStatus('You were editing the pose while the attached guide’s drawing was loading, so your drawing was kept.');}
       else if(loaded&&current){
         const next=StudioPoseEditor.resize(loaded,guide,poseCanvas);
         poseHeld={id,points:next,canvas:{...poseCanvas}};poseSeen.add(guide);

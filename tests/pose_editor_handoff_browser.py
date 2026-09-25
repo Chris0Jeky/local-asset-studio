@@ -219,7 +219,7 @@ def restored_guide(page, origin, out, check, drawings, posts, spec):
     check(page.locator('#uxPoseUse').is_enabled() and posts.count('/api/pose/render') == renders + 2, 'The button is released; nothing rendered')
 
 
-DRAG_START = """() => {
+DRAG_START = """(move=true) => {
   const canvas = document.querySelector('#uxPoseCanvas');
   const rect = canvas.getBoundingClientRect();
   const x = Number(document.querySelector('#uxPoseX').value);
@@ -229,8 +229,12 @@ DRAG_START = """() => {
   const cx = rect.left + (x / maxX) * rect.width;
   const cy = rect.top + (y / maxY) * rect.height;
   canvas.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true, cancelable: true, clientX: cx, clientY: cy, pointerId: 7, isPrimary: true}));
-  canvas.dispatchEvent(new PointerEvent('pointermove', {bubbles: true, cancelable: true, clientX: cx + 12, clientY: cy + 12, pointerId: 7, isPrimary: true}));
+  if (move) canvas.dispatchEvent(new PointerEvent('pointermove', {bubbles: true, cancelable: true, clientX: cx + 12, clientY: cy + 12, pointerId: 7, isPrimary: true}));
   return [cx, cy];
+}"""
+DRAG_MOVE = """([cx, cy]) => {
+  document.querySelector('#uxPoseCanvas').dispatchEvent(new PointerEvent('pointermove',
+    {bubbles: true, cancelable: true, clientX: cx + 12, clientY: cy + 12, pointerId: 7, isPrimary: true}));
 }"""
 DRAG_END = """() => {
   const canvas = document.querySelector('#uxPoseCanvas');
@@ -258,14 +262,14 @@ def pending_read_drag_and_draft(page, origin, out, check, drawings, posts, spec)
                     parent_id=None, authority='none', review='unreviewed',
                     source=dict(sha256='c' * 64, format='openpose-coco18', person_index=0, coordinate_space='pixels'))
 
-    drag_id, typed_id, draft_id = 'd' * 64, '8' * 64, '9' * 64
+    drag_id, down_id, typed_id, draft_id = 'd' * 64, '7' * 64, '8' * 64, '9' * 64
     reads, waiting = [], {}
 
     def artifact_route(route):
         path = urlsplit(route.request.url).path
         reads.append(path)
         artifact_id = path.rsplit('/', 1)[-1]
-        if artifact_id in (drag_id, typed_id, draft_id):
+        if artifact_id in (drag_id, down_id, typed_id, draft_id):
             waiting.setdefault(artifact_id, []).append(route)
         else:
             route.fulfill(status=200, content_type='application/json', body=json.dumps(stored(artifact_id)))
@@ -286,7 +290,7 @@ def pending_read_drag_and_draft(page, origin, out, check, drawings, posts, spec)
     # Case 1: a joint drag is active when the held read resolves.
     page.evaluate(REPLACE_GUIDE, base_guide(drag_id, 'd'))
     wait_held(drag_id)
-    page.wait_for_function("document.querySelector('#uxPoseReason').textContent.includes('is loading')")
+    check('is loading' in page.locator('#uxPoseReason').text_content(), 'The held guide read disables Use this pose')
     page.evaluate(DRAG_START)
     edited = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
     waiting[drag_id][0].fulfill(status=200, content_type='application/json', body=json.dumps(stored(drag_id)))
@@ -300,7 +304,27 @@ def pending_read_drag_and_draft(page, origin, out, check, drawings, posts, spec)
     check(reads == ['/api/pose/artifacts/' + drag_id], 'No retry after the drag ends')
     check(page.locator('#uxPoseUse').is_enabled(), 'The button is released after the kept drag')
 
-    # Case 2: even a typed-only draft must remain authoritative when the held read resolves.
+    # Case 2: the read resolves after pointerdown but before the first movement.
+    page.evaluate(REPLACE_GUIDE, base_guide(down_id, '7'))
+    wait_held(down_id)
+    before_move = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    coords = page.evaluate(DRAG_START, False)
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == before_move,
+          'Pointerdown starts a drag without changing geometry')
+    waiting[down_id][0].fulfill(status=200, content_type='application/json', body=json.dumps(stored(down_id)))
+    page.wait_for_timeout(300)
+    page.evaluate(DRAG_MOVE, coords)
+    moved = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    check(moved != before_move, 'The first pointermove changes the drawing after the read')
+    page.evaluate(DRAG_END)
+    page.evaluate(SYNC_TICK)
+    page.wait_for_timeout(300)
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == moved,
+          'A later sync keeps a drag begun before the guide response')
+    check(reads.count('/api/pose/artifacts/' + down_id) == 1,
+          'The down-before-move guide is marked seen and read once')
+
+    # Case 3: even a typed-only draft must remain authoritative when the held read resolves.
     page.evaluate(REPLACE_GUIDE, base_guide(typed_id, '8'))
     wait_held(typed_id)
     original = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
@@ -322,7 +346,7 @@ def pending_read_drag_and_draft(page, origin, out, check, drawings, posts, spec)
           'The guide cannot overwrite the applied typed position on a later sync')
     check(reads.count('/api/pose/artifacts/' + typed_id) == 1, 'The typed-over guide reads once')
 
-    # Case 3: a geometry edit plus a typed (unapplied) position draft is pending when the held read resolves.
+    # Case 4: a geometry edit plus a typed (unapplied) position draft is pending when the held read resolves.
     page.evaluate(REPLACE_GUIDE, base_guide(draft_id, 'e'))
     wait_held(draft_id)
     page.wait_for_function("document.querySelector('#uxPoseReason').textContent.includes('is loading')")
@@ -343,7 +367,7 @@ def pending_read_drag_and_draft(page, origin, out, check, drawings, posts, spec)
     page.wait_for_timeout(300)
     check(reads.count('/api/pose/artifacts/' + draft_id) == 1, 'Resetting the draft does not re-read the seen guide')
 
-    # Case 4: adopting guide B while guide A is held issues one GET for B.
+    # Case 5: adopting guide B while guide A is held issues one GET for B.
     page.unroute('**/api/pose/artifacts/*')
     reads_b = []
 
