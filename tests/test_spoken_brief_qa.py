@@ -223,6 +223,72 @@ class QATests(unittest.TestCase):
         forged = p.with_name(report['report_sha256'] + '.json'); write_json(forged, report)
         with self.assertRaises(SpokenBriefError): self.m.load_report(self.directory, report['report_sha256'])
 
+    def test_bounded_empty_master_report_saves_and_reloads(self):
+        transcript = importlib.import_module('spoken_brief_transcript')
+        from spoken_brief_exports import _json_bytes
+        master_text = ('a ' * 16000).strip()
+        archive = {'manifest_sha256': 'a' * 64, 'manifest_file_sha256': 'b' * 64,
+            'assembly_receipt_sha256': 'c' * 64, 'producer_sha256': 'd' * 64,
+            'source': {'sha256': 'e' * 64}, 'master': {'sha256': 'f' * 64},
+            'segments': [{'id': 's1', 'text': master_text, 'audio_sha256': '0' * 64}]}
+        evidence = {'schema_version': 1, 'manifest_sha256': archive['manifest_sha256'],
+            'master_sha256': archive['master']['sha256'], 'observations': [
+            {'target': 'master', 'audio_sha256': archive['master']['sha256'], 'text': '',
+             'method': 'independent-asr', 'producer': {'id': 'offline-fixture', 'revision': 'fixture-v1',
+             'runtime_sha256': 'd' * 64, 'configuration_sha256': 'e' * 64}}]}
+        # Causal baseline: the legacy full-edit encoding cannot fit the 2 MiB record bound.
+        full = transcript.compare_text(master_text, '')
+        self.assertEqual('empty', full['status']); self.assertEqual(16000, full['counts']['deletion'])
+        with self.assertRaises(SpokenBriefError):
+            _json_bytes(full)
+        report = self.m.build_report(archive, evidence)
+        master = report['targets'][-1]
+        self.assertEqual('empty', master['transcript_status']); self.assertEqual('unreviewed', master['listening_status'])
+        self.assertEqual(16000, master['comparison']['counts']['deletion'])
+        self.assertEqual(1, master['comparison']['word_error_rate'])
+        self.assertEqual(64, len(master['comparison']['edits']))
+        self.assertEqual(16000 - 64, master['comparison']['edits_omitted'])
+        self.assertEqual(report['report_sha256'], self.m.build_report(archive, evidence)['report_sha256'])
+        with patch.object(self.m, 'inspect_run', return_value=archive):
+            first = self.m.save_report(self.directory, evidence)
+            self.assertEqual(report['report_sha256'], first['id'])
+            loaded = self.m.load_report(self.directory, first['id'])
+            self.assertEqual(first['id'], loaded['report_sha256'])
+            self.assertEqual(16000, loaded['targets'][-1]['comparison']['counts']['deletion'])
+            self.assertEqual(16000 - 64, loaded['targets'][-1]['comparison']['edits_omitted'])
+            self.assertEqual('empty', loaded['targets'][-1]['transcript_status'])
+            again = self.m.save_report(self.directory, evidence)
+            self.assertTrue(again['reused']); self.assertEqual(first['id'], again['id'])
+
+    def test_legacy_full_edit_report_still_loads(self):
+        transcript = importlib.import_module('spoken_brief_transcript')
+        master_text = ('a ' * 100).strip()
+        archive = {'manifest_sha256': 'a' * 64, 'manifest_file_sha256': 'b' * 64,
+            'assembly_receipt_sha256': 'c' * 64, 'producer_sha256': 'd' * 64,
+            'source': {'sha256': 'e' * 64}, 'master': {'sha256': 'f' * 64},
+            'segments': [{'id': 's1', 'text': master_text, 'audio_sha256': '1' * 64}]}
+        evidence = {'schema_version': 1, 'manifest_sha256': archive['manifest_sha256'],
+            'master_sha256': archive['master']['sha256'], 'observations': [
+            {'target': 'master', 'audio_sha256': archive['master']['sha256'], 'text': '',
+             'method': 'independent-asr', 'producer': {'id': 'offline-fixture', 'revision': 'fixture-v1',
+             'runtime_sha256': 'd' * 64, 'configuration_sha256': 'e' * 64}}]}
+        bounded = self.m.build_report(archive, evidence)
+        self.assertEqual(64, len(bounded['targets'][-1]['comparison']['edits']))
+        # Reconstruct the genuine pre-change record: full edits, no omission marker.
+        full = transcript.compare_text(master_text, '')
+        self.assertEqual(100, len(full['edits'])); self.assertNotIn('edits_omitted', full)
+        legacy = copy.deepcopy(bounded)
+        legacy['targets'][-1]['comparison'] = full
+        del legacy['report_sha256']
+        legacy['report_sha256'] = canonical_digest({k: v for k, v in legacy.items() if k != 'report_sha256'})
+        write_json(self.directory / 'qa' / 'reports' / (legacy['report_sha256'] + '.json'), legacy)
+        with patch.object(self.m, 'inspect_run', return_value=archive):
+            loaded = self.m.load_report(self.directory, legacy['report_sha256'])
+        self.assertEqual(100, len(loaded['targets'][-1]['comparison']['edits']))
+        self.assertNotIn('edits_omitted', loaded['targets'][-1]['comparison'])
+        self.assertEqual(100, loaded['targets'][-1]['comparison']['counts']['deletion'])
+        self.assertEqual('empty', loaded['targets'][-1]['transcript_status'])
+
     def test_review_is_separate_and_exact_audio_bound(self):
         before = (self.directory / 'receipt.json').read_bytes(); saved = self.review()
         value = self.m.load_review(self.directory, saved['id'])

@@ -18,6 +18,7 @@ from spoken_brief_transcript import NORMALIZATION_VERSION, _text, compare_text, 
 
 MAX_RECORDS = 128
 FINDINGS = ('pronunciation', 'omissions_repetitions', 'delivery', 'fatigue')
+MAX_COMPARISON_EDITS = 64
 
 
 def _hash(value):
@@ -64,12 +65,24 @@ def _observations(archive, evidence):
     return found
 
 
-def build_report(archive, evidence, lexicon=None):
-    """Pure projection over a verified archive; producer independence is attributed.
+def _bound_comparison(comparison):
+    """Bound stored edit details while keeping exact aggregates, rate and status.
 
-    Importing a producer's claimed hashes/method does not execute or independently
-    authenticate that producer. Forced alignment is explicitly non-certifying.
+    Comparisons at or under the cap are returned unchanged so existing small
+    reports stay byte-for-byte projection-compatible. Larger ones keep the
+    first MAX_COMPARISON_EDITS details (the comparator emits them in a
+    deterministic order) plus an explicit edits_omitted count. The omission
+    marker is only present when details were omitted.
     """
+    if comparison is None or len(comparison['edits']) <= MAX_COMPARISON_EDITS:
+        return comparison
+    trimmed = dict(comparison)
+    trimmed['edits'] = comparison['edits'][:MAX_COMPARISON_EDITS]
+    trimmed['edits_omitted'] = len(comparison['edits']) - MAX_COMPARISON_EDITS
+    return trimmed
+
+
+def _assemble_report(archive, evidence, lexicon, *, bound_edits):
     book = validate_lexicon(lexicon); observations = _observations(archive, evidence)
     targets = []
     for target in _targets(archive):
@@ -77,7 +90,8 @@ def build_report(archive, evidence, lexicon=None):
         if observation is None: status = 'not-transcribed'
         elif observation['method'] == 'forced-alignment': status = 'not-independent'
         else:
-            comparison = compare_text(target['text'], observation['text'], book); status = comparison['status']
+            full = compare_text(target['text'], observation['text'], book); status = full['status']
+            comparison = _bound_comparison(full) if bound_edits else full
         targets.append({'id': target['id'], 'intended_text': target['text'],
             'text_sha256': digest_bytes(target['text'].encode('utf-8')), 'audio_sha256': target['audio_sha256'],
             'transcript_status': status, 'listening_status': 'unreviewed', 'comparison': comparison,
@@ -89,6 +103,15 @@ def build_report(archive, evidence, lexicon=None):
     value['report_sha256'] = canonical_digest(value)
     _json_bytes(value)
     return value
+
+
+def build_report(archive, evidence, lexicon=None):
+    """Pure projection over a verified archive; producer independence is attributed.
+
+    Importing a producer's claimed hashes/method does not execute or independently
+    authenticate that producer. Forced alignment is explicitly non-certifying.
+    """
+    return _assemble_report(archive, evidence, lexicon, bound_edits=True)
 
 
 def _target(archive, identifier, audio_sha256):
@@ -170,7 +193,15 @@ def load_report(run_dir, identifier):
     value, _ = checked_json(_record_path(directory, 'reports', identifier))
     try: expected = build_report(archive, value['evidence'], value['lexicon'])
     except (KeyError, TypeError) as exc: raise SpokenBriefError('Malformed retained QA report') from exc
-    if canonical_digest(value) != canonical_digest(expected) or value['report_sha256'] != identifier:
+    if canonical_digest(value) == canonical_digest(expected) and value['report_sha256'] == identifier:
+        return value
+    # Retained pre-change reports carry full edit details with no omission
+    # marker. Verify them against the legacy full-edit projection so valid
+    # history keeps loading; anything else still fails closed below.
+    try: legacy = _assemble_report(archive, value['evidence'], value['lexicon'], bound_edits=False)
+    except (KeyError, TypeError, SpokenBriefError) as exc:
+        raise SpokenBriefError('Retained QA report differs from a fresh evidence projection') from exc
+    if canonical_digest(value) != canonical_digest(legacy) or value['report_sha256'] != identifier:
         raise SpokenBriefError('Retained QA report differs from a fresh evidence projection')
     return value
 
