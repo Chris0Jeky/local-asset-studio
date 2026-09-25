@@ -192,6 +192,29 @@ does not itself label an image successful or a combination optimal.
   not validated), or advertised a `nextPage` or `currentPage < totalPages` without a
   `nextCursor`.
 
+### Unsupported pagination remains evidence (#836)
+
+Unsupported query cursors (including numeric, boolean and list values accepted by
+otherwise valid receipts) stay unchanged in the source receipt. Their valid image
+records are still normalized, but those pages cannot join a string-cursor chain or
+establish complete coverage. Pagination-key case variants such as `Page` or
+`CURSOR` are likewise retained, not silently reinterpreted as a cursor-free root.
+The report identifies them with `invalid_pagination_query` or
+`pagination_query_noncanonical` and keeps `coverage_complete: false`.
+
+A non-object pagination `metadata` value produces `pagination_metadata_invalid`
+without discarding otherwise valid image records. When either page counter is
+present, both must be positive integers with `currentPage <= totalPages`; booleans,
+floats, strings, missing partners and contradictory counters produce
+`pagination_counters_invalid`. A later page without an incoming cursor cannot
+establish root coverage. Supported root pages and connected string-cursor chains
+keep their existing output and coverage rules.
+
+This is not blanket input recovery: invalid source hosts, credentials, receipt
+shapes, image-item collections or byte/record bounds still refuse through the
+existing validation contract. Provider-text tolerance and duplicated source-scope
+memory amplification remain separate #836 follow-ups. No provider request is made.
+
 Images that do not identify the queried version are excluded with
 `target_version_missing`; that exclusion does not by itself change coverage.
 
