@@ -63,6 +63,7 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Hugging Face/Civitai provenance and acquisition handoff | [Source intake](SOURCE-INTAKE.md) |
 | Offline bounded provider-response snapshot adapters | [Source snapshots](SOURCE-SNAPSHOTS.md) |
 | Explicit bounded public provider-metadata GETs and cache | [Source transport](SOURCE-TRANSPORT.md) |
+| Provider metadata response framing (body length, chunked, 204/304 handling) | [Response framing](SOURCE-TRANSPORT-FRAMING.md) |
 | Deterministic local snapshot-to-acquisition planning | [Acquisition handoff](ACQUISITION-HANDOFF.md) |
 | Operational candidates and research watchlist | [Technique portfolio](TECHNIQUE-PORTFOLIO.md) |
 | Intelligence delivery sequence | [Intelligence implementation plan](INTELLIGENCE-IMPLEMENTATION-PLAN.md) |
