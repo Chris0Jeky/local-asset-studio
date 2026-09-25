@@ -334,6 +334,12 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(sent,[(403,{"error":"Local same-origin request required"})])
                 self.assertTrue(handler.close_connection)
 
+    def test_refused_body_without_parsed_headers_closes_connection(self):
+        handler=server.Handler.__new__(server.Handler)
+        handler.rfile=io.BytesIO(b"");handler.close_connection=False
+        handler._drain_refused_body()
+        self.assertTrue(handler.close_connection)
+
     def test_malformed_setup_and_export_bodies_are_400_not_500(self):
         studio=self.studio();sent=[]
         for path,body in (('/api/setups',[]),

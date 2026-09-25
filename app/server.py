@@ -2015,7 +2015,10 @@ class Handler(BaseHTTPRequestHandler):
         if lease: lease.require_available()
     def _drain_refused_body(self):
         """Best-effort bounded drain before refusal; close on missing or ambiguous framing."""
-        headers = self.headers
+        headers = getattr(self, "headers", None)
+        if headers is None:
+            self.close_connection = True
+            return
         get_all = getattr(headers, "get_all", None)
         if callable(get_all):
             lengths = get_all("Content-Length") or []
