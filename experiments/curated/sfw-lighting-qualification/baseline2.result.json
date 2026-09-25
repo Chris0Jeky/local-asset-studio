@@ -1,0 +1,97 @@
+{
+  "name": "baseline2",
+  "intent": {
+    "preset_id": "wai",
+    "controls": {
+      "positive": "1woman, adult woman, mature face, original character, long dark auburn hair, amber eyes, high-collared dark green travelling coat, leather gloves, brass lantern in raised right hand, standing on a stone bridge over a night river, moonlit mist, dark, dim lighting, dark background, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+      "negative": "bad quality, worst quality, worst detail, sketch, censor, shiny skin, nsfw",
+      "width": 832,
+      "height": 1216,
+      "seed": 2026092502,
+      "steps": 30,
+      "cfg": 5.0,
+      "denoise": 1.0,
+      "sampler": "euler_ancestral",
+      "scheduler": "normal",
+      "lora": 0.0
+    },
+    "batch_count": 1,
+    "references": [],
+    "parent_assets": []
+  },
+  "job": {
+    "id": "c1194ca5-e9bf-47df-a6f0-8e5da2290106",
+    "status": "completed",
+    "created_at": 1790307075.186432,
+    "preset_id": "wai",
+    "preset_name": "WAI v17 \u2022 illustration",
+    "controls": {
+      "positive": "1woman, adult woman, mature face, original character, long dark auburn hair, amber eyes, high-collared dark green travelling coat, leather gloves, brass lantern in raised right hand, standing on a stone bridge over a night river, moonlit mist, dark, dim lighting, dark background, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+      "negative": "bad quality, worst quality, worst detail, sketch, censor, shiny skin, nsfw",
+      "width": 832,
+      "height": 1216,
+      "seed": 2026092502,
+      "steps": 30,
+      "cfg": 5.0,
+      "denoise": 1.0,
+      "sampler": "euler_ancestral",
+      "scheduler": "normal",
+      "lora": 0.0
+    },
+    "batch_count": 1,
+    "prompt_ids": [
+      "1de840e9-a4de-43bd-8a92-3bc10fb2cab8"
+    ],
+    "submissions": [
+      {
+        "index": 0,
+        "prompt_id": "1de840e9-a4de-43bd-8a92-3bc10fb2cab8",
+        "seed": 2026092502,
+        "status": "completed",
+        "gpu_memory": {
+          "peak_shared_bytes": 82534400,
+          "peak_dedicated_bytes": 7122477056,
+          "samples": 30,
+          "spilled": false
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "filename": "WAI-Illustration_00042_.png",
+        "subfolder": "Studio",
+        "type": "output",
+        "seed": 2026092502,
+        "prompt_id": "1de840e9-a4de-43bd-8a92-3bc10fb2cab8",
+        "media_type": "image",
+        "asset_id": "82cfa12db54a5222be297e693f186d52"
+      }
+    ],
+    "message": "Complete",
+    "failure": null,
+    "parent_assets": [],
+    "references": [],
+    "project_id": null,
+    "started_at": 1790307075.1934357,
+    "finished_at": 1790307089.3664658,
+    "elapsed_seconds": 14.173030138015747,
+    "tracking_disposition": null,
+    "preparation": null,
+    "continuation": null,
+    "abandonment": null,
+    "label": null,
+    "can_stop_tracking": false,
+    "can_resume_tracking": false,
+    "has_pending_submission": false,
+    "never_submitted": false,
+    "mixed_batch": null,
+    "can_abandon": false,
+    "abandon_requires_acknowledgement": false,
+    "put_away_at": null,
+    "put_away": false,
+    "put_away_basis": null,
+    "can_put_away": false,
+    "can_bring_back": false
+  },
+  "observed_at": 1790307091.2172067
+}

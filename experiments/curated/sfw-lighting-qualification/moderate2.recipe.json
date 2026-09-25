@@ -1,0 +1,262 @@
+{
+  "version": 2,
+  "preset_id": "wai",
+  "controls": {
+    "positive": "1woman, adult woman, mature face, original character, long dark auburn hair, amber eyes, high-collared dark green travelling coat, leather gloves, brass lantern in raised right hand, standing on a stone bridge over a night river, moonlit mist, dark, dim lighting, dark background, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, shiny skin, nsfw",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026092502,
+    "steps": 30,
+    "cfg": 5.0,
+    "denoise": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.6,
+    "lora_name": "Dark_Illustrious_v1.safetensors"
+  },
+  "batch_count": 1,
+  "created_at": 1790307115.197399,
+  "workflow": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+      }
+    },
+    "2": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "8",
+          1
+        ],
+        "text": "1woman, adult woman, mature face, original character, long dark auburn hair, amber eyes, high-collared dark green travelling coat, leather gloves, brass lantern in raised right hand, standing on a stone bridge over a night river, moonlit mist, dark, dim lighting, dark background, cowboy shot, fantasy, masterpiece, best quality, amazing quality"
+      }
+    },
+    "3": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "8",
+          1
+        ],
+        "text": "bad quality, worst quality, worst detail, sketch, censor, shiny skin, nsfw"
+      }
+    },
+    "4": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 832,
+        "height": 1216,
+        "batch_size": 1
+      }
+    },
+    "5": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "8",
+          0
+        ],
+        "seed": 2026092502,
+        "steps": 30,
+        "cfg": 5.0,
+        "sampler_name": "euler_ancestral",
+        "scheduler": "normal",
+        "positive": [
+          "2",
+          0
+        ],
+        "negative": [
+          "3",
+          0
+        ],
+        "latent_image": [
+          "4",
+          0
+        ],
+        "denoise": 1.0
+      }
+    },
+    "6": {
+      "class_type": "VAEDecodeTiled",
+      "inputs": {
+        "samples": [
+          "5",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+      }
+    },
+    "7": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "6",
+          0
+        ],
+        "filename_prefix": "Studio/WAI-Illustration"
+      }
+    },
+    "8": {
+      "class_type": "LoraLoader",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "clip": [
+          "1",
+          1
+        ],
+        "lora_name": "Dark_Illustrious_v1.safetensors",
+        "strength_model": 0.6,
+        "strength_clip": 0.6
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "a4dc485f-1371-42be-a121-4231462420d8",
+      "seed": 2026092502,
+      "graph": {
+        "1": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+          }
+        },
+        "2": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "8",
+              1
+            ],
+            "text": "1woman, adult woman, mature face, original character, long dark auburn hair, amber eyes, high-collared dark green travelling coat, leather gloves, brass lantern in raised right hand, standing on a stone bridge over a night river, moonlit mist, dark, dim lighting, dark background, cowboy shot, fantasy, masterpiece, best quality, amazing quality"
+          }
+        },
+        "3": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "8",
+              1
+            ],
+            "text": "bad quality, worst quality, worst detail, sketch, censor, shiny skin, nsfw"
+          }
+        },
+        "4": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 832,
+            "height": 1216,
+            "batch_size": 1
+          }
+        },
+        "5": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "8",
+              0
+            ],
+            "seed": 2026092502,
+            "steps": 30,
+            "cfg": 5.0,
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "positive": [
+              "2",
+              0
+            ],
+            "negative": [
+              "3",
+              0
+            ],
+            "latent_image": [
+              "4",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "6": {
+          "class_type": "VAEDecodeTiled",
+          "inputs": {
+            "samples": [
+              "5",
+              0
+            ],
+            "vae": [
+              "1",
+              2
+            ],
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8
+          }
+        },
+        "7": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "6",
+              0
+            ],
+            "filename_prefix": "Studio/WAI-Illustration"
+          }
+        },
+        "8": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "clip": [
+              "1",
+              1
+            ],
+            "lora_name": "Dark_Illustrious_v1.safetensors",
+            "strength_model": 0.6,
+            "strength_clip": 0.6
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 82534400,
+        "peak_dedicated_bytes": 7233626112,
+        "samples": 34,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "WAI-Illustration_00043_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092502,
+      "prompt_id": "a4dc485f-1371-42be-a121-4231462420d8",
+      "media_type": "image",
+      "asset_id": "f08bc74d14af57e3ade850b063a24505"
+    }
+  ],
+  "parent_assets": [],
+  "references": [],
+  "preparation": null,
+  "native_recipe": null,
+  "continuation": null
+}
