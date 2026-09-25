@@ -120,6 +120,12 @@ class GpuMemoryTests(unittest.TestCase):
         self.assertEqual((result['adapter'], result['basis'], result['others_bytes']),
                          (DGPU_ADAPTER, 'measured', 2 * GIB))
 
+    def test_partial_adapter_totals_do_not_redirect_launch_to_igpu(self):
+        sample = reading_with_totals({DGPU.format(40): 12 * GIB, IGPU.format(11): 300 * MIB},
+                                     {IGPU_ADAPTER: 300 * MIB})
+        result = gpu_memory.launch_reserve_gib(sample)
+        self.assertEqual((result['basis'], result['adapter'], result['others_bytes']), ('fallback', None, None))
+
     def test_collective_overshoot_is_capped_at_the_adapter_figure(self):
         sample = reading_with_totals({DGPU.format(7): 3 * GIB, DGPU.format(8): 3 * GIB}, {DGPU_ADAPTER: 4 * GIB})
         result = gpu_memory.launch_reserve_gib(sample)

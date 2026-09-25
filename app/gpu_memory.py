@@ -166,9 +166,16 @@ def launch_reserve_gib(reading=None, exclude_pids=()):
     reading = read() if reading is None else reading
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
     if adapters and isinstance(reading, dict) and 'adapter_totals' in reading:
-        candidates = {name: _adapter_total(reading, name) for name in adapters}
-        candidates = {name: total for name, total in candidates.items() if total is not None}
-        adapter = max(candidates, key=candidates.get) if candidates else None
+        candidates = {}
+        unmatched_active = False
+        for name, processes in adapters.items():
+            total = _adapter_total(reading, name)
+            if total is not None:
+                candidates[name] = total
+            elif any(process['dedicated_bytes'] > 0 for process in processes.values()):
+                # A missing dGPU counter must not redirect launch sizing to a measured but quieter iGPU.
+                unmatched_active = True
+        adapter = max(candidates, key=candidates.get) if candidates and not unmatched_active else None
     else:
         adapter = select_adapter(adapters) if adapters else None
     if adapter is None: return {'reserve_gib': FALLBACK_GIB, 'others_bytes': None, 'adapter': None, 'adapter_total_bytes': None,
