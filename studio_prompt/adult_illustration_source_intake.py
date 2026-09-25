@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 from typing import Any, Mapping
 from urllib.parse import quote
 
@@ -29,6 +30,7 @@ _SENSITIVE_REQUEST_HEADERS = {
     "proxy-authorization",
     "x-api-key",
 }
+_ABBREVIATED_SHA = re.compile(r"[0-9a-fA-F]{7,39}")
 
 
 def _hf_file_id(path: str) -> str:
@@ -54,6 +56,14 @@ def snapshot_huggingface(
             or payload["sha"].casefold() != requested.casefold()
         ):
             raise ValueError("Hugging Face response commit conflicts with requested revision")
+        if _ABBREVIATED_SHA.fullmatch(requested) is not None:
+            returned = payload.get("sha")
+            if (
+                not isinstance(returned, str)
+                or _base._SHA40.fullmatch(returned) is None
+                or not returned.casefold().startswith(requested.casefold())
+            ):
+                raise ValueError("Hugging Face response commit conflicts with requested revision")
         files = payload.get("siblings", [])
         if not isinstance(files, list) or len(files) > _base.MAX_FILES:
             raise ValueError("Hugging Face file list must be bounded")
@@ -371,6 +381,10 @@ def _validate_snapshot(value: Any) -> dict[str, Any]:
             raise ValueError("Stored Hugging Face requested revision is invalid")
         if _base._SHA40.fullmatch(requested) is not None and (
             requested.casefold() != revision.casefold()
+        ):
+            raise ValueError("Stored immutable revision conflicts with requested commit")
+        if _ABBREVIATED_SHA.fullmatch(requested) is not None and (
+            not revision.casefold().startswith(requested.casefold())
         ):
             raise ValueError("Stored immutable revision conflicts with requested commit")
         metadata = f"https://huggingface.co/api/models/{repo_id}/revision/"
