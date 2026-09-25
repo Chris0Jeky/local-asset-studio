@@ -8,7 +8,7 @@ only the Codex runtime config, the active gate, and skill adapters.
 
 1. `../AGENTS.md` (the Codex contract) and its shared facts in `../CLAUDE.md`.
 2. `memories/00_ACTIVE.md` — the active gate: what is running, what is parked, what needs a human.
-3. `../CURRENT_STATE.md` head for executed evidence; `../HUMAN_TODO.md` for human-only choices.
+3. `../CURRENT_STATE.md` head for executed evidence; `../HUMAN_TODO.md` for owner decisions and actions.
 4. `skills/README.md` — pick the one Studio skill that matches; global skills cover the rest.
 
 ## What is here

@@ -90,7 +90,7 @@ is a separate offline planner and receipt checker: plans are hash-identified and
 `.claude/skills/` (canonical; `.codex/skills/` Codex adapter, parity-tested; Grok loads this tree via Claude compatibility):
 `studio-preset-slice`, `studio-execution-evidence`, `studio-native-adapter`, `studio-runtime-models`,
 `studio-session-closeout`. Path rules auto-load from `.claude/rules/` for catalog and evidence-doc edits.
-`HUMAN_TODO.md` holds subjective creative choices: surface them in every summary, never tick them.
+`HUMAN_TODO.md` holds owner decisions and actions: surface open items in every summary. Tick an item only on verified completion, or when the owner answered every part and its conditions hold; record how and when. Never infer a decision or art acceptance.
 
 ## PR issue disposition
 
