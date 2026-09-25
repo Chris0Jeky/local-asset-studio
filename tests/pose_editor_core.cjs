@@ -172,7 +172,7 @@ test('the workbench sends the drawing to the guide endpoint and to no generation
   assert.match(workbench,/switchCombineEngine\(POSE_RECIPE,result\)/,'explicit replacement uses the checked new guide through the shared switch path');
   assert.match(workbench,/StudioPoseEditor\.guideResponse\(response,body\)/,'response validation precedes attachment');
   assert.match(workbench,/guideResponse\(response,body\);poseHeld=\{id:result\.artifact_id,points:/,'a rendered guide is the drawing the editor holds');
-  assert.match(workbench,/api\('\/api\/pose\/artifacts\/'\+id\)/,'a restored guide reads its own stored drawing, a GET that renders and submits nothing');
+  assert.match(workbench,/api\('\/api\/pose\/artifacts\/'\+id,\{signal:AbortSignal\.timeout\(30000\)\}\)/,'a restored guide reads its own stored drawing with a bounded GET that renders and submits nothing');
   assert.match(workbench,/StudioPoseEditor\.fromArtifact\(value,guide\)/,'the stored drawing is checked against the attached guide before it is loaded');
   assert.match(workbench,/\{artifact:poseHeldArtifact\(\),loading:poseLoading\?\.artifact_id,blocked:poseBlockedReason\(\)\}/,'the hold knows what the editor holds and why its button is disabled');
   assert.match(workbench,/if\(poseLoading\)return 'The attached pose guide’s drawing is loading into the editor\.';/,'Use this pose waits for an in-flight read');
