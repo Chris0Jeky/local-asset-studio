@@ -450,7 +450,12 @@ function writeStoredModelStatus(value){try{if(typeof localStorage!=='undefined')
 function restoreModelStatus(){const select=$('#modelStatus');if(select)select.value=readStoredModelStatus();}
 function assetNeedsAction(a){return a?.verified!==true;}
 function modelStatusMatch(a,status){if(status==='installed')return a?.verified===true;if(status==='action')return assetNeedsAction(a);return true;}
-function inventoryNeedsAction(m,assets){const match=(assets||[]).find(a=>a.file===m.file);return !!match&&match.verified!==true;}
+// Inventory rows spell the on-disk relative path while curated assets spell the portable
+// manifest path (relative_model_path); on a Windows library root both name the same file
+// despite separators or case. Canonicalize only for this status classification; installation paths are untouched.
+function libraryRootIsWindows(root){return typeof root==='string'&&(/^[A-Za-z]:[\\/]/.test(root)||root.startsWith('\\\\')||root.startsWith('//'));}
+function canonicalModelRel(value,windows){const s=String(value??'');return windows?s.replace(/\\/g,'/').toLowerCase():s;}
+function inventoryNeedsAction(m,assets,root){const windows=libraryRootIsWindows(root??(typeof library!=='undefined'?library?.model_root:undefined));const key=canonicalModelRel(m?.file,windows);const match=(assets||[]).find(a=>canonicalModelRel(a?.file,windows)===key);return !!match&&match.verified!==true;}
 function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase(),status=currentModelStatus(),assets=library.assets||[];const rows=library.inventory.filter(m=>m.file.toLowerCase().includes(q)&&(status==='all'||(status==='action'?inventoryNeedsAction(m,assets):!inventoryNeedsAction(m,assets))));$('#inventory').innerHTML=rows.map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';const count=$('#modelCount');if(count)count.textContent=rows.length+' of '+library.inventory.length+(status==='action'?' need action':status==='installed'?' installed':' shown');}
 async function refreshLibrary(){
   try{

@@ -784,5 +784,49 @@ async function modelStatusFilter() {
   await unresolvedInputLineageCannotBeSaved();
   await avoidWordingIsVisibleWhenTheRecipeBindsIt();
   await modelStatusFilter();
+  await windowsInventoryStatusMatchesCaseAndSeparators();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
+
+// #986: on a Windows library root an inventory row spells the same file as its
+// curated asset despite separators and case; the present-but-unverified row
+// belongs under Needs action, not Installed. On a case-sensitive root the two
+// spellings stay distinct files. (Hoisted: available to the runner above.)
+async function windowsInventoryStatusMatchesCaseAndSeparators() {
+  const {element, run} = sandbox({}, {});
+  const assets = [
+    {id:'a-win', name:'Windows Model', family:'Test', bytes:8, file:'checkpoints/foo.safetensors', present:true, verified:false, installable:true, download:{}},
+  ];
+  const inventory = [
+    {file:'Checkpoints\\Foo.safetensors', bytes:8},
+    {file:'loras/extra.safetensors', bytes:8},
+  ];
+  element('#modelSearch').value = '';
+  run(`library=${JSON.stringify({assets, inventory, storage:{}, folders:[], collections:[], model_root:'C:/models'})};`);
+  element('#modelStatus').value = 'action';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'Windows root keeps the present-but-unverified row under Needs action despite separator and case mismatch');
+  assert.doesNotMatch(element('#inventory').innerHTML, /extra\.safetensors/, 'Needs action still hides the truly uncurated file');
+  element('#modelStatus').value = 'installed';
+  run('renderInventory()');
+  assert.doesNotMatch(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'The same row is absent from Installed on a Windows root');
+  assert.match(element('#inventory').innerHTML, /extra\.safetensors/, 'Installed still lists the truly uncurated file');
+  run(`library=${JSON.stringify({assets, inventory, storage:{}, folders:[], collections:[], model_root:'//server/share/models'})};`);
+  element('#modelStatus').value = 'action';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'Forward-slash UNC roots also use Windows path matching');
+  // A case-sensitive root keeps the two spellings distinct: no canonical match,
+  // so the row reads as uncurated (Installed) rather than needing action.
+  run(`library=${JSON.stringify({assets, inventory, storage:{}, folders:[], collections:[], model_root:'/models'})};`);
+  element('#modelStatus').value = 'action';
+  run('renderInventory()');
+  assert.doesNotMatch(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'A case-sensitive root does not fold case-distinct spellings into Needs action');
+  element('#modelStatus').value = 'installed';
+  run('renderInventory()');
+  assert.match(element('#inventory').innerHTML, /Checkpoints\\Foo\.safetensors/, 'A case-sensitive root still lists the case-distinct file as installed');
+  assert.equal(
+    run(`inventoryNeedsAction(${JSON.stringify({file:'checkpoints\\foo.safetensors'})},${JSON.stringify([{file:'checkpoints/foo.safetensors', verified:false}])},'/models')`),
+    false,
+    'A POSIX backslash remains a literal filename character rather than a path separator'
+  );
+}
