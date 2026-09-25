@@ -48,6 +48,18 @@ if ($existingStudio.app -eq 'local-asset-studio') {
 }
 if (-not (Test-Path -LiteralPath $studioConfig.python)) { throw 'Python not found. Update config/local.json with this computer''s runtime paths.' }
 if (-not (Test-Path -LiteralPath $studioConfig.comfy_root)) { throw 'ComfyUI not found. Update config/local.json.' }
+# The persisted Studio lease is authoritative even before its HTTP service is up.
+# Unknown state blocks both starts; a held lease skips ComfyUI but keeps lease release reachable.
+function Test-StudioGpuLeaseAvailable {
+    $gateOutput = & $studioConfig.python -s (Join-Path $repoRoot 'scripts\studio-gpu-lease-gate.py') --root $repoRoot
+    $gateExit = $LASTEXITCODE
+    if ($gateExit -notin @(0, 10)) { throw "GPU lease admission failed; neither runtime was started. $gateOutput" }
+    $gate = $gateOutput | ConvertFrom-Json
+    if ($gateExit -eq 10 -and $gate.state -eq 'held') { Write-Host $gate.message; return $false }
+    if ($gateExit -eq 0 -and $gate.state -eq 'available') { return $true }
+    throw 'GPU lease admission returned an inconsistent result; neither runtime was started.'
+}
+$gpuAvailable = Test-StudioGpuLeaseAvailable
 $inputRoot = Join-Path $studioConfig.comfy_root 'input'
 foreach ($reference in Get-ChildItem -LiteralPath (Join-Path $repoRoot 'examples\references') -File) {
     $targetPath = Join-Path $inputRoot $reference.Name
@@ -62,7 +74,7 @@ try { $qwen21Stats = Invoke-RestMethod 'http://127.0.0.1:8196/system_stats' -Tim
 $backendStatePath = Join-Path $repoRoot '.runtime\backend-state.json'
 $savedBackend = $null
 if (Test-Path -LiteralPath $backendStatePath) { $savedBackend = Get-Content -LiteralPath $backendStatePath -Raw | ConvertFrom-Json }
-if (-not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3','qwen21')) {
+if ($gpuAvailable -and -not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3','qwen21')) {
     if (-not (Test-Path -LiteralPath $studioConfig.comfy_launcher)) { throw 'ComfyUI is offline and its launcher is missing. Check config/local.json.' }
     # Start the same runtime the Studio's own switch/recovery launches: arguments from BackendManager.primary_argv,
     # with the configured --reserve-vram and pinned-memory setting (docs/RUNTIME-PRECONDITIONS.md section 8).
@@ -74,8 +86,11 @@ if (-not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @
         if ($LASTEXITCODE -ne 0) { throw 'Could not compute the ComfyUI launch arguments; see scripts/primary-comfy-args.py.' }
         $launcherArgs = @('-ArgumentsFile', $argsFile)
     }
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $studioConfig.comfy_launcher -NoBrowser @launcherArgs
-    if ($LASTEXITCODE -ne 0) { throw 'ComfyUI did not start; inspect its logs.' }
+    # Arguments/probes can take time. Re-observe immediately before the external launcher.
+    if (Test-StudioGpuLeaseAvailable) {
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $studioConfig.comfy_launcher -NoBrowser @launcherArgs
+        if ($LASTEXITCODE -ne 0) { throw 'ComfyUI did not start; inspect its logs.' }
+    }
 }
 $studioUrl = 'http://127.0.0.1:8191'
 $ready = $false

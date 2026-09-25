@@ -1,0 +1,35 @@
+name: GPU lease launcher guard
+on:
+  pull_request:
+    paths:
+      - 'scripts/Start-Studio.ps1'
+      - 'scripts/studio-gpu-lease-gate.py'
+      - 'app/gpu_lease.py'
+      - 'tests/test_gpu_lease_launcher.py'
+      - '.github/workflows/gpu-lease-launcher.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/Start-Studio.ps1'
+      - 'scripts/studio-gpu-lease-gate.py'
+      - 'app/gpu_lease.py'
+      - 'tests/test_gpu_lease_launcher.py'
+      - '.github/workflows/gpu-lease-launcher.yml'
+permissions:
+  contents: read
+concurrency:
+  group: gpu-lease-launcher-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  inert-launcher:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require native Windows PowerShell
+        run: Get-Command powershell.exe -ErrorAction Stop
+      - name: Read-only gate and inert launcher contract
+        run: python -m unittest discover -s tests -p test_gpu_lease_launcher.py -v
