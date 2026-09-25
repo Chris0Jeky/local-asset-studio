@@ -137,6 +137,83 @@ class ReviewedTaxonomyPromptIntegrationTests(unittest.TestCase):
         self.assertEqual(resolution["status"], "unsupported_profile")
         self.assertEqual(resolution["emitted"], [])
 
+    def test_reviewed_term_not_accepted_emits_nothing_without_catalog_fallback(
+        self,
+    ) -> None:
+        def reject_onsen(value: dict[str, object]) -> None:
+            entries = {entry["source_name"]: entry for entry in value["entries"]}
+            entries["onsen"]["accepted_for_compilation"] = False
+
+        projection = projection_with_terms(["hot spring"])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = write_contract_root(Path(tmp), reject_onsen)
+            result = compile_prompt(projection, "animagine-xl4-ordered-v1", root)
+
+        positive = result["channels"]["positive"]
+        self.assertNotIn("onsen", positive)
+        self.assertNotIn("hot spring", positive)
+        self.assertIn(
+            "TAXONOMY_TERM_NOT_ACCEPTED",
+            {item["code"] for item in result["diagnostics"]},
+        )
+        resolution = positive_resolutions(result)["hot spring"]
+        self.assertEqual(resolution["source"], "reviewed_taxonomy")
+        self.assertEqual(resolution["status"], "not_accepted")
+        self.assertEqual(resolution["entry_ids"], ["onsen"])
+        self.assertEqual(resolution["emitted"], [])
+        self.assertFalse(result["taxonomy"]["used_for_emission"])
+
+    def test_reviewed_deprecated_term_emits_nothing(self) -> None:
+        def deprecate_onsen(value: dict[str, object]) -> None:
+            entries = {entry["source_name"]: entry for entry in value["entries"]}
+            # A deprecated entry cannot remain accepted under the review contract.
+            entries["onsen"]["accepted_for_compilation"] = False
+            entries["onsen"]["deprecated_by"] = "sitting"
+
+        projection = projection_with_terms(["hot spring"])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = write_contract_root(Path(tmp), deprecate_onsen)
+            result = compile_prompt(projection, "animagine-xl4-ordered-v1", root)
+
+        positive = result["channels"]["positive"]
+        self.assertNotIn("onsen", positive)
+        self.assertNotIn("hot spring", positive)
+        self.assertIn(
+            "TAXONOMY_DEPRECATED_TERM",
+            {item["code"] for item in result["diagnostics"]},
+        )
+        resolution = positive_resolutions(result)["hot spring"]
+        self.assertEqual(resolution["source"], "reviewed_taxonomy")
+        self.assertEqual(resolution["status"], "deprecated")
+        self.assertEqual(resolution["entry_ids"], ["onsen"])
+        self.assertEqual(resolution["emitted"], [])
+        self.assertFalse(result["taxonomy"]["used_for_emission"])
+
+    def test_implication_target_not_accepted_is_not_emitted(self) -> None:
+        def imply_rejected(value: dict[str, object]) -> None:
+            entries = {entry["source_name"]: entry for entry in value["entries"]}
+            entries["sitting"]["implications"] = ["solo"]
+            entries["solo"]["accepted_for_compilation"] = False
+
+        projection = projection_with_terms(["sitting"])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = write_contract_root(Path(tmp), imply_rejected)
+            result = compile_prompt(projection, "animagine-xl4-ordered-v1", root)
+
+        positive = result["channels"]["positive"]
+        self.assertIn("sitting", positive)
+        self.assertNotIn("solo", positive)
+        self.assertIn(
+            "TAXONOMY_IMPLICATION_NOT_ACCEPTED",
+            {item["code"] for item in result["diagnostics"]},
+        )
+        resolution = positive_resolutions(result)["sitting"]
+        self.assertEqual(resolution["source"], "reviewed_taxonomy")
+        self.assertEqual(resolution["status"], "partially_emitted")
+        self.assertEqual(resolution["entry_ids"], ["sitting", "solo"])
+        self.assertEqual(resolution["emitted"], ["sitting"])
+        self.assertTrue(result["taxonomy"]["used_for_emission"])
+
     def test_reviewed_implications_are_emitted_and_profile_ordered(self) -> None:
         def imply_solo(value: dict[str, object]) -> None:
             entries = {entry["source_name"]: entry for entry in value["entries"]}
