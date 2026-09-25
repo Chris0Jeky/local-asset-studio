@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 from ._adult_illustration_source_transport_common import (
@@ -24,6 +25,45 @@ from ._adult_illustration_source_transport_common import (
     request_key,
     validate_json_media_type,
 )
+
+
+_MAX_STORED_AT_CHARS = 128
+_CACHE_FUTURE_SKEW_SECONDS = 300
+
+
+def _utcnow_isoformat() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _parse_stored_at(value: object) -> datetime:
+    """Validate persisted UTC write-time evidence without trusting mtime."""
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value) > _MAX_STORED_AT_CHARS
+        or "\r" in value
+        or "\n" in value
+    ):
+        raise ValueError("Source response cache write time is invalid")
+    text = value.strip()
+    if not text:
+        raise ValueError("Source response cache write time is invalid")
+    normalised = text[:-1] + "+00:00" if text.endswith("Z") else text
+    try:
+        parsed = datetime.fromisoformat(normalised)
+    except ValueError as exc:
+        raise ValueError(
+            "Source response cache write time is invalid"
+        ) from exc
+    if parsed.tzinfo is None:
+        raise ValueError("Source response cache write time must carry UTC timezone")
+    offset = parsed.utcoffset()
+    if offset is None or offset.total_seconds() != 0:
+        raise ValueError("Source response cache write time must be UTC")
+    now = datetime.now(timezone.utc).timestamp()
+    if parsed.timestamp() - now > _CACHE_FUTURE_SKEW_SECONDS:
+        raise ValueError("Source response cache write time is in the future")
+    return parsed
 
 
 def _validate_response_routes(
@@ -67,10 +107,18 @@ class SnapshotResponseCache:
     def path_for(self, request: HttpRequest) -> Path:
         return self._resolved_root / f"{request_key(request)}.json"
 
-    def load(self, request: HttpRequest) -> HttpResponse | None:
+    def load_entry(
+        self, request: HttpRequest
+    ) -> tuple[HttpResponse | None, str | None]:
+        """Load a validated cached response with its persisted write time.
+
+        Returns ``(None, None)`` on a miss. Legacy v1 records without
+        ``stored_at`` return ``(response, None)`` so receipts report age
+        unknown instead of inventing a date.
+        """
         path = self.path_for(request)
         if not path.exists():
-            return None
+            return None, None
         if path.is_symlink():
             raise ValueError("Source response cache entry cannot be a symlink")
         resolved = path.resolve(strict=True)
@@ -79,7 +127,7 @@ class SnapshotResponseCache:
         if resolved.stat().st_size > MAX_CACHE_RECORD_BYTES:
             raise ValueError("Source response cache record is oversized")
         record = parse_cache_json(resolved.read_bytes())
-        expected_keys = {
+        base_keys = {
             "schema",
             "cache_key",
             "request",
@@ -89,7 +137,16 @@ class SnapshotResponseCache:
             "body_sha256",
             *tuple(AUTHORITY),
         }
-        if set(record) != expected_keys or record.get("schema") != CACHE_SCHEMA:
+        keys = set(record)
+        stored_at: str | None = None
+        if keys == base_keys:
+            stored_at = None
+        elif keys == base_keys | {"stored_at"}:
+            stored_at = record.get("stored_at")
+            _parse_stored_at(stored_at)
+        else:
+            raise ValueError("Source response cache record has an invalid schema")
+        if record.get("schema") != CACHE_SCHEMA:
             raise ValueError("Source response cache record has an invalid schema")
         for field, expected in AUTHORITY.items():
             if record.get(field) is not expected:
@@ -142,7 +199,7 @@ class SnapshotResponseCache:
         )
         headers = cached_headers(response.get("headers", {}))
         validate_json_media_type(headers)
-        return HttpResponse(
+        cached = HttpResponse(
             request_url=request.url,
             final_url=response.get("final_url"),
             status=200,
@@ -150,6 +207,11 @@ class SnapshotResponseCache:
             body=body,
             redirect_chain=redirects,
         )
+        return cached, stored_at
+
+    def load(self, request: HttpRequest) -> HttpResponse | None:
+        cached, _ = self.load_entry(request)
+        return cached
 
     def store(self, request: HttpRequest, response: HttpResponse) -> str:
         if not isinstance(response, HttpResponse) or response.status != 200:
@@ -180,6 +242,7 @@ class SnapshotResponseCache:
             "body_base64": base64.b64encode(response.body).decode("ascii"),
             "body_bytes": len(response.body),
             "body_sha256": hashlib.sha256(response.body).hexdigest(),
+            "stored_at": _utcnow_isoformat(),
             **AUTHORITY,
         }
         payload = (
