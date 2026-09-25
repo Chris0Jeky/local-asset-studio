@@ -238,8 +238,12 @@ class BackendManager:
         name=result.stdout.strip() if result.returncode==0 else ''
         return name or None
 
-    def launch_recovery(self, profile):
-        """Launch exactly one selected profile without switching or stopping any process."""
+    def launch_recovery(self, profile, on_spawn=None):
+        """Launch exactly one selected profile without switching or stopping any process.
+
+        When ``on_spawn`` is callable it is invoked with the launched PID
+        immediately after spawn and before pidfile work, so a caller can attest
+        the exact process this invocation started for later reconciliation."""
         identifier=profile['id'];stamp=time.strftime('%Y%m%d-%H%M%S')+'-recovery';logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
         if identifier=='primary':
             self.last_launch_reserve=dict(self.launch_reserve(profile),recorded_at=time.time(),profile=identifier);argv=self.primary_argv(profile,self.last_launch_reserve)
@@ -247,6 +251,8 @@ class BackendManager:
         else:argv=[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']]
         with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:
             launched=subprocess.Popen(argv,cwd=profile['root'],stdout=out,stderr=err,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            if callable(on_spawn):
+                on_spawn(launched.pid)
         if identifier=='primary':Path(profile['pidfile']).write_text(str(launched.pid))
         return launched.pid
 

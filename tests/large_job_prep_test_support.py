@@ -108,11 +108,13 @@ class Manager:
     def configured_processes(self, profile):
         return list(self.configured)
 
-    def launch_recovery(self, profile):
+    def launch_recovery(self, profile, on_spawn=None):
         self.launches += 1
         new = Process(90 + self.launches, 200.0 + self.launches)
         self.current = new
         self.configured = [new]
+        if callable(on_spawn):
+            on_spawn(new.pid)
         if self.launch_error:
             error = self.launch_error
             self.launch_error = None
