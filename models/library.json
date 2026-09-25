@@ -2734,6 +2734,23 @@
         0.6,
         1.0
       ]
+    },
+    {
+      "id": "dark-illustrious-v1",
+      "name": "Dark / Dim lighting / Dark Background / Illustrious v1.0",
+      "file": "loras/Dark_Illustrious_v1.safetensors",
+      "source": "https://civitai.com/models/1711037?modelVersionId=1936270",
+      "url": "https://civitai.com/api/download/models/1936270",
+      "bytes": 170594572,
+      "sha256": "8bf1c001b1a6ecf463df812470008264ec94bd3a2b1952546eea789eeec4f27d",
+      "license": "",
+      "terms": "civitai model 1711037 / version 1936270 (Illustrious v1.0), downloaded with scripts/civitai-fetch.py on 2026-09-25; receipt SHA-256 and bytes match the listing. Model-level flags read from /api/v1/models/1711037: allowCommercialUse Image, RentCivit; allowNoCredit false; derivatives NOT allowed; different licence NOT allowed. The version payload carries no separate permission flags. Base model Illustrious. A matching hash and listing flags are not creator authentication or licence clearance; WAI v17 checkpoint terms remain unresolved.",
+      "family": "illustrious",
+      "trigger": "dark, dim lighting, dark background",
+      "strength": [
+        0.6,
+        1.0
+      ]
     }
   ],
   "collections": [

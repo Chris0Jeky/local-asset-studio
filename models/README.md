@@ -257,6 +257,10 @@ Illustrious Flat Color build (Illustrious v0.1 is the parent of NoobAI eps) stoo
 The TextFusion "Refusal-Reduction" LoRA (`2775340`) was not downloaded again. It was already on disk; see
 `docs/research/LORA-DISK-AUDIT-2026-09-23.md` (#762) for its hot-path recommendation.
 
+### SFW lighting qualification candidate, 25 September 2026
+
+`Dark_Illustrious_v1.safetensors` (Civitai [model 1711037, Illustrious version 1936270](https://civitai.com/models/1711037?modelVersionId=1936270)) was downloaded with `scripts/civitai-fetch.py`. The installed file is 170,594,572 bytes and its SHA-256 matches the listing: `8bf1c001b1a6ecf463df812470008264ec94bd3a2b1952546eea789eeec4f27d`. The receipt is in `.runtime/downloads/receipts.json`. The model-level listing flags allow Image and RentCivit commercial uses, require credit, disallow derivatives and different licensing; the version API carries no separate permission flags. These are recorded claims, not licence clearance. WAI v17's creator authentication and commercial terms also remain unresolved. The planned, unaccepted SFW lighting comparison is documented in `experiments/curated/sfw-lighting-qualification/`.
+
 ### Acquisition scripts
 
 | Script | Use |

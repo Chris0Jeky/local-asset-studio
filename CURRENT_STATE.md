@@ -1,4 +1,8 @@
-# Current state — 24 September 2026
+# Current state — 25 September 2026
+
+## SFW night lighting LoRA comparison — 25 September 2026 (04:33 local)
+
+Five serial Studio `wai` jobs completed on the primary backend with the verified Illustrious build of Civitai model 1711037: three strengths (0, 0.6, 1.0) on seed 2026092501 and a 0/0.6 repeat on seed 2026092502. The LoRA made both scenes darker; 0.6 kept the adult subject, coat, lantern and bridge readable, while 1.0 lost much background and coat detail. All five 832 x 1216 PNGs were opened; exact Studio job and ComfyUI prompt IDs, recipes, output hashes and inspection notes are in `experiments/curated/sfw-lighting-qualification/README.md`. The weight matched the listed SHA-256 and is pinned in `models/library.json`. This is generated and agent-inspected evidence only, not owner art acceptance or licence clearance; the `wai` catalog `verified` flag was not changed. The LoRA listing flags and WAI creator terms remain separate from runtime success.
 
 ## NSFW lab closeout: p93 judged 7/7, G24 closed, all 552 cells organised and saved — 25 September 2026 (night local)
 
