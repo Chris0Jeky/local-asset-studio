@@ -143,5 +143,89 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     assert.match(s.el('#assetBulkReviewStatus').textContent,/1 failed and no retry was sent/);
     assert.match(s.el('#assetBulkReviewStatus').textContent,/not confirmed/);
   });
+  // Group triage (#939): the same edit command as selection review, one confirmed decision per visible group.
+  const tick=()=>new Promise(resolve=>setImmediate(resolve));
+  const groupLibrary=(n,recipe='WAI v17 • illustration')=>{const s=setup({autoOpen:false});s.el('#assetType').value='all';s.el('#assetSort').value='newest';
+    s.run(`assetGroupMode='recipe';assetState.assets=Array.from({length:${n}},(_,i)=>({id:'g'+i,workspace_id:assetState.workspace_id,title:'g'+i,notes:'',tags:[],review:'unreviewed',favorite:false,media_type:'image',preset_name:${JSON.stringify(recipe)},preset_id:'wai',job_id:'job-g',metadata_revision:0,source:{},lineage:[],collections:[],created_at:i,bytes:1}));renderAssets()`);
+    s.run('globalThis.__prompts=[];window.confirm=m=>{__prompts.push(m);return globalThis.__approve??true;}');return s;};
+  const acceptBatch=(s,i)=>{const r=s.receipt(i);r.current=r.current.slice(0,10);s.writes[i].resolve(r);};
+  const review=(s,id)=>s.run(`assetState.assets.find(a=>a.id==='${id}').review`);
+  const groupKey="'recipe:WAI v17 • illustration'";
+  await check('Group triage names the count and decision and marks only visible unreviewed assets of that group',async()=>{
+    const s=groupLibrary(5);
+    s.run("assetState.assets[0].review='selected';assetState.assets[1].media_type='video';assetState.assets.push({...assetState.assets[2],id:'other',title:'other',preset_name:'Krea'});");
+    s.el('#assetType').value='image';s.run('renderAssets()');
+    assert.deepEqual(JSON.parse(s.run(`JSON.stringify(assetGroupReviewPlan(${groupKey}).ids)`)).sort(),['g2','g3','g4']);
+    s.run('globalThis.__approve=false');
+    assert.equal(await s.run(`bulkReviewGroup(${groupKey},'rejected')`),false);
+    assert.equal(s.writes.length,0);assert.match(s.el('#assetMessage').textContent,/Nothing was changed/);
+    s.run('globalThis.__approve=true');
+    const p=s.run(`bulkReviewGroup(${groupKey},'rejected')`);
+    const prompt=s.run('__prompts.at(-1)');
+    assert.match(prompt,/^Mark 3 unreviewed pictures in 'WAI v17 • illustration' as Rejected\?/);
+    assert.match(prompt,/1 already reviewed keeps its review/);assert.match(prompt,/changed back individually/);
+    assert.equal(s.writes.length,1);assert.deepEqual(s.metadata(0),{ids:['g4','g3','g2'],action:'edit',review:'rejected'});
+    assert.deepEqual(s.payload(0).expected_revisions,{g4:0,g3:0,g2:0});
+    s.accept(0);assert.equal(await p,true);
+    for(const id of ['g2','g3','g4'])assert.equal(review(s,id),'rejected');
+    assert.equal(review(s,'g0'),'selected');assert.equal(review(s,'g1'),'unreviewed');assert.equal(review(s,'other'),'unreviewed');
+    assert.match(s.el('#assetMessage').textContent,/Marked 3 of 3 in 'WAI v17 • illustration' as Rejected/);
+    assert.equal(s.run(`assetGroupReviewPlan(${groupKey}).ids.length`),0);
+  });
+  await check('Group actions are escaped buttons naming their count, and vanish once nothing is unreviewed',()=>{
+    const s=groupLibrary(2,'<img src=x onerror=evil()>');
+    const html=s.run('assetGroupActionsHTML(assetGroups(visibleAssets(),assetGroupMode)[0])');
+    assert.doesNotMatch(html,/<img/);assert.match(html,/Mark 2 unreviewed as/);
+    assert.equal((html.match(/<button type="button" data-group-review=/g)||[]).length,3);
+    assert.match(html,/aria-label="Mark 2 unreviewed in &lt;img src=x onerror=evil\(\)&gt; as Needs work"/);
+    s.run("assetState.assets.forEach(a=>{a.review='needs_work';})");
+    assert.equal(s.run('assetGroupActionsHTML(assetGroups(visibleAssets(),assetGroupMode)[0])'),'');
+    s.run("assetGroupMode='none'");assert.equal(s.run(`assetGroupReviewPlan('recipe:x')`),null);
+  });
+  await check('A group larger than the command limit is split into sequential batches with their own preconditions',async()=>{
+    const s=groupLibrary(205);
+    const p=s.run(`bulkReviewGroup(${groupKey},'needs_work')`);
+    assert.match(s.run('__prompts[0]'),/^Mark 205 unreviewed pictures/);
+    assert.equal(s.writes.length,1);assert.equal(s.payload(0).ids.length,200);
+    // Revisions are fixed at confirmation: a refresh that saw another client's change cannot become an overwrite.
+    s.run("assetState.assets.find(a=>a.id==='g0').metadata_revision=7");
+    acceptBatch(s,0);await tick();
+    assert.equal(s.writes.length,2);assert.equal(s.payload(1).ids.length,5);
+    assert.equal(s.payload(1).expected_revisions.g0,0);assert.notEqual(s.payload(0).request_id,s.payload(1).request_id);
+    assert.deepEqual(new Set([...s.payload(0).ids,...s.payload(1).ids]).size,205);
+    acceptBatch(s,1);assert.equal(await p,true);
+    assert.match(s.el('#assetMessage').textContent,/Marked 205 of 205/);
+    assert.equal(review(s,'g0'),'unreviewed');assert.equal(review(s,'g1'),'needs_work');
+  });
+  await check('A stale revision stops the run cleanly and reports how many were applied',async()=>{
+    const s=groupLibrary(401);
+    const p=s.run(`bulkReviewGroup(${groupKey},'rejected')`);
+    acceptBatch(s,0);await tick();assert.equal(s.writes.length,2);
+    const e=Error('Selected asset metadata changed or no longer exists; nothing changed in this batch');e.status=409;
+    e.data={code:'asset_revision_conflict',workspace_id:s.payload(1).workspace_id,request_id:s.payload(1).request_id,conflict_ids:[s.payload(1).ids[0]],missing_ids:[],current:[]};
+    s.writes[1].reject(e);assert.equal(await p,false);await tick();
+    assert.equal(s.writes.length,2);
+    const text=s.el('#assetMessage').textContent;
+    assert.match(text,/^200 of 401 marked/);assert.match(text,/Batch 2 \(200 pictures\) was not applied: 1 of its assets changed elsewhere/);assert.match(text,/No retry was sent/);
+    assert.equal(s.run("assetState.assets.filter(a=>a.review==='rejected').length"),200);
+    assert.equal(s.run('assetBulkReviewBusy'),false);
+  });
+  await check('An unconfirmed batch stops the run without a retry or a later batch',async()=>{
+    const s=groupLibrary(401);
+    const p=s.run(`bulkReviewGroup(${groupKey},'selected')`);
+    s.writes[0].reject(Error('response lost'));assert.equal(await p,false);await tick();
+    assert.equal(s.writes.length,1);assert.equal(s.run("assetState.assets.filter(a=>a.review==='selected').length"),0);
+    assert.match(s.el('#assetMessage').textContent,/^0 of 401 marked.*Batch 1 \(200 pictures\) is not confirmed: it may or may not have been applied/);
+  });
+  await check('Group status belongs to its Workspace generation and a replaced Workspace gets no further batch',async()=>{
+    const s=groupLibrary(401);
+    const p=s.run(`bulkReviewGroup(${groupKey},'rejected')`);
+    assert.equal(await s.run(`bulkReviewGroup(${groupKey},'needs_work')`),false);assert.equal(s.writes.length,1);
+    s.run("assetState={...assetState,workspace_id:'2'.repeat(32),assets:assetState.assets.map(a=>({...a,workspace_id:'2'.repeat(32)}))};renderAssets()");
+    acceptBatch(s,0);assert.equal(await p,false);await tick();
+    assert.equal(s.writes.length,1);
+    assert.equal(s.run("assetState.assets.filter(a=>a.review!=='unreviewed').length"),0);
+    assert.match(s.el('#assetMessage').textContent,/Workspace changed while it ran\. 200 of 401 were confirmed.*earlier Workspace\. Nothing was marked in the Workspace now shown/);
+  });
   console.log('Asset metadata frontend contracts passed:',count);
 })().catch(e=>{console.error(e);process.exitCode=1;});

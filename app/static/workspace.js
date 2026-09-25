@@ -435,8 +435,8 @@ function renderAssets() {
   $('#reviewNext').disabled=!pending.length;
   const groups=assetGroups(assets,assetGroupMode),grouped=!!groups[0]?.key;
   $('#assetGrid').classList.toggle('is-grouped',grouped && !!assets.length);
-  StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
-  renderAssetSelection();
+  StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,groupActionsHTML:assetGroupActionsHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
+  renderAssetSelection();assetBulkReviewControls();
 }
 // Reconcile the saved record without fetching; retain cached nodes and current group membership.
 function updateAssetCard() {renderAssets();}
@@ -508,7 +508,19 @@ function renderAssetSiblings(asset) {
   panel.hidden=siblings.length<2;
   panel.innerHTML=siblings.length<2?'':'<h3>Same run</h3><div class="asset-sibling-strip">'+siblings.map(s=>'<button type="button" class="asset-sibling'+(s.id===asset.id?' is-current':'')+'" data-asset-open="'+esc(s.id)+'" aria-current="'+(s.id===asset.id?'true':'false')+'">'+assetPreview(s)+'<small>'+esc(s.title)+'</small></button>').join('')+'</div><small>'+siblings.length+' outputs from this job. Opening one keeps your unsaved draft rules.</small>';
 }
-function assetBulkReviewControls(){document.querySelectorAll('[data-review-bulk]').forEach(b=>{b.disabled=assetBulkReviewBusy;});}
+function assetBulkReviewControls(){document.querySelectorAll('[data-review-bulk],[data-group-review]').forEach(b=>{if(b.disabled!==assetBulkReviewBusy)b.disabled=assetBulkReviewBusy;});}
+// Selection and group review share one write: the ordinary /api/assets/update edit with expected_revisions.
+async function postAssetCommand(command) {
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+  try{return await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(command),signal:controller.signal});}finally{clearTimeout(timer);}
+}
+// A confirmed receipt updates only records still at the revision it was issued against.
+function applyAssetReviewReceipt(command,result) {
+  for(const id of command.ids){
+    const record=assetState.assets.find(a=>a.id===id);
+    if(record && (!record.workspace_id || record.workspace_id===command.workspace_id) && record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.applied,{metadata_revision:result.revisions[id]});
+  }
+}
 // Bulk review sends the ordinary single-asset save per asset, three at a time; no failure is dropped.
 async function bulkReviewSelected(review) {
   if(assetBulkReviewBusy || !assetReviewLabels[review] || review==='unreviewed')return;
@@ -525,10 +537,8 @@ async function bulkReviewSelected(review) {
       const id=queue.shift(),record=assetState.assets.find(a=>a.id===id);
       try {
         const command=assetCommand({ids:[id],action:'edit',review},[record],record?.workspace_id||assetState.workspace_id);
-        const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
-        let result;try{result=await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(command),signal:controller.signal});}finally{clearTimeout(timer);}
-        validateAssetReceipt(result,command);
-        if(record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.applied,{metadata_revision:result.revisions[id]});
+        const result=validateAssetReceipt(await postAssetCommand(command),command);
+        applyAssetReviewReceipt(command,result);
         done++;
       } catch(error) {
         const refused=error.status>=400 && error.status<500 && error.data?.code!=='asset_workspace_conflict';
@@ -543,6 +553,81 @@ async function bulkReviewSelected(review) {
     status(failures.length?done+' of '+ids.length+' marked as '+label+'. '+failures.length+' failed and no retry was sent: '+failures.join(' · ')
       :'Marked '+done+' of '+ids.length+' as '+label+'.');
   }
+}
+// Group triage (#939): one confirmed decision for a visible group's unreviewed assets. The ids and their revisions are
+// fixed when the operator confirms; batches stay within the server's 200-asset command limit and each carries its own
+// expected_revisions, so a later refresh can never turn a stale snapshot into an overwrite. The first batch that is
+// refused, conflicted or unconfirmed stops the run. Status is owned by the Workspace generation it started in (#830).
+const assetGroupReviewBatch=assetSelectionLimit;
+function assetGroupReviewPlan(key, visible=visibleAssets()) {
+  if(!assetGroupModes.includes(assetGroupMode))return null;
+  const group=assetGroups(visible,assetGroupMode).find(g=>g.key===key);
+  if(!group)return null;
+  const pending=assetUnreviewed(group.assets);
+  return {key,label:group.label,ids:pending.map(a=>a.id),reviewed:group.assets.length-pending.length,images:pending.every(a=>a.media_type==='image')};
+}
+function assetGroupNoun(plan,count){return plan.images?(count===1?'picture':'pictures'):(count===1?'asset':'assets');}
+function assetGroupReviewPrompt(plan, review) {
+  const count=plan.ids.length,noun=assetGroupNoun(plan,count);
+  return 'Mark '+count+' unreviewed '+noun+' in \''+plan.label+'\' as '+assetReviewLabels[review]+'?\n\n'+
+    'Only the unreviewed '+noun+' shown in this group with the current filters change'+(plan.reviewed?'; '+plan.reviewed+' already reviewed '+(plan.reviewed===1?'keeps its':'keep their')+' review':'')+'. '+
+    'Each review can be changed back individually by opening the asset.';
+}
+function assetGroupActionsHTML(group) {
+  const pending=assetUnreviewed(group.assets).length;
+  if(!pending)return '';
+  return '<span class="asset-group-mark">Mark '+pending+' unreviewed as</span>'+['needs_work','rejected','selected'].map(review=>
+    '<button type="button" data-group-review="'+review+'" data-group-key="'+esc(group.key)+'" aria-label="'+esc('Mark '+pending+' unreviewed in '+group.label+' as '+assetReviewLabels[review])+'">'+esc(assetReviewLabels[review])+'</button>').join('');
+}
+async function bulkReviewGroup(key, review) {
+  if(assetBulkReviewBusy || !assetReviewLabels[review] || review==='unreviewed')return false;
+  if(assetLibraryPending || assetLibraryBusy){assetMessage('Resolve the earlier library update before marking reviews.',true);return false;}
+  if(assetDetailBusy || assetDetailPending || assetDetailConflict){assetMessage('Finish the open asset save before marking a group.',true);return false;}
+  const plan=assetGroupReviewPlan(key);
+  if(!plan){assetMessage('That group is no longer shown. Nothing was changed.',true);return false;}
+  if(!plan.ids.length){assetMessage('Every asset shown in \''+plan.label+'\' already has a review. Nothing was changed.');return false;}
+  const workspace=assetState.workspace_id,epoch=assetWorkspaceEpoch,label=assetReviewLabels[review],total=plan.ids.length;
+  const snapshot=plan.ids.map(id=>{const record=assetState.assets.find(a=>a.id===id);return {id,workspace_id:record.workspace_id,metadata_revision:record.metadata_revision};});
+  if(!window.confirm(assetGroupReviewPrompt(plan,review))){assetMessage('Nothing was changed.');return false;}
+  const owns=()=>assetState.workspace_id===workspace && assetWorkspaceEpoch===epoch;
+  const where=' in \''+plan.label+'\' as '+label;
+  let done=0,stop='';
+  // Disabling the focused trigger can drop focus to <body>, outside the grid's own handoff; restore it after the run.
+  const trigger=document.activeElement?.closest?.('[data-group-review]')?document.activeElement:null;
+  assetBulkReviewBusy=true;assetBulkReviewControls();assetMessage('Marking 0 of '+total+where+'…');
+  try {
+    for(let at=0;at<total;at+=assetGroupReviewBatch){
+      if(!owns()){stop='The Workspace changed, so no further batch was sent.';break;}
+      const ids=plan.ids.slice(at,at+assetGroupReviewBatch),batch='Batch '+(at/assetGroupReviewBatch+1)+' ('+ids.length+' '+assetGroupNoun(plan,ids.length)+')';
+      let command;
+      try{command=assetCommand({ids,action:'edit',review},snapshot,workspace);}catch(error){stop=error.message;break;}
+      try {
+        const result=validateAssetReceipt(await postAssetCommand(command),command);
+        done+=ids.length;
+        if(owns())applyAssetReviewReceipt(command,result);
+      } catch(error) {
+        const code=error.data?.code;
+        if(code==='asset_revision_conflict'){
+          const changed=(error.data.conflict_ids?.length||0)+(error.data.missing_ids?.length||0);
+          stop=batch+' was not applied: '+(changed||'some')+' of its assets changed elsewhere or no longer exist since you confirmed.';
+        }else if(code!=='asset_workspace_conflict' && error.status>=400 && error.status<500)stop=batch+' was refused and not applied. '+error.message;
+        else stop=batch+' is not confirmed: it may or may not have been applied. '+(error.name==='AbortError'?'The request timed out after 15 s.':error.message);
+        break;
+      }
+      if(owns())assetMessage('Marking '+done+' of '+total+where+'…');
+    }
+  } finally {
+    assetBulkReviewBusy=false;assetBulkReviewControls();
+    if(!owns())assetMessage('Group review stopped: the Workspace changed while it ran. '+done+' of '+total+' were confirmed'+where+' in the earlier Workspace. Nothing was marked in the Workspace now shown.',true);
+    else {
+      renderAssets();
+      const focused=document.activeElement;
+      if(trigger && (!focused || focused===document.body || focused===trigger && (!trigger.isConnected || trigger.disabled)))StudioAssetGrid.focusGroup?.($('#assetGrid'),key,review);
+      assetMessage(stop?done+' of '+total+' marked'+where+'. Stopped: '+stop+' No retry was sent; refresh the library before marking what remains.':
+        'Marked '+done+' of '+total+where+'. Each review can be changed back individually by opening the asset.',!!stop);
+    }
+  }
+  return !stop;
 }
 function renderLibraryRecovery() {
   observeAssetWorkspaceIdentity();
@@ -748,6 +833,7 @@ document.addEventListener('click',async e=>{
     const step=e.target.closest('[data-queue-step]');if(step){assetQueueStep(Number(step.dataset.queueStep));return;}
     if(e.target.closest('[data-queue-exit]')){assetQueue=null;renderAssetQueue();assetMessage('Left the review queue. Saved reviews are unchanged.');return;}
     const bulkReview=e.target.closest('[data-review-bulk]');if(bulkReview){await bulkReviewSelected(bulkReview.dataset.reviewBulk);return;}
+    const groupReview=e.target.closest('[data-group-review]');if(groupReview){await bulkReviewGroup(groupReview.dataset.groupKey,groupReview.dataset.groupReview);return;}
     if(e.target.closest('[data-asset-clear-filters]')){clearAssetFilters();return;}
     const sourceChoice=e.target.closest('[data-asset-source]');if(sourceChoice){chooseAssetSource(sourceChoice.dataset.assetSource);return;}
     if(e.target.closest('[data-asset-import]')){$('#importAssets').click();return;}
