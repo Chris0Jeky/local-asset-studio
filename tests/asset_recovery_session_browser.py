@@ -104,7 +104,8 @@ async def exercise(args):
                     page = await context.new_page(); page.set_default_timeout(8000)
                     page.on('pageerror', lambda error: errors.append(str(error)))
                     if args.inert: await inert_page(page, 8191)
-                    else: await page.goto('http://127.0.0.1:8191/#assets')
+                    # A cold Windows runner can take longer than the 8 s default for the first load (as in #943).
+                    else: await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
                     await page.wait_for_function('!!catalog && !!selected')
                     await page.evaluate("showView('assets')"); await refreshed(page)
                     check('SESSION-01 boot sends no metadata mutation', not writes)

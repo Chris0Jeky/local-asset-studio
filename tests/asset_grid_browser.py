@@ -66,7 +66,7 @@ async def exercise(args):
                 page.on('pageerror', lambda error: errors.append(str(error)))
                 page.set_default_timeout(6000)
                 if args.inert: await inert_page(page, http.server_port)
-                else: await page.goto(f'http://127.0.0.1:{http.server_port}/#assets')
+                else: await page.goto(f'http://127.0.0.1:{http.server_port}/#assets', timeout=20000)
                 await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id')
                 await page.evaluate("showView('assets');if(window.studioReadPoller)studioReadPoller.pause?.();")
                 await page.wait_for_selector(f'[data-asset-check="{ids[0]}"]')

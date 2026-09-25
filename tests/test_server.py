@@ -1118,6 +1118,46 @@ class ServerTests(unittest.TestCase):
                 handler._media=fail; handler._local_file=fail; handler.do_GET()
                 self.assertEqual(seen,{'status':404,'obj':{'error':'Unknown image'}})
 
+    def test_get_local_oserror_is_500_without_comfy_wording(self):
+        s=self.studio(); name='0'*32 + '_missing.png'
+        handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path='/api/uploads/' + name; handler.headers={}
+        handler._safe_host=lambda:True; seen={}
+        handler._json=lambda status,obj:seen.update(status=status,obj=obj)
+        handler.do_GET()
+        self.assertEqual(seen.get('status'),500,seen)
+        self.assertIn('Could not read a local file',seen['obj']['error'])
+        self.assertIn(name,seen['obj']['error'])
+        self.assertNotIn('ComfyUI',seen['obj']['error'])
+        self.assertNotIn(str(s.experiments),seen['obj']['error'])
+    def test_get_image_urlerror_is_502_with_actionable_comfy_wording(self):
+        s=self.studio(); identifier='image-job'; s.jobs[identifier]={'id':identifier,'outputs':[{'filename':'a.png','subfolder':'','type':'output'}]}
+        handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path=f'/api/image/{identifier}/0'; handler.headers={}
+        handler._safe_host=lambda:True; seen={}
+        handler._json=lambda status,obj:seen.update(status=status,obj=obj)
+        with patch.object(server,'urlopen',side_effect=URLError('refused')):
+            handler.do_GET()
+        self.assertEqual(seen.get('status'),502,seen)
+        self.assertIn('did not return',seen['obj']['error'])
+        self.assertIn('then reload',seen['obj']['error'])
+    def test_get_broken_pipe_writes_no_second_response(self):
+        s=self.studio(); identifier='image-job'; s.jobs[identifier]={'id':identifier,'outputs':[{'filename':'a.png','subfolder':'','type':'output'}]}
+        handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path=f'/api/image/{identifier}/0'; handler.headers={}
+        handler._safe_host=lambda:True; sent=[]
+        handler._json=lambda status,obj:sent.append((status,obj))
+        handler.send_response=Mock(side_effect=AssertionError('disconnected client must not get a second response'))
+        # A vanished browser surfaces from the local file write, not from the ComfyUI request.
+        with patch.object(server.Handler,'_local_file',side_effect=BrokenPipeError()), patch.object(server,'urlopen',side_effect=AssertionError('no ComfyUI call')):
+            s.jobs[identifier]['outputs'][0]['asset_id']='a'*32; s.assets=Mock(); handler.do_GET()
+        self.assertEqual(sent,[])
+    def test_get_comfy_disconnect_or_stall_is_a_comfy_error(self):
+        from http.client import RemoteDisconnected
+        for error in (RemoteDisconnected('closed'), TimeoutError('timed out')):
+            with self.subTest(type(error).__name__):
+                s=self.studio(); identifier='image-job'; s.jobs[identifier]={'id':identifier,'outputs':[{'filename':'a.png','subfolder':'','type':'output'}]}
+                handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path=f'/api/image/{identifier}/0'; handler.headers={}
+                handler._safe_host=lambda:True; sent=[]; handler._json=lambda status,obj:sent.append((status,obj))
+                with patch.object(server,'urlopen',side_effect=error): handler.do_GET()
+                self.assertEqual(sent[0][0],502); self.assertIn('ComfyUI',sent[0][1]['error'])
     def test_run_label_is_bounded_stored_on_the_job_and_copied_to_its_assets(self):
         (self.root/'fake-comfy/output').mkdir(); (self.root/'fake-comfy/output/ok.png').write_bytes(png())
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"p1"},{"p1":{"status":{"status_str":"success"},"outputs":{"9":{"images":[{"filename":"ok.png","subfolder":"","type":"output"}]}}}}]

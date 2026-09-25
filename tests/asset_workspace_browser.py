@@ -88,7 +88,7 @@ async def exercise(args):
                     page = await context.new_page(); page.set_default_timeout(6000)
                     page.on('pageerror', lambda e: errors.append(str(e)))
                     if args.inert: await inert_page(page, 8191, session)
-                    else: await page.goto('http://127.0.0.1:8191/#assets')
+                    else: await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
                     await ready(page)
                     return page
                 async def reload(page):
