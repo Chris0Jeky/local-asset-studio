@@ -34,6 +34,26 @@ class LargeJobPreparationPreflightTests(LargeJobPreparationTestCase):
         self.assertEqual(result["after_release"]["evaluation"]["decision"], "observed_unsafe")
         self.assertFalse(result["final"]["ready"])
 
+    def test_restart_still_below_submission_floor_is_not_ready(self):
+        studio = Studio(self.root, [
+            observation(commit=20 * GIB), observation(commit=20 * GIB), observation(commit=25 * GIB),
+        ])
+        for stage in studio.profile["stages"]:
+            stage["windows_commit_bytes"] = 10 * GIB
+        studio.required_host_commit_bytes = lambda preset, graph: 32 * GIB
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        original_wait = original.wait
+        def wait(timeout):
+            original_wait(timeout)
+            studio.backends.current = None
+            studio.backends.configured = []
+        original.wait = wait
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(studio.backends.launches, 1)
+        self.assertEqual(result["after_restart"]["evaluation"]["decision"], "observed_unsafe")
+        self.assertFalse(result["final"]["ready"])
+
     def test_low_commit_preparation_defers_only_the_host_commit_gate(self):
         studio = Studio(self.root, [observation(commit=20 * GIB)])
         low_bytes = 5 * GIB
