@@ -65,8 +65,9 @@ class LifecycleMixin:
         # The restart already happened, so only in-flight work can still refuse readiness here.
         self._check_work("New Studio work arrived after restart; readiness was not granted")
         observation = self.observer(self.studio)
-        evaluation = self._evaluate(
-            context["workflow_identity"], context["_profile"], observation, context["reservations"]
+        evaluation = self._with_host_commit_floor(
+            self._evaluate(context["workflow_identity"], context["_profile"], observation, context["reservations"]),
+            observation, context.get("_host_commit_minimum_bytes"),
         )
         final_backend, _ = self._backend_snapshot(
             expected_identity=restarted["process"], expected_profile_id=restarted["profile_id"]

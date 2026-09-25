@@ -64,7 +64,8 @@ class FlowMixin:
                 # without duplicating its full stages in the durable public receipt.
                 context["_profile"] = profile
                 receipt["blockers"] = context.pop("blockers")
-                receipt["before"] = {key: copy.deepcopy(value) for key, value in context.items() if key != "_profile"}
+                receipt["before"] = {key: copy.deepcopy(value) for key, value in context.items()
+                                     if not key.startswith("_")}
                 self._persist(journal, receipt)
                 if profile is None:
                     return self._finish(
