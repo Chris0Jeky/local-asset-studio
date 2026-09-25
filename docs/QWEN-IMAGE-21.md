@@ -96,3 +96,16 @@ crops or packs by alpha. Generated and agent-inspected only: not art acceptance,
 Research License keeps them non-commercial. Still open under #739: a 2048² text-to-image run, a 3-6 reference identity
 edit, a text-heavy prompt, the LoRA status (the downloaded 2.1 Fix LoRA is untested), and a VRAM-arbitration note for
 running beside a local LLM or Spoken Briefs.
+
+## Compatibility boundary with Edit 2511 (issue #760)
+
+Edit 2511 is a different stack on a different backend — see `docs/QWEN-EDIT-2511.md`.
+Do not mix them: 2.1 is the 7B int8 checkpoint with the Qwen3-VL 8B int8 encoder and
+the bf16 RGBA VAE on the isolated v0.37.0 backend (port 8196); Edit 2511 is the 20B
+GGUF Q4 with the Qwen2.5-VL 7B fp8 encoder and `qwen_image_vae` on the primary
+v0.35.0 backend (port 8188), which has no 2.1 model class. Do not load the Edit-2511
+Lightning 4-step LoRA (or any Edit-2511 LoRA) on a 2.1 graph, do not load any 2.1
+LoRA (Pruna, Fix) on an Edit-2511 graph, and do not point either graph at the
+other's weights. The downloaded 2.1 Fix LoRA stays untested: a download is not
+qualification. Research hygiene (`docs/research/LAS-IMAGE-MODELS-WAVE-FINDINGS-2026-09-24.md`
+section 3) and the #739 open items above still govern.
