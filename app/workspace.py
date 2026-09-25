@@ -501,7 +501,10 @@ class AssetWorkspace:
             recipe = payload.get("recipe")
             if not name or not isinstance(recipe, dict):
                 raise WorkspaceError("Name and recipe are required")
-            raw = json.dumps(recipe)
+            try:
+                raw = json.dumps(recipe, allow_nan=False)
+            except (TypeError, ValueError, RecursionError) as error:
+                raise WorkspaceError("Saved setup recipe must contain finite JSON values") from error
             if len(raw) > 128 * 1024:
                 raise WorkspaceError("Saved setup is too large")
             existing = db.execute("SELECT name,recipe FROM setups WHERE id=?", (identifier,)).fetchone()
