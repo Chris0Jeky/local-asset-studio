@@ -13,6 +13,11 @@
 .production-empty{padding:6px 2px}
 .production-empty p{margin:0 0 10px;font-size:12px;color:var(--muted)}
 .production-empty p b{color:var(--text);font-size:13px}
+.plan-filters{display:flex;gap:8px;margin:0 0 12px}
+.plan-filters select{flex:1 1 0;min-width:0;font-size:12px}
+.plan-older>summary{cursor:pointer;font-size:12px;color:var(--muted);margin:6px 0 10px}
+.plan-filter-note{margin:10px 0 0;font-size:11px;color:var(--muted)}
+.plan-filter-note button{padding:2px 8px;font-size:11px}
 .experiment-summary{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--panel2);font-size:13px}
 .experiment-summary:empty{display:none}
 .experiment-arithmetic{margin:-4px 0 12px;font-size:12px;color:var(--muted)}
