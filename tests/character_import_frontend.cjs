@@ -41,7 +41,7 @@ function harness(fixture={plan,handoff,references:[{bytes:bytes.toString('base64
     if(url==='/api/production'&&method==='POST'){if(transport.unconfirmed)throw Error('inert unconfirmed request');transport.saved=true;if(transport.drop)throw Error('inert lost reply');return project;}
     throw Error('Unexpected request: '+method+' '+url);
   };
-  const context=vm.createContext({$,esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),crypto:webcrypto,TextEncoder,Uint8Array,
+  const context=vm.createContext({$,esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),crypto:webcrypto,TextEncoder,Uint8Array,AbortController,
     api,post:(url,data)=>api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}),
     refreshProduction:async()=>{},showView(){},productionId:null,productionMessage:(...args)=>messages.push(args)});
   vm.runInContext(fs.readFileSync(path.join(root,'app/static/character-import.js'),'utf8'),context);
@@ -102,5 +102,25 @@ function harness(fixture={plan,handoff,references:[{bytes:bytes.toString('base64
   h.references();await h.submit();assert.deepEqual(JSON.parse(h.requests.find(r=>r.url==='/api/production'&&r.method==='POST').body).uploads.map(u=>u.reference_id),['front','back']);
   h=harness();await h.load();h.references();h.$('#characterImportMinutes').value='0';await h.submit();assert.equal(h.requests.length,0);
   h.$('#characterImportMinutes').value='30';h.$('#characterPlanFile').onchange();await h.submit();assert.equal(h.requests.length,0,'Changing plan files invalidates the prepared case');
+  {
+    const second=Buffer.from('second synthetic reference'),pairPlan=clone(plan),pairHandoff=clone(handoff);
+    pairPlan.canon.references.push({id:'back',role:'identity',path:'back.png',sha256:sha(second)});pairPlan.cases[0].reference_ids.push('back');
+    pairHandoff.upload_requirements.push({...pairPlan.canon.references[1],slot_index:1});
+    h=harness({plan:pairPlan,handoff:pairHandoff,references:[{bytes:bytes.toString('base64'),type:'image/png'},{bytes:second.toString('base64'),type:'image/png'}]});
+    await h.load();h.references();
+    let started=0,cancelDisabledDuringLoop=null,hadSignal=false;const inner=h.context.api;
+    h.context.api=async(url,options={})=>{
+      if(url==='/api/upload'){if(started===0){cancelDisabledDuringLoop=h.$('#cancelCharacterImport').disabled;hadSignal=!!(options&&options.signal);h.$('#cancelCharacterImport').onclick();}started++;}
+      return inner(url,options);
+    };
+    await h.submit();
+    assert.equal(cancelDisabledDuringLoop,false,'Cancel must stay enabled during the reference read/hash/upload loop');
+    assert.equal(hadSignal,true,'The in-flight upload must receive an AbortController signal');
+    assert.equal(started,1,'Cancel during the loop must stop further uploads');
+    assert.match(h.$('#characterImportStatus').textContent,/Import cancelled after 1 of 2 pictures/i,'Cancelling must report how many pictures were uploaded');
+    assert.match(h.$('#characterImportStatus').textContent,/Nothing was imported/i,'Cancelling before the final commit must commit nothing and say so');
+    assert.equal(h.requests.filter(r=>r.url==='/api/production'&&r.method==='POST').length,0,'A cancelled import must not register the case');
+    assert.equal(h.$('#cancelCharacterImport').disabled,false,'Cancel must be usable after the cancelled import');
+  }
   console.log('Character import controls preserve reference order, exact bytes, explicit import and no duplicate submission.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

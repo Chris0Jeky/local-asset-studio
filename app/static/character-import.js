@@ -2,11 +2,13 @@
 // Production remains the plan/reference/preflight/budget authority.
 (()=>{
   const MAX_JSON=1024*1024,MAX_IMAGE=20*1024*1024,hex=/^[0-9a-f]{64}$/;
-  let loaded=null,busy=false,attempted=false;
+  let loaded=null,busy=false,attempted=false,abortRequested=false,uploadController=null;
   const status=(message,error=false)=>{const target=$('#characterImportStatus');target.textContent=message;target.classList.toggle('error',error);};
   const require=(condition,message)=>{if(!condition)throw Error(message);};
   const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');
-  const lock=value=>{busy=value;$('#characterImportInputs').disabled=value;$('#cancelCharacterImport').disabled=value;};
+  const lock=value=>{busy=value;$('#characterImportInputs').disabled=value;$('#cancelCharacterImport').disabled=false;};
+  const cancelMessage=(done,total)=>done>0?'Import cancelled after '+done+' of '+total+' pictures. Nothing was imported; pictures already uploaded stay ready for another try.':'Import cancelled after 0 of '+total+' pictures. Nothing was imported.';
+  const requestAbort=()=>{abortRequested=true;try{uploadController?.abort();}catch(e){}};
   function clear(){loaded=null;attempted=false;$('#characterCaseFields').hidden=true;$('#importCharacterCase').disabled=true;$('#characterReferenceFiles').innerHTML='';$('#importCharacterCase').textContent='Import planned case';}
   async function readFile(selector,label){
     const file=$(selector).files[0];require(file,label+' is required.');
@@ -60,8 +62,8 @@
     productionMessage((alreadySaved?'Opened the existing case.':'Imported the planned case.')+' Nothing was started. Use its separate Start action when ready.');
   }
   $('#importCharacterStudy').onclick=()=>{if(busy)return;clear();$('#characterPlanFile').value='';$('#characterHandoffFile').value='';$('#characterImportMinutes').value='30';status('Choose the approved study plan and the handoff for one case.');$('#characterImportDialog').showModal();};
-  $('#cancelCharacterImport').onclick=()=>{if(!busy)$('#characterImportDialog').close();};
-  $('#characterImportDialog').oncancel=e=>{if(busy)e.preventDefault();};
+  $('#cancelCharacterImport').onclick=()=>{if(busy)requestAbort();else $('#characterImportDialog').close();};
+  $('#characterImportDialog').oncancel=e=>{if(busy){e.preventDefault();requestAbort();}};
   for(const selector of ['#characterPlanFile','#characterHandoffFile'])$(selector).onchange=()=>{if(!busy){clear();status('Read the selected files to preview this case.');}};
   $('#readCharacterCase').onclick=async()=>{
     if(busy)return;clear();lock(true);
@@ -79,13 +81,14 @@
     }catch(e){clear();status(e.message,true);}finally{lock(false);}
   };
   $('#characterImportForm').onsubmit=async e=>{
-    e.preventDefault();if(busy||!loaded)return;lock(true);
+    e.preventDefault();if(busy||!loaded)return;lock(true);abortRequested=false;uploadController=null;
     try{
       if(attempted){const saved=await existing();if(saved)await show(saved,true);else status('The case is not visible yet. No import was repeated. Inspect Runs & review and the reported failure before loading corrected files.',true);return;}
       const files=[];
       validatePayload(payload(loaded.refs.map(ref=>({reference_id:ref.id,file:'x'.repeat(200)}))));
       // Check all bytes before uploading any file; hash one bounded image at a time.
       for(let i=0;i<loaded.refs.length;i++){
+        if(abortRequested)throw Error(cancelMessage(0,loaded.refs.length));
         const ref=loaded.refs[i],file=$('#characterReference'+i).files[0];
         require(file,'Choose the original image for '+ref.id+'.');
         require(file.size>0&&file.size<=MAX_IMAGE,'Reference '+ref.id+' must be under 20 MiB.');
@@ -96,14 +99,20 @@
       const saved=await existing();if(saved){await show(saved,true);return;}
       const uploads=[];
       for(let i=0;i<files.length;i++){
+        if(abortRequested)throw Error(cancelMessage(uploads.length,files.length));
         const ref=loaded.refs[i],file=files[i],known=loaded.uploads.get(i);let name=known?.source===file?known.name:null;
         if(!name){status('Uploading reference '+(i+1)+' of '+files.length+'…');
-          const uploaded=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':ref.id},body:file});
-          require(typeof uploaded?.file==='string'&&/^[0-9a-f]{32}_[A-Za-z0-9._-]{1,110}$/.test(uploaded.file),'Studio did not confirm the uploaded reference name.');
-          name=uploaded.file;loaded.uploads.set(i,{source:file,name});
+          uploadController=new AbortController();
+          try{
+            const uploaded=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':ref.id},body:file,signal:uploadController.signal});
+            require(typeof uploaded?.file==='string'&&/^[0-9a-f]{32}_[A-Za-z0-9._-]{1,110}$/.test(uploaded.file),'Studio did not confirm the uploaded reference name.');
+            name=uploaded.file;loaded.uploads.set(i,{source:file,name});
+          }catch(uploadError){if(abortRequested)throw Error(cancelMessage(uploads.length,files.length));throw uploadError;}
+          finally{uploadController=null;}
         }
         uploads.push({reference_id:ref.id,file:name});
       }
+      if(abortRequested)throw Error(cancelMessage(uploads.length,files.length));
       const value=payload(uploads);validatePayload(value);attempted=true;$('#importCharacterCase').textContent='Check saved case';status('Checking and importing this case…');
       await show(await api('/api/production',{method:'POST',headers:{'Content-Type':'application/json'},body:serialize(value)}));
     }catch(error){
