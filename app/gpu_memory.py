@@ -6,6 +6,11 @@ as "loaded completely" can therefore overflow into WDDM shared memory, where eve
 PCIe: Qwen-Image 2.1 ran at 12.5-17.7 s/step that way and at 0.68 s/step once `--reserve-vram` covered the
 other processes (experiments/curated/vram-spill-20260923/qwen21-bench.json). `launch_reserve_gib` sizes the
 reserve from a live reading; `spill` reports a running ComfyUI process's shared-memory use as evidence.
+
+Process counters can report impossible values (dwm at 65.9 GiB, issue #983). `read` also samples the
+adapter-level `GPU Adapter Memory` dedicated figure per LUID. If process counters disagree beyond sampling
+headroom, the reserve and guard use the adapter figure instead. If that cross-check is unavailable, the
+reserve uses its declared fallback and the guard receives an unknown reading.
 """
 from __future__ import annotations
 
@@ -22,9 +27,15 @@ FLOOR_GIB = 0.6
 CAP_GIB = 6.0
 # Used when the counters cannot be read: other processes held 3.3-3.8 GB on 23 September 2026.
 FALLBACK_GIB = 4.0
+# Headroom between the process and adapter PDH samples: the two queries run moments apart, so a small skew is
+# ordinary; anything past RATIO plus SLOP is an impossible counter, not timing (issue #983).
+RECONCILE_RATIO = 1.1
+RECONCILE_SLOP_BYTES = 1024 ** 3
 # Shared usage below this is ordinary driver bookkeeping (78 MB on a run that did not spill).
 SPILL_BYTES = 512 * 1024 ** 2
 _INSTANCE = re.compile(r'pid_(\d+)_luid_(0x[0-9A-Fa-f]+_0x[0-9A-Fa-f]+)_phys_(\d+)')
+_ADAPTER_INSTANCE = re.compile(r'luid_(0x[0-9A-Fa-f]+_0x[0-9A-Fa-f]+)_phys_(\d+)')
+_ADAPTER_BARE = re.compile(r'(0x[0-9A-Fa-f]+_0x[0-9A-Fa-f]+)_phys_(\d+)')
 
 
 def parse(dedicated, shared):
@@ -41,6 +52,48 @@ def parse(dedicated, shared):
             record = adapters.setdefault(adapter, {}).setdefault(pid, {'dedicated_bytes': 0, 'shared_bytes': 0})
             record[kind] += int(value)
     return adapters
+
+
+def parse_adapter_totals(dedicated):
+    """Fold a `GPU Adapter Memory(*)` dedicated array into `{adapter: bytes}`, keyed like `parse`.
+
+    Adapter instances look like ``luid_0x00000000_0x000102FB_phys_0``: the same LUID plus physical index that
+    `parse` derives from the longer per-process instance names, so totals line up per adapter.
+    """
+    totals = {}
+    for name, value in (dedicated or {}).items():
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0: continue
+        match = _ADAPTER_INSTANCE.fullmatch(name) or _ADAPTER_BARE.fullmatch(name)
+        if not match: continue
+        adapter = match.group(1).lower() + '_' + match.group(2)
+        totals[adapter] = totals.get(adapter, 0) + int(value)
+    return totals
+
+
+def _adapter_total(reading, adapter):
+    """The adapter-level dedicated figure for `adapter`, or None when missing, unmatched or unusable."""
+    totals = reading.get('adapter_totals') if isinstance(reading, dict) else None
+    total = totals.get(adapter) if isinstance(totals, dict) else None
+    if isinstance(total, bool) or not isinstance(total, (int, float)) or not math.isfinite(total) or total < 0: return None
+    return int(total)
+
+
+def _reconcile(values, total, own_pid=None):
+    """Fold `{pid: dedicated_bytes}` into a plausible others total against the adapter-level figure.
+
+    Returns `(excluded_pids, others_bytes, reconciled)`. When process counters exceed the adapter figure
+    beyond sampling headroom, use the adapter figure (minus a credible owned process) instead of guessing
+    which of the remaining process counters account for its actual usage.
+    """
+    if total is None: return [], sum(value for pid, value in values.items() if pid != own_pid), False
+    limit = total * RECONCILE_RATIO + RECONCILE_SLOP_BYTES
+    excluded = sorted(pid for pid, value in values.items() if value > limit)
+    summed = sum(values.values())
+    if total == 0 and summed > 0: return excluded, None, False
+    if own_pid is not None and own_pid in excluded: return excluded, None, False
+    if excluded or summed > limit:
+        return excluded, max(0, total - values.get(own_pid, 0)), True
+    return [], sum(value for pid, value in values.items() if pid != own_pid), False
 
 
 def select_adapter(adapters, pid=None):
@@ -80,38 +133,73 @@ def _read_counter(pdh, path):
 
 
 def read():
-    """Return per-adapter, per-process GPU memory, or an explicit reason it is unknown. Never raises."""
-    if os.name != 'nt': return {'adapters': None, 'unknown_reason': 'Windows GPU performance counters are unavailable on this host'}
+    """Return per-adapter, per-process GPU memory plus the adapter-level dedicated figures. Never raises."""
+    if os.name != 'nt': return {'adapters': None, 'adapter_totals': None, 'unknown_reason': 'Windows GPU performance counters are unavailable on this host',
+                                'adapter_unknown_reason': None}
     try:
         pdh = ctypes.windll.pdh
         dedicated = _read_counter(pdh, r'\GPU Process Memory(*)\Dedicated Usage')
         shared = _read_counter(pdh, r'\GPU Process Memory(*)\Shared Usage')
     except (AttributeError, OSError, ValueError) as exc:
-        return {'adapters': None, 'unknown_reason': 'Windows GPU process memory counters could not be read: ' + str(exc)[:200]}
+        return {'adapters': None, 'adapter_totals': None, 'unknown_reason': 'Windows GPU process memory counters could not be read: ' + str(exc)[:200],
+                'adapter_unknown_reason': None}
     adapters = parse(dedicated, shared)
-    if not adapters: return {'adapters': None, 'unknown_reason': 'No GPU process memory instances were reported'}
-    return {'adapters': adapters, 'unknown_reason': None}
+    if not adapters: return {'adapters': None, 'adapter_totals': None, 'unknown_reason': 'No GPU process memory instances were reported',
+                             'adapter_unknown_reason': None}
+    try:
+        adapter_used = _read_counter(pdh, r'\GPU Adapter Memory(*)\Dedicated Usage')
+    except (AttributeError, OSError, ValueError) as exc:
+        return {'adapters': adapters, 'adapter_totals': None, 'unknown_reason': None,
+                'adapter_unknown_reason': 'Windows GPU adapter memory counters could not be read: ' + str(exc)[:200]}
+    totals = parse_adapter_totals(adapter_used)
+    if not totals: return {'adapters': adapters, 'adapter_totals': None, 'unknown_reason': None,
+                           'adapter_unknown_reason': 'No GPU adapter memory instances were reported'}
+    return {'adapters': adapters, 'adapter_totals': totals, 'unknown_reason': None, 'adapter_unknown_reason': None}
 
 
 def launch_reserve_gib(reading=None, exclude_pids=()):
-    """`--reserve-vram` for a ComfyUI about to start: what every other process holds on the GPU plus ComfyUI's margin."""
+    """`--reserve-vram` for a ComfyUI about to start: what every other process holds on the GPU plus ComfyUI's margin.
+
+    Impossible process counters are reconciled against the adapter-level figure (`basis: 'reconciled'`);
+    without a matching figure a new reading uses the declared fallback.
+    """
     reading = read() if reading is None else reading
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
-    adapter = select_adapter(adapters) if adapters else None
-    if adapter is None: return {'reserve_gib': FALLBACK_GIB, 'others_bytes': None, 'adapter': None,
-                                'basis': 'fallback', 'unknown_reason': (reading or {}).get('unknown_reason') or 'No adapter reading'}
+    if adapters and isinstance(reading, dict) and 'adapter_totals' in reading:
+        candidates = {name: _adapter_total(reading, name) for name in adapters}
+        candidates = {name: total for name, total in candidates.items() if total is not None}
+        adapter = max(candidates, key=candidates.get) if candidates else None
+    else:
+        adapter = select_adapter(adapters) if adapters else None
+    if adapter is None: return {'reserve_gib': FALLBACK_GIB, 'others_bytes': None, 'adapter': None, 'adapter_total_bytes': None,
+                                'excluded_pids': [], 'basis': 'fallback', 'unknown_reason':
+                                (reading or {}).get('unknown_reason') or (reading or {}).get('adapter_unknown_reason') or 'No matching GPU adapter memory reading'}
     exclude = set(exclude_pids)
-    others = sum(p['dedicated_bytes'] for pid, p in adapters[adapter].items() if pid not in exclude)
+    values = {pid: p['dedicated_bytes'] for pid, p in adapters[adapter].items() if pid not in exclude}
+    total = _adapter_total(reading, adapter)
+    excluded, others, capped = _reconcile(values, total)
+    if others is None:
+        return {'reserve_gib': FALLBACK_GIB, 'others_bytes': None, 'adapter': adapter, 'adapter_total_bytes': total,
+                'excluded_pids': excluded, 'basis': 'fallback', 'unknown_reason': 'GPU adapter and process counters disagree'}
     reserve = min(CAP_GIB, max(FLOOR_GIB, math.ceil((others / GIB + MARGIN_GIB) * 10) / 10))
-    return {'reserve_gib': reserve, 'others_bytes': others, 'adapter': adapter, 'basis': 'measured', 'unknown_reason': None}
+    return {'reserve_gib': reserve, 'others_bytes': others, 'adapter': adapter, 'adapter_total_bytes': total,
+            'excluded_pids': excluded, 'basis': 'reconciled' if (excluded or capped) else 'measured', 'unknown_reason': None}
 
 
 def others_bytes(reading, pid):
-    """Dedicated memory every other process holds on `pid`'s adapter, or None when the reading has no adapters."""
+    """Dedicated memory every other plausible process holds on `pid`'s adapter, or None when the reading has no adapters.
+
+    Impossible process counters are reconciled against the adapter-level figure, so a runaway counter cannot
+    zero the installed VRAM guard's perceived free memory; without a matching figure a new reading is unknown.
+    """
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
     adapter = select_adapter(adapters, pid) if adapters else None
-    if adapter is None: return None
-    return sum(p['dedicated_bytes'] for other, p in adapters[adapter].items() if other != pid)
+    if adapter is None or pid not in adapters[adapter]: return None
+    total = _adapter_total(reading, adapter)
+    if isinstance(reading, dict) and 'adapter_totals' in reading and total is None: return None
+    values = {other: p['dedicated_bytes'] for other, p in adapters[adapter].items()}
+    _, others, _ = _reconcile(values, total, own_pid=pid)
+    return others
 
 
 def holders(reading, pid, top=3):
