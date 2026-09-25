@@ -422,9 +422,12 @@ class RuntimeMixin:
             self._evaluate(context["workflow_identity"], profile, observation, context["reservations"]),
             observation, context.get("_host_commit_minimum_bytes"),
         )
-        backend_after, _ = self._backend_snapshot(
-            expected_identity=expected_identity, expected_profile_id=expected_profile_id
-        )
-        self._check_work("Studio work changed while post-action resources were being measured")
+        # #956: the final snapshot and work check are one Studio.lock-held
+        # decision, so a concurrent switch cannot take backends.busy between them.
+        with self.studio.lock:
+            backend_after, _ = self._backend_snapshot(
+                expected_identity=expected_identity, expected_profile_id=expected_profile_id
+            )
+            self._check_work("Studio work changed while post-action resources were being measured")
         return {"observation": observation, "evaluation": evaluation, "backend": backend_after,
                 "queue_before_observation": backend["queue"]}

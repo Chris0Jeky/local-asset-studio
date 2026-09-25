@@ -426,6 +426,117 @@ class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
                 self.request(request_id="idle-2", mode="idle_policy", allow_restart=True)
             )
 
+    def restartable_studio(self, name, observations):
+        studio = Studio(self.root / name, observations)
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        original_wait = original.wait
+
+        def wait(timeout):
+            original_wait(timeout)
+            studio.backends.current = None
+            studio.backends.configured = []
+
+        original.wait = wait
+        return studio, original
+
+    def test_post_restart_final_decision_holds_the_studio_lock(self):
+        # #956: the final backend snapshot and work check are one Studio.lock-held
+        # decision, so a concurrent switch cannot take backends.busy between them.
+        # No threads or timing: the wrappers record lock ownership on each call,
+        # and the final pair must be owned. This fails against the pre-fix code,
+        # where the final snapshot and check run outside the lock.
+        studio, original = self.restartable_studio("lock", [
+            observation(commit=20 * GIB),
+            observation(commit=20 * GIB),
+            observation(commit=40 * GIB),
+        ])
+        controller = self.controller(studio)
+        original_snapshot = controller._backend_snapshot
+        original_check = controller._check_work
+        snapshots: list[bool] = []
+        checks: list[tuple[str, bool]] = []
+
+        def snapshot(**kwargs):
+            snapshots.append(studio.lock._is_owned())
+            return original_snapshot(**kwargs)
+
+        def check(message, **kwargs):
+            checks.append((message, studio.lock._is_owned()))
+            return original_check(message, **kwargs)
+
+        controller._backend_snapshot = snapshot
+        controller._check_work = check
+        result = controller.run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "ready_after_restart")
+        self.assertTrue(result["final"]["ready"])
+        self.assertTrue(snapshots, "expected backend snapshots to run")
+        self.assertTrue(snapshots[-1], "final post-restart snapshot must hold Studio.lock")
+        self.assertEqual(checks[-1][0],
+                         "Studio work changed while post-restart resources were being measured")
+        self.assertTrue(checks[-1][1], "final post-restart work check must hold Studio.lock")
+        self.assertEqual([action["kind"] for action in result["actions"]], ["release", "restart"])
+        self.assertEqual(len(studio.free_calls), 1)
+        self.assertEqual(studio.backends.launches, 1)
+        self.assertTrue(original.terminated)
+        self.assertFalse(studio.backends.busy)
+
+    def test_post_restart_switch_gate_refuses_readiness_without_clearing_the_gate(self):
+        # A switch that claims backends.busy during post-restart observation must
+        # leave a non-ready receipt; our path never owned that gate, so it stays set.
+        studio, original = self.restartable_studio("busy", [
+            observation(commit=20 * GIB),
+            observation(commit=20 * GIB),
+            observation(commit=40 * GIB),
+        ])
+        controller = self.controller(studio)
+        original_observer = controller.observer
+        calls = {"count": 0}
+
+        def observer(value):
+            outcome = original_observer(value)
+            calls["count"] += 1
+            if calls["count"] == 3:
+                studio.backends.busy = True
+            return outcome
+
+        controller.observer = observer
+        result = controller.run(self.request(allow_restart=True))
+        self.assertFalse(result["final"]["ready"])
+        self.assertNotEqual(result["phase"], "ready_after_restart")
+        self.assertIn("switching", result["final"]["reason"])
+        self.assertEqual([action["kind"] for action in result["actions"]], ["release", "restart"])
+        self.assertEqual(studio.backends.launches, 1, "no second launch after the refused readiness")
+        self.assertTrue(original.terminated)
+        self.assertFalse(result["generation_submitted"])
+        self.assertTrue(studio.backends.busy, "another owner's gate is never cleared")
+
+    def test_post_restart_late_work_still_refuses_with_the_existing_message(self):
+        studio, original = self.restartable_studio("late", [
+            observation(commit=20 * GIB),
+            observation(commit=20 * GIB),
+            observation(commit=40 * GIB),
+        ])
+        controller = self.controller(studio)
+        original_check = controller._check_work
+
+        def check(message, **kwargs):
+            if message == "Studio work changed while post-restart resources were being measured":
+                studio.jobs["late"] = {"status": "running", "submissions": []}
+            return original_check(message, **kwargs)
+
+        controller._check_work = check
+        result = controller.run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "refused")
+        self.assertFalse(result["final"]["ready"])
+        self.assertIn("Studio work changed while post-restart resources were being measured",
+                      result["final"]["reason"])
+        self.assertEqual([action["kind"] for action in result["actions"]], ["release", "restart"])
+        self.assertEqual(studio.backends.launches, 1)
+        self.assertTrue(original.terminated)
+        self.assertFalse(result["generation_submitted"])
+        self.assertFalse(studio.backends.busy)
+
 
 if __name__ == "__main__":
     unittest.main()
