@@ -191,7 +191,7 @@ body.workshop-active[data-workshop-ambience="quiet-morning"] .wk-immersive-hero:
 .workshop .wk-appearance {position:relative;z-index:30;justify-self:end;align-self:center;min-width:0;margin:0;padding:0;border:0;background:none}
 .workshop .wk-appearance>summary {list-style:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--muted);font-size:11px;letter-spacing:.06em;cursor:pointer;white-space:nowrap}
 .workshop .wk-appearance>summary::-webkit-details-marker {display:none}
-.workshop .wk-appearance>summary::after {content:"BE";font-size:10px}
+.workshop .wk-appearance>summary::after {content:"▾";font-size:10px}
 .workshop .wk-appearance>summary:hover,.workshop .wk-appearance[open]>summary {color:var(--text);border-color:var(--accent)}
 .workshop .wk-appearance>.wk-toolbar {position:absolute;top:calc(100% + 8px);right:0;width:min(640px,calc(100vw - 28px));z-index:60;box-shadow:var(--wk-shadow)}
 

@@ -153,7 +153,7 @@
     }
     skinSelect.addEventListener('change', () => updatePreference('skin', skinSelect.value));
     skinControl.append(skinLabel, nativeSkinLabel, skinPicker);
-    toolbar.append(selectControls, skinControl, preferenceNotice);
+    toolbar.append(selectControls, skinControl);
     // Appearance is a compact, closed-by-default popover in the page header: the recipe chip and the prompt come
     // first under the title (#772). The selects keep their ids, handlers and persistence; only their container moved.
     const appearance = el('details', 'wk-appearance'); appearance.id = 'workshopAppearance';
@@ -306,6 +306,8 @@
     editor.append(parameters, inspection, review);
     const setupReview = button('workshopSetupReview', 'Review readiness', () => reveal(review));
     setupReview.className = 'wk-setup-review'; setupRail.append(setupReview);
+    // The storage notice stays outside the closed Appearance popover, so a choice that will not persist is always visible.
+    setupRail.append(preferenceNotice);
     const dock = el('div', 'wk-run-dock'); dock.setAttribute('aria-label','Generation controls');
     const dockInfo = el('div', 'wk-dock-info'), readiness = el('strong'), eta = el('span');
     readiness.id = 'workshopReadiness'; eta.id = 'workshopEta';

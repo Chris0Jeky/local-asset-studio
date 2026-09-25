@@ -523,6 +523,9 @@ async function recipeSwapDuringUploadNeverSubmits() {
 async function generateShortcutRoutesThroughTheButton() {
   const s = sandbox({}, {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
   s.run(`selectPreset('plain');`);
+  let openDialog = null;
+  s.context.document.querySelector = selector => selector === 'dialog[open]' ? openDialog : s.element(selector);
+  s.context.document.body = {closest: () => null};
   const jobs = () => s.requests.filter(r => r.url === '/api/jobs').length;
   assert.equal(jobs(), 0, 'Loading Create never submits');
   const button = s.element('#generate'), create = s.element('#createView'), prompt = s.element('#positive'), outside = {closest: () => null};
@@ -545,6 +548,14 @@ async function generateShortcutRoutesThroughTheButton() {
   assert.equal(clicks, 1, 'A key repeat never clicks');
   assert.deepEqual(press({ctrlKey: false}), ['ignored', false], 'Plain Enter keeps its normal meaning');
   assert.deepEqual(press({shiftKey: true}), ['ignored', false]);
+  assert.deepEqual(press({altKey: true}), ['ignored', false], 'Ctrl+Alt+Enter is not the shortcut');
+  assert.deepEqual(press({isComposing: true}), ['ignored', false], 'An IME composition keeps its Enter');
+  assert.deepEqual(press({defaultPrevented: true}), ['ignored', false], 'A field that already handled Enter keeps it');
+  openDialog = {};
+  assert.deepEqual(press({target: s.context.document.body}), ['ignored', false], 'An open modal owns the keyboard even when focus fell to body');
+  assert.deepEqual(press(), ['ignored', false]);
+  openDialog = null;
+  assert.equal(clicks, 1, 'None of those clicked');
   assert.deepEqual(press({ctrlKey: false, metaKey: true}), ['clicked', true], 'Cmd+Enter works on a Mac');
   assert.equal(clicks, 2);
   await flush(); await flush();
@@ -572,6 +583,8 @@ async function pastedAndDroppedPicturesFillEmptySlots() {
   s.context.fetch = async (url, options = {}) => url === '/api/upload'
     ? (s.requests.push({url, name: options.headers['X-Filename']}), {ok: true, json: async () => ({file: 'up-' + options.headers['X-Filename'], sha256: 'e'.repeat(64), width: 512, height: 768})})
     : fetch(url, options);
+  let openDialog = null;
+  s.context.document.querySelector = selector => selector === 'dialog[open]' ? openDialog : s.element(selector);
   const body = {closest: () => null}, prompt = s.element('#positive'), create = s.element('#createView');
   s.context.document.body = body; create.hidden = false; create.contains = node => node === prompt || node === body;
   prompt.closest = selector => selector.includes('textarea') ? prompt : null;
@@ -585,6 +598,10 @@ async function pastedAndDroppedPicturesFillEmptySlots() {
   s.run(`selectPreset('qwen-3ref');`);
   assert.deepEqual(paste([], {target: prompt, types: ['text/plain']}), ['ignored', false], 'A text paste is left alone');
   assert.deepEqual(paste([png('clip.png')], {target: prompt, types: ['text/plain', 'Files']}), ['ignored', false], 'Text on the clipboard wins in a text field');
+  openDialog = {};
+  assert.deepEqual(paste([png('a.png')]), ['ignored', false], 'A paste behind an open modal is left alone');
+  openDialog = null;
+  assert.deepEqual(uploads(), []);
   assert.deepEqual(paste([png('a.png')]), ['pasted', true]);
   await flush(); await flush();
   assert.deepEqual(slots(), ['up-a.png', null, null], 'The picture lands in the first empty slot');

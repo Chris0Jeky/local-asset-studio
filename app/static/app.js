@@ -580,9 +580,10 @@ function generateShortcutBlocker(button){
   return String($('#uxBlockers .ux-blocker p')?.textContent||'').trim()||'Generate is not available yet. Review the readiness checks.';
 }
 function generateShortcut(e){
-  if(e.key!=='Enter'||!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey||e.isComposing)return 'ignored';
+  // A field that already handled Enter (the pose X/Y inputs) keeps it; an open modal owns the keyboard, even from body.
+  if(e.key!=='Enter'||!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey||e.isComposing||e.defaultPrevented)return 'ignored';
   const button=$('#generate'),create=$('#createView'),target=e.target;
-  if(!button||!create||create.hidden||!(target===document.body||create.contains(target))||target?.closest?.('dialog'))return 'ignored';
+  if(!button||!create||create.hidden||!(target===document.body||create.contains(target))||target?.closest?.('dialog')||document.querySelector('dialog[open]'))return 'ignored';
   e.preventDefault();
   if(e.repeat)return 'repeat';
   const visible=!button.closest('[hidden]')&&button.getClientRects().length>0;

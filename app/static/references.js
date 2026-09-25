@@ -146,7 +146,7 @@ function stageReferenceInput(id,file){
 }
 function pasteReference(e){
   const create=$('#createView'),target=e.target,data=e.clipboardData;
-  if(!data||!create||create.hidden||!(target===document.body||create.contains(target))||target?.closest?.('dialog'))return 'ignored';
+  if(!data||!create||create.hidden||!(target===document.body||create.contains(target))||target?.closest?.('dialog')||document.querySelector('dialog[open]'))return 'ignored';
   const files=[...(data.files||[])].filter(file=>String(file?.type||'').startsWith('image/'));
   if(!files.length)return 'ignored';
   if(target?.closest?.('input,textarea,select,[contenteditable]')&&[...(data.types||[])].includes('text/plain'))return 'ignored';

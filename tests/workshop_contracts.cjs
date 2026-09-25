@@ -81,11 +81,14 @@ test('appearance is a closed popover in the title row; the recipe chip and promp
   assert.match(js, /editor\.before\(hero, modebar, appearance, setupRail\)/);
   assert.doesNotMatch(js, /appearance\.open = true/, 'Appearance is never opened for the user');
   for (const id of ['workshopLayout', 'workshopAmbience', 'workshopSkin']) assert.ok(js.includes(id), id + ' keeps its id');
+  assert.match(js, /setupRail\.append\(preferenceNotice\)/, 'The storage notice stays visible outside the closed popover');
+  assert.doesNotMatch(js, /toolbar\.append\([^)]*preferenceNotice/);
   // Only Immersive, which hides the title, keeps a toolbar row; Focus and Studio templates give it no row at all.
   for (const name of ['workshop-immersive-core.css', 'workshop-immersive.css']) {
     const css = fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8');
     for (const [, selector, body] of css.matchAll(/([^{}]+)\{([^{}]*grid-template-areas[^{}]*)\}/g))
       if (!selector.includes('immersive')) assert.doesNotMatch(body, /toolbar/, name + ': ' + selector.trim());
+    assert.ok(![...css].some(c => c.charCodeAt(0) < 32 && ![9, 10, 13].includes(c.charCodeAt(0))), name + ' carries no raw control bytes');
     if (name === 'workshop-immersive-core.css') {
       assert.match(css, /\.workshop:not\(\[data-workshop-layout="immersive"\]\) \.wk-appearance \{grid-area:heading\}/);
       assert.match(css, /\.workshop \.wk-appearance>\.wk-toolbar \{position:absolute;/);
