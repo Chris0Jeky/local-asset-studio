@@ -36,7 +36,9 @@ MAX_REVISION = 2**53 - 1
 # register() copies a job name (AV project names reach 1,000 characters) into the initial title; the
 # edit limit is 200. Conflict projections in app/static/workspace.js accept up to this bound.
 REGISTERED_TITLE_MAX = 1024
-METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "run_label", "metadata_revision")
+# The editor-conflict envelope: the editor, its conflict projection and the recovery shelf validate exactly these keys.
+# run_label is not an editor field; it travels in the receipt's applied values and in every full asset read (#939).
+METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
 # Additive, nullable asset columns: a Workspace created before them opens unchanged and its assets read as NULL (#939).
 ADDITIVE_COLUMNS = ("run_label", "prompt_excerpt")
 PROMPT_EXCERPT_CHARS = 60

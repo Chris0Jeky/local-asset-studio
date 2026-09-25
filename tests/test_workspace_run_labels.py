@@ -79,8 +79,10 @@ class RunLabelEditCommandTests(unittest.TestCase):
         self.assertEqual(marked['applied'], {'run_label':'Agent lab'})
         self.assertEqual(marked['revisions'], {i:1 for i in self.ids})
         self.assertEqual(self.labels(), ['Agent lab']*3)
-        self.assertEqual([m['run_label'] for m in marked['current']], ['Agent lab']*3)
-        self.assertEqual(self.store.metadata(self.ids[0], self.scope)['run_label'], 'Agent lab')
+        # The editor-conflict envelope stays exactly METADATA_FIELDS; full asset reads carry the label.
+        self.assertEqual([set(m) for m in marked['current']], [set(workspace.METADATA_FIELDS) | {'workspace_id'}]*3)
+        self.assertNotIn('run_label', self.store.metadata(self.ids[0], self.scope))
+        self.assertEqual({a['run_label'] for a in self.store.snapshot()['assets']}, {'Agent lab'})
         cleared = self.store.update(self.command(run_label=None))
         self.assertEqual(cleared['applied'], {'run_label':None}); self.assertEqual(self.labels(), [None]*3)
         self.assertEqual(cleared['revisions'], {i:2 for i in self.ids})
@@ -113,7 +115,7 @@ class RunLabelEditCommandTests(unittest.TestCase):
             self.store.update(stale)
         error = caught.exception
         self.assertEqual((error.status, error.code, error.details['conflict_ids']), (409, 'asset_revision_conflict', [self.ids[1]]))
-        self.assertIsNone(error.details['current'][0]['run_label'])
+        self.assertEqual(error.details['current'][0]['title'], 'Renamed elsewhere')
         self.assertEqual(self.labels(), [None]*3)
 
     def test_the_command_limit_still_applies(self):
