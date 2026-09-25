@@ -295,6 +295,14 @@ class ReviewTests(unittest.TestCase):
         oriented,transform=decode(data)
         try:self.assertEqual(oriented.size,(15,9));self.assertEqual(transform['encoded_size'],[9,15]);self.assertEqual(transform['exif_orientation'],6);self.assertFalse(oriented.info)
         finally:oriented.close();image.close()
+    def test_review_busy_status_and_export_reason_wired(self):
+        js=(Path(__file__).resolve().parent.parent/'app/static/review.js').read_text(encoding='utf-8');html=(Path(__file__).resolve().parent.parent/'app/static/review.html').read_text(encoding='utf-8')
+        self.assertIn("$('#export').disabled=busy||!state?.finalized||dirty()",js)
+        self.assertIn('aria-busy',js);self.assertIn("$('#desk').setAttribute('aria-busy'",js)
+        self.assertIn('Saving…',js);self.assertIn('Loading…',js)
+        self.assertIn('Save your unsaved changes first',js);self.assertIn('Finalize the review first',js)
+        self.assertIn("$('#export').title",js);self.assertIn("$('#exportHint').textContent",js)
+        self.assertIn('id="exportHint"',html)
     def test_animated_oversized_and_nonimage_decodes_refused(self):
         from PIL import Image
         image=Image.new('RGBA',(5,5));buffer=io.BytesIO();image.save(buffer,format='PNG',save_all=True,append_images=[Image.new('RGBA',(5,5),'red')],duration=10)
