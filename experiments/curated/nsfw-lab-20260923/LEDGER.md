@@ -2,11 +2,11 @@
 
 ## Correction: p40–p92 header times are not execution evidence
 
-`git blame --line-porcelain origin/main -- CURRENT_STATE.md` shows that headers p40–p92 were committed before their written local times, so those header times are not evidence of execution. Three examples: p40 header says 24 Sep 15:00, owning commit `c3294252` was 24 Sep 14:33:49 +01:00; p60 says 25 Sep 00:20, commit `9438ffa6` was 24 Sep 14:43:27 +01:00; p92 says 25 Sep 21:45, commit `47f36db7` was 24 Sep 23:18:20 +01:00. This correction describes the error without changing the original headers below, which are preserved verbatim. The p4–p39 header times precede their owning commit, so that comparison alone neither proves nor disproves them; receipt times were not checked. Future lab entries must take times from the clock or receipt `created_at`, as `.claude/rules/evidence-docs.md` requires. The complete p40–p92 comparison follows.
+`git blame --line-porcelain d77e23102ec1db08828f00558a78558379fd5531 -- CURRENT_STATE.md` shows that headers p40–p92 were committed before their written local times, so those header times are not evidence of execution. Three examples: p40 header says 24 Sep 15:00, owning commit `c3294252` was 24 Sep 14:33:49 +01:00; p60 says 25 Sep 00:20, commit `9438ffa6` was 24 Sep 14:43:27 +01:00; p92 says 25 Sep 21:45, commit `47f36db7` was 24 Sep 23:18:20 +01:00. This correction describes the error without changing the original headers below, which are preserved verbatim. The p4–p39 header times precede their owning commit, so that comparison alone neither proves nor disproves them; receipt times were not checked. Future lab entries must take times from the clock or receipt `created_at`, as `.claude/rules/evidence-docs.md` requires. The complete p40–p92 comparison follows.
 
 # Header times contradicted by commit times
 
-This compares the verbatim lab header claim with the owning Git blame committer time on `origin/main` at 2026-09-25. A commit time does not prove execution time; these headers are impossible as contemporaneous reports because they state later local times.
+This compares the verbatim lab header claim with the owning Git blame committer time at pre-move commit `d77e23102ec1db08828f00558a78558379fd5531`. A commit time does not prove execution time; these headers are impossible as contemporaneous reports because they state later local times.
 
 | Pass | Header claims local | Owning commit local | Commit |
 | --- | --- | --- | --- |
