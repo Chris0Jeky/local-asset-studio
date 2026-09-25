@@ -51,6 +51,14 @@ class ObservedVramTests(unittest.TestCase):
         observed = resource_admission.observe(studio)
         self.assertEqual(observed["vram"]["available_bytes"], 15 * GIB)
         self.assertIsNone(observed["vram"]["unknown_reason"])
+        # A loaded model: the pool is part of vram_free, never a smaller bound on it.
+        stats["devices"] = [{"vram_total": 16 * GIB, "vram_free": 10 * GIB, "torch_vram_total": 6 * GIB, "torch_vram_free": 2 * GIB}]
+        self.assertEqual(resource_admission.observe(studio)["vram"]["available_bytes"], 10 * GIB)
+        # An invalid device pair is unknown (fail closed), even when the torch pool alone looks valid.
+        stats["devices"] = [{"vram_total": 16 * GIB, "vram_free": 20 * GIB, "torch_vram_total": 6 * GIB, "torch_vram_free": 2 * GIB}]
+        observed = resource_admission.observe(studio)
+        self.assertIsNone(observed["vram"]["available_bytes"])
+        self.assertIsNotNone(observed["vram"]["unknown_reason"])
 
 
 class ResourceAdmissionServerTests(unittest.TestCase):
