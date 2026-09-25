@@ -75,7 +75,9 @@ class RuntimeMixin:
         jobs = getattr(self.studio, "jobs", {})
         if not isinstance(jobs, dict):
             raise PreparationError("Studio job state is unavailable")
-        for identifier, job in jobs.items():
+        with self.studio.lock:
+            snapshot = dict(jobs)
+        for identifier, job in snapshot.items():
             if not isinstance(job, dict):
                 raise PreparationError("Studio job state is invalid")
             status = str(job.get("status", "unknown"))
@@ -118,7 +120,7 @@ class RuntimeMixin:
                 if state.get("pending_submission") or status in IN_FLIGHT_PRODUCTION_STATES:
                     add("production", identifier, status, BLOCKS_ALL)
                 elif status in UNRESOLVED_PRODUCTION_STATES:
-                    add("production", identifier, status, BLOCKS_RESTART, self._plan_prompts(state, jobs))
+                    add("production", identifier, status, BLOCKS_RESTART, self._plan_prompts(state, snapshot))
                 elif status not in AT_REST_PRODUCTION_STATES:
                     add("production", identifier, status, BLOCKS_ALL)  # unrecognized: fail closed
         return blockers
@@ -229,8 +231,10 @@ class RuntimeMixin:
     def _reservation_snapshot(self) -> dict[str, Any]:
         owners: dict[str, dict[str, int]] = {}
         jobs = getattr(self.studio, "jobs", {})
+        with self.studio.lock:
+            snapshot = list(jobs.items())
         definitive = getattr(resource_admission, "_definitive_terminal", lambda job: False)
-        for owner_id, job in jobs.items():
+        for owner_id, job in snapshot:
             history = job.get("resource_admission") if isinstance(job, dict) else None
             if not isinstance(history, list) or not history or definitive(job):
                 continue
