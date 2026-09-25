@@ -11,7 +11,10 @@ from typing import Any, Callable, Iterator, Mapping
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
-from ._adult_illustration_source_transport_cache import SnapshotResponseCache
+from ._adult_illustration_source_transport_cache import (
+    SnapshotResponseCache,
+    _parse_stored_at,
+)
 from ._adult_illustration_source_transport_common import (
     AUTHORITY,
     INTERNAL_REQUEST_HEADERS,
@@ -144,6 +147,14 @@ class StdlibMetadataExchange:
             raise ConnectionError(
                 f"Provider metadata request failed: {exc.reason}"
             ) from exc
+
+
+def _cache_age_seconds(stored_at: str | None) -> float | None:
+    """Measure seconds since the payload was stored, never filesystem mtime."""
+    if stored_at is None:
+        return None
+    parsed = _parse_stored_at(stored_at)
+    return max(0.0, float(time.time() - parsed.timestamp()))
 
 
 def _validator_headers(cached: HttpResponse | None) -> dict[str, str]:
@@ -353,7 +364,10 @@ class BoundedProviderTransport:
             raise RuntimeError("Previous provider response was not finalized")
         provider = validate_base_request(request)
         key = request_key(request)
-        cached = self.cache.load(request) if self.cache is not None else None
+        if self.cache is not None:
+            cached, cache_stored_at = self.cache.load_entry(request)
+        else:
+            cached, cache_stored_at = None, None
         if cached is not None:
             _validate_cached_policy(cached, self.policy)
         if cached is not None and not self.refresh:
@@ -368,6 +382,8 @@ class BoundedProviderTransport:
                 redirects=len(cached.redirect_chain),
                 validators=(),
                 wire_status=200,
+                cache_stored_at=cache_stored_at,
+                cache_age_seconds=_cache_age_seconds(cache_stored_at),
             )
             self._awaiting_finalization = True
             return cached
@@ -392,6 +408,12 @@ class BoundedProviderTransport:
             if response.status == 200 and self.cache is not None:
                 self._pending = (request, response)
 
+        if cache_state == "revalidated":
+            receipt_stored_at: str | None = cache_stored_at
+        else:
+            # Fresh 200 payloads commit on finalize, so this receipt must not
+            # claim a committed timestamp before that succeeds.
+            receipt_stored_at = None
         self._receipt = self._make_receipt(
             provider=provider,
             request=request,
@@ -403,6 +425,8 @@ class BoundedProviderTransport:
             redirects=len(redirects),
             validators=tuple(sorted(validators)),
             wire_status=wire.status,
+            cache_stored_at=receipt_stored_at,
+            cache_age_seconds=_cache_age_seconds(receipt_stored_at),
         )
         self._awaiting_finalization = True
         return response
@@ -420,6 +444,8 @@ class BoundedProviderTransport:
         redirects: int,
         validators: tuple[str, ...],
         wire_status: int,
+        cache_stored_at: str | None,
+        cache_age_seconds: float | None,
     ) -> dict[str, Any]:
         return {
             "schema": RECEIPT_SCHEMA,
@@ -442,6 +468,8 @@ class BoundedProviderTransport:
             "effective_status": response.status,
             "final_url": response.final_url,
             "response_payload_sha256": hashlib.sha256(response.body).hexdigest(),
+            "cache_stored_at": cache_stored_at,
+            "cache_age_seconds": cache_age_seconds,
             "credentials_used": False,
             "model_bytes_downloaded": False,
             **AUTHORITY,
