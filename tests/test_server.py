@@ -313,6 +313,25 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(sent[0][0],400,sent)
         self.assertEqual(studio.assets.setups(),[])
 
+    def test_export_with_trashed_asset_returns_code_and_ids(self):
+        import uuid
+        s=self.studio()
+        clean=s.import_image('clean.png','image/png',png())['asset']
+        dirty=s.import_image('dirty.png','image/png',png())['asset']
+        rev={i:s.assets.get(i)['metadata_revision'] for i in (clean['id'],dirty['id'])}
+        s.assets.update({'ids':[dirty['id']],'action':'trash','request_id':uuid.uuid4().hex,'expected_revisions':{dirty['id']:rev[dirty['id']]}})
+        with self.assertRaises(server.StudioError) as ctx:
+            s.export_assets({'ids':[clean['id'],dirty['id']]})
+        self.assertEqual(ctx.exception.code,'export_has_trashed')
+        self.assertEqual(ctx.exception.details.get('trashed_ids'),[dirty['id']])
+        self.assertIn('1 selected asset',str(ctx.exception))
+        handler=server.Handler.__new__(server.Handler);handler.studio=s;handler.path='/api/assets/export'
+        handler._safe_mutation=lambda:True;handler._body_json=lambda *a,**k:{'ids':[clean['id'],dirty['id']]}
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj));handler.do_POST()
+        self.assertEqual(sent[0][0],400,sent);self.assertEqual(sent[0][1].get('code'),'export_has_trashed',sent)
+        self.assertEqual(sent[0][1].get('trashed_ids'),[dirty['id']],sent)
+        self.assertEqual(s.export_assets({'ids':[clean['id']]})['count'],1)
+
     def test_malformed_edit_campaign_bodies_are_400_not_500(self):
         from scripts import character_edit_campaign as campaigns
         studio=self.studio();sent=[];good=campaigns.create('owner',3,campaign_id='3'*32)
