@@ -128,17 +128,35 @@ class LifecycleMixin:
         action.update(state="launch_intent_saved", launch_intent_at=self.clock())
         self._persist(journal, receipt)
         launched_pid: int | None = None
+        attested_pid: int | None = None
+
+        def _on_spawn(pid: Any) -> None:
+            nonlocal attested_pid
+            if type(pid) is int and pid > 0:
+                attested_pid = pid
+                action["attested_pid"] = pid
+
         try:
-            launched_pid = self.studio.backends.launch_recovery(profile)
+            launched_pid = self.studio.backends.launch_recovery(profile, on_spawn=_on_spawn)
         except Exception as exc:
-            # Recover a lost local return only from one exact configured process;
-            # never call launch_recovery twice for the same intent.
+            # Attested-launch reconciliation only: adopt a candidate after a lost
+            # return when the same launch_recovery invocation attested its PID via
+            # on_spawn immediately after spawn. A failure before attestation never
+            # adopts a foreign listener; never call launch_recovery twice.
+            if attested_pid is None:
+                action.update(state="launch_unknown", error=type(exc).__name__)
+                self._persist(journal, receipt)
+                raise PreparationError("Backend launch outcome is unknown; retry is prohibited") from exc
             try:
                 matching = self.studio.backends.configured_processes(profile)
-                if len(matching) == 1:
+                if len(matching) != 1:
+                    launched_pid = None
+                else:
                     candidate = _process_identity(matching[0])
-                    if candidate != expected:
+                    if candidate != expected and candidate["pid"] == attested_pid:
                         launched_pid = candidate["pid"]
+                    else:
+                        launched_pid = None
             except Exception:
                 launched_pid = None
             if launched_pid is None:

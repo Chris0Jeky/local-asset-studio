@@ -27,8 +27,8 @@ class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
             studio.backends.configured = []
         original.wait = wait
         original_launch = studio.backends.launch_recovery
-        def launch(profile):
-            pid = original_launch(profile)
+        def launch(profile, on_spawn=None):
+            pid = original_launch(profile, on_spawn=on_spawn)
             studio.backends.system_ready = False
             return pid
         studio.backends.launch_recovery = launch
@@ -226,8 +226,8 @@ class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
             studio.backends.configured = []
         original.wait = wait
         original_launch = studio.backends.launch_recovery
-        def launch(profile):
-            pid = original_launch(profile)
+        def launch(profile, on_spawn=None):
+            pid = original_launch(profile, on_spawn=on_spawn)
             studio.backends.system_ready = False
             return pid
         studio.backends.launch_recovery = launch
@@ -271,7 +271,7 @@ class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
             studio.backends.configured = []
         original.wait = wait
         attempts = {"count": 0}
-        def failing_launch(profile):
+        def failing_launch(profile, on_spawn=None):
             attempts["count"] += 1
             raise ConnectionError("transport lost")
         studio.backends.launch_recovery = failing_launch
@@ -290,6 +290,130 @@ class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
         self.assertEqual(studio.backends.launches, 0)
         self.assertIsNone(studio.backends.current)
         self.assertEqual(studio.backends.configured, [])
+        self.assertFalse(studio.backends.busy)
+
+    def test_pre_spawn_failure_with_foreign_listener_refuses_without_adoption(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        foreign = Process(991, 500.0)
+        def wait(timeout):
+            studio.backends.current = None
+            studio.backends.configured = []
+        original.wait = wait
+        attempts = {"count": 0}
+        offered = {"seen": False}
+        def failing_launch(profile, on_spawn=None):
+            attempts["count"] += 1
+            offered["seen"] = callable(on_spawn)
+            studio.backends.current = foreign
+            studio.backends.configured = [foreign]
+            raise TimeoutError("spawn never happened")
+        studio.backends.launch_recovery = failing_launch
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "refused")
+        self.assertEqual(result["state"], "unknown")
+        self.assertFalse(result["final"]["ready"])
+        self.assertIn("retry is prohibited", result["final"]["reason"])
+        self.assertFalse(result["generation_submitted"])
+        self.assertFalse(result["final"]["generation_submitted"])
+        self.assertEqual(len(result["actions"]), 2)
+        restart_action = result["actions"][1]
+        self.assertEqual(restart_action["kind"], "restart")
+        self.assertEqual(restart_action["state"], "launch_unknown")
+        self.assertEqual(restart_action["error"], "TimeoutError")
+        self.assertNotIn("launch_transport", restart_action)
+        self.assertNotIn("after_restart", result)
+        self.assertTrue(offered["seen"])
+        self.assertEqual(attempts["count"], 1)
+        self.assertEqual(studio.backends.launches, 0)
+        self.assertIs(studio.backends.current, foreign)
+        self.assertEqual(studio.backends.configured, [foreign])
+        self.assertFalse(foreign.terminated)
+        self.assertTrue(original.terminated)
+        self.assertFalse(studio.backends.busy)
+
+    def test_post_spawn_return_loss_reconciles_only_attested_process(self):
+        studio = Studio(self.root, [
+            observation(commit=20 * GIB),
+            observation(commit=20 * GIB),
+            observation(commit=40 * GIB),
+        ])
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        def wait(timeout):
+            studio.backends.current = None
+            studio.backends.configured = []
+        original.wait = wait
+        studio.backends.launch_error = TimeoutError("return lost")
+        original_launch = studio.backends.launch_recovery
+        attested: dict[str, int] = {}
+        def launch(profile, on_spawn=None):
+            def capture(pid):
+                attested["pid"] = pid
+                if callable(on_spawn):
+                    on_spawn(pid)
+            return original_launch(profile, on_spawn=capture)
+        studio.backends.launch_recovery = launch
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "ready_after_restart")
+        self.assertTrue(result["final"]["ready"])
+        self.assertEqual(studio.backends.launches, 1)
+        self.assertEqual(result["actions"][1]["launch_transport"], "lost_but_process_reconciled")
+        self.assertIn("pid", attested)
+        self.assertEqual(result["actions"][1]["attested_pid"], attested["pid"])
+        self.assertEqual(attested["pid"], result["actions"][1]["new_process"]["pid"])
+        self.assertEqual(studio.backends.current.pid, attested["pid"])
+        self.assertFalse(studio.backends.busy)
+        self.assertFalse(result["generation_submitted"])
+        self.assertFalse(result["final"]["generation_submitted"])
+
+    def test_attested_pid_mismatch_refuses_without_second_launch(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        def wait(timeout):
+            studio.backends.current = None
+            studio.backends.configured = []
+        original.wait = wait
+        original_launch = studio.backends.launch_recovery
+        attempts = {"count": 0}
+        attested: dict[str, int] = {}
+        foreign_holder: dict[str, Process] = {}
+        def launch(profile, on_spawn=None):
+            attempts["count"] += 1
+            def capture(pid):
+                attested["pid"] = pid
+                if callable(on_spawn):
+                    on_spawn(pid)
+            pid = original_launch(profile, on_spawn=capture)
+            foreign = Process(pid + 1000, 900.0)
+            foreign_holder["process"] = foreign
+            studio.backends.current = foreign
+            studio.backends.configured = [foreign]
+            raise TimeoutError("return lost")
+        studio.backends.launch_recovery = launch
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "refused")
+        self.assertEqual(result["state"], "unknown")
+        self.assertFalse(result["final"]["ready"])
+        self.assertIn("retry is prohibited", result["final"]["reason"])
+        self.assertFalse(result["generation_submitted"])
+        self.assertFalse(result["final"]["generation_submitted"])
+        self.assertEqual(len(result["actions"]), 2)
+        restart_action = result["actions"][1]
+        self.assertEqual(restart_action["kind"], "restart")
+        self.assertEqual(restart_action["state"], "launch_unknown")
+        self.assertEqual(restart_action["error"], "TimeoutError")
+        self.assertNotIn("launch_transport", restart_action)
+        self.assertNotIn("after_restart", result)
+        self.assertEqual(attempts["count"], 1)
+        self.assertEqual(studio.backends.launches, 1)
+        self.assertIn("pid", attested)
+        self.assertEqual(restart_action["attested_pid"], attested["pid"])
+        self.assertNotEqual(attested["pid"], foreign_holder["process"].pid)
+        self.assertIs(studio.backends.current, foreign_holder["process"])
+        self.assertFalse(foreign_holder["process"].terminated)
         self.assertFalse(studio.backends.busy)
 
     def test_idle_policy_requires_separate_opt_in_and_cannot_restart(self):

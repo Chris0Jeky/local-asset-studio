@@ -360,8 +360,8 @@ class LargeJobPreparationClassificationTests(LargeJobPreparationTestCase):
                 studio.backends.history.add("p-late")
                 original = self.restartable(studio)
                 launch = studio.backends.launch_recovery
-                def launched(profile, studio=studio, launch=launch, late=late):
-                    pid = launch(profile)
+                def launched(profile, on_spawn=None, studio=studio, launch=launch, late=late):
+                    pid = launch(profile, on_spawn=on_spawn)
                     studio.jobs["late"] = late
                     return pid
                 studio.backends.launch_recovery = launched
