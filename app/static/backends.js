@@ -23,7 +23,8 @@ async function refreshBackends() {
   const epoch=++backendReadEpoch,current=()=>epoch===backendReadEpoch;backendReadPending=epoch;
   try {
     const state=await api('/api/backends');if(!current())return;
-    if(!Array.isArray(state?.profiles)||typeof state.active!=='string'||typeof state.busy!=='boolean'||(state.busy&&typeof state.operation?.target!=='string'))throw Error('The backend status is incomplete. Your draft was kept.');
+    const switching=state?.busy===true&&state.operation?.status==='running'&&typeof state.operation?.target==='string';
+    if(!Array.isArray(state?.profiles)||typeof state.active!=='string'||typeof state.busy!=='boolean'||(state.busy&&state.operation?.status==='running'&&typeof state.operation?.target!=='string'))throw Error('The backend status is incomplete. Your draft was kept.');
     const changed=backendActive!==null&&backendActive!==state.active;
     if(changed){
       const next=await api('/api/catalog');if(!current())return;
@@ -37,9 +38,10 @@ async function refreshBackends() {
     backendSwitching=state.busy;
     const select=$('#backendChoice'),keep=select.value;
     select.innerHTML=state.profiles.map(p=>'<option value="'+esc(p.id)+'" '+(!p.installed?'disabled':'')+'>'+esc(p.name)+(p.online?' · online':'')+'</option>').join('');
-    select.value=state.busy?state.operation.target:(backendActive===null?state.active:(keep||state.active));
+    select.value=switching?state.operation.target:(state.busy?state.active:(backendActive===null?state.active:(keep||state.active)));
     select.disabled=state.busy;$('#switchBackend').disabled=state.busy;
-    $('#backendStatus').textContent=state.operation?.message||'One model environment at a time. Switching never starts a generation.';
+    const busyMessage='A local operation is running. Switching is disabled until it finishes.';
+    $('#backendStatus').textContent=switching?(state.operation.message||'One model environment at a time. Switching never starts a generation.'):(state.busy?busyMessage:(state.operation?.message||'One model environment at a time. Switching never starts a generation.'));
     renderRecovery(state.recovery);
     backendActive=state.active;$('#activeBackend').textContent=state.profiles.find(p=>p.active)?.name||'';
     updateReady();

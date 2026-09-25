@@ -61,3 +61,43 @@ test('an obsolete read finishing cannot clear the current read polling guard',as
  f.state.poll();assert.equal(f.pending.length,2,'the current unfinished read still owns the guard');
  f.pending[1].resolve(f.backend('old'));await newer;
 });
+const busyMessage='A local operation is running. Switching is disabled until it finishes.';
+test('busy without an operation disables switching, selects active and shows a generic busy message',async()=>{
+ const f=fixture();f.node('#positive').value='draft';
+ const work=f.run();f.pending[0].resolve({...f.backend('old'),busy:true,operation:null});await work;
+ assert.equal(f.node('#backendChoice').value,'old');
+ assert.equal(f.node('#backendChoice').disabled,true);
+ assert.equal(f.node('#switchBackend').disabled,true);
+ assert.equal(f.node('#backendStatus').textContent,busyMessage);
+ assert.equal(f.node('#positive').value,'draft');
+ assert.equal(vm.runInContext('backendSwitching',f.context),true);
+});
+for(const status of ['completed','failed','interrupted'])test('busy with '+status+' operation ignores its stale target and message',async()=>{
+ const f=fixture();f.node('#positive').value='draft';
+ const work=f.run();f.pending[0].resolve({...f.backend('old'),busy:true,operation:{target:'new',status,message:'Switching to New'}});await work;
+ assert.equal(f.node('#backendChoice').value,'old');
+ assert.equal(f.node('#backendChoice').disabled,true);
+ assert.equal(f.node('#switchBackend').disabled,true);
+ assert.equal(f.node('#backendStatus').textContent,busyMessage);
+ assert.equal(f.node('#positive').value,'draft');
+});
+test('running switch keeps its target and message presentation',async()=>{
+ const f=fixture();
+ const work=f.run();f.pending[0].resolve({...f.backend('old'),busy:true,operation:{target:'new',status:'running',message:'Switching to New'}});await work;
+ assert.equal(f.node('#backendChoice').value,'new');
+ assert.equal(f.node('#backendChoice').disabled,true);
+ assert.equal(f.node('#switchBackend').disabled,true);
+ assert.equal(f.node('#backendStatus').textContent,'Switching to New');
+});
+for(const operation of [{status:'running',message:'Switching'},{status:'running',target:null,message:'Switching'},{status:'running',target:42,message:'Switching'}])test('running switch without a valid target remains an incomplete-state error',async()=>{
+ const f=fixture();f.node('#positive').value='draft';
+ const work=f.run();f.pending[0].resolve({...f.backend('old'),busy:true,operation});await work;
+ assert.ok(f.node('#backendStatus').textContent.includes('incomplete'));
+ assert.equal(f.node('#positive').value,'draft');
+});
+test('missing backend status reports incomplete without losing the draft',async()=>{
+ const f=fixture();f.node('#positive').value='draft';
+ const work=f.run();f.pending[0].resolve(null);await work;
+ assert.ok(f.node('#backendStatus').textContent.includes('incomplete'));
+ assert.equal(f.node('#positive').value,'draft');
+});
