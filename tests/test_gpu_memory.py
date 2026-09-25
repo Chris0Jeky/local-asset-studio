@@ -106,6 +106,26 @@ class GpuMemoryTests(unittest.TestCase):
                                      {DGPU_ADAPTER: 4 * GIB})
         self.assertIsNone(gpu_memory.others_bytes(sample, 40))
 
+    def test_impossible_own_usage_retains_credible_other_processes(self):
+        # Follow-up to issue #983: own 4.8 GiB exceeds the 4 GiB adapter total (process sum 5.5 GiB
+        # is past the 5.4 GiB reconciliation limit), so subtracting it hid the measured 0.7 GiB
+        # external holder behind an others reading of zero.
+        sample = reading_with_totals({DGPU.format(40): int(4.8 * GIB), DGPU.format(2304): int(0.7 * GIB)},
+                                     {DGPU_ADAPTER: 4 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), int(0.7 * GIB))
+        # A runaway counter alongside the impossible own reading stays excluded.
+        crowded = reading_with_totals({DGPU.format(40): int(4.8 * GIB), DGPU.format(2304): int(0.7 * GIB),
+                                       DGPU.format(500): DWM_ANOMALY}, {DGPU_ADAPTER: 4 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(crowded, 40), int(0.7 * GIB))
+        # Another per-process reading above the whole adapter is not a credible holder even if it
+        # falls inside the looser aggregate sampling margin.
+        impossible_other = reading_with_totals({DGPU.format(40): int(4.8 * GIB), DGPU.format(2304): 5 * GIB},
+                                               {DGPU_ADAPTER: 4 * GIB})
+        self.assertIsNone(gpu_memory.others_bytes(impossible_other, 40))
+        mixed = reading_with_totals({DGPU.format(40): int(4.8 * GIB), DGPU.format(2304): int(0.7 * GIB),
+                                     DGPU.format(500): 5 * GIB}, {DGPU_ADAPTER: 4 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(mixed, 40), int(0.7 * GIB))
+
     def test_others_still_count_before_comfy_process_counter_appears(self):
         sample = reading_with_totals({DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: 3 * GIB})
         self.assertEqual(gpu_memory.others_bytes(sample, 40), 2 * GIB)
