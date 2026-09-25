@@ -135,3 +135,13 @@ pin and a safetensors container-header/data-offset check. These checks establish
 identity and basic file integrity, not model licensing, GPU compatibility or
 art quality. A diagnostic contact sheet establishes sampled-frame behavior only;
 it does not replace a human review of the entire clip.
+
+Unpinned model hashes are cached by path. A cache hit still reopens the
+candidate without blocking on special files, checks the open descriptor is a
+regular file, compares the descriptor fields against the cached descriptor
+record, and binds that descriptor to the current path before reusing the
+digest; any mismatch or failed validation rehashes or reports a truthful
+error, and a valid hit does not reread file contents. Pinned
+(`models/library.json`) entries always hash current bytes. The unpinned hit
+remains a metadata-only comparison: a same-size in-place change that also
+preserved every compared descriptor and path field would still match.
