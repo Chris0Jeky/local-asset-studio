@@ -5,7 +5,7 @@ import copy
 from typing import Any
 
 from large_job_prep_common import (
-    MAX_REQUEST_BYTES, SAFE_DECISIONS, SCHEMA, PreparationError, _digest,
+    MAX_REQUEST_BYTES, SAFE_DECISIONS, SCHEMA, PreparationError, WorkBlockedError, _digest,
     _normalize_request,
 )
 
@@ -93,8 +93,19 @@ class FlowMixin:
                     )
                 config = getattr(self.studio, "config", {}) or {}
                 if request["dry_run"]:
-                    # Unresolved work at rest leaves /free allowed but a restart refused.
-                    restart_blocked = request["allow_restart"] and receipt["blockers"]["blocks_restart"] > 0
+                    # Unresolved work at rest leaves /free allowed but a restart refused while the
+                    # selected backend may still hold its history (read-only /history checks).
+                    restart_blocked = False
+                    if request["allow_restart"]:
+                        try:
+                            checked = self._check_work("Studio work changed while preparation was being observed",
+                                                       restart=True)
+                            checked.pop("_history_absent")
+                            receipt["blockers"] = checked
+                        except WorkBlockedError as exc:
+                            if exc.phase != "restart_blocked_by_unresolved_work":
+                                raise
+                            receipt["blockers"], restart_blocked = exc.blockers, True
                     receipt["planned_actions"] = ["release_owned_backend_cache"] + (
                         ["restart_verified_owned_backend"] if request["allow_restart"] and not restart_blocked else []
                     )

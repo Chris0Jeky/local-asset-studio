@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import copy
 from typing import Any
+from urllib.parse import quote
 
 from backend_contracts import queue_is_idle
 import resource_admission
 from large_job_prep_common import (
-    AT_REST_PRODUCTION_STATES, BLOCKS_ALL, BLOCKS_RESTART, IN_FLIGHT_JOB_STATES,
+    AT_REST_JOB_STATES, AT_REST_PRODUCTION_STATES, BLOCKS_ALL, BLOCKS_RESTART,
+    HISTORY_TIMEOUT_SECONDS, IN_FLIGHT_JOB_STATES, MAX_HISTORY_PROMPTS, MAX_HISTORY_RECORDS, PROMPT_ID,
     IN_FLIGHT_PRODUCTION_STATES, TERMINAL_SUBMISSION_STATES, UNRESOLVED_JOB_STATES,
     UNRESOLVED_PRODUCTION_STATES, PreparationError, WorkBlockedError, _blocker_summary,
     _process_identity, _queue_summary,
@@ -15,12 +17,60 @@ from large_job_prep_common import (
 
 
 class RuntimeMixin:
-    def _work_blockers(self) -> list[dict[str, str]]:
-        """Classify every Studio record as blocking all actions, only restart, or nothing."""
-        blockers: list[dict[str, str]] = []
+    @staticmethod
+    def _open_prompts(job: dict[str, Any]) -> list[str] | None:
+        """Retained prompt IDs whose outcome is not yet recorded; None when unreadable."""
+        ids, submissions = job.get("prompt_ids") or [], job.get("submissions") or []
+        if not isinstance(ids, list) or not isinstance(submissions, list):
+            return None
+        done = {item.get("prompt_id") for item in submissions
+                if isinstance(item, dict) and item.get("status") in TERMINAL_SUBMISSION_STATES}
+        result: list[str] = []
+        for prompt_id in ids + [item.get("prompt_id") if isinstance(item, dict) else None for item in submissions
+                                if not isinstance(item, dict) or item.get("status") not in TERMINAL_SUBMISSION_STATES]:
+            if prompt_id in done or prompt_id in result:
+                continue
+            if not isinstance(prompt_id, str):
+                return None
+            result.append(prompt_id)
+        return result
 
-        def add(kind: str, identifier: Any, status: str, blocks: str) -> None:
-            blockers.append({"kind": kind, "id": str(identifier)[:128], "status": status[:64], "blocks": blocks})
+    def _plan_prompts(self, state: dict[str, Any], jobs: dict[str, Any]) -> list[str] | None:
+        attempts = state.get("attempts") or {}
+        if not isinstance(attempts, dict):
+            return None
+        result: list[str] = []
+        for attempt in attempts.values():
+            if not isinstance(attempt, dict):
+                return None
+            job = jobs.get(attempt.get("job_id")) if isinstance(attempt.get("job_id"), str) else None
+            if isinstance(job, dict):
+                found = self._open_prompts(job)
+            else:
+                raw = attempt.get("prompt_ids") or []
+                found = raw + [attempt["prompt_id"]] if "prompt_id" in attempt and isinstance(raw, list) else raw
+                if not isinstance(found, list) or not all(isinstance(item, str) for item in found):
+                    found = None
+            if found is None:
+                return None
+            result.extend(item for item in found if item not in result)
+        return result
+
+    def _work_blockers(self) -> list[dict[str, Any]]:
+        """Classify every Studio record as blocking all actions, only restart, or nothing.
+
+        A restart blocker carries its open prompt IDs internally (``_prompts``; None when
+        unreadable); an unresolved record without any never touched a ComfyUI history.
+        """
+        blockers: list[dict[str, Any]] = []
+
+        def add(kind: str, identifier: Any, status: str, blocks: str, prompts: list[str] | None = None) -> None:
+            item = {"kind": kind, "id": str(identifier)[:128], "status": status[:64], "blocks": blocks}
+            if blocks == BLOCKS_RESTART:
+                if prompts == []:
+                    return
+                item["_prompts"] = prompts
+            blockers.append(item)
 
         jobs = getattr(self.studio, "jobs", {})
         if not isinstance(jobs, dict):
@@ -38,10 +88,11 @@ class RuntimeMixin:
             # any other open submission may still be submitting.
             submitting = any(not isinstance(item, dict) or item.get("status") != "observing"
                              or status not in UNRESOLVED_JOB_STATES for item in open_submissions)
-            if pending or status in IN_FLIGHT_JOB_STATES or submitting:
-                add("studio_job", identifier, status, BLOCKS_ALL)
+            known = status in IN_FLIGHT_JOB_STATES or status in UNRESOLVED_JOB_STATES or status in AT_REST_JOB_STATES
+            if pending or status in IN_FLIGHT_JOB_STATES or submitting or not known:
+                add("studio_job", identifier, status, BLOCKS_ALL)  # an unrecognized status fails closed
             elif status in UNRESOLVED_JOB_STATES or open_submissions:
-                add("studio_job", identifier, status, BLOCKS_RESTART)
+                add("studio_job", identifier, status, BLOCKS_RESTART, self._open_prompts(job))
         reference_jobs = getattr(self.studio, "reference_jobs", None)
         if reference_jobs is not None:
             try:
@@ -66,23 +117,78 @@ class RuntimeMixin:
                 if state.get("pending_submission") or status in IN_FLIGHT_PRODUCTION_STATES:
                     add("production", identifier, status, BLOCKS_ALL)
                 elif status in UNRESOLVED_PRODUCTION_STATES:
-                    add("production", identifier, status, BLOCKS_RESTART)
+                    add("production", identifier, status, BLOCKS_RESTART, self._plan_prompts(state, jobs))
                 elif status not in AT_REST_PRODUCTION_STATES:
                     add("production", identifier, status, BLOCKS_ALL)  # unrecognized: fail closed
         return blockers
 
-    def _check_work(self, message: str, *, restart: bool = False) -> dict[str, Any]:
+    def _history_state(self, prompt_id: str) -> str:
+        """Whether the selected backend still holds a prompt's /history; errors stay unknown."""
+        if not PROMPT_ID.fullmatch(prompt_id):
+            return "unknown"
+        manager = self.studio.backends
+        try:
+            value = manager.request(manager.profiles[manager.active], "/history/" + quote(prompt_id, safe=""),
+                                    HISTORY_TIMEOUT_SECONDS)
+        except Exception:
+            return "unknown"
+        if not isinstance(value, dict):
+            return "unknown"
+        return "history_present" if prompt_id in value else "history_absent"
+
+    def _restart_history(self, blockers: list[dict[str, Any]], verified_absent: frozenset | None
+                         ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], frozenset]:
+        """Drop restart blockers whose open prompts the selected backend no longer holds.
+
+        With ``verified_absent`` (under the Studio lock) nothing is fetched: only a record
+        already proved absent, with the same prompt IDs, passes.
+        """
+        remaining: list[dict[str, Any]] = []
+        checks: list[dict[str, Any]] = []
+        absent: set = set()
+        cache: dict[str, str] = {}
+        budget = MAX_HISTORY_PROMPTS
+        for index, item in enumerate(item for item in blockers if item["blocks"] == BLOCKS_RESTART):
+            prompts = item["_prompts"]
+            key = (item["kind"], item["id"], tuple(prompts or ()))
+            if verified_absent is not None:
+                result = "history_absent" if prompts and key in verified_absent else "unknown"
+            elif prompts is None or index >= MAX_HISTORY_RECORDS or len(set(prompts) - set(cache)) > budget:
+                result = "unknown"  # unreadable or beyond the bound: fail closed
+            else:
+                states = []
+                for prompt_id in prompts:
+                    if prompt_id not in cache:
+                        budget -= 1
+                        cache[prompt_id] = self._history_state(prompt_id)
+                    states.append(cache[prompt_id])
+                result = ("history_present" if "history_present" in states
+                          else "unknown" if "unknown" in states else "history_absent")
+            checks.append({"kind": item["kind"], "id": item["id"], "prompt_ids": len(prompts or ()), "result": result})
+            if result == "history_absent":
+                absent.add(key)
+            else:
+                remaining.append(item)
+        return remaining, checks, frozenset(absent)
+
+    def _check_work(self, message: str, *, restart: bool = False,
+                    verified_absent: frozenset | None = None) -> dict[str, Any]:
         """Refuse on in-flight work, and before a restart on unresolved work; return the summary."""
         blockers = self._work_blockers()
         summary = _blocker_summary(blockers)
         if summary["blocks_all"]:
             raise WorkBlockedError(message, summary)
-        if restart and summary["blocks_restart"]:
+        if not restart:
+            return summary
+        remaining, checks, absent = self._restart_history(blockers, verified_absent)
+        summary = _blocker_summary(remaining, checks)
+        if remaining:
             raise WorkBlockedError(
-                "Uncertain, partial or interrupted Studio work may still need ComfyUI history for Resume "
-                "observation; the backend restart was refused. Resolve or abandon it first.",
+                "Unresolved Studio work may still need its ComfyUI history. Open the job and use Resume "
+                "observation to collect its result first; the restart would erase ComfyUI's record of it.",
                 summary, "restart_blocked_by_unresolved_work",
             )
+        summary["_history_absent"] = absent
         return summary
 
     def _backend_snapshot(self, *, expected_identity: dict[str, Any] | None = None,
@@ -221,7 +327,8 @@ class RuntimeMixin:
                 expected_identity=expected_identity, expected_profile_id=expected_profile_id
             )
 
-    def _claim_backend(self, expected_identity: dict[str, Any], expected_profile_id: str) -> tuple[dict[str, Any], Any]:
+    def _claim_backend(self, expected_identity: dict[str, Any], expected_profile_id: str,
+                       verified_absent: frozenset = frozenset()) -> tuple[dict[str, Any], Any]:
         """Recheck and take the switch gate in one critical section.
 
         ``backends.busy`` is the gate ``Studio.prepare``, ``switch``, reference jobs and
@@ -230,7 +337,9 @@ class RuntimeMixin:
         """
         with self.studio.lock:
             # Unresolved work at rest blocks only this action: a restart discards ComfyUI history.
-            self._check_work("New Studio work arrived; lifecycle action was refused", restart=True)
+            # No network under the lock: only records already proved absent may pass.
+            self._check_work("New Studio work arrived; lifecycle action was refused", restart=True,
+                             verified_absent=verified_absent)
             backend, process = self._recheck(expected_identity, expected_profile_id)
             manager = self.studio.backends
             if manager.busy:

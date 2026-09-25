@@ -83,7 +83,9 @@ class ActionMixin:
             )
         try:
             # /free keeps ComfyUI history; a restart discards what Resume observation needs (#864).
-            receipt["blockers"] = self._check_work("New Studio work arrived; lifecycle action was refused", restart=True)
+            checked = self._check_work("New Studio work arrived; lifecycle action was refused", restart=True)
+            context["_history_absent"] = checked.pop("_history_absent")
+            receipt["blockers"] = checked
         except WorkBlockedError as exc:
             receipt["blockers"] = exc.blockers
             return self._finish(

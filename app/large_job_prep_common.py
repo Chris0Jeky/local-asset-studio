@@ -20,17 +20,23 @@ MAX_JOURNAL_BYTES = 2 * 1024 * 1024
 # Work is classified by what each lifecycle action can harm (#306 live proof, 25 Sep 2026).
 # In-flight work blocks every action, dry run included. Unresolved work at rest blocks only
 # the backend restart: a restart discards ComfyUI /history that Resume observation needs
-# (#864), while /free leaves it intact. Recognized at-rest records never block; an
-# unrecognized production status fails closed as in-flight.
+# (#864), while /free leaves it intact. It blocks only while the selected backend still holds
+# (or cannot be shown not to hold) a retained open prompt ID. Recognized at-rest records never
+# block; an unrecognized job or production status fails closed as in-flight.
 IN_FLIGHT_JOB_STATES = {"queued", "waiting", "submitting", "running"}
 UNRESOLVED_JOB_STATES = {"uncertain", "partial", "interrupted"}
+AT_REST_JOB_STATES = {"completed", "failed", "abandoned", "not_submitted", "cancelled"}
 IN_FLIGHT_PRODUCTION_STATES = {"queued", "running", "observing"}
 UNRESOLVED_PRODUCTION_STATES = {"uncertain", "interrupted"}
 AT_REST_PRODUCTION_STATES = {"planned", "awaiting_review", "reviewed", "published", "stopped",
-                             "completed", "failed", "abandoned", "not_submitted"}
+                             "completed", "failed", "abandoned", "not_submitted", "cancelled"}
 TERMINAL_SUBMISSION_STATES = {"completed", "failed"}
 BLOCKS_ALL, BLOCKS_RESTART = "all", "restart"
 MAX_LISTED_BLOCKERS = 20
+MAX_HISTORY_RECORDS = 20
+MAX_HISTORY_PROMPTS = 50
+HISTORY_TIMEOUT_SECONDS = 3
+PROMPT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}\Z")
 SAFE_DECISIONS = {"observed_safe", "estimated_safe"}
 
 
@@ -47,15 +53,22 @@ class WorkBlockedError(PreparationError):
         self.phase = phase
 
 
-def _blocker_summary(blockers: list[dict[str, str]]) -> dict[str, Any]:
+def _blocker_summary(blockers: list[dict[str, Any]],
+                     history_checks: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     # In-flight blockers first, so truncation keeps the ones that stop everything.
     ordered = sorted(blockers, key=lambda item: item["blocks"] != BLOCKS_ALL)
-    return {
+    summary = {
         "count": len(ordered),
         "blocks_all": sum(item["blocks"] == BLOCKS_ALL for item in ordered),
         "blocks_restart": sum(item["blocks"] == BLOCKS_RESTART for item in ordered),
-        "items": [dict(item) for item in ordered[:MAX_LISTED_BLOCKERS]],
+        "items": [{key: value for key, value in item.items() if not key.startswith("_")}
+                  for item in ordered[:MAX_LISTED_BLOCKERS]],
+        # Without a history check, every unresolved record with open prompt IDs counts.
+        "history_checked": history_checks is not None,
     }
+    if history_checks is not None:
+        summary["history_checks"] = history_checks[:MAX_HISTORY_RECORDS]
+    return summary
 
 
 def _canonical(value: Any, limit: int) -> bytes:
