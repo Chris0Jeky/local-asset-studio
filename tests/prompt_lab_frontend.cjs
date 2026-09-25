@@ -342,9 +342,26 @@ async function malformedDraftLeavesThePageUsable() {
     assert.equal(element('export-result').disabled, false, 'The page still builds after dropping it');
   }
 }
+// A restored draft says so, and Start fresh forgets it and returns to the starting brief.
+async function restoredDraftOffersStartFresh() {
+  const storage = makeStorage();
+  const first = harness({timers: true, storage, compile: compiled()});
+  await new Promise(resolve => setTimeout(resolve, 600));
+  first.element('brief').value = 'A brief I left behind';
+  first.run('invalidate()');
+  await new Promise(resolve => setTimeout(resolve, 700));
+  const second = harness({timers: true, storage, compile: compiled()});
+  await new Promise(resolve => setTimeout(resolve, 50));
+  assert.equal(second.element('draft-restored').hidden, false, 'A restored draft is announced');
+  second.element('draft-reset').listeners.click();
+  assert.equal(storage.getItem('studio.promptLab.draft'), null, 'Start fresh forgets the stored draft');
+  assert.equal(second.element('draft-restored').hidden, true, 'The notice closes');
+  assert.notEqual(second.element('brief').value, 'A brief I left behind', 'The brief returns to the starting text');
+  assert.ok(second.requests.every(r => !r.url.includes('/api/jobs')), 'Nothing is submitted');
+}
 // Terminal line: its absence is how the Python wrapper tells a stalled chain from a completed run.
 startup(true).then(() => startup(false)).then(blockedBuildExplainsItself).then(repairsAreOfferedOnlyWhenTheyFit)
   .then(avoidTermsAreParkedNotDeleted).then(longAvoidListsAreSplitNotTruncated)
-  .then(coverageNamesTheFieldThisDialectFills).then(importedBriefRefreshesItsExplanation).then(metadataResponses).then(liveBuildIsDebounced).then(draftIsRestoredAfterReload).then(corruptDraftIsIgnored).then(storedDraftExcludesReferenceBytes).then(failedRebuildMarksStale).then(repairPathsPersistTheDraft).then(malformedDraftLeavesThePageUsable)
+  .then(coverageNamesTheFieldThisDialectFills).then(importedBriefRefreshesItsExplanation).then(metadataResponses).then(liveBuildIsDebounced).then(draftIsRestoredAfterReload).then(corruptDraftIsIgnored).then(storedDraftExcludesReferenceBytes).then(failedRebuildMarksStale).then(repairPathsPersistTheDraft).then(malformedDraftLeavesThePageUsable).then(restoredDraftOffersStartFresh)
   .then(() => console.log('Prompt Lab frontend contracts passed: profile startup, live build, plain-language blockers, HTTP failure reporting and metadata selection.'))
   .catch(error => { console.error(error); process.exitCode = 1; });
