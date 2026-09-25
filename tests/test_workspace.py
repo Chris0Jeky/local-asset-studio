@@ -74,6 +74,15 @@ class WorkspaceTests(unittest.TestCase):
             self.assertEqual(self.store.save_setup({'id':identifier,'action':'delete'}),{'id':identifier,'deleted':True})
         self.assertEqual([s['id'] for s in self.store.setups()],[kept['id']])
 
+    def test_delete_setup_requires_id(self):
+        recipe = {'preset': 'test'}
+        kept = self.store.save_setup({'name': 'Kept', 'recipe': recipe})
+        before = self.store.setups()
+        with self.assertRaises(workspace.WorkspaceError):
+            self.store.save_setup({'action': 'delete'})
+        self.assertEqual(self.store.setups(), before)
+        self.assertEqual([s['id'] for s in self.store.setups()], [kept['id']])
+
     def test_save_setup_validation_rejects_invalid_without_storing(self):
         self.assertEqual(self.store.setups(),[])
         with self.assertRaisesRegex(workspace.WorkspaceError,'Name and recipe are required'): self.store.save_setup({'name':'','recipe':{'preset':'test'}})
