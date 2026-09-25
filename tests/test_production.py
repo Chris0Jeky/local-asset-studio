@@ -84,6 +84,32 @@ class ProductionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Krita changed'):studio.production.run(changed['id'])
         execute.assert_not_called()
 
+    def test_native_rejects_unhashable_and_non_string_ids_as_value_error(self):
+        studio=FakeStudio(self.root,[])
+        for ids in ([{'a': 1}], [1], [None], [''], [b'bytes'], [['nested']]):
+            with self.subTest(ids=repr(ids)):
+                with self.assertRaisesRegex(ValueError, 'Select ordered images'):
+                    studio.production.native({'kind': 'atlas', 'ids': ids})
+        self.assertEqual(studio.production.list(), [])
+
+    def test_register_edit_campaign_rejects_malformed_shapes_as_value_error(self):
+        from scripts import character_edit_campaign as campaigns
+        studio=FakeStudio(self.root,[]);good=campaigns.create('owner',3,campaign_id='2'*32)
+        bad=[None,[],'campaign',7,[['campaign',good]],{},{'campaign':good,'extra':1},{'campaign':None},{'campaign':[good]},
+             {'campaign':'x'},{'campaign':{}},{'campaign':dict(good,extra=1)}]
+        for key,value in (('schema_version',[1]),('schema_version',True),('kind',['character_edit_campaign']),('kind',{'a':1}),
+                          ('campaign_id',{'a':1}),('campaign_id',['2'*32]),('campaign_id',2),('budget_owner',{'a':1}),('budget_owner',None),
+                          ('max_generation_attempts','3'),('max_generation_attempts',[3]),('max_generation_attempts',3.0),
+                          ('campaign_sha256',{'a':1}),('campaign_sha256',[good['campaign_sha256']]),('campaign_sha256','0'*64)):
+            bad.append({'campaign':dict(good,**{key:value})})
+        for payload in bad:
+            with self.subTest(payload=repr(payload)[:120]):
+                with self.assertRaises(ValueError):studio.production.register_edit_campaign(payload)
+        with studio.production.connect() as db:
+            self.assertIsNone(db.execute('SELECT 1 FROM character_edit_campaigns').fetchone())
+            self.assertIsNone(db.execute("SELECT 1 FROM budgets WHERE id LIKE 'character-edit:%'").fetchone())
+        self.assertEqual(studio.production.register_edit_campaign({'campaign':good})['campaign'],good)
+
     def test_branch_budget_and_start_are_atomic_and_not_reset(self):
         studio=FakeStudio(self.root,[]);lab=studio.production
         parent=lab.create(self.intent());child=lab.create(self.intent(parent_project=parent['id']))
@@ -345,3 +371,10 @@ class ExperimentsClarityFrontendTests(unittest.TestCase):
                               capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         self.assertIn('state each fact once',result.stdout)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_typed_detail_values_survive_poll_refresh_and_filters_until_sent(self):
+        result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('production_typed_draft_frontend.cjs'))],
+                              capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('survive polls, Refresh and filters until sent',result.stdout)

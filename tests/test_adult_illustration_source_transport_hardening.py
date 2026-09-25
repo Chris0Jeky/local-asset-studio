@@ -13,12 +13,56 @@ from studio_prompt.adult_illustration_source_transport import (
     MetadataPolicy,
     SnapshotResponseCache,
     WireResponse,
+    fetch_civitai,
     fetch_huggingface,
 )
 
 
 HF_URL = "https://huggingface.co/api/models/owner/model/revision/main?blobs=true"
 HF_COMMIT = "a" * 40
+CIVITAI_URL = "https://civitai.com/api/v1/model-versions/123"
+CIVITAI_HEADERS = {
+    "accept": "application/json",
+    "user-agent": "local-asset-studio-source-snapshot/1",
+}
+FILE_SHA = "b" * 64
+
+
+def _civitai_payload() -> dict[str, object]:
+    return {
+        "id": 123,
+        "modelId": 9,
+        "name": "Version 1",
+        "baseModel": "SDXL 1.0",
+        "trainedWords": ["example trigger"],
+        "model": {
+            "id": 9,
+            "name": "Example model",
+            "type": "Checkpoint",
+            "allowNoCredit": False,
+            "allowCommercialUse": "Image",
+            "allowDerivatives": True,
+            "allowDifferentLicense": False,
+        },
+        "files": [
+            {
+                "id": 55,
+                "name": "model.safetensors",
+                "sizeKB": 1.0,
+                "hashes": {"SHA256": FILE_SHA},
+                "primary": True,
+            }
+        ],
+    }
+
+
+def _civitai_json_response(url: str, payload: object) -> WireResponse:
+    return WireResponse(
+        url=url,
+        status=200,
+        headers={"content-type": "application/json"},
+        body=json.dumps(payload, separators=(",", ":")).encode("utf-8"),
+    )
 
 
 def _request() -> HttpRequest:
@@ -248,6 +292,27 @@ class SourceTransportHardeningTests(unittest.TestCase):
         self.assertEqual(status, 2)
         self.assertEqual(exchange.calls, [])
         self.assertIn("already exists", json.loads(stderr.getvalue())["error"])
+
+    def test_civitai_bare_query_delimiter_is_refused_before_exchange(self) -> None:
+        exchange = ScriptedExchange()
+        transport = BoundedProviderTransport(exchange=exchange)
+        with self.assertRaisesRegex(ValueError, "not a supported metadata endpoint"):
+            transport(HttpRequest(url=CIVITAI_URL + "?", headers=dict(CIVITAI_HEADERS)))
+        self.assertEqual(exchange.calls, [])
+
+    def test_civitai_bare_query_redirect_is_refused_without_follow(self) -> None:
+        exchange = ScriptedExchange(
+            WireResponse(
+                url=CIVITAI_URL,
+                status=302,
+                headers={"location": "?"},
+                body=b"",
+            ),
+            _civitai_json_response(CIVITAI_URL + "?", _civitai_payload()),
+        )
+        with self.assertRaisesRegex(ValueError, "empty query"):
+            fetch_civitai(123, BoundedProviderTransport(exchange=exchange))
+        self.assertEqual(len(exchange.calls), 1)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ Godot, or that produced execution evidence. Do NOT use for a docs-only session (
   ComfyUI with its own queue is not yours to stop.
 - Preserve outputs: name the full-resolution files that stay in ComfyUI's `output/` folder.
 - Never write "verified" for a path you did not run this session; list it under NOT verified.
-- `HUMAN_TODO.md` items stay open unless the human stated the decision in this session.
+- `HUMAN_TODO.md` items stay open until directly verified completion, or a recorded owner answer to every part the item asks with its stated conditions met; record how and when.
 
 ## Workflow
 

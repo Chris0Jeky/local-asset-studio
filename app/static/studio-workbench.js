@@ -24,7 +24,7 @@
   const createHeading=element('div','ux-create-heading','<div><span class="eyebrow">CREATE / PILOT THE NEXT PASS</span><h1>Follow the idea.</h1></div><div class="ux-stage-track" aria-label="Creative workflow"><span aria-current="step">1 · Prepare</span><span>2 · Run</span><a href="/#production">3 · Review</a><a href="/#assets">4 · Reuse</a></div>');q('#createView').prepend(createHeading);
   const recipeTools=element('div','ux-intent-tools','<label for="uxIntent">Start with a task<select id="uxIntent"><option value="all">Every recipe</option>'+U.INTENTS.map(i=>'<option value="'+i.id+'">'+i.name+'</option>').join('')+'</select></label><p id="uxIntentHint" class="muted">Choose by outcome, then inspect the exact recipe.</p>');q('#presetSearch').closest('label').before(recipeTools);
   const setup=q('#createView .setup'),drawer=element('details','ux-recipe-drawer');drawer.open=window.innerWidth>850;drawer.innerHTML='<summary>Recipe library <small id="uxRecipeLabel">Choose a starting point</small></summary>';while(setup.firstChild)drawer.append(setup.firstChild);setup.append(drawer);
-  const drafts=element('div','ux-draft-bar');drafts.id='uxDraftBar';drafts.innerHTML='<span id="uxDraftStatus">Draft recovery is browser-local.</span><div><button id="uxRestoreDraft" hidden>Restore draft</button><button id="uxDiscardDraft" hidden>Discard saved draft</button><button id="uxExportDraft">Export draft</button><button id="uxImportDraftButton">Import draft</button><input id="uxImportDraft" type="file" accept="application/json,.json" hidden><button id="uxKeepDraft" hidden>Keep this tab</button></div>';editor.prepend(drafts);
+  const drafts=element('div','ux-draft-bar');drafts.id='uxDraftBar';drafts.innerHTML='<span id="uxDraftStatus">Your unsaved draft is kept in this browser. Save a setup to keep it in your workspace.</span><div><button id="uxRestoreDraft" hidden>Restore draft</button><button id="uxDiscardDraft" hidden>Discard saved draft</button><button id="uxExportDraft">Export draft</button><button id="uxImportDraftButton">Import draft</button><input id="uxImportDraft" type="file" accept="application/json,.json" hidden><button id="uxKeepDraft" hidden>Keep this tab</button></div>';editor.prepend(drafts);
   q('#positiveWrap').before(element('div','ux-section-heading','<span>01</span><h3>Describe the result</h3><a href="/prompt-lab.html">Open Prompt Lab ↗</a>'));
   // A recipe's bracketed fills (who, the pose, the clothes) are short fields that write the prepared wording for you; the
   // paragraph stays visible and editable underneath, and a hand edit stops the fields from rewriting it (#422 slice A).
@@ -92,7 +92,7 @@
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
   let readinessMarkup='',readinessChecking=false;
-  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture','pose-position':'Review joint coordinates'};
+  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture','pose-position':'Review joint coordinates','pose-size':'Show the pose editor'};
   // A continuation blocker names a control; the button beside it performs or shows that repair, nothing more.
   const continuationActions={source:'source-back',inputs:'references',board:'references',wording:'wording'};
   function readinessItems(){
@@ -105,12 +105,13 @@
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
     const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
     if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
+    poseHeldShown=poseHeldArtifact();const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
     // The continuation names the exact empty slot; the generic reference line would only repeat it.
     if(specific.some(item=>['continuation-board','continuation-inputs','continuation-source'].includes(item.code)))items.splice(items.findIndex(item=>item.code==='references')>>>0,1);
     items.push(...specific);
-    if(secondPicture)items.push({code:'second',message:'You added a second picture, but this recipe reads one. Say what it is for.',action:'second'});
+    if(secondPicture)items.push({code:'second',message:selected?.reference_slots?.length>1?'Picture 1 remains your source. Choose another slot or explicitly start from the extra picture.':'You added a second picture, but this recipe reads one. Say what it is for.',action:'second'});
     if(sharedAdoptionError)items.push({code:'shared-setup',message:sharedAdoptionError,action:null});
     if(continuationState&&!continuationSource)items.push({code:'source',message:sourceReadError||'Checking the retained source metadata…',action:'continuation'});
     return{items,required};
@@ -152,6 +153,8 @@
       else target=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded)).map(id=>q('#'+id))[0]||(lastMissing&&uploaded?q('#lastReference'):q('#reference'));
     }
     if(action==='pose-position')target=q('#uxPoseX');
+    // A disabled button cannot be the next step (#952): show the reason beside it instead.
+    if(action==='pose-size')target=q('#uxPoseUse').disabled?q('#uxPoseReason'):q('#uxPoseUse');
     if(action==='parameters')target=q('#i2vMode')||getControl('frames');
     if(action==='wording'||action==='fills')target=(!fillsBlock.hidden&&fillInputs().find(input=>!input.value.trim()))||q('#positive');
     if(action==='source')target=q(selected?.last_reference?'#lastReference':'#reference');
@@ -253,7 +256,7 @@
     +'<fieldset class="ux-pose-position"><legend id="uxPosePositionLabel">Joint position (pixels)</legend><label for="uxPoseX">X<input id="uxPoseX" type="number" min="0" step="0.01" inputmode="decimal"></label><label for="uxPoseY">Y<input id="uxPoseY" type="number" min="0" step="0.01" inputmode="decimal"></label><button type="button" id="uxPosePositionApply">Set joint position</button><button type="button" id="uxPosePositionReset">Reset fields</button></fieldset>'
     +'<div class="ux-pose-actions"><button type="button" id="uxPoseUnknown">Mark unknown</button><button type="button" id="uxPoseUndo">Undo</button><button type="button" id="uxPoseRedo">Redo</button><button type="button" id="uxPoseUse" class="primary" aria-describedby="uxPoseReason">Use this pose</button></div>'
     +'<p id="uxPoseReason" class="muted"></p><p id="uxPoseStatus" role="status"></p></div></div>';
-  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseTimeline=StudioPoseEditor.timeline(POSE_UNDO),poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
+  let posePoints=null,poseHome=null,poseHeld=null,poseHeldShown='',poseLoading=null,poseCanvas={width:1024,height:1536},poseTimeline=StudioPoseEditor.timeline(POSE_UNDO),poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
   const poseStatus=text=>{q('#uxPoseStatus').textContent=text;};
   // The canvas the recipe will actually render at: the width and height controls when they are usable, else the recipe's own.
   function poseCanvasSize(){
@@ -293,6 +296,7 @@
     if(!selected)return 'Choose a Combine recipe first.';
     if(StudioPoseEditor.known(posePoints||[])<2)return 'Mark at least two joints: a guide with fewer draws no limb.';
     if(poseBusy)return 'The drawing is being rendered.';
+    if(poseLoading)return 'The attached pose guide’s drawing is loading into the editor.';
     if(posePositionDirty())return 'Set the typed joint position or reset its fields before continuing.';
     if(combineBusy())return 'Finish the attachment in progress first.';
     if(selected.id===POSE_RECIPE||StudioPoseEditor.drawsGuide(selected))return '';
@@ -305,6 +309,10 @@
   }
   // The panel serves every Combine recipe and any recipe that declares its own drawn-guide slot (an SDXL skeleton recipe).
   function poseActive(){return !!selected&&(!!StudioContinuation.combineKind(selected)||StudioPoseEditor.drawsGuide(selected));}
+  // A guide drawn for another Width/Height would be stretched to this canvas; drawing it again at this size clears the hold (#844).
+  // The hold promises a resize only when the editor holds the guide's own drawing (#947), and names the blocker first when
+  // the button is disabled (#952).
+  function poseSizeHold(){return poseActive()?StudioPoseEditor.guideSizeReason(referenceRecords,poseCanvasSize(),selected.id!==POSE_RECIPE&&!StudioPoseEditor.drawsGuide(selected)?'Replace pose picture with drawing':'Use this pose',{artifact:poseHeldArtifact(),loading:poseLoading?.artifact_id,blocked:poseBlockedReason()}):'';}
   function posePositionDirty(){
     if(!poseActive()||!posePoints?.[poseJoint]||posePositionSignature!==JSON.stringify([poseJoint,posePoints[poseJoint],poseCanvas]))return false;
     try{const value=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),point=posePoints[poseJoint];
@@ -328,7 +336,7 @@
     const replacing=selected?.id!==POSE_RECIPE&&!StudioPoseEditor.drawsGuide(selected);
     use.textContent=replacing?'Replace pose picture with drawing':'Use this pose';
     use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';
-    q('#uxPoseReason').textContent=reason||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays. Describe this pose before Generate; the old pose picture’s wording is not kept.':'');
+    q('#uxPoseReason').textContent=reason||poseSizeHold()||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays. Describe this pose before Generate; the old pose picture’s wording is not kept.':'');
     const positionPending=posePositionDirty();
     q('#uxPoseStart').disabled=poseBusy||positionPending;syncPosePosition();
     q('#uxPoseJoints').querySelectorAll('button').forEach(button=>{button.disabled=poseBusy||positionPending;});
@@ -352,11 +360,40 @@
     const signature=JSON.stringify([posePoints,poseCanvas,poseJoint,display]);
     if(el.width!==display.width||el.height!==display.height){el.width=display.width;el.height=display.height;poseSignature='';}
     if(signature!==poseSignature){poseSignature=signature;renderPoseJoints();drawPose();}
-    syncPoseActions();
+    syncPoseActions();loadPoseSource();
+  }
+  // A guide restored from a saved setup, a draft or a same-tab setup load brings its picture back but not its drawing.
+  // Read the drawing behind it (its artifact_id) into the editor, so Use this pose redraws that pose and never silently
+  // replaces it with whatever figure the editor held (#947). Each attached guide record is considered once (a restore makes
+  // a new record, so it is read again); Undo or Start from never pull the stored drawing back over the user's choice.
+  // The editor "holds" a guide only while its drawing still matches the one adopted or rendered for it (poseHeld).
+  const poseSeen=new WeakSet();
+  function poseHeldArtifact(){return poseHeld&&posePoints&&StudioPoseEditor.holds(posePoints,poseCanvas,poseHeld)?poseHeld.id:'';}
+  function loadPoseSource(){
+    const guide=StudioPoseEditor.drawnGuide(referenceRecords),id=guide?.artifact_id;
+    if(!guide||poseSeen.has(guide)||guide===poseLoading||poseBusy||poseDrag>=0||posePositionDirty())return;
+    if(!/^[a-f0-9]{64}$/.test(id||'')||id===poseHeldArtifact()){poseSeen.add(guide);return;}
+    // An edit made while the read is in flight wins over the stored drawing; the button waits for the read.
+    poseLoading=guide;let loaded=null;const before={points:StudioPoseEditor.resize(posePoints,poseCanvas,poseCanvas),canvas:{...poseCanvas}};syncPoseActions();
+    api('/api/pose/artifacts/'+id).then(value=>{loaded=StudioPoseEditor.fromArtifact(value,guide);}).catch(()=>{}).then(()=>{
+      if(poseLoading===guide)poseLoading=null;
+      // A newer guide, a render in flight or an unfinished edit wins; a later sync reads this guide again.
+      const current=StudioPoseEditor.drawnGuide(referenceRecords)===guide&&!poseBusy&&poseDrag<0&&!posePositionDirty()&&poseActive();
+      const edited=!StudioPoseEditor.holds(posePoints,poseCanvas,before);
+      if(loaded&&current&&edited){poseSeen.add(guide);poseStatus('You changed the drawing while the attached guide’s drawing was loading, so your drawing was kept.');}
+      else if(loaded&&current){
+        const next=StudioPoseEditor.resize(loaded,guide,poseCanvas);
+        pushPose();poseEdit(StudioPoseEditor.adopt(posePoints,next));poseHeld={id,points:next,canvas:{...poseCanvas}};poseSeen.add(guide);
+        poseStatus('The attached pose guide’s drawing is back in the editor. Undo returns to the previous drawing. Nothing was submitted.');
+      }else if(!loaded){poseSeen.add(guide);poseStatus('The drawing behind the attached pose guide could not be read. The picture stays attached.');}
+      syncReady();
+    });
   }
   function poseEdit(next,remember=true){
     posePoints=next;if(remember)poseHome=poseHome.map((point,index)=>posePoints[index]||point);
     poseSignature='';renderPoseJoints();drawPose();syncPoseActions();
+    // Undo, Redo, Start from or any edit can make the editor stop (or start) holding the guide: Generate's hold follows.
+    if(poseHeldArtifact()!==poseHeldShown)syncReady();
   }
   function applyPosePosition(){
     if(poseBusy||!posePoints?.[poseJoint])return;
@@ -417,7 +454,7 @@
     try{
       const response=await post('/api/pose/render',body);
       if(stamp!==setupStamp()||setupBusy()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
-      const result=StudioPoseEditor.guideResponse(response,body);
+      const result=StudioPoseEditor.guideResponse(response,body);poseHeld={id:result.artifact_id,points:StudioPoseEditor.resize(posePoints,poseCanvas,poseCanvas),canvas:{...poseCanvas}};
       if(switching)switchCombineEngine(POSE_RECIPE,result);
       else{
         const previous=referenceRecords[0]?.parent_asset;
@@ -517,17 +554,23 @@
   // One slot, two pictures: the second picture is a question, not a silent replacement (owner report, 14 Sep 2026).
   let secondPicture=null,pendingStyle=null;
   const secondPanel=element('div','ux-second-picture callout');secondPanel.id='uxSecondPicture';secondPanel.hidden=true;secondPanel.setAttribute('role','group');secondPanel.setAttribute('aria-labelledby','uxSecondTitle');
-  secondPanel.innerHTML='<b id="uxSecondTitle">One slot, two pictures.</b><p id="uxSecondText"></p><div class="ux-context-actions"><button type="button" id="uxSecondCombine" class="primary">Use its pose → Combine</button><button type="button" id="uxSecondRestyle">Use its look → Restyle the source</button><button type="button" id="uxSecondReplace">Start from this picture instead</button><button type="button" id="uxSecondKeep">Keep the source, drop this picture</button></div><p id="uxSecondHint" class="muted"></p>';
+  secondPanel.innerHTML='<b id="uxSecondTitle">One slot, two pictures.</b><p id="uxSecondText"></p><div id="uxSecondSlots" class="ux-context-actions"></div><div class="ux-context-actions"><button type="button" id="uxSecondCombine" class="primary">Use its pose → Combine</button><button type="button" id="uxSecondRestyle">Use its look → Restyle the source</button><button type="button" id="uxSecondReplace">Start from this picture instead</button><button type="button" id="uxSecondKeep">Keep the source, drop this picture</button></div><p id="uxSecondHint" class="muted"></p>';
   q('#createView .references').after(secondPanel);
   function secondName(item){return item?.file?item.file.name:item?.asset?.title||'this picture';}
   const boardDestination=intent=>StudioContinuation.destinations(intent,catalog?.presets||[],continuationSource).find(p=>p.continuation_capability?.board_min>0);
   function offerSecondPicture(item){
     secondPicture=item;const dest=boardDestination('restyle'),pose=boardDestination('combine');
+    const slots=item.asset&&StudioContinuation.sourceInput(selected?.continuation_capability)==='reference'?selected.reference_slots||[]:[];
+    q('#uxSecondTitle').textContent=slots.length?'Keep your source. Place the extra picture.':'One slot, two pictures.';
+    q('#uxSecondSlots').innerHTML=slots.slice(1).map((slot,index)=>{
+      const i=index+1,occupied=!!referenceRecords[i]?.file&&!referenceRecords[i]?.missing;
+      return '<button type="button" data-ux-second-slot="'+i+'">'+(occupied?'Replace Picture ':'Use as Picture ')+(i+1)+' · '+escape(referenceRecords[i]?.role||slot.role)+'</button>';
+    }).join('');
     q('#uxSecondText').textContent=StudioContinuation.sourceLabel(selected)+' already holds the picture you are continuing. What is “'+secondName(item)+'” for?';
     q('#uxSecondCombine').disabled=!pose;q('#uxSecondCombine').title=pose?'':'No combine recipe is available.';
     q('#uxSecondRestyle').disabled=!dest;q('#uxSecondRestyle').title=dest?'':'No style-board restyle recipe is available.';
     q('#uxSecondHint').textContent=(pose?'Combine keeps the source character and draws it in the new picture’s pose ('+pose.name+'). ':'')+(dest?(dest.continuation_capability?.keeps_picture?'Restyle keeps the source and repaints it '+(dest.continuation_capability?.prompt_role==='instruction'?'the way the new picture is drawn ('+dest.name+').':'in the recipe’s finish ('+dest.name+'); the new picture goes on the style board, which adds its palette only as far as Style weight says (0 = off).'):'Restyle keeps the source’s pose and paints it in the look of the new picture ('+dest.name+').')+' ':'No restyle recipe is available. ')+'Starting from the new picture ends this continuation; the original stays in your library.';
-    secondPanel.hidden=false;syncReady();focusReadinessTarget(pose?q('#uxSecondCombine'):dest?q('#uxSecondRestyle'):q('#uxSecondReplace'));
+    secondPanel.hidden=false;syncReady();focusReadinessTarget(q('[data-ux-second-slot]')||(pose?q('#uxSecondCombine'):dest?q('#uxSecondRestyle'):q('#uxSecondReplace')));
   }
   function dismissSecondPicture(){secondPicture=null;secondPanel.hidden=true;}
   const legacyReferenceChange=q('#reference').onchange;
@@ -536,9 +579,9 @@
     if(continuationState&&file&&!selected?.reference_slots?.length&&StudioContinuation.sourceInput(selected?.continuation_capability)==='reference'){offerSecondPicture({file});return;}
     dismissSecondPicture();return legacyReferenceChange?.call(this,e);
   };
-  q('#uxSecondKeep').onclick=()=>{dismissSecondPicture();q('#reference').value='';syncReady();announce('Kept the source. The extra picture was not attached.');};
+  q('#uxSecondKeep').onclick=()=>{if(pickerBusy)return;dismissSecondPicture();q('#reference').value='';syncReady();announce('Kept the source. The extra picture was not attached.');};
   const useSecondPicture=intent=>()=>{
-    const item=secondPicture,dest=boardDestination(intent);if(!item||!dest||!continuationState)return;
+    const item=secondPicture,dest=boardDestination(intent);if(pickerBusy||!item||!dest||!continuationState)return;
     // Keep the choice and native File until Prepare commits (selectPreset clears both).
     // A refused opening, failed context read or cancelled modal must not consume the picture.
     pendingStyle=null;
@@ -548,14 +591,39 @@
   };
   q('#uxSecondRestyle').onclick=useSecondPicture('restyle');q('#uxSecondCombine').onclick=useSecondPicture('combine');
   q('#uxSecondReplace').onclick=async()=>{
-    const item=secondPicture;if(!item||!continuationState)return;
+    const item=secondPicture;if(pickerBusy||handoffBusy||submitting||restoring||referencePending||!item||!continuationState)return;
     if(!window.confirm('Start from this picture instead? The continuation ends and Create resets to the recipe defaults. The original stays in your library.'))return;
-    dismissSecondPicture();selectPreset(selected.id,true,true);
+    pickerBusy=true;syncReady();
     try{
-      if(item.file){const transfer=new DataTransfer();transfer.items.add(item.file);q('#reference').files=transfer.files;legacyReferenceChange?.call(q('#reference'),new Event('change'));}
-      else{const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id:item.asset.id});if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. It was not applied.');uploaded=result.file;q('#reference').value='';replaceParentAsset('reference',null,item.asset.id);}
+      if(item.file){const transfer=new DataTransfer();transfer.items.add(item.file);selectPreset(selected.id,true,true);q('#reference').files=transfer.files;legacyReferenceChange?.call(q('#reference'),new Event('change'));}
+      else{
+        // Keep the reviewed draft live until a verified copy is ready. The reset and
+        // existing source owner then commit synchronously, with no second request.
+        const stamp=workbenchStamp(),epoch=selectionEpoch,refs=referenceEpoch,result=await post('/api/assets/reference',{id:item.asset.id});
+        if(referencePending||epoch!==selectionEpoch||refs!==referenceEpoch||stamp!==workbenchStamp()||secondPicture!==item)throw Error('The workbench changed while the picture was being copied. It was not applied.');
+        if(result?.parent_asset!==item.asset.id||result?.sha256!==item.asset.sha256||result?.context?.asset_id!==item.asset.id||result?.context?.sha256!==item.asset.sha256||!StudioContinuation.normalize({...continuationState,reference_file:result?.file,source_asset_id:item.asset.id,source_sha256:item.asset.sha256}))throw Error('The replacement attachment could not be verified. The current source was kept.');
+        selectPreset(selected.id,true,true);attachContinuationSource(result);
+      }
+      dismissSecondPicture();
       draftDirty=true;saveDraft();syncCreate();announce('Continuation ended. '+secondName(item)+' is now the reference; the prompt is the recipe default.');
     }catch(error){announce(error.message,true);}
+    finally{pickerBusy=false;syncReady();}
+  };
+  // The existing slot attachment owner arbitrates late copies and preserves slot roles.
+  q('#uxSecondSlots').onclick=async e=>{
+    const button=e.target.closest('[data-ux-second-slot]'),item=secondPicture,index=Number(button?.dataset.uxSecondSlot);
+    if(!button||pickerBusy||handoffBusy||submitting||restoring||referencePending||!item?.asset||!continuationState)return;
+    if(StudioContinuation.sourceInput(selected.continuation_capability)!=='reference'||!Number.isInteger(index)||index<1||!selected.reference_slots?.[index])return;
+    if(referenceRecords[index]?.file&&!referenceRecords[index]?.missing&&!window.confirm('Replace Picture '+(index+1)+' with '+secondName(item)+'? Picture 1 and your wording stay unchanged.'))return;
+    const ownedFocus=secondPanel.contains(document.activeElement);
+    pickerBusy=true;button.disabled=true;secondPanel.setAttribute('aria-busy','true');syncReady();
+    try{
+      if(!await pullIntoSlot(index,item.asset.id))return;
+      const returnFocus=ownedFocus&&view==='create'&&(secondPanel.contains(document.activeElement)||document.activeElement===document.body);
+      if(secondPicture===item)dismissSecondPicture();
+      announce('Picture '+(index+1)+' attached. Your source and wording were kept. Review its role before generating.');
+      if(returnFocus)focusReadinessTarget(q('[data-ref-contribution="'+index+'"]')||q('[data-ref-file="'+index+'"]'));
+    }finally{pickerBusy=false;button.disabled=false;secondPanel.setAttribute('aria-busy','false');syncReady();}
   };
   // A modal handoff carries IDs, not paths; selecting a destination never runs it.
   const handoff=element('dialog','studio-dialog ux-handoff');handoff.id='uxHandoff';handoff.setAttribute('aria-labelledby','uxHandoffTitle');handoff.innerHTML='<div class="dialog-heading"><div><span class="eyebrow">CONTINUE WITH THIS ASSET</span><h2 id="uxHandoffTitle">Where should it go next?</h2></div><button data-ux-close="uxHandoff" aria-label="Close handoff">✕</button></div><div class="ux-handoff-layout"><div id="uxHandoffSource"></div><div><div id="uxHandoffIntents" class="ux-handoff-intents"></div><label for="uxDestination">Destination recipe<select id="uxDestination"></select></label><div id="uxHandoffDetails"></div><details><summary>Wording prepared for this pass</summary><pre id="uxHandoffPrompt"></pre></details><details><summary>Technical recipe notes</summary><p id="uxHandoffTechnical"></p></details><p class="callout">Prepare attaches a copy and fills the settings. Nothing runs until you press Generate.</p><p id="uxHandoffStatus" role="status"></p><button id="uxPrepareHandoff" class="primary">Prepare in Create →</button></div></div>';document.body.append(handoff);
@@ -677,7 +745,7 @@
   }
   q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;
       if(continuationState){const input=StudioContinuation.sourceInput(selected.continuation_capability),isSource=input==='last_reference'?slot==='lastReference':slot==='reference'||slot==='0';
-        if(isSource&&!selected.reference_slots?.length){picker.close();offerSecondPicture({asset:assetState.assets.find(a=>a.id===id)});return;}
+        if(isSource&&(!selected.reference_slots?.length||input==='reference')){picker.close();offerSecondPicture({asset:assetState.assets.find(a=>a.id===id)});return;}
         if(isSource)throw Error(StudioContinuation.sourceLabel(selected)+' is the picture you are continuing. Pull into another slot, or use Leave this continuation to start from this one.');}
       if(selected.reference_slots?.length&&slot!=='lastReference')await attachReferenceAsset(Number(slot),id);
       else{const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id});if(stamp!==workbenchStamp())throw Error('The workbench changed during attachment. Reopen the picker.');if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',null,id);}
@@ -728,7 +796,7 @@
   function draftKey(){return draftPrefix&&selected?draftPrefix+selected.id:null;}
   function readDraft(key=draftKey()){if(!key)return null;try{const value=U.normalizeDraft(JSON.parse(localStorage.getItem(key)));if(value)knownDrafts.set(key,value.updatedAt);return value;}catch(_){return null;}}
   function saveDraft(){if(restoring||draftPaused||!draftDirty||!draftPrefix||!selected)return;const key=draftKey(),draft=snapshot();if(!draft)return;try{const current=U.normalizeDraft(JSON.parse(localStorage.getItem(key)));if(current&&knownDrafts.has(key)&&knownDrafts.get(key)!==current.updatedAt){draftPaused=true;renderDraftNotice();return;}if(current&&JSON.stringify({...current,updatedAt:0})===JSON.stringify({...draft,updatedAt:0}))return;localStorage.setItem(key,JSON.stringify(draft));knownDrafts.set(key,draft.updatedAt);q('#uxDraftStatus').textContent='Draft saved in this browser · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(_){q('#uxDraftStatus').textContent='Browser storage is unavailable. Export this draft or save a named setup.';}}
-  function renderDraftNotice(){const draft=readDraft();q('#uxRestoreDraft').hidden=!draft;q('#uxDiscardDraft').hidden=!draft;q('#uxKeepDraft').hidden=!draftPaused;q('#uxDraftStatus').textContent=draftPaused?'Another tab changed the saved draft. Autosave is paused; export yours or keep this tab.':draft?'Saved draft from '+new Date(draft.updatedAt).toLocaleString()+'. Restore it to continue.':'Draft recovery is browser-local. Named setups live in your workspace.';}
+  function renderDraftNotice(){const draft=readDraft();q('#uxRestoreDraft').hidden=!draft;q('#uxDiscardDraft').hidden=!draft;q('#uxKeepDraft').hidden=!draftPaused;q('#uxDraftStatus').textContent=draftPaused?'Another tab changed the saved draft. Autosave is paused; export yours or keep this tab.':draft?'Saved draft from '+new Date(draft.updatedAt).toLocaleString()+'. Restore it to continue.':'Your unsaved draft is kept in this browser. Save a setup to keep it in your workspace.';}
   async function restoreDraft(draft){
   if(!draft)return;if(!catalog?.presets.some(p=>p.id===draft.recipe.preset)){announce('This draft needs a recipe that is not in the current catalog.',true);return;}
   restoring=true;let epoch=null,checkedInputs=[];
@@ -769,7 +837,7 @@
     const ordered=[...s.reviewPlans,...s.attentionPlans,...s.activePlans,...s.prepared].slice(0,6),seenJobs=new Set((plans||[]).flatMap(p=>(p.stages||[]).map(stage=>stage.job?.id).filter(Boolean)));
     const records=ordered.map(p=>'<a class="ux-desk-row" href="'+(p.state.status==='awaiting_review'&&p.kind==='comparison'?'/review.html?project='+encodeURIComponent(p.id):p.kind==='av'?'/av.html?project='+encodeURIComponent(p.id):p.kind==='voice'?'/voice.html':'/#production')+'" data-ux-project="'+escape(p.id)+'"><span class="ux-state-dot '+escape(p.state.status)+'" aria-hidden="true"></span><span><b>'+escape(p.name)+'</b><small>'+escape(p.state.status.replaceAll('_',' '))+' · '+escape(p.kind)+'</small></span><span aria-hidden="true">↗</span></a>');
     for(const j of [...s.attentionJobs,...s.activeJobs].filter(j=>!seenJobs.has(j.id)).slice(0,3))records.push('<button type="button" class="ux-desk-row" data-ux-inspect-job="'+escape(j.id)+'"><span class="ux-state-dot '+escape(j.status)+'" aria-hidden="true"></span><span><b>'+escape(j.preset_name)+'</b><small>'+escape(j.status)+' · inspect existing record; do not repeat uncertain work</small></span><span aria-hidden="true">↗</span></button>');
-    q('#uxAttention').innerHTML=records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>');
+    q('#uxAttention').innerHTML=(records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>'))+(s.putAwayJobs.length?'<p class="ux-desk-note"><small>'+s.putAwayJobs.length+' run(s) put away or with tracking stopped. <a href="/#create">Show put away in Create → Problems</a></small></p>':'');
     const recent=assets.filter(a=>!a.trashed_at).sort((a,b)=>b.created_at-a.created_at).slice(0,6);q('#uxRecent').innerHTML=recent.map(a=>'<button class="ux-recent-card" data-ux-open-asset="'+escape(a.id)+'">'+assetPreview(a)+'<span><b>'+escape(a.title)+'</b><small>'+escape(a.media_type)+' · '+escape(a.review||'unreviewed')+'</small></span></button>').join('')||'<div class="ux-empty panel"><h3>'+(workspace?'Make room for your first asset.':'Asset library is unavailable.')+'</h3><p>Import an existing image or create from a recipe. Sources stay available for the next step.</p><a href="/#assets">Open Asset library →</a></div>';
   }
   q('#uxRefreshHome').onclick=()=>refreshHome();

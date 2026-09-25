@@ -1,5 +1,9 @@
 # Studio UX QA — 13 September 2026
 
+## Live journey pass — 24 September 2026
+
+[LIVE-JOURNEY-QA-2026-09-24.md](LIVE-JOURNEY-QA-2026-09-24.md): a read-only walkthrough on the owner's running Studio. Results: #775 and #769 verified and closed; findings filed as #939, #940 and #942; fixes in #944, #945 and #951.
+
 ## Collection editor sessions — 14 September 2026
 
 [Collection editor](COLLECTION-EDITOR.md) protects an open collection draft, makes save outcomes visible and validates Workspace scope. [Checkpoint](COLLECTION-EDITOR-RESULTS.json). Durable collection revisions/receipts remain #282.

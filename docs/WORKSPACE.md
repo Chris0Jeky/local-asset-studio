@@ -14,9 +14,55 @@ Create a collection with **＋**, select assets using their checkboxes, and choo
 **Add to collection**. An asset can belong to multiple collections. Removing a
 collection leaves the assets available in All assets.
 
+Selecting: Shift-click a checkbox to select (or deselect) every asset between it
+and the checkbox you clicked last, in the order the grid shows them. With focus
+in the grid, <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>A</kbd> does what **Select
+visible** does (the first 200) and <kbd>Esc</kbd> clears the selection, as does
+**Clear selection**; neither shortcut acts while you type in a field or while a
+dialog is open. One action takes at most 200 assets, and a range that would pass
+that limit changes nothing. Search and filters keep the selection (the summary
+counts what is outside the view); changing scope starts a new one and says how
+many were cleared.
+
 **Group by** arranges the grid into sections by recipe, day or run, each with a
 count. The choice is remembered in this browser only; it changes nothing that is
-saved with an asset.
+saved with an asset. Scope, sort and media type are remembered the same way, and
+the search text for this tab only, so a reload keeps your view; a remembered
+collection that has since been deleted opens All assets.
+
+**Source** (*Mine / Agent runs / All sources*) appears once any asset carries a
+run label. Agent runs are assets whose job was submitted with a `label` (see
+below); everything else, including every asset registered before labels existed,
+counts as Mine. Until you choose, the library shows **Mine**; the choice is
+remembered in this browser like grouping. The count line says how many assets
+the source hides, and **Review next** queues only the assets in the current
+source, scope and filters.
+
+When an asset still has its registered title (*recipe · N*), its card shows the
+first 60 characters of the job's positive prompt under the title; the asset
+dialog shows that excerpt and the run label for every asset that has one. New
+assets store the excerpt when they are registered; older assets take it from
+their job record while that job is still in the runs folder.
+
+**Run labels for scripts and agents.** `POST /api/jobs` accepts an optional
+`label`: printable text of 1 to 80 characters after trimming, with no line
+breaks, tabs or other control characters; anything else is refused with HTTP 400
+and no job is created. The label is kept in the job's `state.json` (not in
+`recipe.json`, so re-running a recipe does not inherit it), returned with the
+job, and copied to every asset registered from it as its `run_label`. The
+Create page never sends one. Label every lab or batch run, for example
+`"label": "lab p71 · G16 ports"`, so its outputs stay out of Mine.
+
+**Marking a source afterwards.** Outputs registered without a label (every lab
+run before labels existed) can be marked by hand: select them and choose **Mark
+as agent run**, or, with **Group by recipe / day / run**, use a group's **Mark n
+as agent runs** (it asks first, like group triage). The label field beside the
+button defaults to *Agent lab*; assets that already carry a label keep it. **Mark as
+mine** clears the label again, and asks first, naming them, when that would clear
+labels other than *Agent lab*. Both are
+the ordinary revisioned metadata edit (`run_label`: the same 1-80 printable
+characters, or `null`), at most 200 assets per command, with a receipt; once any
+asset is labelled, the Mine view hides it.
 
 Open an asset to rename it, tag it, record notes or choose a review state.
 **Selected** is your creative selection; it does not certify model licensing,
@@ -37,8 +83,22 @@ screen with its evidence. Skipping saves nothing.
 
 With assets selected, **Mark selected: Keeper / Needs work / Rejected** applies
 the same single-asset save to each one, three at a time, and reports progress.
+When some selected assets already have a different saved review, it first asks,
+naming how many of each will change; there is no undo beyond reopening an asset.
 Anything that fails is listed with whether it was refused or merely unconfirmed;
 no retry is sent for you. The four review states are unchanged.
+
+With **Group by recipe / day / run**, each group heading offers **Mark n
+unreviewed as Needs work / Rejected / Keeper** (tab to it; Enter activates). It
+asks first, naming the count, the group and the decision, and touches only the
+unreviewed assets the group shows under the current scope, source, search and
+media filters; already reviewed assets keep their review. The ids and their
+revisions are fixed when you confirm and sent as the ordinary metadata edit in
+batches of at most 200, each with its own revision guard. The first batch that
+conflicts (an asset changed elsewhere), is refused or goes unconfirmed stops the
+run, and the status says how many were marked; nothing is retried or overwritten.
+A Workspace change mid-run also stops it. Each review can still be changed back
+one asset at a time.
 
 **Move to Trash** removes an asset from the regular views. Open Trash and choose
 **Restore** to bring it back with its collections, notes and recipe. Trash is

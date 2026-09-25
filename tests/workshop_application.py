@@ -66,7 +66,7 @@ def main():
             page.evaluate("document.querySelector('#uxTransferPreview').textContent=Array.from({length:40},(_,i)=>'A transferred line '+i).join(String.fromCharCode(10));document.querySelector('#uxTransferNotice').textContent='Compiled text from Prompt Lab. Applying it replaces the current wording only.'")
             transfer=[]
             for layout,ambience in [(l,a) for l in ['focus','studio','immersive'] for a in ['none','night-shift']]:
-                page.select_option('#workshopLayout',layout);page.select_option('#workshopAmbience',ambience);page.wait_for_timeout(120)
+                page.select_option('#workshopLayout', layout, force=True);page.select_option('#workshopAmbience', ambience, force=True);page.wait_for_timeout(120)
                 closed=page.evaluate("()=>[document.querySelector('.ux-create-heading').getBoundingClientRect().y,document.querySelector('#createView .editor').getBoundingClientRect().y,document.documentElement.scrollHeight]")
                 page.evaluate("document.querySelector('#uxTransfer').hidden=false");page.wait_for_timeout(120)
                 heading=page.locator('.ux-create-heading').bounding_box()
@@ -81,12 +81,12 @@ def main():
                 # Hiding it again restores the exact geometry of a Create view that never received a handoff.
                 assert page.evaluate("()=>[document.querySelector('.ux-create-heading').getBoundingClientRect().y,document.querySelector('#createView .editor').getBoundingClientRect().y,document.documentElement.scrollHeight]")==closed,(layout,closed)
                 transfer.append({'layout':layout,'ambience':ambience,'panel_y':round(panel['y']),'apply_y':round(apply_button['y']),'editor_y':closed[1]})
-            page.select_option('#workshopLayout','focus');page.select_option('#workshopAmbience','none');page.wait_for_timeout(120)
+            page.select_option('#workshopLayout', 'focus', force=True);page.select_option('#workshopAmbience', 'none', force=True);page.wait_for_timeout(120)
             narrow=browser.new_page(viewport={'width':390,'height':844});narrow.on('pageerror',lambda e:errors.append(str(e)))
             narrow.goto(origin+'/#create');narrow.wait_for_function('!!selected && schemaAvailable && !!document.querySelector("#workshopRecipeChange")')
             narrow.evaluate("document.querySelector('#uxTransferPreview').textContent=Array.from({length:40},(_,i)=>'A transferred line '+i).join(String.fromCharCode(10));document.querySelector('#uxTransferNotice').textContent='Compiled text from Prompt Lab. Applying it replaces the current wording only.'")
             for layout in ['focus','immersive']:
-                narrow.select_option('#workshopLayout',layout)
+                narrow.select_option('#workshopLayout', layout, force=True)
                 narrow.evaluate("document.querySelector('#uxTransfer').hidden=false");narrow.wait_for_timeout(120)
                 small=narrow.locator('#uxApplyPrompt').bounding_box()
                 assert small['y']+small['height']<=844,(layout,small)
@@ -102,7 +102,7 @@ def main():
             for width, height in [(1440, 900), (390, 844)]:
                 page.set_viewport_size({'width': width, 'height': height})
                 for layout in ['focus', 'studio', 'immersive']:
-                    page.select_option('#workshopLayout', layout)
+                    page.select_option('#workshopLayout', layout, force=True)
                     page.fill('#positive', '   ')
                     assert page.locator('#generate').is_disabled(), (width, layout)
                     # The specific blocker is summarized in the dock; details are
@@ -121,7 +121,7 @@ def main():
                     assert not [row for row in fixture.POSTS if row['path'] == '/api/jobs']
                     prompt_cases.append({'width': width, 'layout': layout})
             page.set_viewport_size({'width': 1440, 'height': 900})
-            page.select_option('#workshopLayout', 'focus')
+            page.select_option('#workshopLayout', 'focus', force=True)
             checks.append({'name': 'empty wording blocks the actual run handler with an explicit repair action', 'cases': prompt_cases})
             # Preserve input identity, source and pending draft through presentation changes.
             page.evaluate("window.keptPrompt=document.querySelector('#positive');window.keptGenerate=document.querySelector('#generate');window.keptReference=document.querySelector('#reference')")
@@ -161,16 +161,16 @@ def main():
             for layout in layouts:
                 for skin in skins:
                     for ambience in ambiences:
-                        page.select_option('#workshopLayout',layout)
-                        page.select_option('#workshopSkin',skin)
-                        page.select_option('#workshopAmbience',ambience)
+                        page.select_option('#workshopLayout', layout, force=True)
+                        page.select_option('#workshopSkin', skin, force=True)
+                        page.select_option('#workshopAmbience', ambience, force=True)
                         assert page.evaluate('JSON.stringify({controls:values(),uploaded,lastUploaded,parentAssets,parentByInput})') == before
                         assert page.evaluate("keptPrompt===document.querySelector('#positive') && keptGenerate===document.querySelector('#generate') && keptReference===document.querySelector('#reference')")
             assert not [row for row in fixture.POSTS if row['path']=='/api/jobs']
             checks.append({'name':'all presentation combinations preserve real source lineage, controls and zero submissions','layouts':layouts,'skins':skins,'ambiences':ambiences})
-            page.select_option('#workshopLayout','focus')
-            page.select_option('#workshopSkin','atelier')
-            page.select_option('#workshopAmbience','none')
+            page.select_option('#workshopLayout', 'focus', force=True)
+            page.select_option('#workshopSkin', 'atelier', force=True)
+            page.select_option('#workshopAmbience', 'none', force=True)
             page.click('#workshopTune')
             assert page.locator('[data-key="seed"]').is_visible()
             page.fill('[data-key="seed"]','1024')
@@ -182,7 +182,11 @@ def main():
             # The real original handler reaches the fixture once. The fixture deliberately
             # refuses the mutation; no synthetic success or accepted generation is invented.
             assert page.locator('#generate').is_enabled()
-            page.click('#generate')
+            # #772: Ctrl+Enter in the prompt is one click on this same button, so it reaches the same handler once.
+            assert page.locator('#generate').get_attribute('aria-keyshortcuts') == 'Control+Enter Meta+Enter'
+            assert page.locator('#generateShortcut').inner_text() == 'Ctrl+Enter'
+            page.focus('#positive')
+            page.keyboard.press('Control+Enter')
             page.wait_for_function('document.querySelector("#status").textContent.includes("Unexpected mutation blocked")')
             submissions=[row for row in fixture.POSTS if row['path']=='/api/jobs']
             assert len(submissions)==1,submissions
@@ -200,9 +204,9 @@ def main():
                 attach_page_observers(fresh, errors, requests, allowed_origins=(origin,))
                 fresh.goto(origin+'/#create')
                 fresh.wait_for_function('!!selected && schemaAvailable && !!document.querySelector("#workshopRecipeChange")')
-                fresh.select_option('#workshopLayout',layout)
-                fresh.select_option('#workshopSkin',skin)
-                fresh.select_option('#workshopAmbience',ambience)
+                fresh.select_option('#workshopLayout', layout, force=True)
+                fresh.select_option('#workshopSkin', skin, force=True)
+                fresh.select_option('#workshopAmbience', ambience, force=True)
                 fresh.wait_for_timeout(150)
                 assert fresh.evaluate('document.documentElement.scrollWidth<=innerWidth'),case
                 box=fresh.locator('#generate').bounding_box()

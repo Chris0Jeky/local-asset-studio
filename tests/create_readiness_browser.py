@@ -49,8 +49,8 @@ async def run(args):
             page=await browser.new_page(viewport={'width':1440,'height':1100},reduced_motion='reduce');page.set_default_timeout(5000)
             page.on('pageerror',lambda e:errors.append(str(e)))
             if args.inert:await inert_page(page,server.server_port)
-            else:await page.goto(f'http://127.0.0.1:{server.server_port}/#create')
-            await page.wait_for_function('!!selected && !!readPoller')
+            else:await page.goto(f'http://127.0.0.1:{server.server_port}/#create',timeout=20000)  # cold-runner first load (#911)
+            await page.wait_for_function('!!selected && !!readPoller',timeout=20000)
             # Freeze periodic fixture reads, not product handlers or responses.
             await page.evaluate("readPoller.started=false;for(const lane of readPoller.lanes.values()){clearTimeout(lane.timer);lane.timer=null;}showView('create');selectPreset('qwen-3ref')")
             await page.wait_for_function("document.querySelector('#dependencyCount').textContent.includes('/ 1 present')")

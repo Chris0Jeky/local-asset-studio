@@ -80,8 +80,8 @@ async def run(args):
                     await page.add_style_tag(content=(ROOT/'app/static/workshop.css').read_text())
                     await page.add_script_tag(content=(ROOT/'app/static/presentation-context.js').read_text())
                     await page.add_script_tag(content=(ROOT/'app/static/workshop.js').read_text())
-                else: await page.goto(f'http://127.0.0.1:{server.server_port}/#create')
-                await page.wait_for_function('!!catalog && !!selected && schemaAvailable')
+                else: await page.goto(f'http://127.0.0.1:{server.server_port}/#create', timeout=20000)  # cold-runner first load (#911)
+                await page.wait_for_function('!!catalog && !!selected && schemaAvailable', timeout=20000)
                 await page.evaluate("showView('create')")
                 return page
             async def restore(page, value):

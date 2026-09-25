@@ -117,7 +117,10 @@ function renderPresets() {
   const query = $('#presetSearch').value.toLowerCase(), category = $('#categorySelect').value;
   const list = catalog.presets.filter(p => (mode === 'all' || (p.modality || 'image') === mode) && (category === 'All' || p.category === category) && [p.name,p.family,p.description,p.category].join(' ').toLowerCase().includes(query));
   $('#filteredCount').textContent = list.length;
+  // Rebuilding the list must not drop keyboard focus: a picked recipe keeps it on its own rebuilt button (#772).
+  const focused = document.activeElement?.closest?.('#presetList [data-id]')?.dataset.id;
   $('#presetList').innerHTML = list.map(p => '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '"><b>' + esc(p.name) + '</b><span>' + esc(p.description) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span><em class="badge ' + (p.verified ? 'tested' : '') + '">' + (p.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</em></div></button>').join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
+  if (focused) ([...$('#presetList').querySelectorAll('[data-id]')].find(button => button.dataset.id === focused) || $('#presetSearch'))?.focus({preventScroll:true});
 }
 function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
@@ -335,7 +338,7 @@ async function refreshHealth() {
   try {
     const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
     if(typeof renderRecovery==='function')renderRecovery(h.recovery);
-    const failure=$('#workerFailure');if(failure){failure.hidden=!h.worker_failure;failure.textContent=h.worker_failure?'A failure record was not saved for '+h.worker_failure.action+' '+h.worker_failure.id+'. Inspect local storage and retained job records before continuing that task. No submission was retried.':'';}
+    const failure=$('#workerFailure'),lost=h.worker_failure;if(failure){failure.hidden=!lost;failure.title=lost?String(lost.id):'';failure.textContent=lost?'Failure record not saved for job '+String(lost.id).slice(0,8)+' ('+lost.action+'). Nothing was resubmitted. Once no other program is holding files in the runs folder, open this job and note its prompt ID, or use Resume observation, before restarting the Studio.':'';}
     if(h.devices?.[0]) $('#hardware').textContent=h.devices[0].name.replace(/^cuda:\d+ /,'').replace(' : native','') + ' · ' + (h.devices[0].vram_total/1024**3).toFixed(0) + ' GB VRAM';
     if(h.comfy_url) $('#comfyLink').href=safeUrl(h.comfy_url);
     updateReady();
@@ -411,17 +414,31 @@ function renderJobs(signature=JSON.stringify(jobs)) {
       const stop=job.can_stop_tracking?'<label>Reason for stopping tracking<input class="stopTrackingReason" data-stop-tracking-reason="'+esc(job.id)+'" maxlength="1000" required></label><button class="stopTracking" data-job="'+esc(job.id)+'">Stop tracking</button>':'';
       const abandonNote=job.abandonment?'<p><b>Abandoned locally</b>: '+esc(job.abandonment.reason)+'<br><small>'+esc(job.abandonment.basis==='never_submitted'?'No submission was recorded.':'Remote outcome remains unknown; no cancellation was sent.')+'</small></p>':'';
       const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
-      (['failed','partial','uncertain','abandoned'].includes(job.status)?problems:cards).push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
+      const problem=['failed','partial','uncertain','abandoned'].includes(job.status);
+      const putAway=!problem?'':job.put_away?(job.put_away_basis==='owner'?'<p class="putAwayNote"><small>Put away '+esc(new Date(job.put_away_at*1000).toLocaleString())+'. Status, prompt IDs, outputs and reservations are unchanged.</small></p>':'<p class="putAwayNote"><small>Off your desk because tracking was stopped. Resume observation brings it back.</small></p>')+(job.can_bring_back?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="false">Bring back</button>':''):job.can_put_away?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="true" title="Hide from Problems and your desk. Nothing is retried, cancelled or deleted.">Put away</button>':job.status==='uncertain'?'<p class="putAwayNote"><small>'+esc(job.can_stop_tracking?'Stop tracking before putting this away; its resume path stays open until then.':'Resolve or abandon this uncertain job before putting it away.')+'</small></p>':'';
+      const html='<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button>'+putAway+'</article>';
+      if(problem)problems.push({job,html});else cards.push(html);
     }
     job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });
-  const problemMarkup=problems.length?'<details id="jobProblems" class="job-problems" '+(problemsOpen?'open':'')+'><summary>Problems · '+problems.length+' run(s)</summary>'+problems.join('')+'</details>':'';
+  const problemMarkup=renderProblems(problems,problemsOpen);
   const host=document.getElementById?.('jobProblemsHost')||null;
   $('#gallery').className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
   $('#gallery').innerHTML=(cards.length?cards.join(''):(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
   if(host)host.innerHTML=problemMarkup;
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
   renderCompare();
+}
+// #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
+const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
+function renderProblems(problems,open){
+  if(!problems.length)return'';
+  const newest=(a,b)=>(Number(b.job.created_at)||0)-(Number(a.job.created_at)||0);
+  const active=problems.filter(p=>!p.job.put_away).sort(newest),away=problems.filter(p=>p.job.put_away).sort(newest);
+  const shown=problemsShowAll?active:active.slice(0,PROBLEMS_SHOWN),rest=active.length-shown.length;
+  const more=rest>0?'<p class="problemsMore"><small>'+rest+' older problem(s) not shown.</small> <button type="button" data-problems-toggle="all">Show all '+active.length+'</button></p>':problemsShowAll&&active.length>PROBLEMS_SHOWN?'<p class="problemsMore"><button type="button" data-problems-toggle="all">Show newest '+PROBLEMS_SHOWN+' only</button></p>':'';
+  const awayToggle=away.length?'<p class="problemsMore"><button type="button" data-problems-toggle="away" aria-expanded="'+problemsShowPutAway+'">'+(problemsShowPutAway?'Hide put away':'Show put away ('+away.length+')')+'</button></p>'+(problemsShowPutAway?'<div class="problemsPutAway">'+away.map(p=>p.html).join('')+'</div>':''):'';
+  return '<details id="jobProblems" class="job-problems" '+(open?'open':'')+'><summary>Problems · '+active.length+' run(s)'+(away.length?' · '+away.length+' put away':'')+'</summary>'+(active.length?'':'<p><small>No open problems.</small></p>')+shown.map(p=>p.html).join('')+more+awayToggle+'</details>';
 }
 async function refreshJobs(){try{const next=await api('/api/jobs'),signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
 function refresh(){return readPoller?readPoller.refresh('jobs'):refreshJobs();}
@@ -540,7 +557,7 @@ $('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.val
   document.addEventListener('change',e=>{if(e.target===$('#positive'))updateReady();else if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('click',e=>{if(e.target.closest('#createView')){if(typeof setTimeout==='function')setTimeout(scheduleTimeEstimate,0);else scheduleTimeEstimate();}});
 $('#recipeSelect').onchange=e=>{if(e.target.value===''){if(continuationState)applyRecipe({preset_id:selected.id,name:'Recipe defaults',controls:{}});return;}try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
-$('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();recipeChanged();};
+$('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();recipeChanged();if(input)message('Seed changed to '+input.value+'. Nothing was generated.');};
 $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');updateReady();};$('#lastReference').onchange=()=>{lastUploaded=null;releaseInputParent('lastReference');updateReady();};
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
@@ -554,12 +571,36 @@ $('#generate').onclick=async()=>{
     const job=await post('/api/jobs',intent);activeJobId=job.id;message(job.message);await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };
+// Ctrl+Enter (Cmd+Enter on a Mac) anywhere in Create does what one click on the Generate button does and nothing more:
+// it clicks the real button only while that button is visible and enabled, so the handler's busy guard, readiness gate and
+// intent snapshot still decide. A held key repeats keydown; a repeat never submits. A blocked button explains itself (#772).
+function generateShortcutBlocker(button){
+  if(submitting)return 'A run is already being submitted. Wait for it to finish.';
+  if(!button.disabled)return 'Generate is not on screen. Open Create, then press Ctrl+Enter again.';
+  return String($('#uxBlockers .ux-blocker p')?.textContent||'').trim()||'Generate is not available yet. Review the readiness checks.';
+}
+function generateShortcut(e){
+  // A field that already handled Enter (the pose X/Y inputs) keeps it; an open modal owns the keyboard, even from body.
+  if(e.key!=='Enter'||!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey||e.isComposing||e.defaultPrevented)return 'ignored';
+  const button=$('#generate'),create=$('#createView'),target=e.target;
+  if(!button||!create||create.hidden||!(target===document.body||create.contains(target))||target?.closest?.('dialog')||document.querySelector('dialog[open]'))return 'ignored';
+  e.preventDefault();
+  if(e.repeat)return 'repeat';
+  const visible=!button.closest('[hidden]')&&button.getClientRects().length>0;
+  if(submitting||button.disabled||!visible){message(generateShortcutBlocker(button),true);return 'blocked';}
+  button.click();return 'clicked';
+}
+if(typeof document!=='undefined')document.addEventListener?.('keydown',generateShortcut);
+if(typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.platform||'')){const hint=$('#generateShortcut');if(hint){hint.textContent='⌘ Enter';hint.title='Press Cmd+Enter anywhere in Create to generate';}}
 $('#gallery').onclick=async e=>{
   try{
     const mixed=e.target.closest('[data-mixed-action]');if(mixed){await mixedBatchAction(mixed);return;}
-    const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index};pinned=pinned.some(x=>x.job===p.job&&x.index===p.index)?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();}
+    const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index},unpin=pinned.some(x=>x.job===p.job&&x.index===p.index),dropped=!unpin&&pinned.length>=2;pinned=unpin?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();if(dropped)message('Side by side shows two pictures. The oldest pin was replaced by this one.');}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}
+    const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs();return;}
+    // Put away changes only the record's put_away_at; it never retries, resumes or cancels.
+    const away=e.target.closest('.putAway');if(away){away.disabled=true;try{await post('/api/jobs/'+encodeURIComponent(away.dataset.job)+'/put-away',{put_away:away.dataset.putAway==='true'});await refresh();}finally{away.disabled=false;}return;}
     const stop=e.target.closest('.stopTracking');if(stop){const reason=stop.parentElement.querySelector('[data-stop-tracking-reason]')?.value.trim();if(!reason)throw Error('Give a reason before stopping tracking.');await post('/api/jobs/'+encodeURIComponent(stop.dataset.job)+'/stop-tracking',{reason});await refresh();}
     const abandon=e.target.closest('.abandonJob');if(abandon){
       const box=abandon.closest('.abandonJobControls'),reason=box.querySelector('[data-abandon-reason]')?.value.trim(),ack=box.querySelector('[data-abandon-ack]');

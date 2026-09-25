@@ -23,7 +23,10 @@ class MixedBatchHTTPTests(unittest.TestCase):
         self.thread=threading.Thread(target=self.http.serve_forever,daemon=True);self.thread.start();self.addCleanup(self.close)
         self.route='/api/jobs/'+self.case.job['id']
     def close(self):
-        self.http.shutdown();self.http.server_close();self.thread.join(3)
+        # shutdown() waits without a bound for serve_forever to acknowledge; skip it when the
+        # serving thread never ran or already died, so cleanup cannot hang (#872).
+        if self.thread.is_alive():self.http.shutdown()
+        self.http.server_close();self.thread.join(3)
     def request(self,path,payload=None,method='POST'):
         connection=HTTPConnection('127.0.0.1',self.http.server_port,timeout=5)
         try:

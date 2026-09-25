@@ -30,7 +30,7 @@ def main():
                 if args.dispatch_bridge:
                     from review_browser_bridge import load_bridge
                     load_bridge(page,base,identifier)
-                else:page.goto(base+'/review.html?project='+identifier)
+                else:page.goto(base+'/review.html?project='+identifier, timeout=20000)
             load();expect(page.locator('#open')).to_be_enabled()
             assert [c['action'] for c in commands]==['inspect'];assert not studio.production.reviews.exists(identifier)
             page.locator('#open').click();expect(page.locator('#phase')).to_have_text('Blind review')

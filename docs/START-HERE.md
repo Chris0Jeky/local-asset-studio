@@ -1,9 +1,9 @@
 # Your first image
 
 1. Double-click **Asset Studio** on the desktop. Give the launcher time to start ComfyUI. It opens the local studio page.
-2. Choose **Pixel art • 128px prop**. The existing prompt already works. For your first run, change only the subject: for example, replace the treasure chest with a brass compass.
+2. Open **Create**, press **Change** next to the recipe name and choose **Pixel art • aspect-preserving prop**. The existing prompt already works. For your first run, change only the subject: for example, replace the treasure chest with a brass compass.
 3. Leave the advanced settings alone and press **Generate** once. The job appears in the gallery when complete. First loads are slower than repeat generations.
-4. Inspect both outputs: the detailed concept and the small 128px version. A pixel-style image is not automatically a finished game sprite: check edges, palette, scale, and transparency.
+4. Inspect both outputs: the detailed concept and the small pixel export at 1/8 of the chosen size (128×128 at the 1024×1024 default). A pixel-style image is not automatically a finished game sprite: check edges, palette, scale, and transparency.
 5. Save the recipe or download the image. Your job recipe and seed are also saved locally in `experiments/runs/`.
 
 The default prompts are starting examples, not hidden rules. You can rewrite them. When switching between model families, first try each preset's own defaults: Pony/Animagine tags and Qwen/FLUX instructions are deliberately different.

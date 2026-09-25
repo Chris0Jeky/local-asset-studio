@@ -58,7 +58,7 @@ server writes only inputs named there, and `Studio.catalog()` reads authored gra
 **`app/server.py`**: `Studio` owns state; `Handler` routes `/api/*` by prefix in `do_GET`/`do_POST` behind a
 loopback Host and same-origin check. `prepare()` validates and binds; `_work()` is the single daemon worker
 that submits to ComfyUI, polls `/history`, and persists jobs under `experiments/runs/<job-id>/` with the exact
-submitted graph. `_request()` is the sole HTTP seam to ComfyUI.
+submitted graph. `_request()` is its ComfyUI seam; `BackendManager.request`, `resource_probe.fetch_stats` and `Handler._media` (`/view`) bypass it with their own loopback connections.
 
 **Siblings**, each wired into `Studio`, each unit-tested: `backends.py` (explicit switches between `primary`
 8188, `hidream` isolated 8192, `h3` mmap loader 8194, `qwen21` isolated v0.37.0 8196; state in `.runtime/backend-state.json`; presets carry
@@ -90,7 +90,7 @@ is a separate offline planner and receipt checker: plans are hash-identified and
 `.claude/skills/` (canonical; `.codex/skills/` Codex adapter, parity-tested; Grok loads this tree via Claude compatibility):
 `studio-preset-slice`, `studio-execution-evidence`, `studio-native-adapter`, `studio-runtime-models`,
 `studio-session-closeout`. Path rules auto-load from `.claude/rules/` for catalog and evidence-doc edits.
-`HUMAN_TODO.md` holds subjective creative choices: surface them in every summary, never tick them.
+`HUMAN_TODO.md` holds owner decisions and actions: surface open items in every summary. Tick an item only on verified completion, or when the owner answered every part and its conditions hold; record how and when. Never infer a decision or art acceptance.
 
 ## PR issue disposition
 

@@ -209,5 +209,46 @@
       throw Error('The rendered guide did not match this drawing request. The previous picture was kept.');
     return Object.fromEntries(['file','sha256','artifact_id','bytes','width','height','renderer','generation_submitted'].map(key=>[key,value[key]]));
   }
-  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,RENDERERS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,drawsGuide,guideRenderer,renderRequest,limbColours,guideResponse,positionInput};
+  // An attached drawn guide is a picture of one canvas. Once Width or Height move on, the recipe would stretch the old
+  // PNG to the new size (ControlNet, Klein reference-latent scaling), so the guide is stale until it is drawn again (#844).
+  // Only a drawn-pose file counts: an uploaded picture keeps its own size and the recipe scales it as authored.
+  const DRAWN=/^[a-f0-9]{32}_drawn-pose\.png$/;
+  function drawnGuide(records){return(Array.isArray(records)?records:[]).find(r=>r&&!r.missing&&DRAWN.test(r.file||''))||null;}
+  // A redraw only resizes the guide when the editor holds the drawing behind it (editor.artifact); after a restored
+  // setup or draft it may hold an unrelated figure, so the hold must not promise a resize then (#947). A disabled
+  // button is not a next step: editor.blocked is the reason it is disabled, named first (#952).
+  function guideSizeReason(records,canvas,action,editor){
+    const c=canvasOf(canvas),stale=(Array.isArray(records)?records:[]).find(r=>r&&!r.missing&&DRAWN.test(r.file||'')
+      &&Number.isInteger(r.width)&&Number.isInteger(r.height)&&(r.width!==c.width||r.height!==c.height));
+    if(!stale)return '';
+    const drawn=stale.width+'×'+stale.height,now=c.width+'×'+c.height,button=action||'Use this pose',state=editor||{},id=typeof stale.artifact_id==='string'&&stale.artifact_id||null;
+    const blocked=typeof state.blocked==='string'&&state.blocked.trim()?state.blocked.trim().replace(/([^.!?])$/,'$1.')+' ':'';
+    if(!editor||id&&state.artifact===id)
+      return blocked?'The pose guide was drawn at '+drawn+', not the new size ('+now+'). '+blocked+'Then press '+button+' again.'
+        :'The pose guide was drawn at '+drawn+'; press '+button+' again for the new size ('+now+').';
+    if(id&&state.loading===id)return 'The pose guide was drawn at '+drawn+', not the new size ('+now+'). Its drawing is loading into the editor.';
+    return 'The pose guide was drawn at '+drawn+', not the new size ('+now+'), and the editor does not hold that drawing. Set Width and Height back to '
+      +drawn+', or redraw the pose'+(blocked?'. '+blocked+'Then press '+button+'.':' and press '+button+'.');
+  }
+  // The editable sidecar behind a drawn guide (GET /api/pose/artifacts/<artifact_id>, studio_workflow/pose_artifact) back as
+  // editor points. Only the exact artifact the guide names, on the exact canvas it was drawn at, is accepted.
+  function fromArtifact(value,guide){
+    const fail=()=>{throw Error('The stored drawing does not match the attached pose guide.');};
+    if(!value||typeof value!=='object'||!guide||value.schema!=='studio.pose-artifact/v1'||!/^[a-f0-9]{64}$/.test(guide.artifact_id||'')||value.id!==guide.artifact_id
+        ||!value.canvas||value.canvas.width!==guide.width||value.canvas.height!==guide.height||!value.joints||typeof value.joints!=='object')fail();
+    const c=canvasOf(value.canvas),points=JOINTS.map(name=>{const p=value.joints[name];if(p===null)return null;
+      if(!p||!finite(p.x)||!finite(p.y)||p.x<0||p.y<0||p.x>c.width||p.y>c.height)fail();return{x:p.x,y:p.y};});
+    if(known(points)<2)fail();
+    return points;
+  }
+  // Whether the editor still holds a guide's drawing: the drawing adopted or rendered for it (held.points on held.canvas),
+  // followed through any canvas change, to a hundredth of a pixel. Undo, Start from or any edit breaks the match.
+  function holds(points,canvas,held){
+    if(!held||!Array.isArray(held.points)||!Array.isArray(points))return false;
+    const now=resize(held.points,held.canvas,canvas),near=(a,b)=>Math.abs(a-b)<=.01;
+    return JOINTS.every((_,i)=>{const a=at(points,i),b=now[i];return a===null&&b===null||!!a&&!!b&&near(a.x,b.x)&&near(a.y,b.y);});
+  }
+  // Replacing the whole drawing (a restored guide's pose) is one undoable edit, like choosing a Start from figure.
+  function adopt(points,next){return publish(points,copy(next),true);}
+  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,RENDERERS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,drawsGuide,guideRenderer,renderRequest,limbColours,guideResponse,drawnGuide,guideSizeReason,fromArtifact,adopt,holds,positionInput};
 });

@@ -89,8 +89,8 @@ async def exercise(args):
                       let index=0;crypto.randomUUID=()=>ids[index++];
                       Object.defineProperty(crypto,'subtle',{value:{digest:async(_,raw)=>new Uint8Array(await __collectionDigest([...new Uint8Array(raw)])).buffer}});
                     }""",[str(uuid.uuid4()) for _ in range(50)])
-                else:await page.goto(f'http://127.0.0.1:{http.server_port}/#assets')
-                await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id && !!window.StudioReadPoller')
+                else:await page.goto(f'http://127.0.0.1:{http.server_port}/#assets',timeout=20000)  # cold-runner first load (#911)
+                await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id && !!window.StudioReadPoller',timeout=20000)
                 await page.evaluate("""()=>{showView('assets');const poller=window.StudioReadPoller;poller.started=false;for(const lane of poller.lanes.values()){if(lane.timer!==null)poller.clearTimeout(lane.timer);lane.timer=null;}window.collectionQaInFlight=0;const original=api;api=async(path,options)=>{if(path!=='/api/collections')return original(path,options);collectionQaInFlight++;try{return await original(path,options);}finally{collectionQaInFlight--;}};}""")
                 async def refresh():
                     await page.wait_for_function('!assetRefreshing');await page.evaluate('refreshAssets(true)');await page.wait_for_function('!assetRefreshing')

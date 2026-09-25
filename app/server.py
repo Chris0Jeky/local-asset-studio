@@ -30,7 +30,7 @@ from urllib.request import Request, urlopen
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from model_library import ModelLibrary
-from workspace import AssetWorkspace, WorkspaceError, digest_file
+from workspace import AssetWorkspace, WorkspaceError, clean_run_label, digest_file, prompt_excerpt
 from references import compile_references, image_record
 from production import Production, fingerprint
 import mixed_batch
@@ -39,9 +39,12 @@ import host_memory
 import gpu_memory
 import wan_capacity
 from runtime_recovery import RuntimeRecovery
+from gpu_lease import GpuLease, GpuLeaseError
 import prompting
 import submission_evidence
 import observation_state
+import file_replace
+import asset_thumbs
 import job_resources
 import continuation
 import pose_guide
@@ -104,6 +107,11 @@ def number(value, name, lo, hi, integer=False):
     result = int(raw) if integer else float(raw)
     return result
 
+def run_label(value):
+    """An optional caller label for a run (#939): None, or trimmed printable text of 1-80 characters."""
+    try: return clean_run_label(value)
+    except ValueError as error: raise StudioError(str(error)) from None
+
 class Studio:
     def __init__(self, repo_root: Path):
         self.root = repo_root.resolve()
@@ -143,6 +151,8 @@ class Studio:
         self.production = Production(self)
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
+        # Before the worker and the recovery monitor start: both consult a lease that may have survived a Studio restart.
+        self.gpu_lease = GpuLease(self)
         from studio_prompt.reference_jobs import ReferenceJobs
         self.reference_jobs = ReferenceJobs(self)
         from studio_prompt.projects import PromptProjects
@@ -704,6 +714,7 @@ class Studio:
 
     def _create_job(self, payload, enqueue=True, job_id=None):
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
+        label = run_label(payload.get("label")) if isinstance(payload, dict) else None
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
@@ -716,6 +727,7 @@ class Studio:
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         job["prompt_bindings"] = {key: ([preset[key]] if preset.get(key) else []) + preset.get("bindings_extra", {}).get(key, []) for key in ("positive", "negative")}
         job["parent_assets"] = parents
+        if label: job["label"] = label
         if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
@@ -725,8 +737,18 @@ class Studio:
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
 
+    def workspace_snapshot(self):
+        """The Workspace snapshot; assets registered before excerpts were stored take one from their loaded job (a dict lookup each).
+
+        Called unbound by the handler, so a studio that carries only a Workspace (the HTTP tests) still serves it."""
+        data = self.assets.snapshot(); jobs = getattr(self, "jobs", None) or {}
+        for asset in data["assets"]:
+            job = jobs.get(asset.get("job_id")) if asset.get("prompt_excerpt") is None else None
+            if job: asset["prompt_excerpt"] = prompt_excerpt(job)
+        return data
+
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -737,6 +759,15 @@ class Studio:
         result["mixed_batch"] = mixed_batch.snapshot(job)
         result["can_abandon"] = submission_evidence.abandonable(job)
         result["abandon_requires_acknowledgement"] = result["can_abandon"] and not result["never_submitted"]
+        # Put away (#940) is presentation state: an owner put-away counts only while the job stays
+        # settled, and a stopped-tracking uncertain job already left the desk by the owner's own act.
+        owner = "put_away_at" in job and Studio._put_away_error(job) is None
+        stopped = Studio._tracking_stopped(job) and job.get("status") == "uncertain"
+        result["put_away_at"] = job.get("put_away_at")
+        result["put_away"] = owner or stopped
+        result["put_away_basis"] = "owner" if owner else "tracking_stopped" if stopped else None
+        result["can_put_away"] = not result["put_away"] and Studio._put_away_error(job) is None
+        result["can_bring_back"] = "put_away_at" in job and job.get("status") not in Studio.ACTIVE_JOB_STATUSES
         return result
 
     @staticmethod
@@ -1087,7 +1118,7 @@ class Studio:
     def _write_json_atomic(self, path, value):
         temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
         temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
-        temp.replace(path)
+        file_replace.replace(temp, path)   # a reader holding the target open on Windows refuses briefly
 
     _sync_parent_directory = staticmethod(observation_state.sync_parent_directory)
 
@@ -1288,6 +1319,41 @@ class Studio:
             job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
             return self.public(job)
 
+    ACTIVE_JOB_STATUSES = ("queued", "waiting", "submitting", "running")
+    PUT_AWAY_STATUSES = ("failed", "partial", "uncertain", "abandoned")
+
+    @staticmethod
+    def _put_away_error(job):
+        status = job.get("status")
+        if status not in Studio.PUT_AWAY_STATUSES: return "Only a failed, partial, uncertain or abandoned job can be put away"
+        if "pending_submission" in job and status != "abandoned": return "A submission outcome is still unknown; resolve or abandon it before putting it away"
+        if status == "uncertain" and not Studio._tracking_stopped(job): return "Stop tracking this uncertain job before putting it away; its resume path stays open until then"
+        return None
+
+    def put_away_job(self, job_id, put_away):
+        """Hide or restore a settled problem record (#940).
+
+        Only `put_away_at` changes: status, message, reservations, prompt IDs, outputs and
+        tracking stay exactly as recorded, and nothing is queued, submitted or resumed.
+        """
+        if type(put_away) is not bool: raise StudioError("put_away must be true or false")
+        with self.lock:
+            job = self.jobs.get(job_id)
+            if not job: raise StudioError("Unknown job")
+            if put_away == ("put_away_at" in job): return self.public(job)
+            if put_away:
+                error = self._put_away_error(job)
+                if error: raise StudioError(error)
+                prospective = dict(job, put_away_at=time.time())
+            else:
+                # An active job's record belongs to the worker until it settles again.
+                if job.get("status") in self.ACTIVE_JOB_STATUSES: raise StudioError("This job is queued or being observed; wait for it to settle")
+                prospective = {k: v for k, v in job.items() if k != "put_away_at"}
+            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            if put_away: job["put_away_at"] = prospective["put_away_at"]
+            else: job.pop("put_away_at", None)
+            return self.public(job)
+
     def _load_jobs(self):
         for state_path in self.runs.glob("*/state.json"):
             data = read_json(state_path)
@@ -1435,6 +1501,10 @@ class Studio:
                 "note": "Static dependency inspection only. No graph was run or code installed. Bypassed nodes are included; filenames selected dynamically may be absent." if available else "ComfyUI is offline: missing node status is unknown. Model filenames were inspected locally; nothing was run."}
 
     def _wait_for_queue(self, base_url=None):
+        # The single pre-submit gate for every generation path: a job that raced a GPU lease is never posted.
+        lease = getattr(self, "gpu_lease", None)
+        refusal = lease.refusal() if lease else None
+        if refusal: raise QueueWaitUnavailable(refusal)
         deadline = time.monotonic() + PRE_SUBMIT_QUEUE_WAIT_SECONDS
         while True:
             remaining = deadline - time.monotonic()
@@ -1458,9 +1528,17 @@ class Studio:
                 self._save(job); return
             if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed'):
                 uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
+                locked = not uncertain and submission_evidence.never_submitted(job) and self._run_folder_lock(job, exc)
                 job['status'] = 'uncertain' if uncertain else 'failed'
                 job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
+                if locked: job['failure'] = {'kind': 'record_write_locked', 'title': "The Studio could not write this job's record", 'summary': "Another program had the run folder's file open. Nothing was sent to ComfyUI.", 'action': 'Safe to generate again with the same settings.', 'detail': str(exc)[:300]}
             self._save(job)
+
+    def _run_folder_lock(self, job, exc):
+        """A transient Windows refusal on a file inside this job's own run folder (another program held it open)."""
+        if not file_replace.transient(exc) or not isinstance(job.get('id'), str): return False
+        folder = self.runs / job['id']
+        return any(isinstance(name, (str, Path)) and Path(name).parent == folder for name in (exc.filename, getattr(exc, 'filename2', None)))
 
     def cache_release_status(self):
         idle = time.monotonic() - self._last_activity
@@ -1878,6 +1956,10 @@ class Handler(BaseHTTPRequestHandler):
         origin = self.headers.get("Origin")
         parsed = urlparse(origin or "")
         return parsed.scheme == "http" and parsed.netloc in ("127.0.0.1:8191", "localhost:8191") and not parsed.username and not parsed.password
+    def _require_gpu(self):
+        """New generation work is refused (409 gpu_leased) while another local GPU tenant holds the lease."""
+        lease = getattr(self.studio, "gpu_lease", None)
+        if lease: lease.require_available()
     def _content_length(self, limit):
         try: size = int(self.headers.get("Content-Length", ""))
         except ValueError: raise StudioError("Valid Content-Length required")
@@ -1902,6 +1984,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(416)
                 if exc.headers.get("Content-Range"): self.send_header("Content-Range", exc.headers["Content-Range"])
                 self.send_header("Content-Length", "0"); self.end_headers(); return
+        # urlopen leaves getresponse() failures unwrapped; a stalled or vanished ComfyUI is still a ComfyUI error.
+        except (TimeoutError, ConnectionError, HTTPException) as exc: raise URLError(exc) from exc
         with response:
             self.send_response(response.status)
             for key in ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "ETag", "Last-Modified"):
@@ -1909,9 +1993,15 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             try:
                 while chunk := response.read(64 * 1024): self.wfile.write(chunk)
-            except (BrokenPipeError, ConnectionResetError): return
+            except OSError: return  # headers are sent; a second response would corrupt the body
 
-    def _local_file(self, file, download=False):
+    def _cache_headers(self, etag, immutable=False):
+        # `immutable` only when the URL itself names the bytes (a thumbnail's ?v=<version>-<sha256 prefix>): an asset ID
+        # can recur in another Workspace or a rebuilt catalogue with other bytes, so ID-only URLs revalidate (304 by ETag).
+        self.send_header("ETag", etag); self.send_header("Cache-Control", "private, max-age=31536000, immutable" if immutable else "private, no-cache")
+    def _local_file(self, file, download=False, etag=None, content_type=None, immutable=False):
+        if etag and any(tag.strip().removeprefix("W/") in (etag, "*") for tag in self.headers.get("If-None-Match", "").split(",")):
+            self.send_response(304); self._cache_headers(etag, immutable); self.end_headers(); return
         size = file.stat().st_size
         start, end = 0, size - 1
         requested = self.headers.get("Range")
@@ -1924,8 +2014,9 @@ class Handler(BaseHTTPRequestHandler):
             if start > end or start >= size:
                 self.send_response(416); self.send_header("Content-Range", f"bytes */{size}"); self.send_header("Content-Length", "0"); self.end_headers(); return
         self.send_response(206 if requested else 200)
-        self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream")
+        self.send_header("Content-Type", content_type or mimetypes.guess_type(str(file))[0] or "application/octet-stream")
         self.send_header("Content-Length", str(end - start + 1)); self.send_header("Accept-Ranges", "bytes")
+        if etag: self._cache_headers(etag, immutable)
         if requested: self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
         if download: self.send_header("Content-Disposition", f'attachment; filename="{file.name}"')
         self.end_headers()
@@ -1951,8 +2042,11 @@ class Handler(BaseHTTPRequestHandler):
             path = urlparse(self.path).path
             if path == "/api/identity": return self._json(200, self.studio.identity())
             if path == '/api/backends':
-                result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
-            if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
+                result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();lease=getattr(self.studio,'gpu_lease',None)
+                if lease: result['gpu_lease']=lease.snapshot()
+                return self._json(200,result)
+            if path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.snapshot())
+            if path == "/api/workspace": return self._json(200, Studio.workspace_snapshot(self.studio))
             if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope()))
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
@@ -1981,7 +2075,13 @@ class Handler(BaseHTTPRequestHandler):
                 if not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)",name): raise StudioError("Invalid upload")
                 return self._local_file(inside(self.studio.experiments/'uploads',self.studio.experiments/'uploads'/name))
             if path.startswith("/api/assets/") and path.endswith("/file"):
-                return self._local_file(self.studio.assets.file(path.split("/")[3]), urlparse(self.path).query == "download")
+                file, asset = self.studio.assets.file_entry(path.split("/")[3]); digest = asset.get("sha256")
+                tag = '"' + digest + '"' if isinstance(digest, str) and asset_thumbs.SHA256.fullmatch(digest) else None
+                return self._local_file(file, urlparse(self.path).query == "download", tag)
+            if path.startswith("/api/assets/") and path.endswith("/thumb") and len(path.split("/")) == 5:
+                query = parse_qs(urlparse(self.path).query, keep_blank_values=True)
+                file, etag = asset_thumbs.thumbnail(self.studio.assets, path.split("/")[3], asset_thumbs.requested_size(query.get("w")))
+                return self._local_file(file, etag=etag, content_type=asset_thumbs.CONTENT_TYPE, immutable=asset_thumbs.names_content(query.get("v"), etag))
             if path.startswith("/api/exports/"):
                 identifier = path.rsplit("/", 1)[-1]
                 if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")
@@ -2030,14 +2130,24 @@ class Handler(BaseHTTPRequestHandler):
             file = inside(Path(__file__).parent / "static", Path(__file__).parent / "static" / path.lstrip("/"))
             if not file.is_file() or file.suffix not in (".html", ".js", ".css"): return self._json(404, {"error":"Not found"})
             data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
-        except WorkspaceError as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
-        except (URLError, HTTPError, OSError) as exc: self._json(502, {"error": "ComfyUI image is unavailable"})
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return
+        except (URLError, HTTPError): self._json(502, {"error": "ComfyUI did not return this image. Check that ComfyUI is running (Models & setup shows its state), then reload."})
+        except OSError as exc:
+            detail = exc.strerror or type(exc).__name__
+            known = getattr(exc, "filename", None)
+            suffix = " (%s)" % Path(known).name if known else ""
+            self._json(500, {"error": "Could not read a local file%s: %s" % (suffix, detail)})
     def do_POST(self):
         if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
         try:
             if self.path == "/api/estimate": return self._json(200, self.studio.estimate(self._body_json()))
-            if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
+            if self.path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.acquire(self._body_json()))
+            if self.path == '/api/gpu-lease/release': return self._json(200, self.studio.gpu_lease.release(self._body_json()))
+            if self.path == "/api/jobs":
+                payload = self._body_json(); self._require_gpu()
+                return self._json(201, self.studio.create_job(payload))
             if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_json().get('id')))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
@@ -2057,6 +2167,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/experiments/plan': return self._json(200, self.studio.production.plan(self._body_json()))
             if self.path.startswith('/api/production/'):
                 parts=self.path.split('/');payload=self._body_json();identifier=parts[3]
+                if parts[-1] in ('start','resume'):self._require_gpu()
                 if parts[-1]=='start':return self._json(202,self.studio.production.start(identifier))
                 if parts[-1]=='stop':return self._json(200,self.studio.production.stop(identifier))
                 if parts[-1]=='resume':return self._json(202,self.studio.production.resume(identifier))
@@ -2094,12 +2205,18 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.abandon_job(parts[3], payload.get('reason'), payload.get('acknowledge_unknown', False)))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
                 return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_json().get("reason")))
+            if self.path.startswith("/api/jobs/") and self.path.endswith("/put-away"):
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown put-away route')
+                payload = self._body_json()
+                if not isinstance(payload, dict): raise StudioError('Put-away command must be an object')
+                return self._json(200, self.studio.put_away_job(parts[3], payload.get('put_away')))
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             return self._json(404, {"error":"Not found"})
-        except WorkspaceError as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})
         except OSError as exc: self._json(500, {"error": "Local operation failed: " + str(exc)[:200]})
 

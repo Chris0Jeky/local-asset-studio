@@ -1,6 +1,6 @@
 > Migrated research snapshot from 11 September 2026. Use [Start here](../START-HERE.md) and [current state](../../CURRENT_STATE.md) for the new repository. Original workspace commands below are historical.
 
-> September 11 expansion update: the original downloads and FLUX tests completed. See [Asset-Strategy-and-Findings.md](Asset-Strategy-and-Findings.md), [Expansion-Status.md](Expansion-Status.md), and [the Lanternkeeper example](Lanternkeeper/README.md) for the current state. Any pending-download text below describes the earlier installation checkpoint.
+> September 11 expansion update: the original downloads and FLUX tests completed. See [Asset-Strategy-and-Findings.md](Asset-Strategy-and-Findings.md), [the evidence ledger](../../CURRENT_STATE.md), and [the Lanternkeeper example](../../examples/lanternkeeper/README.md) for the current state. Any pending-download text below describes the earlier installation checkpoint.
 
 # A local asset pipeline for games and products
 

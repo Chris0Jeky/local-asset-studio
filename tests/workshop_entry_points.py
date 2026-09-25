@@ -70,7 +70,7 @@ class EntryPoints(unittest.TestCase):
         self.load_workshop()
         for layout in ('focus', 'studio', 'immersive'):
             with self.subTest(layout=layout):
-                self.page.select_option('#workshopLayout', layout)
+                self.page.select_option('#workshopLayout', layout, force=True)
                 self.assertEqual(self.page.locator('#workshopRecipeChange').get_attribute('aria-expanded'), 'false')
                 self.assertTrue(self.page.locator('.ux-recipe-drawer').evaluate('(n)=>n.inert'))
                 self.assertEqual(self.page.locator('.ux-recipe-drawer').get_attribute('aria-hidden'), 'true')
@@ -85,7 +85,7 @@ class EntryPoints(unittest.TestCase):
         self.load_workshop()
         for layout in ('focus', 'studio', 'immersive'):
             with self.subTest(layout=layout):
-                self.page.select_option('#workshopLayout', layout)
+                self.page.select_option('#workshopLayout', layout, force=True)
                 self.page.evaluate("selected=null;document.querySelector('#createView').__workshop.sync()")
                 self.assertEqual(self.page.locator('#workshopRecipeChange').inner_text(), 'Choose recipe')
                 self.page.evaluate("selectPreset('ink');document.querySelector('#createView').__workshop.sync()")
@@ -98,7 +98,7 @@ class EntryPoints(unittest.TestCase):
             self.page.set_viewport_size({'width': width, 'height': 900})
             for layout in ('focus', 'studio', 'immersive'):
                 with self.subTest(width=width, layout=layout):
-                    self.page.select_option('#workshopLayout', layout)
+                    self.page.select_option('#workshopLayout', layout, force=True)
                     self.page.evaluate("selected.name='Combine • FLUX.2 Klein 9B — Copy pose and preserve identity';document.querySelector('#createView').__workshop.sync()")
                     chip = self.page.locator('.wk-recipe').bounding_box()
                     change = self.page.locator('#workshopRecipeChange').bounding_box()
@@ -114,7 +114,7 @@ class EntryPoints(unittest.TestCase):
         self.page.fill('#positive', 'Keep my edited draft')
         for layout in ('focus', 'studio', 'immersive'):
             with self.subTest(layout=layout):
-                self.page.select_option('#workshopLayout', layout)
+                self.page.select_option('#workshopLayout', layout, force=True)
                 self.page.click('#workshopRecipeChange')
                 self.assertFalse(self.page.locator('.ux-recipe-drawer').evaluate('(n)=>n.inert'))
                 self.assertTrue(self.page.locator('#presetSearch').evaluate('(n)=>n===document.activeElement'))

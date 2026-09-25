@@ -127,8 +127,9 @@ class CollectionEditorProtocolTests(unittest.TestCase):
 
     def load_page(self, page, retained=None):
         if not INERT:
-            page.goto(self.origin)
-            page.wait_for_function('typeof openCollection === "function"')
+            # Cold-runner first load gets its own budget (#911); interactions keep 5 s.
+            page.goto(self.origin, timeout=20000)
+            page.wait_for_function('typeof openCollection === "function"', timeout=20000)
             return
         # Explicit inert fixture; do not mistake this for browser origin/storage proof.
         def bridge(path, options=None):

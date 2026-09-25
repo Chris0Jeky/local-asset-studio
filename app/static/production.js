@@ -26,11 +26,72 @@ async function refreshProduction(force=false){
     if(force||signature!==productionSignature){productionSignature=signature;renderProduction();}
   }catch(e){productionMessage(e.message,true);}finally{productionRefreshing=false;}
 }
+// Your plans filters (#940): presentation over the list already fetched. They never
+// start, stop, re-read or change a plan; a hidden plan keeps its detail and records.
+const PLAN_FILTER_KEY='studio.production.filters',PLAN_RECENT_SECONDS=7*86400;
+const PLAN_TYPES={all:null,comparison:['comparison'],scene:['av'],voice:['voice'],export:['native','articulated']};
+const PLAN_TYPE_NOUNS={all:'plans',comparison:'comparisons',scene:'scenes',voice:'voice takes',export:'exports'};
+// Open work = StudioUX ACTIVE ∪ ATTENTION (studio-core.js, one source of truth) plus the two plan states that
+// wait on the owner. studio-core loads after this file, so it is read per render; the literal mirrors it for
+// pages and tests without it. A Studio restart turns running plans into `interrupted`, which must stay in view.
+const PLAN_OPEN_FALLBACK=['queued','submitting','running','waiting','observing','rendering','failed','partial','uncertain','interrupted','stopped'];
+function planOpenStatuses(){const ux=globalThis.StudioUX,core=Array.isArray(ux?.ACTIVE)&&Array.isArray(ux?.ATTENTION)?[...ux.ACTIVE,...ux.ATTENTION]:PLAN_OPEN_FALLBACK;return new Set([...core,'planned','awaiting_review']);}
+let planFilter={type:'all',status:'active'};
+function cleanPlanFilter(value){return {type:Object.hasOwn(PLAN_TYPES,value?.type)?value.type:'all',status:value?.status==='all'?'all':'active'};}
+// The newest thing known about a plan: its creation, its own run (voice, scene and export plans have
+// no stages), its attempts, its stage jobs and its review.
+function planActivity(p){const stamps=r=>[r?.created_at,r?.started_at,r?.finished_at,r?.at],state=p?.state||{};
+  const known=[p?.created_at,state.started_at,state.finished_at,state.review?.at,...Object.values(state.attempts&&typeof state.attempts==='object'?state.attempts:{}).flatMap(stamps),...(p?.stages||[]).flatMap(s=>stamps(s?.job))].map(Number).filter(t=>Number.isFinite(t)&&t>0);return known.length?Math.max(...known):null;}
+function planGroups(plans,filter=planFilter,now=Date.now()/1000){
+  const kinds=PLAN_TYPES[filter.type],typed=plans.filter(p=>!kinds||kinds.includes(p.kind));
+  if(filter.status==='all')return {recent:typed,older:[],hidden:plans.length-typed.length};
+  const open=planOpenStatuses(),recent=[],older=[],active=typed.filter(p=>open.has(p.state?.status));
+  // A plan with no readable date cannot be shown to be old, so it stays in view.
+  for(const p of active){const at=planActivity(p);(at!==null&&now-at>PLAN_RECENT_SECONDS?older:recent).push(p);}
+  return {recent,older,hidden:plans.length-active.length};
+}
+function planFilterPhrase(filter=planFilter){return PLAN_TYPE_NOUNS[filter.type]+(filter.status==='active'?' in progress or needing attention':'');}
+function syncPlanFilter(){const type=$('#planType'),status=$('#planStatus');if(type)type.value=planFilter.type;if(status)status.value=planFilter.status;}
+function setPlanFilter(next,focus=false){planFilter=cleanPlanFilter({...planFilter,...next});syncPlanFilter();try{localStorage.setItem(PLAN_FILTER_KEY,JSON.stringify(planFilter));}catch(err){}renderProduction();
+  // Show all lives inside the list it re-renders; hand keyboard focus to the Status select instead of losing it.
+  if(focus)$('#planStatus')?.focus?.();}
+function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStorage.getItem(PLAN_FILTER_KEY)||'{}'));}catch(err){}syncPlanFilter();}
+function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>';}
+function renderPlanList(){
+  const list=$('#productionList');if(!productionPlans.length){list.innerHTML=PRODUCTION_EMPTY;return;}
+  const groups=planGroups(productionPlans),shown=groups.recent.length+groups.older.length,showAll='<button data-plan-show-all>Show all</button>';
+  const olderOpen=list.querySelector?.('.plan-older')?.open||groups.older.some(p=>p.id===productionId);
+  const hidden=groups.hidden+' '+(groups.hidden===1?'plan':'plans')+' hidden by these filters.';
+  if(!shown){list.innerHTML='<div class="production-empty plan-filter-empty"><p><b>No '+esc(planFilterPhrase())+'.</b> '+hidden+'</p>'+showAll+'</div>';return;}
+  list.innerHTML=groups.recent.map(planButton).join('')+(groups.older.length?'<details class="plan-older"'+(olderOpen?' open':'')+'><summary>Older ('+groups.older.length+')</summary>'+groups.older.map(planButton).join('')+'</details>':'')+(groups.hidden?'<p class="plan-filter-note">Showing '+esc(planFilterPhrase())+(planFilter.status==='active'?'; untouched for 7 days folds under Older':'')+'. '+hidden+' '+showAll+'</p>':'');
+}
+// Unsent typed values in the plan detail (#772). A poll, Refresh or a filter change rebuilds the whole
+// panel, so every field the user typed in is kept per plan and written back with its focus and caret.
+// They are dropped only when another plan is shown or the action that sends them succeeds.
+let productionDrafts={plan:null,fields:{}},productionDetailPlan=null;
+// Drafts belong to the plan actually on screen: productionId can move without a re-render (studio-workbench.js).
+// A number box holding a half-typed '-' or '1e' reads as '' (badInput); recording that would blank the field.
+function keepProductionDraft(el){if(!el?.id||!productionDetailPlan||!['TEXTAREA','INPUT'].includes(el.tagName)||['checkbox','radio'].includes(el.type)||(el.type==='number'&&el.validity?.badInput))return;
+  if(productionDrafts.plan!==productionDetailPlan)productionDrafts={plan:productionDetailPlan,fields:{}};productionDrafts.fields[el.id]=el.value;}
+// `sent` maps field ids to the values an action sent; text typed while it was in flight is kept.
+function dropProductionDrafts(sent){if(!sent){productionDrafts={plan:null,fields:{}};return;}for(const [id,value] of Object.entries(sent))if(productionDrafts.fields[id]===value)delete productionDrafts.fields[id];}
+function writeProductionDetail(plan,html){
+  const detail=$('#productionDetail'),active=typeof document!=='undefined'?document.activeElement:null;
+  if(productionDrafts.plan!==plan)dropProductionDrafts();
+  const focus=active?.id&&detail.contains?.(active)&&productionDetailPlan===plan?{id:active.id,start:active.selectionStart,end:active.selectionEnd,direction:active.selectionDirection,scroll:active.scrollTop}:null;
+  detail.innerHTML=html;productionDetailPlan=plan;
+  for(const [id,value] of Object.entries(productionDrafts.fields)){const el=detail.querySelector?.('#'+id);if(el)el.value=value;}
+  const el=focus&&detail.querySelector?.('#'+focus.id);if(!el)return;
+  el.focus?.({preventScroll:true});
+  // Number inputs have no caret API and throw on setSelectionRange; focus alone is right for them.
+  try{if(typeof focus.start==='number'&&typeof focus.end==='number')el.setSelectionRange(focus.start,focus.end,focus.direction||'none');}catch(err){}
+  if(typeof focus.scroll==='number')el.scrollTop=focus.scroll;
+}
 function renderProduction(){
-  $('#productionList').innerHTML=productionPlans.map(p=>'<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(p.state.status.replaceAll('_',' '))+' · '+(p.kind==='comparison'?p.stages.length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>').join('')||PRODUCTION_EMPTY;
+  renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   if(p.kind==='av'){
-    $('#productionDetail').innerHTML='<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>';
+    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>');
     return;
   }
   const terminalReconciliation=p.can_reconcile_tracking===true||p.can_reconcile_batch===true,active=['queued','running','observing'].includes(p.state.status),trackingRecoveryPending=!terminalReconciliation&&(p.stages||[]).some(s=>{const d=s.job?.tracking_disposition;return (d?.status==='stopped'||d?.history?.some(event=>event.status==='stopped'))&&s.job?.status!=='completed';}),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
@@ -69,7 +130,7 @@ function renderProduction(){
   if(p.state.engine)html+='<p class="callout">Godot import and timed playback verified for this export.</p>';
   if(p.state.krita)html+='<p class="callout">Krita saved and reopened this document. '+p.state.krita.kra.layers.length+' layer records retained.</p><p><a class="artifact-download" href="/api/production/'+p.id+'/files/native/krita/roundtrip.kra?download" download>Download Krita document</a></p><img class="comparison-sheet" src="/api/production/'+p.id+'/files/native/krita/export.png" alt="Image exported from the reopened Krita document">';
   if(artifacts.length)html+='<details><summary>Files & provenance · '+artifacts.length+'</summary><div class="artifact-files">'+artifacts.map(a=>'<a href="'+a.url+'?download" download>'+esc(a.path)+'</a>').join('')+'</div></details>';
-  $('#productionDetail').innerHTML=html;
+  writeProductionDetail(p.id,html);
 }
 async function openComparison(parent=null){
   if(!selected)return;++plannerRequestId;comparisonParent=parent;
@@ -214,8 +275,11 @@ function restoreProductionIntro(){
   try{intro.open=localStorage.getItem(PRODUCTION_INTRO_KEY)!=='closed';}catch(err){}
   intro.ontoggle=()=>{try{localStorage.setItem(PRODUCTION_INTRO_KEY,intro.open?'open':'closed');}catch(err){}};
 }
-restoreProductionIntro();
-$('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
+restoreProductionIntro();restorePlanFilter();
+if($('#planType'))$('#planType').onchange=()=>setPlanFilter({type:$('#planType').value});
+if($('#planStatus'))$('#planStatus').onchange=()=>setPlanFilter({status:$('#planStatus').value});
+$('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}if(e.target.closest('[data-plan-show-all]')){setPlanFilter({type:'all',status:'all'},true);return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
+$('#productionDetail').oninput=e=>keepProductionDraft(e.target);
 $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindComparison=e.target.checked;renderProduction();}};
 // Workspace review of a single candidate image: the same revision-guarded
 // /api/assets/update command the asset dialog sends, never a new endpoint. It
@@ -238,13 +302,14 @@ $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[d
   if(mark){await reviewCandidateAsset(mark.dataset.candidateAsset,mark.dataset.candidateReview);return;}
   if(open){await refreshAssets();openAsset(open);return;}if(recipe){await exportRecipe(recipe);return;}
   if(action==='branch'){applySaved({preset:p.recipe.preset_id,controls:p.recipe.controls,references:p.recipe.references,parent_assets:p.recipe.parent_assets});await openComparison(p);return;}
-  if(choice||action==='needs_work')await post('/api/production/'+p.id+'/review',{asset_id:choice||null,notes:$('#productionNotes').value,reviewer:'local-user'});
+  if(choice||action==='needs_work'){const notes=$('#productionNotes').value;await post('/api/production/'+p.id+'/review',{asset_id:choice||null,notes,reviewer:'local-user'});dropProductionDrafts({productionNotes:notes});}
   else if(action==='extend-time'){
-    const seconds=Number($('#extendTimeMinutes').value)*60,reason=$('#extendTimeReason').value.trim();
+    const minutes=$('#extendTimeMinutes').value,typed=$('#extendTimeReason').value,seconds=Number(minutes)*60,reason=typed.trim();
     if(!Number.isInteger(seconds)||seconds<60||!reason)throw Error('Give at least one whole minute of additional time and a reason.');
-    await post('/api/production/'+p.id+'/extend-time',{seconds,reason,expected_revision:p.state.time_budget.revision});
+    await post('/api/production/'+p.id+'/extend-time',{seconds,reason,expected_revision:p.state.time_budget.revision});dropProductionDrafts({extendTimeMinutes:minutes,extendTimeReason:typed});
   }
-  else if(['start','stop','resume'].includes(action))await post('/api/production/'+p.id+'/'+action,{});
+  // A plan that starts, stops or resumes moves on; a time-extension draft from before must not come back later.
+  else if(['start','stop','resume'].includes(action)){await post('/api/production/'+p.id+'/'+action,{});dropProductionDrafts();}
   if(action||choice)await refreshProduction(true);
 }catch(err){productionMessage(err.message,true);}finally{if(coordinatorAction){productionActionPending=false;actionButton.disabled=false;}}};
 function renderNativeAssets(){

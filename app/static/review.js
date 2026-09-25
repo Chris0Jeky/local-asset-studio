@@ -29,7 +29,10 @@
   function dirty(){return drafts.size>0||viewDraft!==null||summaryDraft!==null||selectionDraft!==null||characterDecisionDraft!==null;}
   function controls(){
     for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy;
+    $('#desk').setAttribute('aria-busy',busy?'true':'false');
     $('#export').disabled=busy||!state?.finalized||dirty();
+    const exportReason=busy?'':dirty()?'Save your unsaved changes first':!state?.finalized?'Finalize the review first':'';
+    $('#export').title=exportReason;$('#exportHint').textContent=exportReason;
     $('#reveal').disabled=busy||!!state?.revealed;
     $('#restore').disabled=busy||!$('#restoreRevision').value;
     $('#saveDraft').hidden=!dirty();$('#open').disabled=busy||!project||!/^[a-f0-9]{32}$/.test(project);
@@ -45,7 +48,7 @@
     const value=await response.json();if(!response.ok)throw Error(value.error||'Review request failed.');return value;
   }
   async function operation(action,extra={},after=()=>{}){
-    if(busy)return;busy=true;controls();const ticket=++serial;
+    if(busy)return;busy=true;message(action==='export'?'Exporting…':['inspect','open'].includes(action)?'Loading…':'Saving…');controls();const ticket=++serial;
     try{
       const value=await request(action,extra);if(ticket!==serial)return;
       after(value);if(action==='export')state.export=value;else state=value;

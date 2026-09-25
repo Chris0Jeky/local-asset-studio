@@ -50,7 +50,7 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
       value: '', files: [], textContent: '', classList: {toggle() {}},
-      addEventListener() {}, scrollIntoView() {}, focus() {this.focused=true;}, close() {this.open=false;}, showModal() {this.open=true;},
+      querySelectorAll() {return [];}, addEventListener(name, handler) {(this.listeners ||= {})[name] = handler;}, scrollIntoView() {}, focus() {this.focused=true;}, close() {this.open=false;}, showModal() {this.open=true;},
     });
     return elements.get(selector);
   };
@@ -374,6 +374,34 @@ async function explicitLocalAbandonment() {
   assert.match(element('#gallery').innerHTML,/Remote outcome remains unknown/);
 }
 
+// #940: Problems shows the newest five open problems; put-away ones stay one toggle away.
+async function problemsPanelPutAway() {
+  const {element, requests, run} = sandbox({}, {});
+  const failed=i=>`{id:'f${i}',preset_name:'Failed ${i}',status:'failed',message:'OOM',outputs:[],prompt_ids:[],created_at:${i},can_put_away:true,put_away:false}`;
+  run(`jobs=[${[1,2,3,4,5,6,7].map(failed).join(',')},{id:'away',preset_name:'Put away one',status:'failed',message:'Old',outputs:[],prompt_ids:[],created_at:0,put_away:true,put_away_basis:'owner',put_away_at:100,can_bring_back:true},{id:'tracking',preset_name:'Still tracked',status:'uncertain',message:'Unknown',outputs:[],prompt_ids:['p'],created_at:9,can_stop_tracking:true,can_put_away:false,put_away:false}];renderJobs();`);
+  let html=element('#gallery').innerHTML;
+  assert.match(html,/Problems · 8 run\(s\) · 1 put away/);
+  assert.equal((html.match(/data-put-away="true"/g)||[]).length,4,'Newest five shown; the tracked uncertain job offers no Put away');
+  assert.match(html,/Stop tracking before putting this away/);
+  assert.match(html,/3 older problem\(s\) not shown/);assert.doesNotMatch(html,/Failed 3/);
+  assert.doesNotMatch(html,/Put away one/);assert.match(html,/Show put away \(1\)/);
+  assert.equal(requests.length,0,'Rendering sends nothing');
+  const toggle=value=>({target:{closest:selector=>selector==='[data-problems-toggle]'?{dataset:{problemsToggle:value}}:null}});
+  await element('#gallery').onclick(toggle('away'));html=element('#gallery').innerHTML;
+  assert.match(html,/Put away one/);assert.match(html,/data-put-away="false"/);assert.match(html,/Hide put away/);
+  await element('#gallery').onclick(toggle('all'));html=element('#gallery').innerHTML;
+  assert.match(html,/Failed 1/);assert.match(html,/Show newest 5 only/);
+  assert.equal(requests.length,0,'Toggles are local presentation only');
+  const button={dataset:{job:'f7',putAway:'true'},disabled:false};
+  await element('#gallery').onclick({target:{closest:selector=>selector==='.putAway'?button:null}});
+  assert.deepEqual(requests.filter(r=>r.url.endsWith('/put-away')),[{url:'/api/jobs/f7/put-away',data:{put_away:true}}]);
+  assert.equal(button.disabled,false);
+  const back={dataset:{job:'away',putAway:'false'},disabled:false};
+  await element('#gallery').onclick({target:{closest:selector=>selector==='.putAway'?back:null}});
+  assert.deepEqual(requests.filter(r=>r.url.endsWith('/put-away')).at(-1),{url:'/api/jobs/away/put-away',data:{put_away:false}});
+  assert.ok(requests.every(r=>!/\/(resume|stop-tracking|abandon)$|^\/api\/jobs$/.test(r.url)),'Put away never resumes, stops, abandons or submits');
+}
+
 // #117: an unavailable check may keep a source claim in memory but clear the attachment.
 // Named setup persistence must not turn that uncertainty into an unattributed durable parent.
 async function unresolvedInputLineageCannotBeSaved() {
@@ -491,10 +519,166 @@ async function recipeSwapDuringUploadNeverSubmits() {
   s.context.fetch = fetch;
 }
 
+// #772: Ctrl+Enter is one click on the real Generate button, never a second path around its guards.
+async function generateShortcutRoutesThroughTheButton() {
+  const s = sandbox({}, {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
+  s.run(`selectPreset('plain');`);
+  let openDialog = null;
+  s.context.document.querySelector = selector => selector === 'dialog[open]' ? openDialog : s.element(selector);
+  s.context.document.body = {closest: () => null};
+  const jobs = () => s.requests.filter(r => r.url === '/api/jobs').length;
+  assert.equal(jobs(), 0, 'Loading Create never submits');
+  const button = s.element('#generate'), create = s.element('#createView'), prompt = s.element('#positive'), outside = {closest: () => null};
+  prompt.value = 'A lantern-lit workshop.'; prompt.closest = () => null;
+  create.hidden = false; create.contains = node => node === prompt;
+  button.closest = () => null; button.getClientRects = () => [{}]; button.disabled = false;
+  let clicks = 0;
+  button.click = () => {clicks++; button.onclick();};
+  const press = (extra = {}) => {
+    const e = {key: 'Enter', ctrlKey: true, target: prompt, prevented: false, preventDefault() {this.prevented = true;}, ...extra};
+    return [s.context.generateShortcut(e), e.prevented];
+  };
+  assert.deepEqual(press(), ['clicked', true], 'Ctrl+Enter in the prompt clicks the enabled Generate button');
+  assert.deepEqual(press(), ['blocked', true], 'A second press while the first run is submitting does not click again');
+  assert.equal(clicks, 1);
+  assert.match(s.element('#status').textContent, /already being submitted/);
+  await flush(); await flush();
+  assert.equal(jobs(), 1, 'Two quick presses submit exactly one run');
+  assert.deepEqual(press({repeat: true}), ['repeat', true], 'A held key repeat is swallowed');
+  assert.equal(clicks, 1, 'A key repeat never clicks');
+  assert.deepEqual(press({ctrlKey: false}), ['ignored', false], 'Plain Enter keeps its normal meaning');
+  assert.deepEqual(press({shiftKey: true}), ['ignored', false]);
+  assert.deepEqual(press({altKey: true}), ['ignored', false], 'Ctrl+Alt+Enter is not the shortcut');
+  assert.deepEqual(press({isComposing: true}), ['ignored', false], 'An IME composition keeps its Enter');
+  assert.deepEqual(press({defaultPrevented: true}), ['ignored', false], 'A field that already handled Enter keeps it');
+  openDialog = {};
+  assert.deepEqual(press({target: s.context.document.body}), ['ignored', false], 'An open modal owns the keyboard even when focus fell to body');
+  assert.deepEqual(press(), ['ignored', false]);
+  openDialog = null;
+  assert.equal(clicks, 1, 'None of those clicked');
+  assert.deepEqual(press({ctrlKey: false, metaKey: true}), ['clicked', true], 'Cmd+Enter works on a Mac');
+  assert.equal(clicks, 2);
+  await flush(); await flush();
+  assert.equal(jobs(), 2, 'Each deliberate press is one click and at most one run');
+  button.disabled = true;
+  s.element('#uxBlockers .ux-blocker p').textContent = 'Add a prompt to generate.';
+  assert.deepEqual(press(), ['blocked', true]);
+  assert.equal(s.element('#status').textContent, 'Add a prompt to generate.', 'A disabled button announces its existing reason');
+  button.disabled = false; button.closest = selector => selector === '[hidden]' ? {} : null;
+  assert.deepEqual(press(), ['blocked', true], 'A hidden button is never clicked');
+  button.closest = () => null;
+  assert.deepEqual(press({target: outside}), ['ignored', false], 'Outside Create the shortcut does nothing');
+  prompt.closest = selector => selector === 'dialog' ? {} : null;
+  assert.deepEqual(press(), ['ignored', false], 'Inside a dialog the shortcut does nothing');
+  prompt.closest = () => null; create.hidden = true;
+  assert.deepEqual(press(), ['ignored', false], 'On another view the shortcut does nothing');
+  assert.equal(clicks, 2);
+  assert.equal(jobs(), 2);
+}
+
+// #772: a pasted or multi-dropped picture fills empty slots through uploadRoleFile; text pastes stay the browser's.
+async function pastedAndDroppedPicturesFillEmptySlots() {
+  const s = sandbox({}, {});
+  const fetch = s.context.fetch;
+  s.context.fetch = async (url, options = {}) => url === '/api/upload'
+    ? (s.requests.push({url, name: options.headers['X-Filename']}), {ok: true, json: async () => ({file: 'up-' + options.headers['X-Filename'], sha256: 'e'.repeat(64), width: 512, height: 768})})
+    : fetch(url, options);
+  let openDialog = null;
+  s.context.document.querySelector = selector => selector === 'dialog[open]' ? openDialog : s.element(selector);
+  const body = {closest: () => null}, prompt = s.element('#positive'), create = s.element('#createView');
+  s.context.document.body = body; create.hidden = false; create.contains = node => node === prompt || node === body;
+  prompt.closest = selector => selector.includes('textarea') ? prompt : null;
+  const png = (name, size = 2048, type = 'image/png') => ({name, size, type});
+  const paste = (files, {target = body, types = ['Files']} = {}) => {
+    const e = {target, clipboardData: {files, types}, prevented: false, preventDefault() {this.prevented = true;}};
+    return [s.context.pasteReference(e), e.prevented];
+  };
+  const slots = () => JSON.parse(s.run('JSON.stringify(referenceRecords.map(r=>r.file))'));
+  const uploads = () => s.requests.filter(r => r.url === '/api/upload').map(r => r.name);
+  s.run(`selectPreset('qwen-3ref');`);
+  assert.deepEqual(paste([], {target: prompt, types: ['text/plain']}), ['ignored', false], 'A text paste is left alone');
+  assert.deepEqual(paste([png('clip.png')], {target: prompt, types: ['text/plain', 'Files']}), ['ignored', false], 'Text on the clipboard wins in a text field');
+  openDialog = {};
+  assert.deepEqual(paste([png('a.png')]), ['ignored', false], 'A paste behind an open modal is left alone');
+  openDialog = null;
+  assert.deepEqual(uploads(), []);
+  assert.deepEqual(paste([png('a.png')]), ['pasted', true]);
+  await flush(); await flush();
+  assert.deepEqual(slots(), ['up-a.png', null, null], 'The picture lands in the first empty slot');
+  assert.deepEqual(paste([png('b.png')], {target: prompt, types: ['Files']}), ['pasted', true], 'An image-only paste into the prompt still attaches');
+  assert.deepEqual(paste([png('c.png'), png('d.png')]), ['pasted', true]);
+  assert.match(s.element('#status').textContent, /1 more picture was ignored/);
+  await flush(); await flush();
+  assert.deepEqual(slots(), ['up-a.png', 'up-b.png', 'up-c.png']);
+  assert.deepEqual(uploads(), ['a.png', 'b.png', 'c.png'], 'Every pasted picture went through the upload path; the extra was not sent');
+  assert.deepEqual(paste([png('e.png')]), ['full', true]);
+  s.run(`referenceRecords[1].file=null;`);
+  assert.deepEqual(paste([png('f.gif', 10, 'image/gif')]), ['refused', true], 'Only PNG, JPG or WebP is accepted');
+  assert.deepEqual(paste([png('big.png', 21 * 1024 * 1024)]), ['refused', true], 'The 20 MiB limit applies before upload');
+  assert.equal(uploads().length, 3);
+  // A drop onto a card keeps its old meaning for the first picture and fills the other empty slots with the rest.
+  s.run(`selectPreset('qwen-3ref');`);
+  s.element('#referenceCards').ondrop({preventDefault() {}, target: {closest: () => ({dataset: {refDrop: '1'}})}, dataTransfer: {files: [png('x.png'), png('y.png'), png('z.png'), png('w.png')]}});
+  assert.match(s.element('#status').textContent, /3 pictures added\. 1 more was ignored/);
+  await flush(); await flush();
+  assert.deepEqual(slots(), ['up-y.png', 'up-x.png', 'up-z.png']);
+  // An unsupported or oversized file never takes a valid picture's slot (Codex review on #974).
+  s.run(`selectPreset('qwen-3ref');referenceRecords[0].file='kept.png';referenceRecords[2].file='kept.png';`);
+  s.element('#referenceCards').ondrop({preventDefault() {}, target: {closest: () => ({dataset: {refDrop: '0'}})}, dataTransfer: {files: [png('bad.gif', 10, 'image/gif'), png('huge.png', 21 * 1024 * 1024), png('good.png')]}});
+  assert.match(s.element('#status').textContent, /1 picture added\. 2 other files were skipped/);
+  await flush(); await flush();
+  assert.deepEqual(slots(), ['up-good.png', null, 'kept.png'], 'The valid picture takes the dropped-on slot');
+  assert.ok(!uploads().includes('bad.gif') && !uploads().includes('huge.png'));
+  s.element('#referenceCards').ondrop({preventDefault() {}, target: {closest: () => ({dataset: {refDrop: '1'}})}, dataTransfer: {files: [png('bad.gif', 10, 'image/gif')]}});
+  assert.match(s.element('#status').textContent, /Nothing was added/);
+  // The slot picker is cleared after each attempt, so choosing the same file again fires a new change event.
+  const input = {dataset: {refFile: '0'}, files: [png('again.png')], value: 'C:\\fakepath\\again.png'};
+  s.element('#referenceCards').listeners.change({target: input});
+  assert.notEqual(input.value, '', 'The picker keeps its File while the upload runs');
+  await flush(); await flush();
+  assert.equal(input.value, '', 'The slot picker is reset once the upload settles');
+  assert.equal(slots()[0], 'up-again.png');
+  // A slot-less reference recipe receives the picture in its own file input, as if chosen there.
+  s.run(`selectPreset('gentle-variation');`);
+  s.context.DataTransfer = class {constructor() {this.files = []; this.items = {add: file => this.files.push(file)};}};
+  s.context.Event = class {constructor(type, options = {}) {this.type = type; this.bubbles = !!options.bubbles;}};
+  let changes = 0;
+  s.element('#reference').files = [];
+  s.element('#reference').dispatchEvent = event => {changes++; assert.equal(event.type, 'change'); s.element('#reference').onchange(event);};
+  assert.deepEqual(paste([png('source.png')]), ['pasted', true]);
+  assert.equal(changes, 1);
+  assert.equal(s.element('#reference').files[0].name, 'source.png');
+  assert.deepEqual(paste([png('second.png')]), ['full', true], 'A filled slot-less input is not replaced');
+  s.run(`selectPreset('plain');`);
+  assert.deepEqual(paste([png('nothing.png')]), ['no-reference', true]);
+  assert.match(s.element('#status').textContent, /takes no reference picture/);
+  create.hidden = true;
+  assert.deepEqual(paste([png('elsewhere.png')]), ['ignored', false], 'Pasting on another view is left alone');
+}
+
+// #772: a new seed and a replaced comparison pin say what happened instead of changing silently.
+async function seedAndPinChangesAreAnnounced() {
+  const s = sandbox({}, {});
+  s.run(`selectPreset('plain');`);
+  s.element('#randomSeed').onclick();
+  assert.match(s.element('#status').textContent, /^Seed changed to \d+\. Nothing was generated\.$/);
+  assert.equal(s.element('#status').textContent, 'Seed changed to ' + s.element('[data-key="seed"]').value + '. Nothing was generated.');
+  const pin = job => ({closest: selector => selector === '.pin' ? {dataset: {job, index: '0'}} : null});
+  for (const job of ['a', 'b']) await s.element('#gallery').onclick({target: pin(job)});
+  assert.doesNotMatch(s.element('#status').textContent, /oldest pin/);
+  await s.element('#gallery').onclick({target: pin('c')});
+  assert.match(s.element('#status').textContent, /oldest pin was replaced/);
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(pinned.map(p=>p.job))')), ['b', 'c']);
+}
+
 (async () => {
+  await generateShortcutRoutesThroughTheButton();
+  await seedAndPinChangesAreAnnounced();
+  await pastedAndDroppedPicturesFillEmptySlots();
   await recipeSwapDuringUploadNeverSubmits();
   await unstagedLocalFilesCannotBeSaved();
   await explicitLocalAbandonment();
+  await problemsPanelPutAway();
   await check('qwen-1ref', null, 1);
   await check('qwen-3ref', null, 3);
   await check('plain', null, 0);

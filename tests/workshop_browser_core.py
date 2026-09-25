@@ -140,7 +140,7 @@ def main():
         assert not page.locator('#workshopRecipeDialog').evaluate('(el)=>el.open')
         checks.append({'name': 'native focus return + cancelled and accepted recipe replacement'})
 
-        page.select_option('#workshopLayout', 'immersive')
+        page.select_option('#workshopLayout', 'immersive', force=True)
         # A slot-less reference recipe is not a readiness prerequisite in app.js (referencesReady() returns
         # true and the recipe's example stands until replaced), so guidance must not invent one here.
         assert page.evaluate("document.querySelector('#workshopGuidanceAction')?.dataset.intent") != 'review-sources'
@@ -164,9 +164,9 @@ def main():
         for layout in layouts:
             for skin in skins:
                 for ambience in ambiences:
-                    page.select_option('#workshopLayout', layout)
-                    page.select_option('#workshopSkin', skin)
-                    page.select_option('#workshopAmbience', ambience)
+                    page.select_option('#workshopLayout', layout, force=True)
+                    page.select_option('#workshopSkin', skin, force=True)
+                    page.select_option('#workshopAmbience', ambience, force=True)
                     assert page.locator('#positive').input_value() == await_value
                     assert page.locator('#reference').evaluate('(el)=>el.files[0].name') == 'source.png'
                     assert page.evaluate("document.getElementById('positive')===originalNodes.positive")
@@ -174,9 +174,15 @@ def main():
                     assert page.evaluate('submitted') == 0
         checks.append({'name': 'all presentation combinations preserve draft and input identity', 'layouts': layouts, 'skins': skins, 'ambiences': ambiences})
 
-        page.select_option('#workshopLayout', 'immersive')
+        page.select_option('#workshopLayout', 'immersive', force=True)
+        # #772: Appearance is a closed popover; open it, choose, then Escape closes it and returns focus to its summary.
+        assert not page.locator('#workshopAppearance').evaluate('(el)=>el.open')
+        page.locator('#workshopAppearance > summary').click()
         page.locator('[data-workshop-skin-choice="retro-anime"]').click()
-        page.select_option('#workshopAmbience', 'night-shift')
+        page.keyboard.press('Escape')
+        assert not page.locator('#workshopAppearance').evaluate('(el)=>el.open')
+        assert page.locator('#workshopAppearance > summary').evaluate('(el)=>el===document.activeElement')
+        page.select_option('#workshopAmbience', 'night-shift', force=True)
         assert page.locator('#workshopSkin').input_value() == 'retro-anime'
         assert page.locator('[data-workshop-skin-choice="retro-anime"]').get_attribute('aria-pressed') == 'true'
         assert page.locator('#workshopAmbienceHero').is_visible()
@@ -246,9 +252,9 @@ def main():
             attach_page_observers(page, errors, requests)
             load(page)
             page.wait_for_selector('#workshopRecipeChange')
-            page.select_option('#workshopLayout', layout)
-            page.select_option('#workshopSkin', skin)
-            page.select_option('#workshopAmbience', ambience)
+            page.select_option('#workshopLayout', layout, force=True)
+            page.select_option('#workshopSkin', skin, force=True)
+            page.select_option('#workshopAmbience', ambience, force=True)
             page.wait_for_timeout(70)
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), case
             box = page.locator('#generate').bounding_box()

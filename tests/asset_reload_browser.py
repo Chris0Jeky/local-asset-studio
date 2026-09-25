@@ -57,7 +57,7 @@ async def run(args):
                 page=await context.new_page();page.set_default_timeout(6000)
                 page.on('pageerror',lambda error:errors.append(str(error)))
                 if args.inert:await detail.inert_page(page,server.server_port,saved_session)
-                else:await page.goto(f'http://127.0.0.1:{server.server_port}/#assets')
+                else:await page.goto(f'http://127.0.0.1:{server.server_port}/#assets', timeout=20000)
                 await ready(page);return page
             async def accept_dialog(dialog):await dialog.accept()
             async def open_asset(page,identifier):

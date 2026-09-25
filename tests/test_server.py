@@ -298,6 +298,34 @@ class ServerTests(unittest.TestCase):
         handler.headers={"Host":"evil.example:8191","Origin":"http://evil.example:8191"}
         self.assertFalse(handler._safe_host())
 
+    def test_malformed_setup_and_export_bodies_are_400_not_500(self):
+        studio=self.studio();sent=[]
+        for path,body in (('/api/setups',[]),
+                          ('/api/setups','named-setup'),
+                          ('/api/setups',{'id':123,'name':'Bad id','recipe':{'preset':'test'}}),
+                          ('/api/production-export',{'kind':'atlas','ids':[{'a':1}]}),
+                          ('/api/production-export',{'kind':'atlas','ids':[1]})):
+            with self.subTest(path=path,body=repr(body)):
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path=path
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body=body:body
+                sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent[0][0],400,sent)
+        self.assertEqual(studio.assets.setups(),[])
+
+    def test_malformed_edit_campaign_bodies_are_400_not_500(self):
+        from scripts import character_edit_campaign as campaigns
+        studio=self.studio();sent=[];good=campaigns.create('owner',3,campaign_id='3'*32)
+        for body in ([],'campaign',[['campaign',good]],{'campaign':[good]},{'campaign':dict(good,campaign_id={'a':1})},
+                     {'campaign':dict(good,max_generation_attempts=[3])},{'campaign':dict(good,campaign_sha256=['x'])}):
+            with self.subTest(body=repr(body)[:120]):
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/production/campaigns'
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body=body:body
+                sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent[0][0],400,sent)
+        with studio.production.connect() as db:self.assertIsNone(db.execute('SELECT 1 FROM character_edit_campaigns').fetchone())
+
     def test_numbers_reject_bool_nan_and_fractional_integers(self):
         for bad in (True, float("nan"), float("inf"), 1.5, "3.2"):
             with self.assertRaises(server.StudioError): server.number(bad, "seed", 0, 99, integer=True)
@@ -1089,5 +1117,121 @@ class ServerTests(unittest.TestCase):
                 def fail(*args,**kwargs): raise AssertionError('out-of-range image must 404, not serve media')
                 handler._media=fail; handler._local_file=fail; handler.do_GET()
                 self.assertEqual(seen,{'status':404,'obj':{'error':'Unknown image'}})
+
+    def test_get_local_oserror_is_500_without_comfy_wording(self):
+        s=self.studio(); name='0'*32 + '_missing.png'
+        handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path='/api/uploads/' + name; handler.headers={}
+        handler._safe_host=lambda:True; seen={}
+        handler._json=lambda status,obj:seen.update(status=status,obj=obj)
+        handler.do_GET()
+        self.assertEqual(seen.get('status'),500,seen)
+        self.assertIn('Could not read a local file',seen['obj']['error'])
+        self.assertIn(name,seen['obj']['error'])
+        self.assertNotIn('ComfyUI',seen['obj']['error'])
+        self.assertNotIn(str(s.experiments),seen['obj']['error'])
+    def test_get_image_urlerror_is_502_with_actionable_comfy_wording(self):
+        s=self.studio(); identifier='image-job'; s.jobs[identifier]={'id':identifier,'outputs':[{'filename':'a.png','subfolder':'','type':'output'}]}
+        handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path=f'/api/image/{identifier}/0'; handler.headers={}
+        handler._safe_host=lambda:True; seen={}
+        handler._json=lambda status,obj:seen.update(status=status,obj=obj)
+        with patch.object(server,'urlopen',side_effect=URLError('refused')):
+            handler.do_GET()
+        self.assertEqual(seen.get('status'),502,seen)
+        self.assertIn('did not return',seen['obj']['error'])
+        self.assertIn('then reload',seen['obj']['error'])
+    def test_get_broken_pipe_writes_no_second_response(self):
+        s=self.studio(); identifier='image-job'; s.jobs[identifier]={'id':identifier,'outputs':[{'filename':'a.png','subfolder':'','type':'output'}]}
+        handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path=f'/api/image/{identifier}/0'; handler.headers={}
+        handler._safe_host=lambda:True; sent=[]
+        handler._json=lambda status,obj:sent.append((status,obj))
+        handler.send_response=Mock(side_effect=AssertionError('disconnected client must not get a second response'))
+        # A vanished browser surfaces from the local file write, not from the ComfyUI request.
+        with patch.object(server.Handler,'_local_file',side_effect=BrokenPipeError()), patch.object(server,'urlopen',side_effect=AssertionError('no ComfyUI call')):
+            s.jobs[identifier]['outputs'][0]['asset_id']='a'*32; s.assets=Mock(); handler.do_GET()
+        self.assertEqual(sent,[])
+    def test_get_comfy_disconnect_or_stall_is_a_comfy_error(self):
+        from http.client import RemoteDisconnected
+        for error in (RemoteDisconnected('closed'), TimeoutError('timed out')):
+            with self.subTest(type(error).__name__):
+                s=self.studio(); identifier='image-job'; s.jobs[identifier]={'id':identifier,'outputs':[{'filename':'a.png','subfolder':'','type':'output'}]}
+                handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path=f'/api/image/{identifier}/0'; handler.headers={}
+                handler._safe_host=lambda:True; sent=[]; handler._json=lambda status,obj:sent.append((status,obj))
+                with patch.object(server,'urlopen',side_effect=error): handler.do_GET()
+                self.assertEqual(sent[0][0],502); self.assertIn('ComfyUI',sent[0][1]['error'])
+    def test_run_label_is_bounded_stored_on_the_job_and_copied_to_its_assets(self):
+        (self.root/'fake-comfy/output').mkdir(); (self.root/'fake-comfy/output/ok.png').write_bytes(png())
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"p1"},{"p1":{"status":{"status_str":"success"},"outputs":{"9":{"images":[{"filename":"ok.png","subfolder":"","type":"output"}]}}}}]
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{"positive":"a  lantern\nin the fog"},"label":"  nsfw-lab p71 · G16 ports  "})
+        self.assertEqual(created["label"],"nsfw-lab p71 · G16 ports")
+        self.assertEqual(json.loads((s.runs/created["id"]/"state.json").read_text(encoding="utf-8"))["label"],"nsfw-lab p71 · G16 ports")
+        self.assertNotIn("label",json.loads((s.runs/created["id"]/"recipe.json").read_text(encoding="utf-8")))
+        s._run(s.jobs[created["id"]]); self.assertEqual(s.jobs[created["id"]]["status"],"completed")
+        asset=s.assets.get(s.jobs[created["id"]]["outputs"][0]["asset_id"])
+        self.assertEqual((asset["run_label"],asset["prompt_excerpt"],asset["title"]),("nsfw-lab p71 · G16 ports","a lantern in the fog","Demo · 1"))
+        self.assertEqual(self.studio().jobs[created["id"]]["label"],"nsfw-lab p71 · G16 ports")
+        mine=self.studio().create_job({"preset_id":"demo","controls":{}},enqueue=False)
+        self.assertIsNone(mine["label"]); self.assertNotIn("label",json.loads((s.runs/mine["id"]/"state.json").read_text(encoding="utf-8")))
+
+    def test_invalid_run_labels_are_refused_before_any_job_exists(self):
+        s=self.studio()
+        for label in ("","   ","x"*81,"line\nbreak","tab\there","bell\x07",7,["lab"],{"a":1},True):
+            with self.subTest(label=label), self.assertRaisesRegex(server.StudioError,"label must be printable text of 1 to 80 characters"):
+                s.create_job({"preset_id":"demo","controls":{},"label":label},enqueue=False)
+        self.assertEqual(s.jobs,{}); self.assertEqual(list(s.runs.iterdir()),[])
+        self.assertEqual(s.create_job({"preset_id":"demo","controls":{},"label":"x"*80},enqueue=False)["label"],"x"*80)
+
+    def test_workspace_snapshot_derives_missing_prompt_excerpts_from_loaded_jobs(self):
+        s=self.studio(); created=s.create_job({"preset_id":"demo","controls":{}},enqueue=False); job=s.jobs[created["id"]]
+        source=self.root/"legacy.png"; source.write_bytes(png()); job["outputs"]=[{"filename":"legacy.png","media_type":"image"}]
+        asset=s.assets.register(job,0,source)
+        with s.assets.connection() as db: db.execute("UPDATE assets SET prompt_excerpt=NULL WHERE id=?",(asset,))
+        self.assertIsNone(s.assets.get(asset)["prompt_excerpt"])
+        self.assertEqual(s.workspace_snapshot()["assets"][0]["prompt_excerpt"],"native positive")
+        del s.jobs[created["id"]]; self.assertIsNone(s.workspace_snapshot()["assets"][0]["prompt_excerpt"])
+
+    @staticmethod
+    def _windows_refusal(source, target):
+        err=PermissionError(13,'Access is denied',str(source),None,str(target)); err.winerror=5; return err
+
+    def test_atomic_json_write_outlasts_a_transient_windows_refusal(self):
+        s=self.studio(); path=self.root/'state.json'; path.write_text('{}'); original=Path.replace; calls=[]
+        def replace(source,target):
+            calls.append(target)
+            if len(calls)==1: raise self._windows_refusal(source,target)
+            return original(source,target)
+        with patch.object(Path,'replace',replace),patch.object(server.file_replace.time,'sleep') as sleep: s._write_json_atomic(path,{'status':'failed'})
+        self.assertEqual((len(calls),sleep.call_count),(2,1));self.assertEqual(json.loads(path.read_text()),{'status':'failed'})
+        self.assertEqual(list(self.root.glob('*.tmp')),[])
+
+    def test_locked_run_folder_before_submission_is_a_plain_language_safe_retry(self):
+        # Live 24 Sep 2026: another program held state.json open through every save attempt of the first write.
+        s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]; original=Path.replace; refusals=[]
+        def replace(source,target):
+            if Path(target).name=='state.json' and len(refusals)<=len(server.file_replace.DELAYS):
+                refusals.append(self._windows_refusal(source,target)); raise refusals[-1]
+            return original(source,target)
+        with patch.object(Path,'replace',replace),patch.object(server.file_replace.time,'sleep'),patch.object(server,'urlopen',side_effect=AssertionError('nothing may reach ComfyUI')) as request:
+            with self.assertRaises(PermissionError) as caught: s._run(job)
+            s.record_job_failure(job,caught.exception)
+        request.assert_not_called();self.assertEqual(len(refusals),len(server.file_replace.DELAYS)+1)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['failure']['kind'],'record_write_locked')
+        self.assertEqual(job['failure']['action'],'Safe to generate again with the same settings.')
+        self.assertIn('Nothing was sent to ComfyUI',job['failure']['summary'])
+        saved=json.loads((s.runs/job['id']/'state.json').read_text());self.assertEqual(saved['failure'],job['failure'])
+        self.assertEqual(saved['prompt_ids'],[])
+
+    def test_lock_wording_needs_a_never_submitted_job_and_its_own_run_folder(self):
+        s=self.studio()
+        def fresh(**extra):
+            job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]; job.update(status='waiting',**extra); return job
+        cases=[]
+        job=fresh(pending_submission={}); cases.append((job,self._windows_refusal(s.runs/job['id']/'state.json.a.tmp',s.runs/job['id']/'state.json'),'uncertain'))
+        job=fresh(); cases.append((job,self._windows_refusal(self.root/'elsewhere.tmp',self.root/'elsewhere.json'),'failed'))
+        job=fresh(); cases.append((job,PermissionError(13,'Permission denied',str(s.runs/job['id']/'state.json')),'failed'))
+        job=fresh(); cases.append((job,OSError('disk full'),'failed'))
+        for job,exc,status in cases:
+            with self.subTest(exc=str(exc)):
+                s.record_job_failure(job,exc)
+                self.assertEqual(job['status'],status);self.assertNotIn('failure',job)
 
 if __name__ == "__main__": unittest.main()

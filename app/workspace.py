@@ -33,7 +33,25 @@ class WorkspaceError(ValueError):
 WAL_INITIALIZATION_TIMEOUT = 15
 _INITIALIZATION_LOCK = threading.Lock()
 MAX_REVISION = 2**53 - 1
+# register() copies a job name (AV project names reach 1,000 characters) into the initial title; the
+# edit limit is 200. Conflict projections in app/static/workspace.js accept up to this bound.
+REGISTERED_TITLE_MAX = 1024
+# The editor-conflict envelope: the editor, its conflict projection and the recovery shelf validate exactly these keys.
+# run_label is not an editor field; it travels in the receipt's applied values and in every full asset read (#939).
 METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
+# Additive, nullable asset columns: a Workspace created before them opens unchanged and its assets read as NULL (#939).
+ADDITIVE_COLUMNS = ("run_label", "prompt_excerpt")
+PROMPT_EXCERPT_CHARS = 60
+RUN_LABEL_MAX = 80
+
+
+def clean_run_label(value):
+    """A run label (#939): None, or trimmed printable text of 1-80 characters; ValueError otherwise.
+    Shared by job submission (app/server.py) and the asset edit command, where None marks the asset as the operator's own."""
+    if value is None: return None
+    if not isinstance(value, str) or not 1 <= len(value.strip()) <= RUN_LABEL_MAX or not value.strip().isprintable():
+        raise ValueError(f"label must be printable text of 1 to {RUN_LABEL_MAX} characters")
+    return value.strip()
 
 
 def digest_file(path):
@@ -42,6 +60,19 @@ def digest_file(path):
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def prompt_excerpt(job, limit=PROMPT_EXCERPT_CHARS):
+    """The start of a job's positive prompt, whitespace-collapsed and bounded, for a library subtitle; None when unknown. Never raises."""
+    try:
+        text = (job.get("controls") or {}).get("positive")
+        if not isinstance(text, str):
+            node, name = ((job.get("prompt_bindings") or {}).get("positive") or [(None, None)])[0]
+            text = job["graph"][str(node)]["inputs"][str(name)]
+    except (AttributeError, KeyError, TypeError, IndexError, ValueError): return None
+    if not isinstance(text, str): return None
+    text = " ".join(text.split())
+    return (text if len(text) <= limit else text[:limit - 1].rstrip() + "…") or None
 
 
 class AssetWorkspace:
@@ -87,8 +118,11 @@ class AssetWorkspace:
             db.execute("BEGIN IMMEDIATE")
             db.execute("CREATE TABLE IF NOT EXISTS workspace_identity (singleton INTEGER PRIMARY KEY CHECK(singleton=1), id TEXT NOT NULL)")
             db.execute("INSERT OR IGNORE INTO workspace_identity VALUES (1,?)", (uuid.uuid4().hex,))
-            if "metadata_revision" not in {r["name"] for r in db.execute("PRAGMA table_info(assets)")}:
+            columns = {r["name"] for r in db.execute("PRAGMA table_info(assets)")}
+            if "metadata_revision" not in columns:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
+            for column in ADDITIVE_COLUMNS:
+                if column not in columns: db.execute(f"ALTER TABLE assets ADD COLUMN {column} TEXT")
             from studio_workflow.collection_commands import migrate
             migrate(db)
             from studio_workflow.asset_reads import migrate as migrate_asset_reads
@@ -177,16 +211,23 @@ class AssetWorkspace:
             return None
         path, digest, size = self.snapshot_file(source)
         output = job["outputs"][index]
+        label = job.get("label") if isinstance(job.get("label"), str) and job.get("label") else None
         with self.connection() as db:
             db.execute("""INSERT OR IGNORE INTO assets
                 (id,job_id,output_index,title,media_type,path,filename,sha256,bytes,
-                 created_at,preset_id,preset_name,source,lineage)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-                asset_id, job["id"], index, job.get("preset_name", "Untitled") + f" · {index + 1}",
+                 created_at,preset_id,preset_name,source,lineage,run_label,prompt_excerpt)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                asset_id, job["id"], index, self.registered_title(job.get("preset_name", "Untitled"), index),
                 output.get("media_type", "image"), path, output.get("filename", Path(source).name),
                 digest, size, job.get("created_at", time.time()), job.get("preset_id"),
-                job.get("preset_name"), json.dumps(output), json.dumps(job.get("parent_assets", []))))
+                job.get("preset_name"), json.dumps(output), json.dumps(job.get("parent_assets", [])),
+                label[:80] if label else None, prompt_excerpt(job)))
         return asset_id
+
+    @staticmethod
+    def registered_title(name, index):
+        suffix = f" · {index + 1}"
+        return name[:REGISTERED_TITLE_MAX - len(suffix)] + suffix
 
     def _asset(self, row):
         value = dict(row)
@@ -204,11 +245,15 @@ class AssetWorkspace:
         return self._asset(row)
 
     def file(self, asset_id):
+        return self.file_entry(asset_id)[0]
+
+    def file_entry(self, asset_id):
+        """(snapshot path, asset record): the contained media file and the row whose sha256 names its bytes."""
         asset = self.get(asset_id)
         path = (self.root / asset["path"]).resolve()
         if self.media.resolve() not in path.parents or not path.is_file():
             raise WorkspaceError("Asset snapshot is unavailable")
-        return path
+        return path, asset
 
     def snapshot(self):
         with self.connection() as db:
@@ -347,7 +392,7 @@ class AssetWorkspace:
                 any(isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= MAX_REVISION for v in expected.values())):
             raise WorkspaceError("Supply one nonnegative safe integer revision for every selected asset")
         scope = self._validate_scope(payload["workspace_id"]) if "workspace_id" in payload else None
-        allowed = {"workspace_id", "ids", "action", "request_id", "expected_revisions", "title", "notes", "tags", "favorite", "review", "collection_id"}
+        allowed = {"workspace_id", "ids", "action", "request_id", "expected_revisions", "title", "notes", "tags", "favorite", "review", "run_label", "collection_id"}
         if set(payload) - allowed:
             raise WorkspaceError("Unknown asset command fields")
         try:
@@ -413,6 +458,10 @@ class AssetWorkspace:
                         if not isinstance(tags, list) or len(tags) > 30:
                             raise WorkspaceError("Use up to 30 tags")
                         changes["tags"] = json.dumps(list(dict.fromkeys(self.text(t, "Tag", 60) for t in tags if t)))
+                    if "run_label" in payload:
+                        # A label marks an agent run; null clears it (the operator's own). Reversible like every edit.
+                        try: changes["run_label"] = clean_run_label(payload["run_label"])
+                        except ValueError as error: raise WorkspaceError("Run label must be null or printable text of 1 to 80 characters") from error
                 else:
                     raise WorkspaceError("Unknown asset action")
                 if not changes:
@@ -436,7 +485,14 @@ class AssetWorkspace:
             return [dict(r, recipe=json.loads(r["recipe"])) for r in db.execute("SELECT * FROM setups ORDER BY created_at DESC")]
 
     def save_setup(self, payload):
-        identifier = payload.get("id") or uuid.uuid4().hex
+        if not isinstance(payload, dict):
+            raise WorkspaceError("Setup request must be an object")
+        if "id" in payload:
+            identifier = payload["id"]
+            if not isinstance(identifier, str) or not identifier or len(identifier) > 128:
+                raise WorkspaceError("Setup ID must be a non-empty string up to 128 characters")
+        else:
+            identifier = uuid.uuid4().hex
         with self.connection() as db:
             if payload.get("action") == "delete":
                 db.execute("DELETE FROM setups WHERE id=?", (identifier,))

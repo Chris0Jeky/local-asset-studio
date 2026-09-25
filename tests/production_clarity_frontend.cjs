@@ -5,10 +5,16 @@ const elements=new Map();
 const $=selector=>{if(!elements.has(selector))elements.set(selector,{innerHTML:'',value:'',textContent:'',disabled:false,hidden:false,required:false,open:false,classList:{toggle(){}}});return elements.get(selector);};
 const esc=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const safeUrl=url=>{try{const u=new URL(url);return ['http:','https:'].includes(u.protocol)?u.href:'#';}catch{return '#';}};
-const context=vm.createContext({$,document:{querySelector:$,querySelectorAll:()=>[],createElement:()=>({style:{},classList:{toggle(){}},querySelectorAll:()=>[]})},
+const stored=new Map([['studio.production.filters',JSON.stringify({type:'voice',status:'all'})]]);
+const localStorage={getItem:key=>stored.has(key)?stored.get(key):null,setItem:(key,value)=>stored.set(key,String(value))};
+const context=vm.createContext({$,localStorage,document:{querySelector:$,querySelectorAll:()=>[],createElement:()=>({style:{},classList:{toggle(){}},querySelectorAll:()=>[]})},
   esc,safeUrl,setInterval(){},showView(){},api:async()=>[],post:async()=>({})});
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/production.js'),'utf8'),context);
 const run=source=>vm.runInContext(source,context);
+
+// 0 · A remembered filter choice is restored into the selects on load; the rest of this file starts from the default.
+assert.equal($('#planType').value,'voice');assert.equal($('#planStatus').value,'all');
+run("setPlanFilter({type:'all',status:'active'})");
 
 // 1 · A grid variant states its label once and never repeats its rationale.
 const base={steps:20,cfg:4,width:768,height:1152,seed:7,positive:'a portrait'};
@@ -101,5 +107,51 @@ assert.equal($('#experimentBudget').value,'9','A total the operator raised is ne
 $('#experimentBudget').disabled=true;$('#experimentBudget').value='2';run(`$('#experimentAxis').onchange();`);
 assert.equal($('#experimentBudget').value,'2','A branch sharing its parent budget is left alone');
 $('#experimentBudget').disabled=false;
+
+// 10 · Your plans filters (#940): type and status over the fetched list, older open work folded, never hidden.
+// Open = StudioUX ACTIVE ∪ ATTENTION ∪ planned/awaiting review; the fallback literal must mirror studio-core.
+const core=require('../app/static/studio-core.js');
+assert.equal(JSON.stringify(run('PLAN_OPEN_FALLBACK')),JSON.stringify([...core.ACTIVE,...core.ATTENTION]),'The fallback mirrors studio-core ACTIVE and ATTENTION');
+const now=Date.now()/1000,day=86400;
+const plan=(id,kind,status,age,extra={})=>({id:id.repeat(32),name:kind+' '+status+' '+age,kind,created_at:now-age*day,stages:[],budget:{reserved:0,allowance:1},state:{status,message:'Fixture.',artifacts:[]},...extra});
+const fixtures=[plan('1','comparison','planned',1),plan('2','comparison','awaiting_review',12),plan('3','comparison','reviewed',1),
+  plan('4','voice','uncertain',2),plan('5','av','completed',30),plan('6','native','failed',3),plan('7','articulated','planned',1),
+  plan('8','comparison','running',20,{stages:[{label:'A',job:{created_at:now-20*day,finished_at:now-day}}]}),plan('9','voice','planned',0,{created_at:undefined}),
+  plan('a','voice','running',15,{state:{status:'running',message:'Fixture.',started_at:now-3600,attempts:{}}}),plan('b','native','uncertain',15,{state:{status:'uncertain',message:'Fixture.',attempts:{'0':{finished_at:now-2*day}}}}),
+  plan('c','comparison','interrupted',1),plan('d','voice','stopped',2),plan('e','comparison','failed',20),
+  plan('f','comparison','planned',0,{created_at:'not a date'}),plan('g','comparison','planned',0)];
+const ids=html=>[...html.matchAll(/data-project="(.)\1{31}"/g)].map(m=>m[1]).join('');
+run(`productionPlans=${JSON.stringify(fixtures)};productionPlans.at(-1).created_at=NaN;productionId=null;setPlanFilter({type:'all',status:'active'});`);
+let listed=$('#productionList').innerHTML;
+const [recentPart,olderPart]=listed.split('<details class="plan-older"');
+assert.equal(ids(recentPart),'146789abcdfg','Open and recent: planned, uncertain, failed, interrupted (a restarted run), stopped, recent stage/run/attempt activity; undated, string and NaN timestamps stay in view');
+assert.match(olderPart,/^[^>]*><summary>Older \(2\)<\/summary>/,'Older open work is folded with its count');
+assert.equal(ids(olderPart.split('</details>')[0]),'2e','A 12-day-old review and a 20-day-old failure are older, not gone');
+assert.match(listed,/Showing plans in progress or needing attention; untouched for 7 days folds under Older\. 2 plans hidden by these filters\. <button data-plan-show-all>Show all<\/button>/,'The list says what is filtered');
+assert.equal(JSON.parse(stored.get('studio.production.filters')).status,'active','The choice is remembered');
+run(`productionId=${JSON.stringify('2'.repeat(32))};renderProduction();`);
+assert.match($('#productionList').innerHTML,/<details class="plan-older" open>/,'The chosen older plan keeps its group open');
+run(`productionId=null;setPlanFilter({type:'export'});`);
+assert.equal(ids($('#productionList').innerHTML),'67b','Exports cover native and articulated plans; a failed export needs attention');
+assert.equal($('#planType').value,'export');
+run(`setPlanFilter({type:'scene'});`);
+listed=$('#productionList').innerHTML;
+assert.equal(ids(listed),'','A completed 30-day-old scene is closed');
+assert.match(listed,/No scenes in progress or needing attention\.<\/b> 16 plans hidden by these filters\./,'The empty state names the filter');
+assert.match(listed,/data-plan-show-all/,'and offers one-click Show all');
+let focused=null;$('#planStatus').focus=()=>{focused='#planStatus';};
+run(`$('#productionList').onclick({target:{closest:selector=>selector==='[data-plan-show-all]'?{}:null}});`);
+assert.equal(focused,'#planStatus','Show all is re-rendered away, so focus moves to the Status select');
+assert.deepEqual(JSON.parse(stored.get('studio.production.filters')),{type:'all',status:'all'},'Show all clears both filters and remembers it');
+assert.equal(ids($('#productionList').innerHTML),'123456789abcdefg','All shows every plan, in the fetched order, with nothing folded');
+assert.doesNotMatch($('#productionList').innerHTML,/plan-older|plan-filter-note/);
+run(`setPlanFilter({type:'voice'});`);assert.equal(ids($('#productionList').innerHTML),'49ad','Type filtering alone keeps every voice status');
+run(`setPlanFilter({type:'toString',status:'nonsense'});`);
+assert.deepEqual(JSON.parse(stored.get('studio.production.filters')),{type:'all',status:'active'},'An unknown choice falls back to the default, never to a prototype key');
+// studio-core, once loaded, is the source of truth rather than the literal.
+context.StudioUX={ACTIVE:['rendering_now'],ATTENTION:[]};
+run(`productionPlans=[${JSON.stringify(plan('h','comparison','rendering_now',1))},${JSON.stringify(plan('i','comparison','failed',1))}];renderProduction();`);
+assert.equal(ids($('#productionList').innerHTML),'h','Open statuses are read from StudioUX when it is present');
+delete context.StudioUX;run(`productionPlans=[];setPlanFilter({type:'all',status:'active'});`);
 
 console.log('Experiments planner cards state each fact once; plan names, empty state and comparison arithmetic read clearly.');

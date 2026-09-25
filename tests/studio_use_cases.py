@@ -1304,8 +1304,9 @@ def main(argv=None):
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True, args=['--no-sandbox'],
                                                  executable_path=args.chromium or os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or None)
-            context = browser.new_context(viewport={'width': 1536, 'height': 1060}, device_scale_factor=1, reduced_motion='reduce')
             for spec in cases:
+                # One context per case: browser storage (drafts, filters, guide steps) must not leak between cases.
+                context = browser.new_context(viewport={'width': 1536, 'height': 1060}, device_scale_factor=1, reduced_motion='reduce')
                 page = context.new_page()
                 page.set_default_timeout(6000)
                 page.on('pageerror', lambda error, case=spec['id']: errors.append(case + ': ' + str(error)[:200]))
@@ -1313,7 +1314,7 @@ def main(argv=None):
                 print('--- ' + spec['id'], flush=True)
                 rows.append(run_case(spec, page, origin, live, args.screenshots))
                 print(case_result(rows[-1]) + ' ' + spec['id'] + ' · ' + (rows[-1]['detail'] or rows[-1]['failure']), flush=True)
-                page.close()
+                page.close(); context.close()
             browser.close()
     finally:
         if server: server.shutdown(); server.server_close()

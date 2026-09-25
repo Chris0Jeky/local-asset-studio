@@ -96,6 +96,35 @@ class ObservationStateTests(unittest.TestCase):
         self.assertEqual(list(self.path.parent.glob('*.tmp')), [])
         parent.assert_not_called()
 
+    def windows_refusal(self):
+        err = PermissionError(13, 'Access is denied'); err.winerror = 5; return err
+
+    def test_transient_windows_refusal_is_retried_with_the_temp_still_owned(self):
+        original, calls, parent = Path.replace, [], Mock(return_value=False)
+        def replace(path, target):
+            calls.append(path.read_bytes())  # The owned temp is intact for every attempt.
+            if len(calls) == 1: raise self.windows_refusal()
+            return original(path, target)
+        with patch.object(Path, 'replace', replace), patch.object(state.file_replace.time, 'sleep') as sleep:
+            report = state.publish(self.path, self.value, parent)
+        self.assertEqual(len(calls), 2); sleep.assert_called_once()
+        self.assertEqual(report, {'content_synced': True, 'directory_synced': False})
+        self.assertEqual(json.loads(self.path.read_bytes()), self.value)
+        self.assertEqual(list(self.path.parent.glob('*.tmp')), []); parent.assert_called_once_with(self.path.parent)
+
+    def test_persistent_windows_refusal_cleans_the_owned_temp_and_grants_nothing(self):
+        refusals, parent = [], Mock()
+        def replace(path, target):
+            refusals.append(self.windows_refusal()); raise refusals[-1]
+        with patch.object(Path, 'replace', replace), patch.object(state.file_replace.time, 'sleep'):
+            with self.assertRaises(PermissionError) as caught:
+                state.publish(self.path, self.value, parent)
+        self.assertEqual(len(refusals), len(state.file_replace.DELAYS) + 1)
+        self.assertIs(caught.exception, refusals[-1])
+        self.assertEqual(self.path.read_bytes(), b'old')
+        self.assertEqual(list(self.path.parent.glob('*.tmp')), [])
+        parent.assert_not_called()
+
     def test_foreign_replacement_of_temp_is_not_removed_on_failure(self):
         def replace(path, target):
             path.rename(path.with_suffix('.held'))

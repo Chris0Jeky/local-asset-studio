@@ -82,7 +82,7 @@ async def exercise(args):
                 if args.inert:
                     await inert_page(page, 8191)
                 else:
-                    await page.goto('http://127.0.0.1:8191/#assets')
+                    await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
                 await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id')
                 await page.evaluate("showView('assets')")
                 await page.wait_for_selector(f'[data-asset-check="{ids[0]}"]')
@@ -182,8 +182,12 @@ async def exercise(args):
                 check('LIB-34', 'Ungrouping restores the flat grid', await page.locator('#assetGrid .asset-group').count() == 0 and await page.locator('#assetGrid .asset-card').count() == 2)
                 before = len(writes)
                 await page.evaluate('ids=>{assetSelection=new Set(ids);renderAssets();}', ids[:2])
+                # ids[0] is a keeper since LIB-29, so bulk review first names the saved review it replaces (#939).
+                outcome['accept'] = True; asked = len(dialogs)
                 await page.click('[data-review-bulk="needs_work"]')
                 await page.wait_for_function('!assetBulkReviewBusy')
+                outcome['accept'] = False
+                check('LIB-37', 'Bulk review asks before replacing a saved keeper', len(dialogs) == asked + 1 and dialogs[-1].startswith('Replace 1 saved review? 1 keeper will change to Needs work.'))
                 sent = writes[before:]
                 check('LIB-35', 'Bulk review sends one ordinary single-asset command per selection', len(sent) == 2 and all(len(w['ids']) == 1 and w['action'] == 'edit' and w['review'] == 'needs_work' and w['expected_revisions'] for w in sent) and {w['ids'][0] for w in sent} == set(ids[:2]))
                 saved = {a['id']: a['review'] for a in store.snapshot()['assets']}

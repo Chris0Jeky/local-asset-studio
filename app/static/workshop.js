@@ -153,7 +153,17 @@
     }
     skinSelect.addEventListener('change', () => updatePreference('skin', skinSelect.value));
     skinControl.append(skinLabel, nativeSkinLabel, skinPicker);
-    toolbar.append(selectControls, skinControl, preferenceNotice);
+    toolbar.append(selectControls, skinControl);
+    // Appearance is a compact, closed-by-default popover in the page header: the recipe chip and the prompt come
+    // first under the title (#772). The selects keep their ids, handlers and persistence; only their container moved.
+    const appearance = el('details', 'wk-appearance'); appearance.id = 'workshopAppearance';
+    const appearanceSummary = el('summary', '', 'Appearance'); toolbar.id = 'workshopAppearancePanel';
+    appearance.append(appearanceSummary, toolbar);
+    appearance.addEventListener('keydown', e => {
+      if (e.key !== 'Escape' || !appearance.open) return;
+      e.preventDefault(); e.stopPropagation(); appearance.open = false; appearanceSummary.focus({preventScroll:true});
+    });
+    d.addEventListener('pointerdown', e => { if (appearance.open && !appearance.contains(e.target)) appearance.open = false; }, true);
 
     const setupRail = el('aside', 'wk-setup-rail'); setupRail.id = 'workshopSetupRail';
     const setupHeading = el('div', 'wk-rail-heading');
@@ -173,7 +183,7 @@
     const setupEta = el('span', '', 'Runtime estimate not available'); setupEta.id = 'workshopSetupEta';
     setupStatus.append(setupReadiness, setupEta);
     setupRail.append(setupHeading, recipeChip, quickTune, setupStatus);
-    editor.before(hero, modebar, toolbar, setupRail);
+    editor.before(hero, modebar, appearance, setupRail);
 
     // One native modal around the current picker. Its search, shortlist and handlers are unchanged.
     const recipeDialog = el('dialog', 'wk-recipe-dialog'); recipeDialog.id = 'workshopRecipeDialog';
@@ -296,6 +306,8 @@
     editor.append(parameters, inspection, review);
     const setupReview = button('workshopSetupReview', 'Review readiness', () => reveal(review));
     setupReview.className = 'wk-setup-review'; setupRail.append(setupReview);
+    // The storage notice stays outside the closed Appearance popover, so a choice that will not persist is always visible.
+    setupRail.append(preferenceNotice);
     const dock = el('div', 'wk-run-dock'); dock.setAttribute('aria-label','Generation controls');
     const dockInfo = el('div', 'wk-dock-info'), readiness = el('strong'), eta = el('span');
     readiness.id = 'workshopReadiness'; eta.id = 'workshopEta';
@@ -382,6 +394,7 @@
     function groupControls() {
       const controls = q('#controls'); if (!controls) return;
       const labels = [...controls.children].filter(n => n.tagName === 'LABEL'); if (!labels.length) return;
+      const focused = controls.contains(d.activeElement) ? d.activeElement : null;
       const groups = new Map();
       for (const label of labels) {
         if (label.querySelector('#i2vMode')) continue;
@@ -393,6 +406,8 @@
         groups.get(name).append(label);
       }
       for (const name of ['Seed','Canvas & duration','Sampling','Model & guidance']) if (groups.has(name)) controls.append(groups.get(name));
+      // Reparenting the existing field must not blur an editor restored by its owner.
+      if (focused && d.activeElement === d.body) focused.focus({preventScroll:true});
     }
     function applyPresentation() {
       create.dataset.workshopLayout = state.layout;

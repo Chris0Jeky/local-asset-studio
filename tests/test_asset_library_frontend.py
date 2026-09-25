@@ -13,4 +13,4 @@ class AssetLibraryFrontend(unittest.TestCase):
             capture_output=True, text=True, timeout=20,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('Asset library contracts: 14 passed, 0 failed', result.stdout)
+        self.assertIn('Asset library contracts: 32 passed, 0 failed', result.stdout)

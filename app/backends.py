@@ -114,7 +114,8 @@ class BackendManager:
         # An uncertain job whose tracking the operator stopped is a closed record, not local work: switch() still refuses
         # while its prompt is live in any ComfyUI queue (_idle) or kept in any running ComfyUI's history (_stopped_results).
         # Resuming tracking makes it block again.
-        return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') and not self._stopped_record(j) for j in self.studio.jobs.values()) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
+        # Iterate a snapshot: handler threads can insert into studio.jobs mid-loop, which raises on a live view.
+        return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') and not self._stopped_record(j) for j in list(self.studio.jobs.values())) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
 
     @staticmethod
     def _stopped_record(job):
@@ -126,7 +127,7 @@ class BackendManager:
 
         Stopping that process would discard the only descriptor of a completed result that Resume observation could still
         record. An endpoint that refuses connections with no listener has no history left to lose; any other failure is unknown."""
-        stopped=[job for job in self.studio.jobs.values() if self._stopped_record(job)]
+        stopped=[job for job in list(self.studio.jobs.values()) if self._stopped_record(job)]
         if not stopped:return
         # A backend with no listening socket has no in-memory history to lose; ask the process table once per profile.
         live=[profile for profile in self.profiles.values() if self.process(profile) is not None]
@@ -296,6 +297,9 @@ class BackendManager:
         if not self.available(self.profiles[identifier]):raise ValueError('This environment is not installed completely. '+self.readiness(self.profiles[identifier])['message'])
         with self.studio.lock:
             if self.busy:raise ValueError('A backend switch is already running; follow its current status')
+            # A switch launches a backend; while another local GPU tenant holds the lease that is refused (409 gpu_leased).
+            lease=getattr(self.studio,'gpu_lease',None)
+            if lease:lease.require_available()
             if self._local_work():raise ValueError('Finish or reconcile active Studio work before switching backends')
             self._check_retained_startup()
             self._check_startup_processes()
