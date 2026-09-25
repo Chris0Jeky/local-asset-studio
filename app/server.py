@@ -41,6 +41,7 @@ import wan_capacity
 from runtime_recovery import RuntimeRecovery
 from gpu_lease import GpuLease, GpuLeaseError
 from large_job_prep_common import PreparationError
+from studio_workflow.http_body import drain_for_reset
 import prompting
 import submission_evidence
 import observation_state
@@ -2012,6 +2013,22 @@ class Handler(BaseHTTPRequestHandler):
         """New generation work is refused (409 gpu_leased) while another local GPU tenant holds the lease."""
         lease = getattr(self.studio, "gpu_lease", None)
         if lease: lease.require_available()
+    def _drain_refused_body(self):
+        """Best-effort bounded drain before refusal; close on missing or ambiguous framing."""
+        headers = self.headers
+        get_all = getattr(headers, "get_all", None)
+        if callable(get_all):
+            lengths = get_all("Content-Length") or []
+            transfer_encoding = get_all("Transfer-Encoding") or []
+        else:
+            raw_length = headers.get("Content-Length")
+            lengths = [] if raw_length is None else [raw_length]
+            raw_transfer_encoding = headers.get("Transfer-Encoding")
+            transfer_encoding = [] if raw_transfer_encoding is None else [raw_transfer_encoding]
+        if len(lengths) != 1 or transfer_encoding:
+            self.close_connection = True
+        if not drain_for_reset(self):
+            self.close_connection = True
     def _content_length(self, limit):
         try: size = int(self.headers.get("Content-Length", ""))
         except ValueError: raise StudioError("Valid Content-Length required")
@@ -2200,7 +2217,9 @@ class Handler(BaseHTTPRequestHandler):
             suffix = " (%s)" % Path(known).name if known else ""
             self._json(500, {"error": "Could not read a local file%s: %s" % (suffix, detail)})
     def do_POST(self):
-        if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
+        if not self._safe_mutation():
+            self._drain_refused_body()
+            return self._json(403, {"error":"Local same-origin request required"})
         try:
             if self.path == "/api/estimate": return self._json(200, self.studio.estimate(self._body_json()))
             if self.path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.acquire(self._body_json()))
