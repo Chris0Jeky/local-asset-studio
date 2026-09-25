@@ -92,6 +92,17 @@ class ProductionTests(unittest.TestCase):
                     studio.production.native({'kind': 'atlas', 'ids': ids})
         self.assertEqual(studio.production.list(), [])
 
+    def test_native_rejects_unknown_top_level_field_before_storing_project(self):
+        studio=FakeStudio(self.root,[])
+        asset=studio.import_image('paint.png','image/png',png())['asset']
+        payload={'kind':'ora','ids':[asset['id']],'options':{'clip':'paint-study'},'option':{'clip':'paint-study'}}
+        with self.assertRaisesRegex(ValueError,'Unknown native export field'):
+            studio.production.native(payload)
+        self.assertEqual(studio.production.list(),[])
+        with studio.production.connect() as db:
+            self.assertIsNone(db.execute('SELECT 1 FROM budgets').fetchone())
+            self.assertIsNone(db.execute('SELECT 1 FROM projects').fetchone())
+
     def test_register_edit_campaign_rejects_malformed_shapes_as_value_error(self):
         from scripts import character_edit_campaign as campaigns
         studio=FakeStudio(self.root,[]);good=campaigns.create('owner',3,campaign_id='2'*32)
