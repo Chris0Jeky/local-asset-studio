@@ -259,6 +259,31 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertNotIn("rotate-03", ids)
         self.assertIn("rotate-new", ids)
 
+    def test_terminal_action_receipt_is_not_evicted(self):
+        from large_job_prep_common import MAX_RECORDS
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        journal = self._fill_journal(controller, studio, ["completed"] * MAX_RECORDS)
+        journal["records"][0]["actions"] = [{"kind": "free", "state": "measured"}]
+        studio._write_json_atomic(controller.path, journal)
+        controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        ids = [record["request_id"] for record in controller._load()["records"]]
+        self.assertIn("rotate-00", ids)
+        self.assertNotIn("rotate-01", ids)
+
+    def test_full_action_journal_refuses_new_request(self):
+        from large_job_prep_common import MAX_RECORDS
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        journal = self._fill_journal(controller, studio, ["completed"] * MAX_RECORDS)
+        for record in journal["records"]:
+            record["actions"] = [{"kind": "free", "state": "measured"}]
+        studio._write_json_atomic(controller.path, journal)
+        before = controller.path.read_bytes()
+        with self.assertRaisesRegex(PreparationError, "retention is full"):
+            controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        self.assertEqual(controller.path.read_bytes(), before)
+
     def test_full_protected_journal_fails_closed_intact(self):
         from large_job_prep_common import MAX_RECORDS
         studio = Studio(self.root, [])

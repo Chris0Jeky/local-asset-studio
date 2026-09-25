@@ -46,7 +46,9 @@ class JournalMixin:
         else:
             if len(records) >= MAX_RECORDS:
                 for evict_index, candidate in enumerate(records):
-                    if candidate.get("state") in ("completed", "refused"):
+                    # An action intent is the only durable guard against replaying
+                    # /free or a restart after the request ID is retried.
+                    if candidate.get("state") in ("completed", "refused") and not candidate.get("actions"):
                         del records[evict_index]
                         break
                 else:
