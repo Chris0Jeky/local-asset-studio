@@ -72,6 +72,11 @@ class LifecycleMixin:
         final_backend, _ = self._backend_snapshot(
             expected_identity=restarted["process"], expected_profile_id=restarted["profile_id"]
         )
+        # A job arriving during observation/evaluation would otherwise be missed
+        # while the receipt still reports ready_after_restart. The restart already
+        # happened, so only in-flight work can still refuse readiness here, and
+        # this check runs after the gate release with no second terminate/launch.
+        self._check_work("Studio work changed while post-restart resources were being measured")
         return {"observation": observation, "evaluation": evaluation, "backend": final_backend}
 
     def _restart_held(self, journal: dict[str, Any], receipt: dict[str, Any], expected: dict[str, Any],

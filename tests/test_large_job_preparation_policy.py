@@ -61,6 +61,73 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertEqual(len(studio.free_calls), 1)
         self.assertEqual(studio.backends.launches, 0)
 
+    def test_release_holds_switch_gate_during_free_and_releases_afterward(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+        seen = {}
+        original = studio._request
+        def capture(route, **kwargs):
+            seen["busy_during_free"] = studio.backends.busy
+            return original(route, **kwargs)
+        studio._request = capture
+        result = self.controller(studio).run(self.request())
+        self.assertEqual(len(studio.free_calls), 1)
+        self.assertTrue(seen["busy_during_free"])
+        self.assertFalse(studio.backends.busy)
+        self.assertEqual(result["actions"][0]["kind"], "release")
+        self.assertEqual(result["actions"][0]["state"], "measured")
+
+    def test_switch_gate_held_before_release_claim_refuses_without_post(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB)])
+        controller = self.controller(studio)
+        original = type(controller)._claim_release_gate
+        def switch_then_claim(expected_identity, expected_profile_id):
+            # The switch arrives after observation but before release takes the gate.
+            with studio.lock:
+                studio.backends.busy = True
+            return original(controller, expected_identity, expected_profile_id)
+        controller._claim_release_gate = switch_then_claim
+        result = controller.run(self.request())
+        self.assertEqual(studio.free_calls, [])
+        self.assertTrue(studio.backends.busy)
+        self.assertEqual(result["actions"], [])
+        self.assertEqual(result["phase"], "refused")
+        self.assertIn("switching", result["final"]["reason"])
+
+    def test_lost_free_response_releases_own_gate_and_never_replays_or_restarts(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB)])
+        studio.free_error = TimeoutError("response lost")
+        seen = {}
+        original = studio._request
+        def capture(route, **kwargs):
+            seen["busy_during_free"] = studio.backends.busy
+            return original(route, **kwargs)
+        studio._request = capture
+        controller = self.controller(studio)
+        result = controller.run(self.request())
+        self.assertEqual(result["phase"], "release_response_unknown")
+        self.assertEqual(result["state"], "unknown")
+        self.assertEqual(len(studio.free_calls), 1)
+        self.assertTrue(seen["busy_during_free"])
+        self.assertFalse(studio.backends.busy)
+        self.assertEqual(studio.backends.launches, 0)
+        self.assertEqual([action["kind"] for action in result["actions"]], ["release"])
+        replay = controller.run(self.request())
+        self.assertTrue(replay["replayed"])
+        self.assertEqual(len(studio.free_calls), 1)
+        self.assertFalse(studio.backends.busy)
+        self.assertEqual(studio.backends.launches, 0)
+
+    def test_unresolved_work_at_rest_still_permits_free(self):
+        studio = Studio(self.root, [observation(commit=20 * GIB), observation(commit=40 * GIB)])
+        studio.jobs["u"] = {"status": "uncertain", "prompt_ids": ["p-1"],
+                            "submissions": [{"index": 0, "prompt_id": "p-1", "status": "observing"}]}
+        result = self.controller(studio).run(self.request())
+        self.assertEqual(len(studio.free_calls), 1)
+        self.assertEqual(studio.backends.history_requests, [])
+        self.assertEqual(result["phase"], "ready_after_release")
+        self.assertTrue(result["final"]["ready"])
+        self.assertFalse(studio.backends.busy)
+
 
     def test_unknown_production_state_fails_closed(self):
         # Interrupted plans block only a restart (test_large_job_preparation_classification).

@@ -90,6 +90,59 @@ class LargeJobPreparationLifecycleTests(LargeJobPreparationTestCase):
         self.assertEqual(studio.backends.launches, 1)
         self.assertNotEqual(result["actions"][1]["old_process"], result["actions"][1]["new_process"])
 
+    def test_late_studio_job_during_final_restart_snapshot_refuses_readiness(self):
+        studio = Studio(self.root, [
+            observation(commit=20 * GIB),
+            observation(commit=20 * GIB),
+            observation(commit=40 * GIB),
+        ])
+        studio.config["enable_large_job_backend_restart"] = True
+        original = studio.backends.current
+        original_wait = original.wait
+        def wait(timeout):
+            original_wait(timeout)
+            studio.backends.current = None
+            studio.backends.configured = []
+        original.wait = wait
+        controller = self.controller(studio)
+        original_snapshot = controller._backend_snapshot
+        original_check = controller._check_work
+        events: list[str] = []
+        def check(message, **kwargs):
+            events.append("check:" + message)
+            return original_check(message, **kwargs)
+        def snapshot(**kwargs):
+            value = original_snapshot(**kwargs)
+            if ("check:New Studio work arrived after restart; readiness was not granted" in events
+                    and "injected" not in events):
+                studio.jobs["late-arrival"] = {"status": "running"}
+                events.append("injected")
+            events.append("snapshot")
+            return value
+        controller._check_work = check
+        controller._backend_snapshot = snapshot
+        result = controller.run(self.request(allow_restart=True))
+        self.assertFalse(result["final"]["ready"])
+        self.assertEqual(result["phase"], "refused")
+        self.assertEqual(result["state"], "unknown")
+        self.assertIn(
+            "Studio work changed while post-restart resources were being measured",
+            result["final"]["reason"],
+        )
+        self.assertIn("injected", events)
+        self.assertLess(
+            events.index("injected"),
+            events.index("check:Studio work changed while post-restart resources were being measured"),
+        )
+        self.assertEqual(studio.backends.launches, 1)
+        self.assertTrue(original.terminated)
+        self.assertFalse(studio.backends.current.terminated)
+        self.assertFalse(result["generation_submitted"])
+        self.assertFalse(result["final"]["generation_submitted"])
+        self.assertEqual(len(result["actions"]), 2)
+        self.assertNotIn("after_restart", result)
+        self.assertFalse(studio.backends.busy)
+
     def test_launch_return_loss_is_reconciled_without_second_launch(self):
         studio = Studio(self.root, [
             observation(commit=20 * GIB),
