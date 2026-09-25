@@ -42,6 +42,14 @@ async def exercise(args):
             studio = SimpleNamespace(assets=store)
             json = fixture.Handler.json
 
+            # This fixture uses its own loopback origin, even while the owner's
+            # Studio is listening on 8191. Production host checks have their own tests.
+            def _safe_host(self):
+                return self.headers.get('Host') in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}')
+
+            def _safe_mutation(self):
+                return self._safe_host() and self.headers.get('Origin') in (f'http://127.0.0.1:{self.server.server_port}', f'http://localhost:{self.server.server_port}')
+
             def do_GET(self):
                 if self.path == '/api/workspace' or self.path.startswith('/api/assets/'):
                     reads.append(self.path)
@@ -65,7 +73,8 @@ async def exercise(args):
                     return
                 return super()._json(status, data)
 
-        http = ThreadingHTTPServer(('127.0.0.1', 8191), Handler)
+        http = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        port = http.server_port
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
 
@@ -85,7 +94,7 @@ async def exercise(args):
                     page = await context.new_page(); page.set_default_timeout(7000)
                     page.on('pageerror', lambda error: errors.append(str(error)))
                     if args.inert:
-                        await inert_page(page, 8191)
+                        await inert_page(page, port)
                         await page.expose_function('__shelfHash', lambda data: list(hashlib.sha256(bytes(data)).digest()))
                         await page.evaluate('''() => {
                           Object.defineProperty(window, 'crypto', {value:{getRandomValues: crypto.getRandomValues.bind(crypto),
@@ -97,8 +106,11 @@ async def exercise(args):
                         if retained is not None:
                             await page.evaluate('raw=>localStorage.setItem(StudioAssetRecoveryShelf.KEY,raw)', retained)
                     else:
-                        await page.goto('http://127.0.0.1:8191/#assets')
+                        await page.goto(f'http://127.0.0.1:{port}/#assets')
                     await page.wait_for_function('!!catalog && !!selected')
+                    # The shell removes the legacy nav; the workbench then replaces
+                    # showView with the current navigation adapter in one script turn.
+                    await page.wait_for_function('!!window.StudioShell && !!document.getElementById("homeView")')
                     await page.evaluate("showView('assets')")
                     await page.wait_for_function('assetState.assets.length===2')
                     return page
