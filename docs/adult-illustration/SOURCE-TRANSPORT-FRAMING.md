@@ -15,7 +15,8 @@ The default exchange reads through the real stdlib HTTP parser with a byte cap. 
 | Invalid Content-Length, multiple Transfer-Encoding fields, unsupported transfer coding, or both length and transfer coding, on a response that may carry a body | Refuse before body reading |
 | Properly framed chunked response | Retain the bounded decoded body; existing HTTP parse failures remain connection failures |
 | No framing length and no transfer coding | Retain the bounded close-delimited body |
-| 1xx, 204 or 304 status | Take the no-body branch before the ambiguity and length checks: expect zero body bytes, so an advertised full-representation length is not required and does not fail as oversize; duplicate or conflicting framing headers on these statuses are not checked; existing cache-validator and exact-route checks still decide acceptance |
+| 304 status | Take the no-body branch before the ambiguity and length checks: expect zero body bytes, so an advertised full-representation length does not fail as oversize; duplicate or conflicting framing headers are not checked; cache-validator and exact-route checks decide revalidation acceptance |
+| 1xx or 204 status | Take the same no-body branch without checking framing ambiguity, then reject the non-200 status; these statuses do not enter 304 cache revalidation |
 
 The ambiguity rows above apply only to responses that may carry a body. Duplicate lengths on such responses are deliberately rejected even where a general HTTP client could normalize identical duplicates. This metadata client does not need that permissive repair.
 
