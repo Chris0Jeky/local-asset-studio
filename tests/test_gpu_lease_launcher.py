@@ -98,6 +98,15 @@ class LauncherLeaseGateTests(unittest.TestCase):
             code, value = module.observe(self.root)
         self.assertEqual((code, value['state']), (20, 'unknown'))
 
+    def test_runtime_junction_cannot_authorize_from_another_workspace(self):
+        spec = importlib.util.spec_from_file_location('lease_launch_junction_test', GATE)
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        self.write({'record': None})
+        with patch.object(Path, 'is_junction', create=True, return_value=True):
+            code, value = module.observe(self.root)
+        self.assertEqual((code, value['state']), (20, 'unknown'))
+        self.assertEqual(json.loads(self.path.read_bytes()), {'record': None})
+
     def test_launcher_checks_before_backend_and_studio_launch_and_rechecks_at_spawn(self):
         source = (ROOT / 'scripts' / 'Start-Studio.ps1').read_text()
         self.assertIn('studio-gpu-lease-gate.py', source)

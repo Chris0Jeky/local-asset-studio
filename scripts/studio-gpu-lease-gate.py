@@ -36,7 +36,8 @@ def observe(root, now=None):
     """Return (exit code, JSON observation); uncertainty never permits launch."""
     path = Path(root) / '.runtime' / 'studio-gpu-lease.json'
     try:
-        if path.parent.is_symlink() or path.is_symlink():
+        if any(item.is_symlink() or (hasattr(item, 'is_junction') and item.is_junction())
+               for item in (path.parent, path)):
             raise ValueError('Linked lease state is not launch authority')
         try:
             mode = path.stat().st_mode
