@@ -5,15 +5,15 @@ function resetReferenceSlots(){referenceEpoch++;referencePending=0;referenceReco
 // Transient attachment intent belongs to the slot owner, not prompt/settings snapshots.
 // Epoch changes invalidate structural edits; the per-record token also rejects an older
 // upload/copy on the same unchanged slot. Tokens are never persisted as lineage or readiness.
-const referenceAttachments=new WeakMap(),referenceChecks=new WeakMap(),referenceObservations=new Set();
+const referenceAttachments=new WeakMap(),referenceChecks=new WeakMap(),referenceObservations=new Set(),referenceUploading=new Set();
 function beginReferenceAttachment(index){
   const slot=referenceRecords[index];
   if(!Number.isInteger(index)||index<0||!slot||!selected?.reference_slots?.[index])throw Error('The destination slot is no longer available.');
   const epoch=referenceEpoch,token={};let finished=false;
-  referenceAttachments.set(slot,token);referencePending++;updateReady();$('#referenceSummary').textContent='Uploading and validating…';
+  referenceAttachments.set(slot,token);referenceUploading.add(slot);referencePending++;updateReady();$('#referenceSummary').textContent='Uploading and validating…';
   return {
     current:()=>!finished&&epoch===referenceEpoch&&referenceRecords[index]===slot&&referenceAttachments.get(slot)===token,
-    finish(){if(finished)return;finished=true;if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
+    finish(){if(finished)return;finished=true;if(referenceAttachments.get(slot)===token)referenceUploading.delete(slot);if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
   };
 }
 async function attachReferenceAsset(index,id){
@@ -102,7 +102,7 @@ $('#referenceMode').onchange=e=>{
 };
 $('#referenceCards').addEventListener('change',e=>{
   const d=e.target.dataset;
-  if(d.refFile!==undefined){uploadRoleFile(Number(d.refFile),e.target.files[0]);return;}
+  if(d.refFile!==undefined){const file=e.target.files[0];e.target.value='';uploadRoleFile(Number(d.refFile),file);return;}
   for(const [key,field] of [['refRole','role'],['refContribution','contribution'],['refAvoid','avoid']])if(d[key]!==undefined)referenceRecords[Number(d[key])][field]=e.target.value;
 });
 $('#referenceCards').addEventListener('input',e=>{for(const [key,field] of [['refContribution','contribution'],['refAvoid','avoid']])if(e.target.dataset[key]!==undefined)referenceRecords[Number(e.target.dataset[key])][field]=e.target.value;});
@@ -121,7 +121,48 @@ $('#referenceCards').onclick=e=>{
   renderReferenceSlots();
 };
 $('#referenceCards').ondragover=e=>{e.preventDefault();};
-$('#referenceCards').ondrop=e=>{e.preventDefault();const card=e.target.closest('[data-ref-drop]');if(card)uploadRoleFile(Number(card.dataset.refDrop),e.dataTransfer.files[0]);};
+$('#referenceCards').ondrop=e=>{e.preventDefault();const card=e.target.closest('[data-ref-drop]');if(card)fillReferenceSlots(e.dataTransfer.files,Number(card.dataset.refDrop));};
+// Several pictures dropped or pasted at once fill the empty slots in order instead of vanishing silently (#772).
+// `first` is the card a drop landed on: it takes the first picture even when filled, exactly as a single drop did.
+// Every picture still goes through uploadRoleFile, so its size limit and the server's type check are unchanged.
+function emptyReferenceSlots(except=null){return referenceRecords.map((r,i)=>i).filter(i=>i!==except&&(!referenceRecords[i].file||referenceRecords[i].missing)&&!referenceUploading.has(referenceRecords[i]));}
+function fillReferenceSlots(files,first=null){
+  const pictures=[...(files||[])],targets=[...(first===null?[]:[first]),...emptyReferenceSlots(first)],placed=pictures.slice(0,targets.length);
+  placed.forEach((file,k)=>uploadRoleFile(targets[k],file));
+  const ignored=pictures.length-placed.length;
+  if(ignored)message(placed.length+' picture'+(placed.length===1?'':'s')+' added. '+ignored+' more '+(ignored===1?'was':'were')+' ignored: '+(placed.length?'no other reference slot is empty':'every reference slot is already filled')+'. Clear a slot to add '+(ignored===1?'it':'them')+'.',true);
+  return {placed:placed.length,ignored,slots:targets.slice(0,placed.length)};
+}
+// Pasting a picture on Create puts it into the first empty reference slot through the same path an upload or a drop
+// takes. A paste into a text field with text on the clipboard is never intercepted: the browser pastes the text (#772).
+const referencePasteTypes=['image/png','image/jpeg','image/webp'];
+function referenceInputEmpty(id){const input=$('#'+id);return !!input&&!input.files?.length&&!(id==='reference'?uploaded:lastUploaded);}
+function stageReferenceInput(id,file){
+  const input=$('#'+id),transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+}
+function pasteReference(e){
+  const create=$('#createView'),target=e.target,data=e.clipboardData;
+  if(!data||!create||create.hidden||!(target===document.body||create.contains(target))||target?.closest?.('dialog'))return 'ignored';
+  const files=[...(data.files||[])].filter(file=>String(file?.type||'').startsWith('image/'));
+  if(!files.length)return 'ignored';
+  if(target?.closest?.('input,textarea,select,[contenteditable]')&&[...(data.types||[])].includes('text/plain'))return 'ignored';
+  e.preventDefault();
+  if(!selected?.reference_slots?.length&&!selected?.reference&&!selected?.last_reference){message('This recipe takes no reference picture — choose a reference recipe first, or import the picture in Workspace.',true);return 'no-reference';}
+  const pictures=files.filter(file=>referencePasteTypes.includes(file.type));
+  if(!pictures.length){message('Paste a PNG, JPG or WebP picture. Nothing was added.',true);return 'refused';}
+  if(pictures.some(file=>file.size>20*1024*1024)){message('Reference image exceeds 20 MiB. Nothing was added.',true);return 'refused';}
+  const slots=selected?.reference_slots?.length?emptyReferenceSlots():[];
+  const inputs=[['reference',!!selected?.reference&&!$('#referenceWrap').hidden],['lastReference',!!selected?.last_reference&&!$('#lastReferenceWrap').hidden]].filter(([id,shown])=>shown&&referenceInputEmpty(id)).map(([id])=>id);
+  const toSlots=pictures.slice(0,slots.length),toInputs=pictures.slice(toSlots.length,toSlots.length+inputs.length),ignored=pictures.length-toSlots.length-toInputs.length;
+  if(!toSlots.length&&!toInputs.length){message('Every reference slot is already filled. Clear one, then paste again.',true);return 'full';}
+  if(toSlots.length)fillReferenceSlots(toSlots);
+  toInputs.forEach((file,k)=>stageReferenceInput(inputs[k],file));
+  const names=[...slots.slice(0,toSlots.length).map(i=>'Picture '+(i+1)),...inputs.slice(0,toInputs.length).map(id=>$('#'+id+'Label')?.textContent||id)];
+  message('Pasted into '+names.join(', ')+'.'+(ignored?' '+ignored+' more picture'+(ignored===1?' was':'s were')+' ignored: every other slot is filled.':''),!!ignored);
+  return 'pasted';
+}
+document.addEventListener('paste',pasteReference);
 $('#previewResolvedRecipe').onclick=async()=>{
   try{const result=await post('/api/preview',{preset_id:selected.id,...continuationPayload(),controls:values(),references:attachedReferencePayload(),parent_assets:parentAssets,batch_count:$('#batch').value});$('#graphPreview').textContent=JSON.stringify(result,null,2);$('#graphPreview').closest('details').open=true;message('Resolved recipe previewed. No generation submitted.');}
   catch(e){message(e.message,true);}

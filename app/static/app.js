@@ -568,6 +568,26 @@ $('#generate').onclick=async()=>{
     const job=await post('/api/jobs',intent);activeJobId=job.id;message(job.message);await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };
+// Ctrl+Enter (Cmd+Enter on a Mac) anywhere in Create does what one click on the Generate button does and nothing more:
+// it clicks the real button only while that button is visible and enabled, so the handler's busy guard, readiness gate and
+// intent snapshot still decide. A held key repeats keydown; a repeat never submits. A blocked button explains itself (#772).
+function generateShortcutBlocker(button){
+  if(submitting)return 'A run is already being submitted. Wait for it to finish.';
+  if(!button.disabled)return 'Generate is not on screen. Open Create, then press Ctrl+Enter again.';
+  return String($('#uxBlockers .ux-blocker p')?.textContent||'').trim()||'Generate is not available yet. Review the readiness checks.';
+}
+function generateShortcut(e){
+  if(e.key!=='Enter'||!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey||e.isComposing)return 'ignored';
+  const button=$('#generate'),create=$('#createView'),target=e.target;
+  if(!button||!create||create.hidden||!(target===document.body||create.contains(target))||target?.closest?.('dialog'))return 'ignored';
+  e.preventDefault();
+  if(e.repeat)return 'repeat';
+  const visible=!button.closest('[hidden]')&&button.getClientRects().length>0;
+  if(submitting||button.disabled||!visible){message(generateShortcutBlocker(button),true);return 'blocked';}
+  button.click();return 'clicked';
+}
+document.addEventListener('keydown',generateShortcut);
+if(typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.platform||'')){const hint=$('#generateShortcut');if(hint){hint.textContent='⌘ Enter';hint.title='Press Cmd+Enter anywhere in Create to generate';}}
 $('#gallery').onclick=async e=>{
   try{
     const mixed=e.target.closest('[data-mixed-action]');if(mixed){await mixedBatchAction(mixed);return;}
