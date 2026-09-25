@@ -8,7 +8,7 @@ compatibility (`grok inspect` labels them `project [claude]`).
 ## Start here
 
 1. `../CLAUDE.md` (canon) and the Grok section of `../AGENTS.md`.
-2. `../CURRENT_STATE.md` head for executed evidence; `../HUMAN_TODO.md` for human-only choices.
+2. `../CURRENT_STATE.md` head for executed evidence; `../HUMAN_TODO.md` for owner decisions and actions.
 3. `../.claude/skills/README.md` — pick the one Studio skill that matches (`studio-preset-slice`,
    `studio-execution-evidence`, `studio-native-adapter`, `studio-runtime-models`,
    `studio-session-closeout`); global skills cover the rest.

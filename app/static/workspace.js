@@ -1,3 +1,5 @@
+// Thumbnail rendering version; keep in step with THUMB_VERSION in app/asset_thumbs.py (tests/test_asset_thumbs.py pins both).
+const ASSET_THUMB_VERSION = 1;
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
 let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0, assetObservedWorkspace;
 // The tab journal retains drafts and exact commands; Workspace owns saved metadata.
@@ -468,9 +470,13 @@ function assetSelectionCanProceed(action) {
   return !selection.hidden || window.confirm((labels[action]||'This action')+' will include '+selection.hidden+(selection.hidden===1?' selected asset':' selected assets')+' outside this view. Continue with all '+assetSelection.size+' selected assets? Cancel to review the selection or keep only visible assets.');
 }
 function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=null;$('#assetSearch').value='';$('#assetType').value='all';renderAssets();$('#assetSearch').focus();}
+// Small previews use the server's cached WEBP thumbnail; detail and review views keep the original.
+// ?v=<rendering version>-<sha256 prefix> names the bytes, so only then may the server mark the response immutable
+// (an ID alone can recur across Workspaces).
+function assetThumbUrl(asset) {return '/api/assets/'+encodeURIComponent(asset.id)+'/thumb?v='+ASSET_THUMB_VERSION+'-'+encodeURIComponent(String(asset.sha256||'').slice(0,16));}
 function assetPreview(asset, detail=false) {
   const url=asset.url, alt=esc(asset.title);
-  if(asset.media_type==='image')return '<img loading="lazy" src="'+url+'" alt="'+alt+'">';
+  if(asset.media_type==='image')return detail?'<img loading="lazy" decoding="async" src="'+url+'" alt="'+alt+'">':'<img loading="lazy" decoding="async" src="'+esc(assetThumbUrl(asset))+'" data-full-src="'+esc(url)+'" alt="'+alt+'">';
   if(asset.media_type==='video')return '<video '+(detail?'controls':'muted')+' preload="metadata" src="'+url+'" aria-label="'+alt+'"></video>';
   if(asset.media_type==='audio')return detail?'<audio controls src="'+url+'"></audio>':'<span class="asset-type-placeholder">♫<small>Audio</small></span>';
   return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder">◇<small>3D model</small></span>';
@@ -1016,6 +1022,8 @@ document.addEventListener('click',async e=>{
     }
   }catch(err){assetMessage(err.message,true);message(err.message,true);}
 });
+// A thumbnail the server cannot produce (unreadable image, older server) falls back once to the original file.
+document.addEventListener('error',e=>{const image=e.target;if(image?.tagName!=='IMG'||!image.dataset?.fullSrc||!image.isConnected||!image.getAttribute('src'))return;const full=image.dataset.fullSrc;delete image.dataset.fullSrc;image.src=full;},true);
 // A checkbox click precedes its change event; remember only whether Shift was held for that click.
 document.addEventListener('click',e=>{if(e.target?.dataset?.assetCheck!==undefined)assetCheckShift=!!e.shiftKey;},true);
 document.addEventListener('change',e=>{if(e.target?.dataset?.assetCheck)toggleAssetCheck(e.target);});

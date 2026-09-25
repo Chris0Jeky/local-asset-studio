@@ -15,7 +15,7 @@ An agent's judgement is a pre-review. It never replaces the owner's eye.
 | **human-accepted** | the owner, in their own words | the owner likes it enough to use it |
 | **licensed** | the model terms | the use is allowed |
 
-Agents write "agent-judged", never "accepted" or "approved", and never tick a `HUMAN_TODO.md` item.
+Agents write "agent-judged", never "accepted" or "approved", and never tick a `HUMAN_TODO.md` item on the strength of an agent judgement.
 
 ## The six scores
 

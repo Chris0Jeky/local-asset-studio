@@ -11,7 +11,7 @@ it, so the Grok section at the bottom overrides the Codex facts for Grok session
 
 1. `CLAUDE.md` — repo facts, proving checks, architecture, pitfalls.
 2. `CURRENT_STATE.md` head — executed evidence versus plans; reconcile claims against code and `.runtime/`.
-3. `HUMAN_TODO.md` — human-only creative choices; surface open items in every summary, never tick them.
+3. `HUMAN_TODO.md` — owner decisions and actions; surface open items in every summary. Tick an item only on verified completion, or when the owner answered every part and its stated conditions hold, recording how and when; never infer a decision or art acceptance.
 4. `docs/PROJECT-OPERATING-MODEL.md` — issue type/readiness, three-line WIP limit, stack order and evidence placement.
 5. If you are Codex, read `.codex/README.md` and `.codex/memories/00_ACTIVE.md`. If you are Grok, read `.grok/README.md`.
 6. Authority: `.agent-harness/tier.json` (T2, push free, merge free). Read it live; never infer it from prose.

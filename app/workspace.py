@@ -245,11 +245,15 @@ class AssetWorkspace:
         return self._asset(row)
 
     def file(self, asset_id):
+        return self.file_entry(asset_id)[0]
+
+    def file_entry(self, asset_id):
+        """(snapshot path, asset record): the contained media file and the row whose sha256 names its bytes."""
         asset = self.get(asset_id)
         path = (self.root / asset["path"]).resolve()
         if self.media.resolve() not in path.parents or not path.is_file():
             raise WorkspaceError("Asset snapshot is unavailable")
-        return path
+        return path, asset
 
     def snapshot(self):
         with self.connection() as db:
