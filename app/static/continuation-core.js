@@ -214,10 +214,23 @@
       return 'Remove the extra board picture before replacing the pose with a drawing.';
     return '';
   }
+  // An engine switch without a fresh guide keeps the restored drawn picture but the old
+  // allowlist dropped its editable sidecar. A valid drawn guide keeps its artifact ID and its
+  // declared Studio pose renderer so the editor can still read its drawing; anything else stays filtered.
+  const DRAWN_GUIDE=/^[a-f0-9]{32}_drawn-pose\.png$/,GUIDE_ID=/^[a-f0-9]{64}$/;
+  const POSE_RENDERERS=['studio.coco18-lines/v1','studio.coco18-openpose-xinsir/v1'];
   function combineReferences(preset,refs){
     const filled=refs.filter(r=>r?.file);
     if(filled.length>preset.reference_slots.length)throw Error('The destination cannot keep every attached picture.');
-    return preset.reference_slots.map((slot,i)=>({role:slot.role,contribution:'',avoid:'',file:null,...Object.fromEntries(Object.entries(filled[i]||{}).filter(([key])=>['file','sha256','bytes','width','height','parent_asset','missing'].includes(key)))}));
+    return preset.reference_slots.map((slot,i)=>{
+      const source=filled[i]||{};
+      const kept=Object.fromEntries(Object.entries(source).filter(([key])=>['file','sha256','bytes','width','height','parent_asset','missing'].includes(key)));
+      if(typeof source.file==='string'&&DRAWN_GUIDE.test(source.file)&&typeof source.artifact_id==='string'&&GUIDE_ID.test(source.artifact_id)){
+        kept.artifact_id=source.artifact_id;
+        if(POSE_RENDERERS.includes(source.renderer))kept.renderer=source.renderer;
+      }
+      return{role:slot.role,contribution:'',avoid:'',file:null,...kept};
+    });
   }
   function sameCombinePair(current,job,presets){
     const first=presets.find(p=>p.id===current?.preset_id),second=presets.find(p=>p.id===job?.preset_id),kind=combineKind(first);

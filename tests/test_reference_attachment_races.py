@@ -15,4 +15,4 @@ class ReferenceAttachmentRaceTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("# fail 0", result.stdout)
-        self.assertIn("# tests 13", result.stdout)
+        self.assertIn("# tests 16", result.stdout)

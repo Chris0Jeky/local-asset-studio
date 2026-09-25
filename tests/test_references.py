@@ -258,3 +258,84 @@ class KleinBoardTests(unittest.TestCase):
         g=klein_board_graph(); ref.compile_references(self.preset,g,[{'role':'pose','file':'a.png'},{'role':'pose','file':'c.png'}],self.root)
         self.assertEqual((g['6']['inputs']['positive'],g['27']['inputs']['conditioning'],g['23']['inputs']['conditioning']),(['27',0],['23',0],['17',0]))
         self.assertEqual((g['20']['inputs']['image'],g['24']['inputs']['image']),('a.png','c.png'))
+
+
+class DrawnPoseSidecarTests(unittest.TestCase):
+    """A drawn guide keeps its editable sidecar through compilation; ordinary uploads never do."""
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
+        sys.path.insert(0,str(ROOT))
+        from studio_workflow.pose_raster import RENDERER
+        self.renderer=RENDERER
+        self.drawn='ab'*16+'_drawn-pose.png'
+        self.drawn2='cd'*16+'_drawn-pose.png'
+        Image.new('RGB',(400,600),'teal').save(self.root/self.drawn)
+        Image.new('RGB',(400,600),'teal').save(self.root/self.drawn2)
+        Image.new('RGB',(400,600),'teal').save(self.root/'plain.png')
+        self.preset={'positive':['6','prompt'],'max_reference_pixels':1024*1024,
+                     'reference_slots':[{'binding':['4','image']},{'binding':['16','image']}]}
+        self.graph={'4':{'class_type':'LoadImage','inputs':{'image':'default'}},'16':{'class_type':'LoadImage','inputs':{'image':'default'}},
+                    '5':scaler('4'),'18':scaler('16'),'6':{'class_type':'TextEncodeQwenImageEditPlus','inputs':{'prompt':'Hold a compass'}}}
+        self.board={'positive':['2','text'],'reference_board':{'min':1},
+                    'reference_slots':[{'role':'style','binding':['10','image']},{'role':'style','binding':['30','image']},{'role':'style','binding':['31','image']}]}
+        for name in ('a.png','b.png','c.png'): Image.new('RGB',(300,400),'teal').save(self.root/name)
+    def tearDown(self):self.temp.cleanup()
+
+    def test_valid_drawn_guide_keeps_sidecar_through_single_reference_path(self):
+        supplied=[{'role':'identity','file':self.drawn,'contribution':'Pose','avoid':'Face','artifact_id':'ef'*32,'renderer':self.renderer},
+                  {'role':'pose','file':'pose.png','contribution':'Hands','avoid':'Clothes'}]
+        Image.new('RGB',(600,400),'gold').save(self.root/'pose.png')
+        before=copy.deepcopy(supplied)
+        result=ref.compile_references(self.preset,copy.deepcopy(self.graph),supplied,self.root)
+        self.assertEqual(result[0]['artifact_id'],'ef'*32)
+        self.assertEqual(result[0]['renderer'],self.renderer)
+        self.assertNotIn('artifact_id',result[1]);self.assertNotIn('renderer',result[1])
+        self.assertEqual(supplied,before)
+
+    def test_valid_drawn_guide_keeps_sidecar_through_board_path(self):
+        supplied=[{'role':'style','file':self.drawn,'artifact_id':'12'*32,'renderer':self.renderer},
+                  {},{'role':'style','file':'c.png'}]
+        records=ref.compile_references(self.board,board_graph(),supplied,self.root)
+        self.assertEqual(records[0]['artifact_id'],'12'*32)
+        self.assertEqual(records[0]['renderer'],self.renderer)
+        self.assertNotIn('artifact_id',records[2]);self.assertNotIn('renderer',records[2])
+        plain=[{'role':'style','file':self.drawn2},{},{'role':'style','file':'c.png'}]
+        legacy=ref.compile_references(self.board,board_graph(),plain,self.root)
+        self.assertNotIn('artifact_id',legacy[0]);self.assertNotIn('renderer',legacy[0])
+
+    def test_drawn_guide_without_sidecar_stays_a_legacy_record(self):
+        Image.new('RGB',(600,400),'gold').save(self.root/'pose.png')
+        supplied=[{'role':'identity','file':self.drawn,'contribution':'Pose','avoid':'Face'},
+                  {'role':'pose','file':'pose.png','contribution':'Hands','avoid':'Clothes'}]
+        result=ref.compile_references(self.preset,copy.deepcopy(self.graph),supplied,self.root)
+        self.assertNotIn('artifact_id',result[0]);self.assertNotIn('renderer',result[0])
+
+    def test_malformed_sidecar_on_a_drawn_guide_is_rejected(self):
+        Image.new('RGB',(600,400),'gold').save(self.root/'pose.png')
+        base=[{'role':'identity','file':self.drawn,'contribution':'Pose','avoid':'Face'},
+              {'role':'pose','file':'pose.png','contribution':'Hands','avoid':'Clothes'}]
+        for bad in ('xyz','AB'*32,'12'*31,'',123,True,None):
+            supplied=copy.deepcopy(base);supplied[0]['artifact_id']=bad
+            with self.assertRaises(ValueError):ref.compile_references(self.preset,copy.deepcopy(self.graph),supplied,self.root)
+            with self.assertRaises(ValueError):ref.compile_references(self.board,board_graph(),
+                [{'role':'style','file':self.drawn,'artifact_id':bad},{},{'role':'style','file':'c.png'}],self.root)
+        for bad in ('bogus-renderer','',123,None):
+            supplied=copy.deepcopy(base);supplied[0]['artifact_id']='ab'*32;supplied[0]['renderer']=bad
+            with self.assertRaises(ValueError):ref.compile_references(self.preset,copy.deepcopy(self.graph),supplied,self.root)
+            with self.assertRaises(ValueError):ref.compile_references(self.board,board_graph(),
+                [{'role':'style','file':self.drawn,'renderer':bad},{},{'role':'style','file':'c.png'}],self.root)
+        with self.assertRaisesRegex(ValueError,'requires artifact_id'):
+            ref.compile_references(self.board,board_graph(),
+                [{'role':'style','file':self.drawn,'renderer':self.renderer},{},{'role':'style','file':'c.png'}],self.root)
+
+    def test_ordinary_upload_never_carries_sidecar_metadata(self):
+        Image.new('RGB',(600,400),'gold').save(self.root/'pose.png')
+        supplied=[{'role':'identity','file':'plain.png','contribution':'Face','avoid':'Pose','artifact_id':'ab'*32,'renderer':self.renderer},
+                  {'role':'pose','file':'pose.png','contribution':'Hands','avoid':'Clothes','artifact_id':'cd'*32,'renderer':self.renderer}]
+        result=ref.compile_references(self.preset,copy.deepcopy(self.graph),supplied,self.root)
+        for record in result: self.assertNotIn('artifact_id',record);self.assertNotIn('renderer',record)
+        records=ref.compile_references(self.board,board_graph(),
+            [{'role':'style','file':'a.png','artifact_id':'ab'*32,'renderer':self.renderer},
+             {'role':'style','file':'b.png'},{'role':'style','file':'c.png'}],self.root)
+        for record in records:
+            if record.get('file') is not None: self.assertNotIn('artifact_id',record);self.assertNotIn('renderer',record)
