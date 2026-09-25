@@ -995,9 +995,9 @@ document.addEventListener('click',async e=>{
       const ids=[...assetSelection], action=bulk.dataset.bulk;if(!ids.length)return;
       if(action==='export'){assetMessage('Building a pack with originals, recipes and metadata…');const result=await post('/api/assets/export',{ids});const link=document.createElement('a');link.href=result.url;link.download='asset-pack.zip';link.click();assetMessage('Export ready: '+result.count+' assets with recipes and provenance.');return;}
       if(action==='agent_run' || action==='mine'){
-        const run_label=action==='agent_run'?assetRunLabelChoice():null,hidden=assetSource()==='mine';
+        const run_label=action==='agent_run'?assetRunLabelChoice():null;
         await mutateAssets({ids,action:'edit',run_label});const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();
-        assetMessage((run_label?'Marked '+ids.length+' as agent runs ('+run_label+').'+(hidden||assetSource()==='mine'?' The Mine view hides them; choose All sources or Agent runs to see them.':''):'Marked '+ids.length+' as yours; their run label is cleared.')+' Mark as '+(run_label?'mine':'agent run')+' reverses it.'+(changed?' Your changed selection was kept.':''));
+        assetMessage((run_label?'Marked '+ids.length+' as agent runs ('+run_label+').'+(assetSource()==='mine'?' The Mine view hides them; choose All sources or Agent runs to see them.':''):'Marked '+ids.length+' as yours; their run label is cleared.')+' Mark as '+(run_label?'mine':'agent run')+' reverses it.'+(changed?' Your changed selection was kept.':''));
         return;
       }
       const payload={ids,action,collection_id:$('#bulkCollection').value};
