@@ -164,17 +164,23 @@ class GpuLease:
             except ValueError as exc:
                 raise GpuLeaseError(str(exc)[:400] + ". Nothing was stopped", code="backend_not_idle") from exc
             stopped = []
-            for key, profile, process in targets:
-                if process is None: continue
+            def checked_identity(key, profile, process):
                 try:
-                    manager._idle(profile)  # recheck just before termination, as a backend switch does
-                    identity = {"profile": key, "pid": process.pid, "created_at": process.create_time(), "entry": profile["entry"]}
+                    manager._idle(profile)
+                    return {"profile": key, "pid": process.pid, "created_at": process.create_time(), "entry": profile["entry"]}
                 except ValueError as exc:
                     raise GpuLeaseError(str(exc)[:400] + ". Processes already stopped: " + json.dumps(stopped), code="backend_not_idle",
                                         stopped_processes=stopped) from exc
                 except Exception as exc:
                     raise GpuLeaseError("ComfyUI process identity could not be re-read; it was preserved: " + str(exc)[:200],
                                         code="backend_not_idle", stopped_processes=stopped) from exc
+            # Finish every strict idle/identity check before the first physical
+            # stop. Keep the immediate checks too: external work can still race.
+            for key, profile, process in targets:
+                if process is not None: checked_identity(key, profile, process)
+            for key, profile, process in targets:
+                if process is None: continue
+                identity = checked_identity(key, profile, process)
                 try: process.terminate(); process.wait(timeout=STOP_WAIT_SECONDS)
                 except Exception as exc:
                     # Termination may still complete later; the lease is not granted, so the holder must not load.
