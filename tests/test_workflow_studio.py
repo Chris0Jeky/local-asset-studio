@@ -6,6 +6,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import io
 import json
 from pathlib import Path
+import shutil
+import subprocess
 import tempfile
 import threading
 from types import SimpleNamespace
@@ -251,5 +253,14 @@ class HTTPTests(unittest.TestCase):
             with self.assertRaises(ValueError): Client(url)
         with self.assertRaises(ValueError): Client(self.url, float('nan'))
 
+
+class TypedTextFrontendTests(unittest.TestCase):
+    """The shipped editor script in Node, without a browser: re-renders keep what the user is typing."""
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_typed_name_and_inspector_values_survive_rerender_and_number_box_follows_slider(self):
+        result = subprocess.run([shutil.which('node'), str(Path(__file__).with_name('workflow_studio_typed_frontend.cjs'))],
+                                capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('number boxes and sliders stay in sync', result.stdout)
 
 if __name__ == '__main__': unittest.main()

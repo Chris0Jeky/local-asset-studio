@@ -35,7 +35,7 @@
     persist(); render();
   }
   function edit(action) { const next = clone(doc); action(next); changed(next); }
-  function replace(next) { safeNumbers(next); document.dispatchEvent(new Event('workflow:replace')); undo = []; redo = []; doc = null; selected = null; camera = null; changed(next, false); status('Draft loaded. Check connections before exporting. Nothing was queued.'); }
+  function replace(next) { safeNumbers(next); document.dispatchEvent(new Event('workflow:replace')); undo = []; redo = []; doc = null; selected = null; camera = null; nameForced = true; changed(next, false); status('Draft loaded. Check connections before exporting. Nothing was queued.'); }
   function discard() { return !doc || window.confirm('Replace the current draft? Save a document file first to keep it.'); }
   function download(name, value) { const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2) + '\n'], {type: 'application/json'})); const a = el('a', '', {href: url, download: name}); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   function defaultValue(spec) {
@@ -47,7 +47,7 @@
     return undefined;
   }
   function addNode(kind) {
-    if (!doc) replace({format: 'studio.workflow/v1', name: 'Untitled workflow', revision: 0, backend_id: schema.backend_id, schema_sha256: schema.schema_sha256, nodes: {}, outputs: [], disabled: [], bypass: {}, positions: {}});
+    if (!doc) replace({format: 'studio.workflow/v1', name: $('#workflowName').value.trim().slice(0, 160) || 'Untitled workflow', revision: 0, backend_id: schema.backend_id, schema_sha256: schema.schema_sha256, nodes: {}, outputs: [], disabled: [], bypass: {}, positions: {}});
     if (Object.keys(doc.nodes).length >= 256) return status('This authoring slice supports at most 256 nodes.');
     let id = 1; while (doc.nodes[String(id)]) id++;
     selected = String(id);
@@ -160,15 +160,34 @@
     label.append(select); host.append(label);
   }
   function checkbox(text, checkedValue, fn) { const label = el('label', null, {class: 'wf-check'}); const input = el('input', null, {type: 'checkbox'}); input.checked = checkedValue; input.onchange = () => fn(input.checked); label.append(input, document.createTextNode(text)); return label; }
+  // A re-render (schema refresh, another module's change) rebuilds the inspector. A value typed but not yet
+  // committed is written back with its focus and caret when the same node is shown again (#772). Committing
+  // marks a field clean first, so the render a commit causes shows the document, and an invalid entry resets.
+  let inspectorNode = null;
+  function typedInspectorField(host) {
+    const active = document.activeElement;
+    if (!active?.dataset?.wfField || !host.contains(active) || active.value === active.wfRendered) return null;
+    return {node: inspectorNode, key: active.dataset.wfField, value: active.value, start: active.selectionStart, end: active.selectionEnd, direction: active.selectionDirection};
+  }
+  function restoreInspectorField(host, typed) {
+    const input = typed && typed.node === inspectorNode && [...host.querySelectorAll('[data-wf-field]')].find(x => x.dataset.wfField === typed.key);
+    if (!input) return;
+    input.value = typed.value; input.focus({preventScroll: true});
+    try { if (typeof typed.start === 'number' && typeof typed.end === 'number') input.setSelectionRange(typed.start, typed.end, typed.direction || 'none'); } catch (_) { /* number inputs have no caret */ }
+  }
   function renderInspector() {
-    const host = $('#nodeInspector'); host.replaceChildren(el('h3', 'Node settings'));
+    const host = $('#nodeInspector'), typed = typedInspectorField(host);
+    inspectorNode = selected; buildInspector(host); restoreInspectorField(host, typed);
+  }
+  function buildInspector(host) {
+    host.replaceChildren(el('h3', 'Node settings'));
     if (!doc || !selected || !doc.nodes[selected]) { host.append(el('p', 'Select a node in the diagram or list.')); return; }
     const id = selected, node = doc.nodes[id], kind = schema?.nodes[node.class_type];
     host.append(el('strong', `${id} · ${kind?.name || node.class_type}`));
     host.append(checkbox('Enabled', !doc.disabled.includes(id), checkedValue => edit(next => { next.disabled = next.disabled.filter(x => x !== id); if (!checkedValue) next.disabled.push(id); })));
     if (kind?.output_node) host.append(checkbox('Include this output', doc.outputs.includes(id), checkedValue => edit(next => { next.outputs = next.outputs.filter(x => x !== id); if (checkedValue) next.outputs.push(id); })));
     const coordinates = el('div', null, {class: 'wf-position'}), current = position(id, Object.keys(doc.nodes).indexOf(id));
-    ['X', 'Y'].forEach((axis, i) => { const label = el('label', axis), input = el('input', null, {type: 'number', min: '0', max: '100000'}); input.value = current[i]; input.onchange = () => { if (!input.checkValidity() || !Number.isFinite(input.valueAsNumber)) return status('Use a finite position from 0 to 100000.'); edit(next => { next.positions[id] = [...current]; next.positions[id][i] = input.valueAsNumber; }); }; label.append(input); coordinates.append(label); }); host.append(coordinates);
+    ['X', 'Y'].forEach((axis, i) => { const label = el('label', axis), input = el('input', null, {type: 'number', min: '0', max: '100000', 'data-wf-field': 'position-' + axis}); input.value = current[i]; input.wfRendered = input.value; input.onchange = () => { input.wfRendered = input.value; if (!input.checkValidity() || !Number.isFinite(input.valueAsNumber)) return status('Use a finite position from 0 to 100000.'); edit(next => { next.positions[id] = [...current]; next.positions[id][i] = input.valueAsNumber; }); }; label.append(input); coordinates.append(label); }); host.append(coordinates);
     if (!kind) host.append(el('p', 'Node class unavailable. Original input data is retained; load its installed environment or keep it for native editing.'));
     else {
       if (kind.description) host.append(el('p', kind.description));
@@ -234,15 +253,15 @@
           input = checkbox('On / off', value === true, setValue); input.querySelector('input').setAttribute('aria-label', spec.name);
         } else {
           const wide = spec.type === 'STRING' && wideText(spec, value);
-          input = el(wide ? 'textarea' : 'input', null, {'aria-label': spec.name});
+          input = el(wide ? 'textarea' : 'input', null, {'aria-label': spec.name, 'data-wf-field': spec.name});
           if (wide) { input.rows = 4; input.className = 'wf-text'; input.oninput = () => grow(input); }
           else if (spec.type === 'STRING') input.type = 'text';
           else {
             input.type = 'number'; input.step = spec.type === 'INT' ? '1' : 'any';
             input.min = Math.max(-MAX, spec.options.min ?? -MAX); input.max = Math.min(MAX, spec.options.max ?? MAX);
           }
-          input.value = present && !isLink(value) ? value : '';
-          input.onchange = () => { try { const v = spec.type === 'STRING' ? input.value : input.valueAsNumber; safeNumbers(v); if (!input.checkValidity() || (spec.type === 'INT' && !Number.isInteger(v))) throw Error('Use a value inside the declared range. Integer fields require whole numbers.'); setValue(v); } catch (error) { status(error.message); renderInspector(); } };
+          input.value = present && !isLink(value) ? value : ''; input.wfRendered = input.value;
+          input.onchange = () => { input.wfRendered = input.value; try { const v = spec.type === 'STRING' ? input.value : input.valueAsNumber; safeNumbers(v); if (!input.checkValidity() || (spec.type === 'INT' && !Number.isInteger(v))) throw Error('Use a value inside the declared range. Integer fields require whole numbers.'); setValue(v); } catch (error) { status(error.message); renderInspector(); } };
           if (wide) { control.append(input); const wider = button('Expand', () => expand(spec.name, input.value, next => { input.value = next; grow(input); setValue(next); })); wider.className = 'wf-expand-open';
             wider.onpointerdown = e => e.preventDefault(); /* Keep the textarea focused so its change event cannot re-render the inspector under this click. */ control.append(wider); requestAnimationFrame(() => grow(input)); return; }
         }
@@ -250,14 +269,26 @@
         if (['INT', 'FLOAT'].includes(spec.type) && Number.isFinite(spec.options.min) && Number.isFinite(spec.options.max) && spec.options.max <= 10000 && spec.options.min >= -10000) {
           const range = el('input', null, {type: 'range', min: spec.options.min, max: spec.options.max, step: spec.type === 'INT' ? '1' : String(spec.options.step || 'any'), 'aria-label': spec.name + ' slider'}); range.value = typeof value === 'number' ? value : spec.options.min;
           range.onchange = () => setValue(Number(range.value)); control.append(range);
+          // One setting, two controls: each follows the other while it moves, before either commits (#772).
+          input.oninput = () => { if (input.value !== '' && Number.isFinite(input.valueAsNumber)) range.value = input.value; };
+          range.oninput = () => { input.value = range.value; };
         }
       }
     }
     mode.onchange = () => { if (mode.value === 'value') { const d = defaultValue(spec); if (d !== undefined) setValue(d); } else show('link'); };
     show(mode.value); host.append(field);
   }
+  // The name box is committed on change, so a background render must not replace a name being typed: a focused
+  // box, or one edited since the last render, keeps its text (#772). A loaded document brings its own name.
+  let nameRendered = $('#workflowName').value, nameForced = false;
+  function renderName() {
+    const box = $('#workflowName'), name = doc?.name || 'Untitled workflow';
+    const typing = box === document.activeElement || box.value !== nameRendered;
+    if (!typing || nameForced) { box.value = name; nameRendered = name; } else if (box.value === name) nameRendered = name;
+    nameForced = false;
+  }
   function render() {
-    $('#workflowName').value = doc?.name || 'Untitled workflow';
+    renderName();
     $('#undoWorkflow').disabled = !undo.length; $('#redoWorkflow').disabled = !redo.length;
     for (const id of ['saveWorkflow', 'compileWorkflow']) $('#' + id).disabled = !doc || (id === 'compileWorkflow' && !schema);
     $('#rebaseWorkflow').disabled = !doc || !schema || (doc.schema_sha256 === schema.schema_sha256 && doc.backend_id === schema.backend_id);
