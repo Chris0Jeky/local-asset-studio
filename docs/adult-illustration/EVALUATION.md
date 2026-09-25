@@ -103,7 +103,7 @@ A result record:
 - requires the corpus, route manifest and result to declare the same lowercase 40-hex source baseline;
 - uses a real ISO calendar date rather than arbitrary date-shaped text;
 - names the selected cases, phase, route and prompt variant;
-- records a declared cap but does not create or expand an allowance;
+- records a declared cap (`study.declared_candidate_cap`) but does not create or expand an allowance; the corpus `authorized_candidate_cap: 0` remains the independent execution authority;
 - requires non-synthetic evidence to pin route configuration, graph, source set, external campaign and authorization references;
 - retains one record for every actual candidate, including refusals, unsupported controls, no-ops, OOMs, crashes, binding faults, cancellations and uncertain submissions;
 - requires contiguous candidate ordinals and exact attempted/retained/accepted accounting;
@@ -125,7 +125,7 @@ python -m unittest tests.test_adult_illustration_benchmark_result_cli -v
 python -m unittest tests.test_adult_illustration_benchmark_result_integrity -v
 ```
 
-Changing the corpus or route manifest makes the example stale until it is explicitly reviewed and regenerated. Recomputing `result_id` cannot make inconsistent accounting, invented case/route IDs, hidden attempts, invalid measurements, baseline drift, malformed dates, mismatched decision targets or synthetic promotion valid.
+Changing the corpus or route manifest makes the example stale until it is explicitly reviewed and regenerated. Recomputing `result_id` cannot make inconsistent accounting, invented case/route IDs, invalid measurements, baseline drift, malformed dates, mismatched decision targets or synthetic promotion valid; it only binds the retained content to its hash. A wholly omitted candidate with matching decremented accounting stays internally consistent and cannot be detected without an external dispatch anchor.
 
 ## Automated assistance
 
