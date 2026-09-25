@@ -375,7 +375,7 @@
     if(!/^[a-f0-9]{64}$/.test(id||'')||id===poseHeldArtifact()){poseSeen.add(guide);return;}
     // An edit made while the read is in flight wins over the stored drawing; the button waits for the read.
     poseLoading=guide;let loaded=null;const before={points:StudioPoseEditor.resize(posePoints,poseCanvas,poseCanvas),canvas:{...poseCanvas}};syncPoseActions();
-    api('/api/pose/artifacts/'+id).then(value=>{loaded=StudioPoseEditor.fromArtifact(value,guide);}).catch(()=>{}).then(()=>{
+    api('/api/pose/artifacts/'+id,{signal:AbortSignal.timeout(30000)}).then(value=>{loaded=StudioPoseEditor.fromArtifact(value,guide);}).catch(()=>{}).then(()=>{
       if(poseLoading===guide)poseLoading=null;
       // A newer guide, an inactive editor or a render in flight wins; a later sync reads this guide again.
       const attached=StudioPoseEditor.drawnGuide(referenceRecords)===guide&&poseActive();

@@ -390,6 +390,53 @@ def pending_read_drag_and_draft(page, origin, out, check, drawings, posts, spec)
           'Guide B drawing is adopted over held guide A, selected joint follows: ' + str(held_coords))
 
 
+def stalled_read_timeout(page, origin, out, check, drawings, posts, spec):
+    """#967: a stalled artifact read aborts bounded, releases the hold, keeps picture+drawing, no retry."""
+    run = ux.CaseRun(dict(spec, id='pose-handoff-stalled-read'), page, origin, False, out / 'setup')
+    ready, detail = ux._combine(run)
+    check(ready, 'Existing Combine source-pair journey is ready: ' + detail)
+    page.locator('[data-ux-engine="combine-klein"]').click()
+    page.wait_for_function("selected.id==='combine-klein' && !document.querySelector('#uxPoseEditor').hidden")
+    stalled = 'f' * 64
+    reads, waiting = [], []
+
+    def artifact_route(route):
+        path = urlsplit(route.request.url).path
+        reads.append(path)
+        if path.endswith('/' + stalled):
+            waiting.append(route)
+        else:
+            route.fulfill(status=400, content_type='application/json', body='{"error":"Editable pose artifact is unavailable"}')
+
+    page.route('**/api/pose/artifacts/*', artifact_route)
+    # Test-only short abort for the production 30s bound; the shipped code keeps AbortSignal.timeout(30000).
+    page.evaluate("() => { if (!window.__origAbortTimeout) { window.__origAbortTimeout = AbortSignal.timeout.bind(AbortSignal); AbortSignal.timeout = (ms) => window.__origAbortTimeout(ms === 30000 ? 250 : ms); } }")
+    renders = posts.count('/api/pose/render')
+    before = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    before_xy = [page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')]
+    guide = dict(file='f' * 32 + '_drawn-pose.png', sha256='f' * 64, bytes=2048, width=1024, height=1536,
+                 artifact_id=stalled, renderer='studio.coco18-lines/v1', parent_asset=None, missing=False)
+    page.evaluate(REPLACE_GUIDE, guide)
+    for _ in range(40):
+        if waiting:
+            break
+        page.wait_for_timeout(50)
+    check(len(waiting) == 1, 'The stalled guide read is held open')
+    page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.includes('could not be read')")
+    check('could not be read' in page.locator('#uxPoseStatus').text_content(), 'The stalled read reports the unreadable guide')
+    check(page.locator('#uxPoseUse').is_enabled(), 'The bounded abort releases Use this pose')
+    check(page.evaluate("referenceRecords[0]?.file?.endsWith('_drawn-pose.png')"), 'The attached picture stays after the abort')
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == before, 'The editor keeps its drawing when the read stalls')
+    check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == before_xy, 'The editor coordinates are unchanged')
+    check(reads == ['/api/pose/artifacts/' + stalled], 'One stalled GET, no retry: ' + str(reads))
+    check(posts.count('/api/pose/render') == renders, 'No guide render and no job from an uncertain read')
+    page.evaluate(SYNC_TICK)
+    page.wait_for_timeout(500)
+    check(reads == ['/api/pose/artifacts/' + stalled], 'A later sync does not re-read the aborted guide')
+    # Settle the held Playwright route before closing the browser context.
+    waiting[0].abort()
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, default=ROOT / '.runtime/pose-handoff-browser')
@@ -597,6 +644,26 @@ def main(argv=None):
                 finally:
                     context.close()
                 print(('PASS ' if row['passed'] else 'FAIL ') + 'pending-read: ' + row.get('error', str(len(row['assertions'])) + ' assertions'), flush=True)
+                context = browser.new_context(viewport={'width': 1536, 'height': 1060}, reduced_motion='reduce')
+                page = context.new_page(); page.set_default_timeout(8000)
+                row = dict(case='stalled-read', viewport=1536, assertions=[], passed=False); records.append(row)
+                page.on('pageerror', lambda error: errors.append('stalled-read: ' + str(error)))
+                page.on('request', lambda request: posts.append(urlsplit(request.url).path) if request.method == 'POST' else None)
+                page.on('request', lambda request: drawings.append(request.post_data_json) if request.method == 'POST' and urlsplit(request.url).path == '/api/pose/render' else None)
+                def check_stalled(condition, message):
+                    if not condition: raise AssertionError(message)
+                    row['assertions'].append(message)
+                try:
+                    stalled_read_timeout(page, origin, args.out, check_stalled, drawings, posts, spec)
+                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); page.screenshot(path=str(args.out / 'stalled-read.png'))
+                    row['passed'] = True
+                except Exception as exc:
+                    row['error'] = str(exc)
+                    try: page.screenshot(path=str(args.out / 'stalled-read-failure.png'))
+                    except Exception: pass
+                finally:
+                    context.close()
+                print(('PASS ' if row['passed'] else 'FAIL ') + 'stalled-read: ' + row.get('error', str(len(row['assertions'])) + ' assertions'), flush=True)
             finally:
                 browser.close()
     finally:
