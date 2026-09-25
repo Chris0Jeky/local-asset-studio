@@ -8,7 +8,11 @@
   const grids=new WeakMap();
   const selectors={check:'[data-asset-check]',favorite:'.asset-star',title:'.asset-card-title',preview:'.asset-open'};
   function mediaKey(asset){return JSON.stringify([asset.media_type,asset.url,asset.sha256]);}
-  function displayKey(asset,selected){return JSON.stringify([mediaKey(asset),asset.title,asset.preset_name,asset.review,!!asset.favorite,asset.tags.slice(0,4),selected]);}
+  // The run label is displayed (a chip in the tag row), so marking a source must repaint the card (#939).
+  function displayKey(asset,selected){return JSON.stringify([mediaKey(asset),asset.title,asset.preset_name,asset.review,!!asset.favorite,asset.tags.slice(0,4),asset.run_label??null,selected]);}
+  // Group controls: review buttons keep their bare review value as the key (focusGroup callers pass it); source buttons are 'source:<mode>'.
+  function actionKey(node){const data=node?.dataset||{};return data.groupReview!=null?data.groupReview:data.groupSource!=null?'source:'+data.groupSource:null;}
+  function groupButtons(section){return [...section.actions.querySelectorAll('[data-group-review]'),...section.tools.querySelectorAll('[data-group-source]')];}
   function nextFocus(previous,current,removed){
     const available=new Set(current),index=previous.indexOf(removed);
     if(available.has(removed))return removed;
@@ -70,7 +74,7 @@
     let state=grids.get(grid);
     const previous=state?[...state.rows.keys()]:[],sameWorkspace=!!state && state.workspace===options.workspaceId;
     let focusId=null,focusRole=null,focusGroup=null,focusAction=null;
-    if(state && grid.contains(focused))for(const [key,section] of state.groups)if(section.actions.contains(focused)){focusGroup=key;focusAction=focused.dataset?.groupReview??null;break;}
+    if(state && grid.contains(focused))for(const [key,section] of state.groups)if(section.actions.contains(focused)||section.tools.contains(focused)){focusGroup=key;focusAction=actionKey(focused);break;}
     if(state && grid.contains(focused) && focusGroup===null){
       for(const [id,row] of state.rows){
         if(!row.node.contains(focused))continue;
@@ -101,14 +105,17 @@
       if(grouped)for(const group of groups){
         let section=state.groups.get(group.key);
         if(!section){
-          const node=doc.createElement('section'),heading=doc.createElement('h4'),label=doc.createTextNode(''),count=doc.createElement('small'),actions=doc.createElement('div'),items=doc.createElement('div');
-          node.className='asset-group';items.className='asset-group-items';actions.className='asset-group-actions';actions.hidden=true;
+          const node=doc.createElement('section'),heading=doc.createElement('h4'),label=doc.createTextNode(''),count=doc.createElement('small'),actions=doc.createElement('div'),tools=doc.createElement('div'),items=doc.createElement('div');
+          node.className='asset-group';items.className='asset-group-items';actions.className='asset-group-actions';actions.hidden=true;tools.className='asset-group-source';tools.hidden=true;
           // The heading is a programmatic focus target for when a group's own actions disappear.
-          heading.tabIndex=-1;heading.append(label,count);node.append(heading,actions,items);section={node,heading,label,count,actions,actionsHTML:'',items};
+          heading.tabIndex=-1;heading.append(label,count);node.append(heading,actions,tools,items);section={node,heading,label,count,actions,actionsHTML:'',tools,toolsHTML:'',items};
         }
         // Group actions are caller-escaped markup, replaced only when it changes so a focused control survives.
         const actionsHTML=options.groupActionsHTML?.(group)||'';
         if(section.actionsHTML!==actionsHTML){section.actions.innerHTML=actionsHTML;section.actionsHTML=actionsHTML;section.actions.hidden=!actionsHTML;}
+        // Source marking (#939) lives in its own row: review actions still vanish once nothing in the group is unreviewed.
+        const toolsHTML=options.groupSourceHTML?.(group)||'';
+        if(section.toolsHTML!==toolsHTML){section.tools.innerHTML=toolsHTML;section.toolsHTML=toolsHTML;section.tools.hidden=!toolsHTML;}
         if(section.label.nodeValue!==group.label)section.label.nodeValue=group.label;
         if(section.count.textContent!==String(group.assets.length))section.count.textContent=group.assets.length;
         place(grid,section.node,cursor);cursor=section.node.nextElementSibling;sections.set(group.key,section);
@@ -132,7 +139,7 @@
       let target=null;
       if(sameWorkspace && focusGroup!==null){
         const section=state.groups.get(focusGroup);
-        target=section?[...section.actions.querySelectorAll('[data-group-review]')].find(b=>b.dataset.groupReview===focusAction)||section.heading:null;
+        target=section?groupButtons(section).find(b=>actionKey(b)===focusAction)||section.heading:null;
       }else if(sameWorkspace && focusRole){
         const id=nextFocus(previous,nextIds,focusId);
         target=state.rows.get(id)?.node.querySelector(selectors[focusRole]);
@@ -143,10 +150,10 @@
   // Explicit handoff for callers whose control lost focus outside a render (a disabled button can drop focus to <body>).
   function focusGroup(grid,key,action){
     const section=grids.get(grid)?.groups.get(key);if(!section)return false;
-    const target=[...section.actions.querySelectorAll('[data-group-review]')].find(b=>b.dataset.groupReview===action && !b.disabled)||section.heading;
+    const target=groupButtons(section).find(b=>actionKey(b)===action && !b.disabled)||section.heading;
     target.focus({preventScroll:true});return true;
   }
-  return {render,focusGroup,mediaKey,displayKey,nextFocus};
+  return {render,focusGroup,mediaKey,displayKey,nextFocus,actionKey};
 });
 
 // The editor is a separate browser module; Node projection tests stay side-effect free.
