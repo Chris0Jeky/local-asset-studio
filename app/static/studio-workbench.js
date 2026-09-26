@@ -516,6 +516,10 @@
   };
   after('renderJobs',()=>{syncCombineEngines();syncCombineResults();});after('renderAssets',syncCombineResults);
   function workbenchStamp(){return JSON.stringify({preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
+  // Attachment guards compare attachment-relevant state only: wording, lineage claims and batch
+  // must not refuse a copy that was already verified against its own destination (#606 finding 3).
+  // Handoff baselines and shared-setup adoption keep the whole-workbench stamp.
+  function attachStamp(){const slots=selected?.reference_slots?.length?referenceRecords.map(r=>({file:r.file||null,missing:!!r.missing,role:r.role||null})):[];return JSON.stringify({preset:selected?.id,slots,named:[uploaded||null,lastUploaded||null],pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
   function syncContinuation(){
     contextPanel.hidden=!continuationState;if(!continuationState)return;
     const source=continuationSource,cap=selected?.continuation_capability;
@@ -604,8 +608,8 @@
       else{
         // Keep the reviewed draft live until a verified copy is ready. The reset and
         // existing source owner then commit synchronously, with no second request.
-        const stamp=workbenchStamp(),epoch=selectionEpoch,refs=referenceEpoch,result=await post('/api/assets/reference',{id:item.asset.id});
-        if(referencePending||epoch!==selectionEpoch||refs!==referenceEpoch||stamp!==workbenchStamp()||secondPicture!==item)throw Error('The workbench changed while the picture was being copied. It was not applied.');
+        const stamp=attachStamp(),epoch=selectionEpoch,refs=referenceEpoch,result=await post('/api/assets/reference',{id:item.asset.id});
+        if(referencePending||epoch!==selectionEpoch||refs!==referenceEpoch||stamp!==attachStamp()||secondPicture!==item)throw Error('The workbench changed while the picture was being copied. It was not applied.');
         if(result?.parent_asset!==item.asset.id||result?.sha256!==item.asset.sha256||result?.context?.asset_id!==item.asset.id||result?.context?.sha256!==item.asset.sha256||!StudioContinuation.normalize({...continuationState,reference_file:result?.file,source_asset_id:item.asset.id,source_sha256:item.asset.sha256}))throw Error('The replacement attachment could not be verified. The current source was kept.');
         selectPreset(selected.id,true,true);attachContinuationSource(result);
       }
@@ -753,7 +757,7 @@
         if(isSource&&(!selected.reference_slots?.length||input==='reference')){picker.close();offerSecondPicture({asset:assetState.assets.find(a=>a.id===id)});return;}
         if(isSource)throw Error(StudioContinuation.sourceLabel(selected)+' is the picture you are continuing. Pull into another slot, or use Leave this continuation to start from this one.');}
       if(selected.reference_slots?.length&&slot!=='lastReference')await attachReferenceAsset(Number(slot),id);
-      else{const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id});if(stamp!==workbenchStamp())throw Error('The workbench changed during attachment. Reopen the picker.');if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',null,id);}
+      else{const stamp=attachStamp(),result=await post('/api/assets/reference',{id});if(stamp!==attachStamp())throw Error('The workbench changed during attachment. Reopen the picker.');if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',null,id);}
       draftDirty=true;saveDraft();syncCreate();
       const filled=referenceRecords.filter(r=>r.file&&!r.missing).length,boardDone=!!selected.reference_board&&filled>=(selected.reference_board.min??1);
       const remaining=boardDone?-1:nextEmptySlot();

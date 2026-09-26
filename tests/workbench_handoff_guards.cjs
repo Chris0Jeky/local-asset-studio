@@ -146,22 +146,25 @@ function replaceHarness() {
   const context = {StudioContinuation:require('../app/static/continuation-core.js')};
   vm.runInNewContext([
     "let pickerBusy=false,handoffBusy=false,submitting=false,restoring=false,referencePending=0;let secondPicture={asset:{id:'replacement',sha256:'b'.repeat(64),title:'Replacement'}},continuationState={version:1,intent:'edit',preset_id:'recipe',reference_file:'a'.repeat(32)+'_old.png',source_asset_id:'source',source_sha256:'a'.repeat(64),template_sha256:'c'.repeat(64)};",
-    "const selected={id:'recipe'};let selectionEpoch=0,referenceEpoch=0,stamp='before',finish,fail,uploaded='old-upload',draftDirty=false;",
+    "const selected={id:'recipe'};let selectionEpoch=0,referenceEpoch=0,stamp='before',astamp='before',finish,fail,uploaded='old-upload',draftDirty=false;",
     "const notices=[];const nodes=new Map();const q=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'',files:[]});return nodes.get(selector);};",
     "const window={confirm:()=>true};const dismissSecondPicture=()=>{secondPicture=null};",
-    "const selectPreset=()=>{stamp='reset';selectionEpoch++;continuationState=null};const workbenchStamp=()=>stamp;",
+    "const selectPreset=()=>{stamp='reset';astamp='reset';selectionEpoch++;continuationState=null};const workbenchStamp=()=>stamp;const attachStamp=()=>astamp;",
     "const post=()=>new Promise((resolve,reject)=>{finish=resolve;fail=reject});",
     "let replaceCount=0,saveCount=0,syncCount=0;const attachContinuationSource=result=>{uploaded=result.file;replaceCount++};",
     "const replaceParentAsset=()=>{replaceCount++};const saveDraft=()=>{saveCount++};const syncCreate=()=>{syncCount++};",
     "const announce=(message,error=false)=>notices.push({message,error});const secondName=item=>item.asset.title;const syncReady=()=>{};",
     "const legacyReferenceChange=null;const DataTransfer=function(){};const Event=function(){};",
     replaceSecondPictureSource,
-    "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.finish=value=>finish(value);this.fail=error=>fail(error);this.draft=()=>JSON.stringify({stamp,continuationState,secondPicture});",
+    "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value;astamp=value};this.editWording=()=>{stamp='typed wording'};this.finish=value=>finish(value);this.fail=error=>fail(error);this.draft=()=>JSON.stringify({stamp,continuationState,secondPicture});",
     "this.setPending=value=>{referencePending=value};this.pendingCount=()=>referencePending;",
     "this.state=()=>JSON.stringify({uploaded,draftDirty,replaceCount,saveCount,syncCount});this.notices=notices;",
   ].join('\n'), context);
   return context;
 }
+
+const pickerAttachSource = between("  q('#uxSourceAssets').onclick=async e=>{", "\n  picker.addEventListener('cancel'");
+const attachStampSource = between('  function attachStamp(){', '\n  function syncContinuation(){');
 
 const replacement=()=>({file:'b'.repeat(32)+'_replacement.png',sha256:'b'.repeat(64),parent_asset:'replacement',context:{asset_id:'replacement',sha256:'b'.repeat(64)}});
 
@@ -195,6 +198,18 @@ test('a delayed replacement copy cannot overwrite a newer workbench state', asyn
   });
   assert.equal(harness.notices.at(-1).error, true);
   assert.match(harness.notices.at(-1).message, /workbench changed/);
+});
+
+test('wording-only edits do not cancel source replacement', async () => {
+  const harness = replaceHarness();
+  const pending = harness.start();
+  harness.editWording();
+  harness.finish(replacement());
+  await pending;
+  assert.deepEqual(JSON.parse(harness.state()), {
+    uploaded:'b'.repeat(32)+'_replacement.png',draftDirty:true,replaceCount:1,saveCount:1,syncCount:1,
+  });
+  assert.equal(harness.notices.at(-1).error, false);
 });
 
 test('a newer pending role upload prevents source replacement without losing its owner', async () => {
@@ -263,4 +278,14 @@ test('a modeless dialog conflict is reported without consuming the picture', () 
   assert.equal(harness.pending(), null);
   assert.equal(harness.reference.value, 'selected-look.png');
   assert.match(harness.notices.at(-1).message, /Modeless dialog conflict/);
+});
+test('the library picker guards named-input attachment with the attachment stamp', () => {
+  assert.match(pickerAttachSource, /attachStamp\(\)/, 'The picker compares attachment-relevant state, not whole-workbench wording');
+  assert.doesNotMatch(pickerAttachSource, /workbenchStamp\(\)/, 'Typing a prompt while the picker copy is in flight must not refuse it');
+});
+
+test('the attachment stamp excludes wording, lineage and batch state', () => {
+  assert.doesNotMatch(attachStampSource, /values\(\)|parentAssets|continuationState|#positive|#negative|#batch/, 'Controls, lineage claims and batch stay out of the attachment comparison');
+  assert.match(attachStampSource, /referenceRecords/, 'Slot files, roles and availability stay in');
+  assert.match(attachStampSource, /uploaded/, 'Staged named-input files stay in');
 });

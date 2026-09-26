@@ -506,15 +506,19 @@ function applySaved(s){
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
   // A saved setup round-trips each role record's parent_asset and each supported named-input mapping.
   // Board recipes still have a named lastReference continuation source, independent of their role slots.
-  // Restore recorded mappings rather than re-deriving them; only a legacy slot-less record with no mapping
+  // Restore recorded mappings rather than re-deriving them; only a legacy record with no mapping
   // falls back to the unambiguous single-parent, single-input guess. A job-exported recipe has neither,
   // and an unattributed parent is never dropped by a later edit.
   const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);
   // An empty mapping is absence, not a recorded "nothing": a draft or setup written before #112 has
   // no attribution to restore, and reading {} as one would make the legacy fallback unreachable.
+  // On board recipes the guess additionally requires that no role slot already claims a parent:
+  // a claimed slot makes the single parent's input ambiguous, and the guess must not invent
+  // attribution a later slot clear would then treat as a second claim (#606 finding 1).
   const savedMapping=s.parent_by_input,mapped=savedMapping&&typeof savedMapping==='object'&&!Array.isArray(savedMapping)&&Object.keys(savedMapping).length?savedMapping:null;
+  const slotClaimed=typeof referenceRecords!=='undefined'&&referenceRecords.some(r=>r&&r.parent_asset);
   if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>(!selected.reference_slots?.length||input==='lastReference')&&parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
-  else if(!selected.reference_slots?.length&&parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};
+  else if(parentAssets.length===1&&filled.length===1&&!slotClaimed)parentByInput={[filled[0][0]]:parentAssets[0]};
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}

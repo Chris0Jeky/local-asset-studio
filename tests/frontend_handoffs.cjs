@@ -484,6 +484,31 @@ async function boardContinuationSourceHasItsOwnLineageClaim() {
   assert.equal(s.run('lastUploaded'), 'continuation-source.png');
 }
 
+// #606 finding 1: a legacy board setup (no per-input mapping) with one parent on the
+// named continuation input attributes it, so copying that asset into a slot and then
+// clearing the slot cannot erase the source lineage. A slot that already claims a
+// parent keeps the setup ambiguous and untouched: the guess must not invent a claim
+// a later slot clear would treat as a second attribution.
+async function legacyBoardSetupAttributesSingleNamedSource() {
+  const attached = sourceAttachment('source-copy.png', 'source-asset');
+  const local = {file: 'replacement.png', sha256: 'c'.repeat(64), width: 640, height: 640};
+  const legacy = references => ({preset: 'combine-9b', controls: {positive: 'A study', last_reference: 'continuation-source.png'}, batch_count: 1, parent_assets: ['source-asset'], references});
+  const emptySlot = [{role: 'pose', contribution: '', avoid: '', file: null}];
+
+  const s = sandbox(attached, local);
+  s.run(`applySaved(${JSON.stringify(legacy(emptySlot))});`);
+  await flush();
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')), {lastReference: 'source-asset'}, 'The unambiguous legacy board case attributes the named source');
+  await s.run(`attachReferenceAsset(0,'source-asset')`);
+  s.element('#referenceCards').onclick({target: {closest: selector => selector === '[data-ref-clear]' ? {dataset: {refClear: '0'}} : null}});
+  assert.deepEqual(s.parents(), ['source-asset'], 'Clearing the slot keeps the named-input source claim');
+
+  const claimed = sandbox(attached, local);
+  claimed.run(`applySaved(${JSON.stringify(legacy([{role: 'pose', contribution: '', avoid: '', file: 'source-copy.png', sha256: 'a'.repeat(64), width: 512, height: 768, parent_asset: 'source-asset', missing: false}]))});`);
+  await flush();
+  assert.deepEqual(JSON.parse(claimed.run('JSON.stringify(parentByInput)')), {}, 'A claimed slot leaves the legacy board setup ambiguous and untouched');
+}
+
 // The recipe picker stays interactive while /api/upload is in flight; a swap in that window must not submit.
 async function recipeSwapDuringUploadNeverSubmits() {
   const s = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
@@ -774,6 +799,7 @@ async function modelStatusFilter() {
   for (const target of ['anime-detail-fix', 'krea-refine']) await swapDropsHandoffLineage(target);
   await slotSwapKeepsTheOtherSlots();
   await boardContinuationSourceHasItsOwnLineageClaim();
+  await legacyBoardSetupAttributesSingleNamedSource();
   await boardSummaryFollowsTheRecipeOrder();
   await firstLastFramesAttributeSeparately();
   await savedSetupCarriesPerInputAttribution();
