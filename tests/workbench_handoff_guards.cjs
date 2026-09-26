@@ -146,17 +146,17 @@ function replaceHarness() {
   const context = {StudioContinuation:require('../app/static/continuation-core.js')};
   vm.runInNewContext([
     "let pickerBusy=false,handoffBusy=false,submitting=false,restoring=false,referencePending=0;let secondPicture={asset:{id:'replacement',sha256:'b'.repeat(64),title:'Replacement'}},continuationState={version:1,intent:'edit',preset_id:'recipe',reference_file:'a'.repeat(32)+'_old.png',source_asset_id:'source',source_sha256:'a'.repeat(64),template_sha256:'c'.repeat(64)};",
-    "const selected={id:'recipe'};let selectionEpoch=0,referenceEpoch=0,stamp='before',astamp='before',finish,fail,uploaded='old-upload',draftDirty=false;",
+    "const selected={id:'recipe'};let selectionEpoch=0,referenceEpoch=0,stamp='before',finish,fail,uploaded='old-upload',draftDirty=false;",
     "const notices=[];const nodes=new Map();const q=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'',files:[]});return nodes.get(selector);};",
     "const window={confirm:()=>true};const dismissSecondPicture=()=>{secondPicture=null};",
-    "const selectPreset=()=>{stamp='reset';astamp='reset';selectionEpoch++;continuationState=null};const workbenchStamp=()=>stamp;const attachStamp=()=>astamp;",
+    "const selectPreset=()=>{stamp='reset';selectionEpoch++;continuationState=null};const workbenchStamp=()=>stamp;",
     "const post=()=>new Promise((resolve,reject)=>{finish=resolve;fail=reject});",
     "let replaceCount=0,saveCount=0,syncCount=0;const attachContinuationSource=result=>{uploaded=result.file;replaceCount++};",
     "const replaceParentAsset=()=>{replaceCount++};const saveDraft=()=>{saveCount++};const syncCreate=()=>{syncCount++};",
     "const announce=(message,error=false)=>notices.push({message,error});const secondName=item=>item.asset.title;const syncReady=()=>{};",
     "const legacyReferenceChange=null;const DataTransfer=function(){};const Event=function(){};",
     replaceSecondPictureSource,
-    "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value;astamp=value};this.editWording=()=>{stamp='typed wording'};this.finish=value=>finish(value);this.fail=error=>fail(error);this.draft=()=>JSON.stringify({stamp,continuationState,secondPicture});",
+    "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.editWording=()=>{stamp='typed wording'};this.finish=value=>finish(value);this.fail=error=>fail(error);this.draft=()=>JSON.stringify({stamp,continuationState,secondPicture});",
     "this.setPending=value=>{referencePending=value};this.pendingCount=()=>referencePending;",
     "this.state=()=>JSON.stringify({uploaded,draftDirty,replaceCount,saveCount,syncCount});this.notices=notices;",
   ].join('\n'), context);
@@ -200,16 +200,19 @@ test('a delayed replacement copy cannot overwrite a newer workbench state', asyn
   assert.match(harness.notices.at(-1).message, /workbench changed/);
 });
 
-test('wording-only edits do not cancel source replacement', async () => {
+test('wording typed during replacement cancels the stale confirmation', async () => {
   const harness = replaceHarness();
   const pending = harness.start();
   harness.editWording();
+  const before = harness.draft();
   harness.finish(replacement());
   await pending;
+  assert.equal(harness.draft(), before, 'a stale confirmation must not wipe wording typed while its copy runs');
   assert.deepEqual(JSON.parse(harness.state()), {
-    uploaded:'b'.repeat(32)+'_replacement.png',draftDirty:true,replaceCount:1,saveCount:1,syncCount:1,
+    uploaded:'old-upload',draftDirty:false,replaceCount:0,saveCount:0,syncCount:0,
   });
-  assert.equal(harness.notices.at(-1).error, false);
+  assert.equal(harness.notices.at(-1).error, true);
+  assert.match(harness.notices.at(-1).message, /workbench changed/);
 });
 
 test('a newer pending role upload prevents source replacement without losing its owner', async () => {

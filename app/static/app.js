@@ -512,13 +512,15 @@ function applySaved(s){
   const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);
   // An empty mapping is absence, not a recorded "nothing": a draft or setup written before #112 has
   // no attribution to restore, and reading {} as one would make the legacy fallback unreachable.
-  // On board recipes the guess additionally requires that no role slot already claims a parent:
-  // a claimed slot makes the single parent's input ambiguous, and the guess must not invent
-  // attribution a later slot clear would then treat as a second claim (#606 finding 1).
+  // On board recipes the guess additionally requires empty role slots: a slot holding a picture
+  // makes the single parent's input ambiguous, and the guess must not invent attribution a later
+  // edit would then release while the board picture still derives from it (#606 finding 1).
+  // A recorded claim is not the test: job-exported recipes carry slot files whose parent_asset
+  // the prepared records omit, so any slot file blocks the guess, not just a claimed one.
   const savedMapping=s.parent_by_input,mapped=savedMapping&&typeof savedMapping==='object'&&!Array.isArray(savedMapping)&&Object.keys(savedMapping).length?savedMapping:null;
-  const slotClaimed=typeof referenceRecords!=='undefined'&&referenceRecords.some(r=>r&&r.parent_asset);
+  const slotOccupied=typeof referenceRecords!=='undefined'&&referenceRecords.some(r=>r&&(r.file||r.parent_asset));
   if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>(!selected.reference_slots?.length||input==='lastReference')&&parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
-  else if(parentAssets.length===1&&filled.length===1&&!slotClaimed)parentByInput={[filled[0][0]]:parentAssets[0]};
+  else if(parentAssets.length===1&&filled.length===1&&!slotOccupied)parentByInput={[filled[0][0]]:parentAssets[0]};
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}

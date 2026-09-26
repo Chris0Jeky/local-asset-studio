@@ -516,9 +516,11 @@
   };
   after('renderJobs',()=>{syncCombineEngines();syncCombineResults();});after('renderAssets',syncCombineResults);
   function workbenchStamp(){return JSON.stringify({preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
-  // Attachment guards compare attachment-relevant state only: wording, lineage claims and batch
-  // must not refuse a copy that was already verified against its own destination (#606 finding 3).
-  // Handoff baselines and shared-setup adoption keep the whole-workbench stamp.
+  // Slot and picker attachment preserves wording, so its guard compares attachment-relevant
+  // state only: wording, lineage claims and batch must not refuse a copy that was already
+  // verified against its own destination (#606 finding 3). Replace resets to the recipe
+  // defaults, and handoff baselines and shared-setup adoption review the whole task, so
+  // those keep the whole-workbench stamp.
   function attachStamp(){const slots=selected?.reference_slots?.length?referenceRecords.map(r=>({file:r.file||null,missing:!!r.missing,role:r.role||null})):[];return JSON.stringify({preset:selected?.id,slots,named:[uploaded||null,lastUploaded||null],pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
   function syncContinuation(){
     contextPanel.hidden=!continuationState;if(!continuationState)return;
@@ -608,8 +610,10 @@
       else{
         // Keep the reviewed draft live until a verified copy is ready. The reset and
         // existing source owner then commit synchronously, with no second request.
-        const stamp=attachStamp(),epoch=selectionEpoch,refs=referenceEpoch,result=await post('/api/assets/reference',{id:item.asset.id});
-        if(referencePending||epoch!==selectionEpoch||refs!==referenceEpoch||stamp!==attachStamp()||secondPicture!==item)throw Error('The workbench changed while the picture was being copied. It was not applied.');
+        // Replace resets to the recipe defaults, so wording typed while the copy runs is
+        // newer work the stale confirmation must not wipe: whole-workbench guard.
+        const stamp=workbenchStamp(),epoch=selectionEpoch,refs=referenceEpoch,result=await post('/api/assets/reference',{id:item.asset.id});
+        if(referencePending||epoch!==selectionEpoch||refs!==referenceEpoch||stamp!==workbenchStamp()||secondPicture!==item)throw Error('The workbench changed while the picture was being copied. It was not applied.');
         if(result?.parent_asset!==item.asset.id||result?.sha256!==item.asset.sha256||result?.context?.asset_id!==item.asset.id||result?.context?.sha256!==item.asset.sha256||!StudioContinuation.normalize({...continuationState,reference_file:result?.file,source_asset_id:item.asset.id,source_sha256:item.asset.sha256}))throw Error('The replacement attachment could not be verified. The current source was kept.');
         selectPreset(selected.id,true,true);attachContinuationSource(result);
       }

@@ -486,9 +486,9 @@ async function boardContinuationSourceHasItsOwnLineageClaim() {
 
 // #606 finding 1: a legacy board setup (no per-input mapping) with one parent on the
 // named continuation input attributes it, so copying that asset into a slot and then
-// clearing the slot cannot erase the source lineage. A slot that already claims a
-// parent keeps the setup ambiguous and untouched: the guess must not invent a claim
-// a later slot clear would treat as a second attribution.
+// clearing the slot cannot erase the source lineage. A slot holding a picture keeps
+// the setup ambiguous and untouched: job exports omit slot parent_asset, so the guess
+// must not invent a claim a later edit would drop while the board still derives from it.
 async function legacyBoardSetupAttributesSingleNamedSource() {
   const attached = sourceAttachment('source-copy.png', 'source-asset');
   const local = {file: 'replacement.png', sha256: 'c'.repeat(64), width: 640, height: 640};
@@ -507,6 +507,15 @@ async function legacyBoardSetupAttributesSingleNamedSource() {
   claimed.run(`applySaved(${JSON.stringify(legacy([{role: 'pose', contribution: '', avoid: '', file: 'source-copy.png', sha256: 'a'.repeat(64), width: 512, height: 768, parent_asset: 'source-asset', missing: false}]))});`);
   await flush();
   assert.deepEqual(JSON.parse(claimed.run('JSON.stringify(parentByInput)')), {}, 'A claimed slot leaves the legacy board setup ambiguous and untouched');
+
+  // Job-export shape: the slot holds the board picture but its prepared record omits
+  // parent_asset, so the same single parent could belong to the slot, not the input.
+  const exported = sandbox(attached, local);
+  exported.run(`applySaved(${JSON.stringify(legacy([{role: 'pose', contribution: '', avoid: '', file: 'source-copy.png', sha256: 'a'.repeat(64), width: 512, height: 768}]))});`);
+  await flush();
+  assert.deepEqual(JSON.parse(exported.run('JSON.stringify(parentByInput)')), {}, 'A slot holding an unclaimed file still blocks the guess');
+  exported.element('#lastReference').onchange();
+  assert.deepEqual(exported.parents(), ['source-asset'], 'Replacing the named input keeps the unclaimed parent');
 }
 
 // The recipe picker stays interactive while /api/upload is in flight; a swap in that window must not submit.
