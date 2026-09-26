@@ -154,6 +154,13 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(record['output_sha256'],p.file_sha(self.root/'clean.png'))
         self.assertEqual(json.loads((self.root/'evidence.json').read_text()),record)
         with redirect_stdout(io.StringIO()):self.assertEqual(m.main(['cleanup',str(src),'--out',str(self.root/'clean.png')]),2)
+    def test_cleanup_leaves_no_orphan_when_evidence_blocked(self):
+        src=self.root/'dusty.png';Image.new('RGBA',(4,4),(5,6,7,3)).save(src)
+        (self.root/'taken.json').write_text('{}')
+        with self.assertRaises(ValueError):m.cleanup(src,self.root/'clean.png',evidence=self.root/'taken.json')
+        self.assertFalse((self.root/'clean.png').exists())
+        with self.assertRaises(OSError):m.cleanup(src,self.root/'clean2.png',evidence=self.root/'nodir/ev.json')
+        self.assertFalse((self.root/'clean2.png').exists())
     def test_cleaned_frame_packs_without_edge_warning(self):
         im=Image.new('RGBA',(8,8),(0,0,0,0))
         for y in range(2,6):

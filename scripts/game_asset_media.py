@@ -188,6 +188,7 @@ def decode_png(raw, what='Input image'):
 def cleanup(source, output, mode='rgba-cleanup', evidence=None):
     """Explicit finishing step: clean alpha dust or drop a spurious channel. Never overwrites."""
     require(mode in ('rgba-cleanup', 'to-rgb'), 'Unknown cleanup mode')
+    require(evidence is None or not Path(evidence).exists(), 'Evidence file exists; outputs are never overwritten')
     with Path(source).open('rb') as stream: raw = stream.read(MAX_FILE + 1)
     before_image = decode_png(raw)
     before = alpha_report(before_image)
@@ -200,7 +201,9 @@ def cleanup(source, output, mode='rgba-cleanup', evidence=None):
               'input': str(source), 'input_sha256': hashlib.sha256(raw).hexdigest(),
               'output': str(out), 'output_sha256': file_sha(out),
               'before': before, 'after': after}
-    if evidence: write_json(record, evidence)
+    if evidence:
+        try: write_json(record, evidence)
+        except OSError: out.unlink(missing_ok=True); raise
     return record
 
 
