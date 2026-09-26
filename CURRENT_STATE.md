@@ -1,4 +1,8 @@
-# Current state — 25 September 2026
+# Current state — 26 September 2026
+
+## Qwen-Image 2.1 native 2K square: 2048² runs, paging-bound — 26 September 2026 (night local)
+
+One frozen Studio `qwen21-t2i` job at 2048x2048 on the isolated backend: job `252c3ebe`, prompt `3593cd92`, seed 2026092601, 25 steps, completed in 353.0 s. The run spilled 11.9 GB into shared RAM (1.2 GB retained after), so native 2K works on this 16 GB card but 1 MP stays the everyday size. The 2048² PNG was opened and matches the brief; 11.5 % of pixels carry the same faint partial alpha as the 1MP proofs. Full receipts in `experiments/curated/qwen21-2048-20260926/`. Before the run, five `uncertain` restart leftovers blocked the backend-switch gate; their prompts were verified absent from ComfyUI history, three were stop-tracked with that reason and two were already stopped records from 14 September — recipes and prompt IDs retained, nothing resubmitted, and backend switching works for the owner again. Generated and agent-inspected only, not art acceptance and not licence clearance. #739 stays open for the 3-6 reference identity edit, text-heavy prompt, LoRA status and VRAM-arbitration note.
 
 ## SFW night lighting LoRA comparison — 25 September 2026 (04:33 local)
 

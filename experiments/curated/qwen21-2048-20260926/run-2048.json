@@ -1,0 +1,29 @@
+{
+ "id": "252c3ebe-5376-4817-b810-397dd7b26ada",
+ "status": "completed",
+ "preset_id": "qwen21-t2i",
+ "prompt_ids": [
+  "3593cd92-133b-4e0d-a350-e37abe327388"
+ ],
+ "outputs": [
+  {
+   "filename": "qwen21-t2i_00002_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092601,
+   "prompt_id": "3593cd92-133b-4e0d-a350-e37abe327388",
+   "media_type": "image",
+   "asset_id": "107f1b4630b45232b1c63b1bd7ba6e5a"
+  }
+ ],
+ "elapsed_seconds": 352.97164511680603,
+ "error": null,
+ "created_at": 1790382722.8858263,
+ "comfy_url": null,
+ "controls": {
+  "seed": 2026092601,
+  "width": 2048,
+  "height": 2048,
+  "steps": 25
+ }
+}

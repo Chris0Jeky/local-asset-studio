@@ -95,9 +95,11 @@ PNGs are saved as RGBA with faint partial alpha on part of the frame; strip or t
 crops or packs by alpha — `python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by
 default, `--mode to-rgb` to drop a spurious channel), with before/after evidence in
 `experiments/curated/qwen21-alpha-cleanup/`. Generated and agent-inspected only: not art acceptance, and the Qwen
-Research License keeps them non-commercial. Still open under #739: a 2048² text-to-image run, a 3-6 reference identity
-edit, a text-heavy prompt, the LoRA status (the downloaded 2.1 Fix LoRA is untested), and a VRAM-arbitration note for
-running beside a local LLM or Spoken Briefs.
+Research License keeps them non-commercial. The 2048² text-to-image run is done (26 September 2026: job
+`252c3ebe`, prompt `3593cd92`, seed 2026092601, 25 steps, 353.0 s, 11.9 GB spilled to shared RAM;
+`experiments/curated/qwen21-2048-20260926/`): native 2K completes on this 16 GB card but is paging-bound, so 1 MP
+stays the everyday size. Still open under #739: a 3-6 reference identity edit, a text-heavy prompt, the LoRA status
+(the downloaded 2.1 Fix LoRA is untested), and a VRAM-arbitration note for running beside a local LLM or Spoken Briefs.
 
 ## Compatibility boundary with Edit 2511 (issue #760)
 
