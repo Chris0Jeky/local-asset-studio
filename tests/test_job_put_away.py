@@ -305,6 +305,65 @@ class JobPutAwayTests(unittest.TestCase):
         status, public = post("/api/jobs/" + job["id"] + "/put-away", {"put_away": False})
         self.assertEqual(status, 200); self.assertFalse(public["put_away"]); self.assertNotIn("put_away_at", job)
 
+    def test_resume_failure_after_landed_replacement_resurfaces_without_queueing(self):
+        for path in ("stopped-tracking", "ordinary"):
+            with self.subTest(path=path):
+                studio = self.studio()
+                if path == "stopped-tracking":
+                    job = self.uncertain(studio); studio.stop_tracking(job["id"], "Stop for now")
+                    old_status, old_disposition = "uncertain", copy.deepcopy(job["tracking_disposition"])
+                else:
+                    job = self.failed(studio)
+                    old_status, old_disposition = "failed", None
+                studio.put_away_job(job["id"], True)
+                self.assertIn("put_away_at", job)
+                queued = studio.queue.qsize()
+                real_publish = studio._write_observation_state
+
+                def fail_after_replace(path, value):
+                    real_publish(path, value)
+                    raise OSError("parent sync lost")
+
+                with patch.object(studio, "_write_observation_state", side_effect=fail_after_replace):
+                    with self.assertRaisesRegex(OSError, "parent sync lost"):
+                        studio.resume_job(job["id"])
+                self.assertEqual(studio.queue.qsize(), queued)  # nothing queued
+                self.assertNotIn("put_away_at", job)  # acknowledgement converged to disk truth
+                self.assertEqual(job["status"], old_status)  # status and disposition await an explicit retry
+                if old_disposition is not None: self.assertEqual(job["tracking_disposition"], old_disposition)
+                persisted = self.state(studio, job)
+                self.assertEqual(persisted["status"], "queued"); self.assertNotIn("put_away_at", persisted)
+                shown = studio.public(job)
+                if path == "ordinary":
+                    self.assertFalse(shown["put_away"]); self.assertTrue(shown["can_put_away"])
+                else:
+                    self.assertIsNone(shown["put_away_at"]); self.assertEqual(shown["put_away_basis"], "tracking_stopped")
+                # An explicit retry heals fully from the reconciled memory state.
+                resumed = studio.resume_job(job["id"])
+                self.assertEqual(resumed["status"], "queued"); self.assertNotIn("put_away_at", job)
+                self.assertNotIn("put_away_at", self.state(studio, job))
+                self.assertEqual(studio.queue.qsize(), queued + 1)
+                self.assertEqual(studio.queue.get_nowait(), ("observe", job["id"]))
+
+    def test_resume_failure_after_landed_replacement_without_marker_leaves_memory(self):
+        studio = self.studio(); job = self.failed(studio)
+        self.assertNotIn("put_away_at", job)
+        before = copy.deepcopy(job)
+        queued = studio.queue.qsize()
+        real_publish = studio._write_observation_state
+
+        def fail_after_replace(path, value):
+            real_publish(path, value)
+            raise OSError("parent sync lost")
+
+        with patch.object(studio, "_write_observation_state", side_effect=fail_after_replace):
+            with self.assertRaisesRegex(OSError, "parent sync lost"):
+                studio.resume_job(job["id"])
+        self.assertEqual(job, before)
+        self.assertEqual(studio.queue.qsize(), queued)
+        persisted = self.state(studio, job)
+        self.assertEqual(persisted["status"], "queued")
+
 
 if __name__ == "__main__":
     unittest.main()
