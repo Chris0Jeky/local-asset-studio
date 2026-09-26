@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "kind": "alpha_cleanup",
+  "mode": "rgba-cleanup",
+  "thresholds": {
+    "dust_below": 8,
+    "solid_from": 224
+  },
+  "input": "C:/AI/experiments/qwen-image-21/ComfyUI/output/Studio/qwen21-rgba_00001_.png",
+  "input_sha256": "7c37000a842a51ad80c5dcee2d3ac2ed98e5628f77be229c5060665ac6912c1b",
+  "output": ".runtime\\qwen21-alpha-cleanup\\rgba-clean.png",
+  "output_sha256": "d46477c7e33c591fb817e61e041bc74c6c69ac339c88fe624818d83e5e7de47d",
+  "before": {
+    "size": [
+      1024,
+      1024
+    ],
+    "bbox": [
+      0,
+      0,
+      1024,
+      1024
+    ],
+    "bands": {
+      "transparent": 637821,
+      "dust": 54233,
+      "edge": 4108,
+      "body": 277006,
+      "opaque": 75408
+    },
+    "components": 13968,
+    "largest_component": 357968
+  },
+  "after": {
+    "size": [
+      1024,
+      1024
+    ],
+    "bbox": [
+      210,
+      50,
+      815,
+      972
+    ],
+    "bands": {
+      "transparent": 692054,
+      "dust": 0,
+      "edge": 4108,
+      "body": 0,
+      "opaque": 352414
+    },
+    "components": 1,
+    "largest_component": 356522
+  }
+}
