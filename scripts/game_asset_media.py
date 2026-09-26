@@ -117,6 +117,93 @@ def png_bytes(im):
     buf = io.BytesIO(); im.save(buf, format='PNG'); return buf.getvalue()
 
 
+ALPHA_DUST_BELOW = 8
+ALPHA_SOLID_FROM = 224
+
+
+def alpha_bands(im):
+    """Count alpha pixels per finishing band; the 8..223 edge band is never touched."""
+    require(im.mode == 'RGBA', 'Alpha report needs RGBA pixels')
+    hist = im.getchannel('A').histogram()
+    return {'transparent': sum(hist[0:1]), 'dust': sum(hist[1:ALPHA_DUST_BELOW]),
+            'edge': sum(hist[ALPHA_DUST_BELOW:ALPHA_SOLID_FROM]),
+            'body': sum(hist[ALPHA_SOLID_FROM:255]), 'opaque': hist[255]}
+
+
+def matte_components(im):
+    """Count 4-connected alpha>0 regions with a deterministic flood fill."""
+    require(im.mode == 'RGBA', 'Alpha report needs RGBA pixels')
+    w, h = im.size; mask = im.getchannel('A').tobytes(); seen = bytearray(w * h)
+    found = 0; largest = 0
+    for y in range(h):
+        for x in range(w):
+            i = y * w + x
+            if seen[i] or not mask[i]: continue
+            found += 1; size = 0; stack = [i]; seen[i] = 1
+            while stack:
+                j = stack.pop(); size += 1
+                jy, jx = divmod(j, w)
+                if jx > 0 and mask[j - 1] and not seen[j - 1]: seen[j - 1] = 1; stack.append(j - 1)
+                if jx + 1 < w and mask[j + 1] and not seen[j + 1]: seen[j + 1] = 1; stack.append(j + 1)
+                if jy > 0 and mask[j - w] and not seen[j - w]: seen[j - w] = 1; stack.append(j - w)
+                if jy + 1 < h and mask[j + w] and not seen[j + w]: seen[j + w] = 1; stack.append(j + w)
+            largest = max(largest, size)
+    return {'components': found, 'largest_component': largest}
+
+
+def alpha_report(im):
+    box = im.getchannel('A').getbbox()
+    report = {'size': list(im.size), 'bbox': list(box) if box else None, 'bands': alpha_bands(im)}
+    report.update(matte_components(im))
+    return report
+
+
+def alpha_cleanup(im):
+    """Snap alpha below 8 to 0 and at/above 224 to 255; RGB and the edge band pass through byte-identical."""
+    require(im.mode == 'RGBA', 'Alpha cleanup needs RGBA pixels')
+    table = bytes([0] * ALPHA_DUST_BELOW + list(range(ALPHA_DUST_BELOW, ALPHA_SOLID_FROM)) + [255] * (256 - ALPHA_SOLID_FROM))
+    out = im.copy(); out.putalpha(im.getchannel('A').point(table)); return out
+
+
+def to_rgb(im):
+    """Drop a spurious alpha channel; RGB bytes pass through unchanged."""
+    require(im.mode == 'RGBA', 'RGB conversion needs RGBA pixels')
+    return im.convert('RGB')
+
+
+def decode_png(raw, what='Input image'):
+    Image = pil()
+    require(len(raw) <= MAX_FILE, f'{what} exceeds 64 MiB')
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', Image.DecompressionBombWarning)
+        with Image.open(io.BytesIO(raw)) as source:
+            require(source.format == 'PNG', 'Use explicit PNG interchange')
+            require(source.width * source.height <= MAX_PIXELS, f'{what} exceeds pixel budget')
+            require(getattr(source, 'n_frames', 1) == 1, 'Animated PNG is not a finishing input')
+            require(not source.info.get('icc_profile'), 'Convert tagged images to agreed sRGB first')
+            require(source.mode == 'RGBA', 'Expected RGBA PNG; convert explicitly before finishing')
+            source.load(); return source.copy()
+
+
+def cleanup(source, output, mode='rgba-cleanup', evidence=None):
+    """Explicit finishing step: clean alpha dust or drop a spurious channel. Never overwrites."""
+    require(mode in ('rgba-cleanup', 'to-rgb'), 'Unknown cleanup mode')
+    with Path(source).open('rb') as stream: raw = stream.read(MAX_FILE + 1)
+    before_image = decode_png(raw)
+    before = alpha_report(before_image)
+    after_image = alpha_cleanup(before_image) if mode == 'rgba-cleanup' else to_rgb(before_image)
+    after = alpha_report(after_image) if mode == 'rgba-cleanup' else {'mode': 'RGB', 'size': list(after_image.size)}
+    out = Path(output)
+    with out.open('xb') as stream: after_image.save(stream, format='PNG')
+    record = {'schema_version': 1, 'kind': 'alpha_cleanup', 'mode': mode,
+              'thresholds': {'dust_below': ALPHA_DUST_BELOW, 'solid_from': ALPHA_SOLID_FROM},
+              'input': str(source), 'input_sha256': hashlib.sha256(raw).hexdigest(),
+              'output': str(out), 'output_sha256': file_sha(out),
+              'before': before, 'after': after}
+    if evidence: write_json(record, evidence)
+    return record
+
+
 def zip_entry(archive, name, data, compress_type=zipfile.ZIP_DEFLATED):
     """Write fixed ZIP metadata so identical layer inputs reproduce byte-for-byte."""
     info = zipfile.ZipInfo(name, date_time=ZIP_EPOCH)
@@ -169,11 +256,15 @@ def main(argv=None):
         if cmd=='atlas':
             child.add_argument('--columns',type=int,default=8); child.add_argument('--padding',type=int,default=2)
             child.add_argument('--extrude',type=int,default=1)
+    child=sub.add_parser('cleanup'); child.add_argument('input'); child.add_argument('--out',required=True)
+    child.add_argument('--mode',default='rgba-cleanup'); child.add_argument('--evidence')
     args=p.parse_args(argv)
     try:
-        m=read_json(args.manifest)
-        if args.cmd=='atlas': value=atlas(m,args.workspace,args.out,args.columns,args.padding,args.extrude)
-        else: value=ora(m,args.workspace,args.out)
+        if args.cmd=='cleanup': value=cleanup(args.input,args.out,args.mode,args.evidence)
+        else:
+            m=read_json(args.manifest)
+            if args.cmd=='atlas': value=atlas(m,args.workspace,args.out,args.columns,args.padding,args.extrude)
+            else: value=ora(m,args.workspace,args.out)
         write_json(value);return 0
     except (OSError,ValueError,TypeError,KeyError,ImportError,Warning) as exc:
         print(json.dumps({'error':str(exc)}),file=sys.stderr);return 2

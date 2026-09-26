@@ -92,7 +92,9 @@ the exported `recipe-<preset>.json` beside it), seed 2026092211, 25 steps, commi
 
 All three recipes are now `verified: true` (the route runs and returns the intended kind of output). The t2i and edit
 PNGs are saved as RGBA with faint partial alpha on part of the frame; strip or threshold alpha before any step that
-crops or packs by alpha. Generated and agent-inspected only: not art acceptance, and the Qwen
+crops or packs by alpha — `python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by
+default, `--mode to-rgb` to drop a spurious channel), with before/after evidence in
+`experiments/curated/qwen21-alpha-cleanup/`. Generated and agent-inspected only: not art acceptance, and the Qwen
 Research License keeps them non-commercial. Still open under #739: a 2048² text-to-image run, a 3-6 reference identity
 edit, a text-heavy prompt, the LoRA status (the downloaded 2.1 Fix LoRA is untested), and a VRAM-arbitration note for
 running beside a local LLM or Spoken Briefs.

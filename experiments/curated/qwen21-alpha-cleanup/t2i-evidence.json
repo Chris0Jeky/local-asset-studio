@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "kind": "alpha_cleanup",
+  "mode": "to-rgb",
+  "thresholds": {
+    "dust_below": 8,
+    "solid_from": 224
+  },
+  "input": "C:/AI/experiments/qwen-image-21/ComfyUI/output/Studio/qwen21-t2i_00001_.png",
+  "input_sha256": "7f2ae8ef4c8bdde877c9fdce6b9436eee1244e4c81b25474ce2505504149127b",
+  "output": ".runtime\\qwen21-alpha-cleanup\\t2i-rgb.png",
+  "output_sha256": "aab0b6dfc00aef0d94c96cbccbe55776756e4d525b2ce7e9d72982352445b4f1",
+  "before": {
+    "size": [
+      832,
+      1248
+    ],
+    "bbox": [
+      0,
+      0,
+      832,
+      1248
+    ],
+    "bands": {
+      "transparent": 0,
+      "dust": 0,
+      "edge": 4,
+      "body": 97389,
+      "opaque": 940943
+    },
+    "components": 1,
+    "largest_component": 1038336
+  },
+  "after": {
+    "mode": "RGB",
+    "size": [
+      832,
+      1248
+    ]
+  }
+}
