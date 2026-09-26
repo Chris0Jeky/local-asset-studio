@@ -109,25 +109,34 @@ class BackendManager:
         self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root)
         self.studio._schema=None;self.studio._schema_at=0
 
-    def _local_work(self):
+    def _local_work(self, ignore_job_ids=()):
         if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
         # An uncertain job whose tracking the operator stopped is a closed record, not local work: switch() still refuses
         # while its prompt is live in any ComfyUI queue (_idle) or kept in any running ComfyUI's history (_stopped_results).
         # Resuming tracking makes it block again.
+        # `ignore_job_ids` is the GPU lease's stale-uncertain age-out (#979); switch() never passes it. It exempts only a
+        # record still 'uncertain' when read here: the same id queued, waiting, submitting or running blocks as usual.
         # Iterate a snapshot: handler threads can insert into studio.jobs mid-loop, which raises on a live view.
-        return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') and not self._stopped_record(j) for j in list(self.studio.jobs.values())) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
+        return any(self._blocking_job(j, ignore_job_ids) for j in list(self.studio.jobs.values())) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
+
+    @classmethod
+    def _blocking_job(cls, job, ignore_job_ids=()):
+        status=job.get('status')
+        if status not in ('queued','waiting','submitting','running','uncertain'):return False
+        return status!='uncertain' or not (cls._stopped_record(job) or job.get('id') in ignore_job_ids)
 
     @staticmethod
     def _stopped_record(job):
         disposition=job.get('tracking_disposition')
         return job.get('status')=='uncertain' and isinstance(disposition,dict) and disposition.get('status')=='stopped'
 
-    def _stopped_results(self):
+    def _stopped_results(self, extra_job_ids=()):
         """Refuse while a stopped record's prompt is still in a running ComfyUI's in-memory history.
 
         Stopping that process would discard the only descriptor of a completed result that Resume observation could still
-        record. An endpoint that refuses connections with no listener has no history left to lose; any other failure is unknown."""
-        stopped=[job for job in list(self.studio.jobs.values()) if self._stopped_record(job)]
+        record. An endpoint that refuses connections with no listener has no history left to lose; any other failure is unknown.
+        `extra_job_ids` (GPU lease only, #979) adds the stale uncertain records the lease exempted from `_local_work`."""
+        stopped=[job for job in list(self.studio.jobs.values()) if self._stopped_record(job) or (job.get('status')=='uncertain' and job.get('id') in extra_job_ids)]
         if not stopped:return
         # A backend with no listening socket has no in-memory history to lose; ask the process table once per profile.
         live=[profile for profile in self.profiles.values() if self.process(profile) is not None]

@@ -36,7 +36,7 @@ class FakeManager:
         self.profiles = {"primary": {"id": "primary", "name": "Main library", "entry": "C:/fake/ComfyUI/main.py"},
                          "hidream": {"id": "hidream", "name": "HiDream", "entry": "C:/fake/hidream-launch.py"}}
         self.processes = {"primary": FakeProcess()}; self.idle_calls = []
-    def _local_work(self): return self.work
+    def _local_work(self, ignore_job_ids=()): return self.work
     def _check_retained_startup(self): pass
     def _check_startup_processes(self):
         if self.startup_error: raise ValueError(self.startup_error)
@@ -45,7 +45,7 @@ class FakeManager:
         self.idle_calls.append((profile["id"], allow_offline))
         if self.queue_busy: raise ValueError("ComfyUI has active or queued work. Its queue was preserved.")
         return True
-    def _stopped_results(self): pass
+    def _stopped_results(self, extra_job_ids=()): pass
     def process(self, profile):
         process = self.processes.get(profile["id"])
         return None if process is None or (process.terminated and process.exits) else process
@@ -203,7 +203,7 @@ def inert_backends(studio, process=None, queue_busy=False):
         if queue_busy: raise ValueError("ComfyUI has active or queued work. Its queue was preserved.")
         return True
     manager._idle = idle; manager._check_retained_startup = lambda: None
-    manager._check_startup_processes = lambda: {}; manager._stopped_results = lambda: None
+    manager._check_startup_processes = lambda: {}; manager._stopped_results = lambda extra_job_ids=(): None
     manager.process = lambda profile: process if profile["id"] == "primary" and process and not process.terminated else None
     manager.available = lambda profile: True
     return calls
