@@ -90,12 +90,14 @@ the exported `recipe-<preset>.json` beside it), seed 2026092211, 25 steps, commi
 | `qwen21-rgba`, 1024² | `b377572d` / `b0297f2a` | 28.2 s | 13.0 / 0.4 | potion icon with native alpha, no halo; *fixable* per the blind second judge (#877): alpha dust (1-31) over the background and a 1-12 % see-through body; threshold alpha before packing |
 | `qwen21-edit`, 1024² | `dc8f18f8` / `027b8a22` | 78.6 s | 12.9 / 2.6 | the lantern cutout kept in shape and colour, redrawn with ink outlines and cel shading |
 
-All three recipes are now `verified: true` (the route runs and returns the intended kind of output). The t2i and edit
-PNGs are saved as RGBA with faint partial alpha on part of the frame; strip or threshold alpha before any step that
-crops or packs by alpha — `python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by
-default, `--mode to-rgb` to drop a spurious channel), with before/after evidence in
-`experiments/curated/qwen21-alpha-cleanup/`. Generated and agent-inspected only: not art acceptance, and the Qwen
-Research License keeps them non-commercial. The 2048² text-to-image run is done (26 September 2026: job
+The rgba recipe is `verified: true` (the route runs and returns the intended kind of output). The t2i and edit
+graphs now route SaveImage through a core SplitImageWithAlpha node so full-frame outputs save RGB instead of RGBA
+with faint partial alpha (#878); both are `verified: false` until one proving run each through the Studio. The rgba
+PNG keeps its alpha channel — strip or threshold alpha before any step that crops or packs by alpha:
+`python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by default, `--mode to-rgb`
+to drop a spurious channel), with before/after evidence in `experiments/curated/qwen21-alpha-cleanup/`. Generated
+and agent-inspected only: not art acceptance, and the Qwen Research License keeps them non-commercial. The 2048²
+text-to-image run is done (26 September 2026: job
 `252c3ebe`, prompt `3593cd92`, seed 2026092601, 25 steps, 353.0 s, 11.9 GB spilled to shared RAM;
 `experiments/curated/qwen21-2048-20260926/`): native 2K completes on this 16 GB card but is paging-bound, so 1 MP
 stays the everyday size. Still open under #739: a 3-6 reference identity edit, a text-heavy prompt, the LoRA status
