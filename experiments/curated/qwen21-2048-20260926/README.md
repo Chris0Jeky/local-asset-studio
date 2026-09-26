@@ -28,7 +28,8 @@ One frozen proving run for the #739 leftover "a 2048² text-to-image run".
   before the next job. Native 2K on this 16 GB card is possible but paging-bound;
   1 MP stays the everyday size.
 - Output `Studio/qwen21-t2i_00002_.png` (5,474,405 bytes, SHA-256
-  `60f0f322…f02a54`): PNG RGBA 2048x2048, opened and inspected. The briefed scene
+  `60f0f3228db4b64f76dda28198e2454fe30a72a7e731a6d88a143d330df02a54`): PNG RGBA
+  2048x2048, opened and inspected. The briefed scene
   is all there — adult silver-haired sorceress, midnight-blue coat and cape with
   gold clasps, lit brass lantern in hand, stone bridge, rain, blue-hour mountains.
   Clean anime finish; the visible hand holds the lantern handle naturally; no
