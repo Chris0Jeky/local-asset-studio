@@ -788,7 +788,200 @@ async function modelStatusFilter() {
 }
 }
 
+// #772 Recent runs: a tiny DOM over #gallery. Each innerHTML write re-parses the markup into fresh element
+// objects (as a browser would), so a focused node or a playing clip is lost exactly when the list is replaced.
+function recentRunsSandbox({host = false} = {}) {
+  const s = sandbox({}, {});
+  const matches = (node, selector) => selector.startsWith('[') ? selector.slice(6, -1).replace(/-(\w)/g, (_, c) => c.toUpperCase()) in node.dataset
+    : selector.startsWith('.') ? node.className.split(/\s+/).includes(selector.slice(1)) : node.tagName === selector.toUpperCase();
+  const any = (node, selector) => selector.split(',').some(part => matches(node, part.trim()));
+  const parse = markup => {
+    const out = []; let owner = null;
+    for (const m of markup.matchAll(/<(\/article|article|button|a|input|video|audio|summary)\b([^>]*)>/g)) {
+      if (m[1] === '/article') {owner = null; continue;}
+      const attrs = Object.fromEntries([...m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(a => [a[1], a[2] ?? '']));
+      const dataset = Object.fromEntries(Object.entries(attrs).filter(([k]) => k.startsWith('data-')).map(([k, v]) => [k.slice(5).replace(/-(\w)/g, (_, c) => c.toUpperCase()), v]));
+      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, paused: true, ended: false, loop: 'loop' in attrs, listeners: {},
+        focus(options) {this.focusOptions = options; s.context.document.activeElement = this;},
+        addEventListener(name, handler) {(this.listeners[name] ||= []).push(handler);},
+        removeEventListener(name, handler) {this.listeners[name] = (this.listeners[name] || []).filter(h => h !== handler);},
+        closest(selector) {return any(this, selector) ? this : this.owner && any(this.owner, selector) ? this.owner : null;}};
+      if (m[1] === 'article') owner = node;
+      out.push(node);
+    }
+    return out;
+  };
+  // Each innerHTML write re-parses into fresh nodes and counts as one replacement of that container.
+  const container = target => {
+    const box = {html: '', nodes: [], writes: 0};
+    Object.defineProperty(target, 'innerHTML', {get: () => box.html, set(value) {box.html = value; box.nodes = parse(value); box.writes++;}});
+    target.querySelectorAll = selector => box.nodes.filter(node => any(node, selector));
+    target.contains = node => box.nodes.includes(node);
+    return box;
+  };
+  const gallery = container(s.element('#gallery'));
+  Object.defineProperty(s, 'writes', {get: () => gallery.writes});
+  s.nodes = () => gallery.nodes;
+  if (host) {
+    const hostElement = {};
+    s.host = container(hostElement);
+    s.context.document.getElementById = id => id === 'jobProblemsHost' ? hostElement : null;
+  }
+  s.cards = () => (gallery.html.match(/class="imageCard"/g) || []).length;
+  s.poll = async list => {s.context.fetch = async () => ({ok: true, json: async () => JSON.parse(JSON.stringify(list))}); await s.run('refreshJobs()');};
+  return s;
+}
+const recentJob = (id, count = 1, type = 'image') => ({id, preset_name: 'Recipe ' + id, status: 'completed', message: 'Done', prompt_ids: [], controls: {positive: 'prompt ' + id},
+  outputs: Array.from({length: count}, (_, i) => ({asset_id: id + '-' + i, filename: id + '-' + i + '.png', media_type: type}))});
+
+async function recentRunsShowMoreSurvivesAPoll() {
+  const s = recentRunsSandbox();
+  const history = Array.from({length: 25}, (_, i) => recentJob('r' + i));
+  await s.poll(history);
+  assert.equal(s.cards(), 10, 'Ten recent outputs by default');
+  assert.match(s.element('#gallery').innerHTML, /15 older output\(s\) not shown/);
+  const more = () => s.nodes().find(node => 'recentMore' in node.dataset);
+  assert.ok(more(), 'A Show more control is offered when older outputs exist');
+  await s.element('#gallery').onclick({target: more()});
+  assert.equal(s.cards(), 20, 'Show 10 more reveals ten older outputs');
+  assert.match(s.element('#gallery').innerHTML, /Show 5 more/, 'The last step names what is left');
+  await s.poll([recentJob('new'), ...history]);
+  assert.equal(s.cards(), 20, 'A poll re-render keeps the raised count');
+  await s.element('#gallery').onclick({target: more()});
+  assert.equal(s.cards(), 26, 'The count stops at the available outputs');
+  assert.equal(more(), undefined, 'The control hides once everything is shown');
+}
+
+async function recentRunsUnchangedPollLeavesTheList() {
+  const s = recentRunsSandbox();
+  const history = Array.from({length: 3}, (_, i) => recentJob('u' + i));
+  await s.poll(history);
+  const writes = s.writes, first = s.nodes()[0];
+  await s.poll(history); await s.poll(history);
+  assert.equal(s.writes, writes, 'An unchanged data signature never replaces the list');
+  assert.equal(s.nodes()[0], first);
+}
+
+async function recentRunsFocusReturnsAfterAChangedPoll() {
+  const s = recentRunsSandbox();
+  const history = Array.from({length: 4}, (_, i) => recentJob('f' + i));
+  await s.poll(history);
+  const before = s.nodes().find(node => node.dataset.job === 'f2' && node.className === 'reference-output' && node.dataset.preset === 'krea-refine');
+  s.context.document.activeElement = before;
+  await s.poll([recentJob('fresh'), ...history]);
+  const after = s.context.document.activeElement;
+  assert.notEqual(after, before, 'The list was replaced');
+  assert.ok(s.nodes().includes(after), 'Focus moved to an element of the new list');
+  assert.deepEqual([after.dataset.job, after.dataset.index, after.className, after.dataset.preset], ['f2', '0', 'reference-output', 'krea-refine'], 'Same output, same control');
+  assert.equal(after.focusOptions?.preventScroll, true, 'Focus is restored without scrolling');
+}
+
+async function recentRunsWaitForPlayingMedia() {
+  const s = recentRunsSandbox();
+  const history = [recentJob('clip', 1, 'video'), recentJob('p1')];
+  await s.poll(history);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('later'), ...history]);
+  await s.poll([recentJob('later'), recentJob('later2'), ...history]);
+  assert.equal(s.writes, writes, 'A playing clip holds the re-render');
+  assert.equal(s.nodes().find(node => node.tagName === 'VIDEO'), video, 'The playing element survives');
+  assert.equal(video.listeners.pause.length, 1, 'One wait per clip, however many polls arrive');
+  video.paused = true; video.listeners.pause[0]();
+  assert.equal(s.writes, writes + 1, 'Pausing releases the held re-render once');
+  assert.match(s.element('#gallery').innerHTML, /data-output="later2:0"/, 'The released render shows the newest data');
+  assert.equal(video.listeners.pause.length, 0);
+}
+
+async function recentRunsReleaseOnEndedAndSkipLoops() {
+  const s = recentRunsSandbox();
+  const history = [recentJob('clip', 1, 'video'), recentJob('p1')];
+  await s.poll(history);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('later'), ...history]);
+  assert.equal(s.writes, writes, 'A playing clip holds the re-render');
+  video.ended = true; video.listeners.ended[0]();
+  assert.equal(s.writes, writes + 1, 'The end of the clip releases the held re-render');
+  assert.equal(video.listeners.ended.length, 0, 'The wait unregisters itself');
+  const looping = s.nodes().find(node => node.tagName === 'VIDEO');
+  looping.paused = false; looping.loop = true;
+  await s.poll([recentJob('loop-later'), recentJob('later'), ...history]);
+  assert.equal(s.writes, writes + 2, 'A looping clip never ends, so it does not hold the list');
+}
+
+async function recentRunsUserActionsRenderDuringPlayback() {
+  const s = recentRunsSandbox();
+  const history = [recentJob('clip', 1, 'video'), ...Array.from({length: 12}, (_, i) => recentJob('m' + i))];
+  await s.poll(history);
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const writes = s.writes;
+  await s.element('#gallery').onclick({target: s.nodes().find(node => 'recentMore' in node.dataset)});
+  assert.equal(s.writes, writes + 1, 'Show more is the owner asking: it renders even while a clip plays');
+  assert.equal(s.cards(), 13);
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  s.run(`jobs.push({id:'bad',preset_name:'Bad',status:'failed',message:'OOM',outputs:[],prompt_ids:[],created_at:1,can_put_away:true,put_away:false},{id:'away',preset_name:'Away',status:'failed',message:'Old',outputs:[],prompt_ids:[],created_at:0,put_away:true,put_away_basis:'owner',put_away_at:1,can_bring_back:true});jobsSignature='';renderJobs(undefined,true);`);
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const before = s.writes;
+  await s.element('#gallery').onclick({target: {closest: selector => selector === '[data-problems-toggle]' ? {dataset: {problemsToggle: 'away'}} : null}});
+  assert.equal(s.writes, before + 1, 'A Problems toggle renders even while a clip plays');
+  assert.match(s.element('#gallery').innerHTML, /Hide put away/);
+}
+
+async function recentRunsFinalShowMoreFocusesTheFirstRevealedOutput() {
+  const s = recentRunsSandbox();
+  await s.poll(Array.from({length: 13}, (_, i) => recentJob('n' + i)));
+  const more = s.nodes().find(node => 'recentMore' in node.dataset);
+  s.context.document.activeElement = more;
+  await s.element('#gallery').onclick({target: more});
+  assert.equal(s.nodes().find(node => 'recentMore' in node.dataset), undefined, 'Everything is shown');
+  const focused = s.context.document.activeElement;
+  assert.ok(s.nodes().includes(focused), 'Focus stays inside Recent runs instead of falling to the page');
+  assert.equal(focused.closest('[data-output]').dataset.output, 'n10:0', 'The first newly revealed output takes focus');
+  assert.equal(focused.focusOptions?.preventScroll, true);
+}
+
+async function recentRunsProblemsStayCurrentDuringPlayback() {
+  const s = recentRunsSandbox({host: true});
+  const history = [recentJob('clip', 1, 'video'), recentJob('p1')];
+  await s.poll(history);
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const writes = s.writes;
+  const failed = {id: 'new-fail', preset_name: 'Fresh failure', status: 'failed', message: 'Out of memory', outputs: [], prompt_ids: [], created_at: 5, can_put_away: true, put_away: false};
+  await s.poll([failed, ...history]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.match(s.host.html, /Fresh failure/, 'A new failure reaches Problems while the clip plays');
+  const hostWrites = s.host.writes;
+  await s.poll([failed, ...history]);
+  assert.equal(s.host.writes, hostWrites, 'Unchanged Problems markup is not rewritten');
+  await s.poll([{...failed, put_away: true, put_away_basis: 'owner', put_away_at: 9, can_put_away: false, can_bring_back: true}, ...history]);
+  assert.match(s.host.html, /Show put away \(1\)/, 'A Put away result shows at once, so the card does not invite a second click');
+  assert.doesNotMatch(s.host.html, /data-put-away="true"/);
+  assert.equal(s.writes, writes, 'The gallery is still untouched');
+}
+
+async function recentRunsLeaveOutsideFocusAlone() {
+  const s = recentRunsSandbox();
+  await s.poll(Array.from({length: 3}, (_, i) => recentJob('o' + i)));
+  const prompt = s.element('#positive');
+  s.context.document.activeElement = prompt;
+  await s.poll(Array.from({length: 4}, (_, i) => recentJob('o' + i)));
+  assert.equal(s.context.document.activeElement, prompt, 'Typing in the brief keeps focus through a poll');
+  assert.ok(s.nodes().every(node => !node.focusOptions), 'No list control is focused');
+}
+
 (async () => {
+  await recentRunsShowMoreSurvivesAPoll();
+  await recentRunsReleaseOnEndedAndSkipLoops();
+  await recentRunsUserActionsRenderDuringPlayback();
+  await recentRunsFinalShowMoreFocusesTheFirstRevealedOutput();
+  await recentRunsProblemsStayCurrentDuringPlayback();
+  await recentRunsLeaveOutsideFocusAlone();
+  await recentRunsUnchangedPollLeavesTheList();
+  await recentRunsFocusReturnsAfterAChangedPoll();
+  await recentRunsWaitForPlayingMedia();
   await generateShortcutRoutesThroughTheButton();
   await seedAndPinChangesAreAnnounced();
   await pastedAndDroppedPicturesFillEmptySlots();

@@ -72,3 +72,4 @@ model-viewer{display:block;width:100%;height:320px;background:radial-gradient(ci
 #collectionStatus{min-height:3em;overflow-wrap:anywhere}
 .collection-next{display:flex;flex-wrap:wrap;gap:8px}
 #collectionDialog .actions{flex-wrap:wrap}
+.recentMore{grid-column:1/-1;margin:0;font-size:11px;color:var(--muted)}
