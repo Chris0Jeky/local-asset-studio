@@ -84,7 +84,7 @@
     "class_type": "SaveImage",
     "inputs": {
       "images": [
-        "7",
+        "11",
         0
       ],
       "filename_prefix": "Studio/qwen21-edit"
@@ -105,6 +105,15 @@
     "class_type": "LoadImage",
     "inputs": {
       "image": "studio-lantern-cutout.png"
+    }
+  },
+  "11": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": [
+        "7",
+        0
+      ]
     }
   }
 }

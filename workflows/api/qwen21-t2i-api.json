@@ -84,10 +84,19 @@
     "class_type": "SaveImage",
     "inputs": {
       "images": [
-        "7",
+        "9",
         0
       ],
       "filename_prefix": "Studio/qwen21-t2i"
+    }
+  },
+  "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": [
+        "7",
+        0
+      ]
     }
   }
 }

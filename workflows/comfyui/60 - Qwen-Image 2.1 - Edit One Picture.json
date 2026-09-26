@@ -1,6 +1,6 @@
 {
-  "last_node_id": 9,
-  "last_link_id": 10,
+  "last_node_id": 10,
+  "last_link_id": 11,
   "nodes": [
     {
       "id": 1,
@@ -251,7 +251,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            9
+            11
           ]
         }
       ],
@@ -370,6 +370,47 @@
         "studio-lantern-cutout.png"
       ],
       "title": "Load Image"
+    },
+    {
+      "id": 10,
+      "type": "SplitImageWithAlpha",
+      "pos": [
+        390,
+        680
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            9
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SplitImageWithAlpha"
+      },
+      "widgets_values": [],
+      "title": "Split Image with Alpha"
     }
   ],
   "links": [
@@ -439,7 +480,7 @@
     ],
     [
       9,
-      6,
+      10,
       0,
       7,
       0,
@@ -452,6 +493,14 @@
       8,
       0,
       "MODEL"
+    ],
+    [
+      11,
+      6,
+      0,
+      10,
+      0,
+      "IMAGE"
     ]
   ],
   "groups": [],

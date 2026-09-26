@@ -36,8 +36,19 @@ def base():
     }
 
 
+def drop_alpha(graph, key):
+    """Route SaveImage through SplitImageWithAlpha so full-frame outputs save RGB (#878).
+
+    The Qwen 2.1 VAE decodes RGBA with faint partial alpha on the t2i/edit
+    recipes; the transparent recipe keeps the direct VAEDecode wiring.
+    """
+    graph[key]={'class_type':'SplitImageWithAlpha','inputs':{'image':['7',0]}}
+    graph['8']['inputs']['images']=[key,0]
+
+
 def graphs():
     t2i=base();t2i['8']['inputs']['filename_prefix']='Studio/qwen21-t2i'
+    drop_alpha(t2i,'9')
     t2i['4']['inputs']['prompt']=('Anime key visual of an adult silver-haired sorceress in a midnight-blue travelling coat, holding a glowing '
                                   'brass lantern on a rainy stone bridge at blue hour. Clean linework, layered cel shading, teal and warm amber light.')
     t2i['5']['inputs'].update(width=832,height=1248)
@@ -56,6 +67,7 @@ def graphs():
                                'ink outlines and soft cel shading on a plain light background.')
     edit['4']['inputs']['images.image_1']=['10',0]
     edit['6']['inputs'].update(model=['9',0],latent_image=['4',2])
+    drop_alpha(edit,'11')
     return {'qwen21-t2i':t2i,'qwen21-rgba':rgba,'qwen21-edit':edit}
 
 

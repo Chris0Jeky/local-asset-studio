@@ -1,6 +1,6 @@
 {
-  "last_node_id": 8,
-  "last_link_id": 8,
+  "last_node_id": 9,
+  "last_link_id": 9,
   "nodes": [
     {
       "id": 1,
@@ -277,7 +277,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            8
+            9
           ]
         }
       ],
@@ -322,6 +322,47 @@
         "Studio/qwen21-t2i"
       ],
       "title": "Save Image"
+    },
+    {
+      "id": 9,
+      "type": "SplitImageWithAlpha",
+      "pos": [
+        0,
+        680
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SplitImageWithAlpha"
+      },
+      "widgets_values": [],
+      "title": "Split Image with Alpha"
     }
   ],
   "links": [
@@ -383,9 +424,17 @@
     ],
     [
       8,
-      7,
+      9,
       0,
       8,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      7,
+      0,
+      9,
       0,
       "IMAGE"
     ]
