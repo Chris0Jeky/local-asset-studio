@@ -97,6 +97,9 @@ Studio proofs, seed 2026092211, 25 steps, commit gate enforced (58.6 / 36.8 / 37
 (`docs/QWEN-IMAGE-21.md`, *Studio proofs*). Agent-inspected only; not art acceptance; Qwen Research License,
 non-commercial. #739 stays open for the 2048², multi-reference, text-heavy, LoRA and VRAM-arbitration items.
 
+*Correction, 26 September 2026:* #1059 routed `qwen21-t2i` and `qwen21-edit` through `SplitImageWithAlpha` so they
+save RGB (#878), and both went back to `verified: false` until a Studio re-proof; only `qwen21-rgba` stays verified.
+
 ## GPU memory on this card: spill measured, reserve default kept at 0.6 — 23 September 2026 (02:40)
 
 ComfyUI's free-VRAM figure ignores what dwm and other apps hold (0.9–2.3 GB for dwm alone tonight), so a
