@@ -15,7 +15,7 @@ from studio_workflow.run_http import PREFIX
 
 def attach_lease(studio):
     manager = lease_fixtures.FakeManager(); manager.active = 'primary'
-    manager._local_work = lambda: any(job.get('status') == 'queued' for job in studio.jobs.values())
+    manager._local_work = lambda ignore_job_ids=(): any(job.get('status') == 'queued' for job in studio.jobs.values())
     studio.backends = manager
     studio._write_json_atomic = lambda path, value: write_json(path, value)
     now = [10000.0]

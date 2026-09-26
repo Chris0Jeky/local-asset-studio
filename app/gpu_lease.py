@@ -6,7 +6,9 @@ switches and new Studio generations are refused, and the worker never posts a pr
 back: runtime recovery (when enabled) starts the selected backend on its next pass with its configured arguments.
 
 The lease stops only processes this Studio can prove it launched, and only after the same idle checks a backend switch
-uses: no queued, running or uncertain Studio work and an empty running+pending ComfyUI queue on every endpoint. It adds
+uses: no queued, running or uncertain Studio work and an empty running+pending ComfyUI queue on every endpoint. One exception
+applies to the lease alone (#979): an 'uncertain' job with no recorded activity for STALE_UNCERTAIN_SECONDS no longer blocks
+a grant; its prompt IDs still get the in-memory history check, and the grant names it in `ignored_stale_uncertain`. It adds
 no authentication: like every Studio mutation it relies on the loopback bind, the loopback Host check and the
 same-origin Origin check.
 """
@@ -22,6 +24,31 @@ MIN_TTL_SECONDS = 60
 MAX_TTL_SECONDS = 4 * 3600
 STOP_WAIT_SECONDS = 15
 HOLDER_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,63}")
+# An 'uncertain' job idle this long no longer blocks a lease grant (owner decision 2026-09-25, #979). Nothing about the
+# job changes: it stays 'uncertain', resumable and blocking for backend switches and every other admission path.
+STALE_UNCERTAIN_SECONDS = 24 * 3600
+
+
+def _finite(value):
+    try: return type(value) in (int, float) and math.isfinite(value)
+    except OverflowError: return False  # an int too large for a float is not a usable time
+
+
+def last_activity(job):
+    """The latest time a job record says anything happened to it, or None when it carries no finite time.
+
+    Reads creation, start, finish, the pending-submission marker and every tracking stop/resume event. The owner's
+    put-away acknowledgement is not activity: it records that someone looked, not that work moved."""
+    stamps = [job.get(key) for key in ("created_at", "started_at", "finished_at")]
+    pending = job.get("pending_submission")
+    if isinstance(pending, dict): stamps.append(pending.get("marked_at"))
+    disposition = job.get("tracking_disposition")
+    if isinstance(disposition, dict):
+        stamps.append(disposition.get("recorded_at"))
+        history = disposition.get("history")
+        if isinstance(history, list): stamps.extend(event.get("recorded_at") for event in history if isinstance(event, dict))
+    stamps = [stamp for stamp in stamps if _finite(stamp)]
+    return max(stamps) if stamps else None
 
 
 class GpuLeaseError(ValueError):
@@ -111,7 +138,8 @@ class GpuLease:
             result = {"held": record is not None, "holder": None, "acquired_at": None, "renewed_at": None, "expires_at": None,
                       "expires_at_utc": None, "ttl_seconds": None, "remaining_seconds": None, "stopped_processes": [],
                       "last_release": dict(self.last_release) if self.last_release else None,
-                      "limits": {"min_ttl_seconds": MIN_TTL_SECONDS, "max_ttl_seconds": MAX_TTL_SECONDS},
+                      "limits": {"min_ttl_seconds": MIN_TTL_SECONDS, "max_ttl_seconds": MAX_TTL_SECONDS,
+                                 "stale_uncertain_seconds": STALE_UNCERTAIN_SECONDS},
                       "relaunch_on_release": "automatic" if getattr(recovery, "enabled", False) else "manual",
                       "access": "loopback only: Host 127.0.0.1:8191 or localhost:8191, same-origin Origin for mutations; no authentication"}
             if record:
@@ -120,6 +148,20 @@ class GpuLease:
                 result["expires_at_utc"] = _stamp(record["expires_at"])
                 result["remaining_seconds"] = max(0.0, round(record["expires_at"] - self.clock(), 1))
             return result
+
+    def stale_uncertain(self, now):
+        """Sorted ids of 'uncertain' jobs whose last activity is at least STALE_UNCERTAIN_SECONDS before `now`.
+
+        A record with no finite time, or one dated in the future, is not stale. A stopped-tracking record is left out: it
+        never blocks, so the age rule does not change anything for it."""
+        stale = []
+        for job in list(getattr(self.studio, "jobs", {}).values()):
+            if not isinstance(job, dict) or job.get("status") != "uncertain" or type(job.get("id")) is not str: continue
+            disposition = job.get("tracking_disposition")
+            if isinstance(disposition, dict) and disposition.get("status") == "stopped": continue
+            last = last_activity(job)
+            if last is not None and now - last >= STALE_UNCERTAIN_SECONDS: stale.append(job["id"])
+        return sorted(stale)
 
     @staticmethod
     def _holder(payload, allowed):
@@ -151,15 +193,18 @@ class GpuLease:
                 record = dict(self.record, renewed_at=now, ttl_seconds=ttl, expires_at=now + ttl)
                 self._save(record, self.last_release)
                 self._log("renewed", holder=holder, ttl_seconds=ttl, stopped_processes=[])
-                return dict(self.snapshot(), granted=True, renewed=True, stopped_now=[])
+                return dict(self.snapshot(), granted=True, renewed=True, stopped_now=[], ignored_stale_uncertain=[])
             if manager.busy: raise GpuLeaseError("A backend switch is running; nothing was stopped", code="backend_switch_active")
-            if manager._local_work():
-                raise GpuLeaseError("Studio has queued, running or unreconciled work; nothing was stopped", code="studio_work_active")
+            # Only the lease ages out old 'uncertain' records; the manager re-reads each status, so one resumed since is not exempt.
+            stale = tuple(self.stale_uncertain(self.clock()))
+            if manager._local_work(ignore_job_ids=stale):
+                raise GpuLeaseError("Studio has queued, running or unreconciled work; nothing was stopped", code="studio_work_active",
+                                    ignored_stale_uncertain=list(stale))
             try:
                 manager._check_retained_startup(); manager._check_startup_processes()
                 # Every endpoint, including work submitted directly through ComfyUI: running+pending must be empty.
                 for profile in manager.profiles.values(): manager._idle(profile, allow_offline=True)
-                manager._stopped_results()
+                manager._stopped_results(extra_job_ids=stale)
                 targets = [(key, profile, manager.process(profile)) for key, profile in manager.profiles.items()]
             except ValueError as exc:
                 raise GpuLeaseError(str(exc)[:400] + ". Nothing was stopped", code="backend_not_idle") from exc
@@ -192,8 +237,8 @@ class GpuLease:
             record = {"holder": holder, "acquired_at": now, "stopped_processes": stopped,
                       "renewed_at": None, "ttl_seconds": ttl, "expires_at": now + ttl}
             self._save(record, self.last_release)
-            self._log("granted", holder=holder, ttl_seconds=ttl, stopped_processes=stopped)
-            return dict(self.snapshot(), granted=True, renewed=False, stopped_now=stopped)
+            self._log("granted", holder=holder, ttl_seconds=ttl, stopped_processes=stopped, ignored_stale_uncertain=list(stale))
+            return dict(self.snapshot(), granted=True, renewed=False, stopped_now=stopped, ignored_stale_uncertain=list(stale))
 
     def release(self, payload):
         """Release by the holder; idempotent when nothing is held. Relaunch stays with runtime recovery."""
