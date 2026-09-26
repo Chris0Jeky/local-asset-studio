@@ -362,7 +362,7 @@ async function uploadInput(id) {
 function mediaCard(job,index,output) {
   const id=esc(job.id), url='/api/image/'+id+'/'+index, type=output.media_type || 'image';
   const media=type==='video'?'<video controls preload="metadata" src="'+url+'"></video>':type==='audio'?'<audio controls src="'+url+'"></audio>':type==='3d'?'<model-viewer loading="lazy" camera-controls touch-action="pan-y" environment-image="neutral" shadow-intensity="0.7" src="'+url+'" alt="'+esc(job.preset_name)+' mesh"><span slot="poster">Load interactive 3D preview</span></model-viewer>':'<img loading="lazy" src="'+url+'" alt="'+esc(job.preset_name)+' output">';
-  return '<article class="imageCard">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div><p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
+  return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div><p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
 const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
@@ -399,10 +399,22 @@ async function mixedBatchAction(button) {
     throw error;
   } finally {button.disabled=false;mixedBatchBusy.delete(identifier);}
 }
-function renderJobs(signature=JSON.stringify(jobs)) {
-  if(signature===jobsSignature)return; jobsSignature=signature;
+// #772: Recent runs grows ten at a time on request. A poll re-render keeps that count, puts focus back on the
+// same control of the same output, and waits while a clip in the list plays; unchanged data never touches the DOM.
+// The key uses the first class only: studio-workbench.js adds `primary` to the kept reference button after each render.
+const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer';let recentShown=RECENT_STEP,jobsRenderWait=null;
+function jobControlKey(el){
+  if(!el?.dataset||!el.tagName)return null;const owner=el.closest?.('[data-output],[data-problem]');
+  return [owner?.dataset.output??(owner?'problem:'+owner.dataset.problem:''),el.tagName,String(el.className||'').split(/\s+/)[0],...Object.keys(el.dataset).filter(k=>k!=='job'&&k!=='index').sort().map(k=>k+'='+el.dataset[k])].join('|');
+}
+function renderJobs(signature=JSON.stringify(jobs),force=false) {
+  if(signature===jobsSignature)return;
+  const gallery=$('#gallery'),playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended);
+  if(playing){if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);}return;}
+  jobsRenderWait=null;jobsSignature=signature;
+  const focusHosts=[gallery,document.getElementById?.('jobProblemsHost')].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null;
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
-  const cards=[],problems=[],problemsOpen=$('#jobProblems')?.open;
+  const cards=[],problems=[],problemsOpen=$('#jobProblems')?.open;let recentHidden=0;
   jobs.forEach(job=>{
     if(job.status!=='completed'){
       const stopped=job.tracking_disposition?.status==='stopped', promptIds=(job.prompt_ids||[]).join(', ');
@@ -416,17 +428,19 @@ function renderJobs(signature=JSON.stringify(jobs)) {
       const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
       const problem=['failed','partial','uncertain','abandoned'].includes(job.status);
       const putAway=!problem?'':job.put_away?(job.put_away_basis==='owner'?'<p class="putAwayNote"><small>Put away '+esc(new Date(job.put_away_at*1000).toLocaleString())+'. Status, prompt IDs, outputs and reservations are unchanged.</small></p>':'<p class="putAwayNote"><small>Off your desk because tracking was stopped. Resume observation brings it back.</small></p>')+(job.can_bring_back?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="false">Bring back</button>':''):job.can_put_away?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="true" title="Hide from Problems and your desk. Nothing is retried, cancelled or deleted.">Put away</button>':job.status==='uncertain'?'<p class="putAwayNote"><small>'+esc(job.can_stop_tracking?'Stop tracking before putting this away; its resume path stays open until then.':'Resolve or abandon this uncertain job before putting it away.')+'</small></p>':'';
-      const html='<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button>'+putAway+'</article>';
+      const html='<article class="jobStatus '+esc(job.status)+'" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button>'+putAway+'</article>';
       if(problem)problems.push({job,html});else cards.push(html);
     }
-    job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
+    job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
   });
   const problemMarkup=renderProblems(problems,problemsOpen);
   const host=document.getElementById?.('jobProblemsHost')||null;
-  $('#gallery').className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
-  $('#gallery').innerHTML=(cards.length?cards.join(''):(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
+  const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
+  gallery.className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
+  gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
   if(host)host.innerHTML=problemMarkup;
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
+  if(focusKey)focusHosts.flatMap(h=>[...(h.querySelectorAll?.(JOB_FOCUSABLE)||[])]).find(el=>jobControlKey(el)===focusKey)?.focus({preventScroll:true});
   renderCompare();
 }
 // #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
@@ -619,7 +633,8 @@ $('#gallery').onclick=async e=>{
     const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index},unpin=pinned.some(x=>x.job===p.job&&x.index===p.index),dropped=!unpin&&pinned.length>=2;pinned=unpin?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();if(dropped)message('Side by side shows two pictures. The oldest pin was replaced by this one.');}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}
-    const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs();return;}
+    const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs(undefined,true);return;}
+    if(e.target.closest('[data-recent-more]')){recentShown+=RECENT_STEP;jobsSignature='';renderJobs(undefined,true);return;}
     // Put away changes only the record's put_away_at; it never retries, resumes or cancels.
     const away=e.target.closest('.putAway');if(away){away.disabled=true;try{await post('/api/jobs/'+encodeURIComponent(away.dataset.job)+'/put-away',{put_away:away.dataset.putAway==='true'});await refresh();}finally{away.disabled=false;}return;}
     const stop=e.target.closest('.stopTracking');if(stop){const reason=stop.parentElement.querySelector('[data-stop-tracking-reason]')?.value.trim();if(!reason)throw Error('Give a reason before stopping tracking.');await post('/api/jobs/'+encodeURIComponent(stop.dataset.job)+'/stop-tracking',{reason});await refresh();}
