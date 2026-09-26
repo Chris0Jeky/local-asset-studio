@@ -140,6 +140,7 @@ class StaleUncertainLeaseTests(unittest.TestCase):
         self.assertIsNone(last_activity({}))
         self.assertIsNone(last_activity({"created_at": True, "started_at": "x", "finished_at": math.nan}))
         self.assertEqual(last_activity({"created_at": 1, "finished_at": 5.5, "put_away_at": 99}), 5.5)
+        self.assertIsNone(last_activity({"created_at": 10 ** 400}), "an int beyond float range is not a time")
 
 
 if __name__ == "__main__":

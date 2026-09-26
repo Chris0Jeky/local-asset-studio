@@ -30,7 +30,8 @@ STALE_UNCERTAIN_SECONDS = 24 * 3600
 
 
 def _finite(value):
-    return type(value) in (int, float) and math.isfinite(value)
+    try: return type(value) in (int, float) and math.isfinite(value)
+    except OverflowError: return False  # an int too large for a float is not a usable time
 
 
 def last_activity(job):
