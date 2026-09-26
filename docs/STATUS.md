@@ -8,7 +8,7 @@ inspected/accepted (a human judged the art), licensed (the terms allow the use);
 
 | Goal | State | One-line summary |
 | --- | --- | --- |
-| G1 Workflows that genuinely work and are elaborated | ~70 % (was ~65 %) | 89 presets, 47 `verified: true` (66 and 36 after #263); 19 newly verified routes (Klein Combine and Restyle, Qwen-Image 2.1, Krea GGUF, Z-Image fp8, `wai-skeleton`, masked repair, Style + Pose); the six most-used SDXL presets wait for a re-proof after #888; video still fails inspection |
+| G1 Workflows that genuinely work and are elaborated | ~70 % (was ~65 %) | 89 presets, 45 `verified: true` (66 and 36 after #263); 19 newly verified routes (Klein Combine and Restyle, Qwen-Image 2.1, Krea GGUF, Z-Image fp8, `wai-skeleton`, masked repair, Style + Pose); the six most-used SDXL presets wait for a re-proof after #888; video still fails inspection |
 | G2 Chosen images at baseline quality | ~65 % (was ~60 %) | The brief's four steps plus identity routes exist, and the owner chose the pack's face, expression and full body from them (q-30); a hand repair works (agent-judged); zero owner-accepted images, 0 keepers of 1,205 assets (#939) |
 | G3 Character sheets → figures, poses, in-betweens | ~45 % (was ~35 %) | The figure splitter with lineage is merged (#379, #647) but has never split a real sheet; masked hand repair verified; pose editor and pose routes exist; in-betweens are research only |
 | G4 UX that reflects the real work | ~70 % (was ~72 %) | Create workshop layouts, the Combine workbench and completed Create/Overview/library journeys; the 24 Sep live QA found the library and desk buried under lab output (#939, #940); no sheet/figure task family |
@@ -19,13 +19,13 @@ inspected/accepted (a human judged the art), licensed (the terms allow the use);
 ## G1 — Workflows that genuinely work
 
 **Moved up by** nineteen presets proved through the Studio since 14 September (Studio jobs, agent-inspected,
-`verified: true`, none art acceptance; `presets/catalog.json` against the #263 merge); **held back by** eight that lost the flag.
+`verified: true`, none art acceptance; `presets/catalog.json` against the #263 merge); **held back by** ten that lost the flag (two of them `qwen21-t2i` and `qwen21-edit` after #1059).
 - Combine: `combine-klein` (FLUX.2 Klein 4B, job `fb0eb95d`), and on Klein 9B `combine-klein-9b` (pose first),
   `-depth` (`22ff6394`), `-skeleton` (`26448d58`), `-copypose` (`61dd5375`, #452) and `-replace` (`7051b297`, `2752190c`, #481).
   Since the owner's q-28 answer (23 Sep) the route order is Copy Pose, drawn skeleton, depth, replace, pose-first 9B, 4B.
 - Restyle: `restyle-klein` (job `db25b173`, 65.9 s including the model load; 16–20 s warm in research) leads, `restyle-wai` (`0c13590c`) is second (owner, q-27, 23 Sep).
 - Qwen-Image 2.1 on the isolated v0.37.0 backend: `qwen21-t2i` (`be94bd02`, 52.9 s), `qwen21-rgba` (`b377572d`),
-  `qwen21-edit` (`dc8f18f8`) (#858, #876, [QWEN-IMAGE-21.md](QWEN-IMAGE-21.md)); #739 open for 2048², multi-reference, text, LoRA, VRAM.
+  `qwen21-edit` (`dc8f18f8`) (#858, #876, [QWEN-IMAGE-21.md](QWEN-IMAGE-21.md)); t2i and edit lost the flag on 26 Sep when #1059 rerouted their output to RGB, and wait for a re-proof; #739 open for 2048², multi-reference, text, LoRA, VRAM.
 - Krea 2 Q5_K_M GGUF with the text encoder on the CPU: `krea-portrait-gguf` (`c6049b90`), `krea-anime-atelier-gguf`
   (`29e468ca`) (#880); the atelier target stack took 173.2 s on it against 827.6 s on fp8.
 - `zimage-fast` (`4f5974cc`, 57 s), `wai-skeleton` (`6a342bbf`, #855), `anime-masked-repair` (`1f9b3e11`, #881, #885),
