@@ -401,18 +401,18 @@ async function mixedBatchAction(button) {
 }
 // #772: Recent runs grows ten at a time on request. A poll re-render keeps that count, puts focus back on the
 // same control of the same output, and waits while a clip in the list plays; unchanged data never touches the DOM.
+// Only the gallery waits for a clip: Problems holds no media and always shows the current record, so a new failure
+// or the result of Put away / Resume / Stop tracking / Abandon appears at once. A looping clip never waits (no `ended`).
 // The key uses the first class only: studio-workbench.js adds `primary` to the kept reference button after each render.
-const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer';let recentShown=RECENT_STEP,jobsRenderWait=null;
+const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer';let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='';
 function jobControlKey(el){
   if(!el?.dataset||!el.tagName)return null;const owner=el.closest?.('[data-output],[data-problem]');
   return [owner?.dataset.output??(owner?'problem:'+owner.dataset.problem:''),el.tagName,String(el.className||'').split(/\s+/)[0],...Object.keys(el.dataset).filter(k=>k!=='job'&&k!=='index').sort().map(k=>k+'='+el.dataset[k])].join('|');
 }
 function renderJobs(signature=JSON.stringify(jobs),force=false) {
   if(signature===jobsSignature)return;
-  const gallery=$('#gallery'),playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended);
-  if(playing){if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);}return;}
-  jobsRenderWait=null;jobsSignature=signature;
-  const focusHosts=[gallery,document.getElementById?.('jobProblemsHost')].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null;
+  const gallery=$('#gallery'),host=document.getElementById?.('jobProblemsHost')||null,playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended&&!m.loop);
+  const focusHosts=[gallery,host].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null;
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
   const cards=[],problems=[],problemsOpen=$('#jobProblems')?.open;let recentHidden=0;
   jobs.forEach(job=>{
@@ -434,14 +434,19 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
     job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
   });
   const problemMarkup=renderProblems(problems,problemsOpen);
-  const host=document.getElementById?.('jobProblemsHost')||null;
+  if(playing){
+    if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);}
+    if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host)host.innerHTML=problemMarkup;else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}}
+  } else {
+  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
   gallery.className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
   gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
   if(host)host.innerHTML=problemMarkup;
+  }
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
-  if(focusKey)focusHosts.flatMap(h=>[...(h.querySelectorAll?.(JOB_FOCUSABLE)||[])]).find(el=>jobControlKey(el)===focusKey)?.focus({preventScroll:true});
-  renderCompare();
+  if(focusKey&&!focusHosts.some(h=>h.contains?.(document.activeElement)))focusHosts.flatMap(h=>[...(h.querySelectorAll?.(JOB_FOCUSABLE)||[])]).find(el=>jobControlKey(el)===focusKey)?.focus({preventScroll:true});
+  if(!playing)renderCompare();
 }
 // #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
 const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
@@ -634,7 +639,11 @@ $('#gallery').onclick=async e=>{
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}
     const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs(undefined,true);return;}
-    if(e.target.closest('[data-recent-more]')){recentShown+=RECENT_STEP;jobsSignature='';renderJobs(undefined,true);return;}
+    if(e.target.closest('[data-recent-more]')){
+      const gallery=$('#gallery'),seen=new Set([...gallery.querySelectorAll('[data-output]')].map(card=>card.dataset.output));recentShown+=RECENT_STEP;jobsSignature='';renderJobs(undefined,true);
+      // The last step removes the button: move focus to the first newly revealed output rather than dropping it on <body>.
+      if(!gallery.contains?.(document.activeElement))[...gallery.querySelectorAll(JOB_FOCUSABLE)].find(el=>{const card=el.closest('[data-output]');return card&&!seen.has(card.dataset.output);})?.focus({preventScroll:true});
+      return;}
     // Put away changes only the record's put_away_at; it never retries, resumes or cancels.
     const away=e.target.closest('.putAway');if(away){away.disabled=true;try{await post('/api/jobs/'+encodeURIComponent(away.dataset.job)+'/put-away',{put_away:away.dataset.putAway==='true'});await refresh();}finally{away.disabled=false;}return;}
     const stop=e.target.closest('.stopTracking');if(stop){const reason=stop.parentElement.querySelector('[data-stop-tracking-reason]')?.value.trim();if(!reason)throw Error('Give a reason before stopping tracking.');await post('/api/jobs/'+encodeURIComponent(stop.dataset.job)+'/stop-tracking',{reason});await refresh();}
