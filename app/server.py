@@ -12,6 +12,7 @@ import mimetypes
 import random
 import re
 import shutil
+import socket
 import sqlite3
 import sys
 import threading
@@ -2335,7 +2336,14 @@ class Handler(BaseHTTPRequestHandler):
             else: self._json(400, {"error": str(exc)})
         except OSError as exc: self._json(500, {"error": "Local operation failed: " + str(exc)[:200]})
 
-def create_server(repo_root, host=HOST, port=PORT, http_server=ThreadingHTTPServer, studio_factory=Studio):
+class StudioHTTPServer(ThreadingHTTPServer):
+    """On Windows SO_REUSEADDR lets a second process bind a listening port; four racing launchers once all bound 8191."""
+    if sys.platform == "win32": allow_reuse_address = False
+    def server_bind(self):
+        if sys.platform == "win32" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"): self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer, studio_factory=Studio):
     """Bind the loopback port before creating a Studio worker or queue."""
     handler = extend_handler(Handler)
     http = http_server((host, port), handler)
