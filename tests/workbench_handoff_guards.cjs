@@ -156,12 +156,15 @@ function replaceHarness() {
     "const announce=(message,error=false)=>notices.push({message,error});const secondName=item=>item.asset.title;const syncReady=()=>{};",
     "const legacyReferenceChange=null;const DataTransfer=function(){};const Event=function(){};",
     replaceSecondPictureSource,
-    "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.finish=value=>finish(value);this.fail=error=>fail(error);this.draft=()=>JSON.stringify({stamp,continuationState,secondPicture});",
+    "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.editWording=()=>{stamp='typed wording'};this.finish=value=>finish(value);this.fail=error=>fail(error);this.draft=()=>JSON.stringify({stamp,continuationState,secondPicture});",
     "this.setPending=value=>{referencePending=value};this.pendingCount=()=>referencePending;",
     "this.state=()=>JSON.stringify({uploaded,draftDirty,replaceCount,saveCount,syncCount});this.notices=notices;",
   ].join('\n'), context);
   return context;
 }
+
+const pickerAttachSource = between("  q('#uxSourceAssets').onclick=async e=>{", "\n  picker.addEventListener('cancel'");
+const attachStampSource = between('  function attachStamp(){', '\n  function syncContinuation(){');
 
 const replacement=()=>({file:'b'.repeat(32)+'_replacement.png',sha256:'b'.repeat(64),parent_asset:'replacement',context:{asset_id:'replacement',sha256:'b'.repeat(64)}});
 
@@ -190,6 +193,21 @@ test('a delayed replacement copy cannot overwrite a newer workbench state', asyn
   harness.setStamp('changed');
   harness.finish(replacement());
   await pending;
+  assert.deepEqual(JSON.parse(harness.state()), {
+    uploaded:'old-upload',draftDirty:false,replaceCount:0,saveCount:0,syncCount:0,
+  });
+  assert.equal(harness.notices.at(-1).error, true);
+  assert.match(harness.notices.at(-1).message, /workbench changed/);
+});
+
+test('wording typed during replacement cancels the stale confirmation', async () => {
+  const harness = replaceHarness();
+  const pending = harness.start();
+  harness.editWording();
+  const before = harness.draft();
+  harness.finish(replacement());
+  await pending;
+  assert.equal(harness.draft(), before, 'a stale confirmation must not wipe wording typed while its copy runs');
   assert.deepEqual(JSON.parse(harness.state()), {
     uploaded:'old-upload',draftDirty:false,replaceCount:0,saveCount:0,syncCount:0,
   });
@@ -263,4 +281,14 @@ test('a modeless dialog conflict is reported without consuming the picture', () 
   assert.equal(harness.pending(), null);
   assert.equal(harness.reference.value, 'selected-look.png');
   assert.match(harness.notices.at(-1).message, /Modeless dialog conflict/);
+});
+test('the library picker guards named-input attachment with the attachment stamp', () => {
+  assert.match(pickerAttachSource, /attachStamp\(\)/, 'The picker compares attachment-relevant state, not whole-workbench wording');
+  assert.doesNotMatch(pickerAttachSource, /workbenchStamp\(\)/, 'Typing a prompt while the picker copy is in flight must not refuse it');
+});
+
+test('the attachment stamp excludes wording, lineage and batch state', () => {
+  assert.doesNotMatch(attachStampSource, /values\(\)|parentAssets|continuationState|#positive|#negative|#batch/, 'Controls, lineage claims and batch stay out of the attachment comparison');
+  assert.match(attachStampSource, /referenceRecords/, 'Slot files, roles and availability stay in');
+  assert.match(attachStampSource, /uploaded/, 'Staged named-input files stay in');
 });
