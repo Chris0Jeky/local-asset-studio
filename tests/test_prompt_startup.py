@@ -95,3 +95,9 @@ class PromptStartupTests(unittest.TestCase):
         with self.assertRaisesRegex(OSError, "already in use"):
             server.create_server(self.temporary.name, http_server=OccupiedPort, studio_factory=lambda root: created.append(root))
         self.assertEqual(created, [])
+
+    def test_second_server_cannot_bind_a_listening_port(self):
+        created = []
+        with self.assertRaises(OSError):
+            server.create_server(self.temporary.name, port=self.http.server_port, studio_factory=lambda root: created.append(root))
+        self.assertEqual(created, [])
