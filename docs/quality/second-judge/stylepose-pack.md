@@ -92,11 +92,14 @@ held on 5 of 9:
 One qualification: pose-following on this board is seed-dependent. One seed in three ignored each pose outright, so a
 pose run should be checked picture by picture.
 
-The lab's proposed next step is a lower style weight (0.4–0.5). This judge agrees it is the first thing to try, but it
-is untested. The burn could also come from the board's own dark, high-contrast palette being pushed onto WAI.
+Correction (25 September 2026): the lower-weight step has since been tested. Six Studio jobs on the same board and the
+action pose at pose strength 0.9 (seeds 2026092371–73, style weights 0.45 and 0.3), lab judged open in
+`experiments/curated/overnight-20260923/stylepose-pack/README.md` with the independent blind second judge in
+`stylepose-weight.md`: the burn was absent in all six, the two weights tie on this small sample, and the seed-71 action
+pose was still ignored. The burn could also come from the board's own dark, high-contrast palette being pushed onto WAI.
 
 ## Not verified
 
-- One board, two poses, three seeds.
-- Whether a lower style weight removes the burn.
+- One board, two poses, three seeds (follow-up: one board, one pose, three seeds at 0.45 and 0.3).
+- A lower style weight removes the burn on the tested follow-up (absent 6/6); whether 0.3 or 0.45 is the better default is undecided.
 - Nothing here is art acceptance.

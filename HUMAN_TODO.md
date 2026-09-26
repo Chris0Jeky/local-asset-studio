@@ -66,8 +66,11 @@ Original question: civitai's flags differ per file and are recorded in `models/l
 prompt, a *style board* of one to three pictures whose look is averaged in (IP-Adapter, weight 0.7 by default) and a
 *pose picture* (pose strength 0.9 by default). It draws a new picture; it does not edit an existing one.
 *What changed since the question was first asked:* the pack's look is now Anima look B, and in q-30 you chose to make
-the pack's variations by editing the reference portrait and through the pose and face routes. Style + Pose was never
-re-tested with the pack's own portrait as the style board.
+the pack's variations by editing the reference portrait and through the pose and face routes. Correction (25 September
+2026): the requested re-test with the pack's own portrait as the style board already ran on 23 September 2026 — 18 Studio
+jobs in `experiments/curated/overnight-20260923/stylepose-pack/README.md` (look-B portrait as the board, standing and
+action poses, seeds 2026092371–73, pose strengths 0.7/0.9/1.0, default style weight 0.7), judged open by the lab with the
+independent second judge blind in `docs/quality/second-judge/stylepose-pack.md`. No duplicate run is needed.
 *The evidence:* the blind pre-review of the six-checkpoint matrix (docs/quality/pre-reviews/q-25.md) puts WAI v17,
 YumeFlux and CSTati within 0.2 of each other, and Pony V6 and NoobAI failed. The sheets are
 `examples/local-only/assessment-sheet.jpg`, `examples/style-pose/board-verify-*.jpg` and
@@ -75,14 +78,19 @@ YumeFlux and CSTati within 0.2 of each other, and Pony V6 and NoobAI failed. The
 *The decision:* (1) Should the pack keep Style + Pose as one of its tools? The alternative is to leave the pack to Anima
 look B plus edits and the reference routes, which it already uses. Either way, Style + Pose stays in the Studio for other
 work. (2) Only if it stays: should its default checkpoint be WAI v17 or YumeFlux? On the evidence they tie.
-*If you are unsure,* say "re-test q-25". That authorises an agent re-test: the pack portrait as the style board, a
-standing pose, three seeds, pose strength 0.7 / 0.9 / 1.0, judged blind. Agents do not tick this.
+*If you are unsure,* review the completed 18-job matrix and blind judgement linked above; no duplicate run is needed.
+Ask the owner to decide whether Style + Pose stays in the pack and, only if it does, which checkpoint becomes the
+default. Agents do not tick this.
 
 Agent pre-review (23 Sep 2026): docs/quality/pre-reviews/q-25.md; the owner still decides.
 
-**Owner answer (25 September 2026, in-session question): "Re-test later".** This authorises the agent re-test described
-above, once the GPU is free (on 25 September it was running the owner's local LLM, so nothing was queued). q-25 stays open
-until the re-test sheet exists and the owner decides (1) and (2).
+**Owner answer (25 September 2026, in-session question): "Re-test later".** This authorised the agent re-test described
+above. It completed on 23 September: the 18-job matrix above plus a six-job follow-up at style weights 0.45 and 0.3 in
+the same README, lab judged open with the independent blind second judge in `docs/quality/second-judge/stylepose-weight.md`
+(burn absent in all six, the two weights tie on this small sample, seed-71 action pose still ignored). No duplicate run is
+needed. q-25 stays open for the owner's decisions (1) and (2) above; this is not art acceptance, licensing or owner
+approval. Limits: three seeds, one board (look-B portrait; follow-up on the action pose only), no art acceptance, and 0.3
+versus 0.45 undecided.
 
 ## Anime & fantasy atelier — open items
 
