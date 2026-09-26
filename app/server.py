@@ -1316,6 +1316,21 @@ class Studio:
             job["tracking_disposition"] = prospective['tracking_disposition']
             return self.public(job)
 
+    @staticmethod
+    def _reconcile_landed_marker_removal(state_path, state, job):
+        """Drop a stale owner marker from live memory when a failed Resume demonstrably replaced state (#940).
+
+        A parent-directory failure after replacement leaves the markerless
+        prospective state on disk while live memory still hides the job. When
+        the on-disk bytes are exactly the prospective state, only the
+        acknowledgement bit converges to disk truth; status, disposition and
+        queueing still await an explicit retry, and the caller re-raises.
+        """
+        if "put_away_at" not in job: return False
+        if read_json(state_path, None) != state: return False
+        job.pop("put_away_at", None)
+        return True
+
     def _resume_tracking(self, job):
         self.require_worker_observation()
         error = Studio._observation_error(job)
@@ -1331,7 +1346,13 @@ class Studio:
         # partial or uncertain outcome surfaces unacknowledged again.
         prospective.pop("put_away_at", None)
         # Keep the live stop disposition until the supported publication barriers pass.
-        self._write_observation_state(self.runs / job["id"] / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+        state_path = self.runs / job["id"] / "state.json"
+        state = {k: v for k, v in prospective.items() if k != "graph"}
+        try:
+            self._write_observation_state(state_path, state)
+        except Exception:
+            self._reconcile_landed_marker_removal(state_path, state, job)
+            raise
         job.update(status=prospective["status"], message=prospective["message"], tracking_disposition=resumed)
         job.pop("put_away_at", None)
         self.queue.put(("observe", job["id"]))
@@ -1929,8 +1950,13 @@ class Studio:
         state = {key: value for key, value in prospective.items() if key != "graph"}
         state_path = self.runs / job_id / "state.json"
         # Readable replacement bytes cannot certify a failed synchronization.
-        # Every failure preserves live/queue state until a later explicit retry.
-        self._write_observation_state(state_path, state)
+        # Every failure preserves live/queue state until a later explicit retry,
+        # except a demonstrably landed marker removal, which re-surfaces the job.
+        try:
+            self._write_observation_state(state_path, state)
+        except Exception:
+            self._reconcile_landed_marker_removal(state_path, state, job)
+            raise
         job.update(prospective)
         job.pop("put_away_at", None)
         self.queue.put(("observe", job_id))
