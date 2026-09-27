@@ -1,0 +1,104 @@
+[
+ {
+  "id": "7179db99-e2fe-412c-9957-ed5244ee3b32",
+  "status": "completed",
+  "preset_id": "qwen21-rgba",
+  "prompt_ids": [
+   "f0fb24bb-87e9-467f-8893-531862f7a752"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-rgba_00006_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092701,
+    "prompt_id": "f0fb24bb-87e9-467f-8893-531862f7a752",
+    "media_type": "image",
+    "asset_id": "44e3fd99610c586b86926ef203eed7f2"
+   }
+  ],
+  "elapsed_seconds": 72.58593511581421,
+  "error": null,
+  "created_at": 1790489655.5903618,
+  "finished_at": 1790489728.1858213,
+  "label": "rgba-knight",
+  "controls": {
+   "positive": "A full-body game character sprite of an adult woman knight in silver plate armour with a teal cloak, holding a longsword point-down in front of her, calm expression, clean cel-shaded anime style, full figure visible from head to boots, centred.",
+   "seed": 2026092701,
+   "width": 832,
+   "height": 1248
+  },
+  "references": [],
+  "commit_before_pct": 50.0,
+  "commit_peak_pct": 76.4,
+  "poll_wall_s": 75.3
+ },
+ {
+  "id": "0b6b83b7-67e5-455e-b7dc-3b9fae43f635",
+  "status": "completed",
+  "preset_id": "qwen21-rgba",
+  "prompt_ids": [
+   "1f902a83-e70a-4b04-8f21-7dfc7e70ea9e"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-rgba_00007_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092702,
+    "prompt_id": "1f902a83-e70a-4b04-8f21-7dfc7e70ea9e",
+    "media_type": "image",
+    "asset_id": "aa2e982883925cdca0949b017f19c2fa"
+   }
+  ],
+  "elapsed_seconds": 55.68461012840271,
+  "error": null,
+  "created_at": 1790489804.815649,
+  "finished_at": 1790489860.5093129,
+  "label": "rgba-sword",
+  "controls": {
+   "positive": "A fantasy longsword game item icon: a steel blade with a gold crossguard, a blue leather grip and a round sapphire pommel, laid diagonally, clean cel-shaded style, full object visible.",
+   "seed": 2026092702,
+   "width": 1024,
+   "height": 1024
+  },
+  "references": [],
+  "commit_before_pct": 51.9,
+  "commit_peak_pct": 77.1,
+  "poll_wall_s": 60.8
+ },
+ {
+  "id": "254d368d-2f58-4ef1-a115-12da322f39a1",
+  "status": "completed",
+  "preset_id": "qwen21-rgba",
+  "prompt_ids": [
+   "b3e4f7fe-ffd8-468b-bb31-fe54817e8820"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-rgba_00008_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092703,
+    "prompt_id": "b3e4f7fe-ffd8-468b-bb31-fe54817e8820",
+    "media_type": "image",
+    "asset_id": "de49f41e72235927b7b82227229905bd"
+   }
+  ],
+  "elapsed_seconds": 63.368133544921875,
+  "error": null,
+  "created_at": 1790489882.7680225,
+  "finished_at": 1790489946.1470153,
+  "label": "rgba-crystal",
+  "controls": {
+   "positive": "A glowing violet magic crystal cluster game prop with a few small floating sparkles around it, clean cel-shaded style, centred, full object visible.",
+   "seed": 2026092703,
+   "width": 1024,
+   "height": 1024
+  },
+  "references": [],
+  "commit_before_pct": 51.7,
+  "commit_peak_pct": 77.4,
+  "poll_wall_s": 67.7
+ }
+]
