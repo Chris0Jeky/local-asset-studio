@@ -7,7 +7,7 @@
   if(!document.querySelector('#createView'))return;
   const U=StudioUX,q=s=>document.querySelector(s),escape=esc;
   let sharedAdoptionError='';
-  let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='';
+  let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='',varyUnapplied=null;
   let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0,handoffEpoch=0;
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
   let homeBusy=false,homeData=null,homeErrors=[],homeUpdated=null,homeSignature='';
@@ -189,6 +189,8 @@
     if(secondPicture)items.push({code:'second',message:selected?.reference_slots?.length>1?'Picture 1 remains your source. Choose another slot or explicitly start from the extra picture.':'You added a second picture, but this recipe reads one. Say what it is for.',action:'second'});
     if(sharedAdoptionError)items.push({code:'shared-setup',message:sharedAdoptionError,action:null});
     if(continuationState&&!continuationSource)items.push({code:'source',message:sourceReadError||'Checking the retained source metadata…',action:'continuation'});
+    // A Vary round whose carried stack did not apply stays blocked while that same continuation is open.
+    if(varyUnapplied&&continuationState&&varyUnapplied.stamp===JSON.stringify(continuationState))items.push({code:'vary',message:varyUnapplied.message,action:null});
     return{items,required};
   }
   function syncReady(){
@@ -919,7 +921,8 @@
   document.addEventListener('click',e=>{const button=e.target.closest('.reference-output,[data-handoff]');if(!button)return;e.preventDefault();e.stopImmediatePropagation();const output=button.dataset.job?jobs.find(j=>j.id===button.dataset.job)?.outputs?.[Number(button.dataset.index)]:null;if(button.classList.contains('reference-output')){void openGalleryHandoff(output?.asset_id,button.dataset.preset);return;}const id=activeAsset?.id;if(!id){announce('Choose an available image from the Asset library.',true);return;}openHandoff(id,button.dataset.preset||button.dataset.handoff);},true);
   after('openAsset',()=>{q('#uxAssetUnsaved')?.remove();if(!activeAsset)return;const a=activeAsset;const eligibility=U.sceneEligibility([a]);q('#assetHandoffs').innerHTML=(!a.trashed_at&&a.media_type==='image'?'<button class="primary" data-ux-handoff="'+a.id+'">Continue with this →</button><button id="uxFindSourceRecipes">Find recipes for this image</button>':'')+(!a.trashed_at&&['image','video','audio'].includes(a.media_type)?'<a class="ux-scene-link" href="/av.html?asset_ids='+encodeURIComponent(a.id)+'">'+(eligibility.ok?'Use in a scene':'Open scene source picker')+' ↗</a>':'');q('#assetRecipe').disabled=!a.job_id;q('#assetRecipe').textContent=a.job_id?'Recipe':'No recipe recorded';q('#assetRecipe').title=a.job_id?'':'This asset was not made by a Studio job, so there is no recipe to export.';});
   // #1202 Vary subtle / Vary strong: one press from a picture to a prepared round of close variations. The img2img route
-  // attaches a copy through the same continuation as Continue with this (lineage = this picture); a recipe with no route
+  // attaches a copy through the same continuation as Continue with this (lineage = this picture) and, when it carries the
+  // source's stack (WAI), copies the picture's recorded LoRA slots and sampling settings; a recipe with no route
   // reloads its own recipe with new seeds and records this picture as the parent. Generate stays the owner's press.
   let varyBusy=false;
   function varyMarkup(plan,attrs,why){
@@ -931,7 +934,7 @@
   function varyPlanFor(presetId,jobId,assetId,mediaType){
     const asset=assetState.assets.find(a=>a.id===assetId);
     if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
-    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset);
+    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
   }
   // Rebuilt only when its words change, so polling never steals focus from a Vary button.
   function placeVary(holder,after,markup){
@@ -973,7 +976,20 @@
         const result=await post('/api/assets/reference',{id:assetId});
         if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. Nothing was applied; press Vary again.');
         if(result?.parent_asset!==assetId||result.context?.asset_id!==assetId||result.sha256!==result.context?.sha256)throw Error('The copied picture could not be verified. Nothing was applied.');
-        beginContinuation(result,plan.route.id,'edit');sourceReadError='';
+        beginContinuation(result,plan.route.id,'edit');sourceReadError='';varyUnapplied=null;
+        // A carrying route (WAI) keeps the picture's recorded LoRA stack and sampling settings. A recorded file the
+        // offline list does not offer is added as it was recorded; the server still refuses one that is not installed.
+        // If one value cannot be set, Generate stays blocked on this continuation until Vary is pressed again.
+        for(const [key,value] of Object.entries(plan.carry||{})){
+          const input=getControl(key),text=String(value);
+          if(input&&input.tagName==='SELECT'&&![...input.options].some(option=>option.value===text))input.append(new Option(text,text));
+          if(input)input.value=text;
+          if(!input||input.value!==text){
+            const message='Vary could not keep '+key+' = '+text+' from the run of this picture, so Generate is blocked. Press Vary again or reopen Continue with this. Nothing was generated.';
+            varyUnapplied={stamp:JSON.stringify(continuationState),message};updateReady();throw Error(message);
+          }
+        }
+        if(plan.carry&&typeof updateLoraHints==='function')updateLoraHints();
         for(const [key,value] of Object.entries(plan.strengths[strength].controls)){const input=getControl(key);if(input)input.value=value;}
         q('#referenceHint').textContent='Attached source · '+result.width+' × '+result.height;
       }else{
@@ -997,12 +1013,16 @@
   // carries its reason. Prepare rolls the texture and attaches its seam cross to the tile recipe; Generate stays the owner's press.
   let tileBusy=false,tileRead=0;
   function tileMarkup(status){
-    const why='uxTileWhyAsset',note=!status?'Checking whether this picture can tile…':status.eligible?status.flag:[status.reason,status.flag].filter(Boolean).join(' ');
-    return '<button type="button" data-ux-tile="'+escape(status?.asset_id||'')+'"'+(status?.eligible?'':' disabled')+' aria-describedby="'+why+'">Make seamless</button><small id="'+why+'">'+escape(note)+'</small>';
+    const why='uxTileWhyAsset',bands=U.tileBands(status),note=!status?'Checking whether this picture can tile…':status.eligible?[status.flag,bands.note].filter(Boolean).join(' '):[status.reason,status.flag].filter(Boolean).join(' ');
+    // Seam band (owner, 27 Sep 2026): wide hides a floor's repeating plank ends; narrow keeps more of the texture as generated.
+    const band=bands.options.length?'<label>Seam band <select id="uxTileBand" data-ux-tile-band aria-describedby="'+why+'">'+bands.options.map(o=>'<option value="'+escape(o.value)+'"'+(o.selected?' selected':'')+(o.disabled?' disabled':'')+'>'+escape(o.label)+'</option>').join('')+'</select></label>':'';
+    return band+'<button type="button" data-ux-tile="'+escape(status?.asset_id||'')+'"'+(status?.eligible?'':' disabled')+' aria-describedby="'+why+'">Make seamless</button><small id="'+why+'">'+escape(note)+'</small>';
   }
   function placeTile(holder,markup){
     let box=holder.querySelector(':scope > .ux-tile');if(box&&box.dataset.markup===markup)return;
+    const chosen=box?.querySelector('[data-ux-tile-band]')?.value;
     const next=element('div','ux-tile',markup);next.dataset.markup=markup;next.setAttribute('role','group');next.setAttribute('aria-label','Make this texture tile');
+    const band=next.querySelector('[data-ux-tile-band]');if(band&&chosen&&[...band.options].some(o=>o.value===chosen&&!o.disabled))band.value=chosen;
     if(box)box.replaceWith(next);else q('#assetHandoffs').after(next);
   }
   after('openAsset',()=>{
@@ -1016,16 +1036,18 @@
     const assetId=button.dataset.uxTile;if(tileBusy||!assetId)return;
     if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
+    const bandPx=U.tileBandPx(button.parentElement?.querySelector('[data-ux-tile-band]')?.value);
     tileBusy=true;button.disabled=true;syncReady();
     const stamp=workbenchStamp();
     try{
-      const result=await post('/api/tiles/prepare',{asset_id:assetId});
+      const result=await post('/api/tiles/prepare',{asset_id:assetId,...(bandPx==null?{}:{band_px:bandPx})});
+      if(bandPx!=null&&result?.plan?.band_px!==bandPx)throw Error('The seam band came back different from the one chosen. Nothing was applied; press Make seamless again.');
       if(stamp!==workbenchStamp())throw Error('The workbench changed while the texture was being prepared. Nothing was applied; press Make seamless again.');
       if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.rolled_file)throw Error('The prepared seam cross could not be verified. Nothing was applied.');
       beginTile(result);
       if(q('#assetDialog').open)q('#assetDialog').close();
       draftDirty=true;showView('create');saveDraft();syncCreate();updateReady();scheduleTimeEstimate();recipeChanged();
-      announce('Seam cross prepared: the texture is rolled by half and only its centre cross will be repainted. '+(result.context?.positive?'Its own wording is kept. ':'No wording was kept for this texture: replace the bracketed description. ')+'Press Generate; the Studio then finishes the tile with its seam score and a 3×3 preview.');
+      announce('Seam cross prepared: the texture is rolled by half and only its centre cross ('+result.plan.band_px+' px seam band) will be repainted. '+(result.context?.positive?'Its own wording is kept. ':'No wording was kept for this texture: replace the bracketed description. ')+'Press Generate; the Studio then finishes the tile with its seam score and a 3×3 preview.');
     }catch(error){announce(error.message,true);}
     finally{tileBusy=false;button.disabled=false;syncReady();}
   }

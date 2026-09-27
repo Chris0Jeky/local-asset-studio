@@ -206,4 +206,16 @@ test('an unusable transfer says which limit it hit', () => {
   assert.deepEqual(none.map(x=>x.code),['NO_PROMPT_TEXT']);
   assert.ok(none[0].blocking&&long[0].blocking);
 });
+test('Make seamless offers the server seam bands, keeps a too-wide band listed with its reason, and sends a number',()=>{
+  const status={eligible:true,band_px:112,band_choices:[{name:'narrow',band_px:112,available:true,reason:null},{name:'wide',band_px:160,available:true,reason:null}]};
+  const both=U.tileBands(status);
+  assert.deepEqual(both.options,[{value:'112',label:'narrow (112 px)',disabled:false,selected:true},{value:'160',label:'wide (160 px)',disabled:false,selected:false}]);
+  assert.equal(both.note,'');
+  const small=U.tileBands({...status,band_choices:[status.band_choices[0],{name:'wide',band_px:160,available:false,reason:'A 160 px band needs a side of at least 320 px; this texture is 256 px.'}]});
+  assert.deepEqual(small.options.map(o=>o.disabled),[false,true]);
+  assert.equal(small.note,'Wide: A 160 px band needs a side of at least 320 px; this texture is 256 px.');
+  assert.deepEqual(U.tileBands({eligible:false,band_choices:status.band_choices}),{options:[],note:''},'no choice on a picture that cannot tile');
+  assert.deepEqual(U.tileBands(null),{options:[],note:''});
+  assert.equal(U.tileBandPx('160'),160);assert.equal(U.tileBandPx(''),null);assert.equal(U.tileBandPx(undefined),null);assert.equal(U.tileBandPx('wide'),null);
+});
 console.log(count+' Studio UX policy checks passed.');

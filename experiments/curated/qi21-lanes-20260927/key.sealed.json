@@ -1,0 +1,66 @@
+{
+ "char-A": {
+  "key": "char-GR-41",
+  "file": "Research/qi21-lanes-20260927/char-GR-41_00001_.png"
+ },
+ "char-B": {
+  "key": "char-B0-42",
+  "file": "Research/qi21-lanes-20260927/char-B0-42_00001_.png"
+ },
+ "char-C": {
+  "key": "char-GR-42",
+  "file": "Research/qi21-lanes-20260927/char-GR-42_00001_.png"
+ },
+ "char-D": {
+  "key": "char-GW-42",
+  "file": "Research/qi21-lanes-20260927/char-GW-42_00001_.png"
+ },
+ "char-E": {
+  "key": "char-W-42",
+  "file": "Research/qi21-lanes-20260927/char-W-42_00001_.png"
+ },
+ "char-F": {
+  "key": "char-B0-41",
+  "file": "Research/qi21-lanes-20260927/char-B0-41_00001_.png"
+ },
+ "char-G": {
+  "key": "char-GW-41",
+  "file": "Research/qi21-lanes-20260927/char-GW-41_00001_.png"
+ },
+ "char-H": {
+  "key": "char-W-41",
+  "file": "Research/qi21-lanes-20260927/char-W-41_00001_.png"
+ },
+ "prop-A": {
+  "key": "prop-GR-41",
+  "file": "Research/qi21-lanes-20260927/prop-GR-41_00001_.png"
+ },
+ "prop-B": {
+  "key": "prop-B0-42",
+  "file": "Research/qi21-lanes-20260927/prop-B0-42_00001_.png"
+ },
+ "prop-C": {
+  "key": "prop-GR-42",
+  "file": "Research/qi21-lanes-20260927/prop-GR-42_00001_.png"
+ },
+ "prop-D": {
+  "key": "prop-GW-42",
+  "file": "Research/qi21-lanes-20260927/prop-GW-42_00001_.png"
+ },
+ "prop-E": {
+  "key": "prop-W-42",
+  "file": "Research/qi21-lanes-20260927/prop-W-42_00001_.png"
+ },
+ "prop-F": {
+  "key": "prop-B0-41",
+  "file": "Research/qi21-lanes-20260927/prop-B0-41_00001_.png"
+ },
+ "prop-G": {
+  "key": "prop-GW-41",
+  "file": "Research/qi21-lanes-20260927/prop-GW-41_00001_.png"
+ },
+ "prop-H": {
+  "key": "prop-W-41",
+  "file": "Research/qi21-lanes-20260927/prop-W-41_00001_.png"
+ }
+}

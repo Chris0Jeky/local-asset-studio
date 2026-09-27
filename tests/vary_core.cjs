@@ -73,13 +73,54 @@ test('the hint beside the buttons names the route, the round and the strengths',
   assert.equal(C.varyHint(C.varyPlan(picture('plain'),presets,[],{})),'Starts afresh from the same words · 2 pictures');
   assert.equal(C.varyHint({kind:'none',reason:'x'}),'x');
 });
-test('the shipped catalog routes Krea and plain SDXL pictures and nothing else',()=>{
+// A route that carries the picture's recorded adapters (#1202 follow-up, owner 27 Sep 2026: "Yes, WAI img2img").
+const waiVary={id:'wai-vary',name:'WAI vary',positive:['2','text'],reference:['4','image'],seed:['5','seed'],denoise:['5','denoise'],steps:['5','steps'],sampler:['5','sampler_name'],
+  lora:['8','strength_model'],lora_name:['8','lora_name'],lora2:['9','strength_model'],lora2_name:['9','lora_name'],continuation_capability:cap('image-to-image'),
+  vary:{status:'starting-value',sources:['wai','wai-vary'],carry:['lora','lora_name','lora2','lora2_name','sampler','steps'],subtle:{controls:{denoise:0.5},basis:'SDXL owner value.'},strong:{controls:{denoise:0.7},basis:'SDXL owner value.'}}};
+const wai={id:'wai',name:'WAI illustration',positive:['2','text'],seed:['5','seed'],lora:['8','strength_model'],lora_name:['8','lora_name'],lora2:['9','strength_model'],lora2_name:['9','lora_name'],sampler:['5','sampler_name'],steps:['5','steps'],
+  defaults:{lora:0,lora_name:'cinematic lighting.safetensors',lora2:0,lora2_name:'manga-ink-screentone.safetensors',sampler:'euler_ancestral',steps:30},continuation_capability:cap('new-image')};
+const anime={id:'anime',name:'Animagine',positive:['2','text'],seed:['5','seed'],continuation_capability:cap('new-image')};
+const waiShelf=[waiVary,wai,anime];
+const waiJob=(controls,extra={})=>({id:'wai-job',preset_id:'wai',status:'completed',elapsed_seconds:40,batch_count:1,controls,...extra});
+const recorded={positive:'1girl, lantern',seed:5,lora:1,lora_name:'noirpopwave.safetensors',sampler:'euler',steps:24};
+test('a carrying route keeps the picture\'s recorded adapters and settings, and fills the rest from the recipe',()=>{
+  const plan=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob(recorded)],{},['noirpopwave.safetensors','manga-ink-screentone.safetensors']);
+  assert.equal(plan.kind,'img2img');assert.equal(plan.route.id,'wai-vary');
+  assert.deepEqual(plan.carry,{lora:1,lora_name:'noirpopwave.safetensors',lora2:0,lora2_name:'manga-ink-screentone.safetensors',sampler:'euler',steps:24});
+  assert.deepEqual(plan.strengths.subtle.controls,{denoise:0.5},'the round never carries the source denoise or seed');
+  assert.equal(C.varyPlan(picture('portrait'),presets,[],{}).carry,null,'a route that carries nothing keeps its own stack');
+  assert.equal(C.varyRoute('anime',waiShelf),null,'another checkpoint is not a source');
+});
+test('a carrying route refuses, with its reason, when the recorded stack cannot be read or is not installed',()=>{
+  const reason=(item,jobs,installed,shelf=waiShelf)=>{const plan=C.varyPlan(item,shelf,jobs,{},installed);assert.equal(plan.kind,'none');assert.ok(plan.reason.length>20,plan.reason);return plan.reason;};
+  assert.match(reason(picture('wai',{job_id:null}),[],[]),/No run is recorded.*adapters/);
+  assert.match(reason(picture('wai',{job_id:'gone'}),[waiJob(recorded)],[]),/No run is recorded/);
+  assert.match(reason(picture('wai',{job_id:'wai-job'}),[waiJob(recorded,{preset_id:'anime'})],[]),/no longer records WAI illustration/);
+  const unreadable=[{...wai,defaults:{}},waiVary];
+  assert.match(reason(picture('wai',{job_id:'wai-job'}),[waiJob({seed:5})],[],unreadable),/lora is not recorded/);
+  assert.match(reason(picture('wai',{job_id:'wai-job'}),[waiJob(recorded)],['manga-ink-screentone.safetensors']),/WAI vary.*Missing here: noirpopwave\.safetensors/);
+  // An off slot still names a file the server checks, so a missing one blocks too.
+  assert.match(reason(picture('wai',{job_id:'wai-job'}),[waiJob(recorded)],['noirpopwave.safetensors']),/manga-ink-screentone/);
+  assert.equal(C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob(recorded)],{},[]).kind,'img2img','an unknown inventory is not "everything is missing"');
+  assert.equal(C.varyPlan(picture('wai',{job_id:'wai-job'}),[{...waiVary,missing_loras:['cinematic lighting.safetensors']},wai],[waiJob(recorded)],{},[]).kind,'none','the route\'s own disabled reason stays');
+});
+test('the status and hint say the checkpoint and adapters are kept',()=>{
+  const plan=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob(recorded)],{},[]);
+  const status=C.varyStatus(plan,'strong',3);
+  assert.match(status,/Vary strong prepared on WAI vary/);assert.match(status,/same checkpoint and adapters as this picture \(noirpopwave\.safetensors at 1\)/);
+  assert.match(status,/denoise 0\.7/);assert.match(status,/Nothing was generated/);
+  const bare=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({seed:5})],{},[]);
+  assert.match(C.varyStatus(bare,'subtle',3),/same checkpoint as this picture, no adapters \(it used none\)/);
+  assert.equal(C.varyHint(plan),'On WAI vary · keeps its adapters · 2 pictures · denoise 0.5 / 0.7 (starting values)');
+});
+test('the shipped catalog routes Krea, plain SDXL and WAI pictures and nothing else',()=>{
   const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8')).presets;
   const routed=Object.fromEntries(catalog.filter(p=>p.vary).map(p=>[p.id,p.vary.sources]));
-  assert.deepEqual(Object.keys(routed).sort(),['gentle-variation','krea-refine']);
-  // Server-computed capability stands in here: both are image-to-image description routes (tests/test_vary_routes.py proves it from the graphs).
+  assert.deepEqual(Object.keys(routed).sort(),['gentle-variation','krea-refine','wai-vary']);
+  // Server-computed capability stands in here: all are image-to-image description routes (tests/test_vary_routes.py proves it from the graphs).
   const live=catalog.map(p=>p.vary?{...p,continuation_capability:cap('image-to-image')}:p);
   assert.equal(C.varyRoute('krea-anime-atelier',live).id,'krea-refine');assert.equal(C.varyRoute('sdxl',live).id,'gentle-variation');
-  assert.equal(C.varyRoute('wai',live),null);assert.equal(C.varyRoute('combine-klein-9b-copypose',live),null);
+  assert.equal(C.varyRoute('wai',live).id,'wai-vary');assert.equal(C.varyRoute('anime-wai-quality',live).id,'wai-vary');
+  for(const other of ['anime','noob','pony','lineani-portrait','combine-klein-9b-copypose'])assert.equal(C.varyRoute(other,live),null,other);
 });
 console.log(count+' Vary policy contracts passed');

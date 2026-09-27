@@ -36,11 +36,17 @@
     const anchor=(look.lineage||[]).find(e=>e.role==='anchor');
     return [look.preset_name||look.body?.preset_id,anchor?'anchor '+(anchor.key||String(anchor.sha256||'').slice(0,12))+(look.anchor_asset_id?' (in your Workspace)':' (not in this Workspace)'):'no anchor picture',look.origin==='seed'?'shipped look':'your look'].filter(Boolean).join(' · ');
   }
-  function readyMessage(result,switched){
+  // Optional lines (owner, 27 Sep 2026): layout sentences a look offers but does not force, e.g. Night Shift's quiet wall for UI
+  // backgrounds. One checkbox per line, set to the line's default; every line's choice is sent so the server never guesses.
+  const lines=look=>Array.isArray(look?.body?.options)?look.body.options:[];
+  function optionRows(look){return lines(look).map(o=>({id:o.id,label:o.label,checked:!!o.default}));}
+  function optionsPayload(look,checked){const all=lines(look);return all.length?Object.fromEntries(all.map(o=>[o.id,typeof checked?.[o.id]==='boolean'?checked[o.id]:!!o.default])):null;}
+  function readyMessage(result,switched,look){
     const c=result.controls||{},size=c.width&&c.height?', '+c.width+'x'+c.height:'',seed=c.seed!=null?', seed '+c.seed:'';
-    return result.look.name+' prepared on '+(result.preset_name||result.preset_id)+(switched?' (recipe switched)':'')+seed+size+'. Your scene is in the wording. Nothing was generated; press Generate when it reads right.';
+    const on=lines(look).filter(o=>result.look?.options?.[o.id]).map(o=>o.label),withLines=on.length?', with: '+on.join('; '):'';
+    return result.look.name+' prepared on '+(result.preset_name||result.preset_id)+(switched?' (recipe switched)':'')+seed+size+withLines+'. Your scene is in the wording. Nothing was generated; press Generate when it reads right.';
   }
-  return{SLOT,slotCount,recipeProblem,groups,optionLabel,prepareBlocker,saveBlocker,saveControls,summary,readyMessage};
+  return{SLOT,slotCount,recipeProblem,groups,optionLabel,prepareBlocker,saveBlocker,saveControls,summary,optionRows,optionsPayload,readyMessage};
 });
 
 (function(){
@@ -50,7 +56,7 @@
   let looks=[],busy=false,composed=null;
   // Folded by default: Create's first screen keeps the wording and Generate in view (workshop height budget).
   const block=document.createElement('details');block.id='lookBlock';block.className='ux-looks';
-  block.innerHTML='<summary>Use a saved look <small>type only the scene</small></summary><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div>'
+  block.innerHTML='<summary>Use a saved look <small>type only the scene</small></summary><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div><div id="lookOptions" class="ux-looks-row" role="group" aria-label="Optional lines of this look" hidden></div>'
     +'<p id="lookSummary" class="muted"></p><div class="ux-looks-row"><button type="button" id="lookPrepare" aria-describedby="lookReason">Prepare with this look</button><button type="button" id="lookTrash" aria-describedby="lookReason">Put away</button></div><p class="disabledReason"><small id="lookReason"></small></p>'
     +'<details id="lookSave"><summary>Save this wording as a look</summary><p class="muted">Write '+L.SLOT+' in the wording where a new scene goes. The recipe and its settings are saved with it.</p><label>Look name<input id="lookName" maxlength="120" autocomplete="off" aria-describedby="lookSaveReason"></label><p id="lookAnchor" class="muted"></p><button type="button" id="lookSaveButton" aria-describedby="lookSaveReason">Save look</button><p class="disabledReason"><small id="lookSaveReason"></small></p></details>'
     +'<p id="lookStatus" role="status" aria-live="polite"></p>';
@@ -58,7 +64,16 @@
   const current=()=>looks.find(l=>l.id===q('#lookSelect').value)||null;
   const status=(text,error=false)=>{q('#lookStatus').textContent=text;q('#lookStatus').classList.toggle('error',error);};
   const anchorAsset=()=>typeof parentAssets!=='undefined'&&parentAssets.length===1?parentAssets[0]:null;
+  // Rebuilt only when the chosen look changes, so a ticked line survives typing the scene.
+  let linesFor=null;
+  function renderLines(){
+    const look=current(),key=look?look.id+':'+look.revision:null;if(key===linesFor)return;linesFor=key;
+    const rows=L.optionRows(look),box=q('#lookOptions');box.hidden=!rows.length;
+    box.innerHTML=rows.map(r=>'<label><input type="checkbox" data-look-option="'+esc(r.id)+'"'+(r.checked?' checked':'')+'> '+esc(r.label)+'</label>').join('');
+  }
+  const checkedLines=()=>Object.fromEntries([...document.querySelectorAll('#lookOptions [data-look-option]')].map(i=>[i.dataset.lookOption,i.checked]));
   function sync(){
+    renderLines();
     const look=current(),reason=L.prepareBlocker({look,scene:q('#lookScene').value,busy});
     q('#lookPrepare').disabled=!!reason;q('#lookReason').textContent=reason;
     q('#lookTrash').hidden=!look;q('#lookTrash').disabled=busy;q('#lookTrash').textContent=look?.trashed_at?'Restore':'Put away';
@@ -86,12 +101,13 @@
     for(const [key,value] of Object.entries(result.controls)){const input=key==='positive'?q('#positive'):key==='negative'?q('#negative'):getControl(key);if(input)input.value=value;}
     composed=result.controls.positive;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));
     updateLoraHints();updateReady();scheduleTimeEstimate();recipeChanged();
-    const text=L.readyMessage(result,switched);message(text);status(text);
+    const text=L.readyMessage(result,switched,looks.find(l=>l.id===result.look.id));message(text);status(text);
   }
   q('#lookSelect').addEventListener('change',sync);q('#lookScene').addEventListener('input',sync);q('#lookName').addEventListener('input',sync);
   q('#positive').addEventListener('input',sync);document.addEventListener('studio:recipe',()=>render(q('#lookSelect').value));
   q('#lookScene').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();if(!q('#lookPrepare').disabled)q('#lookPrepare').click();}});
-  q('#lookPrepare').onclick=()=>act(async()=>{const look=current();apply(await post('/api/looks/prepare',{id:look.id,scene:q('#lookScene').value,expected_revision:look.revision}));});
+  q('#lookPrepare').onclick=()=>act(async()=>{const look=current(),options=L.optionsPayload(look,checkedLines());
+    apply(await post('/api/looks/prepare',{id:look.id,scene:q('#lookScene').value,expected_revision:look.revision,...(options?{options}:{})}));});
   q('#lookTrash').onclick=()=>act(async()=>{const look=current();const saved=await post('/api/looks',{action:look.trashed_at?'restore':'trash',id:look.id,expected_revision:look.revision});await load(saved.id);status(saved.name+(saved.trashed_at?' put away. Restore brings it back.':' restored.'));});
   q('#lookSaveButton').onclick=()=>act(async()=>{
     const body={preset_id:selected.id,template:q('#positive').value,controls:L.saveControls(values())};if(selected.negative)body.negative=q('#negative').value;
