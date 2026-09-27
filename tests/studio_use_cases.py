@@ -1287,7 +1287,7 @@ def _vary(c):
         c.page.evaluate("document.querySelector('#assetDialog').close();showView('create')"); c.page.wait_for_timeout(300)
         c.act('#generate', 'read', note='readiness only; never pressed')
         img2img = (first['preset'] == 'krea-refine' and first['intent'] == 'edit' and first['source'] == 'asset-2'
-                   and first['parents'] == ['asset-2'] and first['denoise'] == '0.25' and first['batch'] == '2'
+                   and first['parents'] == ['asset-2'] and first['denoise'] == '0.45' and first['batch'] == '2'
                    and first['seed'] not in (None, '', '7') and 'Vary subtle prepared on' in first['notice']
                    and 'Nothing was generated' in first['notice'] and '4 min per picture here' in first['notice'])
         reseed = (second['preset'] == 'anima-portrait' and second['intent'] is None and second['parents'] == ['asset-0']

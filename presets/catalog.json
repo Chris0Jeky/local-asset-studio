@@ -433,13 +433,13 @@
           "controls": {
             "denoise": 0.5
           },
-          "basis": "Owner-approved: the owner's answer, 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg): \"Nudge both up\". Subtle takes the old strong value (on the live proof 0.55 read \"right\" and 0.3 \"too close\"). Proved through the page on 27 Sep 2026 at 0.5: job bc31e7fe (2 pictures, 83.8 s), experiments/curated/live-proofs-20260927/. The earlier starting value was 0.3, from the research brief (#1202)."
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Subtle takes the old strong value (on the live proof 0.55 read \"right\" and 0.3 \"too close\"). Proved through the page on 27 Sep 2026 at 0.5: job bc31e7fe (2 pictures, 83.8 s), experiments/curated/live-proofs-20260927/. The earlier starting value was 0.3, from the research brief (#1202)."
         },
         "strong": {
           "controls": {
             "denoise": 0.7
           },
-          "basis": "Owner-approved: the owner's answer, 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg): \"Nudge both up\". Strong goes further than the old 0.55. Proved through the page on 27 Sep 2026 at 0.7: job bc904e63 (2 pictures, 26.7 s), experiments/curated/live-proofs-20260927/. Only plain SDXL base recipes are sources: this graph carries no style LoRA, so the LineAni, screentone, cinematic-lighting and pixel-art recipes fall back to new seeds instead."
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Strong goes further than the old 0.55. Proved through the page on 27 Sep 2026 at 0.7: job bc904e63 (2 pictures, 26.7 s), experiments/curated/live-proofs-20260927/. Only plain SDXL base recipes are sources: this graph carries no style LoRA, so the LineAni, screentone, cinematic-lighting and pixel-art recipes fall back to new seeds instead."
         }
       },
       "modality": "image",
@@ -5533,14 +5533,14 @@
           "controls": {
             "denoise": 0.45
           },
-          "basis": "Owner-approved: the owner's answer, 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg): \"Nudge both up\". Subtle moves past the old strong value (on the live proof 0.25 read \"too close\" and 0.5 \"right\"). Proved through the page on 27 Sep 2026 at 0.45: job b4bfb680 (2 pictures, 900.1 s), experiments/curated/live-proofs-20260927/. The earlier starting value 0.25 was this recipe's measured polish default (23 Sep 2026, jobs 36e5d833, 0cba57ec, 0887896e)."
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Subtle moves past the old strong value (on the live proof 0.25 read \"too close\" and 0.5 \"right\"). Proved through the page on 27 Sep 2026 at 0.45: job b4bfb680 (2 pictures, 900.1 s), experiments/curated/live-proofs-20260927/. The earlier starting value 0.25 was this recipe's measured polish default (23 Sep 2026, jobs 36e5d833, 0cba57ec, 0887896e)."
         },
         "strong": {
           "controls": {
             "denoise": 0.65,
             "steps": 6
           },
-          "basis": "Owner-approved: the owner's answer, 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg): \"Nudge both up\". Strong goes further and keeps the 6-step setting: the owner asked to keep it unless it clearly fights 0.65, and the live proof kept the composition at 6 steps. Proved through the page on 27 Sep 2026 at 0.65, 6 steps: job 213848b0 (2 pictures, 1322.2 s), experiments/curated/live-proofs-20260927/. The earlier starting value was the recipe's own Redraw variant (0.5, 6 steps)."
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Strong goes further and keeps the 6-step setting: the owner asked to keep it unless it clearly fights 0.65, and the live proof kept the composition at 6 steps. Proved through the page on 27 Sep 2026 at 0.65, 6 steps: job 213848b0 (2 pictures, 1322.2 s), experiments/curated/live-proofs-20260927/. The earlier starting value was the recipe's own Redraw variant (0.5, 6 steps)."
         }
       },
       "modality": "image",
