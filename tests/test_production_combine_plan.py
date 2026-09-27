@@ -157,6 +157,18 @@ class CombinePlanTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "destination graph changed"): lab.create(stale)
         self.assertEqual(lab.list(), []); self.assertEqual(self.post_count(self.studio), 0)
 
+    def test_a_klein_4b_lead_needs_the_clothes_answer_for_copy_pose_and_the_server_stays_the_authority(self):
+        # The live defect of 27 Sep 2026: Klein 4B's page asks who and pose only; Copy Pose also reads the clothes.
+        lab = self.studio.production; two = {key: ANSWERS[key] for key in ("who", "pose")}
+        plan = lambda answers: {"name": "4B lead", "combine_plan": dict(base=self.base("combine-klein"), engines=["combine-klein", "combine-klein-9b-copypose"], seeds=[11], answers=answers)}
+        with self.assertRaisesRegex(ValueError, "Copy Pose.*fill in the wording, replace .*image 1's clothes and colours"): lab.create(plan(two))
+        self.assertEqual(lab.list(), [])
+        # The plan form's extra field sends the clothes answer: the same pair now prepares from the 4B lead.
+        project = lab.create(plan(dict(two, clothes=ANSWERS["clothes"])))
+        stages = lab.get(project["id"], full=True)["plan"]["stages"]
+        self.assertEqual([s["engine"] for s in stages], ["combine-klein", "combine-klein-9b-copypose"])
+        self.assertIn(ANSWERS["clothes"], stages[1]["request"]["controls"]["positive"]); self.assertEqual(self.post_count(self.studio), 0)
+
     def test_a_plan_bigger_than_sixteen_pictures_is_refused(self):
         self.presets.update({f"combine-klein-copy{i}": dict(copy.deepcopy(self.presets["combine-klein"]), id=f"combine-klein-copy{i}") for i in range(3)})
         self.write_catalog()

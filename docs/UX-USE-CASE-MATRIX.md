@@ -79,6 +79,16 @@ two recipes, type two seeds, Prepare, read Start, change a seed. It asserts the 
 change. It also asserts that no `/api/jobs` or `/start` request was made. `python tests/studio_use_cases.py` passed
 **16/16** at the time (17/17 after the merge with Vary, 27 Sep) with zero generation submissions and zero page errors. These are fixture screens; no model ran.
 
+**Every fill is shown (live defect and owner decision, 27 September 2026).** With Klein 4B open (its wording asks who and
+the pose), ticking Copy Pose or depth used to be refused at Prepare for the clothes fill, a field the page never showed.
+The plan now shows each fill a ticked recipe reads and the open recipe lacks, once per meaning (e.g. *Clothes and colours
+for Klein 9B · Copy Pose, Klein 9B · depth*), filled from this character's remembered answer, and sends it in the answers.
+The server still refuses any recipe whose wording keeps a bracket. The form also belongs to one pair (#1198): switching
+engines keeps it, another pair starts from its own recipe and seed; the seeds field can be emptied; the stale notice
+clears when the page matches the prepared plan again; and a failed refresh after Start no longer offers Start again.
+The journey now leads with Klein 4B, ticks Copy Pose and depth and answers the clothes field (12 intents, 11 clicks).
+`python tests/studio_use_cases.py` passed **19/19** with zero generation submissions and zero page errors (fixture screens).
+
 ## Quick checks on results — 27 September 2026
 
 Refs #1203 (owner decision, 27 September 2026). Keep / Needs work / Reject stay as they are. Each image result now also

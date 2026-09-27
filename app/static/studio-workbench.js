@@ -314,33 +314,46 @@
   // server and shows the expected total; nothing runs until Start plan is pressed, and each picture lands under the pair.
   enginePanel.innerHTML='<div id="uxEngineList"></div><details id="uxEnginePlan" class="ux-engine-plan"><summary><b>Run several recipes on this pair</b> <small>one plan, the same seeds, one Start</small></summary>'
     +'<p>Tick the recipes and type the seeds. Prepare plan checks every recipe and shows the expected total time; nothing runs until you press Start plan. Each picture lands under Runs for these pictures.</p>'
-    +'<fieldset id="uxPlanEngines" class="ux-plan-engines"><legend>Recipes</legend></fieldset><label for="uxPlanSeeds">Seeds<input id="uxPlanSeeds" inputmode="numeric" autocomplete="off" placeholder="e.g. 11, 12"></label>'
+    +'<fieldset id="uxPlanEngines" class="ux-plan-engines"><legend>Recipes</legend></fieldset><label for="uxPlanSeeds">Seeds<input id="uxPlanSeeds" inputmode="numeric" autocomplete="off" placeholder="e.g. 11, 12"></label><div id="uxPlanFills" class="ux-fills ux-plan-fills" hidden></div>'
     +'<p id="uxPlanSummary"></p><div class="ux-plan-actions"><button type="button" id="uxPlanPrepare">Prepare plan</button><button type="button" id="uxPlanStart" class="primary" hidden>Start plan</button></div><p id="uxPlanStatus" role="status"></p></details>';
-  const planChoice=new Set();let planEnginesMarkup='',planPrepared=null,planBusy=false,planPreset=null;
+  const planChoice=new Set(),planFills={};let planEnginesMarkup='',planFillsMarkup='',planPrepared=null,planBusy=false,planPreset=null,planPair=null,planSeeded=false;
   const planStatus=text=>{q('#uxPlanStatus').textContent=text;};
   function planOptions(){return StudioContinuation.destinations('combine',catalog.presets,continuationSource).map(p=>({preset:p,reason:StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||''}));}
   function planSeeds(){return StudioContinuation.combinePlanSeeds(q('#uxPlanSeeds').value);}
   function planEngines(){return planOptions().filter(o=>!o.reason&&planChoice.has(o.preset.id)).map(o=>o.preset);}
   // Seconds per picture the page already shows on each engine button: this PC's runs first, then the read-only estimate.
   function planPerPicture(preset){const here=StudioContinuation.combineTiming(jobs,preset.id);if(here)return here.seconds;const guess=engineEstimate(preset);return guess?.available&&guess.confidence!=='none'?Number(guess.estimate_seconds):null;}
+  // #1163 live defect (27 Sep 2026): Klein 4B asks who and pose, a ticked Copy Pose also reads the clothes, and Prepare was refused
+  // for a field the page never showed. Each fill a ticked recipe reads and the open recipe lacks is shown here, starting from this
+  // character's remembered answer; a recipe with its own edited wording reads no answers. The server still refuses any bracket left.
+  function planNeeds(engines=planEngines()){const identity=pairKey();return StudioContinuation.combinePlanFills(selected,engines.filter(p=>p.id!==selected.id&&!combineWording.has(identity+'|'+p.id)));}
+  function planFill(meaning){const saved=rememberedFills();return String(('@'+meaning) in saved?saved['@'+meaning]||'':planFills[meaning]||'');}
   // What Prepare sends: the recipe Generate would run, the ticked recipes, the seeds, the answers and any wording edited per recipe.
   function planIntent(engines,seeds){
-    const identity=pairKey(),wording={};
+    const identity=pairKey(),wording={},answers=combineAnswers();for(const fill of planNeeds(engines))answers[fill.meaning]=planFill(fill.meaning);
     for(const p of engines)if(p.id!==selected.id&&combineWording.has(identity+'|'+p.id))wording[p.id]=combineWording.get(identity+'|'+p.id);
     const base={preset_id:selected.id,controls:values(),continuation:continuationState?{...continuationState}:null,parent_assets:[...parentAssets],references:attachedReferencePayload(),expected_template_sha256:recipeTemplateHash};
     const name=('Combine · '+engines.map(p=>StudioContinuation.combineEngineLabel(p)).join(' / ')+' · seed'+(seeds.length>1?'s ':' ')+seeds.join(', ')).slice(0,120);
-    return{name,combine_plan:{base,engines:engines.map(p=>p.id),seeds,answers:Object.fromEntries(Object.entries(combineAnswers()).filter(([,v])=>String(v||'').trim())),wording}};
+    return{name,combine_plan:{base,engines:engines.map(p=>p.id),seeds,answers:Object.fromEntries(Object.entries(answers).filter(([,v])=>String(v||'').trim())),wording}};
   }
   function planStamp(){return JSON.stringify(planIntent(planEngines(),planSeeds().seeds));}
   function syncCombinePlan(){
     if(enginePanel.hidden){planEnginesMarkup='';return;}
+    // #1198: the form belongs to one pair. Switching engines keeps it; another pair starts from its own recipe and seed.
+    const pair=pairKey();
+    if(pair!==planPair){planPair=pair;planChoice.clear();planPreset=null;planSeeded=false;q('#uxPlanSeeds').value='';for(const key of Object.keys(planFills))delete planFills[key];if(!planBusy){planPrepared=null;planStatus('');}}
     // A recipe opened here starts the choice with itself ticked; the ticks otherwise survive switching engines.
     if(planPreset!==selected.id){if(!planChoice.size)planChoice.add(selected.id);planPreset=selected.id;}
-    if(!q('#uxPlanSeeds').value&&getControl('seed')?.value)q('#uxPlanSeeds').value=getControl('seed').value;
+    // The seeds start from the open recipe's seed once per pair, so the field can be emptied and retyped (#1198).
+    if(!planSeeded&&getControl('seed')?.value){planSeeded=true;if(!q('#uxPlanSeeds').value)q('#uxPlanSeeds').value=getControl('seed').value;}
     const busy=combineBusy()||planBusy,options=planOptions();
     const markup='<legend>Recipes</legend>'+options.map(({preset:p,reason})=>{const per=planPerPicture(p);
       return '<label class="ux-plan-engine"><input type="checkbox" data-ux-plan-engine="'+escape(p.id)+'" '+(planChoice.has(p.id)&&!reason?'checked ':'')+(reason||busy?'disabled ':'')+'title="'+escape(reason||p.name)+'"> <b>'+escape(StudioContinuation.combineEngineLabel(p))+'</b> <small>'+escape(reason||(per?'~'+durationLabel(per)+' per picture':'no timing yet'))+'</small></label>';}).join('');
     if(markup!==planEnginesMarkup){planEnginesMarkup=markup;q('#uxPlanEngines').innerHTML=markup;}
+    // Re-rendered only when the set of fields changes, never while one is being typed in.
+    const needs=planNeeds(),needsKey=JSON.stringify(needs);
+    if(needsKey!==planFillsMarkup){planFillsMarkup=needsKey;q('#uxPlanFills').hidden=!needs.length;
+      q('#uxPlanFills').innerHTML=needs.length?'<p class="muted">The ticked recipes also read these; the open recipe does not ask for them.</p>'+needs.map(f=>'<label>'+escape(f.label)+' <small>for '+escape(f.recipes.join(', '))+'</small><input data-ux-plan-fill="'+escape(f.meaning)+'" placeholder="'+escape(f.example?'e.g. '+f.example:'')+'" value="'+escape(planFill(f.meaning))+'" autocomplete="off"></label>').join(''):'';}
     const engines=planEngines(),{seeds,error}=planSeeds(),count=engines.length*seeds.length,time=StudioContinuation.combinePlanTime(engines.map(planPerPicture),seeds.length);
     const timing=time.unknown?(time.seconds?' · at least ~'+durationLabel(time.seconds)+'; '+time.unknown+' recipe'+(time.unknown===1?' has':'s have')+' no timing yet':' · no timing on this PC yet'):' · about '+durationLabel(time.seconds);
     q('#uxPlanSummary').textContent=!engines.length?'Tick at least one recipe.':error?error:count>16?count+' pictures: a plan runs at most 16. Untick a recipe or a seed.'
@@ -350,9 +363,17 @@
     const fresh=!!planPrepared&&!planPrepared.started&&planPrepared.stamp===planStamp();
     q('#uxPlanStart').hidden=!fresh;q('#uxPlanStart').disabled=busy;
     if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Runs & review, not started.');}
+    // Undoing the change brings Start back with its Prepared line; the next change is announced again (#1198).
+    else if(fresh&&planPrepared.stale){planPrepared.stale=false;planStatus(planPrepared.message);}
   }
   q('#uxPlanEngines').onchange=e=>{const box=e.target.closest('[data-ux-plan-engine]');if(!box)return;if(box.checked)planChoice.add(box.dataset.uxPlanEngine);else planChoice.delete(box.dataset.uxPlanEngine);syncCombinePlan();};
   q('#uxPlanSeeds').oninput=()=>syncCombinePlan();
+  // An extra answer is this character's, like the fields above the wording: kept for the next recipe and the next visit.
+  q('#uxPlanFills').oninput=e=>{
+    const meaning=e.target?.dataset?.uxPlanFill;if(!meaning)return;planFills[meaning]=e.target.value;
+    const key=fillsKey();if(key)try{localStorage.setItem(key,JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value}));}catch(error){}
+    syncCombinePlan();
+  };
   const planTime=seconds=>Number(seconds)>0?durationLabel(seconds):'unknown';
   q('#uxPlanPrepare').onclick=async()=>{
     if(planBusy||combineBusy())return;
@@ -364,8 +385,8 @@
       const intent=planIntent(engines,seeds),stamp=JSON.stringify(intent);
       planBusy=true;planPrepared=null;syncCombinePlan();planStatus('Checking every recipe, its models and the pictures. Nothing is submitted.');
       const project=await post('/api/production',intent),estimate=project.combine?.estimate||{};
-      planPrepared={project,stamp};
-      planStatus('Prepared '+project.stages.length+' pictures: expected about '+planTime(estimate.total_seconds)+(estimate.total_upper_seconds?' (up to about '+planTime(estimate.total_upper_seconds)+')':'')+', '+(estimate.confidence||'no')+' confidence. Nothing has run. Press Start plan to run it.');
+      planPrepared={project,stamp,message:'Prepared '+project.stages.length+' pictures: expected about '+planTime(estimate.total_seconds)+(estimate.total_upper_seconds?' (up to about '+planTime(estimate.total_upper_seconds)+')':'')+', '+(estimate.confidence||'no')+' confidence. Nothing has run. Press Start plan to run it.'};
+      planStatus(planPrepared.message);
       if(typeof refreshProduction==='function')void refreshProduction(true);
     }catch(error){planStatus(error.message);announce(error.message,true);}
     finally{planBusy=false;syncCombinePlan();}
@@ -373,11 +394,13 @@
   q('#uxPlanStart').onclick=async()=>{
     const prepared=planPrepared;if(planBusy||combineBusy()||!prepared||prepared.started||prepared.stamp!==planStamp())return;
     planBusy=true;prepared.started=true;syncCombinePlan();
+    // Once the Start request returns, the plan has started: a failed refresh after it must not offer Start again (#1198).
+    let begun=false;
     try{
-      const project=await post('/api/production/'+encodeURIComponent(prepared.project.id)+'/start',{});
+      const project=await post('/api/production/'+encodeURIComponent(prepared.project.id)+'/start',{});begun=true;
       planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Runs & review.');
       await refresh();
-    }catch(error){prepared.started=false;planStatus(error.message);announce(error.message,true);}
+    }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;planStatus(error.message);announce(error.message,true);}}
     finally{planBusy=false;syncCombinePlan();}
   };
   // #1203: this PC's owner answers for every picture the recipe made, e.g. "pose 3/4 · face 1/4"; none reads as such (K14).
