@@ -1,5 +1,14 @@
 # Current state — 27 September 2026
 
+## Background-technique lab: parallax, seamless tiles, backdrop variety — 27 September 2026 (18:29-19:03 local)
+
+Everything used installed tools on the primary and the accepted Night Shift anchor z2 (refs #422).
+- **Parallax:** naive Depth Anything V2 bands were rejected, because the window read as a near wall. What worked (keep): a `flux-edit` clean plate plus a `flux-edit` isolate-on-white matte, both registered to the anchor, a nearest-pixel ring behind the frame, and a colour-matched plate. Three layers recomposite to within 0.36/255. The window mask was drawn by hand.
+- **Seamless tiles:** roll by half, repaint the centre cross with Z-Image `SetLatentNoiseMask`, then a circular lighting flatten. The wall keeps and the floor is fixable (a repeating row of plank ends). A perspective floor source was rejected.
+- **Backdrop variety:** a z2 wording template on Z-Image carries the look (corridor keep, rooftop fixable). The Klein look-picture route leaks content and loses the night.
+
+Evidence: `experiments/curated/background-lab-20260927/`. Agent-judged only; not art acceptance, not licence clearance.
+
 ## Owner cancel (#1138) proved live on ComfyUI 0.35.0 — 27 September 2026 (16:41-16:44 local)
 
 Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<id>/cancel` on the primary backend. Every job ended `cancelled`, with who and when recorded. The three jobs that had reached ComfyUI also record the prompt ID, ComfyUI's reply and the `/queue` observations.
