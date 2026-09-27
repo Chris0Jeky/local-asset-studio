@@ -94,8 +94,8 @@ The rgba recipe is `verified: true` (the route runs and returns the intended kin
 graphs now route SaveImage through a core SplitImageWithAlpha node so full-frame outputs save RGB instead of RGBA
 with faint partial alpha (#878); both are `verified: false` until one proving run each through the Studio. The rgba
 PNG keeps its alpha channel — strip or threshold alpha before any step that crops or packs by alpha:
-`python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by default, `--mode to-rgb`
-to drop a spurious channel), with before/after evidence in `experiments/curated/qwen21-alpha-cleanup/`. Generated
+`python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by default; `--mode rgba-despeckle`
+also clears detached specks that never reach alpha 32, as left around soft glows; `--mode to-rgb` to drop a spurious channel), with before/after evidence in `experiments/curated/qwen21-alpha-cleanup/`. Generated
 and agent-inspected only: not art acceptance, and the Qwen Research License keeps them non-commercial. The 2048²
 text-to-image run is done (26 September 2026: job
 `252c3ebe`, prompt `3593cd92`, seed 2026092601, 25 steps, 353.0 s, 11.9 GB spilled to shared RAM;
