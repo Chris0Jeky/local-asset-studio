@@ -402,47 +402,6 @@ async function mixedBatchAction(button) {
     throw error;
   } finally {button.disabled=false;mixedBatchBusy.delete(identifier);}
 }
-// #1138: Cancel targets only this job's own prompt. The server settles a queued job at once and hands anything already
-// sent to its worker, which removes a waiting prompt or interrupts this job's running one and records what ComfyUI then
-// shows. The control is on every queued or running card and in the run dock; when it cannot act it stays visible,
-// disabled, with the server's reason. A render that may be running asks first. Nothing here retries or resubmits.
-const ACTIVE_JOB_STATUSES=['queued','waiting','submitting','running'],cancelBusy=new Set();
-const CANCEL_STATES={requested:'Cancel requested',refused:'Cancel refused',too_late:'Cancel came too late',unresolved:'Cancel not confirmed'};
-function cancelConsequence(job){return job.cancel_needs_confirm?'Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.':'Removes it from the queue. Nothing has been sent to ComfyUI.';}
-function renderCancel(job){
-  const record=job.cancellation,state=record?.state,when=record?.requested_at?new Date(record.requested_at*1000).toLocaleTimeString():'';
-  const note=state&&CANCEL_STATES[state]?'<p class="cancelNote"><small><b>'+esc(CANCEL_STATES[state])+'</b>'+(when?' ('+esc(when)+')':'')+': '+esc(state==='requested'?'the Studio is checking ComfyUI for this job\'s prompt. Nothing is retried.':record.note||'')+'</small></p>':'';
-  if(!ACTIVE_JOB_STATUSES.includes(job.status))return note;
-  if(job.can_cancel)return note+'<button class="cancelJob" data-job="'+esc(job.id)+'" data-confirm="'+(job.cancel_needs_confirm?'1':'0')+'">Cancel</button><p class="cancelConsequence"><small>'+esc(cancelConsequence(job))+'</small></p>';
-  return note+(state==='requested'?'':'<button class="cancelJob" data-job="'+esc(job.id)+'" disabled>Cancel</button><p class="disabledReason"><small>'+esc(job.cancel_blocked_reason||'This job cannot be cancelled now.')+'</small></p>');
-}
-async function cancelJob(id,confirmNeeded){
-  if(!id||cancelBusy.has(id))return;
-  if(confirmNeeded&&!window.confirm('Cancel this render?\n\nStops the render in ComfyUI. Finished outputs are kept. Nothing is retried.'))return;
-  cancelBusy.add(id);renderRunCancel();
-  try{const job=await post('/api/jobs/'+encodeURIComponent(id)+'/cancel',{});message(job.status==='cancelled'?job.message:'Cancel requested. The Studio is checking ComfyUI; the card shows what it finds.');await refresh();}
-  finally{cancelBusy.delete(id);renderRunCancel();}
-}
-// The run dock follows the run started here, else the newest queued or running job. Its row sits under the status line
-// (like the run summary), so the dock's own controls keep their width.
-function runToCancel(){const active=jobs.filter(j=>ACTIVE_JOB_STATUSES.includes(j.status));return active.find(j=>j.id===activeJobId)||active.sort((a,b)=>(b.created_at||0)-(a.created_at||0))[0]||null;}
-function runCancelBox(){
-  let box=document.getElementById?.('runCancel');if(box||!document.createElement)return box||null;
-  const status=document.getElementById('status');if(!status)return null;
-  box=document.createElement('div');box.id='runCancel';box.className='run-cancel';box.hidden=true;
-  box.innerHTML='<button id="cancelRun" type="button">Cancel run</button><small id="cancelRunReason"></small>';status.after(box);
-  const button=box.querySelector('#cancelRun');button.onclick=async()=>{try{await cancelJob(button.dataset.job,button.dataset.confirm==='1');}catch(err){message(err.message,true);}};
-  return box;
-}
-function renderRunCancel(){
-  const box=runCancelBox(),button=document.getElementById?.('cancelRun'),reason=document.getElementById?.('cancelRunReason');if(!box||!button)return;
-  const job=runToCancel(),requested=job?.cancellation?.state==='requested',busy=job&&cancelBusy.has(job.id);
-  box.hidden=!job;if(!job)return;
-  button.dataset.job=job.id;button.dataset.confirm=job.cancel_needs_confirm?'1':'0';
-  button.disabled=!job.can_cancel||busy;button.textContent=requested||busy?'Cancelling…':'Cancel run';
-  const why=job.can_cancel?cancelConsequence(job):requested?'Cancel requested. The Studio is checking ComfyUI for this job\'s prompt.':job.cancel_blocked_reason||'This run cannot be cancelled now.';
-  button.title=why;if(reason)reason.textContent=why;
-}
 // #772: Recent runs grows ten at a time on request. A poll re-render keeps that count, puts focus back on the
 // same control of the same output, and waits while a clip in the list plays; unchanged data never touches the DOM.
 // Only the gallery waits for a clip: Problems holds no media and always shows the current record, so a new failure
@@ -498,7 +457,7 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   if(focusKey&&!focusHosts.some(h=>h.contains?.(document.activeElement)))focusHosts.flatMap(h=>[...(h.querySelectorAll?.(JOB_FOCUSABLE)||[])]).find(el=>jobControlKey(el)===focusKey)?.focus({preventScroll:true});
   if(focusKey&&focusInGallery&&!playing&&!force&&!focusHosts.some(h=>h.contains?.(document.activeElement)))(gallery.querySelector?.('[data-recent-more]')||[...(gallery.querySelectorAll?.(JOB_FOCUSABLE)||[])].pop())?.focus?.({preventScroll:true});
   if(!playing)renderCompare();
-  renderRunCancel();
+  if(typeof renderRunCancel==='function')renderRunCancel();   // journeys load renderJobs alone
 }
 // #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
 const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
@@ -510,6 +469,47 @@ function renderProblems(problems,open){
   const more=rest>0?'<p class="problemsMore"><small>'+rest+' older problem(s) not shown.</small> <button type="button" data-problems-toggle="all">Show all '+active.length+'</button></p>':problemsShowAll&&active.length>PROBLEMS_SHOWN?'<p class="problemsMore"><button type="button" data-problems-toggle="all">Show newest '+PROBLEMS_SHOWN+' only</button></p>':'';
   const awayToggle=away.length?'<p class="problemsMore"><button type="button" data-problems-toggle="away" aria-expanded="'+problemsShowPutAway+'">'+(problemsShowPutAway?'Hide put away':'Show put away ('+away.length+')')+'</button></p>'+(problemsShowPutAway?'<div class="problemsPutAway">'+away.map(p=>p.html).join('')+'</div>':''):'';
   return '<details id="jobProblems" class="job-problems" '+(open?'open':'')+'><summary>Problems · '+active.length+' run(s)'+(away.length?' · '+away.length+' put away':'')+'</summary>'+(active.length?'':'<p><small>No open problems.</small></p>')+shown.map(p=>p.html).join('')+more+awayToggle+'</details>';
+}
+// #1138: Cancel targets only this job's own prompt. The server settles a queued job at once and hands anything already
+// sent to its worker, which removes a waiting prompt or interrupts this job's running one and records what ComfyUI then
+// shows. The control is on every queued or running card and in the run dock; when it cannot act it stays visible,
+// disabled, with the server's reason. A render that may be running asks first. Nothing here retries or resubmits.
+const ACTIVE_JOB_STATUSES=['queued','waiting','submitting','running'],cancelBusy=new Set();
+const CANCEL_STATES={requested:'Cancel requested',refused:'Cancel refused',too_late:'Cancel came too late',unresolved:'Cancel not confirmed'};
+function cancelConsequence(job){return job.cancel_needs_confirm?'Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.':'Removes it from the queue. Nothing has been sent to ComfyUI.';}
+function renderCancel(job){
+  const record=job.cancellation,state=record?.state,when=record?.requested_at?new Date(record.requested_at*1000).toLocaleTimeString():'';
+  const note=state&&CANCEL_STATES[state]?'<p class="cancelNote"><small><b>'+esc(CANCEL_STATES[state])+'</b>'+(when?' ('+esc(when)+')':'')+': '+esc(state==='requested'?'the Studio is checking ComfyUI for this job\'s prompt. Nothing is retried.':record.note||'')+'</small></p>':'';
+  if(!ACTIVE_JOB_STATUSES.includes(job.status))return note;
+  if(job.can_cancel)return note+'<button class="cancelJob" data-job="'+esc(job.id)+'" data-confirm="'+(job.cancel_needs_confirm?'1':'0')+'">Cancel</button><p class="cancelConsequence"><small>'+esc(cancelConsequence(job))+'</small></p>';
+  return note+(state==='requested'?'':'<button class="cancelJob" data-job="'+esc(job.id)+'" disabled>Cancel</button><p class="disabledReason"><small>'+esc(job.cancel_blocked_reason||'This job cannot be cancelled now.')+'</small></p>');
+}
+async function cancelJob(id,confirmNeeded){
+  if(!id||cancelBusy.has(id))return;
+  if(confirmNeeded&&!window.confirm('Cancel this render?\n\nStops the render in ComfyUI. Finished outputs are kept. Nothing is retried.'))return;
+  cancelBusy.add(id);renderRunCancel();
+  try{const job=await post('/api/jobs/'+encodeURIComponent(id)+'/cancel',{});message(job.status==='cancelled'?job.message:'Cancel requested. The Studio is checking ComfyUI; the card shows what it finds.');await refresh();}
+  finally{cancelBusy.delete(id);renderRunCancel();}
+}
+// The run dock follows the run started here, else the newest queued or running job. Its row sits under the status line
+// (like the run summary), so the dock's own controls keep their width.
+function runToCancel(){const active=jobs.filter(j=>ACTIVE_JOB_STATUSES.includes(j.status));const mine=typeof activeJobId==='undefined'?null:activeJobId;return active.find(j=>j.id===mine)||active.sort((a,b)=>(b.created_at||0)-(a.created_at||0))[0]||null;}
+function runCancelBox(){
+  let box=document.getElementById?.('runCancel');if(box||!document.createElement)return box||null;
+  const status=document.getElementById('status');if(!status)return null;
+  box=document.createElement('div');box.id='runCancel';box.className='run-cancel';box.hidden=true;
+  box.innerHTML='<button id="cancelRun" type="button">Cancel run</button><small id="cancelRunReason"></small>';status.after(box);
+  const button=box.querySelector('#cancelRun');button.onclick=async()=>{try{await cancelJob(button.dataset.job,button.dataset.confirm==='1');}catch(err){message(err.message,true);}};
+  return box;
+}
+function renderRunCancel(){
+  const box=runCancelBox(),button=document.getElementById?.('cancelRun'),reason=document.getElementById?.('cancelRunReason');if(!box||!button)return;
+  const job=runToCancel(),requested=job?.cancellation?.state==='requested',busy=job&&cancelBusy.has(job.id);
+  box.hidden=!job;if(!job)return;
+  button.dataset.job=job.id;button.dataset.confirm=job.cancel_needs_confirm?'1':'0';
+  button.disabled=!job.can_cancel||busy;button.textContent=requested||busy?'Cancelling…':'Cancel run';
+  const why=job.can_cancel?cancelConsequence(job):requested?'Cancel requested. The Studio is checking ComfyUI for this job\'s prompt.':job.cancel_blocked_reason||'This run cannot be cancelled now.';
+  button.title=why;if(reason)reason.textContent=why;
 }
 async function refreshJobs(){try{const response=await fetch('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{});if(response.status===304){const current=response.headers?.get?.('ETag');if(current)jobsEtag=current;settleActiveJob(false);return;}if(!response.ok){let detail='Request failed';try{const data=await response.json();if(data&&data.error)detail=data.error;}catch{}const error=Error(detail);error.status=response.status;throw error;}const next=await response.json(),etag=response.headers?.get?.('ETag');jobsEtag=etag||null;const signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}settleActiveJob();}catch(e){message(e.message,true);}}
 // The run started here may already be settled in the list a 304 confirms (a fast failure seen by an earlier poll).
