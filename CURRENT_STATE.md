@@ -1,5 +1,15 @@
 # Current state — 27 September 2026
 
+## Qwen-Image 2.1 lanes: GGUF Q4 and the w4a8 text encoder — 27 September 2026 (21:55-22:37 local)
+
+All runs were on the qwen21 backend (refs #1028).
+- **unsloth Q4_K_M GGUF:** does not load in ComfyUI-GGUF 6ea2651e ("Unknown model architecture"). It needs the unmerged city96/ComfyUI-GGUF#483; parked.
+- **realrebelai Q4 GGUF:** loads, with quality level with B0, but runs at about 1.6 s/it against 1.5 it/s, so it is about 1.4× slower. F1 fails.
+- **Comfy-Org w4a8 text encoder:** the same time as B0 (73.9 against 73.7 s). Blind, 4 of 4 keep against 2 of 4: no pseudo-lettering on the prop, on 2 seeds. A lead that needs more seeds and text-heavy prompts, not a pin.
+- The three downloads are SHA-verified and pinned in `models/library.json`. The FP8 lanes are still downloading.
+
+Evidence: `experiments/curated/qi21-lanes-20260927/`. Agent-judged only.
+
 ## Background-technique lab: parallax, seamless tiles, backdrop variety — 27 September 2026 (18:29-19:03 local)
 
 Everything used installed tools on the primary and the accepted Night Shift anchor z2 (refs #422).
