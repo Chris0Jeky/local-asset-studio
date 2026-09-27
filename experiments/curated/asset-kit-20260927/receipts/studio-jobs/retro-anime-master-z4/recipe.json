@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "An empty room, no people. Hand-painted anime film background of a narrow late-night animation workshop loft above a rain-washed city. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden desk with stacked blank drawing sheets, a warm amber desk lamp and a small glowing CRT monitor making a soft pool of cyan light. Faint rose and cyan reflections on the wet glass, muted graphite palette with small amber accents. An empty room with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092754
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790487164.671182,
+  "references": [],
+  "parent_assets": []
+}

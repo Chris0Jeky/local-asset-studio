@@ -778,8 +778,8 @@
   ],
   "mode": "RGB",
   "sha256": "2482315364e94edab5a21dde9f50166f18c56eb85977300a87ab9e6876d3cac0",
-  "verdict": null,
-  "worst_defect": null
+  "verdict": "fixable",
+  "worst_defect": "heavy purple cast from the \"purple retro anime style\" trigger; brief wants graphite with rose/cyan accents (whole frame)"
  },
  {
   "world": "comparison",
@@ -795,8 +795,8 @@
   ],
   "mode": "RGB",
   "sha256": "0ca6557dcf3069d37937224c2331690052321b45fa43175e721b89c740a69e30",
-  "verdict": null,
-  "worst_defect": null
+  "verdict": "fixable",
+  "worst_defect": "pinned notes, leaning boards and a chair fill the left and centre; roses and graphite palette on-brief (crop 0,300-700,768)"
  },
  {
   "world": "comparison",
@@ -812,8 +812,8 @@
   ],
   "mode": "RGB",
   "sha256": "14532a5ce3713577b4b387fc7dd7e5db386f5ca3af7b92bc44215a73e76d018c",
-  "verdict": null,
-  "worst_defect": null
+  "verdict": "keep",
+  "worst_defect": "dark picture frame at the far left edge of the quiet wall (crop 0,180-60,360)"
  },
  {
   "world": "comparison",
@@ -829,8 +829,8 @@
   ],
   "mode": "RGB",
   "sha256": "099691f160eb3a92833ba42fab41ffaef69807b039b4e3571a79f97d792b4467",
-  "verdict": null,
-  "worst_defect": null
+  "verdict": "reject",
+  "worst_defect": "symmetric twin desks and framed pictures on both walls; no quiet left wall (whole frame)"
  },
  {
   "world": "comparison",

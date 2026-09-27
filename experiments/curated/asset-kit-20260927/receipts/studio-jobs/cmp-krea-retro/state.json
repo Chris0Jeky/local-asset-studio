@@ -1,0 +1,202 @@
+{
+  "id": "57bd99fc-3002-46fe-8258-24708ef589c4",
+  "status": "completed",
+  "created_at": 1790481317.4508724,
+  "preset_id": "krea-portrait-gguf",
+  "preset_name": "Krea 2 Retro Anime - Portrait (GGUF, fast)",
+  "controls": {
+    "positive": "purple retro anime style, Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092701,
+    "steps": 8,
+    "cfg": 1,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "e21d6ee7-02b1-4641-ba2d-5d16d547a399"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "e21d6ee7-02b1-4641-ba2d-5d16d547a399",
+      "seed": 2026092701,
+      "graph": {
+        "1": {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "krea2_turbo-Q5_K_M.gguf"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+            "type": "krea2",
+            "device": "cpu"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "purple retro anime style, Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters."
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 1344,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "7": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "10",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "6",
+              0
+            ],
+            "seed": 2026092701,
+            "steps": 8,
+            "cfg": 1.0,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1.0
+          }
+        },
+        "8": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "7",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "9": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "8",
+              0
+            ],
+            "filename_prefix": "Studio/krea-portrait-gguf"
+          }
+        },
+        "10": {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "lora_name": "krea2_retroanime.safetensors",
+            "strength_model": 1.0
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 2968215552,
+        "peak_dedicated_bytes": 14582177792,
+        "samples": 547,
+        "spilled": true,
+        "top_holders": [
+          {
+            "pid": 2200,
+            "name": "dwm.exe",
+            "dedicated_bytes": 36529344512
+          },
+          {
+            "pid": 13928,
+            "name": "explorer.exe",
+            "dedicated_bytes": 464400384
+          },
+          {
+            "pid": 20880,
+            "name": "ProtonVPN.Client.exe",
+            "dedicated_bytes": 230154240
+          }
+        ],
+        "settled_shared_bytes": 82534400,
+        "lingering": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "krea-portrait-gguf_00002_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092701,
+      "prompt_id": "e21d6ee7-02b1-4641-ba2d-5d16d547a399",
+      "media_type": "image",
+      "asset_id": "7dcb154a3334521ab65db47503202268"
+    }
+  ],
+  "message": "Complete. GPU memory overflowed 2.8 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 34.0 GB.",
+  "graph_path": "workflows\\api\\krea-portrait-gguf-api.json",
+  "seed_bindings": [
+    [
+      "7",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "lab-0927 wishlist cmp krea-retro",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790481317.458873,
+  "gpu_spill": true,
+  "finished_at": 1790481584.8523052,
+  "elapsed_seconds": 267.39343214035034
+}
