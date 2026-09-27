@@ -27,9 +27,11 @@
     const output=raw.match(/No prompt was submitted for output (\d+)/),prior=!job||(Array.isArray(job.prompt_ids)&&job.prompt_ids.length>0);
     const sent=output&&Number(output[1])>1?' Output '+output[1]+' was not sent to ComfyUI'+(prior?'; the earlier outputs in this batch had already finished.':'.'):output?' Nothing was sent to ComfyUI.':'';
     const measured='the Studio checks Windows commit headroom: how much more memory Windows can still promise to programs, counting RAM plus the page file';
+    // The server appends this clause only after its opt-in release (commit_gate_release_seconds) actually posted /free and measured again.
+    const freed=/even after the Studio freed ComfyUI's cached models/.test(raw);
     return low?{title:'Held: not enough memory headroom',
-      summary:'Before sending a Qwen or FLUX.2 job, '+measured+'. It had '+(low[1]==='unknown'?'an unknown amount':low[1])+'; this job needs '+low[2]+'.'+sent,
-      action:'Close other programs that use a lot of memory, or wait until a running job finishes and its memory is released, then press Generate again. The Studio checks again just before sending.'}
+      summary:'Before sending a Qwen or FLUX.2 job, '+measured+'. It had '+(low[1]==='unknown'?'an unknown amount':low[1])+(freed?" even after it freed ComfyUI's cached models":'')+'; this job needs '+low[2]+'.'+sent,
+      action:freed?'Something outside ComfyUI is holding the memory. Close other programs that use a lot of memory, then press Generate again.':'Close other programs that use a lot of memory, or wait until a running job finishes and its memory is released, then press Generate again. The Studio checks again just before sending.'}
       :{title:'Held: memory headroom unknown',
       summary:'Before sending a Qwen or FLUX.2 job, '+measured+', but it could not read it ('+unknown[1].trim()+'), so it held the job instead of guessing.'+sent,
       action:'Try Generate again in a moment. If this keeps happening, check Models & setup or restart the Studio.'};
