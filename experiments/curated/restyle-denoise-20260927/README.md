@@ -54,3 +54,29 @@ On both sources, **0.75 kept the named props and layout** that 0.85 dropped, wit
 ## Status
 
 These results are generated and agent-judged only; none of it is art acceptance. Licences are not cleared: WAI's creator terms are unresolved, and the Mishima LoRA carries civitai flags (see `models/library.json`). The pictures stay local under ComfyUI `output/Research/lab-20260927/restyle-denoise/`.
+
+## Second seed (lab 2) — 27 September 2026 (08:29-08:33 local)
+
+Seed 2026092762 (on the KSampler and the FaceDetailer) at 0.75 and 0.85 only, with the same graphs and sources and no other change
+(`seed2-lab2/graph-*.json`). The four cells ran straight to ComfyUI on the primary, serially: `platform-d75` `5e206d1b` 83.3 s,
+`platform-d85` `c72f866d` 52.3 s, `carto-d75` `4cb2e6f3` 50.9 s and `carto-d85` `a84e184a` 44.6 s `exec_s`, with host commit peaking at 78-81 %
+(`seed2-lab2/runs.json`). They were judged blind as source + A/B per picture before `seed2-lab2/key.sealed.json` was read. This time the face, hand and
+prop crops are recorded in `seed2-lab2/judgements.jsonl`. On review, each record also got its configuration, the output's
+SHA-256 and the prompt ID. The full-size PNGs are still in the primary's `output/Research/lab2-20260927/restyle-denoise/`, and each
+file's modification time is within 3 s of its render end. The judging time was not recorded.
+
+| Denoise | platform | carto |
+| --- | --- | --- |
+| 0.75 | keep, control 4 (canopy, coat, hands in pockets, boots kept; a train added) | fixable, control 3 (arch lost; **compass kept**, moved from the waist onto the pack) |
+| 0.85 | keep, control 4 (same keeps; near tie with 0.75) | fixable, control 3 (arch lost; **compass dropped to the ground**) |
+
+Faces were clean and hands readable at both levels (crops listed per record). Seed 2 therefore partly replicates seed 1. On
+platform, 0.85 did not lose the canopy this time, and the two levels tie. On carto, 0.75 again kept a named prop that 0.85
+dropped, but the scores barely separate: the mean is 4.00 against 3.83, with the same verdict and the same control score.
+
+Under the rubric's rule that means within 0.3 are a tie, 0.75 is ahead in **1 of the 4 comparisons** (seed-1 carto, 4.33 against 4.00)
+and ties in 3 (seed-1 platform 4.17 against 4.00, seed-2 platform 4.17 against 4.17, seed-2 carto 4.00 against 3.83). Pooled over
+the four pictures, it is 4.17 against 4.00, which is also a tie. 0.75 never scored lower. On verdict and control score it was ahead
+on both seed-1 sources (keep with control 4, against fixable with control 3) and level on seed 2. On carto it kept the compass on
+both seeds. The case for making 0.75 the default is therefore that prop and layout retention, not a score margin, and it does
+not firm up on this seed. It is still one agent judge and no owner review; the owner's q-27 decides the look.

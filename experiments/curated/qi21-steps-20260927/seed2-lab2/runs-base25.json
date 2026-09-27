@@ -1,0 +1,38 @@
+[
+ {
+  "label": "char-base25-seed2",
+  "prompt_id": "f6ec0d2e-e61d-4891-932d-6470a6a88f4a",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:59:05",
+  "wall_s": 63.8,
+  "commit_before_pct": 53.4,
+  "commit_peak_pct": 76.7,
+  "status": "success",
+  "exec_s": 60.6,
+  "outputs": [
+   {
+    "filename": "pruna-char-base25-seed2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "prop-base25-seed2",
+  "prompt_id": "0e91964d-d2b5-45d2-a2d7-8dddb19bab89",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 08:02:09",
+  "wall_s": 32.4,
+  "commit_before_pct": 65.9,
+  "commit_peak_pct": 77.4,
+  "status": "success",
+  "exec_s": 30.9,
+  "outputs": [
+   {
+    "filename": "pruna-prop-base25-seed2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ }
+]
