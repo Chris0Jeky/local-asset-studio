@@ -83,4 +83,26 @@ class FigureCropStorageTests(unittest.TestCase):
                                         (self.payload['request_id'],)).fetchone())
 
 
+    def test_existing_snapshot_is_verified_never_trusted_or_overwritten(self):
+        # Content-addressed reuse must prove the bytes: a tampered or non-file name is refused, kept, and leaves no .part.
+        import hashlib
+        data=b'figure snapshot bytes';digest=hashlib.sha256(data).hexdigest();target=self.store.media/(digest+'.png')
+        self.assertEqual(figures._snapshot_png(self.store,data)[1],digest)
+        self.assertEqual(figures._snapshot_png(self.store,data)[1],digest)  # an identical existing snapshot is reused
+        target.write_bytes(b'tampered')
+        with self.assertRaisesRegex(server.WorkspaceError,'has changed; original retained'):figures._snapshot_png(self.store,data)
+        self.assertEqual(target.read_bytes(),b'tampered')
+        target.unlink();target.mkdir()
+        with self.assertRaisesRegex(server.WorkspaceError,'not a regular file'):figures._snapshot_png(self.store,data)
+        self.assertEqual(list(self.store.media.glob('*.part')),[])
+
+    def test_workspace_snapshot_file_refuses_a_changed_existing_snapshot(self):
+        import hashlib
+        source=self.root/'output.png';source.write_bytes(b'output bytes')
+        relative,digest,_=self.store.snapshot_file(source);target=self.store.root/relative
+        target.write_bytes(b'changed')
+        with self.assertRaisesRegex(server.WorkspaceError,'has changed; original retained'):self.store.snapshot_file(source)
+        self.assertEqual(target.read_bytes(),b'changed');self.assertEqual(digest,hashlib.sha256(b'output bytes').hexdigest())
+        self.assertEqual(list(self.store.media.glob('*.part')),[])
+
 if __name__=='__main__':unittest.main()
