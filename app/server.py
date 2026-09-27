@@ -2088,7 +2088,7 @@ class Handler(BaseHTTPRequestHandler):
         if size < 0 or size > limit: raise StudioError("Request body is too large")
         return size
     def _body_json(self, limit=1024 * 1024):
-        if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": raise StudioError("application/json required")
+        if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": self._drain_refused_body(); raise StudioError("application/json required")
         raw = self.rfile.read(self._content_length(limit))
         try: return json.loads(raw.decode())
         except RecursionError: raise StudioError("JSON body is nested too deeply") from None
@@ -2359,7 +2359,7 @@ class Handler(BaseHTTPRequestHandler):
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
-            return self._json(404, {"error":"Not found"})
+            self._drain_refused_body(); return self._json(404, {"error":"Not found"})
         except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc:
             if isinstance(exc, StudioError) and getattr(exc, "code", None): self._json(400, exc.response())
