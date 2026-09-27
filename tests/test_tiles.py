@@ -143,7 +143,7 @@ class ImageOperationTests(unittest.TestCase):
         self.assertTrue(tiles.band_choices(320)[1]["available"])
         for value, band in ((160, 160), ("160", 160), (" 112 ", 112), (160.0, 160), ("1.6e2", 160)):
             with self.subTest(value=value): self.assertEqual(tiles.band_value(value), band)
-        for value in (113, "113", 160.5, "nan", "inf", True, None, [160], {"px": 160}, "wide", 14, 514, ""):
+        for value in (113, "113", 160.5, "nan", "inf", True, None, [160], {"px": 160}, "wide", 14, 514, "", "1e30", "1e999999", "-1e30", 10 ** 40):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, "even whole number from 16 to 512"): tiles.band_value(value)
 
     def test_the_catalog_registers_one_masked_tile_route(self):

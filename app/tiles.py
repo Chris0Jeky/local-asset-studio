@@ -149,7 +149,8 @@ def band_value(value):
     """band_px as the panel or an API caller sends it, a number or its text (server.number() style: Decimal, finite, whole, in range)."""
     try: raw = None if isinstance(value, bool) else Decimal(str(value).strip())
     except (InvalidOperation, ValueError): raw = None
-    if raw is None or not raw.is_finite() or raw != raw.to_integral_value() or raw % 2 or not BAND_LIMITS[0] <= raw <= BAND_LIMITS[1]:
+    # Range before whole/even: Decimal's modulo of a huge value ("1e30") raises InvalidOperation instead of answering.
+    if raw is None or not raw.is_finite() or not BAND_LIMITS[0] <= raw <= BAND_LIMITS[1] or raw != raw.to_integral_value() or raw % 2:
         raise ValueError("band_px must be an even whole number from %d to %d." % BAND_LIMITS)
     return int(raw)
 
