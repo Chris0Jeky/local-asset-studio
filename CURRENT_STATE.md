@@ -1,5 +1,16 @@
 # Current state — 27 September 2026
 
+## Every prompt now records its Windows commit peak (#302) — 27 September 2026 (09:13-09:18 local)
+
+On branch `claude/lab3-commit-telemetry`, the Studio samples Windows commit every 0.5 s while each prompt runs. It keeps the peak and the minimum headroom in `job.host_commit_windows`. The finished-run line adds "Memory was tight" only when headroom fell below 16 GiB.
+
+Proved with one job per family, each checked against an independent 0.5 s sampler: the Studio's figures agreed within 0.01 GiB.
+- `wai`: prompt `e39d2c83`, peak 63.1 %, 35.32 GiB left
+- `zimage-fast`: prompt `fb5ad836`, peak 75.1 %, 23.82 GiB left
+- `qwen21-t2i`: prompt `858d462e`, peak 76.4 %, 22.55 GiB left
+
+A read costs 47 µs. Receipts are in `experiments/curated/perf-20260927/telemetry/`. No quality judgement was made.
+
 ## Restyle (WAI) denoise sweep, blind — 27 September 2026 (06:43-07:04 local)
 
 Eight direct-ComfyUI runs on the primary of the shipped `restyle-wai` graph: two original SFW sources × denoise 0.6/0.75/0.85/0.95, seed 2026092761, other controls at the defaults. Prompt IDs: platform-d60 `081f0317`, platform-d75 `017a3589`, platform-d85 `253fa1b5`, platform-d95 `87a2e871`, carto-d60 `b4c77d34`, carto-d75 `2f946d69`, carto-d85 `d1d7946c`, carto-d95 `e16b10e9`. Blind agent verdicts: 0.60 and 0.75 kept layout and props on both sources (keep, control 4); the 0.85 default and 0.95 dropped named props or framing (fixable, control 3). The style scored 4-5 at every level. Jobs took 107-198 s at 79.3-85.3 % peak host commit; there was no #89 crash. The judgements recorded no face or hand crops and four of eight are whole-frame only, so they fall short of the rubric's crop evidence and need a re-judge before they carry rubric weight. The catalog default is unchanged; making 0.75 the default is proposed in `experiments/curated/restyle-denoise-20260927/` (refs #351). Generated and agent-inspected only: not art acceptance and not licence clearance.

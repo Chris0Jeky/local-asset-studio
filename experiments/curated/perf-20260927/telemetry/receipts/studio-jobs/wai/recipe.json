@@ -1,0 +1,11 @@
+{
+  "preset_id": "wai",
+  "controls": {
+    "seed": 2026092701
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\wai-api.json",
+  "created_at": 1790496813.240771,
+  "references": [],
+  "parent_assets": []
+}
