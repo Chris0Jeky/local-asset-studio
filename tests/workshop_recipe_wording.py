@@ -162,5 +162,88 @@ class RecipeWording(unittest.TestCase):
         self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden(), 'the later write stands; nothing to offer')
         self.assertEqual(self.page.input_value('#positive'), 'Written right after the switch')
 
+    # #1100 second loss (owner decision 27 Sep 2026): a switch that clears a staged picture offers a way back to the
+    # recipe it belonged to, with the picture and wording as they were. It is never carried into the new recipe.
+    PICTURE = str(smoke.ROOT / 'examples/references/lantern-reference.png')
+
+    def stage_picture(self, preset='gentle-variation'):
+        self.switch(preset)
+        self.page.set_input_files('#reference', self.PICTURE)
+        self.assertEqual(self.page.evaluate("document.getElementById('reference').files.length"), 1)
+
+    def staged(self):
+        return self.page.evaluate("""()=>({files:document.getElementById('reference').files.length+document.getElementById('lastReference').files.length,
+          uploaded,lastUploaded,parents:parentAssets.length,slots:referenceRecords.filter(r=>r.file).length,reference:values().reference||null})""")
+
+    def test_a_staged_picture_can_be_brought_back_after_a_switch(self):
+        self.stage_picture()
+        self.page.fill('#positive', MINE)
+        self.switch('sdxl')
+        self.assertEqual(self.staged(), {'files': 0, 'uploaded': None, 'lastUploaded': None, 'parents': 0, 'slots': 0, 'reference': None}, 'the switch still clears it')
+        undo = self.page.locator('#uxWordingUndo')
+        undo.wait_for(state='visible')
+        self.assertIn('picture was cleared', undo.inner_text())
+        back = self.page.locator('#uxWordingUndoBack')
+        self.assertTrue(back.is_visible())
+        self.page.click('#uxWordingUndoBack')
+        self.assertEqual(self.page.evaluate('selected.id'), 'gentle-variation')
+        self.assertEqual(self.page.evaluate("document.getElementById('reference').files[0]?.name"), 'lantern-reference.png')
+        self.assertEqual(self.page.input_value('#positive'), MINE)
+        self.assertTrue(undo.is_hidden())
+        self.assertIn('picture', self.page.locator('#uxNotice').inner_text())
+
+    def test_a_pulled_slot_picture_and_its_lineage_come_back(self):
+        self.switch('qwen-2ref')
+        self.page.click('#uxPullAsset'); self.page.select_option('#uxSourceSlot', '1'); self.page.click('[data-ux-pull="asset-1"]')
+        self.page.wait_for_function('referenceRecords[1].file === "' + 'a' * 32 + '_fixture.png"')
+        self.switch('sdxl')
+        self.assertEqual(self.staged()['slots'], 0)
+        self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+        self.page.click('#uxWordingUndoBack')
+        self.assertEqual(self.page.evaluate('selected.id'), 'qwen-2ref')
+        self.assertEqual(self.page.evaluate('referenceRecords[1].file'), 'a' * 32 + '_fixture.png')
+        self.assertIsNone(self.page.evaluate('referenceRecords[0].file'))
+        self.assertEqual(self.page.evaluate('parentAssets'), ['asset-1'])
+
+    def test_a_picture_never_leaks_into_another_reference_recipe(self):
+        self.stage_picture()
+        self.switch('krea-refine')
+        self.assertTrue(self.page.evaluate('!!selected.reference'), 'fixture: Krea refine takes a reference too')
+        self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+        self.assertEqual(self.staged(), {'files': 0, 'uploaded': None, 'lastUploaded': None, 'parents': 0, 'slots': 0, 'reference': None})
+        self.assertTrue(self.page.locator('#uxWordingUndoRestore').is_hidden(), 'no wording of yours to put back')
+        self.page.click('#uxWordingUndoDismiss')
+        self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden())
+        self.assertEqual(self.page.evaluate('selected.id'), 'krea-refine')
+        self.assertEqual(self.staged()['files'], 0, 'keeping the new recipe leaves it empty')
+
+    def test_a_misclick_then_the_intended_recipe_still_goes_back_to_the_picture(self):
+        self.stage_picture()
+        self.switch('sdxl')
+        self.switch('realvis')
+        self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+        self.page.click('#uxWordingUndoBack')
+        self.assertEqual(self.page.evaluate('selected.id'), 'gentle-variation')
+        self.assertEqual(self.page.evaluate("document.getElementById('reference').files.length"), 1)
+
+    def test_a_picture_staged_after_the_switch_is_never_replaced(self):
+        self.stage_picture()
+        self.switch('krea-refine')
+        self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+        self.page.evaluate("uploaded='b'.repeat(32)+'_later.png'")
+        self.page.click('#uxWordingUndoBack')
+        self.assertEqual(self.page.evaluate('selected.id'), 'krea-refine')
+        self.assertEqual(self.page.evaluate('uploaded'), 'b' * 32 + '_later.png')
+        self.assertIn('nothing was replaced', self.page.locator('#uxNotice').inner_text())
+
+    def test_editing_a_setting_after_the_switch_withdraws_the_way_back(self):
+        self.stage_picture()
+        self.switch('sdxl')
+        self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+        seed = self.page.locator('#controls [data-key="seed"]')
+        seed.evaluate('(n)=>n.closest("details")&&(n.closest("details").open=true)')
+        seed.fill('4242')
+        self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden(), 'going back would discard that edit')
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
