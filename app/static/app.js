@@ -405,7 +405,7 @@ async function mixedBatchAction(button) {
 // or the result of Put away / Resume / Stop tracking / Abandon appears at once. A looping clip never waits (no `ended`).
 // A card that a poll pushes out of the capped list falls back to Show more (else the last list control); error/emptied
 // also release the playback wait (an errored clip never counts as playing), and held Problems hides the gallery cards
-// its records supersede (#1074).
+// its records supersede (#1074): removed, not hidden, so focus restoration reaches the visible Problems card.
 // The key uses the first class only: studio-workbench.js adds `primary` to the kept reference button after each render.
 const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer';let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='';
 function jobControlKey(el){
@@ -439,7 +439,7 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   const problemMarkup=renderProblems(problems,problemsOpen);
   if(playing){
     if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);playing.removeEventListener('error',resume);playing.removeEventListener('emptied',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);playing.addEventListener('error',resume);playing.addEventListener('emptied',resume);}
-    if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host){host.innerHTML=problemMarkup;gallery.querySelector?.('#jobProblems')?.remove();}else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}for(const p of problems)for(const el of gallery.querySelectorAll?.('[data-problem]')||[])if(el.dataset?.problem===p.job.id&&!el.closest?.('#jobProblems'))el.hidden=true;}
+    if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host){host.innerHTML=problemMarkup;gallery.querySelector?.('#jobProblems')?.remove();}else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}for(const p of problems)for(const el of gallery.querySelectorAll?.('[data-problem]')||[])if(el.dataset?.problem===p.job.id&&!el.closest?.('#jobProblems'))el.remove();}
   } else {
   jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';

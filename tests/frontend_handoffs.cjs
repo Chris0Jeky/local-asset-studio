@@ -792,16 +792,20 @@ async function modelStatusFilter() {
 // objects (as a browser would), so a focused node or a playing clip is lost exactly when the list is replaced.
 function recentRunsSandbox({host = false} = {}) {
   const s = sandbox({}, {});
-  const matches = (node, selector) => selector.startsWith('[') ? selector.slice(6, -1).replace(/-(\w)/g, (_, c) => c.toUpperCase()) in node.dataset
+  const matches = (node, selector) => selector === '#jobProblems' ? node.inProblems : selector.startsWith('[') ? selector.slice(6, -1).replace(/-(\w)/g, (_, c) => c.toUpperCase()) in node.dataset
     : selector.startsWith('.') ? node.className.split(/\s+/).includes(selector.slice(1)) : node.tagName === selector.toUpperCase();
   const any = (node, selector) => selector.split(',').some(part => matches(node, part.trim()));
-  const parse = markup => {
-    const out = []; let owner = null;
-    for (const m of markup.matchAll(/<(\/article|article|button|a|input|video|audio|summary)\b([^>]*)>/g)) {
+  const parse = (markup, box) => {
+    const out = []; let owner = null, inProblems = false;
+    for (const m of markup.matchAll(/<(\/details|details|\/article|article|button|a|input|video|audio|summary)\b([^>]*)>/g)) {
       if (m[1] === '/article') {owner = null; continue;}
+      if (m[1] === '/details') {inProblems = false; continue;}
+      if (m[1] === 'details') {inProblems = /id="jobProblems"/.test(m[2]); continue;}
       const attrs = Object.fromEntries([...m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(a => [a[1], a[2] ?? '']));
       const dataset = Object.fromEntries(Object.entries(attrs).filter(([k]) => k.startsWith('data-')).map(([k, v]) => [k.slice(5).replace(/-(\w)/g, (_, c) => c.toUpperCase()), v]));
-      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, paused: true, ended: false, hidden: false, loop: 'loop' in attrs, listeners: {},
+      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, inProblems, paused: true, ended: false, hidden: false, loop: 'loop' in attrs, listeners: {},
+        // Removing a card removes the controls it owns, as the DOM would.
+        remove() {box.nodes = box.nodes.filter(n => n !== this && n.owner !== this);},
         focus(options) {this.focusOptions = options; s.context.document.activeElement = this;},
         addEventListener(name, handler) {(this.listeners[name] ||= []).push(handler);},
         removeEventListener(name, handler) {this.listeners[name] = (this.listeners[name] || []).filter(h => h !== handler);},
@@ -814,7 +818,9 @@ function recentRunsSandbox({host = false} = {}) {
   // Each innerHTML write re-parses into fresh nodes and counts as one replacement of that container.
   const container = target => {
     const box = {html: '', nodes: [], writes: 0};
-    Object.defineProperty(target, 'innerHTML', {get: () => box.html, set(value) {box.html = value; box.nodes = parse(value); box.writes++;}});
+    Object.defineProperty(target, 'innerHTML', {get: () => box.html, set(value) {box.html = value; box.nodes = parse(value, box); box.writes++;}});
+    // The no-host held branch appends Problems markup; that is not a replacement of the list.
+    target.insertAdjacentHTML = (where, markup) => {box.html += markup; box.nodes.push(...parse(markup, box));};
     target.querySelectorAll = selector => box.nodes.filter(node => any(node, selector));
     target.querySelector = selector => box.nodes.find(node => any(node, selector)) || null;
     target.contains = node => box.nodes.includes(node);
@@ -1018,14 +1024,38 @@ async function recentRunsSupersededGalleryCardHidden() {
   await s.poll(history);
   const card = s.nodes().find(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'pend');
   assert.ok(card, 'A waiting job renders as a gallery card');
+  const recipe = s.nodes().find(node => node.className === 'recipe' && node.owner === card);
+  assert.ok(recipe, 'The waiting card offers its Recipe control');
+  s.context.document.activeElement = recipe;
   const video = s.nodes().find(node => node.tagName === 'VIDEO');
   video.paused = false;
   const writes = s.writes;
   await s.poll([{...pending, status: 'abandoned', message: 'Abandoned', created_at: 7, can_put_away: true, put_away: false}, recentJob('clip', 1, 'video'), recentJob('p1')]);
   assert.equal(s.writes, writes, 'The gallery still waits for the clip');
   assert.match(s.host.html, /Recipe pend/, 'The abandoned job reaches Problems while the clip plays');
-  assert.equal(card.hidden, true, 'The superseded gallery card hides instead of showing twice');
-  assert.equal(video.hidden, false, 'The playing clip is untouched');
+  assert.equal(s.nodes().includes(card), false, 'The superseded gallery card is removed instead of showing twice');
+  assert.equal(s.nodes().some(node => node.owner === card), false, 'Its controls go with it');
+  assert.ok(s.nodes().includes(video) && !video.hidden, 'The playing clip is untouched');
+  // #1091 review: focus follows the job to its visible Problems card, not a hidden control or the page body.
+  const focused = s.context.document.activeElement;
+  assert.ok(s.host.nodes.includes(focused), 'Focus lands in the Problems host');
+  assert.equal(focused.owner?.dataset.problem, 'pend'); assert.equal(focused.className, 'recipe');
+}
+
+// #1091 review (LOW): without a host, held Problems is appended inside the gallery; the removal must spare the
+// fresh Problems card for the same job and remove only the stale waiting card.
+async function recentRunsHeldProblemsInsideTheGalleryKeepTheirCard() {
+  const s = recentRunsSandbox();
+  const pending = {id: 'pend', preset_name: 'Recipe pend', status: 'not_submitted', message: 'Queued', outputs: [], prompt_ids: []};
+  await s.poll([recentJob('clip', 1, 'video'), pending]);
+  const card = s.nodes().find(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'pend');
+  assert.ok(card && !card.inProblems, 'The waiting card sits in the gallery list');
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  await s.poll([{...pending, status: 'abandoned', message: 'Abandoned', created_at: 7, can_put_away: true, put_away: false}, recentJob('clip', 1, 'video')]);
+  const cards = s.nodes().filter(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'pend');
+  assert.equal(s.nodes().includes(card), false, 'The stale waiting card is removed');
+  assert.equal(cards.length, 1, 'Exactly one card remains for the job');
+  assert.ok(cards[0].inProblems, 'It is the fresh card inside #jobProblems, spared by the guard');
 }
 
 async function recentRunsLeaveOutsideFocusAlone() {
@@ -1051,6 +1081,7 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await recentRunsFocusFallsBackToShowMore();
   await recentRunsReleaseOnErrorAndEmptied();
   await recentRunsSupersededGalleryCardHidden();
+  await recentRunsHeldProblemsInsideTheGalleryKeepTheirCard();
   await generateShortcutRoutesThroughTheButton();
   await seedAndPinChangesAreAnnounced();
   await pastedAndDroppedPicturesFillEmptySlots();
