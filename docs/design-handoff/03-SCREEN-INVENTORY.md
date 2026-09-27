@@ -84,7 +84,7 @@ splitter share a row; character import, the scene dialog and the NSFW lab page e
 
 ## Not captured
 
-- Review desk after *Prepare review* (it writes a snapshot; the fixture blocks that mutation and the live Studio was not touched).
+- Review desk after *Prepare review* (it writes a snapshot; the fixture only simulates that route with a simplified choice recorder, so a capture would not show the real desk, and the live Studio was not touched).
 - Combine workbench, pose editor and bundle explorer (need a prepared Combine pair or lazily loaded modules).
 - Any real in-flight job (no generation was submitted); running/uncertain cards were injected into fixture data.
 - Live Library and Runs pages: captured for inspection with images hidden but **not committed**, because card text

@@ -145,8 +145,11 @@ Deliver:
    artifacts, crop), title, tags, notes, Continue with this verbs, lineage; unconfirmed-save and "changed elsewhere"
    conflict states.
 3. Review mode: large preview + filmstrip; keys K keeper, W needs work, X rejected, S skip, left/right, 1-7 reason
-   chips, Z undo, F favourite, Space 100% zoom; each decision shows saving -> saved (queue advances only after a
-   confirmed save) or failed with retry; "Review this group" from a group header; progress "37 of 120".
+   chips, Z undo, F favourite, Space 100% zoom; each decision shows saving -> saved (the queue advances only after a
+   confirmed save), refused (e.g. changed elsewhere: show the conflict), or UNCONFIRMED when the request timed out or
+   its response was lost. Unconfirmed is not failed: the save may have landed. Keep the asset and decision on screen,
+   show "Save not confirmed", offer "Check save status" first and "Retry exact save" only for that same retained
+   request (newer edits are never sent with it), and do not advance or accept another decision until it resolves; "Review this group" from a group header; progress "37 of 120".
 Frames: grid 1440x900 with 60+ tiles; bulk selection; side panel; review mode; review mode at 390x844.
 Decisions are the owner's selection, not art or licence approval; never auto-classify.
 ```
@@ -305,7 +308,7 @@ optional "Verify in local Godot/Krita"; canvas requirement check ("all frames mu
 Prepare and Start as separate actions; result view with files, measurements and verification outcome.
 ```
 
-## D13 · Guided coach and assistance levels
+## D13 · Guided coach (assistance levels only if Q12 says so)
 
 Attach: `44-guided-path-active.jpg`, `42-guided-workflows.jpg`.
 
@@ -313,8 +316,10 @@ Attach: `44-guided-path-active.jpg`, `42-guided-workflows.jpg`.
 Design guided help for Local Asset Studio (see project context). Replace the current coach panel that pushes the
 workspace down with an anchored coach mark beside the target control: "Step 2 of 6 · Add a pose picture", one
 sentence of why, observed evidence ("Recipe selected"), Next / Back / Pause, and a small step list. Guides never
-generate or approve anything. Add an assistance setting (Guided, Studio, Expert) that changes how much explanation
-shows, never what the user may do. Max ~40 words per step.
+generate or approve anything. Max ~40 words per step. Explanations use one level with "Why?" disclosures next to the
+control they explain (the owner has not decided on assistance levels; this is the assumed default).
+OPTIONAL, only if asked separately: a sketch of an assistance setting (Guided, Studio, Expert) that changes how much
+explanation shows, never what the user may do. Keep it out of the main frames.
 ```
 
 ## D14 · Skins and environment pass

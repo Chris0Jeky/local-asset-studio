@@ -99,7 +99,7 @@ Also: Review desk *Record decision* is never disabled and fails on the server; i
 | C21 | Asset card | selected, focused, favourite, review state, run label, trashed, video/3D/audio badge | grid card | Title fallback from prompt, not "<recipe> · 1" |
 | C22 | Asset grid + bulk bar | none/n selected, n outside view, batch progress, per-item failure | grid + 17-button bar | Group bulk actions: Decide · Organise · Export · Danger |
 | C23 | Asset detail panel | view, edit, unconfirmed save, conflict | modal dialog | **Proposal:** side panel so the grid stays visible |
-| C24 | Review mode | queue position, decision keys, reason chips, undo, auto-advance after confirmed save | queue strip in dialog | See §7 |
+| C24 | Review mode | queue position, decision keys, reason chips, undo; per decision: saving · saved (auto-advance) · refused/conflict · **unconfirmed** (timeout or lost response: the save may have landed; asset stays, queue does not advance, "Check save status" then "Retry exact save" of the same retained request, newer edits never sent with it) | queue strip in dialog; `workspace.js` keeps the pending command and requires a receipt check | Unconfirmed must look different from failed; see §7 and C34 |
 | C25 | Reason chips | hands, face, style off, composition, anatomy, artifacts, crop | chips | Number keys 1-7 in review mode |
 | C26 | Collection list | item, count, new, rename, delete, recover | sidebar | Recovery out of the default view |
 | C27 | Compare board | 2-4 candidates, blind, revealed, synced crop/zoom, swap, preference 1-5, verdicts | Runs candidate cards + Review desk canvases | One board for both |

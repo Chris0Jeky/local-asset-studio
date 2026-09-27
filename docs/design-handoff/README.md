@@ -66,4 +66,7 @@ between the brief, the constraints and the visual direction."*
   (HUMAN_TODO q-7).
 
 To re-capture after a redesign, drive the same fixture: `build_handler()` in `tests/studio_use_cases.py` serves the
-real frontend with synthetic data and blocks every mutation.
+real frontend against a synthetic, in-memory API. It never reaches ComfyUI, the real Workspace or the job store, and it
+refuses unlisted mutation routes, but it does accept and apply a few fixture-local writes (for example asset review
+updates, uploads, pose renders, recipe checks and workflow compiles) so journeys can complete. Those writes change only
+the fixture's own state for that run.
