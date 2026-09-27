@@ -1,4 +1,4 @@
-# Live proofs through the real Studio page — 27 September 2026 (19:37-21:47 local)
+# Live proofs through the real Studio page — 27 September 2026 (19:37-22:15 local)
 
 Each feature was driven in headless Chromium (Playwright) against the running Studio: main `c22479e8`, and from 20:56 (the Studio restart) main
 `cb686915` with #1224 and #1227. ComfyUI 0.35.0 on primary. Every generation was started by the page's own button. The scripts
@@ -108,11 +108,42 @@ this look** → Variations 2 → **Generate**.
   dominates the scene.
 - **Owner answer (27 Sep 2026): "Loosen it".** A builder loosens the look; the scene is re-rendered after.
 
+## (f) Make parallax layers (#1219 / #1231) — 22:07-22:15 local, Studio restarted at 22:06 on main `7fae318e`
+
+Route: Asset library → the owner-accepted anchor z2 (asset `beecbff4`, sha256 `c22b723c…`) → **Make parallax layers**:
+- foreground "the desk, the chair, the desk lamp and the computer monitor";
+- two far-view boxes **dragged on the page's picture** inside the window glass, `988,75,1125,425` and `1172,35,1336,445`
+  (`parallax-far-view-boxes.png`);
+- then **Make parallax layers**, **Generate** (clean plate), **Generate** (isolate), and the Studio splits.
+
+| Step | Job / prompt | Time | Result |
+| --- | --- | ---: | --- |
+| clean plate (Klein 4B edit) | `7fb68111` / `c98b6858` | 68.8 s | completed |
+| isolate, first try | `37b9c16b` | 1.1 s | **refused, nothing sent**: "Host commit headroom 31.9 GiB is below the required 32 GiB … even after the Studio freed ComfyUI's cached models" |
+| isolate, reloaded from the plate card's button after `POST /free` | `d185ad3e` / `9b94fc31` | 95.0 s | completed |
+| split (finish) | `4b507f85` | — | far / mid / near + strip |
+
+**Result, compared with the lab:**
+
+| | Recomposite error | Near share of the picture |
+| --- | --- | --- |
+| This run | 0.34/255 (worst pixel 208/255) | 10.1 % |
+| Lab route C2 | 0.36/255 | 10.2 % (105,753 of 1,032,192 px) |
+
+- `parallax-strip.jpg` is the Studio's own 3-frame strip (camera left / centre / right). The window view slides behind its
+  frame, and the desk group moves over the wall. At 2× zoom there is no visible halo at the desk edges. Agent pre-review:
+  **keep**.
+- The layers are RGBA 1344×768 (`receipts/parallax-assets.json`).
+- `validate-live.py` passes `parallax-edit` (86 of 91; the 5 failures are the hidream and qwen21 presets as before). The
+  recipe is now `verified: true` with an execution_note. `tests/test_parallax.py` requires that note when the route is verified.
+- The first isolate refusal is the gate working as designed. Klein at 1344×768 counts as a Qwen/FLUX.2 submission for the
+  32 GiB rule, and the owner's local LLM had just been unloaded, so commit was still settling.
+
 ## Not verified
 
 - One agent judge; two pictures per round.
 - The Vary buttons' new values are proven by the catalog tests. The page re-press, to confirm the buttons show 0.5 / 0.7 and
   0.45 / 0.65 without the "starting value" label, follows after this PR merges.
 - The plan-form defect is not fixed here.
-- The tiles are not tested in a game engine.
+- The tiles and the parallax layers are not tested in a game engine or at 4K.
 - No art acceptance, apart from the owner answers quoted above.

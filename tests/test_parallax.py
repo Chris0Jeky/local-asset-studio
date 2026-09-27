@@ -214,7 +214,8 @@ class ContractTests(unittest.TestCase):
 
     def test_the_catalog_registers_one_parallax_edit_on_the_verified_klein_graph(self):
         self.assertEqual(parallax.route_problems(CATALOG), [])
-        self.assertFalse(ROUTE["verified"])
+        # verified only with a recorded proving run (the 27 Sep 2026 live proof through the page on z2, #1219)
+        if ROUTE["verified"]: self.assertIn("Executed", ROUTE.get("execution_note", ""))
         flux = next(p for p in CATALOG if p["id"] == "flux-edit")
         self.assertEqual(ROUTE["graph"], flux["graph"]); self.assertTrue(flux["verified"])
         self.assertEqual({k: ROUTE[k] for k in ("positive", "seed", "width", "height", "reference", "bindings_extra")}, {k: flux[k] for k in ("positive", "seed", "width", "height", "reference", "bindings_extra")})

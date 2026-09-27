@@ -1,6 +1,6 @@
 # Current state — 27 September 2026
 
-## Live proofs through the page: Vary, multi-engine plan, review checks, Make seamless, look templates — 27 September 2026 (19:37-21:47 local)
+## Live proofs through the page: Vary, multi-engine plan, review checks, Make seamless, look templates, parallax layers — 27 September 2026 (19:37-22:15 local)
 
 All five features were driven through the real Studio page in headless Chromium.
 - **Vary (#1202):** one page press prepares the round and one Generate is one job with the parent recorded. After the first sheets, the owner said "Nudge both up": SDXL is now 0.5 / 0.7 and Krea 0.45 / 0.65 (6 steps), proved once per strength and marked `owner-approved`.
@@ -8,6 +8,7 @@ All five features were driven through the real Studio page in headless Chromium.
 - **Review checks (#1203):** per-engine tallies render and persist across a fresh session. The agent's test taps were cleared afterwards.
 - **Make seamless (#1220):** wall seam 4.34 → 0.84 (owner: "Wall ok"); flat floor 13.53 → 1.93 (needs the wide band). `zimage-seam-repair` is now verified.
 - **Look templates (#1224):** the Night Shift look carries, but the scene is drowned out (owner: "Loosen it").
+- **Make parallax layers (#1231), 22:07-22:15:** run on the z2 anchor through the page with two dragged far-view boxes. Far / mid / near recomposite within 0.34/255 (lab C2: 0.36), and the strip is keep. `parallax-edit` is now verified. The first isolate was refused by the 32 GiB commit gate with nothing sent; it ran after `/free`.
 
 Evidence: `experiments/curated/live-proofs-20260927/`. Agent pre-review plus the quoted owner answers; no other art acceptance.
 
