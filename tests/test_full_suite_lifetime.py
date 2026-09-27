@@ -297,10 +297,15 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         self.assertIn(SHUTDOWN_WATCHDOG, output)
         self.assertIn("Thread ", output)
 
+    # These four synthetic children use only stdlib. Site hooks and PYTHON*
+    # settings are not part of their timed behavior; the real workers above
+    # still load the normal test environment and dependencies.
     def test_shutdown_probe_reports_absent_watchdog_and_reaps_child(self):
         process = subprocess.Popen(
             [
                 sys.executable,
+                "-I",
+                "-S",
                 "-u",
                 "-c",
                 (
@@ -332,6 +337,8 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         process = subprocess.Popen(
             [
                 sys.executable,
+                "-I",
+                "-S",
                 "-u",
                 "-c",
                 (
@@ -362,6 +369,8 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         process = subprocess.Popen(
             [
                 sys.executable,
+                "-I",
+                "-S",
                 "-u",
                 "-c",
                 (
@@ -376,10 +385,12 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
             bufsize=1,
         )
         capture = ProcessCapture(process)
-        self.assertTrue(capture.wait_for("stdout-once", 1), capture.output())
-        self.assertTrue(capture.wait_for("stderr-once", 1), capture.output())
-        process.wait(timeout=5)
-        returncode, output = capture.reap()
+        try:
+            self.assertTrue(capture.wait_for("stdout-once", 1), capture.output())
+            self.assertTrue(capture.wait_for("stderr-once", 1), capture.output())
+            process.wait(timeout=5)
+        finally:
+            returncode, output = capture.reap()
         self.assertEqual(returncode, 0, output)
         self.assertEqual(output.count("stdout-once"), 1)
         self.assertEqual(output.count("stderr-once"), 1)
@@ -388,6 +399,8 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         process = subprocess.Popen(
             [
                 sys.executable,
+                "-I",
+                "-S",
                 "-u",
                 "-c",
                 "import time; time.sleep(5)",
