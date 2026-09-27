@@ -67,6 +67,22 @@ test('required source slot identity, pending staging and overflow remain distinc
   assert.equal(view.primaryAction.id, C.ACTIONS.REVIEW_SOURCES);
 });
 
+test('staged required sources are satisfied, an empty optional slot is not missing, and no slots are not-required', () => {
+  const input = baseInput();
+  input.capability.value.referenceSlots = [
+    {id:'identity', role:'Identity', required:true},
+    {id:'style', role:'Style', required:false}
+  ];
+  input.draft.references = [{id:'identity-source', slotId:'identity', role:'Identity', stage:'staged'}];
+  const staged = C.project(C.captureContext(input), {}).sourceSummary;
+  assert.equal(staged.state, 'satisfied');
+  assert.deepEqual(staged.provided.map(x => x.id), ['identity-source']);
+  assert.deepEqual([staged.missing.length, staged.pending.length, staged.extra.length], [0, 0, 0]);
+  const none = C.project(C.captureContext(baseInput()), {});
+  assert.equal(none.sourceSummary.state, 'not-required');
+  assert.notEqual(none.primaryAction.id, C.ACTIONS.REVIEW_SOURCES);
+});
+
 test('an uncertain operation stays primary while draft conflict and source issues remain visible', () => {
   const input = baseInput();
   input.execution = knownExecution('uncertain', {operationId:'op-7'});
