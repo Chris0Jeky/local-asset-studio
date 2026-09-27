@@ -99,3 +99,5 @@
 .studio-shell dialog{--dialog-pad:26px}.studio-shell dialog form>.actions:last-child,.studio-shell .asset-detail-actions{position:sticky;bottom:calc(-1*var(--dialog-pad));z-index:2;background:var(--panel);box-shadow:0 -14px 18px -12px var(--panel);padding:10px 0 calc(10px + var(--dialog-pad));margin-block-end:calc(-1*var(--dialog-pad))}
 @media(max-width:580px){.studio-shell dialog{--dialog-pad:18px}}
 .ux-vary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:0 10px 10px}.ux-vary small{flex-basis:100%;font-size:10px;color:var(--muted)}#assetDialog .ux-vary{padding:8px 0 0}
+/* Looks (#1221): pick a saved look, type the scene. */
+.ux-looks{border:1px solid var(--line,#3334);border-radius:10px;padding:.6rem .8rem;margin:.5rem 0 1rem}.ux-looks h4{margin:0 0 .4rem}.ux-looks-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:end}.ux-looks-row label{display:grid;gap:.3rem;flex:1 1 220px;font-size:.9rem}.ux-looks-row input,.ux-looks-row select{min-height:38px;width:100%;box-sizing:border-box}.ux-looks p{margin:.35rem 0}.ux-looks details{margin-top:.4rem}

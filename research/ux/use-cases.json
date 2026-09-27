@@ -620,6 +620,23 @@
         {"intent": "read what the fallback prepared", "expect": "it says new seeds, same recipe and nothing was generated"},
         {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
+    },
+    {
+      "id": "new-scene-in-an-accepted-look",
+      "goal": "Make a new backdrop in a look I already accepted (Night Shift) by typing only the new scene; the Studio writes the look's wording and loads its recipe and settings. Nothing is generated.",
+      "starting_view": "create",
+      "success_condition": "Choosing the saved look while another recipe is open offers it with its recipe named; Prepare stays off with a reason until a scene is typed; preparing loads the look's recipe, writes the look's wording with the scene in its slot and sets the look's seed and size; the status says nothing was generated; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "choose the accepted look while another recipe is open", "expect": "the look is offered with the recipe it uses"},
+        {"intent": "read what the look carries", "expect": "its recipe, anchor picture and origin are named"},
+        {"intent": "try to prepare before typing a scene", "expect": "Prepare is off and says a scene is needed"},
+        {"intent": "type only the new scene", "expect": "the scene box takes a few words, with an example from the look"},
+        {"intent": "prepare Create from the look", "expect": "the look's recipe loads and the wording is written; nothing runs"},
+        {"intent": "read what was prepared", "expect": "the look, recipe, seed and size are named, and it says nothing was generated"},
+        {"intent": "check the wording", "expect": "the scene sits inside the look's own sentences"},
+        {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
+      ]
     }
   ]
 }

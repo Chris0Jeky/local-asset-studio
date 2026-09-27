@@ -202,7 +202,7 @@ DENY_IDS = {
     'saveSharedWorkflow', 'copySharedWorkflow', 'retrySharedWorkflow', 'prepareSavedRun',
     'exportGraph', 'saveWorkflow', 'refreshModels', 'retryRecovery', 'uxPrepareHandoff',
     'uxImportDraftButton', 'uxExportDraft', 'compare', 'newCollection', 'deleteCollection',
-    'uxPoseUse',
+    'uxPoseUse', 'lookSaveButton', 'lookTrash',
 }
 DENY_LABELS = re.compile(
     r'\b(generate|start\s+(comparison|export|voice|take)|render|save\s+to\s+workspace|'
@@ -217,6 +217,7 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 # control skips the label check. The id and attribute deny lists still bind first. Checked against
 # app/static on 22 Sep 2026; a control that starts writing must leave this list.
 LOCAL_CONTROLS = {
+    '#lookSelect': 'chooses a saved look in this page; nothing is sent',
     '#workshopRecipeChange': 'opens the recipe picker',
     '#presetList [data-id]': 'loads a recipe into this page (selectPreset); nothing is sent',
     '#presetList button.preset': 'loads a recipe into this page (selectPreset); nothing is sent',
@@ -304,6 +305,13 @@ def build_handler():
                                        outputs=[{'filename': 'b.png', 'asset_id': 'asset-1', 'media_type': 'image', 'seed': 43}])}])
     if not any(plan['id'] == keeper['id'] for plan in fixture.PLANS): fixture.PLANS.insert(0, keeper)
 
+    # The shipped looks as /api/looks lists them (app/looks.py listing), and the real composer for Prepare (#1221).
+    import looks
+    names = {p['id']: p['name'] for p in fixture.CATALOG['presets']}
+    shipped = [dict(entry, origin='seed', revision=0, trashed_at=None, created_at=1790500000, updated_at=1790500000, usable=True,
+                    unusable_reason=None, anchor_asset_id=None, preset_name=names.get(entry['body']['preset_id']))
+               for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks']]
+
     class PromptFixtureBase(fixture.Handler):
         studio = None
         # Production's own length guard; its host/origin guards hard-code :8191 and this fixture
@@ -328,6 +336,7 @@ def build_handler():
             if path == '/api/workflow-studio/capabilities':
                 return self.json({'version': 1, 'run': {'available': False, 'reason': 'The use-case fixture never executes graphs.'}, 'generation_submitted': False})
             if path == '/api/workflow-studio/documents': return self.json({'documents': []})
+            if path == '/api/looks': return self.json({'looks': copy.deepcopy(shipped), 'seed_errors': [], 'generation_submitted': False})
             if path == '/api/workflow-studio/document-runs': return self.json({'runs': []})
             if path.startswith('/api/workflow-studio/presets/'):
                 return self.json({'document': dict(document, source={'preset_id': path.rsplit('/', 1)[-1], 'authoring_only': True}), 'generation_submitted': False})
@@ -380,6 +389,14 @@ def build_handler():
                 return self.json(dict(status='applied', workspace_id=data['workspace_id'], request_id=data['request_id'],
                                       action='edit', updated=data['ids'], revisions={a['id']: a['metadata_revision'] for a in assets},
                                       applied={field: data[field]}, current=copy.deepcopy(assets)))
+            if path == '/api/looks/prepare':
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                look = next((entry for entry in shipped if entry['id'] == data.get('id')), None)
+                if look is None or data.get('expected_revision') != look['revision']: return self.json({'error': 'Unknown fixture look'}, 404)
+                try: positive = looks.compose(look['body']['template'], data.get('scene'))
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                return self.json({'preset_id': look['body']['preset_id'], 'preset_name': look['preset_name'], 'controls': {'positive': positive, **look['body']['controls']},
+                                  'look': {'id': look['id'], 'name': look['name'], 'revision': look['revision']}, 'generation_submitted': False})
             if path == '/api/preview':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
@@ -1162,6 +1179,42 @@ def _vary(c):
             {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')}, why or 'no disabled reason')
     finally:
         for job in added: fixture.JOBS.remove(job)
+
+
+LOOK_SCENE = ('a small rooftop garden at night; at the right edge a rusty water tank and a warm amber lamp over a door, '
+              'and beyond the railing a distant elevated train')
+LOOK_STATE = """() => ({preset: selected?.id, positive: document.querySelector('#positive').value,
+  seed: getControl('seed')?.value, width: getControl('width')?.value, height: getControl('height')?.value,
+  status: document.querySelector('#lookStatus').textContent, notice: document.querySelector('#status').textContent})"""
+
+
+@driver('new-scene-in-an-accepted-look')
+def _look(c):
+    """#1221: pick a saved look while another recipe is open, type only the scene; the Studio writes the wording and loads the
+    look's recipe and settings. Generate stays a separate press."""
+    import looks
+    c.boot('#create')
+    c.need_recipe('zimage-fast')
+    if not c.live: c.select_preset('anima-portrait')
+    look = c.pick('look-night-shift-retro-anime', '#lookSelect option[value]', 'saved look', keep="id !== ''")
+    c.act('#lookSelect', 'select', typed=look, note='choose the Night Shift look')
+    label = c.page.evaluate("document.querySelector('#lookSelect').selectedOptions[0]?.textContent || ''")
+    c.act('#lookSummary', 'read', note=c.page.evaluate("document.querySelector('#lookSummary').textContent")[:200])
+    c.act('#lookPrepare', 'read', note='Prepare waits for a scene')
+    reason = c.page.evaluate("document.querySelector('#lookPrepare').disabled ? document.querySelector('#lookReason').textContent : ''")
+    c.act('#lookScene', 'fill', typed=LOOK_SCENE, note='type only the scene')
+    c.stop_before(c.act('#lookPrepare', note='prepare Create from the look and the scene'), 'stopped before preparing: it rewrites Create from the look')
+    c.page.wait_for_timeout(600)
+    state = c.page.evaluate(LOOK_STATE)
+    c.act('#lookStatus', 'read', note=state['status'][:200])
+    c.act('#positive', 'read', note=state['positive'][:200])
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    shipped = next(entry for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks'] if entry['id'] == 'look-night-shift-retro-anime')
+    wording = looks.compose(shipped['body']['template'], LOOK_SCENE)
+    ok = (state['preset'] == 'zimage-fast' and state['positive'] == wording and state['seed'] == '2026092752'
+          and (state['width'], state['height']) == ('1344', '768') and 'Nothing was generated' in state['status']
+          and 'recipe switched' in state['status'] and 'Type the scene' in reason and '· on ' in label)
+    return ok, 'look option %r; reason before the scene %r; prepared %s' % (label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')})
 
 
 @driver('reference-analysis-review-and-apply')
