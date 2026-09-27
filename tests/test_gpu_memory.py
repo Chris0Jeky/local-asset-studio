@@ -83,6 +83,22 @@ class GpuMemoryTests(unittest.TestCase):
         self.assertEqual(measured['adapter_total_bytes'], 4 * GIB)
         self.assertEqual(gpu_memory.others_bytes(sample, 30868), 2282 * MIB)
 
+    def test_holders_flag_counters_the_adapter_figure_rules_out(self):
+        # Issue #983: dwm at 65.85 GiB on a 16 GiB card must not top peak evidence as if it were real.
+        own = 40
+        sample = reading_with_totals({DGPU.format(own): 8 * GIB, DGPU.format(2288): int(65.85 * GIB), DGPU.format(3000): 2 * GIB},
+                                     {DGPU_ADAPTER: 16 * GIB})
+        with patch('psutil.Process', side_effect=OSError('no real processes in tests')):
+            rows = gpu_memory.holders(sample, own)
+        self.assertEqual([(row['pid'], row['plausible']) for row in rows], [(3000, True), (2288, False)])
+        self.assertEqual([row['dedicated_bytes'] for row in rows], [2 * GIB, int(65.85 * GIB)])
+        # Without an adapter figure there is nothing to rule a counter out by: raw order, unknown plausibility.
+        legacy = reading({DGPU.format(own): 8 * GIB, DGPU.format(2288): int(65.85 * GIB), DGPU.format(3000): 2 * GIB})
+        with patch('psutil.Process', side_effect=OSError('no real processes in tests')):
+            plain = gpu_memory.holders(legacy, own)
+        self.assertEqual([row['pid'] for row in plain], [2288, 3000])
+        self.assertTrue(all(row['plausible'] is None for row in plain))
+
     def test_missing_or_unmatched_adapter_totals_are_unknown_in_new_readings(self):
         inflated = {DGPU.format(2304): DWM_ANOMALY, DGPU.format(30868): 812 * MIB}
         unavailable = reading_with_totals(inflated, None)

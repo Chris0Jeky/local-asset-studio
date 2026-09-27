@@ -273,18 +273,25 @@ def others_for_admission(reading, pid):
 
 
 def holders(reading, pid, top=3):
-    """The largest other dedicated-memory holders on `pid`'s adapter as `[{pid, name, dedicated_bytes}]`, largest first."""
+    """The largest other dedicated-memory holders on `pid`'s adapter, largest plausible first.
+
+    Rows are raw process counters as `[{pid, name, dedicated_bytes, plausible}]`; `plausible: False` marks a
+    counter larger than the adapter-level figure allows (issue #983), so it is evidence of a counter anomaly,
+    not memory held. Without a matching adapter figure every row carries `plausible: None`."""
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
     adapter = select_adapter(adapters, pid) if adapters else None
     if adapter is None: return []
-    ranked = sorted(((other, p['dedicated_bytes']) for other, p in adapters[adapter].items() if other != pid), key=lambda item: -item[1])[:top]
+    total = _adapter_total(reading, adapter)
+    limit = total * RECONCILE_RATIO + RECONCILE_SLOP_BYTES if total is not None else None
+    candidates = [(other, p['dedicated_bytes']) for other, p in adapters[adapter].items() if other != pid]
+    ranked = sorted(candidates, key=lambda item: (limit is not None and item[1] > limit, -item[1]))[:top]
     rows = []
     for other, value in ranked:
         try:
             import psutil
             name = psutil.Process(other).name()
         except Exception: name = None
-        rows.append({'pid': other, 'name': name, 'dedicated_bytes': value})
+        rows.append({'pid': other, 'name': name, 'dedicated_bytes': value, 'plausible': None if limit is None else value <= limit})
     return rows
 
 

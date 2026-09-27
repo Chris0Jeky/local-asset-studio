@@ -376,7 +376,7 @@ class BackendManager:
                     stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
                     if identifier=='primary':
                         stopped=[p['pid'] for p in self.operation.get('stopped_processes',[])]
-                        self.last_launch_reserve=dict(self.launch_reserve(target,stopped),recorded_at=time.time(),profile=identifier,excluded_pids=stopped)
+                        self.last_launch_reserve=dict(self.launch_reserve(target,stopped),recorded_at=time.time(),profile=identifier,stopped_pids=stopped)
                         argv=self.primary_argv(target,self.last_launch_reserve);self.operation['launch_reserve']=self.last_launch_reserve
                     elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
                     else:argv=[target['python'],'-s',target['entry'],'--comfy-root',target['root']]
