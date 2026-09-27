@@ -126,6 +126,7 @@ One press prepares a round of close variations. It never submits: Generate is st
   copy of the picture through the same continuation as *Continue with this*: the picture is the source and the
   recorded parent. The round keeps the picture's submitted words and sets the route's recorded denoise and new seeds.
   Today Krea 2 pictures vary on *Krea 2 Refine Pass*, and plain SDXL base pictures on *SDXL gentle reference variation*.
+  WAI v17 pictures vary on *WAI v17 · vary* with their own adapters (see below).
 - **Vary · new seeds, same recipe** appears when the picture came from words alone and no route is recorded. It reloads
   the run's own recipe with new seeds and records the picture as the parent. Each picture starts afresh.
 - A disabled **Vary** with its reason beside it covers the rest. Examples: a picture made from other pictures (use
@@ -148,6 +149,35 @@ picture as source and parent, denoise 0.25, a new seed and a round of 2 (one 240
 fallback on an Anima picture: the same recipe, a new seed, a round of 4 (one 30 s receipt) and the picture as parent.
 Last, it reads the disabled Vary and its reason in the asset panel. These are fixture screens; no model ran, and
 nobody has judged the strengths yet.
+
+### WAI pictures keep their adapters — 27 September 2026
+
+Owner decision in chat, 27 September 2026: "Yes, WAI img2img". Pictures from *WAI v17 · illustration* and *Anime WAI
+Portrait* (and from the new route itself) now get **Vary subtle** and **Vary strong** on *WAI v17 · vary*. Before this,
+they got only new seeds on the same recipe. The route is one img2img graph on the same WAI v17 checkpoint with both LoRA
+slots bound. Its `vary` block adds `carry`: the controls the page copies from the picture's own run, falling back to the
+recipe's authored default. Those are both LoRA strengths and files, sampler, scheduler, CFG and steps. So a picture made
+with an adapter varies with that adapter at the same strength. The status line says *same checkpoint and adapters as
+this picture (file at strength)*, or *no adapters (it used none)*. Vary stays disabled, with its reason beside it, in
+four cases: no run is recorded, the run's recipe changed, a carried setting is unknown, or a carried LoRA file is not
+installed. An off slot's file counts too, because the server checks every named file. The route's own missing adapters
+still disable it as before. `scripts/validate-repo.py` (through `continuation.vary_problems`) proves each carrying route
+three ways:
+
+- It holds each source to the **exact same checkpoint**, never a family label.
+- Every LoRA loader in the source graph must be bound by a carried slot, and every loader in the route graph must be
+  carried, so no adapter is dropped or added.
+- Each carried key must be bound on both sides, with the same clip fan-out, and within the route's choices.
+
+Animagine, NoobAI, Pony, CSTati, YumeFlux and AniFox draw on other checkpoints. They keep the new-seeds fallback until a
+route takes the checkpoint too; Pony also needs its clip skip. The strengths start at the owner's SDXL values
+(0.5 / 0.7, status `starting-value`) until a GPU proof and the owner's look.
+
+`vary-a-keeper` now also presses *Vary strong* on a WAI fixture picture made with `noirpopwave.safetensors` at 0.85.
+It asserts WAI v17 · vary with the picture as source and parent, denoise 0.7 and a new seed. It also asserts the recorded
+stack and settings on the page, including a LoRA file the offline adapter list did not offer, and the status wording.
+`python tests/studio_use_cases.py` passed **20/20** with zero generation submissions and zero page errors (9 intents,
+4 clicks for this journey). These are fixture screens; no model ran.
 
 ## Combine runs beside their pictures — 27 September 2026
 
