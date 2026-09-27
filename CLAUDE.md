@@ -19,7 +19,7 @@ python app/server.py --repo-root .             # needs config/local.json (copy c
 ```
 
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
-`http://127.0.0.1:8191`). Restart the server to reload `presets/catalog.json`. No build step, no linter, no
+`http://127.0.0.1:8191`). The server rereads `presets/catalog.json` per request (reload the page); restart it after `app/` changes. No build step, no linter, no
 package manager: Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`
 with a vendored model-viewer. Skips are environment-dependent (72 on 19 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`; the run is the record).
 
