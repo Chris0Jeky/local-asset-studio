@@ -199,6 +199,10 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
 - [ ] **seamless-tiles-1220** (owner judgment; agents do not tick this): after the GPU live proof of *Make seamless*, open the Seamless tile and its 3×3 repeat asset for a wall and a flat floor. Say whether the tile is usable, and whether you want a band-width choice on the panel. Today the band is 112 px and only the API takes `band_px` (the lab used 160 px on the floor). The seam score is evidence, not acceptance.
 
+## Parallax layers (#1219, 27 September 2026) — open
+
+- [ ] **parallax-layers-1219** (owner judgment; agents do not tick this): after the GPU live proof of *Make parallax layers*, split one of your own scenes (for example the Night Shift room: foreground *the desk, the chair, the desk lamp and the computer monitor*, one box inside each window pane). Open the far, mid and near layers and the 3-frame strip. Say whether the layers are usable, whether typing or dragging boxes for the far view is acceptable or you want a different mask input, and whether the two Generate presses (clean plate, then isolate) should stay separate. The recomposite error is evidence, not acceptance.
+
 ## NSFW lab: ZZZ age-guide intake (24 September 2026, evening) — answered by the owner
 
 - [x] **zzz-age-intake**: The owner pasted a community ZZZ age guide (zerozoneshop) whose headline finding is that HoYoverse has confirmed no exact ZZZ character age. 15 names were evaluated in `experiments/curated/nsfw-lab-20260923/FINDINGS.md` (tail intake block); Ellen Joe stays dropped; Billy Kid and Pyrois excluded (non-human/unknown); Anby, Belle, Lucy, Koleda, Piper, Aria, Cissia, and Promeia pending owner confirmation; Nicole corrected as already-run. Decide: (a) confirm or reject each of the 8(or more) pending names for sexual cells; (b) confirm or retire new cells for already-run Jane, Nicole, Rina, Grace, and Yanagi (owner-named Evelyn, Miyabi, Caesar, and Burnice stand as authorized); (c) confirm or reject Aqua, whose wildcard line was removed meanwhile (see the intake block). Agents do not tick this.

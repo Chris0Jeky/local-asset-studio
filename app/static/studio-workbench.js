@@ -314,33 +314,46 @@
   // server and shows the expected total; nothing runs until Start plan is pressed, and each picture lands under the pair.
   enginePanel.innerHTML='<div id="uxEngineList"></div><details id="uxEnginePlan" class="ux-engine-plan"><summary><b>Run several recipes on this pair</b> <small>one plan, the same seeds, one Start</small></summary>'
     +'<p>Tick the recipes and type the seeds. Prepare plan checks every recipe and shows the expected total time; nothing runs until you press Start plan. Each picture lands under Runs for these pictures.</p>'
-    +'<fieldset id="uxPlanEngines" class="ux-plan-engines"><legend>Recipes</legend></fieldset><label for="uxPlanSeeds">Seeds<input id="uxPlanSeeds" inputmode="numeric" autocomplete="off" placeholder="e.g. 11, 12"></label>'
+    +'<fieldset id="uxPlanEngines" class="ux-plan-engines"><legend>Recipes</legend></fieldset><label for="uxPlanSeeds">Seeds<input id="uxPlanSeeds" inputmode="numeric" autocomplete="off" placeholder="e.g. 11, 12"></label><div id="uxPlanFills" class="ux-fills ux-plan-fills" hidden></div>'
     +'<p id="uxPlanSummary"></p><div class="ux-plan-actions"><button type="button" id="uxPlanPrepare">Prepare plan</button><button type="button" id="uxPlanStart" class="primary" hidden>Start plan</button></div><p id="uxPlanStatus" role="status"></p></details>';
-  const planChoice=new Set();let planEnginesMarkup='',planPrepared=null,planBusy=false,planPreset=null;
+  const planChoice=new Set(),planFills={};let planEnginesMarkup='',planFillsMarkup='',planPrepared=null,planBusy=false,planPreset=null,planPair=null,planSeeded=false;
   const planStatus=text=>{q('#uxPlanStatus').textContent=text;};
   function planOptions(){return StudioContinuation.destinations('combine',catalog.presets,continuationSource).map(p=>({preset:p,reason:StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||''}));}
   function planSeeds(){return StudioContinuation.combinePlanSeeds(q('#uxPlanSeeds').value);}
   function planEngines(){return planOptions().filter(o=>!o.reason&&planChoice.has(o.preset.id)).map(o=>o.preset);}
   // Seconds per picture the page already shows on each engine button: this PC's runs first, then the read-only estimate.
   function planPerPicture(preset){const here=StudioContinuation.combineTiming(jobs,preset.id);if(here)return here.seconds;const guess=engineEstimate(preset);return guess?.available&&guess.confidence!=='none'?Number(guess.estimate_seconds):null;}
+  // #1163 live defect (27 Sep 2026): Klein 4B asks who and pose, a ticked Copy Pose also reads the clothes, and Prepare was refused
+  // for a field the page never showed. Each fill a ticked recipe reads and the open recipe lacks is shown here, starting from this
+  // character's remembered answer; a recipe with its own edited wording reads no answers. The server still refuses any bracket left.
+  function planNeeds(engines=planEngines()){const identity=pairKey();return StudioContinuation.combinePlanFills(selected,engines.filter(p=>p.id!==selected.id&&!combineWording.has(identity+'|'+p.id)));}
+  function planFill(meaning){const saved=rememberedFills();return String(('@'+meaning) in saved?saved['@'+meaning]||'':planFills[meaning]||'');}
   // What Prepare sends: the recipe Generate would run, the ticked recipes, the seeds, the answers and any wording edited per recipe.
   function planIntent(engines,seeds){
-    const identity=pairKey(),wording={};
+    const identity=pairKey(),wording={},answers=combineAnswers();for(const fill of planNeeds(engines))answers[fill.meaning]=planFill(fill.meaning);
     for(const p of engines)if(p.id!==selected.id&&combineWording.has(identity+'|'+p.id))wording[p.id]=combineWording.get(identity+'|'+p.id);
     const base={preset_id:selected.id,controls:values(),continuation:continuationState?{...continuationState}:null,parent_assets:[...parentAssets],references:attachedReferencePayload(),expected_template_sha256:recipeTemplateHash};
     const name=('Combine · '+engines.map(p=>StudioContinuation.combineEngineLabel(p)).join(' / ')+' · seed'+(seeds.length>1?'s ':' ')+seeds.join(', ')).slice(0,120);
-    return{name,combine_plan:{base,engines:engines.map(p=>p.id),seeds,answers:Object.fromEntries(Object.entries(combineAnswers()).filter(([,v])=>String(v||'').trim())),wording}};
+    return{name,combine_plan:{base,engines:engines.map(p=>p.id),seeds,answers:Object.fromEntries(Object.entries(answers).filter(([,v])=>String(v||'').trim())),wording}};
   }
   function planStamp(){return JSON.stringify(planIntent(planEngines(),planSeeds().seeds));}
   function syncCombinePlan(){
     if(enginePanel.hidden){planEnginesMarkup='';return;}
+    // #1198: the form belongs to one pair. Switching engines keeps it; another pair starts from its own recipe and seed.
+    const pair=pairKey();
+    if(pair!==planPair){planPair=pair;planChoice.clear();planPreset=null;planSeeded=false;q('#uxPlanSeeds').value='';for(const key of Object.keys(planFills))delete planFills[key];if(!planBusy){planPrepared=null;planStatus('');}}
     // A recipe opened here starts the choice with itself ticked; the ticks otherwise survive switching engines.
     if(planPreset!==selected.id){if(!planChoice.size)planChoice.add(selected.id);planPreset=selected.id;}
-    if(!q('#uxPlanSeeds').value&&getControl('seed')?.value)q('#uxPlanSeeds').value=getControl('seed').value;
+    // The seeds start from the open recipe's seed once per pair, so the field can be emptied and retyped (#1198).
+    if(!planSeeded&&getControl('seed')?.value){planSeeded=true;if(!q('#uxPlanSeeds').value)q('#uxPlanSeeds').value=getControl('seed').value;}
     const busy=combineBusy()||planBusy,options=planOptions();
     const markup='<legend>Recipes</legend>'+options.map(({preset:p,reason})=>{const per=planPerPicture(p);
       return '<label class="ux-plan-engine"><input type="checkbox" data-ux-plan-engine="'+escape(p.id)+'" '+(planChoice.has(p.id)&&!reason?'checked ':'')+(reason||busy?'disabled ':'')+'title="'+escape(reason||p.name)+'"> <b>'+escape(StudioContinuation.combineEngineLabel(p))+'</b> <small>'+escape(reason||(per?'~'+durationLabel(per)+' per picture':'no timing yet'))+'</small></label>';}).join('');
     if(markup!==planEnginesMarkup){planEnginesMarkup=markup;q('#uxPlanEngines').innerHTML=markup;}
+    // Re-rendered only when the set of fields changes, never while one is being typed in.
+    const needs=planNeeds(),needsKey=JSON.stringify(needs);
+    if(needsKey!==planFillsMarkup){planFillsMarkup=needsKey;q('#uxPlanFills').hidden=!needs.length;
+      q('#uxPlanFills').innerHTML=needs.length?'<p class="muted">The ticked recipes also read these; the open recipe does not ask for them.</p>'+needs.map(f=>'<label>'+escape(f.label)+' <small>for '+escape(f.recipes.join(', '))+'</small><input data-ux-plan-fill="'+escape(f.meaning)+'" placeholder="'+escape(f.example?'e.g. '+f.example:'')+'" value="'+escape(planFill(f.meaning))+'" autocomplete="off"></label>').join(''):'';}
     const engines=planEngines(),{seeds,error}=planSeeds(),count=engines.length*seeds.length,time=StudioContinuation.combinePlanTime(engines.map(planPerPicture),seeds.length);
     const timing=time.unknown?(time.seconds?' · at least ~'+durationLabel(time.seconds)+'; '+time.unknown+' recipe'+(time.unknown===1?' has':'s have')+' no timing yet':' · no timing on this PC yet'):' · about '+durationLabel(time.seconds);
     q('#uxPlanSummary').textContent=!engines.length?'Tick at least one recipe.':error?error:count>16?count+' pictures: a plan runs at most 16. Untick a recipe or a seed.'
@@ -350,9 +363,17 @@
     const fresh=!!planPrepared&&!planPrepared.started&&planPrepared.stamp===planStamp();
     q('#uxPlanStart').hidden=!fresh;q('#uxPlanStart').disabled=busy;
     if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Runs & review, not started.');}
+    // Undoing the change brings Start back with its Prepared line; the next change is announced again (#1198).
+    else if(fresh&&planPrepared.stale){planPrepared.stale=false;planStatus(planPrepared.message);}
   }
   q('#uxPlanEngines').onchange=e=>{const box=e.target.closest('[data-ux-plan-engine]');if(!box)return;if(box.checked)planChoice.add(box.dataset.uxPlanEngine);else planChoice.delete(box.dataset.uxPlanEngine);syncCombinePlan();};
   q('#uxPlanSeeds').oninput=()=>syncCombinePlan();
+  // An extra answer is this character's, like the fields above the wording: kept for the next recipe and the next visit.
+  q('#uxPlanFills').oninput=e=>{
+    const meaning=e.target?.dataset?.uxPlanFill;if(!meaning)return;planFills[meaning]=e.target.value;
+    const key=fillsKey();if(key)try{localStorage.setItem(key,JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value}));}catch(error){}
+    syncCombinePlan();
+  };
   const planTime=seconds=>Number(seconds)>0?durationLabel(seconds):'unknown';
   q('#uxPlanPrepare').onclick=async()=>{
     if(planBusy||combineBusy())return;
@@ -364,8 +385,8 @@
       const intent=planIntent(engines,seeds),stamp=JSON.stringify(intent);
       planBusy=true;planPrepared=null;syncCombinePlan();planStatus('Checking every recipe, its models and the pictures. Nothing is submitted.');
       const project=await post('/api/production',intent),estimate=project.combine?.estimate||{};
-      planPrepared={project,stamp};
-      planStatus('Prepared '+project.stages.length+' pictures: expected about '+planTime(estimate.total_seconds)+(estimate.total_upper_seconds?' (up to about '+planTime(estimate.total_upper_seconds)+')':'')+', '+(estimate.confidence||'no')+' confidence. Nothing has run. Press Start plan to run it.');
+      planPrepared={project,stamp,message:'Prepared '+project.stages.length+' pictures: expected about '+planTime(estimate.total_seconds)+(estimate.total_upper_seconds?' (up to about '+planTime(estimate.total_upper_seconds)+')':'')+', '+(estimate.confidence||'no')+' confidence. Nothing has run. Press Start plan to run it.'};
+      planStatus(planPrepared.message);
       if(typeof refreshProduction==='function')void refreshProduction(true);
     }catch(error){planStatus(error.message);announce(error.message,true);}
     finally{planBusy=false;syncCombinePlan();}
@@ -373,11 +394,13 @@
   q('#uxPlanStart').onclick=async()=>{
     const prepared=planPrepared;if(planBusy||combineBusy()||!prepared||prepared.started||prepared.stamp!==planStamp())return;
     planBusy=true;prepared.started=true;syncCombinePlan();
+    // Once the Start request returns, the plan has started: a failed refresh after it must not offer Start again (#1198).
+    let begun=false;
     try{
-      const project=await post('/api/production/'+encodeURIComponent(prepared.project.id)+'/start',{});
+      const project=await post('/api/production/'+encodeURIComponent(prepared.project.id)+'/start',{});begun=true;
       planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Runs & review.');
       await refresh();
-    }catch(error){prepared.started=false;planStatus(error.message);announce(error.message,true);}
+    }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;planStatus(error.message);announce(error.message,true);}}
     finally{planBusy=false;syncCombinePlan();}
   };
   // #1203: this PC's owner answers for every picture the recipe made, e.g. "pose 3/4 · face 1/4"; none reads as such (K14).
@@ -1013,6 +1036,85 @@
     finally{tileBusy=false;button.disabled=false;syncReady();}
   }
   document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-tile]');if(!button||button.disabled)return;e.preventDefault();void prepareTile(button);});
+  // #1219 Make parallax layers: the owner names the foreground to lift out and may mark the far view (window glass, sky) as boxes,
+  // typed as x0,y0,x1,y1 or dragged on the picture. The mask is the owner's, never detected. The server says whether the picture
+  // qualifies; a disabled button carries its reason. Prepare attaches the picture unchanged and loads the clean-plate edit;
+  // every Generate stays the owner's press.
+  let parallaxBusy=false,parallaxRead=0,parallaxDrag=null;
+  function parallaxBoxes(text){
+    const boxes=String(text||'').split(';').map(part=>part.trim()).filter(Boolean).map(part=>part.split(/[\s,]+/).filter(Boolean).map(Number));
+    return boxes.every(box=>box.length===4&&box.every(Number.isInteger))?boxes:null;
+  }
+  function parallaxReason(group){
+    const status=group.parallaxStatus;
+    if(!status)return 'Checking whether this picture can be split…';
+    if(!status.eligible)return status.reason;
+    if(!group.querySelector('#uxParallaxObjects').value.trim())return 'Name the foreground to lift out first, e.g. the desk, the chair and the lamp.';
+    const boxes=parallaxBoxes(group.querySelector('#uxParallaxView').value);
+    if(!boxes)return 'Far view boxes are x0,y0,x1,y1 in picture pixels, separated by semicolons.';
+    if(boxes.length>status.max_views)return 'Mark at most '+status.max_views+' far view boxes.';
+    const outside=boxes.find(([x0,y0,x1,y1])=>!(0<=x0&&x0<x1&&x1<=status.width&&0<=y0&&y0<y1&&y1<=status.height));
+    return outside?'The box '+outside.join(',')+' is not inside the '+status.width+' × '+status.height+' picture.':null;
+  }
+  function syncParallax(group){
+    const why=parallaxReason(group),button=group.querySelector('[data-ux-parallax]');if(!button)return;
+    button.disabled=Boolean(why)||parallaxBusy;group.querySelector('#uxParallaxWhy').textContent=why||group.parallaxStatus.flag;
+    const pick=group.querySelector('.ux-parallax-pick'),status=group.parallaxStatus;if(!pick||!status?.width)return;
+    pick.querySelectorAll('.ux-parallax-box').forEach(box=>box.remove());
+    for(const [x0,y0,x1,y1] of parallaxBoxes(group.querySelector('#uxParallaxView').value)||[]){
+      const box=element('span','ux-parallax-box');Object.assign(box.style,{left:100*x0/status.width+'%',top:100*y0/status.height+'%',width:100*(x1-x0)/status.width+'%',height:100*(y1-y0)/status.height+'%'});pick.append(box);
+    }
+  }
+  function parallaxMarkup(status,url){
+    const button='<button type="button" data-ux-parallax="'+escape(status?.asset_id||'')+'" disabled aria-describedby="uxParallaxWhy">Make parallax layers</button>';
+    if(!status?.eligible)return button+'<small id="uxParallaxWhy">'+escape(status?status.reason:'Checking whether this picture can be split…')+'</small>';
+    return '<label>Foreground to lift out <input id="uxParallaxObjects" maxlength="240" autocomplete="off" placeholder="e.g. the desk, the chair, the lamp and the monitor"></label>'
+      +'<label>Far view boxes, optional <input id="uxParallaxView" autocomplete="off" placeholder="x0,y0,x1,y1; … in pixels, or drag on the picture below"></label>'
+      +'<details class="ux-parallax-mark"><summary>Mark the far view on the picture</summary><p>Drag a box inside the window glass or the sky, not over its frame: what is inside moves as the far layer. No box: two layers.</p>'
+      +'<div class="ux-parallax-pick"><img src="'+escape(url)+'" alt="Drag to mark the far view" draggable="false"></div></details>'
+      +button+'<button type="button" data-ux-parallax-clear>Clear boxes</button><small id="uxParallaxWhy"></small>';
+  }
+  function placeParallax(holder,status,url){
+    const next=element('div','ux-parallax',parallaxMarkup(status,url));next.setAttribute('role','group');next.setAttribute('aria-label','Split this picture into parallax layers');next.parallaxStatus=status;
+    const box=holder.querySelector(':scope > .ux-parallax');if(box)box.replaceWith(next);else(holder.querySelector(':scope > .ux-tile')||q('#assetHandoffs')).after(next);
+    if(status?.eligible)syncParallax(next);
+  }
+  after('openAsset',()=>{
+    const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
+    if(!a||a.media_type!=='image'||a.trashed_at||!catalog?.presets?.some(p=>p.parallax_route)){holder.querySelector(':scope > .ux-parallax')?.remove();return;}
+    const read=++parallaxRead,current=()=>read===parallaxRead&&activeAsset?.id===a.id;placeParallax(holder,null,a.url);
+    api('/api/parallax/source/'+encodeURIComponent(a.id)).then(status=>{if(current())placeParallax(holder,status,a.url);})
+      .catch(error=>{if(current())placeParallax(holder,{asset_id:a.id,eligible:false,reason:'Could not check this picture: '+error.message+'.'},a.url);});
+  });
+  document.addEventListener('input',e=>{const group=e.target.closest?.('.ux-parallax');if(group)syncParallax(group);});
+  function pickPoint(pick,e){const r=pick.getBoundingClientRect(),s=pick.closest('.ux-parallax').parallaxStatus;return [Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*s.width),Math.round(Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))*s.height)];}
+  document.addEventListener('pointerdown',e=>{const pick=e.target.closest?.('.ux-parallax-pick');if(!pick||e.button!==0)return;e.preventDefault();parallaxDrag={pick,start:pickPoint(pick,e)};pick.setPointerCapture?.(e.pointerId);});
+  document.addEventListener('pointerup',e=>{
+    if(!parallaxDrag)return;const {pick,start}=parallaxDrag,end=pickPoint(pick,e);parallaxDrag=null;
+    const box=[Math.min(start[0],end[0]),Math.min(start[1],end[1]),Math.max(start[0],end[0]),Math.max(start[1],end[1])],group=pick.closest('.ux-parallax');
+    if(box[2]-box[0]<8||box[3]-box[1]<8){announce('A far view box needs at least 8 px on each side; drag a larger box.',true);return;}
+    const field=group.querySelector('#uxParallaxView');field.value=[field.value.trim(),box.join(',')].filter(Boolean).join('; ');syncParallax(group);
+  });
+  document.addEventListener('click',e=>{const clear=e.target.closest('[data-ux-parallax-clear]');if(!clear)return;const group=clear.closest('.ux-parallax');group.querySelector('#uxParallaxView').value='';syncParallax(group);});
+  async function prepareParallax(button){
+    const group=button.closest('.ux-parallax'),assetId=button.dataset.uxParallax;if(parallaxBusy||!assetId||!group)return;
+    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy||tileBusy){announce('Wait for the current Create action to finish, then press Make parallax layers again. Nothing was prepared.',true);return;}
+    if(assetDetailsDirty()){warnUnsavedAsset();return;}
+    const why=parallaxReason(group);if(why){announce(why,true);return;}
+    parallaxBusy=true;button.disabled=true;syncReady();
+    const stamp=workbenchStamp(),boxes=parallaxBoxes(group.querySelector('#uxParallaxView').value);
+    try{
+      const result=await post('/api/parallax/prepare',{asset_id:assetId,objects:group.querySelector('#uxParallaxObjects').value,...(boxes.length?{view:boxes}:{})});
+      if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being prepared. Nothing was applied; press Make parallax layers again.');
+      if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.source_file||result.stage!=='plate')throw Error('The prepared parallax plan could not be verified. Nothing was applied.');
+      beginParallax(result);
+      if(q('#assetDialog').open)q('#assetDialog').close();
+      draftDirty=true;showView('create');saveDraft();syncCreate();updateReady();scheduleTimeEstimate();recipeChanged();
+      announce('Parallax layers prepared: the picture is attached unchanged and the clean-plate edit is loaded ('+(boxes.length?boxes.length+' far view box'+(boxes.length===1?'':'es'):'no far view: two layers')+'). Press Generate; the isolate edit loads next for a second Generate, and the Studio splits the layers when both are in.');
+    }catch(error){announce(error.message,true);}
+    finally{parallaxBusy=false;if(group.isConnected)syncParallax(group);syncReady();}
+  }
+  document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-parallax]');if(!button||button.disabled)return;e.preventDefault();void prepareParallax(button);});
   document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSourceRecipes'))return;
     if(assetDetailsDirty()){warnUnsavedAsset();return;}const a=activeAsset;
     if(!a||a.trashed_at||a.media_type!=='image'||!window.RecipeShortlist){announce('Choose an available image after recipe guidance has loaded.',true);return;}
