@@ -1383,6 +1383,56 @@ async function seamlessTileSubmitsTheServerPlan() {
   assert.equal(requests.filter(r => r.url === '/api/jobs').length, 1, 'finishing never submits a generation');
 }
 
+// Parallax layers (#1219): the parallax recipe refuses to run without the server's plan; beginParallax attaches the unchanged
+// source at its own size with the source as parent; the first Generate sends the plate claim and then only LOADS the isolate
+// stage, so the second edit is a second press; any recipe change drops the plan; a stage card offers the one next step.
+async function parallaxStagesAreTwoOwnerPresses() {
+  const {element, requests, run, parents, context} = sandbox(null, null);
+  const file = 'f'.repeat(32) + '_room.png';
+  const plan = {version: 1, plan_id: 'b'.repeat(64), preset_id: 'parallax-route', source_asset_id: 'source-asset', source_sha256: 'a'.repeat(64), source_file: file, width: 1344, height: 768, objects: 'the desk', view_polygons: []};
+  const stage = name => ({plan, claim: {...plan, stage: name}, stage: name, stage_name: name === 'plate' ? 'clean plate' : 'isolate', words: name + ' words for the desk', file, width: 1344, height: 768, preset_id: 'parallax-route', context: {title: 'Room'}, flag: 'The view mask is yours, not detected.'});
+  const fetched = context.fetch;
+  context.fetch = async (url, options = {}) => url === '/api/parallax/stage' ? (requests.push({url, data: JSON.parse(options.body)}), {ok: true, json: async () => stage(JSON.parse(options.body).stage)}) : fetched(url, options);
+  run(`catalog.presets.push({id:'parallax-route',name:'Parallax layers',modality:'image',parallax_route:true,reference:['14','image'],positive:['4','text'],width:['10','width'],height:['10','height'],defaults:{}});selectPreset('parallax-route');`);
+  assert.match(run('JSON.stringify(continuationBlockers())'), /Make parallax layers/, 'the parallax recipe names its entry point');
+  assert.equal(element('#generate').disabled, true, 'no plan, no Generate');
+  run(`beginParallax(${JSON.stringify(stage('plate'))})`);
+  assert.equal(element('#positive').value, 'plate words for the desk');
+  assert.deepEqual(parents(), ['source-asset']);
+  assert.equal(element('[data-key="width"]').value, '1344'); assert.equal(element('[data-key="height"]').value, '768');
+  assert.match(element('#referenceHint').textContent, /edit 1 of 2, the clean plate.*not detected/);
+  assert.equal(requests.length, 0, 'preparing the workbench submits nothing');
+  await element('#generate').onclick();
+  const jobs = () => requests.filter(r => r.url === '/api/jobs').map(r => r.data);
+  assert.equal(jobs().length, 1, 'one press, one edit');
+  assert.deepEqual(jobs()[0].parallax, {...plan, stage: 'plate'}); assert.equal(jobs()[0].controls.reference, file); assert.equal(jobs()[0].controls.width, '1344');
+  assert.equal(run('parallaxState.stage'), 'isolate', 'the isolate edit is loaded, not run');
+  assert.equal(element('#positive').value, 'isolate words for the desk');
+  assert.match(element('#status').textContent, /isolate edit is loaded.*press Generate/);
+  await element('#generate').onclick();
+  assert.equal(jobs().length, 2); assert.equal(jobs()[1].parallax.stage, 'isolate');
+  assert.match(element('#status').textContent, /splits the layers when both edits complete/);
+  run(`selectPreset('plain')`);
+  assert.equal(run('JSON.stringify(parallaxPayload())'), '{}', 'another recipe drops the plan');
+  const card = (job, siblings = []) => { run(`jobs=${JSON.stringify(siblings)}`); return run(`mediaCard(${JSON.stringify(job)},0,{media_type:'image',asset_id:'edit'})`); };
+  const plate = {id: 'plate-job', status: 'completed', controls: {}, preset_name: 'Parallax layers', parallax: {...plan, stage: 'plate'}};
+  const isolate = status => ({id: 'isolate-job', status, controls: {}, parallax: {...plan, stage: 'isolate'}});
+  assert.match(card(plate), /class="parallaxStage" data-job="plate-job" data-stage="isolate"/);
+  assert.match(card(plate), /has no isolate edit yet/);
+  assert.match(card(plate, [isolate('running')]), /isolate edit is running; the layers split when it completes/);
+  assert.match(card(plate, [isolate('completed')]), /class="parallaxFinish" data-job="plate-job"/);
+  assert.match(card({...plate, parallax_finish: {error: 'no fit'}}, [isolate('completed')]), /Layers not split: no fit/);
+  assert.match(card({...plate, parallax_finish: {job_id: 'split', summary: 'within 0.36/255'}}), /Layers split: within 0.36\/255/);
+  assert.doesNotMatch(card({...plate, parallax_finish: {job_id: 'split'}}), /parallaxStage|parallaxFinish/);
+  assert.match(run(`mediaCard({id:'f',controls:{},preset_name:'Parallax layers'},0,{media_type:'image',parallax:{layer:'near',shift_px:24,summary:'within 0.36/255'}})`), /Near layer, shift 24 px\. within 0.36\/255/);
+  run(`jobs=[]`);
+  await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxFinish' ? {dataset: {job: 'plate-job'}} : null}});
+  assert.deepEqual(requests.filter(r => r.url === '/api/parallax/finish').map(r => r.data), [{job_id: 'plate-job'}]);
+  await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
+  assert.equal(run('selected.id'), 'parallax-route'); assert.equal(run('parallaxState.stage'), 'isolate');
+  assert.equal(jobs().length, 2, 'splitting or loading a stage never submits a generation');
+}
+
 (async () => {
   await recentRunsShowMoreSurvivesAPoll();
   await recentRunsReleaseOnEndedAndSkipLoops();
@@ -1442,6 +1492,7 @@ async function seamlessTileSubmitsTheServerPlan() {
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
   await seamlessTileSubmitsTheServerPlan();
+  await parallaxStagesAreTwoOwnerPresses();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
 
