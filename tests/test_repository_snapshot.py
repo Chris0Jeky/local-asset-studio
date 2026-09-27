@@ -121,8 +121,8 @@ class RepositorySnapshotTests(unittest.TestCase):
             self.assertEqual(local["catalog"], {"blob_sha": CATALOG_BLOB_SHA, "presets": 3, "unique_graphs": 2,
                                                 "verified_presets": 2, "visual_workflows": 1})
             self.assertEqual(local["human_todo"]["blob_sha"], TODO_BLOB_SHA)
-            self.assertEqual(local["human_todo"]["open_count"], 3)
-            self.assertEqual([item["id"] for item in local["human_todo"]["items"]], ["q-25", "q-26", None])
+            self.assertEqual(local["human_todo"]["open_count"], 2)
+            self.assertEqual([item["id"] for item in local["human_todo"]["items"]], ["q-25", "q-26"])
             self.assertTrue(local["catalog_matches_capture"])
             self.assertTrue(local["human_todo_matches_capture"])
             (root / "HUMAN_TODO.md").write_text(TODO_TEXT + "- [ ] A later owner check" + chr(10), encoding="utf-8", newline="")
@@ -130,7 +130,7 @@ class RepositorySnapshotTests(unittest.TestCase):
             moved = snapshot.build_snapshot(root, source(), include_local=True)
         self.assertFalse(moved["local_facts"]["catalog_matches_capture"])
         self.assertFalse(moved["local_facts"]["human_todo_matches_capture"])
-        self.assertEqual(moved["local_facts"]["human_todo"]["open_count"], 4)
+        self.assertEqual(moved["local_facts"]["human_todo"]["open_count"], 2)
         self.assertIn("differs from the capture", snapshot.render_markdown(moved))
 
     def test_committed_projection_never_depends_on_catalog_or_owner_backlog_bytes(self):

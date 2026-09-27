@@ -51,12 +51,87 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                     self.assertTrue(self.page.locator('#generate').is_disabled())
                     self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width)
 
+    def test_focused_text_field_is_never_left_under_the_dock(self):
+        """Handoff 03: the fixed dock covered the prompt at 1440x900 and half the phone screen."""
+        self.load_workshop()
+        # Room above and below, so any field can be scrolled to sit on the dock's top edge.
+        self.page.evaluate("document.querySelector('#createView').insertAdjacentHTML('beforebegin','<div style=height:900px></div>');document.querySelector('#createView').style.paddingBottom='900px'")
+        overlap = """(id)=>{const f=document.getElementById(id).getBoundingClientRect(),d=document.querySelector('.wk-run-dock').getBoundingClientRect();
+          return {covered:Math.max(0,Math.min(f.bottom,d.bottom)-Math.max(f.top,d.top)),top:f.top,dock:d.height}}"""
+        # 720x450 is 1440x900 at 200 % zoom; 640x360 is the shortest supported size.
+        for width, height in ((1440, 900), (1280, 720), (720, 450), (640, 360), (390, 844)):
+            self.page.set_viewport_size({'width': width, 'height': height})
+            for layout in ('focus', 'studio', 'immersive'):
+                for field in ('positive', 'negative'):
+                    with self.subTest(width=width, height=height, layout=layout, field=field):
+                        self.page.select_option('#workshopLayout', layout, force=True)
+                        self.page.locator('#negativeWrap').evaluate('(n)=>n.open=true')
+                        self.page.evaluate("document.activeElement?.blur()")
+                        before = self.page.locator('.wk-run-dock').bounding_box()['height']
+                        # Put the field's top just above the dock, the way a scrolled page leaves it, then click into it.
+                        self.page.evaluate("""([id,h])=>{const f=document.getElementById(id),d=document.querySelector('.wk-run-dock');
+                          scrollBy(0,f.getBoundingClientRect().top-(d.getBoundingClientRect().top-30))}""", [field, height])
+                        self.assertGreater(self.page.evaluate(overlap, field)['covered'], 0)
+                        self.page.click('#'+field, position={'x': 20, 'y': 10})
+                        self.page.wait_for_timeout(120)
+                        result = self.page.evaluate(overlap, field)
+                        self.assertEqual(result['covered'], 0, result)
+                        self.assertGreaterEqual(result['top'], 0, result)
+                        self.assertTrue(self.page.locator('#generate').is_visible())
+                        if width <= 600 or height <= 700: self.assertLess(result['dock'], before, 'a narrow or short dock compacts while typing')
+                        self.page.evaluate("document.activeElement?.blur()")
+                        self.assertTrue(self.page.locator('#planComparison').is_visible())
+        self.assertEqual(self.page.evaluate('submitted'), 0)
+
     def test_no_seed_control_has_no_dead_randomize_button(self):
         self.load_workshop()
         self.page.locator('[data-key=seed]').evaluate('(n)=>n.remove()')
         self.page.evaluate("document.querySelector('#createView').__workshop.sync()")
         self.assertFalse(self.page.locator('#randomSeed').is_visible())
 
+
+    def test_every_blocker_is_listed_with_its_fix_not_only_the_first(self):
+        """Handoff 03: Create showed only the first blocker; the full list sat in a collapsed disclosure."""
+        self.load_workshop()
+        self.page.evaluate("""document.getElementById('uxBlockers').innerHTML=
+          '<div class="ux-blocker" data-readiness-code="models"><p>Connect your local model environment before generating.</p></div>'+
+          '<div class="ux-blocker" data-readiness-code="references"><p>Attach every required reference before starting.</p><button type="button" data-ux-resolve="references">Show the empty slot</button></div>'+
+          '<div class="ux-blocker" data-readiness-code="parameters"><p>Width must be a multiple of 8.</p><button type="button" data-ux-resolve="parameters">Review motion settings</button></div>'""")
+        self.page.wait_for_function("document.querySelectorAll('#workshopBlockerList li').length===3")
+        dock = self.page.locator('#workshopReadiness').inner_text()
+        self.assertIn('Connect your local model environment', dock)
+        self.assertIn('+2 more', dock)
+        self.assertFalse(self.page.locator('#workshopChecks').evaluate('(n)=>n.open'))
+        for width, height in ((1440, 900), (390, 844)):
+            with self.subTest(width=width):
+                self.page.set_viewport_size({'width': width, 'height': height})
+                items = self.page.locator('#workshopBlockerList li')
+                self.assertEqual(items.count(), 3)
+                self.assertTrue(items.nth(2).is_visible())
+                self.assertIn('3 things to fix', self.page.locator('#workshopSetupReadiness').inner_text())
+                self.assertIn('Width must be a multiple of 8.', items.nth(2).inner_text())
+                self.assertEqual(items.nth(0).locator('button').count(), 0, 'no fix button is invented')
+        # The fix button forwards to the original readiness action; it owns no behaviour of its own.
+        self.page.locator('#workshopBlockerList li').nth(2).locator('button').click()
+        self.assertTrue(self.page.locator('[data-key="width"]').evaluate('(n)=>n===document.activeElement'))
+        # A repeat render with identical evidence keeps the same nodes (no focus loss on poll).
+        node = self.page.evaluate_handle("document.querySelector('#workshopBlockerList li')")
+        self.page.evaluate("document.querySelector('#createView').__workshop.sync()")
+        self.assertTrue(self.page.evaluate("(n)=>n.isConnected", node))
+        # Codex P2 on #1125: once one blocker is left, its repair stays in the strip (once, beside its summary).
+        self.page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=\"ux-blocker\" data-readiness-code=\"parameters\"><p>Width must be a multiple of 8.</p><button type=\"button\" data-ux-resolve=\"parameters\">Review motion settings</button></div>'")
+        self.page.wait_for_function("document.querySelectorAll('#workshopBlockerList li').length===1 && !document.getElementById('workshopBlockerList').hidden")
+        self.assertEqual(self.page.locator('#workshopReadiness').inner_text(), 'Width must be a multiple of 8.')
+        self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Width must be a multiple of 8.')
+        self.assertEqual(self.page.locator('#workshopBlockerList li').inner_text(), 'Review motion settings', 'the message is not repeated')
+        self.page.evaluate("document.activeElement?.blur()")
+        self.page.locator('#workshopBlockerList button').click()
+        self.assertTrue(self.page.locator('[data-key="width"]').evaluate('(n)=>n===document.activeElement'))
+        self.page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=\"ux-blocker\"><p>Only this one.</p></div>'")
+        self.page.wait_for_function("document.getElementById('workshopBlockerList').hidden")
+        self.assertEqual(self.page.locator('#workshopReadiness').inner_text(), 'Only this one.')
+        self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Only this one.')
+        self.assertEqual(self.page.evaluate('submitted'), 0)
 
 if __name__ == '__main__':
     import unittest

@@ -543,7 +543,8 @@ function assetQueueStep(delta) {
   const next=assetQueue.index+delta;
   if(next<0){assetDetailStatus('This is the first asset in the queue.');return false;}
   // Leaving the queue is an ordinary close: unsaved typing still gets its discard consent.
-  if(next>=assetQueue.ids.length){assetQueue=null;renderAssetQueue();closeAssetDetails();assetMessage('Review queue finished. Reopen it for anything still unreviewed.');return false;}
+  // A cancelled close keeps the editor, so it also keeps the queue and its position.
+  if(next>=assetQueue.ids.length){closeAssetDetails();if($('#assetDialog').open)return false;assetQueue=null;renderAssetQueue();assetMessage('Review queue finished. Reopen it for anything still unreviewed.');return false;}
   const previous=assetQueue.index;assetQueue.index=next;
   if(!openAsset(assetQueue.ids[next])){if(assetQueue)assetQueue.index=previous;renderAssetQueue();return false;}
   return true;
@@ -816,8 +817,10 @@ async function mutateAssets(payload) {
   return performLibraryCommand(assetLibraryPending);
 }
 // A scope is a different set of assets, so it starts a fresh selection; say so rather than dropping it silently.
+// Re-choosing the scope already shown (or Browse all from inside All) keeps the selection: the set is the same.
+// Its message is rebuilt either way, so an earlier "Selection cleared" never sits beside a kept selection.
 function setAssetScope(scope){
-  const cleared=assetSelection.size;assetScope=scope;assetSelection.clear();assetSelectionAnchor=null;renderAssets();
+  const same=scope===assetScope,cleared=same?0:assetSelection.size;assetScope=scope;if(!same){assetSelection.clear();assetSelectionAnchor=null;}renderAssets();
   assetMessage([scope==='trash'?'Trash is recoverable. Original files and recipes remain on disk.':'',cleared?'Selection cleared ('+cleared+').':''].filter(Boolean).join(' '));
 }
 function diagnosticArtifact(record, label) {
@@ -968,7 +971,8 @@ document.addEventListener('click',async e=>{
     const discard=e.target.closest('[data-asset-recovery-discard]');
     if(discard){
       const slot=discard.dataset.assetRecoveryDiscard;
-      if(!['detail','library'].includes(slot) || assetDetailBusy || assetLibraryBusy || $('#assetDialog').open)return;
+      if(!['detail','library'].includes(slot))return;
+      if(assetDetailBusy || assetLibraryBusy || $('#assetDialog').open){assetMessage($('#assetDialog').open?'Close the asset editor before discarding local recovery; nothing was discarded.':'A save is still in flight; discard local recovery once it settles.',true);return;}
       if(!window.confirm('Discard this local draft/recovery record? An unconfirmed save may already have committed. This does not cancel or undo any server change.'))return;
       assetRecovery.clear(slot);
       if(slot==='detail')assetRetainedDetail=null;else {assetLibraryPending=null;assetRetainedSelection=null;assetSelection.clear();}

@@ -181,7 +181,10 @@
     const setupStatus = el('div', 'wk-setup-status');
     const setupReadiness = el('strong', '', 'Checking readiness…'); setupReadiness.id = 'workshopSetupReadiness';
     const setupEta = el('span', '', 'Runtime estimate not available'); setupEta.id = 'workshopSetupEta';
-    setupStatus.append(setupReadiness, setupEta);
+    // Every blocker, not only the first, with the repair its own readiness row offers (handoff 03).
+    const blockerList = el('ol', 'wk-blocker-list'); blockerList.id = 'workshopBlockerList'; blockerList.hidden = true;
+    blockerList.setAttribute('aria-label', 'Everything to fix before generating');
+    setupStatus.append(setupReadiness, blockerList, setupEta);
     setupRail.append(setupHeading, recipeChip, quickTune, setupStatus);
     editor.before(hero, modebar, appearance, setupRail);
 
@@ -314,6 +317,19 @@
     const reviewButton = button('workshopReview', 'Review checks', () => reveal(review));
     dockInfo.append(readiness, eta, reviewButton);
     const status = q('#status'); dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
+    // A text field you enter is never left under the fixed dock; a narrow or short dock also compacts while you type (workshop.css).
+    const typing = n => !!n?.matches?.('textarea,input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=file],[type=color],[type=image])') && !dock.contains(n);
+    // Measured after the compacted dock has laid out, and once more a frame later in case the page height settled.
+    const clearOfDock = (field, passes) => w.requestAnimationFrame(() => {
+      if (d.activeElement !== field) return;
+      const bar = d.querySelector('.studio-globalbar'), barBottom = bar && w.getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().bottom : 0;
+      const box = field.getBoundingClientRect(), limit = Math.max(0, barBottom) + 8, bottom = dock.getBoundingClientRect().top - 8;
+      // A field taller than the room between the header and the dock shows its first lines.
+      if (box.top < limit || box.bottom > bottom) w.scrollBy(0, box.top < limit || box.height > bottom - limit ? box.top - limit : box.bottom - bottom);
+      if (passes > 1) clearOfDock(field, passes - 1);
+    });
+    create.addEventListener('focusout', e => { if (typing(e.target)) dock.classList.remove('wk-typing'); });
+    create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
     const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('aria-label', 'Plan and vary this run');
     const compare = q('#planComparison'), newSeed = q('#randomSeed');
@@ -478,6 +494,25 @@
       presentationSnapshot = Object.freeze({view:currentView, recipe:recipe ? Object.freeze({id:String(recipe.id || ''), name:String(recipe.name || recipe.id || '')}) : null});
       if (announcedStamp !== currentView.contextStamp) { announcedStamp = currentView.contextStamp; create.dispatchEvent(new w.CustomEvent('studio:presentation', {detail:presentationSnapshot})); }
     }
+    let blockerSignature = '';
+    function renderBlockers(blockers) {
+      const rows = blockers.map(n => { const fix = n.querySelector('[data-ux-resolve]'); return [n.dataset.readinessCode || '', n.querySelector('p').textContent, fix?.textContent || '', !!fix?.disabled]; });
+      // A lone blocker's text is already the summary above; its row then carries only the repair, if it has one.
+      const single = rows.length === 1; blockerList.hidden = !rows.length || single && !rows[0][2];
+      const signature = JSON.stringify(rows); if (signature === blockerSignature) return; blockerSignature = signature;
+      blockerList.replaceChildren(...rows.map(([code, message, label, disabled]) => {
+        const item = el('li'); if (!single) item.append(el('span', '', message));
+        if (label) {
+          const fix = el('button', '', label); fix.type = 'button'; fix.disabled = disabled;
+          // Forwards to the original readiness button, which owns focus and repair; nothing is decided here.
+          fix.addEventListener('click', () => [...d.querySelectorAll('#uxBlockers .ux-blocker')]
+            .find(n => (n.dataset.readinessCode || '') === code && n.querySelector('p')?.textContent === message)
+            ?.querySelector('[data-ux-resolve]')?.click());
+          item.append(fix);
+        }
+        return item;
+      }));
+    }
     function sync() {
       const active = !create.hidden;
       d.body.classList.toggle('workshop-active', active);
@@ -507,7 +542,10 @@
       text(quickTune, summary+'   ·   Tune settings ↗');
       const blocked = q('#generate').disabled, first = q('#uxBlockers .ux-blocker p')?.textContent;
       const readinessText = blocked ? first || 'Review readiness before generating.' : 'No blockers reported';
-      text(readiness, readinessText); text(setupReadiness, readinessText);
+      const blockers = blocked ? [...d.querySelectorAll('#uxBlockers .ux-blocker')].filter(n => n.querySelector('p')?.textContent) : [];
+      text(readiness, readinessText + (blockers.length > 1 ? ' (+'+(blockers.length-1)+' more)' : ''));
+      text(setupReadiness, blockers.length > 1 ? blockers.length+' things to fix before generating' : readinessText);
+      renderBlockers(blockers);
       const time = q('#estimateValue')?.textContent;
       const etaText = estimate && !estimate.hidden && time ? 'Expected: '+time : 'Runtime estimate not available';
       text(eta, etaText); text(setupEta, etaText);

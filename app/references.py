@@ -118,6 +118,7 @@ def prune_missing_slot(graph, node):
                         rest=[f for f in ('embed2','embed3','embed4','embed5') if f in inputs]
                         if not rest: raise ValueError('The style board needs at least one picture')
                         inputs['embed1']=inputs.pop(rest[0])
+                    changed=True  # the slid embed may itself point at a removed encoder: look again
                 elif item.get('class_type')=='ReferenceLatent' and field=='latent' and isinstance(inputs.get('conditioning'),list):
                     upstream=list(inputs['conditioning']); graph.pop(key); removed.add(key)
                     for other in graph.values():

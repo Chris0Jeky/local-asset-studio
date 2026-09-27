@@ -86,6 +86,44 @@
   after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();dismissSecondPicture();syncCreate();renderDraftNotice();});
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
+  // #1100: loading a recipe still loads its wording, but wording you wrote gets one explicit way back until you type, dismiss
+  // or put it back (reversible choice; nothing is carried over silently, nothing is sent). "Yours" means different from the
+  // wording the Studio itself last loaded (preset example or applied recipe). Setups, drafts and continuations clear the offer.
+  const wordingUndo=element('div','ux-wording-undo');wordingUndo.id='uxWordingUndo';wordingUndo.hidden=true;wordingUndo.setAttribute('role','status');
+  const wordingText=element('span'),wordingRestore=element('button','','Put my wording back'),wordingDismiss=element('button','subtle','Keep the recipe wording');
+  wordingRestore.type=wordingDismiss.type='button';wordingRestore.id='uxWordingUndoRestore';wordingDismiss.id='uxWordingUndoDismiss';wordingUndo.append(wordingText,wordingRestore,wordingDismiss);
+  q('#positiveWrap')?.after(wordingUndo);let wordingKept=null,wordingBase=null,wordingDepth=0;
+  const wording=()=>({positive:q('#positive')?.value??'',negative:q('#negative')?.value??''});
+  const presetWording=p=>({positive:p?.defaults?.positive||'',negative:p?.defaults?.negative||''});
+  const forgetWording=()=>{wordingKept=null;wordingUndo.hidden=true;};
+  function offerWording(name){const kept=wordingKept,now=wording();if(!kept||!selected)return;
+    const positive=kept.positive!==null&&kept.positive!==now.positive,negativeFits=!!selected.negative&&!!q('#negative');
+    const negative=kept.negative!==null&&negativeFits&&kept.negative!==now.negative,lost=kept.negative!==null&&!negativeFits;
+    if(!positive&&!negative&&!lost){forgetWording();return;}
+    kept.loaded=now;kept.restorable=positive||negative;wordingRestore.hidden=!kept.restorable;
+    wordingText.textContent=(kept.restorable?name+' loaded its own wording. Yours is kept until you type or choose.':'')+(lost?(kept.restorable?' ':'')+selected.name+' has no negative prompt, so your negative wording is not used: “'+kept.negative.slice(0,160)+(kept.negative.length>160?'…':'')+'”':'');
+    wordingUndo.hidden=false;if(kept.restorable&&!selected.runtime_block)message('Loaded with its own wording. Yours is kept under the prompt: Put my wording back, or keep typing.');}
+  function trackWording(name,kind){const original=window[name];window[name]=function(...args){
+    const outer=wordingDepth===0,before=outer?wording():null,base=wordingBase||presetWording(selected);wordingDepth++;
+    let result;try{result=original.apply(this,args);}finally{wordingDepth--;}
+    if(!outer)return result;
+    if(kind==='setup'||kind==='preset'&&args[2]===true){forgetWording();wordingBase=presetWording(selected);return result;}
+    const own=key=>!!String(before[key]).trim()&&before[key]!==base[key]?before[key]:null,positive=own('positive'),negative=own('negative');
+    // Your wording replaces an older offer; a load over untouched wording keeps the older one (a misclick in between).
+    if(positive!==null||negative!==null)wordingKept={positive,negative};
+    const recipe=kind==='recipe'?args[0]:null;wordingBase=recipe?{positive:recipe.controls?.positive??wording().positive,negative:recipe.controls?.negative??wording().negative}:presetWording(selected);
+    // Measured after the caller finishes (a bundle apply sets its own wording in the same task).
+    if(wordingKept){const label=recipe?'Loading '+(recipe.name||'this recipe'):'Switching to '+selected.name;queueMicrotask(()=>offerWording(label));}
+    return result;};}
+  trackWording('selectPreset','preset');trackWording('applyRecipe','recipe');trackWording('applySaved','setup');
+  wordingRestore.onclick=()=>{const kept=wordingKept;forgetWording();if(!kept||!selected)return;const now=wording(),field=q('#positive');
+    // Anything that changed the wording after the switch wins; the offer never overwrites it.
+    if(now.positive!==kept.loaded?.positive||now.negative!==kept.loaded?.negative){announce('The wording changed after the switch, so nothing was replaced.');return;}
+    if(kept.positive!==null&&kept.positive!==now.positive){field.value=kept.positive;field.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(kept.negative!==null&&selected.negative&&q('#negative')){q('#negative').value=kept.negative;q('#negative').dispatchEvent(new Event('input',{bubbles:true}));}
+    field.focus();announce('Your wording is back. The recipe stays '+selected.name+'.');};
+  wordingDismiss.onclick=()=>{forgetWording();q('#positive')?.focus();};
+  for(const id of ['positive','negative'])q('#'+id)?.addEventListener('input',()=>{const kept=wordingKept;if(kept?.loaded&&(wording().positive!==kept.loaded.positive||wording().negative!==kept.loaded.negative))forgetWording();});
   after('renderSelected',syncCreate);after('updateReady',syncReady);
   const originalUploadRoleFile=uploadRoleFile;uploadRoleFile=async function(...args){const epoch=referenceEpoch,applied=await originalUploadRoleFile(...args);if(applied&&epoch===referenceEpoch){draftDirty=true;saveDraft();}return applied;};
   // Collapse six overlapping output actions into one reviewed, compatible handoff.

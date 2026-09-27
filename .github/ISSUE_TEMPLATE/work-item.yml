@@ -1,6 +1,5 @@
 name: Structured work item
 description: Record an epic, slice, defect, experiment, decision or research item without creating another state store.
-title: ""
 body:
   - type: dropdown
     id: work_type

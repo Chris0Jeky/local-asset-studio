@@ -28,8 +28,17 @@ MAX_INPUT_BYTES = 1024 * 1024
 MAX_ITEMS = 1000
 _SHA = re.compile(r"[0-9a-f]{40}")
 _CAPTURED = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
-_Q_OPEN = re.compile(r"^\*\*(q-\d+)\s+—\s+(.+?)\s+\(open\)\.\*\*(?:\s|$)", re.IGNORECASE)
-_UNCHECKED = re.compile(r"^\s*-\s*\[\s\]\s+(.+?)\s*$")
+_Q_OPEN = re.compile(
+    r"^\*\*(q-\d+)\s+[-\u2013\u2014]\s+(.+?)"
+    r"(?:\s+\(open(?:;[^)]*)?\)|:\s+open(?:\s+\([^)]*\))?)\.?\*\*(?:\s|$)",
+    re.IGNORECASE,
+)
+_UNCHECKED = re.compile(
+    r"^-\s*\[\s\]\s+\*\*([a-z0-9]+(?:-[a-z0-9]+)*)\*\*\s+"
+    r"\(owner (?:action|decisions?)(?:;[^)]*)?\):\s+(.+?)\s*$",
+    re.IGNORECASE,
+)
+_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 _REPOSITORY_FIELDS = ("head_sha", "default_branch", "facts_sha", "catalog_blob_sha", "human_todo_blob_sha")
 
 
@@ -300,19 +309,33 @@ def catalog_facts(root: Path):
 
 
 def human_todo_facts(root: Path):
+    """Observe explicit open q-headings and named owner action/decision checkboxes.
+
+    Generic or nested checklists and fenced examples are not owner decisions.
+    Parsing never changes the backlog or infers acceptance from narrative text.
+    """
     raw, blob = _observe_local_file(root, "HUMAN_TODO.md", "HUMAN_TODO.md")
     try:
         lines = raw.decode("utf-8").splitlines()
     except UnicodeDecodeError as exc:
         raise ValueError("HUMAN_TODO.md must be UTF-8") from exc
-    items = []
+    items, seen = [], set()
+    fence = None
     for line in lines:
-        match = _Q_OPEN.match(line)
-        if match:
-            items.append({"id": match.group(1).lower(), "text": match.group(2).strip()}); continue
-        match = _UNCHECKED.match(line)
-        if match:
-            items.append({"id": None, "text": match.group(1).strip()})
+        marker = _FENCE.match(line)
+        if fence is not None:
+            if (marker and marker[1][0] == fence[0] and len(marker[1]) >= fence[1]
+                    and not marker[2].strip()):
+                fence = None
+            continue
+        if marker:
+            fence = (marker[1][0], len(marker[1]))
+            continue
+        match = _Q_OPEN.match(line) or _UNCHECKED.match(line)
+        if match and match[1].lower() not in seen:
+            identifier = match[1].lower()
+            seen.add(identifier)
+            items.append({"id": identifier, "text": match[2].strip()})
     return {"blob_sha": blob, "open_count": len(items), "items": items}
 
 
