@@ -5651,16 +5651,15 @@
       ],
       "variants": [
         {
-          "name": "Style lighter, pose looser",
+          "name": "Style lighter (0.3)",
           "controls": {
-            "style_weight": 0.5,
-            "pose_strength": 0.7
+            "style_weight": 0.3
           }
         },
         {
-          "name": "Style stronger",
+          "name": "Style stronger (0.7, multi-picture boards)",
           "controls": {
-            "style_weight": 0.9
+            "style_weight": 0.7
           }
         },
         {
@@ -5675,7 +5674,7 @@
         }
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.4 / 0.9) favour the pose. The style default was 0.7 until 27 Sep 2026: with a single painterly picture as the board it burned the colours on 18 of 18 renders, while 0.45 and 0.3 did not (experiments/curated/overnight-20260923/stylepose-pack/); 0.7 stays as a variant for averaged multi-picture boards. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
       "reference_slots": [
         {
           "role": "style",
