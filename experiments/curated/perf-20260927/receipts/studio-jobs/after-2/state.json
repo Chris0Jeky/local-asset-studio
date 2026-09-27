@@ -1,0 +1,226 @@
+{
+  "id": "a146e6cf-b3fa-4e07-98e5-f45e9a2fd40a",
+  "status": "completed",
+  "created_at": 1790495710.0550973,
+  "preset_id": "qwen21-rgba",
+  "preset_name": "Qwen-Image 2.1 - Transparent sprite (RGBA)",
+  "controls": {
+    "positive": "A quiet geometric line illustration of an open empty folio with one inviting blank picture frame resting on its right page and a small four-point star above it, thin even neutral grey line work with one soft warm amber accent, flat minimal style, centred, full object visible, no text.",
+    "width": 1024,
+    "height": 1024,
+    "seed": 2026092772
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "85d0f8a6-537b-48b6-ae37-9077f143773a"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "85d0f8a6-537b-48b6-ae37-9077f143773a",
+      "seed": 2026092772,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+            "type": "qwen_image",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "TextEncodeQwenImage21",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "prompt": [
+              "10",
+              0
+            ],
+            "negative_prompt": "",
+            "resolution": 1024
+          }
+        },
+        "5": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 1024,
+            "height": 1024,
+            "batch_size": 1
+          }
+        },
+        "6": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "4",
+              1
+            ],
+            "latent_image": [
+              "5",
+              0
+            ],
+            "seed": 2026092772,
+            "steps": 25,
+            "cfg": 1.0,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1.0
+          }
+        },
+        "7": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "6",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "8": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "7",
+              0
+            ],
+            "filename_prefix": "Studio/qwen21-rgba"
+          }
+        },
+        "9": {
+          "class_type": "StringConcatenate",
+          "inputs": {
+            "string_a": "This is an RGBA image with transparency.",
+            "string_b": "A quiet geometric line illustration of an open empty folio with one inviting blank picture frame resting on its right page and a small four-point star above it, thin even neutral grey line work with one soft warm amber accent, flat minimal style, centred, full object visible, no text.",
+            "delimiter": " "
+          }
+        },
+        "10": {
+          "class_type": "StringConcatenate",
+          "inputs": {
+            "string_a": [
+              "9",
+              0
+            ],
+            "string_b": "The image has alpha channel and the background is transparent.",
+            "delimiter": " "
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 3404161024,
+        "peak_dedicated_bytes": 14605520896,
+        "samples": 130,
+        "spilled": true,
+        "settled_shared_bytes": 82272256,
+        "lingering": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "qwen21-rgba_00013_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092772,
+      "prompt_id": "85d0f8a6-537b-48b6-ae37-9077f143773a",
+      "media_type": "image",
+      "asset_id": "f4a88ff8c473559e8504fd33f0b10051"
+    }
+  ],
+  "message": "Complete. GPU memory overflowed 3.2 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+  "graph_path": "workflows\\api\\qwen21-rgba-api.json",
+  "seed_bindings": [
+    [
+      "6",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "9",
+        "string_b"
+      ]
+    ],
+    "negative": [
+      [
+        "4",
+        "negative_prompt"
+      ]
+    ]
+  },
+  "parent_assets": [],
+  "label": "lab3 perf after-2",
+  "references": [],
+  "comfy_root": "C:\\AI\\experiments\\qwen-image-21\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8196",
+  "host_commit_readings": [
+    {
+      "available_bytes": 28901036032,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 73883054080,
+      "unknown_reason": null,
+      "phase": "prepared",
+      "recorded_at": 1790495710.0550973,
+      "deferred": true
+    },
+    {
+      "available_bytes": 40964661248,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 61819428864,
+      "unknown_reason": null,
+      "phase": "pre-submit",
+      "index": 0,
+      "recorded_at": 1790495717.1770325
+    }
+  ],
+  "started_at": 1790495710.0625253,
+  "commit_releases": [
+    {
+      "index": 0,
+      "url": "http://127.0.0.1:8196",
+      "required_bytes": 34359738368,
+      "before_available_bytes": 28883578880,
+      "before_committed_bytes": 73900511232,
+      "limit_bytes": 102784090112,
+      "requested_at": 1790495710.155094,
+      "after_available_bytes": 40965312512,
+      "after_committed_bytes": 61818777600,
+      "samples": 15,
+      "outcome": "released",
+      "waited_seconds": 7.0
+    }
+  ],
+  "gpu_spill": true,
+  "finished_at": 1790495780.8413289,
+  "elapsed_seconds": 70.77880358695984
+}

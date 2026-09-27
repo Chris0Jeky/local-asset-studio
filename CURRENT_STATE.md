@@ -1,5 +1,17 @@
 # Current state — 27 September 2026
 
+## Back-to-back Qwen-Image 2.1 jobs no longer need a manual `/free` (opt-in) — 27 September 2026 (08:46-09:05 local)
+
+A `qwen21-rgba` job leaves the qwen21 ComfyUI holding enough host commit that the next heavy job reads 26.5-27.6 GiB of headroom, and the 32 GiB gate refused it. With current main, 7 creates were refused across three runs. Every job after the first needed a manual `POST /free`, which crossed 32 GiB after 7.0-11.0 s. A `batch_count` 3 job ended `partial` after output 1 (job `66353ab7`, prompt `b3a81b85`).
+
+The new opt-in `commit_gate_release_seconds` (branch `claude/lab3-commit-release`, #305) keeps the gate itself unchanged. Instead of refusing a measured shortfall, the Studio queues the job and, just before `/prompt`, frees that job's own idle backend. It then admits only on a fresh passing reading. Result: 6 of 6 outputs completed with no refusal and no manual step, after releases of 7.0-11.5 s:
+- three sequential jobs, prompts `f3801bb7`, `85d0f8a6`, `8d431fc8`, 66.1-71.2 s each including the release;
+- one batch of 3, prompts `5872c64a`, `6e5df8d0`, `a7b637fc`.
+
+Nothing got faster: the reload after a release is the same cold load, and the generation part was 3-10 s slower on three samples, cause not isolated. A manual `/free` measured every 0.2 s first *lowered* headroom from 27.4 to 12.7 GiB, as the weights moved into RAM, before it settled at 46.2 GiB. So the release is skipped below 18 GiB.
+
+The owner's `config/local.json` now has `commit_gate_release_seconds: 45`. It has no effect until the PR merges and the Studio restarts. Receipts are in `experiments/curated/perf-20260927/`. This was a scheduling benchmark only: no quality judgement, not art acceptance.
+
 ## Restyle (WAI) denoise sweep, blind — 27 September 2026 (06:43-07:04 local)
 
 Eight direct-ComfyUI runs on the primary of the shipped `restyle-wai` graph: two original SFW sources × denoise 0.6/0.75/0.85/0.95, seed 2026092761, other controls at the defaults. Prompt IDs: platform-d60 `081f0317`, platform-d75 `017a3589`, platform-d85 `253fa1b5`, platform-d95 `87a2e871`, carto-d60 `b4c77d34`, carto-d75 `2f946d69`, carto-d85 `d1d7946c`, carto-d95 `e16b10e9`. Blind agent verdicts: 0.60 and 0.75 kept layout and props on both sources (keep, control 4); the 0.85 default and 0.95 dropped named props or framing (fixable, control 3). The style scored 4-5 at every level. Jobs took 107-198 s at 79.3-85.3 % peak host commit; there was no #89 crash. The judgements recorded no face or hand crops and four of eight are whole-frame only, so they fall short of the rubric's crop evidence and need a re-judge before they carry rubric weight. The catalog default is unchanged; making 0.75 the default is proposed in `experiments/curated/restyle-denoise-20260927/` (refs #351). Generated and agent-inspected only: not art acceptance and not licence clearance.
