@@ -249,14 +249,31 @@
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
   function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes','outfit'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
   function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty();}
+  // Each engine's time per picture: this PC's own completed runs of it first; otherwise the read-only local estimate
+  // (POST /api/estimate reads timing history and runs nothing), asked once per engine and canvas; otherwise say so (K13).
+  const engineEstimates=new Map();let engineEstimateQueue=Promise.resolve();
+  function engineEstimate(preset){
+    const controls=values(),size={};for(const key of ['width','height'])if(controls[key]!=null&&controls[key]!=='')size[key]=controls[key];
+    const payload={preset_id:preset.id,controls:size,batch_count:1,reference_count:estimateReferenceCount()},key=JSON.stringify(payload);
+    if(!engineEstimates.has(key)){
+      if(engineEstimates.size>60)engineEstimates.clear();engineEstimates.set(key,null);
+      engineEstimateQueue=engineEstimateQueue.then(()=>api('/api/estimate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)}))
+        .then(value=>{engineEstimates.set(key,value);},()=>{engineEstimates.set(key,{available:false});}).then(()=>{engineMarkup='';syncCombineEngines();});
+    }
+    return engineEstimates.get(key);
+  }
+  function engineTime(preset){
+    const here=StudioContinuation.combineTiming(jobs,preset.id);
+    if(here)return '~'+durationLabel(here.seconds)+' per picture here · '+here.count+' run'+(here.count===1?'':'s');
+    const guess=engineEstimate(preset);
+    return guess?.available&&guess.confidence!=='none'?'Estimate ~'+durationLabel(guess.estimate_seconds)+' per picture · '+guess.confidence+' confidence':'No timing on this PC yet';
+  }
   function syncCombineEngines(){
     enginePanel.hidden=!continuationState||!StudioContinuation.combineKind(selected);if(enginePanel.hidden){engineMarkup='';return;}
     const options=StudioContinuation.destinations('combine',catalog.presets,continuationSource),busy=combineBusy();
     const markup='<h3>Try this pair with another recipe</h3><p>Pictures and answers stay here. Each recipe keeps its edited wording. Generate starts the next run.</p><div class="ux-engine-options">'+options.map(p=>{
-      const reason=StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||'',run=jobs.find(j=>j.preset_id===p.id&&j.status==='completed'&&Number(j.elapsed_seconds)>0);
-      const label=StudioContinuation.combineEngineLabel(p);
-      const timing=run?'Last completed run: '+durationLabel(run.elapsed_seconds)+' · '+(run.batch_count||1)+' output(s)':'No completed timing yet';
-      return '<button type="button" data-ux-engine="'+escape(p.id)+'" aria-pressed="'+(p.id===selected.id)+'" '+(reason||busy?'disabled':'')+' title="'+escape(reason||p.name)+'"><b>'+escape(label)+'</b><small>'+escape(timing)+'</small>'+(reason?'<small>'+escape(reason)+'</small>':'')+'</button>';
+      const reason=StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||'',hint=StudioContinuation.combineEngineHint(p);
+      return '<button type="button" data-ux-engine="'+escape(p.id)+'" aria-pressed="'+(p.id===selected.id)+'" '+(reason||busy?'disabled':'')+' title="'+escape(reason||p.name)+'"><b>'+escape(StudioContinuation.combineEngineLabel(p))+'</b>'+(hint?'<small class="ux-engine-hint">'+escape(hint)+'</small>':'')+'<small>'+escape(engineTime(p))+'</small>'+(reason?'<small>'+escape(reason)+'</small>':'')+'</button>';
     }).join('')+'</div>';
     if(markup!==engineMarkup){engineMarkup=markup;enginePanel.innerHTML=markup;}
   }
