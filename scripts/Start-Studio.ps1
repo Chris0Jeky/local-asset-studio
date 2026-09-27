@@ -111,8 +111,11 @@ if (-not $ready) {
         try { $health = Invoke-RestMethod ($studioUrl + '/api/identity') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio' } catch { }
         if ($ready) { break }
         if ($process.HasExited) {
-            try { $health = Invoke-RestMethod ($studioUrl + '/api/identity') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio' } catch { }
-            break
+            # A losing child exits on its failed bind while the winner, already listening, may still be initialising:
+            # keep polling to the deadline while anything listens on 8191. Nothing listening means nobody will answer.
+            $listening = $true
+            try { $listening = @(Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort 8191 -State Listen -ErrorAction SilentlyContinue).Count -gt 0 } catch { }
+            if (-not $listening) { break }
         }
     }
     if ($ready -and $health.workspace -ne $repoRoot) {

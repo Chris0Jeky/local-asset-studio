@@ -32,6 +32,7 @@ $ErrorActionPreference = 'Stop'
 $global:RaceProbe = @{ failed = $false; message = '' }
 $global:RaceWorkspace = $PSScriptRoot
 $global:RaceStarted = $false
+$global:IdentityCalls = 0
 function Invoke-RestMethod {
     param($Uri, $TimeoutSec)
     if ($Uri -like '*/system_stats') {
@@ -39,6 +40,7 @@ function Invoke-RestMethod {
     }
     if ($Uri.EndsWith('/api/identity')) {
         if (-not $global:RaceStarted) { throw 'Inert offline endpoint' }
+        $global:IdentityCalls += 1
         __IDENTITY__
     }
     throw 'Inert offline endpoint'
@@ -52,6 +54,7 @@ function Start-Process {
 function Start-Sleep { param($Seconds) }
 function Get-NetTCPConnection {
     param($LocalAddress, $LocalPort, $State, $ErrorAction)
+    if ('__OWNING__' -eq 'none') { return }
     return [pscustomobject]@{ OwningProcess = __OWNING__ }
 }
 function Get-CimInstance {
@@ -61,11 +64,14 @@ function Get-CimInstance {
 function powershell.exe { $global:LASTEXITCODE = 0 }
 try { & (Join-Path $PSScriptRoot 'scripts/Start-Studio.ps1') -NoBrowser -Detached }
 catch { $global:RaceProbe.failed = $true; $global:RaceProbe.message = ($_ | Out-String) }
+$global:RaceProbe.identity_calls = $global:IdentityCalls
 $global:RaceProbe | ConvertTo-Json -Compress
 '''
 
 READY_IDENTITY = "return @{ app = 'local-asset-studio'; workspace = $global:RaceWorkspace }"
 NEVER_IDENTITY = "throw 'Inert offline endpoint'"
+# The winner binds 8191 before constructing Studio, so /api/identity answers only after a few polls.
+SLOW_IDENTITY = "if ($global:IdentityCalls -lt 5) { throw 'Winner still initialising' }; " + READY_IDENTITY
 
 
 @unittest.skipUnless(POWERSHELL, 'PowerShell executable required for inert launcher race')
@@ -115,6 +121,19 @@ class LauncherRaceTests(unittest.TestCase):
     def test_unrelated_listener_records_no_pid(self):
         outcome, pid_text = self.run_launcher(False, 5555, READY_IDENTITY, parent=1)
         self.assertFalse(outcome['failed'], outcome)
+        self.assertIsNone(pid_text)
+
+    def test_lost_race_waits_for_a_slow_winner_past_the_childs_exit(self):
+        outcome, pid_text = self.run_launcher(True, 4242, SLOW_IDENTITY)
+        self.assertFalse(outcome['failed'], outcome)
+        self.assertEqual(outcome['identity_calls'], 5)
+        self.assertIsNone(pid_text)
+
+    def test_dead_child_with_nothing_listening_fails_without_waiting(self):
+        outcome, pid_text = self.run_launcher(True, 'none', NEVER_IDENTITY)
+        self.assertTrue(outcome['failed'], outcome)
+        self.assertIn('Asset Studio exited', outcome['message'])
+        self.assertEqual(outcome['identity_calls'], 1)
         self.assertIsNone(pid_text)
 
     def test_dead_child_with_no_server_fails(self):
