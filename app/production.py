@@ -383,6 +383,11 @@ class Production:
             plan['sha256']=fingerprint(plan)
             state={'status':'planned','message':'Ready for explicit Start. No generation submitted.','attempts':{},'artifacts':[],
                    'stop_requested':False,'review':{'status':'unreviewed','notes':''}}
+            # Reservations only grow, so a new plan larger than what is left of the root allowance could never start.
+            # An existing identity keeps its own "already imported" refusal from _insert_materialized.
+            budget=db.execute('SELECT allowance,reserved FROM budgets WHERE id=?',(root_id,)).fetchone()
+            if budget is not None and len(stages)>budget['allowance']-budget['reserved'] and not db.execute('SELECT 1 FROM projects WHERE id=?',(identifier,)).fetchone():
+                raise ValueError(f"Comparison needs {len(stages)} generations but the root experiment's remaining generation budget is {budget['allowance']-budget['reserved']}")
             self._insert_materialized(db,identifier,root_id,plan,state)
         project_storage.complete(self.root,identifier,plan)
         return self.get(identifier)
