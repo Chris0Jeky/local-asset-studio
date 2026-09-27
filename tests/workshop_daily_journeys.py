@@ -223,6 +223,10 @@ let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{a
             '{id:"kept",name:"Kept review",kind:"comparison",created_at:'+now+'-3600,state:{status:"awaiting_review"}}]', '[]')
         self.assertIn('Kept review', desk); self.assertNotIn('Put away review', desk)
         self.assertIn('1 plan(s) put away', desk)
+        # A put-away plan that was never on the desk (completed, reviewed) is still counted, so none vanishes silently.
+        desk = self.load_desk('[{id:"done",name:"Reviewed study",kind:"comparison",created_at:'+now+'-3600,put_away:true,state:{status:"reviewed"}},'
+            '{id:"exp",name:"Finished export",kind:"native",created_at:'+now+'-3600,put_away:true,state:{status:"completed"}}]', '[]')
+        self.assertIn('2 plan(s) put away', desk); self.assertEqual(self.page.locator('#uxAttention .ux-desk-note a[href="/#production"]').count(), 1)
         desk = self.load_desk('[{id:"kept",name:"Kept review",kind:"comparison",created_at:'+now+'-3600,state:{status:"awaiting_review"}}]', '[]')
         self.assertNotIn('put away', desk)
 

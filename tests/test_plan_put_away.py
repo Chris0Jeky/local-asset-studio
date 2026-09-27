@@ -48,6 +48,17 @@ class PlanPutAwayTests(unittest.TestCase):
         self.assertFalse(plan['put_away'], 'the owner put away a planned plan, not this failure'); self.assertTrue(plan['can_put_away'])
         self.assertEqual(self.lab._get(self.id)['state']['put_away']['status'], 'planned', 'the marker stays as history')
 
+    def test_the_same_status_after_a_resume_is_a_change_and_a_restart_is_not(self):
+        # #1161 review (Codex): put away while interrupted, resumed, interrupted again must come back.
+        self.lab._mutate(self.id, status='interrupted', message='Studio restarted. Inspect known jobs before explicitly resuming; nothing was resubmitted.')
+        self.assertTrue(self.lab.put_away(self.id, {'put_away': True})['put_away'])
+        restarted = FakeStudio(self.fixture.root, []).production
+        self.assertTrue(restarted.get(self.id)['put_away'], 'a restart that changes nothing keeps it put away')
+        restarted._mutate(self.id, status='queued', started_at=5000.0, message='Queued to resume')
+        restarted._mutate(self.id, status='interrupted', message='Studio restarted. Inspect known jobs before explicitly resuming; nothing was resubmitted.')
+        again = restarted.get(self.id)
+        self.assertEqual(again['state']['status'], 'interrupted'); self.assertFalse(again['put_away']); self.assertTrue(again['can_put_away'])
+
     def test_a_running_plan_cannot_be_put_away_and_bad_bodies_are_refused(self):
         for status in ('queued', 'running', 'observing'):
             with self.subTest(status=status):

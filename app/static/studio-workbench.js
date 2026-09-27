@@ -909,7 +909,7 @@
     // a plan with no readable date cannot be shown to be old, so it stays too. planActivity is production.js's.
     const now=Date.now()/1000,stale=p=>!U.ACTIVE.includes(p.state?.status)&&typeof planActivity==='function'&&(at=>at!==null&&now-at>7*86400)(planActivity(p));
     // An owner put-away plan (#940) leaves the desk too; Runs & review → Status: All keeps it one click away.
-    const allDeskPlans=[...s.reviewPlans,...s.attentionPlans,...s.activePlans,...s.prepared],putAwayPlans=allDeskPlans.filter(p=>p.put_away===true).length;
+    const allDeskPlans=[...s.reviewPlans,...s.attentionPlans,...s.activePlans,...s.prepared],putAwayPlans=(plans||[]).filter(p=>p.put_away===true).length;
     const deskPlans=allDeskPlans.filter(p=>p.put_away!==true),olderPlans=deskPlans.filter(stale).length;
     const ordered=deskPlans.filter(p=>!stale(p)).slice(0,6),seenJobs=new Set((plans||[]).flatMap(p=>(p.stages||[]).map(stage=>stage.job?.id).filter(Boolean)));
     const records=ordered.map(p=>'<a class="ux-desk-row" href="'+(p.state.status==='awaiting_review'&&p.kind==='comparison'?'/review.html?project='+encodeURIComponent(p.id):p.kind==='av'?'/av.html?project='+encodeURIComponent(p.id):p.kind==='voice'?'/voice.html':'/#production')+'" data-ux-project="'+escape(p.id)+'"><span class="ux-state-dot '+escape(p.state.status)+'" aria-hidden="true"></span><span><b>'+escape(p.name)+'</b><small>'+escape(p.state.status.replaceAll('_',' '))+' · '+escape(p.kind)+'</small></span><span aria-hidden="true">↗</span></a>');

@@ -33,12 +33,23 @@ def fingerprint(value):
 PLAN_LIVE_STATUSES=('queued','submitting','running','waiting','observing','rendering')
 
 
-def put_away_state(state):
-    """The owner's put-away counts only while the plan stays live-free and in the status it was put away in (#940).
+# Rewritten on every restart without anything happening to the plan, so they cannot count as a change.
+PUT_AWAY_VOLATILE=('put_away','storage_issue','time_budget','time_budget_error')
 
-    Any later status change (a resume, a review, a failure) brings the plan back on its own; the marker stays as history."""
+
+def put_away_revision(state):
+    """What the owner saw when putting the plan away: the whole state minus restart-volatile keys."""
+    return fingerprint({k:v for k,v in state.items() if k not in PUT_AWAY_VOLATILE})
+
+
+def put_away_state(state):
+    """The owner's put-away counts only while the plan is settled and unchanged since it was put away (#940).
+
+    Any later change (a resume with its new attempts, a review, a new interruption message) brings the plan back on its
+    own, even when the status label ends up the same; the marker stays as history."""
     marker=state.get('put_away') if isinstance(state,dict) else None
-    return (isinstance(marker,dict) and marker.get('status')==state.get('status') and state.get('status') not in PLAN_LIVE_STATUSES)
+    return (isinstance(marker,dict) and state.get('status') not in PLAN_LIVE_STATUSES
+            and marker.get('status')==state.get('status') and marker.get('revision')==put_away_revision(state))
 
 
 class Production:
@@ -618,7 +629,7 @@ class Production:
             if away==put_away_state(state):return self.get(identifier)
             if away:
                 if state['status'] in PLAN_LIVE_STATUSES:raise ValueError('This plan is running; wait for it to settle before putting it away')
-                state['put_away']={'at':time.time(),'status':state['status']}
+                state['put_away']={'at':time.time(),'status':state['status'],'revision':put_away_revision(state)}
             else:state.pop('put_away',None)
             self._state(identifier,state)
         return self.get(identifier)
