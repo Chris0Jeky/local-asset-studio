@@ -40,7 +40,7 @@ VERSION = 1
 OPERATION = "parallax.finish.v1"
 STAGES = ("plate", "isolate")
 STAGE_NAMES = {"plate": "clean plate", "isolate": "isolate"}
-SIZE_LIMITS = (512, 2048)
+SIZE_LIMITS = (512, 1536)       # inside the recipe's width/height limits (the Studio default [64, 1536]), so Prepare never outruns Generate
 SIZE_MULTIPLE = 16
 MAX_PIXELS = 1_600_000          # the lab ran 1344 x 768 (1.03 MP); Klein edits the picture at about one megapixel
 MAX_VIEWS, MAX_POINTS, OBJECTS_LIMIT = 4, 16, 240
@@ -398,7 +398,9 @@ def layers(source, plate, isolate, polygons, parameters=PARAMETERS):
 
 def summary(record):
     layer_words = "far / mid / near" if "far" in record["layers"] else "mid / near (no far view marked)"
-    return "%s layers recomposite to the source within %.2f/255 (worst pixel %d/255); near %.1f %% of the picture. Review the 3-frame strip; a number is not art acceptance." % (
+    fallback = [name for name, item in (record.get("registration") or {}).items() if item.get("fallback")]
+    warning = ("Registration fell back to a plain resize for the %s edit; check the matte edges. " % " and ".join(fallback)) if fallback else ""
+    return warning + "%s layers recomposite to the source within %.2f/255 (worst pixel %d/255); near %.1f %% of the picture. Review the 3-frame strip; a number is not art acceptance." % (
         layer_words, record["recomposite_mean_abs_error"], record["recomposite_max_abs_error"], record["near_percent"])
 
 

@@ -186,14 +186,16 @@ class LayerTests(unittest.TestCase):
         self.assertIsNone(images["far"]); self.assertEqual(record["layers"], ["mid", "near"]); self.assertEqual(record["shifts_px"], [10, 24])
         self.assertLess(record["recomposite_mean_abs_error"], 1.0)
         self.assertIn("no far view marked", parallax.summary(record))
+        record["registration"] = {"plate": {"fallback": None}, "isolate": {"fallback": "No registration: ..."}}
+        self.assertTrue(parallax.summary(record).startswith("Registration fell back to a plain resize for the isolate edit"))
 
 
 class ContractTests(unittest.TestCase):
     def test_eligibility_names_the_size(self):
         self.assertIsNone(parallax.eligibility(1344, 768))
         self.assertIn("1000 × 768", parallax.eligibility(1000, 768)); self.assertIn("16 px grid", parallax.eligibility(1000, 768))
-        self.assertIn("between 512 and 2048", parallax.eligibility(256, 768))
-        self.assertIn("megapixels", parallax.eligibility(1920, 1088))
+        self.assertIn("between 512 and 1536", parallax.eligibility(256, 768)); self.assertIn("2048 × 768", parallax.eligibility(2048, 768))
+        self.assertIn("megapixels", parallax.eligibility(1536, 1152))
 
     def test_views_objects_and_plan_identity(self):
         self.assertEqual(parallax._polygons([[10, 20, 50, 60]], 100, 100), [[[10, 20], [49, 20], [49, 59], [10, 59]]])
@@ -217,7 +219,7 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(ROUTE["graph"], flux["graph"]); self.assertTrue(flux["verified"])
         self.assertEqual({k: ROUTE[k] for k in ("positive", "seed", "width", "height", "reference", "bindings_extra")}, {k: flux[k] for k in ("positive", "seed", "width", "height", "reference", "bindings_extra")})
         self.assertIn("more than one", parallax.route_problems([ROUTE, dict(ROUTE, id="copy")])[0])
-        self.assertTrue(parallax.route_problems([dict(ROUTE, requires_rgba_mask=True)])); self.assertTrue(parallax.route_problems([dict(ROUTE, width=None)]))
+        self.assertTrue(parallax.route_problems([dict(ROUTE, requires_rgba_mask=True)])); self.assertTrue(parallax.route_problems([dict(ROUTE, dimension_limits=[64, 1024])])); self.assertTrue(parallax.route_problems([dict(ROUTE, width=None)]))
         graph = json.loads((ROOT / ROUTE["graph"]).read_text(encoding="utf-8"))
         capability = continuation.capability(ROUTE, graph)
         self.assertEqual(capability["operation"], "parallax-stage")
@@ -312,6 +314,16 @@ class RouteTests(unittest.TestCase):
             studio.prepare({"preset_id": "demo", "parallax": claim, "controls": {}, "parent_assets": [claim["source_asset_id"]]})
         (self.root / "experiments/uploads" / stage["file"]).write_bytes(png(Image.new("RGB", (512, 512))))
         with self.assertRaisesRegex(ValueError, "changed or is missing"): studio.prepare(self.payload(stage))
+
+    def test_every_eligible_edge_size_binds_at_generate(self):
+        """Review M1 on #1231: a picture the control accepts must never be refused at Generate for its size."""
+        studio = self.studio()
+        for size in ((1536, 1024), (1536, 512), (512, 1536)):
+            with self.subTest(size=size):
+                self.assertIsNone(parallax.eligibility(*size))
+                stage = parallax.prepare(studio, {"asset_id": self.source(studio, speckle(size, 4))["id"], "objects": OBJECTS})
+                _, graph, _, _, _ = studio.prepare(self.payload(stage))
+                self.assertEqual((graph["10"]["inputs"]["width"], graph["10"]["inputs"]["height"]), size)
 
     def test_next_stage_loads_the_isolate_wording_for_the_same_plan(self):
         studio = self.studio(); stage = self.prepared(studio)

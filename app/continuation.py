@@ -358,4 +358,6 @@ def parallax_route_problems(presets):
         if not preset.get("positive") or not preset.get("width") or not preset.get("height"): problems.append(preset["id"] + ": a parallax route binds positive, width and height")
         if preset.get("requires_rgba_mask") or preset.get("tile_route"): problems.append(preset["id"] + ": a parallax route is a whole-picture edit, not a masked repaint or a tile")
         if preset.get("modality", "image") != "image": problems.append(preset["id"] + ": a parallax route makes pictures")
+        limits = preset.get("dimension_limits", [64, 1536])
+        if not (limits[0] <= 512 and 1536 <= limits[1]): problems.append(preset["id"] + ": a parallax route must accept every size Make parallax layers offers (512-1536 px a side)")
     return problems

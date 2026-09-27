@@ -3,7 +3,7 @@
 ## Split a scene into parallax layers — 27 September 2026
 
 Refs #1219 (owner decision, 27 September 2026). A picture's asset panel now has a **Make parallax layers** control. It is
-disabled, with its reason beside it, for a picture outside 512-2048 px a side, off the 16 px grid or above 1.6 megapixels
+disabled, with its reason beside it, for a picture outside 512-1536 px a side, off the 16 px grid or above 1.6 megapixels
 (*this picture is 128 × 128.*), and until the foreground is named (*Name the foreground to lift out first*). The far view is
 optional and yours: type boxes as `x0,y0,x1,y1`, or open *Mark the far view on the picture* and drag them inside the window
 glass or sky; no box gives two layers (mid and near). One press attaches the picture unchanged and opens *Parallax layers •
