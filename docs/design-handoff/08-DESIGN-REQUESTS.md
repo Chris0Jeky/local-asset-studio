@@ -31,4 +31,4 @@ states drawn, not just the happy path.
 ## Out of scope for Claude Design
 
 Backend changes (job cancel, recipe thumbnails generation, server-side search), model/graph work, NSFW lab page,
-commissioning skin artwork (deferred by the owner), and any claim that a design improves render quality.
+producing skin artwork (a separate wishlist workstream, owner-approved 27 Sep 2026), and any claim that a design improves render quality.

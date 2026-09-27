@@ -42,7 +42,8 @@ Minimal Pro and Sci-Fi Noir, and skins applied app-wide.
 
 Rules that bind every skin: art is text-free and never looks clickable; status, labels and progress are HTML; errors
 keep their semantic colour in every skin; a skin is recognisable from materials, not hue alone; "Hide environment" is
-independent of skin; the owner deferred commissioning artwork (HUMAN_TODO `adaptive-pilot-world`, option B), so
+independent of skin; the owner asked on 27 Sep 2026 for the asset wishlist to be reviewed, planned and executed
+(superseding the 23 Sep "defer artwork" answer; PR #1084), but the pilot world and every piece's acceptance are still open, so
 designs must work with **empty art slots and token-only fallbacks** and may show neutral placeholder rectangles.
 
 ## Tokens to define (deliverable)
