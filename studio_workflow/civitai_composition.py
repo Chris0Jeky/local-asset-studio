@@ -147,6 +147,37 @@ def bounded_strings(value: Any, label: str, maximum: int = 256) -> list[str]:
     return result
 
 
+def provider_text(value: Any, label: str, diagnostics: list[dict[str, Any]], limit: int = 500) -> str | None:
+    if value is None: return None
+    if text(value, limit): return value
+    diagnostics.append({'code': 'invalid_provider_text',
+                        'message': 'Provider ' + label + ' was invalid and was omitted.',
+                        'field': label})
+    return None
+
+
+def trained_words(value: Any, diagnostics: list[dict[str, Any]]) -> list[str]:
+    if value is None: return []
+    if not isinstance(value, list):
+        diagnostics.append({'code': 'invalid_trained_words',
+                            'message': 'Provider trainedWords was not a list and was omitted.'})
+        return []
+    result, seen = [], set()
+    for index, item in enumerate(value):
+        if text(item, 1000):
+            if item not in seen: seen.add(item); result.append(item)
+        else:
+            diagnostics.append({'code': 'invalid_trained_word',
+                                'message': 'A provider trained word was invalid and was omitted.',
+                                'index': index})
+    if len(result) > 256:
+        count = len(result); del result[256:]
+        diagnostics.append({'code': 'trained_words_truncated',
+                            'message': 'Provider trained words exceeded 256; the first 256 were kept.',
+                            'count': count})
+    return result
+
+
 def provider_hashes(value: Any, label: str) -> dict[str, str]:
     if value is None: return {}
     need(isinstance(value, dict) and len(value) <= 32, label + ' hashes must be a bounded object')
@@ -217,12 +248,12 @@ def normalize_model(value: Any, diagnostics: list[dict[str, Any]]) -> tuple[dict
         ('allow_no_credit', 'allowNoCredit'), ('allow_commercial_use', 'allowCommercialUse'),
         ('allow_derivatives', 'allowDerivatives'), ('allow_different_license', 'allowDifferentLicense'))}
     resource = {'source_host': receipt['host'], 'model_id': model_id, 'version_id': version_id,
-                'identity': identity, 'model_name': optional_text(model.get('name'), 'model name', 500),
-                'version_name': optional_text(payload.get('name'), 'version name', 500),
+                'identity': identity, 'model_name': provider_text(model.get('name'), 'model name', diagnostics, 500),
+                'version_name': provider_text(payload.get('name'), 'version name', diagnostics, 500),
                 'model_type': optional_text(model.get('type'), 'model type', 200),
-                'base_model': optional_text(payload.get('baseModel'), 'base model', 500),
-                'base_model_type': optional_text(payload.get('baseModelType'), 'base model type', 500),
-                'trained_words': bounded_strings(payload.get('trainedWords'), 'trained words'),
+                'base_model': provider_text(payload.get('baseModel'), 'base model', diagnostics, 500),
+                'base_model_type': provider_text(payload.get('baseModelType'), 'base model type', diagnostics, 500),
+                'trained_words': trained_words(payload.get('trainedWords'), diagnostics),
                 'created_at': optional_text(payload.get('createdAt'), 'created date', 100),
                 'updated_at': optional_text(payload.get('updatedAt'), 'updated date', 100),
                 'published_at': optional_text(payload.get('publishedAt'), 'published date', 100),
