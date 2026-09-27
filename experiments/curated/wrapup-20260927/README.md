@@ -87,3 +87,5 @@ The local driver `python C:/Users/jekyt/AppData/Local/Temp/qi21-dl/dl.py 3 4` do
 - `scripts/`: the as-run page drivers, kept as receipts. They import a local `drive.py` helper and hardcode local paths.
 
 **Receipt note (added at review, 27 Sep 2026):** `scripts/tiles3x3.py` is the earlier live-proofs driver and only builds the narrow-band wall/floor sheet. `tiles-floor-band-sheet.jpg` was put together ad hoc from the Studio's own 3×3 preview assets: narrow band `9f546d90` (the earlier floor run) and wide band `e84e7a97` (tile `a4158f9f`); see `receipts/tiles-assets.json`, and no script for it is committed. The `validate-live` pass for `wai-vary` was read from the console; no receipt is committed for it.
+
+**Exact recipes (added at review):** `recipes/<job8>-recipe.json` are the Studio's own `/api/jobs/<id>/recipe` exports (preset, controls and the full submitted workflow) for every job named in `receipts/`. They were fetched from the running Studio after the runs, so the proofs stay reproducible once the gitignored `experiments/runs/` state is gone.
