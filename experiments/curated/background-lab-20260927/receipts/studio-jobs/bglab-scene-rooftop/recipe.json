@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "An empty rooftop at night, no people. Hand-painted anime film background of a small apartment rooftop above a rain-washed city. The left half and centre of the frame is a plain dark graphite concrete parapet wall and a wet rooftop floor, softly lit, almost empty and low in detail. At the right edge a rusty water tank and a warm amber lamp over a small door, and beyond the railing the city at night with a distant elevated train crossing on a rail line. Faint rose and cyan reflections on the wet surfaces, muted graphite palette with small amber accents. An empty rooftop with nobody on it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+    "seed": 2026092752,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790531694.5520637,
+  "references": [],
+  "parent_assets": []
+}

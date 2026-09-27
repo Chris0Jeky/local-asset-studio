@@ -254,4 +254,10 @@ test('bracketed fills become labelled fields and the answers write the prepared 
   assert.equal(C.assemble(depth.continuation_prompt,{...values,[spec[2].placeholder]:'a black crop top, pink shorts, bare feet'}).includes('['),false);
   assert.equal(C.assemble(null,values),'');assert.equal(C.assemble('plain wording',null),'plain wording');
 });
+test('a several-recipe plan takes one to four different exact seeds and sums only known times (#1163)',()=>{
+  assert.deepEqual(C.combinePlanSeeds(' 11, 12;13 '),{seeds:[11,12,13],error:''});
+  for(const text of ['','1 2 3 4 5','1.5','-3','7 7','1234567890123456','1e3'])assert.ok(C.combinePlanSeeds(text).error,text);
+  assert.deepEqual(C.combinePlanTime([60,null,30],2),{seconds:180,unknown:1});
+  assert.deepEqual(C.combinePlanTime([],3),{seconds:0,unknown:0});
+});
 console.log(count+' continuation client policy checks passed.');

@@ -11,11 +11,29 @@ own submitted words. Generate stays your press. When the repaint completes, the 
 the lighting and records a **Seamless tile** asset and a **3×3 repeat** asset, both with the seam score in their details.
 A completed repaint without a tile (a failed or interrupted finish) shows **Finish tile** on its card.
 
-`python tests/studio_use_cases.py` passed **17/17** journeys with **zero generation submissions and zero page errors**.
-The new `make-a-texture-tile` journey opens a wide picture and reads the disabled control and its reason. It then opens
+`python tests/studio_use_cases.py` passed **18/18** journeys (with #1163's several-recipe plan) with **zero generation
+submissions and zero page errors**. The new `make-a-texture-tile` journey opens a wide picture and reads the disabled control and its reason. It then opens
 a square texture and presses *Make seamless*: the seam-repair recipe is loaded with the rolled cross attached, the texture
 as source and parent, and a status that names Generate as the next press. It takes 4 clicks and 140 instruction words.
 Live mode stops before the press, which stores an upload. These are fixture screens; no model ran.
+
+## One Combine pair on several recipes as one plan — 27 September 2026
+
+Refs #1163 (owner decision 27 September 2026: "Yes, build it"). Under the engine buttons, **Run several recipes on this
+pair** is folded by default. It has a tick box per Combine recipe that fits the pair: the open recipe starts ticked, and
+a recipe for another input (the skeleton recipe on a pose picture) is disabled with its reason. Each box shows that
+recipe's time per picture. Below them are a seeds field (the open recipe's seed to start with), a line counting
+*recipes × seeds = pictures* with the time the page knows, **Prepare plan** and, once prepared, **Start plan**. Prepare
+sends the pair once. The server derives each recipe's image order and wording from the catalog, pins one comparison
+plan and returns its checked total. Start runs that plan on the one worker, and each picture then lands under **Runs for
+these pictures**, tagged *from a plan*. Any change to the pair, recipes, seeds or wording after preparing withdraws
+Start until the plan is prepared again.
+
+The new journey `combine-several-engines-one-plan` takes 10 clicks after the shared Combine setup: open the fold, tick
+two recipes, type two seeds, Prepare, read Start, change a seed. It asserts the posted intent (all three recipes, seeds
+[11, 12], the pair's claim and board picture, the answers), the prepared total, and that Start is withdrawn after the
+change. It also asserts that no `/api/jobs` or `/start` request was made. `python tests/studio_use_cases.py` passed
+**16/16** at the time (17/17 after the merge with Vary, 27 Sep) with zero generation submissions and zero page errors. These are fixture screens; no model ran.
 
 ## Quick checks on results — 27 September 2026
 

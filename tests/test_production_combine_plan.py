@@ -77,7 +77,7 @@ class CombinePlanTests(unittest.TestCase):
         references = [dict(role=slot["role"], contribution="", avoid="", file=None) for slot in preset["reference_slots"]]
         references[0].update(file=self.pose["file"], sha256=self.pose["sha256"])
         return dict(preset_id=preset_id, controls=dict({"positive": wording, "last_reference": self.attachment["file"], "seed": 5}, **controls),
-                    parent_assets=[self.asset_id], references=references, continuation=claim)
+                    parent_assets=[self.asset_id], references=references, continuation=claim, expected_template_sha256=claim["template_sha256"])
 
     def intent(self, engines=("combine-klein-9b-depth", "combine-klein-9b-copypose", "combine-klein"), seeds=(11, 12), **extra):
         plan = dict(base=self.base(), engines=list(engines), seeds=list(seeds), answers=dict(ANSWERS)); plan.update(extra)
@@ -150,6 +150,11 @@ class CombinePlanTests(unittest.TestCase):
         swapped = self.intent(); swapped["combine_plan"]["base"]["references"][0]["sha256"] = "1" * 64
         with self.assertRaisesRegex(ValueError, "combine-klein-9b-depth · seed 11: Reference bytes changed"): lab.create(swapped)
         with self.assertRaisesRegex(ValueError, "Unknown Combine plan field"): lab.create(dict(self.intent(), axis="seed"))
+        # Like Generate, the open recipe refuses a graph that changed since the page opened it (#1186).
+        stale = self.intent(); stale["combine_plan"]["base"]["continuation"]["template_sha256"] = "2" * 64
+        with self.assertRaisesRegex(ValueError, "destination graph changed"): lab.create(stale)
+        stale = self.intent(); stale["combine_plan"]["base"]["expected_template_sha256"] = "3" * 64
+        with self.assertRaisesRegex(ValueError, "destination graph changed"): lab.create(stale)
         self.assertEqual(lab.list(), []); self.assertEqual(self.post_count(self.studio), 0)
 
     def test_a_plan_bigger_than_sixteen_pictures_is_refused(self):

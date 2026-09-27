@@ -1,0 +1,187 @@
+absl-py==2.5.0
+addict==2.4.0
+aiohappyeyeballs @ file:///D:/a/ComfyUI/rocm72_python_deps/aiohappyeyeballs-2.7.1-py3-none-any.whl#sha256=9243213661e29250eb41368e5daa826fc017156c3b8a11440826b2e3ed376472
+aiohttp @ file:///D:/a/ComfyUI/rocm72_python_deps/aiohttp-3.14.3-cp312-cp312-win_amd64.whl#sha256=33a2d7c28d33797a2e99923dffa63f83d908a19b6bf26cfe80fa790aa5e1a75a
+aiosignal @ file:///D:/a/ComfyUI/rocm72_python_deps/aiosignal-1.4.0-py3-none-any.whl#sha256=053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e
+albucore==0.0.24
+albumentations==2.0.8
+alembic @ file:///D:/a/ComfyUI/rocm72_python_deps/alembic-1.19.1-py3-none-any.whl#sha256=b39018cb3d9413a19cbd54cf3c02ad33998641f0538eb77413a488a21c3e14be
+annotated-doc @ file:///D:/a/ComfyUI/rocm72_python_deps/annotated_doc-0.0.5-py3-none-any.whl#sha256=117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101
+annotated-types @ file:///D:/a/ComfyUI/rocm72_python_deps/annotated_types-0.8.0-py3-none-any.whl#sha256=f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0
+antlr4-python3-runtime==4.9.3
+anyio @ file:///D:/a/ComfyUI/rocm72_python_deps/anyio-4.14.2-py3-none-any.whl#sha256=9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494
+attrs @ file:///D:/a/ComfyUI/rocm72_python_deps/attrs-26.1.0-py3-none-any.whl#sha256=c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309
+av @ file:///D:/a/ComfyUI/rocm72_python_deps/av-18.1.0-cp311-abi3-win_amd64.whl#sha256=ea1480b7a8d5405cb5f382b344731bf125fd2c1c6fae3964f6c48595628387ff
+awsebcli==3.21.0
+bidict==0.24.1
+blake3 @ file:///D:/a/ComfyUI/rocm72_python_deps/blake3-1.0.9-cp312-cp312-win_amd64.whl#sha256=15566065ff90ab3da46ec0be1417406f00507af902b6fb0fbc6563e77f02fc42
+botocore==1.35.60
+cement==2.10.14
+certifi==2024.8.30
+cffi @ file:///D:/a/ComfyUI/rocm72_python_deps/cffi-2.1.1-cp312-cp312-win_amd64.whl#sha256=f53e442b08449d42821fa4a4fba000095af9f62742a500f978a9f557ec44339a
+chardet==7.6.0
+charset-normalizer==3.4.0
+click @ file:///D:/a/ComfyUI/rocm72_python_deps/click-8.4.2-py3-none-any.whl#sha256=e6f9f66136c816745b9d65817da91d61d957fb16e02e4dcd0552553c5a197b76
+cloudpickle==3.1.2
+colorama==0.4.6
+colorlog==6.12.0
+comfy-aimdo==0.5.3
+comfy-angle @ file:///D:/a/ComfyUI/rocm72_python_deps/comfy_angle-0.1.1-py3-none-win_amd64.whl#sha256=beddd2e3b9a67e55f5afaef4da73e3ac704fd88f0cbe6a6f67ce5718d7c7edeb
+comfy-kitchen==0.2.33
+comfyui-embedded-docs==0.5.11
+comfyui-manager==4.2.2
+comfyui-workflow-templates-core==0.3.337
+comfyui-workflow-templates-json==0.1.72
+comfyui-workflow-templates-media-api==0.3.84
+comfyui-workflow-templates-media-assets-01==0.1.43
+comfyui-workflow-templates-media-image==0.3.160
+comfyui-workflow-templates-media-other==0.3.229
+comfyui-workflow-templates-media-video==0.3.101
+comfyui_frontend_package==1.51.10
+comfyui_workflow_templates==0.11.57
+contourpy==1.3.3
+cryptography==50.0.1
+cycler==0.12.1
+dill==0.4.1
+einops @ file:///D:/a/ComfyUI/rocm72_python_deps/einops-0.8.2-py3-none-any.whl#sha256=54058201ac7087911181bfec4af6091bb59380360f069276601256a76af08193
+embreex==4.4.0
+filelock @ file:///D:/a/ComfyUI/rocm72_python_deps/filelock-3.32.4-py3-none-any.whl#sha256=22e58ca3b1ae3b98993b762d7338367ae64fe50252bf78d59da3bfebcdf1cedd
+flatbuffers==25.12.19
+fonttools==4.65.0
+frozenlist @ file:///D:/a/ComfyUI/rocm72_python_deps/frozenlist-1.8.0-cp312-cp312-win_amd64.whl#sha256=34187385b08f866104f0c0617404c8eb08165ab1272e884abc89c112e9c00746
+fsspec @ file:///D:/a/ComfyUI/rocm72_python_deps/fsspec-2026.7.0-py3-none-any.whl#sha256=b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279
+ftfy==6.3.1
+fvcore==0.1.5.post20221221
+gguf==0.19.0
+gitdb==4.0.12
+GitPython==3.1.62
+greenlet @ file:///D:/a/ComfyUI/rocm72_python_deps/greenlet-3.5.5-cp312-cp312-win_amd64.whl#sha256=49ddacd36af37735fab103846f4ee4d18a492dde72730d1699c0c8ebe30d9f18
+h11 @ file:///D:/a/ComfyUI/rocm72_python_deps/h11-0.16.0-py3-none-any.whl#sha256=63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
+hf-xet @ file:///D:/a/ComfyUI/rocm72_python_deps/hf_xet-1.6.0-cp38-abi3-win_amd64.whl#sha256=fb4fadde1b2b70bf4c0c14a6dccbe7194b1c28947fefd5bbe3fed9d940676c3b
+httpcore @ file:///D:/a/ComfyUI/rocm72_python_deps/httpcore-1.0.9-py3-none-any.whl#sha256=2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55
+httpx @ file:///D:/a/ComfyUI/rocm72_python_deps/httpx-0.28.1-py3-none-any.whl#sha256=d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
+huggingface_hub @ file:///D:/a/ComfyUI/rocm72_python_deps/huggingface_hub-1.28.0-py3-none-any.whl#sha256=58a8bacb03072edfc38067065e9dc24bbb34805410fcd36a1632de0b329660bb
+idna==3.10
+ImageIO==2.37.4
+importlib_metadata==9.0.1
+iopath==0.1.10
+Jinja2 @ file:///D:/a/ComfyUI/rocm72_python_deps/jinja2-3.1.6-py3-none-any.whl#sha256=85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67
+jmespath==1.0.1
+joblib==1.6.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+kiwisolver==1.5.1
+kornia @ file:///D:/a/ComfyUI/rocm72_python_deps/kornia-0.8.3-py3-none-any.whl#sha256=0b15f5d359aeafd7ff54ea631ed1943a3eb295c4a6dae3f745ddeada25e33289
+kornia_rs @ file:///D:/a/ComfyUI/rocm72_python_deps/kornia_rs-0.1.14-cp312-cp312-win_amd64.whl#sha256=ac4bbd0a8fd73b5058a39707c790fecec4c5204a42d1f5af17f1fa57cc83d406
+lazy-loader==0.5
+lxml==6.1.3
+Mako @ file:///D:/a/ComfyUI/rocm72_python_deps/mako-1.4.1-py3-none-any.whl#sha256=a359d9a94a541213958742b2698d0a7757bb83551767bc468a74b9905aba9617
+manifold3d==3.5.3
+mapbox_earcut==2.1.0
+markdown-it-py @ file:///D:/a/ComfyUI/rocm72_python_deps/markdown_it_py-4.2.0-py3-none-any.whl#sha256=9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a
+MarkupSafe @ file:///D:/a/ComfyUI/rocm72_python_deps/markupsafe-3.0.3-cp312-cp312-win_amd64.whl#sha256=26a5784ded40c9e318cfc2bdb30fe164bdb8665ded9cd64d500a34fb42067b1c
+matplotlib==3.11.1
+mdurl @ file:///D:/a/ComfyUI/rocm72_python_deps/mdurl-0.1.2-py3-none-any.whl#sha256=84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8
+mediapipe==1.0.1
+mpmath @ file:///D:/a/ComfyUI/rocm72_python_deps/mpmath-1.3.0-py3-none-any.whl#sha256=a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c
+multidict @ file:///D:/a/ComfyUI/rocm72_python_deps/multidict-6.7.1-cp312-cp312-win_amd64.whl#sha256=fcee94dfbd638784645b066074b338bc9cc155d4b4bffa4adce1615c5a426c19
+narwhals==2.26.0
+networkx @ file:///D:/a/ComfyUI/rocm72_python_deps/networkx-3.6.1-py3-none-any.whl#sha256=d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762
+numpy @ file:///D:/a/ComfyUI/rocm72_python_deps/numpy-2.5.2-cp312-cp312-win_amd64.whl#sha256=28ac63476ec7651484215ee7fa15a1f78b57c14621f01e392afe17b9a1390ce4
+omegaconf==2.3.1
+onnxruntime==1.30.0
+opencv-contrib-python==5.0.0.93
+opencv-python==5.0.0.93
+opencv-python-headless==5.0.0.93
+packaging @ file:///D:/a/ComfyUI/rocm72_python_deps/packaging-26.3-py3-none-any.whl#sha256=d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+pandas==2.3.3
+pathspec==0.10.1
+piexif==1.1.3
+pillow @ file:///D:/a/ComfyUI/rocm72_python_deps/pillow-12.3.0-cp312-cp312-win_amd64.whl#sha256=a2b55dd6b2a4c4b7d87ffa56bdb33fdc5fdb9a462173861a7bc097f17d91cb09
+platformdirs==4.11.8
+portalocker==4.3.0
+propcache @ file:///D:/a/ComfyUI/rocm72_python_deps/propcache-0.5.2-cp312-cp312-win_amd64.whl#sha256=d9ee8826a7d47863a08ac44e1a5f611a462eefc3a194b492da242128bec75b42
+protobuf==7.36.1
+psutil @ file:///D:/a/ComfyUI/rocm72_python_deps/psutil-7.2.2-cp37-abi3-win_amd64.whl#sha256=eb7e81434c8d223ec4a219b5fc1c47d0417b12be7ea866e24fb5ad6e84b3d988
+py-cpuinfo==9.0.0
+pycollada==0.9.3
+pycparser @ file:///D:/a/ComfyUI/rocm72_python_deps/pycparser-3.0-py3-none-any.whl#sha256=b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992
+pydantic @ file:///D:/a/ComfyUI/rocm72_python_deps/pydantic-2.13.4-py3-none-any.whl#sha256=45a282cde31d808236fd7ea9d919b128653c8b38b393d1c4ab335c62924d9aba
+pydantic-settings @ file:///D:/a/ComfyUI/rocm72_python_deps/pydantic_settings-2.15.0-py3-none-any.whl#sha256=0ba092c291c94baceb5eff768aa0d56400a457585bc0175925a5a5510303da42
+pydantic_core @ file:///D:/a/ComfyUI/rocm72_python_deps/pydantic_core-2.46.4-cp312-cp312-win_amd64.whl#sha256=e9c26f834c65f5752f3f06cb08cb86a913ceb7274d0db6e267808a708b46bc89
+pygit2 @ file:///D:/a/ComfyUI/rocm72_python_deps/pygit2-1.20.0-cp312-cp312-win_amd64.whl#sha256=2c16126d27218e7b5d059e5072b15819261ec3ad515ff45ed611fa1687993c25
+PyGithub==2.10.0
+Pygments @ file:///D:/a/ComfyUI/rocm72_python_deps/pygments-2.21.0-py3-none-any.whl#sha256=2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9
+PyJWT==2.14.0
+PyNaCl==1.6.2
+PyOpenGL @ file:///D:/a/ComfyUI/rocm72_python_deps/pyopengl-3.1.10-py3-none-any.whl#sha256=794a943daced39300879e4e47bd94525280685f42dbb5a998d336cfff151d74f
+pyparsing==3.3.2
+pypiwin32==223
+python-dateutil==2.9.0.post0
+python-dotenv @ file:///D:/a/ComfyUI/rocm72_python_deps/python_dotenv-1.2.3-py3-none-any.whl#sha256=904552145e8bfed22162c09dab1c2b9b54fefa7b23ba780f4f26ca0316b0f0d9
+python-engineio==4.14.0
+python-socketio==5.16.4
+pytz==2025.2
+pywin32==308
+PyYAML==6.0.2
+referencing==0.37.0
+regex @ file:///D:/a/ComfyUI/rocm72_python_deps/regex-2026.7.19-cp312-cp312-win_amd64.whl#sha256=e30d40268a28d54ce0437031750497004c22602b8e3ab891f759b795a003b312
+requests==2.32.3
+rich @ file:///D:/a/ComfyUI/rocm72_python_deps/rich-15.0.0-py3-none-any.whl#sha256=33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb
+rocm @ file:///D:/a/ComfyUI/rocm72_python_deps/rocm-7.2.1-py3-none-any.whl#sha256=7e535ba91467af01baac3f9e7a0f9ddf2dbf82e7f943c2079dca6a6fac6b8eb1
+rocm-sdk-core @ file:///D:/a/ComfyUI/rocm72_python_deps/rocm_sdk_core-7.2.1-py3-none-win_amd64.whl#sha256=f68989d48df71cbfc3cb68bf705dc37c0f56e9666feddb59a1a0f5ff7539fe1c
+rocm-sdk-libraries-custom @ file:///D:/a/ComfyUI/rocm72_python_deps/rocm_sdk_libraries_custom-7.2.1-py3-none-win_amd64.whl#sha256=c7fe0b0731af8896093ff69e11496830d3cb6a4aed73e895c60b7cbdc200be92
+rpds-py==2026.6.3
+rtree==1.4.1
+safetensors @ file:///D:/a/ComfyUI/rocm72_python_deps/safetensors-0.8.0-cp310-abi3-win_amd64.whl#sha256=096ec1a98435df7beb08853bb5aa9081a84f23d0adc67ed1a0a10550f608373f
+scikit-image==0.26.0
+scikit-learn==1.9.1
+scipy @ file:///D:/a/ComfyUI/rocm72_python_deps/scipy-1.18.1-cp312-cp312-win_amd64.whl#sha256=5e4d44984abc0020154ea81b247adeddcc3ac5527b975ff798bd1ba0adc513c2
+segment-anything==1.0
+semantic-version==2.10.0
+sentencepiece @ file:///D:/a/ComfyUI/rocm72_python_deps/sentencepiece-0.2.2-cp312-cp312-win_amd64.whl#sha256=7c6e7bf684dc12145bfa685d3060beaea55139134ba848289bee514ed42e7383
+setuptools==75.5.0
+shapely==2.1.2
+shellingham @ file:///D:/a/ComfyUI/rocm72_python_deps/shellingham-1.5.4-py2.py3-none-any.whl#sha256=7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686
+simple-websocket==1.1.0
+simpleeval @ file:///D:/a/ComfyUI/rocm72_python_deps/simpleeval-1.0.7-py3-none-any.whl#sha256=97ac271bfd8f2af9e7b9a36ceea67617f26fa873f9d5ae1922f64d4c1442534b
+simsimd==6.5.16
+six==1.16.0
+smmap==5.0.3
+sounddevice==0.5.6
+spandrel @ file:///D:/a/ComfyUI/rocm72_python_deps/spandrel-0.4.2-py3-none-any.whl#sha256=6c93e3ecbeb0e548fd2df45a605472b34c1614287c56b51bb33cdef7ae5235b5
+SQLAlchemy @ file:///D:/a/ComfyUI/rocm72_python_deps/sqlalchemy-2.0.52-cp312-cp312-win_amd64.whl#sha256=2d5e53e36e37129fe0be8b9d08b6e4052c10a963ee6cda56c8c10dcc194b99ca
+stringzilla==5.1.2
+svg.path==7.1
+sympy @ file:///D:/a/ComfyUI/rocm72_python_deps/sympy-1.14.0-py3-none-any.whl#sha256=e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5
+tabulate==0.10.0
+termcolor==2.5.0
+threadpoolctl==3.6.0
+tifffile==2026.9.9
+tokenizers @ file:///D:/a/ComfyUI/rocm72_python_deps/tokenizers-0.22.2-cp39-abi3-win_amd64.whl#sha256=c9ea31edff2968b44a88f97d784c2f16dc0729b8b143ed004699ebca91f05c48
+toml==0.10.2
+torch @ file:///D:/a/ComfyUI/rocm72_python_deps/torch-2.9.1%2Brocm7.2.1-cp312-cp312-win_amd64.whl#sha256=e88bf270163b48f7f27f7ea3db5ffb3be4ba107301933022bcb3c6ddedfeeabb
+torchaudio @ file:///D:/a/ComfyUI/rocm72_python_deps/torchaudio-2.9.1%2Brocm7.2.1-cp312-cp312-win_amd64.whl#sha256=62835605995c7812a3224733abf08e222afddb7a487c493521e613ca46e578ab
+torchsde @ file:///D:/a/ComfyUI/rocm72_python_deps/torchsde-0.2.6-py3-none-any.whl#sha256=19bf7ff02eec7e8e46ba1cdb4aa0f9db1c51d492524a16975234b467f7fc463b
+torchvision @ file:///D:/a/ComfyUI/rocm72_python_deps/torchvision-0.24.1%2Brocm7.2.1-cp312-cp312-win_amd64.whl#sha256=b5c34d76a2f01fb97e1e0f224bd97fc3a58ec1ee1ef2376af2d72086e9aca34c
+tqdm @ file:///D:/a/ComfyUI/rocm72_python_deps/tqdm-4.70.0-py3-none-any.whl#sha256=7f585706bfddbdebf89daac705b2dfcc16890130727d3197ca62c732b4310953
+trampoline @ file:///D:/a/ComfyUI/rocm72_python_deps/trampoline-0.1.2-py3-none-any.whl#sha256=36cc9a4ff9811843d177fc0e0740efbd7da39eadfe6e50c9e2937cbc06d899d9
+transformers @ file:///D:/a/ComfyUI/rocm72_python_deps/transformers-5.15.1-py3-none-any.whl#sha256=b7cdf238ff583e3a58dbc7fa34da1aaf091ce063141f65a30538160bd5afe93f
+trimesh==5.1.0
+typer @ file:///D:/a/ComfyUI/rocm72_python_deps/typer-0.27.1-py3-none-any.whl#sha256=53150287edd11baeb4e4722c8e394fcdf8181c0ae89485cba8d25c778d5edd56
+typing-inspection @ file:///D:/a/ComfyUI/rocm72_python_deps/typing_inspection-0.4.4-py3-none-any.whl#sha256=65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147
+typing_extensions @ file:///D:/a/ComfyUI/rocm72_python_deps/typing_extensions-4.16.0-py3-none-any.whl#sha256=481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
+tzdata==2025.2
+ultralytics==8.3.162
+ultralytics-thop==2.0.14
+urllib3==1.26.20
+uv==0.12.13
+vhacdx==0.0.10
+wcwidth==0.2.13
+websocket-client==1.9.2
+wsproto==1.3.2
+xxhash==4.0.1
+yacs==0.1.8
+yapf==0.43.0
+yarl @ file:///D:/a/ComfyUI/rocm72_python_deps/yarl-1.24.5-cp312-cp312-win_amd64.whl#sha256=a929d878fec099030c292803b31e5d5540a7b6a31e6a3cc76cb4685fc2a2f51b
+zipp==4.1.0

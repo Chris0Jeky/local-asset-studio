@@ -1,0 +1,38 @@
+{
+  "preset_id": "restyle-klein-picture",
+  "controls": {
+    "positive": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its hand-painted cel anime film background finish, soft graphite shading, muted graphite palette with small amber and cyan accents, rain on glass), not what it shows. Keep image 1's room layout, furniture and window exactly as they are; only change the rendering style. Image 1's colours: dark walls, warm desk lamps, a night city through the window.",
+    "seed": 2026092774,
+    "width": 1344,
+    "height": 768,
+    "last_reference": "e2bf61be627b44e781b3dcc0415c9aca_bglab-wai-nightshift-content.png.png"
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\restyle-klein-picture-api.json",
+  "created_at": 1790532136.922784,
+  "references": [
+    {
+      "file": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png",
+      "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+      "bytes": 1032887,
+      "width": 1344,
+      "height": 768,
+      "role": "style",
+      "slot": 1,
+      "contribution": "",
+      "avoid": "",
+      "transform": {
+        "policy": "FLUX.2 Klein reference latents: every picture is scaled to ~1 megapixel and VAE-encoded; image 1 is the picture you keep, the board pictures follow it as image 2 and image 3"
+      }
+    },
+    {
+      "slot": 2,
+      "role": "style",
+      "file": null,
+      "pruned": true,
+      "contribution": "",
+      "avoid": ""
+    }
+  ],
+  "parent_assets": []
+}

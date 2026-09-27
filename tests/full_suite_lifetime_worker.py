@@ -15,6 +15,7 @@ import multiprocessing
 from pathlib import Path
 import sys
 import threading
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,12 +58,16 @@ class TrackingTextResult(unittest.TextTestResult):
         set_current_test(identifier)
         self.stream.writeln(f"START {identifier}")
         self.stream.flush()
+        self._active_started = time.perf_counter()
         super().startTest(test)
 
     def stopTest(self, test):
         super().stopTest(test)
         identifier = self._active_identifier
-        self.stream.writeln(f"END {identifier}")
+        # The parent prints captured output only when the child ends, so CI log
+        # timestamps cannot time a test; the duration on END can, even after a
+        # budget kill.
+        self.stream.writeln(f"END {identifier} {time.perf_counter() - self._active_started:.3f}s")
         self.stream.flush()
         set_current_test("<between tests>")
 
@@ -160,6 +165,36 @@ def emit_retained_processes(
         )
 
 
+def parse_shard(value: str) -> tuple[int, int]:
+    """`K/N`: run the K-th of N disjoint parts of the discovered suite."""
+    try:
+        index, count = (int(part) for part in value.split("/"))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"shard must look like 2/3, not {value!r}") from None
+    if not 1 <= index <= count:
+        raise argparse.ArgumentTypeError(f"shard index must be within 1..{count}, not {value!r}")
+    return index, count
+
+
+def select_shard(suite: unittest.TestSuite, index: int, count: int) -> unittest.TestSuite:
+    """Keep whole test modules together and balance them across shards by test count.
+
+    Discovery yields one suite per module, so module and class fixtures stay in
+    one process. Largest modules are placed first on the lightest shard, ties by
+    position, so every shard of the same checkout selects the same disjoint set.
+    """
+    modules = list(suite)
+    if count == 1:
+        return suite
+    order = sorted(range(len(modules)), key=lambda position: (-modules[position].countTestCases(), position))
+    loads, owner = [0] * count, {}
+    for position in order:
+        target = min(range(count), key=lambda shard: (loads[shard], shard))
+        owner[position] = target
+        loads[target] += modules[position].countTestCases()
+    return unittest.TestSuite(module for position, module in enumerate(modules) if owner[position] == index - 1)
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Run the offline suite with lifetime diagnostics."
@@ -168,6 +203,7 @@ def parse_args(argv=None):
     parser.add_argument("--pattern", default="test*.py")
     parser.add_argument("--traceback-after", type=float, required=True)
     parser.add_argument("--shutdown-traceback-after", type=float, required=True)
+    parser.add_argument("--shard", type=parse_shard, default=(1, 1))
     return parser.parse_args(argv)
 
 
@@ -190,6 +226,14 @@ def main(argv=None) -> int:
     work_observer = ExecutorWorkObserver()
     work_observer.install()
     suite = unittest.defaultTestLoader.discover(str(start_dir), pattern=args.pattern)
+    if args.shard != (1, 1):
+        suite = select_shard(suite, *args.shard)
+        print(
+            f"LIFETIME SHARD {args.shard[0]}/{args.shard[1]}: "
+            f"{len(list(suite))} modules, {suite.countTestCases()} tests",
+            file=sys.stderr,
+            flush=True,
+        )
     diagnostics = LifetimeDiagnostics(args.traceback_after)
     diagnostics.arm()
     try:

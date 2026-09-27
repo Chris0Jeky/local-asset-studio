@@ -1,0 +1,1 @@
+{"key": "floor2-flat", "source": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/tiles/floor2-tile.png", "tile": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/tiles/floor2-tile-flat.png", "seam_tile": 1.62, "inner_gradient_tile": 1.13, "step": "circular-Gaussian illumination flatten, sigma 96 px"}
