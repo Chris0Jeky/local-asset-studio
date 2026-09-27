@@ -1,0 +1,38 @@
+[
+ {
+  "label": "char-s16-seed2",
+  "prompt_id": "13b4878d-cca4-453f-ab4d-c6908e2134ef",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 08:35:00",
+  "wall_s": 55.0,
+  "commit_before_pct": 49.0,
+  "commit_peak_pct": 76.2,
+  "status": "success",
+  "exec_s": 52.3,
+  "outputs": [
+   {
+    "filename": "steps-char-s16-seed2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "prop-s16-seed2",
+  "prompt_id": "5b1ec3b1-dbf7-434e-b3dd-bed2d5eb1c62",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 08:36:13",
+  "wall_s": 51.4,
+  "commit_before_pct": 51.7,
+  "commit_peak_pct": 76.2,
+  "status": "success",
+  "exec_s": 51.1,
+  "outputs": [
+   {
+    "filename": "steps-prop-s16-seed2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ }
+]

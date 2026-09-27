@@ -1,0 +1,4 @@
+{"prompt":"char","cell":"A","seed":2026092821,"verdict":"fixable","worst_defect":"murky; lantern hand a dark smeared glove, crop 250,240-340,360; face harsher"}
+{"prompt":"char","cell":"B","seed":2026092821,"verdict":"keep","worst_defect":"none visible; clean face and lantern hand"}
+{"prompt":"prop","cell":"A","seed":2026092823,"verdict":"fixable","worst_defect":"doubled nested bezel with an odd side knob, crop 560,1540-640,1620"}
+{"prompt":"prop","cell":"B","seed":2026092823,"verdict":"fixable","worst_defect":"pseudo-lettering around the rim despite 'no text', crop 1250,1380-1700,1650"}

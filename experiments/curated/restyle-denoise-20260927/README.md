@@ -54,3 +54,22 @@ On both sources, **0.75 kept the named props and layout** that 0.85 dropped, wit
 ## Status
 
 These results are generated and agent-judged only; none of it is art acceptance. Licences are not cleared: WAI's creator terms are unresolved, and the Mishima LoRA carries civitai flags (see `models/library.json`). The pictures stay local under ComfyUI `output/Research/lab-20260927/restyle-denoise/`.
+
+## Second seed (lab 2) — 27 September 2026 (08:29-08:33 local)
+
+Seed 2026092762 (on the KSampler and the FaceDetailer) at 0.75 and 0.85 only, with the same graphs and sources and no other change
+(`seed2-lab2/graph-*.json`). The four cells ran straight to ComfyUI on the primary, serially: `platform-d75` `5e206d1b` 83.3 s,
+`platform-d85` `c72f866d` 52.3 s, `carto-d75` `4cb2e6f3` 50.9 s and `carto-d85` `a84e184a` 44.6 s `exec_s`, with host commit peaking at 78-81 %
+(`seed2-lab2/runs.json`). They were judged blind as source + A/B per picture before `seed2-lab2/key.sealed.json` was read. This time the face, hand and
+prop crops are recorded in `seed2-lab2/judgements.jsonl`.
+
+| Denoise | platform | carto |
+| --- | --- | --- |
+| 0.75 | keep, control 4 (canopy, coat, hands in pockets, boots kept; a train added) | fixable, control 3 (arch lost; **compass kept**, moved from the waist onto the pack) |
+| 0.85 | keep, control 4 (same keeps; near tie with 0.75) | fixable, control 3 (arch lost; **compass dropped to the ground**) |
+
+Faces were clean and hands readable at both levels (crops listed per record). Seed 2 therefore partly replicates seed 1. On
+platform, 0.85 did not lose the canopy this time, and the two levels tie. On carto, 0.75 again kept a named prop that 0.85
+dropped. Across 2 sources × 2 seeds, **0.75 kept more of the picture in 3 of 4 comparisons and tied in 1, never worse**, with no
+loss of the light-novel finish. The proposal to make 0.75 the default stands, a little firmer. It is still one agent judge and
+no owner review; the owner's q-27 decides the look.
