@@ -104,8 +104,9 @@ class VramGuardTest(unittest.TestCase):
         fake = types.SimpleNamespace(read=lambda: sample, others_bytes=gpu_memory.others_bytes)
         others = self.guard.OthersReading(fake, pid=10, status=self.status)
         self.assertTrue(self.guard.install(self.mm, others, expected=self.expected, status=self.status)['installed'])
-        self.assertEqual(self.mm.free_memory(9 * GIB, 'cuda:0'), [10 * GIB, (10 * GIB, 3 * GIB), 12 * GIB])
-        self.assertEqual(self.status['others_bytes'], 2 * GIB)
+        # Adapter-preferred since the owner decision on #983: the whole 3 GiB adapter figure while pid 10 has no counter.
+        self.assertEqual(self.mm.free_memory(9 * GIB, 'cuda:0'), [9 * GIB, (9 * GIB, 3 * GIB), 12 * GIB])
+        self.assertEqual(self.status['others_bytes'], 3 * GIB)
 
     @unittest.skipUnless(INSTALLED_MM.is_file(), 'no local ComfyUI installation')
     def test_pinned_hashes_match_the_installed_comfyui(self):
