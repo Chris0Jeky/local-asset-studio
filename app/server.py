@@ -599,10 +599,14 @@ class Studio:
         peaks = [s.get('gpu_memory') or {} for s in job.get('submissions', [])]
         worst = max(peaks, key=lambda p: p.get('peak_shared_bytes', 0), default={})
         holders = worst.get('top_holders') or []; others = ''
-        if holders:
-            first = holders[0]; name = first.get('name') or 'PID ' + str(first.get('pid'))
-            if name.lower() == 'dwm.exe': name = 'dwm.exe (the Windows desktop)'
-            others = f" The largest other GPU user was {name} with {first.get('dedicated_bytes', 0) / 2**30:.1f} GB."
+        label = lambda row: 'dwm.exe (the Windows desktop)' if (row.get('name') or '').lower() == 'dwm.exe' else row.get('name') or 'PID ' + str(row.get('pid'))
+        # A holder the adapter-level figure rules out (plausible: False, #983) is a counter anomaly, never named as a user.
+        credible = [row for row in holders if row.get('plausible') is not False]
+        if credible:
+            others = f" The largest other GPU user was {label(credible[0])} with {credible[0].get('dedicated_bytes', 0) / 2**30:.1f} GB."
+        elif holders:
+            others = (f" The largest other GPU user is unknown: Windows reported an impossible {holders[0].get('dedicated_bytes', 0) / 2**30:.1f} GB"
+                      f" for {label(holders[0])}, more than the card holds.")
         gib = worst.get('peak_shared_bytes', 0) / 2**30
         if any(p.get('lingering') for p in peaks):
             left = max((p.get('settled_shared_bytes') or 0) for p in peaks) / 2**30
