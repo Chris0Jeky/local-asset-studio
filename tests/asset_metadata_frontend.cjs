@@ -117,6 +117,14 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     s.run('assetQueueStep(1)');
     assert.equal(s.el('#assetDialog').open,true);assert.equal(s.confirmations(),1);
     assert.equal(s.el('#assetNotes').value,'unsaved thought');assert.equal(s.writes.length,0);
+    // Cancelling that close keeps the queue and its position; the queue is not announced as finished.
+    assert.notEqual(s.run('assetQueue'),null);assert.equal(s.run('assetQueue.index'),s.run('assetQueue.ids.length-1'));
+    assert.doesNotMatch(s.el('#assetMessage').textContent,/finished/);
+  });
+  await check('Discarding local recovery while the editor is open says why',async()=>{
+    const s=setup();assert.equal(s.el('#assetDialog').open,true);s.el('#assetMessage').textContent='';
+    await s.clickClosest('[data-asset-recovery-discard]',{assetRecoveryDiscard:'detail'});
+    assert.match(s.el('#assetMessage').textContent,/Close the asset editor/);assert.equal(s.confirmations(),0);
   });
   await check('Reason chips toggle tags without typing and save nothing on their own',()=>{
     const s=setup();
