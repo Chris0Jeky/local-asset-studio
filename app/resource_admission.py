@@ -215,8 +215,17 @@ def observe(studio):
         # Taking the smaller of the two reported "no VRAM" on an empty 16 GB card (#306 live proof, 25 Sep 2026).
         # That figure also ignores other processes' dedicated VRAM on this Windows/ROCm box (docs/RUNTIME-PRECONDITIONS.md
         # §8: dwm alone held 2.3 GB), so subtract what they hold, measured; unmeasured means unknown, never assumed zero.
+        # #1064: CPU/MPS/DirectML free-VRAM counters are not dedicated GPU memory, so fail closed.
+        kind = device.get("type")
         free = _counter(device.get("vram_free_bytes"))
-        if free is None:
+        if kind in ("cpu", "mps", "privateuseone"):
+            vram_reason = "Selected device is %s; ComfyUI's free-VRAM counter there is not dedicated GPU memory" % kind
+        elif kind == "other":
+            vram_reason = "Selected device reports an unrecognised type; its free-VRAM counter is not trusted"
+        elif kind is None and _counter(device.get("vram_total_bytes")) == _counter(device.get("torch_vram_total_bytes")) == 1024 ** 3:
+            # DirectML's placeholder total, whatever free figure accompanies it.
+            vram_reason = "Selected device reports DirectML's fixed 1 GiB placeholder; VRAM is unknown"
+        elif free is None:
             vram_reason = "Selected device returned no valid free-VRAM counter"
         else:
             external, external_reason = external_vram(studio)

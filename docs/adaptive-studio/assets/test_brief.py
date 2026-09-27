@@ -119,6 +119,60 @@ class ProductionBriefTests(unittest.TestCase):
         self.assertIn('adaptive-pilot-world', text)
         self.assertRegex(text, r'(?i)confirm[^\n]+adaptive-pilot-world')
 
+    def plan_routes(self):
+        """{asset_id: (route, wave)} from the route-table rows of PRODUCTION-PLAN.md."""
+        text = (ROOT / 'PRODUCTION-PLAN.md').read_text(encoding='utf-8')
+        table = text[text.index('## Route table'):text.index('## Route counts')]
+        routes, seen = {}, []
+        for line in table.splitlines():
+            cells = [c.strip() for c in line.strip().strip('|').split('|')]
+            if len(cells) == 4 and cells[0].startswith('`'):
+                for asset_id in re.findall(r'`([a-z0-9-]+)`', cells[0]):
+                    seen.append(asset_id)
+                    routes[asset_id] = (cells[1], cells[2])
+        return routes, seen
+
+    def test_production_plan_routes_every_request_exactly_once(self):
+        routes, seen = self.plan_routes()
+        ids = [r['id'] for r in self.rows]
+        self.assertEqual(sorted(seen), sorted(ids), 'every catalogue ID must appear exactly once in the route table')
+        allowed = {'local-comfyui', 'chatgpt-image', 'code-vector', 'free-download', 'capture', 'defer'}
+        for asset_id, (route, wave) in routes.items():
+            self.assertIn(route, allowed, asset_id)
+            self.assertIn(wave, {'W0', 'W1', 'W2', 'W3', 'W4', 'W5', 'later'}, asset_id)
+            if route == 'defer':
+                self.assertEqual(wave, 'later', asset_id)
+        text = (ROOT / 'PRODUCTION-PLAN.md').read_text(encoding='utf-8')
+        total = re.search(r'^\| \*\*Total\*\* \|(.*)\|$', text, re.M).group(1)
+        counts = [int(x.strip().strip('*')) for x in total.split('|')]
+        order = ['local-comfyui', 'chatgpt-image', 'code-vector', 'free-download', 'capture', 'defer']
+        self.assertEqual(counts, [sum(1 for r, _ in routes.values() if r == name) for name in order] + [len(ids)])
+
+    def test_prompt_pack_covers_every_early_chatgpt_request(self):
+        routes, _ = self.plan_routes()
+        early = sorted(i for i, (route, wave) in routes.items() if route == 'chatgpt-image' and wave in {'W1', 'W2'})
+        self.assertTrue(early)
+        text = (ROOT / 'CHATGPT-PROMPT-PACK.md').read_text(encoding='utf-8')
+        sections = dict(re.findall(r'^### `([a-z0-9-]+)`\n(.*?)(?=^##)', text + '\n##', re.M | re.S))
+        self.assertEqual(sorted(sections), early)
+        by_id = {r['id']: r for r in self.rows}
+        for asset_id, body in sections.items():
+            self.assertIn(f'`{asset_id}--<w>x<h>--candidate-<n>.png`', body, asset_id)
+            self.assertRegex(body, r'aspect ratio (4:3|3:2|2:3|1:1)', asset_id)
+            self.assertIn('Do not include: any text, letters, numbers', body, asset_id)
+            self.assertIn('user-interface elements', body, asset_id)
+            line = re.search(r'Anchor: (.*?)(?:\n\n|$)', body, re.S)
+            self.assertTrue(line, f'{asset_id}: every section states its anchor')
+            anchors = [] if line.group(1).startswith('none') else re.findall(r'upload the accepted `([a-z0-9-]+)`', line.group(1))
+            self.assertEqual(line.group(1).startswith('none'), not anchors, asset_id)
+            if by_id[asset_id]['anchor']:
+                self.assertIn(by_id[asset_id]['anchor'], anchors, f'{asset_id}: the pack must upload the catalogue anchor')
+            for anchor in anchors:
+                self.assertIn(anchor, by_id, f'{asset_id}: pack anchor {anchor} is not a catalogue ID')
+                self.assertIn(routes[anchor][1], {'W0', 'W1', 'W2'}, f'{asset_id}: anchor {anchor} is not made by wave 2')
+                self.assertLessEqual(routes[anchor][1], routes[asset_id][1], f'{asset_id}: anchor {anchor} comes in a later wave')
+        self.assertNotRegex(text, r'(?i)gpt-image-\d|dall-e')
+
     def test_agent_guide_records_the_current_path_filtered_lane_count(self):
         text = (REPO / 'CLAUDE.md').read_text(encoding='utf-8')
         workflows = sorted((REPO / '.github/workflows').glob('*.yml'))

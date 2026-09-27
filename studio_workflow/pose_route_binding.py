@@ -7,12 +7,12 @@ import io
 import json
 import math
 import re
-import warnings
 from typing import Any
 
 from PIL import Image, UnidentifiedImageError
 
 from . import pose_artifact, pose_raster, pose_route_contract
+from .image_limits import open_bounded
 
 REQUEST_SCHEMA = 'studio.pose-route-binding-request/v1'
 BINDING_SCHEMA = 'studio.pose-route-binding/v1'
@@ -134,35 +134,33 @@ def _image(data: bytes, expected: dict[str, Any], formats: tuple[str, ...], skel
     if hashlib.sha256(data).hexdigest() != expected['sha256'] or len(data) != expected['bytes']:
         raise ValueError('source image bytes do not match the declared identity')
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', Image.DecompressionBombWarning)
-            with Image.open(io.BytesIO(data)) as image:
-                if getattr(image, 'n_frames', 1) != 1:
-                    raise ValueError('animated or multi-frame pose sources are unsupported')
-                image_format = image.format
-                width, height = image.size
-                mode = image.mode
-                if image_format not in formats or image_format != expected['format']:
-                    raise ValueError('source image format does not match the declaration and route contract')
-                if width * height > MAX_PIXELS:
-                    raise ValueError('source image exceeds 16 megapixels')
-                if {'width': width, 'height': height} != expected['canvas']:
-                    raise ValueError('source image canvas does not match the declaration')
-                if mode not in ('RGB', 'RGBA'):
-                    raise ValueError('pose source must be RGB or RGBA without implicit conversion')
-                if skeleton and (mode != 'RGB' or 'transparency' in image.info):
-                    raise ValueError('precomputed skeleton guide must be opaque RGB')
-                # Loading before reading EXIF also discovers PNG eXIf chunks placed
-                # after IDAT; transform evidence must bind the visibly oriented file.
-                image.load()
-                if image.getexif().get(274, 1) != 1:
-                    raise ValueError('pose source EXIF orientation must be identity')
-                non_black = None
-                if skeleton:
-                    pixels = (image.get_flattened_data() if hasattr(image, 'get_flattened_data') else image.getdata())
-                    non_black = sum(1 for pixel in pixels if pixel != (0, 0, 0))
-                    if non_black == 0:
-                        raise ValueError('precomputed skeleton guide is blank')
+        with open_bounded(io.BytesIO(data)) as image:
+            if getattr(image, 'n_frames', 1) != 1:
+                raise ValueError('animated or multi-frame pose sources are unsupported')
+            image_format = image.format
+            width, height = image.size
+            mode = image.mode
+            if image_format not in formats or image_format != expected['format']:
+                raise ValueError('source image format does not match the declaration and route contract')
+            if width * height > MAX_PIXELS:
+                raise ValueError('source image exceeds 16 megapixels')
+            if {'width': width, 'height': height} != expected['canvas']:
+                raise ValueError('source image canvas does not match the declaration')
+            if mode not in ('RGB', 'RGBA'):
+                raise ValueError('pose source must be RGB or RGBA without implicit conversion')
+            if skeleton and (mode != 'RGB' or 'transparency' in image.info):
+                raise ValueError('precomputed skeleton guide must be opaque RGB')
+            # Loading before reading EXIF also discovers PNG eXIf chunks placed
+            # after IDAT; transform evidence must bind the visibly oriented file.
+            image.load()
+            if image.getexif().get(274, 1) != 1:
+                raise ValueError('pose source EXIF orientation must be identity')
+            non_black = None
+            if skeleton:
+                pixels = (image.get_flattened_data() if hasattr(image, 'get_flattened_data') else image.getdata())
+                non_black = sum(1 for pixel in pixels if pixel != (0, 0, 0))
+                if non_black == 0:
+                    raise ValueError('precomputed skeleton guide is blank')
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError,
             Image.DecompressionBombWarning) as exc:
         raise ValueError('invalid or excessive source image') from exc
