@@ -1489,6 +1489,71 @@
       "source": "experiments/curated/background-lab-20260927/ (PR #1222); issue #1220"
     },
     {
+      "id": "parallax-edit",
+      "name": "Parallax layers • Klein clean plate and isolate",
+      "category": "Image editing",
+      "collection": "workflow-lab",
+      "description": "Splits a still (a room, a street) into far / mid / near layers for a parallax camera. Start from Make parallax layers on the picture in the Asset library: name the foreground to lift out and, optionally, mark the far view (window glass, sky) as boxes. The Studio attaches the picture and loads the clean-plate edit ('remove the foreground'); press Generate. Then load the isolate edit ('replace everything except the foreground with plain white') and press Generate again. Both are FLUX.2 Klein 4B edits on the verified flux-edit graph at the picture's own size. When both are in, the Studio registers them to the picture, builds the near matte from the isolate, colour-matches the plate under it, fills the far view behind its frame, records the recomposite error and makes a 3-frame parallax strip. Lab evidence (27 Sep 2026, route C2, not this recipe): recomposite error 0.36/255, agent-judged keep.",
+      "graph": "workflows/api/flux-edit-api.json",
+      "verified": false,
+      "parallax_route": true,
+      "commercial_note": "Both edits run FLUX.2 Klein 4B, as the flux-edit recipe; check the model terms before publishing. The source picture keeps its own terms; a successful split is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "reference": [
+        "14",
+        "image"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "reference_hint": "Prepared by Make parallax layers: the picture itself, unchanged. Open a picture in the Asset library and press Make parallax layers.",
+      "modality": "image",
+      "backend_id": "primary",
+      "stages": [
+        "Picture attached unchanged, at its own size (Make parallax layers)",
+        "Clean plate: Klein edit removes the named foreground",
+        "Isolate: Klein edit keeps only the named foreground, on white",
+        "Studio: affine registration of both edits, near matte, colour-matched plate, far-view ring fill",
+        "Studio: far / mid / near RGBA layers, recomposite error, 3-frame parallax strip"
+      ],
+      "source": "experiments/curated/background-lab-20260927/ (PR #1222) route C2; issue #1219"
+    },
+    {
       "id": "sdxl",
       "name": "SDXL \u2022 general baseline",
       "category": "General generation",

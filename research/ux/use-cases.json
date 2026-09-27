@@ -674,6 +674,24 @@
         {"intent": "check where the tile will come from", "expect": "the texture is the source and the recorded parent, flagged flat textures only"},
         {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
+    },
+    {
+      "id": "split-a-scene-into-parallax-layers",
+      "goal": "From a scene in my library, get the clean-plate edit of a parallax split ready with one press after naming the foreground and marking the far view, and learn why a picture that is too small cannot be split. Nothing is generated.",
+      "starting_view": "assets",
+      "success_condition": "A 128 px picture shows Make parallax layers disabled with its size in the reason; a wide scene asks for the foreground first, takes a far view box dragged on the picture, and one press loads the clean-plate edit with the picture attached unchanged at its own size, the picture as its recorded parent, the plate words and a status that says Generate is the next press; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open a small picture from my library", "expect": "its details open"},
+        {"intent": "see whether it can be split into parallax layers", "expect": "Make parallax layers is disabled and names the picture's size"},
+        {"intent": "open a wide scene", "expect": "its details open with Make parallax layers waiting for the foreground"},
+        {"intent": "name the foreground to lift out", "expect": "the button is offered and the note says the view mask is mine, not detected"},
+        {"intent": "mark the far view on the picture", "expect": "a dragged box inside the window or sky appears as x0,y0,x1,y1 in the view field"},
+        {"intent": "prepare the layers", "expect": "the picture is attached unchanged and the clean-plate edit is loaded, and nothing runs"},
+        {"intent": "read what was prepared", "expect": "the status says Generate is the next press and the isolate edit loads after it"},
+        {"intent": "check where the edit starts from", "expect": "the scene is the source and the recorded parent, at its own size, edit 1 of 2"},
+        {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
+      ]
     }
   ]
 }
