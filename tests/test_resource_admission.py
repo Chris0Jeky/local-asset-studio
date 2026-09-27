@@ -242,16 +242,29 @@ class ResourceAdmissionTests(unittest.TestCase):
             self.assertIn(kind, snapshot['vram']['unknown_reason'])
 
     def test_observe_treats_directml_placeholder_as_unknown(self):
+        # The fixed 1 GiB totals mark DirectML whether or not some use is reported against them.
+        for free in (1 * GIB, GIB // 2):
+            studio = Studio()
+            studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
+            studio._request = lambda path, timeout=3, base_url=None, free=free: {
+                'devices': [{'vram_free_bytes': free, 'vram_total_bytes': 1 * GIB,
+                             'torch_vram_free_bytes': free, 'torch_vram_total_bytes': 1 * GIB}], 'versions': {}}
+            with patch.object(admission.gpu_memory, 'read', return_value={}), \
+                    patch.object(admission.gpu_memory, 'others_for_admission', return_value=(0, None)):
+                snapshot = admission.observe(studio)
+            self.assertIsNone(snapshot['vram']['available_bytes'], free)
+            self.assertIn('DirectML', snapshot['vram']['unknown_reason'])
+
+    def test_observe_treats_an_unrecognised_device_type_as_unknown(self):
         studio = Studio()
         studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
         studio._request = lambda path, timeout=3, base_url=None: {
-            'devices': [{'vram_free_bytes': 1 * GIB, 'vram_total_bytes': 1 * GIB,
-                         'torch_vram_free_bytes': 1 * GIB, 'torch_vram_total_bytes': 1 * GIB}], 'versions': {}}
+            'devices': [{'type': 'other', 'vram_free_bytes': 12 * GIB, 'vram_total_bytes': 16 * GIB}], 'versions': {}}
         with patch.object(admission.gpu_memory, 'read', return_value={}), \
-                patch.object(admission.gpu_memory, 'others_for_admission', return_value=(0, None)):
+                patch.object(admission.gpu_memory, 'others_for_admission', return_value=(1 * GIB, None)):
             snapshot = admission.observe(studio)
         self.assertIsNone(snapshot['vram']['available_bytes'])
-        self.assertIn('DirectML', snapshot['vram']['unknown_reason'])
+        self.assertIn('unrecognised', snapshot['vram']['unknown_reason'])
 
     def test_observe_still_measures_cuda_device(self):
         studio = Studio()

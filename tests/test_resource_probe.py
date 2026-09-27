@@ -84,9 +84,9 @@ class ProbeTests(unittest.TestCase):
         with self.assertRaises(ValueError): project_stats([])
 
     def test_projection_keeps_only_known_device_types(self):
-        data = {'system': {}, 'devices': [{'type': 'cuda'}, {'type': 'cpu'}, {'type': 'PRIVATE-weird'}, {'type': 7}, {'type': ['cuda']}, {}]}
+        data = {'system': {}, 'devices': [{'type': 'cuda'}, {'type': 'cpu'}, {'type': 'PRIVATE-weird'}, {'type': 7}, {'type': ['cuda']}, {'type': 'CUDA'}, {'type': ''}, {}]}
         projected = project_stats(data)
-        self.assertEqual([device['type'] for device in projected['devices']], ['cuda', 'cpu', None, None, None, None])
+        self.assertEqual([device['type'] for device in projected['devices']], ['cuda', 'cpu', 'other', None, None, 'cuda', 'other', None])
         self.assertNotIn('PRIVATE', json.dumps(projected))
 
     def test_sampling_is_finite_serial_and_preserves_partial_receipts(self):

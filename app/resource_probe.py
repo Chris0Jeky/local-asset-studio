@@ -103,7 +103,8 @@ def project_stats(data):
     for index, device in enumerate(data['devices'][:8]):
         if not isinstance(device, dict): raise ValueError('Invalid device statistics')
         record = {'index': index}
-        kind = device.get('type'); record['type'] = kind if isinstance(kind, str) and kind in DEVICE_TYPES else None  # a list/dict type is unhashable
+        # A known type (case-folded) is kept; any other string becomes 'other', never copied; a non-string is absent (None).
+        kind = device.get('type'); record['type'] = (kind.lower() if kind.lower() in DEVICE_TYPES else 'other') if isinstance(kind, str) else None
         for total_key, free_key in (('vram_total', 'vram_free'), ('torch_vram_total', 'torch_vram_free')):
             total, free = counter(device.get(total_key)), counter(device.get(free_key))
             if total is None or free is None or free > total: total, free = None, None

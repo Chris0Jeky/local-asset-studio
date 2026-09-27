@@ -220,7 +220,10 @@ def observe(studio):
         free = _counter(device.get("vram_free_bytes"))
         if kind in ("cpu", "mps", "privateuseone"):
             vram_reason = "Selected device is %s; ComfyUI's free-VRAM counter there is not dedicated GPU memory" % kind
-        elif kind is None and _counter(device.get("vram_total_bytes")) == _counter(device.get("torch_vram_total_bytes")) == 1024 ** 3 and _counter(device.get("vram_free_bytes")) == _counter(device.get("vram_total_bytes")):
+        elif kind == "other":
+            vram_reason = "Selected device reports an unrecognised type; its free-VRAM counter is not trusted"
+        elif kind is None and _counter(device.get("vram_total_bytes")) == _counter(device.get("torch_vram_total_bytes")) == 1024 ** 3:
+            # DirectML's placeholder total, whatever free figure accompanies it.
             vram_reason = "Selected device reports DirectML's fixed 1 GiB placeholder; VRAM is unknown"
         elif free is None:
             vram_reason = "Selected device returned no valid free-VRAM counter"
