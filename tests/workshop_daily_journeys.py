@@ -415,6 +415,103 @@ window.pending=[];function api(){return new Promise((resolve,reject)=>pending.pu
         self.assertTrue(self.page.evaluate('second'))
         self.assertEqual(self.page.evaluate('assetState.workspace_id'), 'new')
 
+    def load_outcome(self):
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status" role="status"></p><button id="generate">Generate</button>
+<details id="workshopResults"><summary>Recent runs</summary><div id="gallery"><article class="imageCard" data-output="done-1:0"><img alt=""><div class="card-actions"><button class="pin">Compare</button></div></article></div></details>
+<div id="jobProblemsHost"><details id="jobProblems"><summary>Problems</summary><article class="jobStatus failed" data-problem="bad-1"><b>Krea · failed</b><button class="recipe">Recipe</button></article></details></div>
+<script>let jobs=[];window.said=[];function message(text,error=false){said.push([text,error]);document.querySelector('#status').textContent=text;}
+function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source('run-outcome.js')+'</script>')
+
+    def settle(self, job):
+        self.page.evaluate('job=>document.dispatchEvent(new CustomEvent("studio:job-settled",{detail:job}))', job)
+
+    def test_a_finished_run_says_what_happened_and_shows_its_result(self):
+        self.load_outcome()
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 72, 'outputs': [{}, {}], 'batch_count': 2})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 72 s · 2 outputs. Review it while it is fresh.')
+        self.page.click('[data-run-outcome="show"]')
+        self.assertTrue(self.page.evaluate("document.querySelector('#workshopResults').open"))
+        self.assertEqual(self.page.evaluate('document.activeElement.className'), 'pin', 'focus lands on the result so K/W/X can review it')
+        self.page.click('#generate')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden(), 'a new Generate clears the old summary')
+
+    def test_a_failed_or_uncertain_run_points_at_its_problem_and_never_offers_a_rerun(self):
+        self.load_outcome()
+        self.settle({'id': 'bad-1', 'status': 'failed', 'failure': {'title': 'Memory allocation failed'}, 'message': 'Generation failed: bad allocation. More detail.'})
+        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Failed: Memory allocation failed', True])
+        self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
+        self.page.click('[data-run-outcome="show"]')
+        self.assertTrue(self.page.evaluate("document.querySelector('#jobProblems').open"))
+        self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'bad-1', 'focus lands on the record, reason first, not on an action')
+        self.settle({'id': 'lost', 'status': 'uncertain', 'message': 'Submission outcome is uncertain.'})
+        # The exact sentence: it must promise no re-run and invite none.
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Outcome unknown. It will not be run again; inspect it before starting new work.')
+        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#runOutcome button')].map(b=>b.textContent)"), ['Inspect →', 'Dismiss'])
+        self.page.click('[data-run-outcome="show"]')
+        self.assertIn('not shown here yet', self.page.evaluate('said.at(-1)[0]'))
+        self.settle({'id': 'half', 'status': 'partial', 'outputs': [{}], 'batch_count': 3})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Partly done: 1 output saved. The rest will not be run again automatically.')
+        self.page.click('[data-run-outcome="dismiss"]')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden())
+        self.assertEqual(self.page.locator('#status').inner_text(), '')
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
+        self.page.evaluate("message('A newer, unrelated message')")
+        self.page.click('[data-run-outcome="dismiss"]')
+        self.assertEqual(self.page.locator('#status').inner_text(), 'A newer, unrelated message', 'Dismiss never wipes a newer message')
+
+    def test_a_run_that_never_started_says_nothing_was_submitted(self):
+        self.load_outcome()
+        self.settle({'id': 'ns', 'status': 'not_submitted', 'message': 'ComfyUI queue unavailable. Nothing was submitted. No retry was queued.'})
+        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: ComfyUI queue unavailable. Nothing was submitted.', True])
+        self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
+
+    def test_show_result_uses_any_shown_output_of_the_run(self):
+        self.load_outcome()
+        self.page.evaluate("document.querySelector('[data-output]').dataset.output='done-1:2'")
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}, {}, {}]})
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.className'), 'pin', 'output 0 in Trash still leads to the run')
+
+    def test_refresh_jobs_announces_the_started_run_once_when_it_settles(self):
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[],jobsEtag=null,jobsDataSignature='',estimateKey='',estimateResultKey='',activeJobId='mine';window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.reply=[{id:'mine',status:'running',preset_name:'P',message:'Generating'}];window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
+        self.page.evaluate("startedJobIds.add('mine')"); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), [])
+        self.page.evaluate("reply=[{id:'mine',status:'completed',preset_name:'P',message:'Complete',outputs:[{}]}]")
+        self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), ['mine'])
+
+    def test_a_run_already_settled_before_a_304_is_still_announced(self):
+        # Review of #1085: a fast failure seen by an earlier poll, then a 304 after the POST set activeJobId.
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[{id:'mine',status:'failed',preset_name:'P',message:'Rejected'}],jobsEtag='"e1"',jobsDataSignature='x',estimateKey='',estimateResultKey='',activeJobId='mine';window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.fetch=async()=>({ok:false,status:304,headers:{get:()=>'"e1"'},json:async()=>{throw Error('no body');}});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
+        self.page.evaluate("startedJobIds.add('mine')"); self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), ['mine'])
+
+
+    def test_an_earlier_run_is_announced_after_a_newer_generate_took_the_status_line(self):
+        # Codex on #1085: activeJobId is overwritten when a second run is queued before the first settles.
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[],jobsEtag=null,jobsDataSignature='',estimateKey='',estimateResultKey='',activeJobId='second';window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.reply=[{id:'first',status:'not_submitted',preset_name:'P',message:'Queue unavailable. Nothing was submitted.'},{id:'second',status:'running',preset_name:'P',message:'Generating'}];
+window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
+document.addEventListener('studio:job-settled',e=>events.push([e.detail.id,e.detail.status]));</script><script>"""+refresh+'</script>')
+        self.page.evaluate("startedJobIds.add('first');startedJobIds.add('second')")
+        self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), [['first', 'not_submitted']], 'the earlier run settles once; the running one waits')
+        self.assertEqual(self.page.evaluate('activeJobId'), 'second')
+
 
     def test_running_cards_show_truthful_elapsed_time_not_progress(self):
         """Handoff 03: a running card had no elapsed time. Only started_at is observed, so no progress bar is drawn (K13)."""

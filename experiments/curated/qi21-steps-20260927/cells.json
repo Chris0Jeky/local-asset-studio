@@ -1,0 +1,1367 @@
+[
+ {
+  "key": "warmup-s4",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Game item illustration of an ornate brass pocket compass with a teal enamel face and a small star-shaped needle, three-quarter view, centred on a plain warm grey background, clean cel shading, crisp silhouette, no text.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092723,
+     "steps": 4,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/warmup"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "char-s10",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Anime key visual of an adult silver-haired sorceress in a midnight-blue travelling coat, holding a glowing brass lantern on a rainy stone bridge at blue hour. Clean linework, layered cel shading, teal and warm amber light.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092721,
+     "steps": 10,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/char-s10"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "char-s16",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Anime key visual of an adult silver-haired sorceress in a midnight-blue travelling coat, holding a glowing brass lantern on a rainy stone bridge at blue hour. Clean linework, layered cel shading, teal and warm amber light.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092721,
+     "steps": 16,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/char-s16"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "char-s25",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Anime key visual of an adult silver-haired sorceress in a midnight-blue travelling coat, holding a glowing brass lantern on a rainy stone bridge at blue hour. Clean linework, layered cel shading, teal and warm amber light.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092721,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/char-s25"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "char-s40",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Anime key visual of an adult silver-haired sorceress in a midnight-blue travelling coat, holding a glowing brass lantern on a rainy stone bridge at blue hour. Clean linework, layered cel shading, teal and warm amber light.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092721,
+     "steps": 40,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/char-s40"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "scene-s10",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Painted anime background of a quiet mountain shrine courtyard after rain: a stone lantern, puddles reflecting a pale evening sky, a red gate and cedar trees in the distance, no people, soft atmospheric perspective.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092722,
+     "steps": 10,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/scene-s10"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "scene-s16",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Painted anime background of a quiet mountain shrine courtyard after rain: a stone lantern, puddles reflecting a pale evening sky, a red gate and cedar trees in the distance, no people, soft atmospheric perspective.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092722,
+     "steps": 16,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/scene-s16"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "scene-s25",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Painted anime background of a quiet mountain shrine courtyard after rain: a stone lantern, puddles reflecting a pale evening sky, a red gate and cedar trees in the distance, no people, soft atmospheric perspective.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092722,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/scene-s25"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "scene-s40",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Painted anime background of a quiet mountain shrine courtyard after rain: a stone lantern, puddles reflecting a pale evening sky, a red gate and cedar trees in the distance, no people, soft atmospheric perspective.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092722,
+     "steps": 40,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/scene-s40"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "prop-s10",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Game item illustration of an ornate brass pocket compass with a teal enamel face and a small star-shaped needle, three-quarter view, centred on a plain warm grey background, clean cel shading, crisp silhouette, no text.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092723,
+     "steps": 10,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/prop-s10"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "prop-s16",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Game item illustration of an ornate brass pocket compass with a teal enamel face and a small star-shaped needle, three-quarter view, centred on a plain warm grey background, clean cel shading, crisp silhouette, no text.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092723,
+     "steps": 16,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/prop-s16"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "prop-s25",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Game item illustration of an ornate brass pocket compass with a teal enamel face and a small star-shaped needle, three-quarter view, centred on a plain warm grey background, clean cel shading, crisp silhouette, no text.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092723,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/prop-s25"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "prop-s40",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Game item illustration of an ornate brass pocket compass with a teal enamel face and a small star-shaped needle, three-quarter view, centred on a plain warm grey background, clean cel shading, crisp silhouette, no text.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1024,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092723,
+     "steps": 40,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/qi21-steps/prop-s40"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ }
+]
