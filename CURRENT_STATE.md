@@ -1,6 +1,6 @@
 # Current state — 27 September 2026
 
-## Z-Image fp8 with the four installed anime LoRAs, blind — 27 September 2026 (06:00-06:25 local)
+## Z-Image fp8 with the four installed anime LoRAs, blind — 27 September 2026 (06:00-06:29 local)
 
 Fifteen pictures were submitted straight to ComfyUI on the primary: the `zimage-fast` graph plus one LoRA at 0.8 (none, z-image-anime-v1, anime_style_v1, elusarca with its trigger, aimaginedworlds) × three original SFW prompts, one seed each. Prompt IDs: p1-none `12f30529`, p1-zanime `860a3113`, p1-animestyle `4453fc04`, p1-elusarca `aee0fe89`, p1-aimagined `6aa1f94d`, p2-none `2f603b46`, p2-zanime `934c735f`, p2-animestyle `a33a103d`, p2-elusarca `7bb49604`, p2-aimagined `37dc786e`, p3-none `7175b876`, p3-zanime `c2b691c9`, p3-animestyle `0eea3d4a`, p3-elusarca `db7fd929`, p3-aimagined `e1e0e871`. Blind agent means: zanime 4.32 (3/3 keep), none 4.03, elusarca 4.00, aimagined 3.87, animestyle 3.72. Under the rubric's 0.3 rule, zanime ties with none; its 0.32-0.60 leads over the other three rest on one seed per prompt. The base model already draws cel anime from this wording. The first LoRA after the base, with the text unchanged, took 13-18 s. Every later LoRA swap took 94-185 s even with the text unchanged; the cause was not isolated. There is no recipe change. Evidence is in `experiments/curated/zimage-anime-loras-20260927/` (refs #357). Generated and agent-inspected only: not art acceptance and not licence clearance.
 

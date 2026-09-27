@@ -4,7 +4,7 @@ Refs #357 (restyle follow-ups: "Z-Image Turbo fp8 + anime LoRAs"). This is the t
 
 ## Method
 
-I used the shipped `zimage-fast` graph (fp8 KJ build, Qwen3 4B encoder on the CPU, 8 steps res_multistep, CFG 1) and inserted one `LoraLoaderModelOnly` node at 0.8. I submitted straight to ComfyUI on the primary (06:00-06:25 local) with `.runtime/lab-0927/comfy_run.py`. There were five configurations:
+I used the shipped `zimage-fast` graph (fp8 KJ build, Qwen3 4B encoder on the CPU, 8 steps res_multistep, CFG 1) and inserted one `LoraLoaderModelOnly` node at 0.8. I submitted straight to ComfyUI on the primary (06:00-06:29 local) with `.runtime/lab-0927/comfy_run.py`. There were five configurations:
 
 - no LoRA
 - `z-image-anime-v1` ("zanime")
