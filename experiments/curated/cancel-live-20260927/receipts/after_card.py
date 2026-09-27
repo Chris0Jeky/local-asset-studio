@@ -1,3 +1,4 @@
+# As-run driver (27 Sep 2026), kept as a receipt; hardcodes local paths and is not a portable reproduction.
 import json, time
 from playwright.sync_api import sync_playwright
 JID = 'f9687adc-0cab-4406-8241-b17df32c6c44'

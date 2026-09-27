@@ -54,7 +54,7 @@ worker's 2 s history-poll cadence.
 The driver saw `/queue` running = [`fb0f28c0`], pending = [] at 16:41:53.111 and requested the cancel at
 16:41:56.112. The worker read `/queue` itself (observation `queue: running`, running = [`fb0f28c0`]) and sent
 `POST /interrupt {"prompt_id": "fb0f28c0-..."}` at 16:41:57.073 (reply `ok`). ComfyUI's log shows the targeted
-form: `Interrupting prompt fb0f28c0-3b5c-43a3-8b6f-f06b2aa35d61`. History: `status_str: error`, last message
+form: `Interrupting prompt fb0f28c0-3b5c-43a3-8b6f-f06b2aa35d61` (`receipts/comfyui-log-164150-165110.txt`). History: `status_str: error`, last message
 `execution_interrupted` at node 4 (`EmptyLatentImage`), `executed: ["1"]`. The job settled `cancelled` at
 16:42:22.108 with submission 0 `{"basis": "interrupted", "interrupt_reply": "ok"}`.
 
@@ -73,12 +73,14 @@ only two prompt IDs, and ComfyUI's `got prompt` count rose by exactly 2.
 
 ### d. Checks after every case
 
-- **State:** every job ended `cancelled`, none `failed`, `uncertain` or `partial`. Each cancellation record holds
-  `requested_by: owner`, `requested_at`, `resolved_at`, the prompt ID it acted on, the reply, and the `/queue`
-  observations behind the decision. A `cancel-request.json` receipt sits beside each started job's state
-  (`receipts/cancel-request-*.json`).
+- **State:** every job ended `cancelled`, none `failed`, `uncertain` or `partial`. Every cancellation record holds
+  `requested_by: owner`, `requested_at`, `resolved_at` and `status_at_request`. The three jobs that had reached
+  ComfyUI (cases a-c: `3ffa0b39`, `660e5525`, `4cfc70ca`) also record the prompt ID acted on, ComfyUI's reply and
+  the `/queue` observations behind the decision. Each of those three has a `cancel-request.json` beside its state
+  (copied as `receipts/cancel-request-*.json`). The never-submitted job `0519691a` has no prompt ID, no actions,
+  no observations and no request file: it was settled inside the cancel request, and its record says so.
 - **Exactly one `/prompt` POST per submission, no resubmit:** ComfyUI's in-memory log (`/internal/logs/raw`)
-  counted `got prompt` 1 → 2 (b: one prompt; e: none) → 4 (c: two prompts for three planned outputs) → 7 (a: output
+  counted (the unfiltered log lines for 16:41:50-16:51:10 are in `receipts/comfyui-log-164150-165110.txt`) `got prompt` 1 → 2 (b: one prompt; e: none) → 4 (c: two prompts for three planned outputs) → 7 (a: output
   1, the driver's blocker, output 2). `Prompt executed` rose 1 → 2 → 4 → 6: the dequeued `a898e17f` never
   executed. Every Studio prompt in history has `client_id: asset-studio`. No prompt ID appears twice.
 - **Queue empty afterwards:** `/queue` read `running: [], pending: []` after each case (`post` events).
@@ -142,8 +144,9 @@ Those two completed outputs and all cancelled jobs are throwaway; nothing was vi
 - **Restart reconciliation** (a `cancel-request.json` left over when the Studio restarts) was not exercised.
 - Other backends (hidream, h3, qwen21), Production/comparison jobs, and native-operation jobs were not tested.
   The latter two are refused by design.
-- The kept outputs were checked structurally only (file present, 832x1216 RGB, indexed asset id). Nobody
-  viewed them. Generated is not accepted and not licensed; the WAI licence notes in the catalog still apply.
+- The two kept outputs (`Studio/WAI-Illustration_00049_.png`, `_00050_.png`) were checked only like this. Each file
+  was opened with Pillow from ComfyUI's output folder: it exists and decodes as 832x1216 RGB. Its `asset_id`
+  (`4587a8c7…`, `9cc63e35…`) was read from the job's `outputs` in `/api/jobs/<id>`. Nobody viewed them. Generated is not accepted and not licensed; the WAI licence notes in the catalog still apply.
 
 ## Files
 
@@ -152,3 +155,5 @@ ComfyUI history status for each prompt. `receipts/events-*.json` holds the drive
 reads, commit readings and log counts. The folder also has `recipe-*.json`, `cancel-request-*.json`,
 `reopen-refusal.json` and `drive.py`. UI run: `ui-f9687adc.json`, `events-ui*.json`, `ui_cancel.py`,
 `after_card.py`, `ui-settled-card.json` and `ui-04-settled-card.png` (a text-only card crop).
+`comfyui-log-164150-165110.txt`: ComfyUI's own log lines for the whole window, read from `/internal/logs/raw` at
+about 17:25 and saved unfiltered, with colour codes stripped. The three drivers are as-run copies with local paths.

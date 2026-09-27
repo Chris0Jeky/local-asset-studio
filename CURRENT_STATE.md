@@ -2,7 +2,7 @@
 
 ## Owner cancel (#1138) proved live on ComfyUI 0.35.0 — 27 September 2026 (16:41-16:44 local)
 
-Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<id>/cancel` on the primary backend. Every job ended `cancelled`, with who, when, the prompt ID and the `/queue` observations recorded.
+Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<id>/cancel` on the primary backend. Every job ended `cancelled`, with who and when recorded. The three jobs that had reached ComfyUI also record the prompt ID, ComfyUI's reply and the `/queue` observations.
 - **Studio-queued** (`0519691a`): settled at once; nothing was sent.
 - **Running** (`660e5525` / `fb0f28c0`): the targeted `POST /interrupt {"prompt_id"}` was sent after `/queue` listed exactly that prompt, and ComfyUI logged `Interrupting prompt fb0f28c0-…`. It took 25 s to settle, because ComfyUI finished a cold checkpoint load before it stopped.
 - **Batch of 3** (`4cfc70ca`): interrupted on output 2. Output 1 was kept; output 3 was never submitted.

@@ -1,3 +1,5 @@
+# As-run driver for this proof (27 Sep 2026), kept as a receipt. It hardcodes this machine's local paths
+# (Studio runs folder, scratch output folder) and is not a portable reproduction.
 """Live proof driver for #1138 (owner cancel). One case per invocation: python drive.py be|c|a
 Only the Studio's own jobs are cancelled, through POST /api/jobs/<id>/cancel. The case-a blocker is this
 driver's own ComfyUI prompt; it is never cancelled or deleted."""

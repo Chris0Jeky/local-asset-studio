@@ -1,3 +1,4 @@
+# As-run driver (27 Sep 2026), kept as a receipt; hardcodes local paths and is not a portable reproduction.
 """#1138 UI proof: one cheap SFW wai job, cancelled by clicking the running card's Cancel button in a real (headless) browser."""
 import json, sys, time
 sys.path.insert(0, 'C:/Users/jekyt/AppData/Local/Temp/cancel-proof-0927')
