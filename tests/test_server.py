@@ -34,7 +34,10 @@ GRAPH = {"1":{"inputs":{"text":"native positive","width":512,"height":512,"seed"
 PRESET = {"id":"demo","name":"Demo","category":"Test","graph":"workflows/api/demo-api.json","positive":["1","text"],"width":["1","width"],"height":["1","height"],"seed":["1","seed"],"steps":["1","steps"],"cfg":["1","cfg"],"lora":["1","lora"],"reference":["1","reference"],"bindings_extra":{"width":[["2","width"]],"height":[["2","height"]],"lora":[["1","strength_clip"]]}}
 
 class FakeStudio(server.Studio):
-    def __init__(self, root, replies): self.replies=iter(replies); self.requests=[]; super().__init__(root)
+    def __init__(self, root, replies):
+        self.replies=iter(replies); self.requests=[]; super().__init__(root)
+        # Scripted replies arrive at once: a real 2 s /history backoff (#1172) only slowed 24 suite tests by 52 s.
+        self.history_read_backoff_seconds=0
     def _request(self, *args, **kwargs):
         self.requests.append((args, kwargs))
         response=next(self.replies)
@@ -313,6 +316,8 @@ class ServerTests(unittest.TestCase):
         """#1113: one unreadable /history poll is retried after a backoff; the prompt is never resubmitted and the next member is sent."""
         done=lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}}
         s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},URLError('connection reset'),done('first'),{'prompt_id':'second'},done('second')])
+        self.assertEqual(self.studio().history_read_backoff_seconds,server.HISTORY_READ_BACKOFF_SECONDS)  # only the double skips the wait
+        s.history_read_backoff_seconds=server.HISTORY_READ_BACKOFF_SECONDS
         job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2},enqueue=False)['id']]
         with patch.object(server.time,'sleep') as sleep: s._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['first','second'])
@@ -324,6 +329,7 @@ class ServerTests(unittest.TestCase):
         """Only HISTORY_READ_STRIKES consecutive failures (any kind) end observation; nothing is resubmitted and later members stay unsent."""
         self.assertEqual(server.HISTORY_READ_STRIKES,3)
         s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},URLError('refused'),TimeoutError('timed out'),['not','history']])
+        s.history_read_backoff_seconds=server.HISTORY_READ_BACKOFF_SECONDS
         job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2},enqueue=False)['id']]
         with patch.object(server.time,'sleep') as sleep: s._run(job)
         self.assertEqual(job['status'],'uncertain');self.assertEqual(job['prompt_ids'],['first'])
