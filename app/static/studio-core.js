@@ -16,24 +16,26 @@
   const normalizeView=hash=>VIEWS.includes(String(hash||'').replace(/^#/,''))?String(hash).replace(/^#/,''):'home';
   function recipesFor(id,presets,source=false){const intent=INTENTS.find(x=>x.id===id);if(!intent)return[];const rank=p=>{const i=intent.prefer.indexOf(p.id);return i<0?100:i;};return presets.filter(p=>intent.accept(p)&&(!source||!!p.reference)).sort((a,b)=>rank(a)-rank(b)||Number(!!b.verified)-Number(!!a.verified)||a.name.localeCompare(b.name));}
   function summarize(assets=[],plans=[],jobs=[]){const retained=assets.filter(a=>!a.trashed_at);return{assets:retained.length,keepers:retained.filter(a=>a.review==='selected').length,unreviewed:retained.filter(a=>!a.review||a.review==='unreviewed').length,needsWork:retained.filter(a=>a.review==='needs_work').length,activeJobs:jobs.filter(j=>ACTIVE.includes(j.status)),activePlans:plans.filter(p=>ACTIVE.includes(p.state?.status)),reviewPlans:plans.filter(p=>p.state?.status==='awaiting_review'),attentionJobs:jobs.filter(j=>ATTENTION.includes(j.status)&&!j.put_away),putAwayJobs:jobs.filter(j=>j.put_away&&!ACTIVE.includes(j.status)),attentionPlans:plans.filter(p=>ATTENTION.includes(p.state?.status)),prepared:plans.filter(p=>p.state?.status==='planned')};}
-  // #308 (first step): the pre-submit memory check's refusal, in plain words. It names what the check measured, what the
-  // job needs, and that nothing was sent; the server's own wording stays in `detail`. Presentation only: no policy here.
-  function headroomDetails(text){
+  // #308 (first step): the pre-submit memory check's refusal, in plain words. It names what the check measures (Windows
+  // commit headroom), what the job needs and, only when the text or job state proves it, what was not sent; the server's
+  // own wording stays in `detail`. Presentation only: no policy here.
+  function headroomDetails(text,job=null){
     const raw=String(text||''),low=raw.match(/Host commit headroom (\d+(?:\.\d+)? GiB|unknown) is below the required (\d+(?:\.\d+)? GiB)/),unknown=raw.match(/Host commit headroom is unavailable: (.+?)(?:\. No prompt was submitted|$)/);
     if(!low&&!unknown)return null;
-    const output=raw.match(/No prompt was submitted for output (\d+)/),later=output&&Number(output[1])>1;
-    const sent=later?'Output '+output[1]+' was not sent to ComfyUI; earlier outputs are kept.':'Nothing was sent to ComfyUI.';
-    return low?{title:'Not started: not enough memory headroom',
-      summary:'Before sending a Qwen or FLUX.2 job, the Studio checks how much memory Windows can still hand out (RAM plus page file). It had '+(low[1]==='unknown'?'an unknown amount':low[1])+'; this job needs '+low[2]+' to load safely. '+sent,
-      action:'Close other heavy programs or wait for other GPU work to finish, then press Generate again. The Studio checks again just before sending.'}
-      :{title:'Not started: memory headroom unknown',
-      summary:'Before sending a Qwen or FLUX.2 job, the Studio checks how much memory Windows can still hand out, but it could not read it ('+unknown[1].trim()+'), so it held the job instead of guessing. '+sent,
+    const output=raw.match(/No prompt was submitted for output (\d+)/),none=job&&job.status==='failed'&&Array.isArray(job.prompt_ids)&&!job.prompt_ids.length;
+    const sent=output&&Number(output[1])>1?' Output '+output[1]+' was not sent to ComfyUI; the earlier outputs in this batch had already finished.':output||none?' Nothing was sent to ComfyUI.':'';
+    const measured='the Studio checks Windows commit headroom: how much more memory Windows can still promise to programs, counting RAM plus the page file';
+    return low?{title:'Held: not enough memory headroom',
+      summary:'Before sending a Qwen or FLUX.2 job, '+measured+'. It had '+(low[1]==='unknown'?'an unknown amount':low[1])+'; this job needs '+low[2]+'.'+sent,
+      action:'Close other programs that use a lot of memory, or wait until a running job finishes and its memory is released, then press Generate again. The Studio checks again just before sending.'}
+      :{title:'Held: memory headroom unknown',
+      summary:'Before sending a Qwen or FLUX.2 job, '+measured+', but it could not read it ('+unknown[1].trim()+'), so it held the job instead of guessing.'+sent,
       action:'Try Generate again in a moment. If this keeps happening, check Models & setup or restart the Studio.'};
   }
   function headroomExplanation(text){const plain=headroomDetails(text);return plain?plain.title+'. '+plain.summary:null;}
   function failureDetails(job={}){
     const raw=typeof job.message==='string'?job.message:'';
-    const headroom=['failed','partial'].includes(job.status)&&!job.failure?headroomDetails(raw):null;
+    const headroom=['failed','partial'].includes(job.status)&&!job.failure?headroomDetails(raw,job):null;
     if(headroom)return{kind:'host_headroom',...headroom,detail:raw,node_type:'',node_id:'',exception_type:''};
     const failure=job.failure&&typeof job.failure==='object'?job.failure:null;
     if(failure||job.status==='failed'&&/ComfyUI reported an execution error|bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455/i.test(raw)){
