@@ -13,7 +13,6 @@ import socket
 import tempfile
 import threading
 import uuid
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -53,7 +52,7 @@ async def exercise(args):
                     return
                 return super()._json(status,data)
         # Fixed port deliberately exercises the unchanged production Host/Origin contract.
-        http=ThreadingHTTPServer(('127.0.0.1',8191),Handler)
+        http=production.StudioHTTPServer(('127.0.0.1',8191),Handler)
         thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start();fixture.POSTS.clear()
         def record(name,condition):
             checks.append({'id':name,'passed':bool(condition)});print(name,bool(condition),flush=True)
