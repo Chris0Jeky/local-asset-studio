@@ -1,0 +1,41 @@
+{
+ "recipe_id": "anifox-v2-base",
+ "recipe_preset_id": "anifox-v2-baseline",
+ "job_id": "8b274fe1-f2bf-4ec3-b391-d16dcc3adbad",
+ "prompt_id": "ef958560-640f-42f3-87bb-c28fff2d0674",
+ "wall_seconds": 50.8,
+ "host_commit_percent_start": 66.3,
+ "host_commit_percent_peak": 74.7,
+ "output": "Studio/AniFox-v2-Baseline_00010_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "bf546faa943f573aea280c92681e56cec6765fee87f040410bd16b61060e8d61",
+ "thumbnail": "examples/recipe-thumbs-20260927/anifox-v2-base.jpg",
+ "thumbnail_sha256": "e7bac95c48a6a30d0c6747ea4ea699e451442c98224fdccd98a95918b4c08186",
+ "finished_local": "2026-09-27 04:12:12.888231",
+ "inspection": "Black coat, white top and knee boots on a rainy blue platform with a green signal lamp.",
+ "studio_recipe": {
+  "preset_id": "anifox-v2-baseline",
+  "controls": {
+   "positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026091301,
+   "steps": 30,
+   "cfg": 5,
+   "sampler": "euler_ancestral",
+   "scheduler": "karras",
+   "denoise": 1.0,
+   "lora": 0,
+   "lora2": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anifox-v2-baseline-api.json",
+  "created_at": 1790478682.2069688,
+  "references": [],
+  "parent_assets": []
+ }
+}

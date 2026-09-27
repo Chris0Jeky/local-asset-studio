@@ -1,0 +1,45 @@
+{
+ "recipe_id": "oneobsession-anima-v20-portrait",
+ "recipe_preset_id": "oneobsession-anima-v20-baseline",
+ "job_id": "9459228a-551e-4991-a11e-07741c7dad00",
+ "prompt_id": "d0121b72-473c-4a85-8c5a-4016955643c8",
+ "wall_seconds": 26.7,
+ "host_commit_percent_start": 58.4,
+ "host_commit_percent_peak": 61.5,
+ "output": "Studio/OneObsession-Anima-v20-Baseline_00003_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "a60390035d85d352b283ca58b622b20f8d492b8e17704987448450dfb18780ad",
+ "thumbnail": "examples/recipe-thumbs-20260927/oneobsession-anima-v20-portrait.jpg",
+ "thumbnail_sha256": "e2c9de906d16eb6d9619bdf381dfc434d4270b956654bafe390f9ea7d19fcc38",
+ "finished_local": "2026-09-27 04:05:29.096409",
+ "inspection": "Face from slightly above, dark hair across the face, blue night fog and strong chiaroscuro; moody close-up.",
+ "studio_recipe": {
+  "preset_id": "oneobsession-anima-v20-baseline",
+  "controls": {
+   "positive": "masterpiece, best quality, score_8, close up, from above, adult original character, long dark hair, melancholy, dramatic night fog, chiaroscuro, detailed eyelashes, looking at viewer, modern anime illustration",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026092117,
+   "steps": 30,
+   "cfg": 4,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "lora": 0,
+   "lora2": 0,
+   "lora3": 0,
+   "lora4": 0,
+   "lora5": 0,
+   "lora6": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\oneobsession-anima-v20-baseline-api.json",
+  "created_at": 1790478302.4424486,
+  "references": [],
+  "parent_assets": []
+ }
+}

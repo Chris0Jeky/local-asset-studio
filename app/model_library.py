@@ -42,7 +42,11 @@ class ModelLibrary:
         self.lock = threading.Lock()
 
     def manifest(self):
-        return load(self.root / "models/library.json", {"assets": [], "collections": []})
+        data = load(self.root / "models/library.json", {"assets": [], "collections": []})
+        # A wrong shape must not read as an empty library (hiding every pin) or crash a caller with AttributeError.
+        if not isinstance(data, dict) or not isinstance(data.get("assets", []), list) or not all(isinstance(a, dict) for a in data.get("assets", []))                 or not isinstance(data.get("collections", []), list):
+            raise ValueError("models/library.json must be an object with an assets list and a collections list")
+        return data
 
     def asset(self, asset_id):
         checked_id(asset_id)

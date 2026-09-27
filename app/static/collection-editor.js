@@ -23,7 +23,7 @@ function collectionCurrent(s){return collectionSession===s && s.epoch===collecti
 function collectionScope(s){return /^[0-9a-f]{32}$/.test(s.scope||'')&&assetState.workspace_id===s.scope;}
 function collectionDraft(s,value=collectionValues()){return {id:s.id,revision:s.id?s.revision:null,baseline:{...s.baseline},values:{...value},updated_at:Date.now()};}
 function collectionControls(){
-  const s=collectionSession,blocked=!s||s.busy||s.pending||s.restoreRequired||s.storageError||s.stale;
+  const s=collectionSession,blocked=!s||s.busy||s.pending||s.restoreRequired||s.storageError||s.stale||s.discarded;
   $('#saveCollection').disabled=!!blocked||!collectionDirty(s);
   $('#saveCollection').textContent=s?.busy?(s.activity==='inspect'?'Inspecting…':'Saving…'):'Save collection';
   $('#removeCollection').hidden=!s?.id;$('#removeCollection').disabled=!!blocked;
@@ -101,10 +101,11 @@ function restoreCollectionDraft(){
 function discardCollectionDraft(){
   const s=collectionSession;if(!s||!collectionCurrent(s)||s.busy)return;
   if(!collectionScope(s)){collectionStatus('Return to the original Workspace before restoring or discarding this retained draft.',true);return;}
-  const warning=s.storageError?'Discard all collection recovery for this Workspace in this tab? Corrupt evidence may include unconfirmed commands.':'Discard this collection’s local draft and retained command?';
+  let all=false;if(s.storageError){try{if(!s.journal)throw Error('no journal');s.journal.list();}catch(e){all=true;}}
+  const warning=all?'Discard all collection recovery for this Workspace in this tab? Corrupt evidence may include unconfirmed commands.':'Discard this collection’s local draft and retained command?';
   if(!window.confirm(warning+' This does not cancel, undo, or determine the outcome of any server work. Original assets are untouched.'))return;
   try{
-    if(s.storageError){s.journal=s.journal||new StudioCollectionRecovery.Journal(sessionStorage,s.scope);s.journal.reset();}
+    if(all){s.journal=s.journal||new StudioCollectionRecovery.Journal(sessionStorage,s.scope);s.journal.reset();}
     else s.journal.discard(s.id);
     s.pending=null;s.uncertain=false;s.recovery=null;s.restoreRequired=false;s.storageError=false;s.discarded=true;
     collectionRecoveryList(s);
@@ -118,7 +119,7 @@ function collectionDefiniteRefusal(error){
     collection_workspace_conflict:[409],collection_revision_limit:[409],collection_asset_revision_limit:[409],collection_journal_full:[507]};
   return error.data?.format==='studio.collection-error/v1'&&error.data.generation_submitted===false&&expected[error.data.code]?.includes(error.status);
 }
-async function collectionRequest(s,pending,inspect=false){
+async function collectionRequest(s,pending,inspect=false,retry=false){
   s.busy=true;s.activity=inspect?'inspect':'save';collectionControls();
   const command=JSON.parse(pending.body),snapshot=pending.clicked_values;
   $('#collectionName').disabled=$('#collectionDescription').disabled=!inspect&&command.action==='delete';
@@ -160,11 +161,12 @@ async function collectionRequest(s,pending,inspect=false){
     void refreshAssets(true);
   }catch(e){
     if(collectionCurrent(s)){
-      let definite=!inspect&&collectionDefiniteRefusal(e);
+      let definite=!inspect&&collectionDefiniteRefusal(e)&&!(retry&&e.data?.code==='collection_workspace_conflict');
       if(definite){try{s.journal.resolve(s.id,pending,collectionDraft(s));const recovery=s.journal.get(s.id);s.pending=null;s.recovery=recovery;}catch(storageError){definite=false;s.storageError=true;e=storageError;}}
       s.uncertain=!definite;
       if(definite&&e.data?.code==='collection_revision_conflict')collectionCompare(s,e.data.current??null);
-      collectionStatus(definite?'Change refused: '+e.message+' Your edits remain here.':'Change not confirmed. '+e.message+' Your draft and exact command remain retained. It may already be saved; no automatic retry was sent. Request '+pending.request_id+'.',true);
+      if(retry&&e.data?.code==='collection_workspace_conflict')collectionStatus('The Studio is serving a different Workspace, so this retry proves nothing about the original attempt. The exact command stays retained; return to its original Workspace to inspect it. Request '+pending.request_id+'.',true);
+      else collectionStatus(definite?'Change refused: '+e.message+' Your edits remain here.':'Change not confirmed. '+e.message+' Your draft and exact command remain retained. It may already be saved; no automatic retry was sent. Request '+pending.request_id+'.',true);
     }
   }finally{
     clearTimeout(timer);s.busy=false;
@@ -173,7 +175,7 @@ async function collectionRequest(s,pending,inspect=false){
 }
 async function saveCollectionChange(action){
   const s=collectionSession;
-  if(!s||!collectionCurrent(s)||s.busy)return;
+  if(!s||!collectionCurrent(s)||s.busy||s.discarded)return;
   // Enter submits the form even while Save is disabled: say why nothing was sent.
   if(s.pending){collectionStatus('An earlier save is not confirmed yet. Inspect its status or retry that exact command before saving again.',true);return;}
   if(s.restoreRequired){collectionStatus('Restore or discard the retained draft before saving.',true);return;}
@@ -204,7 +206,7 @@ async function recoverCollectionCommand(inspect){
     if(!retained?.pending||StudioCollectionRecovery.canonical(retained.pending)!==StudioCollectionRecovery.canonical(s.pending))throw Error('The retained pending command changed');
     if(!collectionPersist(s))return;
   }catch(e){s.storageError=true;collectionStatus('Recovery could not be verified: '+e.message+' No request was sent.',true);collectionControls();return;}
-  return collectionRequest(s,s.pending,inspect);
+  return collectionRequest(s,s.pending,inspect,!inspect);
 }
 $('#newCollection').onclick=()=>openCollection();
 $('#renameCollection').onclick=()=>openCollection(assetScope.slice(11));

@@ -81,7 +81,7 @@
       if (negative) w.rememberNegativeCollapse?.(negative.open);
     });
     let state = readPreferences(storage), opener = null, pageScroll = null, scheduled = false, recoveryPending = false;
-    let contextRevision = 0, currentView = null, actionAdapter = null;
+    let contextRevision = 0, currentView = null, actionAdapter = null, presentationSnapshot = null, announcedStamp = null;
     const el = (tag, className, text) => {
       const node = d.createElement(tag); if (className) node.className = className;
       if (text !== undefined) node.textContent = text; return node;
@@ -473,6 +473,10 @@
       // rail with a generic "Resolve the next blocker" while the real message sat only in the dock (#610 item 4).
       const secondary = currentView.secondaryActions.map(action => action.title + ' · ' + action.description).join(' — ');
       text(guidanceSecondary, secondary || 'Presentation never changes execution authority.');
+      // Read-only owner notification for optional islands (#907): a frozen view plus the recipe identity, once per stamp.
+      const recipe = bridge.recipe?.();
+      presentationSnapshot = Object.freeze({view:currentView, recipe:recipe ? Object.freeze({id:String(recipe.id || ''), name:String(recipe.name || recipe.id || '')}) : null});
+      if (announcedStamp !== currentView.contextStamp) { announcedStamp = currentView.contextStamp; create.dispatchEvent(new w.CustomEvent('studio:presentation', {detail:presentationSnapshot})); }
     }
     function sync() {
       const active = !create.hidden;
@@ -537,6 +541,7 @@
     create.__workshop = {
       reveal, sync, openRecipes, finishRecipeSelection, preferences:()=>({...state}),
       presentationView:() => currentView,
+      presentationSnapshot:() => presentationSnapshot,
       dispatchIntent
     };
     applyPresentation(); sync();

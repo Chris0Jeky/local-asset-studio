@@ -1,0 +1,43 @@
+{
+ "recipe_id": "krea-atelier-wildcard-study",
+ "recipe_preset_id": "krea-anime-atelier",
+ "job_id": "7480ce57-4f92-4695-bc76-d57f82cdf1d4",
+ "prompt_id": "6e02183b-a3a1-4617-a12d-7f8310aff963",
+ "wall_seconds": 280.2,
+ "host_commit_percent_start": 72.2,
+ "host_commit_percent_peak": 77.4,
+ "output": "Studio/krea-anime-atelier-gguf_00005_.png",
+ "output_size": [
+  768,
+  1152
+ ],
+ "output_sha256": "bb83ac0444bdc9ade568a139e81abde3ea3df4331c518d33eb70c41a917fb561",
+ "thumbnail": "examples/recipe-thumbs-20260927/krea-atelier-wildcard-study.jpg",
+ "thumbnail_sha256": "f634d0c657f8bfe076319b7c42d68242390185387a3a4ff8e80c7d65cec5d0e1",
+ "finished_local": "2026-09-27 04:30:32.364431",
+ "inspection": "The wildcards expanded to an apothecary crowded with jars at night, volumetric light, a tabby dozing on a book, sepia; jar labels are blank marks.",
+ "studio_recipe": {
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "@NJSW33T, {wide shot|cowboy shot}, a travelling storyteller in __fantasy_setting__, __lighting__ at __time_of_day__, __fantasy_creature__ keeping close, __palette__, __medium__, anime illustration",
+   "steps": 8,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "width": 768,
+   "height": 1152,
+   "seed": 20260916,
+   "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+   "lora": 1.0,
+   "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+   "lora2": 1.0,
+   "lora3": 0,
+   "lora4": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790479552.321887,
+  "references": [],
+  "parent_assets": []
+ }
+}

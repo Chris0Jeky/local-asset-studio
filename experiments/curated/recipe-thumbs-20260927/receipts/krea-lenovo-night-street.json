@@ -1,0 +1,42 @@
+{
+ "recipe_id": "krea-lenovo-night-street",
+ "recipe_preset_id": "krea-anime-atelier",
+ "job_id": "127b97ba-541a-4ac3-ab11-cc0e81a63b7c",
+ "prompt_id": "c8889748-14f5-40e6-9a1a-34b1be5856c1",
+ "wall_seconds": 218.2,
+ "host_commit_percent_start": 55.0,
+ "host_commit_percent_peak": 75.4,
+ "output": "Studio/krea-anime-atelier-gguf_00007_.png",
+ "output_size": [
+  768,
+  1152
+ ],
+ "output_sha256": "50cd047a7d0882a1a6fbe36154af94dfca8e4a4728f09c3b68e538e1a1254fd4",
+ "thumbnail": "examples/recipe-thumbs-20260927/krea-lenovo-night-street.jpg",
+ "thumbnail_sha256": "f97c3dcf554e396f7d055c6568d824bd36c8d856c6c3dba2e552f5f184755a25",
+ "finished_local": "2026-09-27 04:40:44.407715",
+ "inspection": "Photoreal amateur night shot: an adult woman in a duffle coat beside a parked car on a hillside street, city lights below, strong street-lamp flare and phone noise; the face is soft and blurred.",
+ "studio_recipe": {
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "Mobile phone photograph, moderate digital noise, nighttime lighting, blue-purple colour cast, an adult woman in a travelling coat standing beside a parked car on a hillside residential street, city lights in the distance, lens flare, candid, unedited",
+   "steps": 8,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "width": 768,
+   "height": 1152,
+   "seed": 2026092116,
+   "lora_name": "lenovo_krea2.safetensors",
+   "lora": 0.85,
+   "lora2": 0,
+   "lora3": 0,
+   "lora4": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790480226.3402863,
+  "references": [],
+  "parent_assets": []
+ }
+}

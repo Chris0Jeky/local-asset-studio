@@ -285,6 +285,15 @@ class ReviewTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'bounded review'):self.open()
         finally:self.production.reviews.media_lock.release()
         self.assertTrue(self.studio.queue.empty())
+    def test_sheet_receipt_keeps_its_own_copy_of_the_crop(self):
+        from PIL import Image
+        stream=io.BytesIO();Image.new('RGBA',(20,20),(1,2,3,255)).save(stream,'PNG');png=stream.getvalue()
+        crop=[0,0,10000,10000]
+        with tempfile.TemporaryDirectory() as folder:
+            receipt=review_media.render_sheet([{'alias':'A'},{'alias':'B'}],lambda candidate:png,crop,Path(folder)/'sheet.png')
+        crop[0]=5000
+        self.assertEqual([t['basis_points'] for t in receipt['transforms']],[[0,0,10000,10000]]*2,'the receipt describes the rendered crop')
+
     def test_crop_rounding_covers_nonempty_exact_regions(self):
         self.assertEqual(crop_box([0,0,10000,10000],(13,17)),(0,0,13,17))
         self.assertEqual(crop_box([3333,3333,6666,6666],(3,3)),(0,0,2,2))

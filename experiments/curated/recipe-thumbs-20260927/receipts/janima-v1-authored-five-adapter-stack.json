@@ -1,0 +1,44 @@
+{
+ "recipe_id": "janima-v1-authored-five-adapter-stack",
+ "recipe_preset_id": "janima-v1-baseline",
+ "job_id": "c546e848-63df-41e1-890e-0c14a1add6f5",
+ "prompt_id": "1673247b-f801-44de-bfdd-439cf0601e76",
+ "wall_seconds": 34.9,
+ "host_commit_percent_start": 58.7,
+ "host_commit_percent_peak": 69.9,
+ "output": "Studio/JANIMA-v1-Baseline_00004_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "710b54502c2693d1dfcb0c546c6ef96fa3f61c75b3c66653d20504b66a753b6f",
+ "thumbnail": "examples/recipe-thumbs-20260927/janima-v1-authored-five-adapter-stack.jpg",
+ "thumbnail_sha256": "0df686f5c1411b6eb9dc0e403f1a51c4befa30d2fd84846a0674ef0255a79568",
+ "finished_local": "2026-09-27 04:04:26.685374",
+ "inspection": "Blunt fringe, cream turtleneck, warm backlit dusk and a softer painterly finish; still fully clothed.",
+ "studio_recipe": {
+  "preset_id": "janima-v1-baseline",
+  "controls": {
+   "positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition, @rapscallion_style, @sl0p, @m1d.",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026091301,
+   "steps": 30,
+   "cfg": 4.5,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "lora": 0.3,
+   "lora2": 0.6,
+   "lora3": 0.35,
+   "lora4": 0.25,
+   "lora5": 0.5
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\janima-v1-baseline-api.json",
+  "created_at": 1790478231.8342657,
+  "references": [],
+  "parent_assets": []
+ }
+}

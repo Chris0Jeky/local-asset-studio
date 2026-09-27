@@ -1,0 +1,39 @@
+{
+ "recipe_id": "animagine-fantasy-portrait",
+ "recipe_preset_id": "anime",
+ "job_id": "381cb3ff-3e54-4c38-a069-73b439007fb1",
+ "prompt_id": "17c317ec-6ce3-4286-aceb-0b5d94803aa9",
+ "wall_seconds": 39.1,
+ "host_commit_percent_start": 61.8,
+ "host_commit_percent_peak": 74.5,
+ "output": "Expansion/Animagine_00008_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "88ff5d08f21b0ef793431b1d241269ae7dee7ec1619b26ae0d3c00a874f92afb",
+ "thumbnail": "examples/recipe-thumbs-20260927/animagine-fantasy-portrait.jpg",
+ "thumbnail_sha256": "6edddec79adf17f50be7a928786a0cd046f942a98df55acbedf18b27c6f1358d",
+ "finished_local": "2026-09-27 04:08:44.542958",
+ "inspection": "Dark embroidered haori, dutch angle, paper lanterns overhead; the fox mask is missing and she holds a sheet of paper instead of a paper lantern.",
+ "studio_recipe": {
+  "preset_id": "anime",
+  "controls": {
+   "positive": "1girl, original character, safe, white fox mask pushed to one side, dark red hair, embroidered haori, holding a paper lantern, lantern-lit night market, rim lighting, dutch angle, upper body, fantasy, masterpiece, high score, great score, absurdres",
+   "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+   "steps": 28,
+   "cfg": 5,
+   "sampler": "euler_ancestral",
+   "scheduler": "normal",
+   "width": 832,
+   "height": 1216,
+   "seed": 20260933,
+   "denoise": 1.0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anime-api.json",
+  "created_at": 1790478485.502485,
+  "references": [],
+  "parent_assets": []
+ }
+}

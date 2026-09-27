@@ -73,6 +73,12 @@ class ModelLibraryTests(unittest.TestCase):
             request.assert_not_called()
         self.assertEqual(target.read_bytes(),b'someone else');self.assertEqual(local.read_bytes(),self.body)
 
+    def test_a_manifest_of_the_wrong_shape_is_a_clear_error(self):
+        for bad in ([],{'assets':{}},{'assets':[1]},{'assets':[],'collections':{}}):
+            with self.subTest(manifest=bad):
+                (self.root/'models/library.json').write_text(json.dumps(bad))
+                with self.assertRaisesRegex(ValueError,'models/library.json'):self.lib.snapshot()
+
 
 class PinOnlyFolderTests(unittest.TestCase):
     """Detectors, GGUF backbones and .pth heads are pinned for verification, never auto-installed."""

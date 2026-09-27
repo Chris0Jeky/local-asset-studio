@@ -1,0 +1,45 @@
+{
+ "recipe_id": "anima-v1-first-adapter-comparison",
+ "recipe_preset_id": "anima-v1-baseline",
+ "job_id": "bd241f3c-ef71-4506-a943-cdcf052fb004",
+ "prompt_id": "efba2f5c-7b25-478d-a57f-4383b37f0dc1",
+ "wall_seconds": 26.7,
+ "host_commit_percent_start": 59.7,
+ "host_commit_percent_peak": 66.0,
+ "output": "Studio/Anima-v1-Baseline_00043_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "c88233c7320a6fc1520213edf05c491f71403d0365bb23545ec93f5336560a13",
+ "thumbnail": "examples/recipe-thumbs-20260927/anima-v1-first-adapter-comparison.jpg",
+ "thumbnail_sha256": "72c1e4d33fd31ca1ceaf3ecb6d0d667826abb965c37f66226711d132b421d8b1",
+ "finished_local": "2026-09-27 04:02:44.534824",
+ "inspection": "Brighter backlit platform with glow, ribbed sweater, brown boots, longer legs; still fully clothed.",
+ "studio_recipe": {
+  "preset_id": "anima-v1-baseline",
+  "controls": {
+   "positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026091301,
+   "steps": 30,
+   "cfg": 4.5,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "lora": 1.0,
+   "lora2": 0,
+   "lora3": 0,
+   "lora4": 0,
+   "lora5": 0,
+   "lora6": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anima-v1-baseline-api.json",
+  "created_at": 1790478137.9389758,
+  "references": [],
+  "parent_assets": []
+ }
+}

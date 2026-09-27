@@ -19,7 +19,7 @@ python app/server.py --repo-root .             # needs config/local.json (copy c
 ```
 
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
-`http://127.0.0.1:8191`). Restart the server to reload `presets/catalog.json`. No build step, no linter, no
+`http://127.0.0.1:8191`). The server rereads `presets/catalog.json` and `app/static/` per request (reload the page); only `app/*.py` changes need a restart, with no Studio work active. No build step, no linter, no
 package manager: Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`
 with a vendored model-viewer. Skips are environment-dependent (72 on 19 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`; the run is the record).
 
@@ -43,7 +43,7 @@ command for the current list instead of a stored module count. Examples include 
 `test_model_install_safety`/`test_model_redirects`, `review_media.py` → `test_review_desk`, `host_memory.py` → `test_server`,
 `model_requirements.py` → `test_preset_model_readiness`, `project_storage.py` → `test_production_storage`, `submission_evidence.py` → `test_submission_recovery`.
 
-CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on every push and PR; 45 further
+CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on every push and PR; 46 further
 path-filtered lanes in the same folder (browser drivers, graph validation, model intake/readiness, workflow MCP, …) run
 only when their files change. Agent tooling outside the Studio (comfy-cli, comfy-mcp, skills): `docs/AGENT-TOOLING.md`.
 

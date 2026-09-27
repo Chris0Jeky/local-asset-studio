@@ -1,0 +1,43 @@
+{
+ "recipe_id": "krea-style-airy-softwatercolor",
+ "recipe_preset_id": "krea-style-lab",
+ "job_id": "311af910-db84-45d9-917d-86aabe8bd8bc",
+ "prompt_id": "8b78c779-0bf5-47b5-9e3a-363b9eb1134c",
+ "wall_seconds": 245.1,
+ "host_commit_percent_start": 70.4,
+ "host_commit_percent_peak": 83.0,
+ "output": "Studio/krea-anime-atelier-gguf_00008_.png",
+ "output_size": [
+  1024,
+  1024
+ ],
+ "output_sha256": "59303c0c5f15ef66a30e0969054e2d89498c42327cb68b5e04903e11fa822434",
+ "thumbnail": "examples/recipe-thumbs-20260927/krea-style-airy-softwatercolor.jpg",
+ "thumbnail_sha256": "f45030bc619a895bcd25c43981b087c5c3ea0a03de2d4a4f5ff56bb4dd9d0345",
+ "finished_local": "2026-09-27 04:44:49.972656",
+ "inspection": "Shelves of stoppered jars and an arched window in soft rose, cream and mint washes; the jar labels are pseudo-script marks, not readable text.",
+ "studio_recipe": {
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "A quiet apothecary crowded with jars, dappled sunlight, soft rose and cream, art deco watercolor style, airy anime watercolor style",
+   "steps": 8,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "width": 1024,
+   "height": 1024,
+   "seed": 20260921,
+   "lora_name": "fal-krea2-airy-anime-watercolor.safetensors",
+   "lora": 1.0,
+   "lora2_name": "krea2_softwatercolor.safetensors",
+   "lora2": 0.7,
+   "lora3": 0,
+   "lora4": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790480444.8944929,
+  "references": [],
+  "parent_assets": []
+ }
+}

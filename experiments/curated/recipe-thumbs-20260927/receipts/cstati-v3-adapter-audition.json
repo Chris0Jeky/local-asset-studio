@@ -1,0 +1,41 @@
+{
+ "recipe_id": "cstati-v3-adapter-audition",
+ "recipe_preset_id": "cstati-v3-baseline",
+ "job_id": "3558d60d-2cca-4c19-8cc5-77d9a5c479dd",
+ "prompt_id": "6a162dfd-352e-42c3-b7ca-c778707defa1",
+ "wall_seconds": 22.5,
+ "host_commit_percent_start": 61.4,
+ "host_commit_percent_peak": 67.8,
+ "output": "Studio/CSTati-v3-Baseline_00008_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "bdb50036c59660c6efd4692b63b8541c8e879990a1f575e7fd5431fd8987e8ac",
+ "thumbnail": "examples/recipe-thumbs-20260927/cstati-v3-adapter-audition.jpg",
+ "thumbnail_sha256": "0cc7f3ee1d6498e48ce9ce7b9b716e37c657e637b1ebae8a433f30a0d2637fb1",
+ "finished_local": "2026-09-27 04:10:25.322068",
+ "inspection": "Still fully clothed, with fuller proportions and a warmer brick platform and garden; the adapter changed body shape and scene more than style.",
+ "studio_recipe": {
+  "preset_id": "cstati-v3-baseline",
+  "controls": {
+   "positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026091301,
+   "steps": 30,
+   "cfg": 4,
+   "sampler": "euler_ancestral",
+   "scheduler": "karras",
+   "denoise": 1.0,
+   "lora": 1.0,
+   "lora2": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\cstati-v3-baseline-api.json",
+  "created_at": 1790478602.9293947,
+  "references": [],
+  "parent_assets": []
+ }
+}

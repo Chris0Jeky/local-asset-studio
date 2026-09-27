@@ -568,7 +568,8 @@ function renderAssetReasons() {
   $('#assetReviewReasons').innerHTML=assetReasonTags.map(reason=>'<button type="button" class="asset-reason'+(chosen.has(reason)?' is-on':'')+'" data-review-reason="'+esc(reason)+'" aria-pressed="'+(chosen.has(reason)?'true':'false')+'">'+esc(reason)+'</button>').join('');
 }
 function toggleAssetReason(reason) {
-  if(!assetReasonTags.includes(reason) || assetDetailBusy)return;
+  if(!assetReasonTags.includes(reason))return;
+  if(assetDetailBusy){assetDetailStatus('A save is still pending; choose that reason again once it finishes.');return;}
   const tags=assetTagList(),at=tags.findIndex(t=>t.toLowerCase()===reason);
   if(at>=0)tags.splice(at,1);else tags.push(reason);
   $('#assetTags').value=tags.join(', ');renderAssetReasons();
@@ -1006,7 +1007,7 @@ document.addEventListener('click',async e=>{
     if(e.target.closest('[data-asset-import]')){$('#importAssets').click();return;}
     const scope=e.target.closest('[data-scope]');if(scope){if(scope.hasAttribute?.('data-asset-browse-scope')){$('#assetSearch').value='';$('#assetType').value='all';}setAssetScope(scope.dataset.scope);}
     const open=e.target.closest('[data-asset-open]');if(open)openAsset(open.dataset.assetOpen);
-    const favorite=e.target.closest('[data-asset-favorite]');if(favorite){const a=assetState.assets.find(a=>a.id===favorite.dataset.assetFavorite);await mutateAssets({ids:[a.id],action:'edit',favorite:!a.favorite});}
+    const favorite=e.target.closest('[data-asset-favorite]');if(favorite){const a=assetState.assets.find(a=>a.id===favorite.dataset.assetFavorite);if(!a)throw Error('This asset is no longer in the loaded library; nothing changed. Refresh the library.');await mutateAssets({ids:[a.id],action:'edit',favorite:!a.favorite});}
     const lineage=e.target.closest('[data-lineage]');if(lineage)openAsset(lineage.dataset.lineage);
     const handoff=e.target.closest('[data-handoff]');if(handoff)await handoffAsset(activeAsset.id,handoff.dataset.handoff);
     const bulk=e.target.closest('[data-bulk]');

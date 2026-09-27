@@ -86,6 +86,108 @@ let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{a
         self.assertIn('A clear desk', desk); self.assertIn('2 run(s) put away', desk)
         self.assertEqual(self.page.locator('#uxAttention a[href="/#create"]').count(), 2)
 
+    def load_output_review(self, fail=False, missing=False):
+        card = region(source('app.js'), 'function mediaCard(', 'function renderCompare(')
+        render = region(source('app.js'), 'const RECENT_STEP=', 'async function refreshJobs')
+        self.page.goto('about:blank')
+        self.page.set_content('''<p id="status"></p><input id="elsewhere"><div id="gallery"></div><div id="jobProblemsHost"></div><script>
+const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let jobs=[{id:'job-1',preset_name:'Lantern',status:'completed',controls:{positive:'a lantern',seed:7},outputs:[{asset_id:'asset-"1',media_type:'image',seed:7},{media_type:'image',seed:8}]}],jobsSignature=null;
+let assetState={assets:'''+("[]" if missing else "[{id:'asset-" + '"' + "1',review:'unreviewed'}]")+'''};window.edits=[];window.reads=0;window.said=[];
+function renderCompare(){}function renderMixedBatch(){return '';}
+function message(text,error=false){said.push([text,error]);}
+window.readOk=true;window.gates=[];let assetRefreshing=false;
+async function refreshAssets(){reads++;if(!assetState.assets.length)assetState.assets.push({id:'asset-"1',review:'unreviewed'});return readOk;}
+async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')throw Error('Resolve the earlier library update first.');if(window.slow)await new Promise(r=>gates.push(r));edits.push(payload);assetState.assets.find(a=>a.id===payload.ids[0]).review=payload.review;}
+</script><script>'''+source('output-review.js')+'''</script><script>'''+card+render+'''renderJobs();</script>''')
+
+    def test_create_output_is_reviewed_in_place_and_a_second_press_clears_it(self):
+        self.load_output_review()
+        self.assertEqual(self.page.locator('.output-review').count(), 1, 'an output with no asset has nothing to review')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
+        self.page.click('[data-output-review="selected"]')
+        self.page.wait_for_function('edits.length===1')
+        self.assertEqual(self.page.evaluate('edits[0]'), {'action': 'edit', 'ids': ['asset-"1'], 'review': 'selected'})
+        self.assertEqual(self.page.evaluate('reads'), 1, 'a fresh revision is read before the edit')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Kept')
+        self.assertEqual(self.page.get_attribute('[data-output-review="selected"]', 'aria-pressed'), 'true')
+        self.assertIn('press it again to clear', self.page.evaluate('said.at(-1)[0]'))
+        self.page.click('[data-output-review="selected"]')
+        self.page.wait_for_function('edits.length===2')
+        self.assertEqual(self.page.evaluate('edits[1].review'), 'unreviewed')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
+
+    def test_create_output_review_keys_act_only_on_the_focused_card(self):
+        self.load_output_review()
+        self.page.focus('#elsewhere'); self.page.keyboard.press('k')
+        self.page.focus('#gallery .imageCard .pin'); self.page.keyboard.press('Control+k')
+        self.assertEqual(self.page.evaluate('edits.length'), 0, 'typing and shortcuts elsewhere never review')
+        self.page.keyboard.press('w')
+        self.page.wait_for_function('edits.length===1')
+        self.assertEqual(self.page.evaluate('edits[0].review'), 'needs_work')
+        self.page.focus('[data-output-review="rejected"]')
+        self.page.evaluate("jobs=[...jobs,{id:'job-2',preset_name:'New',status:'running',message:'Generating output 1 of 1',outputs:[]}];renderJobs()")
+        self.assertEqual(self.page.evaluate("document.activeElement.dataset.outputReview"), 'rejected', 'a poll re-render keeps focus on the decision')
+        self.page.keyboard.press('x')
+        self.page.wait_for_function('edits.length===2')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Rejected')
+
+    def test_a_brand_new_output_is_reviewed_after_the_library_read_brings_it_in(self):
+        # Create never polls the library: the asset of an output made on this page arrives only with the read.
+        self.load_output_review(missing=True)
+        self.page.click('[data-output-review="needs_work"]')
+        self.page.wait_for_function('edits.length===1')
+        self.assertEqual(self.page.evaluate('edits[0].review'), 'needs_work')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Needs work')
+
+    def test_decisions_pressed_while_a_save_is_in_flight_queue_instead_of_vanishing(self):
+        # Codex/Muse on #1081: a press on any card during a save was silently dropped.
+        self.load_output_review()
+        self.page.evaluate("""()=>{assetState.assets.push({id:'asset-2',review:'unreviewed'});
+          jobs=[{id:'job-2',preset_name:'Second',status:'completed',controls:{positive:'b',seed:9},outputs:[{asset_id:'asset-2',media_type:'image',seed:9}]},...jobs];renderJobs();window.slow=true;}""")
+        self.assertEqual(self.page.locator('.output-review').count(), 2)
+        self.page.click('[data-asset="asset-2"][data-output-review="selected"]')
+        self.page.wait_for_function('gates.length===1')
+        self.page.focus('[data-output="job-1:0"] .pin'); self.page.keyboard.press('w')
+        self.page.click('[data-asset="asset-2"][data-output-review="selected"]')
+        self.assertIn('this one follows', self.page.evaluate('said.at(-1)[0]'))
+        self.assertEqual(self.page.locator('[data-review-asset="asset-2"] .output-review-state').inner_text(), 'Saving…')
+        self.assertEqual(self.page.get_attribute('[data-review-asset="asset-2"]', 'aria-busy'), '')
+        for n in range(1, 4):
+            self.page.wait_for_function(f'gates.length==={n}'); self.page.evaluate(f'gates[{n-1}]()')
+        self.page.wait_for_function('edits.length===3')
+        self.assertEqual(self.page.evaluate('edits.map(e=>[e.ids[0],e.review])'),
+                         [['asset-2', 'selected'], ['asset-"1', 'needs_work'], ['asset-2', 'unreviewed']], 'every press is saved, in order; the second Keep clears')
+        self.assertEqual(self.page.locator('[data-review-asset="asset-2"] .output-review-state').inner_text(), 'Unreviewed')
+        self.assertIsNone(self.page.get_attribute('[data-review-asset="asset-2"]', 'aria-busy'))
+        self.assertEqual(self.page.locator('[data-output="job-1:0"] .output-review-state').inner_text(), 'Needs work')
+
+    def test_an_unreadable_library_saves_nothing_and_says_so(self):
+        self.load_output_review()
+        self.page.evaluate('readOk=false')
+        self.page.click('[data-output-review="selected"]')
+        self.page.wait_for_function('said.length===1')
+        self.assertEqual(self.page.evaluate('said[0]'), ['Could not read the library, so nothing was saved. Try again.', True])
+        self.assertEqual(self.page.evaluate('edits.length'), 0)
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
+
+    def test_holding_a_review_key_never_toggles_the_decision_back(self):
+        self.load_output_review()
+        self.page.focus('#gallery .imageCard .pin')
+        self.page.evaluate("""()=>{const t=document.activeElement;t.dispatchEvent(new KeyboardEvent('keydown',{key:'k',bubbles:true}));}""")
+        self.page.wait_for_function('edits.length===1')
+        self.page.evaluate("""()=>{const t=document.activeElement;for(let i=0;i<5;i++)t.dispatchEvent(new KeyboardEvent('keydown',{key:'k',repeat:true,bubbles:true}));}""")
+        self.page.wait_for_timeout(200)
+        self.assertEqual(self.page.evaluate('edits.map(e=>e.review)'), ['selected'])
+
+    def test_create_output_review_failure_is_said_and_retryable(self):
+        self.load_output_review(fail=True)
+        self.page.click('[data-output-review="selected"]')
+        self.page.wait_for_function('said.length===1')
+        self.assertEqual(self.page.evaluate('said[0]'), ['Resolve the earlier library update first.', True])
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
+        self.page.click('[data-output-review="needs_work"]')
+        self.page.wait_for_function('said.length===2', timeout=2000)
     def load_desk(self, plans, jobs):
         home = region(source('studio-workbench.js'), '  function renderHome(', "  q('#uxRefreshHome').onclick")
         self.page.goto('about:blank')
@@ -245,6 +347,55 @@ let homeUpdated=new Date(),jobInspector=document.querySelector('#uxJobInspector'
         self.page.keyboard.press('Escape')
         self.page.wait_for_function('!jobInspector.open')
         self.assertTrue(self.page.locator('#origin').evaluate('(n)=>n===document.activeElement'))
+
+    def test_locked_mixed_batch_recovery_says_why_beside_each_button(self):
+        batch = region(source('app.js'), 'function renderMixedBatch(', 'async function mixedBatchAction(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<div id="out"></div><script>const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));</script><script>"""+batch+"""
+const base={revision:'r',known:[],unknown_index:1,never_submitted_count:0,message:'m'};
+window.show=(status,b)=>{document.querySelector('#out').innerHTML=renderMixedBatch({id:'j',status,mixed_batch:{...base,...b}});return [...document.querySelectorAll('.disabledReason')].map(n=>n.textContent);};</script>""")
+        self.assertEqual(self.page.evaluate("show('running',{can_observe:false,can_dispose:false})"),
+                         ['Available once this job stops being running.'] * 2)
+        self.assertEqual(self.page.evaluate("show('uncertain',{can_observe:false,can_dispose:true})"),
+                         ['The check limit for this batch is used up; its evidence is kept.'])
+        self.assertEqual(self.page.evaluate("show('uncertain',{can_observe:true,can_dispose:true})"), [])
+
+    def test_combine_seed_buttons_say_why_they_are_locked(self):
+        combine = region(source('studio-workbench.js'), '  function syncCombineResults(', '  resultPanel.onclick=')
+        self.page.goto('about:blank')
+        self.page.set_content("""<div id="panel"></div><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const StudioContinuation={combineKind:()=>'depth',sameCombinePair:()=>true};let selected={},catalog={presets:[]},referenceRecords=[],lastUploaded=null,resultMarkup='',pairActionBusy=false,busy=false;
+const resultPanel=document.querySelector('#panel');function currentPair(){return {};}function combineBusy(){return busy||dirty;}let submitting=false,poseBusy=false,dirty=false;function posePositionDirty(){return dirty;}function durationLabel(s){return s+' s';}
+let assetState={assets:[]},jobs=[{id:'done',status:'completed',preset_name:'P',outputs:[{seed:1}]},{id:'half',status:'partial',preset_name:'P',outputs:[{seed:2}]}];
+</script><script>"""+combine+'</script>')
+        titles = lambda: self.page.evaluate("syncCombineResults();[...document.querySelectorAll('[data-ux-rerun]')].map(b=>[b.dataset.job,b.disabled,b.title])")
+        self.assertEqual(titles(), [['done', False, ''], ['done', False, ''],
+                                    ['half', True, 'Only a completed run can prepare another seed.'], ['half', True, 'Only a completed run can prepare another seed.']])
+        self.page.evaluate('busy=true;resultMarkup=""')
+        self.assertEqual(titles()[0], ['done', True, 'Wait for the current Combine action to finish.'])
+        self.page.evaluate('busy=false;dirty=true;resultMarkup=""')
+        self.assertEqual(titles()[0], ['done', True, 'Set or reset the typed joint position first.'], 'waiting never clears an unapplied joint edit')
+
+    def test_restore_source_wording_says_why_and_keeps_its_lock_rule(self):
+        sync = region(source('studio-workbench.js'), '  function syncContinuation(', '  async function readSource(')
+        ids = ['uxContinuationImage','uxContinuationTitle','uxContinuationOrigin','uxContinuationGuidance','uxContinuationPrompt','uxContinuationRecord','uxChangeRoute','uxLeaveContinuation','generate']
+        self.page.goto('about:blank')
+        self.page.set_content('<div id="ctx"></div><textarea id="positive"></textarea><button id="uxRestoreSourcePrompt"></button><small id="uxRestoreSourceReason"></small>'
+            + ''.join(f'<div id="{i}"></div>' if i != 'uxContinuationImage' else f'<img id="{i}">' for i in ids)
+            + '''<script>const q=s=>document.querySelector(s),escape=v=>String(v??''),contextPanel=q('#ctx');
+const StudioContinuation={guidance:()=>[]};let submitting=false,sourceReadError='',continuationState={source_asset_id:'a1'},continuationSource=null,selected={continuation_capability:{prompt_role:'description'}};
+window.state=()=>{syncContinuation();return [q('#uxRestoreSourcePrompt').disabled,q('#uxRestoreSourceReason').textContent];};</script><script>'''+sync+'</script>')
+        self.assertEqual(self.page.evaluate('state()'), [True, 'Restore source wording: Still reading the source.'])
+        self.page.evaluate("sourceReadError='Could not verify source metadata: offline'")
+        self.assertEqual(self.page.evaluate('state()'), [True, 'Restore source wording: Could not verify source metadata: offline'])
+        self.page.evaluate("continuationSource={prompt_origin:'submitted-output',prompt_role:'description',positive:'a lantern'}")
+        self.assertEqual(self.page.evaluate('state()'), [False, ''])
+        self.page.evaluate("selected={continuation_capability:{prompt_role:'instruction'}}")
+        self.assertEqual(self.page.evaluate('state()'), [True, 'Restore source wording: This recipe takes an instruction, not the source description.'])
+        self.page.evaluate("selected={continuation_capability:{prompt_role:'description'}};continuationSource={prompt_origin:'imported',prompt_role:'description',positive:'x'}")
+        self.assertEqual(self.page.evaluate('state()'), [True, 'Restore source wording: The source has no submitted description to restore.'])
+        self.page.evaluate("continuationSource={prompt_origin:'submitted-output',prompt_role:'description',positive:'a'};submitting=true")
+        self.assertEqual(self.page.evaluate('state()'), [True, ''], 'a transient submit lock shows no reason line')
 
     def test_workspace_refresh_reports_success_failure_and_busy(self):
         refresh = region(source('workspace.js'), 'async function refreshAssets(', '// Scope, filters')
