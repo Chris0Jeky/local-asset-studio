@@ -161,8 +161,16 @@ class ProductionBriefTests(unittest.TestCase):
             self.assertRegex(body, r'aspect ratio (4:3|3:2|2:3|1:1)', asset_id)
             self.assertIn('Do not include: any text, letters, numbers', body, asset_id)
             self.assertIn('user-interface elements', body, asset_id)
+            line = re.search(r'Anchor: (.*?)(?:\n\n|$)', body, re.S)
+            self.assertTrue(line, f'{asset_id}: every section states its anchor')
+            anchors = [] if line.group(1).startswith('none') else re.findall(r'upload the accepted `([a-z0-9-]+)`', line.group(1))
+            self.assertEqual(line.group(1).startswith('none'), not anchors, asset_id)
             if by_id[asset_id]['anchor']:
-                self.assertIn(f'upload the accepted `{by_id[asset_id]["anchor"]}`', body, asset_id)
+                self.assertIn(by_id[asset_id]['anchor'], anchors, f'{asset_id}: the pack must upload the catalogue anchor')
+            for anchor in anchors:
+                self.assertIn(anchor, by_id, f'{asset_id}: pack anchor {anchor} is not a catalogue ID')
+                self.assertIn(routes[anchor][1], {'W0', 'W1', 'W2'}, f'{asset_id}: anchor {anchor} is not made by wave 2')
+                self.assertLessEqual(routes[anchor][1], routes[asset_id][1], f'{asset_id}: anchor {anchor} comes in a later wave')
         self.assertNotRegex(text, r'(?i)gpt-image-\d|dall-e')
 
     def test_agent_guide_records_the_current_path_filtered_lane_count(self):

@@ -194,7 +194,8 @@ own prompt IDs and receipts. Its outputs stay outside Git until the owner select
 ## Bringing results in
 
 ChatGPT results land in `docs/adaptive-studio/assets/inbox/` (gitignored) and `python docs/adaptive-studio/assets/intake.py
-receipts` writes one tracked receipt per file under `receipts/` (see the prompt pack). Downloads are listed in
+receipts --provider chatgpt` writes one tracked receipt per file under `receipts/` (see the prompt pack); any other
+producer's files need their own `--provider` value, and without one the provider is recorded as unknown. Downloads are listed in
 `acquired/MANIFEST.json`; `intake.py verify` checks them and `intake.py fetch` restores them on another clone. Receipt
 status stays `candidate-produced` until the owner records art review; source review, rendition checks and runtime
 qualification remain separate stages (DELIVERY-SPEC).

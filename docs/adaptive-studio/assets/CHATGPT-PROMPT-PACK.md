@@ -23,8 +23,8 @@ name a model ID: if ChatGPT shows which image model it used, note it when you ha
 
 1. In your `local-asset-studio` checkout, create `docs/adaptive-studio/assets/inbox/` (Git ignores it) and save every
    download there under the name given with its prompt.
-2. Run `python docs/adaptive-studio/assets/intake.py receipts`, or ask an agent to. It reads the real size, format and
-   alpha channel from each file, hashes it and writes `docs/adaptive-studio/assets/receipts/<file-name>.json` from
+2. Run `python docs/adaptive-studio/assets/intake.py receipts --provider chatgpt`, or ask an agent to. It reads the real
+   size, format and alpha channel from each file, hashes it, takes the anchors from the prompt's "Anchor:" line and writes `docs/adaptive-studio/assets/receipts/<file-name>.json` from
    `receipt-template.json`, with the hash of the prompt section below so the receipt names the exact prompt text. It
    refuses unknown IDs and never overwrites a receipt with a different file. It changes nothing in `inbox/`.
 3. Tell an agent which candidate you accept for each ID, or that none is good enough. The agent records your words and

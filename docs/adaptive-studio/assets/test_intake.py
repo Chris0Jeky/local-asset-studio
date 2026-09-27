@@ -1,4 +1,5 @@
 """Offline intake tests; no network, no providers, no application services."""
+import http.client
 import importlib.util
 import io
 import json
@@ -53,9 +54,12 @@ class IntakeTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def run_receipts(self):
+    def run_receipts(self, provider='chatgpt'):
         with patch('sys.stdout', self.out), patch('sys.stderr', self.err):
-            return self.mod.receipts(self.kit, now='2026-09-27T00:00:00+00:00')
+            return self.mod.receipts(self.kit, now='2026-09-27T00:00:00+00:00', provider=provider)
+
+    def receipt(self, stem):
+        return json.loads((self.kit / 'receipts' / (stem + '.json')).read_text(encoding='utf-8'))
 
     def test_header_sizes_and_alpha(self):
         self.assertEqual(self.mod.image_info(png(1536, 1024)), ('png', 1536, 1024, True))
@@ -64,6 +68,9 @@ class IntakeTests(unittest.TestCase):
         self.assertEqual(self.mod.image_info(webp_lossless(768, 512, True)), ('webp', 768, 512, True))
         with self.assertRaises(ValueError):
             self.mod.image_info(b'GIF89a' + b'\x00' * 20)
+        for truncated in (png(4, 4)[:20], jpeg(4, 4)[:18], webp_lossless(4, 4, False)[:22]):
+            with self.assertRaises(ValueError):
+                self.mod.image_info(truncated)
 
     def test_receipt_records_actual_bytes_and_the_prompt_section(self):
         data = png(1536, 1024)
@@ -89,6 +96,48 @@ class IntakeTests(unittest.TestCase):
         self.assertEqual(receipt['production']['input_anchors'][0]['asset_id'], 'retro-anime-master')
         self.assertEqual(receipt['production']['tool_action'], 'edit with uploaded anchor')
         self.assertTrue(any('1536x1024' in u and '1024x1024' in u for u in receipt['unknowns']))
+
+    def test_pack_anchor_is_recorded_even_when_the_catalogue_row_has_none(self):
+        (self.kit / 'inbox' / 'workflow-combine--candidate-1.png').write_bytes(png(1536, 1024))
+        (self.kit / 'inbox' / 'reference-pose--candidate-1.png').write_bytes(png(1024, 1536))
+        self.assertEqual(self.run_receipts(), 0, self.err.getvalue())
+        combine = self.receipt('workflow-combine--candidate-1')
+        self.assertEqual([a['asset_id'] for a in combine['production']['input_anchors']], ['workflow-create'])
+        self.assertEqual(combine['production']['tool_action'], 'edit with uploaded anchor')
+        pose = self.receipt('reference-pose--candidate-1')
+        self.assertEqual((pose['production']['input_anchors'], pose['production']['tool_action']), ([], 'generate'))
+
+    def test_provider_is_never_assumed(self):
+        (self.kit / 'inbox' / 'retro-anime-master--candidate-1.png').write_bytes(png(1920, 1088, colour_type=2))
+        (self.kit / 'inbox' / 'workflow-create--candidate-1.png').write_bytes(png(1536, 1024))
+        self.assertEqual(self.run_receipts(provider=None), 0, self.err.getvalue())
+        unnamed = self.receipt('workflow-create--candidate-1')
+        self.assertIsNone(unnamed['production']['provider'])
+        self.assertIsNone(unnamed['brief_revision'])
+        self.assertTrue(any('Provider is unknown' in u for u in unnamed['unknowns']))
+        shutil.rmtree(self.kit / 'receipts')
+        self.assertEqual(self.run_receipts(provider='GPU lab, Studio krea-environment'), 0, self.err.getvalue())
+        lab = self.receipt('retro-anime-master--candidate-1')
+        self.assertEqual(lab['production']['provider'], 'GPU lab, Studio krea-environment')
+        self.assertIsNone(lab['production']['prompt_record'])
+        self.assertFalse(any('Image 2.5' in u for u in lab['unknowns']))
+
+    def test_truncated_image_gets_a_receipt_with_unknown_size(self):
+        (self.kit / 'inbox' / 'state-blank--candidate-1.png').write_bytes(png(4, 4)[:20])
+        self.assertEqual(self.run_receipts(), 0, self.err.getvalue())
+        receipt = self.receipt('state-blank--candidate-1')
+        self.assertIsNone(receipt['files'][0]['width'])
+        self.assertTrue(any('truncated' in u for u in receipt['unknowns']))
+
+    def test_unreadable_existing_receipt_is_left_alone(self):
+        (self.kit / 'inbox' / 'state-blank--candidate-1.png').write_bytes(png(4, 4))
+        (self.kit / 'inbox' / 'state-conflict--candidate-1.png').write_bytes(png(4, 4))
+        (self.kit / 'receipts').mkdir()
+        (self.kit / 'receipts' / 'state-blank--candidate-1.json').write_text('{not json', encoding='utf-8')
+        self.assertEqual(self.run_receipts(), 2)
+        self.assertIn('unreadable', self.err.getvalue())
+        self.assertEqual((self.kit / 'receipts' / 'state-blank--candidate-1.json').read_text(encoding='utf-8'), '{not json')
+        self.assertTrue((self.kit / 'receipts' / 'state-conflict--candidate-1.json').is_file())
 
     def test_rerun_is_idempotent_and_a_replaced_file_is_refused(self):
         path = self.kit / 'inbox' / 'state-blank--candidate-1.png'
@@ -155,6 +204,21 @@ class IntakeTests(unittest.TestCase):
         self.assertFalse((self.kit / 'acquired' / 'wrong.jpg').exists())
         self.assertFalse((self.kit / 'acquired' / 't' / 'Paper.blend').exists())
         self.assertIn('nothing was written', self.err.getvalue())
+
+    def test_fetch_never_overwrites_a_different_local_file_and_survives_bad_downloads(self):
+        self.write_manifest([self.entry('kept.jpg', b'original'), self.entry('cut.jpg', b'whole'), self.entry('zip.jpg', b'z', archive={'member': 'z.jpg'})])
+        (self.kit / 'acquired' / 'kept.jpg').write_bytes(b'owner edit')
+        def serve(url):
+            if url.endswith('cut.jpg'):
+                raise http.client.IncompleteRead(b'wh')
+            return b'not a zip'
+        with patch.object(self.mod, 'download', side_effect=serve) as fetched, patch('sys.stdout', self.out), patch('sys.stderr', self.err):
+            self.assertEqual(self.mod.fetch(self.kit), 2)
+        self.assertEqual((self.kit / 'acquired' / 'kept.jpg').read_bytes(), b'owner edit')
+        self.assertNotIn('kept.jpg', [c.args[0].rsplit('/', 1)[-1] for c in fetched.call_args_list])
+        self.assertIn('never overwrites', self.err.getvalue())
+        self.assertIn('cut.jpg', self.err.getvalue())
+        self.assertIn('zip.jpg', self.err.getvalue())
 
     def test_download_refuses_hosts_outside_the_allow_list(self):
         with patch.object(self.mod.urllib.request, 'urlopen') as opened, self.assertRaisesRegex(ValueError, 'allow-listed'):

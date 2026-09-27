@@ -4,7 +4,7 @@
 
 > Work from `docs/adaptive-studio/assets/` in `Chris0Jeky/local-asset-studio`. Read README, ART-DIRECTION, DELIVERY-SPEC and the selected catalogue rows. This is a future production session; the strategy pass produced no art. First reconcile the repository and existing accepted assets. Do not replace current work or generate the entire catalogue.
 >
-> Before selecting IDs, confirm the pilot world recorded under `adaptive-pilot-world` in `HUMAN_TODO.md` (deferral lifted 27 September 2026; Retro Anime / Night Shift is the named assumption until the owner says otherwise).
+> Before selecting IDs, confirm the pilot world in `HUMAN_TODO.md`: the deferral under `adaptive-pilot-world` was lifted on 27 September 2026, and the open item `asset-plan-2026-09-27` (a) holds the owner's pilot-world answer; Retro Anime / Night Shift is the named assumption until the owner answers.
 >
 > Take the next unfinished wave from `PRODUCTION-PLAN.md`; each ID there has one route (GPU lab, owner-run ChatGPT with `CHATGPT-PROMPT-PACK.md`, code, download, capture or defer). Wave 1 starts with `retro-anime-master`, then `retro-anime-quiet`, `retro-anime-hero`, `retro-anime-poster`, `retro-anime-card` and `retro-anime-wall`; `workflow-create` and `reference-identity` run in ChatGPT in parallel. Resolve and approve the scene anchor before its derivatives. Prefer at most four initial master candidates, two targeted refinement rounds, and reused crops rather than independent images. These are proposed work limits; state the finite batch you are actually about to run.
 >
@@ -14,7 +14,7 @@
 >
 > Return the actual files, a small candidate review view, per-ID receipts and a clear distinction between produced, source-reviewed, artistically reviewed and runtime-qualified. Ask for owner art acceptance before declaring that stage complete. Package local renditions outside the normal source tree; submit manifests, prompts, accepted public preview selections and integration notes via reviewable PRs. Do not change ComfyUI packages, generation gates, API origins or existing private drafts to install a skin.
 
-Owner-made ChatGPT files come back through `inbox/` and `python docs/adaptive-studio/assets/intake.py receipts`; see the prompt pack.
+Owner-made ChatGPT files come back through `inbox/` and `python docs/adaptive-studio/assets/intake.py receipts --provider chatgpt`; see the prompt pack. Files from any other producer need their own `--provider` value, never `chatgpt`.
 
 ## How to use a native image session well
 

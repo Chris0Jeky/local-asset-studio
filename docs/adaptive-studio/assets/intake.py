@@ -1,18 +1,21 @@
 """Bring owner-made candidates and downloaded free assets into the asset kit, with receipts.
 
-  receipts  hash every image in inbox/ and write receipts/<file-stem>.json from receipt-template.json
+  receipts  hash every image in inbox/ and write receipts/<file-stem>.json from receipt-template.json;
+            --provider chatgpt links each receipt to its CHATGPT-PROMPT-PACK.md section and anchors
   verify    check that every acquired/MANIFEST.json entry is present with its recorded sha256
-  fetch     download missing acquired/ entries from their pinned URL and keep only bytes whose sha256 matches
+  fetch     download missing acquired/ entries from their pinned URL and keep only bytes whose sha256 matches;
+            an existing file with a different hash is reported, never overwritten
 
 Standard library only. `receipts` reads inbox/ and writes only receipts/; `fetch` writes only acquired/.
 Nothing here generates, judges or publishes art, and no downloaded file is executed or opened beyond
 reading one named member out of a zip archive. A receipt records bytes, not art acceptance.
-Run: python docs/adaptive-studio/assets/intake.py receipts
+Run: python docs/adaptive-studio/assets/intake.py receipts --provider chatgpt
 """
 import argparse
 import csv
 from datetime import datetime, timezone
 import hashlib
+import http.client
 import io
 import json
 from pathlib import Path
@@ -22,6 +25,7 @@ import sys
 from urllib.parse import urlparse
 import urllib.request
 import zipfile
+import zlib
 
 ROOT = Path(__file__).resolve().parent
 IMAGE_SUFFIXES = {'.png', '.jpg', '.jpeg', '.webp'}
@@ -38,7 +42,16 @@ def sha256(data):
 
 def image_info(data):
     """(format, width, height, alpha) read from the file header; alpha is None when the format cannot say."""
+    try:
+        return _image_info(data)
+    except (IndexError, struct.error) as exc:
+        raise ValueError(f'truncated image header ({exc})') from None
+
+
+def _image_info(data):
     if data[:8] == b'\x89PNG\r\n\x1a\n' and data[12:16] == b'IHDR':
+        if len(data) < 26:
+            raise IndexError('PNG header shorter than IHDR')
         width, height = struct.unpack('>II', data[16:24])
         return 'png', width, height, data[25] in (4, 6)
     if data[:2] == b'\xff\xd8':
@@ -59,6 +72,8 @@ def image_info(data):
         raise ValueError('JPEG without a frame header')
     if data[:4] == b'RIFF' and data[8:12] == b'WEBP':
         chunk = data[12:16]
+        if len(data) < {b'VP8X': 30, b'VP8L': 25, b'VP8 ': 30}.get(chunk, 0):
+            raise IndexError('WebP header shorter than its chunk needs')
         if chunk == b'VP8X':
             return 'webp', 1 + int.from_bytes(data[24:27], 'little'), 1 + int.from_bytes(data[27:30], 'little'), bool(data[20] & 0x10)
         if chunk == b'VP8L':
@@ -75,6 +90,14 @@ def catalogue(root):
         return {row['id']: row for row in csv.DictReader(handle)}
 
 
+def pack_anchors(block):
+    """Anchor IDs a prompt-pack section tells the owner to upload; [] for 'Anchor: none'."""
+    line = re.search(r'Anchor: (.*?)(?:\n\n|$)', block, re.S)
+    if not line or line.group(1).startswith('none'):
+        return []
+    return re.findall(r'upload the accepted `([a-z0-9-]+)`', line.group(1))
+
+
 def prompt_block(root, asset_id):
     """The exact prompt-pack section for an ID, so a receipt names the prompt text it answered."""
     path = root / 'CHATGPT-PROMPT-PACK.md'
@@ -84,7 +107,7 @@ def prompt_block(root, asset_id):
     return match.group(0) if match else None
 
 
-def receipt_for(root, path, rows, template, now):
+def receipt_for(root, path, rows, template, now, provider=None):
     data = path.read_bytes()
     match = NAME.fullmatch(path.stem)
     if not match:
@@ -92,23 +115,37 @@ def receipt_for(root, path, rows, template, now):
     row = rows.get(match['id'])
     if row is None:
         raise ValueError(f'{path.name}: {match["id"]} is not a catalogue ID')
-    fmt, width, height, alpha = image_info(data)
-    unknowns = ['The tool does not expose its model build; "Image 2.5" is the owner\'s route label, not a verified model ID.',
-                'produced_at is unknown: the file time is when it was saved, not when it was generated.']
-    if match['w'] and (int(match['w']), int(match['h'])) != (width, height):
+    unknowns = ['produced_at is unknown: the file time is when it was saved, not when it was generated.']
+    try:
+        fmt, width, height, alpha = image_info(data)
+    except ValueError as exc:
+        fmt = width = height = alpha = None
+        unknowns.append(f'Format, size and alpha are unknown: {exc}.')
+    if match['w'] and width is not None and (int(match['w']), int(match['h'])) != (width, height):
         unknowns.append(f'The file name says {match["w"]}x{match["h"]}; the header says {width}x{height}. The header is recorded.')
-    block = prompt_block(root, match['id'])
+    chatgpt = (provider or '').strip().lower() == 'chatgpt'
+    block = prompt_block(root, match['id']) if chatgpt else None
+    if chatgpt:
+        label = 'ChatGPT (owner-run native image tool)'
+        unknowns.append('The tool does not expose its model build; "Image 2.5" is the owner\'s route label, not a verified model ID.')
+        if not block:
+            unknowns.append('No CHATGPT-PROMPT-PACK.md section exists for this ID; the prompt used is unrecorded.')
+    elif provider:
+        label = provider.strip()
+        unknowns.append('No prompt record: only --provider chatgpt links a receipt to the prompt pack; attach the producer\'s own prompt or job record.')
+    else:
+        label = None
+        unknowns.append('Provider is unknown: intake.py ran without --provider; name the producer before any review.')
+    anchors = pack_anchors(block) if block else ([row['anchor']] if row['anchor'] else [])
     receipt = json.loads(json.dumps(template))
     receipt.pop('file_entry_instructions', None)
     receipt['status'] = 'candidate-produced'
     receipt['requested_asset_id'] = match['id']
     receipt['brief_revision'] = ('CHATGPT-PROMPT-PACK.md section sha256:' + sha256(block.encode('utf-8'))) if block else None
-    if not block:
-        unknowns.append('No CHATGPT-PROMPT-PACK.md section exists for this ID; the prompt used is unrecorded.')
     receipt['production'].update({
-        'method': row['method'], 'provider': 'ChatGPT (owner-run native image tool)', 'tool_action': 'edit with uploaded anchor' if row['anchor'] else 'generate',
+        'method': row['method'], 'provider': label, 'tool_action': 'edit with uploaded anchor' if anchors else 'generate',
         'reported_model': None, 'output_id': None, 'produced_at': None, 'prompt_record': f'CHATGPT-PROMPT-PACK.md#{match["id"]}' if block else None,
-        'input_anchors': [{'asset_id': row['anchor'], 'sha256': None, 'note': 'Add the uploaded anchor file hash when known.'}] if row['anchor'] else []})
+        'input_anchors': [{'asset_id': a, 'sha256': None, 'note': 'Add the uploaded anchor file hash when known.'} for a in anchors]})
     receipt['intake'] = {'received_at': now, 'candidate': int(match['n'])}
     receipt['files'] = [{'relative_path': path.relative_to(root).as_posix(), 'sha256': sha256(data), 'bytes': len(data),
                          'width': width, 'height': height, 'format': fmt, 'alpha': alpha, 'duration_seconds': None, 'codec': None}]
@@ -116,7 +153,7 @@ def receipt_for(root, path, rows, template, now):
     return receipt
 
 
-def receipts(root, now=None):
+def receipts(root, now=None, provider=None):
     now = now or datetime.now(timezone.utc).isoformat(timespec='seconds')
     inbox, out = root / 'inbox', root / 'receipts'
     if not inbox.is_dir():
@@ -130,7 +167,7 @@ def receipts(root, now=None):
             print(f'skip     {path.name} (not an image)')
             continue
         try:
-            receipt = receipt_for(root, path, rows, template, now)
+            receipt = receipt_for(root, path, rows, template, now, provider)
         except (OSError, ValueError, struct.error) as exc:
             print(f'error    {exc}', file=sys.stderr)
             failed += 1
@@ -138,8 +175,13 @@ def receipts(root, now=None):
         target = out / (path.stem + '.json')
         digest = receipt['files'][0]['sha256']
         if target.is_file():
-            old = json.loads(target.read_text(encoding='utf-8'))
-            if old.get('files') and old['files'][0].get('sha256') == digest:
+            try:
+                old = json.loads(target.read_text(encoding='utf-8'))
+            except (OSError, ValueError) as exc:
+                print(f'error    {path.name}: existing receipt {target.name} is unreadable ({exc}); left untouched', file=sys.stderr)
+                failed += 1
+                continue
+            if isinstance(old, dict) and isinstance(old.get('files'), list) and old['files'] and isinstance(old['files'][0], dict) and old['files'][0].get('sha256') == digest:
                 print(f'same     {path.name}')
             else:
                 print(f'error    {path.name}: a different file already has receipt {target.name}; save it as a new candidate number', file=sys.stderr)
@@ -148,7 +190,7 @@ def receipts(root, now=None):
         out.mkdir(exist_ok=True)
         target.write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
         f = receipt['files'][0]
-        print(f'receipt  {path.name} -> receipts/{target.name} ({f["width"]}x{f["height"]} {f["format"]}, {f["bytes"]} bytes)')
+        print(f'receipt  {path.name} -> receipts/{target.name} ({f["width"]}x{f["height"]} {f["format"]}, {f["bytes"]} bytes, provider {receipt["production"]["provider"]})')
     return 2 if failed else 0
 
 
@@ -193,7 +235,10 @@ def fetch(root):
     failed = 0
     for entry in manifest(root)['entries']:
         path = root / 'acquired' / entry['file']
-        if path.is_file() and sha256(path.read_bytes()) == entry['sha256']:
+        if path.exists():
+            if not path.is_file() or sha256(path.read_bytes()) != entry['sha256']:
+                print(f'error    {entry["file"]}: a different local file is in the way; fetch never overwrites it. Inspect it, move it aside and rerun fetch.', file=sys.stderr)
+                failed += 1
             continue
         try:
             data = download(entry['url'])
@@ -203,7 +248,7 @@ def fetch(root):
                     data = archive.read(member)
             if sha256(data) != entry['sha256']:
                 raise ValueError('sha256 differs from the manifest; the upstream file changed, nothing was written')
-        except (OSError, ValueError, KeyError, zipfile.BadZipFile) as exc:
+        except (OSError, ValueError, KeyError, EOFError, RuntimeError, NotImplementedError, zipfile.BadZipFile, zlib.error, http.client.HTTPException) as exc:
             print(f'error    {entry["file"]}: {exc}', file=sys.stderr)
             failed += 1
             continue
@@ -216,9 +261,12 @@ def fetch(root):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('command', choices=('receipts', 'verify', 'fetch'))
+    parser.add_argument('--provider', help='receipts only: who produced the files; "chatgpt" links the prompt pack, anything else is recorded verbatim')
     args = parser.parse_args(argv)
     try:
-        return {'receipts': receipts, 'verify': verify, 'fetch': fetch}[args.command](ROOT)
+        if args.command == 'receipts':
+            return receipts(ROOT, provider=args.provider)
+        return {'verify': verify, 'fetch': fetch}[args.command](ROOT)
     except (OSError, ValueError, KeyError) as exc:
         print(f'Asset intake error: {exc}', file=sys.stderr)
         return 2
