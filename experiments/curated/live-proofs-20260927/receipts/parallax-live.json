@@ -1,0 +1,571 @@
+{
+ "asset": "beecbff4c08d5da0b7b6dcebbbab2fe5",
+ "objects": "the desk, the chair, the desk lamp and the computer monitor",
+ "boxes_intended": [
+  [
+   988,
+   75,
+   1125,
+   425
+  ],
+  [
+   1172,
+   35,
+   1336,
+   445
+  ]
+ ],
+ "events": [
+  {
+   "t": 1790543276.467,
+   "kind": "panel",
+   "text": "Foreground to lift out\nFar view boxes, optional\nMark the far view on the picture\nMake parallax layers\nClear boxes\nName the foreground to lift out first, e.g. the desk, the chair and the lamp."
+  },
+  {
+   "t": 1790543277.923,
+   "kind": "pick_box",
+   "box": {
+    "x": 822.984375,
+    "y": 686.703125,
+    "width": 444.984375,
+    "height": 254.28125
+   }
+  },
+  {
+   "t": 1790543279.127,
+   "kind": "boxes_on_page",
+   "view": "988,75,1125,425; 1172,35,1336,445",
+   "why": "Name the foreground concretely (e.g. the desk, the chair and the lamp). Mark the far view (window glass, sky) as boxes inside the glass, or leave it empty for two layers. The view mask is yours, not detected.",
+   "disabled": false
+  },
+  {
+   "t": 1790543283.513,
+   "kind": "prepared",
+   "status": "Parallax layers prepared: the picture is attached unchanged and the clean-plate edit is loaded (2 far view boxes). Press Generate; the isolate edit loads next for a second Generate, and the Studio splits the layers when both are in.",
+   "selected": "parallax-edit",
+   "hint": "Parallax layers, edit 1 of 2, the clean plate: Z-Image Turbo \u2022 fast (fp8, text encoder on CPU) \u00b7 1 \u00b7 1344 \u00d7 768, attached unchanged. Name the foreground concretely (e.g. the desk, the chair and the lamp). Mark the far view (window glass, sky) as boxes inside the glass, or leave it empty for two layers. The view mask is yours, not detected.",
+   "positive": "Remove the desk, the chair, the desk lamp and the computer monitor, leaving the space behind them empty. Keep everything else exactly as it is: the same camera and framing, the same walls, windows, floor and view, the same colours and lighting, and the same painting style."
+  },
+  {
+   "t": 1790543283.514,
+   "kind": "commit_before_plate",
+   "commit_gib": 51.4,
+   "limit_gib": 95.7,
+   "pct": 53.7,
+   "phys_avail_gib": 8.5
+  },
+  {
+   "t": 1790543288.624,
+   "kind": "generated_plate",
+   "status": "Parallax layers \u2022 Klein clean plate and isolate: Generating output 1 of 1",
+   "positive": "Replace everything except the desk, the chair, the desk lamp and the computer monitor with a plain pure white background. Keep the desk, the chair, the desk lamp and the computer monitor exactly as they are: the same position, size, shape, colours and painting style.",
+   "job_posts": [
+    [
+     1790543283.586,
+     "/api/jobs"
+    ]
+   ]
+  },
+  {
+   "t": 1790543288.625,
+   "kind": "commit_before_isolate",
+   "commit_gib": 54.8,
+   "limit_gib": 95.7,
+   "pct": 57.3,
+   "phys_avail_gib": 8.4
+  },
+  {
+   "t": 1790543293.716,
+   "kind": "generated_isolate",
+   "status": "Parallax layers \u2022 Klein clean plate and isolate: Waiting for the local generation queue",
+   "positive": "Replace everything except the desk, the chair, the desk lamp and the computer monitor with a plain pure white background. Keep the desk, the chair, the desk lamp and the computer monitor exactly as they are: the same position, size, shape, colours and painting style.",
+   "job_posts": [
+    [
+     1790543283.586,
+     "/api/jobs"
+    ],
+    [
+     1790543288.683,
+     "/api/jobs"
+    ]
+   ]
+  },
+  {
+   "t": 1790543294.026,
+   "kind": "jobs",
+   "new": [
+    [
+     "37b9c16b-84ab-4445-8799-4eb23845c15e",
+     "parallax-edit",
+     "queued",
+     "isolate"
+    ],
+    [
+     "7fb68111-0025-43b8-a0b8-6c8ca6bd9b2b",
+     "parallax-edit",
+     "running",
+     "plate"
+    ]
+   ]
+  }
+ ],
+ "jobs": [
+  {
+   "id": "37b9c16b-84ab-4445-8799-4eb23845c15e",
+   "preset_id": "parallax-edit",
+   "status": "failed",
+   "message": "Host commit headroom 31.9 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission even after the Studio freed ComfyUI's cached models. No prompt was submitted for output 1.",
+   "prompt_ids": [],
+   "elapsed_seconds": 1.0640161037445068,
+   "parallax": {
+    "version": 1,
+    "preset_id": "parallax-edit",
+    "source_asset_id": "beecbff4c08d5da0b7b6dcebbbab2fe5",
+    "source_sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "source_file": "19087562a81a4ccb972e737b3aab4d7d_Z-Image-Fast_00004_.png.png",
+    "width": 1344,
+    "height": 768,
+    "objects": "the desk, the chair, the desk lamp and the computer monitor",
+    "view_polygons": [
+     [
+      [
+       988,
+       75
+      ],
+      [
+       1124,
+       75
+      ],
+      [
+       1124,
+       424
+      ],
+      [
+       988,
+       424
+      ]
+     ],
+     [
+      [
+       1172,
+       35
+      ],
+      [
+       1335,
+       35
+      ],
+      [
+       1335,
+       444
+      ],
+      [
+       1172,
+       444
+      ]
+     ]
+    ],
+    "plan_id": "6548eadd8d179a3329fa0cd51b56dff34da94aa8f43f29df84e9526c6da0e24e",
+    "stage": "isolate"
+   },
+   "parallax_finish": null,
+   "outputs": [],
+   "parent_assets": [
+    "beecbff4c08d5da0b7b6dcebbbab2fe5"
+   ]
+  },
+  {
+   "id": "7fb68111-0025-43b8-a0b8-6c8ca6bd9b2b",
+   "preset_id": "parallax-edit",
+   "status": "completed",
+   "message": "Complete",
+   "prompt_ids": [
+    "c98b6858-6b56-478f-bbaf-6694b2a751f1"
+   ],
+   "elapsed_seconds": 68.81463408470154,
+   "parallax": {
+    "version": 1,
+    "preset_id": "parallax-edit",
+    "source_asset_id": "beecbff4c08d5da0b7b6dcebbbab2fe5",
+    "source_sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "source_file": "19087562a81a4ccb972e737b3aab4d7d_Z-Image-Fast_00004_.png.png",
+    "width": 1344,
+    "height": 768,
+    "objects": "the desk, the chair, the desk lamp and the computer monitor",
+    "view_polygons": [
+     [
+      [
+       988,
+       75
+      ],
+      [
+       1124,
+       75
+      ],
+      [
+       1124,
+       424
+      ],
+      [
+       988,
+       424
+      ]
+     ],
+     [
+      [
+       1172,
+       35
+      ],
+      [
+       1335,
+       35
+      ],
+      [
+       1335,
+       444
+      ],
+      [
+       1172,
+       444
+      ]
+     ]
+    ],
+    "plan_id": "6548eadd8d179a3329fa0cd51b56dff34da94aa8f43f29df84e9526c6da0e24e",
+    "stage": "plate"
+   },
+   "parallax_finish": null,
+   "outputs": [
+    {
+     "filename": "FLUX-Edit_00023_.png",
+     "subfolder": "Verified",
+     "type": "output",
+     "seed": 20260911,
+     "prompt_id": "c98b6858-6b56-478f-bbaf-6694b2a751f1",
+     "media_type": "image",
+     "asset_id": "6f50a3964ee05e978641886722dc83de"
+    }
+   ],
+   "parent_assets": [
+    "beecbff4c08d5da0b7b6dcebbbab2fe5"
+   ]
+  }
+ ],
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790543268.428,
+   "/api/estimate"
+  ],
+  [
+   1790543269.935,
+   "/api/estimate"
+  ],
+  [
+   1790543279.468,
+   "/api/parallax/prepare"
+  ],
+  [
+   1790543279.919,
+   "/api/estimate"
+  ],
+  [
+   1790543283.586,
+   "/api/jobs"
+  ],
+  [
+   1790543283.838,
+   "/api/parallax/stage"
+  ],
+  [
+   1790543284.23,
+   "/api/estimate"
+  ],
+  [
+   1790543288.417,
+   "/api/estimate"
+  ],
+  [
+   1790543288.683,
+   "/api/jobs"
+  ],
+  [
+   1790543289.412,
+   "/api/estimate"
+  ]
+ ],
+ "isolate_retry": [
+  {
+   "t": 1790543597.242,
+   "kind": "stage_button",
+   "count": 1,
+   "notes": [
+    "This clean plate has no isolate edit yet."
+   ]
+  },
+  {
+   "t": 1790543600.414,
+   "kind": "loaded",
+   "status": "The isolate edit is loaded: check its words, then press Generate.",
+   "hint": "Parallax layers, edit 2 of 2, the isolate: Z-Image Turbo \u2022 fast (fp8, text encoder on CPU) \u00b7 1 \u00b7 1344 \u00d7 768, attached unchanged. Name the foreground concretely (e.g. the desk, the chair and the lamp). Mark the far view (window glass, sky) as boxes inside the glass, or leave it empty for two layers. The view mask is yours, not detected.",
+   "positive": "Replace everything except the desk, the chair, the desk lamp and the computer monitor with a plain pure white background. Keep the desk, the chair, the desk lamp and the computer monitor exactly as they are: the same position, size, shape, colours and painting style."
+  },
+  {
+   "t": 1790543600.415,
+   "kind": "commit_before_isolate",
+   "commit_gib": 56.3,
+   "limit_gib": 95.7,
+   "pct": 58.8,
+   "phys_avail_gib": 9.3
+  },
+  {
+   "t": 1790543605.549,
+   "kind": "generated",
+   "job_posts": [
+    [
+     1790543600.528,
+     "/api/jobs"
+    ]
+   ],
+   "errors": []
+  },
+  {
+   "t": 1790543605.81,
+   "kind": "jobs",
+   "new": [
+    [
+     "d185ad3e-be28-45fe-9852-c4d600054823",
+     "parallax-edit",
+     "running",
+     "isolate"
+    ]
+   ]
+  }
+ ],
+ "jobs_retry": [
+  {
+   "id": "d185ad3e-be28-45fe-9852-c4d600054823",
+   "preset_id": "parallax-edit",
+   "status": "completed",
+   "message": "Complete",
+   "prompt_ids": [
+    "9b94fc31-b9af-4cc4-a297-d9f3136efd7f"
+   ],
+   "elapsed_seconds": 94.96486139297485,
+   "parallax": {
+    "version": 1,
+    "preset_id": "parallax-edit",
+    "source_asset_id": "beecbff4c08d5da0b7b6dcebbbab2fe5",
+    "source_sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "source_file": "19087562a81a4ccb972e737b3aab4d7d_Z-Image-Fast_00004_.png.png",
+    "width": 1344,
+    "height": 768,
+    "objects": "the desk, the chair, the desk lamp and the computer monitor",
+    "view_polygons": [
+     [
+      [
+       988,
+       75
+      ],
+      [
+       1124,
+       75
+      ],
+      [
+       1124,
+       424
+      ],
+      [
+       988,
+       424
+      ]
+     ],
+     [
+      [
+       1172,
+       35
+      ],
+      [
+       1335,
+       35
+      ],
+      [
+       1335,
+       444
+      ],
+      [
+       1172,
+       444
+      ]
+     ]
+    ],
+    "plan_id": "6548eadd8d179a3329fa0cd51b56dff34da94aa8f43f29df84e9526c6da0e24e",
+    "stage": "isolate"
+   },
+   "parallax_finish": {
+    "job_id": "4b507f85-160d-5cd3-b826-c9e94d448991",
+    "asset_ids": {
+     "far": "5daecce5d2e753ea99491650c383d0ee",
+     "mid": "04bcc58107f95b85af1c9c81c8ce36b0",
+     "near": "ebf996be1c405459ab04160460c0a88e",
+     "strip": "7d17522dac5c51fba1d36c717e9de69a"
+    },
+    "summary": "far / mid / near layers recomposite to the source within 0.34/255 (worst pixel 208/255); near 10.1 % of the picture. Review the 3-frame strip; a number is not art acceptance."
+   },
+   "outputs": [
+    {
+     "filename": "FLUX-Edit_00024_.png",
+     "subfolder": "Verified",
+     "type": "output",
+     "seed": 20260911,
+     "prompt_id": "9b94fc31-b9af-4cc4-a297-d9f3136efd7f",
+     "media_type": "image",
+     "asset_id": "1218243eed2558e8996b6f8812e3d2dd"
+    }
+   ]
+  },
+  {
+   "id": "7fb68111-0025-43b8-a0b8-6c8ca6bd9b2b",
+   "preset_id": "parallax-edit",
+   "status": "completed",
+   "message": "Complete",
+   "prompt_ids": [
+    "c98b6858-6b56-478f-bbaf-6694b2a751f1"
+   ],
+   "elapsed_seconds": 68.81463408470154,
+   "parallax": {
+    "version": 1,
+    "preset_id": "parallax-edit",
+    "source_asset_id": "beecbff4c08d5da0b7b6dcebbbab2fe5",
+    "source_sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "source_file": "19087562a81a4ccb972e737b3aab4d7d_Z-Image-Fast_00004_.png.png",
+    "width": 1344,
+    "height": 768,
+    "objects": "the desk, the chair, the desk lamp and the computer monitor",
+    "view_polygons": [
+     [
+      [
+       988,
+       75
+      ],
+      [
+       1124,
+       75
+      ],
+      [
+       1124,
+       424
+      ],
+      [
+       988,
+       424
+      ]
+     ],
+     [
+      [
+       1172,
+       35
+      ],
+      [
+       1335,
+       35
+      ],
+      [
+       1335,
+       444
+      ],
+      [
+       1172,
+       444
+      ]
+     ]
+    ],
+    "plan_id": "6548eadd8d179a3329fa0cd51b56dff34da94aa8f43f29df84e9526c6da0e24e",
+    "stage": "plate"
+   },
+   "parallax_finish": {
+    "job_id": "4b507f85-160d-5cd3-b826-c9e94d448991",
+    "asset_ids": {
+     "far": "5daecce5d2e753ea99491650c383d0ee",
+     "mid": "04bcc58107f95b85af1c9c81c8ce36b0",
+     "near": "ebf996be1c405459ab04160460c0a88e",
+     "strip": "7d17522dac5c51fba1d36c717e9de69a"
+    },
+    "summary": "far / mid / near layers recomposite to the source within 0.34/255 (worst pixel 208/255); near 10.1 % of the picture. Review the 3-frame strip; a number is not art acceptance."
+   },
+   "outputs": [
+    {
+     "filename": "FLUX-Edit_00023_.png",
+     "subfolder": "Verified",
+     "type": "output",
+     "seed": 20260911,
+     "prompt_id": "c98b6858-6b56-478f-bbaf-6694b2a751f1",
+     "media_type": "image",
+     "asset_id": "6f50a3964ee05e978641886722dc83de"
+    }
+   ]
+  }
+ ],
+ "finish_job": {
+  "id": "4b507f85-160d-5cd3-b826-c9e94d448991",
+  "status": "completed",
+  "message": "Parallax layers split from plate prompt c98b6858-6b56-478f-bbaf-6694b2a751f1 and isolate prompt 9b94fc31-b9af-4cc4-a297-d9f3136efd7f. far / mid / near layers recomposite to the source within 0.34/255 (worst pixel 208/255); near 10.1 % of the picture. Review the 3-frame strip; a number is not art acceptance. No generation was submitted.",
+  "outputs": [
+   {
+    "filename": "far.png",
+    "run_file": "far.png",
+    "type": "output",
+    "media_type": "image",
+    "prompt_id": "c98b6858-6b56-478f-bbaf-6694b2a751f1",
+    "parallax": {
+     "layer": "far",
+     "shift_px": 3,
+     "plan_id": "6548eadd8d179a3329fa0cd51b56dff34da94aa8f43f29df84e9526c6da0e24e",
+     "summary": "far / mid / near layers recomposite to the source within 0.34/255 (worst pixel 208/255); near 10.1 % of the picture. Review the 3-frame strip; a number is not art acceptance."
+    },
+    "asset_id": "5daecce5d2e753ea99491650c383d0ee"
+   },
+   {
+    "filename": "mid.png",
+    "run_file": "mid.png",
+    "type": "output",
+    "media_type": "image",
+    "prompt_id": "c98b6858-6b56-478f-bbaf-6694b2a751f1",
+    "parallax": {
+     "layer": "mid",
+     "shift_px": 10,
+     "plan_id": "6548eadd8d179a3329fa0cd51b56dff34da94aa8f43f29df84e9526c6da0e24e",
+     "summary": "far / mid / near layers recomposite to the source within 0.34/255 (worst pixel 208/255); near 10.1 % of the picture. Review the 3-frame strip; a number is not art acceptance."
+    },
+    "asset_id": "04bcc58107f95b85af1c9c81c8ce36b0"
+   },
+   {
+    "filename": "near.png",
+    "run_file": "near.png",
+    "type": "output",
+    "media_type": "image",
+    "prompt_id": "c98b6858-6b56-478f-bbaf-6694b2a751f1",
+    "parallax": {
+     "layer": "near",
+     "shift_px": 24,
+     "plan_id": "6548eadd8d179a3329fa0cd51b56dff34da94aa8f43f29df84e9526c6da0e24e",
+     "summary": "far / mid / near layers recomposite to the source within 0.34/255 (worst pixel 208/255); near 10.1 % of the picture. Review the 3-frame strip; a number is not art acceptance."
+    },
+    "asset_id": "ebf996be1c405459ab04160460c0a88e"
+   },
+   {
+    "filename": "parallax-strip.png",
+    "run_file": "parallax-strip.png",
+    "type": "output",
+    "media_type": "image",
+    "prompt_id": "c98b6858-6b56-478f-bbaf-6694b2a751f1",
+    "parallax": {
+     "layer": "strip",
+     "plan_id": "6548eadd8d179a3329fa0cd51b56dff34da94aa8f43f29df84e9526c6da0e24e",
+     "summary": "far / mid / near layers recomposite to the source within 0.34/255 (worst pixel 208/255); near 10.1 % of the picture. Review the 3-frame strip; a number is not art acceptance."
+    },
+    "asset_id": "7d17522dac5c51fba1d36c717e9de69a"
+   }
+  ],
+  "operation": null,
+  "elapsed_seconds": null
+ }
+}

@@ -1,0 +1,194 @@
+{
+ "label": "krea",
+ "parent_asset": "2c48e689be5c5c5586eb00bf6321b170",
+ "strength": "strong",
+ "events": [
+  {
+   "t": 1790540693.133,
+   "kind": "asset_opened",
+   "vary_buttons": [
+    "Vary subtle",
+    "Vary strong"
+   ],
+   "hint": "On Krea 2 Refine Pass (img2img polish) \u00b7 2 pictures \u00b7 denoise 0.25 / 0.5 (starting values)"
+  },
+  {
+   "t": 1790540696.198,
+   "kind": "vary_pressed",
+   "status": "Vary strong prepared on Krea 2 Refine Pass (img2img polish) from this picture: denoise 0.5 (a starting value, not yet judged), 2 new seeds from 11728391, about 6.4 min per picture here \u00b7 11 runs. Nothing was generated; press Generate to run the round.",
+   "prepared": {
+    "preset": null,
+    "batch": "2",
+    "denoise": null,
+    "positive": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+    "hash": "#create"
+   },
+   "submitted_so_far": []
+  },
+  {
+   "t": 1790540697.02,
+   "kind": "denoise_override",
+   "control_id": null,
+   "catalog_value": "0.5",
+   "typed": 0.65,
+   "now": "0.65",
+   "steps": "6"
+  },
+  {
+   "t": 1790540697.195,
+   "kind": "generate_state",
+   "disabled": false,
+   "text": "Generate source-based pass \u2192"
+  },
+  {
+   "t": 1790540697.196,
+   "kind": "commit_before_generate",
+   "commit_gib": 61.4,
+   "limit_gib": 95.7,
+   "pct": 64.2,
+   "phys_avail_gib": 5.3
+  },
+  {
+   "t": 1790540701.351,
+   "kind": "generate_pressed",
+   "new_jobs": [
+    [
+     "213848b0-beb5-4419-aa97-1ef0821f8fef",
+     "krea-refine",
+     2,
+     "running"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790540697.259,
+     "/api/jobs"
+    ]
+   ]
+  }
+ ],
+ "job_id": "213848b0-beb5-4419-aa97-1ef0821f8fef",
+ "preset": "krea-refine",
+ "status": "completed",
+ "message": "Complete. GPU memory overflowed 1.5 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+ "batch_count": 2,
+ "prompt_ids": [
+  "8ade0a8f-e82d-4dc7-9352-60bc622afbdf",
+  "bea7a692-c58f-43bd-b792-25f00a819750"
+ ],
+ "outputs": [
+  {
+   "filename": "krea-refine_00016_.png",
+   "subfolder": "Studio",
+   "seed": 11728391,
+   "prompt_id": "8ade0a8f-e82d-4dc7-9352-60bc622afbdf",
+   "asset_id": "014dea2c4e68559290a47b2d73db21ac"
+  },
+  {
+   "filename": "krea-refine_00017_.png",
+   "subfolder": "Studio",
+   "seed": 11728392,
+   "prompt_id": "bea7a692-c58f-43bd-b792-25f00a819750",
+   "asset_id": "ef03c627568e55999e44db4ecd93bc6b"
+  }
+ ],
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "8ade0a8f-e82d-4dc7-9352-60bc622afbdf",
+   "seed": 11728391,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 1632579584,
+    "peak_dedicated_bytes": 14858420224,
+    "samples": 1292,
+    "spilled": true,
+    "settled_shared_bytes": 141242368,
+    "lingering": false
+   }
+  },
+  {
+   "index": 1,
+   "prompt_id": "bea7a692-c58f-43bd-b792-25f00a819750",
+   "seed": 11728392,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 1443704832,
+    "peak_dedicated_bytes": 14961311744,
+    "samples": 1418,
+    "spilled": true,
+    "settled_shared_bytes": 82653184,
+    "lingering": false
+   }
+  }
+ ],
+ "graph_denoise": [
+  0.65
+ ],
+ "parent_assets": [
+  "2c48e689be5c5c5586eb00bf6321b170"
+ ],
+ "continuation": {
+  "intent": "edit",
+  "preset_id": "krea-refine",
+  "reference_file": "b76d21ec500841b9958972e36363db18_krea-anime-atelier-gguf_00011_.png.png",
+  "source_asset_id": "2c48e689be5c5c5586eb00bf6321b170",
+  "source_sha256": "0ca6557dcf3069d37937224c2331690052321b45fa43175e721b89c740a69e30",
+  "template_sha256": "d74f2705d99541754e62f13dd6dcdd0a4720b164c6bef12d69a40de60ba907ab",
+  "version": 1
+ },
+ "controls": {
+  "positive": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+  "seed": "11728391",
+  "steps": "6",
+  "cfg": "1",
+  "denoise": "0.65",
+  "lora": "1",
+  "lora2": "1",
+  "lora3": "0.85",
+  "lora4": "0",
+  "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+  "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+  "lora3_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+  "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors",
+  "sampler": "euler",
+  "scheduler": "simple",
+  "reference": "b76d21ec500841b9958972e36363db18_krea-anime-atelier-gguf_00011_.png.png"
+ },
+ "created_at": 1790540697.4421322,
+ "started_at": 1790540697.452416,
+ "finished_at": 1790542019.6595893,
+ "elapsed_seconds": 1322.2071733474731,
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790540685.63,
+   "/api/estimate"
+  ],
+  [
+   1790540686.774,
+   "/api/estimate"
+  ],
+  [
+   1790540693.182,
+   "/api/assets/reference"
+  ],
+  [
+   1790540693.464,
+   "/api/estimate"
+  ],
+  [
+   1790540696.388,
+   "/api/estimate"
+  ],
+  [
+   1790540697.259,
+   "/api/jobs"
+  ],
+  [
+   1790540697.798,
+   "/api/estimate"
+  ]
+ ],
+ "dialogs": []
+}

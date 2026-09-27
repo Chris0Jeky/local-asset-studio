@@ -1,5 +1,27 @@
 # Current state — 27 September 2026
 
+## Qwen-Image 2.1 lanes: GGUF Q4 and the w4a8 text encoder — 27 September 2026 (21:55-22:37 local)
+
+All runs were on the qwen21 backend (refs #1028).
+- **unsloth Q4_K_M GGUF:** does not load in ComfyUI-GGUF 6ea2651e ("Unknown model architecture"). It needs the unmerged city96/ComfyUI-GGUF#483; parked.
+- **realrebelai Q4 GGUF:** loads, with quality level with B0, but runs at about 1.6 s/it against 1.5 it/s, so it is about 1.4× slower. F1 fails.
+- **Comfy-Org w4a8 text encoder:** the same time as B0 (73.9 against 73.7 s). Blind, 4 of 4 keep against 2 of 4: no pseudo-lettering on the prop, on 2 seeds. A lead that needs more seeds and text-heavy prompts, not a pin.
+- The three downloads are SHA-verified and pinned in `models/library.json`. The FP8 lanes are still downloading.
+
+Evidence: `experiments/curated/qi21-lanes-20260927/`. Agent-judged only.
+
+## Live proofs through the page: Vary, multi-engine plan, review checks, Make seamless, look templates, parallax layers — 27 September 2026 (19:37-22:15 local)
+
+All five features were driven through the real Studio page in headless Chromium.
+- **Vary (#1202):** one page press prepares the round and one Generate is one job with the parent recorded. After the first sheets, the owner said "Nudge both up": SDXL is now 0.5 / 0.7 and Krea 0.45 / 0.65 (6 steps), proved once per strength and marked `owner-approved`.
+- **Multi-engine plan (#1163):** Copy Pose + 9B depth + 4B on one pair. The estimate was 3.8 min (up to 5.5); the run took 303.5 s, with one `/prompt` per stage. The runs are tagged "from a plan". A plan led by a two-field recipe is refused for a third recipe's missing fill (handed to a builder).
+- **Review checks (#1203):** per-engine tallies render and persist across a fresh session. The agent's test taps were cleared afterwards.
+- **Make seamless (#1220):** wall seam 4.34 → 0.84 (owner: "Wall ok"); flat floor 13.53 → 1.93 (needs the wide band). `zimage-seam-repair` is now verified.
+- **Look templates (#1224):** the Night Shift look carries, but the scene is drowned out (owner: "Loosen it").
+- **Make parallax layers (#1231), 22:07-22:15:** run on the z2 anchor through the page with two dragged far-view boxes. Far / mid / near recomposite within 0.34/255 (lab C2: 0.36), and the strip is keep. `parallax-edit` is now verified. The first isolate was refused by the 32 GiB commit gate with nothing sent; it ran after `/free`.
+
+Evidence: `experiments/curated/live-proofs-20260927/`. Agent pre-review plus the quoted owner answers; no other art acceptance.
+
 ## Background-technique lab: parallax, seamless tiles, backdrop variety — 27 September 2026 (18:29-19:03 local)
 
 Everything used installed tools on the primary and the accepted Night Shift anchor z2 (refs #422).

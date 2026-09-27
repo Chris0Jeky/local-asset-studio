@@ -305,7 +305,7 @@
   // no timing yet counts as slow. Preparing never submits: Generate stays the owner's press.
   const VARY_FAST_SECONDS=60;
   function varyRoute(presetId,presets){
-    return(presets||[]).find(p=>Array.isArray(p?.vary?.sources)&&p.vary.sources.includes(presetId)&&p.continuation_capability?.consumes_source&&p.continuation_capability.operation==='image-to-image'&&p.continuation_capability.prompt_role==='description'&&!p.continuation_capability.requires_mask&&['subtle','strong'].every(k=>p.vary[k]?.controls&&typeof p.vary[k].controls==='object'&&Number(p.vary[k].controls.denoise)>0))||null;
+    return(presets||[]).find(p=>Array.isArray(p?.vary?.sources)&&p.vary.sources.includes(presetId)&&p.continuation_capability?.consumes_source&&p.continuation_capability.operation==='image-to-image'&&p.continuation_capability.prompt_role==='description'&&!p.continuation_capability.requires_mask&&(p.vary.carry===undefined||Array.isArray(p.vary.carry))&&['subtle','strong'].every(k=>p.vary[k]?.controls&&typeof p.vary[k].controls==='object'&&Number(p.vary[k].controls.denoise)>0))||null;
   }
   function varyRound(jobs,presetId){const timing=combineTiming(jobs,presetId);return{count:timing&&timing.seconds<VARY_FAST_SECONDS?4:2,timing};}
   // Why a recipe cannot run here now, in the words the page uses elsewhere; '' when nothing is known to be missing.
@@ -314,7 +314,28 @@
     const files=[...new Set([...(Array.isArray(missing?.[preset.id])?missing[preset.id]:[]),...(Array.isArray(preset.missing_loras)?preset.missing_loras:[])])];
     return files.length?'Missing here: '+files.join(', ')+'. Open Models & setup.':'';
   }
-  function varyPlan(item,presets,jobs,missing){
+  // A route with `carry` keeps the picture's own recorded settings (the WAI LoRA stack): each carried control comes from the
+  // picture's run, else the recipe's authored default. Returns the values, or the reason Vary cannot keep them. `installed`
+  // is the LoRA inventory; an empty one is unknown, never "everything is missing". The server checks every named file,
+  // an off slot's too, so a missing one blocks here with its name.
+  function varyCarry(item,source,route,jobs,installed){
+    const job=item.job_id?(jobs||[]).find(j=>j.id===item.job_id):null;
+    if(!job)return 'No run is recorded for this picture, so '+route.name+' cannot keep its adapters. Use Continue with this.';
+    if(job.preset_id!==source.id)return 'This picture\'s run no longer records '+source.name+', so its adapters cannot be kept. Use Continue with this.';
+    const values={};
+    for(const key of route.vary.carry){
+      const recorded=job.controls?.[key],value=recorded!==undefined&&recorded!==null&&recorded!==''?recorded:source.defaults?.[key];
+      if(value===undefined||value===null||value==='')return 'Setting '+key+' is not recorded for this picture\'s run, so its adapters cannot be kept. Use Continue with this.';
+      values[key]=value;
+    }
+    const known=Array.isArray(installed)&&installed.length?installed:null;
+    const absent=known?[...new Set(Object.keys(values).filter(key=>/^lora\d*_name$/.test(key)).map(key=>values[key]).filter(name=>!known.includes(name)))]:[];
+    return absent.length?'Vary uses '+route.name+'. Missing here: '+absent.join(', ')+'. Open Models & setup.':values;
+  }
+  function varyAdapters(carry){
+    return Object.keys(carry||{}).filter(key=>/^lora\d*$/.test(key)&&Number(carry[key])!==0).map(key=>carry[key+'_name']+' at '+carry[key]);
+  }
+  function varyPlan(item,presets,jobs,missing,installed){
     const none=reason=>({kind:'none',reason});
     if(!item||item.media_type!=='image')return none('Vary works on pictures only.');
     if(item.trashed_at)return none('This picture is in the bin. Restore it before varying it.');
@@ -322,7 +343,8 @@
     if(!source)return none('No Studio recipe is recorded for this picture, so there is nothing to vary from. Use Continue with this.');
     const route=varyRoute(source.id,presets);
     if(route){const blocked=varyBlocked(route,missing);if(blocked)return none('Vary uses '+route.name+'. '+blocked);
-      return{kind:'img2img',source,route,round:varyRound(jobs,route.id),strengths:{subtle:route.vary.subtle,strong:route.vary.strong},starting:route.vary.status!=='owner-approved'};}
+      const carry=route.vary.carry?varyCarry(item,source,route,jobs,installed):null;if(typeof carry==='string')return none(carry);
+      return{kind:'img2img',source,route,carry,round:varyRound(jobs,route.id),strengths:{subtle:route.vary.subtle,strong:route.vary.strong},starting:route.vary.status!=='owner-approved'};}
     // No route: the honest fallback is the same recipe with new seeds, only for a recipe that starts from words alone.
     if(source.continuation_capability?.operation!=='new-image')return none('No close-variation route is recorded for '+source.name+', which starts from other pictures. Use Prepare new seed on its run, or Continue with this.');
     if(!source.seed)return none(source.name+' has no seed to change, so a new round would repeat this picture.');
@@ -339,13 +361,14 @@
     const count=plan.round.count,seeds=count+' new seeds from '+seed;
     if(plan.kind==='reseed')return 'Vary prepared as new seeds, same recipe ('+plan.route.name+'): '+seeds+', '+varyTime(plan.round.timing)+'. No close-variation route is recorded for this recipe, so each picture starts afresh from the same words. Nothing was generated; press Generate to run the round.';
     const controls=plan.strengths[strength].controls;
-    return 'Vary '+strength+' prepared on '+plan.route.name+' from this picture: denoise '+controls.denoise+(plan.starting?' (a starting value, not yet judged)':'')+', '+seeds+', '+varyTime(plan.round.timing)+'. Nothing was generated; press Generate to run the round.';
+    const adapters=varyAdapters(plan.carry),kept=!plan.carry?'':adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':', same checkpoint as this picture, no adapters (it used none)';
+    return 'Vary '+strength+' prepared on '+plan.route.name+' from this picture'+kept+': denoise '+controls.denoise+(plan.starting?' (a starting value, not yet judged)':'')+', '+seeds+', '+varyTime(plan.round.timing)+'. Nothing was generated; press Generate to run the round.';
   }
   function varyHint(plan){
     if(plan.kind==='none')return plan.reason;
     const round=plan.round.count+' pictures';
     if(plan.kind==='reseed')return 'Starts afresh from the same words · '+round;
-    return 'On '+plan.route.name+' · '+round+' · denoise '+plan.strengths.subtle.controls.denoise+' / '+plan.strengths.strong.controls.denoise+(plan.starting?' (starting values)':'');
+    return 'On '+plan.route.name+(plan.carry?' · keeps its adapters':'')+' · '+round+' · denoise '+plan.strengths.subtle.controls.denoise+' / '+plan.strengths.strong.controls.denoise+(plan.starting?' (starting values)':'');
   }
   return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime,combinePlanFills,varyRoute,varyRound,varyPlan,varyStatus,varyHint};
 });

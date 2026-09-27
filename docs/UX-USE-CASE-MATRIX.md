@@ -1,5 +1,49 @@
 # UX use-case matrix
 
+## Seam band choice and a looser Night Shift — 27 September 2026
+
+Refs #1220 and #1221 (owner answers, 27 September 2026, after the live renders).
+
+- **Make seamless** now offers **Seam band: narrow (112 px) / wide (160 px)**. The owner found the wall result OK, but a wider
+  band can hide the floor's repeating plank ends. These are the lab's two measured widths. A band wider than half the texture
+  side stays listed, disabled, with its reason (*A 160 px band needs a side of at least 320 px; …*). The band is in the
+  plan, the status, the finished tile's summary and its receipt.
+- **Night Shift (retro anime)** no longer forces a quiet dark wall into every scene. The owner had asked to loosen it after
+  *a rain-soaked arcade entrance* rendered as a shutter. The quiet-wall sentence is now an optional line, **Keep the quiet
+  wall for UI backgrounds**, off by default. Ticked, the wording is exactly the template #1224 shipped. A Workspace that
+  holds the untouched #1224 copy takes the new version on the next Studio start; a copy the owner edited is kept.
+
+`python tests/studio_use_cases.py` passed **19/19** journeys with **zero generation submissions and zero page errors**.
+`make-a-texture-tile` now chooses the wide band before *Make seamless* and asserts that 160 px was sent and recorded.
+`new-scene-in-an-accepted-look` asserts four things:
+- the first prepare has no wall sentence;
+- the quiet-wall box starts unticked;
+- ticking it and preparing again writes the #1224 wording;
+- the status names the line.
+
+These are fixture screens; no model ran. Neither the loosened wording nor a Studio wide-band repaint has been rendered (the lab used 160 px for floor v2 outside the Studio).
+
+## Split a scene into parallax layers — 27 September 2026
+
+Refs #1219 (owner decision, 27 September 2026). A picture's asset panel now has a **Make parallax layers** control. It is
+disabled, with its reason beside it, for a picture outside 512-1536 px a side, off the 16 px grid or above 1.6 megapixels
+(*this picture is 128 × 128.*), and until the foreground is named (*Name the foreground to lift out first*). The far view is
+optional and yours: type boxes as `x0,y0,x1,y1`, or open *Mark the far view on the picture* and drag them inside the window
+glass or sky; no box gives two layers (mid and near). One press attaches the picture unchanged and opens *Parallax layers •
+Klein clean plate and isolate* at the picture's own size with the clean-plate words (*Remove <foreground>, leaving the space
+behind them empty…*) and the picture as the recorded parent. Generate stays your press. After it, Create loads the isolate
+words (*Replace everything except <foreground> with a plain pure white background…*); that is a second Generate. When both
+edits are in, the Studio registers them to the picture, splits the layers and records **far / mid / near** RGBA assets and a
+**3-frame parallax strip**, each with the recomposite error in its details. A completed edit whose other stage is missing
+shows **Load the isolate edit** (or the clean plate) on its card; both in but not split shows **Split layers**.
+
+`python tests/studio_use_cases.py` passed **20/20** journeys with **zero generation submissions and zero page errors**. The
+new `split-a-scene-into-parallax-layers` journey opens a 128 px picture and reads the disabled control and its size, opens a
+1344 × 768 scene, reads the name-the-foreground reason, types the foreground, drags one far view box on the picture and
+presses *Make parallax layers*: the parallax recipe is loaded with the picture attached at 1344 × 768, the plate words, the
+scene as source and parent, and a status that names Generate as the next press. It takes 5 clicks (one drag) and 161
+instruction words. Live mode stops before the press, which stores an upload. These are fixture screens; no model ran.
+
 ## Make seamless from a library texture — 27 September 2026
 
 Refs #1220 (owner decision, 27 September 2026). A picture's asset panel now has a **Make seamless** control, flagged
@@ -105,6 +149,7 @@ One press prepares a round of close variations. It never submits: Generate is st
   copy of the picture through the same continuation as *Continue with this*: the picture is the source and the
   recorded parent. The round keeps the picture's submitted words and sets the route's recorded denoise and new seeds.
   Today Krea 2 pictures vary on *Krea 2 Refine Pass*, and plain SDXL base pictures on *SDXL gentle reference variation*.
+  WAI v17 pictures vary on *WAI v17 · vary* with their own adapters (see below).
 - **Vary · new seeds, same recipe** appears when the picture came from words alone and no route is recorded. It reloads
   the run's own recipe with new seeds and records the picture as the parent. Each picture starts afresh.
 - A disabled **Vary** with its reason beside it covers the rest. Examples: a picture made from other pictures (use
@@ -127,6 +172,37 @@ picture as source and parent, denoise 0.25, a new seed and a round of 2 (one 240
 fallback on an Anima picture: the same recipe, a new seed, a round of 4 (one 30 s receipt) and the picture as parent.
 Last, it reads the disabled Vary and its reason in the asset panel. These are fixture screens; no model ran, and
 nobody has judged the strengths yet.
+
+### WAI pictures keep their adapters — 27 September 2026
+
+Owner decision in chat, 27 September 2026: "Yes, WAI img2img". Pictures from *WAI v17 · illustration* and *Anime WAI
+Portrait* (and from the new route itself) now get **Vary subtle** and **Vary strong** on *WAI v17 · vary*. Before this,
+they got only new seeds on the same recipe. The route is one img2img graph on the same WAI v17 checkpoint with both LoRA
+slots bound. Its `vary` block adds `carry`: the controls the page copies from the picture's own run, falling back to the
+recipe's authored default. Those are both LoRA strengths and files, sampler, scheduler, CFG and steps. So a picture made
+with an adapter varies with that adapter at the same strength. The status line says *same checkpoint and adapters as
+this picture (file at strength)*, or *no adapters (it used none)*. Vary stays disabled, with its reason beside it, in
+four cases: no run is recorded, the run's recipe changed, a carried setting is unknown, or a carried LoRA file is not
+installed. An off slot's file counts too, because the server checks every named file. The route's own missing adapters
+still disable it as before. `scripts/validate-repo.py` (through `continuation.vary_problems`) proves each carrying route
+three ways:
+
+- It holds each source to the **exact same checkpoint**, never a family label.
+- Every LoRA loader in the source graph must be bound by a carried slot, and every loader in the route graph must be
+  carried, so no adapter is dropped or added.
+- Each carried key must be bound on both sides, with the same clip fan-out, and within the route's choices.
+
+Animagine, NoobAI, Pony, CSTati, YumeFlux and AniFox draw on other checkpoints. They keep the new-seeds fallback until a
+route takes the checkpoint too; Pony also needs its clip skip. The strengths start at the owner's SDXL values
+(0.5 / 0.7, status `starting-value`) until a GPU proof and the owner's look.
+
+`vary-a-keeper` now also presses *Vary strong* on a WAI fixture picture made with `noirpopwave.safetensors` at 0.85.
+It asserts WAI v17 · vary with the picture as source and parent, denoise 0.7 and a new seed. It also asserts the recorded
+stack and settings on the page, including a LoRA file the offline adapter list did not offer, and the status wording.
+Outside the measured steps it presses Vary on a run whose recorded strength the page cannot hold. Generate must then
+stay blocked with the reason, not half-applied, until Vary is pressed again or the continuation changes (review on #1240).
+`python tests/studio_use_cases.py` passed **20/20** with zero generation submissions and zero page errors (9 intents,
+4 clicks for this journey). These are fixture screens; no model ran.
 
 ## Combine runs beside their pictures — 27 September 2026
 

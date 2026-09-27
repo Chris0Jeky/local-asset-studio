@@ -1,0 +1,252 @@
+{
+ "label": "wall",
+ "source_asset": "b97ead96a58857e5a424a18b5a693a95",
+ "events": [
+  {
+   "t": 1790539084.987,
+   "kind": "tile_button",
+   "text": "Make seamless\nFlat textures only: top-down or front-on, with no perspective; a perspective picture cannot tile.",
+   "disabled": false
+  },
+  {
+   "t": 1790539088.063,
+   "kind": "prepared",
+   "status": "Seam cross prepared: the texture is rolled by half and only its centre cross will be repainted. Its own wording is kept. Press Generate; the Studio then finishes the tile with its seam score and a 3\u00d73 preview.",
+   "positive": "Seamless texture, flat front view of a dark graphite plaster wall with subtle hand-painted brush texture and faint water stains, hand-painted cel anime film background art, even soft lighting, no objects, no text, fills the whole frame.",
+   "hint": "Seam cross prepared from Z-Image Turbo \u2022 fast (fp8, text encoder on CPU) \u00b7 1 \u00b7 1024 \u00d7 1024. Flat textures only: top-down or front-on, with no perspective; a perspective picture cannot tile.",
+   "selected": "zimage-seam-repair",
+   "blockers": []
+  },
+  {
+   "t": 1790539088.064,
+   "kind": "commit_before_generate",
+   "commit_gib": 61.2,
+   "limit_gib": 95.7,
+   "pct": 63.9,
+   "phys_avail_gib": 5.1
+  },
+  {
+   "t": 1790539092.215,
+   "kind": "generated",
+   "new": [
+    [
+     "632fc46a-08e5-48f2-806a-a9544edabd23",
+     "zimage-seam-repair",
+     "running"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790539088.114,
+     "/api/jobs"
+    ]
+   ]
+  },
+  {
+   "t": 1790539234.253,
+   "kind": "after_job",
+   "status": "completed",
+   "tile_finish": {
+    "job_id": "a44c9cb2-fe40-5e4c-99de-da378a337b6b",
+    "tile_asset_id": "67c808bd810c5559830be7f1bbf8df12",
+    "preview_asset_id": "0f4e49192415521d8b161119eecd5c2d",
+    "summary": "Seam 4.34 \u2192 0.84 (the tile's own neighbour gradient 0.96). Review the 3\u00d73 repeat; a number is not art acceptance."
+   },
+   "outputs": [
+    {
+     "filename": "Z-Image-Seam-Repair_00001_.png",
+     "subfolder": "Studio",
+     "asset_id": "c08993cb8ac85cc1ab252d7ee1ae24a4",
+     "tile": null
+    }
+   ]
+  }
+ ],
+ "job_id": "632fc46a-08e5-48f2-806a-a9544edabd23",
+ "job_public": {
+  "status": "completed",
+  "message": "Complete",
+  "prompt_ids": [
+   "0a213ed5-6e40-4285-84aa-44ec0583568d"
+  ],
+  "elapsed_seconds": 141.84674215316772,
+  "tile": {
+   "version": 1,
+   "preset_id": "zimage-seam-repair",
+   "source_asset_id": "b97ead96a58857e5a424a18b5a693a95",
+   "source_sha256": "5b1d17e8c58bea97440a4aadb989101646332f50851aa36c564b1c82ade89d34",
+   "rolled_file": "d591df89610a4b5b9e08179c4760dd43_seam-cross.png",
+   "rolled_sha256": "181af46b3b1a9f334a358118a6e393400a1a27be7add1ebfa78843d61dbbdf34",
+   "size": 1024,
+   "band_px": 112,
+   "feather_px": 12,
+   "flatten_sigma_px": 96
+  },
+  "tile_finish": {
+   "job_id": "a44c9cb2-fe40-5e4c-99de-da378a337b6b",
+   "tile_asset_id": "67c808bd810c5559830be7f1bbf8df12",
+   "preview_asset_id": "0f4e49192415521d8b161119eecd5c2d",
+   "summary": "Seam 4.34 \u2192 0.84 (the tile's own neighbour gradient 0.96). Review the 3\u00d73 repeat; a number is not art acceptance."
+  },
+  "outputs": [
+   {
+    "filename": "Z-Image-Seam-Repair_00001_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092779,
+    "prompt_id": "0a213ed5-6e40-4285-84aa-44ec0583568d",
+    "media_type": "image",
+    "asset_id": "c08993cb8ac85cc1ab252d7ee1ae24a4"
+   }
+  ],
+  "parent_assets": [
+   "b97ead96a58857e5a424a18b5a693a95"
+  ]
+ },
+ "state_tile": {
+  "tile": {
+   "version": 1,
+   "preset_id": "zimage-seam-repair",
+   "source_asset_id": "b97ead96a58857e5a424a18b5a693a95",
+   "source_sha256": "5b1d17e8c58bea97440a4aadb989101646332f50851aa36c564b1c82ade89d34",
+   "rolled_file": "d591df89610a4b5b9e08179c4760dd43_seam-cross.png",
+   "rolled_sha256": "181af46b3b1a9f334a358118a6e393400a1a27be7add1ebfa78843d61dbbdf34",
+   "size": 1024,
+   "band_px": 112,
+   "feather_px": 12,
+   "flatten_sigma_px": 96
+  },
+  "tile_finish": {
+   "job_id": "a44c9cb2-fe40-5e4c-99de-da378a337b6b",
+   "tile_asset_id": "67c808bd810c5559830be7f1bbf8df12",
+   "preview_asset_id": "0f4e49192415521d8b161119eecd5c2d",
+   "summary": "Seam 4.34 \u2192 0.84 (the tile's own neighbour gradient 0.96). Review the 3\u00d73 repeat; a number is not art acceptance."
+  }
+ },
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790539077.035,
+   "/api/estimate"
+  ],
+  [
+   1790539078.078,
+   "/api/estimate"
+  ],
+  [
+   1790539085.028,
+   "/api/tiles/prepare"
+  ],
+  [
+   1790539085.718,
+   "/api/estimate"
+  ],
+  [
+   1790539088.114,
+   "/api/jobs"
+  ],
+  [
+   1790539088.651,
+   "/api/estimate"
+  ],
+  [
+   1790539234.264,
+   "/api/estimate"
+  ],
+  [
+   1790539234.285,
+   "/api/estimate"
+  ],
+  [
+   1790539234.292,
+   "/api/estimate"
+  ],
+  [
+   1790539234.299,
+   "/api/estimate"
+  ],
+  [
+   1790539234.301,
+   "/api/estimate"
+  ],
+  [
+   1790539234.304,
+   "/api/estimate"
+  ],
+  [
+   1790539234.306,
+   "/api/estimate"
+  ],
+  [
+   1790539234.309,
+   "/api/estimate"
+  ],
+  [
+   1790539234.31,
+   "/api/estimate"
+  ],
+  [
+   1790539234.316,
+   "/api/estimate"
+  ],
+  [
+   1790539234.317,
+   "/api/estimate"
+  ],
+  [
+   1790539234.32,
+   "/api/estimate"
+  ],
+  [
+   1790539234.321,
+   "/api/estimate"
+  ],
+  [
+   1790539234.323,
+   "/api/estimate"
+  ]
+ ],
+ "finish_job": {
+  "id": "a44c9cb2-fe40-5e4c-99de-da378a337b6b",
+  "status": "completed",
+  "message": "Seamless tile finished from repaint prompt 0a213ed5-6e40-4285-84aa-44ec0583568d. Seam 4.34 \u2192 0.84 (the tile's own neighbour gradient 0.96). Review the 3\u00d73 repeat; a number is not art acceptance. No generation was submitted.",
+  "outputs": [
+   {
+    "filename": "tile.png",
+    "run_file": "tile.png",
+    "type": "output",
+    "media_type": "image",
+    "prompt_id": "0a213ed5-6e40-4285-84aa-44ec0583568d",
+    "seed": 2026092779,
+    "tile": {
+     "seam_source": 4.34,
+     "seam_composite": 0.83,
+     "seam_tile": 0.84,
+     "centre_seam_tile": 1.46,
+     "inner_gradient_source": 0.87,
+     "inner_gradient_tile": 0.96,
+     "summary": "Seam 4.34 \u2192 0.84 (the tile's own neighbour gradient 0.96). Review the 3\u00d73 repeat; a number is not art acceptance.",
+     "preview_asset_id": "0f4e49192415521d8b161119eecd5c2d",
+     "repaint_prompt_id": "0a213ed5-6e40-4285-84aa-44ec0583568d",
+     "flat_only": "Flat textures only: top-down or front-on, with no perspective; a perspective picture cannot tile."
+    },
+    "asset_id": "67c808bd810c5559830be7f1bbf8df12"
+   },
+   {
+    "filename": "tile-3x3.png",
+    "run_file": "tile-3x3.png",
+    "type": "output",
+    "media_type": "image",
+    "prompt_id": "0a213ed5-6e40-4285-84aa-44ec0583568d",
+    "tile_preview": {
+     "of": "tile.png",
+     "summary": "Seam 4.34 \u2192 0.84 (the tile's own neighbour gradient 0.96). Review the 3\u00d73 repeat; a number is not art acceptance."
+    },
+    "asset_id": "0f4e49192415521d8b161119eecd5c2d"
+   }
+  ],
+  "preset_id": "seamless-tile",
+  "operation": null,
+  "elapsed_seconds": null
+ }
+}

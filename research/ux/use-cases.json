@@ -630,7 +630,7 @@
       "id": "vary-a-keeper",
       "goal": "From a picture I like, get a small round of close variations ready with one press (Vary subtle); on a recipe that cannot resample its pictures, get new seeds of the same recipe instead. Nothing is generated.",
       "starting_view": "create",
-      "success_condition": "Vary subtle prepares the picture's img2img route with this picture attached as the source and recorded as the parent, at the recorded starting strength, with new seeds and the owner's round size; the fallback loads the same recipe with new seeds and the picture as parent; the status names the recipe, strength, seeds and time; no generation is requested.",
+      "success_condition": "Vary subtle prepares the picture's img2img route with this picture attached as the source and recorded as the parent, at the recorded starting strength, with new seeds and the owner's round size; the fallback loads the same recipe with new seeds and the picture as parent; Vary strong on a WAI picture made with an adapter prepares the WAI route with the picture's recorded adapters and sampling settings; the status names the recipe, strength, seeds and time; no generation is requested.",
       "wrong_turn": false,
       "steps": [
         {"intent": "see what Vary would do with a picture I like", "expect": "subtle and strong are offered with the recipe, round size and starting strengths named"},
@@ -639,6 +639,8 @@
         {"intent": "check where the new pictures will come from", "expect": "the kept picture is the source and the recorded parent"},
         {"intent": "vary a picture whose recipe cannot resample it", "expect": "the same recipe loads with new seeds and the picture as parent"},
         {"intent": "read what the fallback prepared", "expect": "it says new seeds, same recipe and nothing was generated"},
+        {"intent": "vary an anime picture made with an adapter, strongly", "expect": "its WAI route is prepared with the picture's own adapters and sampling settings, and nothing runs"},
+        {"intent": "read what the anime round keeps", "expect": "the status names the same checkpoint and the kept adapter with its strength"},
         {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
     },
@@ -646,7 +648,7 @@
       "id": "new-scene-in-an-accepted-look",
       "goal": "Make a new backdrop in a look I already accepted (Night Shift) by typing only the new scene; the Studio writes the look's wording and loads its recipe and settings. Nothing is generated.",
       "starting_view": "create",
-      "success_condition": "Choosing the saved look while another recipe is open offers it with its recipe named; Prepare stays off with a reason until a scene is typed; preparing loads the look's recipe, writes the look's wording with the scene in its slot and sets the look's seed and size; the status says nothing was generated; no generation is requested.",
+      "success_condition": "Choosing the saved look while another recipe is open offers it with its recipe named; Prepare stays off with a reason until a scene is typed; preparing loads the look's recipe, writes the look's wording with the scene in its slot and sets the look's seed and size; the quiet-wall line is off by default and, when ticked, is written into the wording; the status says nothing was generated; no generation is requested.",
       "wrong_turn": false,
       "steps": [
         {"intent": "choose the accepted look while another recipe is open", "expect": "the look is offered with the recipe it uses"},
@@ -656,6 +658,8 @@
         {"intent": "prepare Create from the look", "expect": "the look's recipe loads and the wording is written; nothing runs"},
         {"intent": "read what was prepared", "expect": "the look, recipe, seed and size are named, and it says nothing was generated"},
         {"intent": "check the wording", "expect": "the scene sits inside the look's own sentences"},
+        {"intent": "keep the quiet wall for a UI background", "expect": "an optional line, off by default, says what it adds"},
+        {"intent": "prepare again with the quiet wall", "expect": "the look's quiet-wall sentence joins the wording; without it the scene decides the layout"},
         {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
     },
@@ -663,15 +667,34 @@
       "id": "make-a-texture-tile",
       "goal": "From a flat texture in my library, get a seamless tile repaint ready with one press, and learn why a picture that is not a square, flat texture cannot tile. Nothing is generated.",
       "starting_view": "assets",
-      "success_condition": "A wide picture shows Make seamless disabled with the flat-textures-only reason and its size; a square texture prepares the seam-repair recipe with the rolled seam cross attached, the texture as its source and recorded parent, and a status that says Generate is the next press; no generation is requested.",
+      "success_condition": "A wide picture shows Make seamless disabled with the flat-textures-only reason and its size; a square texture offers a narrow or wide seam band and prepares the seam-repair recipe with the rolled seam cross attached, the texture as its source and recorded parent and the chosen band, and a status that says Generate is the next press; no generation is requested.",
       "wrong_turn": false,
       "steps": [
         {"intent": "open a wide picture from my library", "expect": "its details open"},
         {"intent": "see whether it can become a seamless tile", "expect": "Make seamless is disabled and says it takes square, flat textures only, naming the picture's size"},
         {"intent": "open a square, flat texture", "expect": "its details open with Make seamless offered and flagged flat textures only"},
+        {"intent": "choose a wider seam band to hide repeating plank ends", "expect": "the seam band offers narrow (112 px) and wide (160 px); a width too big for the texture is disabled with its reason"},
         {"intent": "make it seamless", "expect": "the texture is rolled and its seam cross attached to the seam-repair recipe, and nothing runs"},
         {"intent": "read what was prepared", "expect": "the status says only the centre cross will be repainted and that Generate is the next press"},
         {"intent": "check where the tile will come from", "expect": "the texture is the source and the recorded parent, flagged flat textures only"},
+        {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
+      ]
+    },
+    {
+      "id": "split-a-scene-into-parallax-layers",
+      "goal": "From a scene in my library, get the clean-plate edit of a parallax split ready with one press after naming the foreground and marking the far view, and learn why a picture that is too small cannot be split. Nothing is generated.",
+      "starting_view": "assets",
+      "success_condition": "A 128 px picture shows Make parallax layers disabled with its size in the reason; a wide scene asks for the foreground first, takes a far view box dragged on the picture, and one press loads the clean-plate edit with the picture attached unchanged at its own size, the picture as its recorded parent, the plate words and a status that says Generate is the next press; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open a small picture from my library", "expect": "its details open"},
+        {"intent": "see whether it can be split into parallax layers", "expect": "Make parallax layers is disabled and names the picture's size"},
+        {"intent": "open a wide scene", "expect": "its details open with Make parallax layers waiting for the foreground"},
+        {"intent": "name the foreground to lift out", "expect": "the button is offered and the note says the view mask is mine, not detected"},
+        {"intent": "mark the far view on the picture", "expect": "a dragged box inside the window or sky appears as x0,y0,x1,y1 in the view field"},
+        {"intent": "prepare the layers", "expect": "the picture is attached unchanged and the clean-plate edit is loaded, and nothing runs"},
+        {"intent": "read what was prepared", "expect": "the status says Generate is the next press and the isolate edit loads after it"},
+        {"intent": "check where the edit starts from", "expect": "the scene is the source and the recorded parent, at its own size, edit 1 of 2"},
         {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
     }

@@ -22,6 +22,10 @@ PICTURE = dict(TEXT, id="picture", name="Picture route", reference=["1", "text"]
 VIDEO = dict(TEXT, id="video", name="Video", modality="video")
 TEMPLATE = "No people. Painted background of {scene}. Quiet left half, amber accents."
 BODY = {"preset_id": "text-only", "template": TEMPLATE, "negative": "", "controls": {"seed": 77, "width": 1344, "height": 768}}
+WALL = {"id": "quiet_wall", "label": "Keep the quiet wall for UI backgrounds", "text": "The left half is a plain wall.", "default": False}
+OPTIONAL = dict(BODY, template="No people. Painted background of {scene}. {quiet_wall} Amber accents.", options=[WALL])
+V1 = ROOT / "tests/fixtures/looks-v1-2026-09-27.json"   # presets/looks.json as #1224 shipped it
+NIGHT = "look-night-shift-retro-anime"
 
 
 class LookTests(unittest.TestCase):
@@ -69,6 +73,40 @@ class LookTests(unittest.TestCase):
         self.assertEqual(looks.validate_body(dict(BODY, preset_id="with-negative", negative=" blurry "), WITH_NEGATIVE)["negative"], "blurry")
         with self.assertRaisesRegex(WorkspaceError, "Unknown look fields"): looks.validate_body(dict(BODY, surprise=1), TEXT)
         with self.assertRaisesRegex(WorkspaceError, "recipe"): looks.validate_body(dict(BODY, preset_id="other"), TEXT)
+
+    # ------------------------------------------------------------------ optional lines
+    def test_an_optional_line_is_a_named_sentence_with_one_place_in_the_wording(self):
+        """Owner, 27 Sep 2026: layout sentences leave the always-on wording for a line the owner can switch on."""
+        self.assertEqual(looks.validate_body(OPTIONAL, TEXT)["options"], [WALL])
+        self.assertEqual(looks.validate_body(dict(OPTIONAL, options=[dict(WALL, label=" Keep it ", default=True)]), TEXT)["options"][0]["label"], "Keep it")
+        self.assertNotIn("options", looks.validate_body(BODY, TEXT), "a look without optional lines stores none")
+        bad = [
+            ([dict(WALL, id="Quiet wall")], "id"), ([dict(WALL, id="scene")], "id"), ([WALL, WALL], "once"),
+            ([dict(WALL, id="other")], "exactly once"), ([dict(WALL, text="")], "required"), ([dict(WALL, label="")], "required"),
+            ([dict(WALL, text="of {scene}")], "slot"), ([dict(WALL, text="again {quiet_wall}")], "slot"), ([dict(WALL, default="yes")], "true or false"),
+            ([dict(WALL, extra=1)], "fields"), ("wall", "list"), ([WALL] * 7, "list"), ([dict(WALL, text="x" * 1001)], "1000"),
+        ]
+        for options, message in bad:
+            with self.subTest(options=repr(options)[:60]), self.assertRaisesRegex(WorkspaceError, message): looks.validate_body(dict(OPTIONAL, options=options), TEXT)
+        with self.assertRaisesRegex(WorkspaceError, "exactly once"): looks.validate_body(dict(OPTIONAL, template=OPTIONAL["template"] + " {quiet_wall}"), TEXT)
+
+    def test_compose_writes_an_optional_line_only_when_it_is_on(self):
+        options = [WALL]; template = OPTIONAL["template"]
+        self.assertEqual(looks.compose(template, "a hall", options), "No people. Painted background of a hall. Amber accents.")
+        self.assertEqual(looks.compose(template, "a hall", options, {"quiet_wall": True}), "No people. Painted background of a hall. The left half is a plain wall. Amber accents.")
+        self.assertEqual(looks.compose(template, "a hall", [dict(WALL, default=True)]), "No people. Painted background of a hall. The left half is a plain wall. Amber accents.")
+        self.assertIn("{quiet_wall}", looks.compose(template, "a {quiet_wall} sign", options), "a scene's own braces are the scene's words")
+        for chosen, message in (({"other": True}, "Unknown optional line"), ({"quiet_wall": "on"}, "true or false"), (["quiet_wall"], "object")):
+            with self.subTest(chosen=chosen), self.assertRaisesRegex(WorkspaceError, message): looks.compose(template, "a hall", options, chosen)
+
+    def test_prepare_takes_the_optional_lines_and_says_which_were_on(self):
+        card = self.create(body=OPTIONAL)
+        plain = looks.prepare(self.studio, {"id": card["id"], "scene": "a hall"})
+        self.assertEqual((plain["controls"]["positive"], plain["look"]["options"]), ("No people. Painted background of a hall. Amber accents.", {"quiet_wall": False}))
+        walled = looks.prepare(self.studio, {"id": card["id"], "scene": "a hall", "options": {"quiet_wall": True}, "expected_revision": 0})
+        self.assertIn("The left half is a plain wall.", walled["controls"]["positive"]); self.assertEqual(walled["look"]["options"], {"quiet_wall": True})
+        with self.assertRaisesRegex(WorkspaceError, "Unknown optional line"): looks.prepare(self.studio, {"id": card["id"], "scene": "a hall", "options": {"x": True}})
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
 
     # ------------------------------------------------------------------ storing
     def test_saving_a_look_records_the_anchor_picture_from_the_workspace(self):
@@ -168,11 +206,45 @@ class LookTests(unittest.TestCase):
         plan = json.loads((ROOT / "experiments/curated/asset-kit-20260927/receipts/zimage-studio-plan.json").read_text(encoding="utf-8"))
         z2 = next(entry for entry in plan if entry["key"] == "retro-anime-master-z2")
         self.assertEqual((body["source_prompt"], body["controls"]["seed"]), (z2["controls"]["positive"], z2["controls"]["seed"]))
-        for sentence in ("Hand-painted anime film background of", "softly lit, almost empty and low in detail.", "muted graphite palette with small amber accents.",
+        for sentence in ("Hand-painted anime film background of", "muted graphite palette with small amber accents.",
                          "Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art.", "No text, no signs, no logos, no characters, no people, no figures."):
             self.assertIn(sentence, body["template"]); self.assertIn(sentence, z2["controls"]["positive"])
+        # Owner, 27 Sep 2026 ("a rain-soaked arcade entrance" came out as a shutter): the scene decides the layout. The quiet-wall
+        # composition is an optional line, off by default; switched on, the wording is exactly what #1224 shipped.
+        wall = next(option for option in body["options"] if option["id"] == "quiet_wall")
+        self.assertEqual((wall["default"], wall["label"]), (False, "Keep the quiet wall for UI backgrounds"))
+        for layout in ("graphite wall", "left half", "almost empty"):
+            self.assertNotIn(layout, body["template"]); self.assertIn(layout, wall["text"])
+        old = next(entry for entry in json.loads(V1.read_text(encoding="utf-8"))["looks"] if entry["id"] == NIGHT)
+        scene = "a rain-soaked arcade entrance"
+        self.assertEqual(looks.compose(body["template"], scene, body["options"], {"quiet_wall": True}), looks.compose(old["body"]["template"], scene))
+        self.assertNotIn("wall", looks.compose(body["template"], scene, body["options"]))
+        self.assertEqual((body["source_prompt"], night["lineage"][0]), (old["body"]["source_prompt"], old["lineage"][0]), "anchor and its exact prompt kept")
+        self.assertIn("27 September 2026", body["notes"]); self.assertIn("shutter", body["notes"])
+        self.assertTrue(any("shutter" in entry.get("evidence", "") for entry in night["lineage"]), "the lineage records why the wording changed")
         self.assertEqual((body["controls"]["width"], body["controls"]["height"]), (z2["controls"]["width"], z2["controls"]["height"]))
         self.assertIn(night["body"]["scene_example"].split(";")[0], "a narrow late-night apartment corridor")
+
+    def test_a_workspace_holding_the_first_shipped_night_shift_takes_the_loosened_one_and_an_edited_copy_is_kept(self):
+        """How an updated shipped look reaches an existing Workspace: #1224's Night Shift, never edited, becomes the loosened one;
+        an owner who edited it keeps the edit (their version is theirs; the new wording is in presets/looks.json)."""
+        shipped = json.loads((ROOT / "presets/looks.json").read_text(encoding="utf-8"))
+        night = next(entry for entry in shipped["looks"] if entry["id"] == NIGHT)
+        catalog = (ROOT / "presets/catalog.json").read_bytes()
+        outcomes = {}
+        for case in ("untouched", "edited"):
+            root = Path(tempfile.mkdtemp(dir=self.tmp.name))
+            for folder in ("presets", "config"): (root / folder).mkdir()
+            (root / "presets/catalog.json").write_bytes(catalog); (root / "presets/looks.json").write_bytes(V1.read_bytes())
+            (root / "config/local.json").write_bytes((self.root / "config/local.json").read_bytes())
+            first = server.Studio(root); self.assertEqual([entry["revision"] for entry in looks.listing(first)["looks"]], [0])
+            self.assertIn(first.assets.card_digest(first.assets.card(NIGHT)), night["supersedes"], "the update names the version #1224 seeded")
+            if case == "edited": looks.command(first, {"action": "edit", "id": NIGHT, "expected_revision": 0, "name": "My Night Shift"})
+            (root / "presets/looks.json").write_text(json.dumps(shipped), encoding="utf-8")
+            outcomes[case] = looks.listing(server.Studio(root))["looks"][0]
+            self.assertEqual(looks.listing(server.Studio(root))["looks"][0]["revision"], outcomes[case]["revision"], "a later start changes nothing")
+        self.assertEqual((outcomes["untouched"]["revision"], outcomes["untouched"]["body"], outcomes["untouched"]["lineage"]), (1, night["body"], night["lineage"]))
+        self.assertEqual((outcomes["edited"]["name"], outcomes["edited"]["revision"], "{quiet_wall}" in outcomes["edited"]["body"]["template"]), ("My Night Shift", 1, False))
 
 
 if __name__ == "__main__":

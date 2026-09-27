@@ -139,14 +139,14 @@ changed there. Its file hashes are recorded in `qwen21-gguf-20260927/primary-Com
   excluded). Before, `custom_nodes/` held only the two stock example files (`qwen21-custom-nodes-before.sha256`); after, see
   `qwen21-custom-nodes-after.sha256`.
 - Python: qwen21 runs on the same embedded Python as the primary (`python_embeded/python.exe`; `app/backends.py`), which
-  already had `gguf==0.19.0` and its dependencies numpy, PyYAML 6.0.2, requests 2.32.3 and tqdm. **No pip command ran.**
+  already had `gguf==0.19.0` and its dependencies numpy, PyYAML 6.0.2, requests 2.32.3 and tqdm. **No pip install ran.**
   `pip freeze` before and after is identical (`pip-freeze-before.txt`, `pip-freeze-after.txt`, 187 lines each; torch 2.9.1+rocm7.2.1 unchanged).
-- Proof: after a Studio switch to qwen21 (19:15), the log shows `ComfyUI-GGUF: Allowing full torch compile` and imports the
-  node in 0.1 s. `/object_info` on 8196 lists `UnetLoaderGGUF`, `CLIPLoaderGGUF`, `DualCLIPLoaderGGUF`,
-  `TripleCLIPLoaderGGUF`, `QuadrupleCLIPLoaderGGUF` and `UnetLoaderGGUFAdvanced`. On primary,
-  `python scripts/validate-live.py` then checked 89 graphs: the 84 primary graphs pass. The 5 that fail are the hidream
-  and qwen21 presets, whose nodes and weights live only on their isolated backends, so they cannot validate against the
-  primary endpoint.
+- Proof (receipts):
+  - Import at the first launch. Studio backend switch operation `d224b648…` started 19:14:21 local (`started_at` in `.runtime/backend-state.json` at the time; the log file name carries its 19:14:31 launch stamp). Its log is `.runtime/backends/20260927-191431-d224b648a7524cd8abc0f6e78cdee097-error.log` in the Studio checkout, local and gitignored. Line 43 reads `ComfyUI-GGUF: Allowing full torch compile`, and line 47 imports `custom_nodes\ComfyUI-GGUF` in 0.1 s. The file's last write is 19:15:18, which is where the earlier "19:15" came from.
+  - The same two lines, 43 and 47, appear in a second switch's log: `.runtime/backends/20260927-195424-bedd4df5f2b04de89f5817fe05ee8215-error.log` (operation `bedd4df5…`, 19:54).
+  - That second switch also recorded `qwen21-gguf-20260927/object_info-gguf-8196.json`, the committed excerpt of `GET /object_info` on 8196 captured at 19:55:30. It lists 675 node classes, six of them GGUF: `UnetLoaderGGUF`, `CLIPLoaderGGUF`, `DualCLIPLoaderGGUF`, `TripleCLIPLoaderGGUF`, `QuadrupleCLIPLoaderGGUF` and `UnetLoaderGGUFAdvanced`.
+  - Both logs also print ComfyUI's standing advisory that suggests `pip install -r requirements.txt` for newer templates and docs packages. That is advice text only; it was not run.
+- validate-live: on primary, `python scripts/validate-live.py` then checked 89 graphs. The 84 primary graphs pass. The 5 that fail are the hidream and qwen21 presets, whose nodes and weights live only on their isolated backends, so they cannot validate against the primary endpoint.
 
 To revert (with qwen21 stopped): delete `C:/AI/experiments/qwen-image-21/ComfyUI/custom_nodes/ComfyUI-GGUF`. Nothing else
 was touched.

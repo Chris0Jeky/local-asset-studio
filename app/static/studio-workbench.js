@@ -7,7 +7,7 @@
   if(!document.querySelector('#createView'))return;
   const U=StudioUX,q=s=>document.querySelector(s),escape=esc;
   let sharedAdoptionError='';
-  let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='';
+  let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='',varyUnapplied=null;
   let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0,handoffEpoch=0;
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
   let homeBusy=false,homeData=null,homeErrors=[],homeUpdated=null,homeSignature='';
@@ -189,6 +189,8 @@
     if(secondPicture)items.push({code:'second',message:selected?.reference_slots?.length>1?'Picture 1 remains your source. Choose another slot or explicitly start from the extra picture.':'You added a second picture, but this recipe reads one. Say what it is for.',action:'second'});
     if(sharedAdoptionError)items.push({code:'shared-setup',message:sharedAdoptionError,action:null});
     if(continuationState&&!continuationSource)items.push({code:'source',message:sourceReadError||'Checking the retained source metadata…',action:'continuation'});
+    // A Vary round whose carried stack did not apply stays blocked while that same continuation is open.
+    if(varyUnapplied&&continuationState&&varyUnapplied.stamp===JSON.stringify(continuationState))items.push({code:'vary',message:varyUnapplied.message,action:null});
     return{items,required};
   }
   function syncReady(){
@@ -919,7 +921,8 @@
   document.addEventListener('click',e=>{const button=e.target.closest('.reference-output,[data-handoff]');if(!button)return;e.preventDefault();e.stopImmediatePropagation();const output=button.dataset.job?jobs.find(j=>j.id===button.dataset.job)?.outputs?.[Number(button.dataset.index)]:null;if(button.classList.contains('reference-output')){void openGalleryHandoff(output?.asset_id,button.dataset.preset);return;}const id=activeAsset?.id;if(!id){announce('Choose an available image from the Asset library.',true);return;}openHandoff(id,button.dataset.preset||button.dataset.handoff);},true);
   after('openAsset',()=>{q('#uxAssetUnsaved')?.remove();if(!activeAsset)return;const a=activeAsset;const eligibility=U.sceneEligibility([a]);q('#assetHandoffs').innerHTML=(!a.trashed_at&&a.media_type==='image'?'<button class="primary" data-ux-handoff="'+a.id+'">Continue with this →</button><button id="uxFindSourceRecipes">Find recipes for this image</button>':'')+(!a.trashed_at&&['image','video','audio'].includes(a.media_type)?'<a class="ux-scene-link" href="/av.html?asset_ids='+encodeURIComponent(a.id)+'">'+(eligibility.ok?'Use in a scene':'Open scene source picker')+' ↗</a>':'');q('#assetRecipe').disabled=!a.job_id;q('#assetRecipe').textContent=a.job_id?'Recipe':'No recipe recorded';q('#assetRecipe').title=a.job_id?'':'This asset was not made by a Studio job, so there is no recipe to export.';});
   // #1202 Vary subtle / Vary strong: one press from a picture to a prepared round of close variations. The img2img route
-  // attaches a copy through the same continuation as Continue with this (lineage = this picture); a recipe with no route
+  // attaches a copy through the same continuation as Continue with this (lineage = this picture) and, when it carries the
+  // source's stack (WAI), copies the picture's recorded LoRA slots and sampling settings; a recipe with no route
   // reloads its own recipe with new seeds and records this picture as the parent. Generate stays the owner's press.
   let varyBusy=false;
   function varyMarkup(plan,attrs,why){
@@ -931,7 +934,7 @@
   function varyPlanFor(presetId,jobId,assetId,mediaType){
     const asset=assetState.assets.find(a=>a.id===assetId);
     if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
-    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset);
+    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
   }
   // Rebuilt only when its words change, so polling never steals focus from a Vary button.
   function placeVary(holder,after,markup){
@@ -973,7 +976,20 @@
         const result=await post('/api/assets/reference',{id:assetId});
         if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. Nothing was applied; press Vary again.');
         if(result?.parent_asset!==assetId||result.context?.asset_id!==assetId||result.sha256!==result.context?.sha256)throw Error('The copied picture could not be verified. Nothing was applied.');
-        beginContinuation(result,plan.route.id,'edit');sourceReadError='';
+        beginContinuation(result,plan.route.id,'edit');sourceReadError='';varyUnapplied=null;
+        // A carrying route (WAI) keeps the picture's recorded LoRA stack and sampling settings. A recorded file the
+        // offline list does not offer is added as it was recorded; the server still refuses one that is not installed.
+        // If one value cannot be set, Generate stays blocked on this continuation until Vary is pressed again.
+        for(const [key,value] of Object.entries(plan.carry||{})){
+          const input=getControl(key),text=String(value);
+          if(input&&input.tagName==='SELECT'&&![...input.options].some(option=>option.value===text))input.append(new Option(text,text));
+          if(input)input.value=text;
+          if(!input||input.value!==text){
+            const message='Vary could not keep '+key+' = '+text+' from the run of this picture, so Generate is blocked. Press Vary again or reopen Continue with this. Nothing was generated.';
+            varyUnapplied={stamp:JSON.stringify(continuationState),message};updateReady();throw Error(message);
+          }
+        }
+        if(plan.carry&&typeof updateLoraHints==='function')updateLoraHints();
         for(const [key,value] of Object.entries(plan.strengths[strength].controls)){const input=getControl(key);if(input)input.value=value;}
         q('#referenceHint').textContent='Attached source · '+result.width+' × '+result.height;
       }else{
@@ -997,12 +1013,16 @@
   // carries its reason. Prepare rolls the texture and attaches its seam cross to the tile recipe; Generate stays the owner's press.
   let tileBusy=false,tileRead=0;
   function tileMarkup(status){
-    const why='uxTileWhyAsset',note=!status?'Checking whether this picture can tile…':status.eligible?status.flag:[status.reason,status.flag].filter(Boolean).join(' ');
-    return '<button type="button" data-ux-tile="'+escape(status?.asset_id||'')+'"'+(status?.eligible?'':' disabled')+' aria-describedby="'+why+'">Make seamless</button><small id="'+why+'">'+escape(note)+'</small>';
+    const why='uxTileWhyAsset',bands=U.tileBands(status),note=!status?'Checking whether this picture can tile…':status.eligible?[status.flag,bands.note].filter(Boolean).join(' '):[status.reason,status.flag].filter(Boolean).join(' ');
+    // Seam band (owner, 27 Sep 2026): wide hides a floor's repeating plank ends; narrow keeps more of the texture as generated.
+    const band=bands.options.length?'<label>Seam band <select id="uxTileBand" data-ux-tile-band aria-describedby="'+why+'">'+bands.options.map(o=>'<option value="'+escape(o.value)+'"'+(o.selected?' selected':'')+(o.disabled?' disabled':'')+'>'+escape(o.label)+'</option>').join('')+'</select></label>':'';
+    return band+'<button type="button" data-ux-tile="'+escape(status?.asset_id||'')+'"'+(status?.eligible?'':' disabled')+' aria-describedby="'+why+'">Make seamless</button><small id="'+why+'">'+escape(note)+'</small>';
   }
   function placeTile(holder,markup){
     let box=holder.querySelector(':scope > .ux-tile');if(box&&box.dataset.markup===markup)return;
+    const chosen=box?.querySelector('[data-ux-tile-band]')?.value;
     const next=element('div','ux-tile',markup);next.dataset.markup=markup;next.setAttribute('role','group');next.setAttribute('aria-label','Make this texture tile');
+    const band=next.querySelector('[data-ux-tile-band]');if(band&&chosen&&[...band.options].some(o=>o.value===chosen&&!o.disabled))band.value=chosen;
     if(box)box.replaceWith(next);else q('#assetHandoffs').after(next);
   }
   after('openAsset',()=>{
@@ -1016,20 +1036,101 @@
     const assetId=button.dataset.uxTile;if(tileBusy||!assetId)return;
     if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
+    const bandPx=U.tileBandPx(button.parentElement?.querySelector('[data-ux-tile-band]')?.value);
     tileBusy=true;button.disabled=true;syncReady();
     const stamp=workbenchStamp();
     try{
-      const result=await post('/api/tiles/prepare',{asset_id:assetId});
+      const result=await post('/api/tiles/prepare',{asset_id:assetId,...(bandPx==null?{}:{band_px:bandPx})});
+      if(bandPx!=null&&result?.plan?.band_px!==bandPx)throw Error('The seam band came back different from the one chosen. Nothing was applied; press Make seamless again.');
       if(stamp!==workbenchStamp())throw Error('The workbench changed while the texture was being prepared. Nothing was applied; press Make seamless again.');
       if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.rolled_file)throw Error('The prepared seam cross could not be verified. Nothing was applied.');
       beginTile(result);
       if(q('#assetDialog').open)q('#assetDialog').close();
       draftDirty=true;showView('create');saveDraft();syncCreate();updateReady();scheduleTimeEstimate();recipeChanged();
-      announce('Seam cross prepared: the texture is rolled by half and only its centre cross will be repainted. '+(result.context?.positive?'Its own wording is kept. ':'No wording was kept for this texture: replace the bracketed description. ')+'Press Generate; the Studio then finishes the tile with its seam score and a 3×3 preview.');
+      announce('Seam cross prepared: the texture is rolled by half and only its centre cross ('+result.plan.band_px+' px seam band) will be repainted. '+(result.context?.positive?'Its own wording is kept. ':'No wording was kept for this texture: replace the bracketed description. ')+'Press Generate; the Studio then finishes the tile with its seam score and a 3×3 preview.');
     }catch(error){announce(error.message,true);}
     finally{tileBusy=false;button.disabled=false;syncReady();}
   }
   document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-tile]');if(!button||button.disabled)return;e.preventDefault();void prepareTile(button);});
+  // #1219 Make parallax layers: the owner names the foreground to lift out and may mark the far view (window glass, sky) as boxes,
+  // typed as x0,y0,x1,y1 or dragged on the picture. The mask is the owner's, never detected. The server says whether the picture
+  // qualifies; a disabled button carries its reason. Prepare attaches the picture unchanged and loads the clean-plate edit;
+  // every Generate stays the owner's press.
+  let parallaxBusy=false,parallaxRead=0,parallaxDrag=null;
+  function parallaxBoxes(text){
+    const boxes=String(text||'').split(';').map(part=>part.trim()).filter(Boolean).map(part=>part.split(/[\s,]+/).filter(Boolean).map(Number));
+    return boxes.every(box=>box.length===4&&box.every(Number.isInteger))?boxes:null;
+  }
+  function parallaxReason(group){
+    const status=group.parallaxStatus;
+    if(!status)return 'Checking whether this picture can be split…';
+    if(!status.eligible)return status.reason;
+    if(!group.querySelector('#uxParallaxObjects').value.trim())return 'Name the foreground to lift out first, e.g. the desk, the chair and the lamp.';
+    const boxes=parallaxBoxes(group.querySelector('#uxParallaxView').value);
+    if(!boxes)return 'Far view boxes are x0,y0,x1,y1 in picture pixels, separated by semicolons.';
+    if(boxes.length>status.max_views)return 'Mark at most '+status.max_views+' far view boxes.';
+    const outside=boxes.find(([x0,y0,x1,y1])=>!(0<=x0&&x0<x1&&x1<=status.width&&0<=y0&&y0<y1&&y1<=status.height));
+    return outside?'The box '+outside.join(',')+' is not inside the '+status.width+' × '+status.height+' picture.':null;
+  }
+  function syncParallax(group){
+    const why=parallaxReason(group),button=group.querySelector('[data-ux-parallax]');if(!button)return;
+    button.disabled=Boolean(why)||parallaxBusy;group.querySelector('#uxParallaxWhy').textContent=why||group.parallaxStatus.flag;
+    const pick=group.querySelector('.ux-parallax-pick'),status=group.parallaxStatus;if(!pick||!status?.width)return;
+    pick.querySelectorAll('.ux-parallax-box').forEach(box=>box.remove());
+    for(const [x0,y0,x1,y1] of parallaxBoxes(group.querySelector('#uxParallaxView').value)||[]){
+      const box=element('span','ux-parallax-box');Object.assign(box.style,{left:100*x0/status.width+'%',top:100*y0/status.height+'%',width:100*(x1-x0)/status.width+'%',height:100*(y1-y0)/status.height+'%'});pick.append(box);
+    }
+  }
+  function parallaxMarkup(status,url){
+    const button='<button type="button" data-ux-parallax="'+escape(status?.asset_id||'')+'" disabled aria-describedby="uxParallaxWhy">Make parallax layers</button>';
+    if(!status?.eligible)return button+'<small id="uxParallaxWhy">'+escape(status?status.reason:'Checking whether this picture can be split…')+'</small>';
+    return '<label>Foreground to lift out <input id="uxParallaxObjects" maxlength="240" autocomplete="off" placeholder="e.g. the desk, the chair, the lamp and the monitor"></label>'
+      +'<label>Far view boxes, optional <input id="uxParallaxView" autocomplete="off" placeholder="x0,y0,x1,y1; … in pixels, or drag on the picture below"></label>'
+      +'<details class="ux-parallax-mark"><summary>Mark the far view on the picture</summary><p>Drag a box inside the window glass or the sky, not over its frame: what is inside moves as the far layer. No box: two layers.</p>'
+      +'<div class="ux-parallax-pick"><img src="'+escape(url)+'" alt="Drag to mark the far view" draggable="false"></div></details>'
+      +button+'<button type="button" data-ux-parallax-clear>Clear boxes</button><small id="uxParallaxWhy"></small>';
+  }
+  function placeParallax(holder,status,url){
+    const next=element('div','ux-parallax',parallaxMarkup(status,url));next.setAttribute('role','group');next.setAttribute('aria-label','Split this picture into parallax layers');next.parallaxStatus=status;
+    const box=holder.querySelector(':scope > .ux-parallax');if(box)box.replaceWith(next);else(holder.querySelector(':scope > .ux-tile')||q('#assetHandoffs')).after(next);
+    if(status?.eligible)syncParallax(next);
+  }
+  after('openAsset',()=>{
+    const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
+    if(!a||a.media_type!=='image'||a.trashed_at||!catalog?.presets?.some(p=>p.parallax_route)){holder.querySelector(':scope > .ux-parallax')?.remove();return;}
+    const read=++parallaxRead,current=()=>read===parallaxRead&&activeAsset?.id===a.id;placeParallax(holder,null,a.url);
+    api('/api/parallax/source/'+encodeURIComponent(a.id)).then(status=>{if(current())placeParallax(holder,status,a.url);})
+      .catch(error=>{if(current())placeParallax(holder,{asset_id:a.id,eligible:false,reason:'Could not check this picture: '+error.message+'.'},a.url);});
+  });
+  document.addEventListener('input',e=>{const group=e.target.closest?.('.ux-parallax');if(group)syncParallax(group);});
+  function pickPoint(pick,e){const r=pick.getBoundingClientRect(),s=pick.closest('.ux-parallax').parallaxStatus;return [Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*s.width),Math.round(Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))*s.height)];}
+  document.addEventListener('pointerdown',e=>{const pick=e.target.closest?.('.ux-parallax-pick');if(!pick||e.button!==0)return;e.preventDefault();parallaxDrag={pick,start:pickPoint(pick,e)};pick.setPointerCapture?.(e.pointerId);});
+  document.addEventListener('pointerup',e=>{
+    if(!parallaxDrag)return;const {pick,start}=parallaxDrag,end=pickPoint(pick,e);parallaxDrag=null;
+    const box=[Math.min(start[0],end[0]),Math.min(start[1],end[1]),Math.max(start[0],end[0]),Math.max(start[1],end[1])],group=pick.closest('.ux-parallax');
+    if(box[2]-box[0]<8||box[3]-box[1]<8){announce('A far view box needs at least 8 px on each side; drag a larger box.',true);return;}
+    const field=group.querySelector('#uxParallaxView');field.value=[field.value.trim(),box.join(',')].filter(Boolean).join('; ');syncParallax(group);
+  });
+  document.addEventListener('click',e=>{const clear=e.target.closest('[data-ux-parallax-clear]');if(!clear)return;const group=clear.closest('.ux-parallax');group.querySelector('#uxParallaxView').value='';syncParallax(group);});
+  async function prepareParallax(button){
+    const group=button.closest('.ux-parallax'),assetId=button.dataset.uxParallax;if(parallaxBusy||!assetId||!group)return;
+    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy||tileBusy){announce('Wait for the current Create action to finish, then press Make parallax layers again. Nothing was prepared.',true);return;}
+    if(assetDetailsDirty()){warnUnsavedAsset();return;}
+    const why=parallaxReason(group);if(why){announce(why,true);return;}
+    parallaxBusy=true;button.disabled=true;syncReady();
+    const stamp=workbenchStamp(),boxes=parallaxBoxes(group.querySelector('#uxParallaxView').value);
+    try{
+      const result=await post('/api/parallax/prepare',{asset_id:assetId,objects:group.querySelector('#uxParallaxObjects').value,...(boxes.length?{view:boxes}:{})});
+      if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being prepared. Nothing was applied; press Make parallax layers again.');
+      if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.source_file||result.stage!=='plate')throw Error('The prepared parallax plan could not be verified. Nothing was applied.');
+      beginParallax(result);
+      if(q('#assetDialog').open)q('#assetDialog').close();
+      draftDirty=true;showView('create');saveDraft();syncCreate();updateReady();scheduleTimeEstimate();recipeChanged();
+      announce('Parallax layers prepared: the picture is attached unchanged and the clean-plate edit is loaded ('+(boxes.length?boxes.length+' far view box'+(boxes.length===1?'':'es'):'no far view: two layers')+'). Press Generate; the isolate edit loads next for a second Generate, and the Studio splits the layers when both are in.');
+    }catch(error){announce(error.message,true);}
+    finally{parallaxBusy=false;if(group.isConnected)syncParallax(group);syncReady();}
+  }
+  document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-parallax]');if(!button||button.disabled)return;e.preventDefault();void prepareParallax(button);});
   document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSourceRecipes'))return;
     if(assetDetailsDirty()){warnUnsavedAsset();return;}const a=activeAsset;
     if(!a||a.trashed_at||a.media_type!=='image'||!window.RecipeShortlist){announce('Choose an available image after recipe guidance has loaded.',true);return;}

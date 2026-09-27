@@ -367,7 +367,7 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
         for preset in catalog:
             graph = json.loads((root / preset["graph"]).read_text(encoding="utf-8"))
             result = continuation.capability(preset, graph)
-            self.assertIn(result["operation"], {"new-image", "unsupported-reference", "masked-repair", "image-to-video", "image-to-3d", "localized-detail", "instruction-edit", "upscale", "image-to-image", "reference-guided-generation", "restyle", "combine"}, preset["id"])
+            self.assertIn(result["operation"], {"new-image", "unsupported-reference", "masked-repair", "image-to-video", "image-to-3d", "localized-detail", "instruction-edit", "upscale", "image-to-image", "reference-guided-generation", "restyle", "combine", "parallax-stage"}, preset["id"])
             if preset.get("reference_board") and preset.get("last_reference"): self.assertEqual((result["operation"], result["source_input"]), ("combine" if preset.get("continuation_operation") == "combine" else "restyle", "last_reference"), preset["id"])
             # Restyle a picture starts the sampler from the picture itself (img2img) or declares the picture its reference; Style + Pose
             # starts from an empty latent, and a Combine changes the pose.

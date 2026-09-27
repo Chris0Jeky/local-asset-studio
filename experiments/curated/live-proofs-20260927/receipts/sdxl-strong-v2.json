@@ -1,0 +1,181 @@
+{
+ "label": "sdxl",
+ "parent_asset": "8cb09d62bb82552e920ac23091939802",
+ "strength": "strong",
+ "events": [
+  {
+   "t": 1790539736.848,
+   "kind": "asset_opened",
+   "vary_buttons": [
+    "Vary subtle",
+    "Vary strong"
+   ],
+   "hint": "On SDXL \u2022 gentle reference variation \u00b7 2 pictures \u00b7 denoise 0.3 / 0.55 (starting values)"
+  },
+  {
+   "t": 1790539739.923,
+   "kind": "vary_pressed",
+   "status": "Vary strong prepared on SDXL \u2022 gentle reference variation from this picture: denoise 0.55 (a starting value, not yet judged), 2 new seeds from 1936013278, about 2 min per picture here \u00b7 3 runs. Nothing was generated; press Generate to run the round.",
+   "prepared": {
+    "preset": null,
+    "batch": "2",
+    "denoise": null,
+    "positive": "a small stone cottage with a red door beside a quiet stream in a spring meadow, wildflowers, soft morning light, storybook fantasy illustration, detailed, no people",
+    "hash": "#create"
+   },
+   "submitted_so_far": []
+  },
+  {
+   "t": 1790539740.748,
+   "kind": "denoise_override",
+   "control_id": null,
+   "catalog_value": "0.55",
+   "typed": 0.7,
+   "now": "0.7",
+   "steps": "30"
+  },
+  {
+   "t": 1790539740.811,
+   "kind": "generate_state",
+   "disabled": false,
+   "text": "Generate source-based pass \u2192"
+  },
+  {
+   "t": 1790539740.812,
+   "kind": "commit_before_generate",
+   "commit_gib": 60.3,
+   "limit_gib": 95.7,
+   "pct": 62.9,
+   "phys_avail_gib": 8.2
+  },
+  {
+   "t": 1790539744.96,
+   "kind": "generate_pressed",
+   "new_jobs": [
+    [
+     "bc904e63-a262-4812-88e1-bfdd3634c764",
+     "gentle-variation",
+     2,
+     "running"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790539740.86,
+     "/api/jobs"
+    ]
+   ]
+  }
+ ],
+ "job_id": "bc904e63-a262-4812-88e1-bfdd3634c764",
+ "preset": "gentle-variation",
+ "status": "completed",
+ "message": "Complete",
+ "batch_count": 2,
+ "prompt_ids": [
+  "33486479-0be8-4c42-a56a-68e92cc387db",
+  "d05423c2-67dd-4434-b8b3-3d0cc9e92def"
+ ],
+ "outputs": [
+  {
+   "filename": "SDXL-Gentle-Variation_00012_.png",
+   "subfolder": "Studio",
+   "seed": 1936013278,
+   "prompt_id": "33486479-0be8-4c42-a56a-68e92cc387db",
+   "asset_id": "2da3af6504f95e24905e2134e857ffe3"
+  },
+  {
+   "filename": "SDXL-Gentle-Variation_00013_.png",
+   "subfolder": "Studio",
+   "seed": 1936013279,
+   "prompt_id": "d05423c2-67dd-4434-b8b3-3d0cc9e92def",
+   "asset_id": "46304d0283ef561fb533fbe9e2866cc2"
+  }
+ ],
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "33486479-0be8-4c42-a56a-68e92cc387db",
+   "seed": 1936013278,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 216870912,
+    "peak_dedicated_bytes": 12711067648,
+    "samples": 30,
+    "spilled": false
+   }
+  },
+  {
+   "index": 1,
+   "prompt_id": "d05423c2-67dd-4434-b8b3-3d0cc9e92def",
+   "seed": 1936013279,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 216870912,
+    "peak_dedicated_bytes": 12807004160,
+    "samples": 26,
+    "spilled": false
+   }
+  }
+ ],
+ "graph_denoise": [
+  0.7
+ ],
+ "parent_assets": [
+  "8cb09d62bb82552e920ac23091939802"
+ ],
+ "continuation": {
+  "intent": "edit",
+  "preset_id": "gentle-variation",
+  "reference_file": "75aaef937eb14e0598e58d356b05d40b_SDXL_00003_.png.png",
+  "source_asset_id": "8cb09d62bb82552e920ac23091939802",
+  "source_sha256": "61423162750878cff188c717d425dd0eb8fb273cfd891f2542bd6c68a9443bdf",
+  "template_sha256": "8e585df70da26bc99fbaf9015ac8b16023931731d15feee6360b35e9eecee059",
+  "version": 1
+ },
+ "controls": {
+  "positive": "a small stone cottage with a red door beside a quiet stream in a spring meadow, wildflowers, soft morning light, storybook fantasy illustration, detailed, no people",
+  "negative": "blurry, low quality, watermark, distorted",
+  "seed": "1936013278",
+  "steps": "30",
+  "cfg": "6",
+  "denoise": "0.7",
+  "reference": "75aaef937eb14e0598e58d356b05d40b_SDXL_00003_.png.png"
+ },
+ "created_at": 1790539741.0114899,
+ "started_at": 1790539741.022488,
+ "finished_at": 1790539767.6945302,
+ "elapsed_seconds": 26.67204213142395,
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790539729.682,
+   "/api/estimate"
+  ],
+  [
+   1790539730.779,
+   "/api/estimate"
+  ],
+  [
+   1790539736.9,
+   "/api/assets/reference"
+  ],
+  [
+   1790539737.208,
+   "/api/estimate"
+  ],
+  [
+   1790539740.11,
+   "/api/estimate"
+  ],
+  [
+   1790539740.86,
+   "/api/jobs"
+  ],
+  [
+   1790539741.327,
+   "/api/estimate"
+  ]
+ ],
+ "dialogs": []
+}
