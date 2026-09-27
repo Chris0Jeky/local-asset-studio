@@ -39,6 +39,22 @@ class Qwen21AlphaRoutingTests(unittest.TestCase):
         self.assertEqual(save_source(graph), ['7', 0])
         self.assertNotIn('SplitImageWithAlpha', {n['class_type'] for n in graph.values()})
 
+    def test_visual_graphs_carry_every_api_link(self):
+        """#1068: graph 60 once left LoadImage unwired (no `images.image_1` socket on node 4)."""
+        catalog = json.loads((ROOT / 'presets/catalog.json').read_text(encoding='utf-8'))
+        for preset in catalog['presets']:
+            if preset.get('backend_id') != 'qwen21' or not preset.get('visual'): continue
+            with self.subTest(preset=preset['id']):
+                graph = api(preset['id'])
+                visual = json.loads((ROOT / preset['visual']).read_text(encoding='utf-8'))
+                ids = {key: index + 1 for index, key in enumerate(graph)}  # build-expansion.visual numbering
+                self.assertEqual([n['type'] for n in visual['nodes']], [n['class_type'] for n in graph.values()])
+                by_id = {n['id']: n for n in visual['nodes']}
+                wired = {(link[1], link[2], link[3], by_id[link[3]]['inputs'][link[4]]['name']) for link in visual['links']}
+                expected = {(ids[value[0]], value[1], ids[key], field) for key, node in graph.items()
+                            for field, value in node['inputs'].items() if isinstance(value, list)}
+                self.assertEqual(wired, expected)
+
     def test_builder_matches_committed_graphs(self):
         spec = importlib.util.spec_from_file_location('qwen21_builder', ROOT / 'scripts/build-qwen21-recipes.py')
         builder = importlib.util.module_from_spec(spec)
