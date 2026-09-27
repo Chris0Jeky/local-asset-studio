@@ -79,6 +79,12 @@ class ModelLibraryTests(unittest.TestCase):
                 (self.root/'models/library.json').write_text(json.dumps(bad))
                 with self.assertRaisesRegex(ValueError,'models/library.json'):self.lib.snapshot()
 
+    def test_an_unparseable_manifest_is_a_clear_error_not_an_empty_library(self):
+        for raw in (b'{trunc',b'',bytes([255,254])):
+            with self.subTest(raw=raw):
+                (self.root/'models/library.json').write_bytes(raw)
+                with self.assertRaisesRegex(ValueError,'models/library.json'):self.lib.snapshot()
+
 
 class PinOnlyFolderTests(unittest.TestCase):
     """Detectors, GGUF backbones and .pth heads are pinned for verification, never auto-installed."""

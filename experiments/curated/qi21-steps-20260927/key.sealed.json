@@ -1,0 +1,74 @@
+{
+ "char-A": {
+  "key": "char-s10",
+  "prompt_id": "09dc76ab-ed45-41b1-b839-efe1d88f8c16",
+  "sha256": "87c7508c9e40721b4925d675a4a357ffba679649938be42519f279b79ea35a6f",
+  "file": "Research/lab-20260927/qi21-steps/char-s10_00001_.png"
+ },
+ "char-B": {
+  "key": "char-s25",
+  "prompt_id": "08f24b32-d2c0-48df-b0f6-efe69eececd5",
+  "sha256": "d1e5b6ead8ad135aae6b519260382bf999091a476b1a1fec55e4b359b160c661",
+  "file": "Research/lab-20260927/qi21-steps/char-s25_00001_.png"
+ },
+ "char-C": {
+  "key": "char-s16",
+  "prompt_id": "cbe98bc7-105c-4608-9879-63824fa1a24a",
+  "sha256": "318b7dc741d57932e26824e96a1dddd932815152b713b1edc03130b8a3e88ab9",
+  "file": "Research/lab-20260927/qi21-steps/char-s16_00001_.png"
+ },
+ "char-D": {
+  "key": "char-s40",
+  "prompt_id": "6d8986d8-b315-43f3-aeb2-5e4b7fa76ddd",
+  "sha256": "a55f12b04dca6cab752cb74b897962a66019eb71a93419fcecd60b3780337e87",
+  "file": "Research/lab-20260927/qi21-steps/char-s40_00001_.png"
+ },
+ "scene-A": {
+  "key": "scene-s10",
+  "prompt_id": "808d9e3a-2c87-4009-ade1-cdce9a8626db",
+  "sha256": "92518a641247fd687077a8b81cddb4b914beb6b9faa5622eeb148c978dc35389",
+  "file": "Research/lab-20260927/qi21-steps/scene-s10_00001_.png"
+ },
+ "scene-B": {
+  "key": "scene-s40",
+  "prompt_id": "a0de8612-cc7c-416f-a9e0-1eeea52c3289",
+  "sha256": "2ad6ae219ced80f95cf2f00a72b5dbdac8558f3a496a1b29c7152d281b52c8c0",
+  "file": "Research/lab-20260927/qi21-steps/scene-s40_00001_.png"
+ },
+ "scene-C": {
+  "key": "scene-s16",
+  "prompt_id": "8af638b8-3b27-4abe-b5a8-83960d885029",
+  "sha256": "30d6bca72259e68fca9de129f23cc43d63774be6419d6ee9aa5e42c1a87bfef8",
+  "file": "Research/lab-20260927/qi21-steps/scene-s16_00001_.png"
+ },
+ "scene-D": {
+  "key": "scene-s25",
+  "prompt_id": "45d250c7-ad31-406b-9d40-5d17ee8e3a5d",
+  "sha256": "1312d364827b260fe0f65ca4ce8839a2c0b932e0c7207b1b34539ee57cc195b4",
+  "file": "Research/lab-20260927/qi21-steps/scene-s25_00001_.png"
+ },
+ "prop-A": {
+  "key": "prop-s10",
+  "prompt_id": "69b3124d-4845-4713-91b3-bce486c8544c",
+  "sha256": "ec518ae2aa9edca003ef81c4fbcfeae7187687877e9e2222c98f21dd0e99d286",
+  "file": "Research/lab-20260927/qi21-steps/prop-s10_00001_.png"
+ },
+ "prop-B": {
+  "key": "prop-s16",
+  "prompt_id": "b11ee8f9-cb17-4cff-a6bf-0b821715551d",
+  "sha256": "2968d864d7f0875ad79e5e5ea38adc8d4af19393c00917c5d81d92ab8181ce41",
+  "file": "Research/lab-20260927/qi21-steps/prop-s16_00001_.png"
+ },
+ "prop-C": {
+  "key": "prop-s25",
+  "prompt_id": "e6e0acdb-eb32-440b-8cc9-f62ebed57b7a",
+  "sha256": "d7b79020ee990bcc000db6825c46521c475a96e4fbbb75af84a4c05e82670a68",
+  "file": "Research/lab-20260927/qi21-steps/prop-s25_00001_.png"
+ },
+ "prop-D": {
+  "key": "prop-s40",
+  "prompt_id": "f22d211d-61fc-4824-8fe6-43f0db35a812",
+  "sha256": "71d2fef74877f0086e89245010278813e5b99c236a79961193a834d3f0b5356d",
+  "file": "Research/lab-20260927/qi21-steps/prop-s40_00001_.png"
+ }
+}

@@ -81,7 +81,7 @@
       if (negative) w.rememberNegativeCollapse?.(negative.open);
     });
     let state = readPreferences(storage), opener = null, pageScroll = null, scheduled = false, recoveryPending = false;
-    let contextRevision = 0, currentView = null, actionAdapter = null;
+    let contextRevision = 0, currentView = null, actionAdapter = null, presentationSnapshot = null, announcedStamp = null;
     const el = (tag, className, text) => {
       const node = d.createElement(tag); if (className) node.className = className;
       if (text !== undefined) node.textContent = text; return node;
@@ -314,6 +314,19 @@
     const reviewButton = button('workshopReview', 'Review checks', () => reveal(review));
     dockInfo.append(readiness, eta, reviewButton);
     const status = q('#status'); dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
+    // A text field you enter is never left under the fixed dock; a narrow or short dock also compacts while you type (workshop.css).
+    const typing = n => !!n?.matches?.('textarea,input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=file],[type=color],[type=image])') && !dock.contains(n);
+    // Measured after the compacted dock has laid out, and once more a frame later in case the page height settled.
+    const clearOfDock = (field, passes) => w.requestAnimationFrame(() => {
+      if (d.activeElement !== field) return;
+      const bar = d.querySelector('.studio-globalbar'), barBottom = bar && w.getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().bottom : 0;
+      const box = field.getBoundingClientRect(), limit = Math.max(0, barBottom) + 8, bottom = dock.getBoundingClientRect().top - 8;
+      // A field taller than the room between the header and the dock shows its first lines.
+      if (box.top < limit || box.bottom > bottom) w.scrollBy(0, box.top < limit || box.height > bottom - limit ? box.top - limit : box.bottom - bottom);
+      if (passes > 1) clearOfDock(field, passes - 1);
+    });
+    create.addEventListener('focusout', e => { if (typing(e.target)) dock.classList.remove('wk-typing'); });
+    create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
     const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('aria-label', 'Plan and vary this run');
     const compare = q('#planComparison'), newSeed = q('#randomSeed');
@@ -473,6 +486,10 @@
       // rail with a generic "Resolve the next blocker" while the real message sat only in the dock (#610 item 4).
       const secondary = currentView.secondaryActions.map(action => action.title + ' · ' + action.description).join(' — ');
       text(guidanceSecondary, secondary || 'Presentation never changes execution authority.');
+      // Read-only owner notification for optional islands (#907): a frozen view plus the recipe identity, once per stamp.
+      const recipe = bridge.recipe?.();
+      presentationSnapshot = Object.freeze({view:currentView, recipe:recipe ? Object.freeze({id:String(recipe.id || ''), name:String(recipe.name || recipe.id || '')}) : null});
+      if (announcedStamp !== currentView.contextStamp) { announcedStamp = currentView.contextStamp; create.dispatchEvent(new w.CustomEvent('studio:presentation', {detail:presentationSnapshot})); }
     }
     function sync() {
       const active = !create.hidden;
@@ -537,6 +554,7 @@
     create.__workshop = {
       reveal, sync, openRecipes, finishRecipeSelection, preferences:()=>({...state}),
       presentationView:() => currentView,
+      presentationSnapshot:() => presentationSnapshot,
       dispatchIntent
     };
     applyPresentation(); sync();

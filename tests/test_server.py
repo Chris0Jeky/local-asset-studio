@@ -895,6 +895,17 @@ class ServerTests(unittest.TestCase):
         self.assertIn('Required input missing',job['message']);self.assertIn('output 2',job['message'])
         self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),2)
 
+    def test_a_non_object_400_body_is_still_a_proven_rejection(self):
+        # A 400 proves nothing was queued whatever its body; a JSON list or string must not turn into an AttributeError.
+        for body,batch,expected in (([1],1,'failed'),('text',2,'partial')):
+            with self.subTest(body=body):
+                error=HTTPError('http://localhost/prompt',400,'Bad Request',{},io.BytesIO(json.dumps(body).encode()));self.addCleanup(error.close)
+                answers=[{'queue_running':[],'queue_pending':[]}]+([{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}}] if batch==2 else [])+[error]
+                s=FakeStudio(self.root,answers)
+                job=s.jobs[s.create_job({'preset_id':'demo','controls':{},'batch_count':batch})['id']];s._run(job)
+                self.assertEqual(job['status'],expected);self.assertIn('ComfyUI rejected the workflow before queuing: Invalid workflow',job['message'])
+                self.assertEqual(job['validation_errors'],{});self.assertNotIn('pending_submission',job)
+
     def test_seed_plus_batch_past_the_seed_range_is_refused_before_queueing(self):
         s=self.studio()
         with self.assertRaisesRegex(server.StudioError,'seed plus batch count'):
@@ -945,6 +956,19 @@ class ServerTests(unittest.TestCase):
         self.assertIn('missing.safetensors',report['missing_models'])
         self.assertTrue(all(call[0][0]=='/object_info' and call[1].get('method','GET')=='GET' for call in s.requests))
         self.assertEqual(s.jobs,{})
+
+    def test_workflow_inspection_refuses_malformed_subgraph_shapes_with_400(self):
+        # These escaped do_POST as AttributeError/TypeError: a dropped connection instead of a 400.
+        node={'type':'KSampler','widgets_values':[]};sent=[];studio=self.studio()
+        for workflow in ({'nodes':[node],'definitions':[]},{'nodes':[node],'definitions':{'subgraphs':None}},{'nodes':[node],'definitions':{'subgraphs':'text'}},
+                         {'nodes':[node],'definitions':{'subgraphs':[{'nodes':5}]}},{'nodes':[node],'definitions':None},
+                         {'nodes':[node],'definitions':{'subgraphs':[{'id':[],'nodes':[]}]}},{'nodes':[node],'id':{'a':1}}):
+            with self.subTest(workflow=repr(workflow)[:90]):
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/workflow-inspect'
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body={'workflow':workflow}:body
+                sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent[0][0],400,sent)
 
     def test_shared_experiments_and_waiting_restart(self):
         shared=self.root/'existing-experiments'

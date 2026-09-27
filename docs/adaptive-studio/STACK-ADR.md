@@ -1,6 +1,6 @@
 # ADR: frontend modernization without replacing the local runtime
 
-**Decision status: proposed, gated by a spike and owner acceptance of a maintainer build step.**
+**Decision status: proposed; owner accepted the maintainer build step (option B, 23 Sep 2026). The spike ran on 27 Sep 2026 (#907); see [Spike results](#spike-results-27-sep-2026-907). A default change remains a separate owner decision.**
 
 ## Context
 
@@ -65,3 +65,39 @@ Reject or revise if the implementation needs two-way DOM mirroring, mutation obs
 6. Consolidate guide/disclosure logic and retire the bridge when no legacy consumer needs it.
 
 Each step has independent rollback. A default change is a separate decision from whether the code compiles. Nothing in this ADR authorizes changes to installed ComfyUI packages or claims a rendering-quality improvement.
+
+## Spike results (27 Sep 2026, #907)
+
+Measured on the owner's Windows 11 PC (Radeon host, Python 3.14.3, headless Chromium via Playwright 1.57), with ComfyUI unreachable from the test instance. One seed of evidence per claim; nothing here is a user study.
+
+**What shipped.** One Vue island, `frontend/src/TaskGuide.vue`, mounted as a new `#uiIsland` section in the Create view's `guidance` grid area. It renders the workshop's existing projection (primary intent, up to two secondary intents, source line, "Why this?") and a recipe-discovery summary of `presets/recipes.json` from `GET /api/recipes`, with stills from the existing `/static/bundle-showcase.js` module and a no-preview variant. Buttons dispatch the workshop's existing `createActionAdapter` intents (reveal/focus only) or open the existing bundle explorer for inspection. It owns no draft, submits nothing, uploads nothing and adds no timer, poll or MutationObserver. Typed contracts with runtime validation live in `frontend/src/contracts.ts`; a snapshot claiming `authorizesSubmission` or carrying commands is rejected.
+
+**Legacy seams added** (the whole bridge): `workshop.js` announces a frozen `{view, recipe}` once per context stamp (`studio:presentation` on `#createView`) and exposes `presentationSnapshot()`; `bundle-explorer.js` exposes `StudioBundleExplorer.open(id)` (opens and inspects, never applies); `studio-shell.js` loads `/static/ui-dist/island.{css,js}` only when the URL carries `?ui=island`. Rollback is removing the flag: the island unmounts, `body[data-ui-island]` goes away and the legacy aside returns.
+
+**Enable it:** `http://127.0.0.1:8191/?ui=island#create`. No restart or npm is needed; the Python server reads static files per request.
+
+| Measure | Result |
+| --- | --- |
+| Node / npm | Node 24.13.1 (`frontend/.nvmrc`, `engines >=24.13.1 <25`, `engine-strict`), npm 11.8.0 locally |
+| Packages (exact, lockfile v3, 73 installed) | vue 3.5.43 · vite 8.3.1 (Rolldown) · @vitejs/plugin-vue 6.0.9 · typescript 6.0.3 · vue-tsc 3.3.11 · vitest 5.0.2 · happy-dom 20.14.5 |
+| TypeScript choice | 6.0.3, not 7.0.2: 7 is the native port and vue-tsc needs the JavaScript language-service API |
+| Build output | `island.js` 70,678 B (sha256 `564b73ef3c0c8c6c…`), `island.css` 2,987 B (`cda5d623c99479f8…`); lockfile sha256 `7e99d247bfd0222e…`; full hashes in `app/static/ui-dist/manifest.json` |
+| Compressed payload | 27,441 B + 1,035 B = **28,476 B gzip (27.8 KiB)**, 19 % of the 150 KiB budget; the build fails above budget |
+| Reproducibility (Windows) | Two consecutive builds and a clean `npm ci` rebuild were byte-identical to the committed output. CI (`ui-island.yml`, Ubuntu) rebuilds and requires `git diff --exit-code` on `ui-dist` |
+| Build cost | `npm ci` 7 s warm / about 1 min cold, 99 MB `node_modules` (maintainer only, gitignored); `vite build` 0.6 s |
+| Island tests | Vitest 26/26 in 2.9 s, one forked worker (MACHINE.md OOM guard); browser script `tests/ui_island_browser.py` 26/26 checks |
+| Offline start | See below: zero requests outside the local origin, zero blocked, zero page errors, both flag states |
+| Timing, 6 runs per arm | Workshop ready p50 256 ms (flag off) vs 281 ms (flag on); island cards rendered p50 303 ms; one long task in one run of each arm |
+
+**Offline-start proof.** `app/server.py` has no `--port` flag and its Host/Origin guard accepts only `127.0.0.1:8191`/`localhost:8191`, while the owner's live Studio held 8191. The proof therefore ran the unchanged module's own `create_server(repo_root, port=18191)` from the worktree with a copied `config/local.json` whose `comfy_url` points at a closed port, observed with a request-recording wrapper around `parse_request` (no handler change), and Chromium's `--host-resolver-rules=MAP localhost:8191 127.0.0.1:18191`, so the page ran on the real `localhost:8191` origin with the real Host header. A Playwright route aborted every request that was not a GET/HEAD to that origin. A discriminator request (`/static/ui-dist/island.js` is 404 on main) confirmed the mapping before any page load. Results: server start 0.39 s with Python only; flag off 57 requests, flag on 65 (adds `island.css`, `island.js`, `/api/recipes`, `/static/bundle-showcase.js`); every recorded request reached the proof server and all were GET; `island.js` served as `application/javascript` (Windows registry via `mimetypes`; Linux 3.12 serves `text/javascript`, both valid module types). The live Studio and ComfyUI were not stopped or contacted by the page.
+
+**Findings that shaped the topology.**
+
+- The static handler serves only `.html`, `.js` and `.css`, so a runtime lookup of a JSON manifest or hashed chunk names would need a server change. The spike emits stable names (`island.js`, `island.css`), one module with no chunks or maps, and keeps `manifest.json` as a build/CI record that the server deliberately does not serve. The build refuses any other file type in `ui-dist`.
+- `core.autocrlf=true` on this PC; `.gitattributes` forces LF for `*.ts`, `*.vue`, `*.mjs`, `.nvmrc`, `.npmrc` and `app/static/ui-dist/**` so Windows and Linux builds hash identically.
+- The legacy guidance aside is `display:none` in Focus and Studio layouts, so the `guidance` grid row was empty there. The island fills it in every layout and hides the legacy aside (Immersive only) while `body[data-ui-island="active"]` is set.
+
+**Against the acceptance gates.** Met: unmount/remount without duplicate listeners (unit + browser), prompt field identity and value kept across unmount/remount, network blocked except the local Studio, keyboard (native buttons, arrow/Home/End between recipe cards), OS reduced motion, storage denial (tab-only notice), error containment (a render or setup failure unmounts only the island and restores legacy guidance), bounded reproducible payload. Not triggered: two-way DOM mirroring, document-wide observers, origin exceptions, runtime npm/CDN, duplicated command ownership. **Not measured:** 200 % zoom, IME composition, the A7 paired comparison on the frozen fixture journey, a real generation or recovery run with the island mounted, and owner use.
+
+**Recommendation: accept option B for the guidance island trial and keep it behind `?ui=island`, off by default.** The island met every gate the spike could exercise at under a fifth of its budget with two small, read-only legacy seams. Do not change the default or start the source-board island (A3) until the owner has used the trial and the 200 % zoom and A7 paired-fixture checks have run.
+

@@ -98,6 +98,16 @@ class MediaTests(unittest.TestCase):
     def test_ora_never_replaces_existing(self):
         m.ora(self.lm,self.root,self.root/'art.ora')
         with self.assertRaises(FileExistsError):m.ora(self.lm,self.root,self.root/'art.ora')
+    def test_returned_atlas_payload_does_not_alias_the_callers_manifest(self):
+        out=m.atlas(self.fm,self.root,self.root/'pack')
+        self.fm['anchor'][0]=0;self.fm['frames'][0]['duration_ms']=9999
+        self.assertEqual(out['anchor'],[2,6]);self.assertEqual(out['frames'][0]['anchor'],[2,6])
+        self.assertEqual(out['frames'][0]['source']['duration_ms'],80)
+        self.assertEqual(out,json.loads((self.root/'pack/manifest.json').read_text()))
+    def test_failed_ora_write_leaves_no_partial_archive(self):
+        with mock.patch.object(m,'png_bytes',side_effect=OSError('disk full')):
+            with self.assertRaises(OSError):m.ora(self.lm,self.root,self.root/'art.ora')
+        self.assertFalse((self.root/'art.ora').exists());m.ora(self.lm,self.root,self.root/'art.ora')
     def test_demo_pipeline(self):
         from game_asset_demo import create
         root=create(self.root/'demo');self.assertTrue((root/'editable.ora').is_file())
@@ -161,6 +171,12 @@ class CleanupTests(unittest.TestCase):
         self.assertFalse((self.root/'clean.png').exists())
         with self.assertRaises(OSError):m.cleanup(src,self.root/'clean2.png',evidence=self.root/'nodir/ev.json')
         self.assertFalse((self.root/'clean2.png').exists())
+    def test_failed_cleanup_write_leaves_no_partial_png(self):
+        src=self.root/'dusty.png';Image.new('RGBA',(4,4),(5,6,7,3)).save(src)
+        with mock.patch.object(Image.Image,'save',side_effect=OSError('disk full')):
+            with self.assertRaises(OSError):m.cleanup(src,self.root/'clean.png')
+        self.assertFalse((self.root/'clean.png').exists(),'a truncated output would block the retry and could be read as finished')
+        m.cleanup(src,self.root/'clean.png');self.assertTrue((self.root/'clean.png').is_file())
     def test_cleaned_frame_packs_without_edge_warning(self):
         im=Image.new('RGBA',(8,8),(0,0,0,0))
         for y in range(2,6):
