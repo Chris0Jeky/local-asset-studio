@@ -1,5 +1,26 @@
 # UX use-case matrix
 
+## Split a scene into parallax layers — 27 September 2026
+
+Refs #1219 (owner decision, 27 September 2026). A picture's asset panel now has a **Make parallax layers** control. It is
+disabled, with its reason beside it, for a picture outside 512-1536 px a side, off the 16 px grid or above 1.6 megapixels
+(*this picture is 128 × 128.*), and until the foreground is named (*Name the foreground to lift out first*). The far view is
+optional and yours: type boxes as `x0,y0,x1,y1`, or open *Mark the far view on the picture* and drag them inside the window
+glass or sky; no box gives two layers (mid and near). One press attaches the picture unchanged and opens *Parallax layers •
+Klein clean plate and isolate* at the picture's own size with the clean-plate words (*Remove <foreground>, leaving the space
+behind them empty…*) and the picture as the recorded parent. Generate stays your press. After it, Create loads the isolate
+words (*Replace everything except <foreground> with a plain pure white background…*); that is a second Generate. When both
+edits are in, the Studio registers them to the picture, splits the layers and records **far / mid / near** RGBA assets and a
+**3-frame parallax strip**, each with the recomposite error in its details. A completed edit whose other stage is missing
+shows **Load the isolate edit** (or the clean plate) on its card; both in but not split shows **Split layers**.
+
+`python tests/studio_use_cases.py` passed **20/20** journeys with **zero generation submissions and zero page errors**. The
+new `split-a-scene-into-parallax-layers` journey opens a 128 px picture and reads the disabled control and its size, opens a
+1344 × 768 scene, reads the name-the-foreground reason, types the foreground, drags one far view box on the picture and
+presses *Make parallax layers*: the parallax recipe is loaded with the picture attached at 1344 × 768, the plate words, the
+scene as source and parent, and a status that names Generate as the next press. It takes 5 clicks (one drag) and 161
+instruction words. Live mode stops before the press, which stores an upload. These are fixture screens; no model ran.
+
 ## Make seamless from a library texture — 27 September 2026
 
 Refs #1220 (owner decision, 27 September 2026). A picture's asset panel now has a **Make seamless** control, flagged
@@ -57,6 +78,16 @@ two recipes, type two seeds, Prepare, read Start, change a seed. It asserts the 
 [11, 12], the pair's claim and board picture, the answers), the prepared total, and that Start is withdrawn after the
 change. It also asserts that no `/api/jobs` or `/start` request was made. `python tests/studio_use_cases.py` passed
 **16/16** at the time (17/17 after the merge with Vary, 27 Sep) with zero generation submissions and zero page errors. These are fixture screens; no model ran.
+
+**Every fill is shown (live defect and owner decision, 27 September 2026).** With Klein 4B open (its wording asks who and
+the pose), ticking Copy Pose or depth used to be refused at Prepare for the clothes fill, a field the page never showed.
+The plan now shows each fill a ticked recipe reads and the open recipe lacks, once per meaning (e.g. *Clothes and colours
+for Klein 9B · Copy Pose, Klein 9B · depth*), filled from this character's remembered answer, and sends it in the answers.
+The server still refuses any recipe whose wording keeps a bracket. The form also belongs to one pair (#1198): switching
+engines keeps it, another pair starts from its own recipe and seed; the seeds field can be emptied; the stale notice
+clears when the page matches the prepared plan again; and a failed refresh after Start no longer offers Start again.
+The journey now leads with Klein 4B, ticks Copy Pose and depth and answers the clothes field (12 intents, 11 clicks).
+`python tests/studio_use_cases.py` passed **19/19** with zero generation submissions and zero page errors (fixture screens).
 
 ## Quick checks on results — 27 September 2026
 

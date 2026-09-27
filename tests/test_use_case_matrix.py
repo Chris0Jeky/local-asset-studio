@@ -23,7 +23,7 @@ class Cases(unittest.TestCase):
         self.assertEqual(CASES['version'], 1)
         self.assertEqual(CASES['refs'], '#278')
         self.assertIsInstance(CASES['starting_views'], list)
-        self.assertTrue(8 <= len(CASES['cases']) <= 19, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose, the several-recipe plan, Vary, a new scene in a saved look and Make seamless')
+        self.assertTrue(8 <= len(CASES['cases']) <= 20, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose, the several-recipe plan, Vary, a new scene in a saved look, Make seamless and Make parallax layers')
 
     def test_unique_ids(self):
         ids = [case['id'] for case in CASES['cases']]
@@ -67,7 +67,7 @@ class Cases(unittest.TestCase):
                          'guided-edit-or-preserve-character',
                          'build-and-prepare-node-workflow', 'frames-to-native-export',
                          'restyle-recent-output-with-a-look', 'vary-a-keeper', 'new-scene-in-an-accepted-look',
-                         'make-a-texture-tile'):
+                         'make-a-texture-tile', 'split-a-scene-into-parallax-layers'):
             self.assertIn(expected, ids)
 
 
