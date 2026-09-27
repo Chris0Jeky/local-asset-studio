@@ -18,6 +18,12 @@ on:
     paths:
       - 'frontend/**'
       - 'app/static/ui-dist/**'
+      - 'app/static/studio-shell.js'
+      - 'app/static/workshop.js'
+      - 'app/static/bundle-explorer.js'
+      - 'tests/test_ui_island_static.py'
+      - 'tests/ui_island_browser.py'
+      - '.gitattributes'
       - '.github/workflows/ui-island.yml'
 permissions:
   contents: read
