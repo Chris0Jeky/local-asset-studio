@@ -1,0 +1,71 @@
+name: UI island build
+# #907 spike: maintainer/CI-only TypeScript + Vue build. The runtime never runs npm; this lane proves the committed
+# app/static/ui-dist output is exactly what the pinned toolchain and lockfile produce.
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'app/static/ui-dist/**'
+      - 'app/static/studio-shell.js'
+      - 'app/static/workshop.js'
+      - 'app/static/bundle-explorer.js'
+      - 'tests/test_ui_island_static.py'
+      - 'tests/ui_island_browser.py'
+      - '.gitattributes'
+      - '.github/workflows/ui-island.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'app/static/ui-dist/**'
+      - '.github/workflows/ui-island.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Island unit tests (mount/unmount, storage/network denial, keyboard, containment, reduced motion)
+        run: npm test
+      - name: Type-check and build with the pinned toolchain
+        run: npm run build
+      - name: Committed ui-dist matches the fresh build byte-for-byte
+        run: |
+          git status --porcelain -- ../app/static/ui-dist
+          git diff --stat --exit-code -- ../app/static/ui-dist
+          test -z "$(git status --porcelain -- ../app/static/ui-dist)"
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Python server serves the committed island; flag-off page unchanged
+        run: python -m unittest discover -s tests -p "test_ui_island_static.py"
+      - name: Island in the real frontend with every non-local request blocked
+        run: python tests/ui_island_browser.py --output .runtime/ui-island
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-island-evidence
+          path: .runtime/ui-island/
+          retention-days: 7
