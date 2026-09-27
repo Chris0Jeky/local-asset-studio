@@ -24,6 +24,7 @@ MAX_RESOURCES = 128
 MAX_QUERY = 64
 MAX_BYTES = (1 << 63) - 1
 MAX_INPUT_BYTES = 1048576
+MAX_SCOPE_BYTES = 16384
 SHA256 = re.compile(r'[a-fA-F0-9]{64}\Z')
 VERSION_ROUTE = re.compile(r'/api/v1/model-versions/([1-9][0-9]{0,19})\Z')
 AIR = re.compile(
@@ -235,6 +236,7 @@ def source_scope(receipt: dict[str, Any]) -> dict[str, Any]:
              if key.casefold() not in PAGINATION_QUERY}
     scope = {'host': receipt['host'], 'route': receipt['route'], 'query': query,
              'auth_context': receipt['auth_context']}
+    need(len(canonical(scope)) <= MAX_SCOPE_BYTES, 'Source query scope exceeds 16 KiB')
     scope['scope_sha256'] = digest(scope); return scope
 
 
