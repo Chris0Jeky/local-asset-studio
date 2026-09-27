@@ -569,7 +569,7 @@
       "id": "combine-same-pair-second-engine",
       "goal": "Try the same character and pose on another Combine engine, compare their seeds and prepare the next attempt without rebuilding the source pair.",
       "starting_view": "create",
-      "success_condition": "Switching recipes takes one click, keeps the source roles and three facts, retains edited wording per recipe, shows only matching results, saves independent review decisions and stages same or new seeds without submitting a generation.",
+      "success_condition": "Switching recipes takes one click, keeps the source roles and three facts, retains edited wording per recipe, shows only matching results, saves independent review decisions and quick-check answers, counts them per engine, and stages same or new seeds without submitting a generation.",
       "wrong_turn": false,
       "steps": [
         {"intent": "continue a saved character through Combine", "expect": "the source-bound workbench opens"},
@@ -579,6 +579,7 @@
         {"intent": "switch to another engine on the same screen", "expect": "one click keeps the inputs and answers and updates their image order"},
         {"intent": "return to the previous engine", "expect": "its edited wording is restored"},
         {"intent": "mark one seed as a keeper and another as needing work", "expect": "each decision is saved through the existing library"},
+        {"intent": "answer two quick checks on the keeper and read the engine count", "expect": "each answer saves with that picture's review and the engine shows the count"},
         {"intent": "prepare the same seed and then a new seed", "expect": "the recorded recipe and source pair are loaded without generating"},
         {"intent": "read the run control", "expect": "the next generation still needs an explicit click"}
       ]
@@ -601,6 +602,22 @@
         {"intent": "leave one joint out of the guide", "expect": "it is omitted, with the limbs that touch it"},
         {"intent": "use this drawing as the pose", "expect": "it is rendered and attached to Picture 1"},
         {"intent": "see what reached Picture 1", "expect": "the drawing is attached and only the drawing route was called"},
+        {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
+      ]
+    },
+    {
+      "id": "vary-a-keeper",
+      "goal": "From a picture I like, get a small round of close variations ready with one press (Vary subtle); on a recipe that cannot resample its pictures, get new seeds of the same recipe instead. Nothing is generated.",
+      "starting_view": "create",
+      "success_condition": "Vary subtle prepares the picture's img2img route with this picture attached as the source and recorded as the parent, at the recorded starting strength, with new seeds and the owner's round size; the fallback loads the same recipe with new seeds and the picture as parent; the status names the recipe, strength, seeds and time; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "see what Vary would do with a picture I like", "expect": "subtle and strong are offered with the recipe, round size and starting strengths named"},
+        {"intent": "vary this picture a little", "expect": "a copy is attached and a round is prepared, and nothing runs"},
+        {"intent": "read what was prepared", "expect": "the recipe, strength, seeds and time per picture are named"},
+        {"intent": "check where the new pictures will come from", "expect": "the kept picture is the source and the recorded parent"},
+        {"intent": "vary a picture whose recipe cannot resample it", "expect": "the same recipe loads with new seeds and the picture as parent"},
+        {"intent": "read what the fallback prepared", "expect": "it says new seeds, same recipe and nothing was generated"},
         {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
     }

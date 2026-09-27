@@ -1,0 +1,225 @@
+{
+ "pack": "night-shift (Retro Anime pilot)",
+ "created": "2026-09-27T17:24:25+0100",
+ "anchor": {
+  "id": "retro-anime-master-z2",
+  "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+  "studio_job": "c69e6e18-4739-458d-b546-1dd6e8174e19",
+  "prompt_id": "adfc94c4-0de0-44af-ae72-72b3133742f0"
+ },
+ "status": "art-accepted by the owner on 2026-09-27 (\"Accept, try sharper 4K as well\"): master MA, quiet r1-2, hero, poster, card tight. Not runtime-qualified; licence not cleared; not licence-cleared.",
+ "assets": {
+  "retro-anime-master": [
+   {
+    "relative_path": "retro-anime-master/master/retro-anime-master--3840x2160--ma.png",
+    "sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+    "bytes": 2736794,
+    "width": 3840,
+    "height": 2160,
+    "format": "PNG"
+   },
+   {
+    "relative_path": "retro-anime-master/renditions/retro-anime-master--1280x720--preview.webp",
+    "sha256": "4ff684105c71393102007e42a03695cbfadfe027094a3e865d879a92632ba91d",
+    "bytes": 49262,
+    "width": 1280,
+    "height": 720,
+    "format": "WEBP"
+   },
+   {
+    "relative_path": "retro-anime-master/renditions/retro-anime-master--1280x720--preview.avif",
+    "sha256": "fd5f6cf72c03dd5b03a69fb119efe61d0a9d7b652adaba32e4c62cdbcc41614a",
+    "bytes": 53965,
+    "width": 1280,
+    "height": 720,
+    "format": "AVIF"
+   },
+   {
+    "relative_path": "retro-anime-master/renditions/retro-anime-master--960x540--preview.webp",
+    "sha256": "4b6db50924a08a5f8e6dc9d1e2b635431f8c31fe0900a76325bce6f5cbe3f40c",
+    "bytes": 32534,
+    "width": 960,
+    "height": 540,
+    "format": "WEBP"
+   },
+   {
+    "relative_path": "retro-anime-master/renditions/retro-anime-master--960x540--preview.avif",
+    "sha256": "43940d331aaaf7b5f0bb171c52339bf2f48da59e4710feb5fb3085685fe93bd3",
+    "bytes": 36851,
+    "width": 960,
+    "height": 540,
+    "format": "AVIF"
+   }
+  ],
+  "retro-anime-quiet": [
+   {
+    "relative_path": "retro-anime-quiet/master/retro-anime-quiet--3840x2160--r1-2.png",
+    "sha256": "0b18775c9e1b1bf9c94b867a080b2d1b1c65ea1a20a84870c5b0d7a1ed6a7c05",
+    "bytes": 2095076,
+    "width": 3840,
+    "height": 2160,
+    "format": "PNG"
+   },
+   {
+    "relative_path": "retro-anime-quiet/renditions/retro-anime-quiet--1280x720--poster.webp",
+    "sha256": "92008ca7e8d8fc076e37db518ec003df713f3add6ed9f698c203a8e93902693d",
+    "bytes": 42124,
+    "width": 1280,
+    "height": 720,
+    "format": "WEBP"
+   },
+   {
+    "relative_path": "retro-anime-quiet/review/registration-edges-over-quiet--1280x720.png",
+    "sha256": "e859c00fd7d5fb84fc75c015153b775c3ae89c3aa11f8ec62e2d30b24ee562f9",
+    "bytes": 478797,
+    "width": 1280,
+    "height": 720,
+    "format": "PNG"
+   },
+   {
+    "relative_path": "retro-anime-quiet/review/crossfade-50--1280x720.png",
+    "sha256": "b22e032ec4e7324637fdfcab2a3382a97f23eb4fc435c657e437366ecae56c1c",
+    "bytes": 459014,
+    "width": 1280,
+    "height": 720,
+    "format": "PNG"
+   }
+  ],
+  "retro-anime-hero": [
+   {
+    "relative_path": "retro-anime-hero/master/retro-anime-hero--3840x1600--wide.png",
+    "sha256": "652225192c58a57f8e2d7699670cbf86b841089184bbc9e8e067a9c4d49c7955",
+    "bytes": 2095779,
+    "width": 3840,
+    "height": 1600,
+    "format": "PNG"
+   },
+   {
+    "relative_path": "retro-anime-hero/renditions/retro-anime-hero--1920x800--wide.webp",
+    "sha256": "b3eca60381b273340230af43624bfa807c05ef1a8875ab01fd160d3e30501eb2",
+    "bytes": 69888,
+    "width": 1920,
+    "height": 800,
+    "format": "WEBP"
+   },
+   {
+    "relative_path": "retro-anime-hero/renditions/retro-anime-hero--960x400--wide.webp",
+    "sha256": "9bc4a14d501b5b6a6d5fcfe2cd376e25423447985f2bd3829e54e64afac12808",
+    "bytes": 26316,
+    "width": 960,
+    "height": 400,
+    "format": "WEBP"
+   }
+  ],
+  "retro-anime-poster": [
+   {
+    "relative_path": "retro-anime-poster/renditions/retro-anime-poster--1280x720--still.webp",
+    "sha256": "4ff684105c71393102007e42a03695cbfadfe027094a3e865d879a92632ba91d",
+    "bytes": 49262,
+    "width": 1280,
+    "height": 720,
+    "format": "WEBP"
+   },
+   {
+    "relative_path": "retro-anime-poster/renditions/retro-anime-poster--640x360--still.webp",
+    "sha256": "d65ecf9a19cd26a9c8879090dbfa74f4c901654ac78551b8707836ae1ee9dce5",
+    "bytes": 18142,
+    "width": 640,
+    "height": 360,
+    "format": "WEBP"
+   }
+  ],
+  "retro-anime-card": [
+   {
+    "relative_path": "retro-anime-card/master/retro-anime-card--1024x1024--wide.png",
+    "sha256": "9d2baea9db5202731b8124ae6c10ce6ef4debbc258f984d543680c84b88fbb2e",
+    "bytes": 633943,
+    "width": 1024,
+    "height": 1024,
+    "format": "PNG"
+   },
+   {
+    "relative_path": "retro-anime-card/renditions/retro-anime-card--512x512--wide.webp",
+    "sha256": "89328f5fd2f00e396c67cdffc190598fea4c18b1f5c6a45af5e8ac35883dfeec",
+    "bytes": 26840,
+    "width": 512,
+    "height": 512,
+    "format": "WEBP"
+   },
+   {
+    "relative_path": "retro-anime-card/renditions/retro-anime-card--256x256--wide.webp",
+    "sha256": "b8dd05d50ebc546f1911d1b8a3c059e527a040fa6a0e2fb223ce1104c873c03f",
+    "bytes": 9690,
+    "width": 256,
+    "height": 256,
+    "format": "WEBP"
+   },
+   {
+    "relative_path": "retro-anime-card/master/retro-anime-card--1024x1024--tight.png",
+    "sha256": "ff5b65cf95441a2bec433531ca668f5d095b3ef292cec6656d7dbec127dd7241",
+    "bytes": 802551,
+    "width": 1024,
+    "height": 1024,
+    "format": "PNG"
+   },
+   {
+    "relative_path": "retro-anime-card/renditions/retro-anime-card--512x512--tight.webp",
+    "sha256": "9c48b5df2de0334b20e7b5347e7fadb39f31f3096380ae67ef99715eb1a7e9a0",
+    "bytes": 34872,
+    "width": 512,
+    "height": 512,
+    "format": "WEBP"
+   },
+   {
+    "relative_path": "retro-anime-card/renditions/retro-anime-card--256x256--tight.webp",
+    "sha256": "a05737e77a954ab2e4d7038ae0c543fd77d9c854b6bcab773392103036c79da4",
+    "bytes": 12818,
+    "width": 256,
+    "height": 256,
+    "format": "WEBP"
+   }
+  ]
+ },
+ "art_review": {
+  "reviewer": "Chris (owner)",
+  "at": "2026-09-27",
+  "quote": "Accept, try sharper 4K as well",
+  "accepted": {
+   "retro-anime-master": [
+    "retro-anime-master/master/retro-anime-master--3840x2160--ma.png",
+    "retro-anime-master/renditions/"
+   ],
+   "retro-anime-quiet": [
+    "retro-anime-quiet/master/retro-anime-quiet--3840x2160--r1-2.png",
+    "retro-anime-quiet/renditions/"
+   ],
+   "retro-anime-hero": [
+    "retro-anime-hero/"
+   ],
+   "retro-anime-poster": [
+    "retro-anime-poster/"
+   ],
+   "retro-anime-card": [
+    "retro-anime-card/master/retro-anime-card--1024x1024--tight.png",
+    "retro-anime-card/renditions/retro-anime-card--512x512--tight.webp",
+    "retro-anime-card/renditions/retro-anime-card--256x256--tight.webp"
+   ]
+  },
+  "not_chosen": [
+   "retro-anime-master MB",
+   "retro-anime-quiet r1-1, a1, a2, b1, b2",
+   "retro-anime-card wide"
+  ],
+  "ma_sharp": {
+   "decision": "Keep MA",
+   "at": "2026-09-27",
+   "by": "Chris (owner), in chat after seeing ma-sharp-crops.jpg",
+   "rejected_as_master": [
+    "sharp-a1",
+    "sharp-a2",
+    "sharp-a3"
+   ],
+   "kept_as": "experiments (retro-anime-master/candidates/)"
+  }
+ }
+}

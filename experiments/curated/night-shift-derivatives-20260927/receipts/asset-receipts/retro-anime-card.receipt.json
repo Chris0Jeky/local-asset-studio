@@ -1,0 +1,198 @@
+{
+ "schema": "studio.theme-asset.receipt/v1-proposed",
+ "status": "art-reviewed",
+ "requested_asset_id": "retro-anime-card",
+ "brief_revision": "brief.py show retro-anime-card @ origin/main ffe5b3f9",
+ "production": {
+  "method": "derive",
+  "provider": "local Python (Pillow 12.1.1, numpy)",
+  "tool_action": "square crop + Lanczos encode (Pillow)",
+  "reported_model": null,
+  "output_id": null,
+  "produced_at": "2026-09-27T17:24:25+0100",
+  "prompt_record": null,
+  "input_anchors": [
+   {
+    "id": "retro-anime-master (3840x2160 MA)",
+    "sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414"
+   },
+   {
+    "id": "retro-anime-master-z2",
+    "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "studio_job": "c69e6e18-4739-458d-b546-1dd6e8174e19",
+    "prompt_id": "adfc94c4-0de0-44af-ae72-72b3133742f0"
+   }
+  ]
+ },
+ "source": {
+  "item_id": null,
+  "original_page": null,
+  "creator_credit": null,
+  "terms_evidence": null,
+  "retrieved_at": null,
+  "review_status": "not-applicable: generated locally from the owner-chosen anchor",
+  "terms_evidence_reason": "No terms page was retained in this pass; licence status is not cleared (see unknowns)."
+ },
+ "files": [
+  {
+   "relative_path": "retro-anime-card/master/retro-anime-card--1024x1024--wide.png",
+   "sha256": "9d2baea9db5202731b8124ae6c10ce6ef4debbc258f984d543680c84b88fbb2e",
+   "bytes": 633943,
+   "width": 1024,
+   "height": 1024,
+   "format": "PNG",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-card/renditions/retro-anime-card--512x512--wide.webp",
+   "sha256": "89328f5fd2f00e396c67cdffc190598fea4c18b1f5c6a45af5e8ac35883dfeec",
+   "bytes": 26840,
+   "width": 512,
+   "height": 512,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-card/renditions/retro-anime-card--256x256--wide.webp",
+   "sha256": "b8dd05d50ebc546f1911d1b8a3c059e527a040fa6a0e2fb223ce1104c873c03f",
+   "bytes": 9690,
+   "width": 256,
+   "height": 256,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-card/master/retro-anime-card--1024x1024--tight.png",
+   "sha256": "ff5b65cf95441a2bec433531ca668f5d095b3ef292cec6656d7dbec127dd7241",
+   "bytes": 802551,
+   "width": 1024,
+   "height": 1024,
+   "format": "PNG",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-card/renditions/retro-anime-card--512x512--tight.webp",
+   "sha256": "9c48b5df2de0334b20e7b5347e7fadb39f31f3096380ae67ef99715eb1a7e9a0",
+   "bytes": 34872,
+   "width": 512,
+   "height": 512,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-card/renditions/retro-anime-card--256x256--tight.webp",
+   "sha256": "a05737e77a954ab2e4d7038ae0c543fd77d9c854b6bcab773392103036c79da4",
+   "bytes": 12818,
+   "width": 256,
+   "height": 256,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  }
+ ],
+ "transformations": [
+  {
+   "step": "crop",
+   "detail": {
+    "wide": {
+     "box": [
+      1680,
+      0,
+      3840,
+      2160
+     ],
+     "normalised_x": [
+      0.438,
+      1.0
+     ]
+    },
+    "tight": {
+     "box": [
+      2240,
+      300,
+      3840,
+      1900
+     ],
+     "normalised_x": [
+      0.583,
+      1.0
+     ]
+    }
+   }
+  },
+  {
+   "step": "encode",
+   "detail": {
+    "retro-anime-card/renditions/retro-anime-card--512x512--wide.webp": {
+     "quality": 90,
+     "budget_kib": 80,
+     "within_budget": true
+    },
+    "retro-anime-card/renditions/retro-anime-card--256x256--wide.webp": {
+     "quality": 90,
+     "budget_kib": 30,
+     "within_budget": true
+    },
+    "retro-anime-card/renditions/retro-anime-card--512x512--tight.webp": {
+     "quality": 90,
+     "budget_kib": 80,
+     "within_budget": true
+    },
+    "retro-anime-card/renditions/retro-anime-card--256x256--tight.webp": {
+     "quality": 90,
+     "budget_kib": 30,
+     "within_budget": true
+    }
+   }
+  }
+ ],
+ "art_review": {
+  "status": "accepted",
+  "reviewer": "Chris (owner)",
+  "at": "2026-09-27",
+  "notes": "Owner answer in chat on 2026-09-27 after seeing pack-contact.jpg and quiet-candidates-contact.jpg, relayed by the coordinator: \"Accept, try sharper 4K as well\". accepted: the tight framing (1024/512/256); the wide framing not chosen. This is the only art acceptance; the agent pre-review in judgements.jsonl is not acceptance.",
+  "accepted_files": [
+   "retro-anime-card/master/retro-anime-card--1024x1024--tight.png",
+   "retro-anime-card/renditions/retro-anime-card--512x512--tight.webp",
+   "retro-anime-card/renditions/retro-anime-card--256x256--tight.webp"
+  ]
+ },
+ "rendition_review": {
+  "status": "agent-checked",
+  "checks": [
+   "retro-anime-card/master/retro-anime-card--1024x1024--wide.png: 1024x1024 PNG 633943 B",
+   "retro-anime-card/renditions/retro-anime-card--512x512--wide.webp: 512x512 WEBP 26840 B",
+   "retro-anime-card/renditions/retro-anime-card--256x256--wide.webp: 256x256 WEBP 9690 B",
+   "retro-anime-card/master/retro-anime-card--1024x1024--tight.png: 1024x1024 PNG 802551 B",
+   "retro-anime-card/renditions/retro-anime-card--512x512--tight.webp: 512x512 WEBP 34872 B",
+   "retro-anime-card/renditions/retro-anime-card--256x256--tight.webp: 256x256 WEBP 12818 B"
+  ]
+ },
+ "runtime_review": {
+  "status": "not-qualified",
+  "app_commit": null,
+  "device": null,
+  "checks": []
+ },
+ "release_selection": {
+  "status": "not-selected",
+  "selected_by": null
+ },
+ "unknowns": [
+  "Licence: not re-checked and not cleared. Z-Image Turbo terms as recorded in the asset-kit README (base weights Apache-2.0); this pass did not re-verify them.",
+  "Licence: the ESRGAN upscaler (RealESRGAN_x4plus_anime_6B.pth) terms are as recorded in the anime-esrgan catalog note (\"Official Real-ESRGAN release. Check source image and applicable model terms.\"); not re-checked here.",
+  "Rendition review: not tested in the real slot sizes (390x844, 1440x900, 1920x1080).",
+  "Runtime: not wired into the app; runtime_review stays not-qualified."
+ ]
+}

@@ -209,7 +209,7 @@ DENY_LABELS = re.compile(
     r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
 DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-review', 'data-asset-favorite', 'data-bulk',
-              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'download')
+              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'data-ux-check', 'data-candidate-check', 'download')
 
 # Controls whose press only changes this page, or reads, or validates without storing anything. Keyed by
 # the selector with attribute values stripped (see control_kind). The label heuristic misfires on them —
@@ -368,15 +368,18 @@ def build_handler():
                 return self.json({'template_sha256': preset['continuation_capability']['template_sha256']})
             if path == '/api/assets/update':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
-                if data.get('action') != 'edit' or set(data) != {'action', 'ids', 'review', 'workspace_id', 'expected_revisions', 'request_id'}:
+                # Tile review writes one field: a review decision, or the tags that carry a quick check (#1203).
+                fields = set(data) - {'action', 'ids', 'workspace_id', 'expected_revisions', 'request_id'}
+                if data.get('action') != 'edit' or fields not in ({'review'}, {'tags'}) or len(data) != 6:
                     return self.json({'error': 'Only explicit tile review is supported by this fixture'}, 400)
                 assets = [next(a for a in fixture.ASSETS if a['id'] == identifier) for identifier in data['ids']]
                 if any(a['metadata_revision'] != data['expected_revisions'][a['id']] for a in assets):
                     return self.json({'error': 'Synthetic metadata conflict'}, 409)
-                for asset in assets: asset.update(review=data['review'], metadata_revision=asset['metadata_revision'] + 1)
+                field = fields.pop()
+                for asset in assets: asset.update({field: data[field], 'metadata_revision': asset['metadata_revision'] + 1})
                 return self.json(dict(status='applied', workspace_id=data['workspace_id'], request_id=data['request_id'],
                                       action='edit', updated=data['ids'], revisions={a['id']: a['metadata_revision'] for a in assets},
-                                      applied={'review': data['review']}, current=copy.deepcopy(assets)))
+                                      applied={field: data[field]}, current=copy.deepcopy(assets)))
             if path == '/api/preview':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
@@ -997,6 +1000,10 @@ def _combine_loop(c):
     unrelated = copy.deepcopy(added[0]); unrelated['id'] = 'combine-other-pair'
     unrelated['references'][0]['sha256'] = 'b' * 64
     fixture.JOBS[:0] = fillers + [unrelated] + added
+    # Registered outputs carry their run's recipe, as app/workspace.py records it; the engine chips count by it (#1203).
+    saved = {a['id']: (a.get('preset_id'), list(a['tags'])) for a in fixture.ASSETS}
+    for job in added[:4]:
+        next(a for a in fixture.ASSETS if a['id'] == job['outputs'][0]['asset_id'])['preset_id'] = job['preset_id']
     try:
         c.page.evaluate('refreshJobs()')
         c.page.wait_for_selector('#uxPairResults .ux-result-tile')
@@ -1059,6 +1066,26 @@ def _combine_loop(c):
         c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").review === "selected"')
         c.act('[data-ux-review="needs_work"][data-asset="asset-3"]', note='independent review for the other seed')
         c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-3").review === "needs_work"')
+        # #1203: quick checks fit the Combine route. Two presses on the keeper's tile save one answer each with its revision;
+        # key 2 on the focused tile changes the face answer; Keep stays available throughout, never waiting on a check.
+        tile = '#uxPairResults .ux-result-tile:has([data-ux-check][data-asset="asset-2"])'
+        assert c.page.locator(tile + ' [data-ux-check]').all_inner_texts() == ['pose', 'face', 'outfit', 'style', 'clean']
+        engine_chip = '[data-ux-engine="%s"] .ux-engine-checks' % initial['preset_id']
+        assert c.page.locator(engine_chip).inner_text() == 'Not checked yet'
+        c.act('[data-ux-check="pose"][data-asset="asset-2"]', note='quick check: the pose carried over')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:pose=yes")')
+        c.act('[data-ux-check="face"][data-asset="asset-2"]', note="quick check: the face is the character's")
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:face=yes")')
+        c.page.wait_for_function('document.activeElement && document.activeElement.dataset.uxCheck === "face"')
+        c.page.keyboard.press('2')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:face=no")')
+        writes = [p['data'] for p in fixture.POSTS if p['path'] == '/api/assets/update' and 'tags' in p['data']]
+        assert [w['tags'] for w in writes] == [['fixture', 'check:pose=yes'], ['fixture', 'check:pose=yes', 'check:face=yes'], ['fixture', 'check:pose=yes', 'check:face=no']], writes
+        assert all('review' not in w for w in writes) and c.page.evaluate('assetState.assets.find(a=>a.id === "asset-2").review') == 'selected'
+        assert c.page.locator('[data-ux-review="selected"][data-asset="asset-2"]').is_enabled()
+        c.act(engine_chip, 'read', note="the engine chip counts this PC's answers")
+        assert c.page.locator(engine_chip).inner_text() == 'pose 1/1 · face 0/1', c.page.locator(engine_chip).inner_text()
+        assert c.page.locator('#uxPairResults .ux-run-group:has([data-asset="asset-2"]) .ux-run-checks').inner_text() == 'pose 1/1 · face 0/1'
         c.act('[data-ux-rerun="same"][data-job="combine-loop-0"]', note='stage the exact recorded seed, without running it')
         c.page.wait_for_function('getControl("seed").value === "42" && !referencePending')
         assert c.page.locator('#positive').input_value() == initial['controls']['positive']
@@ -1068,9 +1095,73 @@ def _combine_loop(c):
         assert c.page.evaluate('referenceRecords[0].file') == initial['references'][0]['file']
         assert not [p for p in fixture.POSTS if p['path'] == '/api/jobs']
         c.act('#generate', 'read', note='the only generation action still requires a separate explicit click')
-        return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews saved; same/new seeds prepared; zero generation requests'
+        return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews and three quick-check answers saved; engine count read; same/new seeds prepared; zero generation requests'
     finally:
         fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith(('combine-loop-', 'combine-other-pair', 'combine-filler-'))]
+        for asset in fixture.ASSETS:
+            preset_id, tags = saved[asset['id']]; asset['tags'] = tags
+            if preset_id is None: asset.pop('preset_id', None)
+            else: asset['preset_id'] = preset_id
+
+
+VARY_STATE = """() => ({preset: selected.id, intent: continuationState && continuationState.intent,
+  source: continuationState && continuationState.source_asset_id, parents: parentAssets.slice(),
+  denoise: getControl('denoise') ? getControl('denoise').value : null, seed: getControl('seed') ? getControl('seed').value : null,
+  batch: document.querySelector('#batch').value, positive: document.querySelector('#positive').value,
+  notice: document.querySelector('#uxNotice').textContent})"""
+
+
+@driver('vary-a-keeper')
+def _vary(c):
+    """#1202: one press from a picture to a prepared round of close variations; Generate stays a separate press."""
+    import studio_browser_smoke as fixture
+    receipt = dict(status='completed', batch_count=1, message='Synthetic completed receipt; no model ran.')
+    # A Krea picture (its route is krea-refine) and one timing receipt each: 240 s per Refine picture is slow (2),
+    # 30 s per Anima portrait is fast (4). The Anima fixture job has no route, so it falls back to new seeds.
+    added = [] if c.live else [
+        dict(receipt, id='vary-krea-keeper', preset_id='krea-anime-atelier', preset_name='Krea 2 Anime Atelier', created_at=1789229900,
+             elapsed_seconds=95, controls={'positive': 'A fox shrine at dusk, anime illustration.', 'seed': 7},
+             outputs=[dict(filename='keeper.png', asset_id='asset-2', media_type='image', seed=7)]),
+        dict(receipt, id='vary-refine-timing', preset_id='krea-refine', preset_name='Krea 2 Refine Pass', created_at=1789229800,
+             elapsed_seconds=240, controls={'seed': 1}, outputs=[]),
+        dict(receipt, id='vary-anima-timing', preset_id='anima-portrait', preset_name='Anima portrait', created_at=1789229700,
+             elapsed_seconds=30, controls={'seed': 2}, outputs=[]),
+    ]
+    fixture.JOBS[:0] = added
+    try:
+        c.boot('#create')
+        c.page.wait_for_timeout(600)
+        c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
+        keeper = '#gallery [data-ux-vary="subtle"]' + ('' if c.live else '[data-job="vary-krea-keeper"]')
+        c.act('#gallery .ux-vary', 'read', note='the Vary controls and what they will do')
+        c.stop_before(c.act(keeper, note='prepares the img2img round'), 'stopped before preparing: Vary attaches a copy of the picture')
+        c.page.wait_for_timeout(800)
+        first = c.page.evaluate(VARY_STATE)
+        c.act('#uxNotice', 'read', note=first['notice'][:200])
+        c.act('#uxContinuation', 'read', note='lineage parents=%s' % first['parents'])
+        c.act('#gallery [data-ux-vary="reseed"][data-job="fixture-job"]', note='new seeds on a recipe with no close-variation route')
+        c.page.wait_for_timeout(800)
+        second = c.page.evaluate(VARY_STATE)
+        c.act('#uxNotice', 'read', note=second['notice'][:200])
+        # A picture with no recorded recipe: the asset panel shows Vary disabled, with the reason beside it.
+        c.page.evaluate("showView('assets');openAsset('asset-3')"); c.page.wait_for_timeout(300)
+        c.act('#assetDialog .ux-vary button', 'read', note='Vary disabled with its reason', supplementary=True)
+        why = c.page.evaluate("(() => { const b = document.querySelector('#assetDialog .ux-vary button'); return b && b.disabled ? document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()")
+        c.page.evaluate("document.querySelector('#assetDialog').close();showView('create')"); c.page.wait_for_timeout(300)
+        c.act('#generate', 'read', note='readiness only; never pressed')
+        img2img = (first['preset'] == 'krea-refine' and first['intent'] == 'edit' and first['source'] == 'asset-2'
+                   and first['parents'] == ['asset-2'] and first['denoise'] == '0.25' and first['batch'] == '2'
+                   and first['seed'] not in (None, '', '7') and 'Vary subtle prepared on' in first['notice']
+                   and 'Nothing was generated' in first['notice'] and '4 min per picture here' in first['notice'])
+        reseed = (second['preset'] == 'anima-portrait' and second['intent'] is None and second['parents'] == ['asset-0']
+                  and second['batch'] == '4' and second['seed'] not in (None, '', '42')
+                  and second['positive'] == fixture.JOBS[len(added)]['controls']['positive']
+                  and 'new seeds, same recipe' in second['notice'] and 'Nothing was generated' in second['notice'])
+        disabled = 'No Studio recipe is recorded' in why
+        return img2img and reseed and disabled, 'vary subtle: %s; fallback: %s; asset panel: %s' % (
+            {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')}, why or 'no disabled reason')
+    finally:
+        for job in added: fixture.JOBS.remove(job)
 
 
 @driver('reference-analysis-review-and-apply')
