@@ -521,7 +521,7 @@ async function refreshJobs(){try{const response=await fetch('/api/jobs',jobsEtag
 // it settle. An id the list has not shown yet stays (a poll that began before the POST returned does not list it).
 const SETTLED_JOB_STATUSES=['completed','failed','partial','uncertain','not_submitted','cancelled'],startedJobIds=new Set(),listedStartedJobIds=new Set();
 // A 304 repeats no progress message (the list did not change); it only announces a run that had already settled.
-function settleActiveJob(fresh=true){const job=jobs.find(j=>j.id===activeJobId);if(job){if(fresh)message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(SETTLED_JOB_STATUSES.includes(job.status))activeJobId=null;}
+function settleActiveJob(fresh=true){const job=jobs.find(j=>j.id===activeJobId);if(job){if(fresh)message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(SETTLED_JOB_STATUSES.includes(job.status)||job.status==='abandoned')activeJobId=null;}
   for(const id of [...startedJobIds]){const listed=jobs.find(j=>j.id===id),settled=listed&&SETTLED_JOB_STATUSES.includes(listed.status)?listed:null;
     if(settled||listed?.status==='abandoned'||(!listed&&listedStartedJobIds.has(id))){startedJobIds.delete(id);listedStartedJobIds.delete(id);}else if(listed)listedStartedJobIds.add(id);
     if(settled)document.dispatchEvent(new CustomEvent('studio:job-settled',{detail:settled}));}}

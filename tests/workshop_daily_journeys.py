@@ -571,9 +571,10 @@ function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
 window.reply=[{id:'gone',status:'running',preset_name:'P',message:'Generating'},{id:'dropped',status:'abandoned',preset_name:'P',message:'Abandoned locally'}];
 window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
 document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
-        self.page.evaluate("startedJobIds.add('gone');startedJobIds.add('dropped');startedJobIds.add('fresh')")
+        self.page.evaluate("startedJobIds.add('gone');startedJobIds.add('dropped');startedJobIds.add('fresh');activeJobId='dropped'")
         self.page.evaluate('refreshJobs()')
         self.assertEqual(self.page.evaluate('[...startedJobIds]'), ['gone', 'fresh'], 'abandoned is pruned; an id the list has not shown yet is kept')
+        self.assertIsNone(self.page.evaluate('activeJobId'), 'an abandoned active run stops owning the status line (#1173 Codex P2)')
         self.page.evaluate("reply=[{id:'fresh',status:'running',preset_name:'P',message:'Generating'}]"); self.page.evaluate('refreshJobs()')
         self.assertEqual(self.page.evaluate('[...startedJobIds]'), ['fresh'], 'an id the list showed and then lost is pruned')
         self.page.evaluate("reply=[{id:'fresh',status:'completed',preset_name:'P',message:'Complete',outputs:[{}]}]"); self.page.evaluate('refreshJobs()')
