@@ -229,6 +229,40 @@ class ResourceAdmissionTests(unittest.TestCase):
         self.assertIsNone(snapshot['vram']['available_bytes'])
         self.assertIn('disagree', snapshot['vram']['unknown_reason'])
 
+    def test_observe_treats_cpu_mps_and_directml_counters_as_unknown(self):
+        for kind in ('cpu', 'mps', 'privateuseone'):
+            studio = Studio()
+            studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
+            studio._request = lambda path, timeout=3, base_url=None, kind=kind: {
+                'devices': [{'type': kind, 'vram_free_bytes': 12 * GIB, 'vram_total_bytes': 16 * GIB}], 'versions': {}}
+            with patch.object(admission.gpu_memory, 'read', return_value={}), \
+                    patch.object(admission.gpu_memory, 'others_for_admission', return_value=(1 * GIB, None)):
+                snapshot = admission.observe(studio)
+            self.assertIsNone(snapshot['vram']['available_bytes'])
+            self.assertIn(kind, snapshot['vram']['unknown_reason'])
+
+    def test_observe_treats_directml_placeholder_as_unknown(self):
+        studio = Studio()
+        studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
+        studio._request = lambda path, timeout=3, base_url=None: {
+            'devices': [{'vram_free_bytes': 1 * GIB, 'vram_total_bytes': 1 * GIB,
+                         'torch_vram_free_bytes': 1 * GIB, 'torch_vram_total_bytes': 1 * GIB}], 'versions': {}}
+        with patch.object(admission.gpu_memory, 'read', return_value={}), \
+                patch.object(admission.gpu_memory, 'others_for_admission', return_value=(0, None)):
+            snapshot = admission.observe(studio)
+        self.assertIsNone(snapshot['vram']['available_bytes'])
+        self.assertIn('DirectML', snapshot['vram']['unknown_reason'])
+
+    def test_observe_still_measures_cuda_device(self):
+        studio = Studio()
+        studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
+        studio._request = lambda path, timeout=3, base_url=None: {
+            'devices': [{'type': 'cuda', 'vram_free_bytes': 12 * GIB, 'vram_total_bytes': 16 * GIB}], 'versions': {}}
+        with patch.object(admission.gpu_memory, 'read', return_value={}), \
+                patch.object(admission.gpu_memory, 'others_for_admission', return_value=(1 * GIB, None)):
+            snapshot = admission.observe(studio)
+        self.assertEqual(snapshot['vram']['available_bytes'], 11 * GIB)
+
     def test_pre_submit_is_opt_in_and_requires_durable_job_identity(self):
         studio = Studio()
         self.assertIsNone(admission.pre_submit(studio, {}, {'id': 'demo'}, GRAPH))

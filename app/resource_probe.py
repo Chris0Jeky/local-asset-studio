@@ -20,6 +20,7 @@ from backend_contracts import loopback_port
 MAX_RESPONSE_BYTES = 1024 * 1024
 MAX_PROCESSES = 16
 MAX_SAMPLES = 120
+DEVICE_TYPES = frozenset({'cuda', 'xpu', 'npu', 'mlu', 'mps', 'cpu', 'privateuseone'})
 
 
 def counter(value):
@@ -102,6 +103,7 @@ def project_stats(data):
     for index, device in enumerate(data['devices'][:8]):
         if not isinstance(device, dict): raise ValueError('Invalid device statistics')
         record = {'index': index}
+        kind = device.get('type'); record['type'] = kind if isinstance(kind, str) and kind in DEVICE_TYPES else None  # a list/dict type is unhashable
         for total_key, free_key in (('vram_total', 'vram_free'), ('torch_vram_total', 'torch_vram_free')):
             total, free = counter(device.get(total_key)), counter(device.get(free_key))
             if total is None or free is None or free > total: total, free = None, None
