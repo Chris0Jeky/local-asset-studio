@@ -989,9 +989,14 @@ def _combine_loop(c):
                    message='Synthetic ' + status + ' receipt; no model ran.',
                    outputs=[dict(filename='fixture.png', asset_id='asset-' + str(index + 2), media_type='image', seed=42 + index)])
         added.append(job)
+    # A run never sent has no Problems card; five newer unrelated failures push the uncertain run past Problems' first five.
+    added.append(dict(copy.deepcopy(initial), id='combine-loop-4', status='not_submitted', preset_id=preset['id'], preset_name=preset['name'],
+                      created_at=1789228800 + 300, message='Synthetic run that was never sent.', outputs=[]))
+    fillers = [dict(copy.deepcopy(fixture.JOBS[-1]), id='combine-filler-' + str(i), status='failed', created_at=1789229800 + i,
+                    message='Synthetic unrelated failure; no model ran.', outputs=[]) for i in range(5)]
     unrelated = copy.deepcopy(added[0]); unrelated['id'] = 'combine-other-pair'
     unrelated['references'][0]['sha256'] = 'b' * 64
-    fixture.JOBS[:0] = [unrelated] + added
+    fixture.JOBS[:0] = fillers + [unrelated] + added
     try:
         c.page.evaluate('refreshJobs()')
         c.page.wait_for_selector('#uxPairResults .ux-result-tile')
@@ -1001,8 +1006,10 @@ def _combine_loop(c):
         assert groups.first.locator('.ux-run-head').inner_text().startswith('Klein 4B'), 'the newest run leads and names its engine'
         # The uncertain run is folded and offers no seed at all (never a retry); Problems keeps its controls.
         attention = c.page.locator('#uxPairResults details.ux-run-attention')
-        assert attention.count() == 1 and not attention.evaluate('(el) => el.open') and '1 run' in attention.locator('summary').inner_text()
+        assert attention.count() == 1 and not attention.evaluate('(el) => el.open') and '2 runs' in attention.locator('summary').inner_text()
         assert c.page.locator('[data-ux-rerun][data-job="combine-loop-2"]').count() == 0
+        # Only a run Problems lists offers Open in Problems; the never-sent one offers its recipe instead.
+        assert attention.locator('[data-ux-problem="combine-loop-4"]').count() == 0 and attention.locator('[data-ux-result-recipe="combine-loop-4"]').count() == 1
         assert c.page.locator('#jobProblems').evaluate('(el) => !el.open')
         # J4 / D7: both pictures and the newest seed are on one 1440x900 screen once the pair is in view.
         c.page.set_viewport_size({'width': 1440, 'height': 900})
@@ -1017,6 +1024,8 @@ def _combine_loop(c):
         c.act('#uxPairResults details.ux-run-attention > summary', note='unfold the run that needs attention')
         c.act('[data-ux-problem="combine-loop-2"]', note='its receipt and controls live in Problems; no retry here')
         assert c.page.locator('#jobProblems').evaluate('(el) => el.open')
+        focused = c.page.evaluate('document.activeElement && document.activeElement.closest("[data-problem]") ? document.activeElement.closest("[data-problem]").dataset.problem : null')
+        assert focused == 'combine-loop-2', 'Open in Problems focused %r, not the run past the newest five' % focused
         c.page.locator('#jobProblems').evaluate('(el) => { el.open = false; }')
         assert c.page.locator('[data-ux-engine="combine-klein-9b-skeleton"]').is_disabled()
         # Engine chips: what each is for (from the recipe's own name) and a time per picture from this PC's completed runs;
@@ -1061,7 +1070,7 @@ def _combine_loop(c):
         c.act('#generate', 'read', note='the only generation action still requires a separate explicit click')
         return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews saved; same/new seeds prepared; zero generation requests'
     finally:
-        fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith(('combine-loop-', 'combine-other-pair'))]
+        fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith(('combine-loop-', 'combine-other-pair', 'combine-filler-'))]
 
 
 @driver('reference-analysis-review-and-apply')

@@ -562,14 +562,19 @@
     }).join('');
     const live=groups.active.map(({job})=>'<p class="ux-run-live">'+escape(engine(job))+' · '+escape(job.status)+(runWhen(job.created_at)?' since '+escape(runWhen(job.created_at)):'')+'</p>').join('');
     const count=groups.attention.length;
-    const attention=count?'<details class="ux-run-attention"><summary>'+count+' run'+(count===1?'':'s')+' for these pictures need'+(count===1?'s':'')+' attention</summary>'+groups.attention.map(({job})=>'<p><b>'+escape(engine(job))+' · '+escape(job.status)+'</b>'+(runWhen(job.created_at)?' · '+escape(runWhen(job.created_at)):'')+' <small>'+escape(String(job.message||'').slice(0,160))+'</small> <button type="button" data-ux-problem="'+escape(job.id)+'">Open in Problems</button></p>').join('')+'<p><small>Prompt IDs and recipes stay in Problems. Nothing here runs them again.</small></p></details>':'';
+    const attention=count?'<details class="ux-run-attention"><summary>'+count+' run'+(count===1?'':'s')+' for these pictures need'+(count===1?'s':'')+' attention</summary>'+groups.attention.map(({job})=>'<p><b>'+escape(engine(job))+' · '+escape(job.status)+'</b>'+(runWhen(job.created_at)?' · '+escape(runWhen(job.created_at)):'')+' <small>'+escape(String(job.message||'').slice(0,160))+'</small> '+(StudioContinuation.combineInProblems(job)?'<button type="button" data-ux-problem="'+escape(job.id)+'">Open in Problems</button>':'<button type="button" data-ux-result-recipe="'+escape(job.id)+'">Recipe</button>')+'</p>').join('')+'<p><small>Each run keeps its recipe and any prompt IDs. Nothing here runs it again.</small></p></details>':'';
     const markup='<h3>Runs for these pictures</h3><p>Newest first. Prepare a seed to load its recipe; Generate is still your press.</p>'+live+(runs?'<div class="ux-experiment-strip">'+runs+'</div>':'<p class="ux-no-results">'+(pictures>1?'No runs for these pictures yet.':'Attach both pictures to see their runs.')+'</p>')+(total>RESULT_LIMIT?'<p>Showing the latest '+RESULT_LIMIT+' of '+total+' outputs. All of them stay in the library.</p>':'')+attention+'<p id="uxPairActionStatus" role="status"></p>';
     if(markup!==resultMarkup){const open=!!resultPanel.querySelector('.ux-run-attention')?.open;resultMarkup=markup;resultPanel.innerHTML=markup;const folded=resultPanel.querySelector('.ux-run-attention');if(folded)folded.open=open;}
   }
   resultPanel.onclick=async e=>{
     const button=e.target.closest('button');if(!button||button.disabled||pairActionBusy)return;
     if(button.dataset.uxResultRecipe){try{await exportRecipe(button.dataset.uxResultRecipe);}catch(error){announce(error.message,true);}return;}
-    if(button.dataset.uxProblem){const box=q('#jobProblems');if(box){box.open=true;const card=[...box.querySelectorAll('[data-problem]')].find(el=>el.dataset.problem===button.dataset.uxProblem);if(focusReadinessTarget(card||box.querySelector('summary')))return;}announce('Open Problems below the workbench to inspect this run.');return;}
+    if(button.dataset.uxProblem){
+      // Reveal this run's own card: Problems shows the newest five until asked for all, so ask before looking again.
+      const id=button.dataset.uxProblem,card=()=>{const box=q('#jobProblems');if(box)box.open=true;return [...(box?.querySelectorAll('[data-problem]')||[])].find(el=>el.dataset.problem===id&&!el.closest('.problemsPutAway'));};
+      let found=card();if(!found){q('#jobProblems [data-problems-toggle="all"]')?.click();found=card();}
+      if(!found||!focusReadinessTarget(found))announce('This run is not in the open Problems list. Its recipe stays available here.',true);
+      return;}
     if(!button.dataset.uxReview&&!button.dataset.uxRerun)return;
     const stamp=setupStamp();pairActionBusy=true;syncReady();let status='';
     try{
