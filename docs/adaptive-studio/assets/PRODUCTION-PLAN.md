@@ -6,7 +6,7 @@ adds no art. Art acceptance stays the owner's call at every stage; a route or a 
 
 **Assumption:** the pilot world is Retro Anime / Night Shift with a same-camera Quiet Morning still, as the kit proposes.
 Reason: the owner lifted the deferral without naming a world, and every existing pilot document assumes this one.
-Reversible by: naming another world in `HUMAN_TODO.md`; only wave 1's environment rows change.
+Reversible by: naming another world under `asset-plan-2026-09-27` in `HUMAN_TODO.md`; only wave 1's environment rows change.
 
 ## Routes
 

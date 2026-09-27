@@ -4,15 +4,17 @@
 
 > Work from `docs/adaptive-studio/assets/` in `Chris0Jeky/local-asset-studio`. Read README, ART-DIRECTION, DELIVERY-SPEC and the selected catalogue rows. This is a future production session; the strategy pass produced no art. First reconcile the repository and existing accepted assets. Do not replace current work or generate the entire catalogue.
 >
-> Before selecting those IDs, confirm the owner's open `adaptive-pilot-world` choice in `HUMAN_TODO.md`; the list below is a proposed lane, not a decision.
+> Before selecting IDs, confirm the pilot world recorded under `adaptive-pilot-world` in `HUMAN_TODO.md` (deferral lifted 27 September 2026; Retro Anime / Night Shift is the named assumption until the owner says otherwise).
 >
-> Start with these selected IDs: `retro-anime-master`, then `retro-anime-quiet`, `retro-anime-hero`, `retro-anime-poster`, `retro-anime-card`, `state-blank`, `state-source-required`. Resolve and approve the scene anchor before its derivatives. Prefer at most four initial master candidates, two targeted refinement rounds, and reused crops rather than independent images. These are proposed work limits; state the finite batch you are actually about to run.
+> Take the next unfinished wave from `PRODUCTION-PLAN.md`; each ID there has one route (GPU lab, owner-run ChatGPT with `CHATGPT-PROMPT-PACK.md`, code, download, capture or defer). Wave 1 starts with `retro-anime-master`, then `retro-anime-quiet`, `retro-anime-hero`, `retro-anime-poster`, `retro-anime-card` and `retro-anime-wall`; `workflow-create` and `reference-identity` run in ChatGPT in parallel. Resolve and approve the scene anchor before its derivatives. Prefer at most four initial master candidates, two targeted refinement rounds, and reused crops rather than independent images. These are proposed work limits; state the finite batch you are actually about to run.
 >
 > Use native image generation when it is available and appropriate. The owner calls the desired route “image 2.5”; discover the actual tool and record only the model/version it really exposes. Do not put an assumed model ID in API calls. Do not respond with tool argument JSON instead of creating the requested image. Do not claim a tool was used when only a prompt was written.
 >
 > Build each brief by running `python docs/adaptive-studio/assets/brief.py show <id>` or reading its row and referenced profile. Keep the approved anchor as the actual reference. Preserve camera, palette, proportions and text-safe areas. Generate artwork without UI copy or logos; type labels later as real HTML/vector content. Export actual sizes and record any resizing, alpha repair, cropping or compositing.
 >
 > Return the actual files, a small candidate review view, per-ID receipts and a clear distinction between produced, source-reviewed, artistically reviewed and runtime-qualified. Ask for owner art acceptance before declaring that stage complete. Package local renditions outside the normal source tree; submit manifests, prompts, accepted public preview selections and integration notes via reviewable PRs. Do not change ComfyUI packages, generation gates, API origins or existing private drafts to install a skin.
+
+Owner-made ChatGPT files come back through `inbox/` and `python docs/adaptive-studio/assets/intake.py receipts`; see the prompt pack.
 
 ## How to use a native image session well
 
