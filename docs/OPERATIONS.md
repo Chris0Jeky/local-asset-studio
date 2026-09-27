@@ -82,7 +82,7 @@ The migration copied the original artifacts; it did not move or delete them. `do
 1. Save a working API graph in `workflows/api/` and its visual counterpart in `workflows/comfyui/`.
 2. Add a catalog entry mapping controls to `[node-id, input-name]`. Use `bindings_extra` when one visible control must update multiple inputs, such as FLUX scheduler dimensions.
 3. Set `verified` false until a real generation succeeds. Add an honest commercial note and useful defaults.
-4. Run `python scripts/validate-repo.py` and the tests. The server rereads `presets/catalog.json` on every request, so reload the page; restart the studio only after `app/` changes.
+4. Run `python scripts/validate-repo.py` and the tests. The server rereads `presets/catalog.json` on every request, so reloading the page shows the new preset; no restart is needed.
 5. Try one image, inspect it, and record the outcome in `experiments/curated/`.
 
 Do not change one checkpoint dropdown to a different architecture and assume compatibility. SDXL checkpoints, FLUX, Qwen, ControlNets and LoRAs require matching graphs.
