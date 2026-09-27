@@ -779,6 +779,17 @@ class ServerTests(unittest.TestCase):
         live=FakeStudio(self.root,[{},{}]).health()
         self.assertIn("demo",live["missing_models"])
 
+    def test_health_reads_a_garbled_comfy_body_as_offline_or_schema_unavailable(self):
+        garbled=lambda:UnicodeDecodeError('utf-8',b'\xff',0,1,'invalid start byte')
+        self.assertFalse(FakeStudio(self.root,[garbled()]).health()["online"])
+        live=FakeStudio(self.root,[{},garbled()]).health()
+        self.assertTrue(live["online"]);self.assertFalse(live["schema_available"])
+
+    def test_deeply_nested_request_body_is_a_studio_error(self):
+        body=b'['*100000+b']'*100000
+        handler=server.Handler.__new__(server.Handler);handler.headers={'Content-Type':'application/json','Content-Length':str(len(body))};handler.rfile=io.BytesIO(body)
+        with self.assertRaisesRegex(server.StudioError,'nested'):handler._body_json()
+
     def test_identity_never_calls_backend_and_schema_discovery_is_cached(self):
         s=FakeStudio(self.root,[{}, {}, {}, {}])
         self.assertEqual(s.identity()['app'],'local-asset-studio'); self.assertEqual(s.requests,[])
