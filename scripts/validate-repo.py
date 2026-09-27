@@ -90,6 +90,8 @@ for preset in catalog:
             assert isinstance(authored,str) and authored.endswith('.safetensors') and authored==Path(authored).name, (preset['id'],key,authored)
             named_loras.append((preset['id']+' authored '+key,authored))
 # Vary subtle / strong routes (#1202): each resamples the kept picture on the same model, with recorded strengths.
+# A route that carries its source's recorded LoRA stack (`carry`, the WAI route) must use the exact same checkpoint
+# as every source and carry every adapter the source graph can load, adding none of its own.
 import continuation
 vary_problems=continuation.vary_catalog_problems(catalog,lambda preset:json.loads((root/preset['graph']).read_text(encoding='utf-8')))
 assert not vary_problems, vary_problems
