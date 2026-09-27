@@ -16,6 +16,20 @@ from large_job_prep_common import (
 )
 
 
+_RESTART_BLOCKED_MESSAGE = (
+    "Unresolved Studio work may still need its ComfyUI history. Open the job and use Resume "
+    "observation to collect its result first; the restart would erase ComfyUI's record of it."
+)
+_RESTART_BLOCKED_ALL_ABANDONED_MESSAGE = (
+    "Abandoned Studio jobs still have prompts in ComfyUI's history, and Resume observation does not "
+    "reopen an abandoned job. The restart stays refused until ComfyUI no longer holds those prompts; "
+    "open the job under Problems first if you want its outputs."
+)
+_RESTART_BLOCKED_MIXED_ABANDONED_SUFFIX = (
+    " Abandoned jobs among them cannot be resumed; they block until ComfyUI no longer holds their prompts."
+)
+
+
 class RuntimeMixin:
     @staticmethod
     def _open_prompts(job: dict[str, Any]) -> list[str] | None:
@@ -186,9 +200,14 @@ class RuntimeMixin:
         remaining, checks, absent = self._restart_history(blockers, verified_absent)
         summary = _blocker_summary(remaining, checks)
         if remaining:
+            if all(item.get("status") == "abandoned" for item in remaining):
+                message = _RESTART_BLOCKED_ALL_ABANDONED_MESSAGE
+            elif any(item.get("status") == "abandoned" for item in remaining):
+                message = _RESTART_BLOCKED_MESSAGE + _RESTART_BLOCKED_MIXED_ABANDONED_SUFFIX
+            else:
+                message = _RESTART_BLOCKED_MESSAGE
             raise WorkBlockedError(
-                "Unresolved Studio work may still need its ComfyUI history. Open the job and use Resume "
-                "observation to collect its result first; the restart would erase ComfyUI's record of it.",
+                message,
                 summary, "restart_blocked_by_unresolved_work",
             )
         summary["_history_absent"] = absent
