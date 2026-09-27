@@ -1,0 +1,24 @@
+{
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+    "positive": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092701,
+    "steps": 15,
+    "cfg": 1,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+    "lora": 1.0,
+    "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790481588.2006116,
+  "references": [],
+  "parent_assets": []
+}

@@ -99,22 +99,27 @@
   const presetWording=p=>({positive:p?.defaults?.positive||'',negative:p?.defaults?.negative||''});
   const forgetWording=()=>{wordingKept=null;wordingUndo.hidden=true;};
   function offerWording(name){const kept=wordingKept,now=wording();if(!kept||!selected)return;
+    // Written by something else after the load in the same task: that write stands, so there is nothing to offer (#1144).
+    if(kept.loaded&&(now.positive!==kept.loaded.positive||now.negative!==kept.loaded.negative)){forgetWording();return;}
     const positive=kept.positive!==null&&kept.positive!==now.positive,negativeFits=!!selected.negative&&!!q('#negative');
     const negative=kept.negative!==null&&negativeFits&&kept.negative!==now.negative,lost=kept.negative!==null&&!negativeFits;
     if(!positive&&!negative&&!lost){forgetWording();return;}
-    kept.loaded=now;kept.restorable=positive||negative;wordingRestore.hidden=!kept.restorable;
+    kept.restorable=positive||negative;wordingRestore.hidden=!kept.restorable;
     wordingText.textContent=(kept.restorable?name+' loaded its own wording. Yours is kept until you type or choose.':'')+(lost?(kept.restorable?' ':'')+selected.name+' has no negative prompt, so your negative wording is not used: “'+kept.negative.slice(0,160)+(kept.negative.length>160?'…':'')+'”':'');
     wordingUndo.hidden=false;if(kept.restorable&&!selected.runtime_block)message('Loaded with its own wording. Yours is kept under the prompt: Put my wording back, or keep typing.');}
   function trackWording(name,kind){const original=window[name];window[name]=function(...args){
     const outer=wordingDepth===0,before=outer?wording():null,base=wordingBase||presetWording(selected);wordingDepth++;
     let result;try{result=original.apply(this,args);}finally{wordingDepth--;}
     if(!outer)return result;
-    if(kind==='setup'||kind==='preset'&&args[2]===true){forgetWording();wordingBase=presetWording(selected);return result;}
+    // A setup, import or draft loads its own wording: that text is loaded, not typed, like a recipe's (#1144).
+    if(kind==='setup'||kind==='preset'&&args[2]===true){forgetWording();wordingBase=kind==='setup'?wording():presetWording(selected);return result;}
     const own=key=>!!String(before[key]).trim()&&before[key]!==base[key]?before[key]:null,positive=own('positive'),negative=own('negative');
     // Your wording replaces an older offer; a load over untouched wording keeps the older one (a misclick in between).
     if(positive!==null||negative!==null)wordingKept={positive,negative};
     const recipe=kind==='recipe'?args[0]:null;wordingBase=recipe?{positive:recipe.controls?.positive??wording().positive,negative:recipe.controls?.negative??wording().negative}:presetWording(selected);
     // Measured after the caller finishes (a bundle apply sets its own wording in the same task).
+    // The loaded wording is recorded as this call ends, so a write later in the same task counts as an edit (#1144).
+    if(wordingKept)wordingKept.loaded=wording();
     if(wordingKept){const label=recipe?'Loading '+(recipe.name||'this recipe'):'Switching to '+selected.name;queueMicrotask(()=>offerWording(label));}
     return result;};}
   trackWording('selectPreset','preset');trackWording('applyRecipe','recipe');trackWording('applySaved','setup');

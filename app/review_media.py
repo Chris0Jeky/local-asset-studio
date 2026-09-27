@@ -66,7 +66,7 @@ def decode(data):
             return image, {'encoded_size': original_size, 'oriented_size': list(image.size),
                            'exif_orientation': orientation,
                            'colour': '8-bit review preview; embedded ICC profiles are not colour-managed'}
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
+    except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as exc:
         raise ValueError('Review source could not be decoded within the still-image contract') from exc
 
 

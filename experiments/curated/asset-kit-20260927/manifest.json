@@ -1,0 +1,852 @@
+[
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-c1",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "6aa6cbbf-3693-4d26-9a29-2520cb4444ea",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/retro-anime-master-c1_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-c1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "ff8cede43f55513c908a0ab4927f46f6d3575e51324659fcf4116a7cc5d85228",
+  "verdict": "reject",
+  "worst_defect": "a seated person occupies the left-centre wall (whole frame); the brief forbids characters. Cause: \"camera at seated height\" wording"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-c2",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "ba54a4e6-f95a-49b3-8747-bc8bb51cdeb0",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/retro-anime-master-c2_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-c2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "9fdff035560f3b2686394f10177d68f8960b94e01eb22955a4b76c18e707d6a4",
+  "verdict": "reject",
+  "worst_defect": "a seated person occupies the left-centre wall (whole frame); the brief forbids characters. Cause: \"camera at seated height\" wording"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-c3",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "648de4a5-1df3-4dc8-a9ee-0294fb4f4a45",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/retro-anime-master-c3_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-c3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "9f96b2dad3c467b18ca5fb413dbd0e1aa1702a4016b67280fdfcea0501accca0",
+  "verdict": "reject",
+  "worst_defect": "a seated person occupies the left-centre wall (whole frame); the brief forbids characters. Cause: \"camera at seated height\" wording"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-c4",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "6610c49a-e630-4c62-b29f-445c80f66926",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/retro-anime-master-c4_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-c4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "c6629ad3847e5a44003704cc896bd29e7ba9a7b11382334551da4017baa5c36a",
+  "verdict": "reject",
+  "worst_defect": "a seated person occupies the left-centre wall (whole frame); the brief forbids characters. Cause: \"camera at seated height\" wording"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-c1",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "4472b703-ee9b-4f8d-a6b8-0fc9e458f8fa",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/atelier-master-c1_00001_.png",
+  "local": "asset-kit/atelier-master/atelier-master-c1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "f6d29b39d7094f7869496021339e9268a05e2986897ffb76e16d2b9e5363b2be",
+  "verdict": "reject",
+  "worst_defect": "a seated person occupies the left-centre wall (whole frame); the brief forbids characters. Cause: \"camera at seated height\" wording"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-c2",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "3835d07a-8aff-44c8-957c-c5d736130513",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/atelier-master-c2_00001_.png",
+  "local": "asset-kit/atelier-master/atelier-master-c2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "8bfb8ae01801828245c32be66b5b90d00ebb22cece4179218d9c22c30e0f8388",
+  "verdict": "reject",
+  "worst_defect": "a seated person occupies the left-centre wall (whole frame); the brief forbids characters. Cause: \"camera at seated height\" wording"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-c3",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "328dd7cc-15b2-4ec1-a3fe-9c138546d921",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/atelier-master-c3_00001_.png",
+  "local": "asset-kit/atelier-master/atelier-master-c3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "0d8a2304e9c8a2ecba48e2becdc9fa4a7d6c9ffd761691fceb18031ce0aed0c9",
+  "verdict": "reject",
+  "worst_defect": "a seated person occupies the left-centre wall (whole frame); the brief forbids characters. Cause: \"camera at seated height\" wording"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-c4",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "d21d0a3d-9e02-4dc4-9487-262995e13c6a",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/atelier-master-c4_00001_.png",
+  "local": "asset-kit/atelier-master/atelier-master-c4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "f04d06a7dc0809308ed878ac234c566999bb018b7fcc6ccfcc58b258e2d3b445",
+  "verdict": "reject",
+  "worst_defect": "a seated person occupies the left-centre wall (whole frame); the brief forbids characters. Cause: \"camera at seated height\" wording"
+ },
+ {
+  "world": "sakura-master",
+  "key": "sakura-master-c1",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "a6088356-6a58-4fb0-ad62-5d4d5bd5c9a3",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/sakura-master-c1_00001_.png",
+  "local": "asset-kit/sakura-master/sakura-master-c1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "26dd13d171f0d3b8b6b98487b1b6c2e2f9f95de0e80c09232238a9c05c2a6a57",
+  "verdict": "keep",
+  "worst_defect": "blossom window at 53-100% width; the desk runs along the bottom-left corner into the quiet zone (crop 0,440-900,768)"
+ },
+ {
+  "world": "sakura-master",
+  "key": "sakura-master-c2",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "ef7c7041-8c7f-4cc1-8090-2c2dd79bff13",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/sakura-master-c2_00001_.png",
+  "local": "asset-kit/sakura-master/sakura-master-c2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "a1d90e3cfc2c1c84005d8f6e93fe9d6186587419cda9a5fa2e36acc4f41ff277",
+  "verdict": "keep",
+  "worst_defect": "open sliding door onto the blossom tree and stone lantern at right, small desk under it; left wall empty"
+ },
+ {
+  "world": "sakura-master",
+  "key": "sakura-master-c3",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "c7682c97-80fd-4460-84a5-8a41ef132ab7",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/sakura-master-c3_00001_.png",
+  "local": "asset-kit/sakura-master/sakura-master-c3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "ca0c0945893c6b91c86c88f297969e17151893c9b6c6282f0470124084e8d0aa",
+  "verdict": "keep",
+  "worst_defect": "largest tree, strong interest right-of-centre; desk corner bottom-left (crop 0,640-400,768)"
+ },
+ {
+  "world": "sakura-master",
+  "key": "sakura-master-c4",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "c24e42ae-7793-4040-8533-a83a41a6c6cd",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/sakura-master-c4_00001_.png",
+  "local": "asset-kit/sakura-master/sakura-master-c4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "f84a86c96708ca053c82d08b41414210457b15160473c29b07f8bd63cafbb3dc",
+  "verdict": "keep",
+  "worst_defect": "tree in a doorway at far right, table in the centre-right foreground partly inside the quiet zone (crop 700,550-1100,768)"
+ },
+ {
+  "world": "minimal-pro-master",
+  "key": "minimal-pro-master-c1",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "07dadf6e-6c5e-46c3-bb00-31d91e8f6f1e",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/minimal-pro-master-c1_00001_.png",
+  "local": "asset-kit/minimal-pro-master/minimal-pro-master-c1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "758f1245e4f06522f9be8a71ab07f27e1365dc9eca6d62b8872606861de31446",
+  "verdict": "reject",
+  "worst_defect": "desk fills the centre and right half, no quiet left wall and no skylight (whole frame)"
+ },
+ {
+  "world": "minimal-pro-master",
+  "key": "minimal-pro-master-c2",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "159ad7be-8db2-4278-99f4-8960fdfe3463",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/minimal-pro-master-c2_00001_.png",
+  "local": "asset-kit/minimal-pro-master/minimal-pro-master-c2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "45a4678e2b2b1bbe42f41ec8d2c34debe495ada4a4773dd99c9152f52f064f4c",
+  "verdict": "keep",
+  "worst_defect": "plain graphite wall, desk and sheet at the far right under a daylight wedge; almost monochrome"
+ },
+ {
+  "world": "minimal-pro-master",
+  "key": "minimal-pro-master-c3",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "eb17d579-f62f-47f9-a82c-9b3652ebde6b",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/minimal-pro-master-c3_00001_.png",
+  "local": "asset-kit/minimal-pro-master/minimal-pro-master-c3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "8fc0a844fd43cb61f0554e9db3a75822e9bcddf0684cfa73a9c55937fd5b3705",
+  "verdict": "keep",
+  "worst_defect": "daylight on the far wall, desk at 60-100% width with chair back; floor seam visible (crop 0,700-1344,768)"
+ },
+ {
+  "world": "minimal-pro-master",
+  "key": "minimal-pro-master-c4",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "452764b9-e53e-4523-a729-9e967eaace94",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/minimal-pro-master-c4_00001_.png",
+  "local": "asset-kit/minimal-pro-master/minimal-pro-master-c4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "85a432797dfbff5bf741b7c1c6042ed73b3ae4e0f97c96d423667a0eaf9628aa",
+  "verdict": "keep",
+  "worst_defect": "quiet wall, desk and sheet low right under a soft light rectangle"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-r1",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "9bbf4b35-17d6-4832-941f-092eb00a538a",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/retro-anime-master-r1_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-r1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "e37990644f6371a26b936981a6090f5798d427a3d17e381037e70456c8a26d93",
+  "verdict": "fixable",
+  "worst_defect": "chair and desk sit at 50-95% width, intruding on the text-safe centre; rendering reads semi-3D rather than cel (crop 520,330-900,768)"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-r2",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "98f5f1ce-58d5-4edc-80c7-162449748d60",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/retro-anime-master-r2_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-r2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "a34beb9a450b89c83b93953929b66f13c634337cfd07a66e0a221492fb2b09b9",
+  "verdict": "fixable",
+  "worst_defect": "very quiet wall, desk at the far right; flat semi-3D rendering and almost no rose/cyan reflection on the glass (crop 1180,0-1344,500)"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-r3",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "450cea85-b084-47a7-a402-b97615136469",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/retro-anime-master-r3_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-r3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "f7d83ccb19f384de5151e5eecce708bd1e48f328d33763d41a5580facb1eaa42",
+  "verdict": "keep",
+  "worst_defect": "desk and CRT at 55-75% width; lit coloured billboard shapes in the window carry no lettering (crop 1100,250-1344,480)"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-r4",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "d2372990-f7c9-4eaa-b734-bb04d4bb80a7",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/retro-anime-master-r4_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-r4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "c816c993ec54a447fa2b94b01e1c8259da2a35aac747039765238ec5b8ba4c49",
+  "verdict": "keep",
+  "worst_defect": "desk close at right with CRT, lamp and blank sheets; floor reflections plain; semi-3D wall shading (crop 1000,600-1344,768)"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-r1",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "c2a90f50-bcf6-4925-8d50-5591cd317e00",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/atelier-master-r1_00001_.png",
+  "local": "asset-kit/atelier-master/atelier-master-r1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "c014b3cff681382091e1a01a3c46d57989f5ccfa0d37d7b88f4e3b5392eb73fb",
+  "verdict": "fixable",
+  "worst_defect": "desk and chair start at ~27% width, into the quiet zone; sketch on the paper is a drawing, not text (crop 360,480-1000,768)"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-r2",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "dfca2908-3b0f-4a5f-8e52-5837c90e77d2",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/atelier-master-r2_00001_.png",
+  "local": "asset-kit/atelier-master/atelier-master-r2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "f0a91b9eeb009fc235ac49c0c852d69be65b29dad541eae0d8a34466f595d80c",
+  "verdict": "keep",
+  "worst_defect": "drafting table at the right edge with the doorway and courtyard beyond; clean quiet wall (crop 1100,150-1344,768)"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-r3",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "b1ff249b-b5d3-4a1e-88c8-0879c2e6905a",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/atelier-master-r3_00001_.png",
+  "local": "asset-kit/atelier-master/atelier-master-r3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "ab3af144af3d8370215e16878c6b5eece1d83b251311a58aaf806ef23a1016f8",
+  "verdict": "keep",
+  "worst_defect": "desk at 53-100% width, open doorway with a tree; curtain folds clean (crop 700,480-1344,768)"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-r4",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "fda4ea4b-8d17-4ad9-90fc-1b260fa5fb5a",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/asset-kit/atelier-master-r4_00001_.png",
+  "local": "asset-kit/atelier-master/atelier-master-r4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "625040e64786b9f8005fd84ca5c3f58dd9518c2c6611c567bd8715a99fb757e0",
+  "verdict": "keep",
+  "worst_defect": "desk and chair at 65-100% width, lamp slightly cut at the right edge (crop 1250,300-1344,500)"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-q0",
+  "model": "Qwen-Image 2.1 INT8 (qwen21 backend, direct)",
+  "prompt_id": "6f754ccf-e631-41cc-9368-fb91d4da519e",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/wishlist/cmp-qwen21_00001_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-q0.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "cb2453bbf80872ea57dadbd0db13dc420ef524fc1f2a09537cb48d882395414f",
+  "verdict": "keep",
+  "worst_defect": "chair back and desk start at ~44% width, slightly inside the quiet 60% (crop 560,420-760,768); little rose in the reflections"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-z1",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "66472bbf-a3b7-4d0a-bafc-eaf9dda6de90",
+  "job_id": "eb59a275-6750-49c3-80f0-738b908992b4",
+  "source": "primary:output/Studio/Z-Image-Fast_00003_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-z1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "1ce04c25d950ec34ce986d5663e2cbd19c7e872f622da59b84f1ffbf2c1c87f7",
+  "verdict": "keep",
+  "worst_defect": "room corner and floor seam at far left; pink window lights are shapes, not lettering (crop 940,0-1344,560)"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-z2",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "adfc94c4-0de0-44af-ae72-72b3133742f0",
+  "job_id": "c69e6e18-4739-458d-b546-1dd6e8174e19",
+  "source": "primary:output/Studio/Z-Image-Fast_00004_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-z2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+  "verdict": "keep",
+  "worst_defect": "chair back at 75% width; train with rose stripe in the window, no lettering (crop 940,0-1344,560)"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-z3",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "8da22504-57d0-4652-a203-1107cf030f3b",
+  "job_id": "80e14ff2-12aa-42a1-916d-8dfaec5933cb",
+  "source": "primary:output/Studio/Z-Image-Fast_00005_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-z3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "5ab20b170768edbcacc3c16471eb47eccc6270cacd414277d6f5ba5d4090b3fb",
+  "verdict": "keep",
+  "worst_defect": "small dark picture frame on the left wall inside the quiet zone and a box at bottom right (crop 0,130-90,330)"
+ },
+ {
+  "world": "retro-anime-master",
+  "key": "retro-anime-master-z4",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "2df360b1-c5b9-4323-beb9-6194e023ec68",
+  "job_id": "7a04a1cc-2111-44be-b46b-7b3ea6f31394",
+  "source": "primary:output/Studio/Z-Image-Fast_00006_.png",
+  "local": "asset-kit/retro-anime-master/retro-anime-master-z4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "9233185b293b46008d62b0c603fcf1e9efa1054acf692547dfce7e51efc46447",
+  "verdict": "keep",
+  "worst_defect": "wall socket near the desk; quietest wall of the four (crop 900,650-1000,760)"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-z1",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "d2c2ce3d-abd8-4ebe-9cff-f09aa128fa7a",
+  "job_id": "cccb16f4-c6fe-4bfd-9a90-6e035da1f059",
+  "source": "primary:output/Studio/Z-Image-Fast_00007_.png",
+  "local": "asset-kit/atelier-master/atelier-master-z1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "a6dfbeb88b272d8d406841cbf7fe3b385426183dde55589ddcc5af13e121a2e7",
+  "verdict": "keep",
+  "worst_defect": "a diagonal warm light band crosses the quiet wall; window with trees rather than an open doorway (whole frame)"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-z2",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "bd0a0091-fa6c-4e16-bb1c-9e92477076fc",
+  "job_id": "35fdc415-5fc9-4609-84f0-709205554b01",
+  "source": "primary:output/Studio/Z-Image-Fast_00008_.png",
+  "local": "asset-kit/atelier-master/atelier-master-z2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "05ab373fd88dc918efa0fbcf372b1375c4f5527c0c07886ec399780d8ea0df64",
+  "verdict": "keep",
+  "worst_defect": "same light band; chair back cut at the bottom edge (crop 960,650-1040,768)"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-z3",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "ffdadffb-6fdb-474b-845d-f7c52488635e",
+  "job_id": "6c2a3a16-54df-4d18-8989-72aa29ae0559",
+  "source": "primary:output/Studio/Z-Image-Fast_00009_.png",
+  "local": "asset-kit/atelier-master/atelier-master-z3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "9c8f2f37725a247cd14f378efd9e0f1b9cbf6aea97d179a2ad9fd898763eec17",
+  "verdict": "keep",
+  "worst_defect": "desk lower and closer, pencil on the paper; light band on the wall (whole frame)"
+ },
+ {
+  "world": "atelier-master",
+  "key": "atelier-master-z4",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "d438e673-3052-4996-90cf-466508cd7d30",
+  "job_id": "b32293e0-6d23-4b9b-800b-d2a1e7e10465",
+  "source": "primary:output/Studio/Z-Image-Fast_00010_.png",
+  "local": "asset-kit/atelier-master/atelier-master-z4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "cd7e02656ebb330375376c8df2220685caa3a399067bdcc71a474fa1de968274",
+  "verdict": "keep",
+  "worst_defect": "desk at the far right, calmest wall of the four; window, not a doorway (whole frame)"
+ },
+ {
+  "world": "sakura-master",
+  "key": "sakura-master-z1",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "3f3ca000-9af2-49e8-a1d7-5e6d30dcdf8c",
+  "job_id": "f62a5c32-a927-4b32-9b3b-ac1e63f399aa",
+  "source": "primary:output/Studio/Z-Image-Fast_00011_.png",
+  "local": "asset-kit/sakura-master/sakura-master-z1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "b4f44bc5d65a9306194143b8f92f03b0e9108de3cf57018ba1303d1146ba5aef",
+  "verdict": "keep",
+  "worst_defect": "blossom window at 62-93% width, low table under it; petals stay outside (crop 830,30-1250,540)"
+ },
+ {
+  "world": "sakura-master",
+  "key": "sakura-master-z2",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "765fd86d-c760-48eb-9ddf-d299bd277948",
+  "job_id": "30324332-c49c-4696-90f4-ce884b394a58",
+  "source": "primary:output/Studio/Z-Image-Fast_00012_.png",
+  "local": "asset-kit/sakura-master/sakura-master-z2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "779c64d8fd7f4848971a3e768fd6d8e4db15206898346c018f3aeecded28f1fe",
+  "verdict": "keep",
+  "worst_defect": "open doorway with the tree and wet stones at right, low table in front (crop 1100,0-1344,768)"
+ },
+ {
+  "world": "sakura-master",
+  "key": "sakura-master-z3",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "4e117a0c-28d7-470b-a04e-14ba72eed9a5",
+  "job_id": "4e2b6bec-0053-4196-a3c2-fc3962d3613a",
+  "source": "primary:output/Studio/Z-Image-Fast_00013_.png",
+  "local": "asset-kit/sakura-master/sakura-master-z3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "009c946b389752043eb508a0017de5d814f3c9c5aa964b85910186a353ba502e",
+  "verdict": "keep",
+  "worst_defect": "table runs along the bottom edge at 55-100% width (crop 730,700-1344,768)"
+ },
+ {
+  "world": "sakura-master",
+  "key": "sakura-master-z4",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "2dbc6599-5819-489d-9b00-2b1faee179e4",
+  "job_id": "1600f4cb-242d-4e67-82eb-df1c455ff721",
+  "source": "primary:output/Studio/Z-Image-Fast_00014_.png",
+  "local": "asset-kit/sakura-master/sakura-master-z4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "bbd387299828639123c75a558ac020155383a27b2ab2080941560484d2f4e4d6",
+  "verdict": "keep",
+  "worst_defect": "doorway with the tree at far right; left wall panel empty (whole frame)"
+ },
+ {
+  "world": "minimal-pro-master",
+  "key": "minimal-pro-master-z1",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "8005cae6-3fe3-40f0-8c5f-8404b0739180",
+  "job_id": "fc15ba14-5535-4ab2-892d-6a356b281fae",
+  "source": "primary:output/Studio/Z-Image-Fast_00015_.png",
+  "local": "asset-kit/minimal-pro-master/minimal-pro-master-z1.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "cf6c7fd08ccaa102a10420a0cec63d6e7105082bc0a5b151ce70aff476e81ba2",
+  "verdict": "keep",
+  "worst_defect": "skylight at top centre pulls the eye to the middle; desk low right (crop 350,0-950,90)"
+ },
+ {
+  "world": "minimal-pro-master",
+  "key": "minimal-pro-master-z2",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "17546cd7-e46f-416f-a566-a99d14e6ba8e",
+  "job_id": "f0ac9493-d0cc-4cd9-a0f9-c83e5882917e",
+  "source": "primary:output/Studio/Z-Image-Fast_00016_.png",
+  "local": "asset-kit/minimal-pro-master/minimal-pro-master-z2.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "75041c37380d0dca98cee6fd03483a86272795215be032d16250c15c5db04d1d",
+  "verdict": "keep",
+  "worst_defect": "skylight at top centre-right; symmetric box room (whole frame)"
+ },
+ {
+  "world": "minimal-pro-master",
+  "key": "minimal-pro-master-z3",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "623b9637-790a-49b4-8746-9a0a06956e5b",
+  "job_id": "64ce13a9-d879-4acc-ab61-260a45195524",
+  "source": "primary:output/Studio/Z-Image-Fast_00017_.png",
+  "local": "asset-kit/minimal-pro-master/minimal-pro-master-z3.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "8a61b7e42842ea2d418b64e305ed5bb62c3464da8b5051cb3a7be0546820a8f9",
+  "verdict": "keep",
+  "worst_defect": "skylight top left-centre; desk bottom centre-right at 54-100% width (crop 730,640-1344,768)"
+ },
+ {
+  "world": "minimal-pro-master",
+  "key": "minimal-pro-master-z4",
+  "model": "Z-Image Turbo fp8 (zimage-fast, Studio)",
+  "prompt_id": "13b89e63-f22e-4b6f-b73e-fbad6c4c613b",
+  "job_id": "07cbe3b6-ec53-45b2-ac3c-33e90d854e86",
+  "source": "primary:output/Studio/Z-Image-Fast_00018_.png",
+  "local": "asset-kit/minimal-pro-master/minimal-pro-master-z4.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "36dec1db396f8fcaea55cc62485ad4d99bdc5e9eb830ce00f54ed554f3882f8f",
+  "verdict": "keep",
+  "worst_defect": "skylight top centre; desk at the far right edge (whole frame)"
+ },
+ {
+  "world": "state-blank",
+  "key": "state-blank-c1",
+  "model": "Qwen-Image 2.1 RGBA (qwen21-rgba, Studio)",
+  "prompt_id": "7e730265-8d8a-4401-b6b7-38f4eb920af2",
+  "job_id": "cb64c513-f3f6-4f31-b03b-bad511c2c9d0",
+  "source": "qwen21:output/Studio/qwen21-rgba_00002_.png",
+  "local": "asset-kit/state-blank/state-blank-c1.png",
+  "size": [
+   1248,
+   832
+  ],
+  "mode": "RGBA",
+  "sha256": "1a1d057abc99132c69e02b1271660996abd34c3b885d279813cbc406eb409efc",
+  "verdict": "fixable",
+  "worst_defect": "grey matte smear around the inner frame and spine, visible on a dark surface (crop 650,150-1100,700)"
+ },
+ {
+  "world": "state-blank",
+  "key": "state-blank-c2",
+  "model": "Qwen-Image 2.1 RGBA (qwen21-rgba, Studio)",
+  "prompt_id": "0be5064e-4711-4d6d-95bf-ba412a7677fc",
+  "job_id": "ffec7325-0368-497c-a7a5-2cf369ba14f0",
+  "source": "qwen21:output/Studio/qwen21-rgba_00003_.png",
+  "local": "asset-kit/state-blank/state-blank-c2.png",
+  "size": [
+   1248,
+   832
+  ],
+  "mode": "RGBA",
+  "sha256": "b65f2a1feaa8ad6c30ab6802235bb7068f38b0f30663f048722c88393061ae64",
+  "verdict": "keep",
+  "worst_defect": "clean alpha on light and dark; thin grey lines are low-contrast on dark (crop 1000,250-1240,620)"
+ },
+ {
+  "world": "state-source-required",
+  "key": "state-source-required-c1",
+  "model": "Qwen-Image 2.1 RGBA (qwen21-rgba, Studio)",
+  "prompt_id": "97b757d0-1896-4b6d-9e8f-1dfda753292f",
+  "job_id": "587920ae-a4e6-4f72-b5e6-a0260f08727e",
+  "source": "qwen21:output/Studio/qwen21-rgba_00004_.png",
+  "local": "asset-kit/state-source-required/state-source-required-c1.png",
+  "size": [
+   1248,
+   832
+  ],
+  "mode": "RGBA",
+  "sha256": "b918213abbe9560dca7455b1e3f8887517d6c5d1f8395ba435d13e94718738f2",
+  "verdict": "fixable",
+  "worst_defect": "frame nearly fills the canvas and the corner bracket is a tiny tick at lower left (crop 80,430-300,650)"
+ },
+ {
+  "world": "state-source-required",
+  "key": "state-source-required-c2",
+  "model": "Qwen-Image 2.1 RGBA (qwen21-rgba, Studio)",
+  "prompt_id": "1ce3b593-4dca-45e8-ac83-4d5d2ffd7eb7",
+  "job_id": "8bc356c4-aad8-4604-9c0d-45cbeb85f634",
+  "source": "qwen21:output/Studio/qwen21-rgba_00005_.png",
+  "local": "asset-kit/state-source-required/state-source-required-c2.png",
+  "size": [
+   1248,
+   832
+  ],
+  "mode": "RGBA",
+  "sha256": "d632ac6dedc9180db32a8dc4ada505688b55c09ff7e4a850654eb1be51005daf",
+  "verdict": "fixable",
+  "worst_defect": "outer frame line runs to the canvas edges; bracket is a small grey block (crop 0,640-120,832)"
+ },
+ {
+  "world": "comparison",
+  "key": "cmp-krea-retro",
+  "model": "Krea 2 GGUF + retro-anime LoRA",
+  "prompt_id": "e21d6ee7-02b1-4641-ba2d-5d16d547a399",
+  "job_id": "57bd99fc-3002-46fe-8258-24708ef589c4",
+  "source": "primary:output/Studio/krea-portrait-gguf_00002_.png",
+  "local": "asset-kit/comparison/cmp-krea-retro.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "2482315364e94edab5a21dde9f50166f18c56eb85977300a87ab9e6876d3cac0",
+  "verdict": "fixable",
+  "worst_defect": "heavy purple cast from the \"purple retro anime style\" trigger; brief wants graphite with rose/cyan accents (whole frame)"
+ },
+ {
+  "world": "comparison",
+  "key": "cmp-krea-atelier",
+  "model": "Krea 2 GGUF atelier stack",
+  "prompt_id": "ef329d65-a03f-41bf-ac47-4d0f0fde670c",
+  "job_id": "b6217f9a-ab57-4ea0-9a6b-dcf9d7be0a85",
+  "source": "primary:output/Studio/krea-anime-atelier-gguf_00011_.png",
+  "local": "asset-kit/comparison/cmp-krea-atelier.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "0ca6557dcf3069d37937224c2331690052321b45fa43175e721b89c740a69e30",
+  "verdict": "fixable",
+  "worst_defect": "pinned notes, leaning boards and a chair fill the left and centre; roses and graphite palette on-brief (crop 0,300-700,768)"
+ },
+ {
+  "world": "comparison",
+  "key": "cmp-zimage",
+  "model": "Z-Image Turbo fp8",
+  "prompt_id": "f86d3248-5c7a-4f55-8d99-5cc99c44bd22",
+  "job_id": "e661fa19-a8c7-4f0a-aaf5-41c1ebb817a5",
+  "source": "primary:output/Studio/Z-Image-Fast_00002_.png",
+  "local": "asset-kit/comparison/cmp-zimage.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "14532a5ce3713577b4b387fc7dd7e5db386f5ca3af7b92bc44215a73e76d018c",
+  "verdict": "keep",
+  "worst_defect": "dark picture frame at the far left edge of the quiet wall (crop 0,180-60,360)"
+ },
+ {
+  "world": "comparison",
+  "key": "cmp-wai",
+  "model": "WAI v17 (SDXL)",
+  "prompt_id": "814fe6be-f0b4-4727-9d58-13a51d4afba7",
+  "job_id": "6443797c-1955-4fb4-b687-33d57f0d6718",
+  "source": "primary:output/Studio/WAI-Illustration_00046_.png",
+  "local": "asset-kit/comparison/cmp-wai.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "099691f160eb3a92833ba42fab41ffaef69807b039b4e3571a79f97d792b4467",
+  "verdict": "reject",
+  "worst_defect": "symmetric twin desks and framed pictures on both walls; no quiet left wall (whole frame)"
+ },
+ {
+  "world": "comparison",
+  "key": "cmp-qwen21",
+  "model": "Qwen-Image 2.1 INT8",
+  "prompt_id": "6f754ccf-e631-41cc-9368-fb91d4da519e",
+  "job_id": null,
+  "source": "qwen21:output/Research/lab-20260927/wishlist/cmp-qwen21_00001_.png",
+  "local": "asset-kit/comparison/cmp-qwen21.png",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGB",
+  "sha256": "cb2453bbf80872ea57dadbd0db13dc420ef524fc1f2a09537cb48d882395414f",
+  "verdict": "keep",
+  "worst_defect": "chair back and desk start at ~44% width, slightly inside the quiet 60% (crop 560,420-760,768); little rose in the reflections"
+ }
+]

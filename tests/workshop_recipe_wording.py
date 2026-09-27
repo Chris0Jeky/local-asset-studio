@@ -146,5 +146,21 @@ class RecipeWording(unittest.TestCase):
         self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden())
         self.assertIn('nothing was replaced', self.page.locator('#uxNotice').inner_text())
 
+    # #1144 (follow-up review of #1131).
+    def test_setup_loaded_wording_is_not_yours(self):
+        self.page.evaluate("applySaved({preset:'anima-portrait',controls:{positive:'Saved setup wording'}})")
+        self.switch('sdxl')
+        self.page.wait_for_timeout(100)
+        self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden(), 'a setup loaded that text; nobody typed it')
+
+    def test_a_write_in_the_same_task_after_a_switch_is_never_replaced(self):
+        self.page.fill('#positive', MINE)
+        self.page.evaluate("""()=>{document.querySelector('#presetList [data-id="sdxl"]').click();
+          document.getElementById('positive').value='Written right after the switch';}""")
+        self.page.wait_for_function("selected.id==='sdxl'")
+        self.page.wait_for_timeout(100)
+        self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden(), 'the later write stands; nothing to offer')
+        self.assertEqual(self.page.input_value('#positive'), 'Written right after the switch')
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
