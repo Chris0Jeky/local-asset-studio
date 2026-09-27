@@ -208,6 +208,14 @@ def run(screenshots):
             page.wait_for_function('document.querySelector("#uxDraftStatus").textContent.includes("Another tab")');page.fill('#positive','Do not overwrite the other tab');page.wait_for_timeout(400);check(page.evaluate('JSON.parse(localStorage.getItem("studio-draft-v1:ux-test-workspace:gentle-variation")).recipe.controls.positive')=='Other tab draft','cross-tab conflict pauses autosave');other.close();page.click('#uxKeepDraft');check(page.evaluate('JSON.parse(localStorage.getItem("studio-draft-v1:ux-test-workspace:gentle-variation")).recipe.controls.positive')=='Do not overwrite the other tab','explicit keep-this-tab resolves draft conflict')
             check(set(x['path'] for x in POSTS) <= {'/api/estimate','/api/assets/reference','/api/references/check','/api/prompt/compile','/api/jobs/trackable-job/stop-tracking'},'all tested navigation and handoffs avoid execution and setup mutations')
             check(not errors,'no browser exceptions through all journeys: '+str(errors))
+            # Handoff 03: dialog actions sat below the fold (Plan comparison at 1440x900, asset details at 900 px tall).
+            reachable="([s,d])=>{const r=document.querySelector(s).getBoundingClientRect(),b=document.querySelector(d).getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;return r.height>0&&r.top>=Math.max(0,b.top)&&r.bottom<=Math.min(innerHeight,b.bottom)&&document.querySelector(s).contains(document.elementFromPoint(x,y))}"
+            for width,height in ((1440,900),(390,844)):
+                v=browser.new_page(viewport={'width':width,'height':height});v.goto(origin+'/#create');v.wait_for_function('!!selected && schemaAvailable');v.click('#planComparison');v.wait_for_selector('#experimentDialog[open]')
+                for control in ('#prepareExperiment','#cancelExperiment'):check(v.evaluate(reachable,[control,'#experimentDialog']),f'{control} is on screen when Plan a comparison opens at {width}x{height}')
+                v.keyboard.press('Escape');v.evaluate("showView('assets');openAsset('asset-1')");v.wait_for_selector('#assetDialog[open]');v.wait_for_timeout(200)
+                for control in ('#saveAssetDetails','#assetTrash'):check(v.evaluate(reachable,[control,'#assetDialog']),f'{control} is on screen when asset details open at {width}x{height}')
+                v.close()
             blocked=browser.new_context(viewport={'width':1280,'height':900});blocked.add_init_script("Object.defineProperty(window, 'localStorage', {get(){throw new DOMException('Storage disabled','SecurityError')}})")
             b=blocked.new_page();b.goto(origin+'/#create');b.wait_for_function('!!selected && schemaAvailable');check(b.locator('#createView').is_visible(),'blocked localStorage does not break startup');blocked.close();browser.close()
         print(json.dumps({'passed':len(checks),'checks':checks,'post_paths':[x['path'] for x in POSTS],'fixture_data':True},indent=2))

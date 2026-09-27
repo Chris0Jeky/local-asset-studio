@@ -1,0 +1,41 @@
+/* Guidance island (#907 trial). Plain CSS over the existing skin tokens; no framework styles, fonts or remote assets. */
+.workshop .ui-island {grid-area:guidance;min-width:0}
+/* While the island is active it takes the guidance slot; rollback (flag off, unmount or failure) removes the flag. */
+body[data-ui-island="active"] .workshop .wk-guidance {display:none}
+.ui-island__frame {
+  width:100%;max-width:880px;margin:12px auto 0;padding:18px 20px;box-sizing:border-box;
+  border:1px solid var(--line,#c9d3cc);border-radius:var(--wk-radius,14px);background:var(--panel,#fff);color:var(--text,inherit)
+}
+.ui-island__header {display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ui-island__header h2 {margin:0;font-size:19px;line-height:1.25}
+.ui-island h3 {margin:10px 0 6px;font-size:16px;line-height:1.3}
+.ui-island h4 {margin:0 0 4px;font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+.ui-island p {margin:6px 0;line-height:1.5}
+.ui-island button {font:inherit;min-height:40px;cursor:pointer}
+.ui-island :focus-visible {outline:3px solid var(--accent,#aa6d19);outline-offset:3px}
+.ui-island__primary {padding:8px 16px;border-radius:8px;border:1px solid var(--accent,#214e40);background:var(--accent,#214e40);color:var(--wk-on-accent,#fff)}
+.ui-island__link {background:none;border:0;padding:4px 0;color:inherit;text-decoration:underline;text-underline-offset:3px}
+.ui-island__secondary {list-style:none;padding:0;margin:10px 0}
+.ui-island__secondary li {display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;font-size:13px;color:var(--muted,#53675d)}
+.ui-island__sources,.ui-island__caption,.ui-island__meta,.ui-island__note,.ui-island__sample {font-size:13px;color:var(--muted,#53675d)}
+.ui-island__why {border-top:1px solid var(--line,#c9d3cc);margin-top:10px;padding-top:6px;font-size:13px}
+.ui-island__why summary {min-height:32px;cursor:pointer}
+.ui-island__discovery {border-top:1px solid var(--line,#c9d3cc);margin-top:14px;padding-top:6px}
+.ui-island__discovery-head {display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ui-island__cards {list-style:none;padding:0;margin:8px 0;display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.ui-island__card {display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:start;padding:8px;border:1px solid var(--line,#c9d3cc);border-radius:10px;min-width:0}
+.ui-island__card img,.ui-island__no-preview {width:96px;height:128px;object-fit:cover;border-radius:6px;background:var(--panel2,#eef2ef)}
+.ui-island__no-preview {display:grid;place-items:center;text-align:center;font-size:11px;color:var(--muted,#53675d);padding:6px;box-sizing:border-box}
+.ui-island__card button {padding:4px 12px;border-radius:7px;border:1px solid var(--line,#c9d3cc);background:transparent;color:inherit}
+.ui-island__status:empty {display:none}
+.ui-island__failed {font-size:13px;color:var(--muted,#53675d)}
+/* Motion is decorative only and follows both the OS preference and the island's own observation of it. */
+@media (prefers-reduced-motion:no-preference) {
+  .ui-island__frame[data-motion="full"] .ui-island__guidance {animation:ui-island-in .18s ease-out}
+}
+@keyframes ui-island-in {from {opacity:.4} to {opacity:1}}
+@media (max-width:520px) {
+  .ui-island__frame {padding:14px}
+  .ui-island__card {grid-template-columns:64px minmax(0,1fr)}
+  .ui-island__card img,.ui-island__no-preview {width:64px;height:86px}
+}

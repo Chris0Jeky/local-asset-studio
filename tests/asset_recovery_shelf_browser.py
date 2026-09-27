@@ -78,8 +78,8 @@ async def exercise(args):
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
 
-        def check(name, condition):
-            checks.append({'id': name, 'passed': bool(condition)})
+        def check(name, condition, detail=None):
+            checks.append({'id': name, 'passed': bool(condition), **({'detail': detail} if detail is not None else {})})
             print(name, bool(condition), flush=True)
             if not condition:
                 raise AssertionError(name)
@@ -227,13 +227,21 @@ async def exercise(args):
                     # Two actual pages race the same expected digest. Neither may
                     # replace an unobserved revision from the other page.
                     other = await page_new()
-                    base = (await page.evaluate('assetShelfStore.list()'))[0]
+                    records = await page.evaluate('assetShelfStore.list()'); base = records[0]
                     update = """async data=>{const r=data.record,p=structuredClone(r.payload);p.draft.notes=data.note;
                       const next=await StudioAssetRecoveryShelf.seal(r.slot,p,{id:r.id,generation:r.generation+1,created_at:r.created_at,updated_at:r.updated_at+1},crypto);
-                      try{await assetShelfStore.put(next,r.sha256);return true;}catch(error){if(!error.message.includes('changed'))throw error;return false;}}"""
+                      try{await assetShelfStore.put(next,r.sha256);return {written:true,refusal:null};}catch(error){if(!error.message.includes('changed'))throw error;return {written:false,refusal:error.message};}}"""
                     results = await asyncio.gather(page.evaluate(update, {'record': base, 'note': 'Tab A viewpoint'}),
                                                    other.evaluate(update, {'record': base, 'note': 'Tab B viewpoint'}))
-                    check('SHELF-NATIVE-01 two-tab expected-digest CAS admits exactly one writer', results.count(True) == 1)
+                    # Synthetic fixture values only: retain both writer outcomes and the record's
+                    # generation/digest before and after, so zero writers and two are distinguishable (#825).
+                    after = await page.evaluate('assetShelfStore.list()'); final = next((r for r in after if r['id'] == base['id']), None)
+                    race = {'writers': [dict(tab=tab, **outcome) for tab, outcome in zip(('A', 'B'), results)],
+                            'record_id': base['id'], 'records_before': len(records), 'records_after': len(after),
+                            'before': {'generation': base['generation'], 'sha256': base['sha256']},
+                            'after': None if final is None else {'generation': final['generation'], 'sha256': final['sha256'],
+                                                                 'notes': ((final.get('payload') or {}).get('draft') or {}).get('notes')}}
+                    check('SHELF-NATIVE-01 two-tab expected-digest CAS admits exactly one writer', [r['written'] for r in results].count(True) == 1, race)
                     await other.evaluate("""() => {window.__shelfHeld=false;navigator.locks.request(StudioAssetRecoveryShelf.LOCK,()=>new Promise(resolve=>{window.__releaseShelfLock=resolve;window.__shelfHeld=true;}));}""")
                     await other.wait_for_function('__shelfHeld')
                     outcome = await page.evaluate("""async()=>{const r=(await assetShelfStore.list())[0];try{await assetShelfStore.remove(r.id,r.sha256);return 'unexpected';}catch(error){return error.name;}}""")
