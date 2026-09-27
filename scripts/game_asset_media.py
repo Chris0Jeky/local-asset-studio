@@ -9,7 +9,6 @@ import json
 import math
 from pathlib import Path
 import sys
-import warnings
 import xml.etree.ElementTree as ET
 import zipfile
 from game_asset_pipeline import read_json, require, inside, integer, text, slug, sha, file_sha, write_json
@@ -24,6 +23,12 @@ def pil():
     return Image
 
 
+def pixel_budget(Image):
+    """16 MP, or Pillow's decompression-bomb line when that is lower. Checked from the header, before any decode."""
+    return MAX_PIXELS if Image.MAX_IMAGE_PIXELS is None else min(MAX_PIXELS, Image.MAX_IMAGE_PIXELS)
+
+
+# No process-wide warnings filter: the Studio's production worker calls these decoders on request threads (#1061).
 def image(root, entry):
     """Hash and decode the same bounded bytes; metadata and pixels cannot disagree."""
     p = inside(root, entry['path'])
@@ -31,15 +36,13 @@ def image(root, entry):
     require(len(raw) <= MAX_FILE, 'Input image exceeds 64 MiB')
     require(hashlib.sha256(raw).hexdigest() == entry.get('sha256'), 'Image hash mismatch')
     Image = pil()
-    with warnings.catch_warnings():
-        warnings.simplefilter('error', Image.DecompressionBombWarning)
-        with Image.open(io.BytesIO(raw)) as source:
-            require(source.format == 'PNG', 'Use explicit PNG interchange')
-            require(source.width * source.height <= MAX_PIXELS, 'Image exceeds pixel budget')
-            require(source.mode == 'RGBA', 'Expected RGBA PNG; convert explicitly before packaging')
-            require(getattr(source, 'n_frames', 1) == 1, 'Animated PNG is not a frame or flat layer')
-            require(not source.info.get('icc_profile'), 'Convert tagged images to agreed sRGB first')
-            source.load(); return source.copy()
+    with Image.open(io.BytesIO(raw)) as source:
+        require(source.format == 'PNG', 'Use explicit PNG interchange')
+        require(source.width * source.height <= pixel_budget(Image), 'Image exceeds pixel budget')
+        require(source.mode == 'RGBA', 'Expected RGBA PNG; convert explicitly before packaging')
+        require(getattr(source, 'n_frames', 1) == 1, 'Animated PNG is not a frame or flat layer')
+        require(not source.info.get('icc_profile'), 'Convert tagged images to agreed sRGB first')
+        source.load(); return source.copy()
 
 
 def size(value):
@@ -174,15 +177,13 @@ def to_rgb(im):
 def decode_png(raw, what='Input image'):
     Image = pil()
     require(len(raw) <= MAX_FILE, f'{what} exceeds 64 MiB')
-    with warnings.catch_warnings():
-        warnings.simplefilter('error', Image.DecompressionBombWarning)
-        with Image.open(io.BytesIO(raw)) as source:
-            require(source.format == 'PNG', 'Use explicit PNG interchange')
-            require(source.width * source.height <= MAX_PIXELS, f'{what} exceeds pixel budget')
-            require(getattr(source, 'n_frames', 1) == 1, 'Animated PNG is not a finishing input')
-            require(not source.info.get('icc_profile'), 'Convert tagged images to agreed sRGB first')
-            require(source.mode == 'RGBA', 'Expected RGBA PNG; convert explicitly before finishing')
-            source.load(); return source.copy()
+    with Image.open(io.BytesIO(raw)) as source:
+        require(source.format == 'PNG', 'Use explicit PNG interchange')
+        require(source.width * source.height <= pixel_budget(Image), f'{what} exceeds pixel budget')
+        require(getattr(source, 'n_frames', 1) == 1, 'Animated PNG is not a finishing input')
+        require(not source.info.get('icc_profile'), 'Convert tagged images to agreed sRGB first')
+        require(source.mode == 'RGBA', 'Expected RGBA PNG; convert explicitly before finishing')
+        source.load(); return source.copy()
 
 
 def cleanup(source, output, mode='rgba-cleanup', evidence=None):

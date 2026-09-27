@@ -232,6 +232,42 @@ class LargeJobPreparationClassificationTests(LargeJobPreparationTestCase):
                 self.assertEqual(studio.free_calls, [])
                 self.assertFalse(result["final"]["ready"])
 
+    def test_abandoned_history_blocker_does_not_advise_resume(self):
+        studio = Studio(self.root / "abandoned-restart", [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+        studio.jobs["ab"] = observing_job(status="abandoned", prompt="p-ab")
+        studio.backends.history.add("p-ab")
+        studio.config["enable_large_job_backend_restart"] = True
+        self.restartable(studio)
+        result = self.controller(studio).run(self.request(allow_restart=True))
+        self.assertEqual(result["phase"], "restart_blocked_by_unresolved_work")
+        self.assertIn("Resume observation does not reopen an abandoned job", result["final"]["reason"])
+        self.assertNotIn("Open the job and use Resume", result["final"]["reason"])
+        self.assertNotIn("could not confirm", result["final"]["reason"])
+        with self.subTest("history unknown"):
+            # A timed-out /history check is not proof the prompts are still held (#1082 review).
+            studio = Studio(self.root / "abandoned-unknown", [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+            studio.jobs["ab"] = observing_job(status="abandoned", prompt="p-ab")
+            studio.backends.history_error = TimeoutError("slow")
+            studio.config["enable_large_job_backend_restart"] = True
+            self.restartable(studio)
+            result = self.controller(studio).run(self.request(allow_restart=True))
+            self.assertEqual(result["phase"], "restart_blocked_by_unresolved_work")
+            self.assertEqual(result["blockers"]["history_checks"][0]["result"], "unknown")
+            self.assertIn("could not confirm they are gone", result["final"]["reason"])
+            self.assertNotIn("jobs still have prompts", result["final"]["reason"])
+        with self.subTest("mixed"):
+            studio = Studio(self.root / "mixed-restart", [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+            studio.jobs["ab"] = observing_job(status="abandoned", prompt="p-ab")
+            studio.jobs["u"] = observing_job(status="uncertain", prompt="p-1")
+            studio.backends.history.add("p-ab")
+            studio.backends.history.add("p-1")
+            studio.config["enable_large_job_backend_restart"] = True
+            self.restartable(studio)
+            result = self.controller(studio).run(self.request(allow_restart=True))
+            self.assertEqual(result["phase"], "restart_blocked_by_unresolved_work")
+            self.assertIn("use Resume observation", result["final"]["reason"])
+            self.assertIn("Abandoned jobs among them cannot be resumed", result["final"]["reason"])
+
     def test_in_flight_work_refuses_everything_including_dry_run(self):
         cases = {
             "running job": lambda s: s.jobs.__setitem__("x", {"status": "running", "submissions": []}),
