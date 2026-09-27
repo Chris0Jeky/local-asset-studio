@@ -5,6 +5,13 @@
 *.js text eol=lf
 *.css text eol=lf
 *.html text eol=lf
+*.ts text eol=lf
+*.vue text eol=lf
+*.mjs text eol=lf
+.nvmrc text eol=lf
+.npmrc text eol=lf
+# Committed island build output is compared byte-for-byte in CI (#907).
+app/static/ui-dist/** text eol=lf
 *.ps1 text eol=crlf
 *.cmd text eol=crlf
 *.png binary
