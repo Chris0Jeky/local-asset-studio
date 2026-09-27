@@ -218,6 +218,83 @@ class GpuMemoryTests(unittest.TestCase):
         legacy = reading({DGPU.format(1): 812 * MIB})
         self.assertEqual(gpu_memory.others_for_admission(legacy, 2), (812 * MIB, None))
 
+    def test_adapter_figure_is_preferred_for_others_when_counters_agree(self):
+        # Owner decision on #983 (27 Sep 2026): others = adapter dedicated usage minus ComfyUI's own. Own 8 GiB and
+        # dwm 2 GiB on an 11 GiB adapter leave 1 GiB no process counter attributes; it is still not free.
+        sample = reading_with_totals({DGPU.format(40): 8 * GIB, DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: 11 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 3 * GIB)
+        self.assertEqual(gpu_memory.others_for_admission(sample, 40), (3 * GIB, None))
+        launch = gpu_memory.launch_reserve_gib(sample)
+        self.assertEqual((launch['others_bytes'], launch['basis'], launch['reserve_gib']), (11 * GIB, 'measured', gpu_memory.CAP_GIB))
+        # An adapter figure below the attributed sum (sampling skew inside the headroom) never lowers a measured figure.
+        skewed = reading_with_totals({DGPU.format(40): 3 * GIB, DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: int(4.5 * GIB)})
+        self.assertEqual(gpu_memory.others_bytes(skewed, 40), 2 * GIB)
+        self.assertEqual(gpu_memory.others_for_admission(skewed, 40), (2 * GIB, None))
+
+    def test_launch_reserve_subtracts_lagging_stopped_pids_from_the_adapter_figure(self):
+        # A just-stopped ComfyUI (pid 5) can still show 9000 MiB; the adapter figure includes it while it lags.
+        lagging = reading_with_totals({DGPU.format(2304): 2282 * MIB, DGPU.format(5): 9000 * MIB}, {DGPU_ADAPTER: (2282 + 9000 + 1024) * MIB})
+        result = gpu_memory.launch_reserve_gib(lagging, exclude_pids=[5])
+        self.assertEqual((result['others_bytes'], result['basis'], result['excluded_pids']), ((2282 + 1024) * MIB, 'measured', []))
+        self.assertEqual(result['reserve_gib'], 4.0)
+        # If the adapter has already released it but the process counter lags, the attributed sum still stands.
+        released = reading_with_totals({DGPU.format(2304): 2282 * MIB, DGPU.format(5): 9000 * MIB}, {DGPU_ADAPTER: (2282 + 1024) * MIB})
+        self.assertEqual(gpu_memory.launch_reserve_gib(released, exclude_pids=[5])['others_bytes'], 2282 * MIB)
+
+    def test_zero_byte_own_igpu_entry_with_a_runaway_dgpu_counter_uses_the_adapter_total(self):
+        # #1194 review LOW (recorded on #983).
+        sample = reading_with_totals({IGPU.format(40): 0, IGPU.format(11): 300 * MIB, DGPU.format(2304): DWM_ANOMALY},
+                                     {DGPU_ADAPTER: 14 * GIB, IGPU_ADAPTER: 300 * MIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 14 * GIB)
+        self.assertEqual(gpu_memory.others_for_admission(sample, 40), (None, 'GPU adapter and process counters disagree'))
+
+    def test_process_values_are_bounded_by_the_adapter_figure(self):
+        # 4.5 GiB against a 4 GiB adapter is inside the sampling headroom, so not an anomaly, but no process holds
+        # more than the adapter reports in use.
+        sample = reading_with_totals({DGPU.format(2304): int(4.5 * GIB), DGPU.format(40): 0}, {DGPU_ADAPTER: 4 * GIB})
+        self.assertEqual(gpu_memory.launch_reserve_gib(sample)['others_bytes'], 4 * GIB)
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 4 * GIB)
+        with_anomaly = reading_with_totals({DGPU.format(40): GIB, DGPU.format(2304): int(4.5 * GIB), DGPU.format(9): DWM_ANOMALY},
+                                           {DGPU_ADAPTER: 4 * GIB})
+        with patch('psutil.Process', side_effect=OSError('no real processes in tests')):
+            rows = gpu_memory.holders(with_anomaly, 40)
+        # The counted row is bounded; the impossible one keeps its raw value as evidence.
+        self.assertEqual([(row['pid'], row['dedicated_bytes'], row['plausible']) for row in rows],
+                         [(2304, 4 * GIB, True), (9, DWM_ANOMALY, False)])
+
+    def test_capacity_turns_an_impossible_total_less_result_into_unknown(self):
+        legacy = reading({DGPU.format(40): 8 * GIB, DGPU.format(2304): DWM_ANOMALY})
+        self.assertEqual(gpu_memory.others_bytes(legacy, 40), DWM_ANOMALY)          # no capacity: the old contract
+        self.assertIsNone(gpu_memory.others_bytes(legacy, 40, capacity_bytes=16 * GIB))
+        external, reason = gpu_memory.others_for_admission(legacy, 40, capacity_bytes=16 * GIB)
+        self.assertIsNone(external); self.assertIn('capacity', reason)
+        plausible = reading({DGPU.format(40): 8 * GIB, DGPU.format(2304): 2 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(plausible, 40, capacity_bytes=16 * GIB), 2 * GIB)
+        self.assertEqual(gpu_memory.others_for_admission(plausible, 40, capacity_bytes=16 * GIB), (2 * GIB, None))
+        agreeing = reading_with_totals({DGPU.format(40): 8 * GIB, DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: 11 * GIB})
+        self.assertEqual(gpu_memory.others_for_admission(agreeing, 40, capacity_bytes=16 * GIB), (3 * GIB, None))
+
+    def test_anomalies_are_bounded_evidence_rows(self):
+        sample = reading_with_totals({DGPU.format(40): 2 * GIB, DGPU.format(2304): DWM_ANOMALY, DGPU.format(30868): 812 * MIB},
+                                     {DGPU_ADAPTER: 4 * GIB})
+        limit = int(4 * GIB * gpu_memory.RECONCILE_RATIO + gpu_memory.RECONCILE_SLOP_BYTES)
+        self.assertEqual(gpu_memory.anomalies(sample), [{'adapter': DGPU_ADAPTER, 'pid': 2304, 'dedicated_bytes': DWM_ANOMALY,
+                                                          'adapter_total_bytes': 4 * GIB, 'limit_bytes': limit}])
+        self.assertEqual(gpu_memory.anomalies(reading_with_totals({DGPU.format(1): GIB}, {DGPU_ADAPTER: 4 * GIB})), [])
+        for empty in (None, {}, {'adapters': None}): self.assertEqual(gpu_memory.anomalies(empty), [])
+        # Without an adapter figure only a known capacity rules a counter out.
+        legacy = reading({DGPU.format(2304): DWM_ANOMALY, DGPU.format(1): GIB})
+        self.assertEqual(gpu_memory.anomalies(legacy), [])
+        self.assertEqual(gpu_memory.anomalies(legacy, capacity_bytes=16 * GIB),
+                         [{'adapter': DGPU_ADAPTER, 'pid': 2304, 'dedicated_bytes': DWM_ANOMALY, 'adapter_total_bytes': None, 'limit_bytes': 16 * GIB}])
+        crowded = reading_with_totals({DGPU.format(pid): (70 + pid) * GIB for pid in range(12)}, {DGPU_ADAPTER: 4 * GIB})
+        rows = gpu_memory.anomalies(crowded)
+        self.assertEqual(len(rows), gpu_memory.ANOMALY_ROWS); self.assertEqual(gpu_memory.ANOMALY_ROWS, 8)
+        self.assertEqual([row['pid'] for row in rows], [11, 10, 9, 8, 7, 6, 5, 4])
+        # The launch decision carries the rows from the same reading.
+        self.assertEqual([row['pid'] for row in gpu_memory.launch_reserve_gib(sample)['anomalies']], [2304])
+        self.assertEqual(gpu_memory.launch_reserve_gib({'adapters': None, 'unknown_reason': 'x'})['anomalies'], [])
+
     def test_spill_is_reported_from_the_process_shared_usage(self):
         sample = reading({DGPU.format(40): 15881 * MIB, DGPU.format(2304): 2306 * MIB}, {DGPU.format(40): 1537 * MIB})
         self.assertTrue(gpu_memory.spill(40, sample)['spilled'])
