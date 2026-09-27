@@ -938,7 +938,8 @@ class ServerTests(unittest.TestCase):
         # These escaped do_POST as AttributeError/TypeError: a dropped connection instead of a 400.
         node={'type':'KSampler','widgets_values':[]};sent=[];studio=self.studio()
         for workflow in ({'nodes':[node],'definitions':[]},{'nodes':[node],'definitions':{'subgraphs':None}},{'nodes':[node],'definitions':{'subgraphs':'text'}},
-                         {'nodes':[node],'definitions':{'subgraphs':[{'nodes':5}]}},{'nodes':[node],'definitions':None}):
+                         {'nodes':[node],'definitions':{'subgraphs':[{'nodes':5}]}},{'nodes':[node],'definitions':None},
+                         {'nodes':[node],'definitions':{'subgraphs':[{'id':[],'nodes':[]}]}},{'nodes':[node],'id':{'a':1}}):
             with self.subTest(workflow=repr(workflow)[:90]):
                 handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/workflow-inspect'
                 handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body={'workflow':workflow}:body
