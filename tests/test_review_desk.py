@@ -322,5 +322,11 @@ class ReviewTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'could not be decoded'):decode(b'not an image')
         image.close()
 
+    def test_a_pillow_syntax_error_is_the_still_image_refusal(self):
+        # Pillow reports some damaged files as SyntaxError; references.py and upload() already map it.
+        from PIL import Image
+        with patch.object(Image,'open',side_effect=SyntaxError('broken PNG file')):
+            with self.assertRaisesRegex(ValueError,'could not be decoded'):decode(b'damaged png bytes')
+
 
 if __name__=='__main__':unittest.main()
