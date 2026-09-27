@@ -442,7 +442,7 @@ class Studio:
             except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
             # `lora` stays polymorphic: older presets bind it to a filename input.
             value = number(controls[key], key, 0, 2) if isinstance(existing, (int, float)) and not isinstance(existing, bool) else controls[key]
-            if not isinstance(value, (int, float, str)) or (isinstance(value, str) and len(value) > 8000): raise StudioError(f"{key} must be a number or short text")
+            if isinstance(value, bool) or not isinstance(value, (int, float, str)) or (isinstance(value, str) and len(value) > 8000): raise StudioError(f"{key} must be a number or short text")
             self._bind_control(graph, preset, key, value)
         installed = self.options().get("loras") if any(key in controls for key in LORA_NAME_KEYS) else None
         for key in LORA_NAME_KEYS:
