@@ -141,6 +141,15 @@ class WorkspaceCardTests(unittest.TestCase):
         for bad in (['x'], 'a' * 64, [1], ['A' * 64]):
             with self.subTest(bad=bad), self.assertRaises(workspace.WorkspaceError): self.store.seed_cards([dict(update('look-a'), supersedes=bad)])
 
+    def test_a_lone_surrogate_in_a_stored_card_never_breaks_seeding(self):
+        """Review on #1236: JSON can carry a lone surrogate into a card; hashing it must not raise and take /api/looks down."""
+        seed = dict(id='look-a', kind='look', name='Night Shift', body=BODY, lineage=ANCHOR)
+        self.store.seed_cards([seed])
+        self.store.card_command({'action': 'edit', 'id': 'look-a', 'expected_revision': 0, 'body': dict(BODY, notes='odd \ud800 text')})
+        self.assertRegex(workspace.AssetWorkspace.card_digest(self.store.card('look-a')), r'^[0-9a-f]{64}$')
+        self.assertEqual(self.store.seed_cards([dict(seed, body=dict(BODY, template='New {scene}.'), supersedes=['0' * 64])]), [])
+        self.assertEqual(self.store.card('look-a')['body']['notes'], 'odd \ud800 text', 'the edited card is kept')
+
     def test_stored_json_is_the_exact_body(self):
         card = self.create()
         with closing(sqlite3.connect(self.store.database)) as db:

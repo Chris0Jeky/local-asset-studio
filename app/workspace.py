@@ -631,7 +631,7 @@ class AssetWorkspace:
     def card_digest(card):
         """sha256 of a card's content (name, body, lineage) as canonical JSON: how a shipped card names the versions it replaces."""
         content = {"name": card["name"], "body": card["body"], "lineage": card.get("lineage", [])}
-        return hashlib.sha256(json.dumps(content, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+        return hashlib.sha256(json.dumps(content, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode()).hexdigest()   # ASCII: a lone surrogate hashes, never raises
 
     def seed_cards(self, entries):
         """Insert shipped cards whose id is absent; never overwrite or resurrect one the owner edited or put away. Returns the new ids.
