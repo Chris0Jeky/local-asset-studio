@@ -13,7 +13,7 @@ class NumericChoiceTests(unittest.TestCase):
     def tearDownClass(cls): fixture.ControlPreviewBrowserTests.tearDownClass()
     def test_integer_valued_float_choice_is_not_silently_proposed_as_int(self):
         harness=fixture.ControlPreviewBrowserTests('test_combo_preserves_boolean_vs_integer_choice')
-        harness.setUp(); self.addCleanup(harness.doCleanups)
+        self.addCleanup(harness.doCleanups); harness.setUp()
         harness.value,harness.info=request_fixture(first=[[1.0,1,'safe']],second=[[1.0,1,'safe']])
         harness.open();harness.add();harness.add('b')
         harness.page.locator('#controlProposedValue').select_option('0')

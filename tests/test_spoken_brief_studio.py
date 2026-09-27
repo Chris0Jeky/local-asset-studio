@@ -19,7 +19,7 @@ class StudioArchiveTests(unittest.TestCase):
     def setUp(self):
         self.assertIsNotNone(importlib.util.find_spec('studio_spoken'), 'Studio archive facade is missing')
         self.m = importlib.import_module('studio_spoken.core')
-        self.f = fixtures.ExportTests(); self.f.setUp(); self.addCleanup(self.f.doCleanups)
+        self.f = fixtures.ExportTests(); self.addCleanup(self.f.doCleanups); self.f.setUp()
         self.root = self.f.source.parent
         self.key = self.f.directory.relative_to(self.root).as_posix()
         self.access = self.m.ArchiveAccess({'archive_root': str(self.root)})

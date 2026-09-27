@@ -25,7 +25,11 @@ class ProductionTests(unittest.TestCase):
             patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url,'comfy_root':str(s.comfy_root)}),
             patch.object(server.Studio,'check_production_bundle',lambda *a:None),
             patch.object(server.Studio,'validate_graph',lambda *a:None)]
-        for p in self.patches:p.start()
+        # Stop through cleanups too: a subclass or borrower whose own setUp fails
+        # after this point never reaches tearDown, and a leaked Thread.start patch
+        # leaves later tests waiting forever on workers that never run.
+        self.addCleanup(self.tmp.cleanup)
+        for p in self.patches:p.start();self.addCleanup(p.stop)
     def tearDown(self):
         for p in reversed(self.patches):p.stop()
         self.tmp.cleanup()
@@ -285,7 +289,11 @@ class PlannedSweepTests(unittest.TestCase):
             patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url,'comfy_root':str(s.comfy_root)}),
             patch.object(server.Studio,'check_production_bundle',lambda *a:None),
             patch.object(server.Studio,'validate_graph',lambda *a:None)]
-        for p in self.patches:p.start()
+        # Stop through cleanups too: a subclass or borrower whose own setUp fails
+        # after this point never reaches tearDown, and a leaked Thread.start patch
+        # leaves later tests waiting forever on workers that never run.
+        self.addCleanup(self.tmp.cleanup)
+        for p in self.patches:p.start();self.addCleanup(p.stop)
     def tearDown(self):
         for p in reversed(self.patches):p.stop()
         self.tmp.cleanup()

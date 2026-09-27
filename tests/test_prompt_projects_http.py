@@ -16,7 +16,7 @@ from studio_prompt.http_extension import extend_handler
 
 class PromptProjectHttpTests(unittest.TestCase):
     def setUp(self):
-        self.fixture=project_fixtures.PromptProjectTests();self.fixture.setUp();self.addCleanup(self.fixture.doCleanups)
+        self.fixture=project_fixtures.PromptProjectTests();self.addCleanup(self.fixture.doCleanups);self.fixture.setUp()
         self.scope=self.fixture.scope;self.requests=[];self.drop=False;fixture=self
         class Base(BaseHTTPRequestHandler):
             studio=SimpleNamespace(prompt_projects=fixture.fixture.service)

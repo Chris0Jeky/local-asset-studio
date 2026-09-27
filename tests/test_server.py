@@ -53,6 +53,7 @@ class ServerTests(unittest.TestCase):
         (self.root/"presets/catalog.json").write_text(json.dumps({"presets":[PRESET]}))
         (self.root/"workflows/api/demo-api.json").write_text(json.dumps(GRAPH))
         self.start=patch.object(threading.Thread,"start",lambda *_:None); self.start.start()
+        self.addCleanup(self.start.stop); self.addCleanup(self.tmp.cleanup)  # subclasses may fail after this
     def tearDown(self): self.start.stop(); self.tmp.cleanup()
     def studio(self): return server.Studio(self.root)
 

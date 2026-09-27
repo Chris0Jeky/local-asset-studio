@@ -1,0 +1,65 @@
+# ComfyUI 0.35.0 (primary, 8188) in-memory log, GET /internal/logs/raw read at 2026-09-27 ~17:2x local; ANSI colour codes stripped.
+# Window 16:41:50-16:51:10, all lines unfiltered. Timestamps are ComfyUI local time.
+2026-09-27T16:41:52.992062 [INFO] got prompt
+2026-09-27T16:41:54.177211 [INFO] model weight dtype torch.float16, manual cast: None
+2026-09-27T16:41:54.194227 [INFO] model_type EPS
+2026-09-27T16:41:57.073970 [INFO] Interrupting prompt fb0f28c0-3b5c-43a3-8b6f-f06b2aa35d61
+2026-09-27T16:42:10.929075 [INFO] Using split attention in VAE
+2026-09-27T16:42:10.937074 [INFO] Using split attention in VAE
+2026-09-27T16:42:11.914208 [INFO] VAE load device: cuda:0, offload device: cpu, dtype: torch.bfloat16
+2026-09-27T16:42:19.310334 [INFO] Requested to load SDXLClipModel
+2026-09-27T16:42:19.407853 [INFO] loaded completely;  1560.80 MB loaded, full load: True
+2026-09-27T16:42:19.420863 [INFO] CLIP/text encoder model load device: cuda:0, offload device: cpu, current: cuda:0, dtype: torch.float16
+2026-09-27T16:42:19.420863 [INFO] loaded diffusion model directly to GPU
+2026-09-27T16:42:19.420863 [INFO] Requested to load SDXL
+2026-09-27T16:42:19.596790 [INFO] loaded completely;  4897.05 MB loaded, full load: True
+2026-09-27T16:42:20.710406 [INFO] Processing interrupted
+2026-09-27T16:42:20.716404 [INFO] Prompt executed in 27.72 seconds
+2026-09-27T16:42:36.359819 [INFO] got prompt
+2026-09-27T16:42:47.236067 100%|##########| 40/40 [00:10<00:00,  3.91it/s]
+2026-09-27T16:42:47.236067 100%|##########| 40/40 [00:10<00:00,  3.86it/s]
+2026-09-27T16:42:47.236067 
+2026-09-27T16:42:47.239066 [INFO] Requested to load AutoencoderKL
+2026-09-27T16:42:47.386017 [INFO] loaded completely; 5089.75 MB usable, 159.56 MB loaded, full load: True
+2026-09-27T16:42:49.008178 [INFO] Prompt executed in 12.65 seconds
+2026-09-27T16:42:50.573568 [INFO] got prompt
+2026-09-27T16:42:54.471644  38%|###7      | 15/40 [00:03<00:06,  3.92it/s]
+2026-09-27T16:42:54.660397 [INFO] Interrupting prompt 09eaa504-3f4e-4822-9276-89faaffc7099
+2026-09-27T16:42:54.724229  38%|###7      | 15/40 [00:04<00:06,  3.69it/s]
+2026-09-27T16:42:54.724229 
+2026-09-27T16:42:54.724229 [INFO] Processing interrupted
+2026-09-27T16:42:54.725231 [INFO] Prompt executed in 4.15 seconds
+2026-09-27T16:43:02.019230 [INFO] got prompt
+2026-09-27T16:43:02.069123   0%|          | 0/30 [00:00<?, ?it/s]
+2026-09-27T16:43:02.123703 [INFO] got prompt
+2026-09-27T16:43:09.740080 100%|##########| 30/30 [00:07<00:00,  3.89it/s]
+2026-09-27T16:43:09.741081 100%|##########| 30/30 [00:07<00:00,  3.91it/s]
+2026-09-27T16:43:09.741081 
+2026-09-27T16:43:11.335601 [INFO] Prompt executed in 9.32 seconds
+2026-09-27T16:43:12.250619   3%|3         | 2/60 [00:00<00:14,  3.88it/s]
+2026-09-27T16:43:12.275411 [INFO] got prompt
+2026-09-27T16:43:27.140387 100%|##########| 60/60 [00:15<00:00,  3.83it/s]
+2026-09-27T16:43:27.140387 100%|##########| 60/60 [00:15<00:00,  3.89it/s]
+2026-09-27T16:43:27.140387 
+2026-09-27T16:43:28.733921 [INFO] Prompt executed in 17.06 seconds
+2026-09-27T16:48:02.047403 [INFO] got prompt
+2026-09-27T16:48:17.872776 100%|##########| 60/60 [00:15<00:00,  3.88it/s]
+2026-09-27T16:48:17.872776 100%|##########| 60/60 [00:15<00:00,  3.82it/s]
+2026-09-27T16:48:17.872776 
+2026-09-27T16:48:19.469783 [INFO] Prompt executed in 17.42 seconds
+2026-09-27T16:49:53.661508 [INFO] got prompt
+2026-09-27T16:49:53.668514 [INFO] Prompt executed in 0.01 seconds
+2026-09-27T16:50:07.466081 [INFO] got prompt
+2026-09-27T16:50:23.459142  52%|#####2    | 63/120 [00:15<00:14,  3.90it/s]
+2026-09-27T16:50:23.531419 [INFO] Interrupting prompt 657e3166-8098-4613-b716-aa76b28c7dab
+2026-09-27T16:50:23.532420  52%|#####2    | 63/120 [00:15<00:14,  3.95it/s]
+2026-09-27T16:50:23.532420 
+2026-09-27T16:50:23.532420 [INFO] Processing interrupted
+2026-09-27T16:50:23.533418 [INFO] Prompt executed in 16.07 seconds
+2026-09-27T16:50:48.967634 [INFO] got prompt
+2026-09-27T16:51:02.813847  46%|####5     | 55/120 [00:13<00:16,  3.93it/s]
+2026-09-27T16:51:03.068546 [INFO] Interrupting prompt 9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa
+2026-09-27T16:51:03.070547  46%|####5     | 55/120 [00:13<00:16,  3.93it/s]
+2026-09-27T16:51:03.070547 
+2026-09-27T16:51:03.070547 [INFO] Processing interrupted
+2026-09-27T16:51:03.072054 [INFO] Prompt executed in 14.10 seconds

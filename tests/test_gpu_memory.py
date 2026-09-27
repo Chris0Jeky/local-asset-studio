@@ -146,6 +146,21 @@ class GpuMemoryTests(unittest.TestCase):
         sample = reading_with_totals({DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: 3 * GIB})
         self.assertEqual(gpu_memory.others_bytes(sample, 40), 2 * GIB)
 
+    def test_zero_byte_own_instance_on_another_adapter_does_not_pick_it(self):
+        sample = reading_with_totals({IGPU.format(40): 0, IGPU.format(11): 300 * MIB, DGPU.format(2304): 11 * GIB},
+                                     {DGPU_ADAPTER: 11 * GIB, IGPU_ADAPTER: 300 * MIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 11 * GIB)
+        self.assertEqual(gpu_memory.others_for_admission(sample, 40), (11 * GIB, None))
+
+    def test_zero_byte_own_instance_falls_back_in_legacy_readings(self):
+        sample = reading({IGPU.format(40): 0, IGPU.format(11): 300 * MIB, DGPU.format(2304): 11 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 11 * GIB)
+
+    def test_nonzero_own_instance_still_selects_its_adapter(self):
+        sample = reading_with_totals({IGPU.format(40): 2 * GIB, IGPU.format(11): 300 * MIB, DGPU.format(2304): 11 * GIB},
+                                     {IGPU_ADAPTER: 2 * GIB + 300 * MIB, DGPU_ADAPTER: 11 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 300 * MIB)
+
     def test_reconciliation_applies_per_adapter(self):
         sample = reading_with_totals({DGPU.format(40): 2 * GIB, DGPU.format(2304): 1 * GIB,
                                       IGPU.format(11): DWM_ANOMALY, IGPU.format(12): 100 * MIB},

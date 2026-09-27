@@ -1,0 +1,121 @@
+[
+ {
+  "t": 1790523756.041,
+  "kind": "pre",
+  "name": "c",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 54.3,
+   "limit_gib": 95.7,
+   "pct": 56.7,
+   "phys_avail_gib": 5.1
+  },
+  "log": {
+   "got_prompt": 2,
+   "interrupted": 1,
+   "executed": 2,
+   "entries": 121
+  },
+  "lease": false
+ },
+ {
+  "t": 1790523756.2,
+  "kind": "create",
+  "label": "cancel-proof-c-partial",
+  "code": 201,
+  "id": "4cfc70ca-585c-49d7-86fa-6d1068659cc4",
+  "status": "queued"
+ },
+ {
+  "t": 1790523770.615,
+  "kind": "c_member2_running",
+  "running": [
+   "09eaa504-3f4e-4822-9276-89faaffc7099"
+  ],
+  "pending": [],
+  "subs": [
+   [
+    0,
+    "completed"
+   ],
+   [
+    1,
+    "observing"
+   ]
+  ],
+  "outputs": 1
+ },
+ {
+  "t": 1790523773.618,
+  "kind": "c_before_cancel",
+  "running": [
+   "09eaa504-3f4e-4822-9276-89faaffc7099"
+  ],
+  "pending": []
+ },
+ {
+  "t": 1790523773.641,
+  "kind": "cancel",
+  "id": "4cfc70ca-585c-49d7-86fa-6d1068659cc4",
+  "code": 202,
+  "took": 0.022,
+  "status": "running",
+  "cancellation": {
+   "event_id": "78730317db984f65bbe883cb46f6d6c7",
+   "requested_at": 1790523773.637546,
+   "requested_by": "owner",
+   "status_at_request": "running",
+   "state": "requested",
+   "actions": [],
+   "observations": []
+  }
+ },
+ {
+  "t": 1790523776.74,
+  "kind": "settled",
+  "name": "c",
+  "id": "4cfc70ca-585c-49d7-86fa-6d1068659cc4",
+  "status": "cancelled",
+  "message": "Stopped by you: ComfyUI reported the render interrupted. 1 of 3 outputs finished and are kept. The remaining outputs were not submitted. Nothing is retried.",
+  "cancel_state": "cancelled",
+  "prompt_ids": [
+   "2eeed75e-b2b1-444f-8f59-8efa02d64dce",
+   "09eaa504-3f4e-4822-9276-89faaffc7099"
+  ],
+  "subs": [
+   [
+    0,
+    "completed"
+   ],
+   [
+    1,
+    "cancelled"
+   ]
+  ],
+  "outputs": 1,
+  "history": {
+   "2eeed75e-b2b1-444f-8f59-8efa02d64dce": "success",
+   "09eaa504-3f4e-4822-9276-89faaffc7099": "error"
+  }
+ },
+ {
+  "t": 1790523776.768,
+  "kind": "post",
+  "name": "c",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 56.4,
+   "limit_gib": 95.7,
+   "pct": 58.9,
+   "phys_avail_gib": 5.4
+  },
+  "log": {
+   "got_prompt": 4,
+   "interrupted": 2,
+   "executed": 4,
+   "entries": 135
+  }
+ }
+]
