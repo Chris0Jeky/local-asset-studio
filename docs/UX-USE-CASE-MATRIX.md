@@ -11,11 +11,34 @@ own submitted words. Generate stays your press. When the repaint completes, the 
 the lighting and records a **Seamless tile** asset and a **3×3 repeat** asset, both with the seam score in their details.
 A completed repaint without a tile (a failed or interrupted finish) shows **Finish tile** on its card.
 
-`python tests/studio_use_cases.py` passed **18/18** journeys (with #1163's several-recipe plan) with **zero generation
-submissions and zero page errors**. The new `make-a-texture-tile` journey opens a wide picture and reads the disabled control and its reason. It then opens
+`python tests/studio_use_cases.py` passed **19/19** journeys (with #1163's several-recipe plan and #1221's saved look) with **zero
+generation submissions and zero page errors**. The new `make-a-texture-tile` journey opens a wide picture and reads the disabled control and its reason. It then opens
 a square texture and presses *Make seamless*: the seam-repair recipe is loaded with the rolled cross attached, the texture
 as source and parent, and a status that names Generate as the next press. It takes 4 clicks and 140 instruction words.
 Live mode stops before the press, which stores an upload. These are fixture screens; no model ran.
+
+## A new scene in a saved look — 27 September 2026
+
+Refs #1221 and #1205 (owner decision, 27 September 2026: build look templates as a Studio route). Create has a **Use a saved
+look** block above the wording. A look is a Workspace record (`app/workspace.py` `cards`, kind `look`, revisioned, with
+reversible put-away), not browser storage. It holds a wording template with one `{scene}` slot, its recipe and settings, a
+negative prompt where the recipe has one, and its anchor picture by sha256. The Studio ships one look, **Night Shift
+(retro anime)**, built from the accepted `retro-anime-master-z2` recipe on Z-Image Turbo fast (seed 2026092752,
+1344x768). The owner picks a look, types only the scene and presses **Prepare with this look**. The server composes the
+wording (`POST /api/looks/prepare`, which creates no job). The page then loads the look's recipe and settings and says
+that nothing was generated. Generate stays a separate press. **Save this wording as a look** stores the current wording
+(with `{scene}` written in it) and the recipe's settings; **Put away** / **Restore** are revision-guarded.
+
+The new journey `new-scene-in-an-accepted-look` starts on another recipe (Anima portrait) and takes 2 clicks: choose the
+look, then Prepare. It asserts four things:
+- the option names the look's recipe;
+- Prepare is off with the reason *Type the scene in a few words.* until a scene is typed;
+- the prepared recipe is `zimage-fast`, with the wording exactly the shipped template plus the scene, seed 2026092752 and 1344x768;
+- the status says the recipe switched and that nothing was generated.
+
+`python tests/studio_use_cases.py` passed **18/18** with zero generation submissions and zero page errors (fixture
+screens; no model ran). The look's one-slot wording has not been rendered: the lab carried the look with z2's full
+sentence structure, and this form is the next GPU check.
 
 ## One Combine pair on several recipes as one plan — 27 September 2026
 
