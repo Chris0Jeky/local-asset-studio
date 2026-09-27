@@ -358,6 +358,24 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(submission['history_read_error_count'],31)
         self.assertEqual(len(submission['history_read_errors']),server.HISTORY_READ_ERRORS_KEPT)
 
+    def test_malformed_status_shape_is_a_retryable_read_and_the_batch_continues(self):
+        done=lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}}
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},{'first':{'status':'oops','outputs':{}}},done('first')])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40}},enqueue=False)['id']]
+        with patch.object(server.time,'sleep'): s._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['first'])
+        self.assertEqual([args[0] for args,_ in s.requests].count('/prompt'),1)
+        errors=job['submissions'][0]['history_read_errors'];self.assertEqual(len(errors),1);self.assertIn('Invalid prompt history',errors[0]['error'])
+
+    def test_malformed_outputs_shape_is_a_retryable_read_and_the_batch_continues(self):
+        done=lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}}
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},{'first':{'status':{'status_str':'success'},'outputs':[]}},done('first')])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40}},enqueue=False)['id']]
+        with patch.object(server.time,'sleep'): s._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['first'])
+        self.assertEqual([args[0] for args,_ in s.requests].count('/prompt'),1)
+        errors=job['submissions'][0]['history_read_errors'];self.assertEqual(len(errors),1);self.assertIn('Invalid prompt history',errors[0]['error'])
+
     def test_later_batch_member_uncertain_keeps_earlier_evidence_and_stops(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2}, enqueue=False)['id']]
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),
