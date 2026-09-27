@@ -355,6 +355,37 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(sent[0][0],400,sent)
         self.assertEqual(studio.assets.setups(),[])
 
+    def test_every_json_route_answers_a_non_object_body_with_4xx(self):
+        # Valid JSON that is not an object once escaped do_POST as AttributeError/TypeError: no response, a dropped connection.
+        studio=self.studio();sent=[];project='a'*32
+        # /api/estimate is advisory and answers 200 {available: false}; every other route refuses.
+        routes=('/api/gpu-lease','/api/gpu-lease/release','/api/jobs','/api/backends/switch','/api/articulated','/api/preview',
+                '/api/av','/api/voice-baseline','/api/av/'+project,'/api/production','/api/production/campaigns','/api/production-export',
+                '/api/experiments/plan','/api/production/%s/stop'%project,'/api/production/%s/extend-time'%project,'/api/production/%s/review'%project,
+                '/api/references/check','/api/assets/update','/api/collections','/api/setups','/api/assets/reference','/api/assets/export',
+                '/api/recipe-check','/api/folders/open','/api/models/install','/api/workflow-inspect','/api/jobs/missing/resume',
+                '/api/jobs/missing/observe-known','/api/jobs/missing/dispose-mixed','/api/jobs/missing/abandon','/api/jobs/missing/stop-tracking',
+                '/api/jobs/missing/put-away','/api/pose/render')
+        for path in routes:
+            for body in ([],'text',3,None,True):
+                with self.subTest(path=path,body=repr(body)):
+                    handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path=path
+                    handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body=body:body
+                    sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                    handler.do_POST()
+                    self.assertTrue(sent and 400<=sent[0][0]<500,sent)
+        self.assertEqual(studio.assets.setups(),[]);self.assertEqual(studio.jobs,{})
+
+    def test_export_ids_that_cannot_be_hashed_are_400(self):
+        studio=self.studio();sent=[]
+        for body in ({'ids':[{}]},{'ids':[[1]]}):
+            with self.subTest(body=repr(body)):
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/assets/export'
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body=body:body
+                sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent[0][0],400,sent)
+
     def test_export_with_trashed_asset_returns_code_and_ids(self):
         import uuid
         s=self.studio()
