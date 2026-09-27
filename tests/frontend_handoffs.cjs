@@ -494,6 +494,11 @@ async function ownerCancelControls() {
   run(`jobs=jobs.filter(j=>j.status==='cancelled');renderRunCancel();`);
   assert.equal(element('#runCancel').hidden, true, 'No queued or running job: no dock control');
   assert.equal(requests.length, 2);
+  // A finished run whose cancel came too late still says so (#1160 review); a plain finished run adds no card.
+  run(`jobs=[${job('late', {status: 'completed', outputs: [], cancellation: {state: 'too_late', requested_at: 100, note: 'ComfyUI finished the render before the interrupt took effect'}})},${job('plain', {status: 'completed'})}];renderJobs();`);
+  const done = element('#gallery').innerHTML;
+  assert.match(done, /data-problem="late"><b>P late · completed<\/b><p class="cancelNote"><small><b>Cancel came too late<\/b> \([^)]*\): ComfyUI finished the render before the interrupt took effect/);
+  assert.doesNotMatch(done, /data-problem="plain"/); assert.doesNotMatch(done, /class="cancelJob"/);
 }
 
 // #940: Problems shows the newest five open problems; put-away ones stay one toggle away.
