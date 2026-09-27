@@ -13,6 +13,7 @@ from studio_workflow.model_contracts import ANNOTATOR_SELECTIONS, MODEL_INPUT_FO
 
 # Do not misclassify ordinary prompt/output text merely because it ends in a suffix.
 TEXT_FIELDS = {'text', 'prompt', 'positive', 'negative', 'filename_prefix'}
+PIN_FIX = 're-download from the pinned source or update the pin deliberately'
 
 
 def model_selection(kind, field, value):
@@ -26,6 +27,27 @@ def declared_path(value):
     if len(path.parts) < 2 or path.parts[0] not in FOLDERS:
         raise ValueError('Declare a relative file in a supported model folder')
     return path.as_posix()
+
+
+def pin_mismatch(asset, observed_bytes, observed_sha256=None):
+    """Compare observed size (and digest, when one exists) with one exact-path pin. None when unpinned or agreeing."""
+    try: validate_pins(asset)
+    except (ValueError, TypeError): return None
+    if observed_bytes == asset['bytes'] and observed_sha256 in (None, asset['sha256']): return None
+    observed = observed_sha256 or 'not hashed on a readiness poll'
+    note = (f"Content differs from library pin {asset['id']}: pinned sha256 {asset['sha256']} ({asset['bytes']} bytes), "
+            f"observed sha256 {observed} ({observed_bytes} bytes); {PIN_FIX}.")
+    return {'asset_id': asset['id'], 'pinned_sha256': asset['sha256'], 'observed_sha256': observed_sha256,
+            'pinned_bytes': asset['bytes'], 'observed_bytes': observed_bytes, 'note': note}
+
+
+def cached_pin_mismatch(asset, stamp, record):
+    """Readiness never hashes: only a cached digest for this exact size and mtime is evidence; size alone is a stat fact."""
+    if stamp is None: return None
+    size, mtime_ns = stamp
+    fresh = (isinstance(record, dict) and record.get('bytes') == size and record.get('mtime_ns') == mtime_ns
+             and isinstance(record.get('sha256'), str) and bool(record['sha256']))
+    return pin_mismatch(asset, size, record['sha256'] if fresh else None)
 
 
 def _presence(root, relative, observations):
@@ -47,15 +69,18 @@ def _presence(root, relative, observations):
             note = ('File present; content and runtime compatibility are separate checks.' if present else
                     'Destination is occupied by an empty or non-regular entry; inspect it before choosing a replacement.' if occupied else
                     'Missing file; place it in the indicated folder.')
-            observations[key] = (str(path), present, note, occupied)
+            observations[key] = (str(path), present, note, occupied, (info.st_size, info.st_mtime_ns) if present else None)
         except (OSError, ValueError) as exc:
-            observations[key] = (None, None, 'File availability unknown: ' + str(exc)[:250], None)
+            observations[key] = (None, None, 'File availability unknown: ' + str(exc)[:250], None, None)
     return observations[key]
 
 
-def requirements(library, preset, graph, model_root, *, assets=None, observations=None):
-    """Project exact paths, cheap presence and existing installer policy. Never write."""
-    root = Path(model_root).resolve()
+def requirements(library, preset, graph, model_root, *, assets=None, observations=None, fingerprints=None):
+    """Project exact paths, cheap presence and existing installer policy. Never write, never hash.
+
+    `fingerprints` is production preflight's digest cache; it is read, never refreshed."""
+    root = Path(model_root).resolve(); pinned_root = root == library.models.resolve()
+    fingerprints = fingerprints if isinstance(fingerprints, dict) else {}
     observations = {} if observations is None else observations
     assets = library.manifest().get('assets', []) if assets is None else assets
     known = {}
@@ -72,12 +97,15 @@ def requirements(library, preset, graph, model_root, *, assets=None, observation
         if key in rows: return
         row = {'file': relative or selection, 'folder': relative.split('/')[0] if relative else None,
                'path': None, 'present': None, 'occupied': None, 'asset_id': None, 'source': None,
-               'installable': False, 'install_note': error, 'note': error}
+               'installable': False, 'install_note': error, 'note': error, 'pin_mismatch': None}
         if relative is not None:
-            row['path'], row['present'], row['note'], row['occupied'] = _presence(root, relative, observations)
+            row['path'], row['present'], row['note'], row['occupied'], stamp = _presence(root, relative, observations)
             pins = known.get(relative, [])
             if len(pins) == 1:
                 asset = pins[0]; row.update(asset_id=asset.get('id'), source=asset.get('source'))
+                # A pin describes the curated library's exact path, not a same-named file under another backend.
+                mismatch = cached_pin_mismatch(asset, stamp, fingerprints.get(row['path'])) if pinned_root and row['present'] is True else None
+                if mismatch: row.update(pin_mismatch=mismatch, note=mismatch['note'])
                 try:
                     validate_pins(asset)
                     if row['present'] is None or row['occupied'] is True and row['present'] is False: blocked = row['note']
