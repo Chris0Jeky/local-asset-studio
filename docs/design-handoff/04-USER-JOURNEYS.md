@@ -36,7 +36,7 @@ focus survive every navigation, recipe switch and presentation change.
 
 | | Steps |
 | --- | --- |
-| Current | Library → character → Continue with this → Combine → Prepare → Pull from library → pose picture → fill three bracketed parts (who / pose / clothes) → Generate. 9-13 steps, 5 clicks, 3 view switches. Engine switch (Copy Pose, skeleton, depth, replace, pose-first 9B, 4B) keeps sources. *Draw the pose* editor available. |
+| Current | Library → character → Continue with this → Combine → Prepare → Pull from library → pose picture → fill three bracketed parts (who / pose / clothes) → Generate. 9-13 steps, 5 clicks, 3 view switches. Engine switch (Copy Pose, skeleton, depth, replace, pose-first 9B, 4B) keeps sources. Runs for the pair sit under the two pictures, grouped by run with engine and time; problem runs folded (27 Sep). *Draw the pose* folded on picture routes. |
 | Desired | Combine lens: **two source tiles side by side** (Character · Pose), three short named fields remembered per character, engine chips with measured time, optional "Draw the pose" panel, and a **results-per-pair strip** showing each run's seeds next to both sources with Keep / Needs work / Same seed / New seed. |
 | Success | Both pictures and the latest results visible together without scrolling at 1440×900; switching engine is 1 click and never loses the fills; failed/uncertain runs for this pair are visible but folded. |
 
