@@ -79,9 +79,10 @@ class GpuMemoryTests(unittest.TestCase):
     def test_plausible_counters_stay_measured(self):
         sample = reading_with_totals({DGPU.format(2304): 2282 * MIB, DGPU.format(30868): 811 * MIB}, {DGPU_ADAPTER: 4 * GIB})
         measured = gpu_memory.launch_reserve_gib(sample)
-        self.assertEqual((measured['reserve_gib'], measured['basis'], measured['excluded_pids']), (3.8, 'measured', []))
+        # Adapter-preferred since the owner decision on #983: the 4 GiB adapter figure, not the 3,093 MiB process sum.
+        self.assertEqual((measured['reserve_gib'], measured['basis'], measured['excluded_pids']), (4.7, 'measured', []))
         self.assertEqual(measured['adapter_total_bytes'], 4 * GIB)
-        self.assertEqual(gpu_memory.others_bytes(sample, 30868), 2282 * MIB)
+        self.assertEqual(gpu_memory.others_bytes(sample, 30868), 4 * GIB - 811 * MIB)
 
     def test_holders_flag_counters_the_adapter_figure_rules_out(self):
         # Issue #983: dwm at 65.85 GiB on a 16 GiB card must not top peak evidence as if it were real.
@@ -144,7 +145,7 @@ class GpuMemoryTests(unittest.TestCase):
 
     def test_others_still_count_before_comfy_process_counter_appears(self):
         sample = reading_with_totals({DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: 3 * GIB})
-        self.assertEqual(gpu_memory.others_bytes(sample, 40), 2 * GIB)
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 3 * GIB)   # the whole adapter figure while pid 40 has no counter
 
     def test_zero_byte_own_instance_on_another_adapter_does_not_pick_it(self):
         sample = reading_with_totals({IGPU.format(40): 0, IGPU.format(11): 300 * MIB, DGPU.format(2304): 11 * GIB},
@@ -165,7 +166,7 @@ class GpuMemoryTests(unittest.TestCase):
         sample = reading_with_totals({DGPU.format(40): 2 * GIB, DGPU.format(2304): 1 * GIB,
                                       IGPU.format(11): DWM_ANOMALY, IGPU.format(12): 100 * MIB},
                                      {DGPU_ADAPTER: 5 * GIB, IGPU_ADAPTER: 512 * MIB})
-        self.assertEqual(gpu_memory.others_bytes(sample, 40), 1 * GIB)
+        self.assertEqual(gpu_memory.others_bytes(sample, 40), 3 * GIB)   # 5 GiB adapter minus own 2 GiB (adapter-preferred)
         self.assertEqual(gpu_memory.others_bytes(sample, 12), 512 * MIB - 100 * MIB)
 
     def test_launch_adapter_selection_ignores_anomaly_on_another_adapter(self):
@@ -173,7 +174,7 @@ class GpuMemoryTests(unittest.TestCase):
                                      {DGPU_ADAPTER: 3 * GIB, IGPU_ADAPTER: 512 * MIB})
         result = gpu_memory.launch_reserve_gib(sample)
         self.assertEqual((result['adapter'], result['basis'], result['others_bytes']),
-                         (DGPU_ADAPTER, 'measured', 2 * GIB))
+                         (DGPU_ADAPTER, 'measured', 3 * GIB))   # the dGPU adapter figure (adapter-preferred)
 
     def test_partial_adapter_totals_do_not_redirect_launch_to_igpu(self):
         sample = reading_with_totals({DGPU.format(40): 12 * GIB, IGPU.format(11): 300 * MIB},
@@ -189,7 +190,7 @@ class GpuMemoryTests(unittest.TestCase):
 
     def test_admission_stays_measured_for_a_matching_sample(self):
         sample = reading_with_totals({DGPU.format(2304): 2282 * MIB, DGPU.format(30868): 811 * MIB}, {DGPU_ADAPTER: 4 * GIB})
-        self.assertEqual(gpu_memory.others_for_admission(sample, 30868), (2282 * MIB, None))
+        self.assertEqual(gpu_memory.others_for_admission(sample, 30868), (4 * GIB - 811 * MIB, None))   # adapter-preferred
 
     def test_admission_is_unknown_when_process_counters_disagree(self):
         # 4 GiB adapter, owned 2 GiB, dwm at 66 GiB: the guard keeps the conservative
