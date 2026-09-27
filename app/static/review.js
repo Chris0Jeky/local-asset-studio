@@ -151,6 +151,6 @@
   };
   window.addEventListener('beforeunload',event=>{if(dirty()){event.preventDefault();event.returnValue='';}});
   controls();
-  if(!project||!/^[0-9a-f]{32}$/.test(project)){message('Open Review desk from an image comparison in Studio’s Experiments view.',true);$('#reload').disabled=true;}
+  if(!project||!/^[0-9a-f]{32}$/.test(project)){message('Open Review desk from an image comparison: in Runs & review, open a comparison plan and choose Open review desk.',true);$('#reload').disabled=true;}
   else operation('inspect');
 }());
