@@ -899,6 +899,43 @@
     finally{varyBusy=false;syncReady();}
   }
   document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-vary]');if(!button||button.disabled)return;e.preventDefault();void prepareVary(button);});
+  // #1220 Make seamless: square, flat textures only. The server says whether this picture qualifies and a disabled button
+  // carries its reason. Prepare rolls the texture and attaches its seam cross to the tile recipe; Generate stays the owner's press.
+  let tileBusy=false,tileRead=0;
+  function tileMarkup(status){
+    const why='uxTileWhyAsset',note=!status?'Checking whether this picture can tile…':status.eligible?status.flag:[status.reason,status.flag].filter(Boolean).join(' ');
+    return '<button type="button" data-ux-tile="'+escape(status?.asset_id||'')+'"'+(status?.eligible?'':' disabled')+' aria-describedby="'+why+'">Make seamless</button><small id="'+why+'">'+escape(note)+'</small>';
+  }
+  function placeTile(holder,markup){
+    let box=holder.querySelector(':scope > .ux-tile');if(box&&box.dataset.markup===markup)return;
+    const next=element('div','ux-tile',markup);next.dataset.markup=markup;next.setAttribute('role','group');next.setAttribute('aria-label','Make this texture tile');
+    if(box)box.replaceWith(next);else q('#assetHandoffs').after(next);
+  }
+  after('openAsset',()=>{
+    const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
+    if(!a||a.media_type!=='image'||a.trashed_at||!catalog?.presets?.some(p=>p.tile_route)){holder.querySelector(':scope > .ux-tile')?.remove();return;}
+    const read=++tileRead,current=()=>read===tileRead&&activeAsset?.id===a.id;placeTile(holder,tileMarkup(null));
+    api('/api/tiles/source/'+encodeURIComponent(a.id)).then(status=>{if(current())placeTile(holder,tileMarkup(status));})
+      .catch(error=>{if(current())placeTile(holder,tileMarkup({asset_id:a.id,eligible:false,reason:'Could not check this picture: '+error.message+'.'}));});
+  });
+  async function prepareTile(button){
+    const assetId=button.dataset.uxTile;if(tileBusy||!assetId)return;
+    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
+    if(assetDetailsDirty()){warnUnsavedAsset();return;}
+    tileBusy=true;button.disabled=true;syncReady();
+    const stamp=workbenchStamp();
+    try{
+      const result=await post('/api/tiles/prepare',{asset_id:assetId});
+      if(stamp!==workbenchStamp())throw Error('The workbench changed while the texture was being prepared. Nothing was applied; press Make seamless again.');
+      if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.rolled_file)throw Error('The prepared seam cross could not be verified. Nothing was applied.');
+      beginTile(result);
+      if(q('#assetDialog').open)q('#assetDialog').close();
+      draftDirty=true;showView('create');saveDraft();syncCreate();updateReady();scheduleTimeEstimate();recipeChanged();
+      announce('Seam cross prepared: the texture is rolled by half and only its centre cross will be repainted. '+(result.context?.positive?'Its own wording is kept. ':'No wording was kept for this texture: replace the bracketed description. ')+'Press Generate; the Studio then finishes the tile with its seam score and a 3×3 preview.');
+    }catch(error){announce(error.message,true);}
+    finally{tileBusy=false;button.disabled=false;syncReady();}
+  }
+  document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-tile]');if(!button||button.disabled)return;e.preventDefault();void prepareTile(button);});
   document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSourceRecipes'))return;
     if(assetDetailsDirty()){warnUnsavedAsset();return;}const a=activeAsset;
     if(!a||a.trashed_at||a.media_type!=='image'||!window.RecipeShortlist){announce('Choose an available image after recipe guidance has loaded.',true);return;}

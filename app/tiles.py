@@ -36,8 +36,7 @@ FEATHER = 12                # lab: GaussianBlur(12) on the hard cross before the
 SIZE_LIMITS = (256, 1536)
 SIZE_MULTIPLE = 16
 PREVIEW_CELL = 512
-FLAT_ONLY = ("Flat textures only: a top-down or front-on texture with no perspective and no single subject. "
-             "A perspective picture cannot tile (the lab rejected its perspective floor).")
+FLAT_ONLY = "Flat textures only: top-down or front-on, with no perspective; a perspective picture cannot tile."
 CLAIM_FIELDS = {"version", "preset_id", "source_asset_id", "source_sha256", "rolled_file", "rolled_sha256", "size", "band_px", "feather_px", "flatten_sigma_px"}
 _FINISH_LOCK = threading.Lock()
 
@@ -137,7 +136,7 @@ def png_bytes(image):
 
 def eligibility(width, height):
     """None when a picture can become a tile, else the reason shown on the disabled control."""
-    if width != height: return "Flat textures only, and square: this picture is %d × %d. Make seamless needs a square, flat texture (top-down or front-on)." % (width, height)
+    if width != height: return "Needs a square texture: this picture is %d × %d." % (width, height)
     if not SIZE_LIMITS[0] <= width <= SIZE_LIMITS[1]: return "Make seamless needs a side between %d and %d px; this picture is %d px." % (SIZE_LIMITS + (width,))
     if width % SIZE_MULTIPLE: return "Make seamless needs a side that is a multiple of %d px; this picture is %d px." % (SIZE_MULTIPLE, width)
     return None

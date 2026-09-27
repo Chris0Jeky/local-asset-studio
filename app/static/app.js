@@ -8,6 +8,8 @@ const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lor
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null, jobsEtag = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
+// Make seamless (#1220): the server's prepared tile plan, sent with Generate; any recipe change or reset drops it.
+let tileState = null;
 let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResultKey = '';
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) {const error=Error(data.error || 'Request failed');error.status=r.status;error.data=data;throw error;} return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
@@ -329,6 +331,7 @@ function selectPreset(id, reset=true, transition=false) {
   const next=catalog.presets.find(p=>p.id===id);if(!next)throw Error('This preset is unavailable.');
   if(continuationState&&!transition&&(id!==selected?.id||reset))throw Error('You are continuing an image. Use “Leave this continuation” before loading a different recipe, or reopen Continue with this asset to choose another route.');
   if(transition){continuationState=null;continuationSource=null;}
+  if(reset||id!==selected?.id)tileState=null;
   recipeTemplateHash=null;
   selected=next; recipeChanged();
   if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
@@ -362,7 +365,14 @@ async function uploadInput(id) {
 function mediaCard(job,index,output) {
   const id=esc(job.id), url='/api/image/'+id+'/'+index, type=output.media_type || 'image';
   const media=type==='video'?'<video controls preload="metadata" src="'+url+'"></video>':type==='audio'?'<audio controls src="'+url+'"></audio>':type==='3d'?'<model-viewer loading="lazy" camera-controls touch-action="pan-y" environment-image="neutral" shadow-intensity="0.7" src="'+url+'" alt="'+esc(job.preset_name)+' mesh"><span slot="poster">Load interactive 3D preview</span></model-viewer>':'<img loading="lazy" src="'+url+'" alt="'+esc(job.preset_name)+' output">';
-  return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div>'+(window.StudioOutputReview?.markup(output)||'')+'<p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
+  return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div>'+(window.StudioOutputReview?.markup(output)||'')+'<p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p>'+tileNote(job,output)+'</article>';
+}
+// Make seamless (#1220): a finished tile shows its seam score; a completed seam repaint that has no tile yet offers Finish tile.
+function tileNote(job,output){
+  if(output.tile)return '<p class="tileNote"><small>'+esc(output.tile.summary)+'</small></p>';
+  if(!job.tile||job.status!=='completed'||job.tile_finish?.job_id)return '';
+  const failed=job.tile_finish?.error;
+  return '<p class="disabledReason"><small>'+esc(failed?'Tile not finished: '+failed:'This seam repaint has no finished tile yet.')+'</small></p><button class="finishTile" data-job="'+esc(job.id)+'" title="Composite, flatten, measure the seam and build the 3×3 preview. Nothing is generated.">Finish tile</button>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
 const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
@@ -627,9 +637,24 @@ function applySaved(s,{guessLegacyParent=false}={}){
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
+function tilePayload(){return tileState&&selected?.id===tileState.preset_id?{tile:{...tileState}}:{};}
+// Prepare from the library's Make seamless: the rolled seam cross becomes this recipe's picture, the source its parent.
+function beginTile(result){
+  const target=catalog.presets.find(p=>p.id===result?.preset_id&&p.tile_route);
+  if(!target)throw Error('The seamless-tile recipe is unavailable.');
+  if(submitting)throw Error('Wait for the current submission before preparing a tile.');
+  if(continuationState)throw Error('You are continuing an image. Use “Leave this continuation” before making a tile.');
+  selectPreset(target.id,true,true);
+  tileState={...result.plan};uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);$('#reference').value='';
+  const words=result.context?.positive;if(words)$('#positive').value=words;
+  $('#batch').value=1;
+  $('#referenceHint').textContent='Seam cross prepared from '+(result.context?.title||'the texture')+' · '+result.width+' × '+result.height+'. '+result.flag;
+  updateReady();
+}
 function continuationBlockerItems(){
   // Both the original run button and the workbench consume this shared list.
   // Source-free text recipes need wording too; image-only recipes have no binding.
+  if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Asset library.'}];
   if(!continuationState)return selected?.positive&&!String($('#positive')?.value||'').trim()?[{code:'wording',message:'Add a prompt to generate.'}]:[];
   const controls=values();
   if(selected?.last_reference&&!controls.last_reference&&$('#lastReference').files?.length)controls.last_reference='pending-local-upload';
@@ -687,7 +712,7 @@ $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');upda
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
   // The whole Create surface stays interactive while uploads are in flight: snapshot the intent the operator pressed Generate for.
-  const started=selected,startedHash=recipeTemplateHash,intent={preset_id:selected.id,...continuationPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
+  const started=selected,startedHash=recipeTemplateHash,intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
   try{
     const reference=await uploadInput('reference'),lastReference=await uploadInput('lastReference');
     if(selected!==started||recipeTemplateHash!==startedHash)throw Error('The recipe changed while the source was uploading; nothing was submitted. Press Generate again.');
@@ -725,6 +750,7 @@ $('#gallery').onclick=async e=>{
     const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index},unpin=pinned.some(x=>x.job===p.job&&x.index===p.index),dropped=!unpin&&pinned.length>=2;pinned=unpin?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();if(dropped)message('Side by side shows two pictures. The oldest pin was replaced by this one.');}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const cancel=e.target.closest('.cancelJob');if(cancel){if(!cancel.disabled)await cancelJob(cancel.dataset.job,cancel.dataset.confirm==='1');return;}
+    const finishTile=e.target.closest('.finishTile');if(finishTile){await jobAction('tile:'+finishTile.dataset.job,async()=>{const data=await post('/api/tiles/finish',{job_id:finishTile.dataset.job});message(data?.job?.message||'Tile finished.');await refresh();});return;}
     const resume=e.target.closest('.resume');if(resume)await jobAction('resume:'+resume.dataset.job,async()=>{await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();});
     const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs(undefined,true);return;}
     if(e.target.closest('[data-recent-more]')){

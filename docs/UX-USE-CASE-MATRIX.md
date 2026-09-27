@@ -1,5 +1,22 @@
 # UX use-case matrix
 
+## Make seamless from a library texture — 27 September 2026
+
+Refs #1220 (owner decision, 27 September 2026). A picture's asset panel now has a **Make seamless** control, flagged
+*Flat textures only* (top-down or front-on, no perspective). It is disabled, with its reason beside it, for a picture
+that is not square (*Needs a square texture: this picture is 1344 × 768.*), smaller than 256 px, larger than 1536 px or
+not on a 16 px grid. One press rolls the texture by half, stores it with its seam cross transparent and opens
+*Seamless tile • Z-Image seam repaint* with that picture attached, the texture as the recorded parent and the texture's
+own submitted words. Generate stays your press. When the repaint completes, the Studio composites the cross, flattens
+the lighting and records a **Seamless tile** asset and a **3×3 repeat** asset, both with the seam score in their details.
+A completed repaint without a tile (a failed or interrupted finish) shows **Finish tile** on its card.
+
+`python tests/studio_use_cases.py` passed **17/17** journeys with **zero generation submissions and zero page errors**.
+The new `make-a-texture-tile` journey opens a wide picture and reads the disabled control and its reason. It then opens
+a square texture and presses *Make seamless*: the seam-repair recipe is loaded with the rolled cross attached, the texture
+as source and parent, and a status that names Generate as the next press. It takes 4 clicks and 140 instruction words.
+Live mode stops before the press, which stores an upload. These are fixture screens; no model ran.
+
 ## Quick checks on results — 27 September 2026
 
 Refs #1203 (owner decision, 27 September 2026). Keep / Needs work / Reject stay as they are. Each image result now also

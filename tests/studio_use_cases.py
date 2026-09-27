@@ -209,7 +209,8 @@ DENY_LABELS = re.compile(
     r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
 DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-review', 'data-asset-favorite', 'data-bulk',
-              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'data-ux-check', 'data-candidate-check', 'download')
+              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'data-ux-check', 'data-candidate-check', 'download',
+              'data-ux-tile')   # Make seamless stores a rolled seam cross as an upload (#1220)
 
 # Controls whose press only changes this page, or reads, or validates without storing anything. Keyed by
 # the selector with attribute values stripped (see control_kind). The label heuristic misfires on them —
@@ -286,6 +287,14 @@ def build_handler():
     from studio_workflow.core import catalog, new_document, compile_document
     from studio_prompt.http_extension import extend_handler
     from test_server import server
+    import tiles   # app/ is on sys.path once server.py is loaded; a bare name, never `from app import`
+    from PIL import Image
+
+    def tile_status(asset):
+        with Image.open(ROOT / asset['url'].lstrip('/')) as picture: width, height = picture.size
+        reason = tiles.eligibility(width, height)
+        return {'asset_id': asset['id'], 'width': width, 'height': height, 'eligible': reason is None, 'reason': reason,
+                'flag': tiles.FLAT_ONLY, 'preset_id': 'zimage-seam-repair', 'band_px': tiles.BAND}
 
     info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
     schema = catalog(info, 'primary')
@@ -333,6 +342,9 @@ def build_handler():
                 return self.json({'document': dict(document, source={'preset_id': path.rsplit('/', 1)[-1], 'authoring_only': True}), 'generation_submitted': False})
             if path == '/api/health':
                 return self.json({'online': True, 'worker_alive': True, 'schema_available': True, 'missing_models': {}, 'devices': [], 'comfy_url': 'fixture://none'})
+            if path.startswith('/api/tiles/source/'):
+                asset = next((a for a in fixture.ASSETS if a['id'] == path.rsplit('/', 1)[-1]), None)
+                return self.json(tile_status(asset)) if asset else self.json({'error': 'Asset not found'}, 400)
             if path.startswith('/api/jobs/') and path.endswith('/recipe'):
                 job = next(j for j in fixture.JOBS if j['id'] == path.split('/')[3])
                 return self.json(dict(version=2, preset_id=job['preset_id'], controls=job['controls'],
@@ -362,6 +374,20 @@ def build_handler():
                 return self.json({'file': 'f' * 32 + '_drawn-pose.png', 'sha256': 'd' * 64, 'bytes': 2048,
                                   'width': data['width'], 'height': data['height'], 'original_name': 'drawn-pose',
                                   'artifact_id': 'e' * 64, 'renderer': data.get('renderer', renderers[0]), 'generation_submitted': False})
+            if path == '/api/tiles/prepare':
+                # The same body app/tiles.py accepts; the answer is shaped like its result, and nothing is queued.
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                asset = next((a for a in fixture.ASSETS if isinstance(data, dict) and a['id'] == data.get('asset_id')), None)
+                if asset is None or set(data) - {'asset_id', 'band_px', 'flatten'}: return self.json({'error': 'Unknown fixture asset'}, 400)
+                status = tile_status(asset)
+                if not status['eligible']: return self.json({'error': status['reason']}, 400)
+                size, file = status['width'], 'f' * 32 + '_seam-cross.png'
+                plan = {'version': tiles.VERSION, 'preset_id': 'zimage-seam-repair', 'source_asset_id': asset['id'], 'source_sha256': asset['sha256'],
+                        'rolled_file': file, 'rolled_sha256': 'd' * 64, 'size': size, 'band_px': tiles.BAND, 'feather_px': tiles.FEATHER,
+                        'flatten_sigma_px': tiles.default_sigma(size)}
+                return self.json({'plan': plan, 'file': file, 'sha256': 'd' * 64, 'width': size, 'height': size, 'preset_id': 'zimage-seam-repair',
+                                  'context': fixture.source_context(asset), 'flag': tiles.FLAT_ONLY, 'seam_source': 4.34,
+                                  'inner_gradient_source': 0.87, 'generation_submitted': False}, 201)
             if path == '/api/recipe-check':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
                 preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == data['preset_id'])
@@ -1162,6 +1188,45 @@ def _vary(c):
             {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')}, why or 'no disabled reason')
     finally:
         for job in added: fixture.JOBS.remove(job)
+
+
+TILE_STATE = """() => ({preset: selected.id, parents: parentAssets, tile: (tilePayload().tile || {}).source_asset_id || null,
+  reference: uploaded, notice: document.querySelector('#uxNotice').textContent, hint: document.querySelector('#referenceHint').textContent})"""
+WHY_TILE = """(() => { const b = document.querySelector('#assetDialog .ux-tile button');
+  return b ? (b.disabled ? 'disabled: ' : 'enabled: ') + document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()"""
+
+
+@driver('make-a-texture-tile')
+def _tile(c):
+    """#1220: Make seamless on a library texture: disabled with its reason for a non-square picture, one press to a prepared
+    seam repaint for a square one; Generate stays a separate press."""
+    import studio_browser_smoke as fixture
+    c.need_recipe('zimage-seam-repair')
+    c.boot('#assets')
+    c.page.wait_for_timeout(600)
+    wide = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % wide, note='open a wide picture')
+    c.page.wait_for_timeout(500)
+    c.act('#assetDialog .ux-tile button', 'read', note='Make seamless and why it is not offered')
+    why = c.page.evaluate(WHY_TILE)
+    c.act('#closeAssetDialog', navigation=True, note='close the wide picture', supplementary=True)
+    square = c.pick('asset-3', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET, nth=1)
+    c.act('[data-asset-open="%s"]' % square, note='open a square texture')
+    c.page.wait_for_timeout(500)
+    offered = c.page.evaluate(WHY_TILE)
+    c.stop_before(c.act('#assetDialog [data-ux-tile]', note='prepares the seam repaint'), 'stopped before preparing: Make seamless stores a rolled copy of the picture')
+    c.page.wait_for_timeout(800)
+    state = c.page.evaluate(TILE_STATE)
+    c.act('#uxNotice', 'read', note=state['notice'][:200])
+    c.act('#referenceHint', 'read', note='source %s, parents %s' % (state['tile'], state['parents']))
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    submitted = [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+    prepared = (state['preset'] == 'zimage-seam-repair' and state['tile'] == square and state['parents'] == [square]
+                and state['reference'] == 'f' * 32 + '_seam-cross.png' and 'Press Generate' in state['notice'] and 'Flat textures only' in state['hint'])
+    disabled = why.startswith('disabled: ') and 'Flat textures only' in why and '1344 × 768' in why
+    flagged = offered.startswith('enabled: ') and 'Flat textures only' in offered
+    return prepared and disabled and flagged and not submitted, 'prepared: %s; wide picture: %s; square picture: %s; generation posts: %d' % (
+        {k: state[k] for k in ('preset', 'tile', 'parents')}, why or 'no Make seamless control', offered or 'no Make seamless control', len(submitted))
 
 
 @driver('reference-analysis-review-and-apply')

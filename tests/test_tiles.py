@@ -129,7 +129,7 @@ class ImageOperationTests(unittest.TestCase):
     def test_only_square_flat_sizes_are_eligible_with_a_reason(self):
         self.assertIsNone(tiles.eligibility(1024, 1024))
         wide = tiles.eligibility(1344, 768)
-        self.assertIn("Flat textures only", wide); self.assertIn("1344 × 768", wide)
+        self.assertIn("square", wide); self.assertIn("1344 × 768", wide)
         self.assertIn("multiple of 16", tiles.eligibility(1000, 1000))
         self.assertIn("between 256 and 1536", tiles.eligibility(128, 128))
         self.assertEqual(tiles.default_sigma(1024), 96, "the lab's flatten radius at 1024 px")
@@ -199,7 +199,7 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(prepared["seam_source"], tiles.seam(lit_texture()))
         self.assertEqual(tiles.prepare(studio, {"asset_id": asset["id"], "band_px": 64, "flatten": False})["plan"]["flatten_sigma_px"], 0)
         jobs_before = len(studio.jobs)
-        for body, message in (({"asset_id": self.source(studio, Image.new("RGB", (320, 256)))["id"]}, "Flat textures only"),
+        for body, message in (({"asset_id": self.source(studio, Image.new("RGB", (320, 256)))["id"]}, "square texture"),
                               ({"asset_id": asset["id"], "band_px": 113}, "even whole number"), ({"asset_id": asset["id"], "band_px": 200}, "half the tile side"),
                               ({"asset_id": asset["id"], "flatten": "yes"}, "true or false"), ({"asset_id": asset["id"], "denoise": 1}, "takes asset_id")):
             with self.subTest(body=body), self.assertRaisesRegex(ValueError, message): tiles.prepare(studio, body)
@@ -306,7 +306,7 @@ class HttpRouteTests(unittest.TestCase):
     def test_status_prepare_and_finish_routes(self):
         wide = RouteTests.source(self, self.studio, Image.new("RGB", (320, 256), "grey"))
         status, body = self.call("GET", "/api/tiles/source/" + wide["id"])
-        self.assertEqual(status, 200); self.assertFalse(body["eligible"]); self.assertIn("Flat textures only", body["reason"])
+        self.assertEqual(status, 200); self.assertFalse(body["eligible"]); self.assertIn("square", body["reason"]); self.assertIn("Flat textures only", body["flag"])
         status, body = self.call("POST", "/api/tiles/prepare", {"asset_id": wide["id"]})
         self.assertEqual(status, 400); self.assertIn("320 × 256", body["error"])
         square = RouteTests.source(self, self.studio)
