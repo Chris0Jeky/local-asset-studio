@@ -1,5 +1,31 @@
 # UX use-case matrix
 
+## Quick checks on results — 27 September 2026
+
+Refs #1203 (owner decision, 27 September 2026). Keep / Needs work / Reject stay as they are. Each image result now also
+has one-tap yes/no **quick checks** that fit its recipe route:
+
+- Combine: *pose · face · outfit · style · clean*.
+- Every other image: *style · anatomy · composition · clean*.
+
+A press cycles one check: not checked → ✓ yes → ✗ no → not checked. Absent always means *not checked*, never *no*.
+Answers are `check:<name>=yes|no` tags. They are saved through the ordinary revision-guarded `/api/assets/update`, and
+`app/workspace.py` refuses unknown names, malformed answers and two answers for one check. Keep never waits on a check.
+Where the answers appear, and how they save:
+
+| Where | Checks | Count shown | Saves |
+| --- | --- | --- | --- |
+| **Runs for these pictures** seed tiles | Combine set; keys 1-5 on the focused tile | Each run head, e.g. "pose 1/1 · face 0/1" | One press, one write |
+| **Try this pair with another recipe** engine chips | none | This PC's answers for that recipe, or "Not checked yet" | none |
+| Comparison candidates (Runs & review) | Route set | Each candidate | One press, one write |
+| Library asset dialog and review queue | Route set; keys 1-5 whenever the dialog is open and no field has focus | none | With Save details or a K / W / X decision |
+
+`python tests/studio_use_cases.py` passed **15/15** journeys with **zero generation submissions and zero page errors**.
+`combine-same-pair-second-engine` now takes 16 clicks: the earlier 14, plus *pose* and *face* on the keeper's tile. It
+then presses key 2 on the focused tile, which turns *face* to *no*. It asserts the three saved tag lists, that Keep
+stayed enabled and the review stayed *Keeper*, and that the engine chip and the run head both read
+`pose 1/1 · face 0/1`. These are fixture screens; no model ran and no picture was judged.
+
 ## Combine runs beside their pictures — 27 September 2026
 
 Refs #422, design handoff J4/D7. Before this change, at 1440×900 the pair sat at y≈854 and the result strip at y≈3499, with
