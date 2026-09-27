@@ -114,6 +114,16 @@ class GalleryHandoffTests(unittest.TestCase):
         self.assertIn('Comparison quick checks save one owner answer per press', result.stdout, result.stdout + result.stderr)
 
 
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_combine_plan_form_shows_every_fill_and_belongs_to_one_pair(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('combine_plan_frontend.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('7 Combine plan form checks passed', result.stdout, result.stdout + result.stderr)
+
+
 class ProductionClockFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_explicit_time_extension_does_not_resume_or_duplicate(self):
