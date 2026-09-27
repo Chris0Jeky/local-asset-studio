@@ -231,6 +231,11 @@ class ReviewDesk:
                  'details': copy.deepcopy(details), 'document_sha256': digest(document)}
         db.execute('INSERT INTO comparison_review_events VALUES (?,?,?)', (identifier, document['revision'], canonical(event).decode()))
 
+    def _mark_incomplete(self, identifier, session, step, alias, error=None, superseded_by=None):
+        marker = {'version': 1, 'kind': 'incomplete-review-open', 'project_id': identifier, 'session_id': session, 'step': step, 'alias': alias, 'error': None if error is None else {'type': type(error).__name__, 'message': str(error)[:500]}, 'superseded_by': superseded_by, 'at': time.time(), 'registered': False, 'note': 'Kept as evidence; not part of any review. Nothing was deleted.'}
+        try:write_new(self._path(identifier, f'reviews/{session}/INCOMPLETE.json'), canonical(marker))
+        except (OSError, ValueError):pass
+
     def open(self, identifier, payload):
         with self.production.connect() as db:existing = self._read(db, identifier)
         if existing:return self._public(identifier, existing)
@@ -240,36 +245,41 @@ class ReviewDesk:
             self._storage_budget(identifier, sum(c['bytes'] for c in evidence['candidates']) + len(evidence['candidates']) * 16 * 1024**2)
             session = uuid.uuid4().hex; directory = self._path(identifier, f'reviews/{session}/sources')
             directory.mkdir(parents=True, exist_ok=False)
-            candidates = copy.deepcopy(evidence['candidates']);random.SystemRandom().shuffle(candidates)
-            files = []
-            for index, candidate in enumerate(candidates):
-                alias = chr(65 + index);candidate['alias'] = alias
-                source = self.production.studio.assets.file(candidate['asset_id'])
-                data = checked_bytes(source, candidate['sha256'], candidate['bytes'])
-                suffix = source.suffix.lower()
-                if suffix not in ('.png', '.jpg', '.jpeg', '.webp'):raise ValueError('Review source extension is unsupported')
-                relative = f'reviews/{session}/sources/{alias}{suffix}'
-                write_new(self._path(identifier, relative), data)
-                preview = f'reviews/{session}/{alias}.png'
-                transform, receipt = make_preview(data, self._path(identifier, preview))
-                candidate.update(source_path=relative, preview_path=preview, transform=transform, assessment=rating({}))
-                files.append((preview, receipt))
-            document = {'version': 1, 'session_id': session, 'revision': 0, 'created_at': time.time(),
-                        'evidence_sha256': key, 'evidence': evidence, 'candidates': candidates,
-                        'revealed': False, 'finalized': False, 'selected': None, 'notes': '', 'finalized_by': None, 'finalized_at': None,
-                        'crop': FULL_CROP.copy(), 'background': 'dark'}
-            with self.production.lock, self.production.connect() as db:
-                db.execute('BEGIN IMMEDIATE')
-                # Other processes may have completed the same explicit open during decoding.
-                existing = self._read(db, identifier)
-                if existing:document = existing
-                else:
-                    project = self._current(identifier, document, db)
-                    document['prior_review'] = copy.deepcopy(project['state'].get('review'))
-                    for relative, receipt in files:self._register(db, identifier, relative, receipt, 'blind-review-preview')
-                    self._save(db, identifier, document, 'open', self._reviewer(payload), {'evidence_sha256': key})
-                    state = project['state'];state.setdefault('review', {})['desk_url'] = '/review.html?project=' + identifier
-                    db.execute('UPDATE projects SET state=? WHERE id=?', (json.dumps(state), identifier))
+            try:
+                step = None; alias = None
+                candidates = copy.deepcopy(evidence['candidates']);random.SystemRandom().shuffle(candidates)
+                files = []
+                for index, candidate in enumerate(candidates):
+                    alias = chr(65 + index);candidate['alias'] = alias;step = 'copy_source'
+                    source = self.production.studio.assets.file(candidate['asset_id'])
+                    data = checked_bytes(source, candidate['sha256'], candidate['bytes'])
+                    suffix = source.suffix.lower()
+                    if suffix not in ('.png', '.jpg', '.jpeg', '.webp'):raise ValueError('Review source extension is unsupported')
+                    relative = f'reviews/{session}/sources/{alias}{suffix}'
+                    write_new(self._path(identifier, relative), data)
+                    preview = f'reviews/{session}/{alias}.png'
+                    step = 'preview';transform, receipt = make_preview(data, self._path(identifier, preview))
+                    candidate.update(source_path=relative, preview_path=preview, transform=transform, assessment=rating({}))
+                    files.append((preview, receipt))
+                step = 'register'
+                document = {'version': 1, 'session_id': session, 'revision': 0, 'created_at': time.time(),
+                            'evidence_sha256': key, 'evidence': evidence, 'candidates': candidates,
+                            'revealed': False, 'finalized': False, 'selected': None, 'notes': '', 'finalized_by': None, 'finalized_at': None,
+                            'crop': FULL_CROP.copy(), 'background': 'dark'}
+                with self.production.lock, self.production.connect() as db:
+                    db.execute('BEGIN IMMEDIATE')
+                    # Other processes may have completed the same explicit open during decoding.
+                    existing = self._read(db, identifier)
+                    if existing:document = existing
+                    else:
+                        project = self._current(identifier, document, db)
+                        document['prior_review'] = copy.deepcopy(project['state'].get('review'))
+                        for relative, receipt in files:self._register(db, identifier, relative, receipt, 'blind-review-preview')
+                        self._save(db, identifier, document, 'open', self._reviewer(payload), {'evidence_sha256': key})
+                        state = project['state'];state.setdefault('review', {})['desk_url'] = '/review.html?project=' + identifier
+                        db.execute('UPDATE projects SET state=? WHERE id=?', (json.dumps(state), identifier))
+            except Exception as error:self._mark_incomplete(identifier, session, step, alias, error=error);raise
+            if existing:self._mark_incomplete(identifier, session, 'superseded', None, superseded_by=existing['session_id']);return self._public(identifier, existing)
             return self._public(identifier, document)
         finally:self.media_lock.release()
 
