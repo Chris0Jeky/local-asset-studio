@@ -25,6 +25,9 @@ TRACEBACK_AFTER_SECONDS = LIFETIME_BUDGET_SECONDS - TRACEBACK_MARGIN_SECONDS
 # was still running ordinary tests when the 600-second budget expired, with no
 # hung test, no leaked thread and 2,236 of 2,968 tests started.
 BUDGET_VARIABLE = "FULL_SUITE_LIFETIME_BUDGET_SECONDS"
+# A host too slow for the whole suite in one job runs disjoint `K/N` parts of it,
+# each under the same lifetime and leak checks (the worker keeps modules whole).
+SHARD_VARIABLE = "FULL_SUITE_SHARD"
 # The worker refuses a deadline too short to keep its current-test marker clear
 # of the C-level all-thread dump, so the parent refuses a budget that could only
 # produce one.
@@ -57,6 +60,20 @@ def lifetime_budget(environ=None) -> float:
     return budget
 
 
+def shard(environ=None) -> str | None:
+    """Return an explicit `K/N` shard, or None for the whole suite."""
+    raw = (os.environ if environ is None else environ).get(SHARD_VARIABLE, "").strip()
+    if not raw:
+        return None
+    try:
+        index, count = (int(part) for part in raw.split("/"))
+    except ValueError:
+        raise ValueError(f"{SHARD_VARIABLE} must look like 2/3, not {raw!r}") from None
+    if not 1 <= index <= count:
+        raise ValueError(f"{SHARD_VARIABLE} index must be within 1..{count}, not {raw!r}")
+    return f"{index}/{count}"
+
+
 def traceback_deadline(budget: float) -> float:
     """Dump every thread stack while the child is still alive under `budget`."""
     return budget - TRACEBACK_MARGIN_SECONDS
@@ -71,6 +88,7 @@ def child_environment(environ=None) -> dict:
     """
     child = dict(os.environ if environ is None else environ)
     child.pop(BUDGET_VARIABLE, None)
+    child.pop(SHARD_VARIABLE, None)
     return child
 
 
@@ -83,6 +101,7 @@ def printable(value: str | bytes | None) -> str:
 def suite_command(
     traceback_after: float = TRACEBACK_AFTER_SECONDS,
     shutdown_traceback_after: float = SHUTDOWN_TRACEBACK_AFTER_SECONDS,
+    shard: str | None = None,
 ) -> list[str]:
     return [
         sys.executable,
@@ -98,12 +117,12 @@ def suite_command(
         str(traceback_after),
         "--shutdown-traceback-after",
         str(shutdown_traceback_after),
-    ]
+    ] + (["--shard", shard] if shard else [])
 
 
 def main() -> int:
     budget = lifetime_budget()
-    command = suite_command(traceback_after=traceback_deadline(budget))
+    command = suite_command(traceback_after=traceback_deadline(budget), shard=shard())
     started = time.monotonic()
     try:
         result = subprocess.run(

@@ -13,7 +13,8 @@ class OwnerDecisionFactsTests(unittest.TestCase):
     def facts(self, text):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "HUMAN_TODO.md").write_text(text, encoding="utf-8")
+            # Exact bytes: write_text would turn \n into \r\n on Windows and change the blob identity under test.
+            (root / "HUMAN_TODO.md").write_bytes(text.encode("utf-8"))
             return snapshot.human_todo_facts(root)
 
     def test_open_headings_accept_dash_and_current_status_variants(self):

@@ -585,6 +585,25 @@
       ]
     },
     {
+      "id": "combine-several-engines-one-plan",
+      "goal": "Run the same character and pose on several Combine engines with the same seeds as one plan, see the total time first, and start it with one press.",
+      "starting_view": "create",
+      "success_condition": "The open recipe starts ticked, incompatible recipes cannot be ticked, the page counts the pictures before preparing, Prepare returns one plan with its expected total and nothing run, Start is offered once and withdrawn after any change, and no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "continue a saved character through Combine", "expect": "the source-bound workbench opens"},
+        {"intent": "choose a pose picture and describe the result", "expect": "both source images and the named answers are retained"},
+        {"intent": "open the several-recipes plan", "expect": "the open recipe is ticked and a recipe for another input is disabled"},
+        {"intent": "tick two more recipes", "expect": "each shows its time per picture"},
+        {"intent": "type the seeds", "expect": "the same seeds apply to every recipe"},
+        {"intent": "read the count and time", "expect": "recipes x seeds = pictures, with the time the page knows"},
+        {"intent": "prepare the plan", "expect": "the server checks every recipe and nothing runs"},
+        {"intent": "read the Start control", "expect": "one explicit Start is offered with the expected total"},
+        {"intent": "change a seed", "expect": "the prepared plan no longer matches"},
+        {"intent": "read the plan status", "expect": "Start is withdrawn until the plan is prepared again"}
+      ]
+    },
+    {
       "id": "draw-a-pose-for-combine",
       "goal": "Draw the pose skeleton the Combine recipe needs on the page itself, correct one joint by hand, and put the drawing on Picture 1 without leaving the workbench.",
       "starting_view": "create",

@@ -143,7 +143,10 @@ def stages(studio, intent):
         stage_claim={'version':1,'intent':'combine','preset_id':preset['id'],'source_asset_id':claim['source_asset_id'],
                      'source_sha256':claim['source_sha256'],'reference_file':claim['reference_file'],'template_sha256':template}
         if preset['id']==first['id']:
-            # The recipe open on the screen runs exactly as Generate would run it, the owner's own settings included.
+            # The recipe open on the screen runs exactly as Generate would run it, the owner's own settings included, and
+            # like Generate it refuses a graph that changed since the page opened it (#1186).
+            if claim.get('template_sha256')!=template or base.get('expected_template_sha256') not in (None,'',template):
+                raise ValueError('The destination graph changed. Reopen the handoff and review the new route.')
             controls={key:value for key,value in base['controls'].items() if key not in ('seed','batch_count')}
         else:
             controls=dict({key:value for key,value in size.items() if preset.get(key)},last_reference=claim['reference_file'])

@@ -1,5 +1,13 @@
 # Current state — 27 September 2026
 
+## Qwen-Image 2.1 seed audition: Pruna F0 and the Fix LoRA parked, B0 holds — 27 September 2026 (18:07-18:22 local)
+
+On the isolated qwen21 backend (switched explicitly through the Studio), 2 prompts × 3 seeds × 3 conditions straight to ComfyUI: B0 (25 steps), F0 (Pruna 8-step at 2.0) and Q1 (the untested 2.1 Fix LoRA at 1.0). Even with the prompt text unchanged, ComfyUI recomputed the conditioning in 15 of 18 cells and reloaded the diffusion model before every sample, so the per-image floor is about 25 s of paging. F0 runs at 0.98× of B0 on warm cells (means 33.49 against 34.28 s; the gate is ~0.55×), with quality level (blind: 3 keeps, mean 4.12 against B0's 5 keeps, 3.92), so it is parked. Q1 costs about 1.23× B0 on warm cells and flattens the finish and worsens hands (1 keep, mean 3.39), so it is parked or rejected. B0 holds. Commit peaked at 86.3 %. Evidence: `experiments/curated/qi21-pareto-20260927/` (refs #1028). Agent-judged only; not art acceptance, not licence clearance.
+
+## Night Shift derivatives from the owner's anchor z2 — 27 September 2026 (16:56-17:26 local)
+
+From `retro-anime-master-z2` (sha256 `c22b723c…`, verified): a 3840x2160 master by ESRGAN raw 4x plus Lanczos (the Studio `anime-esrgan` job `c057d94c` took 455 s with a 9.0 GB GPU spill); `retro-anime-quiet` from Studio `flux-edit` (FLUX.2 Klein 4B), 4 candidates plus one refinement round. The first round redrew the window, so round 1 named the frame and the rail view; pick r1-2 (job `a08efbc3`, prompt `5702bc23`, 36.9 s). Klein returned it about 0.7 % larger; a recorded affine warp brings registration to 0.5 / 0.15 px, and the same upscale puts master and quiet on one 3840x2160 grid. `-hero` (3840x1600), `-poster` (1280/640) and `-card` (1024/512/256, tight and wide) are crops and encodes of the master, all within their byte budgets. Full files stay local under ComfyUI `output/Research/nightshift-20260927/`; contact sheets, receipts and rubric pre-review are in `experiments/curated/night-shift-derivatives-20260927/`. **Owner art review (27 Sep, in chat): "Accept, try sharper 4K as well"**. Accepted: master MA, quiet r1-2, hero, poster, card tight. Not runtime-qualified; licence not cleared. `retro-anime-wall` stays the owner's ChatGPT job.
+
 ## Owner cancel (#1138) proved live on ComfyUI 0.35.0 — 27 September 2026 (16:41-16:44 local)
 
 Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<id>/cancel` on the primary backend. Every job ended `cancelled`, with who and when recorded. The three jobs that had reached ComfyUI also record the prompt ID, ComfyUI's reply and the `/queue` observations.
