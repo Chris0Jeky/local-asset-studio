@@ -10,12 +10,12 @@ const assetState={workspace_id:'1'.repeat(32),assets:[
   {id:'asset-b',media_type:'image',preset_id:'anima-portrait',tags:[],metadata_revision:0}]};
 const context=vm.createContext({$,document:{querySelector:$,querySelectorAll:()=>[]},esc,setInterval(){},showView(){},assetState,
   catalog:{presets:[{id:'anima-portrait'}]},api:async()=>[],post:async(url,data)=>{requests.push({url,data});return {};},
-  refreshAssets:async()=>true,mutateAssets:async payload=>{updates.push(JSON.parse(JSON.stringify(payload)));const a=assetState.assets.find(x=>x.id===payload.ids[0]);a.tags=payload.tags;a.metadata_revision++;return {status:'applied'};}});
+  refreshAssets:async()=>{if(!assetState.assets.some(a=>a.id==='asset-c'))assetState.assets.push({id:'asset-c',media_type:'image',preset_id:'anima-portrait',tags:['late'],metadata_revision:0});return true;},mutateAssets:async payload=>{updates.push(JSON.parse(JSON.stringify(payload)));const a=assetState.assets.find(x=>x.id===payload.ids[0]);a.tags=payload.tags;a.metadata_revision++;return {status:'applied'};}});
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/review-checks.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/production.js'),'utf8'),context);
-const stage=(label,asset)=>({label,operation:'generate',job:{id:'job-'+label,status:'completed',outputs:[{asset_id:asset,media_type:'image',seed:42}]}});
+const stage=(label,asset)=>({label,operation:'generate',job:{id:'job-'+label,preset_id:'anima-portrait',status:'completed',outputs:[{asset_id:asset,media_type:'image',seed:42}]}});
 const plan={id:'c'.repeat(32),name:'Lantern keeper',kind:'comparison',axis:'cfg',values:[3.5,5],budget:{reserved:2,allowance:4},created_at:1790000000,
-  stages:[stage('A','asset-a'),stage('B','asset-b')],state:{status:'awaiting_review',message:'Finished'}};
+  stages:[stage('A','asset-a'),stage('B','asset-b'),stage('C','asset-c')],state:{status:'awaiting_review',message:'Finished'}};
 vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.stringify(plan.id)};renderProduction();`,context);
 (async()=>{
   let html=$('#productionDetail').innerHTML;
@@ -31,5 +31,9 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   assert.match($('#productionMessage').textContent,/Saved for this candidate: anatomy yes\. The comparison outcome is unchanged\./);
   html=$('#productionDetail').innerHTML;
   assert.match(html,/<p class="muted candidate-check-count">anatomy 1\/1<\/p>/,'the count updates after the save');
+  // Codex on #1212: a candidate that finished after the last Workspace read still has chips; a press reads fresh tags first.
+  assert.equal((html.match(/data-candidate-check="\w+" data-asset="asset-c"/g)||[]).length,4);
+  await $('#productionDetail').onclick({target:{closest:s=>s==='[data-candidate-check]'?{dataset:{candidateCheck:'clean',asset:'asset-c'}}:null}});
+  assert.deepEqual(updates[1],{ids:['asset-c'],action:'edit',tags:['late','check:clean=yes']},'the other tags read after the refresh survive');
   console.log('Comparison quick checks save one owner answer per press and count them per candidate.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

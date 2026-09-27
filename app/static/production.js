@@ -114,7 +114,7 @@ function renderProduction(){
     if(['awaiting_review','reviewed','failed'].includes(p.state.status))html+='<p><a class="primary artifact-download" href="/review.html?project='+p.id+'">Open review desk</a> <span class="muted">Stable blind candidates, matched crops, findings and an evidence pack. No generation.</span></p>';
     html+='<p class="muted">'+p.budget.reserved+' of '+p.budget.allowance+' graph runs reserved across this study and its branches. Uncertain attempts keep their reservation. No automatic repair runs.</p><label class="blind-toggle"><input id="blindComparison" type="checkbox" '+(blindComparison?'checked':'')+'> Hide settings while comparing</label><div class="candidate-grid">';
     for(const s of p.stages){const j=s.job,images=(j?.outputs||[]).filter(o=>o.asset_id);
-      const index=p.stages.indexOf(s),variant=(p.variants||[])[index],checked=images.map(o=>candidateCheckAsset(o.asset_id)).filter(Boolean),counted=checked.length?StudioReviewChecks.summary(checked,candidateCheckNames(checked[0])):'';
+      const index=p.stages.indexOf(s),variant=(p.variants||[])[index],checked=images.map(o=>candidateCheckAsset(o.asset_id)).filter(Boolean),counted=checked.length?StudioReviewChecks.summary(checked,candidateCheckNames(j)):'';
       html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(variant?variant.label:p.axis+' '+p.values[index])+'</small>'+(variant?.rationale?'<p class="muted">'+esc(variant.rationale)+'</p>':'')+(variant?.sources||[]).map(u=>'<a href="'+safeUrl(u)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' '))+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>'+(counted?'<p class="muted candidate-check-count">'+esc(counted)+'</p>':'');
       for(const o of images){const url='/api/assets/'+o.asset_id+'/file';html+=o.media_type==='image'?'<button class="candidate-image" data-candidate-open="'+o.asset_id+'"><img src="'+url+'" alt="Candidate '+esc(s.label)+'"></button>':o.media_type==='video'?'<video src="'+url+'" controls preload="metadata"></video>':'<a href="'+url+'" download>Download '+esc(o.media_type)+'</a>';
         if(['awaiting_review','reviewed'].includes(p.state.status)&&!p.state.review?.desk_url)html+='<button data-choose-candidate="'+o.asset_id+'">Choose '+esc(s.label)+'</button>';
@@ -122,8 +122,9 @@ function renderProduction(){
         // dialog uses.  Blind mode hides settings, never the pictures, so marking a
         // keeper here reveals nothing about which variant produced it.
         if(o.media_type==='image')html+='<div class="candidate-review"><button data-candidate-review="selected" data-candidate-asset="'+o.asset_id+'">Keeper</button><button data-candidate-review="needs_work" data-candidate-asset="'+o.asset_id+'">Needs work</button></div>';
-        const checkAsset=candidateCheckAsset(o.asset_id),checkNames=candidateCheckNames(checkAsset);
-        if(o.media_type==='image'&&checkNames.length)html+='<div class="candidate-checks" role="group" aria-label="Quick checks for candidate '+esc(s.label)+'">'+StudioReviewChecks.chipsHTML({tags:checkAsset.tags,names:checkNames,attr:'data-candidate-check',asset:o.asset_id,escape:esc})+'</div>';
+        // The set comes from the stage's own recipe, so a candidate that finished after the last Workspace read still gets chips.
+        const checkNames=o.media_type==='image'?candidateCheckNames(j):[];
+        if(checkNames.length)html+='<div class="candidate-checks" role="group" aria-label="Quick checks for candidate '+esc(s.label)+'">'+StudioReviewChecks.chipsHTML({tags:candidateCheckAsset(o.asset_id)?.tags||[],names:checkNames,attr:'data-candidate-check',asset:o.asset_id,escape:esc})+'</div>';
       }
       if(j)html+='<details><summary>Execution record</summary><small>'+esc(j.message)+'</small><p>'+esc((j.prompt_ids||[]).join(', '))+'</p>'+(j.tracking_disposition?.status==='stopped'?'<p><b>Tracking stopped</b>: '+esc(j.tracking_disposition.reason)+'</p>':'')+'<button data-job-recipe="'+j.id+'">Recipe</button></details>';
       html+='</article>';
@@ -302,7 +303,7 @@ async function reviewCandidateAsset(id,review){
 // #1203: quick yes/no checks on a candidate picture, saved one press at a time through the same guarded update.
 // Counts per candidate come only from those owner answers; the comparison's own outcome is untouched.
 function candidateCheckAsset(id){return globalThis.StudioReviewChecks&&typeof assetState!=='undefined'?assetState.assets.find(a=>a.id===id)||null:null;}
-function candidateCheckNames(asset){return asset?StudioReviewChecks.forAsset(asset,typeof catalog==='undefined'?[]:catalog?.presets):[];}
+function candidateCheckNames(job){return globalThis.StudioReviewChecks&&job?StudioReviewChecks.forPreset((typeof catalog==='undefined'?[]:catalog?.presets||[]).find(p=>p.id===job.preset_id)):[];}
 async function checkCandidateAsset(id,name){
   if(!id||!globalThis.StudioReviewChecks)return;
   await refreshAssets(true);const asset=assetState.assets.find(a=>a.id===id);
