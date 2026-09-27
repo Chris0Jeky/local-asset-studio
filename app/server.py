@@ -68,6 +68,7 @@ HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) betwe
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
 HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
+HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
 GPU_SAMPLE_SECONDS = 0.5                 # sampler thread cadence: a VAE decode's overflow into shared memory lasts about 3 s
 GPU_SETTLE_SECONDS = 3                   # after a prompt that spilled, how long shared memory may take to drain before it counts as lingering
@@ -633,7 +634,7 @@ class Studio:
             others = f" The largest other GPU user was {label(credible[0])} with {credible[0].get('dedicated_bytes', 0) / 2**30:.1f} GB."
         elif holders:
             others = (f" The largest other GPU user is unknown: Windows reported an impossible {holders[0].get('dedicated_bytes', 0) / 2**30:.1f} GB"
-                      f" for {label(holders[0])}, more than the card holds.")
+                      f" for {label(holders[0])}, more than the whole card reported in use.")
         gib = worst.get('peak_shared_bytes', 0) / 2**30
         if any(p.get('lingering') for p in peaks):
             left = max((p.get('settled_shared_bytes') or 0) for p in peaks) / 2**30
@@ -873,7 +874,10 @@ class Studio:
         if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time(), **({'deferred': True} if deferred else {}))]
         if deferred:
             available = reading.get('available_bytes') if isinstance(reading, dict) else None
-            job["message"] = f"Queued. Memory headroom is {available / 1024**3:.1f} GiB and this job needs {self.required_host_commit_bytes(preset, graph) / 1024**3:.0f} GiB; before sending it the Studio will free ComfyUI's cached models and measure again"
+            head = f"Queued. Memory headroom is {available / 1024**3:.1f} GiB and this job needs {self.required_host_commit_bytes(preset, graph) / 1024**3:.0f} GiB; the Studio measures again just before sending it"
+            # Promise only what _release_for_commit_gate can do: at or below its floor the release is always skipped.
+            if isinstance(available, int) and available > COMMIT_RELEASE_FLOOR_BYTES: job["message"] = head + " and, if headroom is still short and nothing else is running, frees ComfyUI's cached models and measures once more"
+            else: job["message"] = head + f". Freeing ComfyUI's cached models needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom, so unless memory is released before then the job fails with nothing sent"
         self._save(job); self.jobs[job_id] = job
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
@@ -2088,7 +2092,12 @@ class Studio:
                 # A read is safe to repeat (the prompt is never posted again), so one dropped poll does not end the batch; a ComfyUI
                 # that stays unreadable still ends observation after a bounded number of reads, with the rest of the batch unsent.
                 read_failures += 1; error = (str(exc) or type(exc).__name__)[:200]
-                submission.setdefault("history_read_errors", []).append({"at": time.time(), "error": error})
+                # Failures reset after any good read, so a flaky ComfyUI over the 4-hour window would grow this without bound.
+                kept = submission.setdefault("history_read_errors", [])
+                # A submission resumed from before the cap has a list but no count: seed from it, then trim it.
+                submission["history_read_error_count"] = submission.get("history_read_error_count", len(kept)) + 1
+                del kept[HISTORY_READ_ERRORS_KEPT:]
+                if len(kept) < HISTORY_READ_ERRORS_KEPT: kept.append({"at": time.time(), "error": error})
                 if read_failures >= HISTORY_READ_STRIKES:
                     with self.lock:
                         if self._tracking_stopped(job): return False
@@ -2527,6 +2536,7 @@ class Handler(BaseHTTPRequestHandler):
                 if parts[-1]=='put-away':
                     if len(parts)!=5:raise StudioError('Unknown put-away route')
                     return self._json(200,self.studio.production.put_away(identifier,payload))
+                return self._json(404, {"error":"Not found"})  # the body was read above: nothing is left to drain
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_object()))
             if self.path == "/api/assets/update":
                 try: return self._json(200, self.studio.assets.update(self._body_json()))
