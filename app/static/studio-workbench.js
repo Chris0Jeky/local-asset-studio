@@ -241,8 +241,9 @@
     else if(!focusReadinessTarget(q('#lastReference')))q('#uxPullAsset').click();
   };
   // One experiment retains semantic source roles; image numbers and graph bindings belong to the selected recipe.
+  // The runs sit directly under their two pictures, so the pair and its newest seeds share one screen (#422, J4).
   const enginePanel=element('section','ux-combine-engines');enginePanel.id='uxCombineEngines';enginePanel.hidden=true;pairPanel.after(enginePanel);
-  const resultPanel=element('section','ux-pair-results');resultPanel.id='uxPairResults';resultPanel.hidden=true;runBox.after(resultPanel);
+  const resultPanel=element('section','ux-pair-results');resultPanel.id='uxPairResults';resultPanel.hidden=true;pairPanel.after(resultPanel);
   const combineWording=new Map();let engineMarkup='',resultMarkup='',pairActionBusy=false;
   function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
@@ -253,7 +254,7 @@
     const options=StudioContinuation.destinations('combine',catalog.presets,continuationSource),busy=combineBusy();
     const markup='<h3>Try this pair with another recipe</h3><p>Pictures and answers stay here. Each recipe keeps its edited wording. Generate starts the next run.</p><div class="ux-engine-options">'+options.map(p=>{
       const reason=StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||'',run=jobs.find(j=>j.preset_id===p.id&&j.status==='completed'&&Number(j.elapsed_seconds)>0);
-      const label=({'combine-klein':'Klein 4B','combine-klein-9b':'Klein 9B · pose','combine-klein-9b-depth':'Klein 9B · depth','combine-klein-9b-copypose':'Klein 9B · Copy Pose','combine-klein-9b-replace':'Klein 9B · replace','combine-klein-9b-skeleton':'Klein 9B · skeleton'})[p.id]||p.name;
+      const label=StudioContinuation.combineEngineLabel(p);
       const timing=run?'Last completed run: '+durationLabel(run.elapsed_seconds)+' · '+(run.batch_count||1)+' output(s)':'No completed timing yet';
       return '<button type="button" data-ux-engine="'+escape(p.id)+'" aria-pressed="'+(p.id===selected.id)+'" '+(reason||busy?'disabled':'')+' title="'+escape(reason||p.name)+'"><b>'+escape(label)+'</b><small>'+escape(timing)+'</small>'+(reason?'<small>'+escape(reason)+'</small>':'')+'</button>';
     }).join('')+'</div>';
@@ -290,15 +291,16 @@
   // A pose you draw here becomes the skeleton recipe's image 1: a coloured stick figure on black, the input that
   // carried the pose on 3 of 3 research seeds. Drawing and rendering submit nothing; Generate stays your press (#444).
   const POSE_RECIPE='combine-klein-9b-skeleton',POSE_GRID=8,POSE_LIMITS=[64,1536],POSE_DISPLAY=320,POSE_GRAB=18,POSE_UNDO=60;
-  const posePanel=element('section','ux-pose-editor');posePanel.id='uxPoseEditor';posePanel.hidden=true;pairPanel.after(posePanel);
-  posePanel.innerHTML='<h3>Draw the pose</h3><p>Drag a joint, or pick one below and nudge it with the arrow keys (1 %, or 5 % with Shift). Use this pose puts the drawing on Picture 1; nothing runs until you press Generate.</p>'
+  const posePanel=element('section','ux-pose-editor');posePanel.id='uxPoseEditor';posePanel.hidden=true;enginePanel.after(posePanel);
+  // Folded on a picture route (the pose picture is the input there), open on a recipe that is drawn for (#422).
+  posePanel.innerHTML='<details id="uxPoseDisclosure"><summary><h3>Draw the pose</h3><small id="uxPoseSummaryHint"></small></summary><p>Drag a joint, or pick one below and nudge it with the arrow keys (1 %, or 5 % with Shift). Use this pose puts the drawing on Picture 1; nothing runs until you press Generate.</p>'
     +'<div class="ux-pose-layout"><canvas id="uxPoseCanvas" tabindex="0" role="img" aria-label="Pose skeleton. Drag a joint, or pick one in the joint list and use the arrow keys."></canvas>'
     +'<div class="ux-pose-side"><label for="uxPoseStart">Start from<select id="uxPoseStart"><option value="">Keep this drawing</option>'
     +StudioPoseEditor.PRESETS.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.label)+'</option>').join('')+'</select></label>'
     +'<div id="uxPoseJoints" class="ux-pose-joints" role="group" aria-label="Joints"></div>'
     +'<fieldset class="ux-pose-position"><legend id="uxPosePositionLabel">Joint position (pixels)</legend><label for="uxPoseX">X<input id="uxPoseX" type="number" min="0" step="0.01" inputmode="decimal"></label><label for="uxPoseY">Y<input id="uxPoseY" type="number" min="0" step="0.01" inputmode="decimal"></label><button type="button" id="uxPosePositionApply">Set joint position</button><button type="button" id="uxPosePositionReset">Reset fields</button></fieldset>'
     +'<div class="ux-pose-actions"><button type="button" id="uxPoseUnknown">Mark unknown</button><button type="button" id="uxPoseUndo">Undo</button><button type="button" id="uxPoseRedo">Redo</button><button type="button" id="uxPoseUse" class="primary" aria-describedby="uxPoseReason">Use this pose</button></div>'
-    +'<p id="uxPoseReason" class="muted"></p><p id="uxPoseStatus" role="status"></p></div></div>';
+    +'<p id="uxPoseReason" class="muted"></p><p id="uxPoseStatus" role="status"></p></div></div></details>';
   let posePoints=null,poseHome=null,poseHeld=null,poseHeldShown='',poseLoading=null,poseCanvas={width:1024,height:1536},poseTimeline=StudioPoseEditor.timeline(POSE_UNDO),poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
   const poseStatus=text=>{q('#uxPoseStatus').textContent=text;};
   // The canvas the recipe will actually render at: the width and height controls when they are usable, else the recipe's own.
@@ -390,9 +392,14 @@
     undo.title=poseTimeline.canUndo?'Steps back one change.':'Nothing to undo yet.';redo.title=poseTimeline.canRedo?'Restores the change just stepped back.':'Nothing to redo yet.';
     if(poseBusy)unknown.title=undo.title=redo.title='The drawing is being rendered.';
   }
+  let poseOpenFor=null;
   function syncPoseEditor(){
     const active=poseActive();
     posePanel.hidden=!active;if(!active)return;
+    // Each recipe opens the panel at its own default once; after that the owner's open or close stands.
+    const drawn=selected.id===POSE_RECIPE||StudioPoseEditor.drawsGuide(selected);
+    if(poseOpenFor!==selected.id){poseOpenFor=selected.id;q('#uxPoseDisclosure').open=drawn;}
+    q('#uxPoseSummaryHint').textContent=drawn?'This recipe’s picture 1 is the drawing.':'Optional: swap the pose picture for a stick figure.';
     const next=poseCanvasSize();
     if(!posePoints){posePoints=StudioPoseEditor.fromPreset('standing',next);poseHome=StudioPoseEditor.fromPreset('standing',next);poseTimeline.reset();poseCanvas=next;}
     else if(next.width!==poseCanvas.width||next.height!==poseCanvas.height){
@@ -520,21 +527,32 @@
   q('#uxPoseUse').onclick=()=>{void usePose();};
   function syncCombineResults(){
     const active=!!StudioContinuation.combineKind(selected);resultPanel.hidden=!active;if(!active){resultMarkup='';return;}
+    const RESULT_LIMIT=24,runWhen=seconds=>{const at=new Date(Number(seconds)*1000);if(!Number(seconds)||isNaN(at))return'';return at.toDateString()===new Date().toDateString()?at.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):at.toLocaleString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});};
     const record=currentPair(),matches=jobs.filter(job=>StudioContinuation.sameCombinePair(record,job,catalog.presets));
-    const outputs=matches.flatMap(job=>(job.outputs||[]).map((output,index)=>({job,output,index}))).filter(({output})=>!assetState.assets.find(a=>a.id===output.asset_id)?.trashed_at);
-    const sources=[...referenceRecords.filter(r=>r.file&&!r.missing).map(r=>({file:r.file,label:'Pose source'})),{file:lastUploaded,label:'Character'}].filter(r=>r.file);
-    const sourceTiles='<div class="ux-result-sources">'+sources.map(s=>'<figure><img src="/api/uploads/'+encodeURIComponent(s.file)+'" alt="'+s.label+'"><figcaption>'+s.label+'</figcaption></figure>').join('')+'</div>';
-    const tiles=outputs.slice(0,24).map(({job,output,index})=>{
-      const asset=assetState.assets.find(a=>a.id===output.asset_id),id=escape(job.id),review=asset?.review||'unreviewed',rerun=job.status==='completed'&&!combineBusy(),rerunLock=rerun?'':'disabled title="'+(job.status!=='completed'?'Only a completed run can prepare another seed.':!pairActionBusy&&!submitting&&!poseBusy&&posePositionDirty()?'Set or reset the typed joint position first.':'Wait for the current Combine action to finish.')+'"';
-      return '<article class="ux-result-tile"><img src="/api/image/'+encodeURIComponent(job.id)+'/'+index+'" alt="Combine result, seed '+escape(output.seed??job.controls?.seed??'unknown')+'"><b>Seed '+escape(output.seed??job.controls?.seed??'unknown')+'</b><small>'+escape(job.preset_name)+(Number(job.elapsed_seconds)>0?' · '+durationLabel(job.elapsed_seconds):'')+'</small><span>'+escape(review==='selected'?'Keeper':review.replaceAll('_',' '))+'</span><div class="ux-result-actions">'+(output.asset_id?'<button type="button" data-ux-review="selected" data-asset="'+escape(output.asset_id)+'" '+(pairActionBusy?'disabled':'')+'>Keep</button><button type="button" data-ux-review="needs_work" data-asset="'+escape(output.asset_id)+'" '+(pairActionBusy?'disabled':'')+'>Needs work</button>':'')+'<button type="button" data-ux-rerun="same" data-job="'+id+'" data-index="'+index+'" '+rerunLock+'>Prepare same seed</button><button type="button" data-ux-rerun="new" data-job="'+id+'" data-index="'+index+'" '+rerunLock+'>Prepare new seed</button><button type="button" data-ux-result-recipe="'+id+'">Recipe</button></div>'+(job.status!=='completed'?'<small>Run '+escape(job.status)+'. Resolve it in Problems before preparing another.</small>':'')+'</article>';
+    const groups=StudioContinuation.combineRuns(matches,output=>!!assetState.assets.find(a=>a.id===output.asset_id)?.trashed_at);
+    const engine=job=>StudioContinuation.combineEngineLabel(catalog.presets.find(p=>p.id===job.preset_id)||{id:job.preset_id,name:job.preset_name});
+    const pictures=referenceRecords.filter(r=>r.file&&!r.missing).length+(lastUploaded?1:0);
+    const total=groups.runs.reduce((sum,run)=>sum+run.outputs.length,0);let room=RESULT_LIMIT;
+    const lock=combineBusy()?'disabled title="'+(!pairActionBusy&&!submitting&&!poseBusy&&posePositionDirty()?'Set or reset the typed joint position first.':'Wait for the current Combine action to finish.')+'"':'';
+    const tile=(job,output,index)=>{
+      const asset=assetState.assets.find(a=>a.id===output.asset_id),id=escape(job.id),review=asset?.review||'unreviewed',seed=escape(output.seed??job.controls?.seed??'unknown'),mark=pairActionBusy?'disabled':'';
+      return '<article class="ux-result-tile"><img src="/api/image/'+encodeURIComponent(job.id)+'/'+index+'" alt="'+escape(engine(job))+' result, seed '+seed+'"><b>Seed '+seed+'</b><span>'+escape(review==='selected'?'Keeper':review.replaceAll('_',' '))+'</span><div class="ux-result-actions">'+(output.asset_id?'<button type="button" data-ux-review="selected" data-asset="'+escape(output.asset_id)+'" '+mark+'>Keep</button><button type="button" data-ux-review="needs_work" data-asset="'+escape(output.asset_id)+'" '+mark+'>Needs work</button>':'')+'<button type="button" data-ux-rerun="same" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare same seed</button><button type="button" data-ux-rerun="new" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare new seed</button></div></article>';
+    };
+    const runs=groups.runs.map(({job,outputs})=>{
+      if(room<=0)return'';const shown=outputs.slice(0,room);room-=shown.length;
+      const facts=[Number(job.elapsed_seconds)>0?durationLabel(job.elapsed_seconds):'',outputs.length+' seed'+(outputs.length===1?'':'s'),runWhen(job.created_at)].filter(Boolean).join(' · ');
+      return '<div class="ux-run-group"><div class="ux-run-head"><b>'+escape(engine(job))+'</b><small>'+escape(facts)+'</small><button type="button" data-ux-result-recipe="'+escape(job.id)+'">Recipe</button></div><div class="ux-run-seeds">'+shown.map(({output,index})=>tile(job,output,index)).join('')+'</div></div>';
     }).join('');
-    const activeRuns=matches.filter(j=>j.status!=='completed').map(j=>'<p>'+escape(j.preset_name)+' · '+escape(j.status)+': '+escape(j.message||'')+'</p>').join('');
-    const markup='<h3>Runs for these pictures</h3><p>Review each seed beside its sources. Preparing a seed loads the recorded recipe; Generate remains a separate step.</p><div class="ux-experiment-strip">'+sourceTiles+(tiles||'<p class="ux-no-results">'+(sources.length>1?'No saved results for these pictures yet.':'Attach both pictures to see their results.')+'</p>')+'</div>'+activeRuns+(outputs.length>24?'<p>Showing the latest 24 of '+outputs.length+' outputs. All saved outputs remain in the library.</p>':'')+'<p id="uxPairActionStatus" role="status"></p>';
-    if(markup!==resultMarkup){resultMarkup=markup;resultPanel.innerHTML=markup;}
+    const live=groups.active.map(({job})=>'<p class="ux-run-live">'+escape(engine(job))+' · '+escape(job.status)+(runWhen(job.created_at)?' since '+escape(runWhen(job.created_at)):'')+'</p>').join('');
+    const count=groups.attention.length;
+    const attention=count?'<details class="ux-run-attention"><summary>'+count+' run'+(count===1?'':'s')+' for these pictures need'+(count===1?'s':'')+' attention</summary>'+groups.attention.map(({job})=>'<p><b>'+escape(engine(job))+' · '+escape(job.status)+'</b>'+(runWhen(job.created_at)?' · '+escape(runWhen(job.created_at)):'')+' <small>'+escape(String(job.message||'').slice(0,160))+'</small> <button type="button" data-ux-problem="'+escape(job.id)+'">Open in Problems</button></p>').join('')+'<p><small>Prompt IDs and recipes stay in Problems. Nothing here runs them again.</small></p></details>':'';
+    const markup='<h3>Runs for these pictures</h3><p>Newest first. Prepare a seed to load its recipe; Generate is still your press.</p>'+live+(runs?'<div class="ux-experiment-strip">'+runs+'</div>':'<p class="ux-no-results">'+(pictures>1?'No runs for these pictures yet.':'Attach both pictures to see their runs.')+'</p>')+(total>RESULT_LIMIT?'<p>Showing the latest '+RESULT_LIMIT+' of '+total+' outputs. All of them stay in the library.</p>':'')+attention+'<p id="uxPairActionStatus" role="status"></p>';
+    if(markup!==resultMarkup){const open=!!resultPanel.querySelector('.ux-run-attention')?.open;resultMarkup=markup;resultPanel.innerHTML=markup;const folded=resultPanel.querySelector('.ux-run-attention');if(folded)folded.open=open;}
   }
   resultPanel.onclick=async e=>{
     const button=e.target.closest('button');if(!button||button.disabled||pairActionBusy)return;
     if(button.dataset.uxResultRecipe){try{await exportRecipe(button.dataset.uxResultRecipe);}catch(error){announce(error.message,true);}return;}
+    if(button.dataset.uxProblem){const box=q('#jobProblems');if(box){box.open=true;const card=[...box.querySelectorAll('[data-problem]')].find(el=>el.dataset.problem===button.dataset.uxProblem);if(focusReadinessTarget(card||box.querySelector('summary')))return;}announce('Open Problems below the workbench to inspect this run.');return;}
     if(!button.dataset.uxReview&&!button.dataset.uxRerun)return;
     const stamp=setupStamp();pairActionBusy=true;syncReady();let status='';
     try{

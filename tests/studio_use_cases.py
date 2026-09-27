@@ -981,9 +981,11 @@ def _combine_loop(c):
     initial = c.page.evaluate('({preset_id:selected.id,controls:values(),continuation:continuationState,references:attachedReferencePayload(),parent_assets:parentAssets})')
     preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == initial['preset_id'])
     added = []
-    for index, status in enumerate(('completed', 'completed', 'uncertain')):
-        job = dict(copy.deepcopy(initial), id='combine-loop-' + str(index), status=status,
-                   preset_name=preset['name'], elapsed_seconds=80 + index, batch_count=1,
+    # Three runs on the prepared recipe (the third uncertain) and, newest, one on Klein 4B with the same pictures.
+    for index, status in enumerate(('completed', 'completed', 'uncertain', 'completed')):
+        engine = preset if index < 3 else next(p for p in fixture.CATALOG['presets'] if p['id'] == 'combine-klein')
+        job = dict(copy.deepcopy(initial), id='combine-loop-' + str(index), status=status, preset_id=engine['id'],
+                   preset_name=engine['name'], elapsed_seconds=80 + index, batch_count=1, created_at=1789228800 + 60 * index,
                    message='Synthetic ' + status + ' receipt; no model ran.',
                    outputs=[dict(filename='fixture.png', asset_id='asset-' + str(index + 2), media_type='image', seed=42 + index)])
         added.append(job)
@@ -993,10 +995,29 @@ def _combine_loop(c):
     try:
         c.page.evaluate('refreshJobs()')
         c.page.wait_for_selector('#uxPairResults .ux-result-tile')
-        c.act('#uxPairResults', 'read', note='three matching outputs; the changed pose bytes are excluded')
-        assert c.page.locator('#uxPairResults .ux-result-tile').count() == 3
-        assert c.page.locator('[data-ux-rerun][data-job="combine-loop-2"]:disabled').count() == 2
+        c.act('#uxPairResults', 'read', note='three completed runs, newest first; the changed pose bytes are excluded')
+        groups = c.page.locator('#uxPairResults .ux-run-group')
+        assert groups.count() == 3 and c.page.locator('#uxPairResults .ux-run-group .ux-result-tile').count() == 3
+        assert groups.first.locator('.ux-run-head').inner_text().startswith('Klein 4B'), 'the newest run leads and names its engine'
+        # The uncertain run is folded and offers no seed at all (never a retry); Problems keeps its controls.
+        attention = c.page.locator('#uxPairResults details.ux-run-attention')
+        assert attention.count() == 1 and not attention.evaluate('(el) => el.open') and '1 run' in attention.locator('summary').inner_text()
+        assert c.page.locator('[data-ux-rerun][data-job="combine-loop-2"]').count() == 0
         assert c.page.locator('#jobProblems').evaluate('(el) => !el.open')
+        # J4 / D7: both pictures and the newest seed are on one 1440x900 screen once the pair is in view.
+        c.page.set_viewport_size({'width': 1440, 'height': 900})
+        c.page.evaluate('scrollTo(0, document.querySelector("#uxPair").getBoundingClientRect().top + scrollY - 80)')
+        c.page.wait_for_timeout(150)
+        seen = c.page.evaluate("""() => [...document.querySelectorAll('#uxPair .ux-pair-tile img'), document.querySelector('#uxPairResults .ux-run-group .ux-result-tile img')].map(el => {
+            if (!el) return false; const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+            return y > 0 && y < innerHeight && el.contains(document.elementFromPoint(x, y)); })""")
+        c.observe('both pictures and the newest seed share one 1440x900 screen', seen == [True, True, True], 'visible (pair, pair, newest seed): %s' % seen)
+        c.page.set_viewport_size({'width': 1536, 'height': 1060})
+        assert seen == [True, True, True], seen
+        c.act('#uxPairResults details.ux-run-attention > summary', note='unfold the run that needs attention')
+        c.act('[data-ux-problem="combine-loop-2"]', note='its receipt and controls live in Problems; no retry here')
+        assert c.page.locator('#jobProblems').evaluate('(el) => el.open')
+        c.page.locator('#jobProblems').evaluate('(el) => { el.open = false; }')
         assert c.page.locator('[data-ux-engine="combine-klein-9b-skeleton"]').is_disabled()
         custom = c.page.locator('#positive').input_value() + ' Keep the red ribbon.'
         c.act('#positive', 'fill', typed=custom, note='a hand edit stays with its recipe')
@@ -1012,7 +1033,7 @@ def _combine_loop(c):
         assert not c.page.locator('#uxFillsNote').is_visible()
         assert c.ready()
         c.act('#uxPairResults', 'read', note='results stay grouped across the recipe switch')
-        assert c.page.locator('#uxPairResults .ux-result-tile').count() == 3
+        assert c.page.locator('#uxPairResults .ux-run-group .ux-result-tile').count() == 3
         c.act('[data-ux-engine="%s"]' % initial['preset_id'], note='return to the previous recipe and its exact edited wording')
         assert c.page.locator('#positive').input_value() == custom
         assert len([p for p in fixture.POSTS if p['path'] == '/api/assets/reference']) == before_attach
@@ -1241,7 +1262,7 @@ def run_case(spec, page, origin, live, screenshots):
         # Live: a named end, not a failure and not a dead end. Fixture: the data is always there, so it is one.
         if live: skip_kind, skip_reason = skip.kind, skip.reason; detail = ('stopped: ' if skip.kind == 'read-only' else 'skipped: ') + skip.reason
         else: failure = 'fixture mode never skips: ' + skip.reason
-    except Exception as error: failure = type(error).__name__ + ': ' + str(error).splitlines()[0][:200]
+    except Exception as error: failure = type(error).__name__ + ': ' + (str(error).splitlines() or [''])[0][:200]  # a bare assert has no message
     row = {'id': spec['id'], 'goal': spec['goal'], 'starting_view': spec['starting_view'],
            'success_condition': spec['success_condition'], 'wrong_turn': bool(spec.get('wrong_turn')),
            'steps_intended': len(spec['steps']), 'passed': bool(passed) and not failure and not skip_kind,
