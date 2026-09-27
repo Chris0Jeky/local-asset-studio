@@ -30,7 +30,8 @@
   "creator_credit": null,
   "terms_evidence": null,
   "retrieved_at": null,
-  "review_status": "not-applicable: generated locally from the owner-chosen anchor"
+  "review_status": "not-applicable: generated locally from the owner-chosen anchor",
+  "terms_evidence_reason": "No terms page was retained in this pass; licence status is not cleared (see unknowns)."
  },
  "files": [
   {
@@ -189,6 +190,9 @@
   "selected_by": null
  },
  "unknowns": [
-  "Licence status unchanged: not cleared (FLUX.2 Klein 4B and Real-ESRGAN terms not re-checked; Z-Image Turbo base weights Apache-2.0 per the asset-kit README)."
+  "Licence: not re-checked and not cleared. Z-Image Turbo terms as recorded in the asset-kit README (base weights Apache-2.0); this pass did not re-verify them.",
+  "Licence: the ESRGAN upscaler (RealESRGAN_x4plus_anime_6B.pth) terms are as recorded in the anime-esrgan catalog note (\"Official Real-ESRGAN release. Check source image and applicable model terms.\"); not re-checked here.",
+  "Rendition review: not tested in the real slot sizes (390x844, 1440x900, 1920x1080).",
+  "Runtime: not wired into the app; runtime_review stays not-qualified."
  ]
 }
