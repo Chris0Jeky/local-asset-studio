@@ -1,5 +1,28 @@
 # UX use-case matrix
 
+## A new scene in a saved look — 27 September 2026
+
+Refs #1221 and #1205 (owner decision, 27 September 2026: build look templates as a Studio route). Create has a **Use a saved
+look** block above the wording. A look is a Workspace record (`app/workspace.py` `cards`, kind `look`, revisioned, with
+reversible put-away), not browser storage. It holds a wording template with one `{scene}` slot, its recipe and settings, a
+negative prompt where the recipe has one, and its anchor picture by sha256. The Studio ships one look, **Night Shift
+(retro anime)**, built from the accepted `retro-anime-master-z2` recipe on Z-Image Turbo fast (seed 2026092752,
+1344x768). The owner picks a look, types only the scene and presses **Prepare with this look**. The server composes the
+wording (`POST /api/looks/prepare`, which creates no job). The page then loads the look's recipe and settings and says
+that nothing was generated. Generate stays a separate press. **Save this wording as a look** stores the current wording
+(with `{scene}` written in it) and the recipe's settings; **Put away** / **Restore** are revision-guarded.
+
+The new journey `new-scene-in-an-accepted-look` starts on another recipe (Anima portrait) and takes 2 clicks: choose the
+look, then Prepare. It asserts four things:
+- the option names the look's recipe;
+- Prepare is off with the reason *Type the scene in a few words.* until a scene is typed;
+- the prepared recipe is `zimage-fast`, with the wording exactly the shipped template plus the scene, seed 2026092752 and 1344x768;
+- the status says the recipe switched and that nothing was generated.
+
+`python tests/studio_use_cases.py` passed **18/18** with zero generation submissions and zero page errors (fixture
+screens; no model ran). The look's one-slot wording has not been rendered: the lab carried the look with z2's full
+sentence structure, and this form is the next GPU check.
+
 ## One Combine pair on several recipes as one plan — 27 September 2026
 
 Refs #1163 (owner decision 27 September 2026: "Yes, build it"). Under the engine buttons, **Run several recipes on this
