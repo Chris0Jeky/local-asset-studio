@@ -89,6 +89,10 @@ for preset in catalog:
             authored=graph[node]['inputs'][field]
             assert isinstance(authored,str) and authored.endswith('.safetensors') and authored==Path(authored).name, (preset['id'],key,authored)
             named_loras.append((preset['id']+' authored '+key,authored))
+# Vary subtle / strong routes (#1202): each resamples the kept picture on the same model, with recorded strengths.
+import continuation
+vary_problems=continuation.vary_catalog_problems(catalog,lambda preset:json.loads((root/preset['graph']).read_text(encoding='utf-8')))
+assert not vary_problems, vary_problems
 kb_path=root/'presets/settings-kb.json'
 if kb_path.is_file():
     kb=json.loads(kb_path.read_text(encoding='utf-8'))
