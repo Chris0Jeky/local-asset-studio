@@ -134,6 +134,18 @@ class ImageOperationTests(unittest.TestCase):
         self.assertIn("between 256 and 1536", tiles.eligibility(128, 128))
         self.assertEqual(tiles.default_sigma(1024), 96, "the lab's flatten radius at 1024 px")
 
+    def test_the_seam_band_choice_is_the_labs_two_widths_with_a_reason_when_one_does_not_fit(self):
+        """Owner, 27 Sep 2026: a wider band hides the floor's repeating plank ends. The lab measured 112 px (wall) and 160 px (floor v2)."""
+        self.assertEqual([(c["name"], c["band_px"], c["available"]) for c in tiles.band_choices(1024)], [("narrow", 112, True), ("wide", 160, True)])
+        small = tiles.band_choices(256)
+        self.assertTrue(small[0]["available"]); self.assertIsNone(small[0]["reason"])
+        self.assertFalse(small[1]["available"]); self.assertIn("at least 320 px", small[1]["reason"]); self.assertIn("256 px", small[1]["reason"])
+        self.assertTrue(tiles.band_choices(320)[1]["available"])
+        for value, band in ((160, 160), ("160", 160), (" 112 ", 112), (160.0, 160), ("1.6e2", 160)):
+            with self.subTest(value=value): self.assertEqual(tiles.band_value(value), band)
+        for value in (113, "113", 160.5, "nan", "inf", True, None, [160], {"px": 160}, "wide", 14, 514, ""):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "even whole number from 16 to 512"): tiles.band_value(value)
+
     def test_the_catalog_registers_one_masked_tile_route(self):
         self.assertEqual(tiles.route_problems(CATALOG), [])
         self.assertTrue(ROUTE["requires_rgba_mask"]); self.assertFalse(ROUTE["verified"])
@@ -181,6 +193,8 @@ class RouteTests(unittest.TestCase):
         square = tiles.source_status(studio, self.source(studio)["id"])
         self.assertTrue(square["eligible"]); self.assertIsNone(square["reason"]); self.assertIn("Flat textures only", square["flag"])
         self.assertEqual(square["preset_id"], ROUTE["id"])
+        self.assertEqual((square["band_px"], [c["band_px"] for c in square["band_choices"]]), (112, [112, 160]))
+        self.assertFalse(square["band_choices"][1]["available"], "a 256 px texture cannot take a 160 px band")
         wide = tiles.source_status(studio, self.source(studio, Image.new("RGB", (320, 256), "grey"))["id"])
         self.assertFalse(wide["eligible"]); self.assertIn("320 × 256", wide["reason"])
         self.assertEqual(studio.requests, [])
@@ -198,9 +212,12 @@ class RouteTests(unittest.TestCase):
         with Image.open(stored) as image: self.assertEqual(image.tobytes(), tiles.repaint_input(lit_texture(), 112).tobytes())
         self.assertEqual(prepared["seam_source"], tiles.seam(lit_texture()))
         self.assertEqual(tiles.prepare(studio, {"asset_id": asset["id"], "band_px": 64, "flatten": False})["plan"]["flatten_sigma_px"], 0)
+        self.assertEqual(tiles.prepare(studio, {"asset_id": asset["id"], "band_px": "96"})["plan"]["band_px"], 96, "a form value arrives as text")
         jobs_before = len(studio.jobs)
         for body, message in (({"asset_id": self.source(studio, Image.new("RGB", (320, 256)))["id"]}, "square texture"),
                               ({"asset_id": asset["id"], "band_px": 113}, "even whole number"), ({"asset_id": asset["id"], "band_px": 200}, "half the tile side"),
+                              ({"asset_id": asset["id"], "band_px": 160}, "half the tile side"), ({"asset_id": asset["id"], "band_px": "wide"}, "even whole number"),
+                              ({"asset_id": asset["id"], "band_px": True}, "even whole number"),
                               ({"asset_id": asset["id"], "flatten": "yes"}, "true or false"), ({"asset_id": asset["id"], "denoise": 1}, "takes asset_id")):
             with self.subTest(body=body), self.assertRaisesRegex(ValueError, message): tiles.prepare(studio, body)
         self.assertEqual(len(studio.jobs), jobs_before + 1, "only the second source's import; a refused prepare creates no job")
@@ -260,7 +277,8 @@ class RouteTests(unittest.TestCase):
         metrics = tile_asset["source"]["tile"]
         self.assertEqual(metrics["seam_source"], tiles.seam(lit_texture()))
         self.assertEqual(metrics["preview_asset_id"], preview_asset["id"]); self.assertEqual(tile_asset["source"]["prompt_id"], "seam-prompt")
-        self.assertIn("Seam ", metrics["summary"]); self.assertIn("not art acceptance", metrics["summary"])
+        self.assertIn("Seam ", metrics["summary"]); self.assertIn("not art acceptance", metrics["summary"]); self.assertIn("112 px seam band", metrics["summary"])
+        self.assertEqual(metrics["band_px"], 112)
         with Image.open(studio.assets.file(preview_asset["id"])) as preview: self.assertEqual(preview.size, (768, 768))
         with Image.open(studio.assets.file(tile_asset["id"])) as tile:
             self.assertEqual(tile.tobytes(), tiles.flatten(tiles.composite(rolled, rolled, 112, 12), 24).tobytes())
@@ -272,6 +290,20 @@ class RouteTests(unittest.TestCase):
         self.assertIs(tiles.finish(studio, job["id"]), finished, "finishing again returns the first result")
         self.assertEqual(len(studio.requests), requests, "finishing never reaches ComfyUI")
         reloaded = self.studio(); self.assertEqual(reloaded.jobs[finished["id"]]["outputs"][0]["asset_id"], tile_asset["id"])
+
+    def test_a_wide_band_is_prepared_repainted_and_recorded_in_the_receipt(self):
+        """The panel's "wide" choice: 160 px on a texture large enough to take it, carried from the plan to the tile's receipt."""
+        studio = self.studio(); source = lit_texture(384); asset = self.source(studio, source)
+        prepared = tiles.prepare(studio, {"asset_id": asset["id"], "band_px": 160})
+        self.assertEqual(prepared["plan"]["band_px"], 160)
+        with Image.open(self.root / "experiments/uploads" / prepared["file"]) as image: self.assertEqual(image.tobytes(), tiles.repaint_input(source, 160).tobytes())
+        rolled = tiles.roll_half(source); job = self.run_repaint(studio, prepared, rolled)
+        self.assertEqual(job["tile"]["band_px"], 160)
+        finished = studio.jobs[job["tile_finish"]["job_id"]]; receipt = finished["tile_receipt"]
+        self.assertEqual((receipt["plan"]["band_px"], receipt["metrics"]["band_px"]), (160, 160))
+        self.assertIn("160 px", receipt["steps"][0]); self.assertIn("160 px seam band", finished["message"])
+        with Image.open(studio.assets.file(finished["outputs"][0]["asset_id"])) as tile:
+            self.assertEqual(tile.tobytes(), tiles.flatten(tiles.composite(rolled, rolled, 160, 12), tiles.default_sigma(384)).tobytes())
 
     def test_a_finish_failure_is_recorded_and_never_changes_the_repaint_outcome(self):
         studio = self.studio(); prepared = tiles.prepare(studio, {"asset_id": self.source(studio)["id"]})
@@ -335,6 +367,8 @@ class HttpRouteTests(unittest.TestCase):
         square = RouteTests.source(self, self.studio)
         status, body = self.call("POST", "/api/tiles/prepare", {"asset_id": square["id"]})
         self.assertEqual(status, 201); self.assertEqual(body["plan"]["source_asset_id"], square["id"]); self.assertFalse(body["generation_submitted"])
+        status, body = self.call("POST", "/api/tiles/prepare", {"asset_id": square["id"], "band_px": "160"})
+        self.assertEqual(status, 400); self.assertIn("half the tile side (128 px)", body["error"])
         self.assertRegex(self.call("POST", "/api/tiles/prepare", {"asset_id": square["id"]})[1]["file"], r"^[0-9a-f]{32}_seam-cross\.png$")
         status, body = self.call("POST", "/api/tiles/finish", {"job_id": ["not", "a", "string"]})
         self.assertEqual(status, 400); self.assertIn("Unknown job", body["error"])

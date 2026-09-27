@@ -241,6 +241,7 @@ LOCAL_CONTROLS = {
     '#productionDetail [data-candidate-open]': 'opens a candidate at full size; refreshes the Workspace list (GET)',
     '#loadPreset': 'reads a registered recipe graph into the builder (GET)',
     '#compileWorkflow': 'checks connections: POST /api/workflow-studio/compile validates and stores nothing',
+    '#assetDialog [data-ux-tile-band]': 'chooses the seam band for Make seamless in this page; nothing is sent',
 }
 
 
@@ -296,7 +297,7 @@ def build_handler():
         with Image.open(ROOT / asset['url'].lstrip('/')) as picture: width, height = picture.size
         reason = tiles.eligibility(width, height)
         return {'asset_id': asset['id'], 'width': width, 'height': height, 'eligible': reason is None, 'reason': reason,
-                'flag': tiles.FLAT_ONLY, 'preset_id': 'zimage-seam-repair', 'band_px': tiles.BAND}
+                'flag': tiles.FLAT_ONLY, 'preset_id': 'zimage-seam-repair', 'band_px': tiles.BAND, 'band_choices': tiles.band_choices(min(width, height))}
 
     info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
     schema = catalog(info, 'primary')
@@ -392,8 +393,11 @@ def build_handler():
                 status = tile_status(asset)
                 if not status['eligible']: return self.json({'error': status['reason']}, 400)
                 size, file = status['width'], 'f' * 32 + '_seam-cross.png'
+                try: band = tiles.band_value(data.get('band_px', tiles.BAND))
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                if band > size // 2: return self.json({'error': 'band_px must be at most half the tile side (%d px).' % (size // 2)}, 400)
                 plan = {'version': tiles.VERSION, 'preset_id': 'zimage-seam-repair', 'source_asset_id': asset['id'], 'source_sha256': asset['sha256'],
-                        'rolled_file': file, 'rolled_sha256': 'd' * 64, 'size': size, 'band_px': tiles.BAND, 'feather_px': tiles.FEATHER,
+                        'rolled_file': file, 'rolled_sha256': 'd' * 64, 'size': size, 'band_px': band, 'feather_px': tiles.FEATHER,
                         'flatten_sigma_px': tiles.default_sigma(size)}
                 return self.json({'plan': plan, 'file': file, 'sha256': 'd' * 64, 'width': size, 'height': size, 'preset_id': 'zimage-seam-repair',
                                   'context': fixture.source_context(asset), 'flag': tiles.FLAT_ONLY, 'seam_source': 4.34,
@@ -1256,7 +1260,7 @@ def _vary(c):
         for job in added: fixture.JOBS.remove(job)
 
 
-TILE_STATE = """() => ({preset: selected.id, parents: parentAssets, tile: (tilePayload().tile || {}).source_asset_id || null,
+TILE_STATE = """() => ({preset: selected.id, parents: parentAssets, tile: (tilePayload().tile || {}).source_asset_id || null, band: (tilePayload().tile || {}).band_px || null,
   reference: uploaded, notice: document.querySelector('#uxNotice').textContent, hint: document.querySelector('#referenceHint').textContent})"""
 WHY_TILE = """(() => { const b = document.querySelector('#assetDialog .ux-tile button');
   return b ? (b.disabled ? 'disabled: ' : 'enabled: ') + document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()"""
@@ -1280,6 +1284,9 @@ def _tile(c):
     c.act('[data-asset-open="%s"]' % square, note='open a square texture')
     c.page.wait_for_timeout(500)
     offered = c.page.evaluate(WHY_TILE)
+    # Owner, 27 Sep 2026: a wider seam band hides a floor's repeating plank ends. Choose it when this texture can take it.
+    wide = c.page.evaluate("""(() => { const o = document.querySelector('#assetDialog [data-ux-tile-band] option[value="160"]'); return !!o && !o.disabled; })()""")
+    if wide: c.act('#assetDialog [data-ux-tile-band]', 'select', typed='160', note='choose the wide seam band (160 px)')
     c.stop_before(c.act('#assetDialog [data-ux-tile]', note='prepares the seam repaint'), 'stopped before preparing: Make seamless stores a rolled copy of the picture')
     c.page.wait_for_timeout(800)
     state = c.page.evaluate(TILE_STATE)
@@ -1287,12 +1294,14 @@ def _tile(c):
     c.act('#referenceHint', 'read', note='source %s, parents %s' % (state['tile'], state['parents']))
     c.act('#generate', 'read', note='readiness only; never pressed')
     submitted = [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+    sent = [p['data'].get('band_px') for p in fixture.POSTS if p['path'] == '/api/tiles/prepare']
     prepared = (state['preset'] == 'zimage-seam-repair' and state['tile'] == square and state['parents'] == [square]
-                and state['reference'] == 'f' * 32 + '_seam-cross.png' and 'Press Generate' in state['notice'] and 'Flat textures only' in state['hint'])
+                and state['reference'] == 'f' * 32 + '_seam-cross.png' and 'Press Generate' in state['notice'] and 'Flat textures only' in state['hint']
+                and wide and sent[-1:] == [160] and state['band'] == 160 and '160 px seam band' in state['notice'] and 'seam band 160 px' in state['hint'])
     disabled = why.startswith('disabled: ') and 'Flat textures only' in why and '1344 × 768' in why
     flagged = offered.startswith('enabled: ') and 'Flat textures only' in offered
     return prepared and disabled and flagged and not submitted, 'prepared: %s; wide picture: %s; square picture: %s; generation posts: %d' % (
-        {k: state[k] for k in ('preset', 'tile', 'parents')}, why or 'no Make seamless control', offered or 'no Make seamless control', len(submitted))
+        {k: state[k] for k in ('preset', 'tile', 'parents', 'band')}, why or 'no Make seamless control', offered or 'no Make seamless control', len(submitted))
 
 
 LOOK_SCENE = ('a small rooftop garden at night; at the right edge a rusty water tank and a warm amber lamp over a door, '
