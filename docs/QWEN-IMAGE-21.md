@@ -101,8 +101,11 @@ and agent-inspected only: not art acceptance, and the Qwen Research License keep
 text-to-image run is done (26 September 2026: job
 `252c3ebe`, prompt `3593cd92`, seed 2026092601, 25 steps, 353.0 s, 11.9 GB spilled to shared RAM;
 `experiments/curated/qwen21-2048-20260926/`): native 2K completes on this 16 GB card but is paging-bound, so 1 MP
-stays the everyday size. Still open under #739: a 3-6 reference identity edit, a text-heavy prompt, the LoRA status
-(the downloaded 2.1 Fix LoRA is untested), and a VRAM-arbitration note for running beside a local LLM or Spoken Briefs.
+stays the everyday size. On 27 September 2026 (`experiments/curated/qi21-lab2-20260927/`) a 1/3/5-reference identity edit
+kept the face from one picture and more of the costume from three (the five-reference prompt also named the costume picture and the lantern, so its extra carry-over is not attributable to references alone) (126 / 286 / 470 s: each reference adds text-encoder time),
+two text-heavy prompts spelled 12 of 12 strings exactly, and the Pruna 8-step LoRA v0.1 ran on the int8 model at base-level
+quality without saving whole-job time (the text-encoder swap dominates); its host-commit peaks were 80.1-89.5 % against 76.3-78.0 % without it, 2.5-12.8 points above the matching run but from differing starting levels, so the LoRA's own cost was not isolated: parked (#934).
+Still open under #739: the 2.1 Fix LoRA (downloaded, untested) and a VRAM-arbitration note for running beside a local LLM or Spoken Briefs.
 
 ## Compatibility boundary with Edit 2511 (issue #760)
 

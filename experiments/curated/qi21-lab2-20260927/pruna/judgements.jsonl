@@ -1,0 +1,12 @@
+{"prompt":"char","cell":"A","adherence":4,"anatomy":4,"style":4,"technical":4,"composition":4,"control":null,"verdict":"keep","worst_defect":"right hand in pocket hidden; nothing visible at full size (crop 260,480-360,560 lantern hand reads)"}
+{"prompt":"char","cell":"B","adherence":3,"anatomy":4,"style":4,"technical":3,"composition":4,"control":null,"verdict":"fixable","worst_defect":"lantern drawn as two stacked lantern bodies, crop 1190,520-1300,890 of the panel"}
+{"prompt":"char","cell":"C","adherence":4,"anatomy":4,"style":5,"technical":4,"composition":4,"control":null,"verdict":"keep","worst_defect":"rain streaks only in the sky; nothing structural"}
+{"prompt":"char","cell":"D","adherence":3,"anatomy":2,"style":2,"technical":2,"composition":3,"control":null,"verdict":"reject","worst_defect":"whole frame murky and soft; face and lantern hand smeared, crop 1220,1560-1300,1640"}
+{"prompt":"prop","cell":"A","adherence":3,"anatomy":null,"style":4,"technical":3,"composition":4,"control":null,"verdict":"fixable","worst_defect":"grey smear behind the left rim, crop 190,300-300,500; needle not star-shaped"}
+{"prompt":"prop","cell":"B","adherence":4,"anatomy":null,"style":4,"technical":4,"composition":4,"control":null,"verdict":"keep","worst_defect":"rim bevel slightly lumpy at the lower left"}
+{"prompt":"prop","cell":"C","adherence":3,"anatomy":null,"style":3,"technical":3,"composition":4,"control":null,"verdict":"fixable","worst_defect":"molten, lumpy rim and soft needle, crop 300,1230-760,1700"}
+{"prompt":"prop","cell":"D","adherence":3,"anatomy":null,"style":4,"technical":3,"composition":4,"control":null,"verdict":"fixable","worst_defect":"ring of pseudo-lettering on the dial despite 'no text', crop 1240,1250-1600,1600"}
+{"prompt":"scene","cell":"A","adherence":2,"anatomy":null,"style":1,"technical":2,"composition":3,"control":null,"verdict":"reject","worst_defect":"photographic, and murky blue wash over the ground"}
+{"prompt":"scene","cell":"B","adherence":2,"anatomy":null,"style":1,"technical":4,"composition":4,"control":null,"verdict":"reject","worst_defect":"photographic instead of painted anime"}
+{"prompt":"scene","cell":"C","adherence":2,"anatomy":null,"style":1,"technical":4,"composition":4,"control":null,"verdict":"reject","worst_defect":"photographic instead of painted anime"}
+{"prompt":"scene","cell":"D","adherence":2,"anatomy":null,"style":1,"technical":4,"composition":3,"control":null,"verdict":"reject","worst_defect":"photographic instead of painted anime; lantern crowds the right edge"}

@@ -251,14 +251,31 @@
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
   function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes','outfit'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
   function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty();}
+  // Each engine's time per picture: this PC's own completed runs of it first; otherwise the read-only local estimate
+  // (POST /api/estimate reads timing history and runs nothing), asked once per engine and canvas; otherwise say so (K13).
+  const engineEstimates=new Map();let engineEstimateQueue=Promise.resolve();
+  function engineEstimate(preset){
+    const controls=values(),size={};for(const key of ['width','height'])if(controls[key]!=null&&controls[key]!=='')size[key]=controls[key];
+    const payload={preset_id:preset.id,controls:size,batch_count:1,reference_count:estimateReferenceCount()},key=JSON.stringify(payload);
+    if(!engineEstimates.has(key)){
+      if(engineEstimates.size>60)engineEstimates.clear();engineEstimates.set(key,null);
+      engineEstimateQueue=engineEstimateQueue.then(()=>api('/api/estimate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)}))
+        .then(value=>{engineEstimates.set(key,value);},()=>{engineEstimates.set(key,{available:false});}).then(()=>{engineMarkup='';syncCombineEngines();});
+    }
+    return engineEstimates.get(key);
+  }
+  function engineTime(preset){
+    const here=StudioContinuation.combineTiming(jobs,preset.id);
+    if(here)return '~'+durationLabel(here.seconds)+' per picture here · '+here.count+' run'+(here.count===1?'':'s');
+    const guess=engineEstimate(preset);
+    return guess?.available&&guess.confidence!=='none'?'Estimate ~'+durationLabel(guess.estimate_seconds)+' per picture · '+guess.confidence+' confidence':'No timing on this PC yet';
+  }
   function syncCombineEngines(){
     enginePanel.hidden=!continuationState||!StudioContinuation.combineKind(selected);if(enginePanel.hidden){engineMarkup='';return;}
     const options=StudioContinuation.destinations('combine',catalog.presets,continuationSource),busy=combineBusy();
     const markup='<h3>Try this pair with another recipe</h3><p>Pictures and answers stay here. Each recipe keeps its edited wording. Generate starts the next run.</p><div class="ux-engine-options">'+options.map(p=>{
-      const reason=StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||'',run=jobs.find(j=>j.preset_id===p.id&&j.status==='completed'&&Number(j.elapsed_seconds)>0);
-      const label=StudioContinuation.combineEngineLabel(p);
-      const timing=run?'Last completed run: '+durationLabel(run.elapsed_seconds)+' · '+(run.batch_count||1)+' output(s)':'No completed timing yet';
-      return '<button type="button" data-ux-engine="'+escape(p.id)+'" aria-pressed="'+(p.id===selected.id)+'" '+(reason||busy?'disabled':'')+' title="'+escape(reason||p.name)+'"><b>'+escape(label)+'</b><small>'+escape(timing)+'</small>'+(reason?'<small>'+escape(reason)+'</small>':'')+'</button>';
+      const reason=StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||'',hint=StudioContinuation.combineEngineHint(p);
+      return '<button type="button" data-ux-engine="'+escape(p.id)+'" aria-pressed="'+(p.id===selected.id)+'" '+(reason||busy?'disabled':'')+' title="'+escape(reason||p.name)+'"><b>'+escape(StudioContinuation.combineEngineLabel(p))+'</b>'+(hint?'<small class="ux-engine-hint">'+escape(hint)+'</small>':'')+'<small>'+escape(engineTime(p))+'</small>'+(reason?'<small>'+escape(reason)+'</small>':'')+'</button>';
     }).join('')+'</div>';
     if(markup!==engineMarkup){engineMarkup=markup;enginePanel.innerHTML=markup;}
   }
@@ -933,11 +950,13 @@
     // #940: a plan untouched for 7 days leaves the desk (Runs & review keeps it under Older). Live plans always stay;
     // a plan with no readable date cannot be shown to be old, so it stays too. planActivity is production.js's.
     const now=Date.now()/1000,stale=p=>!U.ACTIVE.includes(p.state?.status)&&typeof planActivity==='function'&&(at=>at!==null&&now-at>7*86400)(planActivity(p));
-    const deskPlans=[...s.reviewPlans,...s.attentionPlans,...s.activePlans,...s.prepared],olderPlans=deskPlans.filter(stale).length;
+    // An owner put-away plan (#940) leaves the desk too; Runs & review → Status: All keeps it one click away.
+    const allDeskPlans=[...s.reviewPlans,...s.attentionPlans,...s.activePlans,...s.prepared],putAwayPlans=(plans||[]).filter(p=>p.put_away===true).length;
+    const deskPlans=allDeskPlans.filter(p=>p.put_away!==true),olderPlans=deskPlans.filter(stale).length;
     const ordered=deskPlans.filter(p=>!stale(p)).slice(0,6),seenJobs=new Set((plans||[]).flatMap(p=>(p.stages||[]).map(stage=>stage.job?.id).filter(Boolean)));
     const records=ordered.map(p=>'<a class="ux-desk-row" href="'+(p.state.status==='awaiting_review'&&p.kind==='comparison'?'/review.html?project='+encodeURIComponent(p.id):p.kind==='av'?'/av.html?project='+encodeURIComponent(p.id):p.kind==='voice'?'/voice.html':'/#production')+'" data-ux-project="'+escape(p.id)+'"><span class="ux-state-dot '+escape(p.state.status)+'" aria-hidden="true"></span><span><b>'+escape(p.name)+'</b><small>'+escape(p.state.status.replaceAll('_',' '))+' · '+escape(p.kind)+'</small></span><span aria-hidden="true">↗</span></a>');
     for(const j of [...s.attentionJobs,...s.activeJobs].filter(j=>!seenJobs.has(j.id)).slice(0,3))records.push('<button type="button" class="ux-desk-row" data-ux-inspect-job="'+escape(j.id)+'"><span class="ux-state-dot '+escape(j.status)+'" aria-hidden="true"></span><span><b>'+escape(j.preset_name)+'</b><small>'+escape(deskJobHint(j))+'</small></span><span aria-hidden="true">↗</span></button>');
-    q('#uxAttention').innerHTML=(records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>'))+(olderPlans?'<p class="ux-desk-note"><small>'+olderPlans+' plan(s) untouched for 7 days. <a href="/#production">See them under Older in Runs &amp; review</a></small></p>':'')+(s.putAwayJobs.length?'<p class="ux-desk-note"><small>'+s.putAwayJobs.length+' run(s) put away or with tracking stopped. <a href="/#create">Show put away in Create → Problems</a></small></p>':'');
+    q('#uxAttention').innerHTML=(records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>'))+(olderPlans?'<p class="ux-desk-note"><small>'+olderPlans+' plan(s) untouched for 7 days. <a href="/#production">See them under Older in Runs &amp; review</a></small></p>':'')+(s.putAwayJobs.length?'<p class="ux-desk-note"><small>'+s.putAwayJobs.length+' run(s) put away or with tracking stopped. <a href="/#create">Show put away in Create → Problems</a></small></p>':'')+(putAwayPlans?'<p class="ux-desk-note"><small>'+putAwayPlans+' plan(s) put away. <a href="/#production">Set Status to All statuses in Runs &amp; review to see them</a></small></p>':'');
     const recent=assets.filter(a=>!a.trashed_at).sort((a,b)=>b.created_at-a.created_at).slice(0,6);q('#uxRecent').innerHTML=recent.map(a=>'<button class="ux-recent-card" data-ux-open-asset="'+escape(a.id)+'">'+assetPreview(a)+'<span><b>'+escape(a.title)+'</b><small>'+escape(a.media_type)+' · '+escape(a.review||'unreviewed')+'</small></span></button>').join('')||'<div class="ux-empty panel"><h3>'+(workspace?'Make room for your first asset.':'Asset library is unavailable.')+'</h3><p>Import an existing image or create from a recipe. Sources stay available for the next step.</p><a href="/#assets">Open Asset library →</a></div>';
   }
   function deskJobHint(j){return j.status==='uncertain'?'outcome unknown · inspect; do not run it again':U.ACTIVE.includes(j.status)?j.status+' · in progress':j.status+' · see why, then put it away';}

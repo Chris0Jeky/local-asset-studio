@@ -18,6 +18,19 @@ dock counts as covering). The journey takes 14 clicks: the earlier 12, plus unfo
 which opens Problems at that run. `tests/pose_editor_handoff_browser.py` opens the fold
 before drawing on picture routes and passed 291 assertions. These are fixture screens; no model ran.
 
+### Engine chips: what each is for, and its time per picture here
+
+Each **Try this pair with another recipe** chip now carries the recipe's own purpose, taken from its catalog name
+(*Strongest pose*, *Keeps its own framing*, *Follows the pose*, …). It also shows a time per picture, found in this order:
+
+1. The median of this PC's completed runs of that recipe, with the run count.
+2. Otherwise, the read-only `POST /api/estimate` figure with its confidence. It is asked once per engine and canvas size.
+3. Otherwise, "No timing on this PC yet" (K13).
+
+The old line showed only the single most recent run's total. The driver now asserts that the Klein 4B chip reads
+"1.4 min per picture here · 1 run", that every chip carries a time or says it has none, and that the depth chip says
+*Strongest pose*. The use-case run passed **15/15** with zero generation submissions.
+
 ## Reference analysis review and Apply — 18 September 2026
 
 `reference-analysis-review-and-apply` now registers the Prompt Lab reference-review pipeline as an

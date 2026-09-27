@@ -259,5 +259,8 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
 /* The settled run's one next step sits under its status line (run-outcome.js). */
 .run-outcome {grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .run-outcome[hidden] {display:none}
+.run-cancel {grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+.run-cancel[hidden] {display:none}
+.run-cancel button {font-size:11px;padding:6px 10px}
 .run-outcome button {font-size:11px;padding:6px 10px}
 .run-outcome button:first-child {border-color:var(--accent);color:var(--accent)}

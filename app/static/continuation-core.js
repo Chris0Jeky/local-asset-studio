@@ -262,5 +262,17 @@
   function combineInProblems(job){return PROBLEM_RUN.includes(job?.status)&&!job?.put_away;}
   const ENGINE_LABELS={'combine-klein':'Klein 4B','combine-klein-9b':'Klein 9B · pose','combine-klein-9b-depth':'Klein 9B · depth','combine-klein-9b-copypose':'Klein 9B · Copy Pose','combine-klein-9b-replace':'Klein 9B · replace','combine-klein-9b-skeleton':'Klein 9B · skeleton'};
   function combineEngineLabel(preset){return ENGINE_LABELS[preset?.id]||preset?.name||preset?.id||'';}
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel};
+  // What the recipe's own name says it is for, e.g. "(FLUX.2 Klein 9B, depth map: strongest pose)" -> "Strongest pose".
+  function combineEngineHint(preset){
+    const inner=/\(([^()]*)\)\s*$/.exec(String(preset?.name||''))?.[1]||'';
+    let hint=inner.replace(/^FLUX\.2 Klein \d+B,?\s*/,'');hint=hint.includes(': ')?hint.slice(hint.indexOf(': ')+2):hint;
+    return hint?hint[0].toUpperCase()+hint.slice(1):'';
+  }
+  // Seconds per picture from this PC's completed runs of one recipe (median), or null: never a guess (K13).
+  function combineTiming(jobs,presetId){
+    const each=(jobs||[]).filter(j=>j.preset_id===presetId&&j.status==='completed'&&!j.operation&&Number(j.elapsed_seconds)>0).map(j=>Number(j.elapsed_seconds)/Math.max(1,Number(j.batch_count)||1)).sort((a,b)=>a-b);
+    if(!each.length)return null;const mid=each.length>>1;
+    return{count:each.length,seconds:each.length%2?each[mid]:(each[mid-1]+each[mid])/2};
+  }
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming};
 });
