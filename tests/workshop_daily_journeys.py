@@ -86,17 +86,17 @@ let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{a
         self.assertIn('A clear desk', desk); self.assertIn('2 run(s) put away', desk)
         self.assertEqual(self.page.locator('#uxAttention a[href="/#create"]').count(), 2)
 
-    def load_output_review(self, fail=False):
+    def load_output_review(self, fail=False, missing=False):
         card = region(source('app.js'), 'function mediaCard(', 'function renderCompare(')
         render = region(source('app.js'), 'const RECENT_STEP=', 'async function refreshJobs')
         self.page.goto('about:blank')
         self.page.set_content('''<p id="status"></p><input id="elsewhere"><div id="gallery"></div><div id="jobProblemsHost"></div><script>
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let jobs=[{id:'job-1',preset_name:'Lantern',status:'completed',controls:{positive:'a lantern',seed:7},outputs:[{asset_id:'asset-"1',media_type:'image',seed:7},{media_type:'image',seed:8}]}],jobsSignature=null;
-let assetState={assets:[{id:'asset-"1',review:'unreviewed'}]};window.edits=[];window.reads=0;window.said=[];
+let assetState={assets:'''+("[]" if missing else "[{id:'asset-" + '"' + "1',review:'unreviewed'}]")+'''};window.edits=[];window.reads=0;window.said=[];
 function renderCompare(){}function renderMixedBatch(){return '';}
 function message(text,error=false){said.push([text,error]);}
-async function refreshAssets(){reads++;return true;}
+async function refreshAssets(){reads++;if(!assetState.assets.length)assetState.assets.push({id:'asset-"1',review:'unreviewed'});return true;}
 async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')throw Error('Resolve the earlier library update first.');edits.push(payload);assetState.assets[0].review=payload.review;}
 </script><script>'''+source('output-review.js')+'''</script><script>'''+card+render+'''renderJobs();</script>''')
 
@@ -130,6 +130,23 @@ async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')th
         self.page.keyboard.press('x')
         self.page.wait_for_function('edits.length===2')
         self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Rejected')
+
+    def test_a_brand_new_output_is_reviewed_after_the_library_read_brings_it_in(self):
+        # Create never polls the library: the asset of an output made on this page arrives only with the read.
+        self.load_output_review(missing=True)
+        self.page.click('[data-output-review="needs_work"]')
+        self.page.wait_for_function('edits.length===1')
+        self.assertEqual(self.page.evaluate('edits[0].review'), 'needs_work')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Needs work')
+
+    def test_holding_a_review_key_never_toggles_the_decision_back(self):
+        self.load_output_review()
+        self.page.focus('#gallery .imageCard .pin')
+        self.page.evaluate("""()=>{const t=document.activeElement;t.dispatchEvent(new KeyboardEvent('keydown',{key:'k',bubbles:true}));}""")
+        self.page.wait_for_function('edits.length===1')
+        self.page.evaluate("""()=>{const t=document.activeElement;for(let i=0;i<5;i++)t.dispatchEvent(new KeyboardEvent('keydown',{key:'k',repeat:true,bubbles:true}));}""")
+        self.page.wait_for_timeout(200)
+        self.assertEqual(self.page.evaluate('edits.map(e=>e.review)'), ['selected'])
 
     def test_create_output_review_failure_is_said_and_retryable(self):
         self.load_output_review(fail=True)

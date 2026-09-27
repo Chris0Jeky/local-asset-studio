@@ -26,20 +26,21 @@
   const say=(text,error=false)=>typeof message==='function'?message(text,error):null;
   async function decide(id,value){
     if(busy)return false;
-    if(!record(id)){say('This output is not in the loaded library yet. Refresh the Asset library, then try again.',true);return false;}
     // Buttons stay enabled so keyboard focus never drops to the page; `busy` refuses overlapping edits.
     busy=true;
     try{
-      await refreshAssets(true);const current=record(id);if(!current)throw Error('This output is no longer in the library.');
+      // Create does not poll the library, so a new output's asset arrives only with this read.
+      await refreshAssets(true);const current=record(id);if(!current)throw Error('This output is not in the library yet. Try again in a moment, or open Asset library.');
       const next=current.review===value?'unreviewed':value;
       await mutateAssets({action:'edit',ids:[id],review:next});sync(id);
       say(next==='unreviewed'?'Review cleared. The output is unreviewed again.':LABEL[next]+'. Saved to the Asset library; press it again to clear.');return true;
-    }catch(e){say(e.message,true);return false;}
+    }catch(e){say(e.message+(typeof assetLibraryPending!=='undefined'&&assetLibraryPending?' Open Asset library to check or retry the earlier update.':''),true);return false;}
     finally{busy=false;}
   }
   document.addEventListener('click',e=>{const b=e.target.closest?.('[data-output-review]');if(b)void decide(b.dataset.asset,b.dataset.outputReview);});
   document.addEventListener('keydown',e=>{
-    if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;const value=KEYS[(e.key||'').toLowerCase()];if(!value)return;
+    // A held key repeats; a repeat must never toggle the decision it just saved back off.
+    if(e.repeat||e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;const value=KEYS[(e.key||'').toLowerCase()];if(!value)return;
     const target=e.target;if(!target?.closest||['INPUT','TEXTAREA','SELECT'].includes((target.tagName||'').toUpperCase())||target.isContentEditable)return;
     const box=target.closest('#gallery .imageCard')?.querySelector('.output-review');if(!box)return;
     e.preventDefault();void decide(box.dataset.reviewAsset,value);
