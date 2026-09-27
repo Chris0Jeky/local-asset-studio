@@ -51,6 +51,13 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                     self.assertTrue(self.page.locator('#generate').is_disabled())
                     self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width)
 
+    def test_no_seed_control_has_no_dead_randomize_button(self):
+        self.load_workshop()
+        self.page.locator('[data-key=seed]').evaluate('(n)=>n.remove()')
+        self.page.evaluate("document.querySelector('#createView').__workshop.sync()")
+        self.assertFalse(self.page.locator('#randomSeed').is_visible())
+
+
     def test_every_blocker_is_listed_with_its_fix_not_only_the_first(self):
         """Handoff 03: Create showed only the first blocker; the full list sat in a collapsed disclosure."""
         self.load_workshop()
@@ -84,13 +91,6 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.assertEqual(self.page.locator('#workshopReadiness').inner_text(), 'Only this one.')
         self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Only this one.')
         self.assertEqual(self.page.evaluate('submitted'), 0)
-
-    def test_no_seed_control_has_no_dead_randomize_button(self):
-        self.load_workshop()
-        self.page.locator('[data-key=seed]').evaluate('(n)=>n.remove()')
-        self.page.evaluate("document.querySelector('#createView').__workshop.sync()")
-        self.assertFalse(self.page.locator('#randomSeed').is_visible())
-
 
 if __name__ == '__main__':
     import unittest
