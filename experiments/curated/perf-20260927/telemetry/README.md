@@ -21,4 +21,6 @@ This is the lab3 GPU session, second slice, on branch `claude/lab3-commit-teleme
 
 Receipts: `receipts/primary.jsonl` and `receipts/qwen21.jsonl` (the driver's log, with the Studio windows and the independent figures), plus `receipts/studio-jobs/<preset>/`, holding the Studio `state.json` (with `host_commit_windows` and the exact submitted graph) and `recipe.json`.
 
+Path re-check after review (10:03-10:04): `python families.py pathcheck wai`, run from `receipts/`, completed job `32cabae7`, prompt `3c12dfa6-900b-433d-8b28-d762c44cbf93`, 44.8 s (`receipts/pathcheck.jsonl`). It ran against the Studio on main, which does not have this branch, so it has no `host_commit_windows`. Its independent sampler saw at least 35.4 GiB of headroom. This proves only that the driver runs from its committed location.
+
 Not verified: a live run that falls below 16 GiB, resumed-observation windows, batch jobs with several windows, and a failure during telemetry on the real host. Each of these is covered by tests only.
