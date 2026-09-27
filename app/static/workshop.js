@@ -580,7 +580,10 @@
     };
     d.addEventListener('studio:recipe', schedule);
     create.addEventListener('input', schedule); create.addEventListener('change', schedule);
-    const observer = new w.MutationObserver(schedule);
+    // The elapsed clock on running cards is presentation, not execution state: its ticks never re-stamp the context.
+    const inClock = n => !!(n.nodeType === 1 ? n : n.parentElement)?.closest?.('.job-elapsed') || !!n.classList?.contains('job-elapsed');
+    const clockOnly = r => inClock(r.target) || r.type === 'childList' && [...r.addedNodes, ...r.removedNodes].every(inClock);
+    const observer = new w.MutationObserver(records => { if (!records.every(clockOnly)) schedule(); });
     for (const id of ['selectedPreset','controls','loraSlots','gallery','uxBlockers','estimateValue','uxDraftStatus']) {
       const node = q('#'+id); if (node) observer.observe(node, {childList:true,subtree:true,characterData:true});
     }

@@ -533,6 +533,11 @@ document.getElementById('gallery').innerHTML=jobs.map(j=>'<article class="jobSta
         self.assertEqual(self.page.locator('[data-problem="done-1"] .job-elapsed').count(), 0)
         self.assertEqual(self.page.locator('#gallery progress, #gallery [role=progressbar]').count(), 0)
         self.page.wait_for_function("!document.querySelector('[data-problem=\"run-1\"] .job-elapsed').textContent.includes('"+running.split('·')[-1].strip()+"')")
+        # Codex P2 on #1139: the ticking clock is not an execution change, so the presentation context stays put.
+        stamp = self.page.evaluate("document.querySelector('#createView').__workshop.presentationView().contextStamp")
+        self.assertTrue(stamp)
+        self.page.wait_for_timeout(2200)
+        self.assertEqual(self.page.evaluate("document.querySelector('#createView').__workshop.presentationView().contextStamp"), stamp)
         # A settled job loses its clock on the next tick.
         self.page.evaluate("jobs[0].status='completed'")
         self.page.wait_for_selector('[data-problem="run-1"] .job-elapsed', state='detached')
