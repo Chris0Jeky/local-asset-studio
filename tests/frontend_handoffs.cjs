@@ -942,14 +942,25 @@ function recentRunsSandbox({host = false} = {}) {
     : selector.startsWith('.') ? node.className.split(/\s+/).includes(selector.slice(1)) : node.tagName === selector.toUpperCase();
   const any = (node, selector) => selector.split(',').some(part => matches(node, part.trim()));
   const parse = (markup, box) => {
-    const out = []; let owner = null, inProblems = false;
+    const out = []; let owner = null, inProblems = false, problemsNode = null;
     for (const m of markup.matchAll(/<(\/details|details|\/article|article|button|a|input|video|audio|summary)\b([^>]*)>/g)) {
       if (m[1] === '/article') {owner = null; continue;}
-      if (m[1] === '/details') {inProblems = false; continue;}
-      if (m[1] === 'details') {inProblems = /id="jobProblems"/.test(m[2]); continue;}
+      if (m[1] === '/details') {inProblems = false; problemsNode = null; continue;}
+      if (m[1] === 'details' && !/id="jobProblems"/.test(m[2])) {inProblems = false; continue;}
+      if (m[1] === 'details') {
+        const attrs = Object.fromEntries([...m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(a => [a[1], a[2] ?? '']));
+        const node = {tagName: 'DETAILS', className: attrs.class || '', dataset: {}, owner: null, inProblems: true, problems: null, paused: true, ended: false, hidden: false, loop: false, listeners: {},
+          remove() {box.nodes = box.nodes.filter(n => n !== this && n.problems !== this && n.owner?.problems !== this);},
+          focus(options) {this.focusOptions = options; s.context.document.activeElement = this;},
+          addEventListener(name, handler) {(this.listeners[name] ||= []).push(handler);},
+          removeEventListener(name, handler) {this.listeners[name] = (this.listeners[name] || []).filter(h => h !== handler);},
+          closest(selector) {return any(this, selector) ? this : this.owner && any(this.owner, selector) ? this.owner : null;}};
+        Object.defineProperty(node, 'outerHTML', {configurable: true, set(markup) {const at = box.nodes.indexOf(this); box.nodes = box.nodes.filter(n => n !== this && n.problems !== this && n.owner?.problems !== this); box.nodes.splice(at < 0 ? box.nodes.length : at, 0, ...parse(markup, box));}});
+        problemsNode = node; inProblems = true; out.push(node); continue;
+      }
       const attrs = Object.fromEntries([...m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(a => [a[1], a[2] ?? '']));
       const dataset = Object.fromEntries(Object.entries(attrs).filter(([k]) => k.startsWith('data-')).map(([k, v]) => [k.slice(5).replace(/-(\w)/g, (_, c) => c.toUpperCase()), v]));
-      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, inProblems, paused: true, ended: false, hidden: false, loop: 'loop' in attrs, listeners: {},
+      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, inProblems, problems: problemsNode, paused: true, ended: false, hidden: false, loop: 'loop' in attrs, listeners: {},
         // Removing a card removes the controls it owns, as the DOM would.
         remove() {box.nodes = box.nodes.filter(n => n !== this && n.owner !== this);},
         focus(options) {this.focusOptions = options; s.context.document.activeElement = this;},
@@ -1204,6 +1215,54 @@ async function recentRunsHeldProblemsInsideTheGalleryKeepTheirCard() {
   assert.ok(cards[0].inProblems, 'It is the fresh card inside #jobProblems, spared by the guard');
 }
 
+// #1074: held no-host Problems replaces the in-gallery #jobProblems in place, and removes it once nothing
+// fails; the list itself is never replaced while the clip plays.
+async function recentRunsHeldProblemsReplaceTheGalleryProblems() {
+  const s = recentRunsSandbox();
+  const failedA = {id: 'held-a', preset_name: 'Failure A', status: 'failed', message: 'Out of memory', outputs: [], prompt_ids: [], created_at: 5, can_put_away: true, put_away: false};
+  const failedB = {id: 'held-b', preset_name: 'Failure B', status: 'failed', message: 'Still failing', outputs: [], prompt_ids: [], created_at: 6, can_put_away: true, put_away: false};
+  await s.poll([recentJob('clip', 1, 'video'), failedA]);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  const oldDetails = s.nodes().find(node => node.tagName === 'DETAILS');
+  assert.ok(oldDetails, 'Problems lands inside the gallery without a host');
+  const oldCard = s.nodes().find(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'held-a');
+  await s.poll([failedB, failedA, recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(s.nodes().filter(node => node.tagName === 'DETAILS').length, 1, 'Exactly one Problems block remains');
+  assert.equal(s.nodes().includes(oldDetails), false, 'The stale Problems block is replaced');
+  assert.equal(s.nodes().includes(oldCard), false, 'The stale Problems card goes with it');
+  assert.deepEqual(s.nodes().filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem).sort(), ['held-a', 'held-b'], 'Both failures render inside the fresh Problems');
+  assert.ok(s.nodes().includes(video), 'The playing clip is untouched');
+  await s.poll([recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'Clearing Problems still waits for the clip');
+  assert.equal(s.nodes().some(node => node.tagName === 'DETAILS'), false, 'Problems is removed once nothing fails');
+  assert.equal(s.nodes().some(node => node.inProblems), false, 'No Problems-owned node remains');
+}
+
+// #1074: a first render before the host mounts leaves a stale in-gallery Problems; the held host branch drops it.
+async function recentRunsHostHeldProblemsDropTheStaleGalleryProblems() {
+  const s = recentRunsSandbox({host: true});
+  const mount = s.context.document.getElementById;
+  s.context.document.getElementById = () => null;
+  const failedA = {id: 'held-a', preset_name: 'Failure A', status: 'failed', message: 'Out of memory', outputs: [], prompt_ids: [], created_at: 5, can_put_away: true, put_away: false};
+  const failedB = {id: 'held-b', preset_name: 'Failure B', status: 'failed', message: 'Still failing', outputs: [], prompt_ids: [], created_at: 6, can_put_away: true, put_away: false};
+  await s.poll([recentJob('clip', 1, 'video'), failedA]);
+  assert.ok(s.nodes().some(node => node.tagName === 'DETAILS'), 'Problems lands inside the gallery before the host mounts');
+  s.context.document.getElementById = mount;
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([failedB, failedA, recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(s.nodes().some(node => node.tagName === 'DETAILS'), false, 'The stale in-gallery Problems is dropped');
+  assert.equal(s.nodes().some(node => node.inProblems), false, 'No Problems-owned node stays in the gallery');
+  assert.equal(s.host.nodes.filter(node => node.tagName === 'DETAILS').length, 1, 'Problems renders once in the host');
+  assert.deepEqual(s.host.nodes.filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem).sort(), ['held-a', 'held-b'], 'Both failures render in the host Problems');
+  assert.ok(s.nodes().includes(video), 'The playing clip is untouched');
+}
+
 async function recentRunsLeaveOutsideFocusAlone() {
   const s = recentRunsSandbox();
   await s.poll(Array.from({length: 3}, (_, i) => recentJob('o' + i)));
@@ -1228,6 +1287,8 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await recentRunsReleaseOnErrorAndEmptied();
   await recentRunsSupersededGalleryCardHidden();
   await recentRunsHeldProblemsInsideTheGalleryKeepTheirCard();
+  await recentRunsHeldProblemsReplaceTheGalleryProblems();
+  await recentRunsHostHeldProblemsDropTheStaleGalleryProblems();
   await generateShortcutRoutesThroughTheButton();
   await seedAndPinChangesAreAnnounced();
   await pastedAndDroppedPicturesFillEmptySlots();
