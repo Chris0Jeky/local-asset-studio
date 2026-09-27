@@ -19,8 +19,8 @@ import test_pose_guide as baseline  # noqa: E402
 class PoseArtifactHandoffTests(unittest.TestCase):
     def setUp(self):
         self.fixture = baseline.PoseGuideTests("test_a_drawn_pose_is_stored_exactly_like_an_uploaded_picture")
-        self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
+        self.fixture.setUp()
         self.studio = self.fixture.studio
 
     def test_render_publishes_a_retrievable_validated_editable_artifact(self):
@@ -74,8 +74,8 @@ class PoseArtifactHandoffTests(unittest.TestCase):
 class PoseArtifactHandoffRouteTests(unittest.TestCase):
     def setUp(self):
         self.fixture = baseline.PoseGuideTests("test_a_drawn_pose_is_stored_exactly_like_an_uploaded_picture")
-        self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
+        self.fixture.setUp()
         self.http = baseline.server.create_server(
             self.fixture.root, port=0, studio_factory=lambda _: self.fixture.studio)
         self.thread = threading.Thread(target=self.http.serve_forever, daemon=True)

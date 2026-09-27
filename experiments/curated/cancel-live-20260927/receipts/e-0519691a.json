@@ -1,0 +1,120 @@
+{
+ "job_public": {
+  "id": "0519691a-43c5-44b8-84c6-c8a4014e7a2e",
+  "status": "cancelled",
+  "created_at": 1790523712.8453107,
+  "preset_id": "wai",
+  "preset_name": "WAI v17 \u2022 illustration",
+  "controls": {
+   "positive": "no humans, scenery, stone lighthouse on a sea cliff, calm ocean, sunset sky, soft clouds, wide shot, masterpiece, best quality",
+   "seed": 927002,
+   "steps": 20,
+   "width": 832,
+   "height": 1216
+  },
+  "batch_count": 1,
+  "prompt_ids": [],
+  "submissions": [],
+  "outputs": [],
+  "message": "Not started: cancelled by you. Nothing was sent to ComfyUI.",
+  "failure": null,
+  "parent_assets": [],
+  "references": [],
+  "project_id": null,
+  "started_at": null,
+  "finished_at": 1790523712.870503,
+  "elapsed_seconds": null,
+  "tracking_disposition": null,
+  "preparation": null,
+  "continuation": null,
+  "abandonment": null,
+  "label": "cancel-proof-e-studio-queued",
+  "cancellation": {
+   "event_id": "37b1c1d3d5ff438cbed8df92b2778426",
+   "requested_at": 1790523712.870503,
+   "requested_by": "owner",
+   "status_at_request": "queued",
+   "state": "cancelled",
+   "actions": [],
+   "observations": [],
+   "resolved_at": 1790523712.870503,
+   "note": "Removed from the Studio queue before submission; nothing was sent to ComfyUI."
+  },
+  "commit_releases": null,
+  "host_commit_windows": null,
+  "can_stop_tracking": false,
+  "can_resume_tracking": false,
+  "has_pending_submission": false,
+  "never_submitted": false,
+  "mixed_batch": null,
+  "can_abandon": false,
+  "abandon_requires_acknowledgement": false,
+  "put_away_at": null,
+  "put_away": false,
+  "put_away_basis": null,
+  "can_put_away": false,
+  "can_bring_back": false,
+  "can_cancel": false,
+  "cancel_blocked_reason": "Already cancelled",
+  "cancel_needs_confirm": false
+ },
+ "state_json": {
+  "id": "0519691a-43c5-44b8-84c6-c8a4014e7a2e",
+  "status": "cancelled",
+  "created_at": 1790523712.8453107,
+  "preset_id": "wai",
+  "preset_name": "WAI v17 \u2022 illustration",
+  "controls": {
+   "positive": "no humans, scenery, stone lighthouse on a sea cliff, calm ocean, sunset sky, soft clouds, wide shot, masterpiece, best quality",
+   "seed": 927002,
+   "steps": 20,
+   "width": 832,
+   "height": 1216
+  },
+  "batch_count": 1,
+  "prompt_ids": [],
+  "submissions": [],
+  "outputs": [],
+  "message": "Not started: cancelled by you. Nothing was sent to ComfyUI.",
+  "graph_path": "workflows\\api\\wai-api.json",
+  "seed_bindings": [
+   [
+    "5",
+    "seed"
+   ]
+  ],
+  "prompt_bindings": {
+   "positive": [
+    [
+     "2",
+     "text"
+    ]
+   ],
+   "negative": [
+    [
+     "3",
+     "text"
+    ]
+   ]
+  },
+  "parent_assets": [],
+  "label": "cancel-proof-e-studio-queued",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "cancellation": {
+   "event_id": "37b1c1d3d5ff438cbed8df92b2778426",
+   "requested_at": 1790523712.870503,
+   "requested_by": "owner",
+   "status_at_request": "queued",
+   "state": "cancelled",
+   "actions": [],
+   "observations": [],
+   "resolved_at": 1790523712.870503,
+   "note": "Removed from the Studio queue before submission; nothing was sent to ComfyUI."
+  },
+  "finished_at": 1790523712.870503
+ },
+ "history": {},
+ "extra": {}
+}

@@ -17,7 +17,7 @@ from http_refusal_transport import atomic_json_post
 
 class MixedBatchHTTPTests(unittest.TestCase):
     def setUp(self):
-        self.case=fixtures.MixedBatchTests();self.case.setUp();self.addCleanup(self.case.doCleanups)
+        self.case=fixtures.MixedBatchTests();self.addCleanup(self.case.doCleanups);self.case.setUp()
         self.studio=self.case.studio;self.case.fixture.patches[0].stop()
         handler=type('MixedHandler',(fixtures.server.Handler,),{'studio':self.studio})
         # Binding numeric loopback needs no reverse DNS; HTTPServer.server_bind normally calls getfqdn.
