@@ -2088,16 +2088,19 @@ class Studio:
                 if not isinstance(response, dict): raise ValueError('Invalid history response')
                 history = response.get(prompt_id)
                 if history is not None and not isinstance(history, dict): raise ValueError('Invalid prompt history')
+                if isinstance(history, dict) and (not isinstance(history.get('status', {}), dict) or not isinstance(history.get('outputs', {}), dict)): raise ValueError('Invalid prompt history')
             except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException) as exc:
                 # A read is safe to repeat (the prompt is never posted again), so one dropped poll does not end the batch; a ComfyUI
                 # that stays unreadable still ends observation after a bounded number of reads, with the rest of the batch unsent.
                 read_failures += 1; error = (str(exc) or type(exc).__name__)[:200]
                 # Failures reset after any good read, so a flaky ComfyUI over the 4-hour window would grow this without bound.
-                kept = submission.setdefault("history_read_errors", [])
-                # A submission resumed from before the cap has a list but no count: seed from it, then trim it.
-                submission["history_read_error_count"] = submission.get("history_read_error_count", len(kept)) + 1
-                del kept[HISTORY_READ_ERRORS_KEPT:]
-                if len(kept) < HISTORY_READ_ERRORS_KEPT: kept.append({"at": time.time(), "error": error})
+                # Under the lock: HTTP handlers serialize this submission while the worker adds these keys (the backoff sleep stays outside).
+                with self.lock:
+                    kept = submission.setdefault("history_read_errors", [])
+                    # A submission resumed from before the cap has a list but no count: seed from it, then trim it.
+                    submission["history_read_error_count"] = submission.get("history_read_error_count", len(kept)) + 1
+                    del kept[HISTORY_READ_ERRORS_KEPT:]
+                    if len(kept) < HISTORY_READ_ERRORS_KEPT: kept.append({"at": time.time(), "error": error})
                 if read_failures >= HISTORY_READ_STRIKES:
                     with self.lock:
                         if self._tracking_stopped(job): return False
