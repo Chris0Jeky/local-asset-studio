@@ -1,0 +1,295 @@
+{
+  "id": "22d40c6c-b322-4d83-88e7-bc6cbe299e5e",
+  "status": "completed",
+  "created_at": 1790525563.4721918,
+  "preset_id": "flux-edit",
+  "preset_name": "Change one thing (FLUX.2 Klein 4B, keeps the rest)",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png",
+    "positive": "Change one thing: make it a quiet early morning instead of night. Soft cool daylight comes through the window, the rain has stopped and the sky outside is pale blue-grey over a calm morning city, the train is gone, the monitor screen is dark and switched off, and the warm desk lamp is still on. Keep everything else exactly as it is: the camera angle and framing, the room, the plain graphite wall on the left, the window frame, the desk, the chair, the lamp and the monitor in the same places, the floor, and the hand-painted cel anime film background style.",
+    "seed": 2026092782,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "d835fb84-9721-4ccf-8a3f-b44b953d7a25"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "d835fb84-9721-4ccf-8a3f-b44b953d7a25",
+      "seed": 2026092782,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "flux-2-klein-4b-fp8.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "flux2",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "text": "Change one thing: make it a quiet early morning instead of night. Soft cool daylight comes through the window, the rain has stopped and the sky outside is pale blue-grey over a calm morning city, the train is gone, the monitor screen is dark and switched off, and the warm desk lamp is still on. Keep everything else exactly as it is: the camera angle and framing, the room, the plain graphite wall on the left, the window frame, the desk, the chair, the lamp and the monitor in the same places, the floor, and the hand-painted cel anime film background style.",
+            "clip": [
+              "2",
+              0
+            ]
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "CFGGuider",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "17",
+              0
+            ],
+            "negative": [
+              "18",
+              0
+            ],
+            "cfg": 1.0
+          }
+        },
+        "7": {
+          "class_type": "RandomNoise",
+          "inputs": {
+            "noise_seed": 2026092782
+          }
+        },
+        "8": {
+          "class_type": "KSamplerSelect",
+          "inputs": {
+            "sampler_name": "euler"
+          }
+        },
+        "9": {
+          "class_type": "Flux2Scheduler",
+          "inputs": {
+            "steps": 4,
+            "width": 1344,
+            "height": 768
+          }
+        },
+        "10": {
+          "class_type": "EmptyFlux2LatentImage",
+          "inputs": {
+            "width": 1344,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "11": {
+          "class_type": "SamplerCustomAdvanced",
+          "inputs": {
+            "noise": [
+              "7",
+              0
+            ],
+            "guider": [
+              "6",
+              0
+            ],
+            "sampler": [
+              "8",
+              0
+            ],
+            "sigmas": [
+              "9",
+              0
+            ],
+            "latent_image": [
+              "10",
+              0
+            ]
+          }
+        },
+        "12": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "11",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "13": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "filename_prefix": "Verified/FLUX-Edit",
+            "images": [
+              "12",
+              0
+            ]
+          }
+        },
+        "14": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png"
+          }
+        },
+        "15": {
+          "class_type": "ImageScaleToTotalPixels",
+          "inputs": {
+            "image": [
+              "14",
+              0
+            ],
+            "upscale_method": "lanczos",
+            "megapixels": 1.0,
+            "resolution_steps": 1
+          }
+        },
+        "16": {
+          "class_type": "VAEEncode",
+          "inputs": {
+            "pixels": [
+              "15",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "17": {
+          "class_type": "ReferenceLatent",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ],
+            "latent": [
+              "16",
+              0
+            ]
+          }
+        },
+        "18": {
+          "class_type": "ReferenceLatent",
+          "inputs": {
+            "conditioning": [
+              "5",
+              0
+            ],
+            "latent": [
+              "16",
+              0
+            ]
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 350998528,
+        "peak_dedicated_bytes": 11548065792,
+        "samples": 62,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "FLUX-Edit_00015_.png",
+      "subfolder": "Verified",
+      "type": "output",
+      "seed": 2026092782,
+      "prompt_id": "d835fb84-9721-4ccf-8a3f-b44b953d7a25",
+      "media_type": "image",
+      "asset_id": "f6f6044e736257aabd5edf06b6f86767"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\flux-edit-api.json",
+  "seed_bindings": [
+    [
+      "7",
+      "noise_seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "nightshift-quiet-a2",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "host_commit_readings": [
+    {
+      "available_bytes": 38603251712,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 64180838400,
+      "unknown_reason": null,
+      "phase": "prepared",
+      "recorded_at": 1790525563.4721918
+    },
+    {
+      "available_bytes": 38655369216,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 64128720896,
+      "unknown_reason": null,
+      "phase": "pre-submit",
+      "index": 0,
+      "recorded_at": 1790525563.578334
+    }
+  ],
+  "started_at": 1790525563.4794137,
+  "host_commit_windows": [
+    {
+      "samples": 60,
+      "unknown_samples": 0,
+      "first_at": 1790525563.7781515,
+      "last_at": 1790525593.9070768,
+      "peak_committed_bytes": 77924360192,
+      "peak_at": 1790525592.4239836,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 24859729920,
+      "index": 0,
+      "prompt_id": "d835fb84-9721-4ccf-8a3f-b44b953d7a25",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790525593.9120755,
+  "elapsed_seconds": 30.432661771774292
+}

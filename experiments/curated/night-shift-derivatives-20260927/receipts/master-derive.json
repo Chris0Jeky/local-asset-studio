@@ -1,0 +1,56 @@
+{
+ "MA": {
+  "source": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research\\nightshift-20260927/master-up-u2-raw4x_00001_.png",
+  "source_size": [
+   5376,
+   3072
+  ],
+  "resize_to": [
+   3840,
+   2194
+  ],
+  "filter": "PIL LANCZOS",
+  "crop_box": [
+   0,
+   17,
+   3840,
+   2177
+  ],
+  "crop_box_anchor_px": [
+   0,
+   5.95,
+   1344,
+   762.05
+  ],
+  "file": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/nightshift-20260927/retro-anime-master/master/retro-anime-master--3840x2160--ma.png",
+  "sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+  "bytes": 2736794
+ },
+ "MB": {
+  "source": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Studio/Anime-ESRGAN-2x_00002_.png",
+  "source_size": [
+   2688,
+   1536
+  ],
+  "resize_to": [
+   3840,
+   2194
+  ],
+  "filter": "PIL LANCZOS",
+  "crop_box": [
+   0,
+   17,
+   3840,
+   2177
+  ],
+  "crop_box_anchor_px": [
+   0,
+   5.95,
+   1344,
+   762.05
+  ],
+  "file": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/nightshift-20260927/retro-anime-master/master/retro-anime-master--3840x2160--mb.png",
+  "sha256": "adde7d35f020914f120944ad86e1e6b333f11e6a74b7bc75436407e3ae2da645",
+  "bytes": 2255578
+ }
+}

@@ -9,6 +9,10 @@ Everything used installed tools on the primary and the accepted Night Shift anch
 
 Evidence: `experiments/curated/background-lab-20260927/`. Agent-judged only; not art acceptance, not licence clearance.
 
+## Night Shift derivatives from the owner's anchor z2 — 27 September 2026 (16:56-17:26 local)
+
+From `retro-anime-master-z2` (sha256 `c22b723c…`, verified): a 3840x2160 master by ESRGAN raw 4x plus Lanczos (the Studio `anime-esrgan` job `c057d94c` took 455 s with a 9.0 GB GPU spill); `retro-anime-quiet` from Studio `flux-edit` (FLUX.2 Klein 4B), 4 candidates plus one refinement round. The first round redrew the window, so round 1 named the frame and the rail view; pick r1-2 (job `a08efbc3`, prompt `5702bc23`, 36.9 s). Klein returned it about 0.7 % larger; a recorded affine warp brings registration to 0.5 / 0.15 px, and the same upscale puts master and quiet on one 3840x2160 grid. `-hero` (3840x1600), `-poster` (1280/640) and `-card` (1024/512/256, tight and wide) are crops and encodes of the master, all within their byte budgets. Full files stay local under ComfyUI `output/Research/nightshift-20260927/`; contact sheets, receipts and rubric pre-review are in `experiments/curated/night-shift-derivatives-20260927/`. **Owner art review (27 Sep, in chat): "Accept, try sharper 4K as well"**. Accepted: master MA, quiet r1-2, hero, poster, card tight. Not runtime-qualified; licence not cleared. `retro-anime-wall` stays the owner's ChatGPT job.
+
 ## Owner cancel (#1138) proved live on ComfyUI 0.35.0 — 27 September 2026 (16:41-16:44 local)
 
 Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<id>/cancel` on the primary backend. Every job ended `cancelled`, with who and when recorded. The three jobs that had reached ComfyUI also record the prompt ID, ComfyUI's reply and the `/queue` observations.

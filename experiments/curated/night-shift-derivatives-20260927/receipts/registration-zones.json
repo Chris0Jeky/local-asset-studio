@@ -1,0 +1,187 @@
+{
+ "method": "edge-map (PIL FIND_EDGES + Gaussian 1.5) normalised cross-correlation per zone at 1344x768; each value [dx, dy, best NCC, NCC at zero shift] = the integer shift that best aligns the candidate to the anchor",
+ "zones": {
+  "desk": [
+   620,
+   420,
+   1150,
+   760
+  ],
+  "floorline-left": [
+   0,
+   470,
+   450,
+   700
+  ],
+  "windowframe": [
+   900,
+   0,
+   1344,
+   420
+  ],
+  "lamp-crt": [
+   820,
+   250,
+   1100,
+   450
+  ]
+ },
+ "results": {
+  "quiet-a1": {
+   "desk": [
+    -3,
+    -2,
+    0.744,
+    0.622
+   ],
+   "floorline-left": [
+    0,
+    -2,
+    0.783,
+    0.654
+   ],
+   "windowframe": [
+    -4,
+    0,
+    0.199,
+    0.09
+   ],
+   "lamp-crt": [
+    -4,
+    0,
+    0.436,
+    0.281
+   ]
+  },
+  "quiet-a2": {
+   "desk": [
+    -4,
+    -2,
+    0.661,
+    0.585
+   ],
+   "floorline-left": [
+    1,
+    -2,
+    0.632,
+    0.536
+   ],
+   "windowframe": [
+    -4,
+    0,
+    0.191,
+    0.132
+   ],
+   "lamp-crt": [
+    -4,
+    1,
+    0.399,
+    0.303
+   ]
+  },
+  "quiet-b1": {
+   "desk": [
+    -3,
+    -2,
+    0.692,
+    0.609
+   ],
+   "floorline-left": [
+    0,
+    -2,
+    0.757,
+    0.667
+   ],
+   "windowframe": [
+    -4,
+    0,
+    0.22,
+    0.099
+   ],
+   "lamp-crt": [
+    -4,
+    0,
+    0.427,
+    0.273
+   ]
+  },
+  "quiet-b2": {
+   "desk": [
+    -4,
+    -2,
+    0.689,
+    0.62
+   ],
+   "floorline-left": [
+    0,
+    -1,
+    0.736,
+    0.701
+   ],
+   "windowframe": [
+    -4,
+    0,
+    0.113,
+    0.092
+   ],
+   "lamp-crt": [
+    -4,
+    0,
+    0.333,
+    0.295
+   ]
+  },
+  "quiet-r1-1": {
+   "desk": [
+    -4,
+    -2,
+    0.74,
+    0.635
+   ],
+   "floorline-left": [
+    0,
+    -2,
+    0.768,
+    0.63
+   ],
+   "windowframe": [
+    -4,
+    0,
+    0.307,
+    0.158
+   ],
+   "lamp-crt": [
+    -4,
+    0,
+    0.564,
+    0.376
+   ]
+  },
+  "quiet-r1-2": {
+   "desk": [
+    -4,
+    -2,
+    0.746,
+    0.651
+   ],
+   "floorline-left": [
+    0,
+    -2,
+    0.768,
+    0.662
+   ],
+   "windowframe": [
+    -5,
+    0,
+    0.246,
+    0.134
+   ],
+   "lamp-crt": [
+    -4,
+    1,
+    0.48,
+    0.33
+   ]
+  }
+ }
+}
