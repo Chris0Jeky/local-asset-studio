@@ -1041,7 +1041,7 @@ class Studio:
 
     def export_assets(self, payload):
         ids = payload.get("ids")
-        if not isinstance(ids, list) or not 1 <= len(ids) <= 200: raise StudioError("Select 1–200 assets to export")
+        if not isinstance(ids, list) or not 1 <= len(ids) <= 200 or not all(isinstance(i, str) for i in ids): raise StudioError("Select 1–200 assets to export")
         assets = [self.assets.get(i) for i in dict.fromkeys(ids)]
         trashed = [a["id"] for a in assets if a["trashed_at"]]
         if trashed:
@@ -1492,7 +1492,7 @@ class Studio:
         try:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
-            except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): info, info_available = {}, False
+            except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): info, info_available = {}, False
             missing = {}; observations = {}
             assets = self.library.manifest().get('assets', [])
             from model_requirements import model_selection
@@ -1520,7 +1520,7 @@ class Studio:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
             return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
@@ -2069,7 +2069,14 @@ class Handler(BaseHTTPRequestHandler):
         return size
     def _body_json(self, limit=1024 * 1024):
         if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": raise StudioError("application/json required")
-        return json.loads(self.rfile.read(self._content_length(limit)).decode())
+        raw = self.rfile.read(self._content_length(limit))
+        try: return json.loads(raw.decode())
+        except RecursionError: raise StudioError("JSON body is nested too deeply") from None
+    def _body_object(self):
+        # For routes that read fields here or in a helper without their own shape check: `[]` is valid JSON, not a request.
+        body = self._body_json()
+        if not isinstance(body, dict): raise StudioError("JSON object required")
+        return body
     def _media(self, descriptor, job=None):
         query = urlencode({k:descriptor[k] for k in ("filename", "subfolder", "type") if descriptor.get(k) is not None})
         headers = {}
@@ -2265,7 +2272,7 @@ class Handler(BaseHTTPRequestHandler):
                     self._require_gpu()
                     result = self.studio.create_job(payload)
                 return self._json(201, result)
-            if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_json().get('id')))
+            if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_object().get('id')))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':
@@ -2292,7 +2299,7 @@ class Handler(BaseHTTPRequestHandler):
                     if len(parts)!=5:raise StudioError('Unknown time extension route')
                     return self._json(200,self.studio.production.extend_time(identifier,payload))
                 if parts[-1]=='review':return self._json(200,self.studio.production.review(identifier,payload))
-            if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_json()))
+            if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_object()))
             if self.path == "/api/assets/update":
                 try: return self._json(200, self.studio.assets.update(self._body_json()))
                 except sqlite3.Error:
@@ -2300,11 +2307,11 @@ class Handler(BaseHTTPRequestHandler):
                                             "code": "asset_storage_unconfirmed"})
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
-            if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_json().get("id")))
-            if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_json()))
+            if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
+            if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
-            if self.path == "/api/folders/open": return self._json(200, self.studio.library.open_folder(self._body_json().get("id")))
-            if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_json().get("id")))
+            if self.path == "/api/folders/open": return self._json(200, self.studio.library.open_folder(self._body_object().get("id")))
+            if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_object().get("id")))
             if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/resume"):
                 self._body_json(); return self._json(202, self.studio.resume_job(self.path.split("/")[3]))
@@ -2321,7 +2328,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(payload, dict): raise StudioError('Abandonment command must be an object')
                 return self._json(200, self.studio.abandon_job(parts[3], payload.get('reason'), payload.get('acknowledge_unknown', False)))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
-                return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_json().get("reason")))
+                return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_object().get("reason")))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/put-away"):
                 parts = self.path.split('/')
                 if len(parts) != 5: raise StudioError('Unknown put-away route')
