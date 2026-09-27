@@ -274,5 +274,19 @@
     if(!each.length)return null;const mid=each.length>>1;
     return{count:each.length,seconds:each.length%2?each[mid]:(each[mid-1]+each[mid])/2};
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming};
+  // #1163: the seeds typed for a several-recipe plan: one to four different whole numbers the page can send exactly.
+  function combinePlanSeeds(text){
+    const parts=String(text??'').split(/[\s,;]+/).filter(Boolean);
+    if(!parts.length)return{seeds:[],error:'Type one to four seeds, e.g. 11, 12.'};
+    if(parts.length>4)return{seeds:[],error:'A plan takes at most four seeds.'};
+    if(parts.some(p=>!/^\d{1,15}$/.test(p)))return{seeds:[],error:'Seeds are whole numbers of up to 15 digits.'};
+    const seeds=parts.map(Number);if(new Set(seeds).size!==seeds.length)return{seeds:[],error:'Use different seeds.'};
+    return{seeds,error:''};
+  }
+  // A plan's expected time from each recipe's time per picture (null where a recipe has none): a sum, never a guess (K13).
+  function combinePlanTime(perPicture,seedCount){
+    const known=(perPicture||[]).filter(v=>Number(v)>0).map(Number);
+    return{seconds:known.reduce((a,b)=>a+b,0)*seedCount,unknown:(perPicture||[]).length-known.length};
+  }
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime};
 });

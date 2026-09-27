@@ -23,7 +23,7 @@ class Cases(unittest.TestCase):
         self.assertEqual(CASES['version'], 1)
         self.assertEqual(CASES['refs'], '#278')
         self.assertIsInstance(CASES['starting_views'], list)
-        self.assertTrue(8 <= len(CASES['cases']) <= 15, 'the original journeys plus Restyle, Combine, the same-pair experiment loop and the drawn pose')
+        self.assertTrue(8 <= len(CASES['cases']) <= 16, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose and the several-recipe plan')
 
     def test_unique_ids(self):
         ids = [case['id'] for case in CASES['cases']]

@@ -66,6 +66,8 @@
 .ux-engine-options{display:flex;gap:8px;flex-wrap:wrap}.ux-engine-options button{flex:1 1 155px;text-align:left;white-space:normal;min-height:64px}
 .ux-engine-options b,.ux-engine-options small{display:block}.ux-engine-options .ux-engine-hint{font-size:11px;opacity:.9}.ux-engine-options small{margin-top:5px;font-size:10px;line-height:1.4}
 .ux-engine-options [aria-pressed=true]{border-color:var(--accent,#c6dd94);background:#273b30}
+.ux-engine-plan{margin-top:12px}.ux-engine-plan summary small{opacity:.85}.ux-plan-engines{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0;border:0;padding:0}
+.ux-plan-engine{display:flex;gap:6px;align-items:baseline;font-size:12px}.ux-plan-engine small{font-size:10px;opacity:.85}.ux-plan-actions{display:flex;gap:8px;flex-wrap:wrap}
 .ux-experiment-strip{display:flex;gap:14px;overflow-x:auto;padding:4px 0 10px;align-items:flex-start}
 .ux-run-group{flex:0 0 auto;width:min-content;display:flex;flex-direction:column;gap:6px;min-width:0}
 .ux-run-head{display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap;font-size:12px}.ux-run-head b{flex-basis:100%}.ux-run-head small{font-size:11px;opacity:.8}.ux-run-head button{font-size:10px;min-height:28px;padding:3px 8px;margin-left:auto}
