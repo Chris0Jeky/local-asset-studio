@@ -22,6 +22,7 @@ import re
 import threading
 import time
 import uuid
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageFilter, ImageMath, ImageStat
@@ -32,6 +33,10 @@ VERSION = 1
 OPERATION = "tile.finish.v1"
 BAND = 112                  # lab: 112 px for the wall (keep), 160 px for floor v2
 BAND_LIMITS = (16, 512)
+# The panel's seam-band choice (owner, 27 Sep 2026: a wider band hides the floor's repeating plank ends). Fixed pixel widths, not a
+# fraction of the side: these are the two the lab measured (1024 px wall and floor v2), and a band only has to cover the seam's
+# content features, which the model draws at the same pixel scale whatever the texture side. A width over half the side is refused.
+BANDS = (("narrow", 112), ("wide", 160))
 FEATHER = 12                # lab: GaussianBlur(12) on the hard cross before the composite
 SIZE_LIMITS = (256, 1536)
 SIZE_MULTIPLE = 16
@@ -134,6 +139,22 @@ def png_bytes(image):
     stream = io.BytesIO(); image.save(stream, "PNG"); return stream.getvalue()
 
 
+def band_choices(size):
+    """The panel's seam-band options for a texture side: each measured width, and the reason when it does not fit."""
+    return [{"name": name, "band_px": px, "available": px <= size // 2,
+             "reason": None if px <= size // 2 else "A %d px band needs a side of at least %d px; this texture is %d px." % (px, px * 2, size)} for name, px in BANDS]
+
+
+def band_value(value):
+    """band_px as the panel or an API caller sends it, a number or its text (server.number() style: Decimal, finite, whole, in range)."""
+    try: raw = None if isinstance(value, bool) else Decimal(str(value).strip())
+    except (InvalidOperation, ValueError): raw = None
+    # Range before whole/even: Decimal's modulo of a huge value ("1e30") raises InvalidOperation instead of answering.
+    if raw is None or not raw.is_finite() or not BAND_LIMITS[0] <= raw <= BAND_LIMITS[1] or raw != raw.to_integral_value() or raw % 2:
+        raise ValueError("band_px must be an even whole number from %d to %d." % BAND_LIMITS)
+    return int(raw)
+
+
 def eligibility(width, height):
     """None when a picture can become a tile, else the reason shown on the disabled control."""
     if width != height: return "Needs a square texture: this picture is %d × %d." % (width, height)
@@ -165,15 +186,15 @@ def source_status(studio, asset_id):
     context = continuation.source_context(studio, asset_id)
     reason = eligibility(context["width"], context["height"])
     return {"asset_id": context["asset_id"], "width": context["width"], "height": context["height"], "eligible": reason is None,
-            "reason": reason, "flag": FLAT_ONLY, "preset_id": route(studio)["id"], "band_px": BAND}
+            "reason": reason, "flag": FLAT_ONLY, "preset_id": route(studio)["id"], "band_px": BAND,
+            "band_choices": band_choices(min(context["width"], context["height"]))}
 
 
 def prepare(studio, payload):
     """Roll one library texture and store its seam cross as an RGBA upload. Nothing is queued or submitted."""
     if not isinstance(payload, dict) or not set(payload) <= {"asset_id", "band_px", "flatten"} or "asset_id" not in payload:
         raise ValueError("Make seamless takes asset_id, and optionally band_px and flatten.")
-    band = payload.get("band_px", BAND); flat = payload.get("flatten", True)
-    if type(band) is not int or band % 2 or not BAND_LIMITS[0] <= band <= BAND_LIMITS[1]: raise ValueError("band_px must be an even whole number from %d to %d." % BAND_LIMITS)
+    band = band_value(payload.get("band_px", BAND)); flat = payload.get("flatten", True)
     if type(flat) is not bool: raise ValueError("flatten must be true or false.")
     preset = route(studio)
     context, source = _source(studio, payload["asset_id"])
@@ -244,8 +265,9 @@ def finish_id(job_id):
 
 
 def summary(metrics):
-    return "Seam %.2f → %.2f (the tile's own neighbour gradient %.2f). Review the 3×3 repeat; a number is not art acceptance." % (
-        metrics["seam_source"], metrics["seam_tile"], metrics["inner_gradient_tile"])
+    band = " across a %d px seam band" % metrics["band_px"] if metrics.get("band_px") else ""
+    return "Seam %.2f → %.2f%s (the tile's own neighbour gradient %.2f). Review the 3×3 repeat; a number is not art acceptance." % (
+        metrics["seam_source"], metrics["seam_tile"], band, metrics["inner_gradient_tile"])
 
 
 def finish(studio, job_id):
@@ -279,7 +301,7 @@ def finish(studio, job_id):
         final = flatten(joined, claim["flatten_sigma_px"]) if claim["flatten_sigma_px"] else joined
         preview = repeat_preview(final)
         metrics = {"seam_source": centre_seam(rolled), "seam_composite": seam(joined), "seam_tile": seam(final), "centre_seam_tile": centre_seam(final),
-                   "inner_gradient_source": inner_gradient(rolled), "inner_gradient_tile": inner_gradient(final)}
+                   "inner_gradient_source": inner_gradient(rolled), "inner_gradient_tile": inner_gradient(final), "band_px": claim["band_px"]}
         metrics["summary"] = summary(metrics)
         directory = studio.runs / identifier; directory.mkdir(parents=True, exist_ok=True)
         files = {"tile.png": png_bytes(final), "tile-3x3.png": png_bytes(preview)}
@@ -288,7 +310,7 @@ def finish(studio, job_id):
         hashes = {filename: hashlib.sha256(data).hexdigest() for filename, data in files.items()}
         submission = next((item for item in job.get("submissions", []) if item.get("prompt_id") == output.get("prompt_id")), {})
         preview_asset = uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:{identifier}:1").hex
-        steps = ["Soft composite of the repainted cross over the rolled texture (Gaussian feather %d px)" % claim["feather_px"],
+        steps = ["Soft composite of the repainted %d px cross over the rolled texture (Gaussian feather %d px)" % (claim["band_px"], claim["feather_px"]),
                  "Circular Gaussian lighting flatten, sigma %d px (Pillow, 3x3 wrap)" % claim["flatten_sigma_px"] if claim["flatten_sigma_px"] else "No lighting flatten",
                  "Seam metric: mean |difference| across the wrap edges; 3x3 repeat preview"]
         receipt = {"version": VERSION, "plan": copy.deepcopy(claim), "repaint_job_id": job_id, "repaint_prompt_id": output.get("prompt_id"),

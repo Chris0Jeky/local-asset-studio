@@ -221,6 +221,7 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 LOCAL_CONTROLS = {
     '#lookBlock > summary': 'opens the saved-looks disclosure',
     '#lookSelect': 'chooses a saved look in this page; nothing is sent',
+    '#lookOptions [data-look-option]': "ticks one of the look's optional lines in this page; nothing is sent",
     '#workshopRecipeChange': 'opens the recipe picker',
     '#presetList [data-id]': 'loads a recipe into this page (selectPreset); nothing is sent',
     '#presetList button.preset': 'loads a recipe into this page (selectPreset); nothing is sent',
@@ -242,6 +243,7 @@ LOCAL_CONTROLS = {
     '#productionDetail [data-candidate-open]': 'opens a candidate at full size; refreshes the Workspace list (GET)',
     '#loadPreset': 'reads a registered recipe graph into the builder (GET)',
     '#compileWorkflow': 'checks connections: POST /api/workflow-studio/compile validates and stores nothing',
+    '#assetDialog [data-ux-tile-band]': 'chooses the seam band for Make seamless in this page; nothing is sent',
 }
 
 
@@ -299,7 +301,7 @@ def build_handler():
         with Image.open(ROOT / asset['url'].lstrip('/')) as picture: width, height = picture.size
         reason = tiles.eligibility(width, height)
         return {'asset_id': asset['id'], 'width': width, 'height': height, 'eligible': reason is None, 'reason': reason,
-                'flag': tiles.FLAT_ONLY, 'preset_id': 'zimage-seam-repair', 'band_px': tiles.BAND}
+                'flag': tiles.FLAT_ONLY, 'preset_id': 'zimage-seam-repair', 'band_px': tiles.BAND, 'band_choices': tiles.band_choices(min(width, height))}
 
     def parallax_status(asset):
         with Image.open(ROOT / asset['url'].lstrip('/')) as picture: width, height = picture.size
@@ -404,8 +406,11 @@ def build_handler():
                 status = tile_status(asset)
                 if not status['eligible']: return self.json({'error': status['reason']}, 400)
                 size, file = status['width'], 'f' * 32 + '_seam-cross.png'
+                try: band = tiles.band_value(data.get('band_px', tiles.BAND))
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                if band > size // 2: return self.json({'error': 'band_px must be at most half the tile side (%d px).' % (size // 2)}, 400)
                 plan = {'version': tiles.VERSION, 'preset_id': 'zimage-seam-repair', 'source_asset_id': asset['id'], 'source_sha256': asset['sha256'],
-                        'rolled_file': file, 'rolled_sha256': 'd' * 64, 'size': size, 'band_px': tiles.BAND, 'feather_px': tiles.FEATHER,
+                        'rolled_file': file, 'rolled_sha256': 'd' * 64, 'size': size, 'band_px': band, 'feather_px': tiles.FEATHER,
                         'flatten_sigma_px': tiles.default_sigma(size)}
                 return self.json({'plan': plan, 'file': file, 'sha256': 'd' * 64, 'width': size, 'height': size, 'preset_id': 'zimage-seam-repair',
                                   'context': fixture.source_context(asset), 'flag': tiles.FLAT_ONLY, 'seam_source': 4.34,
@@ -445,10 +450,11 @@ def build_handler():
                 data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
                 look = next((entry for entry in shipped if entry['id'] == data.get('id')), None)
                 if look is None or data.get('expected_revision') != look['revision']: return self.json({'error': 'Unknown fixture look'}, 404)
-                try: positive = looks.compose(look['body']['template'], data.get('scene'))
+                lines = look['body'].get('options', [])
+                try: chosen = looks.chosen_options(lines, data.get('options')); positive = looks.compose(look['body']['template'], data.get('scene'), lines, chosen)
                 except ValueError as error: return self.json({'error': str(error)}, 400)
                 return self.json({'preset_id': look['body']['preset_id'], 'preset_name': look['preset_name'], 'controls': {'positive': positive, **look['body']['controls']},
-                                  'look': {'id': look['id'], 'name': look['name'], 'revision': look['revision']}, 'generation_submitted': False})
+                                  'look': {'id': look['id'], 'name': look['name'], 'revision': look['revision'], **({'options': chosen} if lines else {})}, 'generation_submitted': False})
             if path == '/api/preview':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
@@ -1329,7 +1335,7 @@ def _vary(c):
         for job in added: fixture.JOBS.remove(job)
 
 
-TILE_STATE = """() => ({preset: selected.id, parents: parentAssets, tile: (tilePayload().tile || {}).source_asset_id || null,
+TILE_STATE = """() => ({preset: selected.id, parents: parentAssets, tile: (tilePayload().tile || {}).source_asset_id || null, band: (tilePayload().tile || {}).band_px || null,
   reference: uploaded, notice: document.querySelector('#uxNotice').textContent, hint: document.querySelector('#referenceHint').textContent})"""
 WHY_TILE = """(() => { const b = document.querySelector('#assetDialog .ux-tile button');
   return b ? (b.disabled ? 'disabled: ' : 'enabled: ') + document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()"""
@@ -1353,6 +1359,10 @@ def _tile(c):
     c.act('[data-asset-open="%s"]' % square, note='open a square texture')
     c.page.wait_for_timeout(500)
     offered = c.page.evaluate(WHY_TILE)
+    # Owner, 27 Sep 2026: a wider seam band hides a floor's repeating plank ends. Choose it when this texture can take it.
+    wide = c.page.evaluate("""(() => { const o = document.querySelector('#assetDialog [data-ux-tile-band] option[value="160"]'); return !!o && !o.disabled; })()""")
+    if wide: c.act('#assetDialog [data-ux-tile-band]', 'select', typed='160', note='choose the wide seam band (160 px)')
+    else: c.act('#assetDialog .ux-tile small', 'read', note='the wide seam band does not fit this texture')
     c.stop_before(c.act('#assetDialog [data-ux-tile]', note='prepares the seam repaint'), 'stopped before preparing: Make seamless stores a rolled copy of the picture')
     c.page.wait_for_timeout(800)
     state = c.page.evaluate(TILE_STATE)
@@ -1360,12 +1370,14 @@ def _tile(c):
     c.act('#referenceHint', 'read', note='source %s, parents %s' % (state['tile'], state['parents']))
     c.act('#generate', 'read', note='readiness only; never pressed')
     submitted = [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+    sent = [p['data'].get('band_px') for p in fixture.POSTS if p['path'] == '/api/tiles/prepare']
     prepared = (state['preset'] == 'zimage-seam-repair' and state['tile'] == square and state['parents'] == [square]
-                and state['reference'] == 'f' * 32 + '_seam-cross.png' and 'Press Generate' in state['notice'] and 'Flat textures only' in state['hint'])
+                and state['reference'] == 'f' * 32 + '_seam-cross.png' and 'Press Generate' in state['notice'] and 'Flat textures only' in state['hint']
+                and wide and sent[-1:] == [160] and state['band'] == 160 and '160 px seam band' in state['notice'] and 'seam band 160 px' in state['hint'])
     disabled = why.startswith('disabled: ') and 'Flat textures only' in why and '1344 × 768' in why
     flagged = offered.startswith('enabled: ') and 'Flat textures only' in offered
     return prepared and disabled and flagged and not submitted, 'prepared: %s; wide picture: %s; square picture: %s; generation posts: %d' % (
-        {k: state[k] for k in ('preset', 'tile', 'parents')}, why or 'no Make seamless control', offered or 'no Make seamless control', len(submitted))
+        {k: state[k] for k in ('preset', 'tile', 'parents', 'band')}, why or 'no Make seamless control', offered or 'no Make seamless control', len(submitted))
 
 
 PARALLAX_STATE = """() => ({preset: selected.id, parents: parentAssets, stage: (parallaxPayload().parallax || {}).stage || null,
@@ -1456,17 +1468,29 @@ def _look(c):
     state = c.page.evaluate(LOOK_STATE)
     c.act('#lookStatus', 'read', note=state['status'][:200])
     c.act('#positive', 'read', note=state['positive'][:200])
+    # Owner, 27 Sep 2026: the quiet wall is an optional line for UI backgrounds, off by default; the scene decides the layout.
+    line = '#lookOptions [data-look-option="quiet_wall"]'
+    unticked = c.page.evaluate("(() => { const box = document.querySelector('%s'); return !!box && !box.checked; })()" % line)
+    c.act(line, 'check', note='keep the quiet wall for a UI background')
+    c.act('#lookPrepare', note='prepare again with the quiet-wall line')
+    c.page.wait_for_timeout(600)
+    walled = c.page.evaluate(LOOK_STATE)
+    c.act('#positive', 'read', note=walled['positive'][:200], supplementary=True)
     c.act('#generate', 'read', note='readiness only; never pressed')
     # Preparing again on the open recipe reloads it: a changed setting the look does not store must not linger (#1224 review).
     reset = c.live or c.page.evaluate("""async () => { const steps = getControl('steps'), authored = steps?.value; if (!steps) return false;
       steps.value = '99'; document.querySelector('#lookPrepare').click(); await new Promise(r => setTimeout(r, 600));
       return getControl('steps').value === authored && selected.id === 'zimage-fast'; }""")
     shipped = next(entry for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks'] if entry['id'] == 'look-night-shift-retro-anime')
-    wording = looks.compose(shipped['body']['template'], LOOK_SCENE)
-    ok = (state['preset'] == 'zimage-fast' and state['positive'] == wording and state['seed'] == '2026092752'
+    lines = shipped['body'].get('options', [])
+    wording = looks.compose(shipped['body']['template'], LOOK_SCENE, lines)
+    with_wall = looks.compose(shipped['body']['template'], LOOK_SCENE, lines, {'quiet_wall': True})
+    ok = (state['preset'] == 'zimage-fast' and state['positive'] == wording and 'graphite wall' not in wording and unticked
+          and walled['positive'] == with_wall and 'plain dark graphite wall' in with_wall and 'with: Keep the quiet wall' in walled['status'] and state['seed'] == '2026092752'
           and (state['width'], state['height']) == ('1344', '768') and 'Nothing was generated' in state['status']
           and 'recipe switched' in state['status'] and 'Type the scene' in reason and '· on ' in label and reset)
-    return ok, 'look option %r; reason before the scene %r; prepared %s; same-recipe reset %s' % (label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')}, reset)
+    return ok, 'look option %r; reason before the scene %r; prepared %s; quiet wall off by default %s, on when ticked %s; same-recipe reset %s' % (
+        label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')}, unticked, walled['positive'] == with_wall, reset)
 
 
 @driver('reference-analysis-review-and-apply')

@@ -1013,12 +1013,16 @@
   // carries its reason. Prepare rolls the texture and attaches its seam cross to the tile recipe; Generate stays the owner's press.
   let tileBusy=false,tileRead=0;
   function tileMarkup(status){
-    const why='uxTileWhyAsset',note=!status?'Checking whether this picture can tile…':status.eligible?status.flag:[status.reason,status.flag].filter(Boolean).join(' ');
-    return '<button type="button" data-ux-tile="'+escape(status?.asset_id||'')+'"'+(status?.eligible?'':' disabled')+' aria-describedby="'+why+'">Make seamless</button><small id="'+why+'">'+escape(note)+'</small>';
+    const why='uxTileWhyAsset',bands=U.tileBands(status),note=!status?'Checking whether this picture can tile…':status.eligible?[status.flag,bands.note].filter(Boolean).join(' '):[status.reason,status.flag].filter(Boolean).join(' ');
+    // Seam band (owner, 27 Sep 2026): wide hides a floor's repeating plank ends; narrow keeps more of the texture as generated.
+    const band=bands.options.length?'<label>Seam band <select id="uxTileBand" data-ux-tile-band aria-describedby="'+why+'">'+bands.options.map(o=>'<option value="'+escape(o.value)+'"'+(o.selected?' selected':'')+(o.disabled?' disabled':'')+'>'+escape(o.label)+'</option>').join('')+'</select></label>':'';
+    return band+'<button type="button" data-ux-tile="'+escape(status?.asset_id||'')+'"'+(status?.eligible?'':' disabled')+' aria-describedby="'+why+'">Make seamless</button><small id="'+why+'">'+escape(note)+'</small>';
   }
   function placeTile(holder,markup){
     let box=holder.querySelector(':scope > .ux-tile');if(box&&box.dataset.markup===markup)return;
+    const chosen=box?.querySelector('[data-ux-tile-band]')?.value;
     const next=element('div','ux-tile',markup);next.dataset.markup=markup;next.setAttribute('role','group');next.setAttribute('aria-label','Make this texture tile');
+    const band=next.querySelector('[data-ux-tile-band]');if(band&&chosen&&[...band.options].some(o=>o.value===chosen&&!o.disabled))band.value=chosen;
     if(box)box.replaceWith(next);else q('#assetHandoffs').after(next);
   }
   after('openAsset',()=>{
@@ -1032,16 +1036,18 @@
     const assetId=button.dataset.uxTile;if(tileBusy||!assetId)return;
     if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
+    const bandPx=U.tileBandPx(button.parentElement?.querySelector('[data-ux-tile-band]')?.value);
     tileBusy=true;button.disabled=true;syncReady();
     const stamp=workbenchStamp();
     try{
-      const result=await post('/api/tiles/prepare',{asset_id:assetId});
+      const result=await post('/api/tiles/prepare',{asset_id:assetId,...(bandPx==null?{}:{band_px:bandPx})});
+      if(bandPx!=null&&result?.plan?.band_px!==bandPx)throw Error('The seam band came back different from the one chosen. Nothing was applied; press Make seamless again.');
       if(stamp!==workbenchStamp())throw Error('The workbench changed while the texture was being prepared. Nothing was applied; press Make seamless again.');
       if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.rolled_file)throw Error('The prepared seam cross could not be verified. Nothing was applied.');
       beginTile(result);
       if(q('#assetDialog').open)q('#assetDialog').close();
       draftDirty=true;showView('create');saveDraft();syncCreate();updateReady();scheduleTimeEstimate();recipeChanged();
-      announce('Seam cross prepared: the texture is rolled by half and only its centre cross will be repainted. '+(result.context?.positive?'Its own wording is kept. ':'No wording was kept for this texture: replace the bracketed description. ')+'Press Generate; the Studio then finishes the tile with its seam score and a 3×3 preview.');
+      announce('Seam cross prepared: the texture is rolled by half and only its centre cross ('+result.plan.band_px+' px seam band) will be repainted. '+(result.context?.positive?'Its own wording is kept. ':'No wording was kept for this texture: replace the bracketed description. ')+'Press Generate; the Studio then finishes the tile with its seam score and a 3×3 preview.');
     }catch(error){announce(error.message,true);}
     finally{tileBusy=false;button.disabled=false;syncReady();}
   }

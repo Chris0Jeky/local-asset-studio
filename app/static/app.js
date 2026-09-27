@@ -685,7 +685,7 @@ function beginTile(result){
   tileState={...result.plan};uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);$('#reference').value='';
   const words=result.context?.positive||target.continuation_prompt;if(words)$('#positive').value=words;
   $('#batch').value=1;
-  $('#referenceHint').textContent='Seam cross prepared from '+(result.context?.title||'the texture')+' · '+result.width+' × '+result.height+'. '+result.flag;
+  $('#referenceHint').textContent='Seam cross prepared from '+(result.context?.title||'the texture')+' · '+result.width+' × '+result.height+' · seam band '+result.plan.band_px+' px. '+result.flag;
   updateReady();
 }
 function continuationBlockerItems(){

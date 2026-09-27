@@ -113,6 +113,43 @@ class WorkspaceCardTests(unittest.TestCase):
         again = self.store.card('look-night-shift')
         self.assertEqual((again['name'], again['revision']), ('My Night Shift', 2)); self.assertIsNotNone(again['trashed_at'])
 
+    def test_an_updated_seed_reaches_only_a_card_whose_content_is_still_a_superseded_shipped_version(self):
+        """#1221 follow-up: a shipped look can change. A seed names the digests of the versions it replaces; a card whose name,
+        body and lineage still hash to one of them takes the new version (a revision, so a stale page gets a 409). An owner's
+        edit changes the digest and keeps the card as it is; a put-away card is updated and stays put away."""
+        v1 = dict(id='look-a', kind='look', name='Night Shift', body=BODY, lineage=ANCHOR)
+        self.assertEqual(self.store.seed_cards([v1, dict(v1, id='look-b'), dict(v1, id='look-c')]), ['look-a', 'look-b', 'look-c'])
+        digest = workspace.AssetWorkspace.card_digest(v1)
+        self.assertRegex(digest, r'^[0-9a-f]{64}$'); self.assertEqual(digest, workspace.AssetWorkspace.card_digest(self.store.card('look-a')))
+        self.store.card_command({'action': 'edit', 'id': 'look-b', 'expected_revision': 0, 'body': dict(BODY, template='Mine: {scene}.')})
+        self.store.card_command({'action': 'trash', 'id': 'look-c', 'expected_revision': 0})
+        v2 = dict(BODY, template='Loosened background of {scene}.')
+        update = lambda card_id: dict(v1, id=card_id, body=v2, supersedes=[digest])
+        self.assertEqual(self.store.seed_cards([update('look-a'), update('look-b'), update('look-c')]), [])
+        a, b, c = (self.store.card(i) for i in ('look-a', 'look-b', 'look-c'))
+        self.assertEqual((a['body'], a['revision'], a['origin']), (v2, 1, 'seed'))
+        self.assertEqual((b['body']['template'], b['revision']), ('Mine: {scene}.', 1), "the owner's edit is never overwritten")
+        self.assertEqual((c['body'], c['revision']), (v2, 2)); self.assertIsNotNone(c['trashed_at'], 'a put-away look stays put away')
+        with self.assertRaises(workspace.WorkspaceError) as caught:
+            self.store.card_command({'action': 'edit', 'id': 'look-a', 'expected_revision': 0, 'name': 'Read before the update'})
+        self.assertEqual(caught.exception.status, 409)
+        self.store.seed_cards([update('look-a')]); self.assertEqual(self.store.card('look-a')['revision'], 1, 'the same update again changes nothing')
+        self.store.seed_cards([dict(update('look-a'), supersedes=[digest, workspace.AssetWorkspace.card_digest(update('look-a'))])])
+        self.assertEqual(self.store.card('look-a')['revision'], 1, 'a seed that lists its own digest does not bump the revision each start')
+        without = dict(v1, id='look-a', body=dict(BODY, template='Other {scene}.'))
+        self.store.seed_cards([without]); self.assertEqual(self.store.card('look-a')['body'], v2, 'a seed without supersedes never overwrites')
+        for bad in (['x'], 'a' * 64, [1], ['A' * 64]):
+            with self.subTest(bad=bad), self.assertRaises(workspace.WorkspaceError): self.store.seed_cards([dict(update('look-a'), supersedes=bad)])
+
+    def test_a_lone_surrogate_in_a_stored_card_never_breaks_seeding(self):
+        """Review on #1236: JSON can carry a lone surrogate into a card; hashing it must not raise and take /api/looks down."""
+        seed = dict(id='look-a', kind='look', name='Night Shift', body=BODY, lineage=ANCHOR)
+        self.store.seed_cards([seed])
+        self.store.card_command({'action': 'edit', 'id': 'look-a', 'expected_revision': 0, 'body': dict(BODY, notes='odd \ud800 text')})
+        self.assertRegex(workspace.AssetWorkspace.card_digest(self.store.card('look-a')), r'^[0-9a-f]{64}$')
+        self.assertEqual(self.store.seed_cards([dict(seed, body=dict(BODY, template='New {scene}.'), supersedes=['0' * 64])]), [])
+        self.assertEqual(self.store.card('look-a')['body']['notes'], 'odd \ud800 text', 'the edited card is kept')
+
     def test_stored_json_is_the_exact_body(self):
         card = self.create()
         with closing(sqlite3.connect(self.store.database)) as db:
