@@ -983,6 +983,15 @@ class ServerTests(unittest.TestCase):
         for bad in ('../escape.safetensors','folder/style.safetensors','style.ckpt','',7):
             with self.assertRaises(server.StudioError): s.prepare({'preset_id':'demo','controls':{'lora_name':bad}})
 
+    def test_filename_bound_lora_slot_refuses_a_boolean_before_queueing(self):
+        # Older presets bind `lora` to a filename input; bool is an int subclass and once reached ComfyUI as a late 400.
+        graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in (True,False):
+            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'number or short text'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'other.safetensors'}})
+        self.assertEqual(bound['1']['inputs']['lora'],'other.safetensors')
+
     def test_disabled_slots_leave_the_graph_and_rewire_model_edges(self):
         self.lora_stack(); s=self.studio()
         _,one,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora2':0}})
