@@ -20,11 +20,13 @@ Where the answers appear, and how they save:
 | Comparison candidates (Runs & review) | Route set | Each candidate | One press, one write |
 | Library asset dialog and review queue | Route set; keys 1-5 whenever the dialog is open and no field has focus | none | With Save details or a K / W / X decision |
 
-`python tests/studio_use_cases.py` passed **15/15** journeys with **zero generation submissions and zero page errors**.
-`combine-same-pair-second-engine` now takes 16 clicks: the earlier 14, plus *pose* and *face* on the keeper's tile. It
+`python tests/studio_use_cases.py` passed **16/16** journeys (with #1202's `vary-a-keeper`) with **zero generation
+submissions and zero page errors**. `combine-same-pair-second-engine` now takes 16 clicks: the earlier 14, plus *pose* and *face* on the keeper's tile. It
 then presses key 2 on the focused tile, which turns *face* to *no*. It asserts the three saved tag lists, that Keep
 stayed enabled and the review stayed *Keeper*, and that the engine chip and the run head both read
-`pose 1/1 · face 0/1`. These are fixture screens; no model ran and no picture was judged.
+`pose 1/1 · face 0/1`. A run that finishes after the page last read the Workspace still shows its chips: they come
+from the run's own output and recipe, and a press re-reads the Workspace before it saves (Codex review on #1212).
+These are fixture screens; no model ran and no picture was judged.
 
 ## Vary subtle / Vary strong from a picture — 27 September 2026
 
