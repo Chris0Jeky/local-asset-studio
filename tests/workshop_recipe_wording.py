@@ -96,5 +96,55 @@ class RecipeWording(unittest.TestCase):
         self.assertEqual(self.page.input_value('#positive'), MINE)
         self.assertEqual(self.page.evaluate('selected.id'), 'realvis')
 
+    # Fix round on #1131 (Codex P1/P2, Muse MEDIUM x2).
+    def test_same_preset_recipe_choice_is_covered(self):
+        self.page.evaluate("atelierRecipes=[{id:'rooftop',preset_id:'anima-portrait',name:'Rainy rooftop',controls:{positive:'Authored rooftop wording'}}];renderRecipeChoices()")
+        self.page.fill('#positive', MINE)
+        self.page.evaluate("const s=document.getElementById('recipeSelect');s.value='0';s.dispatchEvent(new Event('change',{bubbles:true}))")
+        self.assertEqual(self.page.input_value('#positive'), 'Authored rooftop wording')
+        undo = self.page.locator('#uxWordingUndo')
+        undo.wait_for(state='visible')
+        self.assertIn('Rainy rooftop', undo.inner_text())
+        self.page.click('#uxWordingUndoRestore')
+        self.assertEqual(self.page.input_value('#positive'), MINE)
+
+    def test_untouched_applied_recipe_wording_is_not_yours(self):
+        self.page.evaluate("applyRecipe({preset_id:'sdxl',name:'Fixture recipe',controls:{positive:'Authored recipe wording'}})")
+        self.page.wait_for_timeout(50)
+        self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden(), 'the anima example was untouched')
+        self.switch('realvis')
+        self.page.wait_for_timeout(100)
+        self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden(), 'applied recipe text belongs to the Studio, not to you')
+
+    def test_loading_a_saved_setup_clears_the_offer(self):
+        self.page.fill('#positive', MINE)
+        self.switch('sdxl')
+        self.page.locator('#uxWordingUndo').wait_for(state='visible')
+        self.page.evaluate("applySaved({preset:'anima-portrait',controls:{positive:'Saved setup wording'}})")
+        self.page.wait_for_timeout(100)
+        self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden())
+        self.assertEqual(self.page.input_value('#positive'), 'Saved setup wording')
+
+    def test_negative_only_wording_is_not_dropped_silently(self):
+        self.page.locator('#negativeWrap').evaluate('(n)=>n.open=true')
+        self.page.fill('#negative', 'no hats, no umbrellas')
+        self.switch('flux')
+        self.assertFalse(self.page.evaluate('!!selected.negative'), 'fixture: FLUX binds no negative prompt')
+        undo = self.page.locator('#uxWordingUndo')
+        undo.wait_for(state='visible')
+        self.assertIn('no negative prompt', undo.inner_text())
+        self.assertIn('no hats, no umbrellas', undo.inner_text())
+        self.assertTrue(self.page.locator('#uxWordingUndoRestore').is_hidden(), 'nothing to put back into this recipe')
+
+    def test_wording_changed_by_code_after_the_switch_is_never_overwritten(self):
+        self.page.fill('#positive', MINE)
+        self.switch('sdxl')
+        self.page.locator('#uxWordingUndo').wait_for(state='visible')
+        self.page.evaluate("document.getElementById('positive').value='Set by another feature'")
+        self.page.click('#uxWordingUndoRestore')
+        self.assertEqual(self.page.input_value('#positive'), 'Set by another feature')
+        self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden())
+        self.assertIn('nothing was replaced', self.page.locator('#uxNotice').inner_text())
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
