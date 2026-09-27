@@ -1,0 +1,38 @@
+{
+ "far": {
+  "asset": "5daecce5d2e753ea99491650c383d0ee",
+  "sha256": "5c36ff4700c840c3ca6131fb38b80ea1654a60cf6ec5acaf7dd34b6ad3712440",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGBA"
+ },
+ "mid": {
+  "asset": "04bcc58107f95b85af1c9c81c8ce36b0",
+  "sha256": "504d873eedea0b5f6db6977c562a955a1d39dfaa8d0a92ef61bcea4a7e908211",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGBA"
+ },
+ "near": {
+  "asset": "ebf996be1c405459ab04160460c0a88e",
+  "sha256": "339b3e22ab921641980efd161d85ec5c98be69187b0432af91d23b2e68a2d8b6",
+  "size": [
+   1344,
+   768
+  ],
+  "mode": "RGBA"
+ },
+ "strip": {
+  "asset": "7d17522dac5c51fba1d36c717e9de69a",
+  "sha256": "2b13e8b32a3fb8e2f97787e71915e776404003f6e8b019b3f68ab36f03e8bd90",
+  "size": [
+   1954,
+   384
+  ],
+  "mode": "RGB"
+ }
+}

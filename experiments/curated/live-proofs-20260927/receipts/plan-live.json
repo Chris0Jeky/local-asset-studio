@@ -1,0 +1,3306 @@
+{
+ "engines_requested": [
+  "combine-klein-9b-copypose",
+  "combine-klein-9b-depth",
+  "combine-klein"
+ ],
+ "seed": "2026092795",
+ "events": [
+  {
+   "t": 1790538380.28,
+   "kind": "handoff",
+   "destination": "combine-klein-9b-copypose",
+   "options": [
+    "combine-klein-9b-copypose",
+    "combine-klein-9b-skeleton",
+    "combine-klein-9b-depth",
+    "combine-klein-9b-replace",
+    "combine-klein-9b",
+    "combine-klein"
+   ]
+  },
+  {
+   "t": 1790538384.686,
+   "kind": "prepared_handoff",
+   "selected": "combine-klein-9b-copypose",
+   "blockers": ""
+  },
+  {
+   "t": 1790538386.275,
+   "kind": "picker",
+   "pull_buttons": 1292,
+   "pose_present": 1
+  },
+  {
+   "t": 1790538390.451,
+   "kind": "filled",
+   "fields": [
+    "[who is in image 1, e.g. Ellen Joe, a girl with short black hair with red tips]",
+    "[image 1's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]",
+    "[image 2's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind, legs crossed, looking back over the shoulder]"
+   ],
+   "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is the adult traveller with long dark hair, a centre part, brown eyes and gold earrings; keep that character's face, hair and rendering style and the clothes with their colours (a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots); only the pose and framing change, to image 2's: standing upright, holding a lantern at her side. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the pictu",
+   "board": [
+    "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png"
+   ]
+  },
+  {
+   "t": 1790538391.308,
+   "kind": "plan_options",
+   "options": [
+    [
+     "combine-klein-9b-copypose",
+     true,
+     false,
+     "Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing)"
+    ],
+    [
+     "combine-klein-9b-skeleton",
+     false,
+     true,
+     "A pose skeleton and a pose picture are different inputs. Choose that route with the matching source."
+    ],
+    [
+     "combine-klein-9b-depth",
+     false,
+     false,
+     "Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)"
+    ],
+    [
+     "combine-klein-9b-replace",
+     false,
+     false,
+     "Put this character into another picture (FLUX.2 Klein 9B, replace character: that picture keeps everything but the person)"
+    ],
+    [
+     "combine-klein-9b",
+     false,
+     false,
+     "Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)"
+    ],
+    [
+     "combine-klein",
+     false,
+     false,
+     "Put this character in another picture's pose (FLUX.2 Klein 4B)"
+    ]
+   ]
+  },
+  {
+   "t": 1790538392.628,
+   "kind": "plan_summary",
+   "summary": "3 recipes \u00d7 1 seed = 3 pictures \u00b7 about 3.8 min. Prepare gives the checked total.",
+   "ticked": [
+    "combine-klein-9b-copypose",
+    "combine-klein-9b-depth",
+    "combine-klein"
+   ]
+  },
+  {
+   "t": 1790538393.285,
+   "kind": "prepare_button",
+   "disabled": false,
+   "status_before": ""
+  },
+  {
+   "t": 1790538443.542,
+   "kind": "plan_prepared",
+   "status": "Prepared 3 pictures: expected about 3.8 min (up to about 5.5 min), medium confidence. Nothing has run. Press Start plan to run it.",
+   "start_visible": true,
+   "took": 50.3
+  },
+  {
+   "t": 1790538443.542,
+   "kind": "production_posts",
+   "posts": [
+    [
+     1790538393.344,
+     "/api/production"
+    ]
+   ]
+  },
+  {
+   "t": 1790538443.912,
+   "kind": "commit_before_start",
+   "commit_gib": 52.5,
+   "limit_gib": 95.7,
+   "pct": 54.9,
+   "phys_avail_gib": 5.0
+  },
+  {
+   "t": 1790538448.061,
+   "kind": "plan_started",
+   "status": "Started. Queued on the Studio coordinator. Each picture appears under Runs for these pictures as it finishes; the plan is in Runs & review.",
+   "start_posts": [
+    [
+     1790538444.037,
+     "/api/production/cd3c581291914ccf806483ee38763656/start"
+    ]
+   ]
+  }
+ ],
+ "log_before": {
+  "got_prompt": 4,
+  "interrupted": 0,
+  "executed": 4,
+  "entries": 168
+ },
+ "t_start": 1790538443.9973698,
+ "jobs_before": [
+  "003fabe5-13be-49de-acdc-999eb5f88cd5",
+  "00578c06-28be-4751-ab6d-af78aa581cf9",
+  "009d24fd-9d78-49ef-8240-383d0a26463a",
+  "009eddad-f90d-4435-bffb-8f5c98a3305d",
+  "00a25687-3cb6-4578-a91f-062b2d5c93b4",
+  "016892a8-8622-4a13-8b17-982a3543697a",
+  "01903e63-9171-4245-96b2-3bec79fa0e74",
+  "02564063-a69b-47f9-8da3-f7838c35bf1d",
+  "02d503b1-c6b2-4bca-8188-e133d22a7ff0",
+  "02d7c0e4-065a-4171-b043-141ccf7c31c7",
+  "03903f6a-8e84-43b2-b953-00678167acfb",
+  "046c9632-805d-4964-a7cb-3313150e8561",
+  "048c7ed2-ca79-4fda-a865-3bc65a7ae2c1",
+  "04f67247-fd05-4dad-8d12-fb149e35efeb",
+  "0519691a-43c5-44b8-84c6-c8a4014e7a2e",
+  "053f6cf5-aa70-482f-aecb-3021235cd560",
+  "0546fb53-d834-4904-889b-34d3954b99d8",
+  "0553c1bd-a1fe-4f8c-bce0-a382d0a10d92",
+  "05850da0-91be-4c5a-a934-d01262917720",
+  "058abcb0-e962-45da-8534-43443e9a3f60",
+  "059aa6f5-9b97-4e5b-9a4b-10071dfcee77",
+  "05ed1dc0-d7bb-4cf1-bd38-88cb7091363c",
+  "0603610b-588b-4eda-9ca6-ad14f5dd6250",
+  "061a5427-a55f-43d3-8bcc-ab204956c4e5",
+  "069c5efe-e412-482d-83e6-4477b2633c4e",
+  "06c438f2-9b3c-42c2-a12f-8e15f35bef4c",
+  "06ce7180-f66f-49a9-a8de-1969cca1af66",
+  "06f4e4a5-e4a7-4f0a-9bb3-779665396684",
+  "07072db7-2924-46b7-836f-be99501d65f0",
+  "0744d4f9-5c10-49e8-a57e-3ffd15fd2602",
+  "077ae44e-57d8-48e2-b455-1962a9a2bd45",
+  "078fcc5b-bc47-4bbc-8fa5-2c8c8e938d77",
+  "07cbe3b6-ec53-45b2-ac3c-33e90d854e86",
+  "08440813-99ef-4704-9171-5bba2e8976ba",
+  "0887896e-82e5-489e-a484-8b0bc2ed6156",
+  "08c71e74-5c66-48a4-aca5-180a5c350604",
+  "090c6b11-5f37-494e-868a-3be23f2f43ac",
+  "093a0526-24a1-4ff2-aae8-ac0130373c67",
+  "09cdf30b-9d2d-4e94-9dbd-c77c2a0d8af8",
+  "09dd7c7d-3a74-4284-9f20-a6e698f700d8",
+  "09f2e683-adfa-4f9a-b217-8ac63bd08956",
+  "0a92ad22-96c6-43eb-bb1f-ca47c23a5f81",
+  "0ac89bd6-d829-4d4f-84e8-8968659bbf69",
+  "0b1fe46f-a7e1-401e-adcc-d77096bab005",
+  "0b245661-1de8-4574-9f57-a51bb4bbdc6c",
+  "0b6b83b7-67e5-455e-b7dc-3b9fae43f635",
+  "0b9b3c12-add5-4fc7-8698-0fd143cafc3e",
+  "0bd14c1f-05b8-493b-ba14-082be0dc748b",
+  "0bd420b3-7da4-454d-94df-a2289203843f",
+  "0bee0aae-23bd-4d17-89d9-0d43e1d77f44",
+  "0c0108fb-d82c-4550-9460-1502ae1d7fb7",
+  "0c0fc66f-ae64-464e-8bca-b3ade33fbf9e",
+  "0c13590c-d204-4634-b045-cc03d5a3f2e3",
+  "0c199148-d610-49e6-8720-102dd4d29706",
+  "0c4e9653-dba9-407a-9b5a-b5986deae9ae",
+  "0ca9d9dd-a8c5-4c3c-beb7-46dedac56dbe",
+  "0cba57ec-b2ad-477e-887c-786a7fb8b60f",
+  "0cbaae1b-1134-548c-9e03-50bac00b75b9",
+  "0cf01575-0deb-48a5-92af-2352a6f0213f",
+  "0d0672e6-df66-4d3c-9c63-303af56e913f",
+  "0d36565c-1acb-427a-8269-78cf0c1be6d5",
+  "0d695757-d22e-4665-8c2e-85138ef9792c",
+  "0e684820-e595-46b7-9364-1bb211fddfab",
+  "0e76aa27-3340-4cbe-ad51-02d0085d3746",
+  "0eba196f-20e9-4ee5-b563-bb6b7c1b71f4",
+  "0ebb7880-139d-4cd8-954d-a9be8d9d8114",
+  "0ef2864d-a058-4962-8bca-0d7f9d8797c4",
+  "0f5b29e9-cddb-4f62-bd77-21630fe6ac3b",
+  "0f66b253-b98a-44bd-a1dd-fac204654b22",
+  "1004f972-e1d9-489e-bbda-60182bd18216",
+  "1006fabb-7ec9-4afb-9187-d73ff74a03f8",
+  "10684cf7-48db-4d8b-b572-fab7015fa1e2",
+  "10768b03-10dc-4f6a-95ee-1eca6975c664",
+  "10969211-3d78-47dc-86eb-c24560d032bc",
+  "1125fa95-1fb3-401c-b351-fea9b9292691",
+  "11290b29-fd42-4b0c-ac85-e8c9c012868c",
+  "112fc998-0e5d-40bd-ae25-54ae07bf9b3c",
+  "1145433e-ab1f-4207-b0a5-0eb16e37b5e9",
+  "11c4fa44-e644-4e9e-b7e9-92d22a33bb55",
+  "11c8bf6a-59d0-495f-b157-9daaa0749f78",
+  "1264b365-1cea-4b4f-8579-8016895ad0f0",
+  "127b97ba-541a-4ac3-ab11-cc0e81a63b7c",
+  "12999f4f-4e9f-4eba-857a-3c226d279371",
+  "12be1c70-cd3b-456c-ae47-371e4b58f1ce",
+  "12d17db9-0f5b-436f-9c6c-47a5335ccd3a",
+  "12ea069f-b822-4bd0-882a-0b0f68803998",
+  "13331c04-260c-4faa-ae0d-0233834e801e",
+  "13db274d-7e6b-4e16-b971-ad50708224f8",
+  "13db9fe9-c311-4f35-89d4-722fa0366428",
+  "13f4a478-b5a4-46a8-b686-08e3c311c573",
+  "14146c99-e195-41a4-ae6f-ee7e8381593a",
+  "145ff470-47aa-47d1-ae61-29cdd2d460cb",
+  "14caa4fb-5999-497f-8b73-0bb2562229df",
+  "14d3e126-75d0-4902-9ae7-705f0d302ac5",
+  "154694cf-2c49-44de-bdae-6ec9694cccca",
+  "156f8c32-f564-4f62-b6f2-1af401174ed5",
+  "15e62093-db77-4664-a8af-1848c189f5df",
+  "1600f4cb-242d-4e67-82eb-df1c455ff721",
+  "160737ad-6507-48ff-939a-7fb98c8cc8ee",
+  "1627685e-7141-4638-bdf3-839aa54e82dd",
+  "1669629b-4385-4094-bb91-6d64e159faa5",
+  "168a5923-8584-4a73-b058-b1ac4a39daba",
+  "168f0bd4-8999-4674-9030-bfd7bfeb5354",
+  "16d0f2d0-39d3-4356-a01d-6b23fd896d42",
+  "17497f79-3196-49fe-bb92-0b70f92abf20",
+  "1754de82-4114-4227-963a-c2a9c0534c16",
+  "186018dc-6479-4db3-98c9-9412f3acc87b",
+  "18a4f441-b504-44cf-9a1b-9baca4480fe0",
+  "18d64f1e-2d56-4348-9fb7-acd914710960",
+  "194e150d-eb2c-4747-8cbc-20371ffc7e19",
+  "199338fa-3f97-4a77-b27f-b6ba6e848775",
+  "19a1a41b-18f7-4d5c-8f17-86113f974a0c",
+  "1a07713c-a1b6-4c56-ab22-29743658e3de",
+  "1a1e5192-46d4-4c7d-beee-0dd1ff740f07",
+  "1aba70ec-81dc-4c7c-8216-e08a545e200c",
+  "1abf1fd0-e8c7-4135-a8dc-a79887e07144",
+  "1b020595-9b85-40bc-a1d5-8e4195bdd10f",
+  "1b020ba1-aa12-40f4-8fc6-86ae5e3c07d4",
+  "1b1941ad-f936-4b4a-a521-67447d9bf085",
+  "1b3df6ab-341e-40cf-9997-ba94925a8243",
+  "1b818157-d4a0-4234-8334-98c57113d7a0",
+  "1b960258-20c0-4981-8cca-0d3c6ff942bb",
+  "1b960416-d44a-41b4-83b7-4b341fd70d24",
+  "1bb3450e-0566-46d7-9998-061e6d9dac51",
+  "1bc9af6a-8b15-41fd-8899-c385e6107d82",
+  "1bcc752b-a836-4c3f-bd21-9965b2237136",
+  "1bf544c7-0001-445f-a3a5-038b5a4e4d91",
+  "1c0dce10-4c9c-4b85-b4e3-ddb713c88ffa",
+  "1c239d2a-82a5-4019-8b30-b3ecb9b3148f",
+  "1c2aa298-d64d-4b9f-8df9-1c35eecc5401",
+  "1c5457c7-1ede-4b65-9682-cdbf006a422e",
+  "1cd0d265-da6e-4f6b-b9fe-a120b30ef7e8",
+  "1d2a3434-3c22-4317-8499-47f26eec435f",
+  "1d5c667b-f125-47ec-86f0-e3de24ad5726",
+  "1d5d93b5-5733-4a98-8990-882f88c0db03",
+  "1e14c5ca-9f3c-4b06-adfe-a5018fd5dcf7",
+  "1e34560c-a1ce-48a5-b5f4-2b3b2afbbd7e",
+  "1e9434dd-9839-47a1-bbf5-444a76ddc935",
+  "1ea3a333-5504-4cfe-a78c-85e663909861",
+  "1ede08bb-d8af-43c4-b018-07270409f350",
+  "1f8135c4-8964-41f0-9578-cb542aa264e5",
+  "1f9b3e11-ab8f-4e9f-96ec-24eb4f4cd52a",
+  "1fdf076f-d918-4460-8bfd-fc74748e6a72",
+  "1fe3f4b1-7d9c-4b6c-9fee-49138360c6c0",
+  "201672f7-3303-4bf4-bb10-c845b29874d9",
+  "202fb888-392e-4b7c-917d-af56829d5e7a",
+  "2079b0b2-44a1-44db-9b9b-57b0693982fe",
+  "20be8e0c-ed72-441a-ab92-fef2868ba4c2",
+  "20f7e9c5-1b57-4596-951c-d836b83a76d2",
+  "20fcc4a0-cf31-44d7-81d7-07e2cdee6801",
+  "215e55e6-c1c2-4527-98d0-d944b70ad338",
+  "216239b8-981f-426a-9d50-b2b02ef8f7fb",
+  "21b77d9e-bbdc-405b-b098-443a46d30080",
+  "21e4a629-9b7c-4cd2-a87e-dae80a2082f4",
+  "224348bb-9662-41e0-ab67-b1be84b211df",
+  "2277c030-33ce-498f-85df-bc8f4d2bc13c",
+  "22887bd1-8c86-4882-a1a7-dcd8d9540b5a",
+  "22ba91ae-8af0-4562-9c36-71482975b3f8",
+  "22cedbc9-cd37-42f4-b54e-20f080abe396",
+  "22d40c6c-b322-4d83-88e7-bc6cbe299e5e",
+  "22e68cbe-736b-42a0-8ef6-134cd27313b6",
+  "22ff6394-11ad-490a-bfea-6304e53f5d24",
+  "231eec0f-4949-4d5c-b86b-5c7d1bf89540",
+  "233c4164-e407-422b-a1a5-d4d644630850",
+  "235dad00-d3e3-4a0f-a28e-58250094e3a7",
+  "2362dc9d568e5464b13a5a9e7cf96a8e",
+  "24e0c58a-d1e3-4d92-8426-fa851c219338",
+  "252c3ebe-5376-4817-b810-397dd7b26ada",
+  "254d368d-2f58-4ef1-a115-12da322f39a1",
+  "260273f3-4c02-496b-abca-43b7a600e0dc",
+  "2607afc1-84e8-4f46-ae43-a8042b1c6ae7",
+  "2635d33b-a7db-4476-9636-0cac1ddf765a",
+  "263ad942-46b8-4512-8d61-b09901be1a3c",
+  "26448d58-c1bb-41a5-a49f-74c4db4fec89",
+  "26b1e3fb-1218-4c5d-b737-eec3c345ca03",
+  "26ba5851-3c0d-4e17-a215-93944aec2e39",
+  "26d4f02e-b77f-4682-abdc-a35f6a9367d2",
+  "26db6262-dd04-4bc1-a84d-90e819be1c43",
+  "26dd4c09-87df-4480-89ae-1e5822559f6a",
+  "26f71ee9-aec5-4b9c-afaa-9a24f14ae6f4",
+  "2752190c-3681-4130-a5d2-6f96ec63d5fb",
+  "277f968e-9c8f-42c8-9e85-2d1190c59deb",
+  "2784f230-e56f-4170-8172-0bcd54819df8",
+  "278952a7-4526-44bd-b26e-5f0b14fef51d",
+  "2857f506-0a00-435b-af63-1d8d70f522ae",
+  "285eb14d-5f26-4e1a-bb7b-f941cfe60414",
+  "28add1d6-be94-4986-b1a8-a67142f927bf",
+  "28d27220-be3f-4ff7-9e25-d5abaf56f4c3",
+  "291e182d-57b4-420f-86e2-b1a418b5b361",
+  "29263089-c489-4148-8e42-adc5d4ca1786",
+  "292e22cb-76dc-4106-bd5a-5e4c26dbe75d",
+  "29470e32-ec4f-4aa9-868d-4873af8766fd",
+  "29ca2e27-f2d9-4d08-8fff-51c324bba33e",
+  "29e468ca-884d-44d7-a04b-c54e9aa5030a",
+  "2a1de733-c7b2-44b9-9daf-026eda481bc9",
+  "2a387342-3721-4711-8e0d-e6c40d395b2f",
+  "2a3b7c78-0763-42cc-8317-1fe0e9dd69d6",
+  "2a7b6092-22ea-470b-865b-71d14056baba",
+  "2ac8477b-81f5-4787-aebd-430eda3b561d",
+  "2ad383b9-6bc1-4142-926a-22e570fcc2c7",
+  "2b1668e8-2f7a-4735-99b7-bbc93c0be5c5",
+  "2c0a35f0-d3b3-452e-a01e-7289100cb122",
+  "2c3416dc-0b31-422f-bfd1-197484dfcd0e",
+  "2c3f6a85-67b6-4163-9f09-263e326f1b15",
+  "2c65c932-615b-488b-a44e-12e5d0a54f8d",
+  "2ca764e5-b930-49b6-9849-d403fc4dda64",
+  "2cdc4a4a-d770-4714-a87a-32739cbcd9cc",
+  "2d2bced3-9377-469a-a03e-3d1f7544d20e",
+  "2d51c028-7517-406a-9aee-fd439c7743c1",
+  "2d631b8e-e895-4cd3-8990-9cdb08ec9281",
+  "2d934d94-fd8f-4ebe-bd3c-7ee6ed46cc05",
+  "2da470ec-739a-44c7-afe9-c7676681067c",
+  "2dcb836e-8cce-421c-83d6-6fed17b779f4",
+  "2e0769a4-b1a1-4ea4-b3fa-8d675780a941",
+  "2e47a7b3-ace5-4a65-987e-40b1995e52f6",
+  "2e62856e-4f50-4bc1-b5d2-60904025eea9",
+  "2ea4478b-5fdf-4e65-926f-161ee415ffe5",
+  "2f073f1c-707f-49cf-b6dc-5369c6f8e819",
+  "2f132d78-e9e8-45b7-bc31-b218c2eb55bf",
+  "2f34fdc8-743e-4d3b-807f-6ffb2a7a3966",
+  "2f45a6fb-244c-4ea0-81ad-ece30e54f315",
+  "30324332-c49c-4696-90f4-ce884b394a58",
+  "303269ae-b6d8-4a0e-8292-a035960bb5e5",
+  "30d8855f-b02a-42e5-ae5f-5e01054b3bf7",
+  "30dc1fe2-848f-454e-bb27-9e90cec40bbe",
+  "3103565f-5bfa-4ed7-a2ab-dcf28097a994",
+  "311af910-db84-45d9-917d-86aabe8bd8bc",
+  "3152f80e-6b79-42e1-a9ce-6fdb70698855",
+  "31623b44-56b0-4bcc-b9f5-ae12e1e9bb97",
+  "31a29a49-6569-4778-a4dd-061c6340b3d0",
+  "323c0035-ebd4-483d-ba43-58a7a67c00d0",
+  "325884cb-42e7-419e-86f7-0cc4898efc49",
+  "326ed110-a454-429a-ae36-4dcd83650467",
+  "329e1e10-f073-45c8-a4ec-d3e05a2c5d61",
+  "32cabae7-d06c-4d95-8bbb-49f380610d10",
+  "32d3e18e-6210-415c-9759-6955d1970599",
+  "32d8ea3f-5e3f-4996-8391-af9bd094871e",
+  "331b057e-b9c3-4a25-8171-35044d497995",
+  "33ab3591-d52d-4307-be4e-f73d31bf8971",
+  "33c8ec10-2f89-40f1-8535-d89508afbcab",
+  "33d7de95-9600-4612-837f-cea8ed80e8aa",
+  "34068f55-3c0a-59ae-aa19-33ac51d9695c",
+  "342b39a6-3782-4b04-812f-efc3ae96cee9",
+  "34bbd466-9230-46fe-acd4-5bc1c762ed20",
+  "34c8a909-a32e-4a8d-826f-4ab83b42c600",
+  "34df9931-66d5-4706-af8d-16e4fd76cb52",
+  "34fe04cd-dcec-4b20-8d67-0b86954d0d46",
+  "353fa62d-86ee-447b-b784-51b592813c29",
+  "3558d60d-2cca-4c19-8cc5-77d9a5c479dd",
+  "357649fe-e6c2-4c07-87fe-d3211c604ca5",
+  "35799e4a-52e5-44b9-aa5e-2332a55ba825",
+  "35b548fd-ea41-4091-b3e5-5556b68fd00e",
+  "35fdc415-5fc9-4609-84f0-709205554b01",
+  "36537036-d1b1-4654-9d3f-135742b1b1d1",
+  "36683b20-73f6-4b40-abac-6c7174c7859e",
+  "36accaa9-bcb2-461c-8d7c-7e86f60ec87a",
+  "36e5d833-e116-42f3-b7bc-bea0e3882a6b",
+  "373d0b35-421c-4749-956f-377f19b98ce6",
+  "379e65cc-be2e-5798-ab8e-59b782033400",
+  "37b0c53c-dc7d-40fd-9143-e2374a503d0f",
+  "37b8802b-6075-4dfb-8b21-bd1cd7f8a567",
+  "37c41eca-65ec-43b6-8099-07d5803dcf84",
+  "37d0b80a-8b5d-4a3d-8198-ea7ddf7123df",
+  "37eaf8a5-77be-46e2-8b8f-64b3188592b4",
+  "380f6ddb-75a7-489a-a423-b7953142059d",
+  "38198ce3-3c80-46f0-a49f-2949b1265789",
+  "3819a1c0-cc81-4e09-ba32-14ef487cf6d9",
+  "381cb3ff-3e54-4c38-a069-73b439007fb1",
+  "386230de-61a7-4d63-9778-0bc76025b7ae",
+  "38716e1c-9d6e-42b6-b4fc-b4c826249cf1",
+  "38804b41-dbe9-4b65-a4bc-1bec39f98b55",
+  "38a6f8a6-845b-417e-b6cf-448abbab5ee9",
+  "38d65d55-9b86-487d-9c2d-8588277ab5ce",
+  "38ff6668-3b53-4036-b4f9-a5d0e393891e",
+  "394bd2a9-0fdf-4fb2-8084-4c1f9046db18",
+  "3958452c-7552-4a29-b7d0-e61c56248ddc",
+  "399ee23a-bc72-4140-a92f-2e0ea6e25613",
+  "3a008386-23cf-47fa-bde3-02724059f59f",
+  "3a8b9880-20ef-4a09-9c4d-ac97dfab3d25",
+  "3ab4de6e-6949-4de0-8f83-bbe9e2475dc6",
+  "3abd8f5c-692a-419f-9042-693d96335a8d",
+  "3ad01f31-0cb6-4f65-851c-b6d7f3fd0214",
+  "3b0c0962-a61a-4fa2-b147-7edc81761f10",
+  "3b1f8f17-6996-4204-abc0-e7b37adb044e",
+  "3b539b7c-98dd-4953-afae-1e194ea359f5",
+  "3c5db8fe-4d29-402e-aa4a-8ff951c3a0fb",
+  "3c759af1-fd41-47be-9010-45cdd7757625",
+  "3c921d64-da13-49b6-ac57-7f06d2b694a0",
+  "3d4da574-700a-403c-a488-d7bb67767e92",
+  "3da2b8f8-be28-417f-9097-1a7852c9a2f8",
+  "3dc6e53d-e22b-4729-b807-e132e9cdd878",
+  "3e03d7d9-aaed-4772-a385-cfaeb29e8873",
+  "3e8b0e5e-28c9-4df8-b800-d89c3a44b474",
+  "3e8e7e14-0042-40e4-b219-09e7513b710b",
+  "3ebcb8c2-3e51-4bfa-a26f-9cbeabeab48a",
+  "3ee79f97-4051-4615-a73e-02ffd3c22881",
+  "3f50f74f-56a9-454f-a9c8-d71cd14bbc47",
+  "3f7d2a6f-8321-4580-8d82-5a28872d0dcb",
+  "3ffa0b39-7454-4882-9751-948783a825cd",
+  "4000025b-4eda-4c7f-b122-5701c899d67d",
+  "4063815e-51ac-4f1a-ad41-65e567be5d14",
+  "408cf774-a109-490c-ba65-928cf1978c9f",
+  "40aea6ee-c229-46e2-b9c3-341b0b7bbdb4",
+  "40c369b2-d859-49ac-b63d-21fa4d40c9fb",
+  "411c9592-36b1-415b-a57b-4d6a11722c43",
+  "4156379b-d445-4c3f-827a-51897849a7dd",
+  "422c0a27-c39f-49b2-8ef8-dc4c3371597c",
+  "422e2492-ef4b-4b4b-9117-97690bc0c38b",
+  "42a06836-13e5-43a8-8211-b8b6e404acba",
+  "4332a2d6-997a-4951-ad83-ff298d608f1d",
+  "43561247-70a8-4342-a768-81f5601a7fab",
+  "435dfecd-0bac-43de-905b-2396926f86a9",
+  "4360edfe-a157-47f5-8149-2e3f21856bdc",
+  "43a62885-f35b-4c4d-b1c3-c9ecf3ec1918",
+  "43c4cb2c-0c17-4a5a-8245-6c55999118d3",
+  "4403908b-bedb-489d-a9ce-9f19e6136bab",
+  "44059f09-379b-42bb-bd04-1a2b8396cc7d",
+  "445e7734-dad0-4c01-9701-852cc8347c7d",
+  "44638612-8570-45fc-a8a8-ce26a8c3f12b",
+  "44b7acab-9343-4818-b415-6605732b319f",
+  "44caf971-df52-4c4b-959d-9e5855387e6a",
+  "452459c8-667f-4a1e-ad1c-9f0fb90e21ad",
+  "45d53887-29a2-459b-990b-c91bc5ae7348",
+  "45eeae4a-5349-4b2c-bbaf-9af7d5906dff",
+  "45f6a601-1aa6-43ad-a77e-b1ca560806d9",
+  "468cc286-3ed7-4a49-8449-9c103ec738ea",
+  "46ad68f7-63e0-40cc-86a8-fd16fdd8f5fd",
+  "47157216-accb-4292-94d6-e9d8ddcaf4b2",
+  "4765b21b-d04f-4764-b517-98c9c480a43d",
+  "47a561a1-ffed-437b-a821-95a5964514e1",
+  "48120939-9eb3-43e1-93d0-982072cae5d5",
+  "48624c82-084c-4bab-b8ca-4fefde108fd5",
+  "497b66c3-cdc2-4e64-8428-d15ed4dc29d0",
+  "4998789e-a75a-4e64-804e-fe6c9002047d",
+  "49c902d2-be86-440e-ae0a-f28824720c56",
+  "4a2f0147-fe37-41c5-956e-a8e25e11933b",
+  "4ab42cde-a37e-41db-8600-a18c322c1d61",
+  "4ae6ff7b-e7f8-5c09-826f-bc4e37348331",
+  "4b03b5e4-3ef3-49a3-b81d-c60c2e3f1d88",
+  "4b652de6-9a03-4cb0-96d2-021b86bc439f",
+  "4b71f375-95d1-4830-a7b7-dd28ce7e2eec",
+  "4b938317-eee6-459e-9835-97d56ed2caee",
+  "4be448bd-58ce-4bbd-99d7-79b56c48ea02",
+  "4bf91b39-4d41-4158-817c-abf9dd7ecf7b",
+  "4c0dccb6-b0e3-4f33-9a1c-7ef7f9936807",
+  "4c682fec-c14c-47ba-b3a9-b41fde8a727d",
+  "4cc56e3e-ab39-4b62-ae9e-4bd7f6c86352",
+  "4cc58496-d08f-4c2b-9cbf-51ec47cd69de",
+  "4cfc70ca-585c-49d7-86fa-6d1068659cc4",
+  "4d29c13b-ef39-4fb4-9873-fd5805f81bce",
+  "4d695586-e9a7-456d-9b6a-4f07486c73c8",
+  "4e23403e-0679-4f46-970f-b64757838945",
+  "4e2b6bec-0053-4196-a3c2-fc3962d3613a",
+  "4e30999d-0c01-4540-a45c-700b051dd9cc",
+  "4e6ff44d-e640-4997-baf6-3b22e0db7499",
+  "4e72c5cc-5c0b-4efb-b64e-6e7a6a5eb4aa",
+  "4ec39381-15bb-421a-886b-380160320f9a",
+  "4ec71f79-b64f-4b7f-bf41-f3f3fd7be7f7",
+  "4f287fb5-752b-40bc-a7f4-2c3529ebba9d",
+  "4f5974cc-e4f1-4151-b9f2-93c56b6daef2",
+  "4fc55a03-359e-40d0-977d-ea106a326e7e",
+  "4fc7884d-c86c-435b-baa7-0efb3b157580",
+  "4fcdbfa9-d3de-49ce-a4c1-4ee025679f1b",
+  "5017fb78-e5eb-47d9-807c-4bf74bb9d109",
+  "504e6cd7-5bfd-4522-a279-8be516ed6221",
+  "505edf27-f09e-42f1-87af-5a3f7e1d8c37",
+  "508069a8-692b-4a1f-b83b-25be4f824c64",
+  "50e6352f-5179-43e7-826f-dbfbbd1bc705",
+  "51087611-8b14-43b9-a8f8-ca3e23e57fe3",
+  "510aa9e5-759d-4b33-8ce7-6e80f6736534",
+  "513bd06980514be5930a9aa981caf8cd",
+  "51f08bf6-9e7a-4357-8e52-ec81af778473",
+  "520145d1-b140-407f-8b48-f7b101f7d6c8",
+  "524d903f-5709-4b52-a98a-6824a2dee667",
+  "52680f90-485e-4a37-bcd8-fbfe5cb7ba80",
+  "52728e6f-d517-45d7-b41b-a37ea2bc03a6",
+  "527cff24-39b2-46f6-8a38-6373697088a7",
+  "53096057-3a86-4d0b-af2a-12be0ef429ad",
+  "530b243a-bce0-4887-b475-5456f6e287d9",
+  "5330c754-b820-4737-a882-e7756dc47f88",
+  "53c17674-e708-4407-b1e0-ff0cd17872d0",
+  "53f451da-fa5e-4b6b-a81d-db4330c98fa2",
+  "54344d9a-1ef5-495c-950c-ebfc61c12071",
+  "543aa322-59c8-44ee-9dbb-cf6055cc7b4e",
+  "5475f4e2-7a28-437c-9314-09072dc1d58e",
+  "54999005-1f84-4d68-9048-6cdab806c7b5",
+  "552f6282-feb3-4e10-997f-79ddd4d63474",
+  "55427810-f74d-4fb6-8dec-4986ecc49223",
+  "55645ca4-b3b4-4d3d-9ce8-f365f948e91c",
+  "55c545ac-7bf2-4ee7-a88e-06e8ffcb79af",
+  "56184aa8-509d-4944-8442-820ca8c56f5d",
+  "56629a2c-5d9e-4701-8bb1-8427a0ad6460",
+  "566f86d6-edba-4f8d-8731-4b74d83b369b",
+  "56748706-5e0c-4226-b79b-f1d30d59c7ad",
+  "5675d65c-6d5a-4c81-b733-c9bf8d337f79",
+  "57118102-69dc-458d-b402-cdda1c717fdb",
+  "572794b6-4681-4457-8a2f-9eec373fa387",
+  "574fcefd-72fb-40ae-8418-130f20a61a8b",
+  "57558ae4-5609-4625-8841-1d532511f6c7",
+  "57b21991-a7a6-43d5-934a-d2ca34b32178",
+  "57bd99fc-3002-46fe-8258-24708ef589c4",
+  "57f3038b-8cf2-4c90-9a79-37a3fa495340",
+  "5810c165-07ce-4318-900b-d571f7bd800b",
+  "582bb7c5-25a4-453e-ac7e-9f27768aea16",
+  "585e15bf-0483-40a4-8936-730b13877403",
+  "587920ae-a4e6-4f72-b5e6-a0260f08727e",
+  "587ead86cbc95c07944820d247482346",
+  "588a6b69-817f-4030-8761-aa86f07af8bb",
+  "588c5636-d396-4686-9851-27bd50740ed6",
+  "596a2f77-22bb-42d5-bdcb-0ad24b3fed2f",
+  "596eeb1c-f4f4-4b4e-b9a4-7006128e7a54",
+  "598d2817-7fce-41d5-aadc-4e8d1bb0a7b1",
+  "59a5e1c7-e7c9-43c0-835c-8d3adb89424d",
+  "59b54e2c-29e9-4544-85d4-0e262b1f284d",
+  "59d30c3a-8d4a-4707-b51f-8bde90f01de9",
+  "59e0e5c3-3419-4ef7-980f-a28ae2299ffa",
+  "5a10f2ce-0805-4336-9ac6-ec3c5fe8c4bd",
+  "5a4e5b8c-ae12-4803-b4ba-52c4c161a9c9",
+  "5a6ee378-a776-4bb2-aaff-8713587eb048",
+  "5aba17bd-78a7-4b80-a1e3-3ad72d04fc90",
+  "5ac3e83c-9512-406d-86a2-cf3c8868aeb9",
+  "5acc159b-9ade-4c42-973d-a283f638ff3a",
+  "5b52a95f-e3d1-41ba-ae73-aa3ab4408874",
+  "5b6e76eb-1c4c-4990-8968-8432e22658b4",
+  "5bb1bd8d-48b5-4a7f-bed8-0082413e9f2e",
+  "5bb35721-e191-415a-93e8-a8adc224f7d8",
+  "5bb94ec4-bb02-4daf-8695-f6b02a89c4d6",
+  "5c1dea5b-71be-4c5a-8b41-1f4113b63519",
+  "5c2d90cc-2893-4164-b438-a3fdb5eda8cc",
+  "5c392559-c238-4976-ab7e-dcc36150b08b",
+  "5c541003-4c64-46c8-b089-40b4efd42992",
+  "5c81ee83-8ac6-4545-b4f0-f0cca2165145",
+  "5cd821fa-ae0e-4614-ab4f-c6b88f7680f9",
+  "5d4a959d-f054-4b82-aec1-d4d5b3b124ad",
+  "5d5c6c2c-c327-4498-b19e-f9f5c33e0e5a",
+  "5d6563d9-54c1-4ac2-ad9d-9b8d0bb59967",
+  "5d7df879-543d-4d21-888d-364c5f3e9c31",
+  "5dbad2bc-b0a1-490f-9953-57c84ee08d4c",
+  "5dc3803b-33fb-4cca-89bd-b903b675a216",
+  "5e0982574aa450dd8f8538148fdd67af",
+  "5e1d7c63-a2d6-422b-a7a1-6df92341507c",
+  "5e265203-a043-4046-86e3-423554e51835",
+  "5e462af7-018a-4ba1-a26f-319c306514a3",
+  "5e4ce0fa-1738-4ac9-a827-9be65ed9b1d9",
+  "5ea8871d-52bb-4f86-a3f1-65ade75438ec",
+  "5eb6eecf-77d2-465f-a9a5-f4226129fc4d",
+  "5ebf0083-8760-44d5-af11-0008cdbb92d8",
+  "5ef80a63-9861-43fc-8687-c8229512c43a",
+  "5f379c2b-0cf6-44ba-80cc-412f612df6ba",
+  "5f51c2df-c049-4c5b-8751-4f5895157543",
+  "5f97a133-0a13-46ba-84fd-6fd2692025c4",
+  "60210246-a3f5-44d3-9dca-e2a00c087d1e",
+  "60611e63-43c3-4b8d-aedc-b352c914a5df",
+  "607c884f-1589-4444-8ca2-50364ad9092d",
+  "60808b27-b99b-4f24-aa2a-22b37a9a2285",
+  "60934d27-2ec8-4fec-9fcd-d6ee17682633",
+  "60b161cb-43e0-4245-8dcc-a9722c529a23",
+  "60b3e3eb-4b42-4cf8-8cd8-ab041c173cac",
+  "60c224a6-3672-40dd-a6ba-2e176077f7b9",
+  "60d51bf8-35a2-46e3-bf74-66a4f32bdb72",
+  "612924fe-ce90-469f-a2c3-1dc5b27cae2a",
+  "6154ba50-97d5-48cb-9dbd-899c71269712",
+  "6164ec19-f651-4871-9bde-af503611d5a6",
+  "61971118-23cf-4474-924d-5c93539419cb",
+  "619b2bfe-51d2-438f-b824-5377297820cb",
+  "61dd5375-aa6c-42ca-b1e0-12466689857e",
+  "621e2e6e-46a7-4a33-8017-00d77b53df92",
+  "62295421-2df5-4d78-8b18-83216cdac73b",
+  "625e63fb-dfdb-40bc-8aac-0c42b33c6f12",
+  "62fdb115-8e8c-4b54-b42b-bdf5f807562d",
+  "633bdf15-9a46-4e5f-b062-e7bbea95f496",
+  "63f9ecaa-310b-4237-9d22-11c6264ce24c",
+  "6443797c-1955-4fb4-b687-33d57f0d6718",
+  "6496cd38-a540-43ff-9ed7-aeca63bb5aee",
+  "64b86eec-2ff4-4f40-9962-08dadbe30ca0",
+  "64bf45e8-dc3c-46d4-8391-bbc06f29e4b0",
+  "64ce13a9-d879-4acc-ab61-260a45195524",
+  "651cee05-168d-4319-b1cf-219613820f97",
+  "6522818e-8566-4fc1-aaa7-c6e34a091f5a",
+  "653973c1-d6f7-43f6-892a-0c667dfbdda0",
+  "6596b294-8780-4204-81e1-38ad3bafab71",
+  "65a9efbc-0f08-4934-a08f-f55572f47371",
+  "65b9abf2-bd4d-4926-92f6-e9c6c65b9658",
+  "660e5525-f358-47fd-a48c-21a113761b9c",
+  "66353ab7-35e0-44d5-ba8e-d6c815f4396f",
+  "663c6b69-b7f3-435e-8bc4-099ef0d6cd67",
+  "663d4fb6-7888-4842-b123-17b6468d7119",
+  "6646b25c-51e5-40fe-b29e-62de47b36d4c",
+  "669256b6-c68f-446a-9081-d584415581ab",
+  "66b94d8d-0cd5-490b-8e79-aa9ebdcb42db",
+  "66c9a08d-1b6b-448e-8975-a29776daac2e",
+  "674ed5c1-3af9-4e79-a294-110e1c4486fb",
+  "6770d510-4fc7-4d24-a6b3-a1acfe4edfd0",
+  "687ef5e0-6507-437a-a00b-161f001b343c",
+  "68e42ae9-dac5-42eb-897f-a95de28cd127",
+  "69024c57-b241-469a-8b2f-741414cc6dbc",
+  "695653e7-9aa1-4293-8e1e-0122460136bf",
+  "696a8855-235f-45ff-83ef-537176b983ef",
+  "69831394-93f5-409a-948a-a7751037d643",
+  "699dc75e-9838-4a36-b70d-64469914e6b6",
+  "69a3e773-85cb-46a9-a597-12e4fa22d262",
+  "69caca53-11da-4cbb-a21c-3dcaa31724fe",
+  "69d3962b-7acf-4a2e-917e-97d5ed1df549",
+  "69dafac9-8296-4f61-8d8b-c276f8753c6d",
+  "69f8c402-6a7e-4a6a-8871-c793ccebb285",
+  "6a342bbf-995f-466e-9e51-2bf169b11460",
+  "6a3f54c2-a89f-4c93-b399-fb48bad1714b",
+  "6a99bd9d-6567-45e5-bbd5-8f0c553b0b9b",
+  "6aa7317d-624e-4701-bfdc-c8f883d3f01a",
+  "6aba1c3a-2257-4cc4-b5c0-38e21c8ec779",
+  "6ae066d8-2faa-4856-b1ed-c9e169c22c40",
+  "6b375de2-f8c8-4b08-bf5c-9c5a325dc2b7",
+  "6b8835c4-8523-4348-9d16-4184eaa144fc",
+  "6bad1628-5909-4d2a-99ba-40e67eda4384",
+  "6bd5ea48-c0d9-4365-be9d-e99d1ef53765",
+  "6c109fb7-3b8f-4ad1-872f-faf07bc21a01",
+  "6c14e61e-101b-4e10-9c1c-6bedd2f9e6d2",
+  "6c2a3a16-54df-4d18-8989-72aa29ae0559",
+  "6c584ca6-98b3-4234-ae19-109041ee6566",
+  "6d43fb03-8708-4304-a671-c33d2ab34abc",
+  "6d69cf54-3d3a-4e40-8a41-b034df644aeb",
+  "6d7681d2-d10c-4a04-89e1-d9b173f6a4c1",
+  "6d7bc016-6499-4d19-8a68-9fb5c6df49ca",
+  "6e1869cb-85e2-4628-af18-33bd17e8b24b",
+  "6e33976b-52b3-41c9-b495-1c835f9389f9",
+  "6e3f7594-2766-4985-9c69-0fab3ef54635",
+  "6e5956cc-f22a-4e78-8903-bd7f7d42e2d8",
+  "6e799d30-44f5-4de1-b6bc-46e0b7a6eb43",
+  "6e88afeb-13c4-45ad-9e6b-6a31595be4df",
+  "6ebc1d65-0e84-4b47-9f32-f72ae403a062",
+  "6f1f5ffa-f356-4b13-b7e8-bb4998540d3b",
+  "6f23a6ca-43d4-4ff0-aac9-26159f47e28d",
+  "6f32df1b-5c9d-5984-af54-769babf05bf1",
+  "6f5231ad-4269-476a-bec7-e1c0c52f60de",
+  "6f52b4f7-d08d-4831-957a-2187bf131620",
+  "6fa103ad-9d16-4c2f-9dd8-ef8653cfc0ca",
+  "701ec40f-e7be-42a8-abaa-dbaff8c20622",
+  "7051b297-a569-4dba-9a88-558bc867a5df",
+  "70526c9e-a410-4017-8b09-1a6050f53417",
+  "707ee719-2c3a-4960-9bcf-79c1c92812dd",
+  "70b418a6-c5ad-4571-8a55-ea90948be89e",
+  "70cb67ac-7bb6-4e2f-b6dd-8c7597a9a04e",
+  "70fbd70d-7c2b-4f72-837c-3e789ba5acbc",
+  "71279329-8f59-419c-ad88-a9b3f26c7d91",
+  "71749bd7-1475-47c8-bdab-67411b99071f",
+  "7179db99-e2fe-412c-9957-ed5244ee3b32",
+  "71a16b63-4c29-4425-a05e-575c49141b0a",
+  "71be48a8-823b-469d-a65c-6273ee6909d7",
+  "71ddacef-c5b5-47da-bf5e-522d796e7051",
+  "724732e1-a45c-46a5-8f31-6fc1436bebc7",
+  "72ab3a2f-4537-4251-92e2-942471018b7f",
+  "72d0d5a6-f379-431c-bfa3-e6482041dc76",
+  "732a0905-79f5-4899-8fc6-616002635e08",
+  "73494719-606f-47b2-81aa-3ec985cc57e3",
+  "739cc659-59db-4032-9d76-ff0857f26dd9",
+  "73ce0929-7901-4954-b862-7ddc8155a4a8",
+  "74597f0d-3e0b-4fb1-bab5-a2c79a8b6b22",
+  "7480ce57-4f92-4695-bc76-d57f82cdf1d4",
+  "74ff4a95-1958-40a4-b670-ed5dfd56eae8",
+  "752bdde9-59af-42c3-9747-d0532b65a6e5",
+  "7530a078-bb0d-4b4a-9e5e-d06960c15a0a",
+  "7542bafa-bb23-4ba8-82e2-df258f098d41",
+  "75be63aa-793d-440f-88cd-7abe735f0a45",
+  "75beb73d-b6bd-4373-b46c-ffc575f6c295",
+  "75cb5b58-cbaf-4613-9319-5e73fd89219f",
+  "76a0fcae-b318-401a-a3c3-c7e061ccf60c",
+  "76a74ba8-e61a-412c-819b-27fcd96130df",
+  "76d99a6f-240f-40c2-8367-89f6c64aa816",
+  "77135653-a7a9-40cb-a8fe-98040dbca2f3",
+  "77e737a8-8d21-4c80-ae4d-dcbe1a5934e4",
+  "783cdd8c-7254-43a2-be02-5a10025f3481",
+  "7882b378-a833-4c05-9cda-8fb5fd55dcaa",
+  "788edaa8-140a-4b7d-b337-9758fe33f805",
+  "78b5e0a3-5890-413a-ae64-ec0b59235879",
+  "78c48c01-d480-431d-9af7-da76504e9e79",
+  "78e60c55-1f85-479a-a16b-4416234ea329",
+  "78ec616a-0f85-4c04-b439-41716d85a4fc",
+  "794283fd-184c-43c6-81ee-e1e1c9c80b6b",
+  "7976582c-f02a-4baf-aec4-e323626e3904",
+  "79f7c08e-0e37-46b2-8417-e5d6583e9672",
+  "7a04a1cc-2111-44be-b46b-7b3ea6f31394",
+  "7a07ce99-b97b-49d8-bd88-5e7b5f353cdd",
+  "7a0d0d76-ab3b-4392-82c1-816356d51139",
+  "7a433ef0-6e01-4c09-a356-8ad05c8849ab",
+  "7a639a5e-1086-46e2-9962-3e1ed5645f53",
+  "7a8dd04e-dc0c-4ed7-984d-e1302fcf4a42",
+  "7a94c733-f85f-4121-aba2-0fc83149b875",
+  "7aec27b0-5613-461b-affe-1683f1637dd6",
+  "7b7c1b86-ead9-455c-9f13-6632973fc546",
+  "7b7cd022-de22-4dd5-82c0-90f396d8fbc6",
+  "7bdb5705-8efe-4622-b1c9-9706cb5dc876",
+  "7bfcc394-988c-4e06-8ee5-b80b21941649",
+  "7c155bc9-62f1-4cd6-ac67-cfabf91d7bb2",
+  "7c20bc88-2d2a-48cd-9937-ecceb743bc71",
+  "7c38fc0b-2479-4a37-af1f-4022dd93c9fc",
+  "7c488846-6b70-4f85-a2fb-f78306ad1207",
+  "7c4b2e01-9e8d-4796-9c60-1290acc8734c",
+  "7cf63e3d-e820-44a8-bf69-e28f6816c3ae",
+  "7d19abbc-b703-4e39-a54a-6b2b136a6103",
+  "7d589f47-7172-44fb-9541-4ab0602eafce",
+  "7e889c75-ce96-4baf-9ab1-8e14c7d60210",
+  "7ea65fde-2a48-4f28-b8cb-e50ab949ed2c",
+  "7f9947a2-1d0d-4b8c-af46-b07999c53cce",
+  "7fa057f9-83de-4019-a1c7-8c3d18e13684",
+  "80430c21-954a-4237-86fe-ff318d607101",
+  "809b74eb-e999-46e2-95d4-af6948525bd6",
+  "80a130e0-0167-4cdc-9841-37eb0a63d1c6",
+  "80c406f8-5e26-481a-abb8-c198de6b322e",
+  "80e14ff2-12aa-42a1-916d-8dfaec5933cb",
+  "815f6759-4c46-49dd-9065-d775f62a254a",
+  "816113ee-b00a-4413-9382-fc55509ff6bf",
+  "819da04c-c572-4e47-86c6-b33e4f79bf7e",
+  "819ff9c7-232e-404b-8b29-45ab8a404937",
+  "81bf4781-8dd7-4bb4-91df-122d8787224f",
+  "82bcf8e6-8978-4189-af8f-9ef271985b3e",
+  "82ed49d3-ed13-486e-ab7b-80e08411b461",
+  "83179448-29d7-47e8-a517-90ecf4705205",
+  "8352a033-c17e-41b5-af70-312f660b1056",
+  "840402d6-2b95-5563-90f9-89bf487e3b02",
+  "84217db5-be3c-4e55-89b7-37af2a7e6e06",
+  "844bbb77-6766-4b08-a673-8e1ca9afd4a4",
+  "845b03c6-1af0-42f2-ba2a-4c221f75734a",
+  "84910d84-cfd1-4e32-a3e4-d01e0122dbb2",
+  "84b8259f-3e33-4bd5-9f01-32a88df43a0e",
+  "84d73cb3-cbbe-44ee-867d-2511589a82ab",
+  "850d49ac-735f-4f32-a413-ecec0f2a3c3b",
+  "8529e99f-7bc9-4193-87bc-fec5bcefa8f9",
+  "8585132d-4f25-41e9-9a8f-f975e0394da1",
+  "861ff5fb-91bd-4a31-abbb-c4952afd9b39",
+  "86522a2a-6cee-4eff-b7f1-fb0ef84c1495",
+  "86946d9d-5310-4884-92e1-af990c9de04b",
+  "872bb18d-f99a-443c-963c-63409bc7d9ae",
+  "874cde71-ddf4-467a-97f7-d3cc1ab53b84",
+  "87d63e5b-30f0-4fa2-b89d-bee239745e51",
+  "87d68ecc-17c0-479b-94bd-f94de7873449",
+  "87f95e72-618b-449d-9b2d-5d439583204a",
+  "88001260-cbaa-47a3-aaef-23cd91b64b50",
+  "88026ea3-c950-48bd-9529-3d02e81bf1e4",
+  "882818cc-d872-45cb-9567-c47bf643c628",
+  "8828ec8e-3e09-4ee9-8d96-51e003d79220",
+  "88a217e9-14b8-49ef-b32a-c9d9f63f3f52",
+  "88eb3960-edff-4df8-a0d3-381754379950",
+  "88ec4fd6-5853-453e-a480-5f753517f109",
+  "8925a67f-3cdf-47af-a38f-d9f1d344377d",
+  "89658af5-156b-4b87-9c18-7676d84f256e",
+  "8982f6de-17d7-4fed-9f72-5dfc50fcbefe",
+  "898b0c9a-22b7-4869-abe1-88f44d429276",
+  "89e5449c-0134-4507-a433-52364621f2bc",
+  "8a593206-22b5-4951-bb63-80cc0538885b",
+  "8ab16f39-4165-4a47-b216-47b426aa0226",
+  "8af1e664-45b8-435b-b628-69a28c6a7a6e",
+  "8b274fe1-f2bf-4ec3-b391-d16dcc3adbad",
+  "8b571dd4-ba0f-403b-9f3d-35019cb1e3a3",
+  "8bc356c4-aad8-4604-9c0d-45cbeb85f634",
+  "8bdea355-e08d-4564-b4f4-da67e61f70d6",
+  "8c339616-0a4e-4a26-b221-a174238ac9e2",
+  "8c45510d-3e52-4b83-8734-c807eb887145",
+  "8c5cfc8a-5760-4360-a30c-9ba7089cc179",
+  "8c6c856c-e396-4b80-8c9a-d50ae4a4ea54",
+  "8c862ced-48e3-427a-955b-d39c5743f170",
+  "8cbd871f-0dff-47e5-8a18-6a5d1ce0a902",
+  "8d1c7f71-3a76-491d-88ce-1976f57b190a",
+  "8d3b7a73-cebf-4c24-bc59-191699d50e8c",
+  "8d450821-5be0-42b3-a3d4-7416085fb2b6",
+  "8d594b16-087c-4c7a-9f72-7d71a519e15f",
+  "8d712d39-bc91-4093-8577-c7a59c2745d7",
+  "8d7a5a0c-a213-4761-8f5e-11f55a180b87",
+  "8dfbbd9b-1958-4ab8-831c-2f4e0864cf9a",
+  "8e2f6fd6-025f-4e50-92c3-de6da9125125",
+  "8e37e17f-06ae-4431-988c-dd7fc69fdd5c",
+  "8e38a9e7-e705-412a-b369-0e3afa5a84ca",
+  "8e4da003-5e01-4661-8410-3883bcd41ed9",
+  "8eb5bc19-782c-42d0-87d1-2f7cedd73187",
+  "8ee40481-9f27-46ed-988a-ac3054896ecd",
+  "8ef02041-8237-4e52-a0f0-50ebdb1a9002",
+  "8f1e3010-3955-4903-b6b2-1c6fd8d61115",
+  "8f36616d-0127-4213-9da9-dde2ad01815d",
+  "8f7fc0b6-e6a4-47b4-9ca3-4605c3e132e1",
+  "8f960da7-df29-4f0f-96af-4fca1a9d5681",
+  "8f99fe64-151a-4a8b-83dd-26c66c667dea",
+  "8fa6d1a7-163a-4698-96c0-35c1e0f788c8",
+  "8fc6bf44-c66d-4f88-af63-9c845ea26207",
+  "8fd18f6f-156d-4ebb-be14-d24620be9175",
+  "8fdc9abe-dd0a-40a5-b0a2-48f70c4ef64e",
+  "8fe76874-6e1c-4042-8d7b-16d72d13ca21",
+  "9101eb26-3b67-4d16-9b50-039378d7cee5",
+  "914ec81c-6559-4a93-9d18-28b1aa0a8f40",
+  "9184d6ae-bc37-4db1-aaca-6df1a00572c1",
+  "91b42081-f15f-46ac-9d36-a819d6e5d857",
+  "91db128d-9c37-44b3-9e2a-cc2f70b40d98",
+  "921e4884-4b05-4de2-82c1-7f9af34264dc",
+  "92831cc0-a54a-467d-a6cf-c37622c9160d",
+  "92a91197-4a9e-4625-aa2a-3a458c728c63",
+  "92e496de-6956-4841-bd64-5fe1a5a56a95",
+  "93a0a61c-2fd2-4eb0-9549-0bec7dc7e68d",
+  "93a8171b-897d-404f-85a9-99eaeed95859",
+  "9405f04d-72af-427c-afea-40266fb38ec8",
+  "94083679-f875-4fe9-bef6-818cea5d4c50",
+  "941a9ad6-8b84-4dc6-b033-97ac85981fb7",
+  "944745a6-902c-4676-87f2-6e478f58a2fe",
+  "9459228a-551e-4991-a11e-07741c7dad00",
+  "946a55ef-255a-4456-95db-35fadc992bad",
+  "947c8b27-68ca-497f-9f71-90e8b0651452",
+  "94ab5a24-082f-4109-b887-0f2724045221",
+  "94b0f596-ed1c-4dbb-8f1e-c9c2e518792e",
+  "94d8c6b6-5568-4cda-94a5-53583e4adc68",
+  "9554b24d-674f-4255-b2b6-f24887b2bfb3",
+  "955a6cd4-e0b3-4d4c-b2a4-cd1670cf6c6b",
+  "957e6cee-8566-40fa-a1f3-5ba29b1c7769",
+  "95966bda-4da6-4645-9a76-69624b4eb24e",
+  "95a2de42-e7e4-4a96-9048-6e5ada7294b4",
+  "95fae07b-6f20-44ca-abbd-58dd30a10657",
+  "9602e836-e10f-4eef-97e4-4b973141c591",
+  "96272e64-0312-4b3d-9977-5f2b20671470",
+  "962baf44-3b10-4d47-bb85-f1820ed0f2b7",
+  "964b9944-507c-4d4e-a87a-346a6f614827",
+  "9657f4dd-dc5e-4e10-9b8d-cd8e6f72cbb7",
+  "967ad7a3-c7ef-59c1-95e0-64ff4163faba",
+  "96cda2ea-3a96-44a9-958e-54daf8ce0625",
+  "96fd2311-b1ba-4215-aaa4-659247bde66b",
+  "970f1975-c531-47a3-b068-bb4a71fe6c85",
+  "97361590-7184-416c-8d64-8a0459344e7d",
+  "974d09bb-b907-5c78-92a9-6e085174c8e2",
+  "974ed6c5-e8bf-4a4d-a1f7-7e3205b103b1",
+  "97ae2fc6-b43a-432d-8ffd-ecd6b262f7ba",
+  "97eb4ec8-375e-4852-b7f5-a487f9f1e5c9",
+  "97fb2764-0a8e-403f-a814-9fd6af6df987",
+  "995afe87-1828-4c35-af0f-782a6ad01306",
+  "999845e9-3f81-441a-b04e-32250593ea4b",
+  "99b80914-22e6-49ee-b1f1-6bf22e57e506",
+  "99c8df86-675f-4d4d-9e59-5c29ede77a9e",
+  "99fa529a-3853-4cc6-be8d-851671d96e41",
+  "9a1cb618-8050-4312-a67c-8de682ab9af8",
+  "9a2e37f0-9ff5-4f2b-83ca-d50fae064900",
+  "9b0a4015-682f-494d-807c-bbf752edc202",
+  "9b0ed4d0-e98d-415b-8782-2c30ac4bdfc6",
+  "9b5367c8-a240-45bf-8299-62e2121ef1fd",
+  "9bcff43b-d2e7-4223-968a-88a434948fd5",
+  "9bd2f292-7c69-4880-8ce2-7422a33931c0",
+  "9bf10278-d1be-404d-b314-3b9b741909ce",
+  "9c09f67e-5ebd-46f5-8b42-ca2790860a11",
+  "9c0ae805-9120-4684-97a5-ae865f50e52e",
+  "9c12cc27-472c-49f4-8081-59f378be1ebb",
+  "9c422b26-df6e-4d23-a5ea-9cae8a1f54b6",
+  "9c58e09e-b3cc-49eb-ba2e-e4567317067a",
+  "9c6e3445-ff50-4e6e-8b1d-cffa0c9deaa0",
+  "9c8aa8cb-bb35-498c-92be-d530bd596b6a",
+  "9cf9b541-1f39-4508-92d6-7274a804ff50",
+  "9cff976d-8f0c-4f53-b039-32abf5b4016b",
+  "9d0f0968-b78b-4335-bd58-58941ba415fe",
+  "9d2c9924-72da-43aa-82b4-9aa5f9504f80",
+  "9d48b796-8ece-424b-99ab-5e52462dc867",
+  "9d6d0718-4b1a-4a80-9808-bf456c5e54e1",
+  "9d883b74-477d-4031-8e5d-44b9e84a65ba",
+  "9dc3204c-8d99-468d-9101-f4b0e737b171",
+  "9df74338-4671-4df5-bc86-b40ec137ad99",
+  "9df84a51-fa40-45c8-8b95-2f72dd3d9de0",
+  "9e2e4ae7-94d6-47a7-8335-b7c9deefaeb3",
+  "9e4404df-9e7d-49af-86b0-22e37fee0b31",
+  "9e44f90f-728c-4317-8d34-9e7cd55c9afc",
+  "9e98615d-7a9c-4785-942a-4060ce696609",
+  "9ea787d3-5f8a-49d9-8072-6a4ca85d6785",
+  "9ea81f43-ebea-4b0f-b206-24fb65838466",
+  "9ea880b3-99c5-4db7-aed8-acad3bb8c9e7",
+  "9f435ebd-6446-4c4c-9fb4-1f6489634706",
+  "9f66628b-e010-4c5d-99e1-02591b38ac3c",
+  "9f6df1ed-8120-403f-8c4e-7b6d6192e5e0",
+  "9fa9b55b-37a1-459f-bc50-cf91da19587c",
+  "9fd279e0-3f20-41af-93d3-9c99a0c5b90f",
+  "a0290fab-b771-4f54-892d-749063e388fc",
+  "a033663c-8737-47dd-a3af-de7559e0893c",
+  "a041a148-f4ca-413d-b480-eb300ea8fc9c",
+  "a05f4f31-8306-48f0-b2f9-b4a140a48505",
+  "a05f79a8-d99d-4fd7-8abf-d6e59f4e96a8",
+  "a08efbc3-bd75-4922-b520-36c220a2c54b",
+  "a0bd39ea-8eb2-48b3-a7da-79ce8333ef75",
+  "a0c8eddf-df08-4dfa-9806-904bdbb093ba",
+  "a0de86e1-0ae8-40e4-9c2d-4875f5938ab2",
+  "a0e1e212-3b09-4805-ab41-8fcbfb2e45ff",
+  "a12a4540-58fb-47e4-946b-d9579ebc7454",
+  "a12c2fbf-e773-425c-8175-3201c056984a",
+  "a146e6cf-b3fa-4e07-98e5-f45e9a2fd40a",
+  "a14fac06-2359-46f3-867e-feea7497118e",
+  "a1ab5d2b-ddb8-4b75-a053-27225d275225",
+  "a1e21b71-80b2-452f-a585-ce1bd9bf5bbc",
+  "a2532d65-75e7-4316-97e3-048d85a986f8",
+  "a2908800-7214-4caa-ad23-3844527cdf5d",
+  "a29eeddb-212b-4433-b649-59e2b5fc358c",
+  "a312924c-3842-457f-a4d1-087e43f25051",
+  "a3226b09-e5de-487e-97df-4ae985d5d78d",
+  "a34823cb-6584-4da4-aa38-d81f1aa09605",
+  "a37bf9c7-4c27-4d11-80cd-08af3132d552",
+  "a37dca16-888a-4370-8a9f-284f91962f34",
+  "a38bfc85-dcfa-4519-8490-153bffcf935c",
+  "a3c31e47-9eab-479f-a493-84c9e5ff32aa",
+  "a4109534-51cc-4029-8fa0-b218a068bf71",
+  "a44e9d76-c68d-4bae-b067-c33d56a757f2",
+  "a4660ff7-6856-4e6f-a37a-46b127399d40",
+  "a49133a7-853c-41c6-a172-8d0add5db060",
+  "a4a55a82-b022-4bd5-8c6c-7c727dffc98f",
+  "a581e775-09cb-4ed6-8c08-81446a8245f1",
+  "a598459e-608b-45ef-b1bc-4661f909c800",
+  "a63565dc-a336-4fe7-b512-8cdcd25f2e17",
+  "a63affee-851d-4583-9d62-2ac096004428",
+  "a65fcd13-ea33-488a-bcc4-75b3f0498359",
+  "a6bca311-cd76-412a-ae44-8c6778a838b1",
+  "a6e3094e-e91f-4af7-9732-9448b4584c20",
+  "a6fa097f-3b99-4190-837c-bda737b5a12c",
+  "a78bb55c-381e-41fb-82ca-ef5032c469be",
+  "a7b5ff74-eae7-4f71-9044-d125db83cf08",
+  "a7c44f5f-c6e6-4dd1-8153-a50bd71ebf6e",
+  "a7c9869a-fe19-4190-938d-bc2ffe52a08e",
+  "a865f29f-7cd5-4ebc-bb74-c6d12e08e027",
+  "a8ce14d8-910a-4c1b-ac32-bc916b4cd4db",
+  "a8f3eee7-bdbe-4555-8c39-a43fc318f0f4",
+  "a8f70b2f-c8ee-4cbb-a5e8-c13ddf2d1369",
+  "a90a1833-4aae-4fc6-8f92-736cc583063e",
+  "a9166a6c-e3c2-4dd2-b674-aca1ff855fbc",
+  "a999928a-1e2e-4f01-971a-8d60f1183b37",
+  "aa77851b-a3bd-4c50-8fa8-a3cf09c009c6",
+  "ab419131-773d-4e12-b541-2d31315bc482",
+  "ac051d6b-4b75-43e2-b3f1-b3a3b1067f06",
+  "ac2acc95-3b83-42d0-8244-8de612fd69c1",
+  "ac485e5f-2772-4142-98bf-f1e5b8d2e116",
+  "aca99b77-1083-4c1e-993e-5c5d29172bc7",
+  "acf3cbc7-ba02-43e5-9e64-f02eabfdf640",
+  "ad37cc19-27a6-4d88-aeb6-305ed333e8ea",
+  "ad970796-902e-43f2-9137-1482d19ce7aa",
+  "adb0f91c-4ed6-4182-a462-7fd4006fdaa0",
+  "adb2d952-a6ba-4654-8d40-d404c2e6312d",
+  "addb2edd-5050-4353-9289-dbe89c73a217",
+  "ae24b137-e16c-41f2-95b2-906c26bf5aca",
+  "ae331df7-d4dc-5c06-a59c-651a31cfd370",
+  "ae5bbcc2-598e-460e-8a2d-52e0999210e4",
+  "ae6435ad-9b75-4f06-86b9-0b8efc0ad691",
+  "aebf406f-ff76-414c-8500-388e02a98fe2",
+  "aede8fa2-59bf-46c8-ac66-289447798160",
+  "aee6f9a3-27b7-48cd-b22b-7f5c4f05db85",
+  "aefdbb82-27c1-4e88-9c28-82c5f3e7072c",
+  "af4fef50-b1b5-496a-ae2b-4c92c34bac12",
+  "af62ba51-520c-4309-946f-e28fb78692f5",
+  "af845d9a-7ae3-4bd0-b0ba-659c596fc868",
+  "afd22199-a317-4fc4-b189-33fb30af94cd",
+  "afd8d510-bd99-44c9-9a74-4792f4fbf6bd",
+  "b018f5fe-8c1f-498d-be93-723a39da5d6f",
+  "b0bdfe1f-fc6a-4aaf-8e93-a21f57949337",
+  "b10f9e12-425c-4382-a036-6b0db79cf56a",
+  "b19770bf-0bf0-41ef-b395-a15e6f7a944a",
+  "b19ca15a-db93-42b8-9379-4f14c8a40317",
+  "b1f73887-8f99-4ea3-807d-c095273de8c7",
+  "b24a6081-8f4d-4893-9099-2d21b95285b1",
+  "b2b3dd83-33b9-469f-8fbd-93cb91cb1ca6",
+  "b2b75999-74de-4a94-8029-401c1e8662b1",
+  "b2cffbce-f644-4bcf-927f-2a1c6f21a015",
+  "b3001cc0-3b77-4f93-b846-bab2c48e2be6",
+  "b301976b-58dc-4ad7-87f3-d5640c64aa34",
+  "b3093cd6-62d7-431d-8598-d61196fbba87",
+  "b32123e0-4539-4086-816a-fe7b8eac449b",
+  "b32293e0-6d23-4b9b-800b-d2a1e7e10465",
+  "b333516d-97c2-4de8-8cf9-e1d67b42b500",
+  "b36d7f64-4909-49ac-9291-43966342a873",
+  "b377572d-f227-4acc-8e17-fc5ad7e85155",
+  "b430006e-4c8e-4b67-aa40-ddaf8397521e",
+  "b46c5d49-ab60-4529-aff8-9bbe2ff7b9e3",
+  "b48959e4-66ee-454f-b40a-da4fb0c05b04",
+  "b50f5071-8b33-4167-a444-5f6a757043ab",
+  "b514dd52-6296-4b6b-a18a-b6cfa3cff8de",
+  "b5328a8e-35f4-451a-b7c2-12b323e66297",
+  "b54c0780-5237-4ff6-8dca-f4593556ee5c",
+  "b57c6f3f-0d12-430d-863e-02e0bd0ebaa0",
+  "b5b69ae5-1ed1-464a-b603-dbf68d998b03",
+  "b5e25caf-d8b3-4142-a4da-a3af501a6128",
+  "b5f170ea-960d-4d58-ad33-8995f2bad513",
+  "b6217f9a-ab57-4ea0-9a6b-dcf9d7be0a85",
+  "b63fab3c-b741-46b8-89fa-0d3846a45c2a",
+  "b689d91c-6b96-453a-8fbc-cd4853ea6b1e",
+  "b69ec018-c789-44f3-94d8-971854c0226e",
+  "b6cc4efc-f8e8-44cd-9aaf-03462b077823",
+  "b77fc33a-5174-4bcc-8f0b-182ab4fe557c",
+  "b7fb7ed4-4b8b-4680-8846-ea71988d5dc5",
+  "b84538ac-66bb-4bd0-a347-f5fd34b2794b",
+  "b855fded-3a30-4ecd-b314-8e3d9ebc98c4",
+  "b8794fde-7a1d-4a53-a882-ebcd33aa252a",
+  "b8c37064-4371-4c59-ac92-7b6e8a30b3ba",
+  "b8d3cf4d-266d-4b04-955d-f9f55435c50d",
+  "b9045083-e918-4f8d-a0b7-c5b6844a2dfc",
+  "b9181a3c-489f-44d0-83e4-47a11f6ddc79",
+  "b92dae0c-e3b3-4586-909a-8f3f96b671f2",
+  "b953385c-49d3-47b6-880c-da976f8fc6c8",
+  "b991ea76-a20e-40d7-9dba-f0b83b0aa77c",
+  "ba09e6a5001b53bf8840e53d0178012c",
+  "ba139c79-eb92-4b8b-848d-8e27e21ad64e",
+  "ba146785-7724-41e8-af71-48f46827d91a",
+  "ba18f614-280b-4974-b7b1-ae8c1c872fd0",
+  "bac444b2-47fd-482b-a7f9-9ddda1e861b9",
+  "bac76a97-098c-452d-a485-bccfd6b60282",
+  "bae0bb7a-8642-4161-8f19-03ba0b91bdc5",
+  "bb06e405-10e1-4acd-a637-e72446642c22",
+  "bb1a9b05-6d94-403b-8db6-09d7d3f930f6",
+  "bb54f5fe-4d08-4134-bf89-fedfb305cb4b",
+  "bb8efa52-9634-4f43-9246-2c1955ac50a0",
+  "bbc1d26b-4242-4f85-9b96-fc76c5cb0e3a",
+  "bbf7893e-98f0-43a5-ad9e-0148e7ee9025",
+  "bc094dcd-617b-4264-933b-a154eb97f3a6",
+  "bc2094e7-02b7-4aea-b803-cc933e668b0e",
+  "bc378df1-627a-47fb-b148-8a4bc1538f86",
+  "bc40f5b5-d389-4d09-a457-e0fc7621078e",
+  "bcbab259-2c33-4cec-8e51-405e1e735088",
+  "bd241f3c-ef71-4506-a943-cdcf052fb004",
+  "bdcd5d2b-8833-45db-a2b9-eb657a25f574",
+  "bdf00dbc-5f55-4c03-9f58-768aa54872c3",
+  "be100e4f-4f44-4fdc-85e2-b6d1395e2346",
+  "be379a79-7828-4c6d-b91e-4f45a99e96f9",
+  "be94bd02-2575-4e4b-a28d-2b4e110b6fbc",
+  "bec57b3a-d85d-4642-9d4c-6ab6287fa807",
+  "becf1af9-6216-4ed5-a663-6157df193b0a",
+  "bf3d1c70-eb27-443c-9aad-53af07d6e970",
+  "bf72296f-282d-4ec8-aea9-1aee06a05f98",
+  "bfdad04f-57e7-4c55-b70c-677ab4010c6e",
+  "bfde3b32-9002-41f4-bdbd-a3dee7e5a5cf",
+  "c015140a-e5fd-431c-b679-9efa414d6298",
+  "c0332b0e-6480-41bb-853e-ed52270a8792",
+  "c057d94c-4a6c-46e2-9119-33a8e7031c0f",
+  "c069f4b0-0140-4018-ab75-2654ac7f72a7",
+  "c08623d1-f2eb-4ed2-85ef-ee178d219445",
+  "c099a228-b5c5-4637-b921-092895496059",
+  "c0ba6529-c68f-46c4-9e55-e3f85a531510",
+  "c0d302fe-9cd3-44dd-a50e-6c861c047225",
+  "c11448cc-b1cd-4fc2-af4d-1f0a95a549e8",
+  "c1194ca5-e9bf-47df-a6f0-8e5da2290106",
+  "c150c051-c620-43c9-9d49-ee74fc7c662a",
+  "c160689d-3e0c-464f-ad5c-0aebec542ada",
+  "c18e4386-4a89-4c8e-8879-466131ebadd4",
+  "c19a163a-7d42-4447-b1d5-7539b8a48a67",
+  "c1a5bc35-b8a4-439e-90d5-59f6286ed1d1",
+  "c1ce3e4b-3e6a-4e83-a49f-aa3be636fdf7",
+  "c1cedd05-953b-40a1-8ce7-a82f24565280",
+  "c24fd256-4c28-441d-ac2d-344ba9bc47c5",
+  "c2501341-80e2-4295-b9a5-c989d038182c",
+  "c26168b1-d5c1-4640-be6d-335bebd5515a",
+  "c2630b11-03bd-4bf1-b40f-919893a851ac",
+  "c290236f-12d3-4c69-a5d4-58a5027c80ec",
+  "c2e5f3f2-1c0e-43c9-b713-c70ebe33287e",
+  "c31e7777-cf02-401e-8fda-aacd7fe13644",
+  "c345a7e5-0f32-46d3-b09f-ac3628c77fd7",
+  "c36a1bcb-90e1-4f2b-9906-0ff03adf2bd5",
+  "c39a8d88-1626-4b1d-bd31-88bf4a5573f7",
+  "c3aae5c1-2c90-5e72-90fc-01af730b2c01",
+  "c3d4677c-6b12-4996-b136-6c697c48fb11",
+  "c49c8f61-f5a0-4650-8ca6-65ede1267f6c",
+  "c4d67be4-0b6e-4d5e-a5a2-0498bbeca8ab",
+  "c4e06186-745e-4f33-a1cc-61b84795a6c6",
+  "c50cf68e-625d-4cf5-ae1f-d4aad14abf67",
+  "c52bedf7-96ad-425b-87e3-4959b256ef97",
+  "c546e848-63df-41e1-890e-0c14a1add6f5",
+  "c598a85c-b7a4-4fc7-908e-25b040690e01",
+  "c5bd82b9-d139-4d0b-a514-cfbf34721132",
+  "c5dfd218-79a3-49a6-afe6-4300cbb05167",
+  "c5fca2ea-7a15-46f1-b155-77fcee715274",
+  "c6049b90-0942-4ec1-b76e-4b9455749ec8",
+  "c630682a-bfff-47e8-b4da-5e2fbfe7b38d",
+  "c68894b0-7183-4086-a4cd-ca47ef740aa8",
+  "c69e6e18-4739-458d-b546-1dd6e8174e19",
+  "c6c2532a-0e87-4ebb-bffc-13af1f83ca78",
+  "c70365a0-341d-42b5-bfb7-81b89a0dfece",
+  "c74ea597-b0ce-48af-834d-93660a48e475",
+  "c7570c0f-4caa-4e06-a46e-c71f2a2eba53",
+  "c76380b2-a17a-4544-b3b0-87ed24b4b2e1",
+  "c7da953f-752a-4047-bf65-b98e858663d4",
+  "c7e37394-8295-493c-bbaa-d3bdaf68ad2c",
+  "c8349e88-9fde-4ddf-a517-bf042eaced02",
+  "c85354bf-a8f2-47b3-817d-8d252df1dfd1",
+  "c891452f-7304-44b5-90a9-0a197841ec92",
+  "c8e572dd-3a94-457b-b0ac-44199e7279a5",
+  "c8ef7f25-145c-4b37-ba6e-19274fe2ebc3",
+  "c94026f9-9e5e-4a42-a990-e5836c7e6c32",
+  "c9598ec7-1b24-4214-bcd0-8b2b73c09da5",
+  "c9a1ba4f-5546-4402-82ea-e71be64cfa1e",
+  "c9d25444-f64e-46cc-848a-46c895b808fc",
+  "ca02aeaa-dc77-4166-b8e9-3391d008a639",
+  "ca287062-8fa3-47bc-9c3d-6f07e50c9aaf",
+  "ca30a1c6-e411-4ac4-a7d3-5e60e45aefe5",
+  "ca431745-8c61-4b2e-b9d2-781209998b15",
+  "ca5c5082-7268-46cc-a99d-e88646b1b10e",
+  "ca5dcff0-8eb7-4c2e-8da9-07585180635a",
+  "caa2ca0b-45fb-4a52-a47e-3713030ad36c",
+  "caae2811-7842-4f91-86f0-aa7d560d13a8",
+  "cac8749e-3860-4e02-8d41-c583b4169b54",
+  "cacea430-cbdb-49f2-82b1-7969c2e33774",
+  "cae1541f-bd8d-4d0d-b830-dce7f3c317eb",
+  "cb098ca3-0fbc-4d08-8109-3f0e864964e0",
+  "cb64c513-f3f6-4f31-b03b-bad511c2c9d0",
+  "cb7936c9-fe91-4d12-868e-e57cb25d11e5",
+  "cb9916c5-7629-441b-94df-cf6dcdc02334",
+  "cbe47a4d-38bd-5501-aee8-162e82fa1711",
+  "cc225f45-a18d-447a-bb82-a1bbf98a8cac",
+  "cc6498d1-5ce1-4dc7-a3c7-ee43c8a836ba",
+  "cccb16f4-c6fe-4bfd-9a90-6e035da1f059",
+  "ccf4fbf4-c034-488b-b0df-6411a7fea70b",
+  "cdbef762-dd61-4c20-8c73-857a27efead4",
+  "cdf072c6-e721-49f2-b0bd-886681e2c628",
+  "ce1a09a1-f3d4-4ae2-87aa-0fab738fb5f0",
+  "ce89d896-a358-4e71-8a1c-2d6473e3f1ef",
+  "cf3648dd-37fc-4308-87ce-47d0a9c6d36b",
+  "cf85fcf5-abe8-432c-9d7f-fb9d13d1b2be",
+  "cf914d14-5441-4f63-8649-96c564d75eaa",
+  "d050bf4b-4e3c-435e-83e9-bb16425ba9f8",
+  "d05ad540-f5ea-483e-a2e2-bddbfc4c3480",
+  "d06d4362-b4fc-4406-b642-dd25cc2365e5",
+  "d0730f4e-4238-4379-8a69-3baef6af6767",
+  "d0806212-772a-4b61-a0b1-ab4331447094",
+  "d0a5140d-238c-462b-a580-f1c4a535beae",
+  "d0ab2ae1-c6f9-422e-b989-ece35b48b44f",
+  "d0e8524e-173c-4a26-99bc-d5e4fdb80197",
+  "d14cb0b0-87b0-4c92-9795-74c61a7f8f13",
+  "d212bf1a-8923-42a6-a54d-1a28d8639596",
+  "d229b2b5-7adf-4b7b-8186-9b591ba27997",
+  "d247aec0-7c7d-410b-89ce-d7deef3b4730",
+  "d28b4722-c58d-4f69-bccc-c1cdbc91bc3c",
+  "d28fdfd0-a635-408d-b263-2caac5959f44",
+  "d2cd04bc-eeba-41e4-8bd6-390d258ff0a7",
+  "d33ff53d-ba67-4d4d-aa53-d7a9195fadc8",
+  "d373d7ba-8ebf-4117-96d8-8f560c8588c9",
+  "d3b3a0b1-2757-437c-aa52-113381a66471",
+  "d3f22031-5ba0-4813-930c-448514ff77ba",
+  "d409429d-7654-4a88-a2f7-3e84005a8860",
+  "d497a5e0-6d4d-40eb-acab-c631dc13b7aa",
+  "d4df9293-29cf-4595-a81f-a8a9d4e46ff7",
+  "d4ef121f-35ba-41a4-996a-af2ca07e80b7",
+  "d597cd2c-a630-45cd-a7bd-06a8999a4b94",
+  "d6197b20-3815-4c49-bd50-31650b1df663",
+  "d61c9a55-54c3-46be-acf8-65a5926d4503",
+  "d63da220-fc56-427f-93ab-06ac386431a7",
+  "d74dd2b2-9c4e-4cf9-8d39-a225fa696a2c",
+  "d76226820bd44fd3bb50067242f9850f",
+  "d78922b5-d160-4587-ba4a-e0334cc72050",
+  "d7acf9f6-44af-4da5-acec-8b68b2828eb0",
+  "d8275fe4-87ea-4941-8462-d4e6624088c9",
+  "d830fd37-efd0-45ae-9e63-7bd74e492898",
+  "d8380048-3ff9-4f7e-a4cb-0e518c212320",
+  "d83b4628-2c79-4f92-88b1-bedfbc3515a4",
+  "d8415f1a-70d2-417f-9fa8-417984f2da36",
+  "d879863d-ccb9-4954-9225-98c96cade756",
+  "d8860a6c-3c9c-4a33-86c1-d7f80756b9d6",
+  "d8c94308-a9e2-4412-bf75-5ce95bc0e2b6",
+  "d944ea2a-b185-48f1-b70a-793a9a5348c0",
+  "d962c65a-aad4-46a2-b365-2ca23f8718e5",
+  "d9e1a7ca-fd11-4b03-b1ff-082046e8a786",
+  "d9e46e27-a950-4797-9f7b-848717d47acd",
+  "d9eaf76a-e429-4876-966a-1c331743636c",
+  "d9ec6ae9-a6b9-4254-9d13-ea449a414480",
+  "da022cd3-b36b-40e4-961c-69e933d6245b",
+  "da228512-9b69-4aba-9fa2-2c0b01a583a7",
+  "da6475dc-ff42-4ea4-903f-2df8f486d5e4",
+  "da6ad455-4e67-4aaa-b842-dbb653e10586",
+  "da711b46-d3c1-4de2-8fb3-83582a7dd034",
+  "dac04dac-c25a-418c-a7ae-2291e94bb2a9",
+  "db02f6b1-8346-4361-a432-7734fc72d2c2",
+  "db093101-cc99-4c8c-b2ed-f669acaef170",
+  "db25b173-e39c-4656-96bf-b377ded6bf80",
+  "db287044-9a90-4573-bfdf-dfd09199d2ac",
+  "db749a02-f6bf-4156-9fdf-97ee3581271d",
+  "db8d3025-b46d-4d81-bbba-b3a3cc6edfbb",
+  "dba024ae-3541-4fa7-a8fe-00d704d8035b",
+  "dbd8fc4f-0b8b-4982-9886-b033ede55253",
+  "dc09cdff-ddb1-4c6c-8187-c640b7541789",
+  "dc8f18f8-2094-444b-868c-fbe5d2aa3c1d",
+  "dc9af572-6fb4-4dcf-a094-0c78d541ec46",
+  "dce7a4f9-6c9e-4ce4-bb4b-f219245ab2f0",
+  "dd35508e-914c-4f1d-8a89-ede7c015ee6b",
+  "dd477cfe-2f1b-44ee-b5f8-221478f5e7a7",
+  "dd961eea-1142-47ae-8211-1e71e0b3aef3",
+  "ddd11956-ea16-4861-a681-64d87bc3ef15",
+  "de0e003d-2a3a-4da0-afb3-5c015550c066",
+  "de38df9f42e4435bbccb2f29cce017ce",
+  "de47c189-bba7-4fa9-8102-9649ff5dc6da",
+  "decedd59-7c99-5bb0-b258-101bc5b69f30",
+  "dfd4ce4f-29fc-48b1-8f58-53bebe32f44d",
+  "dff8ec58-ee3d-4504-a32e-01f8197f7cc2",
+  "e048a200-3028-4cf2-b89f-4e27e99e024e",
+  "e0523564-9d26-4fa5-9fb2-ff9cb7f5a919",
+  "e06a072d-1543-4b24-8ac2-c4828e71fbd0",
+  "e07896f0-c6a3-42ac-b126-05c582b24893",
+  "e0a28020-5656-47f3-94bc-82dcaa16d899",
+  "e0f0cca2-d078-47f5-9b22-967e64f3e76c",
+  "e108e7b6-02bd-4a04-ad8a-1096c00ae407",
+  "e142afd48bdc517bac2aafc4a3117021",
+  "e1988cd8-6278-4824-8a90-9c3cac41e7fa",
+  "e1db26d7-96c7-4343-8864-5cd983f51308",
+  "e1ea863a-bac5-482a-92c5-d4d5c13de47f",
+  "e1f6de3a-1d8c-4f1a-9b95-51b4f145e699",
+  "e23e54ad-393f-4a67-84b8-48e71f695d8c",
+  "e2799ee8-db57-4e0b-b71a-59823526ac4c",
+  "e283194b-6d28-41cd-9efa-9c5152d2be99",
+  "e33116f1-7253-451a-8d41-f20a99aca808",
+  "e389422d-0f93-4688-919d-4db9bf610e9c",
+  "e3dfb798-3de4-45ef-a548-fd1819ce5ab2",
+  "e42bee3b-8a07-4100-b595-14dd32369b2f",
+  "e42c1e28-7675-403a-b2cf-2ee4c3a8186c",
+  "e4434855-755f-4182-a375-9d4e01193c2f",
+  "e4bf9e52-f69f-4803-ba64-7ed291caa656",
+  "e4e49006-fb1b-419c-8045-fe54d1ddeb12",
+  "e515462c-98b3-4016-a7f3-dd1d41dd0ea6",
+  "e534f0d2-3439-47e6-900a-c7a37eec6fc4",
+  "e5b5beb3-97cf-4789-ba34-a37dc284d88a",
+  "e5fd4cca-dc5a-4e3e-91fc-160dc5436b4c",
+  "e61d27ba-0aa4-43b7-ba30-c993e792571a",
+  "e636b67b-955a-48ac-ba73-5a13a8de7e6d",
+  "e63b499a-5f64-48fc-a0dc-91f09a752af1",
+  "e661fa19-a8c7-4f0a-aaf5-41c1ebb817a5",
+  "e697719c-5687-4d75-be5d-0ccefc09b3cb",
+  "e6a28a8c-f0fa-4d44-8a91-9463f8e73677",
+  "e6a7b947-4543-4a46-a157-3b8c94b2ac7e",
+  "e6aa022d-f748-4820-9e19-1f027d718953",
+  "e6c2775a-5ba4-451c-9c89-15740eb4c6da",
+  "e6df40a9-ed98-4862-b970-9716998e8e75",
+  "e7144856-ba62-4cf4-adf3-73a0643b9761",
+  "e7378421-b1d4-4995-9411-76fa7cad5213",
+  "e76181be-5c70-449d-937f-1e5429a9834d",
+  "e77cec6a-fc6b-43aa-b326-6abb630896e3",
+  "e7bab2d1-3fee-4dd3-a2a1-14583031fe1f",
+  "e82bc89a-604d-4e79-b7d0-3ef675f33cc1",
+  "e875b8fe-a28e-4647-b7dc-27d06aba47a7",
+  "e877dbf5-e342-4800-8743-20c0006ed2fc",
+  "e8999741-14a5-4db2-b18c-2b5fe3eb8ec9",
+  "e8d3c530-2694-4ae2-8c5e-0b458953a3e9",
+  "e924cb2e-1d85-4844-94af-c65b6eeed31e",
+  "e9738458-6634-44b3-aa94-44ae886b9af7",
+  "ea0acd17-2812-4410-b219-d3829769d11a",
+  "ea2b71ab-026e-49ab-909c-1e294fb0a0da",
+  "ea97342b-b646-48ef-a3cd-aad0e190e0a8",
+  "eaf24185-1518-4057-a806-8284487ef36d",
+  "eb59a275-6750-49c3-80f0-738b908992b4",
+  "eb99f486-a385-4549-acf6-8b36ed5842f1",
+  "eb9d3579-269a-4eb1-8b1e-653d3b42428c",
+  "eba89652-be6c-4f0f-b035-08be0b1205ac",
+  "ebe392fe-9a09-4e40-b9c3-e60cf60a97a1",
+  "ec2e8da7-ca95-47cc-ae07-1f8f962dd17d",
+  "eca8e632-473b-4ff1-87d5-abda6282f29c",
+  "ecb9ec29-6e9d-4d15-9d6c-b623d4d712d5",
+  "ecf33bc3-808b-420c-baa4-90f830cdb1f7",
+  "ed305c9a-0242-4c11-858c-1d2c10b2567d",
+  "ed934d82-5227-4ea5-85a9-ed7e0d9bf5ed",
+  "edd6aabb-fcbf-4674-a549-3310638bfeba",
+  "edebb431-8467-461a-9cf6-d29688e8e02e",
+  "edf39880-d168-4af5-af27-299f27f2078b",
+  "edfae3d8-1e51-4865-9aed-12024d008160",
+  "ee0d9558-49cf-4f7b-ab26-d6c77a1fc66b",
+  "ee2fb693-c5d8-4ded-b1fb-7569d18f0faa",
+  "ee3eb02c-d91d-4344-a7ac-f6d119f3dc62",
+  "ee8c6b05-0987-495a-95cd-65a07adcbd5a",
+  "ef2fa048-3a23-404f-898a-2a8bacd002de",
+  "ef743679-da32-4db8-a033-9bb72649ba54",
+  "ef7500c6-beff-41b3-acc2-b0beb1eceb49",
+  "ef75f560-16f7-468d-88d5-cb14426d76b6",
+  "ef7916cc-25bd-4c09-8d2c-73937f53a7bb",
+  "ef8e56b6-afd9-4d3c-8587-3bcbbde89321",
+  "ef9cf294-c59e-4417-b401-5c1b2fa9bcd5",
+  "efb11cba-a799-4821-b9bc-5e72068bd16f",
+  "eff2cf48-b973-47c6-9dfc-4e54b9187b47",
+  "f077a6f9-de97-48a3-a7b5-88b080070481",
+  "f0ac9493-d0cc-4cd9-a0f9-c83e5882917e",
+  "f0b2c466-c402-43d4-bbea-f370feb80557",
+  "f11d4c8a-3000-4251-a1e3-06d0bf346c23",
+  "f14c5406-ddc4-45c2-880e-cacd031eb03a",
+  "f157a5cb-be89-438d-a94b-416d28beef97",
+  "f1d03316-c00f-4d86-8fc6-69b65c937aa6",
+  "f1e29498-b28e-4d6f-9e83-f4957c67eb2a",
+  "f21db673-7c75-47e1-a0c9-bedbe7bff492",
+  "f2361234-53ab-4026-8647-7092a8aa83e1",
+  "f29937b7-478f-4598-b756-661305d18ed9",
+  "f2c7a4b7-1b86-4c66-91fa-cc3918beb7bc",
+  "f3552dde-223a-40b1-af14-bf60e32808cc",
+  "f373ba3b-3f88-4cdb-8bc2-bc4afa36d67e",
+  "f3fe2653-d82f-44f6-a96b-d0504505e4e9",
+  "f5427eb8-4594-482d-985c-9126ef7c9e03",
+  "f569b527-e2e0-4ff0-a066-a2c71be370a8",
+  "f5976ae5-54ba-45b2-8fc8-90814342fe04",
+  "f5ed108f-6102-4510-ab53-383c61ac2af8",
+  "f5f2a8dc-b68c-4675-8b68-a89186850411",
+  "f62a5c32-a927-4b32-9b3b-ac1e63f399aa",
+  "f66c3467-09d3-450c-b7bc-dbea0c2c5b15",
+  "f66c35b1-8490-424f-aa9f-bb90c1ed962c",
+  "f66f3355-488b-43f7-b1a8-f9369930be76",
+  "f695a966-5c51-4109-a487-6b1039f1eccb",
+  "f69c524c-eb0d-4ac0-b8f2-6b51ed2f2ac2",
+  "f6a44985-af01-4e14-9611-0d4a80149324",
+  "f6bd191d-291a-46e1-92e3-5d62aee2772a",
+  "f6ee0717-ab7d-453c-8ffd-cc35225ba5b6",
+  "f7296472-9389-4d18-b460-65711726aa32",
+  "f72df13c-6273-4f65-9682-5d4a90c1a452",
+  "f743d3fe-3d10-4d5f-ad9a-80653d2960c8",
+  "f767bc31-9d38-4a19-b1ba-109abfcb6584",
+  "f77c4084-6bbb-48b9-9fdf-6b84d3e570fc",
+  "f7b870c3-22b1-4f0c-9812-2b671ccd2063",
+  "f8049d9f-7b58-4fcd-89e5-a274177de97a",
+  "f81ce43b-32c1-41e1-8347-d24e65e13c2d",
+  "f8481caa-1721-4453-9ded-f9d46e95f26a",
+  "f8c45ada-5549-42b9-a660-a5a4e3a7f928",
+  "f8dd8319-39df-4891-8d37-14464d5ee302",
+  "f8e79e7f-a986-44c7-a4f8-3f323f821e7a",
+  "f91605f2-563b-4336-8534-f32e3a5ccb44",
+  "f92027ea-d1c3-4a0e-9443-c4620e10164d",
+  "f9204d2d-df20-40f1-ac0d-170b833f00f9",
+  "f9687adc-0cab-4406-8241-b17df32c6c44",
+  "f9a8b395-d085-4e01-a319-e7e1bcaabd94",
+  "f9b6db89-1205-4a1c-bab4-eb856a8760c6",
+  "fa36e824-5660-4532-914e-9c911d79845b",
+  "fa9719f4-5288-576d-beae-814637ccf5da",
+  "fb0eb95d-ba3f-4025-a77e-9c62165d250f",
+  "fb348e70-281f-424c-8ab9-a39f8bc5fde2",
+  "fb448a99-a914-4c46-9e30-cda03bcc3552",
+  "fb97e5e6-46a4-436b-9605-1fe385a30d6a",
+  "fc0a3abf-7b7e-4eb6-9ccf-f27f739b1c82",
+  "fc15ba14-5535-4ab2-892d-6a356b281fae",
+  "fc2f91d7-c7f7-4418-b46d-a1209d280b41",
+  "fc724b0a-9053-4d54-a24d-3f9337f63dc7",
+  "fc85c3ea-4213-512e-99e6-b9e6fa2faa08",
+  "fcdaa139-19a3-4c65-992c-7e8af21c6025",
+  "fd3fb95e-854b-430d-80ea-fbbf4f98ef2f",
+  "fd456764-9e8a-4f32-bd9a-d869c2af6504",
+  "fd7a79b8-5d05-43c0-b372-6786c4a9c945",
+  "fdfdac0a-697a-49bb-b9ec-ee78f8451691",
+  "fe1986ed-1fa8-44c3-a5e1-d65952856ba2",
+  "fe1e419e-1d11-4d86-b3b6-d345cfce883d",
+  "fe359a6b-ad97-414e-8f2d-767ec9fc5882",
+  "fe60fe2e-e4ef-547f-9cb9-7f428e137fab",
+  "fe938462-e8d9-4a33-a694-d568d4eb00b7",
+  "fea3c71c-bf92-4cce-9076-6d3f03601f05",
+  "ffb3ac9a-948c-4fef-a963-5976efa2f522",
+  "ffec7325-0368-497c-a7a5-2cf369ba14f0"
+ ],
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790538370.63,
+   "/api/estimate"
+  ],
+  [
+   1790538372.501,
+   "/api/estimate"
+  ],
+  [
+   1790538381.653,
+   "/api/assets/reference"
+  ],
+  [
+   1790538381.983,
+   "/api/estimate"
+  ],
+  [
+   1790538386.373,
+   "/api/assets/reference"
+  ],
+  [
+   1790538389.795,
+   "/api/estimate"
+  ],
+  [
+   1790538393.344,
+   "/api/production"
+  ],
+  [
+   1790538444.037,
+   "/api/production/cd3c581291914ccf806483ee38763656/start"
+  ]
+ ],
+ "follow": {
+  "project": {
+   "id": "cd3c581291914ccf806483ee38763656",
+   "root_id": "cd3c581291914ccf806483ee38763656",
+   "created_at": 1790538443.4799829,
+   "name": "Combine \u00b7 Klein 9B \u00b7 Copy Pose / Klein 9B \u00b7 depth / Klein 4B \u00b7 seed 2026092795",
+   "kind": "comparison",
+   "parent_project": null,
+   "plan_sha256": "731686ef150a7e32c449bd8ae89c75e437659faf99a72c591c0286ead2363190",
+   "budget": {
+    "allowance": 3,
+    "reserved": 3
+   },
+   "stages": [
+    {
+     "label": "A",
+     "operation": "comfy.generate.v1",
+     "attempt": {
+      "job_id": "227a9fe3-88da-542f-9613-ed4effc4c769",
+      "operation": "comfy.generate.v1",
+      "started_at": 1790538444.5214257,
+      "finished_at": 1790538547.1947446,
+      "status": "completed",
+      "prompt_ids": [
+       "5c3f490b-a390-452c-ab5b-4eaffbb7960f"
+      ]
+     },
+     "engine": "combine-klein-9b-copypose",
+     "seed": 2026092795,
+     "job": {
+      "id": "227a9fe3-88da-542f-9613-ed4effc4c769",
+      "status": "completed",
+      "created_at": 1790538444.492298,
+      "preset_id": "combine-klein-9b-copypose",
+      "preset_name": "Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing)",
+      "controls": {
+       "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is the adult traveller with long dark hair, a centre part, brown eyes and gold earrings; keep that character's face, hair and rendering style and the clothes with their colours (a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots); only the pose and framing change, to image 2's: standing upright, holding a lantern at her side. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+       "steps": "6",
+       "cfg": "1",
+       "width": "1024",
+       "height": "1536",
+       "lora": "1",
+       "lora_name": "KleinBase9B_PoseTransfer.safetensors",
+       "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+       "seed": 2026092795
+      },
+      "batch_count": 1,
+      "prompt_ids": [
+       "5c3f490b-a390-452c-ab5b-4eaffbb7960f"
+      ],
+      "submissions": [
+       {
+        "index": 0,
+        "prompt_id": "5c3f490b-a390-452c-ab5b-4eaffbb7960f",
+        "seed": 2026092795,
+        "status": "completed",
+        "gpu_memory": {
+         "peak_shared_bytes": 2445881344,
+         "peak_dedicated_bytes": 14494015488,
+         "samples": 211,
+         "spilled": true,
+         "settled_shared_bytes": 82391040,
+         "lingering": false
+        }
+       }
+      ],
+      "outputs": [
+       {
+        "filename": "Klein-9B-copypose_00007_.png",
+        "subfolder": "Combine",
+        "type": "output",
+        "seed": 2026092795,
+        "prompt_id": "5c3f490b-a390-452c-ab5b-4eaffbb7960f",
+        "media_type": "image",
+        "asset_id": "7a870a8be71150db901939c1578e0073"
+       }
+      ],
+      "message": "Complete. GPU memory overflowed 2.3 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+      "failure": null,
+      "parent_assets": [
+       "021731c057d955b4a2487395a37fadf6",
+       "025678cadf5750bf9a3bfa8ed62e6590"
+      ],
+      "references": [
+       {
+        "file": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+        "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+        "bytes": 1158496,
+        "width": 832,
+        "height": 1216,
+        "role": "pose",
+        "slot": 1,
+        "contribution": "",
+        "avoid": "",
+        "transform": {
+         "policy": "FLUX.2 Klein reference latents with the Copy Pose LoRA at 1.0: your character is image 1 (kept, re-posed), the pose picture is image 2 (only its pose is taken), each scaled to ~1 megapixel and VAE-encoded"
+        }
+       }
+      ],
+      "project_id": "cd3c581291914ccf806483ee38763656",
+      "started_at": 1790538444.5447242,
+      "finished_at": 1790538547.1912403,
+      "elapsed_seconds": 102.64651608467102,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": {
+       "version": 1,
+       "intent": "combine",
+       "preset_id": "combine-klein-9b-copypose",
+       "source_asset_id": "021731c057d955b4a2487395a37fadf6",
+       "source_sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+       "reference_file": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+       "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956"
+      },
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": [
+       {
+        "samples": 202,
+        "unknown_samples": 0,
+        "first_at": 1790538444.6946428,
+        "last_at": 1790538547.1882396,
+        "peak_committed_bytes": 78759239680,
+        "peak_at": 1790538543.846915,
+        "limit_bytes": 102784090112,
+        "min_available_bytes": 24024850432,
+        "index": 0,
+        "prompt_id": "5c3f490b-a390-452c-ab5b-4eaffbb7960f",
+        "interval_seconds": 0.5
+       }
+      ],
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": false,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": false,
+      "abandon_requires_acknowledgement": false,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "This job has already finished",
+      "cancel_needs_confirm": false
+     }
+    },
+    {
+     "label": "B",
+     "operation": "comfy.generate.v1",
+     "attempt": {
+      "job_id": "6e66575c-28e5-58be-8503-e87474f59eaa",
+      "operation": "comfy.generate.v1",
+      "started_at": 1790538547.5563958,
+      "finished_at": 1790538675.003005,
+      "status": "completed",
+      "prompt_ids": [
+       "8ace1532-9e13-4ed3-8098-0131c4d360e3"
+      ]
+     },
+     "engine": "combine-klein-9b-depth",
+     "seed": 2026092795,
+     "job": {
+      "id": "6e66575c-28e5-58be-8503-e87474f59eaa",
+      "status": "completed",
+      "created_at": 1790538547.5316193,
+      "preset_id": "combine-klein-9b-depth",
+      "preset_name": "Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)",
+      "controls": {
+       "width": "1024",
+       "height": "1536",
+       "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+       "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing upright, holding a lantern at her side. Draw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+       "seed": 2026092795
+      },
+      "batch_count": 1,
+      "prompt_ids": [
+       "8ace1532-9e13-4ed3-8098-0131c4d360e3"
+      ],
+      "submissions": [
+       {
+        "index": 0,
+        "prompt_id": "8ace1532-9e13-4ed3-8098-0131c4d360e3",
+        "seed": 2026092795,
+        "status": "completed",
+        "gpu_memory": {
+         "peak_shared_bytes": 2445881344,
+         "peak_dedicated_bytes": 14492950528,
+         "samples": 260,
+         "spilled": true,
+         "settled_shared_bytes": 82391040,
+         "lingering": false
+        }
+       }
+      ],
+      "outputs": [
+       {
+        "filename": "Klein-9B-depth_00017_.png",
+        "subfolder": "Combine",
+        "type": "output",
+        "seed": 2026092795,
+        "prompt_id": "8ace1532-9e13-4ed3-8098-0131c4d360e3",
+        "media_type": "image",
+        "asset_id": "40a93ce9313558819472549e9132a4c7"
+       }
+      ],
+      "message": "Complete. GPU memory overflowed 2.3 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+      "failure": null,
+      "parent_assets": [
+       "021731c057d955b4a2487395a37fadf6",
+       "025678cadf5750bf9a3bfa8ed62e6590"
+      ],
+      "references": [
+       {
+        "file": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+        "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+        "bytes": 1158496,
+        "width": 832,
+        "height": 1216,
+        "role": "pose",
+        "slot": 1,
+        "contribution": "",
+        "avoid": "",
+        "transform": {
+         "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+        }
+       }
+      ],
+      "project_id": "cd3c581291914ccf806483ee38763656",
+      "started_at": 1790538547.5767198,
+      "finished_at": 1790538674.9960432,
+      "elapsed_seconds": 127.41932344436646,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": {
+       "version": 1,
+       "intent": "combine",
+       "preset_id": "combine-klein-9b-depth",
+       "source_asset_id": "021731c057d955b4a2487395a37fadf6",
+       "source_sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+       "reference_file": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+       "template_sha256": "a50a7e86133cab6fde3defc78ceb37846ce296718733b03515f0f2726e9d61af"
+      },
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": [
+       {
+        "samples": 250,
+        "unknown_samples": 0,
+        "first_at": 1790538547.7313037,
+        "last_at": 1790538674.9890428,
+        "peak_committed_bytes": 90492387328,
+        "peak_at": 1790538669.5037189,
+        "limit_bytes": 102784090112,
+        "min_available_bytes": 12291702784,
+        "index": 0,
+        "prompt_id": "8ace1532-9e13-4ed3-8098-0131c4d360e3",
+        "interval_seconds": 0.5
+       }
+      ],
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": false,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": false,
+      "abandon_requires_acknowledgement": false,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "This job has already finished",
+      "cancel_needs_confirm": false
+     }
+    },
+    {
+     "label": "C",
+     "operation": "comfy.generate.v1",
+     "attempt": {
+      "job_id": "c13dbf5c-2f80-5898-9217-bbaf9bc973f9",
+      "operation": "comfy.generate.v1",
+      "started_at": 1790538675.4422636,
+      "finished_at": 1790538741.500829,
+      "status": "completed",
+      "prompt_ids": [
+       "05988880-c6f2-4119-9b7d-9508ae58d389"
+      ]
+     },
+     "engine": "combine-klein",
+     "seed": 2026092795,
+     "job": {
+      "id": "c13dbf5c-2f80-5898-9217-bbaf9bc973f9",
+      "status": "completed",
+      "created_at": 1790538675.41171,
+      "preset_id": "combine-klein",
+      "preset_name": "Put this character in another picture's pose (FLUX.2 Klein 4B)",
+      "controls": {
+       "width": "1024",
+       "height": "1536",
+       "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+       "positive": "Redraw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings, wearing a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots from image 1 in the pose of the person in image 2: standing upright, holding a lantern at her side. Keep the face, the hair, the outfit and its colours, and image 1's rendering style. One figure only, nobody else in the picture. Do not copy the person from image 2, their clothing or their colours.",
+       "seed": 2026092795
+      },
+      "batch_count": 1,
+      "prompt_ids": [
+       "05988880-c6f2-4119-9b7d-9508ae58d389"
+      ],
+      "submissions": [
+       {
+        "index": 0,
+        "prompt_id": "05988880-c6f2-4119-9b7d-9508ae58d389",
+        "seed": 2026092795,
+        "status": "completed",
+        "gpu_memory": {
+         "peak_shared_bytes": 4243140608,
+         "peak_dedicated_bytes": 14310596608,
+         "samples": 135,
+         "spilled": true,
+         "top_holders": [
+          {
+           "pid": 13928,
+           "name": "explorer.exe",
+           "dedicated_bytes": 578379776,
+           "plausible": true
+          },
+          {
+           "pid": 20880,
+           "name": "ProtonVPN.Client.exe",
+           "dedicated_bytes": 217309184,
+           "plausible": true
+          },
+          {
+           "pid": 19044,
+           "name": "claude.exe",
+           "dedicated_bytes": 144519168,
+           "plausible": true
+          }
+         ],
+         "settled_shared_bytes": 485044224,
+         "lingering": false
+        }
+       }
+      ],
+      "outputs": [
+       {
+        "filename": "Klein_00006_.png",
+        "subfolder": "Combine",
+        "type": "output",
+        "seed": 2026092795,
+        "prompt_id": "05988880-c6f2-4119-9b7d-9508ae58d389",
+        "media_type": "image",
+        "asset_id": "d36ed602beab501eb13e1e30d6403e8d"
+       }
+      ],
+      "message": "Complete. GPU memory overflowed 4.0 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was explorer.exe with 0.5 GB.",
+      "failure": null,
+      "parent_assets": [
+       "021731c057d955b4a2487395a37fadf6",
+       "025678cadf5750bf9a3bfa8ed62e6590"
+      ],
+      "references": [
+       {
+        "file": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+        "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+        "bytes": 1158496,
+        "width": 832,
+        "height": 1216,
+        "role": "pose",
+        "slot": 1,
+        "contribution": "",
+        "avoid": "",
+        "transform": {
+         "policy": "FLUX.2 Klein reference latents: every picture is scaled to ~1 megapixel and VAE-encoded; image 1 is the picture you keep, the board pictures follow it as image 2 and image 3"
+        }
+       },
+       {
+        "slot": 2,
+        "role": "pose",
+        "file": null,
+        "pruned": true,
+        "contribution": "",
+        "avoid": ""
+       }
+      ],
+      "project_id": "cd3c581291914ccf806483ee38763656",
+      "started_at": 1790538675.4618552,
+      "finished_at": 1790538741.493318,
+      "elapsed_seconds": 66.03146290779114,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": {
+       "version": 1,
+       "intent": "combine",
+       "preset_id": "combine-klein",
+       "source_asset_id": "021731c057d955b4a2487395a37fadf6",
+       "source_sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+       "reference_file": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+       "template_sha256": "66ce06910ca7552def1635582cbbdf03bc171fa50d8d0a89a60a647771ea5578"
+      },
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": [
+       {
+        "samples": 130,
+        "unknown_samples": 0,
+        "first_at": 1790538675.6899853,
+        "last_at": 1790538741.4873176,
+        "peak_committed_bytes": 87763935232,
+        "peak_at": 1790538733.9324002,
+        "limit_bytes": 102784090112,
+        "min_available_bytes": 15020154880,
+        "index": 0,
+        "prompt_id": "05988880-c6f2-4119-9b7d-9508ae58d389",
+        "interval_seconds": 0.5
+       }
+      ],
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": false,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": false,
+      "abandon_requires_acknowledgement": false,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "This job has already finished",
+      "cancel_needs_confirm": false
+     }
+    }
+   ],
+   "state": {
+    "status": "awaiting_review",
+    "message": "Comparison finished. Review candidates and record your choice.",
+    "attempts": {
+     "0": {
+      "job_id": "227a9fe3-88da-542f-9613-ed4effc4c769",
+      "operation": "comfy.generate.v1",
+      "started_at": 1790538444.5214257,
+      "finished_at": 1790538547.1947446,
+      "status": "completed",
+      "prompt_ids": [
+       "5c3f490b-a390-452c-ab5b-4eaffbb7960f"
+      ]
+     },
+     "1": {
+      "job_id": "6e66575c-28e5-58be-8503-e87474f59eaa",
+      "operation": "comfy.generate.v1",
+      "started_at": 1790538547.5563958,
+      "finished_at": 1790538675.003005,
+      "status": "completed",
+      "prompt_ids": [
+       "8ace1532-9e13-4ed3-8098-0131c4d360e3"
+      ]
+     },
+     "2": {
+      "job_id": "c13dbf5c-2f80-5898-9217-bbaf9bc973f9",
+      "operation": "comfy.generate.v1",
+      "started_at": 1790538675.4422636,
+      "finished_at": 1790538741.500829,
+      "status": "completed",
+      "prompt_ids": [
+       "05988880-c6f2-4119-9b7d-9508ae58d389"
+      ]
+     }
+    },
+    "artifacts": [
+     {
+      "path": "comparison.png",
+      "url": "/api/production/cd3c581291914ccf806483ee38763656/files/comparison.png",
+      "sha256": "485d6f44f758ce44b5340b9aad8b28b57ceaf044e9fde57d9867f07dd3a86d22",
+      "role": "comparison"
+     }
+    ],
+    "stop_requested": false,
+    "review": {
+     "status": "unreviewed",
+     "notes": ""
+    },
+    "reserved": 3,
+    "started_at": 1790538444.1134183,
+    "time_budget": {
+     "version": 1,
+     "revision": 8,
+     "limit_seconds": 1800,
+     "measured_seconds": 297.6559999999881,
+     "unmeasured_seconds": 0.0,
+     "recovery_reason": null,
+     "amendments": [],
+     "remaining_seconds": 1502.3440000000119
+    },
+    "stop_reason": null,
+    "finished_at": 1790538741.759187
+   },
+   "recipe": null,
+   "axis": "engine",
+   "values": [
+    "combine-klein-9b-copypose \u00b7 seed 2026092795",
+    "combine-klein-9b-depth \u00b7 seed 2026092795",
+    "combine-klein \u00b7 seed 2026092795"
+   ],
+   "variants": null,
+   "knowledge_sha256": null,
+   "combine": {
+    "engines": [
+     "combine-klein-9b-copypose",
+     "combine-klein-9b-depth",
+     "combine-klein"
+    ],
+    "seeds": [
+     2026092795
+    ],
+    "estimate": {
+     "per_engine": {
+      "combine-klein-9b-copypose": {
+       "available": true,
+       "estimate_seconds": 104.9,
+       "range_seconds": [
+        54,
+        156
+       ],
+       "confidence": "high",
+       "matched_samples": 6
+      },
+      "combine-klein-9b-depth": {
+       "available": true,
+       "estimate_seconds": 82.7,
+       "range_seconds": [
+        67,
+        99
+       ],
+       "confidence": "high",
+       "matched_samples": 16
+      },
+      "combine-klein": {
+       "available": true,
+       "estimate_seconds": 38.2,
+       "range_seconds": [
+        4,
+        72
+       ],
+       "confidence": "medium",
+       "matched_samples": 2
+      }
+     },
+     "total_seconds": 225.8,
+     "total_upper_seconds": 327,
+     "confidence": "medium",
+     "note": "Read-only estimate from this PC's completed runs at preparation time; not a promise and not rechecked at Start."
+    },
+    "pair": {
+     "kind": "picture",
+     "source_asset_id": "021731c057d955b4a2487395a37fadf6",
+     "source_sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+     "reference_file": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+     "pictures": [
+      {
+       "file": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+       "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f"
+      }
+     ]
+    },
+    "backend_id": "primary"
+   },
+   "can_reconcile_tracking": false,
+   "can_reconcile_batch": false,
+   "put_away": false,
+   "put_away_at": null,
+   "can_put_away": true,
+   "can_bring_back": false,
+   "plan": {
+    "version": 1,
+    "kind": "comparison",
+    "name": "Combine \u00b7 Klein 9B \u00b7 Copy Pose / Klein 9B \u00b7 depth / Klein 4B \u00b7 seed 2026092795",
+    "recipe": null,
+    "axis": "engine",
+    "values": [
+     "combine-klein-9b-copypose \u00b7 seed 2026092795",
+     "combine-klein-9b-depth \u00b7 seed 2026092795",
+     "combine-klein \u00b7 seed 2026092795"
+    ],
+    "variants": null,
+    "knowledge_sha256": null,
+    "parent_project": null,
+    "max_seconds": 1800,
+    "stages": [
+     {
+      "operation": "comfy.generate.v1",
+      "label": "A",
+      "request": {
+       "preset_id": "combine-klein-9b-copypose",
+       "controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is the adult traveller with long dark hair, a centre part, brown eyes and gold earrings; keep that character's face, hair and rendering style and the clothes with their colours (a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots); only the pose and framing change, to image 2's: standing upright, holding a lantern at her side. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "steps": "6",
+        "cfg": "1",
+        "width": "1024",
+        "height": "1536",
+        "lora": "1",
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors",
+        "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+        "seed": 2026092795
+       },
+       "references": [
+        {
+         "file": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+         "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+         "bytes": 1158496,
+         "width": 832,
+         "height": 1216,
+         "role": "pose",
+         "slot": 1,
+         "contribution": "",
+         "avoid": "",
+         "transform": {
+          "policy": "FLUX.2 Klein reference latents with the Copy Pose LoRA at 1.0: your character is image 1 (kept, re-posed), the pose picture is image 2 (only its pose is taken), each scaled to ~1 megapixel and VAE-encoded"
+         }
+        }
+       ],
+       "parent_assets": [
+        "021731c057d955b4a2487395a37fadf6",
+        "025678cadf5750bf9a3bfa8ed62e6590"
+       ],
+       "continuation": {
+        "version": 1,
+        "intent": "combine",
+        "preset_id": "combine-klein-9b-copypose",
+        "source_asset_id": "021731c057d955b4a2487395a37fadf6",
+        "source_sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+        "reference_file": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+        "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956"
+       },
+       "expected_template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+       "batch_count": 1
+      },
+      "graph": {
+       "1": {
+        "class_type": "UnetLoaderGGUF",
+        "inputs": {
+         "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+        }
+       },
+       "2": {
+        "class_type": "CLIPLoader",
+        "inputs": {
+         "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+         "type": "flux2",
+         "device": "default"
+        }
+       },
+       "3": {
+        "class_type": "VAELoader",
+        "inputs": {
+         "vae_name": "flux2-vae.safetensors"
+        }
+       },
+       "4": {
+        "class_type": "CLIPTextEncode",
+        "inputs": {
+         "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is the adult traveller with long dark hair, a centre part, brown eyes and gold earrings; keep that character's face, hair and rendering style and the clothes with their colours (a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots); only the pose and framing change, to image 2's: standing upright, holding a lantern at her side. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+         "clip": [
+          "2",
+          0
+         ]
+        }
+       },
+       "5": {
+        "class_type": "ConditioningZeroOut",
+        "inputs": {
+         "conditioning": [
+          "4",
+          0
+         ]
+        }
+       },
+       "6": {
+        "class_type": "CFGGuider",
+        "inputs": {
+         "model": [
+          "40",
+          0
+         ],
+         "positive": [
+          "23",
+          0
+         ],
+         "negative": [
+          "18",
+          0
+         ],
+         "cfg": 1.0
+        }
+       },
+       "7": {
+        "class_type": "RandomNoise",
+        "inputs": {
+         "noise_seed": 2026092795
+        }
+       },
+       "8": {
+        "class_type": "KSamplerSelect",
+        "inputs": {
+         "sampler_name": "euler"
+        }
+       },
+       "9": {
+        "class_type": "Flux2Scheduler",
+        "inputs": {
+         "steps": 6,
+         "width": 1024,
+         "height": 1536
+        }
+       },
+       "10": {
+        "class_type": "EmptyFlux2LatentImage",
+        "inputs": {
+         "width": 1024,
+         "height": 1536,
+         "batch_size": 1
+        }
+       },
+       "11": {
+        "class_type": "SamplerCustomAdvanced",
+        "inputs": {
+         "noise": [
+          "7",
+          0
+         ],
+         "guider": [
+          "6",
+          0
+         ],
+         "sampler": [
+          "8",
+          0
+         ],
+         "sigmas": [
+          "9",
+          0
+         ],
+         "latent_image": [
+          "10",
+          0
+         ]
+        }
+       },
+       "12": {
+        "class_type": "VAEDecode",
+        "inputs": {
+         "samples": [
+          "11",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "13": {
+        "class_type": "SaveImage",
+        "inputs": {
+         "filename_prefix": "Combine/Klein-9B-copypose",
+         "images": [
+          "12",
+          0
+         ]
+        }
+       },
+       "14": {
+        "class_type": "LoadImage",
+        "inputs": {
+         "image": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png"
+        }
+       },
+       "15": {
+        "class_type": "ImageScaleToTotalPixels",
+        "inputs": {
+         "image": [
+          "14",
+          0
+         ],
+         "upscale_method": "lanczos",
+         "megapixels": 1.0,
+         "resolution_steps": 1
+        }
+       },
+       "16": {
+        "class_type": "VAEEncode",
+        "inputs": {
+         "pixels": [
+          "15",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "17": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "4",
+          0
+         ],
+         "latent": [
+          "16",
+          0
+         ]
+        }
+       },
+       "18": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "5",
+          0
+         ],
+         "latent": [
+          "16",
+          0
+         ]
+        }
+       },
+       "20": {
+        "class_type": "LoadImage",
+        "inputs": {
+         "image": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png"
+        }
+       },
+       "21": {
+        "class_type": "ImageScaleToTotalPixels",
+        "inputs": {
+         "image": [
+          "20",
+          0
+         ],
+         "upscale_method": "lanczos",
+         "megapixels": 1.0,
+         "resolution_steps": 1
+        }
+       },
+       "22": {
+        "class_type": "VAEEncode",
+        "inputs": {
+         "pixels": [
+          "21",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "23": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "17",
+          0
+         ],
+         "latent": [
+          "22",
+          0
+         ]
+        }
+       },
+       "40": {
+        "class_type": "LoraLoaderModelOnly",
+        "inputs": {
+         "lora_name": "KleinBase9B_PoseTransfer.safetensors",
+         "strength_model": 1.0,
+         "model": [
+          "1",
+          0
+         ]
+        }
+       }
+      },
+      "graph_sha256": "ea7540cb4446dbfabf028798c0b5f291cb407517032a8dd55afd790db8cb1de1",
+      "engine": "combine-klein-9b-copypose",
+      "seed": 2026092795
+     },
+     {
+      "operation": "comfy.generate.v1",
+      "label": "B",
+      "request": {
+       "preset_id": "combine-klein-9b-depth",
+       "controls": {
+        "width": "1024",
+        "height": "1536",
+        "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+        "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing upright, holding a lantern at her side. Draw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+        "seed": 2026092795
+       },
+       "references": [
+        {
+         "file": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+         "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+         "bytes": 1158496,
+         "width": 832,
+         "height": 1216,
+         "role": "pose",
+         "slot": 1,
+         "contribution": "",
+         "avoid": "",
+         "transform": {
+          "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+         }
+        }
+       ],
+       "parent_assets": [
+        "021731c057d955b4a2487395a37fadf6",
+        "025678cadf5750bf9a3bfa8ed62e6590"
+       ],
+       "continuation": {
+        "version": 1,
+        "intent": "combine",
+        "preset_id": "combine-klein-9b-depth",
+        "source_asset_id": "021731c057d955b4a2487395a37fadf6",
+        "source_sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+        "reference_file": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+        "template_sha256": "a50a7e86133cab6fde3defc78ceb37846ce296718733b03515f0f2726e9d61af"
+       },
+       "expected_template_sha256": "a50a7e86133cab6fde3defc78ceb37846ce296718733b03515f0f2726e9d61af",
+       "batch_count": 1
+      },
+      "graph": {
+       "1": {
+        "class_type": "UnetLoaderGGUF",
+        "inputs": {
+         "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+        }
+       },
+       "2": {
+        "class_type": "CLIPLoader",
+        "inputs": {
+         "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+         "type": "flux2",
+         "device": "default"
+        }
+       },
+       "3": {
+        "class_type": "VAELoader",
+        "inputs": {
+         "vae_name": "flux2-vae.safetensors"
+        }
+       },
+       "4": {
+        "class_type": "CLIPTextEncode",
+        "inputs": {
+         "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing upright, holding a lantern at her side. Draw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+         "clip": [
+          "2",
+          0
+         ]
+        }
+       },
+       "5": {
+        "class_type": "ConditioningZeroOut",
+        "inputs": {
+         "conditioning": [
+          "4",
+          0
+         ]
+        }
+       },
+       "6": {
+        "class_type": "CFGGuider",
+        "inputs": {
+         "model": [
+          "1",
+          0
+         ],
+         "positive": [
+          "23",
+          0
+         ],
+         "negative": [
+          "18",
+          0
+         ],
+         "cfg": 1.0
+        }
+       },
+       "7": {
+        "class_type": "RandomNoise",
+        "inputs": {
+         "noise_seed": 2026092795
+        }
+       },
+       "8": {
+        "class_type": "KSamplerSelect",
+        "inputs": {
+         "sampler_name": "euler"
+        }
+       },
+       "9": {
+        "class_type": "Flux2Scheduler",
+        "inputs": {
+         "steps": 6,
+         "width": 1024,
+         "height": 1536
+        }
+       },
+       "10": {
+        "class_type": "EmptyFlux2LatentImage",
+        "inputs": {
+         "width": 1024,
+         "height": 1536,
+         "batch_size": 1
+        }
+       },
+       "11": {
+        "class_type": "SamplerCustomAdvanced",
+        "inputs": {
+         "noise": [
+          "7",
+          0
+         ],
+         "guider": [
+          "6",
+          0
+         ],
+         "sampler": [
+          "8",
+          0
+         ],
+         "sigmas": [
+          "9",
+          0
+         ],
+         "latent_image": [
+          "10",
+          0
+         ]
+        }
+       },
+       "12": {
+        "class_type": "VAEDecode",
+        "inputs": {
+         "samples": [
+          "11",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "13": {
+        "class_type": "SaveImage",
+        "inputs": {
+         "filename_prefix": "Combine/Klein-9B-depth",
+         "images": [
+          "12",
+          0
+         ]
+        }
+       },
+       "14": {
+        "class_type": "LoadImage",
+        "inputs": {
+         "image": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png"
+        }
+       },
+       "30": {
+        "class_type": "DepthAnythingV2Preprocessor",
+        "inputs": {
+         "ckpt_name": "depth_anything_v2_vitl.pth",
+         "resolution": 1024,
+         "image": [
+          "14",
+          0
+         ]
+        }
+       },
+       "15": {
+        "class_type": "ImageScaleToTotalPixels",
+        "inputs": {
+         "image": [
+          "30",
+          0
+         ],
+         "upscale_method": "lanczos",
+         "megapixels": 1.0,
+         "resolution_steps": 1
+        }
+       },
+       "16": {
+        "class_type": "VAEEncode",
+        "inputs": {
+         "pixels": [
+          "35",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "17": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "4",
+          0
+         ],
+         "latent": [
+          "16",
+          0
+         ]
+        }
+       },
+       "18": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "5",
+          0
+         ],
+         "latent": [
+          "16",
+          0
+         ]
+        }
+       },
+       "20": {
+        "class_type": "LoadImage",
+        "inputs": {
+         "image": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png"
+        }
+       },
+       "21": {
+        "class_type": "ImageScaleToTotalPixels",
+        "inputs": {
+         "image": [
+          "20",
+          0
+         ],
+         "upscale_method": "lanczos",
+         "megapixels": 1.0,
+         "resolution_steps": 1
+        }
+       },
+       "22": {
+        "class_type": "VAEEncode",
+        "inputs": {
+         "pixels": [
+          "21",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "23": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "17",
+          0
+         ],
+         "latent": [
+          "22",
+          0
+         ]
+        }
+       },
+       "31": {
+        "class_type": "SolidMask",
+        "inputs": {
+         "value": 0.0,
+         "width": 100,
+         "height": 100
+        }
+       },
+       "32": {
+        "class_type": "SolidMask",
+        "inputs": {
+         "value": 1.0,
+         "width": 100,
+         "height": 100
+        }
+       },
+       "33": {
+        "class_type": "MaskComposite",
+        "inputs": {
+         "destination": [
+          "31",
+          0
+         ],
+         "source": [
+          "32",
+          0
+         ],
+         "x": 0,
+         "y": 100,
+         "operation": "add"
+        }
+       },
+       "34": {
+        "class_type": "EmptyImage",
+        "inputs": {
+         "width": 64,
+         "height": 64,
+         "batch_size": 1,
+         "color": 0
+        }
+       },
+       "35": {
+        "class_type": "ImageCompositeMasked",
+        "inputs": {
+         "destination": [
+          "15",
+          0
+         ],
+         "source": [
+          "34",
+          0
+         ],
+         "x": 0,
+         "y": 0,
+         "resize_source": true,
+         "mask": [
+          "33",
+          0
+         ]
+        }
+       }
+      },
+      "graph_sha256": "b4a70872e6c113728b46e5de1d38e7d8a8946c094e9cd6787f88874d226686df",
+      "engine": "combine-klein-9b-depth",
+      "seed": 2026092795
+     },
+     {
+      "operation": "comfy.generate.v1",
+      "label": "C",
+      "request": {
+       "preset_id": "combine-klein",
+       "controls": {
+        "width": "1024",
+        "height": "1536",
+        "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+        "positive": "Redraw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings, wearing a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots from image 1 in the pose of the person in image 2: standing upright, holding a lantern at her side. Keep the face, the hair, the outfit and its colours, and image 1's rendering style. One figure only, nobody else in the picture. Do not copy the person from image 2, their clothing or their colours.",
+        "seed": 2026092795
+       },
+       "references": [
+        {
+         "file": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+         "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+         "bytes": 1158496,
+         "width": 832,
+         "height": 1216,
+         "role": "pose",
+         "slot": 1,
+         "contribution": "",
+         "avoid": "",
+         "transform": {
+          "policy": "FLUX.2 Klein reference latents: every picture is scaled to ~1 megapixel and VAE-encoded; image 1 is the picture you keep, the board pictures follow it as image 2 and image 3"
+         }
+        },
+        {
+         "slot": 2,
+         "role": "pose",
+         "file": null,
+         "pruned": true,
+         "contribution": "",
+         "avoid": ""
+        }
+       ],
+       "parent_assets": [
+        "021731c057d955b4a2487395a37fadf6",
+        "025678cadf5750bf9a3bfa8ed62e6590"
+       ],
+       "continuation": {
+        "version": 1,
+        "intent": "combine",
+        "preset_id": "combine-klein",
+        "source_asset_id": "021731c057d955b4a2487395a37fadf6",
+        "source_sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+        "reference_file": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+        "template_sha256": "66ce06910ca7552def1635582cbbdf03bc171fa50d8d0a89a60a647771ea5578"
+       },
+       "expected_template_sha256": "66ce06910ca7552def1635582cbbdf03bc171fa50d8d0a89a60a647771ea5578",
+       "batch_count": 1
+      },
+      "graph": {
+       "1": {
+        "class_type": "UNETLoader",
+        "inputs": {
+         "unet_name": "flux-2-klein-4b-fp8.safetensors",
+         "weight_dtype": "default"
+        }
+       },
+       "2": {
+        "class_type": "CLIPLoader",
+        "inputs": {
+         "clip_name": "qwen_3_4b.safetensors",
+         "type": "flux2",
+         "device": "default"
+        }
+       },
+       "3": {
+        "class_type": "VAELoader",
+        "inputs": {
+         "vae_name": "flux2-vae.safetensors"
+        }
+       },
+       "4": {
+        "class_type": "CLIPTextEncode",
+        "inputs": {
+         "text": "Redraw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings, wearing a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots from image 1 in the pose of the person in image 2: standing upright, holding a lantern at her side. Keep the face, the hair, the outfit and its colours, and image 1's rendering style. One figure only, nobody else in the picture. Do not copy the person from image 2, their clothing or their colours.",
+         "clip": [
+          "2",
+          0
+         ]
+        }
+       },
+       "5": {
+        "class_type": "ConditioningZeroOut",
+        "inputs": {
+         "conditioning": [
+          "4",
+          0
+         ]
+        }
+       },
+       "6": {
+        "class_type": "CFGGuider",
+        "inputs": {
+         "model": [
+          "1",
+          0
+         ],
+         "positive": [
+          "23",
+          0
+         ],
+         "negative": [
+          "18",
+          0
+         ],
+         "cfg": 1.0
+        }
+       },
+       "7": {
+        "class_type": "RandomNoise",
+        "inputs": {
+         "noise_seed": 2026092795
+        }
+       },
+       "8": {
+        "class_type": "KSamplerSelect",
+        "inputs": {
+         "sampler_name": "euler"
+        }
+       },
+       "9": {
+        "class_type": "Flux2Scheduler",
+        "inputs": {
+         "steps": 6,
+         "width": 1024,
+         "height": 1536
+        }
+       },
+       "10": {
+        "class_type": "EmptyFlux2LatentImage",
+        "inputs": {
+         "width": 1024,
+         "height": 1536,
+         "batch_size": 1
+        }
+       },
+       "11": {
+        "class_type": "SamplerCustomAdvanced",
+        "inputs": {
+         "noise": [
+          "7",
+          0
+         ],
+         "guider": [
+          "6",
+          0
+         ],
+         "sampler": [
+          "8",
+          0
+         ],
+         "sigmas": [
+          "9",
+          0
+         ],
+         "latent_image": [
+          "10",
+          0
+         ]
+        }
+       },
+       "12": {
+        "class_type": "VAEDecode",
+        "inputs": {
+         "samples": [
+          "11",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "13": {
+        "class_type": "SaveImage",
+        "inputs": {
+         "filename_prefix": "Combine/Klein",
+         "images": [
+          "12",
+          0
+         ]
+        }
+       },
+       "14": {
+        "class_type": "LoadImage",
+        "inputs": {
+         "image": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png"
+        }
+       },
+       "15": {
+        "class_type": "ImageScaleToTotalPixels",
+        "inputs": {
+         "image": [
+          "14",
+          0
+         ],
+         "upscale_method": "lanczos",
+         "megapixels": 1.0,
+         "resolution_steps": 1
+        }
+       },
+       "16": {
+        "class_type": "VAEEncode",
+        "inputs": {
+         "pixels": [
+          "15",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "17": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "4",
+          0
+         ],
+         "latent": [
+          "16",
+          0
+         ]
+        }
+       },
+       "18": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "5",
+          0
+         ],
+         "latent": [
+          "16",
+          0
+         ]
+        }
+       },
+       "20": {
+        "class_type": "LoadImage",
+        "inputs": {
+         "image": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png"
+        }
+       },
+       "21": {
+        "class_type": "ImageScaleToTotalPixels",
+        "inputs": {
+         "image": [
+          "20",
+          0
+         ],
+         "upscale_method": "lanczos",
+         "megapixels": 1.0,
+         "resolution_steps": 1
+        }
+       },
+       "22": {
+        "class_type": "VAEEncode",
+        "inputs": {
+         "pixels": [
+          "21",
+          0
+         ],
+         "vae": [
+          "3",
+          0
+         ]
+        }
+       },
+       "23": {
+        "class_type": "ReferenceLatent",
+        "inputs": {
+         "conditioning": [
+          "17",
+          0
+         ],
+         "latent": [
+          "22",
+          0
+         ]
+        }
+       }
+      },
+      "graph_sha256": "2fc2c9c7ce1f0469746afb0e123d6abebd01af24c47d4e00850fd55cf2d495dd",
+      "engine": "combine-klein",
+      "seed": 2026092795
+     }
+    ],
+    "bundle": {
+     "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+     "comfy_url": "http://127.0.0.1:8188",
+     "models": [
+      {
+       "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\flux-2-klein-9b-Q6_K.gguf",
+       "bytes": 7865424160,
+       "mtime_ns": 1789428318375020900,
+       "sha256": "1cd667293607431e79c9e7e01ecf5c602bd00539c2c0f49d4817a62998b5fe98",
+       "file": "diffusion_models/flux-2-klein-9b-Q6_K.gguf"
+      },
+      {
+       "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen_3_8b_fp8mixed.safetensors",
+       "bytes": 8664848742,
+       "mtime_ns": 1789427890825502600,
+       "sha256": "abad16806e0cbabc54e0325d6565847443fe396d5f0be38bb3cd3fe75a1201d6",
+       "file": "text_encoders/qwen_3_8b_fp8mixed.safetensors"
+      },
+      {
+       "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\flux2-vae.safetensors",
+       "bytes": 336211292,
+       "mtime_ns": 1789092667523900100,
+       "sha256": "868fe7b343cc8f3a19dbcfcafbc3d5f888802be3f89bd81b65b3621a066ce8f3",
+       "file": "vae/flux2-vae.safetensors"
+      },
+      {
+       "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\KleinBase9B_PoseTransfer.safetensors",
+       "bytes": 82866728,
+       "mtime_ns": 1789440451978316600,
+       "sha256": "b2148be5556e620d25f41f744430d200d1b37e7163f04f90e75e0e6ae857d0c1",
+       "file": "loras/KleinBase9B_PoseTransfer.safetensors"
+      },
+      {
+       "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\flux-2-klein-4b-fp8.safetensors",
+       "bytes": 4070624520,
+       "mtime_ns": 1789091722956834200,
+       "sha256": "97ed34fe0567e436200f2faee3939b88f2b5d99f8af2a4dc16532c4245c0ccb6",
+       "file": "diffusion_models/flux-2-klein-4b-fp8.safetensors"
+      },
+      {
+       "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen_3_4b.safetensors",
+       "bytes": 8044982048,
+       "mtime_ns": 1789094366726076900,
+       "sha256": "6c671498573ac2f7a5501502ccce8d2b08ea6ca2f661c458e708f36b36edfc5a",
+       "file": "text_encoders/qwen_3_4b.safetensors"
+      }
+     ],
+     "inputs": [
+      {
+       "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\input\\9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+       "sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+       "bytes": 1184091
+      },
+      {
+       "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\input\\dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+       "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+       "bytes": 1158496
+      }
+     ],
+     "schema_sha256": "13f6ce65da37f117ae5551efda3634dd0025a5986ef850ffc7a728ffbc2e8545",
+     "node_classes": [
+      "CFGGuider",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "ConditioningZeroOut",
+      "DepthAnythingV2Preprocessor",
+      "EmptyFlux2LatentImage",
+      "EmptyImage",
+      "Flux2Scheduler",
+      "ImageCompositeMasked",
+      "ImageScaleToTotalPixels",
+      "KSamplerSelect",
+      "LoadImage",
+      "LoraLoaderModelOnly",
+      "MaskComposite",
+      "RandomNoise",
+      "ReferenceLatent",
+      "SamplerCustomAdvanced",
+      "SaveImage",
+      "SolidMask",
+      "UNETLoader",
+      "UnetLoaderGGUF",
+      "VAEDecode",
+      "VAEEncode",
+      "VAELoader"
+     ],
+     "system": {
+      "os": "win32",
+      "ram_total": 34064613376,
+      "ram_free": 5326385152,
+      "comfyui_version": "0.35.0",
+      "required_frontend_version": "1.51.10",
+      "installed_templates_version": "0.11.57",
+      "required_templates_version": "0.11.57",
+      "comfy_package_versions": [
+       {
+        "name": "comfyui-frontend-package",
+        "installed": "1.51.10",
+        "required": "1.51.10"
+       },
+       {
+        "name": "comfyui-workflow-templates",
+        "installed": "0.11.57",
+        "required": "0.11.57"
+       },
+       {
+        "name": "comfyui-embedded-docs",
+        "installed": "0.5.11",
+        "required": "0.5.11"
+       },
+       {
+        "name": "comfy-kitchen",
+        "installed": "0.2.33",
+        "required": "0.2.33"
+       },
+       {
+        "name": "comfy-aimdo",
+        "installed": "0.5.3",
+        "required": "0.5.3"
+       }
+      ],
+      "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+      "pytorch_version": "2.9.1+rocm7.2.1",
+      "embedded_python": true,
+      "deploy_environment": "local-portable",
+      "argv": [
+       "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\main.py",
+       "--windows-standalone-build",
+       "--disable-auto-launch",
+       "--disable-api-nodes",
+       "--preview-method",
+       "latent2rgb",
+       "--listen",
+       "127.0.0.1",
+       "--port",
+       "8188",
+       "--reserve-vram",
+       "0.6",
+       "--disable-pinned-memory",
+       "--extra-model-paths-config",
+       "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\runtime-patches\\comfy-extensions\\extra-paths.yaml"
+      ]
+     },
+     "devices": [
+      {
+       "name": "cuda:0 AMD Radeon RX 9070 XT : native",
+       "type": "cuda",
+       "index": 0,
+       "vram_total": 17095983104,
+       "vram_free": 16535519232,
+       "torch_vram_total": 79691776,
+       "torch_vram_free": 0
+      }
+     ],
+     "measured_at": 1790538442.2203488,
+     "terms_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards. The Copy Pose LoRA (civitai model 2380153, 'Copy Pose [Qwen & Klein]' by ReltivlyObjectv) carries civitai per-file flags read on 2026-09-15: Rent only, no Image, no Sell, and its description says non-commercial use only (models/library.json). Every picture you attach keeps its own terms. A successful render is not legal clearance.\n\nFLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. The depth map comes from Depth Anything V2 Large (depth-anything/Depth-Anything-V2-Large, licence cc-by-nc-4.0 read from the Hugging Face API on 2026-09-15; fetched by the comfyui_controlnet_aux node on first use). A successful render is not legal clearance.\n\nFLUX.2 Klein 4B is Apache-2.0 (black-forest-labs/FLUX.2-klein-4b-fp8); the Qwen3 4B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. A successful render is not legal clearance.",
+     "verification": "Model content hashes cached only while size and modification time match; inputs rehashed before each stage. Schema hash excludes changing file-choice inventories."
+    },
+    "repair_allowance": 0,
+    "review": "unreviewed",
+    "created_at": 1790538443.4549077,
+    "character_source": null,
+    "combine": {
+     "engines": [
+      "combine-klein-9b-copypose",
+      "combine-klein-9b-depth",
+      "combine-klein"
+     ],
+     "seeds": [
+      2026092795
+     ],
+     "estimate": {
+      "per_engine": {
+       "combine-klein-9b-copypose": {
+        "available": true,
+        "estimate_seconds": 104.9,
+        "range_seconds": [
+         54,
+         156
+        ],
+        "confidence": "high",
+        "matched_samples": 6
+       },
+       "combine-klein-9b-depth": {
+        "available": true,
+        "estimate_seconds": 82.7,
+        "range_seconds": [
+         67,
+         99
+        ],
+        "confidence": "high",
+        "matched_samples": 16
+       },
+       "combine-klein": {
+        "available": true,
+        "estimate_seconds": 38.2,
+        "range_seconds": [
+         4,
+         72
+        ],
+        "confidence": "medium",
+        "matched_samples": 2
+       }
+      },
+      "total_seconds": 225.8,
+      "total_upper_seconds": 327,
+      "confidence": "medium",
+      "note": "Read-only estimate from this PC's completed runs at preparation time; not a promise and not rechecked at Start."
+     },
+     "pair": {
+      "kind": "picture",
+      "source_asset_id": "021731c057d955b4a2487395a37fadf6",
+      "source_sha256": "7801a5dc68ad41f0b708bc02571a5bde4a32bfa496331d55965cb8f82784c3e3",
+      "reference_file": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+      "pictures": [
+       {
+        "file": "dab316bd18154e6f93ce81097233d7a6_Anima-v1-Baseline_00005_.png.png",
+        "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f"
+       }
+      ]
+     },
+     "backend_id": "primary"
+    },
+    "sha256": "731686ef150a7e32c449bd8ae89c75e437659faf99a72c591c0286ead2363190"
+   }
+  },
+  "finished_seen_at": 1790538747.5096555,
+  "wall_from_start_s": 303.5,
+  "commit_peak_pct_sampled_10s": 84.8,
+  "jobs": [
+   {
+    "id": "c13dbf5c-2f80-5898-9217-bbaf9bc973f9",
+    "preset_id": "combine-klein",
+    "status": "completed",
+    "message": "Complete. GPU memory overflowed 4.0 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was explorer.exe with 0.5 GB.",
+    "prompt_ids": [
+     "05988880-c6f2-4119-9b7d-9508ae58d389"
+    ],
+    "batch_count": 1,
+    "elapsed_seconds": 66.03146290779114,
+    "created_at": 1790538675.41171,
+    "started_at": 1790538675.4618552,
+    "finished_at": 1790538741.493318,
+    "controls": {
+     "width": "1024",
+     "height": "1536",
+     "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+     "positive": "Redraw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings, wearing a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots from image 1 in the pose of the person in image 2: standing upright, holding a lantern at her side. Keep the face, the hair, the outfit and its colours, and image 1's rendering style. One figure only, nobody else in the picture. Do not copy the person from image 2, their clothing or their colours.",
+     "seed": 2026092795
+    },
+    "outputs": [
+     {
+      "filename": "Klein_00006_.png",
+      "subfolder": "Combine",
+      "type": "output",
+      "seed": 2026092795,
+      "prompt_id": "05988880-c6f2-4119-9b7d-9508ae58d389",
+      "media_type": "image",
+      "asset_id": "d36ed602beab501eb13e1e30d6403e8d"
+     }
+    ]
+   },
+   {
+    "id": "6e66575c-28e5-58be-8503-e87474f59eaa",
+    "preset_id": "combine-klein-9b-depth",
+    "status": "completed",
+    "message": "Complete. GPU memory overflowed 2.3 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+    "prompt_ids": [
+     "8ace1532-9e13-4ed3-8098-0131c4d360e3"
+    ],
+    "batch_count": 1,
+    "elapsed_seconds": 127.41932344436646,
+    "created_at": 1790538547.5316193,
+    "started_at": 1790538547.5767198,
+    "finished_at": 1790538674.9960432,
+    "controls": {
+     "width": "1024",
+     "height": "1536",
+     "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+     "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing upright, holding a lantern at her side. Draw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+     "seed": 2026092795
+    },
+    "outputs": [
+     {
+      "filename": "Klein-9B-depth_00017_.png",
+      "subfolder": "Combine",
+      "type": "output",
+      "seed": 2026092795,
+      "prompt_id": "8ace1532-9e13-4ed3-8098-0131c4d360e3",
+      "media_type": "image",
+      "asset_id": "40a93ce9313558819472549e9132a4c7"
+     }
+    ]
+   },
+   {
+    "id": "227a9fe3-88da-542f-9613-ed4effc4c769",
+    "preset_id": "combine-klein-9b-copypose",
+    "status": "completed",
+    "message": "Complete. GPU memory overflowed 2.3 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+    "prompt_ids": [
+     "5c3f490b-a390-452c-ab5b-4eaffbb7960f"
+    ],
+    "batch_count": 1,
+    "elapsed_seconds": 102.64651608467102,
+    "created_at": 1790538444.492298,
+    "started_at": 1790538444.5447242,
+    "finished_at": 1790538547.1912403,
+    "controls": {
+     "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is the adult traveller with long dark hair, a centre part, brown eyes and gold earrings; keep that character's face, hair and rendering style and the clothes with their colours (a navy double-breasted coat with brass buttons, a teal scarf, dark trousers and brown lace-up boots); only the pose and framing change, to image 2's: standing upright, holding a lantern at her side. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+     "steps": "6",
+     "cfg": "1",
+     "width": "1024",
+     "height": "1536",
+     "lora": "1",
+     "lora_name": "KleinBase9B_PoseTransfer.safetensors",
+     "last_reference": "9a0d72a0a476496a82b9aa6a958cbed1_Anima-v1-Baseline_00004_.png.png",
+     "seed": 2026092795
+    },
+    "outputs": [
+     {
+      "filename": "Klein-9B-copypose_00007_.png",
+      "subfolder": "Combine",
+      "type": "output",
+      "seed": 2026092795,
+      "prompt_id": "5c3f490b-a390-452c-ab5b-4eaffbb7960f",
+      "media_type": "image",
+      "asset_id": "7a870a8be71150db901939c1578e0073"
+     }
+    ]
+   }
+  ],
+  "log_after": {
+   "got_prompt": 7,
+   "interrupted": 0,
+   "executed": 7,
+   "entries": 253
+  },
+  "queue_after": [
+   [],
+   []
+  ]
+ }
+}

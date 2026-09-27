@@ -1,0 +1,204 @@
+{
+ "label": "sdxl",
+ "parent_asset": "8cb09d62bb82552e920ac23091939802",
+ "strength": "strong",
+ "events": [
+  {
+   "t": 1790534909.328,
+   "kind": "asset_opened",
+   "vary_buttons": [
+    "Vary subtle",
+    "Vary strong"
+   ],
+   "hint": "On SDXL \u2022 gentle reference variation \u00b7 2 pictures \u00b7 denoise 0.3 / 0.55 (starting values)"
+  },
+  {
+   "t": 1790534912.376,
+   "kind": "vary_pressed",
+   "status": "Vary strong prepared on SDXL \u2022 gentle reference variation from this picture: denoise 0.55 (a starting value, not yet judged), 2 new seeds from 1361682764, about 2 min per picture here \u00b7 1 run. Nothing was generated; press Generate to run the round.",
+   "prepared": {
+    "preset": null,
+    "batch": "2",
+    "denoise": null,
+    "positive": "a small stone cottage with a red door beside a quiet stream in a spring meadow, wildflowers, soft morning light, storybook fantasy illustration, detailed, no people",
+    "hash": "#create"
+   },
+   "submitted_so_far": []
+  },
+  {
+   "t": 1790534912.434,
+   "kind": "generate_state",
+   "disabled": false,
+   "text": "Generate source-based pass \u2192"
+  },
+  {
+   "t": 1790534916.593,
+   "kind": "generate_pressed",
+   "new_jobs": [
+    [
+     "c18e4386-4a89-4c8e-8879-466131ebadd4",
+     "gentle-variation",
+     2,
+     "running"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790534912.488,
+     "/api/jobs"
+    ]
+   ]
+  }
+ ],
+ "job_id": "c18e4386-4a89-4c8e-8879-466131ebadd4",
+ "preset": "gentle-variation",
+ "status": "completed",
+ "message": "Complete, but slowly: GPU memory spilled 4.5 GB into system RAM and 0.6 GB was still there after the job, so the next job will page too. The largest other GPU user was llama-server.exe with 6.0 GB. The Studio unloads ComfyUI's models before the next job; if the spill stays, close GPU-heavy apps or restart ComfyUI.",
+ "batch_count": 2,
+ "prompt_ids": [
+  "31c8d966-16d1-4247-89c7-5baef64d45c1",
+  "6cbbc300-76bb-4aa9-8db1-2d080226ddff"
+ ],
+ "outputs": [
+  {
+   "filename": "SDXL-Gentle-Variation_00008_.png",
+   "subfolder": "Studio",
+   "seed": 1361682764,
+   "prompt_id": "31c8d966-16d1-4247-89c7-5baef64d45c1",
+   "asset_id": "9c285f7d3f305729aa09b72c2232606f"
+  },
+  {
+   "filename": "SDXL-Gentle-Variation_00009_.png",
+   "subfolder": "Studio",
+   "seed": 1361682765,
+   "prompt_id": "6cbbc300-76bb-4aa9-8db1-2d080226ddff",
+   "asset_id": "021906e2499e5d718b833b73c268cd19"
+  }
+ ],
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "31c8d966-16d1-4247-89c7-5baef64d45c1",
+   "seed": 1361682764,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 4847292416,
+    "peak_dedicated_bytes": 8570699776,
+    "samples": 241,
+    "spilled": true,
+    "top_holders": [
+     {
+      "pid": 16768,
+      "name": "llama-server.exe",
+      "dedicated_bytes": 6446768128,
+      "plausible": true
+     },
+     {
+      "pid": 13928,
+      "name": "explorer.exe",
+      "dedicated_bytes": 556126208,
+      "plausible": true
+     },
+     {
+      "pid": 20880,
+      "name": "ProtonVPN.Client.exe",
+      "dedicated_bytes": 208658432,
+      "plausible": true
+     }
+    ],
+    "settled_shared_bytes": 686542848,
+    "lingering": true
+   }
+  },
+  {
+   "index": 1,
+   "prompt_id": "6cbbc300-76bb-4aa9-8db1-2d080226ddff",
+   "seed": 1361682765,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 4794863616,
+    "peak_dedicated_bytes": 8642002944,
+    "samples": 239,
+    "spilled": true,
+    "top_holders": [
+     {
+      "pid": 16768,
+      "name": "llama-server.exe",
+      "dedicated_bytes": 6446768128,
+      "plausible": true
+     },
+     {
+      "pid": 13928,
+      "name": "explorer.exe",
+      "dedicated_bytes": 556126208,
+      "plausible": true
+     },
+     {
+      "pid": 20880,
+      "name": "ProtonVPN.Client.exe",
+      "dedicated_bytes": 208658432,
+      "plausible": true
+     }
+    ],
+    "settled_shared_bytes": 365678592,
+    "lingering": false
+   }
+  }
+ ],
+ "graph_denoise": [
+  0.55
+ ],
+ "parent_assets": [
+  "8cb09d62bb82552e920ac23091939802"
+ ],
+ "continuation": {
+  "intent": "edit",
+  "preset_id": "gentle-variation",
+  "reference_file": "619b52aa04f84c9ba16c54a9f812928a_SDXL_00003_.png.png",
+  "source_asset_id": "8cb09d62bb82552e920ac23091939802",
+  "source_sha256": "61423162750878cff188c717d425dd0eb8fb273cfd891f2542bd6c68a9443bdf",
+  "template_sha256": "8e585df70da26bc99fbaf9015ac8b16023931731d15feee6360b35e9eecee059",
+  "version": 1
+ },
+ "controls": {
+  "positive": "a small stone cottage with a red door beside a quiet stream in a spring meadow, wildflowers, soft morning light, storybook fantasy illustration, detailed, no people",
+  "negative": "blurry, low quality, watermark, distorted",
+  "seed": "1361682764",
+  "steps": "30",
+  "cfg": "6",
+  "denoise": "0.55",
+  "reference": "619b52aa04f84c9ba16c54a9f812928a_SDXL_00003_.png.png"
+ },
+ "created_at": 1790534912.6680808,
+ "started_at": 1790534912.7158403,
+ "finished_at": 1790535154.2260053,
+ "elapsed_seconds": 241.51016497612,
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790534901.929,
+   "/api/estimate"
+  ],
+  [
+   1790534903.038,
+   "/api/estimate"
+  ],
+  [
+   1790534909.356,
+   "/api/assets/reference"
+  ],
+  [
+   1790534909.636,
+   "/api/estimate"
+  ],
+  [
+   1790534912.488,
+   "/api/jobs"
+  ],
+  [
+   1790534912.953,
+   "/api/estimate"
+  ]
+ ],
+ "dialogs": []
+}
