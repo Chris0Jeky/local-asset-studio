@@ -1,0 +1,15 @@
+{
+  "preset_id": "flux-edit",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png",
+    "positive": "Change one thing: make it a quiet early morning instead of night. Soft cool daylight comes through the window, the rain has stopped and the sky outside is pale blue-grey over a calm morning city, the train is gone, the monitor screen is dark and switched off, and the warm desk lamp is still on. Keep everything else exactly as it is: the camera angle and framing, the room, the plain graphite wall on the left, the window frame, the desk, the chair, the lamp and the monitor in the same places, the floor, and the hand-painted cel anime film background style.",
+    "seed": 2026092781,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\flux-edit-api.json",
+  "created_at": 1790525499.9119754,
+  "references": [],
+  "parent_assets": []
+}

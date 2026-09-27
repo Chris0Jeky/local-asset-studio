@@ -1,0 +1,164 @@
+{
+ "schema": "studio.theme-asset.receipt/v1-proposed",
+ "status": "art-reviewed",
+ "requested_asset_id": "retro-anime-master",
+ "brief_revision": "brief.py show retro-anime-master @ origin/main ffe5b3f9",
+ "production": {
+  "method": "derive (upscale of the owner-chosen anchor)",
+  "provider": "local ComfyUI 0.35.0 (primary, 127.0.0.1:8188) via Local Asset Studio",
+  "tool_action": "Studio upload + ComfyUI ImageUpscaleWithModel",
+  "reported_model": "RealESRGAN_x4plus_anime_6B.pth (graph workflows/api/anime-esrgan-api.json with ImageScaleBy 0.5 -> 1.0)",
+  "output_id": "f5d51a36-097a-411a-ad8f-d8bd9e868688",
+  "produced_at": "2026-09-27T17:24:19+0100",
+  "prompt_record": null,
+  "input_anchors": [
+   {
+    "id": "retro-anime-master-z2",
+    "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "studio_job": "c69e6e18-4739-458d-b546-1dd6e8174e19",
+    "prompt_id": "adfc94c4-0de0-44af-ae72-72b3133742f0"
+   }
+  ]
+ },
+ "source": {
+  "item_id": null,
+  "original_page": null,
+  "creator_credit": null,
+  "terms_evidence": null,
+  "retrieved_at": null,
+  "review_status": "not-applicable: generated locally from the owner-chosen anchor",
+  "terms_evidence_reason": "No terms page was retained in this pass; licence status is not cleared (see unknowns)."
+ },
+ "files": [
+  {
+   "relative_path": "retro-anime-master/master/retro-anime-master--3840x2160--ma.png",
+   "sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+   "bytes": 2736794,
+   "width": 3840,
+   "height": 2160,
+   "format": "PNG",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-master/renditions/retro-anime-master--1280x720--preview.webp",
+   "sha256": "4ff684105c71393102007e42a03695cbfadfe027094a3e865d879a92632ba91d",
+   "bytes": 49262,
+   "width": 1280,
+   "height": 720,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-master/renditions/retro-anime-master--1280x720--preview.avif",
+   "sha256": "fd5f6cf72c03dd5b03a69fb119efe61d0a9d7b652adaba32e4c62cdbcc41614a",
+   "bytes": 53965,
+   "width": 1280,
+   "height": 720,
+   "format": "AVIF",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-master/renditions/retro-anime-master--960x540--preview.webp",
+   "sha256": "4b6db50924a08a5f8e6dc9d1e2b635431f8c31fe0900a76325bce6f5cbe3f40c",
+   "bytes": 32534,
+   "width": 960,
+   "height": 540,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-master/renditions/retro-anime-master--960x540--preview.avif",
+   "sha256": "43940d331aaaf7b5f0bb171c52339bf2f48da59e4710feb5fb3085685fe93bd3",
+   "bytes": 36851,
+   "width": 960,
+   "height": 540,
+   "format": "AVIF",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  }
+ ],
+ "transformations": [
+  {
+   "step": "upscale",
+   "detail": "raw 4x ESRGAN, 1344x768 -> 5376x3072 (direct ComfyUI prompt f5d51a36-097a-411a-ad8f-d8bd9e868688; the model pass itself ran inside Studio job c057d94c-4a6c-46e2-9119-33a8e7031c0f / prompt d9bc3757-bb8e-40d3-8486-2427d7add7ee with identical input and was reused from ComfyUI cache)"
+  },
+  {
+   "step": "resize",
+   "detail": "Lanczos 5376x3072 -> 3840x2194 (x0.7143)"
+  },
+  {
+   "step": "crop",
+   "detail": "box [0, 17, 3840, 2177] (anchor px [0, 5.95, 1344, 762.05]): 17 px off top and bottom for 16:9"
+  },
+  {
+   "step": "encode",
+   "detail": {
+    "retro-anime-master/renditions/retro-anime-master--1280x720--preview.webp": {
+     "quality": 90,
+     "budget_kib": 300,
+     "within_budget": true
+    },
+    "retro-anime-master/renditions/retro-anime-master--1280x720--preview.avif": {
+     "quality": 90,
+     "budget_kib": 300,
+     "within_budget": true
+    },
+    "retro-anime-master/renditions/retro-anime-master--960x540--preview.webp": {
+     "quality": 90,
+     "budget_kib": 300,
+     "within_budget": true
+    },
+    "retro-anime-master/renditions/retro-anime-master--960x540--preview.avif": {
+     "quality": 90,
+     "budget_kib": 300,
+     "within_budget": true
+    }
+   }
+  }
+ ],
+ "art_review": {
+  "status": "accepted",
+  "reviewer": "Chris (owner)",
+  "at": "2026-09-27",
+  "notes": "Owner answer in chat on 2026-09-27 after seeing pack-contact.jpg and quiet-candidates-contact.jpg, relayed by the coordinator: \"Accept, try sharper 4K as well\". accepted: MA (raw 4x ESRGAN, Lanczos to 3840x2160); MB not chosen. Owner asked to also try a sharper 4K (candidate MA-sharp, not accepted). This is the only art acceptance; the agent pre-review in judgements.jsonl is not acceptance.",
+  "accepted_files": [
+   "retro-anime-master/master/retro-anime-master--3840x2160--ma.png",
+   "retro-anime-master/renditions/"
+  ]
+ },
+ "rendition_review": {
+  "status": "agent-checked",
+  "checks": [
+   "retro-anime-master/master/retro-anime-master--3840x2160--ma.png: 3840x2160 PNG 2736794 B",
+   "retro-anime-master/renditions/retro-anime-master--1280x720--preview.webp: 1280x720 WEBP 49262 B",
+   "retro-anime-master/renditions/retro-anime-master--1280x720--preview.avif: 1280x720 AVIF 53965 B",
+   "retro-anime-master/renditions/retro-anime-master--960x540--preview.webp: 960x540 WEBP 32534 B",
+   "retro-anime-master/renditions/retro-anime-master--960x540--preview.avif: 960x540 AVIF 36851 B"
+  ]
+ },
+ "runtime_review": {
+  "status": "not-qualified",
+  "app_commit": null,
+  "device": null,
+  "checks": []
+ },
+ "release_selection": {
+  "status": "not-selected",
+  "selected_by": null
+ },
+ "unknowns": [
+  "Licence: not re-checked and not cleared. Z-Image Turbo terms as recorded in the asset-kit README (base weights Apache-2.0); this pass did not re-verify them.",
+  "Licence: the ESRGAN upscaler (RealESRGAN_x4plus_anime_6B.pth) terms are as recorded in the anime-esrgan catalog note (\"Official Real-ESRGAN release. Check source image and applicable model terms.\"); not re-checked here.",
+  "Rendition review: not tested in the real slot sizes (390x844, 1440x900, 1920x1080).",
+  "Runtime: not wired into the app; runtime_review stays not-qualified."
+ ]
+}
