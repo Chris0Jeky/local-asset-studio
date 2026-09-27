@@ -3,6 +3,7 @@
 A scripted ComfyUI answers each `_request` in order and fails the test on any call it did not expect, so every test
 also proves which requests were (and were not) sent: no second /prompt, no interrupt of a prompt that is not ours.
 """
+import copy
 import importlib.util
 import json
 import tempfile
@@ -421,6 +422,106 @@ class JobCancelTests(unittest.TestCase):
         self.assertEqual(post("/api/jobs/missing/cancel", {}), (400, {"error": "Unknown job"}))
         status, body = post("/api/jobs/%s/cancel" % job["id"], {})
         self.assertEqual((status, body["status"]), (202, "cancelled"))
+
+    # -- job_cancel unit pins (current behaviour, not a spec) ------------------------------------------------------
+    def test_act_refuses_a_still_pending_prompt_after_two_ignored_deletes_without_a_third_delete(self):
+        studio = self.studio(); job = self.job(studio)
+        job.update(status="running", prompt_ids=["ours"]); studio._save(job)
+        studio.cancel_job(job["id"])
+        submission = {"prompt_id": "ours"}; pending = queue(pending=["ours"])
+        studio.script = [("GET", "/queue", pending), ("POST", "/queue", None), ("GET", "/queue", pending)]
+        self.assertFalse(job_cancel.act(studio, job, submission))
+        self.assertEqual(job["cancellation"]["state"], "requested", "one ignored delete stays open")
+        studio.script = [("GET", "/queue", pending), ("POST", "/queue", None), ("GET", "/queue", pending)]
+        self.assertFalse(job_cancel.act(studio, job, submission))
+        self.assertEqual([a["action"] for a in job["cancellation"]["actions"]], ["dequeue", "dequeue"])
+        self.assertEqual(len(studio.posts("/queue")), 2)
+        studio.script = [("GET", "/queue", pending)]
+        self.assertFalse(job_cancel.act(studio, job, submission))
+        record = job["cancellation"]
+        self.assertEqual(record["state"], "refused")
+        self.assertEqual(record["note"], "ComfyUI kept this prompt queued after two delete requests; nothing more was sent.")
+        self.assertEqual(len(studio.posts("/queue")), 2, "no third DELETE is sent")
+        self.assertEqual(studio.script, [], "every scripted ComfyUI answer is consumed")
+        self.assertEqual(studio.posts("/interrupt"), [])
+
+    def test_queue_reports_unreadable_for_malformed_entries_but_reads_empty_queues(self):
+        studio = self.studio()
+        for reply, expected, label in (({"queue_running": [{"not": "a", "list": "entry"}], "queue_pending": []}, ("unreadable", []), "non-list entry of length 2"),
+                                      ({"queue_running": [[0]], "queue_pending": []}, ("unreadable", []), "entry shorter than 2"),
+                                      ({"queue_running": [], "queue_pending": []}, ("absent", []), "empty queues are absent, not unreadable"),
+                                      (queue(pending=["ours"]), ("pending", []), "length-2 entries still parse")):
+            with self.subTest(label=label):
+                studio.script = [("GET", "/queue", reply)]
+                self.assertEqual(job_cancel._queue(studio, None, "ours"), expected)
+                self.assertEqual(studio.script, [], "the one scripted answer is consumed")
+
+    def test_history_reports_unreadable_for_a_non_dict_entry_or_response(self):
+        studio = self.studio()
+        for reply, expected, label in ((["not", "a", "dict"], "unreadable", "non-dict response"),
+                                      ({"ours": ["not", "a", "dict"]}, "unreadable", "non-dict entry"),
+                                      ({}, "absent", "missing entry stays absent, not unreadable"),
+                                      ({"ours": {"status": {}}}, "present", "dict entry is present")):
+            with self.subTest(label=label):
+                studio.script = [("GET", "/history/ours", reply)]
+                self.assertEqual(job_cancel._history(studio, None, "ours"), expected)
+                self.assertEqual(studio.script, [], "the one scripted answer is consumed")
+
+    def test_resolve_keeps_a_newer_request_whose_event_id_differs(self):
+        studio = self.studio()
+        job = {"id": "j", "cancellation": {"event_id": "old", "state": "requested"}}
+        studio.cancel_requests["j"] = {"event_id": "new", "state": "requested"}
+        job_cancel._resolve(studio, job, "cancelled", "done")
+        self.assertEqual(job["cancellation"]["state"], "cancelled")
+        self.assertEqual(studio.cancel_requests["j"]["event_id"], "new", "a newer request is kept")
+        studio.cancel_requests["j"] = {"event_id": "old", "state": "requested"}
+        job_cancel._resolve(studio, job, "cancelled", "done")
+        self.assertNotIn("j", studio.cancel_requests, "the request this record resolves is removed")
+
+    def test_blocked_refuses_jobs_with_an_operation_key(self):
+        studio = self.studio(); job = self.job(studio)
+        trial = dict(job, status="running", prompt_ids=["ours"], operation="upscale")
+        self.assertEqual(job_cancel.blocked(studio, trial), "This kind of job cannot be cancelled here")
+        self.assertIsNone(job_cancel.blocked(studio, dict(job, status="running", prompt_ids=["ours"])),
+                          "the same job without an operation key stays cancellable")
+
+    def test_record_interrupted_without_a_prior_interrupt_action_records_no_reply(self):
+        for actions, expected, label in (([], None, "no prior interrupt action"),
+                                        ([{"action": "interrupt", "prompt_id": "ours", "at": 1.0, "reply": "ok"}], "ok", "prior reply is carried")):
+            with self.subTest(label=label):
+                studio = self.studio(); job = self.job(studio)
+                job.update(status="running", prompt_ids=["ours"],
+                           submissions=[{"index": 0, "prompt_id": "ours", "seed": 1, "status": "observing"}],
+                           cancellation={"event_id": "e1", "requested_at": 1.0, "requested_by": "owner", "status_at_request": "running",
+                                         "state": "requested", "actions": list(actions), "observations": []})
+                studio._save(job)
+                submission = job["submissions"][0]
+                job_cancel.record_interrupted(studio, job, submission)
+                self.assertEqual(submission["status"], "cancelled")
+                self.assertEqual(set(submission["cancelled"]), {"basis", "at", "interrupt_reply"})
+                self.assertEqual(submission["cancelled"]["basis"], "interrupted")
+                self.assertEqual(submission["cancelled"]["interrupt_reply"], expected)
+                self.assertEqual(job["status"], "cancelled"); self.assertIn("interrupted", job["message"])
+                self.assertEqual(job["cancellation"]["state"], "cancelled")
+
+    def test_reconcile_restart_ignores_a_missing_corrupt_or_non_dict_request_without_writing(self):
+        for index, (body, label) in enumerate(((None, "missing file"), ("not json{{", "corrupt file"),
+                                              ('["not", "a", "dict"]', "non-dict JSON"), ('{"event_id": 7}', "non-string event id"))):
+            with self.subTest(label=label):
+                directory = self.root / ("probe-%d" % index); directory.mkdir()
+                if body is not None: (directory / job_cancel.REQUEST_FILE).write_text(body, encoding="utf-8")
+                job = {"id": directory.name, "status": "running", "prompt_ids": ["ours"]}
+                before = copy.deepcopy(job)
+                self.assertFalse(job_cancel.reconcile_restart(job, directory))
+                self.assertEqual(job, before, "an ignored request writes nothing to the job")
+                self.assertFalse((directory / "state.json").exists(), "an ignored request writes no state file")
+        directory = self.root / "probe-open"; directory.mkdir()
+        (directory / job_cancel.REQUEST_FILE).write_text(
+            json.dumps({"event_id": "e1", "requested_at": 1.0, "requested_by": "owner",
+                        "status_at_request": "running", "state": "requested"}), encoding="utf-8")
+        job = {"id": directory.name, "status": "running", "prompt_ids": ["ours"]}
+        self.assertTrue(job_cancel.reconcile_restart(job, directory), "a well-formed request is still adopted")
+        self.assertEqual(job["cancellation"]["state"], "unresolved"); self.assertIn("restarted", job["cancellation"]["note"])
 
 
 if __name__ == "__main__":
