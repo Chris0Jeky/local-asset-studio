@@ -111,6 +111,14 @@ The normalizer retains bounded fields needed for later review:
 - format, precision and size-class metadata;
 - provider hashes and scan-result claims.
 
+Provider model/version names, `baseModel`/`baseModelType` and trained words are kept
+verbatim, whitespace included. An invalid value (wrong type, NUL, over 500 characters, or a
+trained word over 1,000) is omitted with an `invalid_provider_text`, `invalid_trained_word` or
+`invalid_trained_words` diagnostic instead of refusing the snapshot (the first 16 invalid trained
+words get one diagnostic each, the rest one `invalid_trained_words_summarized` count); more than 256 distinct
+trained words keeps the first 256 with `trained_words_truncated`. Model type, dates, status,
+file facts and permission claims stay strict.
+
 A valid SHA-256 becomes the file identity. Without one, the fallback identity is
 `civitai-file:<version-id>/<provider-file-id>`.
 
@@ -212,8 +220,9 @@ keep their existing output and coverage rules.
 
 This is not blanket input recovery: invalid source hosts, credentials, receipt
 shapes, image-item collections or byte/record bounds still refuse through the
-existing validation contract. Provider-text tolerance and duplicated source-scope
-memory amplification remain separate #836 follow-ups. No provider request is made.
+existing validation contract. The non-pagination source scope copied into each
+observation is capped at 16 KiB of canonical JSON (`Source query scope exceeds 16 KiB`), so
+1,000 observations cannot amplify one large query into gigabytes. No provider request is made.
 
 Images that do not identify the queried version are excluded with
 `target_version_missing`; that exclusion does not by itself change coverage.

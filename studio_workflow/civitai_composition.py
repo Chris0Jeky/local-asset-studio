@@ -24,6 +24,8 @@ MAX_RESOURCES = 128
 MAX_QUERY = 64
 MAX_BYTES = (1 << 63) - 1
 MAX_INPUT_BYTES = 1048576
+MAX_SCOPE_BYTES = 16384
+MAX_WORD_DIAGNOSTICS = 16
 SHA256 = re.compile(r'[a-fA-F0-9]{64}\Z')
 VERSION_ROUTE = re.compile(r'/api/v1/model-versions/([1-9][0-9]{0,19})\Z')
 AIR = re.compile(
@@ -146,6 +148,43 @@ def bounded_strings(value: Any, label: str, maximum: int = 256) -> list[str]:
     return result
 
 
+def provider_text(value: Any, label: str, diagnostics: list[dict[str, Any]], limit: int = 500) -> str | None:
+    if value is None: return None
+    if text(value, limit): return value
+    diagnostics.append({'code': 'invalid_provider_text',
+                        'message': 'Provider ' + label + ' was invalid and was omitted.',
+                        'field': label})
+    return None
+
+
+def trained_words(value: Any, diagnostics: list[dict[str, Any]]) -> list[str]:
+    if value is None: return []
+    if not isinstance(value, list):
+        diagnostics.append({'code': 'invalid_trained_words',
+                            'message': 'Provider trainedWords was not a list and was omitted.'})
+        return []
+    result, seen, invalid = [], set(), 0
+    for index, item in enumerate(value):
+        if text(item, 1000):
+            if item not in seen: seen.add(item); result.append(item)
+        else:
+            invalid += 1
+            if invalid <= MAX_WORD_DIAGNOSTICS:
+                diagnostics.append({'code': 'invalid_trained_word',
+                                    'message': 'A provider trained word was invalid and was omitted.',
+                                    'index': index})
+    if invalid > MAX_WORD_DIAGNOSTICS:
+        diagnostics.append({'code': 'invalid_trained_words_summarized',
+                            'message': 'Further invalid provider trained words were omitted without one diagnostic each.',
+                            'count': invalid - MAX_WORD_DIAGNOSTICS})
+    if len(result) > 256:
+        count = len(result); del result[256:]
+        diagnostics.append({'code': 'trained_words_truncated',
+                            'message': 'Provider trained words exceeded 256; the first 256 were kept.',
+                            'count': count})
+    return result
+
+
 def provider_hashes(value: Any, label: str) -> dict[str, str]:
     if value is None: return {}
     need(isinstance(value, dict) and len(value) <= 32, label + ' hashes must be a bounded object')
@@ -216,12 +255,12 @@ def normalize_model(value: Any, diagnostics: list[dict[str, Any]]) -> tuple[dict
         ('allow_no_credit', 'allowNoCredit'), ('allow_commercial_use', 'allowCommercialUse'),
         ('allow_derivatives', 'allowDerivatives'), ('allow_different_license', 'allowDifferentLicense'))}
     resource = {'source_host': receipt['host'], 'model_id': model_id, 'version_id': version_id,
-                'identity': identity, 'model_name': optional_text(model.get('name'), 'model name', 500),
-                'version_name': optional_text(payload.get('name'), 'version name', 500),
+                'identity': identity, 'model_name': provider_text(model.get('name'), 'model name', diagnostics, 500),
+                'version_name': provider_text(payload.get('name'), 'version name', diagnostics, 500),
                 'model_type': optional_text(model.get('type'), 'model type', 200),
-                'base_model': optional_text(payload.get('baseModel'), 'base model', 500),
-                'base_model_type': optional_text(payload.get('baseModelType'), 'base model type', 500),
-                'trained_words': bounded_strings(payload.get('trainedWords'), 'trained words'),
+                'base_model': provider_text(payload.get('baseModel'), 'base model', diagnostics, 500),
+                'base_model_type': provider_text(payload.get('baseModelType'), 'base model type', diagnostics, 500),
+                'trained_words': trained_words(payload.get('trainedWords'), diagnostics),
                 'created_at': optional_text(payload.get('createdAt'), 'created date', 100),
                 'updated_at': optional_text(payload.get('updatedAt'), 'updated date', 100),
                 'published_at': optional_text(payload.get('publishedAt'), 'published date', 100),
@@ -235,6 +274,7 @@ def source_scope(receipt: dict[str, Any]) -> dict[str, Any]:
              if key.casefold() not in PAGINATION_QUERY}
     scope = {'host': receipt['host'], 'route': receipt['route'], 'query': query,
              'auth_context': receipt['auth_context']}
+    need(len(canonical(scope)) <= MAX_SCOPE_BYTES, 'Source query scope exceeds 16 KiB')
     scope['scope_sha256'] = digest(scope); return scope
 
 
