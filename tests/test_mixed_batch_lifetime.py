@@ -93,6 +93,15 @@ class MixedBatchLifetimeTests(unittest.TestCase):
                 self.assertIn(expected, stdout.getvalue())
                 self.assertIn("attempt 2/2", stderr.getvalue())
 
+    def test_child_arms_faulthandler_before_discovery_and_inside_the_budget(self):
+        # #872: a stalled child must print every thread's stack before the parent's kill, so pin it.
+        armed = "faulthandler.dump_traceback_later(%s, exit=False)" % gate.TRACEBACK_AFTER_SECONDS
+        self.assertIn(armed, gate.CHILD_CODE)
+        self.assertLess(gate.CHILD_CODE.index(armed), gate.CHILD_CODE.index("unittest.main(module=None)"))
+        self.assertLess(0, gate.TRACEBACK_AFTER_SECONDS)
+        self.assertLess(gate.TRACEBACK_AFTER_SECONDS, gate.TIMEOUT_SECONDS)
+        self.assertIn('"-v"', gate.CHILD_CODE)  # verbose names show which test was running at the stall
+
     def test_success_starts_tracemalloc_after_site_then_runs_two_fresh_checks(self):
         result = subprocess.CompletedProcess(["synthetic-child"], 0, "stdout\n", "stderr\n")
         stdout = io.StringIO()
