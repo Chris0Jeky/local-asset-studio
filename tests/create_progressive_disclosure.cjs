@@ -75,4 +75,55 @@ const lateContext=new Element('section','uxContinuation'),lateGuidance=new Eleme
 lateGuidance.textContent='Created by the following workbench script';lateContext.append(lateGuidance);late.body.append(lateContext);
 callbacks[0]();
 assert.equal(late.querySelector('#continuationGuidanceHelp').children[1],lateGuidance);
+// Wildcard disclosure: availability, focus handoff, Escape, toggle and recipe refresh (fake DOM with events and focus).
+{
+  class Node2 {
+    constructor(doc,tag,id=''){this.doc=doc;this.tagName=tag.toUpperCase();this.id=id;this.children=[];this.parentNode=null;this.hidden=false;this.open=false;this.dataset={};this.listeners={};this.textContent='';}
+    append(...items){for(const item of items){if(item.parentNode)item.parentNode.children=item.parentNode.children.filter(c=>c!==item);item.parentNode=this;this.children.push(item);}}
+    after(item){const parent=this.parentNode;if(item.parentNode)item.parentNode.children=item.parentNode.children.filter(c=>c!==item);item.parentNode=parent;parent.children.splice(parent.children.indexOf(this)+1,0,item);}
+    contains(node){for(let n=node;n;n=n.parentNode)if(n===this)return true;return false;}
+    querySelector(selector){const visit=n=>{for(const c of n.children){if(selector==='[data-wildcard]'&&c.dataset.wildcard!==undefined)return c;const f=visit(c);if(f)return f;}return null;};return visit(this);}
+    addEventListener(type,fn){(this.listeners[type]??=[]).push(fn);}
+    emit(type,event={}){for(const fn of this.listeners[type]||[])fn(event);}
+    focus(){this.doc.activeElement=this;}
+  }
+  class Doc2 {
+    constructor(){this.body=new Node2(this,'body');this.activeElement=null;this.listeners={};this.defaultView={};}
+    createElement(tag){return new Node2(this,tag);}
+    querySelector(selector){const id=selector.slice(1),visit=n=>{if(n.id===id)return n;for(const c of n.children){const f=visit(c);if(f)return f;}return null;};return visit(this.body);}
+    addEventListener(type,fn){(this.listeners[type]??=[]).push(fn);}
+    emit(type){for(const fn of this.listeners[type]||[])fn({});}
+  }
+  const doc=new Doc2(),label=new Node2(doc,'label','positiveWrap'),prompt=new Node2(doc,'textarea','positive'),host=new Node2(doc,'div','wildcardChips');
+  const chip=new Node2(doc,'button');chip.dataset.wildcard='lighting';host.append(chip);label.append(prompt,host);doc.body.append(label);
+  const details=Disclosure.mount(doc).wildcards;
+  assert.equal(details.id,'promptWildcards');assert.equal(details.parentNode,doc.body,'the disclosure sits after the prompt label');
+  assert.equal(details.children[1],host,'the existing chip host moves inside, not a copy');
+  assert.equal(details.hidden,false,'available chips show the disclosure');assert.equal(details.open,false);
+  const summary=details.children[0];
+  details.open=true;let prevented=false;
+  details.emit('keydown',{key:'Escape',preventDefault(){prevented=true;},stopPropagation(){}});
+  assert.equal(details.open,false);assert.equal(prevented,true);assert.equal(doc.activeElement,summary,'Escape closes and returns focus to the summary');
+  chip.focus();details.open=false;details.emit('toggle');
+  assert.equal(doc.activeElement,summary,'closing with focus inside moves focus to the summary, not into hidden chips');
+  details.open=true;doc.emit('studio:recipe');assert.equal(details.open,false,'a refresh closes the disclosure');assert.equal(details.hidden,false);
+  chip.focus();delete chip.dataset.wildcard;
+  doc.emit('studio:recipe');
+  assert.equal(details.hidden,true,'a recipe without wildcards hides the disclosure');
+  assert.equal(doc.activeElement,prompt,'focus inside a disappearing disclosure returns to the prompt');
+  assert.equal(Disclosure.mount(doc).wildcards,details,'mounting again reuses the disclosure');
+}
+// observe() caches one observer per disclosure and watches text changes; sync/wrap guard missing nodes.
+{
+  const observed=[];class FakeObserver{constructor(fn){this.fn=fn;}observe(target,options){observed.push({target,options});}}
+  const doc={defaultView:{MutationObserver:FakeObserver}},details={hidden:false},target={textContent:''};
+  const first=Disclosure.observe(doc,details,target),second=Disclosure.observe(doc,details,target);
+  assert.ok(first instanceof FakeObserver);assert.equal(second,first,'one observer per disclosure');
+  assert.equal(observed.length,1);assert.deepEqual(observed[0].options,{childList:true,subtree:true,characterData:true});
+  assert.equal(details.hidden,true,'observe syncs immediately');
+  target.textContent='Now there is guidance';first.fn();assert.equal(details.hidden,false,'a mutation re-syncs visibility');
+  assert.equal(Disclosure.observe({defaultView:{}},{hidden:false},target),null,'no MutationObserver means no observer, not a throw');
+  assert.equal(Disclosure.sync(null,target),null);assert.equal(Disclosure.sync(details,null),null);
+  assert.equal(Disclosure.wrap(new Document(),'missing','missingHelp','Summary'),null);
+}
 console.log('create progressive disclosure contracts passed');
