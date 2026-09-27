@@ -212,6 +212,16 @@ Each loop is a starting habit, not a rule. Times come from the recipe's chip on 
    - (d) A mix.
    - This decides whether the background loop needs layer splitting or seamless tiling next.
 
+## 6. Owner answers (27 September 2026, in chat)
+
+1. **Judging:** add quick checks. Keep / Needs work / Reject stays, plus 4-5 one-tap yes/no checks that fit the job (pose, face, outfit, style, clean), counted per engine (#1203).
+2. **Canon:** start with one chosen keeper portrait, and train a character LoRA once about 20 keepers exist (#1205, #411).
+3. **Blind judging:** only in planned comparisons and multi-engine plans; normal runs show their labels (#1204).
+4. **Round size:** 4 pictures on fast recipes (under a minute each), 2 on slow ones (#1202).
+5. **Backgrounds:** "A mix, a very ambitious mix, with experimentation, this will allow me to push in the direction that I most desire". The background loop has to cover single backdrops, parallax layers and tileable pieces, each experimentally first.
+
+These are workflow defaults, not art acceptance.
+
 ## Sources
 
 Fetched or seen on 27 September 2026. *(snippet)* means only the official page's search snippet was readable.
