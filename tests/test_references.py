@@ -212,6 +212,18 @@ class StyleBoardTests(unittest.TestCase):
         # Nothing else was touched: the embed consumer and the loaders it needs are intact.
         self.assertEqual(g['14']['inputs']['pos_embed'],['22',0]); self.assertIn('12',g); self.assertIn('13',g)
 
+    def test_a_slid_embed_that_was_removed_in_the_same_prune_is_never_left_dangling(self):
+        # One loader feeding two encoders: both leave together, so the survivor (not the second dead encoder) takes embed1.
+        g={'1':{'class_type':'LoadImage','inputs':{}},'9':{'class_type':'LoadImage','inputs':{}},
+           '2':{'class_type':'IPAdapterEncoder','inputs':{'image':['1',0]}},'3':{'class_type':'IPAdapterEncoder','inputs':{'image':['1',0]}},
+           '4':{'class_type':'IPAdapterEncoder','inputs':{'image':['9',0]}},
+           '5':{'class_type':'IPAdapterCombineEmbeds','inputs':{'embed1':['2',0],'embed2':['3',0],'embed3':['4',0],'method':'concat'}}}
+        ref.prune_missing_slot(g,'1')
+        self.assertEqual(g['5']['inputs'],{'embed1':['4',0],'method':'concat'})
+        g={'1':{'class_type':'LoadImage','inputs':{}},'2':{'class_type':'IPAdapterEncoder','inputs':{'image':['1',0]}},
+           '3':{'class_type':'IPAdapterEncoder','inputs':{'image':['1',0]}},'5':{'class_type':'IPAdapterCombineEmbeds','inputs':{'embed1':['2',0],'embed2':['3',0]}}}
+        with self.assertRaisesRegex(ValueError,'at least one picture'):ref.prune_missing_slot(g,'1')
+
     def test_short_or_empty_payloads_are_padded_and_the_minimum_is_enforced(self):
         g=board_graph()
         ref.compile_references(self.preset,g,[{'role':'style','file':'b.png'}],self.root)
