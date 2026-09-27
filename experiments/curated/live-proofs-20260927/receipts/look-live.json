@@ -1,0 +1,127 @@
+{
+ "scene": "a rain-soaked arcade entrance on a narrow street at night; at the right edge a glowing vending machine beside the entrance",
+ "events": [
+  {
+   "t": 1790539449.031,
+   "kind": "looks",
+   "options": [
+    [
+     "",
+     "Choose a look\u2026"
+    ],
+    [
+     "look-night-shift-retro-anime",
+     "Night Shift (retro anime) \u00b7 on Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)"
+    ]
+   ]
+  },
+  {
+   "t": 1790539450.062,
+   "kind": "before_prepare",
+   "summary": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU) \u00b7 anchor retro-anime-master-z2 (in your Workspace) \u00b7 shipped look",
+   "reason": "",
+   "placeholder": "e.g. a narrow late-night apartment corridor; at the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line, with a small wooden bench, a warm amber wall lamp and the soft cyan glow of a vending machine"
+  },
+  {
+   "t": 1790539453.106,
+   "kind": "prepared",
+   "status": "Night Shift (retro anime) prepared on Z-Image Turbo \u2022 fast (fp8, text encoder on CPU) (recipe switched), seed 2026092752, 1344x768. Your scene is in the wording. Nothing was generated; press Generate when it reads right.",
+   "selected": "zimage-fast",
+   "positive": "No people. Hand-painted anime film background of a rain-soaked arcade entrance on a narrow street at night; at the right edge a glowing vending machine beside the entrance. The left half and centre of the frame is a plain dark graphite wall, softly lit, almost empty and low in detail. Faint rose and cyan reflections on the wet surfaces, muted graphite palette with small amber accents. Nobody in the picture. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+   "seed": "2026092752",
+   "size": [
+    "1344",
+    "768"
+   ]
+  },
+  {
+   "t": 1790539453.989,
+   "kind": "commit_before_generate",
+   "commit_gib": 57.4,
+   "limit_gib": 95.7,
+   "pct": 59.9,
+   "phys_avail_gib": 11.5
+  },
+  {
+   "t": 1790539458.117,
+   "kind": "generated",
+   "new": [
+    [
+     "2acea59b-2f9f-4f41-8ba6-20a3e1d0448d",
+     "zimage-fast",
+     2,
+     "running"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790539454.032,
+     "/api/jobs"
+    ]
+   ],
+   "dialogs": []
+  }
+ ],
+ "job_id": "2acea59b-2f9f-4f41-8ba6-20a3e1d0448d",
+ "preset": "zimage-fast",
+ "status": "completed",
+ "prompt_ids": [
+  "6da84a3a-3268-41ca-97e5-c330250b8a92",
+  "4ba02828-457f-414d-bc48-484e71784e3a"
+ ],
+ "elapsed_seconds": 147.4178545475006,
+ "controls": {
+  "positive": "No people. Hand-painted anime film background of a rain-soaked arcade entrance on a narrow street at night; at the right edge a glowing vending machine beside the entrance. The left half and centre of the frame is a plain dark graphite wall, softly lit, almost empty and low in detail. Faint rose and cyan reflections on the wet surfaces, muted graphite palette with small amber accents. Nobody in the picture. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+  "seed": "2026092752",
+  "steps": "8",
+  "cfg": "1",
+  "width": "1344",
+  "height": "768",
+  "denoise": "1"
+ },
+ "outputs": [
+  {
+   "filename": "Z-Image-Fast_00025_.png",
+   "subfolder": "Studio",
+   "seed": 2026092752,
+   "asset_id": "2de0af2c131555f59ea16ded07a99e20"
+  },
+  {
+   "filename": "Z-Image-Fast_00026_.png",
+   "subfolder": "Studio",
+   "seed": 2026092753,
+   "asset_id": "19eece3e38205e89a3376fcbe091173c"
+  }
+ ],
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790539444.455,
+   "/api/estimate"
+  ],
+  [
+   1790539445.386,
+   "/api/estimate"
+  ],
+  [
+   1790539450.095,
+   "/api/looks/prepare"
+  ],
+  [
+   1790539450.37,
+   "/api/estimate"
+  ],
+  [
+   1790539453.303,
+   "/api/estimate"
+  ],
+  [
+   1790539454.032,
+   "/api/jobs"
+  ],
+  [
+   1790539454.407,
+   "/api/estimate"
+  ]
+ ]
+}

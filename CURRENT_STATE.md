@@ -1,5 +1,16 @@
 # Current state — 27 September 2026
 
+## Live proofs through the page: Vary, multi-engine plan, review checks, Make seamless, look templates — 27 September 2026 (19:37-21:47 local)
+
+All five features were driven through the real Studio page in headless Chromium.
+- **Vary (#1202):** one page press prepares the round and one Generate is one job with the parent recorded. After the first sheets, the owner said "Nudge both up": SDXL is now 0.5 / 0.7 and Krea 0.45 / 0.65 (6 steps), proved once per strength and marked `owner-approved`.
+- **Multi-engine plan (#1163):** Copy Pose + 9B depth + 4B on one pair. The estimate was 3.8 min (up to 5.5); the run took 303.5 s, with one `/prompt` per stage. The runs are tagged "from a plan". A plan led by a two-field recipe is refused for a third recipe's missing fill (handed to a builder).
+- **Review checks (#1203):** per-engine tallies render and persist across a fresh session. The agent's test taps were cleared afterwards.
+- **Make seamless (#1220):** wall seam 4.34 → 0.84 (owner: "Wall ok"); flat floor 13.53 → 1.93 (needs the wide band). `zimage-seam-repair` is now verified.
+- **Look templates (#1224):** the Night Shift look carries, but the scene is drowned out (owner: "Loosen it").
+
+Evidence: `experiments/curated/live-proofs-20260927/`. Agent pre-review plus the quoted owner answers; no other art acceptance.
+
 ## Background-technique lab: parallax, seamless tiles, backdrop variety — 27 September 2026 (18:29-19:03 local)
 
 Everything used installed tools on the primary and the accepted Night Shift anchor z2 (refs #422).

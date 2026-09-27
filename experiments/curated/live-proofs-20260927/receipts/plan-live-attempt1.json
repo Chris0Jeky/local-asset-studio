@@ -1,0 +1,122 @@
+{
+ "engines_requested": [
+  "combine-klein",
+  "combine-klein-9b-depth",
+  "combine-klein-9b-copypose"
+ ],
+ "seed": "2026092795",
+ "events": [
+  {
+   "t": 1790537718.009,
+   "kind": "handoff",
+   "destination": "combine-klein-9b-copypose",
+   "options": [
+    "combine-klein-9b-copypose",
+    "combine-klein-9b-skeleton",
+    "combine-klein-9b-depth",
+    "combine-klein-9b-replace",
+    "combine-klein-9b",
+    "combine-klein"
+   ]
+  },
+  {
+   "t": 1790537721.913,
+   "kind": "prepared_handoff",
+   "selected": "combine-klein",
+   "blockers": ""
+  },
+  {
+   "t": 1790537723.55,
+   "kind": "picker",
+   "pull_buttons": 1292,
+   "pose_present": 1
+  },
+  {
+   "t": 1790537727.702,
+   "kind": "filled",
+   "fields": [
+    "[who is in image 1, e.g. the witch in the black and red robe with gold trim and the wide-brimmed witch hat]",
+    "[the pose in a few words, e.g. leaning forward, one hand on her hip, the other held out]"
+   ],
+   "positive": "Redraw the adult traveller with long dark hair, a centre part, brown eyes and gold earrings from image 1 in the pose of the person in image 2: standing upright, holding a lantern at her side. Keep the face, the hair, the outfit and its colours, and image 1's rendering style. One figure only, nobody else in the picture. Do not copy the person from image 2, their clothing or their colours.",
+   "board": [
+    "6dddb7d0bef04f1ca693de3e0f1c0ea7_Anima-v1-Baseline_00005_.png.png"
+   ]
+  },
+  {
+   "t": 1790537728.59,
+   "kind": "plan_options",
+   "options": [
+    [
+     "combine-klein-9b-copypose",
+     false,
+     false,
+     "Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing)"
+    ],
+    [
+     "combine-klein-9b-skeleton",
+     false,
+     true,
+     "A pose skeleton and a pose picture are different inputs. Choose that route with the matching source."
+    ],
+    [
+     "combine-klein-9b-depth",
+     false,
+     false,
+     "Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)"
+    ],
+    [
+     "combine-klein-9b-replace",
+     false,
+     false,
+     "Put this character into another picture (FLUX.2 Klein 9B, replace character: that picture keeps everything but the person)"
+    ],
+    [
+     "combine-klein-9b",
+     false,
+     false,
+     "Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)"
+    ],
+    [
+     "combine-klein",
+     true,
+     false,
+     "Put this character in another picture's pose (FLUX.2 Klein 4B)"
+    ]
+   ]
+  },
+  {
+   "t": 1790537729.813,
+   "kind": "plan_summary",
+   "summary": "3 recipes \u00d7 1 seed = 3 pictures \u00b7 about 3.8 min. Prepare gives the checked total.",
+   "ticked": [
+    "combine-klein-9b-copypose",
+    "combine-klein-9b-depth",
+    "combine-klein"
+   ]
+  },
+  {
+   "t": 1790537730.471,
+   "kind": "prepare_button",
+   "disabled": false,
+   "status_before": ""
+  },
+  {
+   "t": 1790537730.997,
+   "kind": "plan_prepared",
+   "status": "Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing): fill in the wording, replace \u201c[image 1's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]\u201d",
+   "start_visible": false,
+   "took": 0.5
+  },
+  {
+   "t": 1790537730.998,
+   "kind": "production_posts",
+   "posts": [
+    [
+     1790537730.551,
+     "/api/production"
+    ]
+   ]
+  }
+ ]
+}

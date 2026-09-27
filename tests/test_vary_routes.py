@@ -36,11 +36,17 @@ class ShippedVaryRoutes(unittest.TestCase):
         for lora_recipe in ("lineani-portrait", "screentone-portrait", "cinematic-lighting-portrait", "pixel-lora"):
             self.assertNotIn(lora_recipe, routes["gentle-variation"])
 
-    def test_every_strength_is_a_labelled_starting_value_not_a_global(self):
+    def test_every_strength_is_labelled_per_recipe_not_a_global(self):
+        # A route is a labelled starting value until the owner judges it; an owner-approved route's basis records the owner's
+        # answer and its date (27 Sep 2026: "Nudge both up" for krea-refine and gentle-variation, #1202).
         for preset in CATALOG:
             vary = preset.get("vary")
             if not vary: continue
-            self.assertEqual(vary["status"], "starting-value", preset["id"])
+            self.assertIn(vary["status"], ("starting-value", "owner-approved"), preset["id"])
+            if vary["status"] == "owner-approved":
+                for name in ("subtle", "strong"):
+                    self.assertIn("owner", vary[name]["basis"].lower(), (preset["id"], name))
+                    self.assertRegex(vary[name]["basis"], r"20\d\d", (preset["id"], name))
             self.assertLess(vary["subtle"]["controls"]["denoise"], vary["strong"]["controls"]["denoise"], preset["id"])
             for name in ("subtle", "strong"): self.assertTrue(vary[name]["basis"].strip(), (preset["id"], name))
 
@@ -60,7 +66,8 @@ class VaryContract(unittest.TestCase):
         self.assertTrue(any("image-to-image" in p for p in self.problems()))
 
     def test_strengths_are_bound_controls_with_subtle_below_strong(self):
-        self.route["vary"]["subtle"]["controls"]["denoise"] = 0.6
+        # Above the shipped strong value (0.65 since the owner's 27 Sep 2026 answer), so subtle would resample more than strong.
+        self.route["vary"]["subtle"]["controls"]["denoise"] = 0.9
         self.assertTrue(any("subtle" in p and "strong" in p for p in self.problems()))
         self.route["vary"]["subtle"]["controls"] = {"denoise": 0.2, "width": 512}
         self.assertTrue(any("width" in p for p in self.problems()))

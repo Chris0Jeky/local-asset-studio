@@ -136,7 +136,9 @@ class ImageOperationTests(unittest.TestCase):
 
     def test_the_catalog_registers_one_masked_tile_route(self):
         self.assertEqual(tiles.route_problems(CATALOG), [])
-        self.assertTrue(ROUTE["requires_rgba_mask"]); self.assertFalse(ROUTE["verified"])
+        self.assertTrue(ROUTE["requires_rgba_mask"])
+        # verified only with a recorded proving run (the 27 Sep 2026 live proof through the page, #1220)
+        if ROUTE["verified"]: self.assertIn("Executed", ROUTE.get("execution_note", ""))
         self.assertIn("more than one", tiles.route_problems([ROUTE, dict(ROUTE, id="copy")])[0])
         self.assertTrue(tiles.route_problems([dict(ROUTE, requires_rgba_mask=False)]))
         graph = json.loads((ROOT / ROUTE["graph"]).read_text(encoding="utf-8"))

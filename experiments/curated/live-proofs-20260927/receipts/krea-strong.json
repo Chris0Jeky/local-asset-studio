@@ -1,0 +1,181 @@
+{
+ "label": "krea",
+ "parent_asset": "2c48e689be5c5c5586eb00bf6321b170",
+ "strength": "strong",
+ "events": [
+  {
+   "t": 1790536437.931,
+   "kind": "asset_opened",
+   "vary_buttons": [
+    "Vary subtle",
+    "Vary strong"
+   ],
+   "hint": "On Krea 2 Refine Pass (img2img polish) \u00b7 2 pictures \u00b7 denoise 0.25 / 0.5 (starting values)"
+  },
+  {
+   "t": 1790536441.028,
+   "kind": "vary_pressed",
+   "status": "Vary strong prepared on Krea 2 Refine Pass (img2img polish) from this picture: denoise 0.5 (a starting value, not yet judged), 2 new seeds from 548748988, about 6.2 min per picture here \u00b7 9 runs. Nothing was generated; press Generate to run the round.",
+   "prepared": {
+    "preset": null,
+    "batch": "2",
+    "denoise": null,
+    "positive": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+    "hash": "#create"
+   },
+   "submitted_so_far": []
+  },
+  {
+   "t": 1790536441.256,
+   "kind": "generate_state",
+   "disabled": false,
+   "text": "Generate source-based pass \u2192"
+  },
+  {
+   "t": 1790536441.257,
+   "kind": "commit_before_generate",
+   "commit_gib": 58.3,
+   "limit_gib": 95.7,
+   "pct": 60.9,
+   "phys_avail_gib": 6.4
+  },
+  {
+   "t": 1790536445.458,
+   "kind": "generate_pressed",
+   "new_jobs": [
+    [
+     "fd7a79b8-5d05-43c0-b372-6786c4a9c945",
+     "krea-refine",
+     2,
+     "running"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790536441.37,
+     "/api/jobs"
+    ]
+   ]
+  }
+ ],
+ "job_id": "fd7a79b8-5d05-43c0-b372-6786c4a9c945",
+ "preset": "krea-refine",
+ "status": "completed",
+ "message": "Complete. GPU memory overflowed 1.1 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+ "batch_count": 2,
+ "prompt_ids": [
+  "a704bd0a-724d-409d-b8d3-7ef676a80434",
+  "d78660d5-3657-4cc9-ae48-16e87e5e86c3"
+ ],
+ "outputs": [
+  {
+   "filename": "krea-refine_00012_.png",
+   "subfolder": "Studio",
+   "seed": 548748988,
+   "prompt_id": "a704bd0a-724d-409d-b8d3-7ef676a80434",
+   "asset_id": "b232cfebcfe35f46bdc5ad1a2a7c6328"
+  },
+  {
+   "filename": "krea-refine_00013_.png",
+   "subfolder": "Studio",
+   "seed": 548748989,
+   "prompt_id": "d78660d5-3657-4cc9-ae48-16e87e5e86c3",
+   "asset_id": "3656229f83d55381af57ad910df93696"
+  }
+ ],
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "a704bd0a-724d-409d-b8d3-7ef676a80434",
+   "seed": 548748988,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 1162424320,
+    "peak_dedicated_bytes": 15062097920,
+    "samples": 1303,
+    "spilled": true,
+    "settled_shared_bytes": 82391040,
+    "lingering": false
+   }
+  },
+  {
+   "index": 1,
+   "prompt_id": "d78660d5-3657-4cc9-ae48-16e87e5e86c3",
+   "seed": 548748989,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 1188638720,
+    "peak_dedicated_bytes": 15062097920,
+    "samples": 1255,
+    "spilled": true,
+    "settled_shared_bytes": 82391040,
+    "lingering": false
+   }
+  }
+ ],
+ "graph_denoise": [
+  0.5
+ ],
+ "parent_assets": [
+  "2c48e689be5c5c5586eb00bf6321b170"
+ ],
+ "continuation": {
+  "intent": "edit",
+  "preset_id": "krea-refine",
+  "reference_file": "2ec639716bc64beb9bca310073ec65b9_krea-anime-atelier-gguf_00011_.png.png",
+  "source_asset_id": "2c48e689be5c5c5586eb00bf6321b170",
+  "source_sha256": "0ca6557dcf3069d37937224c2331690052321b45fa43175e721b89c740a69e30",
+  "template_sha256": "d74f2705d99541754e62f13dd6dcdd0a4720b164c6bef12d69a40de60ba907ab",
+  "version": 1
+ },
+ "controls": {
+  "positive": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+  "seed": "548748988",
+  "steps": "6",
+  "cfg": "1",
+  "denoise": "0.5",
+  "lora": "1",
+  "lora2": "1",
+  "lora3": "0.85",
+  "lora4": "0",
+  "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+  "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+  "lora3_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+  "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors",
+  "sampler": "euler",
+  "scheduler": "simple",
+  "reference": "2ec639716bc64beb9bca310073ec65b9_krea-anime-atelier-gguf_00011_.png.png"
+ },
+ "created_at": 1790536441.6173441,
+ "started_at": 1790536441.699821,
+ "finished_at": 1790537689.4228141,
+ "elapsed_seconds": 1247.7229931354523,
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790536430.506,
+   "/api/estimate"
+  ],
+  [
+   1790536431.564,
+   "/api/estimate"
+  ],
+  [
+   1790536437.97,
+   "/api/assets/reference"
+  ],
+  [
+   1790536438.297,
+   "/api/estimate"
+  ],
+  [
+   1790536441.37,
+   "/api/jobs"
+  ],
+  [
+   1790536441.89,
+   "/api/estimate"
+  ]
+ ],
+ "dialogs": []
+}
