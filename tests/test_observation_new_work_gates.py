@@ -1,6 +1,7 @@
 """Public domain commands retain resource admission after #608's read-only split."""
 import copy
 import shutil
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -15,14 +16,34 @@ from test_server import FakeStudio
 class NewWorkAdmissionTests(unittest.TestCase):
     def fixture(self, case):
         instance = case()
-        instance.setUp()
+        # Register before setUp: a fixture whose setUp fails after patching
+        # Thread.start must still restore it, or later tests hang in shutdown().
         self.addCleanup(instance.doCleanups)
+        instance.setUp()
         # ReferenceJobTests delegates teardown through ServerTests only in cleanup.
         if case is reference_fixtures.ReferenceJobTests:
             self.addCleanup(reference_fixtures.fixtures.ServerTests.tearDown, instance)
         else:
             self.addCleanup(instance.tearDown)
         return instance
+
+    def test_fixture_restores_thread_start_when_its_setup_fails(self):
+        # VoiceTests.setUp fails after ProductionTests patched Thread.start when
+        # pip is absent; the leaked no-op start hung a later server shutdown().
+        original = threading.Thread.start
+        self.addCleanup(setattr, threading.Thread, 'start', original)
+
+        class FailsAfterPatching(production_fixtures.ProductionTests):
+            def setUp(self):
+                super().setUp()
+                raise RuntimeError('fixture setup failed after patching')
+
+        owner = NewWorkAdmissionTests()
+        with self.assertRaisesRegex(RuntimeError, 'after patching'):
+            owner.fixture(FailsAfterPatching)
+        self.assertIsNot(threading.Thread.start, original)
+        owner.doCleanups()
+        self.assertIs(threading.Thread.start, original)
 
     def test_production_start_and_continuation_keep_hold_and_budget(self):
         fixture = self.fixture(production_fixtures.ProductionTests)
