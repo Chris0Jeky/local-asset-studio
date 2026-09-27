@@ -6,6 +6,15 @@ from pathlib import Path
 
 class GalleryHandoffTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_typed_reasons_and_one_shot_requests_survive_polls_and_double_clicks(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('create_input_drafts.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Create input drafts and one-shot requests survive', result.stdout, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_read_polling_is_bounded_and_visibility_aware(self):
         result = subprocess.run(
             [shutil.which('node'), str(Path(__file__).with_name('read_poller.cjs'))],

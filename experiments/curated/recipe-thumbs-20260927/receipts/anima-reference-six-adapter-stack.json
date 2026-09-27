@@ -1,0 +1,44 @@
+{
+ "recipe_id": "anima-reference-six-adapter-stack",
+ "recipe_preset_id": "anima-artist-stack",
+ "job_id": "d9ec6ae9-a6b9-4254-9d13-ea449a414480",
+ "prompt_id": "46eb9605-01e9-4be3-b268-e7f5ce33d114",
+ "wall_seconds": 95.7,
+ "host_commit_percent_start": 57.6,
+ "host_commit_percent_peak": 82.4,
+ "output": "Studio/anima-artist-stack_00006_.png",
+ "output_size": [
+  1328,
+  1776
+ ],
+ "output_sha256": "fa430a21912070074b7a689d0054733050f05a6cdaf7a86c9d6c1b1119bade89",
+ "thumbnail": "examples/recipe-thumbs-20260927/anima-reference-six-adapter-stack.jpg",
+ "thumbnail_sha256": "725c8e833254c8e6e262ad9c10de8f72a34776115cc42cdbf5623b49713ec424",
+ "finished_local": "2026-09-27 04:00:42.764304",
+ "inspection": "Witch in a wide hat and dark cloak at dusk with sky lanterns; strong painterly purple finish; a faint stray signature scribble sits at the bottom right (crop 1100,1600-1328,1776).",
+ "studio_recipe": {
+  "preset_id": "anima-artist-stack",
+  "controls": {
+   "positive": "1girl, solo, @40u40uya, @hu45h11w, @k144d, a young witch with long silver hair and amber eyes, wide-brimmed hat, deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower at dusk, hanging lanterns, drifting motes of light, wind lifting her hair and cloak, looking at viewer, calm half-smile, painterly, textured brushwork, high contrast, vivid, film grain, depth of field, detailed background, detailed foreground",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia",
+   "steps": 30,
+   "cfg": 4,
+   "sampler": "euler_ancestral",
+   "scheduler": "simple",
+   "width": 1328,
+   "height": 1776,
+   "seed": 975436216244440,
+   "lora": 0.7,
+   "lora2": 0.6,
+   "lora3": 0.3,
+   "lora4": 0.7,
+   "lora5": 1.0,
+   "lora6": 0.5
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anima-artist-stack-api.json",
+  "created_at": 1790477947.136973,
+  "references": [],
+  "parent_assets": []
+ }
+}

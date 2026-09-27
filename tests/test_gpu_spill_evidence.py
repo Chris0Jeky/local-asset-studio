@@ -57,7 +57,7 @@ class FastSamplerAndMessageTests(unittest.TestCase):
             for _ in range(3): sampler.sample()
         peak = sampler.take()
         self.assertEqual((peak['peak_shared_bytes'], peak['samples']), (4 * GIB, 3))
-        self.assertEqual(peak['holders'], [{'pid': 2288, 'name': 'dwm.exe', 'dedicated_bytes': 6 * GIB}])
+        self.assertEqual(peak['holders'], [{'pid': 2288, 'name': 'dwm.exe', 'dedicated_bytes': 6 * GIB, 'plausible': None}])  # no adapter figure (#983)
         self.assertIsNone(sampler.take())                               # taken once
         broken = gpu_memory.Sampler(7, reader=lambda: 1 / 0); broken.sample(); self.assertIsNone(broken.take())
 
@@ -95,6 +95,17 @@ class FastSamplerAndMessageTests(unittest.TestCase):
         lingering = {'submissions': [{'gpu_memory': {'peak_shared_bytes': 5 * GIB, 'spilled': True, 'lingering': True, 'settled_shared_bytes': 2 * GIB}}]}
         message = Studio.spill_message(lingering)
         self.assertTrue(message.startswith('Complete, but slowly')); self.assertIn('2.0 GB was still there', message); self.assertIn('restart ComfyUI', message)
+
+    def test_an_impossible_holder_counter_is_never_named_as_the_largest_user(self):
+        # #983: dwm.exe read 65.9 GiB on a 16 GiB card; holders() marks it plausible: False.
+        anomaly = {'pid': 2288, 'name': 'dwm.exe', 'dedicated_bytes': int(65.85 * GIB), 'plausible': False}
+        real = {'pid': 3000, 'name': 'llama-server.exe', 'dedicated_bytes': 2 * GIB, 'plausible': True}
+        job = lambda rows: {'submissions': [{'gpu_memory': {'peak_shared_bytes': 4 * GIB, 'spilled': True, 'lingering': False, 'top_holders': rows}}]}
+        message = Studio.spill_message(job([anomaly, real]))
+        self.assertIn('largest other GPU user was llama-server.exe with 2.0 GB', message); self.assertNotIn('65.', message)
+        message = Studio.spill_message(job([anomaly]))
+        self.assertIn('largest other GPU user is unknown', message); self.assertIn('impossible 65.8 GB for dwm.exe', message)
+        self.assertNotIn('largest other GPU user was', message)
 
 
 if __name__ == '__main__':

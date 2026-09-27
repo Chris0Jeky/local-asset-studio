@@ -1,7 +1,12 @@
 /* Shared entry points for the main Studio and independently served tools. */
+/* A locked control's reason sits beside it (#278); empty reasons take no space. */
+.disabledReason {margin:4px 0;color:var(--muted)}
+.disabledReason:has(small:empty) {display:none}
 .studio-quick-create {display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 10px;border:1px solid currentColor;border-radius:7px;font-size:12px;text-decoration:none;flex:none}
 .studio-quick-create[hidden] {display:none!important}
 @media(max-width:480px){.studio-globalbar .studio-breadcrumb{display:none}.studio-globalbar{gap:8px}}
 /* Overview record actions retain the row layout used by navigation links. */
 button.ux-desk-row {width:100%;text-align:left;font:inherit}
 #uxJobInspector pre {white-space:pre-wrap;overflow-wrap:anywhere}
+/* #940: Put away / Bring back sits with its consequence in the job inspector. */
+.ux-desk-action {display:flex;align-items:center;gap:10px;flex-wrap:wrap}

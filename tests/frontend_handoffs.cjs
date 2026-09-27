@@ -288,7 +288,7 @@ async function legacySetupWithoutAttributionIsUnchanged() {
     // attributed", so the fallback must still run or the reload regresses a case that works on main.
     ['an empty mapping', {...legacy({reference: 'from-asset-a.png'}, ['asset-a']), parent_by_input: {}}]]) {
     const single = sandbox(first, local);
-    single.run(`applySaved(${JSON.stringify(record)});`);
+    single.run(`applySaved(${JSON.stringify(record)},{guessLegacyParent:true});`);
     assert.deepEqual(JSON.parse(single.run('JSON.stringify(parentByInput)')), {reference: 'asset-a'}, 'The unambiguous legacy case is still attributed with ' + label);
     single.element('#reference').files = [localFile('replacement-first.png')];
     single.element('#reference').onchange();
@@ -314,6 +314,64 @@ async function importedRecipeKeepsUnattributedParents() {
   assert.deepEqual(parents(), ['asset-a', 'asset-b'], 'Clearing a slot with no recorded source disowns nothing');
   assert.equal(element('#generate').disabled, true, 'The cleared slot still blocks generation');
   assert.equal(requests.some(r => r.url === '/api/jobs'), false, 'Importing and editing must never submit generation');
+}
+
+// #1071: the single-parent, single-input guess is library-only. A slotless job-export shape
+// with one parent and one filled input stays unattributed through applySaved and through
+// the #importRecipe entry point; only the saved-list/draft reload flag restores the legacy claim.
+async function singleParentGuessIsLibraryOnly() {
+  const record = {preset: 'gentle-variation', controls: {positive: 'A study', reference: 'upload.png'}, batch_count: 1, parent_assets: ['asset-a'], references: []};
+  const bare = sandbox(null, null);
+  bare.run(`applySaved(${JSON.stringify(record)});`);
+  assert.deepEqual(JSON.parse(bare.run('JSON.stringify(parentByInput)')), {}, 'Without the library flag a lone parent stays unattributed');
+  assert.deepEqual(bare.parents(), ['asset-a'], 'The unattributed parent survives the load');
+  const library = sandbox(null, null);
+  library.run(`applySaved(${JSON.stringify(record)},{guessLegacyParent:true});`);
+  assert.deepEqual(JSON.parse(library.run('JSON.stringify(parentByInput)')), {reference: 'asset-a'}, 'The saved-list reload keeps the legacy attribution');
+}
+
+async function importedSlotlessRecipeNeverGuesses() {
+  const s = sandbox(null, null);
+  const recipe = {preset_id: 'gentle-variation', controls: {positive: 'A study', reference: 'upload.png'}, batch_count: 1, parent_assets: ['asset-a'], references: []};
+  const fetch = s.context.fetch;
+  s.context.fetch = async (url, options = {}) => url === '/api/recipe-check' ? {ok: true, json: async () => ({template_sha256: 'x'})} : fetch(url, options);
+  await s.element('#importRecipe').onchange({target: {files: [{size: 128, text: async () => JSON.stringify(recipe)}], value: 'x'}});
+  s.context.fetch = fetch;
+  assert.equal(s.run('recipeTemplateHash'), 'x', 'The import ran through the recipe check');
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')), {}, 'The import entry point never guesses attribution');
+  assert.deepEqual(s.parents(), ['asset-a'], 'The imported parent stays listed but unattributed');
+}
+
+// #1071: the rerun and production-branch entry points need a DOM this sandbox lacks, so pin their call
+// shapes in the source: neither may opt into the library-only guess; the saved list and draft restore do.
+async function nonLibraryEntryPointsNeverOptIntoTheGuess() {
+  const read = name => fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8');
+  const workbench = read('studio-workbench.js'), production = read('production.js'), app = read('app.js');
+  assert.match(workbench, /selectPreset\(target\.id,true,true\);applySaved\(setup\);/, 'Rerun loads its setup without the library flag');
+  assert.match(production, /action==='branch'\)\{applySaved\(\{[^}]*\}\);/, 'A production branch loads without the library flag');
+  assert.equal((app.match(/guessLegacyParent:true/g) || []).length, 1, 'Only the saved-list load opts in inside app.js');
+  // #1087 review: normalizeDraft drops an empty mapping, so a restored draft cannot tell "nothing attributed"
+  // from "written before mappings"; draft restore therefore never guesses.
+  assert.match(workbench, /try\{applySaved\(draft\.recipe\);/, 'Draft restore never guesses');
+  assert.doesNotMatch(workbench, /guessLegacyParent/, 'No workbench path opts in');
+}
+
+// #1087 review: a rerun with one unclaimed parent and one named input, saved as a setup and reloaded from the
+// saved list, must not gain a guessed claim; replacing the input must keep the parent.
+async function savedSetupRoundTripKeepsAnUnclaimedParent() {
+  const saving = sandbox(null, null);
+  saving.run(`selectPreset('gentle-variation');uploaded='upload.png';parentAssets=['asset-a'];parentByInput={};`);
+  saving.element('#saveName').value = 'Rerun with an unclaimed parent';
+  await saving.element('#save').onclick();
+  const recipe = saving.requests.find(r => r.url === '/api/setups').data.recipe;
+  assert.equal(recipe.attribution_recorded, true, 'A current setup marks its mapping as recorded');
+  assert.deepEqual(recipe.parent_by_input, {}, 'Nothing was attributed');
+  const reload = sandbox(null, null);
+  reload.run(`applySaved(${JSON.stringify(recipe)},{guessLegacyParent:true});`); // exactly the saved-list load
+  assert.deepEqual(JSON.parse(reload.run('JSON.stringify(parentByInput)')), {}, 'The marked empty mapping is not re-guessed');
+  reload.element('#reference').files = [localFile('replacement.png')];
+  reload.element('#reference').onchange();
+  assert.deepEqual(reload.parents(), ['asset-a'], 'Replacing the input keeps the unclaimed parent');
 }
 
 // The Pull-from-library picker in studio-workbench.js drives this exact sequence against one slot.
@@ -383,6 +441,7 @@ async function problemsPanelPutAway() {
   assert.match(html,/Problems · 8 run\(s\) · 1 put away/);
   assert.equal((html.match(/data-put-away="true"/g)||[]).length,4,'Newest five shown; the tracked uncertain job offers no Put away');
   assert.match(html,/Stop tracking before putting this away/);
+  assert.match(html,/a ComfyUI restart, relaunch or crash erases it/,'#864: stopping tracking says what a ComfyUI restart discards');
   assert.match(html,/3 older problem\(s\) not shown/);assert.doesNotMatch(html,/Failed 3/);
   assert.doesNotMatch(html,/Put away one/);assert.match(html,/Show put away \(1\)/);
   assert.equal(requests.length,0,'Rendering sends nothing');
@@ -496,7 +555,7 @@ async function legacyBoardSetupAttributesSingleNamedSource() {
   const emptySlot = [{role: 'pose', contribution: '', avoid: '', file: null}];
 
   const s = sandbox(attached, local);
-  s.run(`applySaved(${JSON.stringify(legacy(emptySlot))});`);
+  s.run(`applySaved(${JSON.stringify(legacy(emptySlot))},{guessLegacyParent:true});`);
   await flush();
   assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')), {lastReference: 'source-asset'}, 'The unambiguous legacy board case attributes the named source');
   await s.run(`attachReferenceAsset(0,'source-asset')`);
@@ -792,16 +851,20 @@ async function modelStatusFilter() {
 // objects (as a browser would), so a focused node or a playing clip is lost exactly when the list is replaced.
 function recentRunsSandbox({host = false} = {}) {
   const s = sandbox({}, {});
-  const matches = (node, selector) => selector.startsWith('[') ? selector.slice(6, -1).replace(/-(\w)/g, (_, c) => c.toUpperCase()) in node.dataset
+  const matches = (node, selector) => selector === '#jobProblems' ? node.inProblems : selector.startsWith('[') ? selector.slice(6, -1).replace(/-(\w)/g, (_, c) => c.toUpperCase()) in node.dataset
     : selector.startsWith('.') ? node.className.split(/\s+/).includes(selector.slice(1)) : node.tagName === selector.toUpperCase();
   const any = (node, selector) => selector.split(',').some(part => matches(node, part.trim()));
-  const parse = markup => {
-    const out = []; let owner = null;
-    for (const m of markup.matchAll(/<(\/article|article|button|a|input|video|audio|summary)\b([^>]*)>/g)) {
+  const parse = (markup, box) => {
+    const out = []; let owner = null, inProblems = false;
+    for (const m of markup.matchAll(/<(\/details|details|\/article|article|button|a|input|video|audio|summary)\b([^>]*)>/g)) {
       if (m[1] === '/article') {owner = null; continue;}
+      if (m[1] === '/details') {inProblems = false; continue;}
+      if (m[1] === 'details') {inProblems = /id="jobProblems"/.test(m[2]); continue;}
       const attrs = Object.fromEntries([...m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(a => [a[1], a[2] ?? '']));
       const dataset = Object.fromEntries(Object.entries(attrs).filter(([k]) => k.startsWith('data-')).map(([k, v]) => [k.slice(5).replace(/-(\w)/g, (_, c) => c.toUpperCase()), v]));
-      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, paused: true, ended: false, loop: 'loop' in attrs, listeners: {},
+      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, inProblems, paused: true, ended: false, hidden: false, loop: 'loop' in attrs, listeners: {},
+        // Removing a card removes the controls it owns, as the DOM would.
+        remove() {box.nodes = box.nodes.filter(n => n !== this && n.owner !== this);},
         focus(options) {this.focusOptions = options; s.context.document.activeElement = this;},
         addEventListener(name, handler) {(this.listeners[name] ||= []).push(handler);},
         removeEventListener(name, handler) {this.listeners[name] = (this.listeners[name] || []).filter(h => h !== handler);},
@@ -814,8 +877,11 @@ function recentRunsSandbox({host = false} = {}) {
   // Each innerHTML write re-parses into fresh nodes and counts as one replacement of that container.
   const container = target => {
     const box = {html: '', nodes: [], writes: 0};
-    Object.defineProperty(target, 'innerHTML', {get: () => box.html, set(value) {box.html = value; box.nodes = parse(value); box.writes++;}});
+    Object.defineProperty(target, 'innerHTML', {get: () => box.html, set(value) {box.html = value; box.nodes = parse(value, box); box.writes++;}});
+    // The no-host held branch appends Problems markup; that is not a replacement of the list.
+    target.insertAdjacentHTML = (where, markup) => {box.html += markup; box.nodes.push(...parse(markup, box));};
     target.querySelectorAll = selector => box.nodes.filter(node => any(node, selector));
+    target.querySelector = selector => box.nodes.find(node => any(node, selector)) || null;
     target.contains = node => box.nodes.includes(node);
     return box;
   };
@@ -962,6 +1028,95 @@ async function recentRunsProblemsStayCurrentDuringPlayback() {
   assert.equal(s.writes, writes, 'The gallery is still untouched');
 }
 
+// #1074: a focused card that polls out of the capped list falls back to Show more (not body/null).
+async function recentRunsFocusFallsBackToShowMore() {
+  const s = recentRunsSandbox();
+  const history = Array.from({length: 10}, (_, i) => recentJob('r' + i));
+  await s.poll(history);
+  const before = s.nodes().find(node => node.dataset.job === 'r9' && node.className === 'reference-output' && node.dataset.preset === 'krea-refine');
+  assert.ok(before, 'The tenth card offers the focused control');
+  s.context.document.activeElement = before;
+  await s.poll([recentJob('new'), ...history]);
+  const after = s.context.document.activeElement;
+  assert.notEqual(after, before, 'The focused card polled out of the capped list');
+  assert.ok('recentMore' in after.dataset, 'Focus falls back to Show more instead of leaving the page');
+  assert.ok(s.nodes().includes(after), 'The fallback control is in the new list');
+  assert.equal(after.focusOptions?.preventScroll, true, 'Fallback focus does not scroll');
+}
+
+// #1074: error/emptied release the playback hold. An errored clip can still report paused false, so it never counts
+// as playing; without the fix the wait never releases (listeners were only on pause/ended).
+async function recentRunsReleaseOnErrorAndEmptied() {
+  const s = recentRunsSandbox();
+  const history = [recentJob('clip', 1, 'video'), recentJob('p1')];
+  await s.poll(history);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('later'), ...history]);
+  assert.equal(s.writes, writes, 'A playing clip holds the re-render');
+  assert.equal(video.listeners.error.length, 1, 'The wait also listens for error');
+  assert.equal(video.listeners.emptied.length, 1, 'The wait also listens for emptied');
+  video.error = {code: 4}; // a browser sets MediaError before firing error; paused may stay false
+  video.listeners.error[0]();
+  assert.equal(s.writes, writes + 1, 'An error releases the held re-render even while paused is false');
+  assert.match(s.element('#gallery').innerHTML, /data-output="later:0"/, 'The released render shows the newest data');
+  assert.deepEqual([video.listeners.pause.length, video.listeners.ended.length, video.listeners.error.length, video.listeners.emptied.length], [0, 0, 0, 0], 'The wait unregisters every event');
+  const next = s.nodes().find(node => node.tagName === 'VIDEO');
+  next.paused = false;
+  const held = s.writes;
+  await s.poll([recentJob('later2'), recentJob('later'), ...history]);
+  assert.equal(s.writes, held, 'The new clip holds again');
+  next.paused = true; // the media load algorithm sets paused before emptied reaches listeners
+  next.listeners.emptied[0]();
+  assert.equal(s.writes, held + 1, 'Emptied releases the held re-render');
+  assert.match(s.element('#gallery').innerHTML, /data-output="later2:0"/, 'The emptied release shows the newest data');
+  assert.deepEqual([next.listeners.pause.length, next.listeners.ended.length, next.listeners.error.length, next.listeners.emptied.length], [0, 0, 0, 0], 'The emptied wait unregisters every event');
+}
+
+// #1074: a waiting job that moves to Problems during the hold hides its gallery card (no double display,
+// no enabled Abandon button); the playing clip in its own media card is untouched.
+async function recentRunsSupersededGalleryCardHidden() {
+  const s = recentRunsSandbox({host: true});
+  const pending = {id: 'pend', preset_name: 'Recipe pend', status: 'not_submitted', message: 'Queued', outputs: [], prompt_ids: []};
+  const history = [recentJob('clip', 1, 'video'), pending, recentJob('p1')];
+  await s.poll(history);
+  const card = s.nodes().find(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'pend');
+  assert.ok(card, 'A waiting job renders as a gallery card');
+  const recipe = s.nodes().find(node => node.className === 'recipe' && node.owner === card);
+  assert.ok(recipe, 'The waiting card offers its Recipe control');
+  s.context.document.activeElement = recipe;
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([{...pending, status: 'abandoned', message: 'Abandoned', created_at: 7, can_put_away: true, put_away: false}, recentJob('clip', 1, 'video'), recentJob('p1')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.match(s.host.html, /Recipe pend/, 'The abandoned job reaches Problems while the clip plays');
+  assert.equal(s.nodes().includes(card), false, 'The superseded gallery card is removed instead of showing twice');
+  assert.equal(s.nodes().some(node => node.owner === card), false, 'Its controls go with it');
+  assert.ok(s.nodes().includes(video) && !video.hidden, 'The playing clip is untouched');
+  // #1091 review: focus follows the job to its visible Problems card, not a hidden control or the page body.
+  const focused = s.context.document.activeElement;
+  assert.ok(s.host.nodes.includes(focused), 'Focus lands in the Problems host');
+  assert.equal(focused.owner?.dataset.problem, 'pend'); assert.equal(focused.className, 'recipe');
+}
+
+// #1091 review (LOW): without a host, held Problems is appended inside the gallery; the removal must spare the
+// fresh Problems card for the same job and remove only the stale waiting card.
+async function recentRunsHeldProblemsInsideTheGalleryKeepTheirCard() {
+  const s = recentRunsSandbox();
+  const pending = {id: 'pend', preset_name: 'Recipe pend', status: 'not_submitted', message: 'Queued', outputs: [], prompt_ids: []};
+  await s.poll([recentJob('clip', 1, 'video'), pending]);
+  const card = s.nodes().find(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'pend');
+  assert.ok(card && !card.inProblems, 'The waiting card sits in the gallery list');
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  await s.poll([{...pending, status: 'abandoned', message: 'Abandoned', created_at: 7, can_put_away: true, put_away: false}, recentJob('clip', 1, 'video')]);
+  const cards = s.nodes().filter(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'pend');
+  assert.equal(s.nodes().includes(card), false, 'The stale waiting card is removed');
+  assert.equal(cards.length, 1, 'Exactly one card remains for the job');
+  assert.ok(cards[0].inProblems, 'It is the fresh card inside #jobProblems, spared by the guard');
+}
+
 async function recentRunsLeaveOutsideFocusAlone() {
   const s = recentRunsSandbox();
   await s.poll(Array.from({length: 3}, (_, i) => recentJob('o' + i)));
@@ -982,6 +1137,10 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await recentRunsUnchangedPollLeavesTheList();
   await recentRunsFocusReturnsAfterAChangedPoll();
   await recentRunsWaitForPlayingMedia();
+  await recentRunsFocusFallsBackToShowMore();
+  await recentRunsReleaseOnErrorAndEmptied();
+  await recentRunsSupersededGalleryCardHidden();
+  await recentRunsHeldProblemsInsideTheGalleryKeepTheirCard();
   await generateShortcutRoutesThroughTheButton();
   await seedAndPinChangesAreAnnounced();
   await pastedAndDroppedPicturesFillEmptySlots();
@@ -1007,6 +1166,10 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await savedSetupCarriesPerInputAttribution();
   await legacySetupWithoutAttributionIsUnchanged();
   await importedRecipeKeepsUnattributedParents();
+  await singleParentGuessIsLibraryOnly();
+  await importedSlotlessRecipeNeverGuesses();
+  await nonLibraryEntryPointsNeverOptIntoTheGuess();
+  await savedSetupRoundTripKeepsAnUnclaimedParent();
   await pullingIntoASlotReplacesItsSource();
   await i2vDiagnosticEligibilityAndRetry();
   await unresolvedInputLineageCannotBeSaved();

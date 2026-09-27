@@ -345,6 +345,30 @@ class JobPutAwayTests(unittest.TestCase):
                 self.assertEqual(studio.queue.qsize(), queued + 1)
                 self.assertEqual(studio.queue.get_nowait(), ("observe", job["id"]))
 
+    def test_resume_failure_with_unreadable_readback_reraises_publish_error(self):
+        for path in ("stopped-tracking", "ordinary"):
+            with self.subTest(path=path):
+                studio = self.studio()
+                if path == "stopped-tracking":
+                    job = self.uncertain(studio); studio.stop_tracking(job["id"], "Stop for now")
+                else:
+                    job = self.failed(studio)
+                studio.put_away_job(job["id"], True)
+                self.assertIn("put_away_at", job)
+                queued = studio.queue.qsize()
+                real_publish = studio._write_observation_state
+
+                def fail_after_replace(state_path, value):
+                    real_publish(state_path, value)
+                    raise OSError("parent sync lost")
+
+                with patch.object(studio, "_write_observation_state", side_effect=fail_after_replace):
+                    with patch.object(server, "read_json", side_effect=ValueError("bad utf-8")):
+                        with self.assertRaisesRegex(OSError, "parent sync lost"):
+                            studio.resume_job(job["id"])
+                self.assertEqual(studio.queue.qsize(), queued)  # nothing queued
+                self.assertIn("put_away_at", job)  # reconciliation could not prove the landing, so memory is left alone
+
     def test_resume_failure_after_landed_replacement_without_marker_leaves_memory(self):
         studio = self.studio(); job = self.failed(studio)
         self.assertNotIn("put_away_at", job)

@@ -263,4 +263,11 @@ class TypedTextFrontendTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('number boxes and sliders stay in sync', result.stdout)
 
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_steps_view_keeps_typed_text_across_render(self):
+        result = subprocess.run([shutil.which('node'), str(Path(__file__).with_name('workflow_steps_typed_frontend.cjs'))],
+                                capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Steps view keeps typed text', result.stdout)
+
 if __name__ == '__main__': unittest.main()

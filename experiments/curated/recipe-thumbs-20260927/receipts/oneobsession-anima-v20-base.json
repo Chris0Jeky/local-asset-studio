@@ -1,0 +1,45 @@
+{
+ "recipe_id": "oneobsession-anima-v20-base",
+ "recipe_preset_id": "oneobsession-anima-v20-baseline",
+ "job_id": "34df9931-66d5-4706-af8d-16e4fd76cb52",
+ "prompt_id": "933db201-93d4-4b7c-9340-21abd988c218",
+ "wall_seconds": 35.1,
+ "host_commit_percent_start": 64.9,
+ "host_commit_percent_peak": 64.9,
+ "output": "Studio/OneObsession-Anima-v20-Baseline_00002_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "a5eec6a8bc4ff5704fa5b16aa2a8d06b1399d846ea9ad6b2c209138c58d49bb8",
+ "thumbnail": "examples/recipe-thumbs-20260927/oneobsession-anima-v20-base.jpg",
+ "thumbnail_sha256": "9bf40a3d58b84c97614b91510cd1035904d0668be4d282bdfa63811c6fae471f",
+ "finished_local": "2026-09-27 04:05:02.089798",
+ "inspection": "Warm dusk backlight under a station canopy, rain streaks and a reflective platform; dark sweater and beige coat.",
+ "studio_recipe": {
+  "preset_id": "oneobsession-anima-v20-baseline",
+  "controls": {
+   "positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026091301,
+   "steps": 30,
+   "cfg": 4.5,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "lora": 0,
+   "lora2": 0,
+   "lora3": 0,
+   "lora4": 0,
+   "lora5": 0,
+   "lora6": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\oneobsession-anima-v20-baseline-api.json",
+  "created_at": 1790478267.0728965,
+  "references": [],
+  "parent_assets": []
+ }
+}

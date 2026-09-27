@@ -145,7 +145,7 @@ def run(screenshots):
             page.click('#workshopResults > summary')
             before_estimates=len([post for post in POSTS if post['path']=='/api/estimate']);page.fill('#positive','A timing estimate interaction');page.wait_for_timeout(350)
             check(len([post for post in POSTS if post['path']=='/api/estimate'])>before_estimates,'time estimate refreshes after a control change')
-            failed=page.locator('#gallery .jobStatus').filter(has_text='Memory allocation failed')
+            failed=page.locator('#jobProblemsHost .jobStatus').filter(has_text='Memory allocation failed')
             check(failed.count()==1,'failed allocation shows a clear diagnosis panel')
             check(not page.locator('#jobProblems').evaluate('(el)=>el.open'),'old failures are collapsed outside the experiment flow')
             page.click('#jobProblems > summary')
@@ -156,10 +156,10 @@ def run(screenshots):
             page.fill('[data-stop-tracking-reason="trackable-job"]','Operator retained <img src=x> uncertainty');page.click('.stopTracking');page.wait_for_timeout(100)
             check(len(POSTS)==before_posts+1 and POSTS[-1]['path']=='/api/jobs/trackable-job/stop-tracking','stop tracking sends exactly one explicit disposition request')
             page.evaluate("""jobs=jobs.filter(j=>j.id!=='trackable-job');jobs.push({id:'stopped-job',preset_name:'Stopped fixture',status:'uncertain',message:'Original uncertain outcome is retained.',controls:{},prompt_ids:['known-fixture'],submissions:[{prompt_id:'known-fixture',status:'observing'}],outputs:[],tracking_disposition:{status:'stopped',reason:'Operator retained <img src=x> uncertainty',recorded_at:123},can_stop_tracking:false,can_resume_tracking:true});renderJobs()""")
-            stopped=page.locator('#gallery .jobStatus').last
+            stopped=page.locator('#jobProblemsHost .jobStatus').last
             check('uncertain' in stopped.inner_text() and 'Original uncertain outcome is retained.' in stopped.inner_text(),'stopped tracking keeps the original uncertain status and message')
             check('Tracking stopped' in stopped.inner_text() and stopped.locator('img').count()==0,'stopped reason is escaped rather than rendered as markup')
-            check('Resume observation of retained prompt' in stopped.locator('.resume').inner_text() and stopped.locator('.recipe').count()==1,'stopped gallery record retains Recipe and offers observation-only recovery')
+            check('Resume observation of retained prompt' in stopped.locator('.resume').inner_text() and stopped.locator('.recipe').count()==1,'stopped Problems record retains Recipe and offers observation-only recovery')
             page.evaluate("""productionPlans.push({id:'tracking-project',name:'Retained stopped stage',kind:'comparison',state:{status:'uncertain',message:'Original project uncertainty retained.'},stages:[{label:'A',operation:'generate',attempt:{job_id:'stopped-job'},job:jobs.find(j=>j.id==='stopped-job')}],budget:{allowance:2,reserved:2},axis:'seed',values:[]});productionId='tracking-project';renderProduction()""")
             check(page.locator('[data-project-action="resume"]').is_disabled() and 'Resume is unavailable' in page.locator('#productionDetail').inner_text(),'production view disables direct resume for a stopped retained stage')
             page.evaluate("showView('home')")

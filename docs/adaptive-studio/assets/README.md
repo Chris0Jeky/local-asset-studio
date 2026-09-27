@@ -1,6 +1,6 @@
 # Frontend asset production kit
 
-**154 planned requests. No media has been produced, acquired, cleared or installed by this kit.**
+**154 planned requests. No art has been produced, cleared or installed by this kit.** The owner lifted the artwork deferral on 27 September 2026; [PRODUCTION-PLAN.md](PRODUCTION-PLAN.md) routes every request and names the first wave. The only bytes so far are 71 permissively licensed downloads (icons, fonts, textures) kept local-only and listed in [acquired/MANIFEST.json](acquired/MANIFEST.json).
 
 This is a production wishlist, not 154 image-generation prompts to execute in one batch. It includes scene masters, derivatives, code/vector work, real tutorial captures and optional sound. Shared profiles supply delivery targets; every catalogue row adds an individual subject, placement, production method, dependency and acceptance test.
 
@@ -22,9 +22,13 @@ The reader is standard-library Python, reads only this directory and prints text
 | [ART-DIRECTION.md](ART-DIRECTION.md) | Coherent worlds and composition/canon rules |
 | [DELIVERY-SPEC.md](DELIVERY-SPEC.md) | File/rendition/loop/layer contracts and acceptance |
 | [SESSION-HANDOFF.md](SESSION-HANDOFF.md) | Copy/paste next-session instruction and provider/tool routes |
+| [PRODUCTION-PLAN.md](PRODUCTION-PLAN.md) | Kit review, one route per request, waves and the GPU-lab queue |
+| [CHATGPT-PROMPT-PACK.md](CHATGPT-PROMPT-PACK.md) | Ready-to-paste ChatGPT prompts for the wave 1-2 `chatgpt-image` requests, and how results come back |
 | [receipt-template.json](receipt-template.json) | Empty receipt template; actual source/output fields are deliberately null |
 | [brief.py](brief.py) | Read-only brief assembly and inventory checks |
-| [test_brief.py](test_brief.py) | Offline inventory, dependency, CLI and planned-state tests |
+| [test_brief.py](test_brief.py) | Offline inventory, dependency, CLI, planned-state, plan-routing and prompt-pack tests |
+| [intake.py](intake.py) | `receipts` for files dropped in the gitignored `inbox/`; `verify`/`fetch` for the local-only `acquired/` downloads |
+| [test_intake.py](test_intake.py) | Offline intake, manifest and fetch-safety tests |
 
 ## Inventory
 
@@ -45,9 +49,10 @@ The reader is standard-library Python, reads only this directory and prints text
 
 ## Production waves
 
-P0 has 25 requests: 6 Retro Anime scene/still derivatives, 4 core workflow vignettes, 5 necessary helper states and 10 code/vector foundations. P1 has 18: Retro Anime layers/loop, 8 reference examples and 6 motion specifications. P2 has 69 broader environment/workflow/tutorial/sample requests. P3 has 42 optional guide, sound, promotion and additional moving-world requests.
-
-These are prioritization proposals, not approved work. P0 is already larger than a sensible first art batch. Start with **one anchor and a few derivatives**, for example `retro-anime-master`, `retro-anime-quiet`, `retro-anime-hero`, `retro-anime-poster`, `retro-anime-card`, `state-blank` and `state-source-required`. Resolve the anchor first; derive crops instead of paying for disconnected new scenes. Add motion only after the still pack works in the actual editor.
+The catalogue's P0-P3 labels were prioritization proposals (P0 alone held 25 requests). The working order is now the
+W0-W5 waves in [PRODUCTION-PLAN.md](PRODUCTION-PLAN.md): wave 1 is the GPU lab's `retro-anime-master` candidates, then
+the owner's acceptance, the same-camera quiet still and crops, plus two ChatGPT style anchors (`workflow-create`,
+`reference-identity`) and the ChatGPT wall adaptation. Resolve each anchor before its derivatives.
 
 ## Dependencies and exclusions
 

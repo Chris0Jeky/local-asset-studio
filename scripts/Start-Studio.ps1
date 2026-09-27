@@ -106,13 +106,34 @@ if (-not $ready) {
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $serverPath = Join-Path $repoRoot 'app\server.py'
     $process = Start-Process -FilePath $studioConfig.python -ArgumentList @('"' + $serverPath + '"') -WorkingDirectory $repoRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $logRoot "$stamp-out.log") -RedirectStandardError (Join-Path $logRoot "$stamp-error.log") -PassThru
-    $process.Id | Set-Content -LiteralPath (Join-Path $logRoot 'server.pid')
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
         Start-Sleep -Seconds 1
-        if ($process.HasExited) { throw "Asset Studio exited. See $logRoot" }
-        try { $health = Invoke-RestMethod ($studioUrl + '/api/identity') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio'; if ($ready) { break } } catch { }
+        try { $health = Invoke-RestMethod ($studioUrl + '/api/identity') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio' } catch { }
+        if ($ready) { break }
+        if ($process.HasExited) {
+            # A losing child exits on its failed bind while the winner, already listening, may still be initialising:
+            # keep polling to the deadline while anything listens on 8191. Nothing listening means nobody will answer.
+            $listening = $true
+            try { $listening = @(Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort 8191 -State Listen -ErrorAction SilentlyContinue).Count -gt 0 } catch { }
+            if (-not $listening) { break }
+        }
     }
-    if (-not $ready) { throw "Asset Studio did not become ready. See $logRoot" }
+    if ($ready -and $health.workspace -ne $repoRoot) {
+        throw "Another Asset Studio workspace is using $studioUrl. Its workspace is '$($health.workspace)'. Finish its active jobs before restarting with this launcher."
+    }
+    if (-not $ready) {
+        if ($process.HasExited) { throw "Asset Studio exited. See $logRoot" }
+        throw "Asset Studio did not become ready. See $logRoot"
+    }
+    try { $owners = @(Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort 8191 -State Listen -ErrorAction Stop | ForEach-Object { $_.OwningProcess }) } catch { $owners = @() }
+    # A venv python.exe is a redirector whose child serves; accept a listener owned by this child's own child.
+    $ownsListener = $owners -contains $process.Id
+    if (-not $ownsListener) { foreach ($owner in $owners) { try { if ((Get-CimInstance Win32_Process -Filter "ProcessId=$owner" -ErrorAction Stop).ParentProcessId -eq $process.Id) { $ownsListener = $true } } catch { } } }
+    if (-not $process.HasExited -and $ownsListener) {
+        $process.Id | Set-Content -LiteralPath (Join-Path $logRoot 'server.pid')
+    } else {
+        Write-Host 'An Asset Studio for this workspace is already serving; this launcher did not record a PID.'
+    }
 }
 Write-Host "Asset Studio ready: $studioUrl"
 if (-not $NoBrowser) { Start-Process $studioUrl }

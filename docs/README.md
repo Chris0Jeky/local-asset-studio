@@ -90,6 +90,7 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 | [STUDIO-REVIEW-2026-09-12.md](STUDIO-REVIEW-2026-09-12.md) | Studio review, 12 September 2026 |
 | [STUDIO-REVIEW-2026-09-13.md](STUDIO-REVIEW-2026-09-13.md) | Studio assessment, 13 September 2026: correctness review, proven routes, goal map |
 | [UX-AUDIT-2026-09-14.md](UX-AUDIT-2026-09-14.md), [UX-USE-CASE-MATRIX.md](UX-USE-CASE-MATRIX.md) | Owner UX verdict and agent-driven measured journeys |
+| [design-handoff/](design-handoff/README.md) | Frontend redesign package for Claude Design: brief, IA, screen inventory with screenshots, journeys, components, constraints, prompts |
 | [ANIMA-BASELINE-EXECUTION-2026-09-13.md](ANIMA-BASELINE-EXECUTION-2026-09-13.md) | Anima baseline execution record |
 
 Agent-facing contracts also live in [`../agent-skills/`](../agent-skills/) (five SKILL.md contracts:

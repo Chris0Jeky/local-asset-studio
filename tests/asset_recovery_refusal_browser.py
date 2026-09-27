@@ -8,7 +8,6 @@ import shutil
 import socket
 import tempfile
 import threading
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -56,7 +55,7 @@ async def exercise(args):
                     return
                 return super()._json(status, value)
 
-        http = ThreadingHTTPServer(('127.0.0.1', 8191), Handler)
+        http = production.StudioHTTPServer(('127.0.0.1', 8191), Handler)
         worker = threading.Thread(target=http.serve_forever, daemon=True); worker.start()
         failure = None
         def check(name, value):
