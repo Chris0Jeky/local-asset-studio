@@ -1,0 +1,69 @@
+[
+ {
+  "key": "cmp-krea-retro",
+  "preset_id": "krea-portrait-gguf",
+  "controls": {
+   "positive": "purple retro anime style, Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+   "width": 1344,
+   "height": 768,
+   "seed": 2026092701,
+   "steps": 8,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "lora": 1.0
+  },
+  "label": "lab-0927 wishlist cmp krea-retro"
+ },
+ {
+  "key": "cmp-krea-atelier",
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+   "width": 1344,
+   "height": 768,
+   "seed": 2026092701,
+   "steps": 15,
+   "cfg": 1,
+   "sampler": "euler_ancestral",
+   "scheduler": "simple",
+   "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+   "lora": 1.0,
+   "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+   "lora2": 1.0,
+   "lora3": 0,
+   "lora4": 0
+  },
+  "label": "lab-0927 wishlist cmp krea-atelier"
+ },
+ {
+  "key": "cmp-zimage",
+  "preset_id": "zimage-fast",
+  "controls": {
+   "positive": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+   "width": 1344,
+   "height": 768,
+   "seed": 2026092701
+  },
+  "label": "lab-0927 wishlist cmp zimage-fast"
+ },
+ {
+  "key": "cmp-wai",
+  "preset_id": "wai",
+  "controls": {
+   "positive": "no humans, scenery, indoors, anime screencap, 1990s \\(style\\), night, rain, window, rain on glass, cityscape, distant train, railway, desk, paper stack, desk lamp, crt monitor, dark wall, plain wall, empty space on left, rose and cyan reflections, muted colors, painted background, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, text, signature, watermark, logo, 1girl, 1boy, person",
+   "width": 1344,
+   "height": 768,
+   "seed": 2026092701,
+   "steps": 26,
+   "cfg": 6,
+   "sampler": "euler_ancestral",
+   "scheduler": "normal",
+   "denoise": 1.0,
+   "lora": 0,
+   "lora2": 0
+  },
+  "label": "lab-0927 wishlist cmp wai"
+ }
+]
