@@ -278,19 +278,26 @@ def resolve_prompt_taxonomy(
                 f"to profile {profile['id']!r}.",
                 {"profile_id": profile["id"]},
             )
-        elif not ordered_facets.intersection(entry["semantic_facets"]):
-            status = (
-                "unordered_for_profile",
-                "TAXONOMY_UNORDERED_FOR_PROFILE",
-                f"Taxonomy entry {entry['source_name']!r} has no profile ordering facet.",
-                {"profile_id": profile["id"]},
-            )
 
         if status is not None:
             rejected_status = rejected_status or status[0]
             diagnostics.append(
                 _diagnostic(status[1], status[2], raw, entry, **status[3])
             )
+            continue
+
+        if not ordered_facets.intersection(entry["semantic_facets"]):
+            rejected_status = rejected_status or "unordered_for_profile"
+            diagnostics.append(
+                _diagnostic(
+                    "TAXONOMY_UNORDERED_FOR_PROFILE",
+                    f"Taxonomy entry {entry['source_name']!r} has no profile ordering facet.",
+                    raw,
+                    entry,
+                    profile_id=profile["id"],
+                )
+            )
+            pending.extend(reversed(entry["implications"]))
             continue
 
         rendered = (
@@ -313,8 +320,10 @@ def resolve_prompt_taxonomy(
             }
         )
         # Rejected entries remain in the trace, but their edges grant no path
-        # to descendants. Another eligible path or direct input can still reach
-        # a descendant. Reverse pushes retain left-to-right depth-first order.
+        # to descendants. An entry filtered only for lacking a profile ordering
+        # facet still passes its implications on. Another eligible path or
+        # direct input can still reach a descendant. Reverse pushes retain
+        # left-to-right depth-first order.
         pending.extend(reversed(entry["implications"]))
 
     result_status = (
