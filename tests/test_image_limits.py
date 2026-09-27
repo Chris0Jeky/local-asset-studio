@@ -52,5 +52,20 @@ class ImageLimitsTests(unittest.TestCase):
                 self.assertNotIn('catch_warnings', text)
                 self.assertIn('open_bounded', text)
 
+    def test_game_asset_media_decoders_refuse_by_pixel_budget_without_warning_filters(self):
+        # The Studio's native exports call these through media.atlas/media.ora on request threads.
+        sys.path.insert(0, str(ROOT / 'scripts'))
+        import game_asset_media as media
+        self.assertNotIn('catch_warnings', (ROOT / 'scripts/game_asset_media.py').read_text(encoding='utf-8'))
+        with Image.new('RGBA', (100, 100)) as picture, io.BytesIO() as out:
+            picture.save(out, format='PNG'); raw = out.getvalue()
+        with warnings.catch_warnings(record=True):
+            snapshot = list(warnings.filters)
+            # 10,000 px sits between Pillow's warning (6,000) and error (12,000) lines, under the 16 MP budget.
+            with patch.object(Image, 'MAX_IMAGE_PIXELS', 6000):
+                with self.assertRaisesRegex(ValueError, 'exceeds pixel budget'): media.decode_png(raw)
+            self.assertEqual(list(warnings.filters), snapshot)
+        self.assertEqual(media.decode_png(raw).size, (100, 100))
+
 
 if __name__ == '__main__': unittest.main()
