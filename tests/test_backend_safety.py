@@ -351,5 +351,49 @@ class BackendSafetyTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'observation limit'):self.manager.request(profile,'/large')
         finally:http.shutdown();http.server_close();thread.join(2)
 
+    def test_local_requests_ignore_environment_proxies(self):
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                body=json.dumps(IDLE).encode();self.send_response(200);self.end_headers();self.wfile.write(body)
+            def log_message(self,*a):pass
+        http=ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
+        dead=ThreadingHTTPServer(('127.0.0.1',0),BaseHTTPRequestHandler);port=dead.server_port;dead.server_close()  # a closed port as the proxy
+        proxy='http://127.0.0.1:%d'%port;environment={k:proxy for k in ('http_proxy','HTTP_PROXY','all_proxy','ALL_PROXY')}
+        environment.update(no_proxy='',NO_PROXY='')
+        try:
+            with patch.dict('os.environ',environment):
+                self.assertEqual(self.manager.request({'url':f'http://127.0.0.1:{http.server_port}'},'/queue'),IDLE)
+        finally:http.shutdown();http.server_close();thread.join(2)
+    def test_loopback_listener_running_another_command_is_refused_not_returned(self):
+        import psutil
+        profile=self.manager.profiles['primary'];listener=SimpleNamespace(status='LISTEN',laddr=SimpleNamespace(port=8188,ip='127.0.0.1'),pid=555)
+        owned=[profile['python'],'-s',profile['entry'],'--listen','127.0.0.1','--port','8188']
+        for argv,expected in ((owned,True),([profile['python'],'-s',str(self.root/'other.py'),'--listen','127.0.0.1','--port','8188'],False),
+                              ([profile['python'],'-s',profile['entry'],'--listen','0.0.0.0','--port','8188'],False)):
+            process=Mock();process.exe.return_value=profile['python'];process.cmdline.return_value=argv;process.cwd.return_value=profile['root']
+            with self.subTest(argv=argv[2:]),patch.object(psutil,'net_connections',return_value=[listener]),patch.object(psutil,'Process',return_value=process):
+                if expected:self.assertIs(self.manager.process(profile),process)
+                else:
+                    with self.assertRaisesRegex(ValueError,'owned by another command'):self.manager.process(profile)
+                process.terminate.assert_not_called()
+    def test_launch_recovery_argv_pidfile_and_spawn_attestation(self):
+        profiles=self.manager.profiles;profiles['primary']['pidfile']=str(self.root/'comfyui.pid');pidfile=Path(profiles['primary']['pidfile'])
+        for identifier,tail in (('primary',None),('hidream',['--install-root',str(Path(profiles['hidream']['root']).parent)]),
+                                ('h3',['--comfy-root',profiles['h3']['root']]),('qwen21',['--comfy-root',profiles['qwen21']['root']])):
+            with self.subTest(identifier=identifier):
+                pidfile.unlink(missing_ok=True);spawned=[];profile=profiles[identifier]
+                attest=lambda pid:spawned.append((pid,pidfile.exists()))
+                with patch('backends.subprocess.Popen',return_value=Mock(pid=4321)) as popen,patch('backends.gpu_memory.read') as read:
+                    self.assertEqual(self.manager.launch_recovery(profile,on_spawn=attest),4321)
+                argv=popen.call_args.args[0];self.assertEqual(popen.call_args.kwargs['cwd'],profile['root'])
+                self.assertEqual(argv[:3],[profile['python'],'-s',profile['entry']]);self.assertEqual(spawned,[(4321,False)],'attested before any pidfile work')
+                if identifier=='primary':
+                    read.assert_not_called();self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
+                    self.assertTrue(self.manager.matches_configured_process(profile,profile['python'],argv,profile['root']))
+                    self.assertEqual(pidfile.read_text(),'4321');self.assertEqual(self.manager.last_launch_reserve['profile'],'primary')
+                else:
+                    self.assertEqual(argv[3:],tail);self.assertFalse(pidfile.exists(),'only the primary launcher owns comfyui.pid')
+                    self.assertTrue(self.manager.matches_configured_process(profile,profile['python'],argv,profile['root']))
+
 
 if __name__=='__main__':unittest.main()
