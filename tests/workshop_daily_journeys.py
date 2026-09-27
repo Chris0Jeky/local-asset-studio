@@ -466,6 +466,32 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: ComfyUI queue unavailable. Nothing was submitted.', True])
         self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
 
+    def test_a_cancelled_run_says_so_plainly_and_keeps_its_finished_outputs(self):
+        # #1138: the owner's own cancel is not an error; kept outputs lead to the run, and nothing invites a re-run.
+        self.load_outcome()
+        self.settle({'id': 'done-1', 'status': 'cancelled', 'outputs': [{}], 'batch_count': 3, 'message': 'Cancelled by you between outputs.'})
+        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Cancelled: 1 finished output kept. Nothing was retried.', False])
+        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#runOutcome button')].map(b=>b.textContent)"), ['Show result →', 'Dismiss'])
+        self.settle({'id': 'bad-1', 'status': 'cancelled', 'outputs': [], 'message': 'Not started: cancelled by you. Nothing was sent to ComfyUI.'})
+        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: cancelled by you. Nothing was sent to ComfyUI.', False])
+        self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See the record →')
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'bad-1')
+
+    def test_a_cancelled_run_is_announced_once_when_it_settles(self):
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[],jobsEtag=null,jobsDataSignature='',estimateKey='',estimateResultKey='',activeJobId='mine';window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.reply=[{id:'mine',status:'running',preset_name:'P',message:'Generating',cancellation:{state:'requested'}}];window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
+        self.page.evaluate("startedJobIds.add('mine')"); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), [], 'an open cancel request is not a settled run')
+        self.page.evaluate("reply=[{id:'mine',status:'cancelled',preset_name:'P',message:'Stopped by you',outputs:[]}]")
+        self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), ['mine'])
+        self.assertIsNone(self.page.evaluate('activeJobId'), 'the dock stops following a cancelled run')
+
     def test_show_result_uses_any_shown_output_of_the_run(self):
         self.load_outcome()
         self.page.evaluate("document.querySelector('[data-output]').dataset.output='done-1:2'")
