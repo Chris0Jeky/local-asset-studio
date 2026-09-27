@@ -1443,6 +1443,51 @@
       "execution_note": "Executed 2026-09-23 07:32:45 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/zimage-fp8/prove_zimage_fast.py): job 4f5974cc-e4f1-4151-b9f2-93c56b6daef2, prompt 9bc91aa8-fc59-432e-ac79-0cb0ce0bd5af, 56.8 s including the model loads and the CPU text encode, sampling 0.75 s/step, no shared-memory spill (79 MB), backend primary, output Studio/Z-Image-Fast_00001_.png: the lantern product shot with the same composition as the bf16 preset's census output, agent-judged keep (the forest background is not the briefed seamless backdrop, as with bf16). Not art acceptance."
     },
     {
+      "id": "zimage-seam-repair",
+      "name": "Seamless tile \u2022 Z-Image seam repaint",
+      "category": "Image editing",
+      "collection": "workflow-lab",
+      "description": "Makes a flat, square texture tile (floor, wall, sky). Start from Make seamless on the texture in the Asset library: it rolls the picture by half so the wrap seam becomes a centre cross and attaches that picture with the cross transparent. Generate repaints only the cross with Z-Image Turbo (SetLatentNoiseMask, authored denoise 0.8); the Studio then composites the cross back through a 12 px feather, flattens the lighting with a circular Gaussian (so the correction tiles too), and records the seam score and a 3x3 repeat preview as a Seamless tile asset. Flat textures only: a perspective picture cannot tile. Lab evidence (27 Sep 2026, direct prompts, not this recipe): wall seam 4.34 to 0.82 against its own gradient of 0.95 (keep); flat floor fixable, with a repeating row of plank ends; perspective floor rejected.",
+      "graph": "workflows/api/zimage-seam-repair-api.json",
+      "verified": false,
+      "tile_route": true,
+      "requires_rgba_mask": true,
+      "commercial_note": "Repaints the seam cross with Z-Image Turbo fp8, as the zimage-fast recipe; check the model terms before publishing. The source texture keeps its own terms; a successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "8",
+        "seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "denoise": [
+        "8",
+        "denoise"
+      ],
+      "reference": [
+        "11",
+        "image"
+      ],
+      "reference_hint": "Prepared by Make seamless: the texture rolled by half, its seam cross transparent. Open a square, flat texture in the Asset library and press Make seamless.",
+      "continuation_placeholder": "[describe the flat texture: e.g. front view of a dark graphite plaster wall with faint water stains]",
+      "modality": "image",
+      "backend_id": "primary",
+      "stages": [
+        "Square flat texture rolled by half (Make seamless)",
+        "Seam cross transparent in the alpha channel",
+        "VAE encode",
+        "Latent noise mask on the cross",
+        "Z-Image Turbo repaint at authored denoise 0.8",
+        "Studio: 12 px feathered composite, circular lighting flatten, seam score, 3x3 preview"
+      ],
+      "source": "experiments/curated/background-lab-20260927/ (PR #1222); issue #1220"
+    },
+    {
       "id": "sdxl",
       "name": "SDXL \u2022 general baseline",
       "category": "General generation",
