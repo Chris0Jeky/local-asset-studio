@@ -94,8 +94,7 @@ import continuation
 vary_problems=continuation.vary_catalog_problems(catalog,lambda preset:json.loads((root/preset['graph']).read_text(encoding='utf-8')))
 assert not vary_problems, vary_problems
 # Make seamless (#1220): one tile route at most, a masked repaint of one picture at the source size.
-import tiles
-tile_problems=tiles.route_problems(catalog)
+tile_problems=continuation.tile_route_problems(catalog)
 assert not tile_problems, tile_problems
 kb_path=root/'presets/settings-kb.json'
 if kb_path.is_file():
