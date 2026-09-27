@@ -2,14 +2,17 @@ import hashlib
 import importlib.util
 import io
 import json
+import socket
 import tempfile
 import threading
 import sqlite3
+import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 from unittest.mock import Mock
-from http.client import IncompleteRead
+from http.client import HTTPConnection, IncompleteRead
+from http.server import ThreadingHTTPServer
 from urllib.error import HTTPError, URLError
 from queue import Empty
 from PIL import Image
@@ -409,6 +412,28 @@ class ServerTests(unittest.TestCase):
         sent=[];handler._json=lambda status,obj:sent.append((status,obj))
         handler.do_POST()
         self.assertEqual(sent,[(403,{"error":"Local same-origin request required"})])
+        self.assertEqual(handler.rfile.read(),b"")
+
+    def test_same_origin_unknown_route_drains_body_before_404(self):
+        body=b"a"*(32*1024)
+        handler=server.Handler.__new__(server.Handler)
+        handler.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Length":str(len(body)),"Content-Type":"application/json"}
+        handler.path="/api/no-such-route";handler.rfile=io.BytesIO(body);handler.close_connection=False
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+        handler.do_POST()
+        self.assertEqual(sent,[(404,{"error":"Not found"})])
+        self.assertEqual(handler.rfile.read(),b"")
+
+    def test_estimate_wrong_content_type_drains_body_before_400(self):
+        body=b"b"*(32*1024)
+        handler=server.Handler.__new__(server.Handler)
+        handler.studio=types.SimpleNamespace(estimate=lambda body:{})
+        handler.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Length":str(len(body)),"Content-Type":"text/plain"}
+        handler.path="/api/estimate";handler.rfile=io.BytesIO(body);handler.close_connection=False
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+        handler.do_POST()
+        self.assertEqual(len(sent),1);self.assertEqual(sent[0][0],400)
+        self.assertIn("application/json required",sent[0][1].get("error",""))
         self.assertEqual(handler.rfile.read(),b"")
 
     def test_foreign_origin_post_drains_declared_length_but_closes_ambiguous_framing(self):
@@ -1636,5 +1661,24 @@ class ServerTests(unittest.TestCase):
         imported = s.import_image('frame.png', 'image/png', png())
         self.assertEqual(ownership, [True])
         self.assertEqual(imported['job']['id'], next(iter(s.jobs)))
+
+class RefusalTransportTests(unittest.TestCase):
+    """Real loopback sockets: ServerTests patches Thread.start, so the serving thread lives here (#1029)."""
+    def test_unknown_route_with_large_body_serves_404_without_reset(self):
+        with patch.object(socket,"getfqdn",return_value="127.0.0.1"):
+            httpd=ThreadingHTTPServer(("127.0.0.1",0),server.Handler)
+        thread=threading.Thread(target=httpd.serve_forever,kwargs={"poll_interval":.01},daemon=True);thread.start()
+        def close():
+            if thread.is_alive():httpd.shutdown()
+            httpd.server_close();thread.join(3)
+        self.addCleanup(close)
+        body=b"a"*(300*1024)
+        for _ in range(40):
+            conn=HTTPConnection("127.0.0.1",httpd.server_port,timeout=5)
+            try:
+                conn.request("POST","/api/no-such-route",body=body,headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Type":"application/json"})
+                response=conn.getresponse();self.assertEqual(response.status,404);response.read()
+            finally:conn.close()
+
 
 if __name__ == "__main__": unittest.main()
