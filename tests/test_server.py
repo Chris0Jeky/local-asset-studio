@@ -365,7 +365,7 @@ class ServerTests(unittest.TestCase):
                 '/api/references/check','/api/assets/update','/api/collections','/api/setups','/api/assets/reference','/api/assets/export',
                 '/api/recipe-check','/api/folders/open','/api/models/install','/api/workflow-inspect','/api/jobs/missing/resume',
                 '/api/jobs/missing/observe-known','/api/jobs/missing/dispose-mixed','/api/jobs/missing/abandon','/api/jobs/missing/stop-tracking',
-                '/api/jobs/missing/put-away','/api/pose/render')
+                '/api/jobs/missing/put-away','/api/jobs/missing/cancel','/api/pose/render')
         for path in routes:
             for body in ([],'text',3,None,True):
                 with self.subTest(path=path,body=repr(body)):
