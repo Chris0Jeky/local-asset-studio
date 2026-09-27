@@ -34,6 +34,9 @@ _ALLOWED_FIELDS = {
 _RECTANGLE_FIELDS = {"x", "y", "width", "height"}
 _PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 _PNG_CRITICAL_CHUNKS = {b"IHDR", b"PLTE", b"IDAT", b"IEND"}
+# Bound to app/workspace.py by tests/test_addressable_figures_schema.py.
+ASSET_INSERT_COLUMNS = ("id", "job_id", "output_index", "title", "media_type", "path", "filename", "sha256", "bytes", "created_at", "preset_id", "preset_name", "source", "lineage")
+WORKSPACE_HELPERS = ("_validate_scope", "_check_scope", "_observe_receipt", "_verify_snapshot")
 
 
 def workspace_error_type(workspace):
@@ -389,10 +392,7 @@ def split_figures(workspace, payload):
                 "generation_submitted": False,
             }
             db.execute(
-                """INSERT INTO assets
-                (id,job_id,output_index,title,media_type,path,filename,sha256,bytes,
-                 created_at,preset_id,preset_name,source,lineage)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                "INSERT INTO assets (" + ",".join(ASSET_INSERT_COLUMNS) + ") VALUES (" + ",".join("?" * len(ASSET_INSERT_COLUMNS)) + ")",
                 (
                     child_id,
                     job_id,
