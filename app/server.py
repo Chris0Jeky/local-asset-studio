@@ -73,9 +73,13 @@ MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt",
 HOST_COMMIT_MINIMUM = 32 * 1024**3
 COMMIT_RELEASE_SAMPLE_SECONDS = 0.5      # commit re-read cadence while ComfyUI releases its cache
 COMMIT_RELEASE_MAX_SECONDS = 300
-# A release first moves the GPU-resident weights into host RAM: qwen21's /free took headroom from 27.4 to 12.7 GiB before it
-# settled at 46.2 GiB (27 Sep 2026, experiments/curated/perf-20260927). Below this floor the release itself could exhaust commit.
-COMMIT_RELEASE_FLOOR_BYTES = 18 * 1024**3
+# A release first moves the GPU-resident weights into host RAM: qwen21's /free took headroom from 27.4 to 12.7 GiB (14.7 GiB used)
+# before it settled at 46.2 GiB (27 Sep 2026, experiments/curated/perf-20260927). Budget the whole 16 GiB card for that transient,
+# since at most the VRAM-resident weights can move, and keep a margin above it: this host dies near 97 % commit (about 2.9 GiB
+# left of its 95.7 GiB limit). At or below the floor the release is skipped, so its lowest point stays above the margin.
+COMMIT_RELEASE_TRANSIENT_BYTES = 16 * 1024**3
+COMMIT_RELEASE_MARGIN_BYTES = 6 * 1024**3
+COMMIT_RELEASE_FLOOR_BYTES = COMMIT_RELEASE_TRANSIENT_BYTES + COMMIT_RELEASE_MARGIN_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError):
@@ -754,8 +758,8 @@ class Studio:
         def finish(outcome, ok=False):
             record['outcome'] = outcome; record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
             job.setdefault('commit_releases', []).append(record); return ok
-        if not isinstance(record['before_available_bytes'], int) or record['before_available_bytes'] < COMMIT_RELEASE_FLOOR_BYTES:
-            return finish(f'skipped: a release first moves GPU weights into RAM and needs {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely')
+        if not isinstance(record['before_available_bytes'], int) or record['before_available_bytes'] <= COMMIT_RELEASE_FLOOR_BYTES:
+            return finish(f'skipped: a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely')
         backends = getattr(self, 'backends', None)
         if backends is not None and getattr(backends, 'busy', False): return finish('skipped: a backend switch is running')
         with self.lock: others = [other for other in self.jobs.values() if other is not job and other.get('status') in ('submitting', 'running')]
@@ -771,8 +775,12 @@ class Studio:
         self._resident = None
         deadline = time.monotonic() + self.commit_release_seconds; samples = 0; after = {}
         while True:
-            after = self.host_commit_reading(refresh=True); samples += 1
-            available = after.get('available_bytes')
+            # /free was posted: the models are gone whatever happens next, so a failing reading is still recorded honestly.
+            try: after = self.host_commit_reading(refresh=True)
+            except Exception as exc:
+                record['samples'] = samples
+                return finish('failed: commit could not be read after release: ' + (str(exc) or type(exc).__name__)[:200])
+            samples += 1; available = after.get('available_bytes')
             if isinstance(available, int) and available >= required: break
             if time.monotonic() >= deadline: break
             time.sleep(COMMIT_RELEASE_SAMPLE_SECONDS)
@@ -830,7 +838,8 @@ class Studio:
         label = run_label(payload.get("label")) if isinstance(payload, dict) else None
         preset, graph, graph_path, controls, batch = self.prepare(payload, _defer_host_commit_preflight=True)
         deferred = None
-        try: reading = self.host_commit_preflight(preset, graph)
+        # A fresh reading: whether to defer (and so later free the backend) is decided on current counters, not a cached one.
+        try: reading = self.host_commit_preflight(preset, graph, refresh=True)
         except HostCommitShortfall as exc:
             # The worker's fresh pre-submit check stays the only admission; a shortfall here is queued for release-then-remeasure.
             if self.commit_release_seconds <= 0: raise

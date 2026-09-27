@@ -126,12 +126,12 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self._heavy_studio(release=10000).commit_release_seconds,300)
 
     def test_commit_release_frees_the_backend_and_admits_only_on_a_fresh_passing_reading(self):
-        minimum=32*1024**3;low,high=self._commit_reading(20*1024**3),self._commit_reading(minimum)
+        minimum=32*1024**3;low,high=self._commit_reading(26*1024**3),self._commit_reading(minimum)
         studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'after-free'},{'after-free':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
         with patch.object(server.host_memory,'read',side_effect=[low,low,low,high,high]),patch.object(server.time,'sleep'):
             created=studio.create_job({'preset_id':'demo','controls':{}},enqueue=False);job=studio.jobs[created['id']]
             self.assertEqual(job['status'],'queued');self.assertTrue(job['host_commit_readings'][0]['deferred'])
-            self.assertIn('free ComfyUI',job['message']);self.assertIn('20.0 GiB',job['message'])
+            self.assertIn('free ComfyUI',job['message']);self.assertIn('26.0 GiB',job['message'])
             studio._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['after-free'])
         calls=[(args[0],kwargs.get('data')) for args,kwargs in studio.requests if args]
@@ -139,23 +139,23 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(calls[2][1],{'unload_models':True,'free_memory':True})
         self.assertEqual(studio.requests[2][1].get('base_url'),job['comfy_url'])
         release,=job['commit_releases']
-        self.assertEqual((release['index'],release['outcome'],release['before_available_bytes'],release['after_available_bytes'],release['required_bytes']),(0,'released',20*1024**3,minimum,minimum))
+        self.assertEqual((release['index'],release['outcome'],release['before_available_bytes'],release['after_available_bytes'],release['required_bytes']),(0,'released',26*1024**3,minimum,minimum))
         self.assertEqual(release['samples'],2);self.assertEqual(release['url'],job['comfy_url'])
         self.assertEqual([entry['phase'] for entry in job['host_commit_readings']],['prepared','pre-submit'])
         self.assertEqual(job['host_commit_readings'][1]['available_bytes'],minimum)
 
     def test_commit_release_that_does_not_raise_headroom_enough_sends_nothing(self):
-        low=self._commit_reading(20*1024**3)
+        low=self._commit_reading(26*1024**3)
         studio=self._heavy_studio([self.IDLE,self.IDLE,None],release=0.01)
         with patch.object(server.host_memory,'read',return_value=low),patch.object(server.time,'sleep'):
             job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
         self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[]);self.assertNotIn('pending_submission',job)
-        self.assertRegex(job['message'],r'Host commit headroom 20\.0 GiB is below the required 32 GiB.*freed ComfyUI.*No prompt was submitted for output 1\.')
+        self.assertRegex(job['message'],r'Host commit headroom 26\.0 GiB is below the required 32 GiB.*freed ComfyUI.*No prompt was submitted for output 1\.')
         self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/queue','/free'])
         self.assertTrue(job['commit_releases'][0]['outcome'].startswith('insufficient'))
 
     def test_commit_release_is_skipped_on_busy_queue_switch_or_other_running_work(self):
-        low=self._commit_reading(20*1024**3)
+        low=self._commit_reading(26*1024**3)
         busy={'queue_running':[['x']],'queue_pending':[]}
         cases=(('queue',[self.IDLE,busy],'ComfyUI queue'),('switch',[self.IDLE],'backend switch'),('other',[self.IDLE],'other Studio work'),('queue-error',[self.IDLE,URLError('down')],'failed'))
         for name,replies,outcome in cases:
@@ -170,17 +170,40 @@ class ServerTests(unittest.TestCase):
                 self.assertIn(outcome,job['commit_releases'][0]['outcome'])
                 self.assertIn('below the required 32 GiB',job['message'])
 
-    def test_commit_release_is_skipped_below_the_floor_its_own_transient_needs(self):
-        floor=server.COMMIT_RELEASE_FLOOR_BYTES;self.assertEqual(floor,18*1024**3)
-        studio=self._heavy_studio([self.IDLE],release=5)
-        with patch.object(server.host_memory,'read',return_value=self._commit_reading(floor-1)),patch.object(server.time,'sleep'):
-            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
-        self.assertEqual(job['status'],'failed');self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
-        self.assertIn('18 GiB',job['commit_releases'][0]['outcome']);self.assertIn('were not freed',job['message'])
-        studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'at-floor'},{'at-floor':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
-        with patch.object(server.host_memory,'read',side_effect=[self._commit_reading(floor)]*2+[self._commit_reading(32*1024**3)]*2),patch.object(server.time,'sleep'):
+    def test_commit_release_is_skipped_at_or_below_the_floor_its_own_transient_needs(self):
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES
+        # The floor is the measured transient (14.7 GiB, budgeted as the whole 16 GiB card) plus a margin above the ~97 % death line.
+        self.assertEqual(floor,server.COMMIT_RELEASE_TRANSIENT_BYTES+server.COMMIT_RELEASE_MARGIN_BYTES);self.assertEqual(floor,22*1024**3)
+        self.assertGreater(server.COMMIT_RELEASE_TRANSIENT_BYTES,int(14.71*1024**3))
+        for below in (floor-1,floor):
+            with self.subTest(before=below):
+                studio=self._heavy_studio([self.IDLE],release=5)
+                with patch.object(server.host_memory,'read',return_value=self._commit_reading(below)),patch.object(server.time,'sleep'):
+                    job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+                self.assertEqual(job['status'],'failed');self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
+                self.assertIn('more than 22 GiB',job['commit_releases'][0]['outcome']);self.assertIn('were not freed',job['message'])
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'over-floor'},{'over-floor':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
+        with patch.object(server.host_memory,'read',side_effect=[self._commit_reading(floor+1)]*2+[self._commit_reading(32*1024**3)]*2),patch.object(server.time,'sleep'):
             job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual(job['commit_releases'][0]['outcome'],'released')
+
+    def test_commit_reading_failure_after_release_is_recorded_and_sends_nothing(self):
+        low=self._commit_reading(25*1024**3)
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None],release=5)
+        with patch.object(server.host_memory,'read',side_effect=[low,low,OSError('pdh gone')]),patch.object(server.time,'sleep'):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[]);self.assertNotIn('pending_submission',job)
+        release,=job['commit_releases']
+        self.assertTrue(release['outcome'].startswith('failed: commit could not be read after release'));self.assertEqual(release['samples'],0)
+        self.assertIn('below the required 32 GiB',job['message']);self.assertIn('No prompt was submitted for output 1',job['message'])
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/queue','/free'])
+
+    def test_create_decides_deferral_on_a_fresh_reading_not_the_cache(self):
+        minimum=32*1024**3;studio=self._heavy_studio(release=5)
+        studio._host_commit=self._commit_reading(minimum);studio._host_commit_at=server.time.monotonic()   # a cached pass from a moment ago
+        with patch.object(server.host_memory,'read',return_value=self._commit_reading(26*1024**3)) as read:
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        self.assertEqual(read.call_count,1);self.assertTrue(job['host_commit_readings'][0]['deferred'])
 
     def test_commit_release_never_follows_an_unknown_reading(self):
         unknown={'available_bytes':None,'limit_bytes':None,'committed_bytes':None,'unknown_reason':'counter unavailable'}
@@ -195,7 +218,7 @@ class ServerTests(unittest.TestCase):
         self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
 
     def test_commit_release_between_batch_members_frees_after_the_first_prompt(self):
-        minimum=32*1024**3;ok,low=self._commit_reading(minimum),self._commit_reading(20*1024**3)
+        minimum=32*1024**3;ok,low=self._commit_reading(minimum),self._commit_reading(26*1024**3)
         studio=self._heavy_studio([self.IDLE,{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}},self.IDLE,None,self.IDLE,{'prompt_id':'two'},{'two':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
         with patch.object(server.host_memory,'read',side_effect=[ok,ok,low,ok,ok]),patch.object(server.time,'sleep'):
             job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':2},enqueue=False)['id']];studio._run(job)
@@ -205,7 +228,7 @@ class ServerTests(unittest.TestCase):
         self.assertIn('commit_releases',studio.public(job))
 
     def test_commit_release_failure_of_the_free_request_sends_nothing(self):
-        low=self._commit_reading(20*1024**3)
+        low=self._commit_reading(26*1024**3)
         studio=self._heavy_studio([self.IDLE,self.IDLE,URLError('refused')],release=5)
         with patch.object(server.host_memory,'read',return_value=low),patch.object(server.time,'sleep'):
             job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
