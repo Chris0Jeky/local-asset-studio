@@ -112,6 +112,11 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.page.click('#negative', position={'x': 20, 'y': 10})
         self.page.wait_for_timeout(50)
         self.assertTrue(self.page.evaluate("document.querySelector('.wk-run-dock').classList.contains('wk-typing')"))
+        # A release the window never sees (Alt+Tab mid-press) still relaxes the dock once the window loses focus.
+        self.page.evaluate("dispatchEvent(new PointerEvent('pointerdown'));document.getElementById('pressProbe').focus()")
+        self.assertTrue(self.page.evaluate("document.querySelector('.wk-run-dock').classList.contains('wk-typing')"), 'held while the press lasts')
+        self.page.evaluate("dispatchEvent(new Event('blur'))")
+        self.page.wait_for_function("!document.querySelector('.wk-run-dock').classList.contains('wk-typing')")
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
     def test_no_seed_control_has_no_dead_randomize_button(self):

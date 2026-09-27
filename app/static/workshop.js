@@ -334,7 +334,9 @@
     const relax = () => { relaxPending = false; const n = d.activeElement; if (!(create.contains(n) && typing(n))) dock.classList.remove('wk-typing'); };
     const released = () => { pressing = false; if (relaxPending) w.setTimeout(relax, 0); };
     w.addEventListener('pointerdown', () => { pressing = true; }, true);
-    w.addEventListener('pointerup', released, true); w.addEventListener('pointercancel', released, true);
+    // A release the window never sees (Alt+Tab mid-press, a native popup taking it) must not leave the dock compact.
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) w.addEventListener(type, released, true);
+    w.addEventListener('blur', e => { if (e.target === w) released(); });
     create.addEventListener('focusout', e => { if (!typing(e.target)) return; if (pressing) relaxPending = true; else dock.classList.remove('wk-typing'); });
     create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
