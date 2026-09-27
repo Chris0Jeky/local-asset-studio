@@ -83,6 +83,37 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                         self.assertTrue(self.page.locator('#planComparison').is_visible())
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
+    def test_a_press_that_leaves_a_text_field_lands_on_its_control(self):
+        """#1229: leaving the prompt grows the compact dock; mid-press, that moved a dock control under the pointer and ate the click."""
+        self.load_workshop()
+        self.page.set_viewport_size({'width': 390, 'height': 844})
+        self.page.select_option('#workshopLayout', 'focus', force=True)
+        self.page.evaluate("document.activeElement?.blur()")
+        full = self.page.evaluate("""()=>[...document.querySelectorAll('.wk-run-dock :is(button,select,input)')].filter(n=>n.offsetParent)
+          .map(n=>{const r=n.getBoundingClientRect();return {top:r.top,left:r.left,width:r.width}})""")
+        self.page.click('#positive', position={'x': 20, 'y': 10})
+        self.page.wait_for_timeout(120)
+        compact = self.page.evaluate("document.querySelector('.wk-run-dock').getBoundingClientRect().top")
+        # A dock control whose full-size position rises above the compact dock's top edge.
+        target = min(full, key=lambda r: r['top'])
+        self.assertLess(target['top'] + 12, compact, 'the premise: the full dock reaches above the compact one')
+        # A page control visible just above the compact dock, where that dock control lands once the dock grows.
+        self.page.evaluate("""([r,bottom])=>{window.pressed=0;const b=document.createElement('button');b.id='pressProbe';b.type='button';b.textContent='Probe';
+          b.style.cssText='position:fixed;z-index:1;margin:0;left:'+r.left+'px;width:'+r.width+'px;top:'+(r.top+2)+'px;height:'+(bottom-r.top-4)+'px';
+          b.onclick=()=>pressed++;document.getElementById('createView').append(b)}""", [target, compact])
+        self.assertTrue(self.page.locator('#positive').evaluate('(n)=>n===document.activeElement'))
+        self.page.locator('#pressProbe').click()
+        self.assertEqual(self.page.evaluate('pressed'), 1, 'the click lands on the control the press started on')
+        self.page.wait_for_function("!document.querySelector('.wk-run-dock').classList.contains('wk-typing')")
+        self.assertLess(self.page.evaluate("document.querySelector('.wk-run-dock').getBoundingClientRect().top"), compact, 'the dock relaxes after the press')
+        # Focus moving between text fields keeps the dock compact.
+        self.page.click('#positive', position={'x': 20, 'y': 10})
+        self.page.locator('#negativeWrap').evaluate('(n)=>n.open=true')
+        self.page.click('#negative', position={'x': 20, 'y': 10})
+        self.page.wait_for_timeout(50)
+        self.assertTrue(self.page.evaluate("document.querySelector('.wk-run-dock').classList.contains('wk-typing')"))
+        self.assertEqual(self.page.evaluate('submitted'), 0)
+
     def test_no_seed_control_has_no_dead_randomize_button(self):
         self.load_workshop()
         self.page.locator('[data-key=seed]').evaluate('(n)=>n.remove()')

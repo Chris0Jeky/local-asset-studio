@@ -328,7 +328,14 @@
       if (box.top < limit || box.bottom > bottom) w.scrollBy(0, box.top < limit || box.height > bottom - limit ? box.top - limit : box.bottom - bottom);
       if (passes > 1) clearOfDock(field, passes - 1);
     });
-    create.addEventListener('focusout', e => { if (typing(e.target)) dock.classList.remove('wk-typing'); });
+    // A press that takes focus out of a text field ends on the control it started on: the compact dock keeps its size
+    // until the pointer is released, so it cannot grow under the pointer between mousedown and mouseup and eat the click (#1229).
+    let pressing = false, relaxPending = false;
+    const relax = () => { relaxPending = false; const n = d.activeElement; if (!(create.contains(n) && typing(n))) dock.classList.remove('wk-typing'); };
+    const released = () => { pressing = false; if (relaxPending) w.setTimeout(relax, 0); };
+    w.addEventListener('pointerdown', () => { pressing = true; }, true);
+    w.addEventListener('pointerup', released, true); w.addEventListener('pointercancel', released, true);
+    create.addEventListener('focusout', e => { if (!typing(e.target)) return; if (pressing) relaxPending = true; else dock.classList.remove('wk-typing'); });
     create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
     const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('aria-label', 'Plan and vary this run');
