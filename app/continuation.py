@@ -119,6 +119,70 @@ def capability(preset, graph):
     }
 
 
+VARY_FIELDS = {"sources", "status", "subtle", "strong"}
+VARY_STATUS = {"starting-value", "owner-approved"}
+# A round picks its own new seeds and keeps the kept picture and its words; a strength only moves sampling settings.
+VARY_FIXED = {"seed", "positive", "negative", "reference", "last_reference", "width", "height"}
+
+
+def _models(graph):
+    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items() if key in ("ckpt_name", "unet_name") and isinstance(value, str)}
+
+
+def vary_problems(preset, graph, presets, graph_of):
+    """What is wrong with one recipe's declared Vary route (#1202); empty when sound or undeclared.
+
+    A route resamples the kept picture (img2img) at the declared denoise with new seeds. Its sources are the
+    recipes whose pictures it may vary: each must draw with the same model family or checkpoint as the route.
+    """
+    vary, name = preset.get("vary"), preset.get("id")
+    if vary is None: return []
+    if not isinstance(vary, dict) or set(vary) != VARY_FIELDS: return ["%s: vary needs exactly %s" % (name, ", ".join(sorted(VARY_FIELDS)))]
+    problems = []
+    cap = capability(preset, graph)
+    if cap["operation"] != "image-to-image" or cap["prompt_role"] != "description" or not preset.get("denoise") or not preset.get("seed"):
+        problems.append("%s: a Vary route must be an image-to-image recipe with seed and denoise controls and a description prompt" % name)
+    if vary["status"] not in VARY_STATUS: problems.append("%s: vary status must be one of %s" % (name, ", ".join(sorted(VARY_STATUS))))
+    bound = {key for key, value in preset.items() if isinstance(value, list) and len(value) == 2 and all(isinstance(part, str) for part in value)} | set(preset.get("bindings_extra") or {})
+    denoise = {}
+    for strength in ("subtle", "strong"):
+        entry = vary[strength]
+        if not isinstance(entry, dict) or set(entry) != {"controls", "basis"} or not isinstance(entry["controls"], dict):
+            problems.append("%s: vary %s needs exactly controls and basis" % (name, strength)); continue
+        if not isinstance(entry["basis"], str) or not entry["basis"].strip(): problems.append("%s: vary %s needs a basis saying where its values come from" % (name, strength))
+        for key in sorted(set(entry["controls"]) - bound): problems.append("%s: vary %s sets %s, which the recipe does not bind" % (name, strength, key))
+        for key in sorted(set(entry["controls"]) & VARY_FIXED): problems.append("%s: vary %s may not set %s" % (name, strength, key))
+        value = entry["controls"].get("denoise")
+        if type(value) not in (int, float) or not 0 < value < 1: problems.append("%s: vary %s needs a denoise between 0 and 1" % (name, strength))
+        else: denoise[strength] = value
+    if len(denoise) == 2 and not denoise["subtle"] < denoise["strong"]: problems.append("%s: vary subtle must resample less than vary strong" % name)
+    sources = vary["sources"]
+    if not isinstance(sources, list) or not sources or any(not isinstance(item, str) for item in sources) or len(set(sources)) != len(sources):
+        return problems + ["%s: vary sources must be a non-empty list of distinct recipe ids" % name]
+    known = {p.get("id"): p for p in presets}
+    for source_id in sources:
+        source = known.get(source_id)
+        if source is None: problems.append("%s: vary source %s is not a recipe" % (name, source_id)); continue
+        if source.get("modality", "image") != "image": problems.append("%s: vary source %s does not make pictures" % (name, source_id)); continue
+        same_family = bool(preset.get("family")) and source.get("family") == preset.get("family")
+        if not same_family and not _models(graph) & _models(graph_of(source)):
+            problems.append("%s: vary source %s draws with another model; varying it here would change the model" % (name, source_id))
+    return problems
+
+
+def vary_catalog_problems(presets, graph_of):
+    """Every Vary route's problems, plus a source claimed by more than one route (the page must pick one)."""
+    problems, owner = [], {}
+    for preset in presets:
+        if preset.get("vary") is None: continue
+        problems += vary_problems(preset, graph_of(preset), presets, graph_of)
+        sources = (preset["vary"] or {}).get("sources") if isinstance(preset["vary"], dict) else None
+        for source_id in [item for item in sources if isinstance(item, str)] if isinstance(sources, list) else []:
+            if source_id in owner: problems.append("vary source %s is claimed by more than one route (%s, %s)" % (source_id, owner[source_id], preset["id"]))
+            owner.setdefault(source_id, preset["id"])
+    return problems
+
+
 def unfilled(preset, text):
     """The recipe's bracketed fills (`continuation_placeholder`, one string or a list) still present in the wording."""
     declared = preset.get("continuation_placeholder")

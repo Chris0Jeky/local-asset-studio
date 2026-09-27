@@ -274,5 +274,53 @@
     if(!each.length)return null;const mid=each.length>>1;
     return{count:each.length,seconds:each.length%2?each[mid]:(each[mid-1]+each[mid])/2};
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming};
+  // #1202 Vary subtle / Vary strong. A route is catalog data (`vary` on an img2img recipe: its sources and per-strength
+  // controls with their basis); the server-computed capability must agree that the graph really resamples the picture.
+  // Round size is the owner's rule (27 Sep 2026): 4 pictures when this PC's median is under a minute per picture, else 2;
+  // no timing yet counts as slow. Preparing never submits: Generate stays the owner's press.
+  const VARY_FAST_SECONDS=60;
+  function varyRoute(presetId,presets){
+    return(presets||[]).find(p=>Array.isArray(p?.vary?.sources)&&p.vary.sources.includes(presetId)&&p.continuation_capability?.consumes_source&&p.continuation_capability.operation==='image-to-image'&&p.continuation_capability.prompt_role==='description'&&!p.continuation_capability.requires_mask&&['subtle','strong'].every(k=>p.vary[k]?.controls&&typeof p.vary[k].controls==='object'&&Number(p.vary[k].controls.denoise)>0))||null;
+  }
+  function varyRound(jobs,presetId){const timing=combineTiming(jobs,presetId);return{count:timing&&timing.seconds<VARY_FAST_SECONDS?4:2,timing};}
+  // Why a recipe cannot run here now, in the words the page uses elsewhere; '' when nothing is known to be missing.
+  function varyBlocked(preset,missing){
+    if(preset.runtime_block)return preset.runtime_block;
+    const files=[...new Set([...(Array.isArray(missing?.[preset.id])?missing[preset.id]:[]),...(Array.isArray(preset.missing_loras)?preset.missing_loras:[])])];
+    return files.length?'Missing here: '+files.join(', ')+'. Open Models & setup.':'';
+  }
+  function varyPlan(item,presets,jobs,missing){
+    const none=reason=>({kind:'none',reason});
+    if(!item||item.media_type!=='image')return none('Vary works on pictures only.');
+    if(item.trashed_at)return none('This picture is in the bin. Restore it before varying it.');
+    const source=(presets||[]).find(p=>p.id===item.preset_id);
+    if(!source)return none('No Studio recipe is recorded for this picture, so there is nothing to vary from. Use Continue with this.');
+    const route=varyRoute(source.id,presets);
+    if(route){const blocked=varyBlocked(route,missing);if(blocked)return none('Vary uses '+route.name+'. '+blocked);
+      return{kind:'img2img',source,route,round:varyRound(jobs,route.id),strengths:{subtle:route.vary.subtle,strong:route.vary.strong},starting:route.vary.status!=='owner-approved'};}
+    // No route: the honest fallback is the same recipe with new seeds, only for a recipe that starts from words alone.
+    if(source.continuation_capability?.operation!=='new-image')return none('No close-variation route is recorded for '+source.name+', which starts from other pictures. Use Prepare new seed on its run, or Continue with this.');
+    if(!source.seed)return none(source.name+' has no seed to change, so a new round would repeat this picture.');
+    if(!item.job_id)return none('No run is recorded for this picture, so its recipe cannot be loaded again.');
+    const blocked=varyBlocked(source,missing);if(blocked)return none(blocked);
+    return{kind:'reseed',source,route:source,round:varyRound(jobs,source.id)};
+  }
+  function varyTime(timing){
+    if(!timing)return 'No timing on this PC yet, so the round is kept to 2';
+    const s=timing.seconds,label=s<90?Math.round(s)+' s':(s/60).toFixed(1).replace(/\.0$/,'')+' min';
+    return 'about '+label+' per picture here · '+timing.count+' run'+(timing.count===1?'':'s');
+  }
+  function varyStatus(plan,strength,seed){
+    const count=plan.round.count,seeds=count+' new seeds from '+seed;
+    if(plan.kind==='reseed')return 'Vary prepared as new seeds, same recipe ('+plan.route.name+'): '+seeds+', '+varyTime(plan.round.timing)+'. No close-variation route is recorded for this recipe, so each picture starts afresh from the same words. Nothing was generated; press Generate to run the round.';
+    const controls=plan.strengths[strength].controls;
+    return 'Vary '+strength+' prepared on '+plan.route.name+' from this picture: denoise '+controls.denoise+(plan.starting?' (a starting value, not yet judged)':'')+', '+seeds+', '+varyTime(plan.round.timing)+'. Nothing was generated; press Generate to run the round.';
+  }
+  function varyHint(plan){
+    if(plan.kind==='none')return plan.reason;
+    const round=plan.round.count+' pictures';
+    if(plan.kind==='reseed')return 'Starts afresh from the same words · '+round;
+    return 'On '+plan.route.name+' · '+round+' · denoise '+plan.strengths.subtle.controls.denoise+' / '+plan.strengths.strong.controls.denoise+(plan.starting?' (starting values)':'');
+  }
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,varyRoute,varyRound,varyPlan,varyStatus,varyHint};
 });

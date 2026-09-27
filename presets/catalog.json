@@ -419,6 +419,29 @@
         "5",
         "denoise"
       ],
+      "vary": {
+        "status": "starting-value",
+        "sources": [
+          "sdxl",
+          "abstract",
+          "stylized-prop",
+          "pixel-concept",
+          "gentle-variation",
+          "sdxl-variation"
+        ],
+        "subtle": {
+          "controls": {
+            "denoise": 0.3
+          },
+          "basis": "Starting value: the research brief's subtle strength (docs/research/EXPERIMENT-LOOP-RESEARCH-2026-09-27.md, #1202), also this graph's authored denoise. Not measured as a Vary strength on this PC."
+        },
+        "strong": {
+          "controls": {
+            "denoise": 0.55
+          },
+          "basis": "Starting value from the research brief (#1202). Not measured on this PC. Only plain SDXL base recipes are sources: this graph carries no style LoRA, so the LineAni, screentone, cinematic-lighting and pixel-art recipes fall back to new seeds instead."
+        }
+      },
       "modality": "image",
       "execution_note": "Executed 2026-09-11 in the initial batch: success, 5.942 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
       "visual": "workflows/comfyui/17 - SDXL Gentle Reference Variation.json"
@@ -5382,6 +5405,31 @@
         "13",
         "lora_name"
       ],
+      "vary": {
+        "status": "starting-value",
+        "sources": [
+          "krea-portrait",
+          "krea-portrait-gguf",
+          "krea-environment",
+          "krea-anime-atelier",
+          "krea-anime-atelier-gguf",
+          "krea-style-lab",
+          "krea-refine"
+        ],
+        "subtle": {
+          "controls": {
+            "denoise": 0.25
+          },
+          "basis": "This recipe's measured polish default: on 23 September 2026, 0.25 kept the fox shrine's composition on 3 of 3 seeds (jobs 36e5d833, 0cba57ec, 0887896e). Not yet judged by the owner as a Vary strength."
+        },
+        "strong": {
+          "controls": {
+            "denoise": 0.5,
+            "steps": 6
+          },
+          "basis": "Starting value: the recipe's own Redraw variant (denoise 0.5, 6 steps); the research brief suggests about 0.55 (#1202). At 0.35 the fox shrine already lost or doubled a fox on 3 of 3 seeds, so expect the composition to move. Not judged by the owner."
+        }
+      },
       "modality": "image",
       "family": "Krea 2 Turbo",
       "dimension_multiple": 16,
