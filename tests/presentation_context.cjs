@@ -192,3 +192,90 @@ test('source attention keeps simultaneous unknown readiness visible', () => {
   assert.ok(readiness);
   assert.match(readiness.description, /No fresh backend observation/);
 });
+
+test('the adapter isolates a missing handler and a throwing handler', () => {
+  const stamp = 'ctx-1';
+  const adapter = C.createActionAdapter({workspaceId:'create', getContextStamp:() => stamp,
+    actions:{[C.ACTIONS.OPEN_RESULTS]:() => { throw new Error('private handler detail'); }}});
+  const intent = id => ({id, workspaceId:'create', contextStamp:stamp});
+  assert.deepEqual(adapter.dispatch(intent(C.ACTIONS.FOCUS_GENERATE)), {ok:false, reason:'unavailable-action'});
+  assert.deepEqual(adapter.dispatch(intent(C.ACTIONS.OPEN_RESULTS)), {ok:false, reason:'handler-failed'});
+});
+
+test('terminal observations map to intents, evidence states and singular wording', () => {
+  const project = (state, outputs) => {
+    const input = baseInput(); input.execution = knownExecution(state, {outputs});
+    return C.project(C.captureContext(input), {});
+  };
+  const one = project('completed', 1);
+  assert.equal(one.primaryAction.id, C.ACTIONS.OPEN_RESULTS);
+  assert.match(one.primaryAction.description, /^1 output is recorded/);
+  assert.equal(one.evidenceState, 'outputs');
+  assert.match(project('completed', 3).primaryAction.description, /^3 outputs are recorded/);
+  for (const state of ['failed', 'cancelled']) {
+    const view = project(state, 0);
+    assert.equal(view.primaryAction.id, C.ACTIONS.INSPECT_OPERATION, state);
+    assert.equal(view.evidenceState, 'observed', state);
+  }
+  const done = project('completed', 0);
+  assert.equal(done.primaryAction.id, C.ACTIONS.INSPECT_OPERATION);
+  assert.equal(done.evidenceState, 'observed');
+  assert.equal(project('ready', 0).evidenceState, 'ready');
+});
+
+test('malformed capability becomes unknown instead of passing as known', () => {
+  const capability = value => {
+    const input = baseInput(); input.capability = {state:'known', value};
+    return C.captureContext(input).capability;
+  };
+  for (const value of ['recipe', {recipeId:null, backendId:'primary'}, {recipeId:'image', backendId:''},
+                       {recipeId:'image', backendId:'primary', referenceSlots:'a'},
+                       {recipeId:'image', backendId:'primary', referenceSlots:[null]},
+                       {recipeId:'image', backendId:'primary', referenceSlots:[{id:'a'}, {id:'a'}]},
+                       {recipeId:'image', backendId:'primary', referenceSlots:[{role:'no id'}]}]) {
+    assert.equal(capability(value).state, 'unknown', JSON.stringify(value));
+  }
+  assert.deepEqual(capability({recipeId:'image', backendId:'primary', referenceSlots:[{id:'a'}]}).value.referenceSlots,
+    [{id:'a', role:'Reference 1', required:true}]);
+});
+
+test('malformed execution normalizes safely', () => {
+  const execution = (value, extra = {}) => {
+    const input = baseInput(); input.execution = {state:'known', ...extra, value};
+    return C.captureContext(input).execution;
+  };
+  assert.equal(execution({state:'dancing'}).state, 'unknown');
+  assert.equal(execution({state:'ready', blockers:'x'}).state, 'unknown');
+  const normalized = execution({state:'blocked', blockers:[null, {}, {code:'bad code!', message:'  ', target:'models'}], outputs:'many'},
+    {observedAt:-5, contextStamp:'not a token!'});
+  assert.equal(normalized.state, 'known');
+  assert.deepEqual(normalized.value.blockers, [
+    {code:'blocker-2', message:'Readiness needs attention.', target:null},
+    {code:'blocker-3', message:'Readiness needs attention.', target:'models'}]);
+  assert.equal(normalized.observedAt, null);
+  assert.equal(normalized.contextStamp, null);
+  assert.equal(normalized.value.outputs, 0);
+  assert.equal(execution({state:'ready'}, {observedAt:Number.NaN}).observedAt, null);
+});
+
+test('stamps are key-order stable and ignore non-data fields', () => {
+  assert.equal(C.makeContextStamp({a:1, b:[2, 3]}), C.makeContextStamp({b:[2, 3], a:1}));
+  assert.equal(C.makeContextStamp({a:1, f:() => 1, s:Symbol('x'), u:undefined}), C.makeContextStamp({a:1}));
+  const cyclic = {a:1}; cyclic.self = cyclic;
+  assert.match(C.makeContextStamp(cyclic), /^ctx-[0-9a-f]{8}$/);
+  assert.notEqual(C.makeContextStamp({a:1}), C.makeContextStamp({a:2}));
+});
+
+test('draft and capture defaults clamp safely', () => {
+  const draft = value => { const input = baseInput(); input.draft = value; return C.captureContext(input).draft; };
+  assert.equal(draft({pendingFiles:-1}).pendingFiles, 0);
+  assert.equal(draft({pendingFiles:9999}).pendingFiles, 128);
+  assert.equal(draft({pendingFiles:'x'}).pendingFiles, 0);
+  const references = draft({references:[null, {id:'bad id!', stage:'bogus'}, ...Array.from({length:80}, (_, i) => ({id:'r' + i}))]}).references;
+  assert.equal(references.length, 63, 'at most 64 raw entries are read; the null one is skipped');
+  assert.deepEqual(references[0], {id:'reference-2', slotId:null, role:'Reference 2', stage:'selected'});
+  const empty = C.captureContext(null);
+  assert.equal(empty.workspaceId, 'workspace'); assert.equal(empty.taskId, 'generate');
+  assert.equal(empty.capability.state, 'unknown'); assert.equal(empty.execution.state, 'unknown');
+  assert.match(C.captureContext({contextStamp:'bad stamp!'}).contextStamp, /^ctx-[0-9a-f]{8}$/);
+});
