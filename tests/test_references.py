@@ -66,6 +66,14 @@ class ReferenceTests(unittest.TestCase):
         missing=copy.deepcopy(self.references);missing[0]['file']=None
         with self.assertRaises(ValueError):ref.compile_references(self.preset,self.graph,missing,self.root)
 
+    def test_undecodable_or_animated_reference_is_a_validation_error(self):
+        # A PIL failure once escaped prepare() as UnidentifiedImageError (a 500), and an animated file compiled off frame 1.
+        (self.root/'broken.png').write_bytes(b'not an image');(self.root/'truncated.png').write_bytes((self.root/'identity.png').read_bytes()[:40])
+        Image.new('RGB',(400,600),'teal').save(self.root/'animated.png',save_all=True,append_images=[Image.new('RGB',(400,600),'red')])
+        for name,message in (('broken.png','cannot be read'),('truncated.png','cannot be read'),('animated.png','single still')):
+            with self.subTest(name=name),self.assertRaisesRegex(ValueError,message):
+                ref.compile_references(self.preset,copy.deepcopy(self.graph),[dict(self.references[0],file=name),self.references[1]],self.root)
+
     def test_saved_reference_change_or_escape_is_rejected(self):
         self.references[0]['sha256']='0'*64
         with self.assertRaisesRegex(ValueError,'bytes changed'):
@@ -183,6 +191,8 @@ class StyleBoardTests(unittest.TestCase):
         self.assertEqual([g['10']['inputs']['image'],g['30']['inputs']['image'],g['31']['inputs']['image']],['a.png','b.png','c.png'])
         self.assertEqual(g['2']['inputs']['text'],'a witch'); self.assertEqual([r['slot'] for r in records],[1,2,3])
         self.assertEqual(records[0]['transform']['policy'],'native IP-Adapter CLIP-vision preprocessing (224 px centre crop)')
+        records[0]['transform']['policy']='mutated'
+        self.assertNotEqual(records[1]['transform']['policy'],'mutated','each board record owns its transform')
 
     def test_empty_middle_slot_prunes_its_loader_and_encoder_and_drops_the_combiner_input(self):
         g=board_graph()

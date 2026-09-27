@@ -904,6 +904,18 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(s.jobs[created['id']]['batch_count'],2)
         s.create_job({'preset_id':'demo','controls':{'seed':str(2**63-1)},'batch_count':1},enqueue=False)
 
+    def test_rejected_or_refused_submission_stamps_its_finish_time(self):
+        # A terminal 400 or pre-submit refusal gets the same finished_at/elapsed_seconds bookkeeping as an engine error.
+        error=HTTPError('http://localhost/prompt',400,'Bad Request',{},io.BytesIO(json.dumps({'error':{'message':'Required input missing'}}).encode()))
+        self.addCleanup(error.close)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},error])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}})['id']];s._run(job)
+        self.assertEqual(job['status'],'failed');self.assertGreaterEqual(job['finished_at'],job['started_at']);self.assertGreaterEqual(job['elapsed_seconds'],0)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]}])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}})['id']]
+        with patch.object(server.continuation,'validate',side_effect=server.StudioError('Source changed')):s._run(job)
+        self.assertEqual(job['status'],'failed');self.assertGreaterEqual(job['elapsed_seconds'],0)
+
     def test_uncertain_http_submission_closes_response_without_retry(self):
         error=HTTPError('http://localhost/prompt',503,'Unavailable',{},io.BytesIO(b'upstream unavailable'))
         self.addCleanup(error.close)
