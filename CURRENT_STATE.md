@@ -1,5 +1,17 @@
 # Current state — 27 September 2026
 
+## Back-to-back Qwen-Image 2.1 jobs no longer need a manual `/free` (opt-in) — 27 September 2026 (08:46-09:05 local)
+
+A `qwen21-rgba` job leaves the qwen21 ComfyUI holding enough host commit that the next heavy job reads 26.5-27.6 GiB of headroom, and the 32 GiB gate refused it. With current main, 7 creates were refused across three runs. Every job after the first needed a manual `POST /free`, which crossed 32 GiB after 7.0-11.0 s. A `batch_count` 3 job ended `partial` after output 1 (job `66353ab7`, prompt `b3a81b85`).
+
+The new opt-in `commit_gate_release_seconds` (branch `claude/lab3-commit-release`, #305) keeps the gate itself unchanged. Instead of refusing a measured shortfall, the Studio queues the job and, just before `/prompt`, frees that job's own idle backend. It then admits only on a fresh passing reading. Result: 6 of 6 outputs completed with no refusal and no manual step, after releases of 7.0-11.5 s:
+- three sequential jobs, prompts `f3801bb7`, `85d0f8a6`, `8d431fc8`, 66.1-71.2 s each including the release;
+- one batch of 3, prompts `5872c64a`, `6e5df8d0`, `a7b637fc`.
+
+Nothing got faster: the reload after a release is the same cold load, and the generation part was 3-10 s slower on three samples, cause not isolated. A manual `/free` measured every 0.2 s first *lowered* headroom from 27.4 to 12.7 GiB, as the weights moved into RAM, before it settled at 46.2 GiB. So the release is skipped at or below 22 GiB: a 16 GiB transient budget plus a 6 GiB margin.
+
+The owner's `config/local.json` now has `commit_gate_release_seconds: 45`. It has no effect until the PR merges and the Studio restarts. Receipts are in `experiments/curated/perf-20260927/`. This was a scheduling benchmark only: no quality judgement, not art acceptance.
+
 ## Klein-matched LoRAs (#764): three downloaded, blind-tested, parked — 27 September 2026 (08:10-08:26 local)
 
 Three Apache-2.0 Hugging Face LoRAs declared for FLUX.2 Klein were downloaded with SHA-256 checks and pinned in `models/library.json`: pixel art (Klein 4B, `24e938f5…`), isometric (Klein 9B, `633467a5…`) and consistency V2 (Klein 9B edits, `61db2017…`). They were tested on the primary backend in 24 serial research cells (LoRA 1.0 against none, same seed and words, 2 seeds each), judged blind. The words alone were preferred on 3 of 4 pixel-art pairs (ComfyUI also left 6 modulation keys of that LoRA unloaded) and on 3 of 4 isometric pairs. The consistency LoRA was closer to the source on 2 of 4 edits (1 against, 1 tie), lowered face drift on background changes, but raised saturation. All three are parked; no recipe was added. Evidence: `experiments/curated/klein-loras-20260927/`. Generated and agent-judged only: not art acceptance, not licence clearance (Klein 9B itself is FLUX non-commercial).

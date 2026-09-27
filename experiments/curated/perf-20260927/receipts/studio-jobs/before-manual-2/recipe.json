@@ -1,0 +1,14 @@
+{
+  "preset_id": "qwen21-rgba",
+  "controls": {
+    "positive": "A quiet geometric line illustration of an open empty folio with one inviting blank picture frame resting on its right page and a small four-point star above it, thin even neutral grey line work with one soft warm amber accent, flat minimal style, centred, full object visible, no text.",
+    "width": 1024,
+    "height": 1024,
+    "seed": 2026092763
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\qwen21-rgba-api.json",
+  "created_at": 1790495536.027926,
+  "references": [],
+  "parent_assets": []
+}
