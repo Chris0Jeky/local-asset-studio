@@ -1,0 +1,174 @@
+{
+  "id": "43a62885-f35b-4c4d-b1c3-c9ecf3ec1918",
+  "status": "completed",
+  "created_at": 1790496813.240771,
+  "preset_id": "wai",
+  "preset_name": "WAI v17 \u2022 illustration",
+  "controls": {
+    "seed": 2026092701
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "e39d2c83-19d3-49bd-98f2-6c44bd9cb6f0"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "e39d2c83-19d3-49bd-98f2-6c44bd9cb6f0",
+      "seed": 2026092701,
+      "graph": {
+        "1": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+          }
+        },
+        "2": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "1",
+              1
+            ],
+            "text": "1girl, solo, adult woman, fantasy ranger, green hooded cloak, leather boots, holding lantern, full body, standing, simple background, white background, game character concept, masterpiece, best quality, amazing quality"
+          }
+        },
+        "3": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "1",
+              1
+            ],
+            "text": "bad quality, worst quality, worst detail, sketch, censor"
+          }
+        },
+        "4": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 832,
+            "height": 1216,
+            "batch_size": 1
+          }
+        },
+        "5": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "seed": 2026092701,
+            "steps": 30,
+            "cfg": 5.0,
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "positive": [
+              "2",
+              0
+            ],
+            "negative": [
+              "3",
+              0
+            ],
+            "latent_image": [
+              "4",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "6": {
+          "class_type": "VAEDecodeTiled",
+          "inputs": {
+            "samples": [
+              "5",
+              0
+            ],
+            "vae": [
+              "1",
+              2
+            ],
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8
+          }
+        },
+        "7": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "6",
+              0
+            ],
+            "filename_prefix": "Studio/WAI-Illustration"
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 260554752,
+        "peak_dedicated_bytes": 10543030272,
+        "samples": 86,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "WAI-Illustration_00047_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092701,
+      "prompt_id": "e39d2c83-19d3-49bd-98f2-6c44bd9cb6f0",
+      "media_type": "image",
+      "asset_id": "f1c7f546ec2c525b89ef1ffc04fefb00"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\wai-api.json",
+  "seed_bindings": [
+    [
+      "5",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "2",
+        "text"
+      ]
+    ],
+    "negative": [
+      [
+        "3",
+        "text"
+      ]
+    ]
+  },
+  "parent_assets": [],
+  "label": "lab3 telemetry primary",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790496813.2457604,
+  "host_commit_windows": [
+    {
+      "samples": 84,
+      "unknown_samples": 0,
+      "first_at": 1790496813.6676922,
+      "last_at": 1790496855.5482216,
+      "peak_committed_bytes": 64856150016,
+      "peak_at": 1790496835.101771,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 37927940096,
+      "index": 0,
+      "prompt_id": "e39d2c83-19d3-49bd-98f2-6c44bd9cb6f0",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790496855.550222,
+  "elapsed_seconds": 42.30446147918701
+}

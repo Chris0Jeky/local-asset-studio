@@ -5,9 +5,15 @@
 (function(){
   const plural=(n,word)=>n+' '+word+(n===1?'':'s');
   const took=job=>Number(job.elapsed_seconds)>0&&typeof durationLabel==='function'?' in '+durationLabel(job.elapsed_seconds):'';
+  // #302: the server samples Windows commit every 0.5 s while each prompt runs (host_commit_windows). Only a run that came
+  // close says so: the qwen-2ref job that died on a host allocation had about 9 GB left (12 Sep 2026). Silence otherwise.
+  const TIGHT_BYTES=16*2**30;
+  const tight=job=>{let low=null,pct=null;for(const w of job.host_commit_windows||[]){const n=v=>typeof v==='number'&&Number.isFinite(v)?v:NaN,left=n(w?.min_available_bytes),peak=n(w?.peak_committed_bytes),limit=n(w?.limit_bytes);
+    if(Number.isFinite(left)&&left>=0&&(low===null||left<low))low=left;if(peak>0&&limit>0)pct=Math.max(pct??0,peak/limit);}
+    return low!==null&&low<TIGHT_BYTES?' Memory was tight: Windows commit headroom fell to '+(low/2**30).toFixed(1)+' GiB'+(pct?' ('+Math.round(pct*100)+' % used)':'')+'; close memory-heavy programs before the next large job.':'';};
   function summary(job){
     const made=(job.outputs||[]).length;
-    if(job.status==='completed')return {text:'Done'+took(job)+' · '+plural(made,'output')+'. Review it while it is fresh.',action:'Show result',error:false};
+    if(job.status==='completed')return {text:'Done'+took(job)+' · '+plural(made,'output')+'. Review it while it is fresh.'+tight(job),action:'Show result',error:false};
     if(job.status==='partial')return {text:'Partly done: '+plural(made,'output')+' saved. The rest will not be run again automatically.',action:'See what happened',error:true};
     if(job.status==='not_submitted')return {text:'Not started: '+(String(job.message||'').split(/(?<=\.)\s/)[0]||'the queue could not be checked.')+' Nothing was submitted.',action:'See why',error:true};
     if(job.status==='cancelled')return {text:made?'Cancelled: '+plural(made,'finished output')+' kept. Nothing was retried.':String(job.message||'Cancelled by you.'),action:made?'Show result':'See the record',error:false};
@@ -48,5 +54,5 @@
     if(b){if(b.dataset.runOutcome==='dismiss'){const said=shown&&summary(shown).text;clear();if(typeof message==='function'&&document.getElementById('status')?.textContent===said)message('');}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
     if(e.target.closest?.('#generate'))clear();
   },true);
-  window.StudioRunOutcome={summary,render,clear,reveal};
+  window.StudioRunOutcome={summary,render,clear,reveal,tight};
 })();

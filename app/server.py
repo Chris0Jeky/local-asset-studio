@@ -72,6 +72,7 @@ GPU_SETTLE_SECONDS = 3                   # after a prompt that spilled, how long
 EVICT_WAIT_SECONDS = 30                  # ceiling for ComfyUI to act on /free before the next prompt is posted anyway
 MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt", ".sft", ".bin")
 HOST_COMMIT_MINIMUM = 32 * 1024**3
+HOST_COMMIT_WINDOWS = 16                 # per-job bound on host-commit telemetry windows (4 batch members plus resumed observations)
 COMMIT_RELEASE_SAMPLE_SECONDS = 0.5      # commit re-read cadence while ComfyUI releases its cache
 COMMIT_RELEASE_MAX_SECONDS = 300
 # A release first moves the GPU-resident weights into host RAM: qwen21's /free took headroom from 27.4 to 12.7 GiB (14.7 GiB used)
@@ -886,7 +887,7 @@ class Studio:
         return data
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -2031,10 +2032,28 @@ class Studio:
         return False
 
     def _wait_history(self, job, submission):
-        sampler = self._start_gpu_sampler()
+        sampler = self._start_gpu_sampler(); commit = self._start_commit_sampler()
         try: return self._observe_history(job, submission, sampler)
         finally:
             if sampler is not None: sampler.stop()
+            if commit is not None: self._record_host_commit(job, submission, commit)
+
+    def _start_commit_sampler(self):
+        """A host_memory.Sampler for this prompt's window (#302), or None. Never raises."""
+        try: return host_memory.Sampler(GPU_SAMPLE_SECONDS).start()
+        except Exception: return None
+
+    def _record_host_commit(self, job, submission, sampler):
+        """Keep the prompt window's commit peak and minimum headroom in job['host_commit_windows'] (#302), one entry per observed
+        window, at most HOST_COMMIT_WINDOWS. Submission receipts stay untouched. Optional evidence: never raises."""
+        try:
+            sampler.stop(); window = sampler.take()
+            if not window: return
+            windows = job.setdefault('host_commit_windows', [])
+            if len(windows) >= HOST_COMMIT_WINDOWS: return
+            windows.append(dict(window, index=submission.get('index'), prompt_id=submission.get('prompt_id'), interval_seconds=GPU_SAMPLE_SECONDS))
+            self._save(job)
+        except Exception: pass
 
     def _observe_history(self, job, submission, sampler=None):
         prompt_id = submission["prompt_id"]

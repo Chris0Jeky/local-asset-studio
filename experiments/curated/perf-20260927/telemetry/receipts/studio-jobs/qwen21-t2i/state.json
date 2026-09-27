@@ -1,0 +1,208 @@
+{
+  "id": "527cff24-39b2-46f6-8a38-6373697088a7",
+  "status": "completed",
+  "created_at": 1790497032.6477654,
+  "preset_id": "qwen21-t2i",
+  "preset_name": "Qwen-Image 2.1 - Text to Image",
+  "controls": {
+    "seed": 2026092701
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "858d462e-c0d8-4e0b-a2d4-1c32bbbccd15"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "858d462e-c0d8-4e0b-a2d4-1c32bbbccd15",
+      "seed": 2026092701,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+            "type": "qwen_image",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "TextEncodeQwenImage21",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "prompt": "Anime key visual of an adult silver-haired sorceress in a midnight-blue travelling coat, holding a glowing brass lantern on a rainy stone bridge at blue hour. Clean linework, layered cel shading, teal and warm amber light.",
+            "negative_prompt": "",
+            "resolution": 1024
+          }
+        },
+        "5": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 832,
+            "height": 1248,
+            "batch_size": 1
+          }
+        },
+        "6": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "4",
+              1
+            ],
+            "latent_image": [
+              "5",
+              0
+            ],
+            "seed": 2026092701,
+            "steps": 25,
+            "cfg": 1.0,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1.0
+          }
+        },
+        "7": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "6",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "8": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "9",
+              0
+            ],
+            "filename_prefix": "Studio/qwen21-t2i"
+          }
+        },
+        "9": {
+          "class_type": "SplitImageWithAlpha",
+          "inputs": {
+            "image": [
+              "7",
+              0
+            ]
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 3479818240,
+        "peak_dedicated_bytes": 14852988928,
+        "samples": 129,
+        "spilled": true,
+        "settled_shared_bytes": 682057728,
+        "lingering": true
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "qwen21-t2i_00006_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092701,
+      "prompt_id": "858d462e-c0d8-4e0b-a2d4-1c32bbbccd15",
+      "media_type": "image",
+      "asset_id": "cd11e4ce2cf55c4c8dd7269ef6aea360"
+    }
+  ],
+  "message": "Complete, but slowly: GPU memory spilled 3.2 GB into system RAM and 0.6 GB was still there after the job, so the next job will page too. The Studio unloads ComfyUI's models before the next job; if the spill stays, close GPU-heavy apps or restart ComfyUI.",
+  "graph_path": "workflows\\api\\qwen21-t2i-api.json",
+  "seed_bindings": [
+    [
+      "6",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "prompt"
+      ]
+    ],
+    "negative": [
+      [
+        "4",
+        "negative_prompt"
+      ]
+    ]
+  },
+  "parent_assets": [],
+  "label": "lab3 telemetry qwen21",
+  "references": [],
+  "comfy_root": "C:\\AI\\experiments\\qwen-image-21\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8196",
+  "host_commit_readings": [
+    {
+      "available_bytes": 51721498624,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 51062591488,
+      "unknown_reason": null,
+      "phase": "prepared",
+      "recorded_at": 1790497032.6477654
+    },
+    {
+      "available_bytes": 51725074432,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 51059015680,
+      "unknown_reason": null,
+      "phase": "pre-submit",
+      "index": 0,
+      "recorded_at": 1790497032.696885
+    }
+  ],
+  "started_at": 1790497032.6517665,
+  "gpu_spill": true,
+  "host_commit_windows": [
+    {
+      "samples": 130,
+      "unknown_samples": 0,
+      "first_at": 1790497032.7111158,
+      "last_at": 1790497098.0606766,
+      "peak_committed_bytes": 78576496640,
+      "peak_at": 1790497072.5070114,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 24207593472,
+      "index": 0,
+      "prompt_id": "858d462e-c0d8-4e0b-a2d4-1c32bbbccd15",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790497098.0646846,
+  "elapsed_seconds": 65.41291809082031
+}
