@@ -135,7 +135,7 @@ class ServerTests(unittest.TestCase):
         with patch.object(server.host_memory,'read',side_effect=[low,low,low,high,high]),patch.object(server.time,'sleep'):
             created=studio.create_job({'preset_id':'demo','controls':{}},enqueue=False);job=studio.jobs[created['id']]
             self.assertEqual(job['status'],'queued');self.assertTrue(job['host_commit_readings'][0]['deferred'])
-            self.assertIn('free ComfyUI',job['message']);self.assertIn('26.0 GiB',job['message'])
+            self.assertIn('frees ComfyUI',job['message']);self.assertIn('26.0 GiB',job['message'])
             studio._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['after-free'])
         calls=[(args[0],kwargs.get('data')) for args,kwargs in studio.requests if args]
@@ -183,7 +183,10 @@ class ServerTests(unittest.TestCase):
             with self.subTest(before=below):
                 studio=self._heavy_studio([self.IDLE],release=5)
                 with patch.object(server.host_memory,'read',return_value=self._commit_reading(below)),patch.object(server.time,'sleep'):
-                    job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+                    job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+                    # The queued message must not promise a release the worker will skip.
+                    self.assertNotIn('frees ComfyUI',job['message']);self.assertIn('needs more than 22 GiB',job['message'])
+                    studio._run(job)
                 self.assertEqual(job['status'],'failed');self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
                 self.assertIn('more than 22 GiB',job['commit_releases'][0]['outcome']);self.assertIn('were not freed',job['message'])
         studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'over-floor'},{'over-floor':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
@@ -344,6 +347,24 @@ class ServerTests(unittest.TestCase):
         with patch.object(server.time,'sleep'): s._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual(len(job['submissions'][0]['history_read_errors']),4)
 
+    def test_intermittent_history_read_failures_keep_a_bounded_record_and_a_full_count(self):
+        """Each good read resets the strike count, so recorded failures are capped per submission while the count stays exact."""
+        flaky=[URLError('flaky'),{}]*(server.HISTORY_READ_ERRORS_KEPT+5)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'},*flaky,{'p':{'status':{'status_str':'success'},'outputs':{}}}])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        with patch.object(server.time,'sleep'),patch.object(server,'HISTORY_QUEUE_CHECK_EVERY',10**6): s._run(job)
+        submission=job['submissions'][0];self.assertEqual(job['status'],'completed')
+        self.assertEqual(len(submission['history_read_errors']),server.HISTORY_READ_ERRORS_KEPT)
+        self.assertEqual(submission['history_read_error_count'],server.HISTORY_READ_ERRORS_KEPT+5)
+
+    def test_a_resumed_submission_seeds_the_error_count_from_its_uncapped_list(self):
+        s=FakeStudio(self.root,[URLError('again'),{'legacy':{'status':{'status_str':'success'},'outputs':{}}}])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        submission={'prompt_id':'legacy','history_read_errors':[{'at':0,'error':'old'}]*30}
+        with patch.object(server.time,'sleep'): s._observe_history(job,submission)
+        self.assertEqual(submission['history_read_error_count'],31)
+        self.assertEqual(len(submission['history_read_errors']),server.HISTORY_READ_ERRORS_KEPT)
+
     def test_later_batch_member_uncertain_keeps_earlier_evidence_and_stops(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2}, enqueue=False)['id']]
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),
@@ -496,6 +517,17 @@ class ServerTests(unittest.TestCase):
         handler.do_POST()
         self.assertEqual(sent,[(404,{"error":"Not found"})])
         self.assertEqual(handler.rfile.read(),b"")
+
+    def test_unknown_production_route_does_not_drain_a_body_it_already_read(self):
+        # The production branch reads the JSON body before matching its sub-route; draining again would wait
+        # for bytes that already arrived and then drop the keep-alive connection.
+        body=b"{}"
+        handler=server.Handler.__new__(server.Handler)
+        handler.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Length":str(len(body)),"Content-Type":"application/json"}
+        handler.path="/api/production/plan-1/bogus";handler.rfile=io.BytesIO(body);handler.close_connection=False
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+        with patch.object(server,"drain_for_reset",side_effect=AssertionError("drained twice")):handler.do_POST()
+        self.assertEqual(sent,[(404,{"error":"Not found"})]);self.assertFalse(handler.close_connection)
 
     def test_estimate_wrong_content_type_drains_body_before_400(self):
         body=b"b"*(32*1024)

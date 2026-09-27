@@ -59,7 +59,7 @@ no-LoRA control, and the three-seed retest found every candidate ties its contro
 **Not done.** No asset is marked accepted in the library (q-30 chose representatives but left the marks unchanged): live QA on 24 Sep counted 1,205 assets, 1,184 unreviewed, 0 keepers (#939).
 The full body's fine facial features are redrawn at that scale; a face pass at portrait fidelity needs renders (backlog).
 *Correction to 14 Sep "AniFox never ran":* AniFox v2 is installed with a matching hash (21 Sep) and has run in the labs
-(105 `anifox-v2-baseline` assets, #939); no inspected baseline entry for the pack exists. q-25 (does Style + Pose stay in the pack) is open.
+(105 `anifox-v2-baseline` assets, #939); no inspected baseline entry for the pack exists. q-25 is answered (27 Sep 2026): Style + Pose stays in the pack on WAI v17 at style weight 0.3-0.45.
 **Next slice.** A face pass on the chosen full body, masked repair where a hand needs it, one owner review batch. Open: #14.
 
 ## G3 — Character sheets, figures, poses, in-betweens
@@ -145,8 +145,7 @@ media records: `experiments/curated/nsfw-lab-*`. Agent tooling: [AGENT-TOOLING.m
 
 ## Open owner items
 
-Open in [HUMAN_TODO.md](../HUMAN_TODO.md): q-7 (first-hand pass over the UX wave), q-25 (does Style + Pose stay in the
-pack), and q-28 (a)–(d) if the owner wants to weigh in. Answered 23 September: q-27, q-28 (e), q-30, q-31, q-32 (its optional art judgement of the LoRA smoke winners stays open), the three
+Open in [HUMAN_TODO.md](../HUMAN_TODO.md): q-7 (first-hand pass over the UX wave) and q-28 (a)–(d) if the owner wants to weigh in. Answered 27 September: q-25 and the asset plan. Answered 23 September: q-27, q-28 (e), q-30, q-31, q-32 (its optional art judgement of the LoRA smoke winners stays open), the three
 Adaptive Studio choices; q-29 on 20 and 23 September; the ZZZ age-guide intake on 24 September. No output is licence-cleared:
 the owner set licence gating aside for private experiments (15 September); terms stay recorded in `models/library.json`.
 Creative acceptance of any generated image remains the owner's alone.

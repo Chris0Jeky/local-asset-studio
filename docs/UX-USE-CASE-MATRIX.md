@@ -1,5 +1,37 @@
 # UX use-case matrix
 
+## Vary subtle / Vary strong from a picture — 27 September 2026
+
+Refs #1202, research gap 1 (pattern P2). Every picture in **Recent runs** and in the asset panel now has a Vary control.
+One press prepares a round of close variations. It never submits: Generate is still your press.
+
+- **Vary subtle** and **Vary strong** appear when the picture's recipe has an img2img route. The route attaches a
+  copy of the picture through the same continuation as *Continue with this*: the picture is the source and the
+  recorded parent. The round keeps the picture's submitted words and sets the route's recorded denoise and new seeds.
+  Today Krea 2 pictures vary on *Krea 2 Refine Pass*, and plain SDXL base pictures on *SDXL gentle reference variation*.
+- **Vary · new seeds, same recipe** appears when the picture came from words alone and no route is recorded. It reloads
+  the run's own recipe with new seeds and records the picture as the parent. Each picture starts afresh.
+- A disabled **Vary** with its reason beside it covers the rest. Examples: a picture made from other pictures (use
+  *Prepare new seed* on its run), no recipe recorded, a recipe that cannot run here (missing model or wrong
+  environment), or a picture in the bin. Videos, sounds and models show no Vary.
+- A round is **4 pictures** when this PC's median time per picture for that recipe is under a minute, else **2**.
+  This is the owner's rule of 27 September 2026, using the same median as the Combine engine chips. A recipe with no
+  timing here yet counts as slow.
+- The status line names the recipe, the denoise (marked *a starting value, not yet judged*), the seeds and the time
+  per picture.
+
+The strengths are catalog data, not code: a `vary` block on the route recipe lists its `sources`, a `status` and
+`subtle` / `strong` control sets, each with a `basis` saying where the number comes from. `scripts/validate-repo.py`
+refuses a route that does not resample the picture, strengths outside 0-1 or in the wrong order, and a source that
+draws with another model. It also refuses a source claimed by two routes.
+
+`python tests/studio_use_cases.py` passed **16/16** journeys with **zero generation submissions and zero page errors**.
+The new `vary-a-keeper` journey presses *Vary subtle* on a Krea picture: it lands on Krea 2 Refine Pass with the
+picture as source and parent, denoise 0.25, a new seed and a round of 2 (one 240 s receipt). It then presses the
+fallback on an Anima picture: the same recipe, a new seed, a round of 4 (one 30 s receipt) and the picture as parent.
+Last, it reads the disabled Vary and its reason in the asset panel. These are fixture screens; no model ran, and
+nobody has judged the strengths yet.
+
 ## Combine runs beside their pictures — 27 September 2026
 
 Refs #422, design handoff J4/D7. Before this change, at 1440×900 the pair sat at y≈854 and the result strip at y≈3499, with
