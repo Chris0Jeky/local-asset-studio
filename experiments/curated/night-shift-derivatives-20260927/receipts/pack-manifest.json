@@ -209,6 +209,17 @@
    "retro-anime-master MB",
    "retro-anime-quiet r1-1, a1, a2, b1, b2",
    "retro-anime-card wide"
-  ]
+  ],
+  "ma_sharp": {
+   "decision": "Keep MA",
+   "at": "2026-09-27",
+   "by": "Chris (owner), in chat after seeing ma-sharp-crops.jpg",
+   "rejected_as_master": [
+    "sharp-a1",
+    "sharp-a2",
+    "sharp-a3"
+   ],
+   "kept_as": "experiments (retro-anime-master/candidates/)"
+  }
  }
 }

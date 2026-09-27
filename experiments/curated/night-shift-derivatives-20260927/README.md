@@ -117,7 +117,8 @@ replaced. All ran straight on ComfyUI with the anchor's own model: Z-Image Turbo
 - Low-denoise tiles mostly soften the line work. At a 1024 px tile of an already smooth upscale, Z-Image keeps the blur and
   re-draws small details.
 - The 2K whole-frame route is the only one with crisper edges, and it repaints the focal window.
-- The agent recommendation stays MA. **The owner decides between MA and a3 (or the others).**
+- The agent recommendation stays MA. **Owner decision (27 Sep 2026, in chat, after seeing `ma-sharp-crops.jpg`): "Keep MA".**
+  a1, a2 and a3 are rejected by the owner as masters. They are kept as experiments only (local files and receipts unchanged).
 - Because no master attempt clearly succeeded, the same method was **not** applied to quiet r1-2, so the accepted pair stays
   aligned.
 
@@ -146,7 +147,7 @@ history. Host commit read 50.0-56.7 % around the runs.
 ## Next
 
 1. Done 27 Sep: owner art review (above).
-2. Pending: the owner chooses between MA and the MA-sharp candidate once it exists.
+2. Done 27 Sep: the owner kept MA ("Keep MA"); the MA-sharp attempts are experiments only.
 3. Owner: `retro-anime-wall` in ChatGPT, with the anchor uploaded.
 4. A later code session wires the accepted renditions in and runs runtime qualification.
 
