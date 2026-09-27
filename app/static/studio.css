@@ -64,7 +64,7 @@
 .ux-combine-engines[hidden],.ux-pair-results[hidden]{display:none}
 .ux-combine-engines h3,.ux-pair-results h3{margin:0 0 8px}.ux-combine-engines p,.ux-pair-results p{font-size:12px;line-height:1.5}
 .ux-engine-options{display:flex;gap:8px;flex-wrap:wrap}.ux-engine-options button{flex:1 1 155px;text-align:left;white-space:normal;min-height:64px}
-.ux-engine-options b,.ux-engine-options small{display:block}.ux-engine-options small{margin-top:5px;font-size:10px;line-height:1.4}
+.ux-engine-options b,.ux-engine-options small{display:block}.ux-engine-options .ux-engine-hint{font-size:11px;opacity:.9}.ux-engine-options small{margin-top:5px;font-size:10px;line-height:1.4}
 .ux-engine-options [aria-pressed=true]{border-color:var(--accent,#c6dd94);background:#273b30}
 .ux-experiment-strip{display:flex;gap:14px;overflow-x:auto;padding:4px 0 10px;align-items:flex-start}
 .ux-run-group{flex:0 0 auto;width:min-content;display:flex;flex-direction:column;gap:6px;min-width:0}
