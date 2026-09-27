@@ -92,3 +92,6 @@
 .ux-pose-actions{display:flex;flex-wrap:wrap;gap:6px}.ux-pose-actions button{min-height:38px;font-size:11px}
 #uxPoseReason:empty,#uxPoseStatus:empty{display:none}
 @media(max-width:700px){#uxPoseCanvas{width:100%;height:auto}.ux-pose-actions button{min-height:44px}}
+/* A dialog's own decision stays on screen (handoff 03): the action row sticks to the bottom edge while the form scrolls under it. */
+.studio-shell dialog{--dialog-pad:26px}.studio-shell dialog form>.actions:last-child,.studio-shell .asset-detail-actions{position:sticky;bottom:calc(-1*var(--dialog-pad));z-index:2;background:var(--panel);box-shadow:0 -14px 18px -12px var(--panel);padding:10px 0 calc(10px + var(--dialog-pad));margin-block-end:calc(-1*var(--dialog-pad))}
+@media(max-width:580px){.studio-shell dialog{--dialog-pad:18px}}
