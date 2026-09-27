@@ -1,6 +1,7 @@
 // One next step when the run you started settles (#278, #772). app.js announces the settled record once
 // ('studio:job-settled'); this says what happened in plain words and offers the one useful move:
-// a finished run shows its result card, anything else opens its Problems entry. Nothing here submits,
+// a finished run shows its result card, anything else reveals its record: a Problems entry, or the Recent runs card of a run that
+// never started (not_submitted, #1120) or was cancelled before it made anything. Nothing here submits,
 // retries or changes a job: every action only opens, scrolls or focuses what is already on the page.
 (function(){
   const plural=(n,word)=>n+' '+word+(n===1?'':'s');
@@ -28,7 +29,7 @@
     const output=results?document.querySelector('#gallery [data-output^="'+CSS.escape(job.id)+':"]'):null;
     const target=job.status==='completed'?output:output||document.querySelector('[data-problem="'+CSS.escape(job.id)+'"]');
     if(!target){if(typeof message==='function')message('That run is not shown here yet (a playing clip holds the list until it stops) or its outputs are in Trash. Asset library has every saved output.',true);return false;}
-    if(!output){const details=document.getElementById('jobProblems');if(details)details.open=true;}
+    // open() unfolds whichever holds the record: Problems for a problem, Recent runs for a gallery card (#1120), never both.
     open(target);target.scrollIntoView({block:'center'});
     // A result focuses its first action (so K/W/X review it); a problem focuses its record, reason first.
     const first=output?target.querySelector('button,a,summary'):null;if(!first&&!target.hasAttribute('tabindex'))target.tabIndex=-1;(first||target).focus({preventScroll:true});return true;

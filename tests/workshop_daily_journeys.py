@@ -480,6 +480,12 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.settle({'id': 'ns', 'status': 'not_submitted', 'message': 'ComfyUI queue unavailable. Nothing was submitted. No retry was queued.'})
         self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: ComfyUI queue unavailable. Nothing was submitted.', True])
         self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
+        # #1120: a never-submitted run is a Recent runs card, not a Problems entry; See why reveals that card and leaves Problems shut.
+        self.page.evaluate("""document.querySelector('#gallery').insertAdjacentHTML('afterbegin','<article class="jobStatus not_submitted" data-problem="ns"><b>Krea · not_submitted</b><button class="recipe">Recipe</button></article>')""")
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'ns')
+        self.assertTrue(self.page.evaluate("document.querySelector('#workshopResults').open"))
+        self.assertFalse(self.page.evaluate("document.querySelector('#jobProblems').open"), 'Problems holds no entry for it')
 
     def test_a_cancelled_run_says_so_plainly_and_keeps_its_finished_outputs(self):
         # #1138: the owner's own cancel is not an error; kept outputs lead to the run, and nothing invites a re-run.
@@ -555,6 +561,23 @@ document.addEventListener('studio:job-settled',e=>events.push([e.detail.id,e.det
         self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
         self.assertEqual(self.page.evaluate('events'), [['first', 'not_submitted']], 'the earlier run settles once; the running one waits')
         self.assertEqual(self.page.evaluate('activeJobId'), 'second')
+
+    def test_started_runs_that_can_never_be_announced_are_pruned(self):
+        # #1120: an id seen in the list and then gone, or put straight into abandoned by the owner, never settles; drop it.
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[],jobsEtag=null,jobsDataSignature='',estimateKey='',estimateResultKey='',activeJobId=null;window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.reply=[{id:'gone',status:'running',preset_name:'P',message:'Generating'},{id:'dropped',status:'abandoned',preset_name:'P',message:'Abandoned locally'}];
+window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
+        self.page.evaluate("startedJobIds.add('gone');startedJobIds.add('dropped');startedJobIds.add('fresh')")
+        self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('[...startedJobIds]'), ['gone', 'fresh'], 'abandoned is pruned; an id the list has not shown yet is kept')
+        self.page.evaluate("reply=[{id:'fresh',status:'running',preset_name:'P',message:'Generating'}]"); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('[...startedJobIds]'), ['fresh'], 'an id the list showed and then lost is pruned')
+        self.page.evaluate("reply=[{id:'fresh',status:'completed',preset_name:'P',message:'Complete',outputs:[{}]}]"); self.page.evaluate('refreshJobs()')
+        self.assertEqual((self.page.evaluate('events'), self.page.evaluate('startedJobIds.size')), (['fresh'], 0))
 
 
     def test_running_cards_show_truthful_elapsed_time_not_progress(self):

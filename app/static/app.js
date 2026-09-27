@@ -517,10 +517,14 @@ function renderRunCancel(){
 async function refreshJobs(){try{const response=await fetch('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{});if(response.status===304){const current=response.headers?.get?.('ETag');if(current)jobsEtag=current;settleActiveJob(false);return;}if(!response.ok){let detail='Request failed';try{const data=await response.json();if(data&&data.error)detail=data.error;}catch{}const error=Error(detail);error.status=response.status;throw error;}const next=await response.json(),etag=response.headers?.get?.('ETag');jobsEtag=etag||null;const signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}settleActiveJob();}catch(e){message(e.message,true);}}
 // The run started here may already be settled in the list a 304 confirms (a fast failure seen by an earlier poll).
 // Every run started from this page is announced once when it settles, even after a newer Generate took the status line.
-const SETTLED_JOB_STATUSES=['completed','failed','partial','uncertain','not_submitted','cancelled'],startedJobIds=new Set();
+// #1120: an id that can never be announced is dropped: one the list showed and then lost, or one the owner abandoned before a poll saw
+// it settle. An id the list has not shown yet stays (a poll that began before the POST returned does not list it).
+const SETTLED_JOB_STATUSES=['completed','failed','partial','uncertain','not_submitted','cancelled'],startedJobIds=new Set(),listedStartedJobIds=new Set();
 // A 304 repeats no progress message (the list did not change); it only announces a run that had already settled.
 function settleActiveJob(fresh=true){const job=jobs.find(j=>j.id===activeJobId);if(job){if(fresh)message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(SETTLED_JOB_STATUSES.includes(job.status))activeJobId=null;}
-  for(const id of [...startedJobIds]){const settled=jobs.find(j=>j.id===id&&SETTLED_JOB_STATUSES.includes(j.status));if(settled){startedJobIds.delete(id);document.dispatchEvent(new CustomEvent('studio:job-settled',{detail:settled}));}}}
+  for(const id of [...startedJobIds]){const listed=jobs.find(j=>j.id===id),settled=listed&&SETTLED_JOB_STATUSES.includes(listed.status)?listed:null;
+    if(settled||listed?.status==='abandoned'||(!listed&&listedStartedJobIds.has(id))){startedJobIds.delete(id);listedStartedJobIds.delete(id);}else if(listed)listedStartedJobIds.add(id);
+    if(settled)document.dispatchEvent(new CustomEvent('studio:job-settled',{detail:settled}));}}
 function refresh(){return readPoller?readPoller.refresh('jobs'):refreshJobs();}
 function showView(next){view=next;['create','assets','production','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();location.hash=next;}
 const MODEL_STATUS_KEY='studio.models.status',MODEL_STATUSES=['all','action','installed'];
