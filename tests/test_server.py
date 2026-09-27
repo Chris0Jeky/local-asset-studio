@@ -355,6 +355,37 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(sent[0][0],400,sent)
         self.assertEqual(studio.assets.setups(),[])
 
+    def test_every_json_route_answers_a_non_object_body_with_4xx(self):
+        # Valid JSON that is not an object once escaped do_POST as AttributeError/TypeError: no response, a dropped connection.
+        studio=self.studio();sent=[];project='a'*32
+        # /api/estimate is advisory and answers 200 {available: false}; every other route refuses.
+        routes=('/api/gpu-lease','/api/gpu-lease/release','/api/jobs','/api/backends/switch','/api/articulated','/api/preview',
+                '/api/av','/api/voice-baseline','/api/av/'+project,'/api/production','/api/production/campaigns','/api/production-export',
+                '/api/experiments/plan','/api/production/%s/stop'%project,'/api/production/%s/extend-time'%project,'/api/production/%s/review'%project,
+                '/api/references/check','/api/assets/update','/api/collections','/api/setups','/api/assets/reference','/api/assets/export',
+                '/api/recipe-check','/api/folders/open','/api/models/install','/api/workflow-inspect','/api/jobs/missing/resume',
+                '/api/jobs/missing/observe-known','/api/jobs/missing/dispose-mixed','/api/jobs/missing/abandon','/api/jobs/missing/stop-tracking',
+                '/api/jobs/missing/put-away','/api/pose/render')
+        for path in routes:
+            for body in ([],'text',3,None,True):
+                with self.subTest(path=path,body=repr(body)):
+                    handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path=path
+                    handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body=body:body
+                    sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                    handler.do_POST()
+                    self.assertTrue(sent and 400<=sent[0][0]<500,sent)
+        self.assertEqual(studio.assets.setups(),[]);self.assertEqual(studio.jobs,{})
+
+    def test_export_ids_that_cannot_be_hashed_are_400(self):
+        studio=self.studio();sent=[]
+        for body in ({'ids':[{}]},{'ids':[[1]]}):
+            with self.subTest(body=repr(body)):
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/assets/export'
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body=body:body
+                sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent[0][0],400,sent)
+
     def test_export_with_trashed_asset_returns_code_and_ids(self):
         import uuid
         s=self.studio()
@@ -748,6 +779,17 @@ class ServerTests(unittest.TestCase):
         live=FakeStudio(self.root,[{},{}]).health()
         self.assertIn("demo",live["missing_models"])
 
+    def test_health_reads_a_garbled_comfy_body_as_offline_or_schema_unavailable(self):
+        garbled=lambda:UnicodeDecodeError('utf-8',b'\xff',0,1,'invalid start byte')
+        self.assertFalse(FakeStudio(self.root,[garbled()]).health()["online"])
+        live=FakeStudio(self.root,[{},garbled()]).health()
+        self.assertTrue(live["online"]);self.assertFalse(live["schema_available"])
+
+    def test_deeply_nested_request_body_is_a_studio_error(self):
+        body=b'['*100000+b']'*100000
+        handler=server.Handler.__new__(server.Handler);handler.headers={'Content-Type':'application/json','Content-Length':str(len(body))};handler.rfile=io.BytesIO(body)
+        with self.assertRaisesRegex(server.StudioError,'nested'):handler._body_json()
+
     def test_identity_never_calls_backend_and_schema_discovery_is_cached(self):
         s=FakeStudio(self.root,[{}, {}, {}, {}])
         self.assertEqual(s.identity()['app'],'local-asset-studio'); self.assertEqual(s.requests,[])
@@ -842,6 +884,25 @@ class ServerTests(unittest.TestCase):
         self.assertIn('Required input missing',job['message']);self.assertEqual(job['prompt_ids'],[])
         self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),1)
         self.assertTrue(error.closed)
+
+    def test_rejection_after_a_completed_batch_member_is_partial(self):
+        # Same rule as a pre-submit refusal between members: completed outputs make the job partial, not failed.
+        error=HTTPError('http://localhost/prompt',400,'Bad Request',{},io.BytesIO(json.dumps({'error':{'message':'Required input missing'}}).encode()))
+        self.addCleanup(error.close)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}},error])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{},'batch_count':2})['id']];s._run(job)
+        self.assertEqual(job['status'],'partial');self.assertEqual(job['prompt_ids'],['one']);self.assertNotIn('pending_submission',job)
+        self.assertIn('Required input missing',job['message']);self.assertIn('output 2',job['message'])
+        self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),2)
+
+    def test_seed_plus_batch_past_the_seed_range_is_refused_before_queueing(self):
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,'seed plus batch count'):
+            s.create_job({'preset_id':'demo','controls':{'seed':str(2**63-1)},'batch_count':2},enqueue=False)
+        self.assertEqual(s.jobs,{})
+        created=s.create_job({'preset_id':'demo','controls':{'seed':str(2**63-2)},'batch_count':2},enqueue=False)
+        self.assertEqual(s.jobs[created['id']]['batch_count'],2)
+        s.create_job({'preset_id':'demo','controls':{'seed':str(2**63-1)},'batch_count':1},enqueue=False)
 
     def test_uncertain_http_submission_closes_response_without_retry(self):
         error=HTTPError('http://localhost/prompt',503,'Unavailable',{},io.BytesIO(b'upstream unavailable'))
@@ -963,6 +1024,15 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(s.catalog()['presets'][0]['defaults']['lora2_name'],'second.safetensors')
         for bad in ('../escape.safetensors','folder/style.safetensors','style.ckpt','',7):
             with self.assertRaises(server.StudioError): s.prepare({'preset_id':'demo','controls':{'lora_name':bad}})
+
+    def test_filename_bound_lora_slot_refuses_a_boolean_before_queueing(self):
+        # Older presets bind `lora` to a filename input; bool is an int subclass and once reached ComfyUI as a late 400.
+        graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in (True,False):
+            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'number or short text'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'other.safetensors'}})
+        self.assertEqual(bound['1']['inputs']['lora'],'other.safetensors')
 
     def test_disabled_slots_leave_the_graph_and_rewire_model_edges(self):
         self.lora_stack(); s=self.studio()
