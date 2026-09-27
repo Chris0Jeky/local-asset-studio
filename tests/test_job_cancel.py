@@ -450,7 +450,7 @@ class JobCancelTests(unittest.TestCase):
         for reply, expected, label in (({"queue_running": [{"not": "a", "list": "entry"}], "queue_pending": []}, ("unreadable", []), "non-list entry of length 2"),
                                       ({"queue_running": [[0]], "queue_pending": []}, ("unreadable", []), "entry shorter than 2"),
                                       ({"queue_running": [], "queue_pending": []}, ("absent", []), "empty queues are absent, not unreadable"),
-                                      (queue(pending=["ours"]), ("pending", []), "length-2 entries still parse")):
+                                      ({"queue_running": [], "queue_pending": [[1, "ours"]]}, ("pending", []), "length-2 entries still parse")):
             with self.subTest(label=label):
                 studio.script = [("GET", "/queue", reply)]
                 self.assertEqual(job_cancel._queue(studio, None, "ours"), expected)
