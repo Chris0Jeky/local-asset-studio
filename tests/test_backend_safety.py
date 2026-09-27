@@ -118,6 +118,11 @@ class BackendSafetyTests(unittest.TestCase):
         with patch.object(self.manager,'request',return_value={'system':'wrong schema'}):snapshot=self.manager.snapshot()
         for profile in snapshot['profiles']:
             self.assertTrue(profile['installed']);self.assertFalse(profile['online']);self.assertIsNone(profile['readiness']['runtime_compatible'])
+    def test_a_non_string_backend_id_is_unknown_not_a_type_error(self):
+        for identifier in ([], {}, None, 7):
+            with self.subTest(identifier=identifier):
+                with self.assertRaisesRegex(ValueError,'Unknown backend'):self.manager.switch(identifier)
+
     def test_unknown_queue_never_launches_worker(self):
         for reply in ({},[],{'queue_running':[]}):
             with patch.object(self.manager,'request',return_value=reply),patch('backends.threading.Thread') as thread:
