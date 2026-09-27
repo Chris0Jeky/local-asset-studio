@@ -65,7 +65,10 @@ async def run(args):
                             seed: document.querySelector('[data-key=seed]').value
                         })''')
                         await page.locator('#controls').evaluate('e => window.scrollTo(0, scrollY + e.getBoundingClientRect().top - 90)')
+                        # The fixed run dock (#1115) covers whatever sits in the bottom band; this check is about the
+                        # label/grid never overlapping the seed, so hit-test it at the viewport centre, clear of the dock.
                         seed_hit = await page.locator('[data-key=seed]').evaluate('''e => {
+                            e.scrollIntoView({block:'center'});
                             const r=e.getBoundingClientRect(); return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===e;
                         }''')
                         await page.screenshot(path=str(args.out / f'{mode}-{width}-{scale}x.png'))
