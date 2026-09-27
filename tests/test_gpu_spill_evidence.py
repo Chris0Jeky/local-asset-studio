@@ -104,7 +104,7 @@ class FastSamplerAndMessageTests(unittest.TestCase):
         message = Studio.spill_message(job([anomaly, real]))
         self.assertIn('largest other GPU user was llama-server.exe with 2.0 GB', message); self.assertNotIn('65.', message)
         message = Studio.spill_message(job([anomaly]))
-        self.assertIn('largest other GPU user is unknown', message); self.assertIn('impossible 65.8 GB for dwm.exe', message)
+        self.assertIn('largest other GPU user is unknown', message); self.assertIn('impossible 65.8 GB for dwm.exe (the Windows desktop), more than the whole card reported in use', message)
         self.assertNotIn('largest other GPU user was', message)
 
 

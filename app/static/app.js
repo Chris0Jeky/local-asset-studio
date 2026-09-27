@@ -8,6 +8,10 @@ const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lor
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null, jobsEtag = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
+// Make seamless (#1220): the server's prepared tile plan, sent with Generate; any recipe change or reset drops it.
+let tileState = null;
+// Parallax layers (#1219): the server's plan for one stage (clean plate or isolate), sent with Generate; any recipe change or reset drops it.
+let parallaxState = null;
 let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResultKey = '';
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) {const error=Error(data.error || 'Request failed');error.status=r.status;error.data=data;throw error;} return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
@@ -329,6 +333,7 @@ function selectPreset(id, reset=true, transition=false) {
   const next=catalog.presets.find(p=>p.id===id);if(!next)throw Error('This preset is unavailable.');
   if(continuationState&&!transition&&(id!==selected?.id||reset))throw Error('You are continuing an image. Use “Leave this continuation” before loading a different recipe, or reopen Continue with this asset to choose another route.');
   if(transition){continuationState=null;continuationSource=null;}
+  if(reset||id!==selected?.id){tileState=null;parallaxState=null;}
   recipeTemplateHash=null;
   selected=next; recipeChanged();
   if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
@@ -362,7 +367,26 @@ async function uploadInput(id) {
 function mediaCard(job,index,output) {
   const id=esc(job.id), url='/api/image/'+id+'/'+index, type=output.media_type || 'image';
   const media=type==='video'?'<video controls preload="metadata" src="'+url+'"></video>':type==='audio'?'<audio controls src="'+url+'"></audio>':type==='3d'?'<model-viewer loading="lazy" camera-controls touch-action="pan-y" environment-image="neutral" shadow-intensity="0.7" src="'+url+'" alt="'+esc(job.preset_name)+' mesh"><span slot="poster">Load interactive 3D preview</span></model-viewer>':'<img loading="lazy" src="'+url+'" alt="'+esc(job.preset_name)+' output">';
-  return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div>'+(window.StudioOutputReview?.markup(output)||'')+'<p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
+  return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div>'+(window.StudioOutputReview?.markup(output)||'')+'<p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p>'+tileNote(job,output)+parallaxNote(job,output)+'</article>';
+}
+// Make seamless (#1220): a finished tile shows its seam score; a completed seam repaint that has no tile yet offers Finish tile.
+function tileNote(job,output){
+  if(output.tile)return '<p class="tileNote"><small>'+esc(output.tile.summary)+'</small></p>';
+  if(!job.tile||job.status!=='completed'||job.tile_finish?.job_id)return '';
+  const failed=job.tile_finish?.error;
+  return '<p class="disabledReason"><small>'+esc(failed?'Tile not finished: '+failed:'This seam repaint has no finished tile yet.')+'</small></p><button class="finishTile" data-job="'+esc(job.id)+'" title="Composite, flatten, measure the seam and build the 3×3 preview. Nothing is generated.">Finish tile</button>';
+}
+// A parallax stage's card: its split when there is one, else what is missing and the one next press.
+function parallaxNote(job,output){
+  if(output.parallax){const p=output.parallax;return '<p class="tileNote"><small>'+esc(p.layer==='strip'?'Parallax strip, camera left / centre / right. ':p.layer[0].toUpperCase()+p.layer.slice(1)+' layer, shift '+p.shift_px+' px. ')+esc(p.summary)+'</small></p>';}
+  const claim=job.parallax;if(!claim||job.status!=='completed')return '';
+  if(job.parallax_finish?.job_id)return '<p class="tileNote"><small>Layers split: '+esc(job.parallax_finish.summary||'see the Parallax layers assets')+'</small></p>';
+  const other=claim.stage==='plate'?'isolate':'plate',name={plate:'clean plate',isolate:'isolate'},id=esc(job.id);
+  const siblings=jobs.filter(j=>j.parallax?.plan_id===claim.plan_id&&j.parallax.stage===other),done=siblings.find(j=>j.status==='completed'),live=siblings.find(j=>['queued','waiting','submitting','running','uncertain'].includes(j.status));
+  const failed=job.parallax_finish?.error?'Layers not split: '+job.parallax_finish.error+' ':'';
+  if(done)return '<p class="disabledReason"><small>'+esc(failed||'Both edits are in; the layers are not split yet.')+'</small></p><button class="parallaxFinish" data-job="'+id+'" title="Register both edits, build the far, mid and near layers, measure the recomposite error and make the strip. Nothing is generated.">Split layers</button>';
+  if(live)return '<p class="tileNote"><small>The '+name[other]+' edit is '+esc(live.status)+'; the layers split when it completes.</small></p>';
+  return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Create. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
 const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
@@ -410,19 +434,24 @@ async function mixedBatchAction(button) {
 // also release the playback wait (an errored clip never counts as playing), and held Problems hides the gallery cards
 // its records supersede (#1074): removed, not hidden, so focus restoration reaches the visible Problems card.
 // The key uses the first class only: studio-workbench.js adds `primary` to the kept reference button after each render.
-const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer';let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='';
+// While held, #recentHeld (outside #gallery, height always reserved, so no card moves) counts what the release will
+// show against the last full render: "1 run finished · 1 new run · 2 other changes, shown when the clip stops".
+// A run counts as finished once completed; new means a new non-problem run; any other status, cancel or kept-output
+// difference is a change. Problems-only changes never raise it (Problems is live); running messages are not counted.
+// The release and every forced render clear it; unchanged text is never rewritten (owner decision, 27 Sep 2026).
+const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer',RECENT_PROBLEM=['failed','partial','uncertain','abandoned'];let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='',recentShownKeys=new Map();
 function jobControlKey(el){
   if(!el?.dataset||!el.tagName)return null;const owner=el.closest?.('[data-output],[data-problem]');
   return [owner?.dataset.output??(owner?'problem:'+owner.dataset.problem:''),el.tagName,String(el.className||'').split(/\s+/)[0],...Object.keys(el.dataset).filter(k=>k!=='job'&&k!=='index').sort().map(k=>k+'='+el.dataset[k])].join('|');
 }
 function renderJobs(signature=JSON.stringify(jobs),force=false) {
-  if(signature===jobsSignature)return;
+  if(signature===jobsSignature){showRecentHeld('');return;}
   const gallery=$('#gallery'),host=document.getElementById?.('jobProblemsHost')||null,playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended&&!m.loop&&!m.error);
   const focusHosts=[gallery,host].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null,focusInGallery=gallery.contains?.(active);
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
   // Typed stop-tracking/abandon reasons and the acknowledgement are drafts too: a poll re-render must not erase them.
   const reasonFields='[data-stop-tracking-reason],[data-abandon-reason],[data-abandon-ack]',reasonDrafts=[...document.querySelectorAll(reasonFields)].map(el=>[jobControlKey(el),el.type==='checkbox'?el.checked:el.value]).filter(([key,value])=>key&&value);
-  const cards=[],problems=[],problemsOpen=$('#jobProblems')?.open;let recentHidden=0;
+  const cards=[],problems=[],keys=new Map(),problemsOpen=$('#jobProblems')?.open;let recentHidden=0;
   jobs.forEach(job=>{
     if(job.status!=='completed'){
       const stopped=job.tracking_disposition?.status==='stopped', promptIds=(job.prompt_ids||[]).join(', ');
@@ -442,14 +471,16 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
       // A finished run whose cancel did not take effect still says so (#1160 review); its outputs follow as usual.
       cards.push('<article class="jobStatus completed" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · completed</b>'+renderCancel(job)+'</article>');
     }
-    job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
+    const kept=[];job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;kept.push(o.asset_id??i);if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
+    keys.set(job.id,job.status+'|'+(job.cancellation?.state||'')+'|'+kept.join(','));
   });
   const problemMarkup=renderProblems(problems,problemsOpen);
   if(playing){
     if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);playing.removeEventListener('error',resume);playing.removeEventListener('emptied',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);playing.addEventListener('error',resume);playing.addEventListener('emptied',resume);}
+    showRecentHeld(recentWaiting(keys));
     if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host){host.innerHTML=problemMarkup;gallery.querySelector?.('#jobProblems')?.remove();}else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}for(const p of problems)for(const el of gallery.querySelectorAll?.('[data-problem]')||[])if(el.dataset?.problem===p.job.id&&!el.closest?.('#jobProblems'))el.remove();}
   } else {
-  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;
+  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;recentShownKeys=keys;showRecentHeld('');
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
   gallery.className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
   gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
@@ -462,6 +493,15 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   if(!playing)renderCompare();
   if(typeof renderRunCancel==='function')renderRunCancel();   // journeys load renderJobs alone
 }
+function recentWaiting(keys){
+  const status=key=>String(key||'').split('|')[0],problem=key=>RECENT_PROBLEM.includes(status(key));let finished=0,started=0,other=0;
+  for(const [id,key] of keys){if(problem(key))continue;const prev=recentShownKeys.get(id);if(status(key)==='completed'&&status(prev)!=='completed')finished++;else if(!prev)started++;else if(prev!==key)other++;}
+  for(const [id,key] of recentShownKeys)if(!keys.has(id)&&!problem(key))other++;
+  const parts=[];if(finished)parts.push(finished+(finished===1?' run finished':' runs finished'));if(started)parts.push(started+(started===1?' new run':' new runs'));if(other)parts.push(other+(parts.length?' other':'')+(other===1?' change':' changes'));
+  return parts.length?parts.join(' · ')+', shown when the clip stops':'';
+}
+// Stateless on purpose (journeys load renderJobs alone): the line's own text is the record, so equal text is never rewritten.
+function showRecentHeld(text){const line=$('#recentHeld');if(line&&line.textContent!==text)line.textContent=text;}
 // #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
 const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
 function renderProblems(problems,open){
@@ -611,9 +651,48 @@ function applySaved(s,{guessLegacyParent=false}={}){
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
+function tilePayload(){return tileState&&selected?.id===tileState.preset_id?{tile:{...tileState}}:{};}
+function parallaxPayload(){return parallaxState&&selected?.id===parallaxState.preset_id?{parallax:{...parallaxState}}:{};}
+// Prepare or next stage of Make parallax layers: the unchanged source is this recipe's picture at its own size, the source its
+// parent, and the stage's words are loaded for review. Generate stays the owner's press.
+function beginParallax(result){
+  const target=catalog.presets.find(p=>p.id===result?.preset_id&&p.parallax_route);
+  if(!target)throw Error('The parallax-layers recipe is unavailable.');
+  if(continuationState)throw Error('You are continuing an image. Use “Leave this continuation” before making parallax layers.');
+  selectPreset(target.id,true,true);
+  parallaxState={...result.claim};uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);$('#reference').value='';
+  $('#positive').value=result.words;
+  for(const key of ['width','height']){const input=getControl(key);if(input)input.value=String(result[key]);}
+  $('#batch').value=1;
+  const step=result.stage==='plate'?'1 of 2, the clean plate':'2 of 2, the isolate';
+  $('#referenceHint').textContent='Parallax layers, edit '+step+': '+(result.context?.title||'the picture')+' · '+result.width+' × '+result.height+', attached unchanged. '+result.flag;
+  updateReady();
+}
+// After a stage is queued, the other stage's words are loaded (never run): the second Generate is the owner's own press.
+async function afterParallaxSubmit(job,claim){
+  if(claim.stage!=='plate'){message('Isolate edit queued. The Studio splits the layers when both edits complete; nothing else runs.');return;}
+  const next=await post('/api/parallax/stage',{job_id:job.id,stage:'isolate'});
+  if(selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id)return;
+  beginParallax(next);message('Clean plate queued. The isolate edit is loaded: check its words, then press Generate.');
+}
+// Prepare from the library's Make seamless: the rolled seam cross becomes this recipe's picture, the source its parent.
+function beginTile(result){
+  const target=catalog.presets.find(p=>p.id===result?.preset_id&&p.tile_route);
+  if(!target)throw Error('The seamless-tile recipe is unavailable.');
+  if(submitting)throw Error('Wait for the current submission before preparing a tile.');
+  if(continuationState)throw Error('You are continuing an image. Use “Leave this continuation” before making a tile.');
+  selectPreset(target.id,true,true);
+  tileState={...result.plan};uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);$('#reference').value='';
+  const words=result.context?.positive||target.continuation_prompt;if(words)$('#positive').value=words;
+  $('#batch').value=1;
+  $('#referenceHint').textContent='Seam cross prepared from '+(result.context?.title||'the texture')+' · '+result.width+' × '+result.height+' · seam band '+result.plan.band_px+' px. '+result.flag;
+  updateReady();
+}
 function continuationBlockerItems(){
   // Both the original run button and the workbench consume this shared list.
   // Source-free text recipes need wording too; image-only recipes have no binding.
+  if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Asset library.'}];
+  if(selected?.parallax_route&&!parallaxState)return [{code:'parallax',message:'Start from Make parallax layers on a picture in the Asset library.'}];
   if(!continuationState)return selected?.positive&&!String($('#positive')?.value||'').trim()?[{code:'wording',message:'Add a prompt to generate.'}]:[];
   const controls=values();
   if(selected?.last_reference&&!controls.last_reference&&$('#lastReference').files?.length)controls.last_reference='pending-local-upload';
@@ -671,13 +750,15 @@ $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');upda
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
   // The whole Create surface stays interactive while uploads are in flight: snapshot the intent the operator pressed Generate for.
-  const started=selected,startedHash=recipeTemplateHash,intent={preset_id:selected.id,...continuationPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
+  const started=selected,startedHash=recipeTemplateHash,intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
   try{
     const reference=await uploadInput('reference'),lastReference=await uploadInput('lastReference');
     if(selected!==started||recipeTemplateHash!==startedHash)throw Error('The recipe changed while the source was uploading; nothing was submitted. Press Generate again.');
     uploaded=reference||uploaded;lastUploaded=lastReference||lastUploaded; // Bind the uploads only to the recipe they were made for.
     if(selected.reference&&uploaded)intent.controls.reference=uploaded;if(selected.last_reference&&lastUploaded)intent.controls.last_reference=lastUploaded;
-    const job=await post('/api/jobs',intent);activeJobId=job.id;startedJobIds.add(job.id);message(job.message);await refresh();
+    const job=await post('/api/jobs',intent);activeJobId=job.id;startedJobIds.add(job.id);message(job.message);
+    if(intent.parallax)try{await afterParallaxSubmit(job,intent.parallax);}catch(e){message('Queued. The next parallax edit could not be loaded: '+e.message+' Use Load the isolate edit on the clean plate card.',true);}
+    await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };
 // Ctrl+Enter (Cmd+Enter on a Mac) anywhere in Create does what one click on the Generate button does and nothing more:
@@ -709,6 +790,9 @@ $('#gallery').onclick=async e=>{
     const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index},unpin=pinned.some(x=>x.job===p.job&&x.index===p.index),dropped=!unpin&&pinned.length>=2;pinned=unpin?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();if(dropped)message('Side by side shows two pictures. The oldest pin was replaced by this one.');}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const cancel=e.target.closest('.cancelJob');if(cancel){if(!cancel.disabled)await cancelJob(cancel.dataset.job,cancel.dataset.confirm==='1');return;}
+    const parallaxStage=e.target.closest('.parallaxStage');if(parallaxStage){if(submitting){message('Wait for the current submission, then load the next edit.',true);return;}await jobAction('parallax-stage:'+parallaxStage.dataset.job,async()=>{const next=await post('/api/parallax/stage',{job_id:parallaxStage.dataset.job,stage:parallaxStage.dataset.stage});beginParallax(next);showView('create');message('The '+next.stage_name+' edit is loaded: check its words, then press Generate.');});return;}
+    const parallaxFinish=e.target.closest('.parallaxFinish');if(parallaxFinish){await jobAction('parallax:'+parallaxFinish.dataset.job,async()=>{const data=await post('/api/parallax/finish',{job_id:parallaxFinish.dataset.job});message(data?.job?.message||'Layers split.');await refresh();});return;}
+    const finishTile=e.target.closest('.finishTile');if(finishTile){await jobAction('tile:'+finishTile.dataset.job,async()=>{const data=await post('/api/tiles/finish',{job_id:finishTile.dataset.job});message(data?.job?.message||'Tile finished.');await refresh();});return;}
     const resume=e.target.closest('.resume');if(resume)await jobAction('resume:'+resume.dataset.job,async()=>{await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();});
     const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs(undefined,true);return;}
     if(e.target.closest('[data-recent-more]')){

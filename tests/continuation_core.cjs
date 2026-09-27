@@ -254,4 +254,22 @@ test('bracketed fills become labelled fields and the answers write the prepared 
   assert.equal(C.assemble(depth.continuation_prompt,{...values,[spec[2].placeholder]:'a black crop top, pink shorts, bare feet'}).includes('['),false);
   assert.equal(C.assemble(null,values),'');assert.equal(C.assemble('plain wording',null),'plain wording');
 });
+test('a several-recipe plan takes one to four different exact seeds and sums only known times (#1163)',()=>{
+  assert.deepEqual(C.combinePlanSeeds(' 11, 12;13 '),{seeds:[11,12,13],error:''});
+  for(const text of ['','1 2 3 4 5','1.5','-3','7 7','1234567890123456','1e3'])assert.ok(C.combinePlanSeeds(text).error,text);
+  assert.deepEqual(C.combinePlanTime([60,null,30],2),{seconds:180,unknown:1});
+  assert.deepEqual(C.combinePlanTime([],3),{seconds:0,unknown:0});
+});
+test('a plan names each fill a ticked recipe reads that the open recipe lacks, once per meaning (#1163 live defect)',()=>{
+  const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8')).presets,get=id=>catalog.find(p=>p.id===id);
+  const four=get('combine-klein'),copy=get('combine-klein-9b-copypose'),depth=get('combine-klein-9b-depth'),replace=get('combine-klein-9b-replace');
+  const needs=C.combinePlanFills(four,[copy,depth]);
+  assert.deepEqual(needs.map(f=>f.meaning),['clothes'],'Klein 4B asks who and pose only; Copy Pose and depth also read the clothes');
+  assert.equal(needs[0].label,'Clothes and colours','the label drops the recipe-specific image number');
+  assert.deepEqual(needs[0].recipes,['Klein 9B · Copy Pose','Klein 9B · depth']);assert.match(needs[0].example,/crop top/);
+  assert.deepEqual(C.combinePlanFills(copy,[four,depth]),[],'Copy Pose already asks every fill the others read');
+  assert.deepEqual(C.combinePlanFills(four,[replace]).map(f=>[f.meaning,f.label]),[['outfit','Outfit and its colours']],'the scene outfit is its own field, never the clothes');
+  assert.deepEqual(C.combinePlanFills(replace,[copy]).map(f=>f.meaning),['clothes']);
+  assert.deepEqual(C.combinePlanFills(four,[]),[]);assert.deepEqual(C.combinePlanFills(null,[copy]).map(f=>f.meaning),['who','clothes','pose']);
+});
 console.log(count+' continuation client policy checks passed.');

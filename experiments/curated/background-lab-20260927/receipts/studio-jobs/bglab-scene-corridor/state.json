@@ -1,0 +1,196 @@
+{
+  "id": "95fae07b-6f20-44ca-abbd-58dd30a10657",
+  "status": "completed",
+  "created_at": 1790531901.6919496,
+  "preset_id": "zimage-fast",
+  "preset_name": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)",
+  "controls": {
+    "positive": "An empty corridor, no people. Hand-painted anime film background of a narrow late-night apartment corridor. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden bench, a warm amber wall lamp and the soft cyan glow of a vending machine. Faint rose and cyan reflections on the wet floor, muted graphite palette with small amber accents. An empty corridor with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+    "seed": 2026092752,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "f5e8471e-1c6d-4bca-9715-8799b0a6d011"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "f5e8471e-1c6d-4bca-9715-8799b0a6d011",
+      "seed": 2026092752,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "lumina2",
+            "device": "cpu"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "ae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "An empty corridor, no people. Hand-painted anime film background of a narrow late-night apartment corridor. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden bench, a warm amber wall lamp and the soft cyan glow of a vending machine. Faint rose and cyan reflections on the wet floor, muted graphite palette with small amber accents. An empty corridor with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures."
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "ModelSamplingAuraFlow",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "shift": 3.0
+          }
+        },
+        "7": {
+          "class_type": "EmptySD3LatentImage",
+          "inputs": {
+            "width": 1344,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "8": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "6",
+              0
+            ],
+            "seed": 2026092752,
+            "steps": 8,
+            "cfg": 1.0,
+            "sampler_name": "res_multistep",
+            "scheduler": "simple",
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "7",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "9": {
+          "class_type": "VAEDecodeTiled",
+          "inputs": {
+            "samples": [
+              "8",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8
+          }
+        },
+        "10": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "9",
+              0
+            ],
+            "filename_prefix": "Studio/Z-Image-Fast"
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 82391040,
+        "peak_dedicated_bytes": 10897858560,
+        "samples": 388,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "Z-Image-Fast_00024_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092752,
+      "prompt_id": "f5e8471e-1c6d-4bca-9715-8799b0a6d011",
+      "media_type": "image",
+      "asset_id": "7efa5d74ca355331bed8157b5e5e82e1"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "seed_bindings": [
+    [
+      "8",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "bglab-scene-corridor",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790531901.7017741,
+  "host_commit_windows": [
+    {
+      "samples": 372,
+      "unknown_samples": 0,
+      "first_at": 1790531901.8619223,
+      "last_at": 1790532093.701498,
+      "peak_committed_bytes": 80137281536,
+      "peak_at": 1790531914.643219,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 22646808576,
+      "index": 0,
+      "prompt_id": "f5e8471e-1c6d-4bca-9715-8799b0a6d011",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790532093.707511,
+  "elapsed_seconds": 192.00573682785034
+}

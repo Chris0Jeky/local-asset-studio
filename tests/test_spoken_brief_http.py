@@ -38,7 +38,7 @@ class SpokenHTTPTests(unittest.TestCase):
     def setUp(self):
         self.assertIsNotNone(importlib.util.find_spec('studio_spoken.http'), 'Spoken HTTP extension is missing')
         self.m = importlib.import_module('studio_spoken.http')
-        self.f = fixtures.ExportTests(); self.f.setUp(); self.addCleanup(self.f.doCleanups)
+        self.f = fixtures.ExportTests(); self.addCleanup(self.f.doCleanups); self.f.setUp()
         self.archive = inspect_run(self.f.directory); self.pin = self.archive['chapters_sha256']
         self.key = self.f.directory.relative_to(self.f.source.parent).as_posix()
         handler = self.m.extend_handler(InertHandler)

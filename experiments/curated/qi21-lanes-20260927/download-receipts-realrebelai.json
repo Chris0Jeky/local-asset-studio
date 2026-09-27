@@ -1,0 +1,12 @@
+[
+ {
+  "url": "https://huggingface.co/realrebelai/Qwen-Image-2.1_GGUFs/resolve/main/Qwen-Image-2.1-Q4.gguf",
+  "dest": "C:/AI/experiments/qwen-image-21/ComfyUI/models/diffusion_models/Qwen-Image-2.1-Q4-realrebelai.gguf",
+  "bytes": 5959127264,
+  "expected_sha256": "51998ad7c068ce7d68e233237537900ffe874ab4d5c72e20758f5f18ceb15b8a",
+  "sha256": "51998ad7c068ce7d68e233237537900ffe874ab4d5c72e20758f5f18ceb15b8a",
+  "verified": true,
+  "seconds": 8864.5,
+  "fetched": "2026-09-27T21:49:54"
+ }
+]

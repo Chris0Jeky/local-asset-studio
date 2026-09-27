@@ -459,14 +459,16 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
             retained.join(timeout=5)
         self.assertEqual(worker.retained_threads(), [])
 
-    def test_windows_full_suite_lane_raises_the_budget_it_measured(self):
+    def test_windows_full_suite_lane_shards_under_an_explicit_budget(self):
         workflow = (HERE.parent / ".github" / "workflows" / "full-suite-lifetime.yml").read_text(
             encoding="utf-8"
         )
         lane = workflow[workflow.index("  windows-full-suite:"):]
-        self.assertIn(f"{wrapper.BUDGET_VARIABLE}: '1500'", lane)
-        self.assertIn("timeout-minutes: 30", lane)
-        self.assertNotIn("timeout-minutes: 30", workflow[: workflow.index("  windows-full-suite:")])
+        self.assertIn(f"{wrapper.BUDGET_VARIABLE}: '900'", lane)
+        self.assertIn("shard: [1, 2, 3]", lane)
+        self.assertIn(f"{wrapper.SHARD_VARIABLE}: '${{{{ matrix.shard }}}}/3'", lane)
+        self.assertIn("timeout-minutes: 25", lane)
+        self.assertNotIn("timeout-minutes: 25", workflow[: workflow.index("  windows-full-suite:")])
 
     def test_child_never_inherits_the_parent_budget_override(self):
         child = wrapper.child_environment({"PATH": "kept", wrapper.BUDGET_VARIABLE: "1500"})

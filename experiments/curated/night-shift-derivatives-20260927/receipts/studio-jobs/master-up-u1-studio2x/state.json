@@ -1,0 +1,136 @@
+{
+  "id": "c057d94c-4a6c-46e2-9119-33a8e7031c0f",
+  "status": "completed",
+  "created_at": 1790524603.7178748,
+  "preset_id": "anime-esrgan",
+  "preset_name": "Anime upscale - ESRGAN 2x",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png"
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "d9bc3757-bb8e-40d3-8486-2427d7add7ee"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "d9bc3757-bb8e-40d3-8486-2427d7add7ee",
+      "seed": null,
+      "graph": {
+        "1": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png"
+          }
+        },
+        "2": {
+          "class_type": "UpscaleModelLoader",
+          "inputs": {
+            "model_name": "RealESRGAN_x4plus_anime_6B.pth"
+          }
+        },
+        "3": {
+          "class_type": "ImageUpscaleWithModel",
+          "inputs": {
+            "upscale_model": [
+              "2",
+              0
+            ],
+            "image": [
+              "1",
+              0
+            ]
+          }
+        },
+        "4": {
+          "class_type": "ImageScaleBy",
+          "inputs": {
+            "image": [
+              "3",
+              0
+            ],
+            "upscale_method": "lanczos",
+            "scale_by": 0.5
+          }
+        },
+        "5": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "4",
+              0
+            ],
+            "filename_prefix": "Studio/Anime-ESRGAN-2x"
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 9680822272,
+        "peak_dedicated_bytes": 11391770624,
+        "samples": 929,
+        "spilled": true,
+        "settled_shared_bytes": 1894502400,
+        "lingering": true
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "Anime-ESRGAN-2x_00002_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": null,
+      "prompt_id": "d9bc3757-bb8e-40d3-8486-2427d7add7ee",
+      "media_type": "image",
+      "asset_id": "6f959a71fef55a6d97cb8c1331a7fc37"
+    }
+  ],
+  "message": "Complete, but slowly: GPU memory spilled 9.0 GB into system RAM and 1.8 GB was still there after the job, so the next job will page too. The Studio unloads ComfyUI's models before the next job; if the spill stays, close GPU-heavy apps or restart ComfyUI.",
+  "graph_path": "workflows\\api\\anime-esrgan-api.json",
+  "seed_bindings": [],
+  "prompt_bindings": {
+    "positive": [],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "nightshift-master-upscale-2x",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790524603.7303905,
+  "model_evictions": [
+    {
+      "index": 0,
+      "reason": "model change",
+      "dropped_models": [
+        "waiIllustriousSDXL_v170.safetensors"
+      ],
+      "shared_before": 82563072,
+      "dedicated_before": 2820153344,
+      "requested_at": 1790524603.8729517,
+      "torch_reserved_before": 79691776,
+      "outcome": "nothing resident",
+      "shared_after": 82563072,
+      "waited_seconds": 0.0
+    }
+  ],
+  "gpu_spill": true,
+  "host_commit_windows": [
+    {
+      "samples": 893,
+      "unknown_samples": 0,
+      "first_at": 1790524604.1156964,
+      "last_at": 1790525059.0158308,
+      "peak_committed_bytes": 72918749184,
+      "peak_at": 1790524792.2505386,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 29865340928,
+      "index": 0,
+      "prompt_id": "d9bc3757-bb8e-40d3-8486-2427d7add7ee",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790525059.0218322,
+  "elapsed_seconds": 455.29144167900085
+}

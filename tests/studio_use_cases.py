@@ -202,14 +202,16 @@ DENY_IDS = {
     'saveSharedWorkflow', 'copySharedWorkflow', 'retrySharedWorkflow', 'prepareSavedRun',
     'exportGraph', 'saveWorkflow', 'refreshModels', 'retryRecovery', 'uxPrepareHandoff',
     'uxImportDraftButton', 'uxExportDraft', 'compare', 'newCollection', 'deleteCollection',
-    'uxPoseUse',
+    'uxPoseUse', 'lookSaveButton', 'lookTrash',
 }
 DENY_LABELS = re.compile(
     r'\b(generate|start\s+(comparison|export|voice|take)|render|save\s+to\s+workspace|'
     r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
 DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-review', 'data-asset-favorite', 'data-bulk',
-              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'download')
+              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'data-ux-check', 'data-candidate-check', 'download',
+              'data-ux-tile',   # Make seamless stores a rolled seam cross as an upload (#1220)
+              'data-ux-parallax')   # Make parallax layers attaches the picture as an upload (#1219)
 
 # Controls whose press only changes this page, or reads, or validates without storing anything. Keyed by
 # the selector with attribute values stripped (see control_kind). The label heuristic misfires on them —
@@ -217,6 +219,9 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 # control skips the label check. The id and attribute deny lists still bind first. Checked against
 # app/static on 22 Sep 2026; a control that starts writing must leave this list.
 LOCAL_CONTROLS = {
+    '#lookBlock > summary': 'opens the saved-looks disclosure',
+    '#lookSelect': 'chooses a saved look in this page; nothing is sent',
+    '#lookOptions [data-look-option]': "ticks one of the look's optional lines in this page; nothing is sent",
     '#workshopRecipeChange': 'opens the recipe picker',
     '#presetList [data-id]': 'loads a recipe into this page (selectPreset); nothing is sent',
     '#presetList button.preset': 'loads a recipe into this page (selectPreset); nothing is sent',
@@ -238,6 +243,7 @@ LOCAL_CONTROLS = {
     '#productionDetail [data-candidate-open]': 'opens a candidate at full size; refreshes the Workspace list (GET)',
     '#loadPreset': 'reads a registered recipe graph into the builder (GET)',
     '#compileWorkflow': 'checks connections: POST /api/workflow-studio/compile validates and stores nothing',
+    '#assetDialog [data-ux-tile-band]': 'chooses the seam band for Make seamless in this page; nothing is sent',
 }
 
 
@@ -286,6 +292,22 @@ def build_handler():
     from studio_workflow.core import catalog, new_document, compile_document
     from studio_prompt.http_extension import extend_handler
     from test_server import server
+    import tiles   # app/ is on sys.path once server.py is loaded; a bare name, never `from app import`
+    import parallax
+    import combine_plan
+    from PIL import Image
+
+    def tile_status(asset):
+        with Image.open(ROOT / asset['url'].lstrip('/')) as picture: width, height = picture.size
+        reason = tiles.eligibility(width, height)
+        return {'asset_id': asset['id'], 'width': width, 'height': height, 'eligible': reason is None, 'reason': reason,
+                'flag': tiles.FLAT_ONLY, 'preset_id': 'zimage-seam-repair', 'band_px': tiles.BAND, 'band_choices': tiles.band_choices(min(width, height))}
+
+    def parallax_status(asset):
+        with Image.open(ROOT / asset['url'].lstrip('/')) as picture: width, height = picture.size
+        reason = parallax.eligibility(width, height)
+        return {'asset_id': asset['id'], 'width': width, 'height': height, 'eligible': reason is None, 'reason': reason,
+                'flag': parallax.FLAG, 'preset_id': 'parallax-edit', 'max_views': parallax.MAX_VIEWS}
 
     info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
     schema = catalog(info, 'primary')
@@ -303,6 +325,13 @@ def build_handler():
                            'job': dict(fixture.JOBS[0], id='candidate-b', elapsed_seconds=13.0,
                                        outputs=[{'filename': 'b.png', 'asset_id': 'asset-1', 'media_type': 'image', 'seed': 43}])}])
     if not any(plan['id'] == keeper['id'] for plan in fixture.PLANS): fixture.PLANS.insert(0, keeper)
+
+    # The shipped looks as /api/looks lists them (app/looks.py listing), and the real composer for Prepare (#1221).
+    import looks
+    names = {p['id']: p['name'] for p in fixture.CATALOG['presets']}
+    shipped = [dict(entry, origin='seed', revision=0, trashed_at=None, created_at=1790500000, updated_at=1790500000, usable=True,
+                    unusable_reason=None, anchor_asset_id=None, preset_name=names.get(entry['body']['preset_id']))
+               for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks']]
 
     class PromptFixtureBase(fixture.Handler):
         studio = None
@@ -328,11 +357,18 @@ def build_handler():
             if path == '/api/workflow-studio/capabilities':
                 return self.json({'version': 1, 'run': {'available': False, 'reason': 'The use-case fixture never executes graphs.'}, 'generation_submitted': False})
             if path == '/api/workflow-studio/documents': return self.json({'documents': []})
+            if path == '/api/looks': return self.json({'looks': copy.deepcopy(shipped), 'seed_errors': [], 'generation_submitted': False})
             if path == '/api/workflow-studio/document-runs': return self.json({'runs': []})
             if path.startswith('/api/workflow-studio/presets/'):
                 return self.json({'document': dict(document, source={'preset_id': path.rsplit('/', 1)[-1], 'authoring_only': True}), 'generation_submitted': False})
             if path == '/api/health':
                 return self.json({'online': True, 'worker_alive': True, 'schema_available': True, 'missing_models': {}, 'devices': [], 'comfy_url': 'fixture://none'})
+            if path.startswith('/api/parallax/source/'):
+                asset = next((a for a in fixture.ASSETS if a['id'] == path.rsplit('/', 1)[-1]), None)
+                return self.json(parallax_status(asset)) if asset else self.json({'error': 'Asset not found'}, 400)
+            if path.startswith('/api/tiles/source/'):
+                asset = next((a for a in fixture.ASSETS if a['id'] == path.rsplit('/', 1)[-1]), None)
+                return self.json(tile_status(asset)) if asset else self.json({'error': 'Asset not found'}, 400)
             if path.startswith('/api/jobs/') and path.endswith('/recipe'):
                 job = next(j for j in fixture.JOBS if j['id'] == path.split('/')[3])
                 return self.json(dict(version=2, preset_id=job['preset_id'], controls=job['controls'],
@@ -362,21 +398,63 @@ def build_handler():
                 return self.json({'file': 'f' * 32 + '_drawn-pose.png', 'sha256': 'd' * 64, 'bytes': 2048,
                                   'width': data['width'], 'height': data['height'], 'original_name': 'drawn-pose',
                                   'artifact_id': 'e' * 64, 'renderer': data.get('renderer', renderers[0]), 'generation_submitted': False})
+            if path == '/api/tiles/prepare':
+                # The same body app/tiles.py accepts; the answer is shaped like its result, and nothing is queued.
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                asset = next((a for a in fixture.ASSETS if isinstance(data, dict) and a['id'] == data.get('asset_id')), None)
+                if asset is None or set(data) - {'asset_id', 'band_px', 'flatten'}: return self.json({'error': 'Unknown fixture asset'}, 400)
+                status = tile_status(asset)
+                if not status['eligible']: return self.json({'error': status['reason']}, 400)
+                size, file = status['width'], 'f' * 32 + '_seam-cross.png'
+                try: band = tiles.band_value(data.get('band_px', tiles.BAND))
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                if band > size // 2: return self.json({'error': 'band_px must be at most half the tile side (%d px).' % (size // 2)}, 400)
+                plan = {'version': tiles.VERSION, 'preset_id': 'zimage-seam-repair', 'source_asset_id': asset['id'], 'source_sha256': asset['sha256'],
+                        'rolled_file': file, 'rolled_sha256': 'd' * 64, 'size': size, 'band_px': band, 'feather_px': tiles.FEATHER,
+                        'flatten_sigma_px': tiles.default_sigma(size)}
+                return self.json({'plan': plan, 'file': file, 'sha256': 'd' * 64, 'width': size, 'height': size, 'preset_id': 'zimage-seam-repair',
+                                  'context': fixture.source_context(asset), 'flag': tiles.FLAT_ONLY, 'seam_source': 4.34,
+                                  'inner_gradient_source': 0.87, 'generation_submitted': False}, 201)
+            if path == '/api/parallax/prepare':
+                # The same body app/parallax.py accepts, answered with its own plan shape and words; nothing is queued.
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                asset = next((a for a in fixture.ASSETS if isinstance(data, dict) and a['id'] == data.get('asset_id')), None)
+                if asset is None or set(data) - {'asset_id', 'objects', 'view'}: return self.json({'error': 'Unknown fixture asset'}, 400)
+                status = parallax_status(asset)
+                if not status['eligible']: return self.json({'error': status['reason']}, 400)
+                try: objects, view = parallax._objects(data.get('objects')), parallax._polygons(data.get('view'), status['width'], status['height'])
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                plan = {'version': parallax.VERSION, 'preset_id': 'parallax-edit', 'source_asset_id': asset['id'], 'source_sha256': asset['sha256'],
+                        'source_file': 'f' * 32 + '_' + asset['filename'], 'width': status['width'], 'height': status['height'], 'objects': objects, 'view_polygons': view}
+                plan['plan_id'] = parallax.plan_id(plan)
+                return self.json(parallax.stage_payload(plan, 'plate', fixture.source_context(asset)), 201)
             if path == '/api/recipe-check':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
                 preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == data['preset_id'])
                 return self.json({'template_sha256': preset['continuation_capability']['template_sha256']})
             if path == '/api/assets/update':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
-                if data.get('action') != 'edit' or set(data) != {'action', 'ids', 'review', 'workspace_id', 'expected_revisions', 'request_id'}:
+                # Tile review writes one field: a review decision, or the tags that carry a quick check (#1203).
+                fields = set(data) - {'action', 'ids', 'workspace_id', 'expected_revisions', 'request_id'}
+                if data.get('action') != 'edit' or fields not in ({'review'}, {'tags'}) or len(data) != 6:
                     return self.json({'error': 'Only explicit tile review is supported by this fixture'}, 400)
                 assets = [next(a for a in fixture.ASSETS if a['id'] == identifier) for identifier in data['ids']]
                 if any(a['metadata_revision'] != data['expected_revisions'][a['id']] for a in assets):
                     return self.json({'error': 'Synthetic metadata conflict'}, 409)
-                for asset in assets: asset.update(review=data['review'], metadata_revision=asset['metadata_revision'] + 1)
+                field = fields.pop()
+                for asset in assets: asset.update({field: data[field], 'metadata_revision': asset['metadata_revision'] + 1})
                 return self.json(dict(status='applied', workspace_id=data['workspace_id'], request_id=data['request_id'],
                                       action='edit', updated=data['ids'], revisions={a['id']: a['metadata_revision'] for a in assets},
-                                      applied={'review': data['review']}, current=copy.deepcopy(assets)))
+                                      applied={field: data[field]}, current=copy.deepcopy(assets)))
+            if path == '/api/looks/prepare':
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                look = next((entry for entry in shipped if entry['id'] == data.get('id')), None)
+                if look is None or data.get('expected_revision') != look['revision']: return self.json({'error': 'Unknown fixture look'}, 404)
+                lines = look['body'].get('options', [])
+                try: chosen = looks.chosen_options(lines, data.get('options')); positive = looks.compose(look['body']['template'], data.get('scene'), lines, chosen)
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                return self.json({'preset_id': look['body']['preset_id'], 'preset_name': look['preset_name'], 'controls': {'positive': positive, **look['body']['controls']},
+                                  'look': {'id': look['id'], 'name': look['name'], 'revision': look['revision'], **({'options': chosen} if lines else {})}, 'generation_submitted': False})
             if path == '/api/preview':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
@@ -386,6 +464,22 @@ def build_handler():
                             state={'status': 'planned', 'message': 'Prepared in the fixture. Preparing is not starting.'},
                             axis=data.get('axis') or 'cfg', values=data.get('values') or [], stages=[],
                             budget={'allowance': int(data.get('max_generations') or 2), 'reserved': 0})
+                if 'combine_plan' in data:
+                    # #1163: one stage per recipe and seed, with a fixed per-picture estimate; nothing is submitted.
+                    intent = data['combine_plan']; pairs = [(e, s) for e in intent['engines'] for s in intent['seeds']]
+                    # The server's own wording rule (combine_plan.stages): each other recipe's wording is built from the answers,
+                    # and a bracket left in any recipe refuses the whole plan. This is the 27 Sep 2026 live defect's refusal.
+                    for engine in intent['engines']:
+                        preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == engine)
+                        words = intent.get('wording', {}).get(engine) or (intent['base']['controls'].get('positive', '') if engine == intent['base']['preset_id'] else
+                                combine_plan.assemble(combine_plan.prompt_for(preset, {}), combine_plan.fill_values(preset, intent.get('answers') or {})))
+                        left = [holder for holder in combine_plan.placeholders(preset) if holder in words]
+                        if left: return self.json({'error': (preset.get('name') or engine) + ': fill in the wording, replace ' + ' and '.join('“%s”' % item for item in left)}, 400)
+                    stages = [dict(label=chr(65 + i), engine=e, seed=s, operation='comfy.generate.v1', attempt={}, job=None) for i, (e, s) in enumerate(pairs)]
+                    plan.update(id='f' * 32, axis='engine', values=[e + ' · seed ' + str(s) for e, s in pairs], stages=stages,
+                                budget={'allowance': len(stages), 'reserved': 0},
+                                combine={'engines': intent['engines'], 'seeds': intent['seeds'],
+                                         'estimate': {'total_seconds': 90.0 * len(stages), 'total_upper_seconds': 120 * len(stages), 'confidence': 'medium'}})
                 fixture.PLANS.insert(0, plan); return self.json(plan)
             if path == '/api/production-export':
                 data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
@@ -879,13 +973,16 @@ def _restyle(c):
 
 
 @driver('combine-character-with-another-pose')
-def _combine(c):
+def _combine(c, lead=None):
     """The owner's 14 Sep 2026 attempt: 'the pose of the second image' typed into a one-picture recipe gave the same picture."""
     c.boot('#create')
     c.page.wait_for_timeout(600)
     c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
     c.act(c.pick_output(), note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
+    if lead:
+        c.need_destination(lead)
+        c.act('#uxDestination', 'select', typed=lead, note='lead with this Combine recipe instead of the default', supplementary=True)
     c.act('#uxHandoffDetails', 'read', note='what Combine does with this picture')
     try: c.page.click('#uxHandoff details:has(#uxHandoffPrompt) > summary', timeout=2000)
     except Exception: pass
@@ -930,6 +1027,55 @@ def _combine(c):
     brackets = c.page.evaluate('((document.querySelector("#positive").value || "").match(/\\[/g) || []).length')
     done = c.ready() and attached and filled >= 1 and brackets == 0 and 'image 2' in filled_wording
     return done, 'source attached=%s, %d board picture(s), %d bracket(s) left, run control enabled=%s' % (attached, filled, brackets, c.ready())
+
+
+@driver('combine-several-engines-one-plan')
+def _combine_plan(c):
+    """#1163: the same pair on several Combine recipes with the same seeds as one prepared plan; Start stays a separate press.
+    It leads with Klein 4B (who and pose only) and ticks Copy Pose and depth, which also read the clothes: the 27 Sep 2026
+    live defect, where Prepare was refused for a field the page never showed."""
+    ready, detail = _combine(c, lead='combine-klein')
+    if not ready or c.live: return False, 'Needs the prepared fixture pair; live mode never prepares a plan. ' + detail
+    import studio_browser_smoke as fixture
+    current = c.page.evaluate('selected.id')
+    assert current == 'combine-klein', current
+    tick = lambda engine: c.page.locator('[data-ux-plan-engine="%s"]' % engine)
+    c.act('#uxEnginePlan > summary', note='open Run several recipes on this pair')
+    assert tick(current).is_checked(), 'the open recipe starts ticked'
+    assert tick('combine-klein-9b-skeleton').is_disabled(), 'a skeleton recipe cannot take this pose picture'
+    assert c.page.locator('#uxPlanFills').is_hidden(), 'Klein 4B alone needs no field beyond its own two'
+    extra = ['combine-klein-9b-copypose', 'combine-klein-9b-depth']
+    assert all(tick(e).is_enabled() for e in extra), extra
+    for engine in extra: c.act('[data-ux-plan-engine="%s"]' % engine, 'check', note='tick another recipe for the same pair')
+    field = '#uxPlanFills [data-ux-plan-fill="clothes"]'
+    c.observe('the plan shows the clothes field Copy Pose and depth read and Klein 4B does not ask', c.page.locator(field).is_visible(),
+              c.page.locator('#uxPlanFills').inner_text())
+    c.act(field, 'fill', typed='a black and red robe with gold trim, a wide-brimmed black hat', note='the clothes and colours, once for both recipes')
+    c.act('#uxPlanSeeds', 'fill', typed='11, 12', note='the same two seeds on every recipe')
+    summary = c.page.locator('#uxPlanSummary').inner_text()
+    c.observe('the page counts the pictures and sums the time it knows before anything is prepared', summary.startswith('3 recipes × 2 seeds = 6 pictures'), summary)
+    assert summary.startswith('3 recipes × 2 seeds = 6 pictures'), summary
+    c.act('#uxPlanPrepare', note='prepare one plan: the server checks every recipe; nothing runs')
+    c.page.wait_for_function('!document.querySelector("#uxPlanStart").hidden')
+    status = c.page.locator('#uxPlanStatus').inner_text()
+    assert 'Prepared 6 pictures' in status and 'Nothing has run' in status and 'about 9.0 min' in status, status
+    posted = [p for p in fixture.POSTS if p['path'] == '/api/production' and 'combine_plan' in p['data']][-1]['data']['combine_plan']
+    assert set(posted['engines']) == {current, *extra} and posted['seeds'] == [11, 12], posted
+    base = posted['base']
+    assert base['preset_id'] == current and base['continuation']['reference_file'] == base['controls']['last_reference'] and base['references'][0]['file'], base
+    assert posted['answers'].get('who') and posted['answers'].get('pose'), posted['answers']
+    assert posted['answers'].get('clothes') == 'a black and red robe with gold trim, a wide-brimmed black hat', posted['answers']
+    c.act('#uxPlanStart', 'read', note='one explicit Start, shown with the expected total; never pressed here')
+    assert c.page.locator('#uxPlanStart').is_enabled()
+    c.act('#uxPlanSeeds', 'fill', typed='11, 13', note='change a seed after preparing')
+    c.page.wait_for_function('document.querySelector("#uxPlanStart").hidden')
+    stale = c.page.locator('#uxPlanStatus').inner_text()
+    c.observe('Start is withdrawn once the plan no longer matches the page', 'Prepare again' in stale, stale)
+    assert 'Prepare again' in stale, stale
+    generations = [p['path'] for p in fixture.POSTS if p['path'] == '/api/jobs' or p['path'].endswith('/start')]
+    assert not generations, generations
+    fixture.PLANS[:] = [plan for plan in fixture.PLANS if plan['id'] != 'f' * 32]
+    return True, 'Klein 4B lead + Copy Pose + depth x 2 seeds prepared as one plan (the clothes field shown and sent); Start shown once and withdrawn after a change; zero generation requests'
 
 
 @driver('draw-a-pose-for-combine')
@@ -997,6 +1143,10 @@ def _combine_loop(c):
     unrelated = copy.deepcopy(added[0]); unrelated['id'] = 'combine-other-pair'
     unrelated['references'][0]['sha256'] = 'b' * 64
     fixture.JOBS[:0] = fillers + [unrelated] + added
+    # Registered outputs carry their run's recipe, as app/workspace.py records it; the engine chips count by it (#1203).
+    saved = {a['id']: (a.get('preset_id'), list(a['tags'])) for a in fixture.ASSETS}
+    for job in added[:4]:
+        next(a for a in fixture.ASSETS if a['id'] == job['outputs'][0]['asset_id'])['preset_id'] = job['preset_id']
     try:
         c.page.evaluate('refreshJobs()')
         c.page.wait_for_selector('#uxPairResults .ux-result-tile')
@@ -1059,6 +1209,26 @@ def _combine_loop(c):
         c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").review === "selected"')
         c.act('[data-ux-review="needs_work"][data-asset="asset-3"]', note='independent review for the other seed')
         c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-3").review === "needs_work"')
+        # #1203: quick checks fit the Combine route. Two presses on the keeper's tile save one answer each with its revision;
+        # key 2 on the focused tile changes the face answer; Keep stays available throughout, never waiting on a check.
+        tile = '#uxPairResults .ux-result-tile:has([data-ux-check][data-asset="asset-2"])'
+        assert c.page.locator(tile + ' [data-ux-check]').all_inner_texts() == ['pose', 'face', 'outfit', 'style', 'clean']
+        engine_chip = '[data-ux-engine="%s"] .ux-engine-checks' % initial['preset_id']
+        assert c.page.locator(engine_chip).inner_text() == 'Not checked yet'
+        c.act('[data-ux-check="pose"][data-asset="asset-2"]', note='quick check: the pose carried over')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:pose=yes")')
+        c.act('[data-ux-check="face"][data-asset="asset-2"]', note="quick check: the face is the character's")
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:face=yes")')
+        c.page.wait_for_function('document.activeElement && document.activeElement.dataset.uxCheck === "face"')
+        c.page.keyboard.press('2')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:face=no")')
+        writes = [p['data'] for p in fixture.POSTS if p['path'] == '/api/assets/update' and 'tags' in p['data']]
+        assert [w['tags'] for w in writes] == [['fixture', 'check:pose=yes'], ['fixture', 'check:pose=yes', 'check:face=yes'], ['fixture', 'check:pose=yes', 'check:face=no']], writes
+        assert all('review' not in w for w in writes) and c.page.evaluate('assetState.assets.find(a=>a.id === "asset-2").review') == 'selected'
+        assert c.page.locator('[data-ux-review="selected"][data-asset="asset-2"]').is_enabled()
+        c.act(engine_chip, 'read', note="the engine chip counts this PC's answers")
+        assert c.page.locator(engine_chip).inner_text() == 'pose 1/1 · face 0/1', c.page.locator(engine_chip).inner_text()
+        assert c.page.locator('#uxPairResults .ux-run-group:has([data-asset="asset-2"]) .ux-run-checks').inner_text() == 'pose 1/1 · face 0/1'
         c.act('[data-ux-rerun="same"][data-job="combine-loop-0"]', note='stage the exact recorded seed, without running it')
         c.page.wait_for_function('getControl("seed").value === "42" && !referencePending')
         assert c.page.locator('#positive').input_value() == initial['controls']['positive']
@@ -1068,9 +1238,259 @@ def _combine_loop(c):
         assert c.page.evaluate('referenceRecords[0].file') == initial['references'][0]['file']
         assert not [p for p in fixture.POSTS if p['path'] == '/api/jobs']
         c.act('#generate', 'read', note='the only generation action still requires a separate explicit click')
-        return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews saved; same/new seeds prepared; zero generation requests'
+        return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews and three quick-check answers saved; engine count read; same/new seeds prepared; zero generation requests'
     finally:
         fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith(('combine-loop-', 'combine-other-pair', 'combine-filler-'))]
+        for asset in fixture.ASSETS:
+            preset_id, tags = saved[asset['id']]; asset['tags'] = tags
+            if preset_id is None: asset.pop('preset_id', None)
+            else: asset['preset_id'] = preset_id
+
+
+VARY_STATE = """() => ({preset: selected.id, intent: continuationState && continuationState.intent,
+  source: continuationState && continuationState.source_asset_id, parents: parentAssets.slice(),
+  denoise: getControl('denoise') ? getControl('denoise').value : null, seed: getControl('seed') ? getControl('seed').value : null,
+  batch: document.querySelector('#batch').value, positive: document.querySelector('#positive').value,
+  kept: Object.fromEntries(['lora', 'lora_name', 'lora2', 'lora2_name', 'sampler', 'scheduler', 'cfg', 'steps'].map(k => [k, getControl(k) ? getControl(k).value : null])),
+  notice: document.querySelector('#uxNotice').textContent})"""
+
+
+@driver('vary-a-keeper')
+def _vary(c):
+    """#1202: one press from a picture to a prepared round of close variations; Generate stays a separate press."""
+    import studio_browser_smoke as fixture
+    receipt = dict(status='completed', batch_count=1, message='Synthetic completed receipt; no model ran.')
+    # A Krea picture (its route is krea-refine) and one timing receipt each: 240 s per Refine picture is slow (2),
+    # 30 s per Anima portrait is fast (4). The Anima fixture job has no route, so it falls back to new seeds.
+    added = [] if c.live else [
+        dict(receipt, id='vary-krea-keeper', preset_id='krea-anime-atelier', preset_name='Krea 2 Anime Atelier', created_at=1789229900,
+             elapsed_seconds=95, controls={'positive': 'A fox shrine at dusk, anime illustration.', 'seed': 7},
+             outputs=[dict(filename='keeper.png', asset_id='asset-2', media_type='image', seed=7)]),
+        dict(receipt, id='vary-refine-timing', preset_id='krea-refine', preset_name='Krea 2 Refine Pass', created_at=1789229800,
+             elapsed_seconds=240, controls={'seed': 1}, outputs=[]),
+        dict(receipt, id='vary-anima-timing', preset_id='anima-portrait', preset_name='Anima portrait', created_at=1789229700,
+             elapsed_seconds=30, controls={'seed': 2}, outputs=[]),
+    ]
+    # A WAI picture made with an adapter (#1202 follow-up): its route keeps the recorded LoRA stack and sampling settings.
+    wai_controls = {'positive': '1girl, solo, adult woman, fantasy ranger, holding lantern', 'seed': 11, 'lora': 0.85,
+                    'lora_name': 'noirpopwave.safetensors', 'lora2': 0, 'lora2_name': 'manga-ink-screentone.safetensors',
+                    'sampler': 'euler', 'scheduler': 'karras', 'cfg': 6, 'steps': 24}
+    if not c.live:
+        added.insert(0, dict(receipt, id='vary-wai-keeper', preset_id='wai', preset_name='WAI v17 · illustration', created_at=1789230000,
+                             elapsed_seconds=31, controls=wai_controls,
+                             outputs=[dict(filename='wai-keeper.png', asset_id='asset-4', media_type='image', seed=11)]))
+        # A run whose recorded strength the page cannot hold: Vary must leave Generate blocked, not half-applied.
+        added.insert(0, dict(receipt, id='vary-wai-broken', preset_id='wai', preset_name='WAI v17 · illustration', created_at=1789229950,
+                             elapsed_seconds=31, controls=dict(wai_controls, lora='not-a-number'),
+                             outputs=[dict(filename='wai-broken.png', asset_id='asset-5', media_type='image', seed=12)]))
+    fixture.JOBS[:0] = added
+    try:
+        c.boot('#create')
+        c.page.wait_for_timeout(600)
+        c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
+        keeper = '#gallery [data-ux-vary="subtle"]' + ('' if c.live else '[data-job="vary-krea-keeper"]')
+        c.act('#gallery .ux-vary', 'read', note='the Vary controls and what they will do')
+        c.stop_before(c.act(keeper, note='prepares the img2img round'), 'stopped before preparing: Vary attaches a copy of the picture')
+        c.page.wait_for_timeout(800)
+        first = c.page.evaluate(VARY_STATE)
+        c.act('#uxNotice', 'read', note=first['notice'][:200])
+        c.act('#uxContinuation', 'read', note='lineage parents=%s' % first['parents'])
+        c.act('#gallery [data-ux-vary="reseed"][data-job="fixture-job"]', note='new seeds on a recipe with no close-variation route')
+        c.page.wait_for_timeout(800)
+        second = c.page.evaluate(VARY_STATE)
+        c.act('#uxNotice', 'read', note=second['notice'][:200])
+        c.act('#gallery [data-ux-vary="strong"][data-job="vary-wai-keeper"]', note="prepares the WAI round with the picture's own adapters")
+        c.page.wait_for_timeout(800)
+        third = c.page.evaluate(VARY_STATE)
+        c.act('#uxNotice', 'read', note=third['notice'][:200])
+        # Pressed outside the measured steps: the deliberate error notice is the expected outcome, not a journey dead end.
+        c.page.click('#gallery [data-ux-vary="strong"][data-job="vary-wai-broken"]')
+        c.page.wait_for_timeout(800)
+        blocked = c.page.evaluate("(() => { const b = document.querySelector('[data-readiness-code=\"vary\"]'); return {generate: document.querySelector('#generate').disabled, blocker: b ? b.textContent : ''}; })()")
+        # A picture with no recorded recipe: the asset panel shows Vary disabled, with the reason beside it.
+        c.page.evaluate("showView('assets');openAsset('asset-3')"); c.page.wait_for_timeout(300)
+        c.act('#assetDialog .ux-vary button', 'read', note='Vary disabled with its reason', supplementary=True)
+        why = c.page.evaluate("(() => { const b = document.querySelector('#assetDialog .ux-vary button'); return b && b.disabled ? document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()")
+        c.page.evaluate("document.querySelector('#assetDialog').close();showView('create')"); c.page.wait_for_timeout(300)
+        c.act('#generate', 'read', note='readiness only; never pressed')
+        img2img = (first['preset'] == 'krea-refine' and first['intent'] == 'edit' and first['source'] == 'asset-2'
+                   and first['parents'] == ['asset-2'] and first['denoise'] == '0.25' and first['batch'] == '2'
+                   and first['seed'] not in (None, '', '7') and 'Vary subtle prepared on' in first['notice']
+                   and 'Nothing was generated' in first['notice'] and '4 min per picture here' in first['notice'])
+        reseed = (second['preset'] == 'anima-portrait' and second['intent'] is None and second['parents'] == ['asset-0']
+                  and second['batch'] == '4' and second['seed'] not in (None, '', '42')
+                  and second['positive'] == fixture.JOBS[len(added)]['controls']['positive']
+                  and 'new seeds, same recipe' in second['notice'] and 'Nothing was generated' in second['notice'])
+        wai = (third['preset'] == 'wai-vary' and third['intent'] == 'edit' and third['source'] == 'asset-4' and third['parents'] == ['asset-4']
+               and third['denoise'] == '0.7' and third['batch'] == '2' and third['seed'] not in (None, '', '11')
+               and third['kept'] == {k: str(v) for k, v in wai_controls.items() if k in third['kept']}
+               and 'same checkpoint and adapters as this picture (noirpopwave.safetensors at 0.85)' in third['notice']
+               and 'Nothing was generated' in third['notice'])
+        wai = wai and blocked['generate'] and 'Vary could not keep lora = not-a-number' in blocked['blocker']
+        disabled = 'No Studio recipe is recorded' in why
+        return img2img and reseed and wai and disabled, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s' % (
+            {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')},
+            dict({k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, unapplied=blocked), why or 'no disabled reason')
+    finally:
+        for job in added: fixture.JOBS.remove(job)
+
+
+TILE_STATE = """() => ({preset: selected.id, parents: parentAssets, tile: (tilePayload().tile || {}).source_asset_id || null, band: (tilePayload().tile || {}).band_px || null,
+  reference: uploaded, notice: document.querySelector('#uxNotice').textContent, hint: document.querySelector('#referenceHint').textContent})"""
+WHY_TILE = """(() => { const b = document.querySelector('#assetDialog .ux-tile button');
+  return b ? (b.disabled ? 'disabled: ' : 'enabled: ') + document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()"""
+
+
+@driver('make-a-texture-tile')
+def _tile(c):
+    """#1220: Make seamless on a library texture: disabled with its reason for a non-square picture, one press to a prepared
+    seam repaint for a square one; Generate stays a separate press."""
+    import studio_browser_smoke as fixture
+    c.need_recipe('zimage-seam-repair')
+    c.boot('#assets')
+    c.page.wait_for_timeout(600)
+    wide = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % wide, note='open a wide picture')
+    c.page.wait_for_timeout(500)
+    c.act('#assetDialog .ux-tile button', 'read', note='Make seamless and why it is not offered')
+    why = c.page.evaluate(WHY_TILE)
+    c.act('#closeAssetDialog', navigation=True, note='close the wide picture', supplementary=True)
+    square = c.pick('asset-3', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET, nth=1)
+    c.act('[data-asset-open="%s"]' % square, note='open a square texture')
+    c.page.wait_for_timeout(500)
+    offered = c.page.evaluate(WHY_TILE)
+    # Owner, 27 Sep 2026: a wider seam band hides a floor's repeating plank ends. Choose it when this texture can take it.
+    wide = c.page.evaluate("""(() => { const o = document.querySelector('#assetDialog [data-ux-tile-band] option[value="160"]'); return !!o && !o.disabled; })()""")
+    if wide: c.act('#assetDialog [data-ux-tile-band]', 'select', typed='160', note='choose the wide seam band (160 px)')
+    else: c.act('#assetDialog .ux-tile small', 'read', note='the wide seam band does not fit this texture')
+    c.stop_before(c.act('#assetDialog [data-ux-tile]', note='prepares the seam repaint'), 'stopped before preparing: Make seamless stores a rolled copy of the picture')
+    c.page.wait_for_timeout(800)
+    state = c.page.evaluate(TILE_STATE)
+    c.act('#uxNotice', 'read', note=state['notice'][:200])
+    c.act('#referenceHint', 'read', note='source %s, parents %s' % (state['tile'], state['parents']))
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    submitted = [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+    sent = [p['data'].get('band_px') for p in fixture.POSTS if p['path'] == '/api/tiles/prepare']
+    prepared = (state['preset'] == 'zimage-seam-repair' and state['tile'] == square and state['parents'] == [square]
+                and state['reference'] == 'f' * 32 + '_seam-cross.png' and 'Press Generate' in state['notice'] and 'Flat textures only' in state['hint']
+                and wide and sent[-1:] == [160] and state['band'] == 160 and '160 px seam band' in state['notice'] and 'seam band 160 px' in state['hint'])
+    disabled = why.startswith('disabled: ') and 'Flat textures only' in why and '1344 × 768' in why
+    flagged = offered.startswith('enabled: ') and 'Flat textures only' in offered
+    return prepared and disabled and flagged and not submitted, 'prepared: %s; wide picture: %s; square picture: %s; generation posts: %d' % (
+        {k: state[k] for k in ('preset', 'tile', 'parents', 'band')}, why or 'no Make seamless control', offered or 'no Make seamless control', len(submitted))
+
+
+PARALLAX_STATE = """() => ({preset: selected.id, parents: parentAssets, stage: (parallaxPayload().parallax || {}).stage || null,
+  source: (parallaxPayload().parallax || {}).source_asset_id || null, view: (parallaxPayload().parallax || {}).view_polygons || null,
+  reference: uploaded, positive: document.querySelector('#positive').value, width: getControl('width')?.value, height: getControl('height')?.value,
+  notice: document.querySelector('#uxNotice').textContent, hint: document.querySelector('#referenceHint').textContent})"""
+WHY_PARALLAX = """(() => { const b = document.querySelector('#assetDialog .ux-parallax [data-ux-parallax]');
+  return b ? (b.disabled ? 'disabled: ' : 'enabled: ') + document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()"""
+PARALLAX_OBJECTS = 'the lantern keeper and the lantern'
+
+
+@driver('split-a-scene-into-parallax-layers')
+def _parallax(c):
+    """#1219: Make parallax layers on a library picture: disabled with its reason for a picture that is too small; for a wide
+    scene, name the foreground, drag the far view on the picture, and one press loads the clean-plate edit. Both Generates
+    stay the owner's presses."""
+    import studio_browser_smoke as fixture
+    import parallax   # bare name: app/ is on sys.path once the fixture server has loaded
+    c.need_recipe('parallax-edit')
+    c.boot('#assets')
+    c.page.wait_for_timeout(600)
+    small = c.pick('asset-2', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % small, note='open a small picture')
+    c.page.wait_for_timeout(500)
+    c.act('#assetDialog .ux-parallax [data-ux-parallax]', 'read', note='Make parallax layers and why it is not offered')
+    why = c.page.evaluate(WHY_PARALLAX)
+    c.act('#closeAssetDialog', navigation=True, note='close the small picture', supplementary=True)
+    wide = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % wide, note='open a wide scene')
+    c.page.wait_for_timeout(500)
+    waiting = c.page.evaluate(WHY_PARALLAX)
+    c.act('#uxParallaxObjects', 'fill', typed=PARALLAX_OBJECTS, note='name the foreground to lift out')
+    c.act('#assetDialog .ux-parallax-mark > summary', note='open the picture to mark the far view', supplementary=True)
+    c.page.wait_for_timeout(300)
+    drawn = ''
+    try:   # a drag only writes the view field on this page; nothing is stored
+        box = c.page.locator('#assetDialog .ux-parallax-pick img').bounding_box()
+        c.page.mouse.move(box['x'] + box['width'] * 0.70, box['y'] + box['height'] * 0.08); c.page.mouse.down()
+        c.page.mouse.move(box['x'] + box['width'] * 0.95, box['y'] + box['height'] * 0.45, steps=6); c.page.mouse.up()
+        c.page.wait_for_timeout(200); drawn = c.page.evaluate("document.querySelector('#uxParallaxView').value")
+    except Exception as error: drawn = 'drag failed: ' + str(error)[:120]
+    c.act('#uxParallaxView', 'read', note='the dragged far view box: ' + drawn)
+    offered = c.page.evaluate(WHY_PARALLAX)
+    c.stop_before(c.act('#assetDialog [data-ux-parallax]', note='prepares the clean-plate edit'), 'stopped before preparing: Make parallax layers attaches the picture as an upload')
+    c.page.wait_for_timeout(800)
+    state = c.page.evaluate(PARALLAX_STATE)
+    c.act('#uxNotice', 'read', note=state['notice'][:200])
+    c.act('#referenceHint', 'read', note='stage %s, source %s, parents %s, %s x %s' % (state['stage'], state['source'], state['parents'], state['width'], state['height']))
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    submitted = [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+    boxes = [[int(v) for v in part.split(',')] for part in drawn.split(';') if part.strip()] if drawn and not drawn.startswith('drag') else []
+    prepared = (state['preset'] == 'parallax-edit' and state['stage'] == 'plate' and state['source'] == wide and state['parents'] == [wide]
+                and state['reference'] == 'f' * 32 + '_forest-hero.png' and (state['width'], state['height']) == ('1344', '768')
+                and state['positive'] == parallax.words('plate', PARALLAX_OBJECTS) and len(state['view'] or []) == 1
+                and 'Press Generate' in state['notice'] and 'edit 1 of 2, the clean plate' in state['hint'])
+    disabled = why.startswith('disabled: ') and '128 × 128' in why
+    guided = waiting.startswith('disabled: ') and 'Name the foreground' in waiting and offered.startswith('enabled: ') and 'not detected' in offered
+    marked = len(boxes) == 1 and boxes[0][0] > 800 and boxes[0][2] > boxes[0][0] + 100
+    return prepared and disabled and guided and marked and not submitted, 'prepared: %s; small picture: %s; before naming: %s; view: %s; generation posts: %d' % (
+        {k: state[k] for k in ('preset', 'stage', 'source', 'parents', 'view')}, why or 'no control', waiting or 'no control', drawn or 'none', len(submitted))
+
+
+LOOK_SCENE = ('a small rooftop garden at night; at the right edge a rusty water tank and a warm amber lamp over a door, '
+              'and beyond the railing a distant elevated train')
+LOOK_STATE = """() => ({preset: selected?.id, positive: document.querySelector('#positive').value,
+  seed: getControl('seed')?.value, width: getControl('width')?.value, height: getControl('height')?.value,
+  status: document.querySelector('#lookStatus').textContent, notice: document.querySelector('#status').textContent})"""
+
+
+@driver('new-scene-in-an-accepted-look')
+def _look(c):
+    """#1221: pick a saved look while another recipe is open, type only the scene; the Studio writes the wording and loads the
+    look's recipe and settings. Generate stays a separate press."""
+    import looks
+    c.boot('#create')
+    c.need_recipe('zimage-fast')
+    if not c.live: c.select_preset('anima-portrait')
+    c.act('#lookBlock > summary', note='open the saved looks', supplementary=True)
+    look = c.pick('look-night-shift-retro-anime', '#lookSelect option[value]', 'saved look', keep="id !== ''")
+    c.act('#lookSelect', 'select', typed=look, note='choose the Night Shift look')
+    label = c.page.evaluate("document.querySelector('#lookSelect').selectedOptions[0]?.textContent || ''")
+    c.act('#lookSummary', 'read', note=c.page.evaluate("document.querySelector('#lookSummary').textContent")[:200])
+    c.act('#lookPrepare', 'read', note='Prepare waits for a scene')
+    reason = c.page.evaluate("document.querySelector('#lookPrepare').disabled ? document.querySelector('#lookReason').textContent : ''")
+    c.act('#lookScene', 'fill', typed=LOOK_SCENE, note='type only the scene')
+    c.stop_before(c.act('#lookPrepare', note='prepare Create from the look and the scene'), 'stopped before preparing: it rewrites Create from the look')
+    c.page.wait_for_timeout(600)
+    state = c.page.evaluate(LOOK_STATE)
+    c.act('#lookStatus', 'read', note=state['status'][:200])
+    c.act('#positive', 'read', note=state['positive'][:200])
+    # Owner, 27 Sep 2026: the quiet wall is an optional line for UI backgrounds, off by default; the scene decides the layout.
+    line = '#lookOptions [data-look-option="quiet_wall"]'
+    unticked = c.page.evaluate("(() => { const box = document.querySelector('%s'); return !!box && !box.checked; })()" % line)
+    c.act(line, 'check', note='keep the quiet wall for a UI background')
+    c.act('#lookPrepare', note='prepare again with the quiet-wall line')
+    c.page.wait_for_timeout(600)
+    walled = c.page.evaluate(LOOK_STATE)
+    c.act('#positive', 'read', note=walled['positive'][:200], supplementary=True)
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    # Preparing again on the open recipe reloads it: a changed setting the look does not store must not linger (#1224 review).
+    reset = c.live or c.page.evaluate("""async () => { const steps = getControl('steps'), authored = steps?.value; if (!steps) return false;
+      steps.value = '99'; document.querySelector('#lookPrepare').click(); await new Promise(r => setTimeout(r, 600));
+      return getControl('steps').value === authored && selected.id === 'zimage-fast'; }""")
+    shipped = next(entry for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks'] if entry['id'] == 'look-night-shift-retro-anime')
+    lines = shipped['body'].get('options', [])
+    wording = looks.compose(shipped['body']['template'], LOOK_SCENE, lines)
+    with_wall = looks.compose(shipped['body']['template'], LOOK_SCENE, lines, {'quiet_wall': True})
+    ok = (state['preset'] == 'zimage-fast' and state['positive'] == wording and 'graphite wall' not in wording and unticked
+          and walled['positive'] == with_wall and 'plain dark graphite wall' in with_wall and 'with: Keep the quiet wall' in walled['status'] and state['seed'] == '2026092752'
+          and (state['width'], state['height']) == ('1344', '768') and 'Nothing was generated' in state['status']
+          and 'recipe switched' in state['status'] and 'Type the scene' in reason and '· on ' in label and reset)
+    return ok, 'look option %r; reason before the scene %r; prepared %s; quiet wall off by default %s, on when ticked %s; same-recipe reset %s' % (
+        label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')}, unticked, walled['positive'] == with_wall, reset)
 
 
 @driver('reference-analysis-review-and-apply')

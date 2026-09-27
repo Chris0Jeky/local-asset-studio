@@ -66,6 +66,8 @@
 .ux-engine-options{display:flex;gap:8px;flex-wrap:wrap}.ux-engine-options button{flex:1 1 155px;text-align:left;white-space:normal;min-height:64px}
 .ux-engine-options b,.ux-engine-options small{display:block}.ux-engine-options .ux-engine-hint{font-size:11px;opacity:.9}.ux-engine-options small{margin-top:5px;font-size:10px;line-height:1.4}
 .ux-engine-options [aria-pressed=true]{border-color:var(--accent,#c6dd94);background:#273b30}
+.ux-engine-plan{margin-top:12px}.ux-engine-plan summary small{opacity:.85}.ux-plan-engines{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0;border:0;padding:0}
+.ux-plan-engine{display:flex;gap:6px;align-items:baseline;font-size:12px}.ux-plan-engine small{font-size:10px;opacity:.85}.ux-plan-actions{display:flex;gap:8px;flex-wrap:wrap}
 .ux-experiment-strip{display:flex;gap:14px;overflow-x:auto;padding:4px 0 10px;align-items:flex-start}
 .ux-run-group{flex:0 0 auto;width:min-content;display:flex;flex-direction:column;gap:6px;min-width:0}
 .ux-run-head{display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap;font-size:12px}.ux-run-head b{flex-basis:100%}.ux-run-head small{font-size:11px;opacity:.8}.ux-run-head button{font-size:10px;min-height:28px;padding:3px 8px;margin-left:auto}
@@ -98,3 +100,8 @@
 /* A dialog's own decision stays on screen (handoff 03): the action row sticks to the bottom edge while the form scrolls under it. */
 .studio-shell dialog{--dialog-pad:26px}.studio-shell dialog form>.actions:last-child,.studio-shell .asset-detail-actions{position:sticky;bottom:calc(-1*var(--dialog-pad));z-index:2;background:var(--panel);box-shadow:0 -14px 18px -12px var(--panel);padding:10px 0 calc(10px + var(--dialog-pad));margin-block-end:calc(-1*var(--dialog-pad))}
 @media(max-width:580px){.studio-shell dialog{--dialog-pad:18px}}
+.ux-vary,.ux-tile{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:0 10px 10px}.ux-vary small,.ux-tile small{flex-basis:100%;font-size:10px;color:var(--muted)}#assetDialog .ux-vary,#assetDialog .ux-tile{padding:8px 0 0}
+/* Looks (#1221): pick a saved look, type the scene. */
+.ux-looks{border:1px solid var(--line,#3334);border-radius:10px;padding:.6rem .8rem;margin:.5rem 0 1rem}.ux-looks>summary{cursor:pointer;font-weight:600}.ux-looks[open]>summary{margin-bottom:.4rem}.ux-looks-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:end}.ux-looks-row label{display:grid;gap:.3rem;flex:1 1 220px;font-size:.9rem}.ux-looks-row input,.ux-looks-row select{min-height:38px;width:100%;box-sizing:border-box}.ux-looks p{margin:.35rem 0}.ux-looks details{margin-top:.4rem}
+/* Parallax layers (#1219): name the foreground, optionally drag the far view boxes on the picture. */
+.ux-parallax{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 0 0}.ux-parallax label{display:grid;gap:3px;flex:1 1 100%;font-size:12px}.ux-parallax input{min-height:32px;width:100%;box-sizing:border-box}.ux-parallax small{flex-basis:100%;font-size:10px;color:var(--muted)}.ux-parallax-mark{flex-basis:100%;font-size:12px}.ux-parallax-mark p{margin:.3rem 0}.ux-parallax-pick{position:relative;display:inline-block;max-width:100%;cursor:crosshair;touch-action:none;user-select:none}.ux-parallax-pick img{display:block;max-width:100%;max-height:260px}.ux-parallax-box{position:absolute;border:2px solid #4fd1ff;background:#4fd1ff33;pointer-events:none;box-sizing:border-box}

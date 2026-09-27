@@ -1,0 +1,22 @@
+[
+ {
+  "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3vl_8b_w4a8.safetensors",
+  "dest": "C:/AI/experiments/qwen-image-21/ComfyUI/models/text_encoders/qwen3vl_8b_w4a8.safetensors",
+  "bytes": 6312105364,
+  "expected_sha256": "7754425e55e7bea2bfde4dde59a4cc236cb44e5ee9c215ea66ef8d47012824eb",
+  "sha256": "7754425e55e7bea2bfde4dde59a4cc236cb44e5ee9c215ea66ef8d47012824eb",
+  "verified": true,
+  "seconds": 4534.0,
+  "fetched": "2026-09-27T20:37:43"
+ },
+ {
+  "url": "https://huggingface.co/unsloth/Qwen-Image-2.1-GGUF/resolve/main/qwen-image-2.1-Q4_K_M.gguf",
+  "dest": "C:/AI/experiments/qwen-image-21/ComfyUI/models/diffusion_models/qwen-image-2.1-Q4_K_M.gguf",
+  "bytes": 4199565024,
+  "expected_sha256": "631d532e7ca71e8d90a87c71d3699761a812039d22e3370e87498d87754660fe",
+  "sha256": "631d532e7ca71e8d90a87c71d3699761a812039d22e3370e87498d87754660fe",
+  "verified": true,
+  "seconds": 4537.0,
+  "fetched": "2026-09-27T21:53:20"
+ }
+]

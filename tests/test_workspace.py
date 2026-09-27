@@ -193,6 +193,53 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self.store.get(self.asset), before)
         self.assertEqual(self._receipt_count(), receipts)
 
+    def test_update_accepts_exactly_200_ids_and_refuses_201(self):
+        rev = self.store.get(self.asset)['metadata_revision']; before = self.store.get(self.asset); receipts = self._receipt_count()
+        ids200 = [self.asset] + [f'unknown-{i:03d}' for i in range(199)]
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update({'ids': ids200, 'action': 'trash', 'request_id': uuid.uuid4().hex,
+                               'expected_revisions': {i: (rev if i == self.asset else 0) for i in ids200}})
+        self.assertEqual(cm.exception.status, 409); self.assertEqual(cm.exception.code, 'asset_revision_conflict')
+        self.assertEqual(len(cm.exception.details['missing_ids']), 199)
+        self.assertEqual(self.store.get(self.asset), before); self.assertEqual(self._receipt_count(), receipts)
+        ids201 = [self.asset] + [f'unknown-{i:03d}' for i in range(200)]
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'Select between 1 and 200 assets'):
+            self.store.update({'ids': ids201, 'action': 'trash', 'request_id': uuid.uuid4().hex,
+                               'expected_revisions': {i: (rev if i == self.asset else 0) for i in ids201}})
+        self.assertEqual(self.store.get(self.asset), before); self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_accepts_a_128_character_id_and_refuses_129(self):
+        before = self.store.get(self.asset); receipts = self._receipt_count()
+        ok = 'u' * 128
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update({'ids': [ok], 'action': 'trash', 'request_id': uuid.uuid4().hex, 'expected_revisions': {ok: 0}})
+        self.assertEqual(cm.exception.status, 409); self.assertEqual(cm.exception.code, 'asset_revision_conflict')
+        self.assertEqual(self.store.get(self.asset), before); self.assertEqual(self._receipt_count(), receipts)
+        bad = 'u' * 129
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'Select between 1 and 200 assets'):
+            self.store.update({'ids': [bad], 'action': 'trash', 'request_id': uuid.uuid4().hex, 'expected_revisions': {bad: 0}})
+        self.assertEqual(self.store.get(self.asset), before); self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_accepts_exactly_128_kib_and_refuses_one_byte_more(self):
+        rev = self.store.get(self.asset)['metadata_revision']; before = self.store.get(self.asset); receipts = self._receipt_count()
+        rid = uuid.uuid4().hex
+        base = {'ids': [self.asset], 'action': 'edit', 'notes': '', 'request_id': rid, 'expected_revisions': {self.asset: rev}}
+        overhead = len(json.dumps(base, sort_keys=True, separators=(',', ':'), allow_nan=False).encode())
+        exact = {'ids': [self.asset], 'action': 'edit', 'notes': 'x' * (128 * 1024 - overhead),
+                 'request_id': rid, 'expected_revisions': {self.asset: rev}}
+        self.assertEqual(len(json.dumps(exact, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()), 131072)
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'notes must be text up to 8000 characters') as cm:
+            self.store.update(exact)
+        self.assertNotIn('Asset command exceeds 128 KiB', str(cm.exception))
+        self.assertEqual(self.store.get(self.asset), before); self.assertEqual(self._receipt_count(), receipts)
+        rid2 = uuid.uuid4().hex
+        over = {'ids': [self.asset], 'action': 'edit', 'notes': 'x' * (128 * 1024 - overhead + 1),
+                'request_id': rid2, 'expected_revisions': {self.asset: rev}}
+        self.assertEqual(len(json.dumps(over, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()), 131073)
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'Asset command exceeds 128 KiB'):
+            self.store.update(over)
+        self.assertEqual(self.store.get(self.asset), before); self.assertEqual(self._receipt_count(), receipts)
+
     def test_update_rejects_non_finite_json_value_without_changing_state(self):
         for bad in (float('nan'), float('inf'), float('-inf')):
             with self.subTest(bad=repr(bad)):

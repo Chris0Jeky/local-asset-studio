@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "Seamless texture, flat front view of a dark graphite plaster wall with subtle hand-painted brush texture and faint water stains, hand-painted cel anime film background art, even soft lighting, no objects, no text, fills the whole frame.",
+    "seed": 2026092772,
+    "width": 1024,
+    "height": 1024
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790530752.756398,
+  "references": [],
+  "parent_assets": []
+}

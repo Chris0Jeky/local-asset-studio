@@ -1,0 +1,196 @@
+{
+  "id": "653973c1-d6f7-43f6-892a-0c667dfbdda0",
+  "status": "completed",
+  "created_at": 1790530752.756398,
+  "preset_id": "zimage-fast",
+  "preset_name": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)",
+  "controls": {
+    "positive": "Seamless texture, flat front view of a dark graphite plaster wall with subtle hand-painted brush texture and faint water stains, hand-painted cel anime film background art, even soft lighting, no objects, no text, fills the whole frame.",
+    "seed": 2026092772,
+    "width": 1024,
+    "height": 1024
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "f7c9541f-71d4-402b-ac64-72041c629e2e"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "f7c9541f-71d4-402b-ac64-72041c629e2e",
+      "seed": 2026092772,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "lumina2",
+            "device": "cpu"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "ae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "Seamless texture, flat front view of a dark graphite plaster wall with subtle hand-painted brush texture and faint water stains, hand-painted cel anime film background art, even soft lighting, no objects, no text, fills the whole frame."
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "ModelSamplingAuraFlow",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "shift": 3.0
+          }
+        },
+        "7": {
+          "class_type": "EmptySD3LatentImage",
+          "inputs": {
+            "width": 1024,
+            "height": 1024,
+            "batch_size": 1
+          }
+        },
+        "8": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "6",
+              0
+            ],
+            "seed": 2026092772,
+            "steps": 8,
+            "cfg": 1.0,
+            "sampler_name": "res_multistep",
+            "scheduler": "simple",
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "7",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "9": {
+          "class_type": "VAEDecodeTiled",
+          "inputs": {
+            "samples": [
+              "8",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8
+          }
+        },
+        "10": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "9",
+              0
+            ],
+            "filename_prefix": "Studio/Z-Image-Fast"
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 82391040,
+        "peak_dedicated_bytes": 10441711616,
+        "samples": 213,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "Z-Image-Fast_00021_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092772,
+      "prompt_id": "f7c9541f-71d4-402b-ac64-72041c629e2e",
+      "media_type": "image",
+      "asset_id": "b97ead96a58857e5a424a18b5a693a95"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "seed_bindings": [
+    [
+      "8",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "bglab-tex-wall",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790530752.7693672,
+  "host_commit_windows": [
+    {
+      "samples": 204,
+      "unknown_samples": 0,
+      "first_at": 1790530752.9240024,
+      "last_at": 1790530858.1115868,
+      "peak_committed_bytes": 74480439296,
+      "peak_at": 1790530854.58079,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 28303650816,
+      "index": 0,
+      "prompt_id": "f7c9541f-71d4-402b-ac64-72041c629e2e",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790530858.1195893,
+  "elapsed_seconds": 105.35022211074829
+}

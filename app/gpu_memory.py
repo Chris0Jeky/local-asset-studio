@@ -8,9 +8,13 @@ other processes (experiments/curated/vram-spill-20260923/qwen21-bench.json). `la
 reserve from a live reading; `spill` reports a running ComfyUI process's shared-memory use as evidence.
 
 Process counters can report impossible values (dwm at 65.9 GiB, issue #983). `read` also samples the
-adapter-level `GPU Adapter Memory` dedicated figure per LUID. If process counters disagree beyond sampling
-headroom, the reserve and guard use the adapter figure instead. If that cross-check is unavailable, the
-reserve uses its declared fallback and the guard receives an unknown reading.
+adapter-level `GPU Adapter Memory` dedicated figure per LUID. When the counters agree, "others" is that adapter
+figure minus ComfyUI's own counter (and minus backends a switch just stopped), never less than the other
+process counters, each bounded by the adapter figure (owner decision on #983, 27 Sep 2026). If process counters
+disagree beyond sampling headroom, the reserve and guard use the adapter figure instead and admission treats the
+figure as unknown. If that cross-check is unavailable, the reserve uses its declared fallback and the guard
+receives an unknown reading. `anomalies` lists the impossible counters as evidence for the launch record and
+admission receipts.
 """
 from __future__ import annotations
 
@@ -78,14 +82,18 @@ def _adapter_total(reading, adapter):
     return int(total)
 
 
-def _reconcile(values, total, own_pid=None):
+def _reconcile(values, total, own_pid=None, lagging=()):
     """Fold `{pid: dedicated_bytes}` into a plausible others total against the adapter-level figure.
 
-    Returns `(excluded_pids, others_bytes, reconciled)`. When process counters exceed the adapter figure
-    beyond sampling headroom, use the adapter figure (minus a credible owned process) instead of guessing
-    which of the remaining process counters account for its actual usage. An owned counter that already
-    exceeds the adapter figure is impossible, so it is not subtracted; credible other-process usage is
-    retained up to the adapter figure instead.
+    Returns `(excluded_pids, others_bytes, reconciled)`. When the counters agree (owner decision on #983,
+    27 Sep 2026) others is the adapter figure minus the owned process and the `lagging` byte counts (processes
+    just stopped, left out of `values`, whose counters can lag their exit), never less than the other process
+    counters themselves (each bounded by the adapter figure), and never more than the adapter figure: usage no
+    process counter attributes is still not free. `reconciled` stays False, since the counters agree. When
+    process counters exceed the adapter figure beyond sampling headroom, use the adapter figure (minus a
+    credible owned process) instead of guessing which of the remaining process counters account for its actual
+    usage. An owned counter that already exceeds the adapter figure is impossible, so it is not subtracted;
+    credible other-process usage is retained up to the adapter figure instead.
     """
     if total is None: return [], sum(value for pid, value in values.items() if pid != own_pid), False
     limit = total * RECONCILE_RATIO + RECONCILE_SLOP_BYTES
@@ -101,7 +109,9 @@ def _reconcile(values, total, own_pid=None):
             if not credible and any(value > total for _, value in others): return excluded, None, True
             return excluded, min(total, credible), True
         return excluded, max(0, total - values.get(own_pid, 0)), True
-    return [], sum(value for pid, value in values.items() if pid != own_pid), False
+    attributed = sum(min(value, total) for pid, value in values.items() if pid != own_pid)
+    from_adapter = total - min(values.get(own_pid, 0), total) - sum(min(value, total) for value in lagging)
+    return [], min(total, max(attributed, from_adapter)), False
 
 
 def select_adapter(adapters, pid=None):
@@ -185,40 +195,58 @@ def _select_metered_adapter(reading, adapters):
 def launch_reserve_gib(reading=None, exclude_pids=()):
     """`--reserve-vram` for a ComfyUI about to start: what every other process holds on the GPU plus ComfyUI's margin.
 
-    Impossible process counters are reconciled against the adapter-level figure (`basis: 'reconciled'`);
-    without a matching figure a new reading uses the declared fallback.
+    Others is the adapter-level figure minus the `exclude_pids` counters (backends just stopped) when the counters
+    agree, never less than the remaining process counters; impossible process counters are reconciled against the
+    adapter-level figure (`basis: 'reconciled'`); without a matching figure a new reading uses the declared
+    fallback. `anomalies` keeps the impossible counters of the same reading as evidence.
     """
     reading = read() if reading is None else reading
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
-    adapter = _select_metered_adapter(reading, adapters)
+    adapter = _select_metered_adapter(reading, adapters); found = anomalies(reading)
     if adapter is None: return {'reserve_gib': FALLBACK_GIB, 'others_bytes': None, 'adapter': None, 'adapter_total_bytes': None,
                                 'excluded_pids': [], 'basis': 'fallback', 'unknown_reason':
-                                (reading or {}).get('unknown_reason') or (reading or {}).get('adapter_unknown_reason') or 'No matching GPU adapter memory reading'}
+                                (reading or {}).get('unknown_reason') or (reading or {}).get('adapter_unknown_reason') or 'No matching GPU adapter memory reading',
+                                'anomalies': found}
     exclude = set(exclude_pids)
     values = {pid: p['dedicated_bytes'] for pid, p in adapters[adapter].items() if pid not in exclude}
+    lagging = [p['dedicated_bytes'] for pid, p in adapters[adapter].items() if pid in exclude]
     total = _adapter_total(reading, adapter)
-    excluded, others, capped = _reconcile(values, total)
+    excluded, others, capped = _reconcile(values, total, lagging=lagging)
     if others is None:
         return {'reserve_gib': FALLBACK_GIB, 'others_bytes': None, 'adapter': adapter, 'adapter_total_bytes': total,
-                'excluded_pids': excluded, 'basis': 'fallback', 'unknown_reason': 'GPU adapter and process counters disagree'}
+                'excluded_pids': excluded, 'basis': 'fallback', 'unknown_reason': 'GPU adapter and process counters disagree', 'anomalies': found}
     reserve = min(CAP_GIB, max(FLOOR_GIB, math.ceil((others / GIB + MARGIN_GIB) * 10) / 10))
     return {'reserve_gib': reserve, 'others_bytes': others, 'adapter': adapter, 'adapter_total_bytes': total,
-            'excluded_pids': excluded, 'basis': 'reconciled' if (excluded or capped) else 'measured', 'unknown_reason': None}
+            'excluded_pids': excluded, 'basis': 'reconciled' if (excluded or capped) else 'measured', 'unknown_reason': None, 'anomalies': found}
 
 
-def others_bytes(reading, pid):
+def _capacity(value):
+    """A usable card capacity in bytes, or None."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0: return None
+    return int(value)
+
+
+def others_bytes(reading, pid, capacity_bytes=None):
     """Dedicated memory every other plausible process holds on `pid`'s adapter, or None when the reading has no adapters.
 
+    With a matching adapter figure and agreeing counters this is the adapter figure minus `pid`'s own (#983).
     Impossible process counters are reconciled against the adapter-level figure, so a runaway counter cannot
     zero the installed VRAM guard's perceived free memory; without a matching figure a new reading is unknown.
+    A result above `capacity_bytes` (the card's size, when the caller knows it) is unknown, never a clamped guess.
     """
+    others = _others_bytes(reading, pid)
+    capacity = _capacity(capacity_bytes)
+    return None if others is not None and capacity is not None and others > capacity else others
+
+
+def _others_bytes(reading, pid):
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
-    owned = [name for name, processes in (adapters or {}).items() if pid in processes]
+    owned = [name for name, processes in (adapters or {}).items() if processes.get(pid, {}).get('dedicated_bytes', 0) > 0]
     if owned:
         adapter = max(owned, key=lambda name: (adapters[name][pid]['dedicated_bytes'], adapters[name][pid].get('shared_bytes', 0)))
     else:
-        # PDH can publish other processes before this ComfyUI PID. Until its entry appears, all selected
-        # adapter usage is external; the guard must keep accounting for it rather than silently using zero.
+        # PDH can publish other processes before this ComfyUI PID. Until its entry appears or while it reports
+        # zero dedicated bytes, all selected adapter usage is external; the guard must keep accounting for it rather than silently using zero.
         adapter = _select_metered_adapter(reading, adapters)
     if adapter is None: return None
     total = _adapter_total(reading, adapter)
@@ -228,7 +256,10 @@ def others_bytes(reading, pid):
     return others
 
 
-def others_for_admission(reading, pid):
+CAPACITY_REASON = "GPU process memory counters exceed the card's capacity"
+
+
+def others_for_admission(reading, pid, capacity_bytes=None):
     """Credible measured external bytes for admission as `(bytes_or_None, reason_or_None)`.
 
     Same adapter selection and `_reconcile` logic as `others_bytes`, but confidence-aware:
@@ -236,15 +267,23 @@ def others_for_admission(reading, pid):
     aggregate, issue #983) the reconciled bound stays conservative for the installed guard
     yet is not a measurement, so admission gets `(None, reason)` instead of a precise byte
     value. A matching sample stays measured; a missing/unmatched adapter stays unknown.
-    Readings without an `adapter_totals` field keep the older `others_bytes` contract.
+    Readings without an `adapter_totals` field keep the older `others_bytes` contract. Any
+    result above `capacity_bytes` is unknown.
     """
+    others, reason = _others_for_admission(reading, pid)
+    capacity = _capacity(capacity_bytes)
+    if others is not None and capacity is not None and others > capacity: return None, CAPACITY_REASON
+    return others, reason
+
+
+def _others_for_admission(reading, pid):
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
     if not adapters:
         reason = None
         if isinstance(reading, dict):
             reason = reading.get('unknown_reason') or reading.get('adapter_unknown_reason')
         return None, reason or 'No matching GPU adapter memory reading'
-    owned = [name for name, processes in adapters.items() if pid in processes]
+    owned = [name for name, processes in adapters.items() if processes.get(pid, {}).get('dedicated_bytes', 0) > 0]
     if owned:
         adapter = max(owned, key=lambda name: (adapters[name][pid]['dedicated_bytes'], adapters[name][pid].get('shared_bytes', 0)))
     else:
@@ -256,7 +295,7 @@ def others_for_admission(reading, pid):
             reason = None
         return None, reason or 'No matching GPU adapter memory reading'
     if not isinstance(reading, dict) or 'adapter_totals' not in reading:
-        others = others_bytes(reading, pid)
+        others = _others_bytes(reading, pid)
         if others is None:
             reason = reading.get('unknown_reason') if isinstance(reading, dict) else None
             return None, reason or 'no GPU adapter reading'
@@ -275,9 +314,11 @@ def others_for_admission(reading, pid):
 def holders(reading, pid, top=3):
     """The largest other dedicated-memory holders on `pid`'s adapter, largest plausible first.
 
-    Rows are raw process counters as `[{pid, name, dedicated_bytes, plausible}]`; `plausible: False` marks a
+    Rows are process counters as `[{pid, name, dedicated_bytes, plausible}]`; `plausible: False` marks a
     counter larger than the adapter-level figure allows (issue #983), so it is evidence of a counter anomaly,
-    not memory held. Without a matching adapter figure every row carries `plausible: None`."""
+    not memory held, and keeps its raw value. A plausible row is bounded by the adapter figure, since no
+    process holds more than the adapter reports in use. Without a matching adapter figure every row is raw
+    and carries `plausible: None`."""
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
     adapter = select_adapter(adapters, pid) if adapters else None
     if adapter is None: return []
@@ -291,8 +332,33 @@ def holders(reading, pid, top=3):
             import psutil
             name = psutil.Process(other).name()
         except Exception: name = None
-        rows.append({'pid': other, 'name': name, 'dedicated_bytes': value, 'plausible': None if limit is None else value <= limit})
+        plausible = None if limit is None else value <= limit
+        rows.append({'pid': other, 'name': name, 'dedicated_bytes': min(value, total) if plausible else value, 'plausible': plausible})
     return rows
+
+
+ANOMALY_ROWS = 8
+
+
+def anomalies(reading, capacity_bytes=None):
+    """Process counters no adapter could hold, as evidence rows `[{adapter, pid, dedicated_bytes, adapter_total_bytes,
+    limit_bytes}]`, largest first and at most ANOMALY_ROWS (owner decision on #983: log implausible readings).
+
+    A counter is impossible above its adapter figure plus sampling headroom, or above `capacity_bytes` (the card's size)
+    when the caller knows it; an adapter with neither bound yields no rows. Pure: reads nothing, never raises."""
+    adapters = reading.get('adapters') if isinstance(reading, dict) else None
+    capacity, rows = _capacity(capacity_bytes), []
+    for adapter, processes in (adapters if isinstance(adapters, dict) else {}).items():
+        total = _adapter_total(reading, adapter)
+        limits = [int(total * RECONCILE_RATIO + RECONCILE_SLOP_BYTES)] if total is not None else []
+        if capacity is not None: limits.append(capacity)
+        if not limits or not isinstance(processes, dict): continue
+        limit = min(limits)
+        for pid, usage in processes.items():
+            value = usage.get('dedicated_bytes') if isinstance(usage, dict) else None
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > limit:
+                rows.append({'adapter': adapter, 'pid': pid, 'dedicated_bytes': int(value), 'adapter_total_bytes': total, 'limit_bytes': limit})
+    return sorted(rows, key=lambda row: (-row['dedicated_bytes'], str(row['adapter']), str(row['pid'])))[:ANOMALY_ROWS]
 
 
 def spill(pid, reading=None):

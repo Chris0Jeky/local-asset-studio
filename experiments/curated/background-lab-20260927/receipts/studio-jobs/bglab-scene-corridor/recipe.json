@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "An empty corridor, no people. Hand-painted anime film background of a narrow late-night apartment corridor. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden bench, a warm amber wall lamp and the soft cyan glow of a vending machine. Faint rose and cyan reflections on the wet floor, muted graphite palette with small amber accents. An empty corridor with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+    "seed": 2026092752,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790531901.6919496,
+  "references": [],
+  "parent_assets": []
+}

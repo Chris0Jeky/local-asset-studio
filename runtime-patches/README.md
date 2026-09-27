@@ -121,3 +121,32 @@ through the Studio; nothing needs reverting in the installation.
 (`…bak-20260923-reserve4`), current `aef83687601d517f…`. Why, with the measurements:
 [`docs/RUNTIME-PRECONDITIONS.md`](../docs/RUNTIME-PRECONDITIONS.md) §8.
 
+
+
+## ComfyUI-GGUF in the isolated qwen21 checkout, 27 September 2026 (owner-approved node install; no package changed)
+
+The owner approved it on 27 Sep 2026 in chat ("Yes, and main too"), for the ComfyUI-GGUF node pack only. It serves the
+#1028 GGUF lanes.
+
+**Primary (`C:/AI/ComfyUI_windows_portable/ComfyUI`):** already had `custom_nodes/ComfyUI-GGUF` (the Klein 9B and Krea
+GGUF presets use it). It is a clean git checkout of `https://github.com/city96/ComfyUI-GGUF` at
+`6ea2651e7df66d7585f6ffee804b20e92fb38b8a` (12 Jan 2026, "Only include metadata on new comfy versions"). Nothing
+changed there. Its file hashes are recorded in `qwen21-gguf-20260927/primary-ComfyUI-GGUF-files.sha256`.
+
+**qwen21 (`C:/AI/experiments/qwen-image-21/ComfyUI`):**
+- Install: `custom_nodes/ComfyUI-GGUF` was cloned from the primary's checkout at the same pinned commit, with `origin` reset
+  to the upstream URL. The file set is byte-identical to the primary's (sha256 lists compared, `.git` and `__pycache__`
+  excluded). Before, `custom_nodes/` held only the two stock example files (`qwen21-custom-nodes-before.sha256`); after, see
+  `qwen21-custom-nodes-after.sha256`.
+- Python: qwen21 runs on the same embedded Python as the primary (`python_embeded/python.exe`; `app/backends.py`), which
+  already had `gguf==0.19.0` and its dependencies numpy, PyYAML 6.0.2, requests 2.32.3 and tqdm. **No pip command ran.**
+  `pip freeze` before and after is identical (`pip-freeze-before.txt`, `pip-freeze-after.txt`, 187 lines each; torch 2.9.1+rocm7.2.1 unchanged).
+- Proof: after a Studio switch to qwen21 (19:15), the log shows `ComfyUI-GGUF: Allowing full torch compile` and imports the
+  node in 0.1 s. `/object_info` on 8196 lists `UnetLoaderGGUF`, `CLIPLoaderGGUF`, `DualCLIPLoaderGGUF`,
+  `TripleCLIPLoaderGGUF`, `QuadrupleCLIPLoaderGGUF` and `UnetLoaderGGUFAdvanced`. On primary,
+  `python scripts/validate-live.py` then checked 89 graphs: the 84 primary graphs pass. The 5 that fail are the hidream
+  and qwen21 presets, whose nodes and weights live only on their isolated backends, so they cannot validate against the
+  primary endpoint.
+
+To revert (with qwen21 stopped): delete `C:/AI/experiments/qwen-image-21/ComfyUI/custom_nodes/ComfyUI-GGUF`. Nothing else
+was touched.

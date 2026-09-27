@@ -241,9 +241,12 @@ the `restyle` intent with the source hash. Measured run below under *Restyle fro
    (or the older *Animagine — pose guide* / *WAI — pose guide*), which take the skeleton directly.
 4. Write the prompt: subject, costume, setting, and the base model's quality tail. The prompt is the
    only thing that says who the character is. The negative prompt is prefilled.
-5. Two knobs: **Style weight** (IP-Adapter, default 0.7) and **Pose strength** (ControlNet, default
-   0.9), both 0–2. The variants give quick starting points: *Style lighter, pose looser*, *Style
-   stronger*, *Pose exact*, *3-seed audition*.
+5. Two knobs: **Style weight** (IP-Adapter) and **Pose strength** (ControlNet, default 0.9), both 0–2.
+   The style default is 0.7 on every checkpoint except WAI v17, which defaults to 0.4 since 27 September 2026:
+   a single painterly board burned the colours at 0.7, and 0.45 and 0.3 did not. The variants give quick
+   starting points. On WAI they are *Style lighter (0.3)*, *Style stronger (0.7, multi-picture boards)*,
+   *Pose exact* and *3-seed audition*. The other checkpoints keep *Style lighter, pose looser*, *Style stronger*,
+   *Pose exact* and *3-seed audition*.
 6. Width and Height set the canvas (default 832×1216); neither picture sets the output size.
 7. Generate. The first run in a ComfyUI session loads four model files (checkpoint, CLIP vision, IP-Adapter, ControlNet) and the OpenPose annotators; the proving run
    took 283 s that way. A warm run has not been timed yet.

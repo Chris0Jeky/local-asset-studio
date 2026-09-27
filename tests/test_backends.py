@@ -108,6 +108,21 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(record['excluded_pids'],[2288]);self.assertEqual(record['stopped_pids'],[1111])
         self.assertEqual(manager.operation['launch_reserve']['stopped_pids'],[1111])
 
+    def test_switch_records_impossible_counters_with_the_launch_reserve(self):
+        # Issue #983, owner decision 27 Sep 2026: impossible readings are kept as evidence on the launch record.
+        manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid');manager.profiles['primary']['reserve_vram']='auto'
+        manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
+        launched=MagicMock(pid=4321);launched.poll.return_value=1;adapter='0x00000000_0x000102fb_0'
+        reading={'adapters':{adapter:{2304:{'dedicated_bytes':int(65.9*2**30),'shared_bytes':0},30868:{'dedicated_bytes':812*2**20,'shared_bytes':0}}},
+                 'adapter_totals':{adapter:4*2**30},'unknown_reason':None,'adapter_unknown_reason':None}
+        with patch.object(manager,'available',return_value=True),patch.object(manager,'_idle',return_value=True), \
+             patch.object(manager,'process',return_value=None),patch.object(manager,'configured_processes',return_value=[]), \
+             patch('backends.gpu_memory.read',return_value=reading),patch('backends.subprocess.Popen',return_value=launched):
+            manager._switch('primary')
+        record=manager.snapshot()['last_launch_reserve']
+        self.assertEqual([(row['pid'],row['dedicated_bytes'],row['adapter_total_bytes']) for row in record['anomalies']],[(2304,int(65.9*2**30),4*2**30)])
+        self.assertEqual((record['basis'],record['excluded_pids']),('reconciled',[2304]))
+
     def test_local_uncertain_and_external_queue_each_prevent_switch(self):
         manager=self.studio.backends
         with patch.object(manager,'available',return_value=True),patch.object(manager,'configured_processes',return_value=[]), \

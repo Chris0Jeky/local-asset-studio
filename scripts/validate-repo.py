@@ -89,6 +89,18 @@ for preset in catalog:
             authored=graph[node]['inputs'][field]
             assert isinstance(authored,str) and authored.endswith('.safetensors') and authored==Path(authored).name, (preset['id'],key,authored)
             named_loras.append((preset['id']+' authored '+key,authored))
+# Vary subtle / strong routes (#1202): each resamples the kept picture on the same model, with recorded strengths.
+# A route that carries its source's recorded LoRA stack (`carry`, the WAI route) must use the exact same checkpoint
+# as every source and carry every adapter the source graph can load, adding none of its own.
+import continuation
+vary_problems=continuation.vary_catalog_problems(catalog,lambda preset:json.loads((root/preset['graph']).read_text(encoding='utf-8')))
+assert not vary_problems, vary_problems
+# Make seamless (#1220): one tile route at most, a masked repaint of one picture at the source size.
+tile_problems=continuation.tile_route_problems(catalog)
+assert not tile_problems, tile_problems
+# Parallax layers (#1219): one parallax route at most, a whole-picture edit of one attached picture at a bound size.
+parallax_problems=continuation.parallax_route_problems(catalog)
+assert not parallax_problems, parallax_problems
 kb_path=root/'presets/settings-kb.json'
 if kb_path.is_file():
     kb=json.loads(kb_path.read_text(encoding='utf-8'))

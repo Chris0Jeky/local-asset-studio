@@ -150,5 +150,11 @@
   }
   // Text-only transfer. A compiler profile is NOT proof of executor compatibility.
   function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),recipes:promptRecipes(compilation.recipes||compilation.profile?.recipes),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}
-  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,headroomExplanation,readiness,readinessItems,sceneEligibility,normalizeDraft,promptBlockers,promptTransfer};
+  // #1220 seam band (owner, 27 Sep 2026): the server's measured widths (app/tiles.py band_choices). A width the texture is too
+  // small for stays listed but disabled, and its reason is shown beside the control; a picture that cannot tile offers none.
+  function tileBands(status){const choices=status?.eligible&&Array.isArray(status.band_choices)?status.band_choices:[];
+    return{options:choices.map(c=>({value:String(c.band_px),label:c.name+' ('+c.band_px+' px)',disabled:!c.available,selected:c.band_px===status.band_px})),
+      note:choices.filter(c=>!c.available).map(c=>c.name.charAt(0).toUpperCase()+c.name.slice(1)+': '+c.reason).join(' ')};}
+  function tileBandPx(value){const n=Number(value);return value!==''&&value!=null&&Number.isInteger(n)?n:null;}
+  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,headroomExplanation,readiness,readinessItems,sceneEligibility,normalizeDraft,promptBlockers,promptTransfer,tileBands,tileBandPx};
 });

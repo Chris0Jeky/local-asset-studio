@@ -13,7 +13,8 @@ class OwnerDecisionFactsTests(unittest.TestCase):
     def facts(self, text):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "HUMAN_TODO.md").write_text(text, encoding="utf-8")
+            # Exact bytes: write_text would turn \n into \r\n on Windows and change the blob identity under test.
+            (root / "HUMAN_TODO.md").write_bytes(text.encode("utf-8"))
             return snapshot.human_todo_facts(root)
 
     def test_open_headings_accept_dash_and_current_status_variants(self):
@@ -41,6 +42,24 @@ class OwnerDecisionFactsTests(unittest.TestCase):
             {"id": "asset-wave-1", "text": "Save candidate files"},
             {"id": "asset-plan", "text": "Choose a world"},
         ])
+
+    def test_owner_label_note_may_follow_a_comma(self):
+        text = ("- [ ] **island-trial** (owner action, opened 27 September 2026 by the #907 spike): "
+                "Try the island page\n")
+        self.assertEqual(self.facts(text)["items"], [{"id": "island-trial", "text": "Try the island page"}])
+
+    def test_unreadable_owner_item_is_refused_not_dropped(self):
+        for line in ("- [ ] **island-trial** (owner action) Try it without a colon\n",
+                     "- [ ] **Island_Trial** (owner decision): Identifier outside the grammar\n"):
+            with self.subTest(line=line):
+                with self.assertRaisesRegex(ValueError, "owner item is not in the parsed form"):
+                    self.facts(line)
+        # Other owner labels are not claims of this form and are left alone, as before.
+        self.assertEqual(self.facts("- [ ] **run-it** (owner-run) Try it\n- [ ] **look** (owner review): Look\n")["open_count"], 0)
+
+    def test_live_human_todo_has_no_unreadable_owner_item(self):
+        # Parsing must not raise; an empty backlog (every item answered) is valid.
+        self.assertGreaterEqual(snapshot.human_todo_facts(ROOT)["open_count"], 0)
 
     def test_examples_nested_checklists_and_answered_headings_do_not_count(self):
         for fence in ("```", "~~~~"):

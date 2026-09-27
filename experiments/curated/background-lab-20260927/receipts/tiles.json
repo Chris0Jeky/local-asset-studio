@@ -1,0 +1,41 @@
+[
+ {
+  "key": "floor",
+  "source": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Studio/Z-Image-Fast_00020_.png",
+  "band_px": 112,
+  "denoise": 0.8,
+  "prompt_id": "0444284d-c449-40cb-9446-61a584bc17a0",
+  "exec_s": 162.957,
+  "tile": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/tiles/floor-tile.png",
+  "seam_raw": 18.12,
+  "seam_tile": 2.45,
+  "inner_gradient_raw": 1.46,
+  "inner_gradient_tile": 1.85
+ },
+ {
+  "key": "wall",
+  "source": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Studio/Z-Image-Fast_00021_.png",
+  "band_px": 112,
+  "denoise": 0.8,
+  "prompt_id": "7ded7485-0813-4ccc-9321-b3a3acb15e1d",
+  "exec_s": 183.678,
+  "tile": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/tiles/wall-tile.png",
+  "seam_raw": 4.34,
+  "seam_tile": 0.82,
+  "inner_gradient_raw": 0.87,
+  "inner_gradient_tile": 0.95
+ },
+ {
+  "key": "floor2",
+  "source": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Studio/Z-Image-Fast_00022_.png",
+  "band_px": 160,
+  "denoise": 0.65,
+  "prompt_id": "b87c63ac-ff41-42d1-8dc4-f701dd9ee550",
+  "exec_s": 146.917,
+  "tile": "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/tiles/floor2-tile.png",
+  "seam_raw": 13.53,
+  "seam_tile": 1.61,
+  "inner_gradient_raw": 0.98,
+  "inner_gradient_tile": 1.12
+ }
+]
