@@ -26,7 +26,7 @@ I judged the fifteen pictures blind with `docs/quality/JUDGING-RUBRIC.md`: shuff
 | aimagined | 3.87 | fixable (compass reduced to a lid) / keep / keep |
 | animestyle | 3.72 | keep / fixable (cluttered, ambiguous tongs hand) / fixable (flat poster look) |
 
-The rubric's rule treats means within 0.3 as a tie. On that rule, **zanime, none and elusarca tie**. Only zanime vs animestyle (0.6) clears the bar, and that is still one seed per prompt. The base model already draws cel-shaded anime from this wording, so none of the LoRAs is needed to get an anime look. What the adapters change is the flavour:
+The rubric's rule treats means within 0.3 as a tie. On that rule, zanime ties with none (0.29 apart). zanime clears elusarca by 0.32, aimagined by 0.45 and animestyle by 0.60, but each of those margins is one seed per prompt. none, elusarca and aimagined tie with each other. The base model already draws cel-shaded anime from this wording, so none of the LoRAs is needed to get an anime look. What the adapters change is the flavour:
 
 - zanime: glossier, semi-real
 - animestyle: older flat TV cel look
