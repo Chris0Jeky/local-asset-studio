@@ -1,0 +1,92 @@
+{
+ "p1-A": {
+  "key": "p1-animestyle",
+  "prompt_id": "4453fc04-d3e3-4afb-a580-0670f01f16d4",
+  "sha256": "aadec7b64458e22408a0bc87ec33036700bdeb5f0fa43dca15dae1b2d4f486a9",
+  "file": "Research/lab-20260927/zimage-lora/p1-animestyle_00001_.png"
+ },
+ "p1-B": {
+  "key": "p1-elusarca",
+  "prompt_id": "aee0fe89-7c28-47ba-a786-883740f989ff",
+  "sha256": "05db4fdc70a3769c973f55e8bd2d3843be0542b516deedad4171e7772cb679cf",
+  "file": "Research/lab-20260927/zimage-lora/p1-elusarca_00001_.png"
+ },
+ "p1-C": {
+  "key": "p1-none",
+  "prompt_id": "12f30529-37cd-4468-8b31-931b916c5bbc",
+  "sha256": "fb8f585564a98fd4475dbeafb49000572b1c8bada2f3fb3b4b8eaf041656e291",
+  "file": "Research/lab-20260927/zimage-lora/p1-none_00001_.png"
+ },
+ "p1-D": {
+  "key": "p1-aimagined",
+  "prompt_id": "6aa1f94d-6aa7-4db9-a880-fa88e922a2e7",
+  "sha256": "2af55b0ffda79372a48973f089ec5ddcd954d33ddb011e11d25cfc6a5d22a025",
+  "file": "Research/lab-20260927/zimage-lora/p1-aimagined_00001_.png"
+ },
+ "p1-E": {
+  "key": "p1-zanime",
+  "prompt_id": "860a3113-9069-4830-8950-2c3eb34e210e",
+  "sha256": "50e2ba3d34dc0015ce19f859e2487a1b5a1ccc8f003fd90251cf3cfef15e4ca5",
+  "file": "Research/lab-20260927/zimage-lora/p1-zanime_00001_.png"
+ },
+ "p2-A": {
+  "key": "p2-none",
+  "prompt_id": "2f603b46-c6b2-4813-b441-4e006f84ccf6",
+  "sha256": "ed3ec9c503f298a33bca5187e30103c30f8f2bf425b07d8dc7eaf74ee231a29d",
+  "file": "Research/lab-20260927/zimage-lora/p2-none_00001_.png"
+ },
+ "p2-B": {
+  "key": "p2-animestyle",
+  "prompt_id": "a33a103d-44af-41a6-8a37-3328206ffce1",
+  "sha256": "f097049ef1470790cf43296dc0b980b745cc4e62effc2da27a7f850f6c36a8ff",
+  "file": "Research/lab-20260927/zimage-lora/p2-animestyle_00001_.png"
+ },
+ "p2-C": {
+  "key": "p2-aimagined",
+  "prompt_id": "37dc786e-e19d-45b6-80cf-b5c81406c226",
+  "sha256": "70995ad260e578d87405d2f49fc71ce60a844f5754beb973916761b79fdeac75",
+  "file": "Research/lab-20260927/zimage-lora/p2-aimagined_00001_.png"
+ },
+ "p2-D": {
+  "key": "p2-elusarca",
+  "prompt_id": "7bb49604-fd26-465c-8ce0-1b6a78a6ffa9",
+  "sha256": "342b90a401a7f4afdf4645429eec6c50401d7d3b8a871972fcebaf984df15070",
+  "file": "Research/lab-20260927/zimage-lora/p2-elusarca_00001_.png"
+ },
+ "p2-E": {
+  "key": "p2-zanime",
+  "prompt_id": "934c735f-3d68-417f-aee8-62ef3dd6de59",
+  "sha256": "8ee1507b137c94f0173c651953d27c4c1a06169eaffb84a90a1ab36b43f8c72a",
+  "file": "Research/lab-20260927/zimage-lora/p2-zanime_00001_.png"
+ },
+ "p3-A": {
+  "key": "p3-elusarca",
+  "prompt_id": "db7fd929-9d15-46b0-9594-afdd828a167a",
+  "sha256": "2fbe87fd3a59333591ee689b884ecef3c0f34f29c206e04e49773ddebe8c28a5",
+  "file": "Research/lab-20260927/zimage-lora/p3-elusarca_00001_.png"
+ },
+ "p3-B": {
+  "key": "p3-aimagined",
+  "prompt_id": "e1e0e871-d195-4c6c-a02c-fb520373de04",
+  "sha256": "adaa2b824bf37dc9bfa671b16898939885241bd0ddd90d727c084a120729c84f",
+  "file": "Research/lab-20260927/zimage-lora/p3-aimagined_00001_.png"
+ },
+ "p3-C": {
+  "key": "p3-zanime",
+  "prompt_id": "c2b691c9-7e90-44a7-9e09-6cd068c027e5",
+  "sha256": "b8ee0da81ea6ca2f2ea4a5fb38f96cbc1c6ad338fb2f3dc5508f9a1663138c0c",
+  "file": "Research/lab-20260927/zimage-lora/p3-zanime_00001_.png"
+ },
+ "p3-D": {
+  "key": "p3-none",
+  "prompt_id": "7175b876-72c0-47a5-9b88-c0e86129376c",
+  "sha256": "5844e6c21bd20bf5e1822b65b353634f3f10f91690f7c765e521352feadddd5e",
+  "file": "Research/lab-20260927/zimage-lora/p3-none_00001_.png"
+ },
+ "p3-E": {
+  "key": "p3-animestyle",
+  "prompt_id": "0eea3d4a-8bed-4b4b-b871-051c226c9987",
+  "sha256": "e4bee0169f172dac19cbd33c0cab5aa15c76b477c07e77b0add9991587c4c2ae",
+  "file": "Research/lab-20260927/zimage-lora/p3-animestyle_00001_.png"
+ }
+}
