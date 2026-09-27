@@ -1,5 +1,26 @@
 # UX use-case matrix
 
+## Split a scene into parallax layers — 27 September 2026
+
+Refs #1219 (owner decision, 27 September 2026). A picture's asset panel now has a **Make parallax layers** control. It is
+disabled, with its reason beside it, for a picture outside 512-2048 px a side, off the 16 px grid or above 1.6 megapixels
+(*this picture is 128 × 128.*), and until the foreground is named (*Name the foreground to lift out first*). The far view is
+optional and yours: type boxes as `x0,y0,x1,y1`, or open *Mark the far view on the picture* and drag them inside the window
+glass or sky; no box gives two layers (mid and near). One press attaches the picture unchanged and opens *Parallax layers •
+Klein clean plate and isolate* at the picture's own size with the clean-plate words (*Remove <foreground>, leaving the space
+behind them empty…*) and the picture as the recorded parent. Generate stays your press. After it, Create loads the isolate
+words (*Replace everything except <foreground> with a plain pure white background…*); that is a second Generate. When both
+edits are in, the Studio registers them to the picture, splits the layers and records **far / mid / near** RGBA assets and a
+**3-frame parallax strip**, each with the recomposite error in its details. A completed edit whose other stage is missing
+shows **Load the isolate edit** (or the clean plate) on its card; both in but not split shows **Split layers**.
+
+`python tests/studio_use_cases.py` passed **20/20** journeys with **zero generation submissions and zero page errors**. The
+new `split-a-scene-into-parallax-layers` journey opens a 128 px picture and reads the disabled control and its size, opens a
+1344 × 768 scene, reads the name-the-foreground reason, types the foreground, drags one far view box on the picture and
+presses *Make parallax layers*: the parallax recipe is loaded with the picture attached at 1344 × 768, the plate words, the
+scene as source and parent, and a status that names Generate as the next press. It takes 5 clicks (one drag) and 161
+instruction words. Live mode stops before the press, which stores an upload. These are fixture screens; no model ran.
+
 ## Make seamless from a library texture — 27 September 2026
 
 Refs #1220 (owner decision, 27 September 2026). A picture's asset panel now has a **Make seamless** control, flagged

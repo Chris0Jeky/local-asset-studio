@@ -210,7 +210,8 @@ DENY_LABELS = re.compile(
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
 DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-review', 'data-asset-favorite', 'data-bulk',
               'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'data-ux-check', 'data-candidate-check', 'download',
-              'data-ux-tile')   # Make seamless stores a rolled seam cross as an upload (#1220)
+              'data-ux-tile',   # Make seamless stores a rolled seam cross as an upload (#1220)
+              'data-ux-parallax')   # Make parallax layers attaches the picture as an upload (#1219)
 
 # Controls whose press only changes this page, or reads, or validates without storing anything. Keyed by
 # the selector with attribute values stripped (see control_kind). The label heuristic misfires on them —
@@ -290,6 +291,7 @@ def build_handler():
     from studio_prompt.http_extension import extend_handler
     from test_server import server
     import tiles   # app/ is on sys.path once server.py is loaded; a bare name, never `from app import`
+    import parallax
     from PIL import Image
 
     def tile_status(asset):
@@ -297,6 +299,12 @@ def build_handler():
         reason = tiles.eligibility(width, height)
         return {'asset_id': asset['id'], 'width': width, 'height': height, 'eligible': reason is None, 'reason': reason,
                 'flag': tiles.FLAT_ONLY, 'preset_id': 'zimage-seam-repair', 'band_px': tiles.BAND}
+
+    def parallax_status(asset):
+        with Image.open(ROOT / asset['url'].lstrip('/')) as picture: width, height = picture.size
+        reason = parallax.eligibility(width, height)
+        return {'asset_id': asset['id'], 'width': width, 'height': height, 'eligible': reason is None, 'reason': reason,
+                'flag': parallax.FLAG, 'preset_id': 'parallax-edit', 'max_views': parallax.MAX_VIEWS}
 
     info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
     schema = catalog(info, 'primary')
@@ -352,6 +360,9 @@ def build_handler():
                 return self.json({'document': dict(document, source={'preset_id': path.rsplit('/', 1)[-1], 'authoring_only': True}), 'generation_submitted': False})
             if path == '/api/health':
                 return self.json({'online': True, 'worker_alive': True, 'schema_available': True, 'missing_models': {}, 'devices': [], 'comfy_url': 'fixture://none'})
+            if path.startswith('/api/parallax/source/'):
+                asset = next((a for a in fixture.ASSETS if a['id'] == path.rsplit('/', 1)[-1]), None)
+                return self.json(parallax_status(asset)) if asset else self.json({'error': 'Asset not found'}, 400)
             if path.startswith('/api/tiles/source/'):
                 asset = next((a for a in fixture.ASSETS if a['id'] == path.rsplit('/', 1)[-1]), None)
                 return self.json(tile_status(asset)) if asset else self.json({'error': 'Asset not found'}, 400)
@@ -398,6 +409,19 @@ def build_handler():
                 return self.json({'plan': plan, 'file': file, 'sha256': 'd' * 64, 'width': size, 'height': size, 'preset_id': 'zimage-seam-repair',
                                   'context': fixture.source_context(asset), 'flag': tiles.FLAT_ONLY, 'seam_source': 4.34,
                                   'inner_gradient_source': 0.87, 'generation_submitted': False}, 201)
+            if path == '/api/parallax/prepare':
+                # The same body app/parallax.py accepts, answered with its own plan shape and words; nothing is queued.
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                asset = next((a for a in fixture.ASSETS if isinstance(data, dict) and a['id'] == data.get('asset_id')), None)
+                if asset is None or set(data) - {'asset_id', 'objects', 'view'}: return self.json({'error': 'Unknown fixture asset'}, 400)
+                status = parallax_status(asset)
+                if not status['eligible']: return self.json({'error': status['reason']}, 400)
+                try: objects, view = parallax._objects(data.get('objects')), parallax._polygons(data.get('view'), status['width'], status['height'])
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                plan = {'version': parallax.VERSION, 'preset_id': 'parallax-edit', 'source_asset_id': asset['id'], 'source_sha256': asset['sha256'],
+                        'source_file': 'f' * 32 + '_' + asset['filename'], 'width': status['width'], 'height': status['height'], 'objects': objects, 'view_polygons': view}
+                plan['plan_id'] = parallax.plan_id(plan)
+                return self.json(parallax.stage_payload(plan, 'plate', fixture.source_context(asset)), 201)
             if path == '/api/recipe-check':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
                 preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == data['preset_id'])
@@ -1293,6 +1317,66 @@ def _tile(c):
     flagged = offered.startswith('enabled: ') and 'Flat textures only' in offered
     return prepared and disabled and flagged and not submitted, 'prepared: %s; wide picture: %s; square picture: %s; generation posts: %d' % (
         {k: state[k] for k in ('preset', 'tile', 'parents')}, why or 'no Make seamless control', offered or 'no Make seamless control', len(submitted))
+
+
+PARALLAX_STATE = """() => ({preset: selected.id, parents: parentAssets, stage: (parallaxPayload().parallax || {}).stage || null,
+  source: (parallaxPayload().parallax || {}).source_asset_id || null, view: (parallaxPayload().parallax || {}).view_polygons || null,
+  reference: uploaded, positive: document.querySelector('#positive').value, width: getControl('width')?.value, height: getControl('height')?.value,
+  notice: document.querySelector('#uxNotice').textContent, hint: document.querySelector('#referenceHint').textContent})"""
+WHY_PARALLAX = """(() => { const b = document.querySelector('#assetDialog .ux-parallax [data-ux-parallax]');
+  return b ? (b.disabled ? 'disabled: ' : 'enabled: ') + document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()"""
+PARALLAX_OBJECTS = 'the lantern keeper and the lantern'
+
+
+@driver('split-a-scene-into-parallax-layers')
+def _parallax(c):
+    """#1219: Make parallax layers on a library picture: disabled with its reason for a picture that is too small; for a wide
+    scene, name the foreground, drag the far view on the picture, and one press loads the clean-plate edit. Both Generates
+    stay the owner's presses."""
+    import studio_browser_smoke as fixture
+    import parallax   # bare name: app/ is on sys.path once the fixture server has loaded
+    c.need_recipe('parallax-edit')
+    c.boot('#assets')
+    c.page.wait_for_timeout(600)
+    small = c.pick('asset-2', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % small, note='open a small picture')
+    c.page.wait_for_timeout(500)
+    c.act('#assetDialog .ux-parallax [data-ux-parallax]', 'read', note='Make parallax layers and why it is not offered')
+    why = c.page.evaluate(WHY_PARALLAX)
+    c.act('#closeAssetDialog', navigation=True, note='close the small picture', supplementary=True)
+    wide = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % wide, note='open a wide scene')
+    c.page.wait_for_timeout(500)
+    waiting = c.page.evaluate(WHY_PARALLAX)
+    c.act('#uxParallaxObjects', 'fill', typed=PARALLAX_OBJECTS, note='name the foreground to lift out')
+    c.act('#assetDialog .ux-parallax-mark > summary', note='open the picture to mark the far view', supplementary=True)
+    c.page.wait_for_timeout(300)
+    drawn = ''
+    try:   # a drag only writes the view field on this page; nothing is stored
+        box = c.page.locator('#assetDialog .ux-parallax-pick img').bounding_box()
+        c.page.mouse.move(box['x'] + box['width'] * 0.70, box['y'] + box['height'] * 0.08); c.page.mouse.down()
+        c.page.mouse.move(box['x'] + box['width'] * 0.95, box['y'] + box['height'] * 0.45, steps=6); c.page.mouse.up()
+        c.page.wait_for_timeout(200); drawn = c.page.evaluate("document.querySelector('#uxParallaxView').value")
+    except Exception as error: drawn = 'drag failed: ' + str(error)[:120]
+    c.act('#uxParallaxView', 'read', note='the dragged far view box: ' + drawn)
+    offered = c.page.evaluate(WHY_PARALLAX)
+    c.stop_before(c.act('#assetDialog [data-ux-parallax]', note='prepares the clean-plate edit'), 'stopped before preparing: Make parallax layers attaches the picture as an upload')
+    c.page.wait_for_timeout(800)
+    state = c.page.evaluate(PARALLAX_STATE)
+    c.act('#uxNotice', 'read', note=state['notice'][:200])
+    c.act('#referenceHint', 'read', note='stage %s, source %s, parents %s, %s x %s' % (state['stage'], state['source'], state['parents'], state['width'], state['height']))
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    submitted = [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+    boxes = [[int(v) for v in part.split(',')] for part in drawn.split(';') if part.strip()] if drawn and not drawn.startswith('drag') else []
+    prepared = (state['preset'] == 'parallax-edit' and state['stage'] == 'plate' and state['source'] == wide and state['parents'] == [wide]
+                and state['reference'] == 'f' * 32 + '_forest-hero.png' and (state['width'], state['height']) == ('1344', '768')
+                and state['positive'] == parallax.words('plate', PARALLAX_OBJECTS) and len(state['view'] or []) == 1
+                and 'Press Generate' in state['notice'] and 'edit 1 of 2, the clean plate' in state['hint'])
+    disabled = why.startswith('disabled: ') and '128 × 128' in why
+    guided = waiting.startswith('disabled: ') and 'Name the foreground' in waiting and offered.startswith('enabled: ') and 'not detected' in offered
+    marked = len(boxes) == 1 and boxes[0][0] > 800 and boxes[0][2] > boxes[0][0] + 100
+    return prepared and disabled and guided and marked and not submitted, 'prepared: %s; small picture: %s; before naming: %s; view: %s; generation posts: %d' % (
+        {k: state[k] for k in ('preset', 'stage', 'source', 'parents', 'view')}, why or 'no control', waiting or 'no control', drawn or 'none', len(submitted))
 
 
 LOOK_SCENE = ('a small rooftop garden at night; at the right edge a rusty water tank and a warm amber lamp over a door, '
