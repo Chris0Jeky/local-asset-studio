@@ -386,7 +386,7 @@ class ServerTests(unittest.TestCase):
         # /api/estimate is advisory and answers 200 {available: false}; every other route refuses.
         routes=('/api/gpu-lease','/api/gpu-lease/release','/api/jobs','/api/backends/switch','/api/articulated','/api/preview',
                 '/api/av','/api/voice-baseline','/api/av/'+project,'/api/production','/api/production/campaigns','/api/production-export',
-                '/api/experiments/plan','/api/production/%s/stop'%project,'/api/production/%s/extend-time'%project,'/api/production/%s/review'%project,
+                '/api/experiments/plan','/api/production/%s/stop'%project,'/api/production/%s/extend-time'%project,'/api/production/%s/review'%project,'/api/production/%s/put-away'%project,
                 '/api/references/check','/api/assets/update','/api/collections','/api/setups','/api/assets/reference','/api/assets/export',
                 '/api/recipe-check','/api/folders/open','/api/models/install','/api/workflow-inspect','/api/jobs/missing/resume',
                 '/api/jobs/missing/observe-known','/api/jobs/missing/dispose-mixed','/api/jobs/missing/abandon','/api/jobs/missing/stop-tracking',

@@ -216,6 +216,20 @@ let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{a
         desk = self.load_desk('[{id:"old",name:"Only old",kind:"comparison",created_at:Date.now()/1000-9*86400,state:{status:"planned"}}]', '[]')
         self.assertIn('A clear desk', desk); self.assertIn('1 plan(s) untouched for 7 days', desk)
 
+    def test_desk_hides_put_away_plans_and_counts_them(self):
+        # #940: an owner put-away plan leaves the desk; Runs & review with Status: All statuses brings it back.
+        now = 'Date.now()/1000'
+        desk = self.load_desk('[{id:"away",name:"Put away review",kind:"comparison",created_at:'+now+'-3600,put_away:true,state:{status:"awaiting_review"}},'
+            '{id:"kept",name:"Kept review",kind:"comparison",created_at:'+now+'-3600,state:{status:"awaiting_review"}}]', '[]')
+        self.assertIn('Kept review', desk); self.assertNotIn('Put away review', desk)
+        self.assertIn('1 plan(s) put away', desk)
+        # A put-away plan that was never on the desk (completed, reviewed) is still counted, so none vanishes silently.
+        desk = self.load_desk('[{id:"done",name:"Reviewed study",kind:"comparison",created_at:'+now+'-3600,put_away:true,state:{status:"reviewed"}},'
+            '{id:"exp",name:"Finished export",kind:"native",created_at:'+now+'-3600,put_away:true,state:{status:"completed"}}]', '[]')
+        self.assertIn('2 plan(s) put away', desk); self.assertEqual(self.page.locator('#uxAttention .ux-desk-note a[href="/#production"]').count(), 1)
+        desk = self.load_desk('[{id:"kept",name:"Kept review",kind:"comparison",created_at:'+now+'-3600,state:{status:"awaiting_review"}}]', '[]')
+        self.assertNotIn('put away', desk)
+
     def test_desk_job_rows_say_what_each_state_needs(self):
         desk = self.load_desk('[]', '[{id:"f",preset_name:"Failed run",status:"failed"},{id:"u",preset_name:"Unknown run",status:"uncertain"},{id:"r",preset_name:"Live run",status:"running"}]')
         self.assertIn('failed · see why, then put it away', desk)
