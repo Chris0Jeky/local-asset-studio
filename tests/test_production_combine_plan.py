@@ -187,6 +187,14 @@ class CombinePlanTests(unittest.TestCase):
         bundle = self.studio.production.get(project["id"], full=True)["plan"]["bundle"]
         self.assertEqual(bundle["node_classes"], ["A", "B"]); self.assertNotEqual(bundle["schema_sha256"], "x")
 
+    def test_the_plan_records_every_engines_terms_note_once(self):
+        preflight = lambda s, preset, graph: {"comfy_url": s.comfy_url, "comfy_root": str(s.comfy_root), "terms_note": preset.get("commercial_note")}
+        with patch.object(server.Studio, "production_preflight", preflight):
+            project = self.studio.production.create(self.intent(engines=["combine-klein", "combine-klein-9b-depth", "combine-klein-9b-copypose"], seeds=[1, 2]))
+        note = self.studio.production.get(project["id"], full=True)["plan"]["bundle"]["terms_note"]
+        notes = {self.presets[e]["commercial_note"] for e in ("combine-klein", "combine-klein-9b-depth", "combine-klein-9b-copypose")}
+        self.assertEqual(sorted(note.split("\n\n")), sorted(notes), "each engine's terms recorded once, whatever the stage order")
+
     def test_start_runs_every_stage_on_the_one_worker_and_an_uncertain_stage_is_never_resubmitted(self):
         project = self.studio.production.create(self.intent(engines=["combine-klein-9b-depth", "combine-klein"], seeds=[11]))
         studio = self.fresh([IDLE, {"prompt_id": "depth-11"}, {"depth-11": {"status": {"status_str": "success"}, "outputs": {}}}, *SWAP, URLError("lost POST response")])

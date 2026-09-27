@@ -368,6 +368,9 @@ class Production:
                 for key in ('models','inputs'):
                     seen={json.dumps(e,sort_keys=True) for e in bundle.get(key,[])}
                     bundle[key]=bundle.get(key,[])+[e for e in stage_bundle.get(key,[]) if json.dumps(e,sort_keys=True) not in seen]
+                # Different recipes carry different terms: record every stage's note, never only the first stage's.
+                note=stage_bundle.get('terms_note')
+                if note and note not in (bundle.get('terms_note') or '').split('\n\n'):bundle['terms_note']=((bundle.get('terms_note') or '')+'\n\n'+note).strip()
                 # Different recipes load different nodes: the pinned schema covers every class any stage uses.
                 extra=set(stage_bundle.get('node_classes') or [])-set(bundle.get('node_classes') or [])
                 if extra:
