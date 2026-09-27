@@ -1,0 +1,44 @@
+{
+ "wall": {
+  "tile_asset": "67c808bd810c5559830be7f1bbf8df12",
+  "tile_sha256": "50b06b3d3f2ccd198a3394611346e3f4a7cb92479f9005089aef4336428550ea",
+  "tile_size": [
+   1024,
+   1024
+  ],
+  "preview_asset": "0f4e49192415521d8b161119eecd5c2d",
+  "preview_sha256": "1bb1ee965a02de17a017be42ee8494527c8a0835472d26266834478c0d9782df",
+  "preview_size": [
+   1536,
+   1536
+  ]
+ },
+ "floor": {
+  "tile_asset": "84eb33a810a15d2fb2dce3c0a26ecc44",
+  "tile_sha256": "15bead4d2864cc4b5ba7815a3aed1fe703d5e72e7f10d034cf2e6c89b33a9ae3",
+  "tile_size": [
+   1024,
+   1024
+  ],
+  "preview_asset": "9f546d909998565ba01d63860ccae645",
+  "preview_sha256": "7ec281427d91a9435acaf137aef8afcbc8f737107e9f31205d20b6e50ab960e5",
+  "preview_size": [
+   1536,
+   1536
+  ]
+ },
+ "floor-band160": {
+  "tile_asset": "a4158f9f722350ada20d573966cbf810",
+  "tile_sha256": "834434c437b295b510e545c4063f50aef3c305f0eec5c8b724d7a7de4039efde",
+  "tile_size": [
+   1024,
+   1024
+  ],
+  "preview_asset": "e84e7a975a0d53ad9e46bd26aecfa885",
+  "preview_sha256": "af58e234bbe8f7358c1377cfb28a645c82fea8104a9e590c947af603ba790da9",
+  "preview_size": [
+   1536,
+   1536
+  ]
+ }
+}

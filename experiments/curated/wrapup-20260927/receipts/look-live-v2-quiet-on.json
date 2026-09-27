@@ -1,0 +1,122 @@
+{
+ "scene": "a rain-soaked arcade entrance on a narrow street at night; at the right edge a glowing vending machine beside the entrance",
+ "events": [
+  {
+   "t": 1790547350.282,
+   "kind": "looks",
+   "options": [
+    [
+     "",
+     "Choose a look\u2026"
+    ],
+    [
+     "look-night-shift-retro-anime",
+     "Night Shift (retro anime) \u00b7 on Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)"
+    ]
+   ]
+  },
+  {
+   "t": 1790547351.355,
+   "kind": "option",
+   "present": 1,
+   "default_checked": false
+  },
+  {
+   "t": 1790547351.736,
+   "kind": "before_prepare",
+   "summary": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU) \u00b7 anchor retro-anime-master-z2 (in your Workspace) \u00b7 shipped look",
+   "reason": "",
+   "placeholder": "e.g. a narrow late-night apartment corridor; at the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line, with a small wooden bench, a warm amber wall lamp and the soft cyan glow of a vending machine"
+  },
+  {
+   "t": 1790547354.81,
+   "kind": "prepared",
+   "status": "Night Shift (retro anime) prepared on Z-Image Turbo \u2022 fast (fp8, text encoder on CPU) (recipe switched), seed 2026092752, 1344x768, with: Keep the quiet wall for UI backgrounds. Your scene is in the wording. Nothing was generated; press Generate when it reads right.",
+   "selected": "zimage-fast",
+   "positive": "No people. Hand-painted anime film background of a rain-soaked arcade entrance on a narrow street at night; at the right edge a glowing vending machine beside the entrance. The left half and centre of the frame is a plain dark graphite wall, softly lit, almost empty and low in detail. Faint rose and cyan reflections on the wet surfaces, muted graphite palette with small amber accents. Nobody in the picture. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+   "seed": "2026092752",
+   "size": [
+    "1344",
+    "768"
+   ]
+  },
+  {
+   "t": 1790547355.745,
+   "kind": "commit_before_generate",
+   "commit_gib": 59.7,
+   "limit_gib": 95.7,
+   "pct": 62.4,
+   "phys_avail_gib": 9.3
+  },
+  {
+   "t": 1790547359.882,
+   "kind": "generated",
+   "new": [
+    [
+     "0ef89646-b99d-4fec-a1cd-4d1544c34059",
+     "zimage-fast",
+     1,
+     "running"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790547355.788,
+     "/api/jobs"
+    ]
+   ],
+   "dialogs": []
+  }
+ ],
+ "job_id": "0ef89646-b99d-4fec-a1cd-4d1544c34059",
+ "preset": "zimage-fast",
+ "status": "completed",
+ "prompt_ids": [
+  "f0aaf8a3-a922-44ba-9b80-41a26cc5c3d5"
+ ],
+ "elapsed_seconds": 151.8738396167755,
+ "controls": {
+  "positive": "No people. Hand-painted anime film background of a rain-soaked arcade entrance on a narrow street at night; at the right edge a glowing vending machine beside the entrance. The left half and centre of the frame is a plain dark graphite wall, softly lit, almost empty and low in detail. Faint rose and cyan reflections on the wet surfaces, muted graphite palette with small amber accents. Nobody in the picture. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+  "seed": "2026092752",
+  "steps": "8",
+  "cfg": "1",
+  "width": "1344",
+  "height": "768",
+  "denoise": "1"
+ },
+ "outputs": [
+  {
+   "filename": "Z-Image-Fast_00029_.png",
+   "subfolder": "Studio",
+   "seed": 2026092752,
+   "asset_id": "ee54c563bb2e51ce99fabfbb12b2b5d3"
+  }
+ ],
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790547345.725,
+   "/api/estimate"
+  ],
+  [
+   1790547346.889,
+   "/api/estimate"
+  ],
+  [
+   1790547351.781,
+   "/api/looks/prepare"
+  ],
+  [
+   1790547352.091,
+   "/api/estimate"
+  ],
+  [
+   1790547355.788,
+   "/api/jobs"
+  ],
+  [
+   1790547356.213,
+   "/api/estimate"
+  ]
+ ]
+}

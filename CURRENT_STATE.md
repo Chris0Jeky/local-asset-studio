@@ -1,12 +1,22 @@
 # Current state — 27 September 2026
 
+## Wrap-up proofs: the wide seam band, the loosened Night Shift look, WAI Vary — 27 September 2026 (23:05-23:22 local)
+
+These ran through the page after #1236 and #1240 merged.
+- **Make seamless, wide band (#1220):** the floor with the wide 160 px band scored 13.53 → 2.17, against its own gradient of 1.22 (the narrow band gave 1.93). The plank-end row is softer but still repeats.
+- **Loosened Night Shift look (#1221):** on the arcade scene with the quiet-wall box off (2 seeds), the entrance reads as glass doors under an awning, no longer a shutter. With the box on, it returns to a plain wall.
+- **WAI Vary (#1202):** subtle made 2 pictures in 69.7 s; strong made 4 in 77.6 s. Both carried the parent's noirpopwave LoRA and sampler. `validate-live` passes and `wai-vary` is now verified; its strengths stay starting values.
+- **Qwen-Image 2.1 FP8 downloads (#1028):** stopped unfinished, with the partial files kept. The resume commands are in the README.
+
+Evidence: `experiments/curated/wrapup-20260927/`. The owner judges the sheets (HUMAN_TODO `seamless-tiles-1220`, `wai-vary-look-1202`); agent pre-review only.
+
 ## Qwen-Image 2.1 lanes: GGUF Q4 and the w4a8 text encoder — 27 September 2026 (21:55-22:37 local)
 
 All runs were on the qwen21 backend (refs #1028).
 - **unsloth Q4_K_M GGUF:** does not load in ComfyUI-GGUF 6ea2651e ("Unknown model architecture"). It needs the unmerged city96/ComfyUI-GGUF#483; parked.
 - **realrebelai Q4 GGUF:** loads, with quality level with B0, but runs at about 1.6 s/it against 1.5 it/s, so it is about 1.4× slower. F1 fails.
 - **Comfy-Org w4a8 text encoder:** the same time as B0 (73.9 against 73.7 s). Blind, 4 of 4 keep against 2 of 4: no pseudo-lettering on the prop, on 2 seeds. A lead that needs more seeds and text-heavy prompts, not a pin.
-- The three downloads are SHA-verified and pinned in `models/library.json`. The FP8 lanes are still downloading.
+- The three downloads are SHA-verified and pinned in `models/library.json`. The FP8 downloads were stopped unfinished (see the wrap-up above).
 
 Evidence: `experiments/curated/qi21-lanes-20260927/`. Agent-judged only.
 

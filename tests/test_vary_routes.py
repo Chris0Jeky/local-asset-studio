@@ -49,7 +49,8 @@ class ShippedVaryRoutes(unittest.TestCase):
             self.assertEqual(continuation._models(graph_of(route)), continuation._models(graph_of(source)), source_id)
             for slot in ("lora", "lora2"): self.assertIn(slot, source)
         self.assertEqual(continuation.capability(route, graph_of(route))["operation"], "image-to-image")
-        self.assertFalse(route["verified"])
+        # verified only with a recorded proving run (the 27 Sep 2026 live proof through the page, #1202)
+        if route["verified"]: self.assertIn("Executed", route.get("execution_note", ""))
         # Started at the SDXL owner values, still a starting value until a GPU proof and the owner's look at WAI pictures.
         self.assertEqual(route["vary"]["status"], "starting-value")
         self.assertEqual((route["vary"]["subtle"]["controls"], route["vary"]["strong"]["controls"]), ({"denoise": 0.5}, {"denoise": 0.7}))
