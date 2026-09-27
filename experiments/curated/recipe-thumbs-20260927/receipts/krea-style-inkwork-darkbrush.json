@@ -1,0 +1,43 @@
+{
+ "recipe_id": "krea-style-inkwork-darkbrush",
+ "recipe_preset_id": "krea-style-lab",
+ "job_id": "3f50f74f-56a9-454f-a9c8-d71cd14bbc47",
+ "prompt_id": "21ab8b19-00cb-4030-acce-164a59c758a8",
+ "wall_seconds": 377.5,
+ "host_commit_percent_start": 70.8,
+ "host_commit_percent_peak": 82.5,
+ "output": "Studio/krea-anime-atelier-gguf_00009_.png",
+ "output_size": [
+  1024,
+  1024
+ ],
+ "output_sha256": "8b5a4c5d51571d5919c2e8dc428c84466414544af055976ee3e63b0af28d2843",
+ "thumbnail": "examples/recipe-thumbs-20260927/krea-style-inkwork-darkbrush.jpg",
+ "thumbnail_sha256": "f0af93a4f544a32d7b69c4cb905b1d0a00ee7a833e26553b8f4adb7e8e7240ae",
+ "finished_local": "2026-09-27 04:51:07.837771",
+ "inspection": "Gothic arch and broken roof with light rays, ivy in heavy dry-brush ink, clean monochrome; no figures.",
+ "studio_recipe": {
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "A ruined chapel reclaimed by ivy, light rays through a broken roof, monochrome ink, monochrome ink wash style, detailed manga inkwork style",
+   "steps": 8,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "width": 1024,
+   "height": 1024,
+   "seed": 20260922,
+   "lora_name": "fal-krea2-detailed-manga-inkwork.safetensors",
+   "lora": 1.0,
+   "lora2_name": "krea2_darkbrush.safetensors",
+   "lora2": 0.6,
+   "lora3": 0,
+   "lora4": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790480690.401467,
+  "references": [],
+  "parent_assets": []
+ }
+}

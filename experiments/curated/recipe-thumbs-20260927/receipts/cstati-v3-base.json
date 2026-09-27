@@ -1,0 +1,41 @@
+{
+ "recipe_id": "cstati-v3-base",
+ "recipe_preset_id": "cstati-v3-baseline",
+ "job_id": "65a9efbc-0f08-4934-a08f-f55572f47371",
+ "prompt_id": "974683b6-c5b7-456e-96e9-af982dc4fd77",
+ "wall_seconds": 41.1,
+ "host_commit_percent_start": 61.0,
+ "host_commit_percent_peak": 73.9,
+ "output": "Studio/CSTati-v3-Baseline_00007_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "8afea6c3d38f58bd4ad538ce2a0f3d50c40954417ea35bead837e63c317228a6",
+ "thumbnail": "examples/recipe-thumbs-20260927/cstati-v3-base.jpg",
+ "thumbnail_sha256": "ea70b11dfad1b018092e49cecee76c5cc39f71e9af5ad2e1be46505f252042b0",
+ "finished_local": "2026-09-27 04:10:02.470273",
+ "inspection": "Beige coat, cream top, dark trousers and knee boots under teal arches; cool palette.",
+ "studio_recipe": {
+  "preset_id": "cstati-v3-baseline",
+  "controls": {
+   "positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026091301,
+   "steps": 30,
+   "cfg": 4,
+   "sampler": "euler_ancestral",
+   "scheduler": "karras",
+   "denoise": 1.0,
+   "lora": 0,
+   "lora2": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\cstati-v3-baseline-api.json",
+  "created_at": 1790478561.4351523,
+  "references": [],
+  "parent_assets": []
+ }
+}

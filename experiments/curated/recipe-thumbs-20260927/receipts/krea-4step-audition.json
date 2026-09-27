@@ -1,0 +1,44 @@
+{
+ "recipe_id": "krea-4step-audition",
+ "recipe_preset_id": "krea-anime-atelier",
+ "job_id": "6f52b4f7-d08d-4831-957a-2187bf131620",
+ "prompt_id": "a3238714-bb0e-4783-addf-4dcf2ad62f7d",
+ "wall_seconds": 255.9,
+ "host_commit_percent_start": 60.5,
+ "host_commit_percent_peak": 76.4,
+ "output": "Studio/krea-anime-atelier-gguf_00004_.png",
+ "output_size": [
+  512,
+  768
+ ],
+ "output_sha256": "67847cdf68da57093a0586a20a4537c8d2a76b2ef4e45ea4fccfae012811c40f",
+ "thumbnail": "examples/recipe-thumbs-20260927/krea-4step-audition.jpg",
+ "thumbnail_sha256": "5b06cb0c73a60b1c142e529c9d60de17a48dd65839e53387cbf8f0a4fe7e4c8d",
+ "finished_local": "2026-09-27 04:25:51.566676",
+ "inspection": "Dark-haired figure reading a map in spray at blue hour; the map lines are illegible scribbles, not text; small audition size.",
+ "studio_recipe": {
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "@NJSW33T, a young cartographer at a cliffside village above the sea, blue hour light, sea spray in the air, upper body, storm grey and pale blue palette, anime illustration",
+   "steps": 4,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "width": 512,
+   "height": 768,
+   "seed": 20260915,
+   "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+   "lora": 1.0,
+   "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+   "lora2": 1.0,
+   "lora3": 0,
+   "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+   "lora4": 0.85
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790479295.763378,
+  "references": [],
+  "parent_assets": []
+ }
+}
