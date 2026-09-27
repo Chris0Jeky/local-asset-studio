@@ -86,6 +86,33 @@
   after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();dismissSecondPicture();syncCreate();renderDraftNotice();});
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
+  // #1100: a recipe switch still loads that recipe's wording, but wording you wrote gets one explicit way back until you type,
+  // dismiss or put it back (reversible choice; nothing is carried over silently, nothing is sent).
+  const wordingUndo=element('div','ux-wording-undo');wordingUndo.id='uxWordingUndo';wordingUndo.hidden=true;wordingUndo.setAttribute('role','status');
+  const wordingText=element('span'),wordingRestore=element('button','','Put my wording back'),wordingDismiss=element('button','subtle','Keep the recipe wording');
+  wordingRestore.type=wordingDismiss.type='button';wordingRestore.id='uxWordingUndoRestore';wordingDismiss.id='uxWordingUndoDismiss';wordingUndo.append(wordingText,wordingRestore,wordingDismiss);
+  q('#positiveWrap')?.after(wordingUndo);let wordingKept=null;
+  const forgetWording=()=>{wordingKept=null;wordingUndo.hidden=true;};
+  const ownWording=(value,preset,key)=>!!String(value||'').trim()&&value!==(preset?.defaults?.[key]||'');
+  const selectKeepingWording=selectPreset;selectPreset=function(id,reset=true,transition=false){
+    const from=selected,positive=q('#positive')?.value,negative=q('#negative')?.value;
+    const result=selectKeepingWording.apply(this,arguments);
+    if(transition||!from){forgetWording();return result;}
+    // Wording you wrote replaces an older offer; a switch away from untouched example wording keeps the older one (a misclick in between).
+    if(ownWording(positive,from,'positive')||ownWording(negative,from,'negative'))wordingKept={positive:ownWording(positive,from,'positive')?positive:null,negative:ownWording(negative,from,'negative')?negative:null};
+    // Measured after the caller finishes (applyRecipe may set its own wording in the same task).
+    if(wordingKept)queueMicrotask(()=>{if(!wordingKept||!selected)return;const kept=wordingKept;
+      const differs=kept.positive!==null&&kept.positive!==q('#positive').value||kept.negative!==null&&!!selected.negative&&kept.negative!==q('#negative').value;
+      if(!differs){forgetWording();return;}
+      wordingText.textContent=(from.id===selected.id?'Reloading ':'Switching to ')+selected.name+' loaded its own wording. Yours is kept until you type or choose.';wordingUndo.hidden=false;
+      if(!selected.runtime_block)message('Recipe loaded with its own wording. Yours is kept under the prompt: Put my wording back, or keep typing.');});
+    return result;};
+  wordingRestore.onclick=()=>{const kept=wordingKept;forgetWording();if(!kept||!selected)return;const field=q('#positive');
+    if(kept.positive!==null){field.value=kept.positive;field.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(kept.negative!==null&&selected.negative){q('#negative').value=kept.negative;q('#negative').dispatchEvent(new Event('input',{bubbles:true}));}
+    field.focus();announce('Your wording is back. The recipe stays '+selected.name+'.');};
+  wordingDismiss.onclick=()=>{forgetWording();q('#positive')?.focus();};
+  for(const id of ['positive','negative'])q('#'+id)?.addEventListener('input',e=>{if(e.isTrusted)forgetWording();});
   after('renderSelected',syncCreate);after('updateReady',syncReady);
   const originalUploadRoleFile=uploadRoleFile;uploadRoleFile=async function(...args){const epoch=referenceEpoch,applied=await originalUploadRoleFile(...args);if(applied&&epoch===referenceEpoch){draftDirty=true;saveDraft();}return applied;};
   // Collapse six overlapping output actions into one reviewed, compatible handoff.
