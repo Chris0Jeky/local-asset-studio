@@ -86,6 +86,60 @@ let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{a
         self.assertIn('A clear desk', desk); self.assertIn('2 run(s) put away', desk)
         self.assertEqual(self.page.locator('#uxAttention a[href="/#create"]').count(), 2)
 
+    def load_output_review(self, fail=False):
+        card = region(source('app.js'), 'function mediaCard(', 'function renderCompare(')
+        render = region(source('app.js'), 'const RECENT_STEP=', 'async function refreshJobs')
+        self.page.goto('about:blank')
+        self.page.set_content('''<p id="status"></p><input id="elsewhere"><div id="gallery"></div><div id="jobProblemsHost"></div><script>
+const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let jobs=[{id:'job-1',preset_name:'Lantern',status:'completed',controls:{positive:'a lantern',seed:7},outputs:[{asset_id:'asset-"1',media_type:'image',seed:7},{media_type:'image',seed:8}]}],jobsSignature=null;
+let assetState={assets:[{id:'asset-"1',review:'unreviewed'}]};window.edits=[];window.reads=0;window.said=[];
+function renderCompare(){}function renderMixedBatch(){return '';}
+function message(text,error=false){said.push([text,error]);}
+async function refreshAssets(){reads++;return true;}
+async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')throw Error('Resolve the earlier library update first.');edits.push(payload);assetState.assets[0].review=payload.review;}
+</script><script>'''+source('output-review.js')+'''</script><script>'''+card+render+'''renderJobs();</script>''')
+
+    def test_create_output_is_reviewed_in_place_and_a_second_press_clears_it(self):
+        self.load_output_review()
+        self.assertEqual(self.page.locator('.output-review').count(), 1, 'an output with no asset has nothing to review')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
+        self.page.click('[data-output-review="selected"]')
+        self.page.wait_for_function('edits.length===1')
+        self.assertEqual(self.page.evaluate('edits[0]'), {'action': 'edit', 'ids': ['asset-"1'], 'review': 'selected'})
+        self.assertEqual(self.page.evaluate('reads'), 1, 'a fresh revision is read before the edit')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Kept')
+        self.assertEqual(self.page.get_attribute('[data-output-review="selected"]', 'aria-pressed'), 'true')
+        self.assertIn('press it again to clear', self.page.evaluate('said.at(-1)[0]'))
+        self.page.click('[data-output-review="selected"]')
+        self.page.wait_for_function('edits.length===2')
+        self.assertEqual(self.page.evaluate('edits[1].review'), 'unreviewed')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
+
+    def test_create_output_review_keys_act_only_on_the_focused_card(self):
+        self.load_output_review()
+        self.page.focus('#elsewhere'); self.page.keyboard.press('k')
+        self.page.focus('#gallery .imageCard .pin'); self.page.keyboard.press('Control+k')
+        self.assertEqual(self.page.evaluate('edits.length'), 0, 'typing and shortcuts elsewhere never review')
+        self.page.keyboard.press('w')
+        self.page.wait_for_function('edits.length===1')
+        self.assertEqual(self.page.evaluate('edits[0].review'), 'needs_work')
+        self.page.focus('[data-output-review="rejected"]')
+        self.page.evaluate("jobs=[...jobs,{id:'job-2',preset_name:'New',status:'running',message:'Generating output 1 of 1',outputs:[]}];renderJobs()")
+        self.assertEqual(self.page.evaluate("document.activeElement.dataset.outputReview"), 'rejected', 'a poll re-render keeps focus on the decision')
+        self.page.keyboard.press('x')
+        self.page.wait_for_function('edits.length===2')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Rejected')
+
+    def test_create_output_review_failure_is_said_and_retryable(self):
+        self.load_output_review(fail=True)
+        self.page.click('[data-output-review="selected"]')
+        self.page.wait_for_function('said.length===1')
+        self.assertEqual(self.page.evaluate('said[0]'), ['Resolve the earlier library update first.', True])
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
+        self.page.click('[data-output-review="needs_work"]')
+        self.page.wait_for_function('said.length===2', timeout=2000)
+
     def load_picker(self):
         production = region(source('studio-workbench.js'), '  // Pull any existing image', '  // Drafts are data only')
         self.page.set_content('''<button id="uxPullAsset">Pull from library</button><script>
