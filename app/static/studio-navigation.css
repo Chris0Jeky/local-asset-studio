@@ -5,3 +5,5 @@
 /* Overview record actions retain the row layout used by navigation links. */
 button.ux-desk-row {width:100%;text-align:left;font:inherit}
 #uxJobInspector pre {white-space:pre-wrap;overflow-wrap:anywhere}
+/* #940: Put away / Bring back sits with its consequence in the job inspector. */
+.ux-desk-action {display:flex;align-items:center;gap:10px;flex-wrap:wrap}
