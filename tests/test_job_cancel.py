@@ -304,6 +304,7 @@ class JobCancelTests(unittest.TestCase):
         studio, job = self.unresolved_after_interrupt()
         studio.script = [("GET", "/history/ours", interrupted("ours"))]; studio._resume(job)
         self.assertEqual((job["status"], job["cancellation"]["state"]), ("cancelled", "cancelled")); self.assertNoResubmission(studio)
+        self.assertIn("not confirmed", job["cancellation"].get("unresolved_note") or "", "the earlier note is kept on both legs")
         studio, job = self.unresolved_after_interrupt()
         studio.script = [("GET", "/history/ours", URLError("still down"))]; studio._resume(job)
         self.assertEqual((job["status"], job["cancellation"]["state"]), ("uncertain", "unresolved"), "still unknown stays unresolved")

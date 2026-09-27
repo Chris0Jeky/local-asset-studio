@@ -121,6 +121,7 @@ def settle(studio, job, how=None):
         rest = ' The remaining outputs were not submitted.' if len(job.get('prompt_ids', [])) < total else ''
         message = lead + kept + rest + ' Nothing is retried.'; note = lead
     record = job['cancellation']
+    if record.get('state') == 'unresolved': record['unresolved_note'] = record.get('note')
     if stop_pending(job):
         record['refusal'] = record.get('note'); record.pop('stop_submissions', None)
         note += ' The in-flight output could not be stopped (' + str(record['refusal'] or 'refused') + ')'
