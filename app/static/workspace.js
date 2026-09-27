@@ -816,10 +816,10 @@ async function mutateAssets(payload) {
   return performLibraryCommand(assetLibraryPending);
 }
 // A scope is a different set of assets, so it starts a fresh selection; say so rather than dropping it silently.
-// Re-choosing the scope already shown (or Browse all from inside All) only re-renders: the set is the same.
+// Re-choosing the scope already shown (or Browse all from inside All) keeps the selection: the set is the same.
+// Its message is rebuilt either way, so an earlier "Selection cleared" never sits beside a kept selection.
 function setAssetScope(scope){
-  if(scope===assetScope)return void renderAssets();
-  const cleared=assetSelection.size;assetScope=scope;assetSelection.clear();assetSelectionAnchor=null;renderAssets();
+  const same=scope===assetScope,cleared=same?0:assetSelection.size;assetScope=scope;if(!same){assetSelection.clear();assetSelectionAnchor=null;}renderAssets();
   assetMessage([scope==='trash'?'Trash is recoverable. Original files and recipes remain on disk.':'',cleared?'Selection cleared ('+cleared+').':''].filter(Boolean).join(' '));
 }
 function diagnosticArtifact(record, label) {
