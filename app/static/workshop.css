@@ -125,6 +125,9 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .wk-run-dock #status {grid-column:1/-1;font-size:11px;line-height:1.5;margin:0;max-height:3em;overflow:auto;color:var(--muted);overflow-wrap:anywhere}
 .workshop .wk-run-dock #status:empty {display:none}
 .workshop .wk-run-dock #status.error {color:var(--danger)}
+/* While a text field has focus, a narrow or short dock keeps only what running needs; a very short one keeps Variations and Generate. */
+@media(max-width:600px),(max-height:700px) {.workshop .wk-run-dock.wk-typing :is(.wk-run-tools,.wk-dock-info>span) {display:none}}
+@media(max-height:500px) {.workshop .wk-run-dock.wk-typing {padding:8px 12px;bottom:6px}.workshop .wk-run-dock.wk-typing :is(.wk-dock-info,#status) {display:none}}
 .workshop :is(input,button,select,textarea,summary) {scroll-margin-block:110px calc(var(--workshop-dock-space) + 20px)}
 body.workshop-active #workshopRecipeDialog {width:min(960px,calc(100vw - 40px));max-height:90dvh;padding:28px;margin:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:20px;box-shadow:var(--wk-shadow);overflow:auto}
 #workshopRecipeDialog::backdrop {background:#06080cc7;backdrop-filter:blur(8px)}
@@ -246,3 +249,8 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   .workshop .wk-run-dock .actions {grid-column:3;grid-row:1}
   .workshop .wk-run-tools {grid-column:2;grid-row:1;border-top:0;border-left:1px solid var(--line);padding:0 0 0 12px;max-width:300px}
 }
+/* The settled run's one next step sits under its status line (run-outcome.js). */
+.run-outcome {grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.run-outcome[hidden] {display:none}
+.run-outcome button {font-size:11px;padding:6px 10px}
+.run-outcome button:first-child {border-color:var(--accent);color:var(--accent)}

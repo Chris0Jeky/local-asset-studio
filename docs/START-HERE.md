@@ -47,7 +47,7 @@ Choose **Change one thing (FLUX.2 Klein 4B, keeps the rest)**. Upload an image, 
 
 For tighter preservation, try **SDXL • gentle reference variation**. For more complex instruction following, try **Qwen • instructed image edit**. Qwen can take minutes and use most available memory. Neither promises pixel-identical unedited areas; the masked-composite example demonstrates that requirement separately.
 
-Pose presets expect a **coloured OpenPose skeleton**, not an ordinary character photograph. The included guide is a working example. Pose control controls structure; it does not lock face, costume, or identity.
+The pose-guide presets (**WAI • pose guide**, **Animagine • pose guide** and the drawn-skeleton WAI preset) expect a **coloured OpenPose skeleton**, not an ordinary character photograph; the included guide is a working example. The **Style + Pose** presets are the opposite: give them an ordinary picture of a person in the pose, and their graph extracts the skeleton itself. Pose control controls structure; it does not lock face, costume, or identity.
 
 ## Learn ComfyUI only when useful
 
