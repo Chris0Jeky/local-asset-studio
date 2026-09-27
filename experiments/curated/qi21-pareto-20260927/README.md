@@ -43,11 +43,11 @@ earlier 70-80 s cells (char-B0-31, the cold first run; char-B0-33; char-F0-32) p
 the diffusion model was requested again ("Requested to load QwenImage21") before sampling. That costs about 15-20 s per prompt
 even when the text encoder stays out.
 
-So even in a seed audition, the per-image floor is about 25 s of paging. Pruna saves only its ~11 s of sampler:
+So even in a seed audition, the per-image floor is about 25 s of paging. Pruna's ~11 s sampler saving does not show up in the warm cells:
 
 | Measurement | B0 | F0 | F0 / B0 |
 | --- | --- | --- | ---: |
-| Warm cells without a text-encoder reload | 26-46 s | 28-41 s | about 0.7-0.8 |
+| Warm cells without a text-encoder reload (B0 n=3, F0 n=4) | 25.975, 35.530, 41.345 s (mean 34.28) | 27.938, 32.378, 33.072, 40.552 s (mean 33.49) | 0.98 |
 | All 6 cells (mean exec_s) | 53.9 s | 44.9 s | 0.83 |
 
 Both ratios miss the F0 gate, which needs about 0.55×.
@@ -64,10 +64,10 @@ Both ratios miss the F0 gate, which needs about 0.55×.
 ## Reading against the #1028 gates
 
 - **F0 (Pruna 8-step at 2.0):** quality is level with B0 on this sample (higher mean, fewer keeps; its prop defects are dial
-  numerals, as in the lab). It is **not faster enough**: 0.7-0.8× of B0 on warm cells, against the ~0.55× gate. The DiT
+  numerals, as in the lab). It is **not faster**: 0.98× of B0 on warm cells (means 33.49 s against 34.28 s) and 0.83× over all six cells, against the ~0.55× gate. The DiT
   reload per prompt dominates on 16 GB. **Park (not GREAT).** This confirms the lab's reading for the seed-audition case
   too. Batched latents (several seeds inside one prompt) are what would keep the models resident; that was not tested.
-- **Q1 (2.1 Fix LoRA at 1.0):** no time tax (36.6-46.2 s, the same range as B0's warm cells). But it visibly **lowers** quality:
+- **Q1 (2.1 Fix LoRA at 1.0):** a small time tax. None of its six cells reloaded the text encoder: 36.6-46.2 s, mean 42.03 s, about 1.23× B0's warm mean of 34.28 s (inside the 1.35× Q1 budget). But it visibly **lowers** quality:
   a flatter, less painterly finish and worse hands on all three characters, and it drifted the sorceress to a
   male-presenting figure once. **Park / reject for Create** (δ is negative).
 - **B0 (25 steps) holds** as the Create default. No recipe change is proposed.
@@ -90,3 +90,13 @@ version carries no permission flags; read its page before any use. Nothing here 
 - `qwen21-log-1808-1822.txt`: the backend log window.
 - `run.py`, `blind.py`, `crops2.py`: as-run scripts with local paths.
 - Full PNGs stay local in the qwen21 checkout, under `output/Research/qi21-pareto-20260927/`.
+
+## Correction (27 Sep 2026, review of PR #1216)
+
+The first version of this README gave F0/B0 as "about 0.7-0.8" on warm cells and B0 warm as "26-46 s". Both were wrong.
+Recounted from `runs.jsonl` (warm = no text-encoder reload):
+- B0: 25.975, 35.530 and 41.345 s, mean 34.28 s.
+- F0: 27.938, 32.378, 33.072 and 40.552 s, mean 33.49 s.
+- F0/B0 = 0.98.
+
+The 46 s cell was a Q1 cell. Q1 was also said to have "no time tax"; its warm mean is 42.03 s, about 1.23× B0. The F0 verdict (park) stands and misses the gate by more. Q1 stays parked on quality.
