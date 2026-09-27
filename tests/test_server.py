@@ -205,6 +205,21 @@ class ServerTests(unittest.TestCase):
             job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
         self.assertEqual(read.call_count,1);self.assertTrue(job['host_commit_readings'][0]['deferred'])
 
+    def test_a_cancel_during_the_release_sends_nothing_and_settles_as_cancelled(self):
+        low,high=self._commit_reading(26*1024**3),self._commit_reading(32*1024**3)
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None],release=5)
+        with patch.object(server.host_memory,'read',return_value=low):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        reads=iter([low,high])
+        def read():
+            value=next(reads,high)
+            if value is high and job['id'] not in studio.cancel_requests: studio.cancel_requests[job['id']]=server.job_cancel.new_record(job,server.time.time())
+            return value
+        with patch.object(server.host_memory,'read',side_effect=read),patch.object(server.time,'sleep'):studio._run(job)
+        self.assertEqual(job['status'],'cancelled');self.assertEqual(job['prompt_ids'],[]);self.assertNotIn('pending_submission',job)
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/queue','/free'],'the post-release queue wait stops for the cancel')
+        self.assertEqual(job['commit_releases'][0]['outcome'],'released')
+
     def test_commit_release_never_follows_an_unknown_reading(self):
         unknown={'available_bytes':None,'limit_bytes':None,'committed_bytes':None,'unknown_reason':'counter unavailable'}
         with patch.object(server.host_memory,'read',return_value=unknown):
@@ -515,7 +530,7 @@ class ServerTests(unittest.TestCase):
                 '/api/references/check','/api/assets/update','/api/collections','/api/setups','/api/assets/reference','/api/assets/export',
                 '/api/recipe-check','/api/folders/open','/api/models/install','/api/workflow-inspect','/api/jobs/missing/resume',
                 '/api/jobs/missing/observe-known','/api/jobs/missing/dispose-mixed','/api/jobs/missing/abandon','/api/jobs/missing/stop-tracking',
-                '/api/jobs/missing/put-away','/api/pose/render')
+                '/api/jobs/missing/put-away','/api/jobs/missing/cancel','/api/pose/render')
         for path in routes:
             for body in ([],'text',3,None,True):
                 with self.subTest(path=path,body=repr(body)):

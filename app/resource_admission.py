@@ -37,7 +37,7 @@ SHAPE_FIELDS = {
     "width", "height", "length", "frames", "num_frames", "video_length",
     "batch_size", "batch", "steps", "megapixels", "tile_size", "overlap",
 }
-TERMINAL_STATUSES = {"completed", "failed", "partial", "not_submitted", "abandoned"}
+TERMINAL_STATUSES = {"completed", "failed", "partial", "not_submitted", "abandoned", "cancelled"}
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -347,7 +347,7 @@ def _definitive_terminal(job):
         return False
     submissions = job.get("submissions") or []
     return all(
-        isinstance(item, dict) and item.get("status") in ("completed", "failed")
+        isinstance(item, dict) and item.get("status") in ("completed", "failed", "cancelled")  # cancelled: dequeued or interrupted, confirmed by /history
         for item in submissions
     )
 
