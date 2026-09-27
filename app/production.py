@@ -30,6 +30,28 @@ def fingerprint(value):
     return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
 
+PLAN_LIVE_STATUSES=('queued','submitting','running','waiting','observing','rendering')
+
+
+# Rewritten on every restart without anything happening to the plan, so they cannot count as a change.
+PUT_AWAY_VOLATILE=('put_away','storage_issue','time_budget','time_budget_error')
+
+
+def put_away_revision(state):
+    """What the owner saw when putting the plan away: the whole state minus restart-volatile keys."""
+    return fingerprint({k:v for k,v in state.items() if k not in PUT_AWAY_VOLATILE})
+
+
+def put_away_state(state):
+    """The owner's put-away counts only while the plan is settled and unchanged since it was put away (#940).
+
+    Any later change (a resume with its new attempts, a review, a new interruption message) brings the plan back on its
+    own, even when the status label ends up the same; the marker stays as history."""
+    marker=state.get('put_away') if isinstance(state,dict) else None
+    return (isinstance(marker,dict) and state.get('status') not in PLAN_LIVE_STATUSES
+            and marker.get('status')==state.get('status') and marker.get('revision')==put_away_revision(state))
+
+
 class Production:
     def __init__(self, studio):
         self.studio=studio
@@ -135,6 +157,10 @@ class Production:
         if plan.get('kind')=='voice':
             from voice_baseline import resume_eligibility
             result['voice_resume']=resume_eligibility(self,project)
+        owner=put_away_state(project['state']) # stored state: the copy above has presentation-only message prefixes
+        result['put_away']=owner;result['put_away_at']=state['put_away'].get('at') if owner else None
+        result['can_put_away']=not owner and state['status'] not in PLAN_LIVE_STATUSES
+        result['can_bring_back']=owner
         if full:result['plan']=plan
         return result
 
@@ -591,6 +617,21 @@ class Production:
             message='Stop requested. The current owned job may finish; later stages will not start.'
             if project['plan']['kind']=='voice':message='Stop requested. The current voice job may already be publishing retained Workspace outputs.'
             self._mutate(identifier,stop_requested=True,message=message)
+        return self.get(identifier)
+
+    def put_away(self, identifier, payload):
+        """Hide or restore a settled plan on the desk and in Your plans (#940). Only `state.put_away` changes:
+        status, stages, attempts, reservations, files and review stay exactly as recorded, and nothing is started or stopped."""
+        away=payload.get('put_away') if isinstance(payload,dict) else None
+        if type(away) is not bool:raise ValueError('put_away must be true or false')
+        with self.lock:
+            project=self._get(identifier);state=project['state']
+            if away==put_away_state(state):return self.get(identifier)
+            if away:
+                if state['status'] in PLAN_LIVE_STATUSES:raise ValueError('This plan is running; wait for it to settle before putting it away')
+                state['put_away']={'at':time.time(),'status':state['status'],'revision':put_away_revision(state)}
+            else:state.pop('put_away',None)
+            self._state(identifier,state)
         return self.get(identifier)
 
     def resume(self, identifier):

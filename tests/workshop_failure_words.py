@@ -1,6 +1,6 @@
 """#308 first step: a run refused by the pre-submit memory check says why in plain words, on the card and in the dock.
 
-Real frontend on the synthetic smoke fixture; no request is made (jobs and the refusal are injected)."""
+Real frontend on the synthetic smoke fixture; no generation request is made (the refused job is served by the fixture, the dock refusal is injected)."""
 import os
 import shutil
 import threading
@@ -40,9 +40,12 @@ class FailureWords(unittest.TestCase):
         self.assertEqual([p['path'] for p in smoke.POSTS if p['path'].startswith('/api/jobs')], [], 'nothing is generated')
 
     def test_refused_job_card_explains_the_memory_check(self):
-        self.page.evaluate("""(m)=>{jobs.unshift({id:'headroom-job',preset_name:'Qwen Atelier - 1 Reference',status:'failed',
-          message:m+'. No prompt was submitted for output 1.',prompt_ids:[],outputs:[],controls:{},can_put_away:true});renderJobs();
-          document.querySelector('#jobProblems').open=true}""", REFUSAL)
+        # The record is served by the fixture, not pushed into `jobs`: the page's own jobs read (its first load can still be
+        # in flight) replaces the client list with the server's, which dropped an injected record about 1 run in 6.
+        job = dict(id='headroom-job', preset_name='Qwen Atelier - 1 Reference', status='failed', message=REFUSAL + '. No prompt was submitted for output 1.',
+                   prompt_ids=[], outputs=[], controls={}, can_put_away=True)
+        smoke.JOBS.insert(0, job); self.addCleanup(smoke.JOBS.remove, job)
+        self.page.evaluate("async()=>{await refresh();document.querySelector('#jobProblems').open=true}")
         card = self.page.locator('#jobProblemsHost [data-problem="headroom-job"]')
         card.wait_for()
         text = card.inner_text()
