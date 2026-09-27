@@ -1,5 +1,28 @@
 # UX use-case matrix
 
+## Seam band choice and a looser Night Shift — 27 September 2026
+
+Refs #1220 and #1221 (owner answers, 27 September 2026, after the live renders).
+
+- **Make seamless** now offers **Seam band: narrow (112 px) / wide (160 px)**. The owner found the wall result OK, but a wider
+  band can hide the floor's repeating plank ends. These are the lab's two measured widths. A band wider than half the texture
+  side stays listed, disabled, with its reason (*A 160 px band needs a side of at least 320 px; …*). The band is in the
+  plan, the status, the finished tile's summary and its receipt.
+- **Night Shift (retro anime)** no longer forces a quiet dark wall into every scene. The owner had asked to loosen it after
+  *a rain-soaked arcade entrance* rendered as a shutter. The quiet-wall sentence is now an optional line, **Keep the quiet
+  wall for UI backgrounds**, off by default. Ticked, the wording is exactly the template #1224 shipped. A Workspace that
+  holds the untouched #1224 copy takes the new version on the next Studio start; a copy the owner edited is kept.
+
+`python tests/studio_use_cases.py` passed **19/19** journeys with **zero generation submissions and zero page errors**.
+`make-a-texture-tile` now chooses the wide band before *Make seamless* and asserts that 160 px was sent and recorded.
+`new-scene-in-an-accepted-look` asserts four things:
+- the first prepare has no wall sentence;
+- the quiet-wall box starts unticked;
+- ticking it and preparing again writes the #1224 wording;
+- the status names the line.
+
+These are fixture screens; no model ran. Neither the loosened wording nor a Studio wide-band repaint has been rendered (the lab used 160 px for floor v2 outside the Studio).
+
 ## Make seamless from a library texture — 27 September 2026
 
 Refs #1220 (owner decision, 27 September 2026). A picture's asset panel now has a **Make seamless** control, flagged
