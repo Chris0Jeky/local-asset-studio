@@ -1,0 +1,39 @@
+{
+ "recipe_id": "wai-fantasy-portrait",
+ "recipe_preset_id": "wai",
+ "job_id": "72ab3a2f-4537-4251-92e2-942471018b7f",
+ "prompt_id": "aa433fd7-edfd-4545-a29d-ac0806c1fe6a",
+ "wall_seconds": 36.2,
+ "host_commit_percent_start": 59.7,
+ "host_commit_percent_peak": 74.7,
+ "output": "Studio/WAI-Illustration_00044_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "7d30506e091baecdd34816a82beea6659d3f054a40d73d739913ac63c1fe752e",
+ "thumbnail": "examples/recipe-thumbs-20260927/wai-fantasy-portrait.jpg",
+ "thumbnail_sha256": "e78092ea51d0f3a7c7e9e523d3e8293cca3a13b2e921614493e7f30b18bf02e1",
+ "finished_local": "2026-09-27 04:07:01.695865",
+ "inspection": "Braided crown, dark hooded cloak, leather bracers and a lit lantern among forest light rays; a glossy black dress with a thigh slit under the cloak.",
+ "studio_recipe": {
+  "preset_id": "wai",
+  "controls": {
+   "positive": "1girl, solo, original character, long silver hair, braided crown, green eyes, travelling cloak, leather bracers, holding a lantern, standing in an ancient forest, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor",
+   "steps": 26,
+   "cfg": 6,
+   "sampler": "euler_ancestral",
+   "scheduler": "normal",
+   "width": 832,
+   "height": 1216,
+   "seed": 20260931,
+   "denoise": 1.0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\wai-api.json",
+  "created_at": 1790478385.5311427,
+  "references": [],
+  "parent_assets": []
+ }
+}

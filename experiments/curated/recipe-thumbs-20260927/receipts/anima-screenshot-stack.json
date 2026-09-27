@@ -1,0 +1,47 @@
+{
+ "recipe_id": "anima-screenshot-stack",
+ "recipe_preset_id": "anima-artist-stack",
+ "job_id": "f5f2a8dc-b68c-4675-8b68-a89186850411",
+ "prompt_id": "ae5d97ff-be25-4e3d-9656-65bd7ff34535",
+ "wall_seconds": 31.5,
+ "host_commit_percent_start": 59.3,
+ "host_commit_percent_peak": 66.3,
+ "output": "Studio/anima-artist-stack_00008_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "d2a2a453995b6f3d2ceeb6142a820e91bea46848a277cd2e7be96fba41b21b61",
+ "thumbnail": "examples/recipe-thumbs-20260927/anima-screenshot-stack.jpg",
+ "thumbnail_sha256": "d6a59cb82183129c6ec495e8bbe53d81fbe326caa7de35485244e585a5f3a8aa",
+ "finished_local": "2026-09-27 04:01:55.621322",
+ "inspection": "Adult cartographer in a navy double-breasted coat and teal scarf, map case on her back, domed observatory behind; the compass became a second lantern plus a disc on the coat. Fully clothed.",
+ "studio_recipe": {
+  "preset_id": "anima-artist-stack",
+  "controls": {
+   "positive": "@failleaf, masterpiece, best quality, safe, adult woman, solo, original fantasy cartographer and lanternkeeper, fully clothed navy travel coat with brass clasps, teal scarf, high collar, leather gloves, ankle boots, holding a brass compass and a warm lantern, weathered map case, misty ruined observatory at dusk, warm rim lighting, teal and amber palette, painterly illustration, detailed background",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, artist name, blurry, jpeg artifacts, chromatic aberration, child, childlike, young-looking",
+   "steps": 30,
+   "cfg": 4,
+   "sampler": "euler_ancestral",
+   "scheduler": "simple",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026091201,
+   "lora_name": "Failleaf_Anima_Base_lora.safetensors",
+   "lora": 0.5,
+   "lora2_name": "sky02Light.safetensors",
+   "lora2": 0.3,
+   "lora3_name": "BunnySlop_Anima.safetensors",
+   "lora3": 0.9,
+   "lora4": 0,
+   "lora5": 0,
+   "lora6": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anima-artist-stack-api.json",
+  "created_at": 1790478084.2336185,
+  "references": [],
+  "parent_assets": []
+ }
+}

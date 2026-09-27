@@ -1,0 +1,41 @@
+{
+ "recipe_id": "yumeflux-ilv1-base",
+ "recipe_preset_id": "yumeflux-ilv1-baseline",
+ "job_id": "b3093cd6-62d7-431d-8598-d61196fbba87",
+ "prompt_id": "12df9f6f-b07d-436a-a8e7-bb816d765e9f",
+ "wall_seconds": 37.0,
+ "host_commit_percent_start": 67.0,
+ "host_commit_percent_peak": 74.3,
+ "output": "Studio/YumeFlux-ILv1-Baseline_00003_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "35366d5cfed13895d0f63828f9e5733271769594adf75667d66f2191402e03c1",
+ "thumbnail": "examples/recipe-thumbs-20260927/yumeflux-ilv1-base.jpg",
+ "thumbnail_sha256": "cc7105f92f4e3b0d1948e2ac586e56313ab6e1683d9715b7223a2866c99b5623",
+ "finished_local": "2026-09-27 04:11:02.703776",
+ "inspection": "Black long coat, white top, dark trousers and boots; muted and soft.",
+ "studio_recipe": {
+  "preset_id": "yumeflux-ilv1-baseline",
+  "controls": {
+   "positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality",
+   "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "width": 832,
+   "height": 1216,
+   "seed": 2026091301,
+   "steps": 30,
+   "cfg": 4,
+   "sampler": "euler_ancestral",
+   "scheduler": "karras",
+   "denoise": 1.0,
+   "lora": 0,
+   "lora2": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\yumeflux-ilv1-baseline-api.json",
+  "created_at": 1790478625.7751265,
+  "references": [],
+  "parent_assets": []
+ }
+}

@@ -1,0 +1,36 @@
+{
+ "recipe_id": "anima-fantasy-portrait",
+ "recipe_preset_id": "anima-portrait",
+ "job_id": "77e737a8-8d21-4c80-ae4d-dcbe1a5934e4",
+ "prompt_id": "886151c5-ff6c-4838-aeaf-a5fafa0145e4",
+ "wall_seconds": 39.8,
+ "host_commit_percent_start": 49.5,
+ "host_commit_percent_peak": 61.7,
+ "output": "Studio/anima-portrait_00005_.png",
+ "output_size": [
+  768,
+  1152
+ ],
+ "output_sha256": "71b9a4adbf722b3b4c913a7a8b568ac8a9fc3bea6314eca5c49377f98e29fb41",
+ "thumbnail": "examples/recipe-thumbs-20260927/anima-fantasy-portrait.jpg",
+ "thumbnail_sha256": "1137dfaedb61426f73439b737217897dac50437452b5b6536c41fc1428b201ea",
+ "finished_local": "2026-09-27 03:59:06.665871",
+ "inspection": "Teal-haired pilot in goggles and a flight suit, floating islands and waterfalls, an airship at top right; readable hand on the rail; the sleeve patch is invented insignia.",
+ "studio_recipe": {
+  "preset_id": "anima-portrait",
+  "controls": {
+   "positive": "A young sky-ferry pilot resting against the rail of a floating island with waterfalls falling into cloud, late afternoon sun, goggles pushed up into short teal hair, patched flight jacket, quiet confident expression, bronze and moss green palette, modern anime illustration, detailed background",
+   "negative": "lowres, blurry, bad anatomy, bad hands, text, watermark, signature",
+   "steps": 30,
+   "cfg": 4,
+   "width": 768,
+   "height": 1152,
+   "seed": 20260941
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anima-portrait-api.json",
+  "created_at": 1790477906.9909995,
+  "references": [],
+  "parent_assets": []
+ }
+}

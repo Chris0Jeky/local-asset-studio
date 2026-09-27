@@ -1,0 +1,43 @@
+{
+ "recipe_id": "krea-oil-fantasy",
+ "recipe_preset_id": "krea-anime-atelier",
+ "job_id": "819da04c-c572-4e47-86c6-b33e4f79bf7e",
+ "prompt_id": "1f7d1dbc-ec2c-4c4f-9b1e-eca8df964eba",
+ "wall_seconds": 279.6,
+ "host_commit_percent_start": 63.0,
+ "host_commit_percent_peak": 73.3,
+ "output": "Studio/krea-anime-atelier-gguf_00002_.png",
+ "output_size": [
+  832,
+  1248
+ ],
+ "output_sha256": "842ee19153ad3193a5562fc490903ca513c434932e9dc269abf5144a977e5589",
+ "thumbnail": "examples/recipe-thumbs-20260927/krea-oil-fantasy.jpg",
+ "thumbnail_sha256": "ddce5c8607d5193fe9a953eaa1aafe0cb7891f782f581a9b6125db0a260f583b",
+ "finished_local": "2026-09-27 04:17:21.568028",
+ "inspection": "A small cloaked figure with a lantern on a mossy arched bridge over fog under a crimson sky; dark oil finish carries the picture.",
+ "studio_recipe": {
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "A lone scholar crossing a moss-covered stone bridge at dusk, lantern light on wet stone, rolling fog below the arches, deep crimson and ink black palette, baroque dreamscape oil style",
+   "steps": 12,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "width": 832,
+   "height": 1248,
+   "seed": 20260913,
+   "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+   "lora": 1.0,
+   "lora2": 0,
+   "lora3": 0,
+   "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors",
+   "lora4": 1.0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790478762.1226914,
+  "references": [],
+  "parent_assets": []
+ }
+}
