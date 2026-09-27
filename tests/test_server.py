@@ -770,8 +770,14 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(job["failure"]["kind"],kind,detail)
             if kind=="model_swap_fault": self.assertIn("while running VAEDecode",job["failure"]["summary"])
 
+    def _ample_commit_for_idle_release(self):
+        """The idle release checks commit first (#1167); these tests are about the release itself, so give it plenty of room."""
+        ample=patch.object(server.host_memory,'read',return_value={'available_bytes':60*1024**3,'limit_bytes':95*1024**3,'committed_bytes':35*1024**3,'unknown_reason':None})
+        ample.start(); self.addCleanup(ample.stop)
+
     def test_idle_tick_releases_the_comfy_cache_once_per_idle_stretch(self):
         """After the configured idle minutes on an empty ComfyUI queue the worker posts /free once; activity re-arms it; a busy queue or 0 disables it."""
+        self._ample_commit_for_idle_release()
         s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"ok":True},{"queue_running":[],"queue_pending":[]},{"ok":True}])
         self.assertEqual(s.idle_release_minutes,10.0); self.assertFalse(s._idle_tick())        # not idle long enough
         s._last_activity-=11*60
@@ -791,8 +797,26 @@ class ServerTests(unittest.TestCase):
         down=FakeStudio(self.root,[URLError("refused")]); down._last_activity-=11*60
         self.assertFalse(down._idle_tick()); self.assertIn("refused",down.cache_release["last_error"]); self.assertFalse(down._idle_tick()); self.assertEqual(len(down.requests),1)
 
+    def test_idle_tick_skips_the_release_at_or_below_the_commit_floor_and_records_why(self):
+        """/free first moves GPU weights into RAM (-14.7 GiB measured, #1167): at or below the gate release's floor the idle tick posts nothing."""
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES; idle={"queue_running":[],"queue_pending":[]}
+        reading=lambda available,reason=None:{'available_bytes':available,'limit_bytes':None if available is None else 95*1024**3,'committed_bytes':None,'unknown_reason':reason}
+        for available,reason,expected in ((floor,None,'22.0 GiB'),(floor-1,None,'22.0 GiB'),(12*1024**3,None,'12.0 GiB'),(None,'Windows GetPerformanceInfo failed','GetPerformanceInfo failed')):
+            with self.subTest(available=available):
+                s=FakeStudio(self.root,[idle,{"ok":True}]); s._last_activity-=11*60
+                with patch.object(server.host_memory,'read',return_value=reading(available,reason)) as read: self.assertFalse(s._idle_tick())
+                self.assertEqual(read.call_count,1); self.assertEqual(s.requests,[])                          # not even /queue
+                self.assertIn(expected,s.cache_release["last_error"]); self.assertIn('more than 22 GiB',s.cache_release["last_error"])
+                self.assertEqual(s.cache_release["count"],0); self.assertTrue(s.cache_release_status()["pending"])   # re-checked on the next tick
+        # Headroom recovers above the floor: the next tick releases as before and clears the recorded skip.
+        s=FakeStudio(self.root,[idle,{"ok":True}]); s._last_activity-=11*60
+        with patch.object(server.host_memory,'read',side_effect=[reading(floor),reading(floor+1)]):
+            self.assertFalse(s._idle_tick()); self.assertTrue(s._idle_tick())
+        self.assertEqual([r[0][0] for r in s.requests],["/queue","/free"]); self.assertEqual((s.cache_release["count"],s.cache_release["last_error"]),(1,None))
+
     def test_idle_tick_only_releases_the_primary_backend(self):
         """An active isolated backend is never posted /free or /queue; switching back to primary releases once."""
+        self._ample_commit_for_idle_release()
         s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"ok":True}]); s._last_activity-=11*60
         s.backends=Mock(active='hidream')
         self.assertFalse(s._idle_tick()); self.assertEqual(s.requests,[]); self.assertFalse(s._released_since_activity); self.assertEqual(s.cache_release["count"],0)
@@ -897,6 +921,7 @@ class ServerTests(unittest.TestCase):
 
     def test_idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks(self):
         """ComfyUI answers /free with 200 and no body; a bounded queue wait ticks the release from the real loop; config edge cases."""
+        self._ample_commit_for_idle_release()
         s=self.studio()
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),self._http_response(b'')]
         s._last_activity-=11*60

@@ -81,6 +81,11 @@ COMMIT_RELEASE_MAX_SECONDS = 300
 COMMIT_RELEASE_TRANSIENT_BYTES = 16 * 1024**3
 COMMIT_RELEASE_MARGIN_BYTES = 6 * 1024**3
 COMMIT_RELEASE_FLOOR_BYTES = COMMIT_RELEASE_TRANSIENT_BYTES + COMMIT_RELEASE_MARGIN_BYTES
+COMMIT_RELEASE_FLOOR_NOTE = f'a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely'
+
+def commit_release_blocked(available):
+    """The one floor rule for every /free the Studio sends on its own (the gate release and the idle release, #1167); an unknown reading blocks."""
+    return not isinstance(available, int) or isinstance(available, bool) or available <= COMMIT_RELEASE_FLOOR_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError):
@@ -762,8 +767,7 @@ class Studio:
         def finish(outcome, ok=False):
             record['outcome'] = outcome; record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
             job.setdefault('commit_releases', []).append(record); return ok
-        if not isinstance(record['before_available_bytes'], int) or record['before_available_bytes'] <= COMMIT_RELEASE_FLOOR_BYTES:
-            return finish(f'skipped: a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely')
+        if commit_release_blocked(record['before_available_bytes']): return finish('skipped: ' + COMMIT_RELEASE_FLOOR_NOTE)
         backends = getattr(self, 'backends', None)
         if backends is not None and getattr(backends, 'busy', False): return finish('skipped: a backend switch is running')
         with self.lock: others = [other for other in self.jobs.values() if other is not job and other.get('status') in ('submitting', 'running')]
@@ -1759,6 +1763,12 @@ class Studio:
         if time.monotonic() - self._last_activity < self.idle_release_minutes * 60: return False
         backends = getattr(self, 'backends', None)
         if backends is not None and (getattr(backends, 'busy', False) or getattr(backends, 'active', 'primary') != 'primary'): return False
+        # The release's own transient (-14.7 GiB measured on qwen21, #1167) must not be what exhausts commit: check headroom first,
+        # post nothing at or below the floor, and look again on the next tick. An unreadable counter is not evidence of room.
+        reading = self.host_commit_reading(refresh=True); available = reading.get('available_bytes')
+        if commit_release_blocked(available):
+            measured = f'{available / 1024**3:.1f} GiB of commit headroom' if isinstance(available, int) else 'commit headroom unknown (' + str(reading.get('unknown_reason') or 'no reading')[:120] + ')'
+            self.cache_release["last_error"] = 'skipped with ' + measured + ': ' + COMMIT_RELEASE_FLOOR_NOTE; return False
         # Pin both calls to the endpoint checked here: a switch that activates another backend mid-tick retargets comfy_url.
         url = self.comfy_url
         try:
