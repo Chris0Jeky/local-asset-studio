@@ -813,7 +813,7 @@
   async function restoreDraft(draft){
   if(!draft)return;if(!catalog?.presets.some(p=>p.id===draft.recipe.preset)){announce('This draft needs a recipe that is not in the current catalog.',true);return;}
   restoring=true;let epoch=null,checkedInputs=[];
-  try{applySaved(draft.recipe);epoch=selectionEpoch;recipeTemplateHash=draft.templateHash;pendingInputs=new Set(draft.pendingInputs);syncReady();
+  try{applySaved(draft.recipe,{guessLegacyParent:true});epoch=selectionEpoch;recipeTemplateHash=draft.templateHash;pendingInputs=new Set(draft.pendingInputs);syncReady();
     checkedInputs=[...(!selected.reference_slots?.length&&selected.reference&&uploaded?[['reference',uploaded]]:[]),...(selected.last_reference&&lastUploaded?[['lastReference',lastUploaded]]:[])];
     if(checkedInputs.length){const files=[...new Set(checkedInputs.map(([,file])=>file))],checks=await post('/api/references/check',{files});if(epoch!==selectionEpoch)return;for(const [name,file]of checkedInputs)if(!checks.some(c=>c.file===file&&c.available)){pendingInputs.add(name);if(name==='reference')uploaded=null;else lastUploaded=null;releaseInputParent(name);}}
     syncCreate();announce('Draft restored. Reattach any missing local files, then review before running.');

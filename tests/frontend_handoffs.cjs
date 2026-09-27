@@ -288,7 +288,7 @@ async function legacySetupWithoutAttributionIsUnchanged() {
     // attributed", so the fallback must still run or the reload regresses a case that works on main.
     ['an empty mapping', {...legacy({reference: 'from-asset-a.png'}, ['asset-a']), parent_by_input: {}}]]) {
     const single = sandbox(first, local);
-    single.run(`applySaved(${JSON.stringify(record)});`);
+    single.run(`applySaved(${JSON.stringify(record)},{guessLegacyParent:true});`);
     assert.deepEqual(JSON.parse(single.run('JSON.stringify(parentByInput)')), {reference: 'asset-a'}, 'The unambiguous legacy case is still attributed with ' + label);
     single.element('#reference').files = [localFile('replacement-first.png')];
     single.element('#reference').onchange();
@@ -314,6 +314,43 @@ async function importedRecipeKeepsUnattributedParents() {
   assert.deepEqual(parents(), ['asset-a', 'asset-b'], 'Clearing a slot with no recorded source disowns nothing');
   assert.equal(element('#generate').disabled, true, 'The cleared slot still blocks generation');
   assert.equal(requests.some(r => r.url === '/api/jobs'), false, 'Importing and editing must never submit generation');
+}
+
+// #1071: the single-parent, single-input guess is library-only. A slotless job-export shape
+// with one parent and one filled input stays unattributed through applySaved and through
+// the #importRecipe entry point; only the saved-list/draft reload flag restores the legacy claim.
+async function singleParentGuessIsLibraryOnly() {
+  const record = {preset: 'gentle-variation', controls: {positive: 'A study', reference: 'upload.png'}, batch_count: 1, parent_assets: ['asset-a'], references: []};
+  const bare = sandbox(null, null);
+  bare.run(`applySaved(${JSON.stringify(record)});`);
+  assert.deepEqual(JSON.parse(bare.run('JSON.stringify(parentByInput)')), {}, 'Without the library flag a lone parent stays unattributed');
+  assert.deepEqual(bare.parents(), ['asset-a'], 'The unattributed parent survives the load');
+  const library = sandbox(null, null);
+  library.run(`applySaved(${JSON.stringify(record)},{guessLegacyParent:true});`);
+  assert.deepEqual(JSON.parse(library.run('JSON.stringify(parentByInput)')), {reference: 'asset-a'}, 'The saved-list reload keeps the legacy attribution');
+}
+
+async function importedSlotlessRecipeNeverGuesses() {
+  const s = sandbox(null, null);
+  const recipe = {preset_id: 'gentle-variation', controls: {positive: 'A study', reference: 'upload.png'}, batch_count: 1, parent_assets: ['asset-a'], references: []};
+  const fetch = s.context.fetch;
+  s.context.fetch = async (url, options = {}) => url === '/api/recipe-check' ? {ok: true, json: async () => ({template_sha256: 'x'})} : fetch(url, options);
+  await s.element('#importRecipe').onchange({target: {files: [{size: 128, text: async () => JSON.stringify(recipe)}], value: 'x'}});
+  s.context.fetch = fetch;
+  assert.equal(s.run('recipeTemplateHash'), 'x', 'The import ran through the recipe check');
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')), {}, 'The import entry point never guesses attribution');
+  assert.deepEqual(s.parents(), ['asset-a'], 'The imported parent stays listed but unattributed');
+}
+
+// #1071: the rerun and production-branch entry points need a DOM this sandbox lacks, so pin their call
+// shapes in the source: neither may opt into the library-only guess; the saved list and draft restore do.
+async function nonLibraryEntryPointsNeverOptIntoTheGuess() {
+  const read = name => fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8');
+  const workbench = read('studio-workbench.js'), production = read('production.js'), app = read('app.js');
+  assert.match(workbench, /selectPreset\(target\.id,true,true\);applySaved\(setup\);/, 'Rerun loads its setup without the library flag');
+  assert.match(production, /action==='branch'\)\{applySaved\(\{[^}]*\}\);/, 'A production branch loads without the library flag');
+  assert.equal((app.match(/guessLegacyParent:true/g) || []).length, 1, 'Only the saved-list load opts in inside app.js');
+  assert.match(workbench, /applySaved\(draft\.recipe,\{guessLegacyParent:true\}\)/, 'Draft restore opts in');
 }
 
 // The Pull-from-library picker in studio-workbench.js drives this exact sequence against one slot.
@@ -496,7 +533,7 @@ async function legacyBoardSetupAttributesSingleNamedSource() {
   const emptySlot = [{role: 'pose', contribution: '', avoid: '', file: null}];
 
   const s = sandbox(attached, local);
-  s.run(`applySaved(${JSON.stringify(legacy(emptySlot))});`);
+  s.run(`applySaved(${JSON.stringify(legacy(emptySlot))},{guessLegacyParent:true});`);
   await flush();
   assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')), {lastReference: 'source-asset'}, 'The unambiguous legacy board case attributes the named source');
   await s.run(`attachReferenceAsset(0,'source-asset')`);
@@ -1007,6 +1044,9 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await savedSetupCarriesPerInputAttribution();
   await legacySetupWithoutAttributionIsUnchanged();
   await importedRecipeKeepsUnattributedParents();
+  await singleParentGuessIsLibraryOnly();
+  await importedSlotlessRecipeNeverGuesses();
+  await nonLibraryEntryPointsNeverOptIntoTheGuess();
   await pullingIntoASlotReplacesItsSource();
   await i2vDiagnosticEligibilityAndRetry();
   await unresolvedInputLineageCannotBeSaved();
