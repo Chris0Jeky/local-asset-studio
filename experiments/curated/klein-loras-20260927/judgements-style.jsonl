@@ -1,0 +1,8 @@
+{"cell":"pix-knight-31","preferred":"B","note":"B crisper, consistent pixel grid (sword staircase); A smoother, less pixel; A plain white bg, B painted checkerboard"}
+{"cell":"pix-knight-32","preferred":"B","note":"near identical; B slightly crisper pixels; both paint a fake checkerboard"}
+{"cell":"pix-potion-31","preferred":"B","note":"A has a soft non-pixel glow; B clean pixel steps"}
+{"cell":"pix-potion-32","preferred":"B","note":"B chunkier, more consistent pixels; both fake checkerboard"}
+{"cell":"iso-tavern-33","preferred":"B","note":"slight: lit lantern, cleaner; A pseudo-lettering on the sign"}
+{"cell":"iso-tavern-34","preferred":"B","note":"A pseudo-lettering sign and a round oven blob on the chimney"}
+{"cell":"iso-forge-33","preferred":"B","note":"B crisper floor and props; A soft dollhouse look"}
+{"cell":"iso-forge-34","preferred":"B","note":"narrow; A crowded"}

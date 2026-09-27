@@ -1028,6 +1028,15 @@ def _combine_loop(c):
         assert focused == 'combine-loop-2', 'Open in Problems focused %r, not the run past the newest five' % focused
         c.page.locator('#jobProblems').evaluate('(el) => { el.open = false; }')
         assert c.page.locator('[data-ux-engine="combine-klein-9b-skeleton"]').is_disabled()
+        # Engine chips: what each is for (from the recipe's own name) and a time per picture from this PC's completed runs;
+        # a recipe with no run here reads the local estimate or says it has no timing, never a made-up number (K13).
+        c.act('#uxCombineEngines', 'read', note='each engine: what it is for and its time per picture here')
+        klein = c.page.locator('[data-ux-engine="combine-klein"]').inner_text()
+        assert '1.4 min per picture here' in klein and '1 run' in klein, klein
+        chips = c.page.locator('#uxCombineEngines [data-ux-engine]').all_inner_texts()
+        assert all(('per picture' in chip) or ('No timing on this PC yet' in chip) for chip in chips), chips
+        depth = c.page.locator('[data-ux-engine="combine-klein-9b-depth"]')
+        if depth.count(): assert 'Strongest pose' in depth.inner_text(), depth.inner_text()
         custom = c.page.locator('#positive').input_value() + ' Keep the red ribbon.'
         c.act('#positive', 'fill', typed=custom, note='a hand edit stays with its recipe')
         before_attach = len([p for p in fixture.POSTS if p['path'] == '/api/assets/reference'])

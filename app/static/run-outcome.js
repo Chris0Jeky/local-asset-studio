@@ -16,6 +16,7 @@
     if(job.status==='completed')return {text:'Done'+took(job)+' · '+plural(made,'output')+'. Review it while it is fresh.'+tight(job),action:'Show result',error:false};
     if(job.status==='partial')return {text:'Partly done: '+plural(made,'output')+' saved. The rest will not be run again automatically.',action:'See what happened',error:true};
     if(job.status==='not_submitted')return {text:'Not started: '+(String(job.message||'').split(/(?<=\.)\s/)[0]||'the queue could not be checked.')+' Nothing was submitted.',action:'See why',error:true};
+    if(job.status==='cancelled')return {text:made?'Cancelled: '+plural(made,'finished output')+' kept. Nothing was retried.':String(job.message||'Cancelled by you.'),action:made?'Show result':'See the record',error:false};
     if(job.status==='uncertain')return {text:'Outcome unknown. It will not be run again; inspect it before starting new work.',action:'Inspect',error:true};
     const why=job.failure?.title||String(job.message||'').split(/(?<=\.)\s/)[0]||'No reason was recorded.';
     return {text:'Failed: '+why,action:'See why',error:true};
@@ -28,12 +29,15 @@
   function open(node){for(let n=node;n;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true;}
   function reveal(job){
     // Any shown output of the run will do: output 0 may be in Trash, and a playing clip holds the list back.
-    const target=job.status==='completed'?document.querySelector('#gallery [data-output^="'+CSS.escape(job.id)+':"]'):document.querySelector('[data-problem="'+CSS.escape(job.id)+'"]');
+    // A cancelled run that kept finished outputs has results too (#1160 review); its record is the fallback.
+    const results=job.status==='completed'||(job.status==='cancelled'&&(job.outputs||[]).length>0);
+    const output=results?document.querySelector('#gallery [data-output^="'+CSS.escape(job.id)+':"]'):null;
+    const target=job.status==='completed'?output:output||document.querySelector('[data-problem="'+CSS.escape(job.id)+'"]');
     if(!target){if(typeof message==='function')message('That run is not shown here yet (a playing clip holds the list until it stops) or its outputs are in Trash. Asset library has every saved output.',true);return false;}
-    if(job.status!=='completed'){const details=document.getElementById('jobProblems');if(details)details.open=true;}
+    if(!output){const details=document.getElementById('jobProblems');if(details)details.open=true;}
     open(target);target.scrollIntoView({block:'center'});
     // A result focuses its first action (so K/W/X review it); a problem focuses its record, reason first.
-    const first=job.status==='completed'?target.querySelector('button,a,summary'):null;if(!first&&!target.hasAttribute('tabindex'))target.tabIndex=-1;(first||target).focus({preventScroll:true});return true;
+    const first=output?target.querySelector('button,a,summary'):null;if(!first&&!target.hasAttribute('tabindex'))target.tabIndex=-1;(first||target).focus({preventScroll:true});return true;
   }
   let shown=null;
   function render(job){

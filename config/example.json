@@ -33,5 +33,6 @@
   "asset_python": "C:/AI/asset-tools/venv/Scripts/python.exe",
   "ffmpeg": "C:/AI/asset-tools/ffmpeg/9.0.1/ffmpeg-9.0.1-essentials_build/bin/ffmpeg.exe",
   "voice_baseline_bundle": "",
-  "enforce_host_commit_headroom": false
+  "enforce_host_commit_headroom": false,
+  "commit_gate_release_seconds": 0
 }

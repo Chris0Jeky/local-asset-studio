@@ -73,6 +73,15 @@ EVICT_WAIT_SECONDS = 30                  # ceiling for ComfyUI to act on /free b
 MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt", ".sft", ".bin")
 HOST_COMMIT_MINIMUM = 32 * 1024**3
 HOST_COMMIT_WINDOWS = 16                 # per-job bound on host-commit telemetry windows (4 batch members plus resumed observations)
+COMMIT_RELEASE_SAMPLE_SECONDS = 0.5      # commit re-read cadence while ComfyUI releases its cache
+COMMIT_RELEASE_MAX_SECONDS = 300
+# A release first moves the GPU-resident weights into host RAM: qwen21's /free took headroom from 27.4 to 12.7 GiB (14.7 GiB used)
+# before it settled at 46.2 GiB (27 Sep 2026, experiments/curated/perf-20260927). Budget the whole 16 GiB card for that transient,
+# since at most the VRAM-resident weights can move, and keep a margin above it: this host dies near 97 % commit (about 2.9 GiB
+# left of its 95.7 GiB limit). At or below the floor the release is skipped, so its lowest point stays above the margin.
+COMMIT_RELEASE_TRANSIENT_BYTES = 16 * 1024**3
+COMMIT_RELEASE_MARGIN_BYTES = 6 * 1024**3
+COMMIT_RELEASE_FLOOR_BYTES = COMMIT_RELEASE_TRANSIENT_BYTES + COMMIT_RELEASE_MARGIN_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError):
@@ -92,6 +101,9 @@ class StudioError(ValueError):
         return body
 
 class QueueWaitUnavailable(StudioError): pass
+
+class HostCommitShortfall(StudioError):
+    """The commit gate measured too little headroom (never raised for an unknown reading); ``details['reading']`` is that reading."""
 
 def combo_options(descriptor):
     """Both ComfyUI combo encodings: legacy [[...], {}] and V3 ['COMBO', {options}]."""
@@ -157,6 +169,11 @@ class Studio:
         # ComfyUI keeps part of the previous checkpoint on the GPU when the next one loads, because its free-VRAM figure ignores what the
         # desktop holds; three SDXL checkpoints in one process spilled 0, 3.7 and 6.0 GB into shared memory (23 Sep 2026). Unload first.
         self.evict_on_model_change = self.config.get("unload_models_on_change", True) is not False
+        # A Qwen-Image 2.1 job leaves its 7B model and 9.35 GB encoder in host commit, so the next heavy job read 26.5 GiB of headroom
+        # and was refused (27 Sep 2026) until someone posted /free by hand. Opt-in: before refusing a measured shortfall, free the job's
+        # own idle backend and re-measure for up to this many seconds; only a fresh reading that passes the unchanged gate admits.
+        raw_release = self.config.get("commit_gate_release_seconds", 0)
+        self.commit_release_seconds = min(float(COMMIT_RELEASE_MAX_SECONDS), float(raw_release)) if self._finite_number(raw_release) and raw_release > 0 else 0.0
         self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
@@ -714,8 +731,67 @@ class Studio:
         if reason: raise StudioError('Host commit headroom is unavailable: '+str(reason))
         if not isinstance(available,int) or available < minimum:
             actual='unknown' if not isinstance(available,int) else f'{available / 1024**3:.1f} GiB'
+            if isinstance(available, int): raise HostCommitShortfall(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission', reading=dict(reading))
             raise StudioError(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission')
         return reading
+
+    def _pre_submit_commit_check(self, job, preset, graph, index):
+        """The unchanged commit gate on a fresh reading, with one opt-in release of the job's own idle backend before a refusal."""
+        freed = " even after the Studio freed ComfyUI's cached models"
+        try: return self.host_commit_preflight(preset, graph, refresh=True)
+        except HostCommitShortfall as shortfall:
+            if self.commit_release_seconds <= 0: raise
+            if not self._release_for_commit_gate(job, preset, graph, index, shortfall):
+                outcome = job['commit_releases'][-1]['outcome']
+                note = freed if outcome.startswith(('insufficient', 'unknown after')) else "; ComfyUI's cached models were not freed (" + outcome + ")"
+                raise HostCommitShortfall(str(shortfall) + note, **shortfall.details) from shortfall
+        # The release wait can outlast the earlier idle proof. An owner cancel (#1159) ends this wait; the gate below still runs,
+        # and the caller's checkpoint settles the cancel before any POST.
+        self._wait_for_queue(job.get('comfy_url'), stop=lambda: job.get('id') in (getattr(self, 'cancel_requests', None) or {}))
+        try: return self.host_commit_preflight(preset, graph, refresh=True)
+        except HostCommitShortfall as exc: raise HostCommitShortfall(str(exc) + freed, **exc.details) from exc
+
+    def _release_for_commit_gate(self, job, preset, graph, index, shortfall):
+        """POST /free {unload_models, free_memory} to the job's idle backend and re-read commit until the gate would pass or time runs out.
+
+        Returns True only when a sampled reading reached the requirement; the caller still runs the gate itself on a fresh reading.
+        Every attempt, skipped or not, leaves a receipt in job['commit_releases']. Never retries, never submits."""
+        required = self.required_host_commit_bytes(preset, graph); url = job.get('comfy_url') or self.comfy_url
+        before = shortfall.details.get('reading') or {}
+        record = {'index': index, 'url': url, 'required_bytes': required, 'before_available_bytes': before.get('available_bytes'),
+                  'before_committed_bytes': before.get('committed_bytes'), 'limit_bytes': before.get('limit_bytes'), 'requested_at': time.time()}
+        def finish(outcome, ok=False):
+            record['outcome'] = outcome; record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
+            job.setdefault('commit_releases', []).append(record); return ok
+        if not isinstance(record['before_available_bytes'], int) or record['before_available_bytes'] <= COMMIT_RELEASE_FLOOR_BYTES:
+            return finish(f'skipped: a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely')
+        backends = getattr(self, 'backends', None)
+        if backends is not None and getattr(backends, 'busy', False): return finish('skipped: a backend switch is running')
+        with self.lock: others = [other for other in self.jobs.values() if other is not job and other.get('status') in ('submitting', 'running')]
+        if others: return finish('skipped: other Studio work is running')
+        try:
+            queue = self._request("/queue", timeout=5, base_url=url)
+            if not isinstance(queue, dict) or any(type(queue.get(key)) is not list or queue.get(key) for key in ("queue_running", "queue_pending")):
+                return finish('skipped: ComfyUI queue busy or unreadable')
+            job['message'] = f"Freeing ComfyUI's cached models: memory headroom {before.get('available_bytes', 0) / 1024**3:.1f} GiB, this job needs {required / 1024**3:.0f} GiB"; self._save(job)
+            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True, base_url=url)
+        except Exception as exc:   # a failing ComfyUI answer is evidence; the job then fails on the unchanged gate with nothing sent
+            return finish('failed: ' + (str(exc) or type(exc).__name__)[:200])
+        self._resident = None
+        deadline = time.monotonic() + self.commit_release_seconds; samples = 0; after = {}
+        while True:
+            # /free was posted: the models are gone whatever happens next, so a failing reading is still recorded honestly.
+            try: after = self.host_commit_reading(refresh=True)
+            except Exception as exc:
+                record['samples'] = samples
+                return finish('failed: commit could not be read after release: ' + (str(exc) or type(exc).__name__)[:200])
+            samples += 1; available = after.get('available_bytes')
+            if isinstance(available, int) and available >= required: break
+            if time.monotonic() >= deadline: break
+            time.sleep(COMMIT_RELEASE_SAMPLE_SECONDS)
+        record.update(after_available_bytes=after.get('available_bytes'), after_committed_bytes=after.get('committed_bytes'), samples=samples)
+        if isinstance(after.get('available_bytes'), int) and after['available_bytes'] >= required: return finish('released', True)
+        return finish(f'insufficient after {self.commit_release_seconds:g} s' if after.get('unknown_reason') is None else 'unknown after release: ' + str(after['unknown_reason'])[:200])
 
     def required_host_commit_bytes(self, preset, graph):
         if self.config.get('enforce_host_commit_headroom') and self.host_commit_required(preset, graph):
@@ -765,7 +841,14 @@ class Studio:
     def _create_job(self, payload, enqueue=True, job_id=None):
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         label = run_label(payload.get("label")) if isinstance(payload, dict) else None
-        preset, graph, graph_path, controls, batch = self.prepare(payload)
+        preset, graph, graph_path, controls, batch = self.prepare(payload, _defer_host_commit_preflight=True)
+        deferred = None
+        # A fresh reading: whether to defer (and so later free the backend) is decided on current counters, not a cached one.
+        try: reading = self.host_commit_preflight(preset, graph, refresh=True)
+        except HostCommitShortfall as exc:
+            # The worker's fresh pre-submit check stays the only admission; a shortfall here is queued for release-then-remeasure.
+            if self.commit_release_seconds <= 0: raise
+            reading = exc.details.get('reading'); deferred = exc
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
         for parent in parents: self.assets.get(parent)
@@ -781,8 +864,10 @@ class Studio:
         if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
-        reading=self.host_commit_preflight(preset, graph)
-        if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time())]
+        if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time(), **({'deferred': True} if deferred else {}))]
+        if deferred:
+            available = reading.get('available_bytes') if isinstance(reading, dict) else None
+            job["message"] = f"Queued. Memory headroom is {available / 1024**3:.1f} GiB and this job needs {self.required_host_commit_bytes(preset, graph) / 1024**3:.0f} GiB; before sending it the Studio will free ComfyUI's cached models and measure again"
         self._save(job); self.jobs[job_id] = job
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
@@ -798,7 +883,7 @@ class Studio:
         return data
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "host_commit_windows")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1883,7 +1968,7 @@ class Studio:
                 except StudioError:preset={}
                 continuation.validate(self, job, preset, graph, check_runtime=True)
                 wan_capacity.enforce(graph)
-                reading=self.host_commit_preflight(preset, graph, refresh=True)
+                reading=self._pre_submit_commit_check(job, preset, graph, i)
             except (StudioError, ValueError, OSError) as exc:
                 job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._stamp_finished(job);self._save(job);return
             if reading:
@@ -2405,6 +2490,9 @@ class Handler(BaseHTTPRequestHandler):
                     if len(parts)!=5:raise StudioError('Unknown time extension route')
                     return self._json(200,self.studio.production.extend_time(identifier,payload))
                 if parts[-1]=='review':return self._json(200,self.studio.production.review(identifier,payload))
+                if parts[-1]=='put-away':
+                    if len(parts)!=5:raise StudioError('Unknown put-away route')
+                    return self._json(200,self.studio.production.put_away(identifier,payload))
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_object()))
             if self.path == "/api/assets/update":
                 try: return self._json(200, self.studio.assets.update(self._body_json()))

@@ -73,8 +73,8 @@ class ServerTests(unittest.TestCase):
     def _commit_reading(available):
         return {'available_bytes':available,'limit_bytes':96*1024**3,'committed_bytes':64*1024**3,'unknown_reason':None}
 
-    def _heavy_studio(self, replies=(), explicit=True):
-        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'enforce_host_commit_headroom':True}))
+    def _heavy_studio(self, replies=(), explicit=True, release=None):
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'enforce_host_commit_headroom':True,**({} if release is None else {'commit_gate_release_seconds':release})}))
         graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['unet_name']='qwen-image-edit-2511-Q4_K_M.gguf'
         graph['3']={'class_type':'ImageScaleToTotalPixels','inputs':{'megapixels':1.0}}
         preset=dict(PRESET,**({'host_commit_heavy':True} if explicit else {}))
@@ -110,6 +110,146 @@ class ServerTests(unittest.TestCase):
             job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':2},enqueue=False)['id']];studio._run(job)
         self.assertEqual(job['status'],'partial');self.assertEqual(job['prompt_ids'],['first']);self.assertNotIn('pending_submission',job)
         self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/prompt','/history/first'])
+
+    # Release-then-remeasure (#305): a job the gate would refuse only because ComfyUI still holds the last job's models.
+    IDLE={'queue_running':[],'queue_pending':[]}
+
+    def test_commit_release_is_off_by_default_and_keeps_todays_refusals(self):
+        minimum=32*1024**3
+        for release in (None,0):
+            with self.subTest(release=release),patch.object(server.host_memory,'read',return_value=self._commit_reading(minimum-1)):
+                studio=self._heavy_studio(release=release);self.assertEqual(studio.commit_release_seconds,0)
+                with self.assertRaisesRegex(server.StudioError,'below the required 32 GiB'):studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)
+                self.assertFalse(studio.jobs);self.assertEqual(studio.requests,[])
+        for raw in ('45',True,float('nan'),-5):
+            with self.subTest(raw=raw):self.assertEqual(self._heavy_studio(release=raw).commit_release_seconds,0)
+        self.assertEqual(self._heavy_studio(release=10000).commit_release_seconds,300)
+
+    def test_commit_release_frees_the_backend_and_admits_only_on_a_fresh_passing_reading(self):
+        minimum=32*1024**3;low,high=self._commit_reading(26*1024**3),self._commit_reading(minimum)
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'after-free'},{'after-free':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
+        with patch.object(server.host_memory,'read',side_effect=[low,low,low,high,high]),patch.object(server.time,'sleep'):
+            created=studio.create_job({'preset_id':'demo','controls':{}},enqueue=False);job=studio.jobs[created['id']]
+            self.assertEqual(job['status'],'queued');self.assertTrue(job['host_commit_readings'][0]['deferred'])
+            self.assertIn('free ComfyUI',job['message']);self.assertIn('26.0 GiB',job['message'])
+            studio._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['after-free'])
+        calls=[(args[0],kwargs.get('data')) for args,kwargs in studio.requests if args]
+        self.assertEqual([path for path,_ in calls],['/queue','/queue','/free','/queue','/prompt','/history/after-free'])
+        self.assertEqual(calls[2][1],{'unload_models':True,'free_memory':True})
+        self.assertEqual(studio.requests[2][1].get('base_url'),job['comfy_url'])
+        release,=job['commit_releases']
+        self.assertEqual((release['index'],release['outcome'],release['before_available_bytes'],release['after_available_bytes'],release['required_bytes']),(0,'released',26*1024**3,minimum,minimum))
+        self.assertEqual(release['samples'],2);self.assertEqual(release['url'],job['comfy_url'])
+        self.assertEqual([entry['phase'] for entry in job['host_commit_readings']],['prepared','pre-submit'])
+        self.assertEqual(job['host_commit_readings'][1]['available_bytes'],minimum)
+
+    def test_commit_release_that_does_not_raise_headroom_enough_sends_nothing(self):
+        low=self._commit_reading(26*1024**3)
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None],release=0.01)
+        with patch.object(server.host_memory,'read',return_value=low),patch.object(server.time,'sleep'):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[]);self.assertNotIn('pending_submission',job)
+        self.assertRegex(job['message'],r'Host commit headroom 26\.0 GiB is below the required 32 GiB.*freed ComfyUI.*No prompt was submitted for output 1\.')
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/queue','/free'])
+        self.assertTrue(job['commit_releases'][0]['outcome'].startswith('insufficient'))
+
+    def test_commit_release_is_skipped_on_busy_queue_switch_or_other_running_work(self):
+        low=self._commit_reading(26*1024**3)
+        busy={'queue_running':[['x']],'queue_pending':[]}
+        cases=(('queue',[self.IDLE,busy],'ComfyUI queue'),('switch',[self.IDLE],'backend switch'),('other',[self.IDLE],'other Studio work'),('queue-error',[self.IDLE,URLError('down')],'failed'))
+        for name,replies,outcome in cases:
+            with self.subTest(name),patch.object(server.host_memory,'read',return_value=low),patch.object(server.time,'sleep'):
+                studio=self._heavy_studio(replies,release=5)
+                job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+                if name=='switch':studio.backends.busy=True
+                if name=='other':studio.jobs['other']={'id':'other','status':'running'}
+                studio._run(job)
+                self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[])
+                self.assertNotIn('/free',[args[0] for args,_ in studio.requests if args])
+                self.assertIn(outcome,job['commit_releases'][0]['outcome'])
+                self.assertIn('below the required 32 GiB',job['message'])
+
+    def test_commit_release_is_skipped_at_or_below_the_floor_its_own_transient_needs(self):
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES
+        # The floor is the measured transient (14.7 GiB, budgeted as the whole 16 GiB card) plus a margin above the ~97 % death line.
+        self.assertEqual(floor,server.COMMIT_RELEASE_TRANSIENT_BYTES+server.COMMIT_RELEASE_MARGIN_BYTES);self.assertEqual(floor,22*1024**3)
+        self.assertGreater(server.COMMIT_RELEASE_TRANSIENT_BYTES,int(14.71*1024**3))
+        for below in (floor-1,floor):
+            with self.subTest(before=below):
+                studio=self._heavy_studio([self.IDLE],release=5)
+                with patch.object(server.host_memory,'read',return_value=self._commit_reading(below)),patch.object(server.time,'sleep'):
+                    job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+                self.assertEqual(job['status'],'failed');self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
+                self.assertIn('more than 22 GiB',job['commit_releases'][0]['outcome']);self.assertIn('were not freed',job['message'])
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'over-floor'},{'over-floor':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
+        with patch.object(server.host_memory,'read',side_effect=[self._commit_reading(floor+1)]*2+[self._commit_reading(32*1024**3)]*2),patch.object(server.time,'sleep'):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['commit_releases'][0]['outcome'],'released')
+
+    def test_commit_reading_failure_after_release_is_recorded_and_sends_nothing(self):
+        low=self._commit_reading(25*1024**3)
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None],release=5)
+        with patch.object(server.host_memory,'read',side_effect=[low,low,OSError('pdh gone')]),patch.object(server.time,'sleep'):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[]);self.assertNotIn('pending_submission',job)
+        release,=job['commit_releases']
+        self.assertTrue(release['outcome'].startswith('failed: commit could not be read after release'));self.assertEqual(release['samples'],0)
+        self.assertIn('below the required 32 GiB',job['message']);self.assertIn('No prompt was submitted for output 1',job['message'])
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/queue','/free'])
+
+    def test_create_decides_deferral_on_a_fresh_reading_not_the_cache(self):
+        minimum=32*1024**3;studio=self._heavy_studio(release=5)
+        studio._host_commit=self._commit_reading(minimum);studio._host_commit_at=server.time.monotonic()   # a cached pass from a moment ago
+        with patch.object(server.host_memory,'read',return_value=self._commit_reading(26*1024**3)) as read:
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        self.assertEqual(read.call_count,1);self.assertTrue(job['host_commit_readings'][0]['deferred'])
+
+    def test_a_cancel_during_the_release_sends_nothing_and_settles_as_cancelled(self):
+        low,high=self._commit_reading(26*1024**3),self._commit_reading(32*1024**3)
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None],release=5)
+        with patch.object(server.host_memory,'read',return_value=low):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        reads=iter([low,high])
+        def read():
+            value=next(reads,high)
+            if value is high and job['id'] not in studio.cancel_requests: studio.cancel_requests[job['id']]=server.job_cancel.new_record(job,server.time.time())
+            return value
+        with patch.object(server.host_memory,'read',side_effect=read),patch.object(server.time,'sleep'):studio._run(job)
+        self.assertEqual(job['status'],'cancelled');self.assertEqual(job['prompt_ids'],[]);self.assertNotIn('pending_submission',job)
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/queue','/free'],'the post-release queue wait stops for the cancel')
+        self.assertEqual(job['commit_releases'][0]['outcome'],'released')
+
+    def test_commit_release_never_follows_an_unknown_reading(self):
+        unknown={'available_bytes':None,'limit_bytes':None,'committed_bytes':None,'unknown_reason':'counter unavailable'}
+        with patch.object(server.host_memory,'read',return_value=unknown):
+            studio=self._heavy_studio(release=5)
+            with self.assertRaisesRegex(server.StudioError,'counter unavailable'):studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)
+        self.assertFalse(studio.jobs)
+        minimum=32*1024**3;studio=self._heavy_studio([self.IDLE],release=5)
+        with patch.object(server.host_memory,'read',side_effect=[self._commit_reading(minimum),unknown]):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertNotIn('commit_releases',job)
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
+
+    def test_commit_release_between_batch_members_frees_after_the_first_prompt(self):
+        minimum=32*1024**3;ok,low=self._commit_reading(minimum),self._commit_reading(26*1024**3)
+        studio=self._heavy_studio([self.IDLE,{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}},self.IDLE,None,self.IDLE,{'prompt_id':'two'},{'two':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
+        with patch.object(server.host_memory,'read',side_effect=[ok,ok,low,ok,ok]),patch.object(server.time,'sleep'):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':2},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['one','two'])
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/prompt','/history/one','/queue','/free','/queue','/prompt','/history/two'])
+        self.assertEqual([(r['index'],r['outcome']) for r in job['commit_releases']],[(1,'released')])
+        self.assertIn('commit_releases',studio.public(job))
+
+    def test_commit_release_failure_of_the_free_request_sends_nothing(self):
+        low=self._commit_reading(26*1024**3)
+        studio=self._heavy_studio([self.IDLE,self.IDLE,URLError('refused')],release=5)
+        with patch.object(server.host_memory,'read',return_value=low),patch.object(server.time,'sleep'):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[])
+        self.assertTrue(job['commit_releases'][0]['outcome'].startswith('failed'))
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/queue','/free'])
 
     def test_host_commit_gate_covers_qwen_image_21_at_any_size(self):
         """The 7B model and its 9.35 GB encoder need the headroom below 1 MP and in the size-less edit graph too."""
@@ -386,7 +526,7 @@ class ServerTests(unittest.TestCase):
         # /api/estimate is advisory and answers 200 {available: false}; every other route refuses.
         routes=('/api/gpu-lease','/api/gpu-lease/release','/api/jobs','/api/backends/switch','/api/articulated','/api/preview',
                 '/api/av','/api/voice-baseline','/api/av/'+project,'/api/production','/api/production/campaigns','/api/production-export',
-                '/api/experiments/plan','/api/production/%s/stop'%project,'/api/production/%s/extend-time'%project,'/api/production/%s/review'%project,
+                '/api/experiments/plan','/api/production/%s/stop'%project,'/api/production/%s/extend-time'%project,'/api/production/%s/review'%project,'/api/production/%s/put-away'%project,
                 '/api/references/check','/api/assets/update','/api/collections','/api/setups','/api/assets/reference','/api/assets/export',
                 '/api/recipe-check','/api/folders/open','/api/models/install','/api/workflow-inspect','/api/jobs/missing/resume',
                 '/api/jobs/missing/observe-known','/api/jobs/missing/dispose-mixed','/api/jobs/missing/abandon','/api/jobs/missing/stop-tracking',
