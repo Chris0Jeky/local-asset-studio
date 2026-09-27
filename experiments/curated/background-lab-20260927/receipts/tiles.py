@@ -37,5 +37,7 @@ def run(key, src, prompt, band=112, denoise=0.8, seed=2026092779):
             'seam_raw': seam(a), 'seam_tile': seam(res), 'inner_gradient_raw': inner(a), 'inner_gradient_tile': inner(res)}
 if __name__ == '__main__':
     res = [run('floor', comfy.OUT + 'Studio/Z-Image-Fast_00020_.png', 'Seamless texture, top-down view of dark worn wooden floorboards, hand-painted cel anime film background art, muted graphite and brown palette with faint cyan reflections, even soft lighting, no objects, no text, fills the whole frame.'),
-           run('wall', comfy.OUT + 'Studio/Z-Image-Fast_00021_.png', 'Seamless texture, flat front view of a dark graphite plaster wall with subtle hand-painted brush texture and faint water stains, hand-painted cel anime film background art, even soft lighting, no objects, no text, fills the whole frame.')]
+           run('wall', comfy.OUT + 'Studio/Z-Image-Fast_00021_.png', 'Seamless texture, flat front view of a dark graphite plaster wall with subtle hand-painted brush texture and faint water stains, hand-painted cel anime film background art, even soft lighting, no objects, no text, fills the whole frame.'),
+           # floor v2, run separately on 27 Sep after v1 was rejected (flat orthographic source, wider band, lower denoise)
+           run('floor2', comfy.OUT + 'Studio/Z-Image-Fast_00022_.png', 'Flat orthographic texture map of straight parallel dark wooden floor planks running vertically, seen exactly from above with no perspective, hand-painted cel anime film background art, muted graphite brown palette, even flat lighting, no objects, no text, fills the whole frame.', band=160, denoise=0.65, seed=2026092780)]
     json.dump(res, open(H + 'tiles.json', 'w'), indent=1); print(json.dumps(res, indent=1))

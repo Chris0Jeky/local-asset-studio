@@ -84,9 +84,6 @@ def route_a():
     sp, _ = strip([(far_rgb, np.ones_like(dep)), (mid_rgb, mid.astype(np.float32)), (A, near.astype(np.float32))], [3, 10, 24], 'strip-route-a')
     return {'route': 'A', 'thresholds': {'far': '<0.25', 'near': '>0.62'}, 'far_pixels': int(far.sum()), 'near_pixels': int(near.sum()), 'layers': paths, 'strip': sp}
 
-if __name__ == '__main__':
-    res = {'B': route_b(), 'A': route_a()}
-    json.dump(res, open(H + 'parallax.json', 'w'), indent=1); print(json.dumps(res, indent=1)[:2500])
 
 ISOLATE = comfy.OUT + 'Verified/FLUX-Edit_00022_.png'
 def route_c():
@@ -137,3 +134,9 @@ def route_c2():
     sp, _ = strip([(far_rgb, far_a), (mid_rgb, mid_a), (A, near_a)], [3, 10, 24], 'strip-route-c2')
     return {'route': 'C2', 'near_pixels': int(near.sum()), 'recomposite_mean_abs_error': round(float(np.abs(comp - A).mean()), 2), 'layers': paths, 'strip': sp, 'shifts_px': [3, 10, 24],
             'fixes': ['far ring filled from the nearest window-view pixel (no MAT), CRT excluded from the view', 'plate colour-matched to the anchor in a 24 px ring, 6 px feathered blend']}
+
+if __name__ == '__main__':
+    # As run on 27 Sep 2026: B and A first, then C and C2 were added after review of the first strips (C2 is the kept route).
+    # One entry point now reproduces all four records of the committed parallax.json.
+    res = {'B': route_b(), 'A': route_a(), 'C': route_c(), 'C2': route_c2()}
+    json.dump(res, open(H + 'parallax.json', 'w'), indent=1); print(json.dumps(res, indent=1)[:2500])
