@@ -326,6 +326,13 @@ The primary's Krea 2 fp8 route (13.1 GB of diffusion weights) was recorded at 94
   shared memory drained within 3 s (`settled_shared_bytes`, `lingering`). A spill that drained completes with *Complete. GPU
   memory overflowed … while it ran*; only a lingering one says *Complete, but slowly* and suggests a restart. Both name the
   largest other holder. `/api/health` carries the live `gpu_memory` reading and `vram_guard` (§10).
+- Each prompt also records its Windows commit window in `host_commit_windows` on the job (#302). A second thread
+  samples every 0.5 s, from the first `/history` poll until observation ends. Each window carries its index and prompt ID,
+  the known and unknown sample counts, the peak committed bytes with their time and the commit limit, and the minimum
+  headroom. There are at most 16 windows per job, and submission receipts are not changed. An unknown reading is
+  counted, never folded in as zero. Only when a window's headroom fell below 16 GiB does the finished-run line add
+  *Memory was tight: Windows commit headroom fell to … GiB*. The `qwen-2ref` host-allocation failure on 12 September
+  had about 9 GB left.
 
 **Measured on the primary: the measured reserve is the wrong default there.** Krea 2 fp8 (`krea-portrait`
 graph unchanged, 768x1152, 8 steps, seed 2026091103; `experiments/curated/vram-spill-20260923/krea_bench.json`):
