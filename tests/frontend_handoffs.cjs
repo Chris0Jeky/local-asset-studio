@@ -350,7 +350,28 @@ async function nonLibraryEntryPointsNeverOptIntoTheGuess() {
   assert.match(workbench, /selectPreset\(target\.id,true,true\);applySaved\(setup\);/, 'Rerun loads its setup without the library flag');
   assert.match(production, /action==='branch'\)\{applySaved\(\{[^}]*\}\);/, 'A production branch loads without the library flag');
   assert.equal((app.match(/guessLegacyParent:true/g) || []).length, 1, 'Only the saved-list load opts in inside app.js');
-  assert.match(workbench, /applySaved\(draft\.recipe,\{guessLegacyParent:true\}\)/, 'Draft restore opts in');
+  // #1087 review: normalizeDraft drops an empty mapping, so a restored draft cannot tell "nothing attributed"
+  // from "written before mappings"; draft restore therefore never guesses.
+  assert.match(workbench, /try\{applySaved\(draft\.recipe\);/, 'Draft restore never guesses');
+  assert.doesNotMatch(workbench, /guessLegacyParent/, 'No workbench path opts in');
+}
+
+// #1087 review: a rerun with one unclaimed parent and one named input, saved as a setup and reloaded from the
+// saved list, must not gain a guessed claim; replacing the input must keep the parent.
+async function savedSetupRoundTripKeepsAnUnclaimedParent() {
+  const saving = sandbox(null, null);
+  saving.run(`selectPreset('gentle-variation');uploaded='upload.png';parentAssets=['asset-a'];parentByInput={};`);
+  saving.element('#saveName').value = 'Rerun with an unclaimed parent';
+  await saving.element('#save').onclick();
+  const recipe = saving.requests.find(r => r.url === '/api/setups').data.recipe;
+  assert.equal(recipe.attribution_recorded, true, 'A current setup marks its mapping as recorded');
+  assert.deepEqual(recipe.parent_by_input, {}, 'Nothing was attributed');
+  const reload = sandbox(null, null);
+  reload.run(`applySaved(${JSON.stringify(recipe)},{guessLegacyParent:true});`); // exactly the saved-list load
+  assert.deepEqual(JSON.parse(reload.run('JSON.stringify(parentByInput)')), {}, 'The marked empty mapping is not re-guessed');
+  reload.element('#reference').files = [localFile('replacement.png')];
+  reload.element('#reference').onchange();
+  assert.deepEqual(reload.parents(), ['asset-a'], 'Replacing the input keeps the unclaimed parent');
 }
 
 // The Pull-from-library picker in studio-workbench.js drives this exact sequence against one slot.
@@ -1047,6 +1068,7 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await singleParentGuessIsLibraryOnly();
   await importedSlotlessRecipeNeverGuesses();
   await nonLibraryEntryPointsNeverOptIntoTheGuess();
+  await savedSetupRoundTripKeepsAnUnclaimedParent();
   await pullingIntoASlotReplacesItsSource();
   await i2vDiagnosticEligibilityAndRetry();
   await unresolvedInputLineageCannotBeSaved();
