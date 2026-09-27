@@ -13,7 +13,6 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import sys
-import warnings
 import zipfile
 
 
@@ -160,39 +159,38 @@ class NativeExports:
             from PIL import Image, ImageCms
         except ImportError as exc:
             raise NativeExportError("Pillow is required for native image exports") from exc
+        from studio_workflow.image_limits import open_bounded
         converted = []
         dimensions = None
         total_pixels = 0
         with ExitStack() as cleanup:
             for record in records:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("error", Image.DecompressionBombWarning)
-                    with Image.open(record["source"]) as source:
-                        require(source.format == IMAGE_TYPES[record["media_type"]],
-                                f"Asset media_type does not match bytes: {record['id']}")
-                        require(1 <= source.width <= 8192 and 1 <= source.height <= 8192,
-                                "Image dimensions exceed native export limits")
-                        total_pixels += source.width * source.height
-                        require(total_pixels <= MAX_PIXELS, "Total image pixels exceed native export limit")
-                        current = (source.width, source.height)
-                        require(dimensions is None or current == dimensions,
-                                "All images must share one canvas; no individual trimming or resizing occurs")
-                        dimensions = current
-                        require(getattr(source, "n_frames", 1) == 1,
-                                "Native exports accept still images; extract animation frames explicitly")
-                        source.load()
-                        profile = source.info.get("icc_profile")
-                        if profile:
-                            try:
-                                image = ImageCms.profileToProfile(
-                                    source, ImageCms.ImageCmsProfile(io.BytesIO(profile)),
-                                    ImageCms.createProfile("sRGB"), outputMode="RGBA")
-                            except (ImageCms.PyCMSError, OSError, ValueError) as exc:
-                                raise NativeExportError(f"Invalid ICC profile: {record['id']}") from exc
-                        else:
-                            image = source.convert("RGBA")
-                        cleanup.callback(image.close)
-                        converted.append((record, image))
+                with open_bounded(record["source"]) as source:
+                    require(source.format == IMAGE_TYPES[record["media_type"]],
+                            f"Asset media_type does not match bytes: {record['id']}")
+                    require(1 <= source.width <= 8192 and 1 <= source.height <= 8192,
+                            "Image dimensions exceed native export limits")
+                    total_pixels += source.width * source.height
+                    require(total_pixels <= MAX_PIXELS, "Total image pixels exceed native export limit")
+                    current = (source.width, source.height)
+                    require(dimensions is None or current == dimensions,
+                            "All images must share one canvas; no individual trimming or resizing occurs")
+                    dimensions = current
+                    require(getattr(source, "n_frames", 1) == 1,
+                            "Native exports accept still images; extract animation frames explicitly")
+                    source.load()
+                    profile = source.info.get("icc_profile")
+                    if profile:
+                        try:
+                            image = ImageCms.profileToProfile(
+                                source, ImageCms.ImageCmsProfile(io.BytesIO(profile)),
+                                ImageCms.createProfile("sRGB"), outputMode="RGBA")
+                        except (ImageCms.PyCMSError, OSError, ValueError) as exc:
+                            raise NativeExportError(f"Invalid ICC profile: {record['id']}") from exc
+                    else:
+                        image = source.convert("RGBA")
+                    cleanup.callback(image.close)
+                    converted.append((record, image))
             cleanup.pop_all()  # Transfer ownership to the caller only after all images pass.
             return dimensions, total_pixels, converted
 

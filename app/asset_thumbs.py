@@ -11,7 +11,6 @@ from __future__ import annotations
 import re
 import threading
 import uuid
-import warnings
 
 import file_replace
 from workspace import WorkspaceError
@@ -57,12 +56,11 @@ def transparent(image):
 def render(source, size):
     """A decoded, oriented, reduced copy of `source` whose long edge is at most `size`. Raises Pillow's errors."""
     from PIL import Image, ImageOps
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", Image.DecompressionBombWarning)  # as native_exports: oversized is unreadable
-        with Image.open(source) as image:
-            image.draft(None, (size, size))  # JPEG: decode at a reduced scale no smaller than the target
-            alpha = transparent(image)
-            image = ImageOps.exif_transpose(image).convert("RGBA" if alpha else "RGB")
+    from studio_workflow.image_limits import open_bounded
+    with open_bounded(source) as image:
+        image.draft(None, (size, size))  # JPEG: decode at a reduced scale no smaller than the target
+        alpha = transparent(image)
+        image = ImageOps.exif_transpose(image).convert("RGBA" if alpha else "RGB")
     image.thumbnail((size, size), Image.Resampling.LANCZOS)  # shrinks only; a small image keeps its size
     return image
 
