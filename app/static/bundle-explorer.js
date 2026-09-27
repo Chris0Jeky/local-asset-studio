@@ -128,6 +128,8 @@
       try{const data=(await import('/static/bundle-showcase.js')).default;if(opened!==openEpoch||!dialog.open)return;showcase=data;showcaseMessage='';cards();if(active){const preview=q('#bundleBody .bundle-feature figure, #bundleBody .bundle-empty');const sample=record(active.id);if(preview&&sample){const figure=document.createElement('figure');figure.innerHTML='<img src="'+escape(sample.url)+'" alt="'+escape(sample.caption)+'"><figcaption>'+escape(sample.label+' · '+sample.caption+' '+sample.notice)+'</figcaption>';preview.replaceWith(figure);images();}}}catch{if(opened!==openEpoch||!dialog.open)return;showcaseMessage='Example index unavailable. Recipes remain browsable without previews.';status(showcaseMessage);}
     };
     button.onclick=openBundles;
+    // Read-only navigation adapter for optional islands (#907): open discovery, optionally inspecting one authored recipe. Never applies.
+    window.StudioBundleExplorer=Object.freeze({open(id){const opening=openBundles();if(typeof id==='string'&&items.some(r=>r.id===id))choose(id);return opening;}});
     function mountHomeLauncher(){
       if(q('#bundleHomeLauncher'))return;
       const heading=q('#homeView .ux-home-heading');if(!heading)return;
