@@ -53,6 +53,8 @@ class OwnerDecisionFactsTests(unittest.TestCase):
             with self.subTest(line=line):
                 with self.assertRaisesRegex(ValueError, "owner item is not in the parsed form"):
                     self.facts(line)
+        # Other owner labels are not claims of this form and are left alone, as before.
+        self.assertEqual(self.facts("- [ ] **run-it** (owner-run) Try it\n- [ ] **look** (owner review): Look\n")["open_count"], 0)
 
     def test_live_human_todo_has_no_unreadable_owner_item(self):
         # Parsing must not raise; an empty backlog (every item answered) is valid.

@@ -203,6 +203,10 @@ class CleanupTests(unittest.TestCase):
         out,removed=m.despeckle(im)
         self.assertEqual(removed,{'regions_cleared':1,'pixels_cleared':1})
         self.assertEqual(out.getpixel((5,5))[3],24);self.assertEqual(out.getpixel((14,14))[3],0)
+        # With a bright subject present, a larger faint haze is residue and is still cleared.
+        im.putpixel((0,15),(9,9,9,255))
+        out,removed=m.despeckle(im)
+        self.assertEqual(removed,{'regions_cleared':2,'pixels_cleared':65});self.assertEqual(out.getpixel((5,5))[3],0)
     def test_despeckle_treats_a_dust_bridge_as_detached(self):
         im=Image.new('RGBA',(8,1),(0,0,0,0))
         for x,a in enumerate((255,255,5,20,0,255,9,40)):im.putpixel((x,0),(7,7,7,a))

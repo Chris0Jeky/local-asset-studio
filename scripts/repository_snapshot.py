@@ -41,7 +41,7 @@ _UNCHECKED = re.compile(
 # A top-level open checkbox with a bold identifier and an owner label claims to
 # be an owner item. One that `_UNCHECKED` cannot read is refused, never dropped:
 # a silent miss under-reports the owner backlog (#1103 added one with a comma).
-_OWNER_CLAIM = re.compile(r"^-\s*\[\s\]\s+\*\*[^*]+\*\*\s*\(owner\b", re.IGNORECASE)
+_OWNER_CLAIM = re.compile(r"^-\s*\[\s\]\s+\*\*[^*]+\*\*\s*\(owner\s+(?:action|decisions?)\b", re.IGNORECASE)
 _FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 _REPOSITORY_FIELDS = ("head_sha", "default_branch", "facts_sha", "catalog_blob_sha", "human_todo_blob_sha")
 
