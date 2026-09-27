@@ -92,7 +92,8 @@ the exported `recipe-<preset>.json` beside it), seed 2026092211, 25 steps, commi
 
 The rgba recipe is `verified: true` (the route runs and returns the intended kind of output). The t2i and edit
 graphs now route SaveImage through a core SplitImageWithAlpha node so full-frame outputs save RGB instead of RGBA
-with faint partial alpha (#878); both are `verified: false` until one proving run each through the Studio. The rgba
+with faint partial alpha (#878); both were re-proved through the Studio on 27 September 2026 (t2i job `c11448cc`,
+57.4 s; edit job `74597f0d`, 114.7 s; both PNGs RGB) and are `verified: true` again. The rgba
 PNG keeps its alpha channel — strip or threshold alpha before any step that crops or packs by alpha:
 `python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by default; `--mode rgba-despeckle`
 also clears detached specks that never reach alpha 32, as left around soft glows; `--mode to-rgb` to drop a spurious channel), with before/after evidence in `experiments/curated/qwen21-alpha-cleanup/`. Generated
