@@ -213,12 +213,12 @@ def others_bytes(reading, pid):
     zero the installed VRAM guard's perceived free memory; without a matching figure a new reading is unknown.
     """
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
-    owned = [name for name, processes in (adapters or {}).items() if pid in processes]
+    owned = [name for name, processes in (adapters or {}).items() if processes.get(pid, {}).get('dedicated_bytes', 0) > 0]
     if owned:
         adapter = max(owned, key=lambda name: (adapters[name][pid]['dedicated_bytes'], adapters[name][pid].get('shared_bytes', 0)))
     else:
-        # PDH can publish other processes before this ComfyUI PID. Until its entry appears, all selected
-        # adapter usage is external; the guard must keep accounting for it rather than silently using zero.
+        # PDH can publish other processes before this ComfyUI PID. Until its entry appears or while it reports
+        # zero dedicated bytes, all selected adapter usage is external; the guard must keep accounting for it rather than silently using zero.
         adapter = _select_metered_adapter(reading, adapters)
     if adapter is None: return None
     total = _adapter_total(reading, adapter)
@@ -244,7 +244,7 @@ def others_for_admission(reading, pid):
         if isinstance(reading, dict):
             reason = reading.get('unknown_reason') or reading.get('adapter_unknown_reason')
         return None, reason or 'No matching GPU adapter memory reading'
-    owned = [name for name, processes in adapters.items() if pid in processes]
+    owned = [name for name, processes in adapters.items() if processes.get(pid, {}).get('dedicated_bytes', 0) > 0]
     if owned:
         adapter = max(owned, key=lambda name: (adapters[name][pid]['dedicated_bytes'], adapters[name][pid].get('shared_bytes', 0)))
     else:

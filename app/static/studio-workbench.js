@@ -91,24 +91,37 @@
   // #1100: loading a recipe still loads its wording, but wording you wrote gets one explicit way back until you type, dismiss
   // or put it back (reversible choice; nothing is carried over silently, nothing is sent). "Yours" means different from the
   // wording the Studio itself last loaded (preset example or applied recipe). Setups, drafts and continuations clear the offer.
+  // A staged picture the load cleared (picked file, pulled or attached slot, with its lineage) gets one too, but only as a way
+  // back to the recipe it was staged for, with that recipe's wording and settings as they were: a picture bound to one recipe's
+  // input never moves into another graph. Your own edit after the switch withdraws it; a later write by code makes it refuse.
   const wordingUndo=element('div','ux-wording-undo');wordingUndo.id='uxWordingUndo';wordingUndo.hidden=true;wordingUndo.setAttribute('role','status');
-  const wordingText=element('span'),wordingRestore=element('button','','Put my wording back'),wordingDismiss=element('button','subtle','Keep the recipe wording');
-  wordingRestore.type=wordingDismiss.type='button';wordingRestore.id='uxWordingUndoRestore';wordingDismiss.id='uxWordingUndoDismiss';wordingUndo.append(wordingText,wordingRestore,wordingDismiss);
-  q('#positiveWrap')?.after(wordingUndo);let wordingKept=null,wordingBase=null,wordingDepth=0;
+  const wordingText=element('span'),wordingRestore=element('button','','Put my wording back'),wordingBack=element('button'),wordingDismiss=element('button','subtle','Keep the recipe wording');
+  wordingRestore.type=wordingBack.type=wordingDismiss.type='button';wordingRestore.id='uxWordingUndoRestore';wordingBack.id='uxWordingUndoBack';wordingDismiss.id='uxWordingUndoDismiss';wordingUndo.append(wordingText,wordingRestore,wordingBack,wordingDismiss);
+  q('#positiveWrap')?.after(wordingUndo);let wordingKept=null,wordingBase=null,wordingDepth=0,pictureKept=null;
   const wording=()=>({positive:q('#positive')?.value??'',negative:q('#negative')?.value??''});
   const presetWording=p=>({positive:p?.defaults?.positive||'',negative:p?.defaults?.negative||''});
-  const forgetWording=()=>{wordingKept=null;wordingUndo.hidden=true;};
-  function offerWording(name){const kept=wordingKept,now=wording();if(!kept||!selected)return;
+  const forgetWording=()=>{wordingKept=pictureKept=null;wordingUndo.hidden=true;};
+  const pickedFiles=id=>[...(q('#'+id)?.files||[])],stagedPicture=()=>!!(pickedFiles('reference').length||pickedFiles('lastReference').length||uploaded||lastUploaded||referenceRecords.some(r=>r.file));
+  const pictureStamp=()=>JSON.stringify([selected?.id,wording(),q('#batch')?.value,uploaded,lastUploaded,parentAssets,parentByInput,referenceRecords,['reference','lastReference'].map(id=>pickedFiles(id).map(f=>[f.name,f.size,f.lastModified]))]);
+  const pictureSnapshot=()=>({id:selected.id,name:selected.name,controls:values(),batch:q('#batch')?.value,wording:wording(),uploaded,lastUploaded,parentAssets:[...parentAssets],parentByInput:{...parentByInput},records:referenceRecords.map(r=>({...r})),files:{reference:pickedFiles('reference'),lastReference:pickedFiles('lastReference')}});
+  function renderUndo(){const kept=wordingKept,pic=pictureKept;if(!pic&&!kept?.line){wordingUndo.hidden=true;return;}
+    wordingRestore.hidden=!kept?.restorable;wordingBack.hidden=!pic;if(pic)wordingBack.textContent='Go back to '+pic.name+' with your picture';
+    wordingDismiss.textContent=pic?'Keep '+selected.name:'Keep the recipe wording';
+    wordingText.textContent=[kept?.line,pic&&'Your picture was cleared.'].filter(Boolean).join(' ');wordingUndo.hidden=false;}
+  function offerWording(name){const kept=wordingKept,now=wording();if(!selected)return;
+    if(pictureKept&&pictureStamp()!==pictureKept.loaded)pictureKept=null;
     // Written by something else after the load in the same task: that write stands, so there is nothing to offer (#1144).
-    if(kept.loaded&&(now.positive!==kept.loaded.positive||now.negative!==kept.loaded.negative)){forgetWording();return;}
-    const positive=kept.positive!==null&&kept.positive!==now.positive,negativeFits=!!selected.negative&&!!q('#negative');
-    const negative=kept.negative!==null&&negativeFits&&kept.negative!==now.negative,lost=kept.negative!==null&&!negativeFits;
-    if(!positive&&!negative&&!lost){forgetWording();return;}
-    kept.restorable=positive||negative;wordingRestore.hidden=!kept.restorable;
-    wordingText.textContent=(kept.restorable?name+' loaded its own wording. Yours is kept until you type or choose.':'')+(lost?(kept.restorable?' ':'')+selected.name+' has no negative prompt, so your negative wording is not used: “'+kept.negative.slice(0,160)+(kept.negative.length>160?'…':'')+'”':'');
-    wordingUndo.hidden=false;if(kept.restorable&&!selected.runtime_block)message('Loaded with its own wording. Yours is kept under the prompt: Put my wording back, or keep typing.');}
+    if(kept&&kept.loaded&&(now.positive!==kept.loaded.positive||now.negative!==kept.loaded.negative))wordingKept=null;
+    else if(kept){const positive=kept.positive!==null&&kept.positive!==now.positive,negativeFits=!!selected.negative&&!!q('#negative');
+      const negative=kept.negative!==null&&negativeFits&&kept.negative!==now.negative,lost=kept.negative!==null&&!negativeFits;
+      if(!positive&&!negative&&!lost)wordingKept=null;
+      else{kept.restorable=positive||negative;kept.line=(kept.restorable?name+' loaded its own wording. Yours is kept until you type or choose.':'')+(lost?(kept.restorable?' ':'')+selected.name+' has no negative prompt, so your negative wording is not used: “'+kept.negative.slice(0,160)+(kept.negative.length>160?'…':'')+'”':'');}}
+    const pic=pictureKept;if(!wordingKept&&!pic){forgetWording();return;}
+    renderUndo();if(selected.runtime_block)return;
+    if(pic)message('Recipe loaded. Your picture was cleared: Go back to '+pic.name+' under the prompt restores it.');
+    else if(wordingKept.restorable)message('Loaded with its own wording. Yours is kept under the prompt: Put my wording back, or keep typing.');}
   function trackWording(name,kind){const original=window[name];window[name]=function(...args){
-    const outer=wordingDepth===0,before=outer?wording():null,base=wordingBase||presetWording(selected);wordingDepth++;
+    const outer=wordingDepth===0,before=outer?wording():null,base=wordingBase||presetWording(selected),picture=outer&&kind!=='setup'&&selected&&stagedPicture()?pictureSnapshot():null;wordingDepth++;
     let result;try{result=original.apply(this,args);}finally{wordingDepth--;}
     if(!outer)return result;
     // A setup, import or draft loads its own wording: that text is loaded, not typed, like a recipe's (#1144).
@@ -116,11 +129,13 @@
     const own=key=>!!String(before[key]).trim()&&before[key]!==base[key]?before[key]:null,positive=own('positive'),negative=own('negative');
     // Your wording replaces an older offer; a load over untouched wording keeps the older one (a misclick in between).
     if(positive!==null||negative!==null)wordingKept={positive,negative};
+    // A picture this load cleared replaces an older way back; a plain switch over nothing staged keeps it (a misclick in between).
+    if(picture&&!stagedPicture())pictureKept=picture;else if(kind!=='preset'||args[1]===false)pictureKept=null;
     const recipe=kind==='recipe'?args[0]:null;wordingBase=recipe?{positive:recipe.controls?.positive??wording().positive,negative:recipe.controls?.negative??wording().negative}:presetWording(selected);
     // Measured after the caller finishes (a bundle apply sets its own wording in the same task).
     // The loaded wording is recorded as this call ends, so a write later in the same task counts as an edit (#1144).
-    if(wordingKept)wordingKept.loaded=wording();
-    if(wordingKept){const label=recipe?'Loading '+(recipe.name||'this recipe'):'Switching to '+selected.name;queueMicrotask(()=>offerWording(label));}
+    if(wordingKept)wordingKept.loaded=wording();if(pictureKept)pictureKept.loaded=pictureStamp();
+    if(wordingKept||pictureKept){const label=recipe?'Loading '+(recipe.name||'this recipe'):'Switching to '+selected.name;queueMicrotask(()=>offerWording(label));}else wordingUndo.hidden=true;
     return result;};}
   trackWording('selectPreset','preset');trackWording('applyRecipe','recipe');trackWording('applySaved','setup');
   wordingRestore.onclick=()=>{const kept=wordingKept;forgetWording();if(!kept||!selected)return;const now=wording(),field=q('#positive');
@@ -129,8 +144,23 @@
     if(kept.positive!==null&&kept.positive!==now.positive){field.value=kept.positive;field.dispatchEvent(new Event('input',{bubbles:true}));}
     if(kept.negative!==null&&selected.negative&&q('#negative')){q('#negative').value=kept.negative;q('#negative').dispatchEvent(new Event('input',{bubbles:true}));}
     field.focus();announce('Your wording is back. The recipe stays '+selected.name+'.');};
+  // Going back is the switch undone: the earlier recipe with its own picture, lineage, wording and settings, nothing carried across.
+  wordingBack.onclick=()=>{const pic=pictureKept;forgetWording();if(!pic||!selected)return;
+    if(pictureStamp()!==pic.loaded){announce('Something changed after the switch, so nothing was replaced.');return;}
+    try{selectPreset(pic.id);}catch(e){announce(e.message,true);return;}
+    const mode=q('#i2vMode');if(mode&&pic.controls.mode)mode.value=pic.controls.mode;
+    for(const [key,value] of Object.entries(pic.controls)){if(['positive','negative','reference','last_reference','mode'].includes(key))continue;const input=getControl(key);if(input)input.value=value;}
+    for(const key of ['positive','negative'])if(q('#'+key))q('#'+key).value=pic.wording[key];if(q('#batch'))q('#batch').value=pic.batch;
+    uploaded=pic.uploaded;lastUploaded=pic.lastUploaded;parentAssets=[...pic.parentAssets];parentByInput={...pic.parentByInput};referenceRecords=pic.records.map(r=>({...r}));
+    // A picked file goes back into its own input without a change event (that handler would drop an uploaded copy).
+    for(const id of ['reference','lastReference']){const input=q('#'+id),files=pic.files[id];if(!input||!files.length)continue;const t=new DataTransfer();files.forEach(f=>t.items.add(f));input.files=t.files;}
+    q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof renderReferenceSlots==='function')renderReferenceSlots();updateReady();recipeChanged();
+    draftDirty=true;saveDraft();q('#positive').focus();announce('Back to '+selected.name+' with your picture and wording.');};
   wordingDismiss.onclick=()=>{forgetWording();q('#positive')?.focus();};
   for(const id of ['positive','negative'])q('#'+id)?.addEventListener('input',()=>{const kept=wordingKept;if(kept?.loaded&&(wording().positive!==kept.loaded.positive||wording().negative!==kept.loaded.negative))forgetWording();});
+  // Your own edit after the switch is a decision: going back would discard it, so the way back is withdrawn.
+  // Every edit fires input (text, select, checkbox, file); a blur-time change after an earlier edit is not a new one.
+  q('#createView .editor')?.addEventListener('input',e=>{if(!e.isTrusted||!pictureKept)return;pictureKept=null;renderUndo();},true);
   after('renderSelected',syncCreate);after('updateReady',syncReady);
   const originalUploadRoleFile=uploadRoleFile;uploadRoleFile=async function(...args){const epoch=referenceEpoch,applied=await originalUploadRoleFile(...args);if(applied&&epoch===referenceEpoch){draftDirty=true;saveDraft();}return applied;};
   // Collapse six overlapping output actions into one reviewed, compatible handoff.
