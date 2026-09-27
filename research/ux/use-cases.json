@@ -569,7 +569,7 @@
       "id": "combine-same-pair-second-engine",
       "goal": "Try the same character and pose on another Combine engine, compare their seeds and prepare the next attempt without rebuilding the source pair.",
       "starting_view": "create",
-      "success_condition": "Switching recipes takes one click, keeps the source roles and three facts, retains edited wording per recipe, shows only matching results, saves independent review decisions and stages same or new seeds without submitting a generation.",
+      "success_condition": "Switching recipes takes one click, keeps the source roles and three facts, retains edited wording per recipe, shows only matching results, saves independent review decisions and quick-check answers, counts them per engine, and stages same or new seeds without submitting a generation.",
       "wrong_turn": false,
       "steps": [
         {"intent": "continue a saved character through Combine", "expect": "the source-bound workbench opens"},
@@ -579,6 +579,7 @@
         {"intent": "switch to another engine on the same screen", "expect": "one click keeps the inputs and answers and updates their image order"},
         {"intent": "return to the previous engine", "expect": "its edited wording is restored"},
         {"intent": "mark one seed as a keeper and another as needing work", "expect": "each decision is saved through the existing library"},
+        {"intent": "answer two quick checks on the keeper and read the engine count", "expect": "each answer saves with that picture's review and the engine shows the count"},
         {"intent": "prepare the same seed and then a new seed", "expect": "the recorded recipe and source pair are loaded without generating"},
         {"intent": "read the run control", "expect": "the next generation still needs an explicit click"}
       ]

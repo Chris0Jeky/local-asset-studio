@@ -377,7 +377,7 @@ window.show=(status,b)=>{document.querySelector('#out').innerHTML=renderMixedBat
     def test_combine_seed_buttons_say_why_they_are_locked(self):
         combine = region(source('studio-workbench.js'), '  function syncCombineResults(', '  resultPanel.onclick=')
         self.page.goto('about:blank')
-        self.page.set_content("""<div id="panel"></div><script>"""+source('continuation-core.js')+"""</script><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        self.page.set_content("""<div id="panel"></div><script>"""+source('continuation-core.js')+source('review-checks.js')+"""</script><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const StudioContinuation={...globalThis.StudioContinuation,combineKind:()=>'depth',sameCombinePair:()=>true};let selected={},catalog={presets:[]},referenceRecords=[],lastUploaded=null,resultMarkup='',pairActionBusy=false,busy=false;
 const resultPanel=document.querySelector('#panel');function currentPair(){return {};}function combineBusy(){return busy||dirty;}let submitting=false,poseBusy=false,dirty=false;function posePositionDirty(){return dirty;}function durationLabel(s){return s+' s';}
 let assetState={assets:[]},jobs=[{id:'done',status:'completed',preset_name:'P',outputs:[{seed:1}]},{id:'half',status:'partial',preset_name:'P',outputs:[{seed:2}]}];
@@ -390,6 +390,10 @@ let assetState={assets:[]},jobs=[{id:'done',status:'completed',preset_name:'P',o
         self.assertEqual(titles()[0], ['done', True, 'Wait for the current Combine action to finish.'])
         self.page.evaluate('busy=false;dirty=true;resultMarkup=""')
         self.assertEqual(titles()[0], ['done', True, 'Set or reset the typed joint position first.'], 'waiting never clears an unapplied joint edit')
+        # #1203 (Codex on #1212): a run that finished after the last Workspace read still offers its quick checks.
+        chips = self.page.evaluate("dirty=false;catalog.presets=[{id:'P',continuation_capability:{operation:'combine'}}];Object.assign(jobs[0],{preset_id:'P'});jobs[0].outputs[0].asset_id='fresh';resultMarkup='';syncCombineResults();"
+                                   "[...document.querySelectorAll('[data-ux-check][data-asset=\"fresh\"]')].map(b=>b.textContent)")
+        self.assertEqual(chips, ['pose', 'face', 'outfit', 'style', 'clean'])
 
     def test_restore_source_wording_says_why_and_keeps_its_lock_rule(self):
         sync = region(source('studio-workbench.js'), '  function syncContinuation(', '  async function readSource(')
