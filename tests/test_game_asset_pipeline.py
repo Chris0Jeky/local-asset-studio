@@ -74,6 +74,11 @@ class PipelineTests(unittest.TestCase):
     def test_initial_ready(self):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual([t['id'] for t in p.next_tasks(self.plan(),[],tmp)['ready']],['preflight'])
+    def test_ready_tasks_are_copies_so_a_caller_cannot_change_the_plan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            plan=self.plan();before=json.dumps(plan,sort_keys=True)
+            ready=p.next_tasks(plan,[],tmp)['ready'];ready[0]['state']='running';ready[0]['depends_on'].append('x')
+            self.assertEqual(json.dumps(plan,sort_keys=True),before);p.check_plan(plan)
     def test_receipt_unlocks_only_next_stage(self):
         with tempfile.TemporaryDirectory() as tmp:
             (Path(tmp)/'report.json').write_text('{}');plan=self.plan()
