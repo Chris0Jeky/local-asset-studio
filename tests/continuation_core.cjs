@@ -196,6 +196,19 @@ test('a pair’s runs are grouped newest first; unfinished work is live, problem
   assert.equal(C.combineEngineLabel({id:'combine-klein-9b-depth',name:'Long name'}),'Klein 9B · depth');
   assert.equal(C.combineEngineLabel({id:'unknown-route',name:'Its own name'}),'Its own name');
 });
+test('engine chips say what each engine is for and time it from this PC’s own completed runs, per picture',()=>{
+  const hint=name=>C.combineEngineHint({name});
+  assert.equal(hint('Put this character into another picture’s pose (FLUX.2 Klein 9B, depth map: strongest pose)'),'Strongest pose');
+  assert.equal(hint('Put this character into another picture’s pose (FLUX.2 Klein 9B, follows the pose)'),'Follows the pose');
+  assert.equal(hint('Put this character into a drawn pose skeleton (FLUX.2 Klein 9B, stick figure in, nothing else copied)'),'Stick figure in, nothing else copied');
+  assert.equal(hint('Put this character in another picture’s pose (FLUX.2 Klein 4B)'),'','a bare model name is not a hint');
+  assert.equal(hint(undefined),'');
+  const jobs=[{preset_id:'d',status:'completed',elapsed_seconds:90},{preset_id:'d',status:'completed',elapsed_seconds:240,batch_count:2},{preset_id:'d',status:'completed',elapsed_seconds:300},
+    {preset_id:'d',status:'failed',elapsed_seconds:5},{preset_id:'d',status:'completed',elapsed_seconds:0},{preset_id:'x',status:'completed',elapsed_seconds:20},{preset_id:'d',status:'completed',elapsed_seconds:60,operation:'upscale'}];
+  assert.deepEqual(C.combineTiming(jobs,'d'),{count:3,seconds:120},'median seconds per picture over completed runs only');
+  assert.deepEqual(C.combineTiming([...jobs,{preset_id:'d',status:'completed',elapsed_seconds:100}],'d'),{count:4,seconds:110},'an even count takes the middle two');
+  assert.equal(C.combineTiming(jobs,'none'),null);assert.equal(C.combineTiming(null,'d'),null);
+});
 test('engine changes carry character, pose and clothes by meaning and never reuse the old graph binding',()=>{
   const four={id:'four',reference_board:{min:1},reference_slots:[{role:'pose'},{role:'pose'}],last_reference:['14','image'],reference_board_label:'Pose picture (image 2)',continuation_capability:{operation:'combine',source_input:'last_reference'},continuation_placeholder:['[who is in image 1, e.g. a witch]','[the pose in a few words, e.g. leaning]']};
   const nine={...four,id:'nine',reference_slots:[{role:'pose'}],reference_board_label:'Pose picture (image 1)',continuation_placeholder:['[who is in image 2, e.g. a witch]',"[image 1's pose, e.g. leaning]","[image 2's clothes and colours, e.g. a robe]"]};
