@@ -369,7 +369,7 @@ def inspect_observation(directory: str | Path, *, expected_result_sha256: str | 
     runtime = _runtime(result.get('runtime_binding'), summary)
     if not sampling['complete']: warnings.append('sampling_incomplete')
     if finish is None: warnings.append('coordinator_exit_missing')
-    elif finish['status'] not in ('completed', 'failed', 'not_submitted', 'abandoned'):
+    elif finish['status'] not in ('completed', 'failed', 'not_submitted', 'abandoned', 'cancelled'):
         warnings.append('coordinator_outcome_unresolved')
     if runtime is None or runtime['lost']: warnings.append('runtime_bracket_lost')
     if result['stop_reason'] != 'coordinator_exit': warnings.append('observer_stopped_early')

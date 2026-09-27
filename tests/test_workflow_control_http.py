@@ -7,6 +7,7 @@ import threading
 from types import SimpleNamespace
 import unittest
 from studio_workflow.core import canonical
+from studio_workflow.http_body import drain_for_reset
 from studio_workflow.sdk import WorkflowClient
 from test_workflow_control_preview import fixture
 try:
@@ -43,8 +44,8 @@ class Base(BaseHTTPRequestHandler):
         raw = canonical(value); self.send_response(status)
         self.send_header('Content-Type', 'application/json'); self.send_header('Content-Length', str(len(raw)))
         self.end_headers(); self.wfile.write(raw)
-    def do_POST(self): self._json(404, {'error': 'Unrelated route'})
-    def do_GET(self): self._json(404, {'error': 'Unrelated route'})
+    def do_POST(self): drain_for_reset(self); self._json(404, {'error': 'Unrelated route'})
+    def do_GET(self): drain_for_reset(self); self._json(404, {'error': 'Unrelated route'})
 
 
 class ControlHttpTests(unittest.TestCase):

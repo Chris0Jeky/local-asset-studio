@@ -1,0 +1,248 @@
+{
+ "version": 2,
+ "preset_id": "qwen21-t2i",
+ "controls": {
+  "positive": "A fantasy tavern chalkboard menu hanging on a wooden wall, hand-lettered in white chalk. Title at the top: \"THE GILDED LANTERN\". Below it five lines, each with a price: \"Honey Mead - 3 silver\", \"Dragonfire Stew - 5 silver\", \"Elven Bread - 2 silver\", \"Mushroom Pie - 4 silver\", \"Room for the Night - 10 silver\". Warm candle light, anime illustration style, crisp readable lettering.",
+  "seed": 2026092741,
+  "width": 1024,
+  "height": 1024
+ },
+ "batch_count": 1,
+ "created_at": 1790492610.2546005,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+    "type": "qwen_image",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "TextEncodeQwenImage21",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "prompt": "A fantasy tavern chalkboard menu hanging on a wooden wall, hand-lettered in white chalk. Title at the top: \"THE GILDED LANTERN\". Below it five lines, each with a price: \"Honey Mead - 3 silver\", \"Dragonfire Stew - 5 silver\", \"Elven Bread - 2 silver\", \"Mushroom Pie - 4 silver\", \"Room for the Night - 10 silver\". Warm candle light, anime illustration style, crisp readable lettering.",
+    "negative_prompt": "",
+    "resolution": 1024
+   }
+  },
+  "5": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 1024,
+    "height": 1024,
+    "batch_size": 1
+   }
+  },
+  "6": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "4",
+     1
+    ],
+    "latent_image": [
+     "5",
+     0
+    ],
+    "seed": 2026092741,
+    "steps": 25,
+    "cfg": 1.0,
+    "sampler_name": "euler",
+    "scheduler": "simple",
+    "denoise": 1.0
+   }
+  },
+  "7": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "6",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "8": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "9",
+     0
+    ],
+    "filename_prefix": "Studio/qwen21-t2i"
+   }
+  },
+  "9": {
+   "class_type": "SplitImageWithAlpha",
+   "inputs": {
+    "image": [
+     "7",
+     0
+    ]
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "1be9bcd8-408f-4b7b-a4a2-d2af4b6ce5ac",
+   "seed": 2026092741,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "TextEncodeQwenImage21",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "prompt": "A fantasy tavern chalkboard menu hanging on a wooden wall, hand-lettered in white chalk. Title at the top: \"THE GILDED LANTERN\". Below it five lines, each with a price: \"Honey Mead - 3 silver\", \"Dragonfire Stew - 5 silver\", \"Elven Bread - 2 silver\", \"Mushroom Pie - 4 silver\", \"Room for the Night - 10 silver\". Warm candle light, anime illustration style, crisp readable lettering.",
+      "negative_prompt": "",
+      "resolution": 1024
+     }
+    },
+    "5": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "6": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "4",
+       1
+      ],
+      "latent_image": [
+       "5",
+       0
+      ],
+      "seed": 2026092741,
+      "steps": 25,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+     }
+    },
+    "7": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "6",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "8": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/qwen21-t2i"
+     }
+    },
+    "9": {
+     "class_type": "SplitImageWithAlpha",
+     "inputs": {
+      "image": [
+       "7",
+       0
+      ]
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 3409248256,
+    "peak_dedicated_bytes": 14709993472,
+    "samples": 161,
+    "spilled": true,
+    "settled_shared_bytes": 691339264,
+    "lingering": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "qwen21-t2i_00004_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092741,
+   "prompt_id": "1be9bcd8-408f-4b7b-a4a2-d2af4b6ce5ac",
+   "media_type": "image",
+   "asset_id": "cd141261405a5e76b437f4f4f3457ea8"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

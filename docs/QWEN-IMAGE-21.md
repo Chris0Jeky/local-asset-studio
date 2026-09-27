@@ -92,16 +92,20 @@ the exported `recipe-<preset>.json` beside it), seed 2026092211, 25 steps, commi
 
 The rgba recipe is `verified: true` (the route runs and returns the intended kind of output). The t2i and edit
 graphs now route SaveImage through a core SplitImageWithAlpha node so full-frame outputs save RGB instead of RGBA
-with faint partial alpha (#878); both are `verified: false` until one proving run each through the Studio. The rgba
+with faint partial alpha (#878); both were re-proved through the Studio on 27 September 2026 (t2i job `c11448cc`,
+57.4 s; edit job `74597f0d`, 114.7 s; both PNGs RGB) and are `verified: true` again. The rgba
 PNG keeps its alpha channel — strip or threshold alpha before any step that crops or packs by alpha:
-`python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by default, `--mode to-rgb`
-to drop a spurious channel), with before/after evidence in `experiments/curated/qwen21-alpha-cleanup/`. Generated
+`python scripts/game_asset_media.py cleanup <png> --out <clean.png>` (rgba-cleanup by default; `--mode rgba-despeckle`
+also clears detached specks that never reach alpha 32, as left around soft glows; `--mode to-rgb` to drop a spurious channel), with before/after evidence in `experiments/curated/qwen21-alpha-cleanup/`. Generated
 and agent-inspected only: not art acceptance, and the Qwen Research License keeps them non-commercial. The 2048²
 text-to-image run is done (26 September 2026: job
 `252c3ebe`, prompt `3593cd92`, seed 2026092601, 25 steps, 353.0 s, 11.9 GB spilled to shared RAM;
 `experiments/curated/qwen21-2048-20260926/`): native 2K completes on this 16 GB card but is paging-bound, so 1 MP
-stays the everyday size. Still open under #739: a 3-6 reference identity edit, a text-heavy prompt, the LoRA status
-(the downloaded 2.1 Fix LoRA is untested), and a VRAM-arbitration note for running beside a local LLM or Spoken Briefs.
+stays the everyday size. On 27 September 2026 (`experiments/curated/qi21-lab2-20260927/`) a 1/3/5-reference identity edit
+kept the face from one picture and more of the costume from three (the five-reference prompt also named the costume picture and the lantern, so its extra carry-over is not attributable to references alone) (126 / 286 / 470 s: each reference adds text-encoder time),
+two text-heavy prompts spelled 12 of 12 strings exactly, and the Pruna 8-step LoRA v0.1 ran on the int8 model at base-level
+quality without saving whole-job time (the text-encoder swap dominates); its host-commit peaks were 80.1-89.5 % against 76.3-78.0 % without it, 2.5-12.8 points above the matching run but from differing starting levels, so the LoRA's own cost was not isolated: parked (#934).
+Still open under #739: the 2.1 Fix LoRA (downloaded, untested) and a VRAM-arbitration note for running beside a local LLM or Spoken Briefs.
 
 ## Compatibility boundary with Edit 2511 (issue #760)
 

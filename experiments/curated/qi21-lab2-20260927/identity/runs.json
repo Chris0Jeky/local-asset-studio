@@ -1,0 +1,56 @@
+[
+ {
+  "label": "ref1",
+  "prompt_id": "be316486-deed-4903-b2e6-01ea451a541f",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:30:02",
+  "wall_s": 127.4,
+  "commit_before_pct": 52.3,
+  "commit_peak_pct": 78.5,
+  "status": "success",
+  "exec_s": 126.2,
+  "outputs": [
+   {
+    "filename": "identity-ref1_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "ref3",
+  "prompt_id": "bb5ecbfc-8d78-4cd2-8771-00715c8b1dfb",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:32:27",
+  "wall_s": 287.7,
+  "commit_before_pct": 52.0,
+  "commit_peak_pct": 79.6,
+  "status": "success",
+  "exec_s": 286.1,
+  "outputs": [
+   {
+    "filename": "identity-ref3_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "ref5",
+  "prompt_id": "31e15e37-3c45-46ef-80b3-af5529b2b29f",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:37:32",
+  "wall_s": 471.1,
+  "commit_before_pct": 52.0,
+  "commit_peak_pct": 81.7,
+  "status": "success",
+  "exec_s": 470.1,
+  "outputs": [
+   {
+    "filename": "identity-ref5_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ }
+]
