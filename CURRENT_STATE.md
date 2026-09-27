@@ -1,5 +1,14 @@
 # Current state — 27 September 2026
 
+## Background-technique lab: parallax, seamless tiles, backdrop variety — 27 September 2026 (18:29-19:03 local)
+
+Everything used installed tools on the primary and the accepted Night Shift anchor z2 (refs #422).
+- **Parallax:** naive Depth Anything V2 bands were rejected, because the window read as a near wall. What worked (keep): a `flux-edit` clean plate plus a `flux-edit` isolate-on-white matte, both registered to the anchor, a nearest-pixel ring behind the frame, and a colour-matched plate. Three layers recomposite to within 0.36/255. The window mask was drawn by hand.
+- **Seamless tiles:** roll by half, repaint the centre cross with Z-Image `SetLatentNoiseMask`, then a circular lighting flatten. The wall keeps and the floor is fixable (a repeating row of plank ends). A perspective floor source was rejected.
+- **Backdrop variety:** a z2 wording template on Z-Image carries the look (corridor keep, rooftop fixable). The Klein look-picture route leaks content and loses the night.
+
+Evidence: `experiments/curated/background-lab-20260927/`. Agent-judged only; not art acceptance, not licence clearance.
+
 ## Qwen-Image 2.1 seed audition: Pruna F0 and the Fix LoRA parked, B0 holds — 27 September 2026 (18:07-18:22 local)
 
 On the isolated qwen21 backend (switched explicitly through the Studio), 2 prompts × 3 seeds × 3 conditions straight to ComfyUI: B0 (25 steps), F0 (Pruna 8-step at 2.0) and Q1 (the untested 2.1 Fix LoRA at 1.0). Even with the prompt text unchanged, ComfyUI recomputed the conditioning in 15 of 18 cells and reloaded the diffusion model before every sample, so the per-image floor is about 25 s of paging. F0 runs at 0.98× of B0 on warm cells (means 33.49 against 34.28 s; the gate is ~0.55×), with quality level (blind: 3 keeps, mean 4.12 against B0's 5 keeps, 3.92), so it is parked. Q1 costs about 1.23× B0 on warm cells and flattens the finish and worsens hands (1 keep, mean 3.39), so it is parked or rejected. B0 holds. Commit peaked at 86.3 %. Evidence: `experiments/curated/qi21-pareto-20260927/` (refs #1028). Agent-judged only; not art acceptance, not licence clearance.

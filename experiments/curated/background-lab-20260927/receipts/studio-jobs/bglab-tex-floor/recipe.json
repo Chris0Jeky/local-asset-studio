@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "Seamless texture, top-down view of dark worn wooden floorboards, hand-painted cel anime film background art, muted graphite and brown palette with faint cyan reflections, even soft lighting, no objects, no text, fills the whole frame.",
+    "seed": 2026092771,
+    "width": 1024,
+    "height": 1024
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790530593.0808525,
+  "references": [],
+  "parent_assets": []
+}
