@@ -81,3 +81,9 @@ experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-
 experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-depth-painted.png
 experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-depth-feet.png
 experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-mannequin-gen.png
+
+# Adaptive Studio asset kit (27 September 2026): owner-made candidates dropped into the inbox and
+# downloaded free assets stay on this PC; receipts/ and acquired/MANIFEST.json are the tracked record.
+docs/adaptive-studio/assets/inbox/
+docs/adaptive-studio/assets/acquired/*
+!docs/adaptive-studio/assets/acquired/MANIFEST.json
