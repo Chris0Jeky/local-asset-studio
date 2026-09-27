@@ -769,7 +769,7 @@
       "name": "WAI v17 · vary (img2img, keeps the adapters)",
       "category": "Characters",
       "graph": "workflows/api/wai-vary-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved. Each carried LoRA keeps its own terms; a varied picture inherits its source's rights questions.",
       "positive": [
         "2",
@@ -894,7 +894,7 @@
         "PNG"
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "execution_note": "Not executed. Added 27 September 2026 without a GPU run: the graph is the WAI v17 recipe's own chain (checkpoint, two LoRA slots, tiled decode) with its empty latent replaced by the attached picture's VAE encode. Needs one Studio proof and the owner's look at subtle and strong before verified or owner-approved."
+      "execution_note": "Executed 2026-09-27 through the Studio page (Asset library -> the picture -> Vary, then Generate; experiments/curated/wrapup-20260927/): parent WAI job eaf24185 (noirpopwave LoRA at 1.0, SFW fantasy cartographer), subtle 0.5: job 5a0b5775-be7a-475f-91cd-593235a3ee1c (2 pictures, 69.7 s), strong 0.7: job fe6462d2-bedf-44eb-84f9-b4478caa91e5 (4 pictures, the page's round size, 77.6 s). The submitted graphs carry the parent's LoRA (noirpopwave at 1.0) and sampler (euler_ancestral, 24 steps). Agent pre-review: subtle close with the style kept, strong moves further with the style kept. The strengths stay starting values until the owner judges them (HUMAN_TODO wai-vary-look-1202). Execution evidence only; not art acceptance."
     },
     {
       "id": "wai-pose",
