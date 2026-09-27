@@ -35,7 +35,7 @@ class SpokenBrowserTests(unittest.TestCase):
         cls.browser.close(); cls.pw.stop()
 
     def setUp(self):
-        self.f = fixtures.ExportTests(); self.f.setUp(); self.addCleanup(self.f.doCleanups)
+        self.f = fixtures.ExportTests(); self.addCleanup(self.f.doCleanups); self.f.setUp()
         self.archive = inspect_run(self.f.directory)
         evidence = {'schema_version': 1, 'manifest_sha256': self.archive['manifest_sha256'],
                     'master_sha256': self.archive['master']['sha256'], 'observations': []}

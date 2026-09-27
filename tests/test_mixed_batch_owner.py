@@ -9,7 +9,7 @@ from test_server import FakeStudio, server
 
 class MixedBatchOwnerTests(unittest.TestCase):
     def setUp(self):
-        self.case=fixtures.MixedBatchTests();self.case.setUp();self.addCleanup(self.case.doCleanups)
+        self.case=fixtures.MixedBatchTests();self.addCleanup(self.case.doCleanups);self.case.setUp()
         self.studio=self.case.studio;self.lab=self.studio.production
         self.owner=self.case.owning_project()
 

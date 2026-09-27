@@ -26,7 +26,7 @@ class ScopePacketTests(unittest.TestCase):
         from scripts import repair_pixel_transforms as rp, repair_source as rs
         from scripts.character_study import file_sha
         self.rp, self.rs, self.file_sha = rp, rs, file_sha
-        self.fixture = TransformPackets(); self.fixture.setUp(); self.addCleanup(self.fixture.doCleanups)
+        self.fixture = TransformPackets(); self.addCleanup(self.fixture.doCleanups); self.fixture.setUp()
         self.root, self.plan, self.request = self.fixture.root, self.fixture.plan, self.fixture.request
         self.bundle = self.fixture.prepare()
 
