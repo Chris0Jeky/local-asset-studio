@@ -885,6 +885,25 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),1)
         self.assertTrue(error.closed)
 
+    def test_rejection_after_a_completed_batch_member_is_partial(self):
+        # Same rule as a pre-submit refusal between members: completed outputs make the job partial, not failed.
+        error=HTTPError('http://localhost/prompt',400,'Bad Request',{},io.BytesIO(json.dumps({'error':{'message':'Required input missing'}}).encode()))
+        self.addCleanup(error.close)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}},error])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{},'batch_count':2})['id']];s._run(job)
+        self.assertEqual(job['status'],'partial');self.assertEqual(job['prompt_ids'],['one']);self.assertNotIn('pending_submission',job)
+        self.assertIn('Required input missing',job['message']);self.assertIn('output 2',job['message'])
+        self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),2)
+
+    def test_seed_plus_batch_past_the_seed_range_is_refused_before_queueing(self):
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,'seed plus batch count'):
+            s.create_job({'preset_id':'demo','controls':{'seed':str(2**63-1)},'batch_count':2},enqueue=False)
+        self.assertEqual(s.jobs,{})
+        created=s.create_job({'preset_id':'demo','controls':{'seed':str(2**63-2)},'batch_count':2},enqueue=False)
+        self.assertEqual(s.jobs[created['id']]['batch_count'],2)
+        s.create_job({'preset_id':'demo','controls':{'seed':str(2**63-1)},'batch_count':1},enqueue=False)
+
     def test_uncertain_http_submission_closes_response_without_retry(self):
         error=HTTPError('http://localhost/prompt',503,'Unavailable',{},io.BytesIO(b'upstream unavailable'))
         self.addCleanup(error.close)
@@ -1005,6 +1024,15 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(s.catalog()['presets'][0]['defaults']['lora2_name'],'second.safetensors')
         for bad in ('../escape.safetensors','folder/style.safetensors','style.ckpt','',7):
             with self.assertRaises(server.StudioError): s.prepare({'preset_id':'demo','controls':{'lora_name':bad}})
+
+    def test_filename_bound_lora_slot_refuses_a_boolean_before_queueing(self):
+        # Older presets bind `lora` to a filename input; bool is an int subclass and once reached ComfyUI as a late 400.
+        graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in (True,False):
+            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'number or short text'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'other.safetensors'}})
+        self.assertEqual(bound['1']['inputs']['lora'],'other.safetensors')
 
     def test_disabled_slots_leave_the_graph_and_rewire_model_edges(self):
         self.lora_stack(); s=self.studio()

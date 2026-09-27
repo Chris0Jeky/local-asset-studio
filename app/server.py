@@ -442,7 +442,7 @@ class Studio:
             except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
             # `lora` stays polymorphic: older presets bind it to a filename input.
             value = number(controls[key], key, 0, 2) if isinstance(existing, (int, float)) and not isinstance(existing, bool) else controls[key]
-            if not isinstance(value, (int, float, str)) or (isinstance(value, str) and len(value) > 8000): raise StudioError(f"{key} must be a number or short text")
+            if isinstance(value, bool) or not isinstance(value, (int, float, str)) or (isinstance(value, str) and len(value) > 8000): raise StudioError(f"{key} must be a number or short text")
             self._bind_control(graph, preset, key, value)
         installed = self.options().get("loras") if any(key in controls for key in LORA_NAME_KEYS) else None
         for key in LORA_NAME_KEYS:
@@ -504,6 +504,12 @@ class Studio:
         elif payload.get("references"):
             raise StudioError("This recipe has no role-assigned reference slots; choose a Qwen Atelier recipe")
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
+        # Batch member i runs at seed+i (_batch_graph): refuse here, not after earlier members were already submitted.
+        seeds = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
+        if batch > 1 and seeds:
+            try: base = graph[str(seeds[0][0])]["inputs"][str(seeds[0][1])]
+            except (KeyError, TypeError, IndexError): base = None
+            if type(base) is int and base + batch - 1 > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range; lower the seed or the batch count")
         self.prune_disabled_loras(graph)
         continuation.validate(self, payload, preset, graph)
         self.ensure_reference_inputs(graph)
@@ -1830,11 +1836,12 @@ class Studio:
                         try: details = json.loads(exc.read(65536))
                         except (ValueError, OSError): details = {}
                         job.pop("pending_submission", None)
-                        job["status"] = "failed"
+                        # Earlier members completed (the loop only continues past a completed one): partial, as for a pre-submit refusal.
+                        job["status"] = "partial" if job.get("prompt_ids") else "failed"
                         job["validation_errors"] = details.get("node_errors", {})
                         error = details.get("error", {})
                         detail = error.get("message", "Invalid workflow") if isinstance(error, dict) else str(error)
-                        job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400]
+                        job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400] + (". No prompt was submitted for output " + str(i + 1) + "." if job["status"] == "partial" else "")
                         self._save(job); return
                     job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
             except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError, HTTPException) as exc:
