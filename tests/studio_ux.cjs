@@ -63,6 +63,28 @@ test('memory allocation failures explain the cause and next action', () => {
   const host=U.failureDetails({status:'failed',message:'Generation failed: ComfyUI reported an execution error: VAEDecode: DefaultCPUAllocator: not enough memory'});
   assert.equal(host.kind,'memory_allocation');
 });
+test('memory headroom refusals are explained in plain words, claiming only what the evidence shows (#308)', () => {
+  const low=U.failureDetails({status:'failed',prompt_ids:[],message:'Host commit headroom 20.0 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission. No prompt was submitted for output 1.'});
+  assert.equal(low.kind,'host_headroom');
+  assert.match(low.title,/^Held/);
+  assert.match(low.summary,/20\.0 GiB/);assert.match(low.summary,/32 GiB/);assert.match(low.summary,/commit headroom/);assert.match(low.summary,/RAM plus the page file/);assert.match(low.summary,/Nothing was sent to ComfyUI/);
+  assert.doesNotMatch(low.summary+low.action,/GPU/,'the check measures commit, not GPU memory');
+  assert.match(low.action,/Generate again/);assert.doesNotMatch(low.action,/retr(y|ied) automatically/i);
+  assert.match(low.detail,/Host commit headroom 20\.0 GiB/,'the engine wording stays available');
+  const partial=U.failureDetails({status:'partial',prompt_ids:['p1'],message:'Host commit headroom 19.5 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission. No prompt was submitted for output 2.'});
+  assert.equal(partial.kind,'host_headroom');assert.match(partial.summary,/Output 2 was not sent/);assert.doesNotMatch(partial.summary,/Nothing was sent/);
+  const unknown=U.failureDetails({status:'failed',message:'Host commit headroom is unavailable: performance counters are unavailable. No prompt was submitted for output 1.'});
+  assert.equal(unknown.kind,'host_headroom');assert.match(unknown.title,/unknown/);assert.match(unknown.summary,/performance counters are unavailable/);assert.match(unknown.summary,/instead of guessing/);
+  // Without the server's no-submission clause, nothing is claimed about what was sent.
+  const bare=U.headroomExplanation('Host commit headroom 12.3 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission');
+  assert.match(bare,/^Held: .*12\.3 GiB/);assert.doesNotMatch(bare,/sent/);
+  const evidence=U.failureDetails({status:'failed',prompt_ids:[],message:'Host commit headroom 12.3 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission'});
+  assert.doesNotMatch(evidence.summary,/sent/,'empty prompt_ids alone is not no-submission evidence (submission_evidence.never_submitted)');
+  const lone=U.failureDetails({status:'partial',prompt_ids:[],message:'Host commit headroom 12.3 GiB is below the required 32 GiB. No prompt was submitted for output 2.'});
+  assert.match(lone.summary,/Output 2 was not sent to ComfyUI\./);assert.doesNotMatch(lone.summary,/had already finished/);
+  assert.equal(U.headroomExplanation('Seed plus batch count exceeds supported range'),null);
+  assert.equal(U.failureDetails({status:'running',message:'Generating output 1 of 1'}),null);
+});
 test('structured execution failures retain engine context', () => {
   const failure=U.failureDetails({status:'failed',failure:{kind:'memory_allocation',title:'Memory allocation failed',summary:'Allocation summary',action:'Allocation action',node_type:'KSampler',exception_type:'RuntimeError',detail:'bad allocation'}});
   assert.equal(failure.title,'Memory allocation failed');
