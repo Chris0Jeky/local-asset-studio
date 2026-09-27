@@ -274,6 +274,20 @@
     if(!each.length)return null;const mid=each.length>>1;
     return{count:each.length,seconds:each.length%2?each[mid]:(each[mid-1]+each[mid])/2};
   }
+  // #1163: the seeds typed for a several-recipe plan: one to four different whole numbers the page can send exactly.
+  function combinePlanSeeds(text){
+    const parts=String(text??'').split(/[\s,;]+/).filter(Boolean);
+    if(!parts.length)return{seeds:[],error:'Type one to four seeds, e.g. 11, 12.'};
+    if(parts.length>4)return{seeds:[],error:'A plan takes at most four seeds.'};
+    if(parts.some(p=>!/^\d{1,15}$/.test(p)))return{seeds:[],error:'Seeds are whole numbers of up to 15 digits.'};
+    const seeds=parts.map(Number);if(new Set(seeds).size!==seeds.length)return{seeds:[],error:'Use different seeds.'};
+    return{seeds,error:''};
+  }
+  // A plan's expected time from each recipe's time per picture (null where a recipe has none): a sum, never a guess (K13).
+  function combinePlanTime(perPicture,seedCount){
+    const known=(perPicture||[]).filter(v=>Number(v)>0).map(Number);
+    return{seconds:known.reduce((a,b)=>a+b,0)*seedCount,unknown:(perPicture||[]).length-known.length};
+  }
   // #1202 Vary subtle / Vary strong. A route is catalog data (`vary` on an img2img recipe: its sources and per-strength
   // controls with their basis); the server-computed capability must agree that the graph really resamples the picture.
   // Round size is the owner's rule (27 Sep 2026): 4 pictures when this PC's median is under a minute per picture, else 2;
@@ -322,5 +336,5 @@
     if(plan.kind==='reseed')return 'Starts afresh from the same words · '+round;
     return 'On '+plan.route.name+' · '+round+' · denoise '+plan.strengths.subtle.controls.denoise+' / '+plan.strengths.strong.controls.denoise+(plan.starting?' (starting values)':'');
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,varyRoute,varyRound,varyPlan,varyStatus,varyHint};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime,varyRoute,varyRound,varyPlan,varyStatus,varyHint};
 });

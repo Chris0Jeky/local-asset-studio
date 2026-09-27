@@ -181,6 +181,7 @@ class Studio:
         # and was refused (27 Sep 2026) until someone posted /free by hand. Opt-in: before refusing a measured shortfall, free the job's
         # own idle backend and re-measure for up to this many seconds; only a fresh reading that passes the unchanged gate admits.
         raw_release = self.config.get("commit_gate_release_seconds", 0)
+        self.history_read_backoff_seconds = HISTORY_READ_BACKOFF_SECONDS   # per instance so a scripted ComfyUI double need not wait
         self.commit_release_seconds = min(float(COMMIT_RELEASE_MAX_SECONDS), float(raw_release)) if self._finite_number(raw_release) and raw_release > 0 else 0.0
         self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
@@ -2108,7 +2109,7 @@ class Studio:
                     return False
                 with self.lock:
                     if self._tracking_stopped(job): return False # the owner stopped tracking: no backoff wait before letting go
-                time.sleep(HISTORY_READ_BACKOFF_SECONDS * read_failures); continue
+                time.sleep(self.history_read_backoff_seconds * read_failures); continue
             read_failures = 0
             if history:
                 # A prompt that finishes between samples (or before the first) still gets one reading at completion.

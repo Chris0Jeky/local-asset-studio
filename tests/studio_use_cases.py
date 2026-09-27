@@ -389,6 +389,14 @@ def build_handler():
                             state={'status': 'planned', 'message': 'Prepared in the fixture. Preparing is not starting.'},
                             axis=data.get('axis') or 'cfg', values=data.get('values') or [], stages=[],
                             budget={'allowance': int(data.get('max_generations') or 2), 'reserved': 0})
+                if 'combine_plan' in data:
+                    # #1163: one stage per recipe and seed, with a fixed per-picture estimate; nothing is submitted.
+                    intent = data['combine_plan']; pairs = [(e, s) for e in intent['engines'] for s in intent['seeds']]
+                    stages = [dict(label=chr(65 + i), engine=e, seed=s, operation='comfy.generate.v1', attempt={}, job=None) for i, (e, s) in enumerate(pairs)]
+                    plan.update(id='f' * 32, axis='engine', values=[e + ' · seed ' + str(s) for e, s in pairs], stages=stages,
+                                budget={'allowance': len(stages), 'reserved': 0},
+                                combine={'engines': intent['engines'], 'seeds': intent['seeds'],
+                                         'estimate': {'total_seconds': 90.0 * len(stages), 'total_upper_seconds': 120 * len(stages), 'confidence': 'medium'}})
                 fixture.PLANS.insert(0, plan); return self.json(plan)
             if path == '/api/production-export':
                 data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
@@ -933,6 +941,46 @@ def _combine(c):
     brackets = c.page.evaluate('((document.querySelector("#positive").value || "").match(/\\[/g) || []).length')
     done = c.ready() and attached and filled >= 1 and brackets == 0 and 'image 2' in filled_wording
     return done, 'source attached=%s, %d board picture(s), %d bracket(s) left, run control enabled=%s' % (attached, filled, brackets, c.ready())
+
+
+@driver('combine-several-engines-one-plan')
+def _combine_plan(c):
+    """#1163: the same pair on several Combine recipes with the same seeds as one prepared plan; Start stays a separate press."""
+    ready, detail = _combine(c)
+    if not ready or c.live: return False, 'Needs the prepared fixture pair; live mode never prepares a plan. ' + detail
+    import studio_browser_smoke as fixture
+    current = c.page.evaluate('selected.id')
+    tick = lambda engine: c.page.locator('[data-ux-plan-engine="%s"]' % engine)
+    c.act('#uxEnginePlan > summary', note='open Run several recipes on this pair')
+    assert tick(current).is_checked(), 'the open recipe starts ticked'
+    assert tick('combine-klein-9b-skeleton').is_disabled(), 'a skeleton recipe cannot take this pose picture'
+    extra = [e for e in ('combine-klein', 'combine-klein-9b-depth', 'combine-klein-9b-copypose') if e != current and tick(e).count() and tick(e).is_enabled()][:2]
+    assert len(extra) == 2, extra
+    for engine in extra: c.act('[data-ux-plan-engine="%s"]' % engine, 'check', note='tick another recipe for the same pair')
+    c.act('#uxPlanSeeds', 'fill', typed='11, 12', note='the same two seeds on every recipe')
+    summary = c.page.locator('#uxPlanSummary').inner_text()
+    c.observe('the page counts the pictures and sums the time it knows before anything is prepared', summary.startswith('3 recipes × 2 seeds = 6 pictures'), summary)
+    assert summary.startswith('3 recipes × 2 seeds = 6 pictures'), summary
+    c.act('#uxPlanPrepare', note='prepare one plan: the server checks every recipe; nothing runs')
+    c.page.wait_for_function('!document.querySelector("#uxPlanStart").hidden')
+    status = c.page.locator('#uxPlanStatus').inner_text()
+    assert 'Prepared 6 pictures' in status and 'Nothing has run' in status and 'about 9.0 min' in status, status
+    posted = [p for p in fixture.POSTS if p['path'] == '/api/production' and 'combine_plan' in p['data']][-1]['data']['combine_plan']
+    assert set(posted['engines']) == {current, *extra} and posted['seeds'] == [11, 12], posted
+    base = posted['base']
+    assert base['preset_id'] == current and base['continuation']['reference_file'] == base['controls']['last_reference'] and base['references'][0]['file'], base
+    assert posted['answers'].get('who') and posted['answers'].get('pose'), posted['answers']
+    c.act('#uxPlanStart', 'read', note='one explicit Start, shown with the expected total; never pressed here')
+    assert c.page.locator('#uxPlanStart').is_enabled()
+    c.act('#uxPlanSeeds', 'fill', typed='11, 13', note='change a seed after preparing')
+    c.page.wait_for_function('document.querySelector("#uxPlanStart").hidden')
+    stale = c.page.locator('#uxPlanStatus').inner_text()
+    c.observe('Start is withdrawn once the plan no longer matches the page', 'Prepare again' in stale, stale)
+    assert 'Prepare again' in stale, stale
+    generations = [p['path'] for p in fixture.POSTS if p['path'] == '/api/jobs' or p['path'].endswith('/start')]
+    assert not generations, generations
+    fixture.PLANS[:] = [plan for plan in fixture.PLANS if plan['id'] != 'f' * 32]
+    return True, '3 recipes x 2 seeds prepared as one plan with its expected total; Start shown once and withdrawn after a change; zero generation requests'
 
 
 @driver('draw-a-pose-for-combine')
