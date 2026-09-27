@@ -1,0 +1,44 @@
+{
+ "recipe_id": "anima-painterly-artist-tags",
+ "recipe_preset_id": "anima-artist-stack",
+ "job_id": "f9a8b395-d085-4e01-a319-e7e1bcaabd94",
+ "prompt_id": "b53109bc-5ac7-4640-b1d7-5d35a8c39dc7",
+ "wall_seconds": 40.5,
+ "host_commit_percent_start": 55.7,
+ "host_commit_percent_peak": 64.1,
+ "output": "Studio/anima-artist-stack_00007_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "972e23fae129102ad608a3fb57eca9e1e9cd1fea9ca78e079290c0c3e863d447",
+ "thumbnail": "examples/recipe-thumbs-20260927/anima-painterly-artist-tags.jpg",
+ "thumbnail_sha256": "9a3cf2c4d13924a37c2b70853c2f2ca19fc894c773e190317395129203e9117d",
+ "finished_local": "2026-09-27 04:01:23.737745",
+ "inspection": "Traveller in a patched dress under a lone tree with birds overhead, low angle, loose painterly brushwork; the hat-holding hand is simplified.",
+ "studio_recipe": {
+  "preset_id": "anima-artist-stack",
+  "controls": {
+   "lora": 0,
+   "lora2": 0,
+   "lora3": 0,
+   "lora4": 0,
+   "lora5": 0,
+   "lora6": 0,
+   "positive": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame",
+   "cfg": 3,
+   "sampler": "dpmpp_2m_sde_gpu",
+   "scheduler": "simple",
+   "steps": 30,
+   "width": 832,
+   "height": 1216,
+   "seed": 975436216244440
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anima-artist-stack-api.json",
+  "created_at": 1790478043.3281631,
+  "references": [],
+  "parent_assets": []
+ }
+}

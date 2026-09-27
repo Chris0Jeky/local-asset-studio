@@ -1,0 +1,43 @@
+{
+ "recipe_id": "krea-style-emerald-tarot",
+ "recipe_preset_id": "krea-style-lab",
+ "job_id": "4cc58496-d08f-4c2b-9cbf-51ec47cd69de",
+ "prompt_id": "c362d8e5-202d-4507-b664-9d6bee781b57",
+ "wall_seconds": 240.9,
+ "host_commit_percent_start": 71.1,
+ "host_commit_percent_peak": 82.2,
+ "output": "Studio/krea-anime-atelier-gguf_00010_.png",
+ "output_size": [
+  1024,
+  1024
+ ],
+ "output_sha256": "b047403898e4fc9da9497d33125450e48ace8088bac57aa1e5c6029f476523ed",
+ "thumbnail": "examples/recipe-thumbs-20260927/krea-style-emerald-tarot.jpg",
+ "thumbnail_sha256": "64d6025b219a4b9161ba403e0da9479815a54c7f5574fc21087d638f12528cef",
+ "finished_local": "2026-09-27 04:55:09.295219",
+ "inspection": "Engraved paperback look with root archways, an armoured knight with a spear and a white fox; the fox shows one bushy tail, not two; a stray monogram-like mark sits at the bottom right (crop 880,880-1024,1024).",
+ "studio_recipe": {
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "A knight-errant and a white fox with two tails before an ancient forest with roots like archways, volumetric lighting, emerald and gold palette, vintage tarot style, emerald fantasy paperback style",
+   "steps": 8,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "width": 1024,
+   "height": 1024,
+   "seed": 20260923,
+   "lora_name": "fal-krea2-emerald-fantasy-paperback.safetensors",
+   "lora": 1.0,
+   "lora2_name": "krea2_vintagetarot.safetensors",
+   "lora2": 0.6,
+   "lora3": 0,
+   "lora4": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790481068.5268304,
+  "references": [],
+  "parent_assets": []
+ }
+}

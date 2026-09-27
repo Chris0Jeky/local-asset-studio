@@ -1,0 +1,43 @@
+{
+ "recipe_id": "krea-watercolor-anime",
+ "recipe_preset_id": "krea-anime-atelier",
+ "job_id": "fe359a6b-ad97-414e-8f2d-767ec9fc5882",
+ "prompt_id": "e8e2aa02-d3b6-4c5e-bf30-005d940e2d63",
+ "wall_seconds": 252.3,
+ "host_commit_percent_start": 62.4,
+ "host_commit_percent_peak": 72.9,
+ "output": "Studio/krea-anime-atelier-gguf_00003_.png",
+ "output_size": [
+  768,
+  1152
+ ],
+ "output_sha256": "c92d1232290afaca16dd810bcb36bc5ae301ebd5e28faded06749b27ea6be25c",
+ "thumbnail": "examples/recipe-thumbs-20260927/krea-watercolor-anime.jpg",
+ "thumbnail_sha256": "7b8a7f87d2b17455708134ce18afcdef3efc74fb81672bc792eccc8723459011",
+ "finished_local": "2026-09-27 04:21:35.070547",
+ "inspection": "Straw hat and green apron, a potted seedling in both hands, bright white greenhouse; loose watercolour washes.",
+ "studio_recipe": {
+  "preset_id": "krea-anime-atelier-gguf",
+  "controls": {
+   "positive": "A herbalist in a greenhouse of impossible plants, morning mist and soft diffused light, pale sand and sea green palette, upper body, airy anime watercolor style",
+   "steps": 8,
+   "cfg": 1,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "width": 768,
+   "height": 1152,
+   "seed": 20260914,
+   "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+   "lora": 1.0,
+   "lora2": 0,
+   "lora3": 0,
+   "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors",
+   "lora4": 1.0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-anime-atelier-gguf-api.json",
+  "created_at": 1790479042.8977354,
+  "references": [],
+  "parent_assets": []
+ }
+}

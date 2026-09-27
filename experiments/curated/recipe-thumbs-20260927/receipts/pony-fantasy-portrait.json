@@ -1,0 +1,39 @@
+{
+ "recipe_id": "pony-fantasy-portrait",
+ "recipe_preset_id": "pony",
+ "job_id": "6d43fb03-8708-4304-a671-c33d2ab34abc",
+ "prompt_id": "3063c283-35b2-4ba5-bac5-0e3804379648",
+ "wall_seconds": 36.0,
+ "host_commit_percent_start": 60.7,
+ "host_commit_percent_peak": 74.3,
+ "output": "Studio/pony_00004_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "48c2d33bef3ca30c99c9e42012482c66da18820f768ab2abec73f398ff5e7577",
+ "thumbnail": "examples/recipe-thumbs-20260927/pony-fantasy-portrait.jpg",
+ "thumbnail_sha256": "a8fba82977d961f3d27663853afbf3daefff80a20af7833ee9fdfddcc1b56a55",
+ "finished_local": "2026-09-27 04:09:20.972418",
+ "inspection": "Curly-haired smith in a teal apron and leather gloves holding tongs, soft warm painterly haze; the forge itself is not visible, only embers.",
+ "studio_recipe": {
+  "preset_id": "pony",
+  "controls": {
+   "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, 1girl, solo, original character, curly brown hair, freckles, apprentice smith's apron, soot-marked gloves, standing at a forge, firelight, chiaroscuro, upper body, fantasy",
+   "negative": "score_6, score_5, score_4, worst quality, low quality, text, watermark, signature, bad anatomy, bad hands",
+   "steps": 30,
+   "cfg": 6,
+   "sampler": "euler_ancestral",
+   "scheduler": "normal",
+   "width": 832,
+   "height": 1216,
+   "seed": 20260934,
+   "denoise": 1.0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\pony-api.json",
+  "created_at": 1790478525.0754423,
+  "references": [],
+  "parent_assets": []
+ }
+}

@@ -1,0 +1,39 @@
+{
+ "recipe_id": "noob-fantasy-scene",
+ "recipe_preset_id": "noob",
+ "job_id": "77135653-a7a9-40cb-a8fe-98040dbca2f3",
+ "prompt_id": "2fa1ee7e-1e08-453b-b43e-6b53fd709c9a",
+ "wall_seconds": 44.6,
+ "host_commit_percent_start": 68.7,
+ "host_commit_percent_peak": 74.9,
+ "output": "Studio/noob_00006_.png",
+ "output_size": [
+  832,
+  1216
+ ],
+ "output_sha256": "92714fb0ef6c3499f98e9dac2815c8c8b5779b30d49ffb2d6a43726265c16705",
+ "thumbnail": "examples/recipe-thumbs-20260927/noob-fantasy-scene.jpg",
+ "thumbnail_sha256": "0373f170103ee87d1e2ad36d5b13f3409e6128a4bf9fb2f4e4b148fd9e6a3fa5",
+ "finished_local": "2026-09-27 04:08:05.021616",
+ "inspection": "A small reading figure on a lit ledge among glowing mushrooms over dark water under stars; too small to check the glasses or hands.",
+ "studio_recipe": {
+  "preset_id": "noob",
+  "controls": {
+   "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, original character, short black hair, round glasses, scholar robes, sitting on a stone step, reading a book, glowing mushroom grove, bioluminescent glow, volumetric lighting, floating particles, scenery, wide shot, fantasy",
+   "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+   "steps": 28,
+   "cfg": 5.5,
+   "sampler": "euler_ancestral",
+   "scheduler": "normal",
+   "width": 832,
+   "height": 1216,
+   "seed": 20260932,
+   "denoise": 1.0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\noob-api.json",
+  "created_at": 1790478440.5157712,
+  "references": [],
+  "parent_assets": []
+ }
+}
