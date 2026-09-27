@@ -1,0 +1,103 @@
+{
+ "schema": "studio.theme-asset.receipt/v1-proposed",
+ "status": "candidate-produced",
+ "requested_asset_id": "retro-anime-poster",
+ "brief_revision": "brief.py show retro-anime-poster @ origin/main ffe5b3f9",
+ "production": {
+  "method": "derive",
+  "provider": "local Python (Pillow 12.1.1, numpy)",
+  "tool_action": "resize + encode (Pillow)",
+  "reported_model": null,
+  "output_id": null,
+  "produced_at": "2026-09-27T17:24:24+0100",
+  "prompt_record": null,
+  "input_anchors": [
+   {
+    "id": "retro-anime-master (3840x2160 MA)",
+    "sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414"
+   },
+   {
+    "id": "retro-anime-master-z2",
+    "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "studio_job": "c69e6e18-4739-458d-b546-1dd6e8174e19",
+    "prompt_id": "adfc94c4-0de0-44af-ae72-72b3133742f0"
+   }
+  ]
+ },
+ "source": {
+  "item_id": null,
+  "original_page": null,
+  "creator_credit": null,
+  "terms_evidence": null,
+  "retrieved_at": null,
+  "review_status": "not-applicable: generated locally from the owner-chosen anchor"
+ },
+ "files": [
+  {
+   "relative_path": "retro-anime-poster/renditions/retro-anime-poster--1280x720--still.webp",
+   "sha256": "4ff684105c71393102007e42a03695cbfadfe027094a3e865d879a92632ba91d",
+   "bytes": 49262,
+   "width": 1280,
+   "height": 720,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-poster/renditions/retro-anime-poster--640x360--still.webp",
+   "sha256": "d65ecf9a19cd26a9c8879090dbfa74f4c901654ac78551b8707836ae1ee9dce5",
+   "bytes": 18142,
+   "width": 640,
+   "height": 360,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  }
+ ],
+ "transformations": [
+  {
+   "step": "resize",
+   "detail": "full 16:9 master, Lanczos, no crop, so a later loop from this still does not jump"
+  },
+  {
+   "step": "encode",
+   "detail": {
+    "retro-anime-poster/renditions/retro-anime-poster--1280x720--still.webp": {
+     "quality": 90,
+     "budget_kib": 220,
+     "within_budget": true
+    },
+    "retro-anime-poster/renditions/retro-anime-poster--640x360--still.webp": {
+     "quality": 90,
+     "budget_kib": 90,
+     "within_budget": true
+    }
+   }
+  }
+ ],
+ "art_review": {
+  "status": "not-reviewed",
+  "reviewer": null,
+  "notes": "agent pre-review only (docs/quality/JUDGING-RUBRIC.md); owner art acceptance pending; focal point (0.76, 0.61); source identity: the master sha256 in input_anchors"
+ },
+ "rendition_review": {
+  "status": "agent-checked",
+  "checks": [
+   "retro-anime-poster/renditions/retro-anime-poster--1280x720--still.webp: 1280x720 WEBP 49262 B",
+   "retro-anime-poster/renditions/retro-anime-poster--640x360--still.webp: 640x360 WEBP 18142 B"
+  ]
+ },
+ "runtime_review": {
+  "status": "not-qualified",
+  "app_commit": null,
+  "device": null,
+  "checks": []
+ },
+ "release_selection": {
+  "status": "not-selected",
+  "selected_by": null
+ },
+ "unknowns": []
+}

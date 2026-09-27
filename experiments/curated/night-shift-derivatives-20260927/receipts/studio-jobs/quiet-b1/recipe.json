@@ -1,0 +1,15 @@
+{
+  "preset_id": "flux-edit",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png",
+    "positive": "Change the time of day from rainy night to calm early morning: cool pale daylight from the window gently lights the room, the city outside is misty and quiet, no rain, the desk lamp glows warm, the monitor screen is off. Keep the same camera, the same room layout, every object in the same position, the same plain wall on the left, and the same hand-painted cel anime background style.",
+    "seed": 2026092781,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\flux-edit-api.json",
+  "created_at": 1790525594.909238,
+  "references": [],
+  "parent_assets": []
+}

@@ -1,0 +1,50 @@
+{
+ "quiet-r1-1": {
+  "patches_used": 25,
+  "affine_x": [
+   1.00678,
+   -0.001223,
+   -2.514847
+  ],
+  "affine_y": [
+   -0.0001,
+   1.006759,
+   -1.948912
+  ],
+  "mean_abs_shift_before": [
+   2.84,
+   1.84
+  ],
+  "mean_abs_shift_after": [
+   0.68,
+   0.44
+  ],
+  "patches_after": 25,
+  "zones_after": {},
+  "aligned_file": "C:/Users/jekyt/AppData/Local/Temp/nightshift-0927/quiet-r1-1-aligned.png"
+ },
+ "quiet-r1-2": {
+  "patches_used": 25,
+  "affine_x": [
+   1.007639,
+   -0.001911,
+   -2.542137
+  ],
+  "affine_y": [
+   -0.000116,
+   1.006594,
+   -2.249685
+  ],
+  "mean_abs_shift_before": [
+   3.28,
+   1.52
+  ],
+  "mean_abs_shift_after": [
+   0.5,
+   0.15
+  ],
+  "patches_after": 26,
+  "zones_after": {},
+  "aligned_file": "C:/Users/jekyt/AppData/Local/Temp/nightshift-0927/quiet-r1-2-aligned.png"
+ }
+}

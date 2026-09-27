@@ -1,0 +1,126 @@
+{
+ "schema": "studio.theme-asset.receipt/v1-proposed",
+ "status": "candidate-produced",
+ "requested_asset_id": "retro-anime-quiet",
+ "brief_revision": "brief.py show retro-anime-quiet @ origin/main ffe5b3f9",
+ "production": {
+  "method": "edit",
+  "provider": "local ComfyUI 0.35.0 (primary, 127.0.0.1:8188) via Local Asset Studio",
+  "tool_action": "Studio preset flux-edit (Change one thing, FLUX.2 Klein 4B), reference = anchor upload",
+  "reported_model": "FLUX.2 Klein 4B (flux-edit preset graph workflows/api/flux-edit-api.json)",
+  "output_id": "5702bc23-db7b-4dd0-b38f-d30b3afaf318",
+  "produced_at": "2026-09-27T17:24:21+0100",
+  "prompt_record": "Change only the light and the weather: it is now a quiet early morning after the rain. Soft cool daylight and pale mist outside, a pale blue-grey sky, no rain falling; the warm desk lamp is still on and the monitor screen is dark. Keep everything else exactly as it is: the same camera and framing, the same room and plain graphite wall on the left, the same dark window frame with its vertical divider, the same view through the window with the elevated rail line, poles and buildings, the same desk, chair, lamp, CRT monitor and objects in the same places and shapes, the same floor, and the same hand-painted cel anime film background style.",
+  "input_anchors": [
+   {
+    "id": "retro-anime-master-z2",
+    "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "studio_job": "c69e6e18-4739-458d-b546-1dd6e8174e19",
+    "prompt_id": "adfc94c4-0de0-44af-ae72-72b3133742f0"
+   }
+  ]
+ },
+ "source": {
+  "item_id": null,
+  "original_page": null,
+  "creator_credit": null,
+  "terms_evidence": null,
+  "retrieved_at": null,
+  "review_status": "not-applicable: generated locally from the owner-chosen anchor"
+ },
+ "files": [
+  {
+   "relative_path": "retro-anime-quiet/master/retro-anime-quiet--3840x2160--r1-2.png",
+   "sha256": "0b18775c9e1b1bf9c94b867a080b2d1b1c65ea1a20a84870c5b0d7a1ed6a7c05",
+   "bytes": 2095076,
+   "width": 3840,
+   "height": 2160,
+   "format": "PNG",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-quiet/renditions/retro-anime-quiet--1280x720--poster.webp",
+   "sha256": "92008ca7e8d8fc076e37db518ec003df713f3add6ed9f698c203a8e93902693d",
+   "bytes": 42124,
+   "width": 1280,
+   "height": 720,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-quiet/review/registration-edges-over-quiet--1280x720.png",
+   "sha256": "e859c00fd7d5fb84fc75c015153b775c3ae89c3aa11f8ec62e2d30b24ee562f9",
+   "bytes": 478797,
+   "width": 1280,
+   "height": 720,
+   "format": "PNG",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-quiet/review/crossfade-50--1280x720.png",
+   "sha256": "b22e032ec4e7324637fdfcab2a3382a97f23eb4fc435c657e437366ecae56c1c",
+   "bytes": 459014,
+   "width": 1280,
+   "height": 720,
+   "format": "PNG",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  }
+ ],
+ "transformations": [
+  {
+   "step": "edit",
+   "detail": "Studio job a08efbc3-bd75-4922-b520-36c220a2c54b, prompt 5702bc23-db7b-4dd0-b38f-d30b3afaf318, seed 2026092782, 1344x768, refinement round 1 wording (r1-words.txt)"
+  },
+  {
+   "step": "registration warp",
+   "detail": "the edit came back ~0.7 % larger and offset (patch-wise edge NCC, 25 patches, mean |shift| [3.28, 1.52] px before -> [0.5, 0.15] after); affine x=[1.007639, -0.001911, -2.542137], y=[-0.000116, 1.006594, -2.249685], bicubic, edge-replicated border (at most ~8 px at the right edge, 1344 scale)"
+  },
+  {
+   "step": "upscale",
+   "detail": "raw 4x ESRGAN (direct ComfyUI prompt 5d725cb9-8856-4237-84d7-59262b0f489a, 93.8 s exec), Lanczos to 3840x2194, crop [0, 17, 3840, 2177]: identical to the master path"
+  },
+  {
+   "step": "encode",
+   "detail": {
+    "retro-anime-quiet/renditions/retro-anime-quiet--1280x720--poster.webp": {
+     "quality": 90,
+     "budget_kib": 300,
+     "within_budget": true
+    }
+   }
+  }
+ ],
+ "art_review": {
+  "status": "not-reviewed",
+  "reviewer": null,
+  "notes": "agent pre-review only (docs/quality/JUDGING-RUBRIC.md); owner art acceptance pending; same camera by construction plus the recorded warp; the window view keeps the rail, train and poles in mist; monitor screen dark, lamp on"
+ },
+ "rendition_review": {
+  "status": "agent-checked",
+  "checks": [
+   "retro-anime-quiet/master/retro-anime-quiet--3840x2160--r1-2.png: 3840x2160 PNG 2095076 B",
+   "retro-anime-quiet/renditions/retro-anime-quiet--1280x720--poster.webp: 1280x720 WEBP 42124 B",
+   "retro-anime-quiet/review/registration-edges-over-quiet--1280x720.png: 1280x720 PNG 478797 B",
+   "retro-anime-quiet/review/crossfade-50--1280x720.png: 1280x720 PNG 459014 B"
+  ]
+ },
+ "runtime_review": {
+  "status": "not-qualified",
+  "app_commit": null,
+  "device": null,
+  "checks": []
+ },
+ "release_selection": {
+  "status": "not-selected",
+  "selected_by": null
+ },
+ "unknowns": []
+}

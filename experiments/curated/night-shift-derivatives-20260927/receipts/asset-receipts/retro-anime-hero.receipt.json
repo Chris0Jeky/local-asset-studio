@@ -1,0 +1,132 @@
+{
+ "schema": "studio.theme-asset.receipt/v1-proposed",
+ "status": "candidate-produced",
+ "requested_asset_id": "retro-anime-hero",
+ "brief_revision": "brief.py show retro-anime-hero @ origin/main ffe5b3f9",
+ "production": {
+  "method": "derive",
+  "provider": "local Python (Pillow 12.1.1, numpy)",
+  "tool_action": "crop + Lanczos encode (Pillow)",
+  "reported_model": null,
+  "output_id": null,
+  "produced_at": "2026-09-27T17:24:24+0100",
+  "prompt_record": null,
+  "input_anchors": [
+   {
+    "id": "retro-anime-master (3840x2160 MA)",
+    "sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414"
+   },
+   {
+    "id": "retro-anime-master-z2",
+    "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+    "studio_job": "c69e6e18-4739-458d-b546-1dd6e8174e19",
+    "prompt_id": "adfc94c4-0de0-44af-ae72-72b3133742f0"
+   }
+  ]
+ },
+ "source": {
+  "item_id": null,
+  "original_page": null,
+  "creator_credit": null,
+  "terms_evidence": null,
+  "retrieved_at": null,
+  "review_status": "not-applicable: generated locally from the owner-chosen anchor"
+ },
+ "files": [
+  {
+   "relative_path": "retro-anime-hero/master/retro-anime-hero--3840x1600--wide.png",
+   "sha256": "652225192c58a57f8e2d7699670cbf86b841089184bbc9e8e067a9c4d49c7955",
+   "bytes": 2095779,
+   "width": 3840,
+   "height": 1600,
+   "format": "PNG",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-hero/renditions/retro-anime-hero--1920x800--wide.webp",
+   "sha256": "b3eca60381b273340230af43624bfa807c05ef1a8875ab01fd160d3e30501eb2",
+   "bytes": 69888,
+   "width": 1920,
+   "height": 800,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  },
+  {
+   "relative_path": "retro-anime-hero/renditions/retro-anime-hero--960x400--wide.webp",
+   "sha256": "9bc4a14d501b5b6a6d5fcfe2cd376e25423447985f2bd3829e54e64afac12808",
+   "bytes": 26316,
+   "width": 960,
+   "height": 400,
+   "format": "WEBP",
+   "mode": "RGB",
+   "duration_seconds": null,
+   "codec": null
+  }
+ ],
+ "transformations": [
+  {
+   "step": "crop",
+   "detail": "master box (0, 360, 3840, 1960) (drops 360 px of upper window/sky and 200 px of floor)"
+  },
+  {
+   "step": "encode",
+   "detail": {
+    "retro-anime-hero/renditions/retro-anime-hero--1920x800--wide.webp": {
+     "quality": 90,
+     "budget_kib": 250,
+     "within_budget": true
+    },
+    "retro-anime-hero/renditions/retro-anime-hero--960x400--wide.webp": {
+     "quality": 90,
+     "budget_kib": 250,
+     "within_budget": true
+    }
+   }
+  },
+  {
+   "step": "plan",
+   "detail": {
+    "portrait_crop_plan": "narrow screens (390x844): take a 9:16 box of height 1600 from this hero master, x from 2350 to 3250 (normalised 0.61-0.85), centred on the lamp, CRT and lower window; the heading moves above the art. Not produced: the plan only, per the brief.",
+    "focal_point_normalised": [
+     0.76,
+     0.52
+    ],
+    "heading_zone": "x 0-0.60 of the hero: plain wall, no detail",
+    "crop_box_in_master": [
+     0,
+     360,
+     3840,
+     1960
+    ]
+   }
+  }
+ ],
+ "art_review": {
+  "status": "not-reviewed",
+  "reviewer": null,
+  "notes": "agent pre-review only (docs/quality/JUDGING-RUBRIC.md); owner art acceptance pending"
+ },
+ "rendition_review": {
+  "status": "agent-checked",
+  "checks": [
+   "retro-anime-hero/master/retro-anime-hero--3840x1600--wide.png: 3840x1600 PNG 2095779 B",
+   "retro-anime-hero/renditions/retro-anime-hero--1920x800--wide.webp: 1920x800 WEBP 69888 B",
+   "retro-anime-hero/renditions/retro-anime-hero--960x400--wide.webp: 960x400 WEBP 26316 B"
+  ]
+ },
+ "runtime_review": {
+  "status": "not-qualified",
+  "app_commit": null,
+  "device": null,
+  "checks": []
+ },
+ "release_selection": {
+  "status": "not-selected",
+  "selected_by": null
+ },
+ "unknowns": []
+}
