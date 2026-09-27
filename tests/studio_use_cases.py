@@ -220,6 +220,7 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 LOCAL_CONTROLS = {
     '#lookBlock > summary': 'opens the saved-looks disclosure',
     '#lookSelect': 'chooses a saved look in this page; nothing is sent',
+    '#lookOptions [data-look-option]': "ticks one of the look's optional lines in this page; nothing is sent",
     '#workshopRecipeChange': 'opens the recipe picker',
     '#presetList [data-id]': 'loads a recipe into this page (selectPreset); nothing is sent',
     '#presetList button.preset': 'loads a recipe into this page (selectPreset); nothing is sent',
@@ -424,10 +425,11 @@ def build_handler():
                 data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
                 look = next((entry for entry in shipped if entry['id'] == data.get('id')), None)
                 if look is None or data.get('expected_revision') != look['revision']: return self.json({'error': 'Unknown fixture look'}, 404)
-                try: positive = looks.compose(look['body']['template'], data.get('scene'))
+                lines = look['body'].get('options', [])
+                try: chosen = looks.chosen_options(lines, data.get('options')); positive = looks.compose(look['body']['template'], data.get('scene'), lines, chosen)
                 except ValueError as error: return self.json({'error': str(error)}, 400)
                 return self.json({'preset_id': look['body']['preset_id'], 'preset_name': look['preset_name'], 'controls': {'positive': positive, **look['body']['controls']},
-                                  'look': {'id': look['id'], 'name': look['name'], 'revision': look['revision']}, 'generation_submitted': False})
+                                  'look': {'id': look['id'], 'name': look['name'], 'revision': look['revision'], **({'options': chosen} if lines else {})}, 'generation_submitted': False})
             if path == '/api/preview':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
@@ -1287,6 +1289,7 @@ def _tile(c):
     # Owner, 27 Sep 2026: a wider seam band hides a floor's repeating plank ends. Choose it when this texture can take it.
     wide = c.page.evaluate("""(() => { const o = document.querySelector('#assetDialog [data-ux-tile-band] option[value="160"]'); return !!o && !o.disabled; })()""")
     if wide: c.act('#assetDialog [data-ux-tile-band]', 'select', typed='160', note='choose the wide seam band (160 px)')
+    else: c.act('#assetDialog .ux-tile small', 'read', note='the wide seam band does not fit this texture')
     c.stop_before(c.act('#assetDialog [data-ux-tile]', note='prepares the seam repaint'), 'stopped before preparing: Make seamless stores a rolled copy of the picture')
     c.page.wait_for_timeout(800)
     state = c.page.evaluate(TILE_STATE)
@@ -1332,17 +1335,29 @@ def _look(c):
     state = c.page.evaluate(LOOK_STATE)
     c.act('#lookStatus', 'read', note=state['status'][:200])
     c.act('#positive', 'read', note=state['positive'][:200])
+    # Owner, 27 Sep 2026: the quiet wall is an optional line for UI backgrounds, off by default; the scene decides the layout.
+    line = '#lookOptions [data-look-option="quiet_wall"]'
+    unticked = c.page.evaluate("(() => { const box = document.querySelector('%s'); return !!box && !box.checked; })()" % line)
+    c.act(line, 'check', note='keep the quiet wall for a UI background')
+    c.act('#lookPrepare', note='prepare again with the quiet-wall line')
+    c.page.wait_for_timeout(600)
+    walled = c.page.evaluate(LOOK_STATE)
+    c.act('#positive', 'read', note=walled['positive'][:200], supplementary=True)
     c.act('#generate', 'read', note='readiness only; never pressed')
     # Preparing again on the open recipe reloads it: a changed setting the look does not store must not linger (#1224 review).
     reset = c.live or c.page.evaluate("""async () => { const steps = getControl('steps'), authored = steps?.value; if (!steps) return false;
       steps.value = '99'; document.querySelector('#lookPrepare').click(); await new Promise(r => setTimeout(r, 600));
       return getControl('steps').value === authored && selected.id === 'zimage-fast'; }""")
     shipped = next(entry for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks'] if entry['id'] == 'look-night-shift-retro-anime')
-    wording = looks.compose(shipped['body']['template'], LOOK_SCENE)
-    ok = (state['preset'] == 'zimage-fast' and state['positive'] == wording and state['seed'] == '2026092752'
+    lines = shipped['body'].get('options', [])
+    wording = looks.compose(shipped['body']['template'], LOOK_SCENE, lines)
+    with_wall = looks.compose(shipped['body']['template'], LOOK_SCENE, lines, {'quiet_wall': True})
+    ok = (state['preset'] == 'zimage-fast' and state['positive'] == wording and 'graphite wall' not in wording and unticked
+          and walled['positive'] == with_wall and 'plain dark graphite wall' in with_wall and 'with: Keep the quiet wall' in walled['status'] and state['seed'] == '2026092752'
           and (state['width'], state['height']) == ('1344', '768') and 'Nothing was generated' in state['status']
           and 'recipe switched' in state['status'] and 'Type the scene' in reason and '· on ' in label and reset)
-    return ok, 'look option %r; reason before the scene %r; prepared %s; same-recipe reset %s' % (label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')}, reset)
+    return ok, 'look option %r; reason before the scene %r; prepared %s; quiet wall off by default %s, on when ticked %s; same-recipe reset %s' % (
+        label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')}, unticked, walled['positive'] == with_wall, reset)
 
 
 @driver('reference-analysis-review-and-apply')

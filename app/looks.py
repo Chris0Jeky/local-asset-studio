@@ -2,7 +2,11 @@
 
 A look is a Workspace card (app/workspace.py `cards`, kind "look"): name, body and lineage, revisioned, reversible trash.
 body: preset_id (one text-to-image recipe), template, negative, controls (only inputs that recipe binds), scene_example,
-source_prompt (the anchor's own wording, verbatim) and notes. lineage: the pictures it came from, by sha256.
+source_prompt (the anchor's own wording, verbatim), notes and options. lineage: the pictures it came from, by sha256.
+options (owner, 27 Sep 2026): optional lines, each a sentence with an id, a label, and a default. The template holds `{<id>}` once
+where the line goes; Prepare writes the line only when it is on. Layout sentences belong here, so the scene decides the layout.
+A shipped look reaches an existing Workspace through workspace.seed_cards: new ids are inserted, and an updated look lists the
+digests it `supersedes`, so a copy never edited takes the new version while an owner's edit is kept as it is.
 The lab behind it (background-lab-20260927, strand c): words on the same model carry a look to new scenes; a look picture
 through a reference route leaks content. Preparing composes Create's fields and never submits (K8: Generate stays a press).
 """
@@ -17,7 +21,10 @@ KIND = "look"
 SLOT = "{scene}"
 SCENE_MAX = 1000
 TEXT_LIMITS = {"template": 4000, "negative": 4000, "scene_example": 1000, "source_prompt": 8000, "notes": 4000}
-BODY_FIELDS = {"preset_id", "controls", *TEXT_LIMITS}
+BODY_FIELDS = {"preset_id", "controls", "options", *TEXT_LIMITS}
+OPTION_ID = re.compile(r"[a-z][a-z0-9_]{1,31}")
+OPTION_FIELDS = {"id", "label", "text", "default"}
+OPTIONS_MAX = 6
 # Wording is the template's job and pictures are not part of a look, so these are never stored as look controls.
 NOT_CONTROLS = {"positive", "negative", "reference", "last_reference", "mode"}
 PICTURE_KEYS = ("reference", "last_reference", "reference_slots")
@@ -45,6 +52,30 @@ def recipe_problem(preset):
     return None
 
 
+def token(option_id):
+    return "{" + option_id + "}"
+
+
+def _options(value, template):
+    """Optional lines, normalized: each id's token appears exactly once in the template; a line holds no slot of its own."""
+    if not isinstance(value, list) or len(value) > OPTIONS_MAX: raise WorkspaceError(f"Optional lines must be a list of up to {OPTIONS_MAX}")
+    result = []
+    for option in value:
+        if not isinstance(option, dict) or set(option) - OPTION_FIELDS: raise WorkspaceError("An optional line has the fields " + ", ".join(sorted(OPTION_FIELDS)))
+        identifier = option.get("id")
+        if not isinstance(identifier, str) or not OPTION_ID.fullmatch(identifier) or token(identifier) == SLOT:
+            raise WorkspaceError("An optional line id is 2-32 lowercase letters, digits or underscores, starting with a letter, and not scene")
+        if any(identifier == other["id"] for other in result): raise WorkspaceError(f"Name the optional line {identifier} once")
+        if template.count(token(identifier)) != 1: raise WorkspaceError(f"Write {token(identifier)} exactly once in the wording, where that line goes")
+        if not isinstance(option.get("default", False), bool): raise WorkspaceError("An optional line's default is true or false")
+        clean = {"id": identifier, "label": _text(option.get("label"), "Optional line label", 120, True), "text": _text(option.get("text"), "Optional line text", 1000, True),
+                 "default": option.get("default", False)}
+        result.append(clean)
+    if any(t in option["text"] for option in result for t in [SLOT, *(token(other["id"]) for other in result)]):
+        raise WorkspaceError("An optional line is plain words: it holds no slot or line token")
+    return result
+
+
 def validate_body(body, preset):
     """The look body, normalized, for this catalog preset; WorkspaceError with a plain reason otherwise."""
     if not isinstance(body, dict): raise WorkspaceError("A look must be an object")
@@ -57,6 +88,7 @@ def validate_body(body, preset):
         if field in body or field in ("template", "negative"): result[field] = _text(body.get(field), field.replace("_", " ").capitalize(), maximum, field == "template")
     if result["template"].count(SLOT) != 1: raise WorkspaceError("Write " + SLOT + " exactly once in the wording, where a new scene goes")
     if result["negative"] and not preset.get("negative"): raise WorkspaceError("This recipe takes no negative prompt; put the exclusions in the wording")
+    if "options" in body: result["options"] = _options(body["options"], result["template"])
     controls = body.get("controls", {})
     if not isinstance(controls, dict) or len(controls) > 40: raise WorkspaceError("Look controls must be an object of up to 40 settings")
     clean = {}
@@ -81,15 +113,29 @@ def validate_lineage(lineage):
     return lineage
 
 
-def compose(template, scene):
-    """The template with the typed scene in its one slot: whitespace collapsed, a trailing full stop dropped (the template has its own)."""
+def chosen_options(options, chosen=None):
+    """{id: on} for each optional line: the caller's choice, else the line's default."""
+    chosen = {} if chosen is None else chosen
+    if not isinstance(chosen, dict): raise WorkspaceError("Optional lines are an object of line id to true or false")
+    unknown = sorted(str(key) for key in chosen if key not in {option["id"] for option in options})
+    if unknown: raise WorkspaceError("Unknown optional line: " + ", ".join(unknown))
+    if any(not isinstance(value, bool) for value in chosen.values()): raise WorkspaceError("Each optional line is true or false")
+    return {option["id"]: chosen.get(option["id"], option["default"]) for option in options}
+
+
+def compose(template, scene, options=(), chosen=None):
+    """The template with the typed scene in its one slot: whitespace collapsed, a trailing full stop dropped (the template has its own).
+    Optional lines are written first, so a scene's own braces stay its words; a line that is off leaves no double space."""
     if not isinstance(scene, str): raise WorkspaceError("Type the scene in a few words")
     scene = " ".join(scene.split()).rstrip(" .")
     if not scene: raise WorkspaceError("Type the scene in a few words")
     if len(scene) > SCENE_MAX: raise WorkspaceError(f"Keep the scene under {SCENE_MAX} characters")
     if SLOT in scene: raise WorkspaceError("The scene is the text that fills " + SLOT + "; leave the token out")
     if template.count(SLOT) != 1: raise WorkspaceError("This look's wording has no single " + SLOT + " slot; edit the look")
-    return template.replace(SLOT, scene)
+    on = chosen_options(options, chosen)
+    for option in options: template = template.replace(token(option["id"]), option["text"] if on[option["id"]] else "")
+    text = template.replace(SLOT, scene)
+    return re.sub(r" {2,}", " ", text).strip() if options else text
 
 
 def _presets(studio):
@@ -108,6 +154,9 @@ def ensure_seeds(studio):
             if not isinstance(entry, dict) or entry.get("kind") != KIND: raise WorkspaceError("not a look")
             preset = presets.get((entry.get("body") or {}).get("preset_id"))
             if preset is None: raise WorkspaceError("its recipe is not in the recipe library")
+            supersedes = entry.get("supersedes", [])
+            if not isinstance(supersedes, list) or len(supersedes) > 20 or not all(isinstance(d, str) and re.fullmatch(r"[0-9a-f]{64}", d) for d in supersedes):
+                raise WorkspaceError("supersedes is a list of up to 20 sha256 digests of earlier shipped versions")
             valid.append(dict(entry, body=validate_body(entry["body"], preset), lineage=validate_lineage(entry.get("lineage", []))))
         except (WorkspaceError, KeyError, TypeError) as error: errors.append(f"{entry.get('id') if isinstance(entry, dict) else entry}: {error}")
     studio.assets.seed_cards(valid)
@@ -152,7 +201,8 @@ def command(studio, payload):
 def prepare(studio, payload):
     """Create's fields for one look and one typed scene. Reads only; submits nothing (the owner presses Generate)."""
     ensure_seeds(studio)
-    if not isinstance(payload, dict) or set(payload) - {"id", "scene", "expected_revision"}: raise WorkspaceError("Prepare takes a look id, the scene and optionally the revision you read")
+    if not isinstance(payload, dict) or set(payload) - {"id", "scene", "options", "expected_revision"}:
+        raise WorkspaceError("Prepare takes a look id, the scene, and optionally its optional lines and the revision you read")
     card = studio.assets.card(payload.get("id"))
     if card["kind"] != KIND: raise WorkspaceError("That card is not a look")
     if "expected_revision" in payload and payload["expected_revision"] != card["revision"]:
@@ -161,6 +211,7 @@ def prepare(studio, payload):
     preset = _presets(studio).get(card["body"].get("preset_id"))
     if preset is None: raise WorkspaceError("This look's recipe is not in the recipe library")
     body = validate_body(card["body"], preset)
-    controls = {"positive": compose(body["template"], payload.get("scene")), **({"negative": body["negative"]} if preset.get("negative") else {}), **body["controls"]}
+    options = body.get("options", []); on = chosen_options(options, payload.get("options"))
+    controls = {"positive": compose(body["template"], payload.get("scene"), options, on), **({"negative": body["negative"]} if preset.get("negative") else {}), **body["controls"]}
     return {"preset_id": preset["id"], "preset_name": preset.get("name"), "controls": controls,
-            "look": {"id": card["id"], "name": card["name"], "revision": card["revision"]}, "generation_submitted": False}
+            "look": {"id": card["id"], "name": card["name"], "revision": card["revision"], **({"options": on} if options else {})}, "generation_submitted": False}

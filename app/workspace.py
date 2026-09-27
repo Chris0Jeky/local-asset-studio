@@ -627,15 +627,32 @@ class AssetWorkspace:
             db.execute(f"UPDATE cards SET {','.join(k + '=?' for k in fields)},revision=revision+1,updated_at=? WHERE id=?", [*fields.values(), now, row["id"]])
             return self._card(db.execute("SELECT * FROM cards WHERE id=?", (row["id"],)).fetchone())
 
+    @staticmethod
+    def card_digest(card):
+        """sha256 of a card's content (name, body, lineage) as canonical JSON: how a shipped card names the versions it replaces."""
+        content = {"name": card["name"], "body": card["body"], "lineage": card.get("lineage", [])}
+        return hashlib.sha256(json.dumps(content, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+
     def seed_cards(self, entries):
-        """Insert shipped cards whose id is absent; never overwrite or resurrect one the owner edited or put away. Returns the new ids."""
+        """Insert shipped cards whose id is absent; never overwrite or resurrect one the owner edited or put away. Returns the new ids.
+        An updated shipped card lists `supersedes`, the card_digest of each earlier shipped version. A stored seed card whose content
+        still hashes to one of them has never been edited, so it takes the new version as a revision (a page that read the old one
+        gets a 409) and keeps its put-away state. An edited card hashes to something else and keeps the owner's version."""
         added, now = [], time.time()
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")
             for entry in entries:
                 if entry.get("kind") not in CARD_KINDS or not CARD_ID.fullmatch(str(entry.get("id", ""))): raise WorkspaceError("Invalid seed card")
+                supersedes = entry.get("supersedes", [])
+                if not isinstance(supersedes, list) or len(supersedes) > 20 or not all(isinstance(d, str) and re.fullmatch(r"[0-9a-f]{64}", d) for d in supersedes):
+                    raise WorkspaceError("A seed card's supersedes is a list of up to 20 sha256 digests")
                 fields = self._card_fields(entry, True)
                 inserted = db.execute("INSERT OR IGNORE INTO cards (id,kind,name,body,lineage,origin,revision,created_at,updated_at) VALUES (?,?,?,?,?,'seed',0,?,?)",
                                       (entry["id"], entry["kind"], fields["name"], fields["body"], fields["lineage"], now, now))
-                if inserted.rowcount: added.append(entry["id"])
+                if inserted.rowcount: added.append(entry["id"]); continue
+                row = db.execute("SELECT * FROM cards WHERE id=?", (entry["id"],)).fetchone() if supersedes else None
+                stored = self.card_digest(self._card(row)) if row is not None else None
+                if row is None or row["origin"] != "seed" or row["kind"] != entry["kind"] or stored not in supersedes or stored == self.card_digest(entry): continue
+                db.execute("UPDATE cards SET name=?,body=?,lineage=?,revision=revision+1,updated_at=? WHERE id=? AND revision=?",
+                           (fields["name"], fields["body"], fields["lineage"], now, row["id"], row["revision"]))
         return added

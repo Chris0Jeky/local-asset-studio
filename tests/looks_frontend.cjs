@@ -51,4 +51,15 @@ test('after preparing, the page says what was set and that nothing was generated
   const text=L.readyMessage({look:{name:'Night Shift (retro anime)'},preset_id:'zimage-fast',preset_name:'Z-Image Turbo fast',controls:{positive:'x',seed:2026092752,width:1344,height:768}},true);
   assert.equal(text,'Night Shift (retro anime) prepared on Z-Image Turbo fast (recipe switched), seed 2026092752, 1344x768. Your scene is in the wording. Nothing was generated; press Generate when it reads right.');
 });
+test('a look with optional lines offers one checkbox per line, set to its default, and sends every choice',()=>{
+  const wall={id:'quiet_wall',label:'Keep the quiet wall for UI backgrounds',text:'The left half is a plain wall.',default:false};
+  const withWall={...night,body:{...night.body,template:'Background of {scene}. {quiet_wall}',options:[wall,{...wall,id:'rain',label:'Heavy rain',default:true}]}};
+  assert.deepEqual(L.optionRows(withWall),[{id:'quiet_wall',label:'Keep the quiet wall for UI backgrounds',checked:false},{id:'rain',label:'Heavy rain',checked:true}]);
+  assert.deepEqual(L.optionRows(night),[]);assert.deepEqual(L.optionRows(null),[]);
+  assert.deepEqual(L.optionsPayload(withWall,{quiet_wall:true}),{quiet_wall:true,rain:true},'an unticked-by-the-page line keeps its default');
+  assert.deepEqual(L.optionsPayload(withWall,{quiet_wall:true,rain:false,stray:true}),{quiet_wall:true,rain:false},'only the look\'s own lines are sent');
+  assert.equal(L.optionsPayload(night,{quiet_wall:true}),null,'a look without lines sends none');
+  const text=L.readyMessage({look:{name:'Night Shift (retro anime)',options:{quiet_wall:true,rain:false}},preset_id:'zimage-fast',preset_name:'Z-Image Turbo fast',controls:{seed:1,width:1344,height:768}},false,withWall);
+  assert.equal(text,'Night Shift (retro anime) prepared on Z-Image Turbo fast, seed 1, 1344x768, with: Keep the quiet wall for UI backgrounds. Your scene is in the wording. Nothing was generated; press Generate when it reads right.');
+});
 console.log(count+' checks. Look contracts passed');
