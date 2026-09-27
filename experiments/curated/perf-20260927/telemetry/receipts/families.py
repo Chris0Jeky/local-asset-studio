@@ -4,7 +4,8 @@ import json, sys, time, threading
 from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'app'))
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / 'app' / 'host_memory.py').is_file())   # the repository, from any copy of this driver
+sys.path.insert(0, str(ROOT / 'app'))
 import host_memory
 
 STUDIO = 'http://127.0.0.1:8191'; GIB = 1024 ** 3; SEED = 2026092701
