@@ -1,0 +1,26 @@
+{
+  "name": "local-asset-studio-ui-islands",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Maintainer/CI-only build for Studio UI islands (#907). The runtime serves the committed app/static/ui-dist output; it never runs npm.",
+  "type": "module",
+  "engines": {
+    "node": ">=24.13.1 <25"
+  },
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "build": "vue-tsc --noEmit -p tsconfig.json && vite build && node scripts/write-manifest.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.9",
+    "happy-dom": "20.14.5",
+    "typescript": "6.0.3",
+    "vite": "8.3.1",
+    "vitest": "5.0.2",
+    "vue-tsc": "3.3.11"
+  }
+}
