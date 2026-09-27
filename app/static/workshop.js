@@ -181,7 +181,10 @@
     const setupStatus = el('div', 'wk-setup-status');
     const setupReadiness = el('strong', '', 'Checking readiness…'); setupReadiness.id = 'workshopSetupReadiness';
     const setupEta = el('span', '', 'Runtime estimate not available'); setupEta.id = 'workshopSetupEta';
-    setupStatus.append(setupReadiness, setupEta);
+    // Every blocker, not only the first, with the repair its own readiness row offers (handoff 03).
+    const blockerList = el('ol', 'wk-blocker-list'); blockerList.id = 'workshopBlockerList'; blockerList.hidden = true;
+    blockerList.setAttribute('aria-label', 'Everything to fix before generating');
+    setupStatus.append(setupReadiness, blockerList, setupEta);
     setupRail.append(setupHeading, recipeChip, quickTune, setupStatus);
     editor.before(hero, modebar, appearance, setupRail);
 
@@ -491,6 +494,25 @@
       presentationSnapshot = Object.freeze({view:currentView, recipe:recipe ? Object.freeze({id:String(recipe.id || ''), name:String(recipe.name || recipe.id || '')}) : null});
       if (announcedStamp !== currentView.contextStamp) { announcedStamp = currentView.contextStamp; create.dispatchEvent(new w.CustomEvent('studio:presentation', {detail:presentationSnapshot})); }
     }
+    let blockerSignature = '';
+    function renderBlockers(blockers) {
+      const rows = blockers.map(n => { const fix = n.querySelector('[data-ux-resolve]'); return [n.dataset.readinessCode || '', n.querySelector('p').textContent, fix?.textContent || '', !!fix?.disabled]; });
+      // A lone blocker's text is already the summary above; its row then carries only the repair, if it has one.
+      const single = rows.length === 1; blockerList.hidden = !rows.length || single && !rows[0][2];
+      const signature = JSON.stringify(rows); if (signature === blockerSignature) return; blockerSignature = signature;
+      blockerList.replaceChildren(...rows.map(([code, message, label, disabled]) => {
+        const item = el('li'); if (!single) item.append(el('span', '', message));
+        if (label) {
+          const fix = el('button', '', label); fix.type = 'button'; fix.disabled = disabled;
+          // Forwards to the original readiness button, which owns focus and repair; nothing is decided here.
+          fix.addEventListener('click', () => [...d.querySelectorAll('#uxBlockers .ux-blocker')]
+            .find(n => (n.dataset.readinessCode || '') === code && n.querySelector('p')?.textContent === message)
+            ?.querySelector('[data-ux-resolve]')?.click());
+          item.append(fix);
+        }
+        return item;
+      }));
+    }
     function sync() {
       const active = !create.hidden;
       d.body.classList.toggle('workshop-active', active);
@@ -520,7 +542,10 @@
       text(quickTune, summary+'   ·   Tune settings ↗');
       const blocked = q('#generate').disabled, first = q('#uxBlockers .ux-blocker p')?.textContent;
       const readinessText = blocked ? first || 'Review readiness before generating.' : 'No blockers reported';
-      text(readiness, readinessText); text(setupReadiness, readinessText);
+      const blockers = blocked ? [...d.querySelectorAll('#uxBlockers .ux-blocker')].filter(n => n.querySelector('p')?.textContent) : [];
+      text(readiness, readinessText + (blockers.length > 1 ? ' (+'+(blockers.length-1)+' more)' : ''));
+      text(setupReadiness, blockers.length > 1 ? blockers.length+' things to fix before generating' : readinessText);
+      renderBlockers(blockers);
       const time = q('#estimateValue')?.textContent;
       const etaText = estimate && !estimate.hidden && time ? 'Expected: '+time : 'Runtime estimate not available';
       text(eta, etaText); text(setupEta, etaText);
