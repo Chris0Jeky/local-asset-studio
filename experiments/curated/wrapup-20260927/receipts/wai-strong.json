@@ -1,0 +1,214 @@
+{
+ "label": "wai",
+ "parent_asset": "4571765f221f56318eafeefd94bd4770",
+ "strength": "strong",
+ "events": [
+  {
+   "t": 1790547654.075,
+   "kind": "asset_opened",
+   "vary_buttons": [
+    "Vary subtle",
+    "Vary strong"
+   ],
+   "hint": "On WAI v17 \u00b7 vary (img2img, keeps the adapters) \u00b7 keeps its adapters \u00b7 4 pictures \u00b7 denoise 0.5 / 0.7 (starting values)"
+  },
+  {
+   "t": 1790547657.188,
+   "kind": "vary_pressed",
+   "status": "Vary strong prepared on WAI v17 \u00b7 vary (img2img, keeps the adapters) from this picture, same checkpoint and adapters as this picture (noirpopwave.safetensors at 1): denoise 0.7 (a starting value, not yet judged), 4 new seeds from 1015797779, about 35 s per picture here \u00b7 1 run. Nothing was generated; press Generate to run the round.",
+   "prepared": {
+    "preset": null,
+    "batch": "4",
+    "denoise": null,
+    "positive": "adult woman, solo, original fantasy cartographer and lanternkeeper, fully clothed navy travel coat with brass clasps, teal scarf, high collar, leather gloves, ankle boots, holding a brass compass and a warm lantern, weathered map case at her hip, misty ruined observatory at dusk, warm rim light, teal and amber palette, painterly graphic shapes, bold lineart, high contrast, limited palette, subtle grain, fantasy illustration, noirpopwave, masterpiece, best quality, amazing quality",
+    "hash": "#create"
+   },
+   "submitted_so_far": []
+  },
+  {
+   "t": 1790547657.338,
+   "kind": "generate_state",
+   "disabled": false,
+   "text": "Generate source-based pass \u2192"
+  },
+  {
+   "t": 1790547657.338,
+   "kind": "commit_before_generate",
+   "commit_gib": 70.6,
+   "limit_gib": 95.7,
+   "pct": 73.8,
+   "phys_avail_gib": 3.0
+  },
+  {
+   "t": 1790547661.499,
+   "kind": "generate_pressed",
+   "new_jobs": [
+    [
+     "fe6462d2-bedf-44eb-84f9-b4478caa91e5",
+     "wai-vary",
+     4,
+     "running"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790547657.405,
+     "/api/jobs"
+    ]
+   ]
+  }
+ ],
+ "job_id": "fe6462d2-bedf-44eb-84f9-b4478caa91e5",
+ "preset": "wai-vary",
+ "status": "completed",
+ "message": "Complete",
+ "batch_count": 4,
+ "prompt_ids": [
+  "106277df-311f-498b-b59e-de7521c57137",
+  "96b1fe2f-2c99-43ff-862d-53592c3fedf3",
+  "e5f0d24e-0ed4-45f2-9470-2b43dc2c0608",
+  "4bceacbb-0d03-45e5-8693-fe3980b7047a"
+ ],
+ "outputs": [
+  {
+   "filename": "WAI-Vary_00003_.png",
+   "subfolder": "Studio",
+   "seed": 1015797779,
+   "prompt_id": "106277df-311f-498b-b59e-de7521c57137",
+   "asset_id": "bf2172bdc7a1550b85bd413f78de2d63"
+  },
+  {
+   "filename": "WAI-Vary_00004_.png",
+   "subfolder": "Studio",
+   "seed": 1015797780,
+   "prompt_id": "96b1fe2f-2c99-43ff-862d-53592c3fedf3",
+   "asset_id": "fc31f3a73a5252c1ac0e6334c751cccb"
+  },
+  {
+   "filename": "WAI-Vary_00005_.png",
+   "subfolder": "Studio",
+   "seed": 1015797781,
+   "prompt_id": "e5f0d24e-0ed4-45f2-9470-2b43dc2c0608",
+   "asset_id": "e0997b42c0695cd7be2196970b6abe3e"
+  },
+  {
+   "filename": "WAI-Vary_00006_.png",
+   "subfolder": "Studio",
+   "seed": 1015797782,
+   "prompt_id": "4bceacbb-0d03-45e5-8693-fe3980b7047a",
+   "asset_id": "6c1527303f8951b4840e9c5c5fbd276c"
+  }
+ ],
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "106277df-311f-498b-b59e-de7521c57137",
+   "seed": 1015797779,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 82534400,
+    "peak_dedicated_bytes": 10753900544,
+    "samples": 26,
+    "spilled": false
+   }
+  },
+  {
+   "index": 1,
+   "prompt_id": "96b1fe2f-2c99-43ff-862d-53592c3fedf3",
+   "seed": 1015797780,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 82534400,
+    "peak_dedicated_bytes": 9618276352,
+    "samples": 21,
+    "spilled": false
+   }
+  },
+  {
+   "index": 2,
+   "prompt_id": "e5f0d24e-0ed4-45f2-9470-2b43dc2c0608",
+   "seed": 1015797781,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 82534400,
+    "peak_dedicated_bytes": 11701813248,
+    "samples": 96,
+    "spilled": false
+   }
+  },
+  {
+   "index": 3,
+   "prompt_id": "4bceacbb-0d03-45e5-8693-fe3980b7047a",
+   "seed": 1015797782,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 82534400,
+    "peak_dedicated_bytes": 11142905856,
+    "samples": 17,
+    "spilled": false
+   }
+  }
+ ],
+ "graph_denoise": [
+  0.7
+ ],
+ "parent_assets": [
+  "4571765f221f56318eafeefd94bd4770"
+ ],
+ "continuation": {
+  "intent": "edit",
+  "preset_id": "wai-vary",
+  "reference_file": "64f525aaaa514a43b0669f65542c0ef9_WAI-Illustration_00045_.png.png",
+  "source_asset_id": "4571765f221f56318eafeefd94bd4770",
+  "source_sha256": "4daddd763e65380957acc2a5b1dbc00e5978cac799cd7f66e0f638051effd410",
+  "template_sha256": "7d005b54cab84ebe83df141eef8619e1380e95a2d904f946ffd4e6b1d3c4add3",
+  "version": 1
+ },
+ "controls": {
+  "positive": "adult woman, solo, original fantasy cartographer and lanternkeeper, fully clothed navy travel coat with brass clasps, teal scarf, high collar, leather gloves, ankle boots, holding a brass compass and a warm lantern, weathered map case at her hip, misty ruined observatory at dusk, warm rim light, teal and amber palette, painterly graphic shapes, bold lineart, high contrast, limited palette, subtle grain, fantasy illustration, noirpopwave, masterpiece, best quality, amazing quality",
+  "negative": "bad quality, worst quality, worst detail, sketch, censor, child, childlike, young-looking",
+  "seed": "1015797779",
+  "steps": "24",
+  "cfg": "6",
+  "denoise": "0.7",
+  "lora": "1",
+  "lora2": "0",
+  "lora_name": "noirpopwave.safetensors",
+  "lora2_name": "manga-ink-screentone.safetensors",
+  "sampler": "euler_ancestral",
+  "scheduler": "normal",
+  "reference": "64f525aaaa514a43b0669f65542c0ef9_WAI-Illustration_00045_.png.png"
+ },
+ "created_at": 1790547657.569535,
+ "started_at": 1790547657.57954,
+ "finished_at": 1790547735.2191272,
+ "elapsed_seconds": 77.63958716392517,
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790547646.52,
+   "/api/estimate"
+  ],
+  [
+   1790547647.681,
+   "/api/estimate"
+  ],
+  [
+   1790547654.137,
+   "/api/assets/reference"
+  ],
+  [
+   1790547654.478,
+   "/api/estimate"
+  ],
+  [
+   1790547657.405,
+   "/api/jobs"
+  ],
+  [
+   1790547657.894,
+   "/api/estimate"
+  ]
+ ],
+ "dialogs": []
+}
