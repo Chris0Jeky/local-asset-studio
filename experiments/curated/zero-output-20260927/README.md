@@ -34,3 +34,7 @@ The picture is truthful (same graph, same seed), but the receipt cannot distingu
 drop a whole cache entry, so the node re-executes; that was read in the code, not tested. Custom output nodes were not
 covered. The Studio still has no guard for a zero-output success: if one ever occurs, it would record `completed` with
 no outputs.
+
+## Exact recipes
+
+`recipes/0bee0aae-recipe.json` (P1) and `recipes/b7fb7ed4-recipe.json` (P2) are the Studio's own `/api/jobs/<id>/recipe` exports, fetched after the run, 27 Sep 2026. Each holds the preset, the controls and the full submitted workflow, so the probe stays reproducible if the `wai` catalog entry or graph changes later.
