@@ -50,14 +50,15 @@ class ShippedVaryRoutes(unittest.TestCase):
             for slot in ("lora", "lora2"): self.assertIn(slot, source)
         self.assertEqual(continuation.capability(route, graph_of(route))["operation"], "image-to-image")
         self.assertFalse(route["verified"])
+        # Started at the SDXL owner values, still a starting value until a GPU proof and the owner's look at WAI pictures.
+        self.assertEqual(route["vary"]["status"], "starting-value")
+        self.assertEqual((route["vary"]["subtle"]["controls"], route["vary"]["strong"]["controls"]), ({"denoise": 0.5}, {"denoise": 0.7}))
 
     def test_every_strength_is_a_labelled_starting_value_not_a_global(self):
         for preset in CATALOG:
             vary = preset.get("vary")
             if not vary: continue
             self.assertEqual(vary["status"], "starting-value", preset["id"])
-            if preset["id"] == "wai-vary":
-                self.assertEqual((vary["subtle"]["controls"], vary["strong"]["controls"]), ({"denoise": 0.5}, {"denoise": 0.7}), "the SDXL owner values")
             self.assertLess(vary["subtle"]["controls"]["denoise"], vary["strong"]["controls"]["denoise"], preset["id"])
             for name in ("subtle", "strong"): self.assertTrue(vary[name]["basis"].strip(), (preset["id"], name))
 
