@@ -30,6 +30,17 @@ def fingerprint(value):
     return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
 
+PLAN_LIVE_STATUSES=('queued','submitting','running','waiting','observing','rendering')
+
+
+def put_away_state(state):
+    """The owner's put-away counts only while the plan stays live-free and in the status it was put away in (#940).
+
+    Any later status change (a resume, a review, a failure) brings the plan back on its own; the marker stays as history."""
+    marker=state.get('put_away') if isinstance(state,dict) else None
+    return (isinstance(marker,dict) and marker.get('status')==state.get('status') and state.get('status') not in PLAN_LIVE_STATUSES)
+
+
 class Production:
     def __init__(self, studio):
         self.studio=studio
@@ -135,6 +146,10 @@ class Production:
         if plan.get('kind')=='voice':
             from voice_baseline import resume_eligibility
             result['voice_resume']=resume_eligibility(self,project)
+        owner=put_away_state(state)
+        result['put_away']=owner;result['put_away_at']=state['put_away'].get('at') if owner else None
+        result['can_put_away']=not owner and state['status'] not in PLAN_LIVE_STATUSES
+        result['can_bring_back']=owner
         if full:result['plan']=plan
         return result
 
@@ -591,6 +606,21 @@ class Production:
             message='Stop requested. The current owned job may finish; later stages will not start.'
             if project['plan']['kind']=='voice':message='Stop requested. The current voice job may already be publishing retained Workspace outputs.'
             self._mutate(identifier,stop_requested=True,message=message)
+        return self.get(identifier)
+
+    def put_away(self, identifier, payload):
+        """Hide or restore a settled plan on the desk and in Your plans (#940). Only `state.put_away` changes:
+        status, stages, attempts, reservations, files and review stay exactly as recorded, and nothing is started or stopped."""
+        away=payload.get('put_away') if isinstance(payload,dict) else None
+        if type(away) is not bool:raise ValueError('put_away must be true or false')
+        with self.lock:
+            project=self._get(identifier);state=project['state']
+            if away==put_away_state(state):return self.get(identifier)
+            if away:
+                if state['status'] in PLAN_LIVE_STATUSES:raise ValueError('This plan is running; wait for it to settle before putting it away')
+                state['put_away']={'at':time.time(),'status':state['status']}
+            else:state.pop('put_away',None)
+            self._state(identifier,state)
         return self.get(identifier)
 
     def resume(self, identifier):

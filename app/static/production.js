@@ -45,7 +45,7 @@ function planActivity(p){const stamps=r=>[r?.created_at,r?.started_at,r?.finishe
 function planGroups(plans,filter=planFilter,now=Date.now()/1000){
   const kinds=PLAN_TYPES[filter.type],typed=plans.filter(p=>!kinds||kinds.includes(p.kind));
   if(filter.status==='all')return {recent:typed,older:[],hidden:plans.length-typed.length};
-  const open=planOpenStatuses(),recent=[],older=[],active=typed.filter(p=>open.has(p.state?.status));
+  const open=planOpenStatuses(),recent=[],older=[],active=typed.filter(p=>open.has(p.state?.status)&&p.put_away!==true);
   // A plan with no readable date cannot be shown to be old, so it stays in view.
   for(const p of active){const at=planActivity(p);(at!==null&&now-at>PLAN_RECENT_SECONDS?older:recent).push(p);}
   return {recent,older,hidden:plans.length-active.length};
@@ -56,7 +56,14 @@ function setPlanFilter(next,focus=false){planFilter=cleanPlanFilter({...planFilt
   // Show all lives inside the list it re-renders; hand keyboard focus to the Status select instead of losing it.
   if(focus)$('#planStatus')?.focus?.();}
 function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStorage.getItem(PLAN_FILTER_KEY)||'{}'));}catch(err){}syncPlanFilter();}
-function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>';}
+function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+(p.put_away?' · put away':'')+'</small></button>';}
+// #940: the owner can put a settled plan away. Only its put_away marker changes (server-side Production.put_away);
+// nothing is started, stopped, retried or deleted, and a later status change brings it back on its own.
+function planPutAway(p){
+  if(p.put_away)return '<p class="plan-put-away"><small>Put away '+esc(planDate(p.put_away_at))+'. Its status, stages and files are unchanged; it is off your desk and the in-progress list.</small> '+(p.can_bring_back?'<button data-plan-put-away="false">Bring back</button>':'')+'</p>';
+  if(p.can_put_away)return '<p class="plan-put-away"><button data-plan-put-away="true">Put away</button> <small>Takes it off your desk and the in-progress list. Nothing is started, stopped or deleted; Show all still lists it.</small></p>';
+  return '';
+}
 function renderPlanList(){
   const list=$('#productionList');if(!productionPlans.length){list.innerHTML=PRODUCTION_EMPTY;return;}
   const groups=planGroups(productionPlans),shown=groups.recent.length+groups.older.length,showAll='<button data-plan-show-all>Show all</button>';
@@ -91,7 +98,7 @@ function renderProduction(){
   renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   if(p.kind==='av'){
-    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>');
+    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>'+planPutAway(p));
     return;
   }
   const terminalReconciliation=p.can_reconcile_tracking===true||p.can_reconcile_batch===true,active=['queued','running','observing'].includes(p.state.status),trackingRecoveryPending=!terminalReconciliation&&(p.stages||[]).some(s=>{const d=s.job?.tracking_disposition;return (d?.status==='stopped'||d?.history?.some(event=>event.status==='stopped'))&&s.job?.status!=='completed';}),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
@@ -130,7 +137,7 @@ function renderProduction(){
   if(p.state.engine)html+='<p class="callout">Godot import and timed playback verified for this export.</p>';
   if(p.state.krita)html+='<p class="callout">Krita saved and reopened this document. '+p.state.krita.kra.layers.length+' layer records retained.</p><p><a class="artifact-download" href="/api/production/'+p.id+'/files/native/krita/roundtrip.kra?download" download>Download Krita document</a></p><img class="comparison-sheet" src="/api/production/'+p.id+'/files/native/krita/export.png" alt="Image exported from the reopened Krita document">';
   if(artifacts.length)html+='<details><summary>Files & provenance · '+artifacts.length+'</summary><div class="artifact-files">'+artifacts.map(a=>'<a href="'+a.url+'?download" download>'+esc(a.path)+'</a>').join('')+'</div></details>';
-  writeProductionDetail(p.id,html);
+  writeProductionDetail(p.id,html+planPutAway(p));
 }
 async function openComparison(parent=null){
   if(!selected)return;++plannerRequestId;comparisonParent=parent;
@@ -295,6 +302,10 @@ $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[d
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
   try{
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
+  const putAway=e.target.closest('[data-plan-put-away]');
+  if(putAway){if(productionActionPending)return;productionActionPending=true;putAway.disabled=true;const away=putAway.dataset.planPutAway==='true';
+    try{await post('/api/production/'+p.id+'/put-away',{put_away:away});productionMessage(away?'Put away. Status: All statuses in Your plans still lists it; Bring back returns it to your desk.':'Back on your desk and in the in-progress list.');await refreshProduction(true);}
+    finally{productionActionPending=false;putAway.disabled=false;}return;}
   const choice=e.target.closest('[data-choose-candidate]')?.dataset.chooseCandidate;
   const open=e.target.closest('[data-candidate-open]')?.dataset.candidateOpen;
   const recipe=e.target.closest('[data-job-recipe]')?.dataset.jobRecipe;
