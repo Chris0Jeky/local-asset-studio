@@ -2751,6 +2751,57 @@
         0.6,
         1.0
       ]
+    },
+    {
+      "id": "klein4b-pixel-art-sprite-limbicnation",
+      "name": "klein4b-pixel-art-sprite-limbicnation.safetensors",
+      "file": "loras/klein4b-pixel-art-sprite-limbicnation.safetensors",
+      "source": "https://huggingface.co/Limbicnation/pixel-art-lora",
+      "url": "https://huggingface.co/Limbicnation/pixel-art-lora/resolve/0ac8e5c3400af68228811edc324721e25fc26777/pytorch_lora_weights.comfyui.safetensors",
+      "bytes": 325276656,
+      "sha256": "24e938f510f5dd0c890ac8b1078f4abb87a50c9c053b2e85c44821c0f30011ad",
+      "license": "apache-2.0 (model card, read 27 September 2026)",
+      "terms": "Hugging Face Limbicnation/pixel-art-lora revision 0ac8e5c3, file pytorch_lora_weights.comfyui.safetensors saved under a descriptive name. Card (read 27 September 2026): Apache-2.0, base FLUX.2-klein-4B, trained on the CC0 dataset Limbicnation/pixel-art-character; trigger \"pixel art sprite, <subject>, game asset, transparent background\", 4 steps, CFG 1, 512x512. On this PC ComfyUI reports 6 modulation keys not loaded; in a blind 2x2 test (experiments/curated/klein-loras-20260927/) the trigger words alone gave the crisper pixel grid on 3 of 4 pairs: parked, no recipe. Licence facts are not clearance for any particular use.",
+      "family": "FLUX.2 Klein 4B",
+      "trigger": "pixel art sprite, game asset, transparent background",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "klein9b-isometric-redmond",
+      "name": "klein9b-isometric-redmond.safetensors",
+      "file": "loras/klein9b-isometric-redmond.safetensors",
+      "source": "https://huggingface.co/artificialguybr/ISOMETRIC-REDMOND-FLUXKLEIN9B",
+      "url": "https://huggingface.co/artificialguybr/ISOMETRIC-REDMOND-FLUXKLEIN9B/resolve/63ce35f9e9ae574e1868d567d6d01661fd8a62fc/%5BFLUX.2.Klein%5DIsometric_Redmond.safetensors",
+      "bytes": 165704496,
+      "sha256": "633467a585b83b29e34ca133a4aa61c9bd219bba7f119f420644434e055d2188",
+      "license": "apache-2.0 (model card, read 27 September 2026)",
+      "terms": "Hugging Face artificialguybr/ISOMETRIC-REDMOND-FLUXKLEIN9B revision 63ce35f9, file [FLUX.2.Klein]Isometric_Redmond.safetensors saved under a descriptive name. Card (read 27 September 2026): Apache-2.0, base FLUX.2-klein-9B, triggers \"Isometric. IsometricRedm.\". The Klein 9B base itself carries its own FLUX non-commercial licence. In a blind 2x2 test (experiments/curated/klein-loras-20260927/) the words alone were preferred on 3 of 4 pairs and both pseudo-lettered signs came from the LoRA side: parked, no recipe.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "Isometric. IsometricRedm.",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "flux2-klein-9b-consistency-v2",
+      "name": "Flux2-Klein-9B-consistency-V2.safetensors",
+      "file": "loras/Flux2-Klein-9B-consistency-V2.safetensors",
+      "source": "https://huggingface.co/dx8152/Flux2-Klein-9B-Consistency",
+      "url": "https://huggingface.co/dx8152/Flux2-Klein-9B-Consistency/resolve/8df0c7338cf68cfcd89ca7e461fe679905634607/Flux2-Klein-9B-consistency-V2.safetensors",
+      "bytes": 331379608,
+      "sha256": "61db2017ce420b97bd5ef11984e5a894c90003a6bbf0dc9473f8d7b9ebb3ff93",
+      "license": "apache-2.0 (model card, read 27 September 2026)",
+      "terms": "Hugging Face dx8152/Flux2-Klein-9B-Consistency revision 8df0c733 (V2 file). Card (read 27 September 2026): Apache-2.0, base FLUX.2-klein-9B, image-to-image, no trigger words; V2 claims less colour cast and saturation. The Klein 9B base itself carries its own FLUX non-commercial licence. On two single-reference edits x 2 seeds (experiments/curated/klein-loras-20260927/) it was closer to the source on 2 of 4, further on 1, tied on 1, and raised saturation on the background change: parked, no recipe.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
     }
   ],
   "collections": [

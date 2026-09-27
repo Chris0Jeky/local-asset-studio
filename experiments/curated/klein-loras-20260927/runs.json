@@ -1,0 +1,434 @@
+[
+ {
+  "label": "con-forest-35-s0",
+  "prompt_id": "1eb859b5-5915-4ed4-b568-fbd6e034ee78",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:10:15",
+  "wall_s": 82.2,
+  "commit_before_pct": 51.2,
+  "commit_peak_pct": 74.5,
+  "status": "success",
+  "exec_s": 77.7,
+  "outputs": [
+   {
+    "filename": "con-forest-35-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "con-forest-35-s10",
+  "prompt_id": "69ac0b98-c58b-4648-ae86-73b5f845db5d",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:11:38",
+  "wall_s": 80.0,
+  "commit_before_pct": 64.6,
+  "commit_peak_pct": 82.1,
+  "status": "success",
+  "exec_s": 76.0,
+  "outputs": [
+   {
+    "filename": "con-forest-35-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "con-forest-36-s0",
+  "prompt_id": "ddcb7a17-cd8b-49ad-a75c-cb9050553d6c",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:12:59",
+  "wall_s": 56.7,
+  "commit_before_pct": 65.3,
+  "commit_peak_pct": 73.9,
+  "status": "success",
+  "exec_s": 55.6,
+  "outputs": [
+   {
+    "filename": "con-forest-36-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "con-forest-36-s10",
+  "prompt_id": "ee8ba1ac-ec9b-41a2-9e67-9bc88e586c51",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:13:57",
+  "wall_s": 55.1,
+  "commit_before_pct": 65.0,
+  "commit_peak_pct": 76.3,
+  "status": "success",
+  "exec_s": 53.6,
+  "outputs": [
+   {
+    "filename": "con-forest-36-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "con-smile-35-s0",
+  "prompt_id": "0ed7244a-19a4-4b3d-9344-6d58938a87d7",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:14:53",
+  "wall_s": 46.1,
+  "commit_before_pct": 64.9,
+  "commit_peak_pct": 76.6,
+  "status": "success",
+  "exec_s": 44.7,
+  "outputs": [
+   {
+    "filename": "con-smile-35-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "con-smile-35-s10",
+  "prompt_id": "682166a1-936f-44b9-811c-d1437e52b13d",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:15:40",
+  "wall_s": 55.4,
+  "commit_before_pct": 65.7,
+  "commit_peak_pct": 80.7,
+  "status": "success",
+  "exec_s": 52.9,
+  "outputs": [
+   {
+    "filename": "con-smile-35-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "con-smile-36-s0",
+  "prompt_id": "2afda6fc-26e2-464c-82a2-35e0f25ff1b3",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:16:36",
+  "wall_s": 45.7,
+  "commit_before_pct": 64.6,
+  "commit_peak_pct": 74.4,
+  "status": "success",
+  "exec_s": 44.3,
+  "outputs": [
+   {
+    "filename": "con-smile-36-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "con-smile-36-s10",
+  "prompt_id": "12cef740-173f-4f03-b00b-4205b43276ef",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:17:23",
+  "wall_s": 51.5,
+  "commit_before_pct": 64.3,
+  "commit_peak_pct": 75.5,
+  "status": "success",
+  "exec_s": 51.1,
+  "outputs": [
+   {
+    "filename": "con-smile-36-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "iso-forge-33-s0",
+  "prompt_id": "5296e2e4-da0a-49c6-af3b-20955d9420eb",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:18:15",
+  "wall_s": 36.5,
+  "commit_before_pct": 65.2,
+  "commit_peak_pct": 73.3,
+  "status": "success",
+  "exec_s": 35.4,
+  "outputs": [
+   {
+    "filename": "iso-forge-33-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "iso-forge-33-s10",
+  "prompt_id": "c759912e-e9dc-4acd-a1c0-962e21e773a7",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:18:52",
+  "wall_s": 40.8,
+  "commit_before_pct": 63.9,
+  "commit_peak_pct": 82.0,
+  "status": "success",
+  "exec_s": 37.9,
+  "outputs": [
+   {
+    "filename": "iso-forge-33-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "iso-forge-34-s0",
+  "prompt_id": "57a001ce-6c45-47a6-ba52-9fa36daf787e",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:19:34",
+  "wall_s": 36.8,
+  "commit_before_pct": 64.0,
+  "commit_peak_pct": 76.1,
+  "status": "success",
+  "exec_s": 35.7,
+  "outputs": [
+   {
+    "filename": "iso-forge-34-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "iso-forge-34-s10",
+  "prompt_id": "cc15aee8-6bcc-4ae6-98bf-f31678670f53",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:20:12",
+  "wall_s": 46.6,
+  "commit_before_pct": 64.2,
+  "commit_peak_pct": 75.7,
+  "status": "success",
+  "exec_s": 45.8,
+  "outputs": [
+   {
+    "filename": "iso-forge-34-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "iso-tavern-33-s0",
+  "prompt_id": "f9cfa7f8-b805-4094-b632-b238e973107f",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:21:00",
+  "wall_s": 55.1,
+  "commit_before_pct": 66.1,
+  "commit_peak_pct": 83.2,
+  "status": "success",
+  "exec_s": 51.3,
+  "outputs": [
+   {
+    "filename": "iso-tavern-33-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "iso-tavern-33-s10",
+  "prompt_id": "073d9bac-90f2-49cc-80ea-b257d125b38c",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:21:56",
+  "wall_s": 54.9,
+  "commit_before_pct": 53.0,
+  "commit_peak_pct": 74.9,
+  "status": "success",
+  "exec_s": 53.4,
+  "outputs": [
+   {
+    "filename": "iso-tavern-33-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "iso-tavern-34-s0",
+  "prompt_id": "6fe86529-c178-4ac6-b549-1568a899efe4",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:22:52",
+  "wall_s": 36.9,
+  "commit_before_pct": 64.1,
+  "commit_peak_pct": 79.1,
+  "status": "success",
+  "exec_s": 34.5,
+  "outputs": [
+   {
+    "filename": "iso-tavern-34-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "iso-tavern-34-s10",
+  "prompt_id": "139df13d-25e0-49ef-934f-682fa48a0cdf",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:23:29",
+  "wall_s": 41.7,
+  "commit_before_pct": 64.5,
+  "commit_peak_pct": 79.9,
+  "status": "success",
+  "exec_s": 39.8,
+  "outputs": [
+   {
+    "filename": "iso-tavern-34-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "pix-knight-31-s0",
+  "prompt_id": "d4d7ee1b-a00b-4115-993c-9694f407f7a5",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:24:12",
+  "wall_s": 32.2,
+  "commit_before_pct": 64.4,
+  "commit_peak_pct": 68.6,
+  "status": "success",
+  "exec_s": 27.6,
+  "outputs": [
+   {
+    "filename": "pix-knight-31-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "pix-knight-31-s10",
+  "prompt_id": "6cd4604d-9fbe-421b-90dc-00f4ec94adf2",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:24:45",
+  "wall_s": 9.5,
+  "commit_before_pct": 65.5,
+  "commit_peak_pct": 70.8,
+  "status": "success",
+  "exec_s": 6.1,
+  "outputs": [
+   {
+    "filename": "pix-knight-31-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "pix-knight-32-s0",
+  "prompt_id": "86e418bf-f7cd-4f6c-923c-a4fdd31845fb",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:24:56",
+  "wall_s": 4.7,
+  "commit_before_pct": 69.7,
+  "commit_peak_pct": 69.7,
+  "status": "success",
+  "exec_s": 3.1,
+  "outputs": [
+   {
+    "filename": "pix-knight-32-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "pix-knight-32-s10",
+  "prompt_id": "c30a17b4-e07e-488a-9e4b-884ce9f95ffd",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:25:02",
+  "wall_s": 9.3,
+  "commit_before_pct": 66.1,
+  "commit_peak_pct": 70.2,
+  "status": "success",
+  "exec_s": 4.8,
+  "outputs": [
+   {
+    "filename": "pix-knight-32-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "pix-potion-31-s0",
+  "prompt_id": "7ee48796-2f09-47c2-bb80-f0f62be82188",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:25:12",
+  "wall_s": 9.1,
+  "commit_before_pct": 69.5,
+  "commit_peak_pct": 69.5,
+  "status": "success",
+  "exec_s": 5.8,
+  "outputs": [
+   {
+    "filename": "pix-potion-31-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "pix-potion-31-s10",
+  "prompt_id": "9efae0e2-3876-489c-a822-68441be76c17",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:25:22",
+  "wall_s": 9.1,
+  "commit_before_pct": 66.0,
+  "commit_peak_pct": 70.4,
+  "status": "success",
+  "exec_s": 5.3,
+  "outputs": [
+   {
+    "filename": "pix-potion-31-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "pix-potion-32-s0",
+  "prompt_id": "c204a2e8-4eea-4a50-9ab5-9275661729b1",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:25:32",
+  "wall_s": 4.6,
+  "commit_before_pct": 69.2,
+  "commit_peak_pct": 69.2,
+  "status": "success",
+  "exec_s": 2.8,
+  "outputs": [
+   {
+    "filename": "pix-potion-32-s0_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "pix-potion-32-s10",
+  "prompt_id": "bee48258-0c4b-40b7-927d-629ade0a5f86",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:25:37",
+  "wall_s": 9.1,
+  "commit_before_pct": 65.7,
+  "commit_peak_pct": 70.4,
+  "status": "success",
+  "exec_s": 6.1,
+  "outputs": [
+   {
+    "filename": "pix-potion-32-s10_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\klein",
+    "type": "output"
+   }
+  ]
+ }
+]
