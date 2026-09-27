@@ -54,6 +54,7 @@ def size(value):
 
 
 def validate_frames(manifest):
+    require(isinstance(manifest, dict), 'Expected a frame manifest object')
     require(manifest.get('schema_version') == 1, 'Expected frame manifest schema 1')
     dims = size(manifest.get('canvas'))
     anchor = manifest.get('anchor')
@@ -65,6 +66,7 @@ def validate_frames(manifest):
     require(isinstance(frames, list) and 1 <= len(frames) <= 512, 'Expected 1..512 frames')
     seen = set()
     for frame in frames:
+        require(isinstance(frame, dict), 'Each frame must be an object')
         slug(frame.get('id')); require(frame['id'] not in seen, 'Duplicate frame ID'); seen.add(frame['id'])
         integer(frame.get('duration_ms'), 1, 60000, 'duration_ms')
         require(type(frame.get('allow_empty', False)) is bool, 'allow_empty must be boolean')
@@ -223,6 +225,7 @@ def zip_entry(archive, name, data, compress_type=zipfile.ZIP_DEFLATED):
 
 
 def ora(manifest, root, output):
+    require(isinstance(manifest, dict), 'Expected a layer manifest object')
     Image = pil(); dims = size(manifest.get('canvas'))
     require(manifest.get('schema_version') == 1, 'Expected layer schema 1')
     layers = manifest.get('layers')
@@ -230,6 +233,7 @@ def ora(manifest, root, output):
     require(dims[0] * dims[1] * len(layers) <= MAX_PIXELS * 4, 'Layer stack exceeds memory budget')
     prepared = []; seen = set()
     for layer in layers:
+        require(isinstance(layer, dict), 'Each layer must be an object')
         slug(layer.get('id')); require(layer['id'] not in seen, 'Duplicate layer ID'); seen.add(layer['id'])
         text(layer.get('name'), 'layer name')
         require(layer.get('blend', 'normal') == 'normal', 'Only normal src-over layers supported')

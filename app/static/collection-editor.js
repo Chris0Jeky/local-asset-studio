@@ -86,7 +86,8 @@ function openCollection(id=null){
   if(!$('#collectionDialog').open)$('#collectionDialog').showModal();$(s.restoreRequired?'#restoreCollectionDraft':'#collectionName').focus();return true;
 }
 function restoreCollectionDraft(){
-  const s=collectionSession;if(!s||!collectionCurrent(s)||s.busy||!collectionScope(s))return;
+  const s=collectionSession;if(!s||!collectionCurrent(s)||s.busy)return;
+  if(!collectionScope(s)){collectionStatus('Return to the original Workspace before restoring or discarding this retained draft.',true);return;}
   try{
     const entry=s.journal.get(s.id);if(!entry)throw Error('The retained draft is no longer available');
     s.recovery=entry;s.id=entry.draft.id;s.revision=entry.draft.revision;s.baseline={...entry.draft.baseline};s.pending=entry.pending;s.uncertain=!!entry.pending;
@@ -98,7 +99,8 @@ function restoreCollectionDraft(){
   collectionControls();collectionRefreshValidation(false);if(!s.storageError&&!s.restoreRequired)$('#collectionName').focus();
 }
 function discardCollectionDraft(){
-  const s=collectionSession;if(!s||!collectionCurrent(s)||s.busy||!collectionScope(s))return;
+  const s=collectionSession;if(!s||!collectionCurrent(s)||s.busy)return;
+  if(!collectionScope(s)){collectionStatus('Return to the original Workspace before restoring or discarding this retained draft.',true);return;}
   let all=false;if(s.storageError){try{if(!s.journal)throw Error('no journal');s.journal.list();}catch(e){all=true;}}
   const warning=all?'Discard all collection recovery for this Workspace in this tab? Corrupt evidence may include unconfirmed commands.':'Discard this collection’s local draft and retained command?';
   if(!window.confirm(warning+' This does not cancel, undo, or determine the outcome of any server work. Original assets are untouched.'))return;
@@ -173,12 +175,17 @@ async function collectionRequest(s,pending,inspect=false,retry=false){
 }
 async function saveCollectionChange(action){
   const s=collectionSession;
-  if(!s||!collectionCurrent(s)||s.busy||s.pending||s.restoreRequired||s.stale||s.discarded)return;
+  if(!s||!collectionCurrent(s)||s.busy||s.discarded)return;
+  // Enter submits the form even while Save is disabled: say why nothing was sent.
+  if(s.pending){collectionStatus('An earlier save is not confirmed yet. Inspect its status or retry that exact command before saving again.',true);return;}
+  if(s.restoreRequired){collectionStatus('Restore or discard the retained draft before saving.',true);return;}
+  // An unusable revision is the specific safety property; report it before the generic staleness it also causes.
+  if(s.id&&(!Number.isSafeInteger(s.revision)||s.revision<1||s.revision>=Number.MAX_SAFE_INTEGER)){collectionStatus('A valid writable collection revision is unavailable. Keep these edits, then refresh and inspect the saved collection before reopening it.',true);return;}
+  if(s.stale){collectionStatus('The saved collection has a newer revision than this draft. Discard the draft and reopen the collection before saving.',true);return;}
   if(!collectionScope(s)){collectionStatus('The Workspace changed or its identity is unavailable. Keep these edits and return to the original Workspace before saving.',true);return;}
   if(action!=='delete'&&!collectionDirty(s))return;
   const snapshot=collectionValues(),saved={name:snapshot.name.trim(),description:snapshot.description.trim()};
-  if(action!=='delete'&&(!saved.name||collectionChars(snapshot.name)>COLLECTION_NAME_LIMIT||collectionChars(snapshot.description)>COLLECTION_DESC_LIMIT)){const firstInvalid=collectionRefreshValidation();const problems=[];if(!saved.name)problems.push('Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters)');else if(snapshot.name.length>COLLECTION_NAME_LIMIT)problems.push('Name is '+snapshot.name.length+' characters; the limit is '+COLLECTION_NAME_LIMIT);if(snapshot.description.length>COLLECTION_DESC_LIMIT)problems.push('Description is '+snapshot.description.length+' characters; the limit is '+COLLECTION_DESC_LIMIT);collectionStatus(problems.join(' ')+'.',true);if(firstInvalid)$(firstInvalid).focus();return;}
-  if(s.id&&(!Number.isSafeInteger(s.revision)||s.revision<1||s.revision>=Number.MAX_SAFE_INTEGER)){collectionStatus('A valid writable collection revision is unavailable. Keep these edits, then refresh and inspect the saved collection before reopening it.',true);return;}
+  if(action!=='delete'&&(!saved.name||collectionChars(snapshot.name)>COLLECTION_NAME_LIMIT||collectionChars(snapshot.description)>COLLECTION_DESC_LIMIT)){const firstInvalid=collectionRefreshValidation();const problems=[];if(!saved.name)problems.push('Enter a collection name (up to '+COLLECTION_NAME_LIMIT+' characters)');else if(collectionChars(snapshot.name)>COLLECTION_NAME_LIMIT)problems.push('Name is '+collectionChars(snapshot.name)+' characters; the limit is '+COLLECTION_NAME_LIMIT);if(collectionChars(snapshot.description)>COLLECTION_DESC_LIMIT)problems.push('Description is '+collectionChars(snapshot.description)+' characters; the limit is '+COLLECTION_DESC_LIMIT);collectionStatus(problems.join(' ')+'.',true);if(firstInvalid)$(firstInvalid).focus();return;}
   if(s.storageError){collectionStatus('Local recovery is unavailable. No new collection write was sent. Your visible input is kept.',true);return;}
   if(action==='delete'&&(!s.id||!window.confirm('Remove collection “'+s.baseline.name+'”? This removes membership links, but keeps all original assets and recipes. Unsaved name and description edits will be discarded only after confirmation.')))return;
   if(typeof crypto.randomUUID!=='function'){collectionStatus('A secure request identity is unavailable. No save was sent.',true);return;}
