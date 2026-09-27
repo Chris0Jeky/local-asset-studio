@@ -65,6 +65,8 @@ def image_info(data):
 
 
 def _image_info(data):
+    if data[:8] == b'\x89PNG\r\n\x1a\n' and len(data) < 16:
+        raise IndexError('PNG header shorter than its first chunk tag')
     if data[:8] == b'\x89PNG\r\n\x1a\n' and data[12:16] == b'IHDR':
         if len(data) < 26:
             raise IndexError('PNG header shorter than IHDR')
@@ -98,6 +100,8 @@ def _image_info(data):
             i += 2 + length
         raise TruncatedHeader('JPEG without a frame header')
     if data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+        if len(data) < 16:
+            raise IndexError('WebP header shorter than its chunk tag')
         chunk = data[12:16]
         if len(data) < {b'VP8X': 30, b'VP8L': 25, b'VP8 ': 30}.get(chunk, 0):
             raise IndexError('WebP header shorter than its chunk needs')
