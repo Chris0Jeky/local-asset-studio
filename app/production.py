@@ -140,13 +140,13 @@ class Production:
         for index,stage in enumerate(plan.get('stages',[])):
             attempt=state.get('attempts',{}).get(str(index),{})
             job=self.studio.jobs.get(attempt.get('job_id'))
-            stages.append({'label':stage['label'],'operation':stage['operation'],'attempt':attempt,
+            stages.append({'label':stage['label'],'operation':stage['operation'],'attempt':attempt,**{k:stage[k] for k in ('engine','seed') if k in stage},
                            'job':self.studio.public(job) if job else None})
         result={k:project[k] for k in ('id','root_id','created_at')}
         result.update(name=plan['name'],kind=plan['kind'],parent_project=plan.get('parent_project'),
                       plan_sha256=plan['sha256'],budget=budget,stages=stages,state=state,
                        recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'),
-                       variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'))
+                       variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'),combine=plan.get('combine'))
         result['can_reconcile_tracking']=state['status'] in ('interrupted','uncertain','stopped') and bool(self._tracking_terminal_records(project))
         mixed=self._mixed_batch_jobs(project)
         ownership_error=self._mixed_batch_ownership_error(project,mixed)
@@ -179,7 +179,18 @@ class Production:
         with self.studio.lock:
             if isinstance(payload,dict) and 'character_handoff' in payload:return self._character_handoff(payload)
             if isinstance(payload,dict) and 'character_edit_handoff' in payload:return self._character_edit_handoff(payload)
+            if isinstance(payload,dict) and 'combine_plan' in payload:return self._combine_plan(payload)
             return self._create(payload)
+
+    def _combine_plan(self, payload):
+        """One pair on several Combine recipes with the same seeds, pinned as one comparison plan (#1163)."""
+        import combine_plan
+        unknown=sorted(set(payload)-{'name','combine_plan','max_seconds'})
+        if unknown:raise ValueError('Unknown Combine plan field: '+', '.join(unknown))
+        derived=combine_plan.stages(self.studio,payload['combine_plan'])
+        intent={'name':payload.get('name',''),'max_seconds':payload.get('max_seconds',combine_plan.default_seconds(derived['estimate']))}
+        combine={key:derived[key] for key in ('engines','seeds','estimate','pair','backend_id')}
+        return self._create(intent,planned=derived['stages'],combine=combine)
 
     def edit_campaign(self, identifier, db=None):
         from scripts.character_edit_campaign import validate
@@ -295,16 +306,19 @@ class Production:
             if not path.is_relative_to(input_root) or not path.is_file() or self._file_hash(path)!=digest:
                 raise ValueError('Prepared Comfy reference bytes differ from the approved handoff')
 
-    def _create(self, payload, *, character_source=None, root_override=None, allowance_override=None, identifier_override=None):
+    def _create(self, payload, *, character_source=None, root_override=None, allowance_override=None, identifier_override=None, planned=None, combine=None):
         if not isinstance(payload,dict):raise ValueError('Experiment intent must be an object')
         if any(k in payload for k in ('workflow','tasks','command','script')):raise ValueError('Use a Studio recipe intent; imported blueprints and commands are not executable')
         name=payload.get('name','')
         if not isinstance(name,str) or not 1<=len(name.strip())<=120:raise ValueError('Name the experiment (1–120 characters)')
         recipe=copy.deepcopy(payload.get('recipe'))
-        if not isinstance(recipe,dict):raise ValueError('Choose a Studio recipe')
-        recipe['batch_count']=1
+        if planned is None and not isinstance(recipe,dict):raise ValueError('Choose a Studio recipe')
+        if planned is None:recipe['batch_count']=1
         variants=self._variants(payload['variants']) if payload.get('variants') is not None else None
-        if variants is not None:
+        if planned is not None:
+            # A cross-recipe plan (#1163): every stage is its own complete recipe, derived server-side.
+            axis='engine';values=[stage['label'] for stage in planned];overrides=[None]*len(planned)
+        elif variants is not None:
             # A planned sweep changes several documented settings at once; the
             # labels carry the meaning the single-axis values used to carry.
             axis='variants';values=[v['label'] for v in variants];overrides=[v['controls'] for v in variants]
@@ -329,10 +343,15 @@ class Production:
         max_seconds=self._integer(payload.get('max_seconds',1800),'Time budget',60,14400)
         stages=[];bundle=None
         for index,override in enumerate(overrides):
-            request=copy.deepcopy(recipe);request.setdefault('controls',{}).update(override)
-            preset,graph,path,controls,_=self.studio.prepare(request)
-            if variants is None and not preset.get(axis):raise ValueError('The selected recipe does not support this comparison axis')
-            if variants is None and axis=='lora' and isinstance(preset.get('defaults',{}).get('lora'),str):raise ValueError('This recipe binds a LoRA filename; choose a numeric comparison axis')
+            if planned is not None:request=copy.deepcopy(planned[index]['request'])
+            else:request=copy.deepcopy(recipe);request.setdefault('controls',{}).update(override)
+            try:preset,graph,path,controls,_=self.studio.prepare(request)
+            except ValueError as exc:
+                # Name the stage that refused, keeping the error's own type (and any code) for the caller.
+                if planned is not None and exc.args:exc.args=(f"{planned[index]['label']}: {exc.args[0]}",)+exc.args[1:]
+                raise
+            if planned is None and variants is None and not preset.get(axis):raise ValueError('The selected recipe does not support this comparison axis')
+            if planned is None and variants is None and axis=='lora' and isinstance(preset.get('defaults',{}).get('lora'),str):raise ValueError('This recipe binds a LoRA filename; choose a numeric comparison axis')
             if preset.get('family')=='Hunyuan3D 2.1' and not self.studio.config.get('terms_decisions',{}).get('Hunyuan3D 2.1'):
                 raise ValueError('Hunyuan3D needs its own recorded terms decision before automated experiments; use TRELLIS or authored geometry meanwhile')
             for key in ('positive','negative'):
@@ -342,16 +361,28 @@ class Production:
             if character_source is not None:self._verify_character_reference_inputs(graph,stage_bundle,character_source)
             if bundle is None:bundle=stage_bundle
             else:
+                # One backend environment per plan (K12): a stage prepared against another runtime is refused.
+                if (stage_bundle.get('comfy_url'),stage_bundle.get('comfy_root'))!=(bundle.get('comfy_url'),bundle.get('comfy_root')):
+                    raise ValueError('Every stage of a plan must run in the same backend environment')
                 # Pruned LoRA slots make stage graphs heterogeneous: pin every model any stage loads.
                 for key in ('models','inputs'):
                     seen={json.dumps(e,sort_keys=True) for e in bundle.get(key,[])}
                     bundle[key]=bundle.get(key,[])+[e for e in stage_bundle.get(key,[]) if json.dumps(e,sort_keys=True) not in seen]
+                # Different recipes carry different terms: record every stage's note, never only the first stage's.
+                note=stage_bundle.get('terms_note')
+                if note and note not in (bundle.get('terms_note') or '').split('\n\n'):bundle['terms_note']=((bundle.get('terms_note') or '')+'\n\n'+note).strip()
+                # Different recipes load different nodes: the pinned schema covers every class any stage uses.
+                extra=set(stage_bundle.get('node_classes') or [])-set(bundle.get('node_classes') or [])
+                if extra:
+                    bundle['node_classes']=sorted(set(bundle.get('node_classes') or [])|extra)
+                    bundle['schema_sha256']=fingerprint(self.studio.node_contract(bundle['node_classes']))
             # Validate every graph against the same live node schema, including changed enum/control values.
             self.studio.validate_graph(graph)
             request['references']=preset.get('_prepared_references',[])
             request['expected_template_sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
             graph_hash=fingerprint(graph)
             stages.append({'operation':'comfy.generate.v1','label':chr(65+index),'request':request,'graph':graph,'graph_sha256':graph_hash})
+            if planned is not None:stages[-1].update(engine=planned[index]['engine'],seed=planned[index]['seed'])
         # Different labels or spellings are not different work: two candidates that resolve
         # to the same graph would spend two reservations on one image. Decimal-distinct axis
         # values can still collapse to one float when bound, so every comparison is checked.
@@ -380,6 +411,7 @@ class Production:
                   'variants':variants,'knowledge_sha256':settings_planner.load_kb(self.studio.root)[1] if variants is not None else None,
                   'parent_project':parent,'max_seconds':max_seconds,'stages':stages,'bundle':bundle,
                    'repair_allowance':0,'review':'unreviewed','created_at':time.time(),'character_source':character_source}
+            if combine is not None:plan['combine']=copy.deepcopy(combine)
             plan['sha256']=fingerprint(plan)
             state={'status':'planned','message':'Ready for explicit Start. No generation submitted.','attempts':{},'artifacts':[],
                    'stop_requested':False,'review':{'status':'unreviewed','notes':''}}
