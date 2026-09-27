@@ -184,6 +184,35 @@ class CleanupTests(unittest.TestCase):
             with self.assertRaises(OSError):m.cleanup(src,self.root/'clean.png')
         self.assertFalse((self.root/'clean.png').exists(),'a truncated output would block the retry and could be read as finished')
         m.cleanup(src,self.root/'clean.png');self.assertTrue((self.root/'clean.png').is_file())
+    def test_despeckle_drops_only_faint_detached_regions(self):
+        im=Image.new('RGBA',(12,12),(0,0,0,0));px=im.load()
+        for y in range(3,7):
+            for x in range(3,7):px[x,y]=(200,10,10,255)
+        px[7,4]=(1,2,3,9)                      # faint, but touching the body: part of its region, kept
+        px[10,1]=(1,2,3,8);px[10,2]=(1,2,3,31)  # detached, peak 31: residue, cleared
+        px[1,10]=(4,5,6,8);px[2,10]=(4,5,6,32)  # detached, peak 32: a small sparkle, kept whole
+        out,removed=m.despeckle(im)
+        self.assertEqual(removed,{'regions_cleared':1,'pixels_cleared':2})
+        self.assertEqual([out.getpixel(xy)[3] for xy in ((10,1),(10,2),(7,4),(1,10),(2,10),(3,3))],[0,0,9,8,32,255])
+        self.assertEqual(out.tobytes()[0::4],im.tobytes()[0::4]);self.assertEqual(m.matte_components(out)['components'],2)
+    def test_despeckle_cli_records_threshold_and_count(self):
+        im=Image.new('RGBA',(10,10),(0,0,0,0))
+        for y in range(4,8):
+            for x in range(4,8):im.putpixel((x,y),(90,90,200,250))
+        im.putpixel((0,9),(0,0,0,3));im.putpixel((9,0),(0,0,0,20));im.putpixel((9,1),(0,0,0,12))
+        src=self.root/'glow.png';im.save(src)
+        plain=m.cleanup(src,self.root/'plain.png')
+        self.assertEqual(plain['after']['components'],2);self.assertEqual(plain['after']['bbox'],[4,0,10,8])
+        self.assertNotIn('despeckle',plain['after'])
+        buf=io.StringIO()
+        with redirect_stdout(buf):rc=m.main(['cleanup',str(src),'--out',str(self.root/'clean.png'),'--mode','rgba-despeckle'])
+        self.assertEqual(rc,0);record=json.loads(buf.getvalue())
+        self.assertEqual(record['thresholds'],{'dust_below':8,'solid_from':224,'speck_peak_below':32})
+        self.assertEqual(record['after']['despeckle'],{'regions_cleared':1,'pixels_cleared':2})
+        self.assertEqual(record['after']['components'],1);self.assertEqual(record['after']['bbox'],[4,4,8,8])
+        with redirect_stdout(io.StringIO()),mock.patch('sys.stderr',io.StringIO()) as err:
+            self.assertEqual(m.main(['cleanup',str(src),'--out',str(self.root/'x.png'),'--mode','despeckle']),2)
+        self.assertIn('Unknown cleanup mode',err.getvalue())
     def test_cleaned_frame_packs_without_edge_warning(self):
         im=Image.new('RGBA',(8,8),(0,0,0,0))
         for y in range(2,6):
