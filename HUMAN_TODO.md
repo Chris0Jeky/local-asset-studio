@@ -61,7 +61,7 @@ Agent pre-review (23 Sep 2026): docs/quality/pre-reviews/q-28.md.
 
 Original question: civitai's flags differ per file and are recorded in `models/library.json`: Mishima Kurone, Momoko and Konosuba SD8 allow Image/Rent/Sell; Glossy, Fantastic Days and Detail enhancer allow Image and Rent but not Sell; Shiny Nai allows Rent only (no Image, no Sell). The Mishima Kurone and Momoko files are artist-style LoRAs the artists did not license. Decide which are acceptable for the pack's intended use; the recipes accept any of them by filename. Agents do not tick this.
 
-**q-25 — does Style + Pose stay part of the fantasy character pack? (open; reworded 23 September 2026 at the owner's request).** **Answered by the owner, 27 September 2026 (in-session question, after seeing a sheet of the 23 September weight follow-up: board, action pose, style weight 0.7 / 0.45 / 0.3 on seeds 71-73):** (1) keep Style + Pose as a pack tool; (2) on WAI v17, at style weight 0.3-0.45 ("I'm torn between 0.3 and 0.45, they both look good for what it has to do"). Agents set the shipped `style-pose-wai` default to 0.4 on that answer, with 0.3 and 0.7 as variants (named assumption; reversible by one graph value). Not art acceptance of any render.
+**q-25 — does Style + Pose stay part of the fantasy character pack? (answered 27 September 2026, see below; reworded 23 September 2026 at the owner's request).** **Answered by the owner, 27 September 2026 (in-session question, after seeing a sheet of the 23 September weight follow-up: board, action pose, style weight 0.7 / 0.45 / 0.3 on seeds 71-73):** (1) keep Style + Pose as a pack tool; (2) on WAI v17, at style weight 0.3-0.45 ("I'm torn between 0.3 and 0.45, they both look good for what it has to do"). Agents set the shipped `style-pose-wai` default to 0.4 on that answer, with 0.3 and 0.7 as variants (named assumption; reversible by one graph value). Not art acceptance of any render.
 *What Style + Pose is:* a Studio route that makes a new picture on an SDXL-family checkpoint from three inputs: your
 prompt, a *style board* of one to three pictures whose look is averaged in (IP-Adapter, weight 0.7 by default) and a
 *pose picture* (pose strength 0.9 by default). It draws a new picture; it does not edit an existing one.
@@ -88,7 +88,7 @@ Agent pre-review (23 Sep 2026): docs/quality/pre-reviews/q-25.md; the owner stil
 above. It completed on 23 September: the 18-job matrix above plus a six-job follow-up at style weights 0.45 and 0.3 in
 the same README, lab judged open with the independent blind second judge in `docs/quality/second-judge/stylepose-weight.md`
 (burn absent in all six, the two weights tie on this small sample, seed-71 action pose still ignored). No duplicate run is
-needed. q-25 stays open for the owner's decisions (1) and (2) above; this is not art acceptance, licensing or owner
+needed. q-25 stayed open for the owner's decisions (1) and (2) above until the 27 September answer; this is not art acceptance, licensing or owner
 approval. Limits: three seeds, one board (look-B portrait; follow-up on the action pose only), no art acceptance, and 0.3
 versus 0.45 undecided.
 
