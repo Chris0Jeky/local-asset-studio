@@ -25,8 +25,7 @@ worker = load("lifetime_worker_shard", HERE / "full_suite_lifetime_worker.py")
 
 
 class Case(unittest.TestCase):
-    def runTest(self):
-        pass
+    """A weight-one placeholder; no test method, so discovery collects nothing here."""
 
 
 def module_suite(tests):
