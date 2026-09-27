@@ -11,8 +11,8 @@
   const escText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // The card owns the markup so renderJobs keeps focus on a decision button across a poll re-render.
   function markup(output){
-    const id=output?.asset_id;if(!id)return '';const review=record(id)?.review||'unreviewed';
-    return '<div class="output-review" data-review-asset="'+escText(id)+'" role="group" aria-label="Review this output"><span class="output-review-state review-'+escText(review)+'">'+escText(LABEL[review]||review)+'</span>'+
+    const id=output?.asset_id;if(!id)return '';const review=record(id)?.review||'unreviewed',saving=pendingFor(id);
+    return '<div class="output-review" data-review-asset="'+escText(id)+'" role="group" aria-label="Review this output"'+(saving?' aria-busy="true"':'')+'><span class="output-review-state review-'+escText(review)+'">'+(saving?'Saving…':escText(LABEL[review]||review))+'</span>'+
       CHOICES.map(([value,label,key])=>'<button type="button" class="outputReview" data-output-review="'+value+'" data-asset="'+escText(id)+'" aria-pressed="'+(review===value)+'" aria-keyshortcuts="'+key+'" title="'+label+' ('+key+' on a focused card)'+(review===value?'. Press again to clear.':'')+'">'+label+'</button>').join('')+'</div>';
   }
   // Update every copy in place: the jobs signature does not change when only a review does.
@@ -24,18 +24,40 @@
     }
   }
   const say=(text,error=false)=>typeof message==='function'?message(text,error):null;
-  async function decide(id,value){
-    if(busy)return false;
-    // Buttons stay enabled so keyboard focus never drops to the page; `busy` refuses overlapping edits.
-    busy=true;
+  // The library takes one edit at a time, so decisions queue in press order and none is dropped: a press on any
+  // card while a save is in flight is saved right after it, and its row says "Saving…" until then. Buttons stay
+  // enabled so keyboard focus never drops to the page. A long queue is refused out loud, never silently.
+  const queue=[],QUEUE_MAX=24;
+  function pendingFor(id){return queue.some(q=>q.id===id)||busy===id;}
+  function mark(id){for(const box of document.querySelectorAll('.output-review[data-review-asset="'+CSS.escape(id)+'"]')){const on=pendingFor(id);box.toggleAttribute('aria-busy',on);if(on)box.querySelector('.output-review-state').textContent='Saving…';}}
+  async function readLibrary(){
+    let fresh=await refreshAssets(true);
+    // false means another library read is in flight (or failed): wait for it briefly, then read once more.
+    for(let i=0;!fresh&&typeof assetRefreshing!=='undefined'&&assetRefreshing&&i<50;i++)await new Promise(r=>setTimeout(r,100));
+    if(!fresh)fresh=await refreshAssets(true);
+    if(!fresh)throw Error('Could not read the library, so nothing was saved. Try again.');
+  }
+  async function apply(id,value){
     try{
       // Create does not poll the library, so a new output's asset arrives only with this read.
-      await refreshAssets(true);const current=record(id);if(!current)throw Error('This output is not in the library yet. Try again in a moment, or open Asset library.');
+      await readLibrary();const current=record(id);if(!current)throw Error('This output is not in the library yet. Try again in a moment, or open Asset library.');
       const next=current.review===value?'unreviewed':value;
-      await mutateAssets({action:'edit',ids:[id],review:next});sync(id);
+      await mutateAssets({action:'edit',ids:[id],review:next});
       say(next==='unreviewed'?'Review cleared. The output is unreviewed again.':LABEL[next]+'. Saved to the Asset library; press it again to clear.');return true;
-    }catch(e){say(e.message+(typeof assetLibraryPending!=='undefined'&&assetLibraryPending?' Open Asset library to check or retry the earlier update.':''),true);return false;}
-    finally{busy=false;}
+    }catch(e){
+      // After a refused edit the library holds it for recovery, so later queued decisions cannot save: say so.
+      const dropped=queue.splice(0);for(const d of dropped){sync(d.id);mark(d.id);}
+      say(e.message+(typeof assetLibraryPending!=='undefined'&&assetLibraryPending?' Open Asset library to check or retry the earlier update.':'')+(dropped.length?' '+plural(dropped.length)+' after it were not saved.':''),true);return false;
+    }
+  }
+  const plural=n=>n+(n===1?' later decision':' later decisions');
+  async function decide(id,value){
+    if(queue.length>=QUEUE_MAX){say('Too many decisions are waiting to save. Wait a moment, then continue.',true);return false;}
+    queue.push({id,value});mark(id);
+    if(busy){say('Saving the previous decision; this one follows.');return true;}
+    let ok=true;
+    while(queue.length){const job=queue.shift();busy=job.id;try{ok=await apply(job.id,job.value);}finally{busy=false;sync(job.id);mark(job.id);}}
+    return ok;
   }
   document.addEventListener('click',e=>{const b=e.target.closest?.('[data-output-review]');if(b)void decide(b.dataset.asset,b.dataset.outputReview);});
   document.addEventListener('keydown',e=>{

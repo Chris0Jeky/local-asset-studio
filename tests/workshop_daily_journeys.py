@@ -96,8 +96,9 @@ let jobs=[{id:'job-1',preset_name:'Lantern',status:'completed',controls:{positiv
 let assetState={assets:'''+("[]" if missing else "[{id:'asset-" + '"' + "1',review:'unreviewed'}]")+'''};window.edits=[];window.reads=0;window.said=[];
 function renderCompare(){}function renderMixedBatch(){return '';}
 function message(text,error=false){said.push([text,error]);}
-async function refreshAssets(){reads++;if(!assetState.assets.length)assetState.assets.push({id:'asset-"1',review:'unreviewed'});return true;}
-async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')throw Error('Resolve the earlier library update first.');edits.push(payload);assetState.assets[0].review=payload.review;}
+window.readOk=true;window.gates=[];let assetRefreshing=false;
+async function refreshAssets(){reads++;if(!assetState.assets.length)assetState.assets.push({id:'asset-"1',review:'unreviewed'});return readOk;}
+async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')throw Error('Resolve the earlier library update first.');if(window.slow)await new Promise(r=>gates.push(r));edits.push(payload);assetState.assets.find(a=>a.id===payload.ids[0]).review=payload.review;}
 </script><script>'''+source('output-review.js')+'''</script><script>'''+card+render+'''renderJobs();</script>''')
 
     def test_create_output_is_reviewed_in_place_and_a_second_press_clears_it(self):
@@ -138,6 +139,37 @@ async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')th
         self.page.wait_for_function('edits.length===1')
         self.assertEqual(self.page.evaluate('edits[0].review'), 'needs_work')
         self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Needs work')
+
+    def test_decisions_pressed_while_a_save_is_in_flight_queue_instead_of_vanishing(self):
+        # Codex/Muse on #1081: a press on any card during a save was silently dropped.
+        self.load_output_review()
+        self.page.evaluate("""()=>{assetState.assets.push({id:'asset-2',review:'unreviewed'});
+          jobs=[{id:'job-2',preset_name:'Second',status:'completed',controls:{positive:'b',seed:9},outputs:[{asset_id:'asset-2',media_type:'image',seed:9}]},...jobs];renderJobs();window.slow=true;}""")
+        self.assertEqual(self.page.locator('.output-review').count(), 2)
+        self.page.click('[data-asset="asset-2"][data-output-review="selected"]')
+        self.page.wait_for_function('gates.length===1')
+        self.page.focus('[data-output="job-1:0"] .pin'); self.page.keyboard.press('w')
+        self.page.click('[data-asset="asset-2"][data-output-review="selected"]')
+        self.assertIn('this one follows', self.page.evaluate('said.at(-1)[0]'))
+        self.assertEqual(self.page.locator('[data-review-asset="asset-2"] .output-review-state').inner_text(), 'Saving…')
+        self.assertEqual(self.page.get_attribute('[data-review-asset="asset-2"]', 'aria-busy'), '')
+        for n in range(1, 4):
+            self.page.wait_for_function(f'gates.length==={n}'); self.page.evaluate(f'gates[{n-1}]()')
+        self.page.wait_for_function('edits.length===3')
+        self.assertEqual(self.page.evaluate('edits.map(e=>[e.ids[0],e.review])'),
+                         [['asset-2', 'selected'], ['asset-"1', 'needs_work'], ['asset-2', 'unreviewed']], 'every press is saved, in order; the second Keep clears')
+        self.assertEqual(self.page.locator('[data-review-asset="asset-2"] .output-review-state').inner_text(), 'Unreviewed')
+        self.assertIsNone(self.page.get_attribute('[data-review-asset="asset-2"]', 'aria-busy'))
+        self.assertEqual(self.page.locator('[data-output="job-1:0"] .output-review-state').inner_text(), 'Needs work')
+
+    def test_an_unreadable_library_saves_nothing_and_says_so(self):
+        self.load_output_review()
+        self.page.evaluate('readOk=false')
+        self.page.click('[data-output-review="selected"]')
+        self.page.wait_for_function('said.length===1')
+        self.assertEqual(self.page.evaluate('said[0]'), ['Could not read the library, so nothing was saved. Try again.', True])
+        self.assertEqual(self.page.evaluate('edits.length'), 0)
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
 
     def test_holding_a_review_key_never_toggles_the_decision_back(self):
         self.load_output_review()
