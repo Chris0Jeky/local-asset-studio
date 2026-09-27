@@ -1489,7 +1489,7 @@ class Studio:
         try:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
-            except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): info, info_available = {}, False
+            except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): info, info_available = {}, False
             missing = {}; observations = {}
             assets = self.library.manifest().get('assets', [])
             from model_requirements import model_selection
@@ -1517,7 +1517,7 @@ class Studio:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
             return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
@@ -2066,7 +2066,9 @@ class Handler(BaseHTTPRequestHandler):
         return size
     def _body_json(self, limit=1024 * 1024):
         if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": raise StudioError("application/json required")
-        return json.loads(self.rfile.read(self._content_length(limit)).decode())
+        raw = self.rfile.read(self._content_length(limit))
+        try: return json.loads(raw.decode())
+        except RecursionError: raise StudioError("JSON body is nested too deeply") from None
     def _body_object(self):
         # For routes that read fields here or in a helper without their own shape check: `[]` is valid JSON, not a request.
         body = self._body_json()
