@@ -114,7 +114,9 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
   await check('The end of the queue still asks before discarding unsaved typing',()=>{
     const s=library();s.run('startReviewQueue()');
     s.run('assetQueue.index=assetQueue.ids.length-1');s.el('#assetNotes').value='unsaved thought';
+    s.el('#assetQueue').innerHTML='focused queue controls';
     s.run('assetQueueStep(1)');
+    assert.equal(s.el('#assetQueue').innerHTML,'focused queue controls','a cancelled close must not rebuild the queue controls and drop focus');
     assert.equal(s.el('#assetDialog').open,true);assert.equal(s.confirmations(),1);
     assert.equal(s.el('#assetNotes').value,'unsaved thought');assert.equal(s.writes.length,0);
     // Cancelling that close keeps the queue and its position; the queue is not announced as finished.
