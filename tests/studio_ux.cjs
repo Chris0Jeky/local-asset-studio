@@ -82,6 +82,10 @@ test('memory headroom refusals are explained in plain words, claiming only what 
   assert.doesNotMatch(evidence.summary,/sent/,'empty prompt_ids alone is not no-submission evidence (submission_evidence.never_submitted)');
   const lone=U.failureDetails({status:'partial',prompt_ids:[],message:'Host commit headroom 12.3 GiB is below the required 32 GiB. No prompt was submitted for output 2.'});
   assert.match(lone.summary,/Output 2 was not sent to ComfyUI\./);assert.doesNotMatch(lone.summary,/had already finished/);
+  // After the opt-in release: the card says the cache was already freed and points at other programs.
+  const freed=U.failureDetails({status:'failed',prompt_ids:[],message:"Host commit headroom 21.4 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission even after the Studio freed ComfyUI's cached models. No prompt was submitted for output 1."});
+  assert.equal(freed.kind,'host_headroom');assert.match(freed.summary,/21\.4 GiB even after it freed ComfyUI's cached models; this job needs 32 GiB/);assert.match(freed.action,/outside ComfyUI/);assert.doesNotMatch(freed.action,/wait until a running job/);
+  assert.doesNotMatch(low.summary,/freed/);
   assert.equal(U.headroomExplanation('Seed plus batch count exceeds supported range'),null);
   assert.equal(U.failureDetails({status:'running',message:'Generating output 1 of 1'}),null);
 });
