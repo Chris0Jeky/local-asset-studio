@@ -166,6 +166,17 @@ class PreSubmitWaitTests(unittest.TestCase):
             # this test only establishes that timeout itself enqueues no retry.
             self.assertEqual(self.studio.queue.qsize(), 0); self.assertEqual(len(polls), before)
 
+    def test_a_not_submitted_job_cannot_be_resumed_into_another_status(self):
+        # #1120: the page announces not_submitted as settled once; Resume observation and Stop tracking refuse it (no prompt id),
+        # so it cannot later complete unannounced. Only the owner's Abandon moves it on (to abandoned, which is never announced).
+        job = self.job()
+        with patch.object(self.studio, '_request', side_effect=lambda path, **kwargs: BUSY): self.dispatch(('generate', job['id']))
+        self.assert_unsent(job)
+        with self.assertRaisesRegex(server.StudioError, 'No known prompt IDs'): self.studio.resume_job(job['id'])
+        with self.assertRaisesRegex(server.StudioError, 'Only an uncertain job'): self.studio.stop_tracking(job['id'], 'no')
+        self.assert_unsent(job); self.assertEqual(self.studio.queue.qsize(), 0)
+        public = self.studio.public(job); self.assertFalse(public.get('can_cancel')); self.assertTrue(public['can_abandon'])
+
     def test_known_or_pending_submissions_do_not_enter_queue_wait(self):
         for evidence in ({'prompt_ids':['retained']}, {'pending_submission':{}}, {'submissions':None}):
             with self.subTest(evidence=evidence):
