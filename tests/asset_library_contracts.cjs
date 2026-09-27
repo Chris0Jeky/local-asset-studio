@@ -55,6 +55,14 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
   await test('Keeper review scope is not confused with checkbox selection',()=>{
     const s=library();s.run("assetSelection.add('a0');setAssetScope('selected')");assert.equal(s.el('#assetScopeTitle').textContent,'Keepers');assert.match(s.el('#assetGrid').innerHTML,/No keepers yet/);assert.equal(s.run('assetSelection.size'),0);
   });
+  await test('Re-choosing the scope already shown keeps the selection; a different scope still clears it',()=>{
+    const s=library();s.run("assetSelection=new Set(['a0','a1']);setAssetScope('all')");assert.equal(s.run('assetSelection.size'),2);assert.doesNotMatch(s.el('#assetMessage').textContent,/Selection cleared/);
+    s.el('#assetSearch').value='Asset 0';s.run("setAssetScope('all')");assert.match(s.el('#assetSelectionSummary').textContent,/1 visible.*1 outside/i);
+    s.run("setAssetScope('favorite')");assert.equal(s.run('assetSelection.size'),0);assert.match(s.el('#assetMessage').textContent,/Selection cleared \(2\)/);
+    // Re-choosing the same scope must not leave a "cleared" message beside a selection it kept.
+    s.run("assetSelection=new Set(['a0']);setAssetScope('favorite')");assert.equal(s.run('assetSelection.size'),1);assert.equal(s.el('#assetMessage').textContent,'');
+    s.run("setAssetScope('trash');assetSelection=new Set(['a1']);setAssetScope('trash')");assert.equal(s.el('#assetMessage').textContent,'Trash is recoverable. Original files and recipes remain on disk.');
+  });
   await test('All assets empty because every original is in Trash offers recovery',()=>{
     const s=library();s.run('for(const asset of assetState.assets)asset.trashed_at=10;renderAssets();');assert.match(s.el('#assetGrid').innerHTML,/Your assets are in Trash/);assert.match(s.el('#assetGrid').innerHTML,/data-scope="trash"/);assert.doesNotMatch(s.el('#assetGrid').innerHTML,/library is empty/);
   });
