@@ -202,14 +202,15 @@ DENY_IDS = {
     'saveSharedWorkflow', 'copySharedWorkflow', 'retrySharedWorkflow', 'prepareSavedRun',
     'exportGraph', 'saveWorkflow', 'refreshModels', 'retryRecovery', 'uxPrepareHandoff',
     'uxImportDraftButton', 'uxExportDraft', 'compare', 'newCollection', 'deleteCollection',
-    'uxPoseUse',
+    'uxPoseUse', 'lookSaveButton', 'lookTrash',
 }
 DENY_LABELS = re.compile(
     r'\b(generate|start\s+(comparison|export|voice|take)|render|save\s+to\s+workspace|'
     r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
 DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-review', 'data-asset-favorite', 'data-bulk',
-              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'data-ux-check', 'data-candidate-check', 'download')
+              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'data-ux-check', 'data-candidate-check', 'download',
+              'data-ux-tile')   # Make seamless stores a rolled seam cross as an upload (#1220)
 
 # Controls whose press only changes this page, or reads, or validates without storing anything. Keyed by
 # the selector with attribute values stripped (see control_kind). The label heuristic misfires on them —
@@ -217,6 +218,8 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 # control skips the label check. The id and attribute deny lists still bind first. Checked against
 # app/static on 22 Sep 2026; a control that starts writing must leave this list.
 LOCAL_CONTROLS = {
+    '#lookBlock > summary': 'opens the saved-looks disclosure',
+    '#lookSelect': 'chooses a saved look in this page; nothing is sent',
     '#workshopRecipeChange': 'opens the recipe picker',
     '#presetList [data-id]': 'loads a recipe into this page (selectPreset); nothing is sent',
     '#presetList button.preset': 'loads a recipe into this page (selectPreset); nothing is sent',
@@ -286,6 +289,14 @@ def build_handler():
     from studio_workflow.core import catalog, new_document, compile_document
     from studio_prompt.http_extension import extend_handler
     from test_server import server
+    import tiles   # app/ is on sys.path once server.py is loaded; a bare name, never `from app import`
+    from PIL import Image
+
+    def tile_status(asset):
+        with Image.open(ROOT / asset['url'].lstrip('/')) as picture: width, height = picture.size
+        reason = tiles.eligibility(width, height)
+        return {'asset_id': asset['id'], 'width': width, 'height': height, 'eligible': reason is None, 'reason': reason,
+                'flag': tiles.FLAT_ONLY, 'preset_id': 'zimage-seam-repair', 'band_px': tiles.BAND}
 
     info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
     schema = catalog(info, 'primary')
@@ -303,6 +314,13 @@ def build_handler():
                            'job': dict(fixture.JOBS[0], id='candidate-b', elapsed_seconds=13.0,
                                        outputs=[{'filename': 'b.png', 'asset_id': 'asset-1', 'media_type': 'image', 'seed': 43}])}])
     if not any(plan['id'] == keeper['id'] for plan in fixture.PLANS): fixture.PLANS.insert(0, keeper)
+
+    # The shipped looks as /api/looks lists them (app/looks.py listing), and the real composer for Prepare (#1221).
+    import looks
+    names = {p['id']: p['name'] for p in fixture.CATALOG['presets']}
+    shipped = [dict(entry, origin='seed', revision=0, trashed_at=None, created_at=1790500000, updated_at=1790500000, usable=True,
+                    unusable_reason=None, anchor_asset_id=None, preset_name=names.get(entry['body']['preset_id']))
+               for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks']]
 
     class PromptFixtureBase(fixture.Handler):
         studio = None
@@ -328,11 +346,15 @@ def build_handler():
             if path == '/api/workflow-studio/capabilities':
                 return self.json({'version': 1, 'run': {'available': False, 'reason': 'The use-case fixture never executes graphs.'}, 'generation_submitted': False})
             if path == '/api/workflow-studio/documents': return self.json({'documents': []})
+            if path == '/api/looks': return self.json({'looks': copy.deepcopy(shipped), 'seed_errors': [], 'generation_submitted': False})
             if path == '/api/workflow-studio/document-runs': return self.json({'runs': []})
             if path.startswith('/api/workflow-studio/presets/'):
                 return self.json({'document': dict(document, source={'preset_id': path.rsplit('/', 1)[-1], 'authoring_only': True}), 'generation_submitted': False})
             if path == '/api/health':
                 return self.json({'online': True, 'worker_alive': True, 'schema_available': True, 'missing_models': {}, 'devices': [], 'comfy_url': 'fixture://none'})
+            if path.startswith('/api/tiles/source/'):
+                asset = next((a for a in fixture.ASSETS if a['id'] == path.rsplit('/', 1)[-1]), None)
+                return self.json(tile_status(asset)) if asset else self.json({'error': 'Asset not found'}, 400)
             if path.startswith('/api/jobs/') and path.endswith('/recipe'):
                 job = next(j for j in fixture.JOBS if j['id'] == path.split('/')[3])
                 return self.json(dict(version=2, preset_id=job['preset_id'], controls=job['controls'],
@@ -362,6 +384,20 @@ def build_handler():
                 return self.json({'file': 'f' * 32 + '_drawn-pose.png', 'sha256': 'd' * 64, 'bytes': 2048,
                                   'width': data['width'], 'height': data['height'], 'original_name': 'drawn-pose',
                                   'artifact_id': 'e' * 64, 'renderer': data.get('renderer', renderers[0]), 'generation_submitted': False})
+            if path == '/api/tiles/prepare':
+                # The same body app/tiles.py accepts; the answer is shaped like its result, and nothing is queued.
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                asset = next((a for a in fixture.ASSETS if isinstance(data, dict) and a['id'] == data.get('asset_id')), None)
+                if asset is None or set(data) - {'asset_id', 'band_px', 'flatten'}: return self.json({'error': 'Unknown fixture asset'}, 400)
+                status = tile_status(asset)
+                if not status['eligible']: return self.json({'error': status['reason']}, 400)
+                size, file = status['width'], 'f' * 32 + '_seam-cross.png'
+                plan = {'version': tiles.VERSION, 'preset_id': 'zimage-seam-repair', 'source_asset_id': asset['id'], 'source_sha256': asset['sha256'],
+                        'rolled_file': file, 'rolled_sha256': 'd' * 64, 'size': size, 'band_px': tiles.BAND, 'feather_px': tiles.FEATHER,
+                        'flatten_sigma_px': tiles.default_sigma(size)}
+                return self.json({'plan': plan, 'file': file, 'sha256': 'd' * 64, 'width': size, 'height': size, 'preset_id': 'zimage-seam-repair',
+                                  'context': fixture.source_context(asset), 'flag': tiles.FLAT_ONLY, 'seam_source': 4.34,
+                                  'inner_gradient_source': 0.87, 'generation_submitted': False}, 201)
             if path == '/api/recipe-check':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
                 preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == data['preset_id'])
@@ -380,6 +416,14 @@ def build_handler():
                 return self.json(dict(status='applied', workspace_id=data['workspace_id'], request_id=data['request_id'],
                                       action='edit', updated=data['ids'], revisions={a['id']: a['metadata_revision'] for a in assets},
                                       applied={field: data[field]}, current=copy.deepcopy(assets)))
+            if path == '/api/looks/prepare':
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                look = next((entry for entry in shipped if entry['id'] == data.get('id')), None)
+                if look is None or data.get('expected_revision') != look['revision']: return self.json({'error': 'Unknown fixture look'}, 404)
+                try: positive = looks.compose(look['body']['template'], data.get('scene'))
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                return self.json({'preset_id': look['body']['preset_id'], 'preset_name': look['preset_name'], 'controls': {'positive': positive, **look['body']['controls']},
+                                  'look': {'id': look['id'], 'name': look['name'], 'revision': look['revision']}, 'generation_submitted': False})
             if path == '/api/preview':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
@@ -1210,6 +1254,86 @@ def _vary(c):
             {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')}, why or 'no disabled reason')
     finally:
         for job in added: fixture.JOBS.remove(job)
+
+
+TILE_STATE = """() => ({preset: selected.id, parents: parentAssets, tile: (tilePayload().tile || {}).source_asset_id || null,
+  reference: uploaded, notice: document.querySelector('#uxNotice').textContent, hint: document.querySelector('#referenceHint').textContent})"""
+WHY_TILE = """(() => { const b = document.querySelector('#assetDialog .ux-tile button');
+  return b ? (b.disabled ? 'disabled: ' : 'enabled: ') + document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()"""
+
+
+@driver('make-a-texture-tile')
+def _tile(c):
+    """#1220: Make seamless on a library texture: disabled with its reason for a non-square picture, one press to a prepared
+    seam repaint for a square one; Generate stays a separate press."""
+    import studio_browser_smoke as fixture
+    c.need_recipe('zimage-seam-repair')
+    c.boot('#assets')
+    c.page.wait_for_timeout(600)
+    wide = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % wide, note='open a wide picture')
+    c.page.wait_for_timeout(500)
+    c.act('#assetDialog .ux-tile button', 'read', note='Make seamless and why it is not offered')
+    why = c.page.evaluate(WHY_TILE)
+    c.act('#closeAssetDialog', navigation=True, note='close the wide picture', supplementary=True)
+    square = c.pick('asset-3', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET, nth=1)
+    c.act('[data-asset-open="%s"]' % square, note='open a square texture')
+    c.page.wait_for_timeout(500)
+    offered = c.page.evaluate(WHY_TILE)
+    c.stop_before(c.act('#assetDialog [data-ux-tile]', note='prepares the seam repaint'), 'stopped before preparing: Make seamless stores a rolled copy of the picture')
+    c.page.wait_for_timeout(800)
+    state = c.page.evaluate(TILE_STATE)
+    c.act('#uxNotice', 'read', note=state['notice'][:200])
+    c.act('#referenceHint', 'read', note='source %s, parents %s' % (state['tile'], state['parents']))
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    submitted = [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+    prepared = (state['preset'] == 'zimage-seam-repair' and state['tile'] == square and state['parents'] == [square]
+                and state['reference'] == 'f' * 32 + '_seam-cross.png' and 'Press Generate' in state['notice'] and 'Flat textures only' in state['hint'])
+    disabled = why.startswith('disabled: ') and 'Flat textures only' in why and '1344 × 768' in why
+    flagged = offered.startswith('enabled: ') and 'Flat textures only' in offered
+    return prepared and disabled and flagged and not submitted, 'prepared: %s; wide picture: %s; square picture: %s; generation posts: %d' % (
+        {k: state[k] for k in ('preset', 'tile', 'parents')}, why or 'no Make seamless control', offered or 'no Make seamless control', len(submitted))
+
+
+LOOK_SCENE = ('a small rooftop garden at night; at the right edge a rusty water tank and a warm amber lamp over a door, '
+              'and beyond the railing a distant elevated train')
+LOOK_STATE = """() => ({preset: selected?.id, positive: document.querySelector('#positive').value,
+  seed: getControl('seed')?.value, width: getControl('width')?.value, height: getControl('height')?.value,
+  status: document.querySelector('#lookStatus').textContent, notice: document.querySelector('#status').textContent})"""
+
+
+@driver('new-scene-in-an-accepted-look')
+def _look(c):
+    """#1221: pick a saved look while another recipe is open, type only the scene; the Studio writes the wording and loads the
+    look's recipe and settings. Generate stays a separate press."""
+    import looks
+    c.boot('#create')
+    c.need_recipe('zimage-fast')
+    if not c.live: c.select_preset('anima-portrait')
+    c.act('#lookBlock > summary', note='open the saved looks', supplementary=True)
+    look = c.pick('look-night-shift-retro-anime', '#lookSelect option[value]', 'saved look', keep="id !== ''")
+    c.act('#lookSelect', 'select', typed=look, note='choose the Night Shift look')
+    label = c.page.evaluate("document.querySelector('#lookSelect').selectedOptions[0]?.textContent || ''")
+    c.act('#lookSummary', 'read', note=c.page.evaluate("document.querySelector('#lookSummary').textContent")[:200])
+    c.act('#lookPrepare', 'read', note='Prepare waits for a scene')
+    reason = c.page.evaluate("document.querySelector('#lookPrepare').disabled ? document.querySelector('#lookReason').textContent : ''")
+    c.act('#lookScene', 'fill', typed=LOOK_SCENE, note='type only the scene')
+    c.stop_before(c.act('#lookPrepare', note='prepare Create from the look and the scene'), 'stopped before preparing: it rewrites Create from the look')
+    c.page.wait_for_timeout(600)
+    state = c.page.evaluate(LOOK_STATE)
+    c.act('#lookStatus', 'read', note=state['status'][:200])
+    c.act('#positive', 'read', note=state['positive'][:200])
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    # Preparing again on the open recipe reloads it: a changed setting the look does not store must not linger (#1224 review).
+    reset = c.live or c.page.evaluate("""async () => { const steps = getControl('steps'), authored = steps?.value; if (!steps) return false;
+      steps.value = '99'; document.querySelector('#lookPrepare').click(); await new Promise(r => setTimeout(r, 600));
+      return getControl('steps').value === authored && selected.id === 'zimage-fast'; }""")
+    shipped = next(entry for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks'] if entry['id'] == 'look-night-shift-retro-anime')
+    wording = looks.compose(shipped['body']['template'], LOOK_SCENE)
+    ok = (state['preset'] == 'zimage-fast' and state['positive'] == wording and state['seed'] == '2026092752'
+          and (state['width'], state['height']) == ('1344', '768') and 'Nothing was generated' in state['status']
+          and 'recipe switched' in state['status'] and 'Type the scene' in reason and '· on ' in label and reset)
+    return ok, 'look option %r; reason before the scene %r; prepared %s; same-recipe reset %s' % (label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')}, reset)
 
 
 @driver('reference-analysis-review-and-apply')

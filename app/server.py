@@ -52,6 +52,8 @@ import asset_thumbs
 import job_resources
 import continuation
 import pose_guide
+import tiles
+import looks
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -541,6 +543,7 @@ class Studio:
             if type(base) is int and base + batch - 1 > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range; lower the seed or the batch count")
         self.prune_disabled_loras(graph)
         continuation.validate(self, payload, preset, graph)
+        tiles.validate(self, payload, preset, graph, batch)
         self.ensure_reference_inputs(graph)
         self._validate_i2v_mode_source(preset, mode, graph, controls)
         wan_capacity.enforce(graph)
@@ -870,6 +873,7 @@ class Studio:
         job["parent_assets"] = parents
         if label: job["label"] = label
         if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
+        if payload.get("tile") is not None: job["tile"] = copy.deepcopy(payload["tile"])
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
         if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time(), **({'deferred': True} if deferred else {}))]
@@ -894,7 +898,7 @@ class Studio:
         return data
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1090,7 +1094,7 @@ class Studio:
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
                 "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []),
-                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation")}
+                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation"), "tile": job.get("tile"), "tile_receipt": job.get("tile_receipt")}
 
     def i2v_diagnostic(self, job_id):
         job = self.jobs.get(job_id)
@@ -1113,6 +1117,9 @@ class Studio:
             if not re.fullmatch('[0-9a-f]{32}',identifier):raise StudioError('Invalid native project identity')
             base=(self.experiments/'projects'/identifier).resolve()
             return inside(base,base/output['native_path'])
+        if (job or {}).get('operation')==tiles.OPERATION:
+            base=(self.runs/job['id']).resolve()
+            return inside(base,base/output['run_file'])
         if (job or {}).get('operation')=='asset.import':
             return inside((self.experiments/'uploads').resolve(),self.experiments/'uploads'/output['uploaded_file'])
         root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
@@ -1296,6 +1303,7 @@ class Studio:
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
         if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
+        if job.get("tile") is not None: recipe["tile"] = job["tile"]
         self._write_json_atomic(directory / "recipe.json", recipe)
         self._write_json_atomic(directory / "workflow.json", job["graph"])
         state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
@@ -1997,6 +2005,7 @@ class Studio:
                 try:preset=self.preset(job['preset_id'])
                 except StudioError:preset={}
                 continuation.validate(self, job, preset, graph, check_runtime=True)
+                tiles.validate(self, job, preset, graph, job["batch_count"], check_runtime=True)
                 wan_capacity.enforce(graph)
                 reading=self._pre_submit_commit_check(job, preset, graph, i)
             except (StudioError, ValueError, OSError) as exc:
@@ -2037,6 +2046,7 @@ class Studio:
         job["status"] = "completed"; job["message"] = "Complete"
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
+        tiles.finish_after_run(self, job)   # deterministic Pillow steps on a completed seam repaint; never a generation
 
     def _prompt_listed(self, job, prompt_id):
         """True unless ComfyUI's queue proves the prompt is neither running nor pending; unreadable means listed."""
@@ -2227,6 +2237,7 @@ class Studio:
             message = prior_message if status == prior_status and prior_message else "Reconciled from retained receipts: " + message
         job["status"] = status; job["message"] = message
         self._save(job)
+        tiles.finish_after_run(self, job)
 
     def upload(self, filename, content_type, body):
         mime = content_type.split(";", 1)[0].lower()
@@ -2399,6 +2410,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
+            if path == "/api/looks": return self._json(200, looks.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
                 return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
@@ -2434,6 +2446,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")
                 file = inside(self.studio.assets.root, self.studio.assets.root / "exports" / (identifier + ".zip"))
                 return self._local_file(file, True)
+            if path.startswith("/api/tiles/source/") and len(path.split("/")) == 5: return self._json(200, tiles.source_status(self.studio, path.split("/")[4]))
             if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
                 return self._json(200, continuation.source_context(self.studio, path.split("/")[3]))
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
@@ -2549,6 +2562,9 @@ class Handler(BaseHTTPRequestHandler):
                                             "code": "asset_storage_unconfirmed"})
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
+            # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
+            if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
+            if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
@@ -2585,6 +2601,10 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
+            # Make seamless (#1220): prepare stores a rolled seam cross as an upload; finish runs Pillow steps. Neither queues a generation.
+            if self.path == "/api/tiles/prepare": return self._json(201, tiles.prepare(self.studio, self._body_object()))
+            if self.path == "/api/tiles/finish":
+                job = tiles.finish(self.studio, self._body_object().get("job_id")); return self._json(200, {"job": self.studio.public(job)})
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             self._drain_refused_body(); return self._json(404, {"error":"Not found"})
         except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())

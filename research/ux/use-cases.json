@@ -639,6 +639,39 @@
         {"intent": "read what the fallback prepared", "expect": "it says new seeds, same recipe and nothing was generated"},
         {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
+    },
+    {
+      "id": "new-scene-in-an-accepted-look",
+      "goal": "Make a new backdrop in a look I already accepted (Night Shift) by typing only the new scene; the Studio writes the look's wording and loads its recipe and settings. Nothing is generated.",
+      "starting_view": "create",
+      "success_condition": "Choosing the saved look while another recipe is open offers it with its recipe named; Prepare stays off with a reason until a scene is typed; preparing loads the look's recipe, writes the look's wording with the scene in its slot and sets the look's seed and size; the status says nothing was generated; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "choose the accepted look while another recipe is open", "expect": "the look is offered with the recipe it uses"},
+        {"intent": "read what the look carries", "expect": "its recipe, anchor picture and origin are named"},
+        {"intent": "try to prepare before typing a scene", "expect": "Prepare is off and says a scene is needed"},
+        {"intent": "type only the new scene", "expect": "the scene box takes a few words, with an example from the look"},
+        {"intent": "prepare Create from the look", "expect": "the look's recipe loads and the wording is written; nothing runs"},
+        {"intent": "read what was prepared", "expect": "the look, recipe, seed and size are named, and it says nothing was generated"},
+        {"intent": "check the wording", "expect": "the scene sits inside the look's own sentences"},
+        {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
+      ]
+    },
+    {
+      "id": "make-a-texture-tile",
+      "goal": "From a flat texture in my library, get a seamless tile repaint ready with one press, and learn why a picture that is not a square, flat texture cannot tile. Nothing is generated.",
+      "starting_view": "assets",
+      "success_condition": "A wide picture shows Make seamless disabled with the flat-textures-only reason and its size; a square texture prepares the seam-repair recipe with the rolled seam cross attached, the texture as its source and recorded parent, and a status that says Generate is the next press; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open a wide picture from my library", "expect": "its details open"},
+        {"intent": "see whether it can become a seamless tile", "expect": "Make seamless is disabled and says it takes square, flat textures only, naming the picture's size"},
+        {"intent": "open a square, flat texture", "expect": "its details open with Make seamless offered and flagged flat textures only"},
+        {"intent": "make it seamless", "expect": "the texture is rolled and its seam cross attached to the seam-repair recipe, and nothing runs"},
+        {"intent": "read what was prepared", "expect": "the status says only the centre cross will be repainted and that Generate is the next press"},
+        {"intent": "check where the tile will come from", "expect": "the texture is the source and the recorded parent, flagged flat textures only"},
+        {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
+      ]
     }
   ]
 }
