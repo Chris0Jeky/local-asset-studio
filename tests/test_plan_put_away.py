@@ -59,6 +59,14 @@ class PlanPutAwayTests(unittest.TestCase):
         again = restarted.get(self.id)
         self.assertEqual(again['state']['status'], 'interrupted'); self.assertFalse(again['put_away']); self.assertTrue(again['can_put_away'])
 
+    def test_put_away_sticks_while_the_public_view_rewrites_the_message(self):
+        # #1161 review (Muse HIGH): the desk view prefixes `message` for a storage issue; the marker must be checked
+        # against the stored state, not that presentation copy, or the plan never leaves the desk.
+        self.lab._mutate(self.id, status='failed', message='A recorded stage failed.', storage_issue={'reason': 'plan.json unreadable'})
+        away = self.lab.put_away(self.id, {'put_away': True})
+        self.assertTrue(away['put_away']); self.assertTrue(away['state']['message'].startswith('Startup storage check:'))
+        self.assertTrue(self.lab.get(self.id)['put_away']); self.assertTrue(FakeStudio(self.fixture.root, []).production.get(self.id)['put_away'])
+
     def test_a_running_plan_cannot_be_put_away_and_bad_bodies_are_refused(self):
         for status in ('queued', 'running', 'observing'):
             with self.subTest(status=status):

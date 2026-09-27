@@ -157,7 +157,7 @@ class Production:
         if plan.get('kind')=='voice':
             from voice_baseline import resume_eligibility
             result['voice_resume']=resume_eligibility(self,project)
-        owner=put_away_state(state)
+        owner=put_away_state(project['state']) # stored state: the copy above has presentation-only message prefixes
         result['put_away']=owner;result['put_away_at']=state['put_away'].get('at') if owner else None
         result['can_put_away']=not owner and state['status'] not in PLAN_LIVE_STATUSES
         result['can_bring_back']=owner
