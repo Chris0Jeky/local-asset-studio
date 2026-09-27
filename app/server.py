@@ -2052,6 +2052,8 @@ class Studio:
                         if self._tracking_stopped(job): return False
                         job["status"] = "uncertain"; job["message"] = f"Could not observe a known ComfyUI prompt: {read_failures} history reads in a row failed (last: {error}). It was not resubmitted. Use Resume observation when ComfyUI is available."; self._save(job)
                     return False
+                with self.lock:
+                    if self._tracking_stopped(job): return False # the owner stopped tracking: no backoff wait before letting go
                 time.sleep(HISTORY_READ_BACKOFF_SECONDS * read_failures); continue
             read_failures = 0
             if history:
