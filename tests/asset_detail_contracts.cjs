@@ -123,6 +123,21 @@ async function main(){
     await s.diagnostic();assert.equal(s.reads.length,1);
     assert.equal(s.el('#assetNotes').value,'typed draft');assert.equal(s.writes.length,0);
   });
+  await test('Quick checks fit the route, edit only the tags draft, answer number keys and save with the review (#1203)',async()=>{
+    const s=setup({autoOpen:false});
+    s.run(fs.readFileSync(path.join(__dirname,'../app/static/review-checks.js'),'utf8'));
+    s.run("var catalog={presets:[{id:'combine-klein',continuation_capability:{operation:'combine'}}]};Object.assign(assetState.assets[0],{media_type:'image',preset_id:'combine-klein'});openAsset('a')");
+    const box=s.el('#assetReviewChecks'),key=(k,tagName='BUTTON')=>s.dispatch('keydown',{key:k,target:{tagName},preventDefault(){}});
+    assert.equal(box.hidden,false);assert.deepEqual([...box.innerHTML.matchAll(/data-review-check="(\w+)"/g)].map(m=>m[1]),['pose','face','outfit','style','clean']);
+    await key('1');assert.equal(s.el('#assetTags').value,'tag, check:pose=yes');assert.match(box.innerHTML,/is-yes" data-review-check="pose"/);
+    await s.clickClosest('[data-review-check]',{reviewCheck:'face'});await s.clickClosest('[data-review-check]',{reviewCheck:'face'});
+    assert.equal(s.el('#assetTags').value,'tag, check:pose=yes, check:face=no');assert.match(s.el('#assetDetailStatus').textContent,/face no\. Unsaved/);
+    await key('3','INPUT');await key('9');assert.equal(s.el('#assetTags').value,'tag, check:pose=yes, check:face=no');
+    assert.equal(s.writes.length,0,'a chip press never writes on its own in the Library');
+    s.el('#assetReview').value='selected';const p=s.el('#saveAssetDetails').onclick();
+    assert.deepEqual(s.metadata(0),{ids:['a'],action:'edit',tags:['tag','check:pose=yes','check:face=no'],review:'selected'});s.accept(0);await p;
+    s.run("openAsset('b')");assert.equal(box.hidden,true,'a video has no quick checks');await key('1');assert.equal(s.el('#assetTags').value,'tag');
+  });
   console.log(`Asset detail contracts passed: ${passed}`);
 }
 if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});
