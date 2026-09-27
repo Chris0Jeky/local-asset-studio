@@ -1273,6 +1273,10 @@ def _vary(c):
         added.insert(0, dict(receipt, id='vary-wai-keeper', preset_id='wai', preset_name='WAI v17 · illustration', created_at=1789230000,
                              elapsed_seconds=31, controls=wai_controls,
                              outputs=[dict(filename='wai-keeper.png', asset_id='asset-4', media_type='image', seed=11)]))
+        # A run whose recorded strength the page cannot hold: Vary must leave Generate blocked, not half-applied.
+        added.insert(0, dict(receipt, id='vary-wai-broken', preset_id='wai', preset_name='WAI v17 · illustration', created_at=1789229950,
+                             elapsed_seconds=31, controls=dict(wai_controls, lora='not-a-number'),
+                             outputs=[dict(filename='wai-broken.png', asset_id='asset-5', media_type='image', seed=12)]))
     fixture.JOBS[:0] = added
     try:
         c.boot('#create')
@@ -1293,6 +1297,10 @@ def _vary(c):
         c.page.wait_for_timeout(800)
         third = c.page.evaluate(VARY_STATE)
         c.act('#uxNotice', 'read', note=third['notice'][:200])
+        # Pressed outside the measured steps: the deliberate error notice is the expected outcome, not a journey dead end.
+        c.page.click('#gallery [data-ux-vary="strong"][data-job="vary-wai-broken"]')
+        c.page.wait_for_timeout(800)
+        blocked = c.page.evaluate("(() => { const b = document.querySelector('[data-readiness-code=\"vary\"]'); return {generate: document.querySelector('#generate').disabled, blocker: b ? b.textContent : ''}; })()")
         # A picture with no recorded recipe: the asset panel shows Vary disabled, with the reason beside it.
         c.page.evaluate("showView('assets');openAsset('asset-3')"); c.page.wait_for_timeout(300)
         c.act('#assetDialog .ux-vary button', 'read', note='Vary disabled with its reason', supplementary=True)
@@ -1312,10 +1320,11 @@ def _vary(c):
                and third['kept'] == {k: str(v) for k, v in wai_controls.items() if k in third['kept']}
                and 'same checkpoint and adapters as this picture (noirpopwave.safetensors at 0.85)' in third['notice']
                and 'Nothing was generated' in third['notice'])
+        wai = wai and blocked['generate'] and 'Vary could not keep lora = not-a-number' in blocked['blocker']
         disabled = 'No Studio recipe is recorded' in why
         return img2img and reseed and wai and disabled, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s' % (
             {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')},
-            {k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, why or 'no disabled reason')
+            dict({k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, unapplied=blocked), why or 'no disabled reason')
     finally:
         for job in added: fixture.JOBS.remove(job)
 

@@ -176,6 +176,8 @@ route takes the checkpoint too; Pony also needs its clip skip. The strengths sta
 `vary-a-keeper` now also presses *Vary strong* on a WAI fixture picture made with `noirpopwave.safetensors` at 0.85.
 It asserts WAI v17 · vary with the picture as source and parent, denoise 0.7 and a new seed. It also asserts the recorded
 stack and settings on the page, including a LoRA file the offline adapter list did not offer, and the status wording.
+Outside the measured steps it presses Vary on a run whose recorded strength the page cannot hold. Generate must then
+stay blocked with the reason, not half-applied, until Vary is pressed again or the continuation changes (review on #1240).
 `python tests/studio_use_cases.py` passed **20/20** with zero generation submissions and zero page errors (9 intents,
 4 clicks for this journey). These are fixture screens; no model ran.
 

@@ -7,7 +7,7 @@
   if(!document.querySelector('#createView'))return;
   const U=StudioUX,q=s=>document.querySelector(s),escape=esc;
   let sharedAdoptionError='';
-  let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='';
+  let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='',varyUnapplied=null;
   let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0,handoffEpoch=0;
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
   let homeBusy=false,homeData=null,homeErrors=[],homeUpdated=null,homeSignature='';
@@ -189,6 +189,8 @@
     if(secondPicture)items.push({code:'second',message:selected?.reference_slots?.length>1?'Picture 1 remains your source. Choose another slot or explicitly start from the extra picture.':'You added a second picture, but this recipe reads one. Say what it is for.',action:'second'});
     if(sharedAdoptionError)items.push({code:'shared-setup',message:sharedAdoptionError,action:null});
     if(continuationState&&!continuationSource)items.push({code:'source',message:sourceReadError||'Checking the retained source metadata…',action:'continuation'});
+    // A Vary round whose carried stack did not apply stays blocked while that same continuation is open.
+    if(varyUnapplied&&continuationState&&varyUnapplied.stamp===JSON.stringify(continuationState))items.push({code:'vary',message:varyUnapplied.message,action:null});
     return{items,required};
   }
   function syncReady(){
@@ -974,15 +976,18 @@
         const result=await post('/api/assets/reference',{id:assetId});
         if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. Nothing was applied; press Vary again.');
         if(result?.parent_asset!==assetId||result.context?.asset_id!==assetId||result.sha256!==result.context?.sha256)throw Error('The copied picture could not be verified. Nothing was applied.');
-        beginContinuation(result,plan.route.id,'edit');sourceReadError='';
+        beginContinuation(result,plan.route.id,'edit');sourceReadError='';varyUnapplied=null;
         // A carrying route (WAI) keeps the picture's recorded LoRA stack and sampling settings. A recorded file the
         // offline list does not offer is added as it was recorded; the server still refuses one that is not installed.
+        // If one value cannot be set, Generate stays blocked on this continuation until Vary is pressed again.
         for(const [key,value] of Object.entries(plan.carry||{})){
           const input=getControl(key),text=String(value);
-          if(!input)throw Error(plan.route.name+' has no '+key+' control, so the adapters of this picture cannot be kept. Nothing was generated; check the recipe before generating.');
-          if(input.tagName==='SELECT'&&![...input.options].some(option=>option.value===text))input.append(new Option(text,text));
-          input.value=text;
-          if(input.value!==text)throw Error('Could not keep '+key+' = '+text+' from the run of this picture. Nothing was generated; check the adapter stack before generating.');
+          if(input&&input.tagName==='SELECT'&&![...input.options].some(option=>option.value===text))input.append(new Option(text,text));
+          if(input)input.value=text;
+          if(!input||input.value!==text){
+            const message='Vary could not keep '+key+' = '+text+' from the run of this picture, so Generate is blocked. Press Vary again or reopen Continue with this. Nothing was generated.';
+            varyUnapplied={stamp:JSON.stringify(continuationState),message};updateReady();throw Error(message);
+          }
         }
         if(plan.carry&&typeof updateLoraHints==='function')updateLoraHints();
         for(const [key,value] of Object.entries(plan.strengths[strength].controls)){const input=getControl(key);if(input)input.value=value;}
