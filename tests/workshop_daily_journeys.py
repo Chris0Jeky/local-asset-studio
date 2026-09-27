@@ -86,32 +86,6 @@ let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{a
         self.assertIn('A clear desk', desk); self.assertIn('2 run(s) put away', desk)
         self.assertEqual(self.page.locator('#uxAttention a[href="/#create"]').count(), 2)
 
-    def test_locked_mixed_batch_recovery_says_why_beside_each_button(self):
-        batch = region(source('app.js'), 'function renderMixedBatch(', 'async function mixedBatchAction(')
-        self.page.goto('about:blank')
-        self.page.set_content("""<div id="out"></div><script>const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));</script><script>"""+batch+"""
-const base={revision:'r',known:[],unknown_index:1,never_submitted_count:0,message:'m'};
-window.show=(status,b)=>{document.querySelector('#out').innerHTML=renderMixedBatch({id:'j',status,mixed_batch:{...base,...b}});return [...document.querySelectorAll('.disabledReason')].map(n=>n.textContent);};</script>""")
-        self.assertEqual(self.page.evaluate("show('running',{can_observe:false,can_dispose:false})"),
-                         ['Available once this job stops being running.'] * 2)
-        self.assertEqual(self.page.evaluate("show('uncertain',{can_observe:false,can_dispose:true})"),
-                         ['The check limit for this batch is used up; its evidence is kept.'])
-        self.assertEqual(self.page.evaluate("show('uncertain',{can_observe:true,can_dispose:true})"), [])
-
-    def test_combine_seed_buttons_say_why_they_are_locked(self):
-        combine = region(source('studio-workbench.js'), '  function syncCombineResults(', '  resultPanel.onclick=')
-        self.page.goto('about:blank')
-        self.page.set_content("""<div id="panel"></div><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const StudioContinuation={combineKind:()=>'depth',sameCombinePair:()=>true};let selected={},catalog={presets:[]},referenceRecords=[],lastUploaded=null,resultMarkup='',pairActionBusy=false,busy=false;
-const resultPanel=document.querySelector('#panel');function currentPair(){return {};}function combineBusy(){return busy;}function durationLabel(s){return s+' s';}
-let assetState={assets:[]},jobs=[{id:'done',status:'completed',preset_name:'P',outputs:[{seed:1}]},{id:'half',status:'partial',preset_name:'P',outputs:[{seed:2}]}];
-</script><script>"""+combine+'</script>')
-        titles = lambda: self.page.evaluate("syncCombineResults();[...document.querySelectorAll('[data-ux-rerun]')].map(b=>[b.dataset.job,b.disabled,b.title])")
-        self.assertEqual(titles(), [['done', False, ''], ['done', False, ''],
-                                    ['half', True, 'Only a completed run can prepare another seed.'], ['half', True, 'Only a completed run can prepare another seed.']])
-        self.page.evaluate('busy=true;resultMarkup=""')
-        self.assertEqual(titles()[0], ['done', True, 'Wait for the current Combine action to finish.'])
-
     def load_picker(self):
         production = region(source('studio-workbench.js'), '  // Pull any existing image', '  // Drafts are data only')
         self.page.set_content('''<button id="uxPullAsset">Pull from library</button><script>
@@ -204,6 +178,55 @@ let homeUpdated=new Date(),jobInspector=document.querySelector('#uxJobInspector'
         self.page.keyboard.press('Escape')
         self.page.wait_for_function('!jobInspector.open')
         self.assertTrue(self.page.locator('#origin').evaluate('(n)=>n===document.activeElement'))
+
+    def test_locked_mixed_batch_recovery_says_why_beside_each_button(self):
+        batch = region(source('app.js'), 'function renderMixedBatch(', 'async function mixedBatchAction(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<div id="out"></div><script>const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));</script><script>"""+batch+"""
+const base={revision:'r',known:[],unknown_index:1,never_submitted_count:0,message:'m'};
+window.show=(status,b)=>{document.querySelector('#out').innerHTML=renderMixedBatch({id:'j',status,mixed_batch:{...base,...b}});return [...document.querySelectorAll('.disabledReason')].map(n=>n.textContent);};</script>""")
+        self.assertEqual(self.page.evaluate("show('running',{can_observe:false,can_dispose:false})"),
+                         ['Available once this job stops being running.'] * 2)
+        self.assertEqual(self.page.evaluate("show('uncertain',{can_observe:false,can_dispose:true})"),
+                         ['The check limit for this batch is used up; its evidence is kept.'])
+        self.assertEqual(self.page.evaluate("show('uncertain',{can_observe:true,can_dispose:true})"), [])
+
+    def test_combine_seed_buttons_say_why_they_are_locked(self):
+        combine = region(source('studio-workbench.js'), '  function syncCombineResults(', '  resultPanel.onclick=')
+        self.page.goto('about:blank')
+        self.page.set_content("""<div id="panel"></div><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const StudioContinuation={combineKind:()=>'depth',sameCombinePair:()=>true};let selected={},catalog={presets:[]},referenceRecords=[],lastUploaded=null,resultMarkup='',pairActionBusy=false,busy=false;
+const resultPanel=document.querySelector('#panel');function currentPair(){return {};}function combineBusy(){return busy||dirty;}let submitting=false,poseBusy=false,dirty=false;function posePositionDirty(){return dirty;}function durationLabel(s){return s+' s';}
+let assetState={assets:[]},jobs=[{id:'done',status:'completed',preset_name:'P',outputs:[{seed:1}]},{id:'half',status:'partial',preset_name:'P',outputs:[{seed:2}]}];
+</script><script>"""+combine+'</script>')
+        titles = lambda: self.page.evaluate("syncCombineResults();[...document.querySelectorAll('[data-ux-rerun]')].map(b=>[b.dataset.job,b.disabled,b.title])")
+        self.assertEqual(titles(), [['done', False, ''], ['done', False, ''],
+                                    ['half', True, 'Only a completed run can prepare another seed.'], ['half', True, 'Only a completed run can prepare another seed.']])
+        self.page.evaluate('busy=true;resultMarkup=""')
+        self.assertEqual(titles()[0], ['done', True, 'Wait for the current Combine action to finish.'])
+        self.page.evaluate('busy=false;dirty=true;resultMarkup=""')
+        self.assertEqual(titles()[0], ['done', True, 'Set or reset the typed joint position first.'], 'waiting never clears an unapplied joint edit')
+
+    def test_restore_source_wording_says_why_and_keeps_its_lock_rule(self):
+        sync = region(source('studio-workbench.js'), '  function syncContinuation(', '  async function readSource(')
+        ids = ['uxContinuationImage','uxContinuationTitle','uxContinuationOrigin','uxContinuationGuidance','uxContinuationPrompt','uxContinuationRecord','uxChangeRoute','uxLeaveContinuation','generate']
+        self.page.goto('about:blank')
+        self.page.set_content('<div id="ctx"></div><textarea id="positive"></textarea><button id="uxRestoreSourcePrompt"></button><small id="uxRestoreSourceReason"></small>'
+            + ''.join(f'<div id="{i}"></div>' if i != 'uxContinuationImage' else f'<img id="{i}">' for i in ids)
+            + '''<script>const q=s=>document.querySelector(s),escape=v=>String(v??''),contextPanel=q('#ctx');
+const StudioContinuation={guidance:()=>[]};let submitting=false,sourceReadError='',continuationState={source_asset_id:'a1'},continuationSource=null,selected={continuation_capability:{prompt_role:'description'}};
+window.state=()=>{syncContinuation();return [q('#uxRestoreSourcePrompt').disabled,q('#uxRestoreSourceReason').textContent];};</script><script>'''+sync+'</script>')
+        self.assertEqual(self.page.evaluate('state()'), [True, 'Restore source wording: Still reading the source.'])
+        self.page.evaluate("sourceReadError='Could not verify source metadata: offline'")
+        self.assertEqual(self.page.evaluate('state()'), [True, 'Restore source wording: Could not verify source metadata: offline'])
+        self.page.evaluate("continuationSource={prompt_origin:'submitted-output',prompt_role:'description',positive:'a lantern'}")
+        self.assertEqual(self.page.evaluate('state()'), [False, ''])
+        self.page.evaluate("selected={continuation_capability:{prompt_role:'instruction'}}")
+        self.assertEqual(self.page.evaluate('state()'), [True, 'Restore source wording: This recipe takes an instruction, not the source description.'])
+        self.page.evaluate("selected={continuation_capability:{prompt_role:'description'}};continuationSource={prompt_origin:'imported',prompt_role:'description',positive:'x'}")
+        self.assertEqual(self.page.evaluate('state()'), [True, 'Restore source wording: The source has no submitted description to restore.'])
+        self.page.evaluate("continuationSource={prompt_origin:'submitted-output',prompt_role:'description',positive:'a'};submitting=true")
+        self.assertEqual(self.page.evaluate('state()'), [True, ''], 'a transient submit lock shows no reason line')
 
     def test_workspace_refresh_reports_success_failure_and_busy(self):
         refresh = region(source('workspace.js'), 'async function refreshAssets(', '// Scope, filters')
