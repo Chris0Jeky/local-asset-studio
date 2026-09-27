@@ -544,7 +544,7 @@ function assetQueueStep(delta) {
   if(next<0){assetDetailStatus('This is the first asset in the queue.');return false;}
   // Leaving the queue is an ordinary close: unsaved typing still gets its discard consent.
   // A cancelled close keeps the editor, so it also keeps the queue and its position.
-  if(next>=assetQueue.ids.length){closeAssetDetails();if($('#assetDialog').open){renderAssetQueue();return false;}assetQueue=null;renderAssetQueue();assetMessage('Review queue finished. Reopen it for anything still unreviewed.');return false;}
+  if(next>=assetQueue.ids.length){closeAssetDetails();if($('#assetDialog').open)return false;assetQueue=null;renderAssetQueue();assetMessage('Review queue finished. Reopen it for anything still unreviewed.');return false;}
   const previous=assetQueue.index;assetQueue.index=next;
   if(!openAsset(assetQueue.ids[next])){if(assetQueue)assetQueue.index=previous;renderAssetQueue();return false;}
   return true;
