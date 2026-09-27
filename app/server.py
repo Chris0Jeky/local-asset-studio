@@ -2080,8 +2080,10 @@ class Studio:
                 # that stays unreadable still ends observation after a bounded number of reads, with the rest of the batch unsent.
                 read_failures += 1; error = (str(exc) or type(exc).__name__)[:200]
                 # Failures reset after any good read, so a flaky ComfyUI over the 4-hour window would grow this without bound.
-                submission["history_read_error_count"] = submission.get("history_read_error_count", 0) + 1
                 kept = submission.setdefault("history_read_errors", [])
+                # A submission resumed from before the cap has a list but no count: seed from it, then trim it.
+                submission["history_read_error_count"] = submission.get("history_read_error_count", len(kept)) + 1
+                del kept[HISTORY_READ_ERRORS_KEPT:]
                 if len(kept) < HISTORY_READ_ERRORS_KEPT: kept.append({"at": time.time(), "error": error})
                 if read_failures >= HISTORY_READ_STRIKES:
                     with self.lock:

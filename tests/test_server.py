@@ -350,6 +350,14 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(len(submission['history_read_errors']),server.HISTORY_READ_ERRORS_KEPT)
         self.assertEqual(submission['history_read_error_count'],server.HISTORY_READ_ERRORS_KEPT+5)
 
+    def test_a_resumed_submission_seeds_the_error_count_from_its_uncapped_list(self):
+        s=FakeStudio(self.root,[URLError('again'),{'legacy':{'status':{'status_str':'success'},'outputs':{}}}])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        submission={'prompt_id':'legacy','history_read_errors':[{'at':0,'error':'old'}]*30}
+        with patch.object(server.time,'sleep'): s._observe_history(job,submission)
+        self.assertEqual(submission['history_read_error_count'],31)
+        self.assertEqual(len(submission['history_read_errors']),server.HISTORY_READ_ERRORS_KEPT)
+
     def test_later_batch_member_uncertain_keeps_earlier_evidence_and_stops(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2}, enqueue=False)['id']]
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),
