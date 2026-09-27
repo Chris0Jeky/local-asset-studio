@@ -125,6 +125,9 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .wk-run-dock #status {grid-column:1/-1;font-size:11px;line-height:1.5;margin:0;max-height:3em;overflow:auto;color:var(--muted);overflow-wrap:anywhere}
 .workshop .wk-run-dock #status:empty {display:none}
 .workshop .wk-run-dock #status.error {color:var(--danger)}
+/* While a text field has focus, a narrow or short dock keeps only what running needs; a very short one keeps Variations and Generate. */
+@media(max-width:600px),(max-height:700px) {.workshop .wk-run-dock.wk-typing :is(.wk-run-tools,.wk-dock-info>span) {display:none}}
+@media(max-height:500px) {.workshop .wk-run-dock.wk-typing {padding:8px 12px;bottom:6px}.workshop .wk-run-dock.wk-typing :is(.wk-dock-info,#status) {display:none}}
 .workshop :is(input,button,select,textarea,summary) {scroll-margin-block:110px calc(var(--workshop-dock-space) + 20px)}
 body.workshop-active #workshopRecipeDialog {width:min(960px,calc(100vw - 40px));max-height:90dvh;padding:28px;margin:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:20px;box-shadow:var(--wk-shadow);overflow:auto}
 #workshopRecipeDialog::backdrop {background:#06080cc7;backdrop-filter:blur(8px)}
@@ -183,7 +186,6 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
   .workshop .wk-run-dock #batch {width:100px;min-height:44px;font-size:11px}
   .workshop .wk-run-dock #generate {min-width:125px;min-height:44px;font-size:13px;padding:10px 18px}
   .workshop .wk-run-dock #status {font-size:10px;max-height:3em}
-  .workshop .wk-run-dock.wk-typing :is(.wk-run-tools,.wk-dock-info>span) {display:none}
   body.workshop-active #workshopRecipeDialog {width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 16px);max-height:none;padding:20px 16px;border-radius:16px}
   .wk-dialog-heading {gap:12px}.wk-dialog-heading h2 {font-size:25px}
   #workshopRecipeDialog #presetList {grid-template-columns:1fr;max-height:48dvh}

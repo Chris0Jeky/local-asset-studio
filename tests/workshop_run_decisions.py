@@ -58,7 +58,8 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.page.evaluate("document.querySelector('#createView').insertAdjacentHTML('beforebegin','<div style=height:900px></div>');document.querySelector('#createView').style.paddingBottom='900px'")
         overlap = """(id)=>{const f=document.getElementById(id).getBoundingClientRect(),d=document.querySelector('.wk-run-dock').getBoundingClientRect();
           return {covered:Math.max(0,Math.min(f.bottom,d.bottom)-Math.max(f.top,d.top)),top:f.top,dock:d.height}}"""
-        for width, height in ((1440, 900), (1280, 720), (390, 844)):
+        # 720x450 is 1440x900 at 200 % zoom; 640x360 is the shortest supported size.
+        for width, height in ((1440, 900), (1280, 720), (720, 450), (640, 360), (390, 844)):
             self.page.set_viewport_size({'width': width, 'height': height})
             for layout in ('focus', 'studio', 'immersive'):
                 for field in ('positive', 'negative'):
@@ -77,7 +78,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                         self.assertEqual(result['covered'], 0, result)
                         self.assertGreaterEqual(result['top'], 0, result)
                         self.assertTrue(self.page.locator('#generate').is_visible())
-                        if width <= 600: self.assertLess(result['dock'], before, 'the narrow dock compacts while typing')
+                        if width <= 600 or height <= 700: self.assertLess(result['dock'], before, 'a narrow or short dock compacts while typing')
                         self.page.evaluate("document.activeElement?.blur()")
                         self.assertTrue(self.page.locator('#planComparison').is_visible())
         self.assertEqual(self.page.evaluate('submitted'), 0)
