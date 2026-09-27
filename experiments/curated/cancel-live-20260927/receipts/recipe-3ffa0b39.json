@@ -1,0 +1,15 @@
+{
+  "preset_id": "wai",
+  "controls": {
+    "positive": "no humans, scenery, stone lighthouse on a sea cliff, calm ocean, sunset sky, soft clouds, wide shot, masterpiece, best quality",
+    "seed": 927201,
+    "steps": 30,
+    "width": 832,
+    "height": 1216
+  },
+  "batch_count": 2,
+  "graph_path": "workflows\\api\\wai-api.json",
+  "created_at": 1790523781.8806705,
+  "references": [],
+  "parent_assets": []
+}

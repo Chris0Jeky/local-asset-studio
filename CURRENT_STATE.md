@@ -1,5 +1,17 @@
 # Current state — 27 September 2026
 
+## Owner cancel (#1138) proved live on ComfyUI 0.35.0 — 27 September 2026 (16:41-16:44 local)
+
+Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<id>/cancel` on the primary backend. Every job ended `cancelled`, with who, when, the prompt ID and the `/queue` observations recorded.
+- **Studio-queued** (`0519691a`): settled at once; nothing was sent.
+- **Running** (`660e5525` / `fb0f28c0`): the targeted `POST /interrupt {"prompt_id"}` was sent after `/queue` listed exactly that prompt, and ComfyUI logged `Interrupting prompt fb0f28c0-…`. It took 25 s to settle, because ComfyUI finished a cold checkpoint load before it stopped.
+- **Batch of 3** (`4cfc70ca`): interrupted on output 2. Output 1 was kept; output 3 was never submitted.
+- **Pending in ComfyUI's queue** (`3ffa0b39`, output 2 `a898e17f` waiting behind the driver's own blocker prompt): dequeued 1.9 s after the request. Output 1 was kept, and the blocker ran on to `success`.
+
+ComfyUI's `got prompt` count matched one POST per submission, with no resubmit. The queue was empty after each case. Resume on a cancelled job is refused.
+
+Not verified live: a lost interrupt reply, the refusal paths, the UI button, and restart reconciliation. Evidence: `experiments/curated/cancel-live-20260927/`. No output was judged; generated only.
+
 ## Second seeds for two single-seed studies — 27 September 2026 (07:59-08:37 local)
 
 **Restyle denoise (#351):** seed 2026092762 at 0.75 and 0.85 on both sources (prompts `5e206d1b`, `c72f866d`, `4cb2e6f3`, `a84e184a`; 45-83 s, primary). Judged blind, this time with face, hand and prop crops recorded. Platform tied; on carto, 0.75 again kept the compass that 0.85 dropped, but its mean was only 0.17 higher (4.00 against 3.83), a tie under the rubric's 0.3 rule. Over 2 sources × 2 seeds, 0.75 is ahead on mean in 1 of 4 comparisons and ties in 3 (pooled 4.17 against 4.00, a tie); it never scored lower, and it was ahead on verdict and control on both seed-1 sources. **Qwen-Image 2.1 steps (#1028):** char and prop at seed + 100, 16 against 25 steps (`13b4878d`, `5b1ec3b1` at 08:35-08:37 against `f6ec0d2e`, `0e91964d`, which ran at 07:59 and 08:02 inside the Pruna session). Blind, 25 steps is keep on 3 of 4 cells over both seeds and 16 steps on 1 of 4, so the 25-step default holds. Evidence: the `seed2-lab2/` folders under `experiments/curated/restyle-denoise-20260927/` and `qi21-steps-20260927/`. Generated and agent-judged only; not art acceptance, not licence clearance.

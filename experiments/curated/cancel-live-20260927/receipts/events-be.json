@@ -1,0 +1,153 @@
+[
+ {
+  "t": 1790523712.567,
+  "kind": "pre",
+  "name": "be",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 50.3,
+   "limit_gib": 95.7,
+   "pct": 52.5,
+   "phys_avail_gib": 2.7
+  },
+  "log": {
+   "got_prompt": 1,
+   "interrupted": 0,
+   "executed": 1,
+   "entries": 106
+  },
+  "lease": false
+ },
+ {
+  "t": 1790523712.716,
+  "kind": "create",
+  "label": "cancel-proof-b-running",
+  "code": 201,
+  "id": "660e5525-f358-47fd-a48c-21a113761b9c",
+  "status": "queued"
+ },
+ {
+  "t": 1790523712.854,
+  "kind": "create",
+  "label": "cancel-proof-e-studio-queued",
+  "code": 201,
+  "id": "0519691a-43c5-44b8-84c6-c8a4014e7a2e",
+  "status": "queued"
+ },
+ {
+  "t": 1790523712.858,
+  "kind": "e_before_cancel",
+  "status": "queued",
+  "can_cancel": true,
+  "never_submitted": true
+ },
+ {
+  "t": 1790523712.876,
+  "kind": "cancel",
+  "id": "0519691a-43c5-44b8-84c6-c8a4014e7a2e",
+  "code": 202,
+  "took": 0.018,
+  "status": "cancelled",
+  "cancellation": {
+   "event_id": "37b1c1d3d5ff438cbed8df92b2778426",
+   "requested_at": 1790523712.870503,
+   "requested_by": "owner",
+   "status_at_request": "queued",
+   "state": "cancelled",
+   "actions": [],
+   "observations": [],
+   "resolved_at": 1790523712.870503,
+   "note": "Removed from the Studio queue before submission; nothing was sent to ComfyUI."
+  }
+ },
+ {
+  "t": 1790523712.881,
+  "kind": "settled",
+  "name": "e",
+  "id": "0519691a-43c5-44b8-84c6-c8a4014e7a2e",
+  "status": "cancelled",
+  "message": "Not started: cancelled by you. Nothing was sent to ComfyUI.",
+  "cancel_state": "cancelled",
+  "prompt_ids": [],
+  "subs": [],
+  "outputs": 0,
+  "history": {}
+ },
+ {
+  "t": 1790523713.111,
+  "kind": "b_running_seen",
+  "prompt_id": "fb0f28c0-3b5c-43a3-8b6f-f06b2aa35d61",
+  "running": [
+   "fb0f28c0-3b5c-43a3-8b6f-f06b2aa35d61"
+  ],
+  "pending": [],
+  "job_status": "running"
+ },
+ {
+  "t": 1790523716.112,
+  "kind": "b_before_cancel",
+  "running": [
+   "fb0f28c0-3b5c-43a3-8b6f-f06b2aa35d61"
+  ],
+  "pending": []
+ },
+ {
+  "t": 1790523716.117,
+  "kind": "cancel",
+  "id": "660e5525-f358-47fd-a48c-21a113761b9c",
+  "code": 202,
+  "took": 0.005,
+  "status": "running",
+  "cancellation": {
+   "event_id": "a73e934ed28f4f6ebc072538bb5af304",
+   "requested_at": 1790523716.1128817,
+   "requested_by": "owner",
+   "status_at_request": "running",
+   "state": "requested",
+   "actions": [],
+   "observations": []
+  }
+ },
+ {
+  "t": 1790523742.506,
+  "kind": "settled",
+  "name": "b",
+  "id": "660e5525-f358-47fd-a48c-21a113761b9c",
+  "status": "cancelled",
+  "message": "Stopped by you: ComfyUI reported the render interrupted. Nothing is retried.",
+  "cancel_state": "cancelled",
+  "prompt_ids": [
+   "fb0f28c0-3b5c-43a3-8b6f-f06b2aa35d61"
+  ],
+  "subs": [
+   [
+    0,
+    "cancelled"
+   ]
+  ],
+  "outputs": 0,
+  "history": {
+   "fb0f28c0-3b5c-43a3-8b6f-f06b2aa35d61": "error"
+  }
+ },
+ {
+  "t": 1790523742.54,
+  "kind": "post",
+  "name": "be",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 54.0,
+   "limit_gib": 95.7,
+   "pct": 56.4,
+   "phys_avail_gib": 5.1
+  },
+  "log": {
+   "got_prompt": 2,
+   "interrupted": 1,
+   "executed": 2,
+   "entries": 121
+  }
+ }
+]
