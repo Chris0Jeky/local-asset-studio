@@ -513,5 +513,35 @@ document.addEventListener('studio:job-settled',e=>events.push([e.detail.id,e.det
         self.assertEqual(self.page.evaluate('activeJobId'), 'second')
 
 
+    def test_running_cards_show_truthful_elapsed_time_not_progress(self):
+        """Handoff 03: a running card had no elapsed time. Only started_at is observed, so no progress bar is drawn (K13)."""
+        html = entry.workshop_html().replace('</body>', """<script>
+var jobs=[{id:'run-1',status:'running',started_at:Date.now()/1000-75,message:'Generating output 1 of 1'},
+  {id:'wait-1',status:'waiting',started_at:Date.now()/1000-5,message:'Waiting for existing ComfyUI work'},
+  {id:'queued-1',status:'queued',message:'Queued'},{id:'done-1',status:'completed',started_at:Date.now()/1000-300,message:'Complete'}];
+document.getElementById('gallery').innerHTML=jobs.map(j=>'<article class="jobStatus '+j.status+'" data-problem="'+j.id+'"><b>Fixture · '+j.status+'</b><p>'+j.message+'</p></article>').join('');
+</script></body>""")
+        self.page.set_content(html)
+        self.page.wait_for_selector('#workshopRecipeChange')
+        self.page.locator('#workshopResults').evaluate('(n)=>n.open=true')  # Generate opens Recent runs
+        self.page.wait_for_selector('[data-problem="run-1"] .job-elapsed')
+        running = self.page.locator('[data-problem="run-1"] .job-elapsed').inner_text()
+        self.assertRegex(running, r'^Started \d{1,2}:\d{2}.* · 1 min 1[5-7] s so far$')
+        self.assertIn('Generating output 1 of 1', self.page.locator('[data-problem="run-1"]').inner_text(), 'the job message stays')
+        self.assertRegex(self.page.locator('[data-problem="wait-1"] .job-elapsed').inner_text(), r' · [5-7] s so far$')
+        self.assertEqual(self.page.locator('[data-problem="queued-1"] .job-elapsed').count(), 0, 'not started, so no clock')
+        self.assertEqual(self.page.locator('[data-problem="done-1"] .job-elapsed').count(), 0)
+        self.assertEqual(self.page.locator('#gallery progress, #gallery [role=progressbar]').count(), 0)
+        self.page.wait_for_function("!document.querySelector('[data-problem=\"run-1\"] .job-elapsed').textContent.includes('"+running.split('·')[-1].strip()+"')")
+        # Codex P2 on #1139: the ticking clock is not an execution change, so the presentation context stays put.
+        stamp = self.page.evaluate("document.querySelector('#createView').__workshop.presentationView().contextStamp")
+        self.assertTrue(stamp)
+        self.page.wait_for_timeout(2200)
+        self.assertEqual(self.page.evaluate("document.querySelector('#createView').__workshop.presentationView().contextStamp"), stamp)
+        # A settled job loses its clock on the next tick.
+        self.page.evaluate("jobs[0].status='completed'")
+        self.page.wait_for_selector('[data-problem="run-1"] .job-elapsed', state='detached')
+        self.assertEqual(self.page.evaluate('submitted'), 0)
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
