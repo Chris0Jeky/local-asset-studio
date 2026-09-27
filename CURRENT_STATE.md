@@ -10,7 +10,9 @@ Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<i
 
 ComfyUI's `got prompt` count matched one POST per submission, with no resubmit. The queue was empty after each case. Resume on a cancelled job is refused.
 
-Not verified live: a lost interrupt reply, the refusal paths, the UI button, and restart reconciliation. Evidence: `experiments/curated/cancel-live-20260927/`. No output was judged; generated only.
+At 16:51 the running card's **Cancel** button was also clicked in a headless browser (job `f9687adc`, prompt `9454cfd3`). The card showed "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.", the confirm dialog opened, and the page sent one cancel POST. The job was `cancelled` 0.58 s after the click.
+
+Not verified live: a lost interrupt reply, the refusal paths, and restart reconciliation (covered offline by the FakeStudio tests). Evidence: `experiments/curated/cancel-live-20260927/`. No output was judged; generated only.
 
 ## Second seeds for two single-seed studies — 27 September 2026 (07:59-08:37 local)
 

@@ -1,0 +1,30 @@
+[
+ {
+  "t": 1790524078.538,
+  "kind": "pre",
+  "name": "ui",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 56.4,
+   "limit_gib": 95.7,
+   "pct": 58.9,
+   "phys_avail_gib": 5.4
+  },
+  "log": {
+   "got_prompt": 7,
+   "interrupted": 2,
+   "executed": 6,
+   "entries": 148
+  },
+  "lease": false
+ },
+ {
+  "t": 1790524081.84,
+  "kind": "create",
+  "label": "cancel-proof-ui-click",
+  "code": 201,
+  "id": "b84538ac-66bb-4bd0-a347-f5fd34b2794b",
+  "status": "queued"
+ }
+]

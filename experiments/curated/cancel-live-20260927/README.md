@@ -88,6 +88,47 @@ only two prompt IDs, and ComfyUI's `got prompt` count rose by exactly 2.
   (`receipts/reopen-refusal.json`).
 - Offline: `python -m unittest discover -s tests -p "test_job_cancel.py"` ran 28 tests, OK, at the same time.
 
+## UI click — 27 September 2026 (16:48-16:51 local)
+
+One cheap `wai` job (`f9687adc`, prompt `9454cfd3`, 120 steps, seed 927304) was cancelled by clicking the real
+**Cancel** button on its running card in a headless Chromium (Playwright, `receipts/ui_cancel.py`). The driver
+created the job with `POST /api/jobs`; the page itself sent no generation. The page was `/#create`. The driver
+opened the "Recent runs" disclosure (`#workshopResults`) with a click, as the owner would, because the running
+cards live there.
+
+- **Before the click** (16:51:02.842): `/queue` running = [`9454cfd3`], pending = []. The card read
+  "WAI v17 • illustration · running / Generating output 1 of 1 / Started 16:50 · 13 s so far / Known prompt IDs:
+  9454cfd3-… / Cancel / **Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.**" The run
+  dock's reason line showed the same consequence.
+- **The click** (16:51:02.927) opened one `confirm` dialog: "Cancel this render? Stops the render in ComfyUI.
+  Finished outputs are kept. Nothing is retried." The driver accepted it. The page then sent exactly one
+  `POST /api/jobs/f9687adc-…/cancel` (16:51:02.973); its other POSTs were only `/api/estimate`. No page errors.
+- The status line changed to "Cancel requested. The Studio is checking ComfyUI; the card shows what it finds."
+  The card changed to "Cancel requested (16:51:02): the Studio is checking ComfyUI for this job's prompt.
+  Nothing is retried."
+- **Server record:** `requested_by: owner`, `status_at_request: running`. The observation was `queue: running`,
+  running = [`9454cfd3`]. The `interrupt` for `9454cfd3` went out at 16:51:03.069 with reply `ok`, and the
+  job was resolved `cancelled` at 16:51:03.550, 0.58 s after the click (the model was warm). History:
+  `execution_interrupted`.
+- **Settled card** (fresh page load, `receipts/ui-04-settled-card.png`): "WAI v17 • illustration · cancelled /
+  Stopped by you: ComfyUI reported the render interrupted. Nothing is retried. / Known prompt IDs: 9454cfd3-… /
+  Recipe". It shows no Cancel button.
+- **d-checks:** ComfyUI `got prompt` 10 → 11 (one POST), `Processing interrupted` 3 → 4, and the queue was empty
+  afterwards.
+
+Attempts before it, recorded honestly:
+1. `b84538ac` (prompt `f0db30fe`, 60 steps) completed normally in 18.3 s. The card never became clickable,
+   because the "Recent runs" disclosure was closed.
+2. `5e4ce0fa` (prompt `553b363b`) reused the same seed and graph by mistake. ComfyUI served it from cache in
+   0.5 s (the same output file `WAI-Illustration_00051_.png`), and it completed before the page's next poll.
+   While no job of its own is active, the page polls `/api/jobs` every 15 s (4 s once one is active).
+3. `6154ba50` (prompt `657e3166`, 120 steps) was cancelled by the same click at 16:50:22. The job record is
+   complete (`receipts/ui-attempt3-6154ba50.json`: `cancelled`, interrupt reply `ok`). The driver then crashed
+   while it collected evidence after the click (an ambiguous `#status` selector), so its dialog and POST log were
+   lost. The clean run above repeats it.
+
+Those two completed outputs and all cancelled jobs are throwaway; nothing was viewed or judged.
+
 ## NOT verified
 
 - **Lost interrupt reply → `unresolved`/uncertain** was not induced live. It needs a fault in the HTTP reply,
@@ -95,8 +136,9 @@ only two prompt IDs, and ComfyUI's `got prompt` count rose by exactly 2.
 - **Refusal paths** (unreadable queue, prompt absent, two running prompts, delete ignored twice) were not hit
   live. The pending case does show that a non-Studio prompt running at the same time was neither dequeued nor
   interrupted.
-- **UI Cancel control** (#1160: the button on running and Problems cards, the confirm prompt, disabled reasons)
-  was not clicked. Every cancel went through the HTTP route the UI calls.
+- **UI:** the running card's Cancel and its confirm dialog were clicked live (above). Not clicked: the run dock's
+  "Cancel run" button (the same `cancelJob()` call), the Problems-card placement, and the disabled-reason
+  rendering. Those are covered by the #1160 frontend tests only.
 - **Restart reconciliation** (a `cancel-request.json` left over when the Studio restarts) was not exercised.
 - Other backends (hidream, h3, qwen21), Production/comparison jobs, and native-operation jobs were not tested.
   The latter two are refused by design.
@@ -108,4 +150,5 @@ only two prompt IDs, and ComfyUI's `got prompt` count rose by exactly 2.
 `receipts/{a,b,c,e}-<job>.json`: the public job record, `state.json` (submission graphs removed) and the
 ComfyUI history status for each prompt. `receipts/events-*.json` holds the driver's timeline, with the `/queue`
 reads, commit readings and log counts. The folder also has `recipe-*.json`, `cancel-request-*.json`,
-`reopen-refusal.json` and `drive.py`.
+`reopen-refusal.json` and `drive.py`. UI run: `ui-f9687adc.json`, `events-ui*.json`, `ui_cancel.py`,
+`after_card.py`, `ui-settled-card.json` and `ui-04-settled-card.png` (a text-only card crop).
