@@ -48,8 +48,9 @@
   if(typeof document==='undefined'||!document.querySelector('#createView')||typeof module==='object')return;
   const L=StudioLooks,q=s=>document.querySelector(s);
   let looks=[],busy=false,composed=null;
-  const block=document.createElement('section');block.id='lookBlock';block.className='ux-looks';block.setAttribute('aria-labelledby','lookTitle');
-  block.innerHTML='<h4 id="lookTitle">Use a saved look</h4><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div>'
+  // Folded by default: Create's first screen keeps the wording and Generate in view (workshop height budget).
+  const block=document.createElement('details');block.id='lookBlock';block.className='ux-looks';
+  block.innerHTML='<summary>Use a saved look <small>type only the scene</small></summary><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div>'
     +'<p id="lookSummary" class="muted"></p><div class="ux-looks-row"><button type="button" id="lookPrepare" aria-describedby="lookReason">Prepare with this look</button><button type="button" id="lookTrash" aria-describedby="lookReason">Put away</button></div><p class="disabledReason"><small id="lookReason"></small></p>'
     +'<details id="lookSave"><summary>Save this wording as a look</summary><p class="muted">Write '+L.SLOT+' in the wording where a new scene goes. The recipe and its settings are saved with it.</p><label>Look name<input id="lookName" maxlength="120" autocomplete="off" aria-describedby="lookSaveReason"></label><p id="lookAnchor" class="muted"></p><button type="button" id="lookSaveButton" aria-describedby="lookSaveReason">Save look</button><p class="disabledReason"><small id="lookSaveReason"></small></p></details>'
     +'<p id="lookStatus" role="status" aria-live="polite"></p>';
@@ -80,7 +81,8 @@
   function apply(result){
     const typed=q('#positive').value.trim(),switched=selected?.id!==result.preset_id;
     if(typed&&typed!==String(selected?.defaults?.positive||'').trim()&&typed!==composed&&!confirm('This look replaces the wording in Create. Continue?')){status('Nothing changed.');return;}
-    if(switched)selectPreset(result.preset_id);
+    // Reload the recipe even when it is open: a setting the look does not store, or a parent picture, must not linger.
+    const batch=q('#batch').value;selectPreset(result.preset_id);q('#batch').value=batch;
     for(const [key,value] of Object.entries(result.controls)){const input=key==='positive'?q('#positive'):key==='negative'?q('#negative'):getControl(key);if(input)input.value=value;}
     composed=result.controls.positive;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));
     updateLoraHints();updateReady();scheduleTimeEstimate();recipeChanged();

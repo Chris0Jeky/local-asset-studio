@@ -217,6 +217,7 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 # control skips the label check. The id and attribute deny lists still bind first. Checked against
 # app/static on 22 Sep 2026; a control that starts writing must leave this list.
 LOCAL_CONTROLS = {
+    '#lookBlock > summary': 'opens the saved-looks disclosure',
     '#lookSelect': 'chooses a saved look in this page; nothing is sent',
     '#workshopRecipeChange': 'opens the recipe picker',
     '#presetList [data-id]': 'loads a recipe into this page (selectPreset); nothing is sent',
@@ -1244,6 +1245,7 @@ def _look(c):
     c.boot('#create')
     c.need_recipe('zimage-fast')
     if not c.live: c.select_preset('anima-portrait')
+    c.act('#lookBlock > summary', note='open the saved looks', supplementary=True)
     look = c.pick('look-night-shift-retro-anime', '#lookSelect option[value]', 'saved look', keep="id !== ''")
     c.act('#lookSelect', 'select', typed=look, note='choose the Night Shift look')
     label = c.page.evaluate("document.querySelector('#lookSelect').selectedOptions[0]?.textContent || ''")
@@ -1257,12 +1259,16 @@ def _look(c):
     c.act('#lookStatus', 'read', note=state['status'][:200])
     c.act('#positive', 'read', note=state['positive'][:200])
     c.act('#generate', 'read', note='readiness only; never pressed')
+    # Preparing again on the open recipe reloads it: a changed setting the look does not store must not linger (#1224 review).
+    reset = c.live or c.page.evaluate("""async () => { const steps = getControl('steps'), authored = steps?.value; if (!steps) return false;
+      steps.value = '99'; document.querySelector('#lookPrepare').click(); await new Promise(r => setTimeout(r, 600));
+      return getControl('steps').value === authored && selected.id === 'zimage-fast'; }""")
     shipped = next(entry for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks'] if entry['id'] == 'look-night-shift-retro-anime')
     wording = looks.compose(shipped['body']['template'], LOOK_SCENE)
     ok = (state['preset'] == 'zimage-fast' and state['positive'] == wording and state['seed'] == '2026092752'
           and (state['width'], state['height']) == ('1344', '768') and 'Nothing was generated' in state['status']
-          and 'recipe switched' in state['status'] and 'Type the scene' in reason and '· on ' in label)
-    return ok, 'look option %r; reason before the scene %r; prepared %s' % (label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')})
+          and 'recipe switched' in state['status'] and 'Type the scene' in reason and '· on ' in label and reset)
+    return ok, 'look option %r; reason before the scene %r; prepared %s; same-recipe reset %s' % (label, reason, {k: state[k] for k in ('preset', 'seed', 'width', 'height')}, reset)
 
 
 @driver('reference-analysis-review-and-apply')
