@@ -372,10 +372,13 @@ function renderMixedBatch(job) {
   const known=(batch.known||[]).map(s=>'Output '+(s.index+1)+': '+s.status).join(' · ');
   const detail='<p>'+esc(known)+'</p><p>Output '+esc(batch.unknown_index+1)+' has an unknown submission outcome. '+esc(batch.never_submitted_count)+' later outputs were not submitted.</p><p><small>'+esc(batch.message)+'</small></p>';
   if(job.status==='abandoned')return detail;
+  // A locked recovery control says why next to it (#278): the job is still being observed, or the check limit is spent.
+  const locked=job.status!=='uncertain'?'Available once this job stops being '+String(job.status||'active').replaceAll('_',' ')+'.':'',
+    observeLocked=batch.can_observe?'':locked||'The check limit for this batch is used up; its evidence is kept.',disposeLocked=batch.can_dispose?'':locked||'Not available for this batch.';
   return '<details class="mixedBatchControls" data-job="'+esc(job.id)+'" data-revision="'+esc(batch.revision)+'"><summary>Recover mixed batch</summary>'+detail+
-    '<button data-mixed-action="observe" data-job="'+esc(job.id)+'" '+(batch.can_observe?'':'disabled')+'>Check known batch receipts</button><p><small>Only unresolved known IDs are queried, once per check. No generation, retry, cancellation or later stage.</small></p>'+
+    '<button data-mixed-action="observe" data-job="'+esc(job.id)+'" '+(batch.can_observe?'':'disabled')+'>Check known batch receipts</button>'+(observeLocked?'<p class="disabledReason"><small>'+esc(observeLocked)+'</small></p>':'')+'<p><small>Only unresolved known IDs are queried, once per check. No generation, retry, cancellation or later stage.</small></p>'+
     '<label>Reason for local disposition<input data-mixed-reason maxlength="1000" required></label><label><input type="checkbox" data-mixed-ack> I understand that all unresolved remote outcomes remain unknown and this does not cancel remote work.</label>'+
-    '<button data-mixed-action="dispose" data-job="'+esc(job.id)+'" '+(batch.can_dispose?'':'disabled')+'>Abandon remaining batch locally</button><small>Preserves outputs, exact submission evidence and spent reservations. A repair is a separate explicit action.</small></details>';
+    '<button data-mixed-action="dispose" data-job="'+esc(job.id)+'" '+(batch.can_dispose?'':'disabled')+'>Abandon remaining batch locally</button>'+(disposeLocked?'<p class="disabledReason"><small>'+esc(disposeLocked)+'</small></p>':'')+'<small>Preserves outputs, exact submission evidence and spent reservations. A repair is a separate explicit action.</small></details>';
 }
 async function mixedBatchAction(button) {
   const identifier=button.dataset.job;if(button.disabled||mixedBatchBusy.has(identifier))return;
