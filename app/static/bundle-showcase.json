@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updated": "2026-09-21",
-  "scope": "Historical local examples plus thirty 2026-09-21 Studio runs of civitai.red intake recipes (ten wave-1 showcases, twenty wave-2 adapter/combo examples). One seed each. Not a representative benchmark, art acceptance or licence clearance.",
+  "updated": "2026-09-27",
+  "scope": "Historical local examples, thirty 2026-09-21 Studio runs of civitai.red intake recipes (ten wave-1 showcases, twenty wave-2 adapter/combo examples) and 31 2026-09-27 recipe thumbnails at the recipe defaults (Krea recipes on the GGUF twin). One seed each. Not a representative benchmark, art acceptance or licence clearance.",
   "examples": {
     "krea-witch-nijisis": {
       "url": "/api/examples/anime-fantasy-atelier/witch-nijisis-baseline.jpg",
@@ -318,6 +318,316 @@
       "jpeg_sha256": "e6a64762fc5a979201d5d000769057a0130f745310dfd9f2e4ee61541a20803a",
       "review": "Soft/blurry back view. Extra fingers on the hip-side hand. Generated, not accepted.",
       "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-fantasy-portrait": {
+      "url": "/api/examples/recipe-thumbs-20260927/anima-fantasy-portrait.jpg",
+      "caption": "Sky-ferry pilot on a floating-island rail: inspect the waterfalls, goggles and the hand on the rail.",
+      "prompt_id": "886151c5-ff6c-4838-aeaf-a5fafa0145e4",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anima-fantasy-portrait.json",
+      "original_sha256": "71b9a4adbf722b3b4c913a7a8b568ac8a9fc3bea6314eca5c49377f98e29fb41",
+      "jpeg_sha256": "1137dfaedb61426f73439b737217897dac50437452b5b6536c41fc1428b201ea",
+      "review": "Teal-haired pilot in goggles and a flight suit, floating islands and waterfalls, an airship at top right; readable hand on the rail; the sleeve patch is invented insignia. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "anima-reference-six-adapter-stack": {
+      "url": "/api/examples/recipe-thumbs-20260927/anima-reference-six-adapter-stack.jpg",
+      "caption": "Silver-haired witch on a lantern-lit balcony: inspect the six-adapter painterly finish and the bottom-right corner.",
+      "prompt_id": "46eb9605-01e9-4be3-b268-e7f5ce33d114",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anima-reference-six-adapter-stack.json",
+      "original_sha256": "fa430a21912070074b7a689d0054733050f05a6cdaf7a86c9d6c1b1119bade89",
+      "jpeg_sha256": "725c8e833254c8e6e262ad9c10de8f72a34776115cc42cdbf5623b49713ec424",
+      "review": "Witch in a wide hat and dark cloak at dusk with sky lanterns; strong painterly purple finish; a faint stray signature scribble sits at the bottom right (crop 1100,1600-1328,1776). Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "anima-painterly-artist-tags": {
+      "url": "/api/examples/recipe-thumbs-20260927/anima-painterly-artist-tags.jpg",
+      "caption": "Straw-hat traveller in pampas grass: inspect the loose brushwork and the hand on the hat brim.",
+      "prompt_id": "b53109bc-5ac7-4640-b1d7-5d35a8c39dc7",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anima-painterly-artist-tags.json",
+      "original_sha256": "972e23fae129102ad608a3fb57eca9e1e9cd1fea9ca78e079290c0c3e863d447",
+      "jpeg_sha256": "9a3cf2c4d13924a37c2b70853c2f2ca19fc894c773e190317395129203e9117d",
+      "review": "Traveller in a patched dress under a lone tree with birds overhead, low angle, loose painterly brushwork; the hat-holding hand is simplified. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "anima-screenshot-stack": {
+      "url": "/api/examples/recipe-thumbs-20260927/anima-screenshot-stack.jpg",
+      "caption": "Cartographer in a navy coat before an observatory: inspect the compass, which became a second lantern.",
+      "prompt_id": "ae5d97ff-be25-4e3d-9656-65bd7ff34535",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anima-screenshot-stack.json",
+      "original_sha256": "d2a2a453995b6f3d2ceeb6142a820e91bea46848a277cd2e7be96fba41b21b61",
+      "jpeg_sha256": "d6a59cb82183129c6ec495e8bbe53d81fbe326caa7de35485244e585a5f3a8aa",
+      "review": "Adult cartographer in a navy double-breasted coat and teal scarf, map case on her back, domed observatory behind; the compass became a second lantern plus a disc on the coat. Fully clothed. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "anima-v1-base": {
+      "url": "/api/examples/recipe-thumbs-20260927/anima-v1-base.jpg",
+      "caption": "Anima v1 baseline, woman on a wet station platform: inspect the even rendering with no adapters.",
+      "prompt_id": "31c62d21-fc9e-460c-973c-255d9f92401e",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anima-v1-base.json",
+      "original_sha256": "a3ee765d1dc1d2813ccbb0f2372b039eb3b34916da6d8a666c5dc4c641bc6d5b",
+      "jpeg_sha256": "d7a9d4f2614e602e5ab31d9a9aa2d0e2566dfa1127575b0f8afdb53362635a65",
+      "review": "Beige trench coat, turtleneck, trousers and lace-up boots on a wet platform at dusk, hands in pockets; clean, even rendering. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "anima-v1-first-adapter-comparison": {
+      "url": "/api/examples/recipe-thumbs-20260927/anima-v1-first-adapter-comparison.jpg",
+      "caption": "Same platform subject with adapter 1 at 1.0: compare the light and proportions with the baseline.",
+      "prompt_id": "efba2f5c-7b25-478d-a57f-4383b37f0dc1",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anima-v1-first-adapter-comparison.json",
+      "original_sha256": "c88233c7320a6fc1520213edf05c491f71403d0365bb23545ec93f5336560a13",
+      "jpeg_sha256": "72c1e4d33fd31ca1ceaf3ecb6d0d667826abb965c37f66226711d132b421d8b1",
+      "review": "Brighter backlit platform with glow, ribbed sweater, brown boots, longer legs; still fully clothed. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "anima-v1-screenshot-sampling-comparison": {
+      "url": "/api/examples/recipe-thumbs-20260927/anima-v1-screenshot-sampling-comparison.jpg",
+      "caption": "Same subject with Euler a at CFG 5.5: compare the pink backlight and the narrower figure.",
+      "prompt_id": "76fdd8fe-1d58-4ded-8b02-c99aef9ff772",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anima-v1-screenshot-sampling-comparison.json",
+      "original_sha256": "1914e1e6469c7b0ebdc9c09fbbb4908e6a53b0e0fa28cb987cc6df40a4e742a4",
+      "jpeg_sha256": "0df87a457b8477015745104d68435a18e198fd45cb8dcfe8bd5455eb5fe738b4",
+      "review": "Pale pink backlight, cream sweater, fitted trousers, glossy wet platform; the figure is narrower and more stylised than the baseline. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "janima-v1-base": {
+      "url": "/api/examples/recipe-thumbs-20260927/janima-v1-base.jpg",
+      "caption": "JANIMA v1 baseline on a rainy platform: inspect the cooler, more even light.",
+      "prompt_id": "52056495-f256-4a79-96f3-e56f1a3a0e47",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/janima-v1-base.json",
+      "original_sha256": "7ce0bd00c4127d7342a1618558391bc20391c1a8ace85450236aa3449e1bde4e",
+      "jpeg_sha256": "ab9cf79dab1e29b07543a8e4afb36fc9f7f98980be63e263dc57425016c4d706",
+      "review": "Navy turtleneck, beige coat and trousers under a blue-grey canopy with a yellow tactile strip. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "janima-v1-authored-five-adapter-stack": {
+      "url": "/api/examples/recipe-thumbs-20260927/janima-v1-authored-five-adapter-stack.jpg",
+      "caption": "JANIMA with the authored five-adapter stack: compare the softer painterly finish with the baseline.",
+      "prompt_id": "1673247b-f801-44de-bfdd-439cf0601e76",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/janima-v1-authored-five-adapter-stack.json",
+      "original_sha256": "710b54502c2693d1dfcb0c546c6ef96fa3f61c75b3c66653d20504b66a753b6f",
+      "jpeg_sha256": "0df686f5c1411b6eb9dc0e403f1a51c4befa30d2fd84846a0674ef0255a79568",
+      "review": "Blunt fringe, cream turtleneck, warm backlit dusk and a softer painterly finish; still fully clothed. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "oneobsession-anima-v20-base": {
+      "url": "/api/examples/recipe-thumbs-20260927/oneobsession-anima-v20-base.jpg",
+      "caption": "One Obsession baseline on a rainy platform: inspect the rain streaks and wet reflections.",
+      "prompt_id": "933db201-93d4-4b7c-9340-21abd988c218",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/oneobsession-anima-v20-base.json",
+      "original_sha256": "a5eec6a8bc4ff5704fa5b16aa2a8d06b1399d846ea9ad6b2c209138c58d49bb8",
+      "jpeg_sha256": "9bf40a3d58b84c97614b91510cd1035904d0668be4d282bdfa63811c6fae471f",
+      "review": "Warm dusk backlight under a station canopy, rain streaks and a reflective platform; dark sweater and beige coat. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "oneobsession-anima-v20-portrait": {
+      "url": "/api/examples/recipe-thumbs-20260927/oneobsession-anima-v20-portrait.jpg",
+      "caption": "Close night-fog portrait: inspect the chiaroscuro and the eyelashes.",
+      "prompt_id": "d0121b72-473c-4a85-8c5a-4016955643c8",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/oneobsession-anima-v20-portrait.json",
+      "original_sha256": "a60390035d85d352b283ca58b622b20f8d492b8e17704987448450dfb18780ad",
+      "jpeg_sha256": "e2c9de906d16eb6d9619bdf381dfc434d4270b956654bafe390f9ea7d19fcc38",
+      "review": "Face from slightly above, dark hair across the face, blue night fog and strong chiaroscuro; moody close-up. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "pearly-anima-mix-v10-base": {
+      "url": "/api/examples/recipe-thumbs-20260927/pearly-anima-mix-v10-base.jpg",
+      "caption": "Pearly Anima Mix baseline on a platform: inspect the symmetrical canopy framing and glossy finish.",
+      "prompt_id": "8045f283-fe2f-493c-9d0e-a436038a706d",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/pearly-anima-mix-v10-base.json",
+      "original_sha256": "8c492471f9ffc95948cce4f6394ee9257eb32324a46a1628589c2c1badaf56ae",
+      "jpeg_sha256": "e09e31ea634bdb0c88d29c8283f445ac8f7615109dd2121638d2ceb9bac66d28",
+      "review": "Teal sweater, beige coat and trousers framed by a symmetrical canopy; soft glossy finish. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "wai-fantasy-portrait": {
+      "url": "/api/examples/recipe-thumbs-20260927/wai-fantasy-portrait.jpg",
+      "caption": "Silver-haired lantern bearer in a sunlit forest: inspect the light rays, crown and lantern hand.",
+      "prompt_id": "aa433fd7-edfd-4545-a29d-ac0806c1fe6a",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/wai-fantasy-portrait.json",
+      "original_sha256": "7d30506e091baecdd34816a82beea6659d3f054a40d73d739913ac63c1fe752e",
+      "jpeg_sha256": "e78092ea51d0f3a7c7e9e523d3e8293cca3a13b2e921614493e7f30b18bf02e1",
+      "review": "Braided crown, dark hooded cloak, leather bracers and a lit lantern among forest light rays; a glossy black dress with a thigh slit under the cloak. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "wai-noirpopwave-screenshot-baseline": {
+      "url": "/api/examples/recipe-thumbs-20260927/wai-noirpopwave-screenshot-baseline.jpg",
+      "caption": "Noirpopwave graphic poster of the cartographer: inspect the flat shapes and ornamental compass wheel.",
+      "prompt_id": "fe3e83b8-0563-47cf-86f6-f09ae907cf95",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/wai-noirpopwave-screenshot-baseline.json",
+      "original_sha256": "4daddd763e65380957acc2a5b1dbc00e5978cac799cd7f66e0f638051effd410",
+      "jpeg_sha256": "c1496b32990707596b832f6e74c01d2487d40f36984ca794692523479387fc40",
+      "review": "Teal coat and scarf, lantern and satchel before an ornamental compass wheel and star; bold flat shapes and a limited palette. The map case became a shoulder satchel. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "noob-fantasy-scene": {
+      "url": "/api/examples/recipe-thumbs-20260927/noob-fantasy-scene.jpg",
+      "caption": "Glowing mushroom grove, wide scenery: the reader is tiny; inspect the glow and the water.",
+      "prompt_id": "2fa1ee7e-1e08-453b-b43e-6b53fd709c9a",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/noob-fantasy-scene.json",
+      "original_sha256": "92714fb0ef6c3499f98e9dac2815c8c8b5779b30d49ffb2d6a43726265c16705",
+      "jpeg_sha256": "0373f170103ee87d1e2ad36d5b13f3409e6128a4bf9fb2f4e4b148fd9e6a3fa5",
+      "review": "A small reading figure on a lit ledge among glowing mushrooms over dark water under stars; too small to check the glasses or hands. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "animagine-fantasy-portrait": {
+      "url": "/api/examples/recipe-thumbs-20260927/animagine-fantasy-portrait.jpg",
+      "caption": "Red-haired woman in a lantern-lit night market: inspect the missing fox mask and the paper in her hand.",
+      "prompt_id": "17c317ec-6ce3-4286-aceb-0b5d94803aa9",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/animagine-fantasy-portrait.json",
+      "original_sha256": "88ff5d08f21b0ef793431b1d241269ae7dee7ec1619b26ae0d3c00a874f92afb",
+      "jpeg_sha256": "6edddec79adf17f50be7a928786a0cd046f942a98df55acbedf18b27c6f1358d",
+      "review": "Dark embroidered haori, dutch angle, paper lanterns overhead; the fox mask is missing and she holds a sheet of paper instead of a paper lantern. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "pony-fantasy-portrait": {
+      "url": "/api/examples/recipe-thumbs-20260927/pony-fantasy-portrait.jpg",
+      "caption": "Freckled apprentice smith with tongs: inspect the gloves and the missing forge.",
+      "prompt_id": "3063c283-35b2-4ba5-bac5-0e3804379648",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/pony-fantasy-portrait.json",
+      "original_sha256": "48c2d33bef3ca30c99c9e42012482c66da18820f768ab2abec73f398ff5e7577",
+      "jpeg_sha256": "a8fba82977d961f3d27663853afbf3daefff80a20af7833ee9fdfddcc1b56a55",
+      "review": "Curly-haired smith in a teal apron and leather gloves holding tongs, soft warm painterly haze; the forge itself is not visible, only embers. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "cstati-v3-base": {
+      "url": "/api/examples/recipe-thumbs-20260927/cstati-v3-base.jpg",
+      "caption": "CSTati v3 baseline on a teal rain-lit platform: inspect the symmetric arches and boots.",
+      "prompt_id": "974683b6-c5b7-456e-96e9-af982dc4fd77",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/cstati-v3-base.json",
+      "original_sha256": "8afea6c3d38f58bd4ad538ce2a0f3d50c40954417ea35bead837e63c317228a6",
+      "jpeg_sha256": "ea70b11dfad1b018092e49cecee76c5cc39f71e9af5ad2e1be46505f252042b0",
+      "review": "Beige coat, cream top, dark trousers and knee boots under teal arches; cool palette. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "cstati-v3-adapter-audition": {
+      "url": "/api/examples/recipe-thumbs-20260927/cstati-v3-adapter-audition.jpg",
+      "caption": "CSTati with the audition adapter at 1.0: compare the body shape and warmer scene with the baseline.",
+      "prompt_id": "6a162dfd-352e-42c3-b7ca-c778707defa1",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/cstati-v3-adapter-audition.json",
+      "original_sha256": "bdb50036c59660c6efd4692b63b8541c8e879990a1f575e7fd5431fd8987e8ac",
+      "jpeg_sha256": "0cc7f3ee1d6498e48ce9ce7b9b716e37c657e637b1ebae8a433f30a0d2637fb1",
+      "review": "Still fully clothed, with fuller proportions and a warmer brick platform and garden; the adapter changed body shape and scene more than style. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "yumeflux-ilv1-base": {
+      "url": "/api/examples/recipe-thumbs-20260927/yumeflux-ilv1-base.jpg",
+      "caption": "YumeFlux ILv1 baseline on a blue rainy platform: inspect the muted soft finish.",
+      "prompt_id": "12df9f6f-b07d-436a-a8e7-bb816d765e9f",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/yumeflux-ilv1-base.json",
+      "original_sha256": "35366d5cfed13895d0f63828f9e5733271769594adf75667d66f2191402e03c1",
+      "jpeg_sha256": "cc7105f92f4e3b0d1948e2ac586e56313ab6e1683d9715b7223a2866c99b5623",
+      "review": "Black long coat, white top, dark trousers and boots; muted and soft. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "yumeflux-ilv1-adapter-audition": {
+      "url": "/api/examples/recipe-thumbs-20260927/yumeflux-ilv1-adapter-audition.jpg",
+      "caption": "YumeFlux with the audition adapter at 1.0: compare the proportions and the added figure and train.",
+      "prompt_id": "fc6c1acf-afe9-4d59-8ab5-9c6cdc42e5a9",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/yumeflux-ilv1-adapter-audition.json",
+      "original_sha256": "45fdcdf0065794eca9bbd0e52e1dca8246d4eb87b54aeb22d477647413d7e0c3",
+      "jpeg_sha256": "b6465da2a78737c59bd62bc8f1b6ebb25244ec858a1db4c9a4b37745ceb6b233",
+      "review": "Still fully clothed, with fuller proportions and high-waisted buttoned trousers; a distant figure and a train were added. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "anifox-v2-base": {
+      "url": "/api/examples/recipe-thumbs-20260927/anifox-v2-base.jpg",
+      "caption": "AniFox v2 baseline on a rainy platform: the closest of the SDXL baselines to the prompt.",
+      "prompt_id": "ef958560-640f-42f3-87bb-c28fff2d0674",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anifox-v2-base.json",
+      "original_sha256": "bf546faa943f573aea280c92681e56cec6765fee87f040410bd16b61060e8d61",
+      "jpeg_sha256": "e7bac95c48a6a30d0c6747ea4ea699e451442c98224fdccd98a95918b4c08186",
+      "review": "Black coat, white top and knee boots on a rainy blue platform with a green signal lamp. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "anifox-v2-adapter-audition": {
+      "url": "/api/examples/recipe-thumbs-20260927/anifox-v2-adapter-audition.jpg",
+      "caption": "AniFox with the audition adapter at 1.0: compare the hair, sky and proportions with the baseline.",
+      "prompt_id": "bf463d95-313e-4ed8-a3f6-a15ccf8f1827",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/anifox-v2-adapter-audition.json",
+      "original_sha256": "43668f81763950ec173b4bcafc706e55cde796495b32858dc993971141ad0f89",
+      "jpeg_sha256": "66bd7157b6df5c2a589975b4836d27f42d8ca57757de065f607425c859cae2e4",
+      "review": "Still fully clothed, with shorter hair, fuller proportions and a brighter cloudy sky; framing unchanged. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults. Not a benchmark and not owner-accepted art."
+    },
+    "krea-oil-fantasy": {
+      "url": "/api/examples/recipe-thumbs-20260927/krea-oil-fantasy.jpg",
+      "caption": "Scholar on a fog-bound stone bridge: inspect the baroque oil texture; the figure is tiny.",
+      "prompt_id": "1f7d1dbc-ec2c-4c4f-9b1e-eca8df964eba",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/krea-oil-fantasy.json",
+      "original_sha256": "842ee19153ad3193a5562fc490903ca513c434932e9dc269abf5144a977e5589",
+      "jpeg_sha256": "ddce5c8607d5193fe9a953eaa1aafe0cb7891f782f581a9b6125db0a260f583b",
+      "review": "A small cloaked figure with a lantern on a mossy arched bridge over fog under a crimson sky; dark oil finish carries the picture. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults on the GGUF twin krea-anime-atelier-gguf (same bindings; the fp8 preset runs about ten times slower here). Not a benchmark and not owner-accepted art."
+    },
+    "krea-watercolor-anime": {
+      "url": "/api/examples/recipe-thumbs-20260927/krea-watercolor-anime.jpg",
+      "caption": "Herbalist in a greenhouse: inspect the airy watercolour washes and the simplified hands.",
+      "prompt_id": "e8e2aa02-d3b6-4c5e-bf30-005d940e2d63",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/krea-watercolor-anime.json",
+      "original_sha256": "c92d1232290afaca16dd810bcb36bc5ae301ebd5e28faded06749b27ea6be25c",
+      "jpeg_sha256": "7b8a7f87d2b17455708134ce18afcdef3efc74fb81672bc792eccc8723459011",
+      "review": "Straw hat and green apron, a potted seedling in both hands, bright white greenhouse; loose watercolour washes. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults on the GGUF twin krea-anime-atelier-gguf (same bindings; the fp8 preset runs about ten times slower here). Not a benchmark and not owner-accepted art."
+    },
+    "krea-4step-audition": {
+      "url": "/api/examples/recipe-thumbs-20260927/krea-4step-audition.jpg",
+      "caption": "Cartographer in sea spray above a cliff village: a 4-step 512x768 audition; inspect the map scribbles.",
+      "prompt_id": "a3238714-bb0e-4783-addf-4dcf2ad62f7d",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/krea-4step-audition.json",
+      "original_sha256": "67847cdf68da57093a0586a20a4537c8d2a76b2ef4e45ea4fccfae012811c40f",
+      "jpeg_sha256": "5b06cb0c73a60b1c142e529c9d60de17a48dd65839e53387cbf8f0a4fe7e4c8d",
+      "review": "Dark-haired figure reading a map in spray at blue hour; the map lines are illegible scribbles, not text; small audition size. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults on the GGUF twin krea-anime-atelier-gguf (same bindings; the fp8 preset runs about ten times slower here). Not a benchmark and not owner-accepted art."
+    },
+    "krea-atelier-wildcard-study": {
+      "url": "/api/examples/recipe-thumbs-20260927/krea-atelier-wildcard-study.jpg",
+      "caption": "Wildcard draw: storyteller in a night apothecary with a tabby cat; inspect the jar labels and the cat.",
+      "prompt_id": "6e02183b-a3a1-4617-a12d-7f8310aff963",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/krea-atelier-wildcard-study.json",
+      "original_sha256": "bb83ac0444bdc9ade568a139e81abde3ea3df4331c518d33eb70c41a917fb561",
+      "jpeg_sha256": "f634d0c657f8bfe076319b7c42d68242390185387a3a4ff8e80c7d65cec5d0e1",
+      "review": "The wildcards expanded to an apothecary crowded with jars at night, volumetric light, a tabby dozing on a book, sepia; jar labels are blank marks. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults on the GGUF twin krea-anime-atelier-gguf (same bindings; the fp8 preset runs about ten times slower here). Not a benchmark and not owner-accepted art."
+    },
+    "krea-lenovo-night-street": {
+      "url": "/api/examples/recipe-thumbs-20260927/krea-lenovo-night-street.jpg",
+      "caption": "Phone-camera night street: inspect the noise, flare and the blurred face.",
+      "prompt_id": "c8889748-14f5-40e6-9a1a-34b1be5856c1",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/krea-lenovo-night-street.json",
+      "original_sha256": "50cd047a7d0882a1a6fbe36154af94dfca8e4a4728f09c3b68e538e1a1254fd4",
+      "jpeg_sha256": "f97c3dcf554e396f7d055c6568d824bd36c8d856c6c3dba2e552f5f184755a25",
+      "review": "Photoreal amateur night shot: an adult woman in a duffle coat beside a parked car on a hillside street, city lights below, strong street-lamp flare and phone noise; the face is soft and blurred. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults on the GGUF twin krea-anime-atelier-gguf (same bindings; the fp8 preset runs about ten times slower here). Not a benchmark and not owner-accepted art."
+    },
+    "krea-style-airy-softwatercolor": {
+      "url": "/api/examples/recipe-thumbs-20260927/krea-style-airy-softwatercolor.jpg",
+      "caption": "Apothecary in rose and cream watercolour: inspect the jar labels, which are illegible marks.",
+      "prompt_id": "8b78c779-0bf5-47b5-9e3a-363b9eb1134c",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/krea-style-airy-softwatercolor.json",
+      "original_sha256": "59303c0c5f15ef66a30e0969054e2d89498c42327cb68b5e04903e11fa822434",
+      "jpeg_sha256": "f45030bc619a895bcd25c43981b087c5c3ea0a03de2d4a4f5ff56bb4dd9d0345",
+      "review": "Shelves of stoppered jars and an arched window in soft rose, cream and mint washes; the jar labels are pseudo-script marks, not readable text. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults on the GGUF twin krea-anime-atelier-gguf (same bindings; the fp8 preset runs about ten times slower here). Not a benchmark and not owner-accepted art."
+    },
+    "krea-style-inkwork-darkbrush": {
+      "url": "/api/examples/recipe-thumbs-20260927/krea-style-inkwork-darkbrush.jpg",
+      "caption": "Ruined chapel in monochrome ink: inspect the dry-brush ivy and light rays.",
+      "prompt_id": "21ab8b19-00cb-4030-acce-164a59c758a8",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/krea-style-inkwork-darkbrush.json",
+      "original_sha256": "8b5a4c5d51571d5919c2e8dc428c84466414544af055976ee3e63b0af28d2843",
+      "jpeg_sha256": "f0af93a4f544a32d7b69c4cb905b1d0a00ee7a833e26553b8f4adb7e8e7240ae",
+      "review": "Gothic arch and broken roof with light rays, ivy in heavy dry-brush ink, clean monochrome; no figures. Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults on the GGUF twin krea-anime-atelier-gguf (same bindings; the fp8 preset runs about ten times slower here). Not a benchmark and not owner-accepted art."
+    },
+    "krea-style-emerald-tarot": {
+      "url": "/api/examples/recipe-thumbs-20260927/krea-style-emerald-tarot.jpg",
+      "caption": "Knight and two-tailed white fox under root arches: inspect the fox's tails and the bottom-right corner.",
+      "prompt_id": "c362d8e5-202d-4507-b664-9d6bee781b57",
+      "receipt": "experiments/curated/recipe-thumbs-20260927/receipts/krea-style-emerald-tarot.json",
+      "original_sha256": "b047403898e4fc9da9497d33125450e48ace8088bac57aa1e5c6029f476523ed",
+      "jpeg_sha256": "64d6025b219a4b9161ba403e0da9479815a54c7f5574fc21087d638f12528cef",
+      "review": "Engraved paperback look with root archways, an armoured knight with a spear and a white fox; the fox shows one bushy tail, not two; a stray monogram-like mark sits at the bottom right (crop 880,880-1024,1024). Generated and agent-inspected, not accepted.",
+      "coverage": "One local Studio seed at the recipe defaults on the GGUF twin krea-anime-atelier-gguf (same bindings; the fp8 preset runs about ten times slower here). Not a benchmark and not owner-accepted art."
     }
   }
 }
