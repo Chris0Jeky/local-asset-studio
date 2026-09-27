@@ -290,6 +290,7 @@ def build_handler():
     from studio_prompt.http_extension import extend_handler
     from test_server import server
     import tiles   # app/ is on sys.path once server.py is loaded; a bare name, never `from app import`
+    import combine_plan
     from PIL import Image
 
     def tile_status(asset):
@@ -436,6 +437,14 @@ def build_handler():
                 if 'combine_plan' in data:
                     # #1163: one stage per recipe and seed, with a fixed per-picture estimate; nothing is submitted.
                     intent = data['combine_plan']; pairs = [(e, s) for e in intent['engines'] for s in intent['seeds']]
+                    # The server's own wording rule (combine_plan.stages): each other recipe's wording is built from the answers,
+                    # and a bracket left in any recipe refuses the whole plan. This is the 27 Sep 2026 live defect's refusal.
+                    for engine in intent['engines']:
+                        preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == engine)
+                        words = intent.get('wording', {}).get(engine) or (intent['base']['controls'].get('positive', '') if engine == intent['base']['preset_id'] else
+                                combine_plan.assemble(combine_plan.prompt_for(preset, {}), combine_plan.fill_values(preset, intent.get('answers') or {})))
+                        left = [holder for holder in combine_plan.placeholders(preset) if holder in words]
+                        if left: return self.json({'error': (preset.get('name') or engine) + ': fill in the wording, replace ' + ' and '.join('“%s”' % item for item in left)}, 400)
                     stages = [dict(label=chr(65 + i), engine=e, seed=s, operation='comfy.generate.v1', attempt={}, job=None) for i, (e, s) in enumerate(pairs)]
                     plan.update(id='f' * 32, axis='engine', values=[e + ' · seed ' + str(s) for e, s in pairs], stages=stages,
                                 budget={'allowance': len(stages), 'reserved': 0},
@@ -934,13 +943,16 @@ def _restyle(c):
 
 
 @driver('combine-character-with-another-pose')
-def _combine(c):
+def _combine(c, lead=None):
     """The owner's 14 Sep 2026 attempt: 'the pose of the second image' typed into a one-picture recipe gave the same picture."""
     c.boot('#create')
     c.page.wait_for_timeout(600)
     c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
     c.act(c.pick_output(), note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
+    if lead:
+        c.need_destination(lead)
+        c.act('#uxDestination', 'select', typed=lead, note='lead with this Combine recipe instead of the default', supplementary=True)
     c.act('#uxHandoffDetails', 'read', note='what Combine does with this picture')
     try: c.page.click('#uxHandoff details:has(#uxHandoffPrompt) > summary', timeout=2000)
     except Exception: pass
@@ -989,18 +1001,26 @@ def _combine(c):
 
 @driver('combine-several-engines-one-plan')
 def _combine_plan(c):
-    """#1163: the same pair on several Combine recipes with the same seeds as one prepared plan; Start stays a separate press."""
-    ready, detail = _combine(c)
+    """#1163: the same pair on several Combine recipes with the same seeds as one prepared plan; Start stays a separate press.
+    It leads with Klein 4B (who and pose only) and ticks Copy Pose and depth, which also read the clothes: the 27 Sep 2026
+    live defect, where Prepare was refused for a field the page never showed."""
+    ready, detail = _combine(c, lead='combine-klein')
     if not ready or c.live: return False, 'Needs the prepared fixture pair; live mode never prepares a plan. ' + detail
     import studio_browser_smoke as fixture
     current = c.page.evaluate('selected.id')
+    assert current == 'combine-klein', current
     tick = lambda engine: c.page.locator('[data-ux-plan-engine="%s"]' % engine)
     c.act('#uxEnginePlan > summary', note='open Run several recipes on this pair')
     assert tick(current).is_checked(), 'the open recipe starts ticked'
     assert tick('combine-klein-9b-skeleton').is_disabled(), 'a skeleton recipe cannot take this pose picture'
-    extra = [e for e in ('combine-klein', 'combine-klein-9b-depth', 'combine-klein-9b-copypose') if e != current and tick(e).count() and tick(e).is_enabled()][:2]
-    assert len(extra) == 2, extra
+    assert c.page.locator('#uxPlanFills').is_hidden(), 'Klein 4B alone needs no field beyond its own two'
+    extra = ['combine-klein-9b-copypose', 'combine-klein-9b-depth']
+    assert all(tick(e).is_enabled() for e in extra), extra
     for engine in extra: c.act('[data-ux-plan-engine="%s"]' % engine, 'check', note='tick another recipe for the same pair')
+    field = '#uxPlanFills [data-ux-plan-fill="clothes"]'
+    c.observe('the plan shows the clothes field Copy Pose and depth read and Klein 4B does not ask', c.page.locator(field).is_visible(),
+              c.page.locator('#uxPlanFills').inner_text())
+    c.act(field, 'fill', typed='a black and red robe with gold trim, a wide-brimmed black hat', note='the clothes and colours, once for both recipes')
     c.act('#uxPlanSeeds', 'fill', typed='11, 12', note='the same two seeds on every recipe')
     summary = c.page.locator('#uxPlanSummary').inner_text()
     c.observe('the page counts the pictures and sums the time it knows before anything is prepared', summary.startswith('3 recipes × 2 seeds = 6 pictures'), summary)
@@ -1014,6 +1034,7 @@ def _combine_plan(c):
     base = posted['base']
     assert base['preset_id'] == current and base['continuation']['reference_file'] == base['controls']['last_reference'] and base['references'][0]['file'], base
     assert posted['answers'].get('who') and posted['answers'].get('pose'), posted['answers']
+    assert posted['answers'].get('clothes') == 'a black and red robe with gold trim, a wide-brimmed black hat', posted['answers']
     c.act('#uxPlanStart', 'read', note='one explicit Start, shown with the expected total; never pressed here')
     assert c.page.locator('#uxPlanStart').is_enabled()
     c.act('#uxPlanSeeds', 'fill', typed='11, 13', note='change a seed after preparing')
@@ -1024,7 +1045,7 @@ def _combine_plan(c):
     generations = [p['path'] for p in fixture.POSTS if p['path'] == '/api/jobs' or p['path'].endswith('/start')]
     assert not generations, generations
     fixture.PLANS[:] = [plan for plan in fixture.PLANS if plan['id'] != 'f' * 32]
-    return True, '3 recipes x 2 seeds prepared as one plan with its expected total; Start shown once and withdrawn after a change; zero generation requests'
+    return True, 'Klein 4B lead + Copy Pose + depth x 2 seeds prepared as one plan (the clothes field shown and sent); Start shown once and withdrawn after a change; zero generation requests'
 
 
 @driver('draw-a-pose-for-combine')
