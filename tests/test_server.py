@@ -906,6 +906,17 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(job['status'],expected);self.assertIn('ComfyUI rejected the workflow before queuing: Invalid workflow',job['message'])
                 self.assertEqual(job['validation_errors'],{});self.assertNotIn('pending_submission',job)
 
+    def test_a_graph_build_failure_after_a_completed_member_is_partial(self):
+        # Building member 2's graph is pre-submit: nothing was sent for it, so completed outputs make the job partial.
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}}])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{},'batch_count':2})['id']];original=s._batch_graph
+        def build(job,i):
+            if i==1:raise server.StudioError('Wildcard lighting is unavailable')
+            return original(job,i)
+        with patch.object(s,'_batch_graph',side_effect=build):s._run(job)
+        self.assertEqual(job['status'],'partial');self.assertEqual(job['prompt_ids'],['one']);self.assertIn('No prompt was submitted for output 2',job['message'])
+        self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),1)
+
     def test_seed_plus_batch_past_the_seed_range_is_refused_before_queueing(self):
         s=self.studio()
         with self.assertRaisesRegex(server.StudioError,'seed plus batch count'):

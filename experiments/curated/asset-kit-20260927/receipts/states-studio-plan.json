@@ -1,0 +1,46 @@
+[
+ {
+  "key": "state-blank-c1",
+  "preset_id": "qwen21-rgba",
+  "controls": {
+   "positive": "A quiet geometric line illustration of an open empty folio with one inviting blank picture frame resting on its right page and a small four-point star above it, thin even neutral grey line work with one soft warm amber accent, flat minimal style, centred, full object visible, no text.",
+   "width": 1248,
+   "height": 832,
+   "seed": 2026092741
+  },
+  "label": "lab-0927 asset-kit state-blank"
+ },
+ {
+  "key": "state-blank-c2",
+  "preset_id": "qwen21-rgba",
+  "controls": {
+   "positive": "A quiet geometric line illustration of an open empty folio with one inviting blank picture frame resting on its right page and a small four-point star above it, thin even neutral grey line work with one soft warm amber accent, flat minimal style, centred, full object visible, no text.",
+   "width": 1248,
+   "height": 832,
+   "seed": 2026092742
+  },
+  "label": "lab-0927 asset-kit state-blank"
+ },
+ {
+  "key": "state-source-required-c1",
+  "preset_id": "qwen21-rgba",
+  "controls": {
+   "positive": "A quiet geometric line illustration of an empty picture frame with a small corner bracket at its lower left, thin even neutral grey line work with one soft warm amber accent, flat minimal style, centred, full object visible, no text.",
+   "width": 1248,
+   "height": 832,
+   "seed": 2026092741
+  },
+  "label": "lab-0927 asset-kit state-source-required"
+ },
+ {
+  "key": "state-source-required-c2",
+  "preset_id": "qwen21-rgba",
+  "controls": {
+   "positive": "A quiet geometric line illustration of an empty picture frame with a small corner bracket at its lower left, thin even neutral grey line work with one soft warm amber accent, flat minimal style, centred, full object visible, no text.",
+   "width": 1248,
+   "height": 832,
+   "seed": 2026092742
+  },
+  "label": "lab-0927 asset-kit state-source-required"
+ }
+]

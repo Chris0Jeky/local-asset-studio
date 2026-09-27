@@ -1,0 +1,181 @@
+{
+  "id": "e661fa19-a8c7-4f0a-aaf5-41c1ebb817a5",
+  "status": "completed",
+  "created_at": 1790485084.6691732,
+  "preset_id": "zimage-fast",
+  "preset_name": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)",
+  "controls": {
+    "positive": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092701
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "f86d3248-5c7a-4f55-8d99-5cc99c44bd22"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "f86d3248-5c7a-4f55-8d99-5cc99c44bd22",
+      "seed": 2026092701,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "lumina2",
+            "device": "cpu"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "ae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters."
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "ModelSamplingAuraFlow",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "shift": 3.0
+          }
+        },
+        "7": {
+          "class_type": "EmptySD3LatentImage",
+          "inputs": {
+            "width": 1344,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "8": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "6",
+              0
+            ],
+            "seed": 2026092701,
+            "steps": 8,
+            "cfg": 1.0,
+            "sampler_name": "res_multistep",
+            "scheduler": "simple",
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "7",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "9": {
+          "class_type": "VAEDecodeTiled",
+          "inputs": {
+            "samples": [
+              "8",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8
+          }
+        },
+        "10": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "9",
+              0
+            ],
+            "filename_prefix": "Studio/Z-Image-Fast"
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 203706368,
+        "peak_dedicated_bytes": 10433708032,
+        "samples": 435,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "Z-Image-Fast_00002_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092701,
+      "prompt_id": "f86d3248-5c7a-4f55-8d99-5cc99c44bd22",
+      "media_type": "image",
+      "asset_id": "8b0cdfc3229b5ed29317da60396063bd"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "seed_bindings": [
+    [
+      "8",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "lab-0927 wishlist cmp zimage-fast",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790485084.6760516,
+  "finished_at": 1790485300.623531,
+  "elapsed_seconds": 215.94747948646545
+}

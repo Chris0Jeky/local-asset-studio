@@ -1,0 +1,19 @@
+{
+  "preset_id": "krea-portrait-gguf",
+  "controls": {
+    "positive": "purple retro anime style, Hand-painted anime film background, the interior of a narrow late-night animation workshop loft, no people. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window looks over a rain-washed city at night, with a distant elevated train crossing on a rail line; below the window a small wooden desk with stacked blank drawing sheets, a warm desk lamp and a small glowing CRT monitor making a soft pool of light. Faint rose and cyan reflections on the wet glass, small amber accents, muted graphite palette, calm and quiet, eye-level camera at seated height, cel-painted 1990s animation background art. No text, no signs, no logos, no characters.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092701,
+    "steps": 8,
+    "cfg": 1,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\krea-portrait-gguf-api.json",
+  "created_at": 1790481317.4508724,
+  "references": [],
+  "parent_assets": []
+}

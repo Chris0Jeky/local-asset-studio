@@ -15,6 +15,8 @@
   function after(name,callback){const original=window[name];window[name]=function(...args){const result=original.apply(this,args);callback(...args);return result;};}
   function element(tag,className,html){const el=document.createElement(tag);if(className)el.className=className;if(html)el.innerHTML=html;return el;}
   function announce(text,error=false){message(text,error);q('#uxNotice').textContent=text;q('#uxNotice').classList.toggle('error',error);}
+  // #308: a Generate the memory check refuses says why in plain words; the server's own wording follows in brackets.
+  const plainMessage=message;message=function(text,error=false){const plain=error?U.headroomExplanation?.(text):null;return plainMessage.call(this,plain?plain+' ('+text+')':text,error);};
   const notice=element('p','ux-notice');notice.id='uxNotice';notice.setAttribute('role','status');main.prepend(notice);
   // Home is a work queue, not a separate project store. Unknown API state is not zero.
   const home=element('section','view ux-home');home.id='homeView';home.setAttribute('aria-labelledby','homeTitle');home.innerHTML='<div class="ux-home-heading"><div><span class="eyebrow">YOUR LOCAL CREATIVE WORKSPACE</span><h1 id="homeTitle" tabindex="-1">Pick up the thread.</h1><p>Start with an idea. Keep what works. Take it somewhere new.</p></div><button id="uxRefreshHome">Refresh overview</button></div><div id="uxHomeHealth" class="ux-home-health" role="status">Reading saved work…</div><div id="uxStats" class="ux-stats"></div><div class="section-title"><h2>What are you making?</h2><a href="/#create">Browse all recipes ↗</a></div><div id="uxJourneys" class="ux-journeys"></div><div class="ux-home-columns"><section class="panel"><div class="section-title"><h2>On your desk</h2><a href="/#production">All runs ↗</a></div><div id="uxAttention"></div></section><section class="panel ux-workflow-map"><span class="eyebrow">ONE IDEA. MANY DESTINATIONS.</span><h2>Keep the thread intact.</h2><div class="ux-flow-map"><a href="/prompt-lab.html">Brief<small>Shape the intent</small></a><span aria-hidden="true">→</span><a href="/#create">Create<small>Choose a recipe</small></a><span aria-hidden="true">→</span><a href="/#production">Review<small>Make a decision</small></a><span aria-hidden="true">→</span><a href="/#assets">Reuse<small>Carry the source</small></a></div><p>Bring outputs back as references, finish them in native tools, or assemble a scene. Every handoff is yours to review.</p><div class="ux-tool-links"><a href="/av.html">Assemble a scene ↗</a><a href="/voice.html">Prepare a voice take ↗</a><a href="/#learn">Understand the workflow ↗</a></div></section></div><div class="section-title"><h2>Recent assets</h2><a href="/#assets">Open library ↗</a></div><div id="uxRecent" class="ux-recent"></div>';
@@ -97,22 +99,27 @@
   const presetWording=p=>({positive:p?.defaults?.positive||'',negative:p?.defaults?.negative||''});
   const forgetWording=()=>{wordingKept=null;wordingUndo.hidden=true;};
   function offerWording(name){const kept=wordingKept,now=wording();if(!kept||!selected)return;
+    // Written by something else after the load in the same task: that write stands, so there is nothing to offer (#1144).
+    if(kept.loaded&&(now.positive!==kept.loaded.positive||now.negative!==kept.loaded.negative)){forgetWording();return;}
     const positive=kept.positive!==null&&kept.positive!==now.positive,negativeFits=!!selected.negative&&!!q('#negative');
     const negative=kept.negative!==null&&negativeFits&&kept.negative!==now.negative,lost=kept.negative!==null&&!negativeFits;
     if(!positive&&!negative&&!lost){forgetWording();return;}
-    kept.loaded=now;kept.restorable=positive||negative;wordingRestore.hidden=!kept.restorable;
+    kept.restorable=positive||negative;wordingRestore.hidden=!kept.restorable;
     wordingText.textContent=(kept.restorable?name+' loaded its own wording. Yours is kept until you type or choose.':'')+(lost?(kept.restorable?' ':'')+selected.name+' has no negative prompt, so your negative wording is not used: “'+kept.negative.slice(0,160)+(kept.negative.length>160?'…':'')+'”':'');
     wordingUndo.hidden=false;if(kept.restorable&&!selected.runtime_block)message('Loaded with its own wording. Yours is kept under the prompt: Put my wording back, or keep typing.');}
   function trackWording(name,kind){const original=window[name];window[name]=function(...args){
     const outer=wordingDepth===0,before=outer?wording():null,base=wordingBase||presetWording(selected);wordingDepth++;
     let result;try{result=original.apply(this,args);}finally{wordingDepth--;}
     if(!outer)return result;
-    if(kind==='setup'||kind==='preset'&&args[2]===true){forgetWording();wordingBase=presetWording(selected);return result;}
+    // A setup, import or draft loads its own wording: that text is loaded, not typed, like a recipe's (#1144).
+    if(kind==='setup'||kind==='preset'&&args[2]===true){forgetWording();wordingBase=kind==='setup'?wording():presetWording(selected);return result;}
     const own=key=>!!String(before[key]).trim()&&before[key]!==base[key]?before[key]:null,positive=own('positive'),negative=own('negative');
     // Your wording replaces an older offer; a load over untouched wording keeps the older one (a misclick in between).
     if(positive!==null||negative!==null)wordingKept={positive,negative};
     const recipe=kind==='recipe'?args[0]:null;wordingBase=recipe?{positive:recipe.controls?.positive??wording().positive,negative:recipe.controls?.negative??wording().negative}:presetWording(selected);
     // Measured after the caller finishes (a bundle apply sets its own wording in the same task).
+    // The loaded wording is recorded as this call ends, so a write later in the same task counts as an edit (#1144).
+    if(wordingKept)wordingKept.loaded=wording();
     if(wordingKept){const label=recipe?'Loading '+(recipe.name||'this recipe'):'Switching to '+selected.name;queueMicrotask(()=>offerWording(label));}
     return result;};}
   trackWording('selectPreset','preset');trackWording('applyRecipe','recipe');trackWording('applySaved','setup');

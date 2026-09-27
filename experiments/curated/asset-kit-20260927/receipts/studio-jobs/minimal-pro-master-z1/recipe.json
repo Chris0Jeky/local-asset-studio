@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "An empty room, no people. Minimal architectural interior painted as an anime film background: graphite walls, ivory paper and diffuse skylight from above. The left half and centre of the frame is a plain smooth graphite wall, almost empty and low in detail. At the right edge one pale desk with a single sheet of blank ivory paper under a soft rectangle of daylight. Almost monochrome graphite and ivory palette, precise and calm, no decoration, no neon. An empty room with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092751
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790487516.1737359,
+  "references": [],
+  "parent_assets": []
+}
