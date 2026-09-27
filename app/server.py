@@ -633,7 +633,7 @@ class Studio:
             others = f" The largest other GPU user was {label(credible[0])} with {credible[0].get('dedicated_bytes', 0) / 2**30:.1f} GB."
         elif holders:
             others = (f" The largest other GPU user is unknown: Windows reported an impossible {holders[0].get('dedicated_bytes', 0) / 2**30:.1f} GB"
-                      f" for {label(holders[0])}, more than the card holds.")
+                      f" for {label(holders[0])}, more than the whole card reported in use.")
         gib = worst.get('peak_shared_bytes', 0) / 2**30
         if any(p.get('lingering') for p in peaks):
             left = max((p.get('settled_shared_bytes') or 0) for p in peaks) / 2**30
