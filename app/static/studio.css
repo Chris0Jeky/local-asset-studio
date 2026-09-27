@@ -15,7 +15,7 @@
 /* Source-bound continuation stays visible beside the editable task, not in a toast. */
 .ux-continuation{display:grid;grid-template-columns:96px minmax(0,1fr);gap:1rem;margin:1rem 0;padding:1rem;border:1px solid var(--line,#455b56);border-left:3px solid var(--accent,#cbef93);border-radius:10px;background:var(--panel,#1b2525)}
 .ux-continuation[hidden]{display:none}.ux-continuation>img{width:96px;max-height:150px;object-fit:contain;border-radius:6px}.ux-continuation h3{margin:.35rem 0;font-size:1.05rem;overflow-wrap:anywhere}.ux-continuation p{margin:.55rem 0;line-height:1.5}.ux-continuation pre,#uxHandoffPrompt{white-space:pre-wrap;overflow-wrap:anywhere;max-height:15rem;overflow:auto;font:inherit;line-height:1.5}.ux-context-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}.ux-context-actions button{min-height:38px}#variants button:has(small){display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;text-align:left}#variants button small{font-weight:400;line-height:1.35;color:var(--muted,#aac0ba)}
-.ux-pair{margin:1rem 0;padding:.75rem 1rem;border:1px solid var(--line,#455b56);border-radius:10px;background:var(--panel,#1b2525)}.ux-pair[hidden]{display:none}.ux-pair-tiles{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.ux-pair-tile{margin:0;min-width:0}.ux-pair-tile img{width:100%;max-height:280px;object-fit:contain;border-radius:6px;background:#000}.ux-pair-tile figcaption{margin-top:.35rem;font-size:.9rem;line-height:1.4}.ux-pair-empty{display:grid;place-items:center;gap:.5rem;min-height:160px;padding:.75rem;border:1px dashed var(--line,#455b56);border-radius:6px;text-align:center}.ux-pair-empty button{min-height:38px}
+.ux-pair{margin:1rem 0;padding:.75rem 1rem;border:1px solid var(--line,#455b56);border-radius:10px;background:var(--panel,#1b2525)}.ux-pair[hidden]{display:none}.ux-pair-tiles{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.ux-pair-tile{margin:0;min-width:0}.ux-pair-tile img{width:100%;max-height:220px;object-fit:contain;border-radius:6px;background:#000}.ux-pair-tile figcaption{margin-top:.35rem;font-size:.9rem;line-height:1.4}.ux-pair-empty{display:grid;place-items:center;gap:.5rem;min-height:160px;padding:.75rem;border:1px dashed var(--line,#455b56);border-radius:6px;text-align:center}.ux-pair-empty button{min-height:38px}
 .ux-fills{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem;margin:.5rem 0 1rem}.ux-fills[hidden]{display:none}.ux-fills>p{grid-column:1/-1;margin:0}.ux-fills label{display:grid;gap:.3rem;font-size:.9rem}.ux-fills input{min-height:38px;width:100%;box-sizing:border-box}.recipe-typing{font-weight:600}.recipe-more summary{cursor:pointer}
 @media(max-width:600px){.ux-continuation{grid-template-columns:64px minmax(0,1fr);padding:.75rem;gap:.65rem}.ux-continuation>img{width:64px}.ux-context-actions{display:grid}.ux-context-actions button{min-height:44px}#variants button:has(small){flex-basis:100%}}
 
@@ -66,18 +66,21 @@
 .ux-engine-options{display:flex;gap:8px;flex-wrap:wrap}.ux-engine-options button{flex:1 1 155px;text-align:left;white-space:normal;min-height:64px}
 .ux-engine-options b,.ux-engine-options small{display:block}.ux-engine-options small{margin-top:5px;font-size:10px;line-height:1.4}
 .ux-engine-options [aria-pressed=true]{border-color:var(--accent,#c6dd94);background:#273b30}
-.ux-experiment-strip{display:flex;gap:12px;overflow-x:auto;padding:5px 0 12px;align-items:stretch}
-.ux-result-sources{position:sticky;left:0;z-index:1;display:flex;gap:6px;flex:0 0 170px;background:var(--panel,#1b2525);padding:8px;border-radius:8px;align-items:flex-start}
-.ux-result-sources figure{margin:0;min-width:0;flex:1}.ux-result-sources img{width:100%;height:120px;object-fit:contain}.ux-result-sources figcaption{font-size:10px;text-align:center}
-.ux-result-tile{flex:0 0 220px;min-width:0;display:flex;flex-direction:column;gap:7px;border:1px solid var(--line,#455b56);border-radius:8px;padding:10px}
-.ux-result-tile>img{width:100%;height:190px;object-fit:contain}.ux-result-tile>small{font-size:10px;line-height:1.5}.ux-result-tile>span{font-size:11px}
-.ux-result-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto}.ux-result-actions button{font-size:10px;min-height:36px;padding:6px 8px}
+.ux-experiment-strip{display:flex;gap:14px;overflow-x:auto;padding:4px 0 10px;align-items:flex-start}
+.ux-run-group{flex:0 0 auto;width:min-content;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ux-run-head{display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap;font-size:12px}.ux-run-head b{flex-basis:100%}.ux-run-head small{font-size:11px;opacity:.8}.ux-run-head button{font-size:10px;min-height:28px;padding:3px 8px;margin-left:auto}
+.ux-run-seeds{display:flex;gap:8px}
+.ux-result-tile{flex:0 0 172px;min-width:0;display:flex;flex-direction:column;gap:5px;border:1px solid var(--line,#455b56);border-radius:8px;padding:8px}
+.ux-result-tile>img{width:100%;height:150px;object-fit:contain}.ux-result-tile>b{font-size:12px}.ux-result-tile>span{font-size:11px}
+.ux-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:auto}.ux-result-actions button{font-size:10px;min-height:32px;padding:4px 6px}
+.ux-run-live{font-weight:600}.ux-run-attention{font-size:12px}.ux-run-attention summary{cursor:pointer}.ux-run-attention button{font-size:10px;min-height:30px;padding:3px 8px}
 .ux-no-results{min-width:180px;align-self:center}.job-problems{grid-column:1/-1;padding:14px;border:1px solid var(--line,#455b56);border-radius:9px}.job-problems summary{cursor:pointer}.job-problems .jobStatus{margin-top:12px}
-@media(max-width:700px){.ux-result-sources{position:static;flex-basis:135px}.ux-result-tile{flex-basis:195px}.ux-result-actions button{min-height:44px}}
+@media(max-width:700px){.ux-pair-tile img{max-height:180px}.ux-result-tile{flex-basis:160px}.ux-result-actions{grid-template-columns:1fr}.ux-result-actions button,.ux-run-head button,.ux-run-attention button{min-height:44px}}
 
 /* Draw the pose: a stick figure on black, the skeleton recipe's image 1. Drawing submits nothing. */
 .ux-pose-editor{margin:18px 0;padding:16px;border:1px solid var(--line,#455b56);border-radius:12px;min-width:0}
 .ux-pose-editor[hidden]{display:none}
+#uxPoseDisclosure,.ux-run-attention{border-top:0;padding-top:0;margin-top:0}.ux-run-attention{margin-top:8px}#uxPoseDisclosure>summary{cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}#uxPoseDisclosure>summary h3{display:inline;margin:0}#uxPoseDisclosure>summary::before{content:'▸';font-size:14px}#uxPoseDisclosure[open]>summary::before{content:'▾'}#uxPoseDisclosure>summary small{font-size:12px;opacity:.8}
 .ux-pose-editor h3{margin:0 0 8px}.ux-pose-editor p{font-size:12px;line-height:1.5}
 .ux-pose-layout{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
 #uxPoseCanvas{flex:0 0 auto;max-width:100%;background:#000;border:1px solid var(--line,#455b56);border-radius:8px;touch-action:none;cursor:grab}

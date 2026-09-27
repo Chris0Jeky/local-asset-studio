@@ -1,5 +1,23 @@
 # UX use-case matrix
 
+## Combine runs beside their pictures — 27 September 2026
+
+Refs #422, design handoff J4/D7. Before this change, at 1440×900 the pair sat at y≈854 and the result strip at y≈3499, with
+the pose editor, engine buttons, fills, wording and reference board in between. **Runs for these pictures** now follows
+the two pictures directly. Runs are grouped newest first, and each run heads its seeds with its engine, time, seed
+count and start time, plus one **Recipe** button. Queued or running work stays in view. A failed, uncertain, stopped
+or unknown-status run for this pair folds into one "needs attention" line with **Open in Problems**. It offers no seed
+action at all, so nothing there can run it again. **Draw the pose** is folded on picture routes and opens by itself on
+a recipe whose picture is the drawing.
+
+`python tests/studio_use_cases.py` passed **15/15** journeys with **zero generation submissions and zero page errors**.
+`combine-same-pair-second-engine` now adds a newer Klein 4B run and asserts three run groups with that run first. It
+checks that the uncertain run is folded with no seed control. It also checks that both pictures and the newest seed are
+unobscured on one 1440×900 screen once the pair is scrolled into view (measured with `elementFromPoint`, so the fixed
+dock counts as covering). The journey takes 14 clicks: the earlier 12, plus unfolding the attention line and pressing **Open in Problems**,
+which opens Problems at that run. `tests/pose_editor_handoff_browser.py` opens the fold
+before drawing on picture routes and passed 291 assertions. These are fixture screens; no model ran.
+
 ## Reference analysis review and Apply — 18 September 2026
 
 `reference-analysis-review-and-apply` now registers the Prompt Lab reference-review pipeline as an

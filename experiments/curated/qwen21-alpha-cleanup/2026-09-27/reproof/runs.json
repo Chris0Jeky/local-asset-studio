@@ -1,0 +1,67 @@
+[
+ {
+  "id": "c11448cc-b1cd-4fc2-af4d-1f0a95a549e8",
+  "status": "completed",
+  "preset_id": "qwen21-t2i",
+  "prompt_ids": [
+   "7e6fdf05-918b-4674-ab59-b1d74f38affe"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-t2i_00003_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092211,
+    "prompt_id": "7e6fdf05-918b-4674-ab59-b1d74f38affe",
+    "media_type": "image",
+    "asset_id": "26713f025c335210b23afe50e24ef82d"
+   }
+  ],
+  "elapsed_seconds": 57.3712112903595,
+  "error": null,
+  "created_at": 1790490172.5738125,
+  "finished_at": 1790490229.9500313,
+  "label": "t2i",
+  "controls": {
+   "seed": 2026092211
+  },
+  "references": [],
+  "commit_before_pct": 52.4,
+  "commit_peak_pct": 74.6,
+  "poll_wall_s": 61.6
+ },
+ {
+  "id": "74597f0d-3e0b-4fb1-bab5-a2c79a8b6b22",
+  "status": "completed",
+  "preset_id": "qwen21-edit",
+  "prompt_ids": [
+   "6bb11e5a-1e75-4a97-b9d3-a4322263e5bb"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-edit_00002_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092211,
+    "prompt_id": "6bb11e5a-1e75-4a97-b9d3-a4322263e5bb",
+    "media_type": "image",
+    "asset_id": "3ea50c266b48579fbb497175135f97ce"
+   }
+  ],
+  "elapsed_seconds": 114.66583156585693,
+  "error": null,
+  "created_at": 1790490251.4391189,
+  "finished_at": 1790490366.114464,
+  "label": "edit",
+  "controls": {
+   "seed": 2026092211,
+   "reference": "740e3264f81e4d6eb1a77b3a02239eb1_studio-lantern-cutout.png.png"
+  },
+  "references": [
+   "studio-lantern-cutout.png"
+  ],
+  "commit_before_pct": 52.0,
+  "commit_peak_pct": 75.9,
+  "poll_wall_s": 116.2
+ }
+]

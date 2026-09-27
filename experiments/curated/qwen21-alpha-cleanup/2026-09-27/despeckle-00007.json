@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "kind": "alpha_cleanup",
+  "mode": "rgba-despeckle",
+  "thresholds": {
+    "dust_below": 8,
+    "solid_from": 224,
+    "speck_peak_below": 32
+  },
+  "input": "C:/AI/experiments/qwen-image-21/ComfyUI/output/Studio/qwen21-rgba_00007_.png",
+  "input_sha256": "2d3860a35933452754709cb0dbec22fbc2ef566486127249fa30f0f9c6a967f5",
+  "output": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Research\\lab2-20260927\\rgba\\qwen21-rgba_00007_despeckle.png",
+  "output_sha256": "5ecb66632e6218c585d365e2ce6baf2f4d67f63bcb344b022c2cb303c1cc5b7d",
+  "before": {
+    "size": [
+      1024,
+      1024
+    ],
+    "bbox": [
+      0,
+      0,
+      1024,
+      1024
+    ],
+    "bands": {
+      "transparent": 847504,
+      "dust": 59168,
+      "edge": 5822,
+      "body": 71483,
+      "opaque": 64599
+    },
+    "components": 19722,
+    "largest_component": 144259
+  },
+  "after": {
+    "size": [
+      1024,
+      1024
+    ],
+    "bbox": [
+      4,
+      10,
+      1011,
+      1015
+    ],
+    "bands": {
+      "transparent": 906672,
+      "dust": 0,
+      "edge": 5822,
+      "body": 0,
+      "opaque": 136082
+    },
+    "components": 1,
+    "largest_component": 141904,
+    "despeckle": {
+      "regions_cleared": 0,
+      "pixels_cleared": 0
+    }
+  }
+}
