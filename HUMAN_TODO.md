@@ -195,6 +195,10 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
 - [ ] **vary-strengths-1202** (owner judgment; agents do not tick this): after the Vary live proof, press *Vary subtle* and *Vary strong* on a few of your own Krea keepers. Say whether subtle stays close enough and strong moves far enough. The starting values are Krea 0.25 / 0.5 (6 steps) and SDXL 0.3 / 0.55, set in `presets/catalog.json` (`vary`). Agents change them only after recording your words here. Also say whether WAI keepers need a real Vary route; today they get new seeds on the same recipe.
 
+## Make seamless (#1220, 27 September 2026) — open
+
+- [ ] **seamless-tiles-1220** (owner judgment; agents do not tick this): after the GPU live proof of *Make seamless*, open the Seamless tile and its 3×3 repeat asset for a wall and a flat floor. Say whether the tile is usable, and whether you want a band-width choice on the panel. Today the band is 112 px and only the API takes `band_px` (the lab used 160 px on the floor). The seam score is evidence, not acceptance.
+
 ## NSFW lab: ZZZ age-guide intake (24 September 2026, evening) — answered by the owner
 
 - [x] **zzz-age-intake**: The owner pasted a community ZZZ age guide (zerozoneshop) whose headline finding is that HoYoverse has confirmed no exact ZZZ character age. 15 names were evaluated in `experiments/curated/nsfw-lab-20260923/FINDINGS.md` (tail intake block); Ellen Joe stays dropped; Billy Kid and Pyrois excluded (non-human/unknown); Anby, Belle, Lucy, Koleda, Piper, Aria, Cissia, and Promeia pending owner confirmation; Nicole corrected as already-run. Decide: (a) confirm or reject each of the 8(or more) pending names for sexual cells; (b) confirm or retire new cells for already-run Jane, Nicole, Rina, Grace, and Yanagi (owner-named Evelyn, Miyabi, Caesar, and Burnice stand as authorized); (c) confirm or reject Aqua, whose wildcard line was removed meanwhile (see the intake block). Agents do not tick this.

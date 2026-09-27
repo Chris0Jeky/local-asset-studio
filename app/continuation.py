@@ -332,3 +332,15 @@ def validate(studio, payload, preset, graph, check_runtime=False):
             raise ValueError("Fill in the wording: replace %s before running." % " and ".join("“%s”" % item for item in left))
     if check_runtime: resource_admission.pre_submit(studio, payload, preset, graph)
     return dict(claim)
+
+
+def tile_route_problems(presets):
+    """Catalog contract, checked by scripts/validate-repo.py (#1220; kept here because the validator lane has no Pillow): at most one tile route, and it is a masked repaint of one picture."""
+    routes = [preset for preset in presets if preset.get("tile_route")]
+    problems = ["more than one tile_route recipe: " + ", ".join(p["id"] for p in routes)] if len(routes) > 1 else []
+    for preset in routes:
+        if preset.get("tile_route") is not True: problems.append(preset["id"] + ": tile_route must be true")
+        if not preset.get("requires_rgba_mask") or not preset.get("reference"): problems.append(preset["id"] + ": a tile route repaints an RGBA cross, so it needs requires_rgba_mask and a reference binding")
+        if preset.get("modality", "image") != "image": problems.append(preset["id"] + ": a tile route makes pictures")
+        if preset.get("width") or preset.get("height"): problems.append(preset["id"] + ": a tile route draws at the source size; it binds no width or height")
+    return problems

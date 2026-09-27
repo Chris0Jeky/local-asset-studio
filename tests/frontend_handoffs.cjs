@@ -1351,6 +1351,38 @@ async function recentRunsLeaveOutsideFocusAlone() {
   assert.ok(s.nodes().every(node => !node.focusOptions), 'No list control is focused');
 }
 
+// Make seamless (#1220): the tile recipe refuses to run without the server's prepared plan; beginTile attaches the seam
+// cross with the source as its parent, Generate sends the plan unchanged, any recipe change drops it, and a completed
+// repaint without a finished tile offers Finish tile, which calls only the deterministic finish route.
+async function seamlessTileSubmitsTheServerPlan() {
+  const {element, requests, run, parents} = sandbox(null, null);
+  const file = 'f'.repeat(32) + '_seam-cross.png';
+  const plan = {version: 1, preset_id: 'tile-route', source_asset_id: 'source-asset', source_sha256: 'a'.repeat(64), rolled_file: file, rolled_sha256: 'd'.repeat(64), size: 256, band_px: 112, feather_px: 12, flatten_sigma_px: 24};
+  run(`catalog.presets.push({id:'tile-route',name:'Seamless tile',modality:'image',tile_route:true,requires_rgba_mask:true,reference:['11','image'],positive:['4','text'],defaults:{}});selectPreset('tile-route');`);
+  assert.match(run('JSON.stringify(continuationBlockers())'), /Make seamless/, 'the tile recipe names its entry point');
+  assert.equal(element('#generate').disabled, true, 'no plan, no Generate');
+  run(`beginTile(${JSON.stringify({preset_id: 'tile-route', file, sha256: 'd'.repeat(64), width: 256, height: 256, plan, flag: 'Flat textures only: no perspective.', context: {title: 'Wall', positive: 'Flat graphite wall words'}})})`);
+  assert.equal(element('#positive').value, 'Flat graphite wall words', "the texture's own wording is kept");
+  assert.deepEqual(parents(), ['source-asset']);
+  assert.match(element('#referenceHint').textContent, /Flat textures only/);
+  assert.equal(requests.length, 0, 'preparing the workbench submits nothing');
+  assert.equal(element('#generate').disabled, false);
+  await element('#generate').onclick();
+  const submitted = requests.find(r => r.url === '/api/jobs').data;
+  assert.deepEqual(submitted.tile, plan); assert.equal(submitted.controls.reference, file); assert.deepEqual(submitted.parent_assets, ['source-asset']);
+  run(`selectPreset('plain')`);
+  assert.equal(run('JSON.stringify(tilePayload())'), '{}', 'another recipe drops the plan');
+  const card = job => run(`mediaCard(${JSON.stringify(job)},0,{media_type:'image',asset_id:'repaint'})`);
+  const repaint = {id: 'repaint-job', status: 'completed', controls: {}, preset_name: 'Seamless tile', tile: plan};
+  assert.match(card(repaint), /class="finishTile" data-job="repaint-job"/);
+  assert.match(card({...repaint, tile_finish: {error: 'size mismatch'}}), /Tile not finished: size mismatch/);
+  assert.doesNotMatch(card({...repaint, tile_finish: {job_id: 'done'}}), /finishTile/);
+  assert.match(run(`mediaCard({id:'f',controls:{},preset_name:'Seamless tile'},0,{media_type:'image',tile:{summary:'Seam 4.34 → 0.82'}})`), /Seam 4.34 → 0.82/);
+  await element('#gallery').onclick({target: {closest: selector => selector === '.finishTile' ? {dataset: {job: 'repaint-job'}} : null}});
+  assert.deepEqual(requests.filter(r => r.url === '/api/tiles/finish').map(r => r.data), [{job_id: 'repaint-job'}]);
+  assert.equal(requests.filter(r => r.url === '/api/jobs').length, 1, 'finishing never submits a generation');
+}
+
 (async () => {
   await recentRunsShowMoreSurvivesAPoll();
   await recentRunsReleaseOnEndedAndSkipLoops();
@@ -1409,6 +1441,7 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await linkedModelFolderIsOneRow();
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
+  await seamlessTileSubmitsTheServerPlan();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
 
