@@ -8,6 +8,9 @@ from scripts import character_study as study
 # Imported two ways: as a sibling inside the server (app/ on sys.path) and as app.character_review by the
 # offline collector script (repository root on sys.path). The package spelling alone shadows under the
 # ComfyUI embedded Python, whose own regular `app` package wins over this directory whatever the path order.
+# Measured 14 Sep 2026 (PR #341): the launcher failed with `ImportError: cannot import name 'character_review'
+# from 'app' (...\ComfyUI\app\__init__.py)` (.runtime/20260914-135035-error.log), and
+# `python_embeded\python.exe -c "import server"` with app/ on the path failed before the bare-sibling fix, passed after.
 try: from review_media import digest
 except ImportError: from app.review_media import digest
 
