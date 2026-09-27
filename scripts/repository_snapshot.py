@@ -35,9 +35,13 @@ _Q_OPEN = re.compile(
 )
 _UNCHECKED = re.compile(
     r"^-\s*\[\s\]\s+\*\*([a-z0-9]+(?:-[a-z0-9]+)*)\*\*\s+"
-    r"\(owner (?:action|decisions?)(?:;[^)]*)?\):\s+(.+?)\s*$",
+    r"\(owner (?:action|decisions?)(?:[;,][^)]*)?\):\s+(.+?)\s*$",
     re.IGNORECASE,
 )
+# A top-level open checkbox with a bold identifier and an owner label claims to
+# be an owner item. One that `_UNCHECKED` cannot read is refused, never dropped:
+# a silent miss under-reports the owner backlog (#1103 added one with a comma).
+_OWNER_CLAIM = re.compile(r"^-\s*\[\s\]\s+\*\*[^*]+\*\*\s*\(owner\b", re.IGNORECASE)
 _FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 _REPOSITORY_FIELDS = ("head_sha", "default_branch", "facts_sha", "catalog_blob_sha", "human_todo_blob_sha")
 
@@ -332,6 +336,9 @@ def human_todo_facts(root: Path):
             fence = (marker[1][0], len(marker[1]))
             continue
         match = _Q_OPEN.match(line) or _UNCHECKED.match(line)
+        if match is None and _OWNER_CLAIM.match(line):
+            raise ValueError(f"HUMAN_TODO.md owner item is not in the parsed form "
+                             f"'- [ ] **id** (owner action|decision[; or , note]): text': {line[:120]}")
         if match and match[1].lower() not in seen:
             identifier = match[1].lower()
             seen.add(identifier)
