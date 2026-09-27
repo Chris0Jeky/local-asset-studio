@@ -81,15 +81,50 @@ class TaxonomyImplicationPathTests(unittest.TestCase):
         self.assertEqual(trace["emitted"], ["pose_seed"])
         self.assertNotIn("alternate_path", trace["entry_ids"])
 
-    def test_unordered_entry_stops_traversal_even_when_accepted(self):
+    def test_unordered_entry_is_filtered_but_its_implications_still_resolve(self):
         for index in (0, 1):
-            with self.subTest(index=index):
-                root, _ = self.make_root(blocked=False, unordered=index)
-                _, result = self.compile(root)
-                trace = result["vocabulary_resolutions"][0]
-                self.assertEqual(trace["entry_ids"], ["pose_seed"] if index == 0 else ["pose_seed", "blocked_bridge"])
-                self.assertEqual(trace["emitted"], [] if index == 0 else ["pose_seed"])
-                self.assertIn("TAXONOMY_UNORDERED_FOR_PROFILE", {d["code"] for d in result["diagnostics"]})
+            for profile in (PROFILE, HYBRID):
+                with self.subTest(index=index, profile=profile):
+                    root, _ = self.make_root(blocked=False, unordered=index)
+                    projection, result = self.compile(root, ["pose_seed"], profile)
+                    trace = result["vocabulary_resolutions"][0]
+                    self.assertEqual(
+                        trace["entry_ids"],
+                        ["pose_seed", "blocked_bridge", "target_leaf"],
+                    )
+                    if index == 0:
+                        expected = (
+                            ["blocked_bridge", "target_leaf"]
+                            if profile == PROFILE
+                            else ["blocked bridge", "target leaf"]
+                        )
+                    else:
+                        expected = (
+                            ["pose_seed", "target_leaf"]
+                            if profile == PROFILE
+                            else ["pose seed", "target leaf"]
+                        )
+                    self.assertEqual(trace["emitted"], expected)
+                    self.assertEqual(trace["status"], "partially_emitted")
+                    self.assertIn(
+                        "TAXONOMY_UNORDERED_FOR_PROFILE",
+                        {d["code"] for d in result["diagnostics"]},
+                    )
+                    self.assertIn("target", result["channels"]["positive"])
+                    self.assertEqual(
+                        validate_prompt_projection(result, projection, root), result
+                    )
+
+    def test_unaccepted_bridge_still_blocks_below_an_unordered_root(self):
+        root, _ = self.make_root(blocked=True, unordered=0)
+        _, result = self.compile(root)
+        trace = result["vocabulary_resolutions"][0]
+        self.assertEqual(trace["entry_ids"], ["pose_seed", "blocked_bridge"])
+        self.assertEqual(trace["emitted"], [])
+        self.assertNotIn("target", result["channels"]["positive"])
+        codes = {d["code"] for d in result["diagnostics"]}
+        self.assertIn("TAXONOMY_UNORDERED_FOR_PROFILE", codes)
+        self.assertIn("TAXONOMY_IMPLICATION_NOT_ACCEPTED", codes)
 
     def test_eligible_alternate_path_reaches_a_shared_descendant_in_its_own_order(self):
         root, _ = self.make_root(alternate=True)
