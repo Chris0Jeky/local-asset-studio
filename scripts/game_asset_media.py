@@ -3,6 +3,7 @@ PNG source frames are never resized/trimmed. OpenRaster supports flat normal RGB
 """
 from __future__ import annotations
 import argparse
+import copy
 import hashlib
 import io
 import json
@@ -102,13 +103,14 @@ def atlas(manifest, root, output, columns=8, padding=2, extrude=1):
                                   (0, h-1, x-e, y+h), (w-1, h-1, x+w, y+h)):
                 sheet.paste(Image.new('RGBA', (e,e), im.getpixel((sx,sy))), (dx,dy))
         require(sheet.crop((x,y,x+w,y+h)).tobytes() == im.tobytes(), 'Internal atlas round-trip failed')
+        # Snapshot the caller's objects: the returned payload must not change when the input manifest does.
         records.append({'id':frame['id'], 'region':[x,y,w,h], 'duration_ms':frame['duration_ms'],
-                        'anchor':manifest['anchor'], 'source':frame, 'pixel_sha256':phash})
+                        'anchor':list(manifest['anchor']), 'source':copy.deepcopy(frame), 'pixel_sha256':phash})
     folder = Path(output); folder.mkdir(parents=True, exist_ok=False)
     (folder / '.incomplete').write_text('Do not consume until manifest.json exists and this marker is absent.\n')
     sheet.save(folder/'atlas.png')
     payload = {'schema_version':1, 'kind':'sprite_atlas', 'clip':manifest['clip'], 'loop':manifest['loop'],
-               'logical_canvas':[w,h], 'anchor':manifest['anchor'], 'atlas':'atlas.png',
+               'logical_canvas':[w,h], 'anchor':list(manifest['anchor']), 'atlas':'atlas.png',
                'atlas_sha256':file_sha(folder/'atlas.png'), 'dimensions':list(sheet.size),
                'padding':padding, 'extrude':extrude, 'frames':records, 'input_manifest_sha256':sha(manifest),
                'qa':{'pixel_roundtrip':'passed','warnings':warnings_out,'motion_semantics':'not_checked'}}
@@ -196,7 +198,10 @@ def cleanup(source, output, mode='rgba-cleanup', evidence=None):
     after_image = alpha_cleanup(before_image) if mode == 'rgba-cleanup' else to_rgb(before_image)
     after = alpha_report(after_image) if mode == 'rgba-cleanup' else {'mode': 'RGB', 'size': list(after_image.size)}
     out = Path(output)
-    with out.open('xb') as stream: after_image.save(stream, format='PNG')
+    stream = out.open('xb')  # FileExistsError: never overwrite
+    try:
+        with stream: after_image.save(stream, format='PNG')
+    except BaseException: out.unlink(missing_ok=True); raise  # a truncated PNG would read as finished and block the retry
     record = {'schema_version': 1, 'kind': 'alpha_cleanup', 'mode': mode,
               'thresholds': {'dust_below': ALPHA_DUST_BELOW, 'solid_from': ALPHA_SOLID_FROM},
               'input': str(source), 'input_sha256': hashlib.sha256(raw).hexdigest(),
@@ -241,12 +246,15 @@ def ora(manifest, root, output):
                       'x':'0','y':'0','opacity':'1.0','visibility':'visible' if layer.get('visible',True) else 'hidden',
                       'composite-op':'svg:src-over'})
     thumb = merged.copy(); thumb.thumbnail((256,256), Image.Resampling.LANCZOS)
-    with zipfile.ZipFile(output, 'x', compression=zipfile.ZIP_DEFLATED) as out:
-        zip_entry(out, 'mimetype', b'image/openraster', zipfile.ZIP_STORED)
-        zip_entry(out, 'stack.xml', ET.tostring(doc, encoding='utf-8', xml_declaration=True))
-        for i, (_, im) in enumerate(prepared): zip_entry(out, f'data/layer{i:03d}.png', png_bytes(im))
-        zip_entry(out, 'mergedimage.png', png_bytes(merged))
-        zip_entry(out, 'Thumbnails/thumbnail.png', png_bytes(thumb))
+    archive = zipfile.ZipFile(output, 'x', compression=zipfile.ZIP_DEFLATED)  # FileExistsError: never replace
+    try:
+        with archive as out:
+            zip_entry(out, 'mimetype', b'image/openraster', zipfile.ZIP_STORED)
+            zip_entry(out, 'stack.xml', ET.tostring(doc, encoding='utf-8', xml_declaration=True))
+            for i, (_, im) in enumerate(prepared): zip_entry(out, f'data/layer{i:03d}.png', png_bytes(im))
+            zip_entry(out, 'mergedimage.png', png_bytes(merged))
+            zip_entry(out, 'Thumbnails/thumbnail.png', png_bytes(thumb))
+    except BaseException: Path(output).unlink(missing_ok=True); raise  # a partial .ora must not look complete
     return {'output':str(output),'sha256':file_sha(output),'layers':len(prepared),
             'format':'OpenRaster flat normal RGBA layers','krita_live_import_tested':False,
             'not_preserved':['animation','rig','groups','masks','non-normal blend modes','ICC profiles']}
