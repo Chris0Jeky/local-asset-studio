@@ -35,7 +35,7 @@ The scene was "a rain-soaked arcade entrance on a narrow street at night; at the
 
 ## 2. WAI Vary (`wai-vary`, #1202, #1240)
 
-**Parent:** WAI job `eaf24185-1518-4057-a806-8284487ef36d`, asset `4571765f`, 16.2 s, from the recipe-thumbs baseline. It used the noirpopwave LoRA at 1.0, euler_ancestral, 24 steps, and an SFW fantasy cartographer prompt.
+**Parent:** WAI job `eaf24185-1518-4057-a806-8284487ef36d`, asset `4571765f`, 16.2 s elapsed on the worker (`elapsed_seconds` in its local `state.json`; the recipe-thumbs receipt records 17.9 s wall), from the recipe-thumbs baseline. It used the noirpopwave LoRA at 1.0, euler_ancestral, 24 steps, and an SFW fantasy cartographer prompt.
 
 The route was: Asset library -> the picture -> Vary subtle or Vary strong -> Generate.
 
@@ -85,3 +85,5 @@ The local driver `python C:/Users/jekyt/AppData/Local/Temp/qi21-dl/dl.py 3 4` do
 - `tiles-floor-band-sheet.jpg`, `look-v2-sheet.jpg`, `vary-wai-sheet.jpg`: the sheets for the owner.
 - `receipts/`: the page events, the prepared wording, host commit before each Generate, the job records (prompt IDs, seeds, assets and elapsed time) and the tile asset hashes.
 - `scripts/`: the as-run page drivers, kept as receipts. They import a local `drive.py` helper and hardcode local paths.
+
+**Receipt note (added at review, 27 Sep 2026):** `scripts/tiles3x3.py` is the earlier live-proofs driver and only builds the narrow-band wall/floor sheet. `tiles-floor-band-sheet.jpg` was put together ad hoc from the Studio's own two 3×3 preview assets (narrow `a4158f9f`, wide `e84e7a97`; see `receipts/tiles-assets.json`), and no script for it is committed. The `validate-live` pass for `wai-vary` was read from the console; no receipt is committed for it.
