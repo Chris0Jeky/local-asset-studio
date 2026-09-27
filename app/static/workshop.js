@@ -314,6 +314,19 @@
     const reviewButton = button('workshopReview', 'Review checks', () => reveal(review));
     dockInfo.append(readiness, eta, reviewButton);
     const status = q('#status'); dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
+    // A text field you enter is never left under the fixed dock; a narrow dock also compacts while you type (workshop.css).
+    const typing = n => !!n?.matches?.('textarea,input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=file],[type=color],[type=image])') && !dock.contains(n);
+    create.addEventListener('focusout', e => { if (typing(e.target)) dock.classList.remove('wk-typing'); });
+    create.addEventListener('focusin', e => {
+      const field = e.target; if (!typing(field)) return; dock.classList.add('wk-typing');
+      w.requestAnimationFrame(() => {
+        if (d.activeElement !== field) return;
+        const box = field.getBoundingClientRect(), top = dock.getBoundingClientRect().top;
+        if (box.bottom <= top - 8 && box.top >= 0) return;
+        // scroll-margin-block keeps the header and the dock clear; a field taller than the room shows its first lines.
+        field.scrollIntoView({block:box.height + 130 > top ? 'start' : 'end'});
+      });
+    });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
     const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('aria-label', 'Plan and vary this run');
     const compare = q('#planComparison'), newSeed = q('#randomSeed');

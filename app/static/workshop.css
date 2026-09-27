@@ -183,6 +183,7 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
   .workshop .wk-run-dock #batch {width:100px;min-height:44px;font-size:11px}
   .workshop .wk-run-dock #generate {min-width:125px;min-height:44px;font-size:13px;padding:10px 18px}
   .workshop .wk-run-dock #status {font-size:10px;max-height:3em}
+  .workshop .wk-run-dock.wk-typing :is(.wk-run-tools,.wk-dock-info>span) {display:none}
   body.workshop-active #workshopRecipeDialog {width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 16px);max-height:none;padding:20px 16px;border-radius:16px}
   .wk-dialog-heading {gap:12px}.wk-dialog-heading h2 {font-size:25px}
   #workshopRecipeDialog #presetList {grid-template-columns:1fr;max-height:48dvh}
