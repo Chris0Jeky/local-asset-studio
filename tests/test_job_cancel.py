@@ -186,6 +186,52 @@ class JobCancelTests(unittest.TestCase):
                 self.assertIn(words, job["cancellation"]["note"]); self.assertEqual(studio.posts("/interrupt"), [])
                 self.assertNotIn(job["id"], studio.cancel_requests); self.assertNoResubmission(studio)
 
+    def test_a_refused_cancel_still_stops_the_rest_of_a_batch(self):
+        # #1159 review: the in-flight output cannot be proven ours, but stopping before the next POST needs nothing from ComfyUI.
+        for answer, words in ((queue(running=["lab"]), "does not list this job's prompt"), (URLError("refused"), "Could not read ComfyUI's queue")):
+            with self.subTest(words=words):
+                studio = self.studio(); job = self.job(studio, batch=3); second = ("POST", "/prompt", {"prompt_id": "two"})
+                studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", self.click(studio, job, {"prompt_id": "one"})),
+                                 ("GET", "/queue", answer), ("GET", "/history/one", success("one")), second]
+                studio._run(job)
+                self.assertEqual(studio.script, [second], "the second output is never submitted")
+                self.assertEqual(len(studio.posts("/prompt")), 1); self.assertEqual(studio.posts("/interrupt"), [])
+                self.assertEqual(job["status"], "cancelled"); self.assertEqual(job["prompt_ids"], ["one"]); self.assertEqual(len(job["outputs"]), 1)
+                self.assertIn("1 of 3 outputs finished and are kept", job["message"])
+                record = job["cancellation"]; self.assertEqual(record["state"], "cancelled"); self.assertNotIn("stop_submissions", record)
+                self.assertIn(words, record["refusal"]); self.assertIn("No further outputs", record["refusal"])
+                self.assertIn("in-flight output could not be stopped", record["note"])
+
+    def test_a_single_output_refusal_stays_refused_and_carries_no_batch_stop(self):
+        studio = self.studio(); job = self.job(studio)
+        studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", self.click(studio, job, {"prompt_id": "ours"})),
+                         ("GET", "/queue", queue(running=["lab"])), ("GET", "/history/ours", success("ours"))]
+        studio._run(job)
+        self.assertEqual(job["status"], "completed"); self.assertEqual(job["cancellation"]["state"], "refused")
+        self.assertNotIn("stop_submissions", job["cancellation"]); self.assertNotIn("No further outputs", job["cancellation"]["note"])
+        self.assertNoResubmission(studio)
+
+    def test_a_delete_whose_read_back_was_lost_is_confirmed_by_history_not_refused(self):
+        # #1159 review: the next pass finds the prompt absent; the earlier delete is noticed and /history decides.
+        studio = self.studio(); job = self.job(studio)
+        studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", self.click(studio, job, {"prompt_id": "ours"})),
+                         ("GET", "/queue", queue(pending=["ours"])), ("POST", "/queue", None), ("GET", "/queue", URLError("busy")),
+                         ("GET", "/history/ours", {}),
+                         ("GET", "/queue", IDLE), ("GET", "/history/ours", {})]
+        studio._run(job)
+        self.assertEqual(job["status"], "cancelled"); self.assertEqual(job["submissions"][0]["cancelled"]["basis"], "dequeued")
+        record = job["cancellation"]; self.assertEqual(record["state"], "cancelled"); self.assertEqual([a["action"] for a in record["actions"]], ["dequeue"])
+        self.assertEqual([(o["queue"], o.get("history")) for o in record["observations"]], [("pending", None), ("unreadable", None), ("absent", "absent")])
+        self.assertNoResubmission(studio)
+        # Same lost read-back, but history shows it ran: not claimed cancelled, never "refused... nothing was cancelled".
+        studio = self.studio(); job = self.job(studio)
+        studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", self.click(studio, job, {"prompt_id": "ours"})),
+                         ("GET", "/queue", queue(pending=["ours"])), ("POST", "/queue", None), ("GET", "/queue", URLError("busy")),
+                         ("GET", "/history/ours", {}), ("GET", "/queue", IDLE), ("GET", "/history/ours", success("ours")),
+                         ("GET", "/history/ours", success("ours"))]
+        studio._run(job)
+        self.assertEqual(job["status"], "completed"); self.assertEqual(job["cancellation"]["state"], "too_late"); self.assertNoResubmission(studio)
+
     def test_refused_cancel_can_be_asked_again_and_keeps_the_earlier_attempt(self):
         studio = self.studio(); job = self.job(studio)
         def second():

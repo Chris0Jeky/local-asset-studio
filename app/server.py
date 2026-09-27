@@ -1859,7 +1859,7 @@ class Studio:
     def _cancel_checkpoint(self, job):
         """Worker, before any new submission: an open owner cancel settles the job here (caller holds the lock)."""
         if job.get('status') == 'cancelled': return True
-        if job_cancel.pickup(self, job) is None: return False
+        if job_cancel.pickup(self, job) is None and not job_cancel.stop_pending(job): return False
         job_cancel.settle(self, job); return True
 
     def _run_generation(self, job):

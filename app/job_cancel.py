@@ -93,6 +93,21 @@ def _resolve(studio, job, state, note):
     if (requests.get(job.get('id')) or {}).get('event_id') == record.get('event_id'): requests.pop(job.get('id'), None)
 
 
+def _refuse(studio, job, note):
+    """The in-flight prompt could not be proven ours or reached. Stopping before the next batch submission needs nothing
+    from ComfyUI, so a refused request still ends the batch at the next boundary (#1159 review)."""
+    remaining = len(job.get('prompt_ids', [])) < (job.get('batch_count') or 1)
+    if remaining: note += ' No further outputs of this batch will be submitted.'
+    _resolve(studio, job, 'refused', note)
+    if remaining: job['cancellation']['stop_submissions'] = True
+
+
+def stop_pending(job):
+    """A refused request still owes the batch a stop before its next submission."""
+    record = job.get('cancellation')
+    return isinstance(record, dict) and record.get('state') == 'refused' and record.get('stop_submissions') is True
+
+
 def settle(studio, job, how=None):
     """Terminal `cancelled` (caller holds studio.lock). Finished outputs stay recorded; nothing is retried."""
     done = sum(1 for s in job.get('submissions', []) if isinstance(s, dict) and s.get('status') == 'completed')
@@ -105,6 +120,10 @@ def settle(studio, job, how=None):
         kept = f' {done} of {total} outputs finished and are kept.' if done else ''
         rest = ' The remaining outputs were not submitted.' if len(job.get('prompt_ids', [])) < total else ''
         message = lead + kept + rest + ' Nothing is retried.'; note = lead
+    record = job['cancellation']
+    if stop_pending(job):
+        record['refusal'] = record.get('note'); record.pop('stop_submissions', None)
+        note += ' The in-flight output could not be stopped (' + str(record['refusal'] or 'refused') + ')'
     job['status'] = 'cancelled'; job['message'] = message
     _resolve(studio, job, 'cancelled', note)
     studio._stamp_finished(job); studio._save(job)
@@ -176,17 +195,19 @@ def act(studio, job, submission):
     with studio.lock:
         _observe(record, prompt_id, queue=where, running=running[:4])
         if where == 'unreadable':
-            _resolve(studio, job, 'refused', "Could not read ComfyUI's queue, so this job's prompt could not be found. Nothing was cancelled; the render continues.")
+            _refuse(studio, job, "Could not read ComfyUI's queue, so this job's prompt could not be found. Nothing was cancelled; the render continues.")
             studio._save(job); return False
-        if where == 'absent':
+        if where == 'absent' and dequeues:
+            studio._save(job)   # a delete was already sent for this prompt: the history read below decides
+        elif where == 'absent':
             other = ' ComfyUI is running another prompt.' if running else ''
-            _resolve(studio, job, 'refused', 'ComfyUI does not list this job\'s prompt as waiting or running, so nothing was cancelled.' + other + ' The Studio keeps reading its history.')
+            _refuse(studio, job, 'ComfyUI does not list this job\'s prompt as waiting or running, so nothing was cancelled.' + other + ' The Studio keeps reading its history.')
             studio._save(job); return False
         if where == 'running' and running != [prompt_id]:
-            _resolve(studio, job, 'refused', 'ComfyUI lists more than one running prompt, so the Studio cannot prove the interrupt would reach only this job. Nothing was interrupted.')
+            _refuse(studio, job, 'ComfyUI lists more than one running prompt, so the Studio cannot prove the interrupt would reach only this job. Nothing was interrupted.')
             studio._save(job); return False
         if where == 'pending' and dequeues >= MAX_DEQUEUES:
-            _resolve(studio, job, 'refused', 'ComfyUI kept this prompt queued after two delete requests; nothing more was sent.')
+            _refuse(studio, job, 'ComfyUI kept this prompt queued after two delete requests; nothing more was sent.')
             studio._save(job); return False
         studio._save(job)
     if where == 'running':
@@ -196,14 +217,19 @@ def act(studio, job, submission):
         with studio.lock:
             record['actions'].append({'action': 'interrupt', 'prompt_id': prompt_id, 'at': time.time(), 'reply': reply}); studio._save(job)
         return False
-    reply = _post(studio, url, '/queue', {'delete': [prompt_id]})
-    with studio.lock: record['actions'].append({'action': 'dequeue', 'prompt_id': prompt_id, 'at': time.time(), 'reply': reply})
-    # Read back in this order: ComfyUI moves a prompt from running to history under one lock, so a prompt that is in
-    # neither the queue read first nor the history read second was removed and never ran.
-    after, running = _queue(studio, url, prompt_id)
+    if where == 'absent':
+        # An earlier delete's read-back was lost; this queue read is the read-back, so only /history is still owed.
+        after = where
+    else:
+        reply = _post(studio, url, '/queue', {'delete': [prompt_id]})
+        with studio.lock: record['actions'].append({'action': 'dequeue', 'prompt_id': prompt_id, 'at': time.time(), 'reply': reply})
+        # Read back in this order: ComfyUI moves a prompt from running to history under one lock, so a prompt that is in
+        # neither the queue read first nor the history read second was removed and never ran.
+        after, running = _queue(studio, url, prompt_id)
     history = _history(studio, url, prompt_id) if after == 'absent' else None
     with studio.lock:
-        _observe(record, prompt_id, queue=after, history=history, running=running[:4])
+        if where == 'absent': record['observations'][-1]['history'] = history
+        else: _observe(record, prompt_id, queue=after, history=history, running=running[:4])
         if after == 'absent' and history == 'absent':
             submission['status'] = 'cancelled'; submission['cancelled'] = {'basis': 'dequeued', 'at': time.time()}
             settle(studio, job, 'dequeued'); return True
