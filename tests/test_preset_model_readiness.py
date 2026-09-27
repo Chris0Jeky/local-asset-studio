@@ -249,6 +249,81 @@ class PresetModelReadinessTests(unittest.TestCase):
                 self.assertTrue(all(row['present'] is False for row in rows))
         self.assertFalse(studio.jobs); self.assertTrue(studio.queue.empty())
 
+    # Issue #1112: an exact-path pin is enforced where digests already exist, never by hashing on a health poll.
+    def pinned_file(self, body=b'synthetic', **changes):
+        import hashlib
+        self.graph = {}; self.preset['model_files'] = ['loras/pinned.safetensors']
+        pin = self.pin('loras/pinned.safetensors', 'pinned-lora', sha256=hashlib.sha256(b'synthetic').hexdigest(), bytes=9, **changes)
+        return pin, self.put('loras/pinned.safetensors', body)
+
+    def cache(self, path, sha256, **changes):
+        info = path.stat(); key = str(path.resolve())
+        record = {'path': key, 'bytes': info.st_size, 'mtime_ns': info.st_mtime_ns, 'sha256': sha256}; record.update(changes)
+        target = self.root/'.runtime/model-fingerprints.json'; target.parent.mkdir(exist_ok=True)
+        target.write_text(json.dumps({key: record})); return record
+
+    def preflight(self, studio):
+        with patch.object(studio, 'node_info', return_value={}), patch.object(studio, 'validate_graph'), \
+             patch.object(studio, '_request', return_value={'system': {}}):
+            return studio.production_preflight(self.preset, self.graph)
+
+    def test_health_warns_when_cached_digest_differs_from_exact_pin(self):
+        pin, path = self.pinned_file(b'different'); self.cache(path, 'b'*64)
+        studio = self.studio()
+        with patch.object(server, 'digest_file', side_effect=AssertionError('no hashing on a health poll')):
+            report = self.health(studio); row = self.requirements(studio)['loras/pinned.safetensors']
+        self.assertNotIn('fixture', report['missing_models'])
+        self.assertEqual(report['pin_mismatch'], {'fixture': ['loras/pinned.safetensors']})
+        self.assertIs(row['present'], True)
+        self.assertEqual((row['pin_mismatch']['pinned_sha256'], row['pin_mismatch']['observed_sha256']), (pin['sha256'], 'b'*64))
+        for text in (pin['sha256'], 'b'*64, 'update the pin deliberately'): self.assertIn(text, row['note'])
+
+    def test_stale_or_agreeing_cache_and_unpinned_files_raise_no_pin_warning(self):
+        pin, path = self.pinned_file(); studio = self.studio()
+        cases = (('agrees', {'sha256': pin['sha256']}), ('size changed', {'sha256': 'b'*64, 'bytes': 10}),
+                 ('mtime changed', {'sha256': 'b'*64, 'mtime_ns': 1}), ('no digest', {'sha256': None}))
+        for label, record in cases:
+            with self.subTest(label):
+                self.cache(path, **record)
+                self.assertEqual(self.health(studio)['pin_mismatch'], {})
+                self.assertIsNone(self.requirements(studio)['loras/pinned.safetensors']['pin_mismatch'])
+        self.manifest.clear(); self.cache(path, 'b'*64); studio = self.studio()
+        self.assertEqual(self.health(studio)['pin_mismatch'], {})
+        self.assertIsNone(self.requirements(studio)['loras/pinned.safetensors']['pin_mismatch'])
+
+    def test_health_warns_when_byte_size_differs_from_pin_without_any_cache(self):
+        pin, path = self.pinned_file(b'longer synthetic'); studio = self.studio()
+        with patch.object(server, 'digest_file', side_effect=AssertionError('no hashing on a health poll')):
+            report = self.health(studio); row = self.requirements(studio)['loras/pinned.safetensors']
+        self.assertEqual(report['pin_mismatch'], {'fixture': ['loras/pinned.safetensors']})
+        self.assertEqual((row['pin_mismatch']['pinned_bytes'], row['pin_mismatch']['observed_bytes']), (9, 16))
+        self.assertIsNone(row['pin_mismatch']['observed_sha256'])
+
+    def test_production_preflight_refuses_digest_that_differs_from_exact_pin(self):
+        import hashlib
+        pin, path = self.pinned_file(b'different'); studio = self.studio()
+        observed = hashlib.sha256(b'different').hexdigest()
+        with self.assertRaises(server.StudioError) as caught: self.preflight(studio)
+        for text in ('loras/pinned.safetensors', pin['sha256'], observed, 're-download from the pinned source or update the pin deliberately'):
+            self.assertIn(text, str(caught.exception))
+        # The refusal still records the digest it computed, so readiness can warn without rehashing.
+        cached = json.loads((self.root/'.runtime/model-fingerprints.json').read_text())[str(path.resolve())]
+        self.assertEqual(cached['sha256'], observed)
+        self.assertEqual(self.health(studio)['pin_mismatch'], {'fixture': ['loras/pinned.safetensors']})
+        self.assertFalse(studio.jobs); self.assertTrue(studio.queue.empty())
+
+    def test_production_preflight_refuses_byte_size_that_differs_from_exact_pin(self):
+        pin, path = self.pinned_file(b'longer synthetic'); studio = self.studio()
+        with self.assertRaises(server.StudioError) as caught: self.preflight(studio)
+        for text in ('loras/pinned.safetensors', pin['sha256'], '9', '16', 'update the pin deliberately'): self.assertIn(text, str(caught.exception))
+
+    def test_production_preflight_accepts_matching_and_unpinned_files(self):
+        pin, path = self.pinned_file(); studio = self.studio()
+        bundle = self.preflight(studio)
+        self.assertEqual([(m['file'], m['sha256']) for m in bundle['models']], [('loras/pinned.safetensors', pin['sha256'])])
+        self.manifest.clear(); path.write_bytes(b'unpinned content'); studio = self.studio()
+        self.assertEqual([m['file'] for m in self.preflight(studio)['models']], ['loras/pinned.safetensors'])
+
     def test_real_http_readiness_inspection_and_pin_only_refusal(self):
         from http.client import HTTPConnection
         from http.server import ThreadingHTTPServer
