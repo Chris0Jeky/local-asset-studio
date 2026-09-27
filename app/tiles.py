@@ -190,7 +190,7 @@ def prepare(studio, payload):
     if reason: raise ValueError(reason)
     size = source.size[0]
     if band > size // 2: raise ValueError("band_px must be at most half the tile side (%d px)." % (size // 2))
-    upload = studio.upload("seam-cross.png", "image/png", png_bytes(repaint_input(source, band)))
+    upload = studio.upload("seam-cross", "image/png", png_bytes(repaint_input(source, band)))
     plan = {"version": VERSION, "preset_id": preset["id"], "source_asset_id": context["asset_id"], "source_sha256": context["sha256"],
             "rolled_file": upload["file"], "rolled_sha256": upload["sha256"], "size": size, "band_px": band, "feather_px": FEATHER,
             "flatten_sigma_px": default_sigma(size) if flat else 0}
@@ -260,7 +260,7 @@ def summary(metrics):
 def finish(studio, job_id):
     """Composite, flatten, measure and preview one completed repaint. Idempotent: a second call returns the first result."""
     with _FINISH_LOCK:
-        job = studio.jobs.get(job_id)
+        job = studio.jobs.get(job_id) if isinstance(job_id, str) else None
         if not job: raise ValueError("Unknown job")
         claim = job.get("tile")
         if not claim: raise ValueError("This job is not a seamless-tile repaint.")
