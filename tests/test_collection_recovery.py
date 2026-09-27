@@ -18,4 +18,4 @@ class CollectionRecovery(unittest.TestCase):
         result = subprocess.run([shutil.which('node'), str(Path(__file__).with_name('collection_recovery_editor_contracts.cjs'))],
                                 capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('"passed":19', result.stdout)
+        self.assertIn('"passed":23', result.stdout)
