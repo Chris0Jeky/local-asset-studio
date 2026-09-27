@@ -801,7 +801,7 @@ function recentRunsSandbox({host = false} = {}) {
       if (m[1] === '/article') {owner = null; continue;}
       const attrs = Object.fromEntries([...m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(a => [a[1], a[2] ?? '']));
       const dataset = Object.fromEntries(Object.entries(attrs).filter(([k]) => k.startsWith('data-')).map(([k, v]) => [k.slice(5).replace(/-(\w)/g, (_, c) => c.toUpperCase()), v]));
-      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, paused: true, ended: false, loop: 'loop' in attrs, listeners: {},
+      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, paused: true, ended: false, hidden: false, loop: 'loop' in attrs, listeners: {},
         focus(options) {this.focusOptions = options; s.context.document.activeElement = this;},
         addEventListener(name, handler) {(this.listeners[name] ||= []).push(handler);},
         removeEventListener(name, handler) {this.listeners[name] = (this.listeners[name] || []).filter(h => h !== handler);},
@@ -816,6 +816,7 @@ function recentRunsSandbox({host = false} = {}) {
     const box = {html: '', nodes: [], writes: 0};
     Object.defineProperty(target, 'innerHTML', {get: () => box.html, set(value) {box.html = value; box.nodes = parse(value); box.writes++;}});
     target.querySelectorAll = selector => box.nodes.filter(node => any(node, selector));
+    target.querySelector = selector => box.nodes.find(node => any(node, selector)) || null;
     target.contains = node => box.nodes.includes(node);
     return box;
   };
@@ -962,6 +963,71 @@ async function recentRunsProblemsStayCurrentDuringPlayback() {
   assert.equal(s.writes, writes, 'The gallery is still untouched');
 }
 
+// #1074: a focused card that polls out of the capped list falls back to Show more (not body/null).
+async function recentRunsFocusFallsBackToShowMore() {
+  const s = recentRunsSandbox();
+  const history = Array.from({length: 10}, (_, i) => recentJob('r' + i));
+  await s.poll(history);
+  const before = s.nodes().find(node => node.dataset.job === 'r9' && node.className === 'reference-output' && node.dataset.preset === 'krea-refine');
+  assert.ok(before, 'The tenth card offers the focused control');
+  s.context.document.activeElement = before;
+  await s.poll([recentJob('new'), ...history]);
+  const after = s.context.document.activeElement;
+  assert.notEqual(after, before, 'The focused card polled out of the capped list');
+  assert.ok('recentMore' in after.dataset, 'Focus falls back to Show more instead of leaving the page');
+  assert.ok(s.nodes().includes(after), 'The fallback control is in the new list');
+  assert.equal(after.focusOptions?.preventScroll, true, 'Fallback focus does not scroll');
+}
+
+// #1074: error/emptied release the playback hold. An errored clip can still report paused false, so it never counts
+// as playing; without the fix the wait never releases (listeners were only on pause/ended).
+async function recentRunsReleaseOnErrorAndEmptied() {
+  const s = recentRunsSandbox();
+  const history = [recentJob('clip', 1, 'video'), recentJob('p1')];
+  await s.poll(history);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('later'), ...history]);
+  assert.equal(s.writes, writes, 'A playing clip holds the re-render');
+  assert.equal(video.listeners.error.length, 1, 'The wait also listens for error');
+  assert.equal(video.listeners.emptied.length, 1, 'The wait also listens for emptied');
+  video.error = {code: 4}; // a browser sets MediaError before firing error; paused may stay false
+  video.listeners.error[0]();
+  assert.equal(s.writes, writes + 1, 'An error releases the held re-render even while paused is false');
+  assert.match(s.element('#gallery').innerHTML, /data-output="later:0"/, 'The released render shows the newest data');
+  assert.deepEqual([video.listeners.pause.length, video.listeners.ended.length, video.listeners.error.length, video.listeners.emptied.length], [0, 0, 0, 0], 'The wait unregisters every event');
+  const next = s.nodes().find(node => node.tagName === 'VIDEO');
+  next.paused = false;
+  const held = s.writes;
+  await s.poll([recentJob('later2'), recentJob('later'), ...history]);
+  assert.equal(s.writes, held, 'The new clip holds again');
+  next.paused = true; // the media load algorithm sets paused before emptied reaches listeners
+  next.listeners.emptied[0]();
+  assert.equal(s.writes, held + 1, 'Emptied releases the held re-render');
+  assert.match(s.element('#gallery').innerHTML, /data-output="later2:0"/, 'The emptied release shows the newest data');
+  assert.deepEqual([next.listeners.pause.length, next.listeners.ended.length, next.listeners.error.length, next.listeners.emptied.length], [0, 0, 0, 0], 'The emptied wait unregisters every event');
+}
+
+// #1074: a waiting job that moves to Problems during the hold hides its gallery card (no double display,
+// no enabled Abandon button); the playing clip in its own media card is untouched.
+async function recentRunsSupersededGalleryCardHidden() {
+  const s = recentRunsSandbox({host: true});
+  const pending = {id: 'pend', preset_name: 'Recipe pend', status: 'not_submitted', message: 'Queued', outputs: [], prompt_ids: []};
+  const history = [recentJob('clip', 1, 'video'), pending, recentJob('p1')];
+  await s.poll(history);
+  const card = s.nodes().find(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'pend');
+  assert.ok(card, 'A waiting job renders as a gallery card');
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([{...pending, status: 'abandoned', message: 'Abandoned', created_at: 7, can_put_away: true, put_away: false}, recentJob('clip', 1, 'video'), recentJob('p1')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.match(s.host.html, /Recipe pend/, 'The abandoned job reaches Problems while the clip plays');
+  assert.equal(card.hidden, true, 'The superseded gallery card hides instead of showing twice');
+  assert.equal(video.hidden, false, 'The playing clip is untouched');
+}
+
 async function recentRunsLeaveOutsideFocusAlone() {
   const s = recentRunsSandbox();
   await s.poll(Array.from({length: 3}, (_, i) => recentJob('o' + i)));
@@ -982,6 +1048,9 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await recentRunsUnchangedPollLeavesTheList();
   await recentRunsFocusReturnsAfterAChangedPoll();
   await recentRunsWaitForPlayingMedia();
+  await recentRunsFocusFallsBackToShowMore();
+  await recentRunsReleaseOnErrorAndEmptied();
+  await recentRunsSupersededGalleryCardHidden();
   await generateShortcutRoutesThroughTheButton();
   await seedAndPinChangesAreAnnounced();
   await pastedAndDroppedPicturesFillEmptySlots();
