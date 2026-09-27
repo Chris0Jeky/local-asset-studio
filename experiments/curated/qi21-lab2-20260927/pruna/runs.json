@@ -1,0 +1,236 @@
+[
+ {
+  "label": "char-p1",
+  "prompt_id": "9f894418-ff4f-4b32-a03a-3a5573eeace5",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:46:02",
+  "wall_s": 49.9,
+  "commit_before_pct": 53.0,
+  "commit_peak_pct": 80.1,
+  "status": "success",
+  "exec_s": 45.4,
+  "outputs": [
+   {
+    "filename": "pruna-char-p1_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "char-c0",
+  "prompt_id": "ec8c0a68-de48-4200-928a-47265475c0be",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:47:25",
+  "wall_s": 45.8,
+  "commit_before_pct": 52.8,
+  "commit_peak_pct": 76.3,
+  "status": "success",
+  "exec_s": 45.0,
+  "outputs": [
+   {
+    "filename": "pruna-char-c0_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "char-p2",
+  "prompt_id": "505fcdb2-4d26-4623-98e2-8af2467acf89",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:48:29",
+  "wall_s": 60.3,
+  "commit_before_pct": 53.2,
+  "commit_peak_pct": 85.6,
+  "status": "success",
+  "exec_s": 56.1,
+  "outputs": [
+   {
+    "filename": "pruna-char-p2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "scene-c0",
+  "prompt_id": "994540e3-0da1-4a53-b1b7-34a3a8c547c3",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:49:46",
+  "wall_s": 55.6,
+  "commit_before_pct": 53.5,
+  "commit_peak_pct": 77.4,
+  "status": "success",
+  "exec_s": 52.7,
+  "outputs": [
+   {
+    "filename": "pruna-scene-c0_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "scene-p1",
+  "prompt_id": "f6551d60-378e-48bf-a609-3ebd83cb8737",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:50:59",
+  "wall_s": 74.8,
+  "commit_before_pct": 52.8,
+  "commit_peak_pct": 85.1,
+  "status": "success",
+  "exec_s": 74.1,
+  "outputs": [
+   {
+    "filename": "pruna-scene-p1_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "scene-p2",
+  "prompt_id": "f6d71b1d-c173-4bec-84da-b4b24e652b99",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:52:31",
+  "wall_s": 65.1,
+  "commit_before_pct": 52.5,
+  "commit_peak_pct": 84.9,
+  "status": "success",
+  "exec_s": 62.7,
+  "outputs": [
+   {
+    "filename": "pruna-scene-p2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "prop-c0",
+  "prompt_id": "56bfed73-0007-4929-9eb8-d38588d1d04d",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:53:52",
+  "wall_s": 73.9,
+  "commit_before_pct": 52.9,
+  "commit_peak_pct": 78.0,
+  "status": "success",
+  "exec_s": 70.4,
+  "outputs": [
+   {
+    "filename": "pruna-prop-c0_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "prop-p1",
+  "prompt_id": "596aa15d-760a-4709-9a68-b94be621e5f1",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:55:24",
+  "wall_s": 64.2,
+  "commit_before_pct": 53.3,
+  "commit_peak_pct": 85.9,
+  "status": "success",
+  "exec_s": 60.4,
+  "outputs": [
+   {
+    "filename": "pruna-prop-p1_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "prop-p2",
+  "prompt_id": "85598a79-c69b-4030-bb82-88652809d6a3",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:56:45",
+  "wall_s": 55.6,
+  "commit_before_pct": 53.0,
+  "commit_peak_pct": 80.5,
+  "status": "success",
+  "exec_s": 53.2,
+  "outputs": [
+   {
+    "filename": "pruna-prop-p2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "char-base25-seed2",
+  "prompt_id": "f6ec0d2e-e61d-4891-932d-6470a6a88f4a",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 07:59:05",
+  "wall_s": 63.8,
+  "commit_before_pct": 53.4,
+  "commit_peak_pct": 76.7,
+  "status": "success",
+  "exec_s": 60.6,
+  "outputs": [
+   {
+    "filename": "pruna-char-base25-seed2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "char-p1-seed2",
+  "prompt_id": "731440d7-3801-454d-84ad-7513cefc5df9",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 08:00:10",
+  "wall_s": 60.6,
+  "commit_before_pct": 73.3,
+  "commit_peak_pct": 89.5,
+  "status": "success",
+  "exec_s": 55.7,
+  "outputs": [
+   {
+    "filename": "pruna-char-p1-seed2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "prop-p1-seed2",
+  "prompt_id": "e885041c-3a2c-4a00-b756-7a4c45bceb74",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 08:01:12",
+  "wall_s": 56.4,
+  "commit_before_pct": 54.0,
+  "commit_peak_pct": 80.8,
+  "status": "success",
+  "exec_s": 55.4,
+  "outputs": [
+   {
+    "filename": "pruna-prop-p1-seed2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "prop-base25-seed2",
+  "prompt_id": "0e91964d-d2b5-45d2-a2d7-8dddb19bab89",
+  "url": "http://127.0.0.1:8196",
+  "submitted_at": "2026-09-27 08:02:09",
+  "wall_s": 32.4,
+  "commit_before_pct": 65.9,
+  "commit_peak_pct": 77.4,
+  "status": "success",
+  "exec_s": 30.9,
+  "outputs": [
+   {
+    "filename": "pruna-prop-base25-seed2_00001_.png",
+    "subfolder": "lab2",
+    "type": "output"
+   }
+  ]
+ }
+]

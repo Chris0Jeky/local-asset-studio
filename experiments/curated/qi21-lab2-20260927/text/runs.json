@@ -1,0 +1,70 @@
+[
+ {
+  "id": "4b938317-eee6-459e-9835-97d56ed2caee",
+  "status": "completed",
+  "preset_id": "qwen21-t2i",
+  "prompt_ids": [
+   "1be9bcd8-408f-4b7b-a4a2-d2af4b6ce5ac"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-t2i_00004_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092741,
+    "prompt_id": "1be9bcd8-408f-4b7b-a4a2-d2af4b6ce5ac",
+    "media_type": "image",
+    "asset_id": "cd141261405a5e76b437f4f4f3457ea8"
+   }
+  ],
+  "elapsed_seconds": 81.83158373832703,
+  "error": null,
+  "created_at": 1790492610.2546005,
+  "finished_at": 1790492692.0971892,
+  "label": "menu",
+  "controls": {
+   "positive": "A fantasy tavern chalkboard menu hanging on a wooden wall, hand-lettered in white chalk. Title at the top: \"THE GILDED LANTERN\". Below it five lines, each with a price: \"Honey Mead - 3 silver\", \"Dragonfire Stew - 5 silver\", \"Elven Bread - 2 silver\", \"Mushroom Pie - 4 silver\", \"Room for the Night - 10 silver\". Warm candle light, anime illustration style, crisp readable lettering.",
+   "seed": 2026092741,
+   "width": 1024,
+   "height": 1024
+  },
+  "references": [],
+  "commit_before_pct": 54.1,
+  "commit_peak_pct": 78.7,
+  "poll_wall_s": 84.6
+ },
+ {
+  "id": "af4fef50-b1b5-496a-ae2b-4c92c34bac12",
+  "status": "completed",
+  "preset_id": "qwen21-t2i",
+  "prompt_ids": [
+   "df6b89d9-5379-47f8-b17a-a46d9459affc"
+  ],
+  "outputs": [
+   {
+    "filename": "qwen21-t2i_00005_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092742,
+    "prompt_id": "df6b89d9-5379-47f8-b17a-a46d9459affc",
+    "media_type": "image",
+    "asset_id": "3f53cdea8a8b52d2bc226e227210f002"
+   }
+  ],
+  "elapsed_seconds": 75.77050256729126,
+  "error": null,
+  "created_at": 1790492712.2565665,
+  "finished_at": 1790492788.0343618,
+  "label": "poster",
+  "controls": {
+   "positive": "A clean flat-design infographic poster on cream paper titled \"HOW TO BREW A HEALING POTION\". Four numbered panels in a 2x2 grid, each with a simple icon and a caption: \"1. Gather moonpetals\", \"2. Crush with a silver pestle\", \"3. Boil in spring water\", \"4. Cool under starlight\". A footer line reads \"Alchemy Guild Handbook, page 12\". Teal and gold palette, crisp sans-serif lettering.",
+   "seed": 2026092742,
+   "width": 1024,
+   "height": 1024
+  },
+  "references": [],
+  "commit_before_pct": 53.7,
+  "commit_peak_pct": 78.0,
+  "poll_wall_s": 79.4
+ }
+]
