@@ -195,6 +195,17 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(removed,{'regions_cleared':1,'pixels_cleared':2})
         self.assertEqual([out.getpixel(xy)[3] for xy in ((10,1),(10,2),(7,4),(1,10),(2,10),(3,3))],[0,0,9,8,32,255])
         self.assertEqual(out.tobytes()[0::4],im.tobytes()[0::4]);self.assertEqual(m.matte_components(out)['components'],2)
+    def test_despeckle_treats_a_dust_bridge_as_detached(self):
+        im=Image.new('RGBA',(8,1),(0,0,0,0))
+        for x,a in enumerate((255,255,5,20,0,255,9,40)):im.putpixel((x,0),(7,7,7,a))
+        self.assertEqual(m.matte_components(im)['components'],2)  # raw: 255,255,5,20 is one region
+        out,removed=m.despeckle(m.alpha_cleanup(im))  # rgba-despeckle order: the alpha-5 bridge is dust and goes first
+        self.assertEqual(removed,{'regions_cleared':1,'pixels_cleared':1})
+        self.assertEqual([out.getpixel((x,0))[3] for x in range(8)],[255,255,0,0,0,255,9,40])
+    def test_matte_regions_stream_counts_and_peaks(self):
+        im=Image.new('RGBA',(300,200),(1,1,1,120));im.putpixel((5,5),(1,1,1,250));im.putpixel((299,0),(0,0,0,0))
+        self.assertEqual(list(m.matte_regions(im)),[(0,59999,250)])
+        self.assertEqual(m.matte_components(im),{'components':1,'largest_component':59999})
     def test_despeckle_cli_records_threshold_and_count(self):
         im=Image.new('RGBA',(10,10),(0,0,0,0))
         for y in range(4,8):

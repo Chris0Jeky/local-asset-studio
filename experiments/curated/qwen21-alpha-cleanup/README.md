@@ -51,7 +51,10 @@ brightest pixel is exactly 8**, left at the dust threshold around the soft glow.
 
 New `--mode rgba-despeckle` = `rgba-cleanup`, then clear every detached 4-connected alpha region whose brightest
 pixel is below 32 (the dust band the 23 September judge measured, alpha 1-31). A faint glow that touches the
-subject stays with its region; a detached sparkle with a bright core stays whatever its size. Results
+subject through pixels at alpha 8 or more stays with its region; a detached sparkle with a bright core stays whatever
+its size. Connectivity is taken after the dust snap, so alpha 1-7 does not bridge: in the raw crystal all 16 cleared
+specks were joined to the glow only through such dust (measured 27 Sep: with raw-file connectivity the mode would
+clear none of them). Results
 (`despeckle-*.json`):
 
 | Output | Regions cleared | After: components, bbox |

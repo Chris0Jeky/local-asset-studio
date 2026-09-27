@@ -3,6 +3,7 @@ PNG source frames are never resized/trimmed. OpenRaster supports flat normal RGB
 """
 from __future__ import annotations
 import argparse
+from array import array
 import copy
 import hashlib
 import io
@@ -138,29 +139,36 @@ def alpha_bands(im):
             'body': sum(hist[ALPHA_SOLID_FROM:255]), 'opaque': hist[255]}
 
 
+def _fill(mask, w, h, seen, i):
+    """Flood one 4-connected mask>0 region from i, marking seen; return (pixels, peak). Holds only a 4-byte-per-entry stack."""
+    stack = array('I', (i,)); seen[i] = 1; count = 0; peak = 0
+    while stack:
+        j = stack.pop(); count += 1; peak = max(peak, mask[j])
+        jy, jx = divmod(j, w)
+        if jx > 0 and mask[j - 1] and not seen[j - 1]: seen[j - 1] = 1; stack.append(j - 1)
+        if jx + 1 < w and mask[j + 1] and not seen[j + 1]: seen[j + 1] = 1; stack.append(j + 1)
+        if jy > 0 and mask[j - w] and not seen[j - w]: seen[j - w] = 1; stack.append(j - w)
+        if jy + 1 < h and mask[j + w] and not seen[j + w]: seen[j + w] = 1; stack.append(j + w)
+    return count, peak
+
+
 def matte_regions(im):
-    """Yield the pixel indices of each 4-connected alpha>0 region, in scan order (deterministic flood fill)."""
+    """Yield (seed index, pixel count, peak alpha) per 4-connected alpha>0 region, in scan order.
+
+    Streaming: no region's pixel indices are retained, so a 16 MP single-component matte costs the fill stack only.
+    """
     require(im.mode == 'RGBA', 'Alpha report needs RGBA pixels')
     w, h = im.size; mask = im.getchannel('A').tobytes(); seen = bytearray(w * h)
-    for y in range(h):
-        for x in range(w):
-            i = y * w + x
-            if seen[i] or not mask[i]: continue
-            region = []; stack = [i]; seen[i] = 1
-            while stack:
-                j = stack.pop(); region.append(j)
-                jy, jx = divmod(j, w)
-                if jx > 0 and mask[j - 1] and not seen[j - 1]: seen[j - 1] = 1; stack.append(j - 1)
-                if jx + 1 < w and mask[j + 1] and not seen[j + 1]: seen[j + 1] = 1; stack.append(j + 1)
-                if jy > 0 and mask[j - w] and not seen[j - w]: seen[j - w] = 1; stack.append(j - w)
-                if jy + 1 < h and mask[j + w] and not seen[j + w]: seen[j + w] = 1; stack.append(j + w)
-            yield region
+    for i in range(w * h):
+        if seen[i] or not mask[i]: continue
+        count, peak = _fill(mask, w, h, seen, i)
+        yield i, count, peak
 
 
 def matte_components(im):
     """Count 4-connected alpha>0 regions with a deterministic flood fill."""
     found = 0; largest = 0
-    for region in matte_regions(im): found += 1; largest = max(largest, len(region))
+    for _, count, _ in matte_regions(im): found += 1; largest = max(largest, count)
     return {'components': found, 'largest_component': largest}
 
 
@@ -181,14 +189,21 @@ def alpha_cleanup(im):
 def despeckle(im):
     """Clear every detached alpha region whose brightest pixel is below SPECK_PEAK_BELOW.
 
-    Regions are 4-connected alpha>0 areas, so a faint glow touching the subject stays with it and a
-    detached sparkle with a bright core is kept whatever its size. RGB bytes pass through unchanged.
+    Regions are 4-connected alpha>0 areas of the image as given, so a faint glow touching the subject stays with it
+    and a detached sparkle with a bright core is kept whatever its size. In rgba-despeckle this runs after
+    alpha_cleanup, so dust (alpha below ALPHA_DUST_BELOW) no longer bridges: a speck joined to the subject only
+    through dust counts as detached. That is the point of the mode: all 16 crystal specks of 27 Sep 2026 were
+    such dust-bridged residue. RGB bytes pass through unchanged.
     """
-    alpha = bytearray(im.getchannel('A').tobytes()); cleared = 0; pixels = 0
-    for region in matte_regions(im):
-        if max(alpha[i] for i in region) >= SPECK_PEAK_BELOW: continue
-        cleared += 1; pixels += len(region)
-        for i in region: alpha[i] = 0
+    w, h = im.size; alpha = bytearray(im.getchannel('A').tobytes()); cleared = 0; pixels = 0
+    for seed, count, peak in matte_regions(im):
+        if peak >= SPECK_PEAK_BELOW: continue
+        cleared += 1; pixels += count
+        stack = array('I', (seed,)); alpha[seed] = 0  # second fill over the mutable copy: zeroing marks visited, regions are disjoint
+        while stack:
+            j = stack.pop(); jy, jx = divmod(j, w)
+            for k, ok in ((j - 1, jx > 0), (j + 1, jx + 1 < w), (j - w, jy > 0), (j + w, jy + 1 < h)):
+                if ok and alpha[k]: alpha[k] = 0; stack.append(k)
     mask = im.getchannel('A'); mask.frombytes(bytes(alpha))  # getchannel returns a new image; frombytes fills it in place
     out = im.copy(); out.putalpha(mask)
     return out, {'regions_cleared': cleared, 'pixels_cleared': pixels}
