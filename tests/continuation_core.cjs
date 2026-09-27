@@ -193,6 +193,9 @@ test('a pair’s runs are grouped newest first; unfinished work is live, problem
   assert.deepEqual(groups.active.map(r=>r.job.id),['live']);
   assert.deepEqual(groups.attention.map(r=>r.job.id),['lost','odd'],'an unknown or uncertain outcome is folded; a put-away problem stays put away');
   assert.deepEqual(C.combineRuns(null),{runs:[],active:[],attention:[]});
+  // Problems lists only these statuses (app.js renderJobs); a folded run outside them must not promise a Problems card.
+  assert.deepEqual(['failed','partial','uncertain','abandoned','not_submitted','stopped','cancelled'].map(status=>C.combineInProblems({status})),[true,true,true,true,false,false,false]);
+  assert.equal(C.combineInProblems({status:'failed',put_away:true}),false,'a put-away problem is not in the open list');
   assert.equal(C.combineEngineLabel({id:'combine-klein-9b-depth',name:'Long name'}),'Klein 9B · depth');
   assert.equal(C.combineEngineLabel({id:'unknown-route',name:'Its own name'}),'Its own name');
 });

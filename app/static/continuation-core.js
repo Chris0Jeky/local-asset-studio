@@ -257,7 +257,10 @@
     }
     return{runs,active,attention};
   }
+  // The statuses the Problems list renders (app.js renderJobs): only these runs have a card there to open.
+  const PROBLEM_RUN=['failed','partial','uncertain','abandoned'];
+  function combineInProblems(job){return PROBLEM_RUN.includes(job?.status)&&!job?.put_away;}
   const ENGINE_LABELS={'combine-klein':'Klein 4B','combine-klein-9b':'Klein 9B · pose','combine-klein-9b-depth':'Klein 9B · depth','combine-klein-9b-copypose':'Klein 9B · Copy Pose','combine-klein-9b-replace':'Klein 9B · replace','combine-klein-9b-skeleton':'Klein 9B · skeleton'};
   function combineEngineLabel(preset){return ENGINE_LABELS[preset?.id]||preset?.name||preset?.id||'';}
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineEngineLabel};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel};
 });
