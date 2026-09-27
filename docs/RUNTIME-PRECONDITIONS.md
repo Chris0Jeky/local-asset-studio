@@ -132,7 +132,20 @@ Set `enforce_host_commit_headroom` to `true` in the local configuration to enfor
 Windows host. The Studio reads `GetPerformanceInfo` commit counters rather than physical RAM,
 rechecks after waiting for the queue and immediately before each `/prompt`, and records each pass
 in the run state. It fails closed when that Windows reading is unavailable for a qualifying graph.
-The gate performs no restart, `/free`, paging change, or other automatic memory action. Qwen Plus
+By default the gate performs no restart, `/free`, paging change, or other automatic memory action.
+The one opt-in exception is `commit_gate_release_seconds` (default `0`, off; at most 300). With it
+set, a job that the gate would refuse only because the **measured** headroom is short is queued rather
+than refused at Create. Just before its `/prompt`, the worker posts `/free {unload_models, free_memory}`
+once to that job's own backend. It does this only when no backend switch or other Studio job is
+running and that backend's queue reads empty. It then re-reads commit every 0.5 s for up to that many
+seconds, waits for an idle queue again, and runs the unchanged gate on a fresh reading. Only that
+fresh pass admits. Otherwise the job fails with nothing sent, and its message says whether the
+models were freed. An unknown reading never triggers a release. Each attempt leaves a
+`commit_releases` receipt in the run state. The receipt holds the URL, the required bytes,
+available and committed bytes before and after, the sample count, the seconds waited and the
+outcome. On 27 September 2026, before this setting existed, a `qwen21-rgba` job left 26.5 GiB of
+headroom and the next Create was refused (`experiments/curated/perf-20260927/`). No restart, and no
+change to production preflight or large-job preparation, is part of this. Qwen Plus
 reference scalers at 1 MP qualify even where the output canvas is smaller; a Qwen text encoder by
 itself does not. Qwen-Image 2.1 (the isolated `qwen21` backend) qualifies at **any** size: its 7B model and 9.35 GB int8
 text encoder left only 2.1-6.5 GiB of commit at 832 × 1248, and its edit graph has no width or height
