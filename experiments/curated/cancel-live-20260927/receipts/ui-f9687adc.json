@@ -1,0 +1,314 @@
+{
+ "job_public": {
+  "id": "f9687adc-0cab-4406-8241-b17df32c6c44",
+  "status": "cancelled",
+  "created_at": 1790524248.8165636,
+  "preset_id": "wai",
+  "preset_name": "WAI v17 \u2022 illustration",
+  "controls": {
+   "positive": "no humans, scenery, stone lighthouse on a sea cliff, calm ocean, sunset sky, soft clouds, wide shot, masterpiece, best quality",
+   "seed": 927304,
+   "steps": 120,
+   "width": 832,
+   "height": 1216
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+   "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+  ],
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+    "seed": 927304,
+    "status": "cancelled",
+    "gpu_memory": {
+     "peak_shared_bytes": 82563072,
+     "peak_dedicated_bytes": 9888186368,
+     "samples": 31,
+     "spilled": false
+    },
+    "cancelled": {
+     "basis": "interrupted",
+     "at": 1790524263.5492747,
+     "interrupt_reply": "ok"
+    }
+   }
+  ],
+  "outputs": [],
+  "message": "Stopped by you: ComfyUI reported the render interrupted. Nothing is retried.",
+  "failure": null,
+  "parent_assets": [],
+  "references": [],
+  "project_id": null,
+  "started_at": 1790524248.8265638,
+  "finished_at": 1790524263.5502741,
+  "elapsed_seconds": 14.723710298538208,
+  "tracking_disposition": null,
+  "preparation": null,
+  "continuation": null,
+  "abandonment": null,
+  "label": "cancel-proof-ui-click",
+  "cancellation": {
+   "event_id": "59c3e82200314b4289abf0339b827472",
+   "requested_at": 1790524262.9717107,
+   "requested_by": "owner",
+   "status_at_request": "running",
+   "state": "cancelled",
+   "actions": [
+    {
+     "action": "interrupt",
+     "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+     "at": 1790524263.0695465,
+     "reply": "ok"
+    }
+   ],
+   "observations": [
+    {
+     "queue": "running",
+     "running": [
+      "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+     ],
+     "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+     "at": 1790524263.0600262
+    }
+   ],
+   "resolved_at": 1790524263.5502741,
+   "note": "Stopped by you: ComfyUI reported the render interrupted."
+  },
+  "commit_releases": null,
+  "host_commit_windows": [
+   {
+    "samples": 30,
+    "unknown_samples": 0,
+    "first_at": 1790524248.9774916,
+    "last_at": 1790524263.55728,
+    "peak_committed_bytes": 60198477824,
+    "peak_at": 1790524250.511318,
+    "limit_bytes": 102784090112,
+    "min_available_bytes": 42585612288,
+    "index": 0,
+    "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+    "interval_seconds": 0.5
+   }
+  ],
+  "can_stop_tracking": false,
+  "can_resume_tracking": false,
+  "has_pending_submission": false,
+  "never_submitted": false,
+  "mixed_batch": null,
+  "can_abandon": false,
+  "abandon_requires_acknowledgement": false,
+  "put_away_at": null,
+  "put_away": false,
+  "put_away_basis": null,
+  "can_put_away": false,
+  "can_bring_back": false,
+  "can_cancel": false,
+  "cancel_blocked_reason": "Already cancelled",
+  "cancel_needs_confirm": false
+ },
+ "state_json": {
+  "id": "f9687adc-0cab-4406-8241-b17df32c6c44",
+  "status": "cancelled",
+  "created_at": 1790524248.8165636,
+  "preset_id": "wai",
+  "preset_name": "WAI v17 \u2022 illustration",
+  "controls": {
+   "positive": "no humans, scenery, stone lighthouse on a sea cliff, calm ocean, sunset sky, soft clouds, wide shot, masterpiece, best quality",
+   "seed": 927304,
+   "steps": 120,
+   "width": 832,
+   "height": 1216
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+   "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+  ],
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+    "seed": 927304,
+    "status": "cancelled",
+    "gpu_memory": {
+     "peak_shared_bytes": 82563072,
+     "peak_dedicated_bytes": 9888186368,
+     "samples": 31,
+     "spilled": false
+    },
+    "cancelled": {
+     "basis": "interrupted",
+     "at": 1790524263.5492747,
+     "interrupt_reply": "ok"
+    }
+   }
+  ],
+  "outputs": [],
+  "message": "Stopped by you: ComfyUI reported the render interrupted. Nothing is retried.",
+  "graph_path": "workflows\\api\\wai-api.json",
+  "seed_bindings": [
+   [
+    "5",
+    "seed"
+   ]
+  ],
+  "prompt_bindings": {
+   "positive": [
+    [
+     "2",
+     "text"
+    ]
+   ],
+   "negative": [
+    [
+     "3",
+     "text"
+    ]
+   ]
+  },
+  "parent_assets": [],
+  "label": "cancel-proof-ui-click",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790524248.8265638,
+  "cancellation": {
+   "event_id": "59c3e82200314b4289abf0339b827472",
+   "requested_at": 1790524262.9717107,
+   "requested_by": "owner",
+   "status_at_request": "running",
+   "state": "cancelled",
+   "actions": [
+    {
+     "action": "interrupt",
+     "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+     "at": 1790524263.0695465,
+     "reply": "ok"
+    }
+   ],
+   "observations": [
+    {
+     "queue": "running",
+     "running": [
+      "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+     ],
+     "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+     "at": 1790524263.0600262
+    }
+   ],
+   "resolved_at": 1790524263.5502741,
+   "note": "Stopped by you: ComfyUI reported the render interrupted."
+  },
+  "finished_at": 1790524263.5502741,
+  "elapsed_seconds": 14.723710298538208,
+  "host_commit_windows": [
+   {
+    "samples": 30,
+    "unknown_samples": 0,
+    "first_at": 1790524248.9774916,
+    "last_at": 1790524263.55728,
+    "peak_committed_bytes": 60198477824,
+    "peak_at": 1790524250.511318,
+    "limit_bytes": 102784090112,
+    "min_available_bytes": 42585612288,
+    "index": 0,
+    "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+    "interval_seconds": 0.5
+   }
+  ]
+ },
+ "history": {
+  "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa": {
+   "status": {
+    "status_str": "error",
+    "completed": false,
+    "messages": [
+     [
+      "execution_start",
+      {
+       "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+       "timestamp": 1790524248970
+      }
+     ],
+     [
+      "execution_cached",
+      {
+       "nodes": [
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+       "timestamp": 1790524248971
+      }
+     ],
+     [
+      "execution_interrupted",
+      {
+       "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa",
+       "node_id": "5",
+       "node_type": "KSampler",
+       "executed": [],
+       "timestamp": 1790524263070
+      }
+     ]
+    ]
+   },
+   "client_id": "asset-studio",
+   "output_nodes": []
+  }
+ },
+ "extra": {
+  "dialogs": [
+   {
+    "t": 1790524262.968,
+    "type": "confirm",
+    "message": "Cancel this render?\n\nStops the render in ComfyUI. Finished outputs are kept. Nothing is retried."
+   }
+  ],
+  "page_errors": [],
+  "page_posts": [
+   [
+    1790524246.015,
+    "POST",
+    "http://127.0.0.1:8191/api/estimate"
+   ],
+   [
+    1790524247.043,
+    "POST",
+    "http://127.0.0.1:8191/api/estimate"
+   ],
+   [
+    1790524262.935,
+    "POST",
+    "http://127.0.0.1:8191/api/estimate"
+   ],
+   [
+    1790524262.973,
+    "POST",
+    "http://127.0.0.1:8191/api/jobs/f9687adc-0cab-4406-8241-b17df32c6c44/cancel"
+   ],
+   [
+    1790524263.585,
+    "POST",
+    "http://127.0.0.1:8191/api/estimate"
+   ]
+  ],
+  "before": {
+   "card_text": "WAI v17 \u2022 illustration \u00b7 running\n\nGenerating output 1 of 1\n\nStarted 16:50 \u00b7 13 s so far\n\nKnown prompt IDs: 9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa\n\nCancel\n\nStops the render in ComfyUI. Finished outputs are kept. Nothing is retried.\n\nRecipe",
+   "consequence": "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.",
+   "run_dock_reason": "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.",
+   "queue_running": [
+    "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+   ],
+   "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+  },
+  "after": {
+   "card_count": 1,
+   "card_text": "WAI v17 \u2022 illustration \u00b7 running\n\nGenerating output 1 of 1\n\nStarted 16:50 \u00b7 16 s so far\n\nKnown prompt IDs: 9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa\n\nCancel requested (16:51:02): the Studio is checking ComfyUI for this job's prompt. Nothing is retried.\n\nRecipe",
+   "status_line": "Cancel requested. The Studio is checking ComfyUI; the card shows what it finds."
+  }
+ }
+}
