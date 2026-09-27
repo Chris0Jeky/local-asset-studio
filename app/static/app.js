@@ -739,8 +739,15 @@ $('#importWorkflow').onchange=async e=>{
   try{
     catalog=await api('/api/catalog');await loadAtelier();$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
-    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);await loadSetups();await health();await refresh();await refreshAssets();await refreshLibrary();
-    const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);
-    configureReadPolling();readPoller?.start();
-  }catch(e){message(e.message,true);}
+    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);
+  }catch(e){message(e.message,true);return;}
+  // Each later stage is independent: one failing read (saved setups, a legacy migration) must not leave
+  // health, jobs, the library and polling unstarted until a reload. The first failure stays on screen.
+  const failed=[];
+  for(const [label,stage] of [['Saved setups',loadSetups],['Health',health],['Jobs',refresh],['Asset library',refreshAssets],['Models',refreshLibrary]]){
+    try{await stage();}catch(e){failed.push(label+' could not load: '+e.message);}
+  }
+  const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);
+  configureReadPolling();readPoller?.start();
+  if(failed.length)message(failed.join(' ')+' The rest of the Studio started; reload to retry.',true);
 })();
