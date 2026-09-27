@@ -1783,6 +1783,10 @@ class Studio:
 
     def _record_history_failure(self, job, submission, message):
         submission["status"] = "failed"; job["status"] = "failed"; job["message"] = message
+        self._stamp_finished(job); self._save(job)
+
+    def _stamp_finished(self, job):
+        """Terminal bookkeeping shared by engine errors, ComfyUI 400 rejections and pre-submit refusals."""
         started = job.get("started_at")
         finished = job.get("finished_at")
         if not self._finite_number(finished):
@@ -1790,7 +1794,6 @@ class Studio:
             if self._finite_number(finished): job["finished_at"] = finished
         if self._finite_number(started) and self._finite_number(finished) and finished >= started and not self._finite_number(job.get("elapsed_seconds")):
             job["elapsed_seconds"] = finished - started
-        self._save(job)
 
     def _run(self, job):
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
@@ -1827,7 +1830,7 @@ class Studio:
                 wan_capacity.enforce(graph)
                 reading=self.host_commit_preflight(preset, graph, refresh=True)
             except (StudioError, ValueError, OSError) as exc:
-                job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._save(job);return
+                job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._stamp_finished(job);self._save(job);return
             if reading:
                 job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
             self._evict_before_submit(job, graph, i)
@@ -1846,7 +1849,7 @@ class Studio:
                         error = details.get("error", {})
                         detail = error.get("message", "Invalid workflow") if isinstance(error, dict) else str(error)
                         job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400] + (". No prompt was submitted for output " + str(i + 1) + "." if job["status"] == "partial" else "")
-                        self._save(job); return
+                        self._stamp_finished(job); self._save(job); return
                     job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
             except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError, HTTPException) as exc:
                 job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
