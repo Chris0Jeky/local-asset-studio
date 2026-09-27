@@ -1,0 +1,1889 @@
+[
+ {
+  "key": "p1-none",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult woman cartographer with short copper hair and green eyes in a navy travelling coat, holding a brass compass, standing on a windy cliff above a harbour town at golden hour, upper body, clean line art, cel shading."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092711,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p1-none"
+    }
+   }
+  }
+ },
+ {
+  "key": "p1-zanime",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult woman cartographer with short copper hair and green eyes in a navy travelling coat, holding a brass compass, standing on a windy cliff above a harbour town at golden hour, upper body, clean line art, cel shading."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092711,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p1-zanime"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "z-image-anime-v1.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p1-animestyle",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult woman cartographer with short copper hair and green eyes in a navy travelling coat, holding a brass compass, standing on a windy cliff above a harbour town at golden hour, upper body, clean line art, cel shading."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092711,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p1-animestyle"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "anime_style_v1_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p1-elusarca",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult woman cartographer with short copper hair and green eyes in a navy travelling coat, holding a brass compass, standing on a windy cliff above a harbour town at golden hour, upper body, clean line art, cel shading., elusarca anime style"
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092711,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p1-elusarca"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "elusarca_anime_style_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p1-aimagined",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult woman cartographer with short copper hair and green eyes in a navy travelling coat, holding a brass compass, standing on a windy cliff above a harbour town at golden hour, upper body, clean line art, cel shading."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092711,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p1-aimagined"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "aimaginedworlds_turbo_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p2-none",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult male blacksmith with a braided black beard and a leather apron, hammering a glowing sword on an anvil in a dim forge, sparks flying, warm firelight, cel shading, detailed background."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092712,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p2-none"
+    }
+   }
+  }
+ },
+ {
+  "key": "p2-zanime",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult male blacksmith with a braided black beard and a leather apron, hammering a glowing sword on an anvil in a dim forge, sparks flying, warm firelight, cel shading, detailed background."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092712,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p2-zanime"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "z-image-anime-v1.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p2-animestyle",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult male blacksmith with a braided black beard and a leather apron, hammering a glowing sword on an anvil in a dim forge, sparks flying, warm firelight, cel shading, detailed background."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092712,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p2-animestyle"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "anime_style_v1_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p2-elusarca",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult male blacksmith with a braided black beard and a leather apron, hammering a glowing sword on an anvil in a dim forge, sparks flying, warm firelight, cel shading, detailed background., elusarca anime style"
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092712,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p2-elusarca"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "elusarca_anime_style_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p2-aimagined",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime illustration of an adult male blacksmith with a braided black beard and a leather apron, hammering a glowing sword on an anvil in a dim forge, sparks flying, warm firelight, cel shading, detailed background."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1216,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092712,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p2-aimagined"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "aimaginedworlds_turbo_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p3-none",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime background illustration of a quiet mountain shrine courtyard after rain, a stone lantern, puddles reflecting a pale evening sky, a red gate in the distance, no people, painterly anime scenery."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 1216,
+     "height": 832,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092713,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p3-none"
+    }
+   }
+  }
+ },
+ {
+  "key": "p3-zanime",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime background illustration of a quiet mountain shrine courtyard after rain, a stone lantern, puddles reflecting a pale evening sky, a red gate in the distance, no people, painterly anime scenery."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 1216,
+     "height": 832,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092713,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p3-zanime"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "z-image-anime-v1.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p3-animestyle",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime background illustration of a quiet mountain shrine courtyard after rain, a stone lantern, puddles reflecting a pale evening sky, a red gate in the distance, no people, painterly anime scenery."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 1216,
+     "height": 832,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092713,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p3-animestyle"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "anime_style_v1_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p3-elusarca",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime background illustration of a quiet mountain shrine courtyard after rain, a stone lantern, puddles reflecting a pale evening sky, a red gate in the distance, no people, painterly anime scenery., elusarca anime style"
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 1216,
+     "height": 832,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092713,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p3-elusarca"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "elusarca_anime_style_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ },
+ {
+  "key": "p3-aimagined",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_4b.safetensors",
+     "type": "lumina2",
+     "device": "cpu"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "ae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "text": "Anime background illustration of a quiet mountain shrine courtyard after rain, a stone lantern, puddles reflecting a pale evening sky, a red gate in the distance, no people, painterly anime scenery."
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "model": [
+      "11",
+      0
+     ],
+     "shift": 3.0
+    }
+   },
+   "7": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 1216,
+     "height": 832,
+     "batch_size": 1
+    }
+   },
+   "8": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "6",
+      0
+     ],
+     "seed": 2026092713,
+     "steps": 8,
+     "cfg": 1.0,
+     "sampler_name": "res_multistep",
+     "scheduler": "simple",
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "5",
+      0
+     ],
+     "latent_image": [
+      "7",
+      0
+     ],
+     "denoise": 1.0
+    }
+   },
+   "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "samples": [
+      "8",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ],
+     "tile_size": 512,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8
+    }
+   },
+   "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/zimage-lora/p3-aimagined"
+    }
+   },
+   "11": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "lora_name": "aimaginedworlds_turbo_zimage.safetensors",
+     "strength_model": 0.8
+    }
+   }
+  }
+ }
+]
