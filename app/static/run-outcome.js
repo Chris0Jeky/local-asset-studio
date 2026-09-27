@@ -6,9 +6,9 @@
   const plural=(n,word)=>n+' '+word+(n===1?'':'s');
   const took=job=>Number(job.elapsed_seconds)>0&&typeof durationLabel==='function'?' in '+durationLabel(job.elapsed_seconds):'';
   function summary(job){
-    const made=(job.outputs||[]).length,wanted=Number(job.batch_count)||made;
+    const made=(job.outputs||[]).length;
     if(job.status==='completed')return {text:'Done'+took(job)+' · '+plural(made,'output')+'. Review it while it is fresh.',action:'Show result',error:false};
-    if(job.status==='partial')return {text:'Partly done: '+made+' of '+wanted+' outputs. The rest will not be run again automatically.',action:'See what happened',error:true};
+    if(job.status==='partial')return {text:'Partly done: '+plural(made,'output')+' saved. The rest will not be run again automatically.',action:'See what happened',error:true};
     if(job.status==='uncertain')return {text:'Outcome unknown. It will not be run again; inspect it before starting new work.',action:'Inspect',error:true};
     const why=job.failure?.title||String(job.message||'').split(/(?<=\.)\s/)[0]||'No reason was recorded.';
     return {text:'Failed: '+why,action:'See why',error:true};
@@ -20,8 +20,9 @@
   }
   function open(node){for(let n=node;n;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true;}
   function reveal(job){
-    const target=job.status==='completed'?document.querySelector('#gallery [data-output="'+CSS.escape(job.id)+':0"]'):document.querySelector('[data-problem="'+CSS.escape(job.id)+'"]');
-    if(!target){if(typeof message==='function')message('That run is no longer listed here. Open Asset library or Runs & review to find it.',true);return false;}
+    // Any shown output of the run will do: output 0 may be in Trash, and a playing clip holds the list back.
+    const target=job.status==='completed'?document.querySelector('#gallery [data-output^="'+CSS.escape(job.id)+':"]'):document.querySelector('[data-problem="'+CSS.escape(job.id)+'"]');
+    if(!target){if(typeof message==='function')message('That run is not shown here yet (a playing clip holds the list until it stops) or its outputs are in Trash. Asset library has every saved output.',true);return false;}
     if(job.status!=='completed'){const details=document.getElementById('jobProblems');if(details)details.open=true;}
     open(target);target.scrollIntoView({block:'center'});
     // A result focuses its first action (so K/W/X review it); a problem focuses its record, reason first.
@@ -39,7 +40,7 @@
   document.addEventListener('studio:job-settled',e=>{if(e.detail?.id)render(e.detail);});
   document.addEventListener('click',e=>{
     const b=e.target.closest?.('[data-run-outcome]');
-    if(b){if(b.dataset.runOutcome==='dismiss'){clear();if(typeof message==='function')message('');}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
+    if(b){if(b.dataset.runOutcome==='dismiss'){const said=shown&&summary(shown).text;clear();if(typeof message==='function'&&document.getElementById('status')?.textContent===said)message('');}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
     if(e.target.closest?.('#generate'))clear();
   },true);
   window.StudioRunOutcome={summary,render,clear,reveal};

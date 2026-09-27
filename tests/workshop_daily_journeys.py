@@ -116,16 +116,27 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.assertTrue(self.page.evaluate("document.querySelector('#jobProblems').open"))
         self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'bad-1', 'focus lands on the record, reason first, not on an action')
         self.settle({'id': 'lost', 'status': 'uncertain', 'message': 'Submission outcome is uncertain.'})
-        self.assertIn('It will not be run again', self.page.locator('#status').inner_text())
-        outcome = self.page.locator('#runOutcome').inner_text()
-        self.assertNotRegex(outcome.lower(), 'retry|run again|generate')
+        # The exact sentence: it must promise no re-run and invite none.
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Outcome unknown. It will not be run again; inspect it before starting new work.')
+        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#runOutcome button')].map(b=>b.textContent)"), ['Inspect →', 'Dismiss'])
         self.page.click('[data-run-outcome="show"]')
-        self.assertIn('no longer listed', self.page.evaluate('said.at(-1)[0]'))
+        self.assertIn('not shown here yet', self.page.evaluate('said.at(-1)[0]'))
         self.settle({'id': 'half', 'status': 'partial', 'outputs': [{}], 'batch_count': 3})
-        self.assertIn('Partly done: 1 of 3 outputs', self.page.locator('#status').inner_text())
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Partly done: 1 output saved. The rest will not be run again automatically.')
         self.page.click('[data-run-outcome="dismiss"]')
         self.assertTrue(self.page.locator('#runOutcome').is_hidden())
         self.assertEqual(self.page.locator('#status').inner_text(), '')
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
+        self.page.evaluate("message('A newer, unrelated message')")
+        self.page.click('[data-run-outcome="dismiss"]')
+        self.assertEqual(self.page.locator('#status').inner_text(), 'A newer, unrelated message', 'Dismiss never wipes a newer message')
+
+    def test_show_result_uses_any_shown_output_of_the_run(self):
+        self.load_outcome()
+        self.page.evaluate("document.querySelector('[data-output]').dataset.output='done-1:2'")
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}, {}, {}]})
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.className'), 'pin', 'output 0 in Trash still leads to the run')
 
     def test_refresh_jobs_announces_the_started_run_once_when_it_settles(self):
         refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
@@ -137,6 +148,17 @@ document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</sc
         self.page.evaluate('refreshJobs()')
         self.assertEqual(self.page.evaluate('events'), [])
         self.page.evaluate("reply=[{id:'mine',status:'completed',preset_name:'P',message:'Complete',outputs:[{}]}]")
+        self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), ['mine'])
+
+    def test_a_run_already_settled_before_a_304_is_still_announced(self):
+        # Review of #1085: a fast failure seen by an earlier poll, then a 304 after the POST set activeJobId.
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[{id:'mine',status:'failed',preset_name:'P',message:'Rejected'}],jobsEtag='"e1"',jobsDataSignature='x',estimateKey='',estimateResultKey='',activeJobId='mine';window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.fetch=async()=>({ok:false,status:304,headers:{get:()=>'"e1"'},json:async()=>{throw Error('no body');}});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
         self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
         self.assertEqual(self.page.evaluate('events'), ['mine'])
 
