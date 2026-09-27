@@ -278,10 +278,10 @@ class JobCancelTests(unittest.TestCase):
                          ("GET", "/queue", queue(running=["ours"])), ("POST", "/interrupt", URLError("reset")), ("GET", "/history/ours", interrupted("ours"))]
         studio._run(job)
         self.assertEqual(job["status"], "cancelled"); self.assertTrue(job["submissions"][0]["cancelled"]["interrupt_reply"].startswith("no reply"))
-        # Same lost reply, then ComfyUI cannot be observed: the job stays uncertain and the cancel is not confirmed.
+        # Same lost reply, then ComfyUI stays unreadable for every bounded history read (#1113): uncertain, cancel not confirmed.
         studio = self.studio(); job = self.job(studio)
         studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", self.click(studio, job, {"prompt_id": "ours"})),
-                         ("GET", "/queue", queue(running=["ours"])), ("POST", "/interrupt", URLError("reset")), ("GET", "/history/ours", URLError("down"))]
+                         ("GET", "/queue", queue(running=["ours"])), ("POST", "/interrupt", URLError("reset"))] + [("GET", "/history/ours", URLError("down"))] * server.HISTORY_READ_STRIKES
         studio._run(job)
         self.assertEqual(job["status"], "uncertain"); self.assertEqual(job["cancellation"]["state"], "unresolved")
         self.assertIn("not confirmed", job["cancellation"]["note"]); self.assertNoResubmission(studio)
@@ -289,7 +289,7 @@ class JobCancelTests(unittest.TestCase):
     def unresolved_after_interrupt(self):
         studio = self.studio(); job = self.job(studio)
         studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", self.click(studio, job, {"prompt_id": "ours"})),
-                         ("GET", "/queue", queue(running=["ours"])), ("POST", "/interrupt", None), ("GET", "/history/ours", URLError("down"))]
+                         ("GET", "/queue", queue(running=["ours"])), ("POST", "/interrupt", None)] + [("GET", "/history/ours", URLError("down"))] * server.HISTORY_READ_STRIKES
         studio._run(job)
         self.assertEqual((job["status"], job["cancellation"]["state"]), ("uncertain", "unresolved"))
         studio.resume_job(job["id"]); return studio, job
@@ -306,7 +306,7 @@ class JobCancelTests(unittest.TestCase):
         self.assertEqual((job["status"], job["cancellation"]["state"]), ("cancelled", "cancelled")); self.assertNoResubmission(studio)
         self.assertIn("not confirmed", job["cancellation"].get("unresolved_note") or "", "the earlier note is kept on both legs")
         studio, job = self.unresolved_after_interrupt()
-        studio.script = [("GET", "/history/ours", URLError("still down"))]; studio._resume(job)
+        studio.script = [("GET", "/history/ours", URLError("still down"))] * server.HISTORY_READ_STRIKES; studio._resume(job)
         self.assertEqual((job["status"], job["cancellation"]["state"]), ("uncertain", "unresolved"), "still unknown stays unresolved")
 
     def test_a_history_read_lost_while_verifying_a_delete_is_rechecked_on_the_next_pass(self):

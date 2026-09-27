@@ -309,6 +309,34 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(job['submissions'][0]['prompt_id'],'  prompt-1  ')
         self.assertNotIn('pending_submission',job)
 
+    def test_a_failed_history_read_is_read_again_and_the_batch_continues(self):
+        """#1113: one unreadable /history poll is retried after a backoff; the prompt is never resubmitted and the next member is sent."""
+        done=lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}}
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},URLError('connection reset'),done('first'),{'prompt_id':'second'},done('second')])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2},enqueue=False)['id']]
+        with patch.object(server.time,'sleep') as sleep: s._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['first','second'])
+        self.assertEqual([args[0] for args,_ in s.requests].count('/prompt'),1+1)
+        errors=job['submissions'][0]['history_read_errors'];self.assertEqual(len(errors),1);self.assertIn('connection reset',errors[0]['error'])
+        self.assertNotIn('history_read_errors',job['submissions'][1]);self.assertIn(((server.HISTORY_READ_BACKOFF_SECONDS,),{}),[tuple(c) for c in sleep.call_args_list])
+
+    def test_history_reads_that_keep_failing_end_uncertain_and_leave_the_rest_unsent(self):
+        """Only HISTORY_READ_STRIKES consecutive failures (any kind) end observation; nothing is resubmitted and later members stay unsent."""
+        self.assertEqual(server.HISTORY_READ_STRIKES,3)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},URLError('refused'),TimeoutError('timed out'),['not','history']])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2},enqueue=False)['id']]
+        with patch.object(server.time,'sleep') as sleep: s._run(job)
+        self.assertEqual(job['status'],'uncertain');self.assertEqual(job['prompt_ids'],['first'])
+        self.assertEqual([args[0] for args,_ in s.requests],['/queue','/prompt','/history/first','/history/first','/history/first'])
+        self.assertIn('Resume observation',job['message']);self.assertIn('3 history reads in a row failed',job['message']);self.assertIn('Invalid history response',job['message'])
+        self.assertEqual(len(job['submissions'][0]['history_read_errors']),3)
+        self.assertEqual([c.args[0] for c in sleep.call_args_list],[server.HISTORY_READ_BACKOFF_SECONDS,2*server.HISTORY_READ_BACKOFF_SECONDS])
+        # A success in between resets the count: two failures, a pending poll, two more failures, then the result.
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'},URLError('a'),URLError('b'),{},URLError('c'),URLError('d'),{'p':{'status':{'status_str':'success'},'outputs':{}}}])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        with patch.object(server.time,'sleep'): s._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(len(job['submissions'][0]['history_read_errors']),4)
+
     def test_later_batch_member_uncertain_keeps_earlier_evidence_and_stops(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2}, enqueue=False)['id']]
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),
@@ -954,8 +982,10 @@ class ServerTests(unittest.TestCase):
         self.assertFalse(list((self.root/"experiments/runs"/job["id"]).glob("*.tmp")))
 
     def test_history_failure_stops_batch_and_known_prompt_can_resume(self):
-        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},URLError("connection lost")]
-        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{},"batch_count":2}); job=s.jobs[created["id"]]; s._run(job)
+        # A ComfyUI that stays unreadable for HISTORY_READ_STRIKES reads (#1113) ends observation; the rest of the batch stays unsent.
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"}]+[URLError("connection lost")]*server.HISTORY_READ_STRIKES
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{},"batch_count":2}); job=s.jobs[created["id"]]
+        with patch.object(server.time,'sleep'): s._run(job)
         self.assertEqual(job["status"],"uncertain"); self.assertEqual(len([x for x in s.requests if x[0][0]=="/prompt"]),1)
         s.replies=iter([{"one":{"status":{"status_str":"success"},"outputs":{}}}]); s._resume(job)
         self.assertEqual(job["status"],"partial"); self.assertEqual(len(job["prompt_ids"]),1)
