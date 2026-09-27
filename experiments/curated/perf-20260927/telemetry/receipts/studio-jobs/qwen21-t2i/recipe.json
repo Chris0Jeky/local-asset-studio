@@ -1,0 +1,11 @@
+{
+  "preset_id": "qwen21-t2i",
+  "controls": {
+    "seed": 2026092701
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\qwen21-t2i-api.json",
+  "created_at": 1790497032.6477654,
+  "references": [],
+  "parent_assets": []
+}

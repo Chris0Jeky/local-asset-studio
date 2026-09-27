@@ -4,6 +4,17 @@
 
 **Restyle denoise (#351):** seed 2026092762 at 0.75 and 0.85 on both sources (prompts `5e206d1b`, `c72f866d`, `4cb2e6f3`, `a84e184a`; 45-83 s, primary). Judged blind, this time with face, hand and prop crops recorded. Platform tied; on carto, 0.75 again kept the compass that 0.85 dropped, but its mean was only 0.17 higher (4.00 against 3.83), a tie under the rubric's 0.3 rule. Over 2 sources × 2 seeds, 0.75 is ahead on mean in 1 of 4 comparisons and ties in 3 (pooled 4.17 against 4.00, a tie); it never scored lower, and it was ahead on verdict and control on both seed-1 sources. **Qwen-Image 2.1 steps (#1028):** char and prop at seed + 100, 16 against 25 steps (`13b4878d`, `5b1ec3b1` at 08:35-08:37 against `f6ec0d2e`, `0e91964d`, which ran at 07:59 and 08:02 inside the Pruna session). Blind, 25 steps is keep on 3 of 4 cells over both seeds and 16 steps on 1 of 4, so the 25-step default holds. Evidence: the `seed2-lab2/` folders under `experiments/curated/restyle-denoise-20260927/` and `qi21-steps-20260927/`. Generated and agent-judged only; not art acceptance, not licence clearance.
 
+## Every prompt now records its Windows commit peak (#302) — 27 September 2026 (09:13-09:18 local)
+
+On branch `claude/lab3-commit-telemetry`, the Studio samples Windows commit every 0.5 s while each prompt runs. It keeps the peak and the minimum headroom in `job.host_commit_windows`. The finished-run line adds "Memory was tight" only when headroom fell below 16 GiB.
+
+Proved with one job per family, each checked against an independent 0.5 s sampler: the Studio's figures agreed within 0.01 GiB.
+- `wai`: prompt `e39d2c83`, peak 63.1 %, 35.32 GiB left
+- `zimage-fast`: prompt `fb5ad836`, peak 75.1 %, 23.82 GiB left
+- `qwen21-t2i`: prompt `858d462e`, peak 76.4 %, 22.55 GiB left
+
+A read costs 47 µs. Receipts are in `experiments/curated/perf-20260927/telemetry/`. No quality judgement was made.
+
 ## Back-to-back Qwen-Image 2.1 jobs no longer need a manual `/free` (opt-in) — 27 September 2026 (08:46-09:05 local)
 
 A `qwen21-rgba` job leaves the qwen21 ComfyUI holding enough host commit that the next heavy job reads 26.5-27.6 GiB of headroom, and the 32 GiB gate refused it. With current main, 7 creates were refused across three runs. Every job after the first needed a manual `POST /free`, which crossed 32 GiB after 7.0-11.0 s. A `batch_count` 3 job ended `partial` after output 1 (job `66353ab7`, prompt `b3a81b85`).

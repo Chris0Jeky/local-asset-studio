@@ -1,0 +1,11 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "seed": 2026092701
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790496858.716326,
+  "references": [],
+  "parent_assets": []
+}

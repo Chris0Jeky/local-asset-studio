@@ -126,7 +126,9 @@ class WorkerRecoveryTests(unittest.TestCase):
         for error in errors:
             with self.subTest(error=type(error).__name__):
                 job=self.job();job.update(status='uncertain',prompt_ids=['known'],submissions=[{'prompt_id':'known','status':'observing'}]);self.studio._save(job)
-                self.studio.replies=iter([error]);self.studio._resume(job)
+                # Every bounded read fails the same way (#1113), so the job stays uncertain.
+                self.studio.replies=iter([error]*server.HISTORY_READ_STRIKES)
+                with patch.object(server.time,'sleep'):self.studio._resume(job)
                 self.assertEqual(job['status'],'uncertain');self.assertEqual(job['prompt_ids'],['known'])
                 self.assertNotIn('finished_at',job)
         self.assertFalse(any(args[0]=='/prompt' for args,_ in self.studio.requests))
@@ -233,7 +235,8 @@ class WorkerRecoveryTests(unittest.TestCase):
         for response in ([],None,True,{'known':[]},{'known':'not history'}):
             with self.subTest(response=response):
                 job=self.job();job.update(status='uncertain',prompt_ids=['known'],submissions=[{'prompt_id':'known','status':'observing'}])
-                self.studio.replies=iter([response]);self.studio._resume(job)
+                self.studio.replies=iter([response]*server.HISTORY_READ_STRIKES)
+                with patch.object(server.time,'sleep'):self.studio._resume(job)
                 self.assertEqual(job['status'],'uncertain');self.assertEqual(job['submissions'][0]['status'],'observing')
         self.assertFalse(any(args[0]=='/prompt' for args,_ in self.studio.requests))
     @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg fixture required')

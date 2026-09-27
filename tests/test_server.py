@@ -309,6 +309,34 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(job['submissions'][0]['prompt_id'],'  prompt-1  ')
         self.assertNotIn('pending_submission',job)
 
+    def test_a_failed_history_read_is_read_again_and_the_batch_continues(self):
+        """#1113: one unreadable /history poll is retried after a backoff; the prompt is never resubmitted and the next member is sent."""
+        done=lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}}
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},URLError('connection reset'),done('first'),{'prompt_id':'second'},done('second')])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2},enqueue=False)['id']]
+        with patch.object(server.time,'sleep') as sleep: s._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['first','second'])
+        self.assertEqual([args[0] for args,_ in s.requests].count('/prompt'),1+1)
+        errors=job['submissions'][0]['history_read_errors'];self.assertEqual(len(errors),1);self.assertIn('connection reset',errors[0]['error'])
+        self.assertNotIn('history_read_errors',job['submissions'][1]);self.assertIn(((server.HISTORY_READ_BACKOFF_SECONDS,),{}),[tuple(c) for c in sleep.call_args_list])
+
+    def test_history_reads_that_keep_failing_end_uncertain_and_leave_the_rest_unsent(self):
+        """Only HISTORY_READ_STRIKES consecutive failures (any kind) end observation; nothing is resubmitted and later members stay unsent."""
+        self.assertEqual(server.HISTORY_READ_STRIKES,3)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},URLError('refused'),TimeoutError('timed out'),['not','history']])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2},enqueue=False)['id']]
+        with patch.object(server.time,'sleep') as sleep: s._run(job)
+        self.assertEqual(job['status'],'uncertain');self.assertEqual(job['prompt_ids'],['first'])
+        self.assertEqual([args[0] for args,_ in s.requests],['/queue','/prompt','/history/first','/history/first','/history/first'])
+        self.assertIn('Resume observation',job['message']);self.assertIn('3 history reads in a row failed',job['message']);self.assertIn('Invalid history response',job['message'])
+        self.assertEqual(len(job['submissions'][0]['history_read_errors']),3)
+        self.assertEqual([c.args[0] for c in sleep.call_args_list],[server.HISTORY_READ_BACKOFF_SECONDS,2*server.HISTORY_READ_BACKOFF_SECONDS])
+        # A success in between resets the count: two failures, a pending poll, two more failures, then the result.
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'},URLError('a'),URLError('b'),{},URLError('c'),URLError('d'),{'p':{'status':{'status_str':'success'},'outputs':{}}}])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        with patch.object(server.time,'sleep'): s._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(len(job['submissions'][0]['history_read_errors']),4)
+
     def test_later_batch_member_uncertain_keeps_earlier_evidence_and_stops(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2}, enqueue=False)['id']]
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),
@@ -770,8 +798,14 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(job["failure"]["kind"],kind,detail)
             if kind=="model_swap_fault": self.assertIn("while running VAEDecode",job["failure"]["summary"])
 
+    def _ample_commit_for_idle_release(self):
+        """The idle release checks commit first (#1167); these tests are about the release itself, so give it plenty of room."""
+        ample=patch.object(server.host_memory,'read',return_value={'available_bytes':60*1024**3,'limit_bytes':95*1024**3,'committed_bytes':35*1024**3,'unknown_reason':None})
+        ample.start(); self.addCleanup(ample.stop)
+
     def test_idle_tick_releases_the_comfy_cache_once_per_idle_stretch(self):
         """After the configured idle minutes on an empty ComfyUI queue the worker posts /free once; activity re-arms it; a busy queue or 0 disables it."""
+        self._ample_commit_for_idle_release()
         s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"ok":True},{"queue_running":[],"queue_pending":[]},{"ok":True}])
         self.assertEqual(s.idle_release_minutes,10.0); self.assertFalse(s._idle_tick())        # not idle long enough
         s._last_activity-=11*60
@@ -791,8 +825,26 @@ class ServerTests(unittest.TestCase):
         down=FakeStudio(self.root,[URLError("refused")]); down._last_activity-=11*60
         self.assertFalse(down._idle_tick()); self.assertIn("refused",down.cache_release["last_error"]); self.assertFalse(down._idle_tick()); self.assertEqual(len(down.requests),1)
 
+    def test_idle_tick_skips_the_release_at_or_below_the_commit_floor_and_records_why(self):
+        """/free first moves GPU weights into RAM (-14.7 GiB measured, #1167): at or below the gate release's floor the idle tick posts nothing."""
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES; idle={"queue_running":[],"queue_pending":[]}
+        reading=lambda available,reason=None:{'available_bytes':available,'limit_bytes':None if available is None else 95*1024**3,'committed_bytes':None,'unknown_reason':reason}
+        for available,reason,expected in ((floor,None,'22.0 GiB'),(floor-1,None,'22.0 GiB'),(12*1024**3,None,'12.0 GiB'),(None,'Windows GetPerformanceInfo failed','GetPerformanceInfo failed')):
+            with self.subTest(available=available):
+                s=FakeStudio(self.root,[idle,{"ok":True}]); s._last_activity-=11*60
+                with patch.object(server.host_memory,'read',return_value=reading(available,reason)) as read: self.assertFalse(s._idle_tick())
+                self.assertEqual(read.call_count,1); self.assertEqual(s.requests,[])                          # not even /queue
+                self.assertIn(expected,s.cache_release["last_error"]); self.assertIn('more than 22 GiB',s.cache_release["last_error"])
+                self.assertEqual(s.cache_release["count"],0); self.assertTrue(s.cache_release_status()["pending"])   # re-checked on the next tick
+        # Headroom recovers above the floor: the next tick releases as before and clears the recorded skip.
+        s=FakeStudio(self.root,[idle,{"ok":True}]); s._last_activity-=11*60
+        with patch.object(server.host_memory,'read',side_effect=[reading(floor),reading(floor+1)]):
+            self.assertFalse(s._idle_tick()); self.assertTrue(s._idle_tick())
+        self.assertEqual([r[0][0] for r in s.requests],["/queue","/free"]); self.assertEqual((s.cache_release["count"],s.cache_release["last_error"]),(1,None))
+
     def test_idle_tick_only_releases_the_primary_backend(self):
         """An active isolated backend is never posted /free or /queue; switching back to primary releases once."""
+        self._ample_commit_for_idle_release()
         s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"ok":True}]); s._last_activity-=11*60
         s.backends=Mock(active='hidream')
         self.assertFalse(s._idle_tick()); self.assertEqual(s.requests,[]); self.assertFalse(s._released_since_activity); self.assertEqual(s.cache_release["count"],0)
@@ -897,6 +949,7 @@ class ServerTests(unittest.TestCase):
 
     def test_idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks(self):
         """ComfyUI answers /free with 200 and no body; a bounded queue wait ticks the release from the real loop; config edge cases."""
+        self._ample_commit_for_idle_release()
         s=self.studio()
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),self._http_response(b'')]
         s._last_activity-=11*60
@@ -929,8 +982,10 @@ class ServerTests(unittest.TestCase):
         self.assertFalse(list((self.root/"experiments/runs"/job["id"]).glob("*.tmp")))
 
     def test_history_failure_stops_batch_and_known_prompt_can_resume(self):
-        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},URLError("connection lost")]
-        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{},"batch_count":2}); job=s.jobs[created["id"]]; s._run(job)
+        # A ComfyUI that stays unreadable for HISTORY_READ_STRIKES reads (#1113) ends observation; the rest of the batch stays unsent.
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"}]+[URLError("connection lost")]*server.HISTORY_READ_STRIKES
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{},"batch_count":2}); job=s.jobs[created["id"]]
+        with patch.object(server.time,'sleep'): s._run(job)
         self.assertEqual(job["status"],"uncertain"); self.assertEqual(len([x for x in s.requests if x[0][0]=="/prompt"]),1)
         s.replies=iter([{"one":{"status":{"status_str":"success"},"outputs":{}}}]); s._resume(job)
         self.assertEqual(job["status"],"partial"); self.assertEqual(len(job["prompt_ids"]),1)

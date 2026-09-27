@@ -1,0 +1,3 @@
+{"event": "created", "preset": "wai", "job_id": "32cabae7-d06c-4d95-8bbb-49f380610d10", "logged_at": "2026-09-27 10:03:10"}
+{"event": "prompt_id", "preset": "wai", "job_id": "32cabae7-d06c-4d95-8bbb-49f380610d10", "prompt_id": "3c12dfa6-900b-433d-8b28-d762c44cbf93", "logged_at": "2026-09-27 10:03:11"}
+{"event": "job", "preset": "wai", "job_id": "32cabae7-d06c-4d95-8bbb-49f380610d10", "status": "completed", "prompt_ids": ["3c12dfa6-900b-433d-8b28-d762c44cbf93"], "elapsed_seconds": 44.76716876029968, "message": "Complete", "host_commit_windows": [], "independent": {"samples_in_window": 0, "min_available_gib": null, "peak_pct": null, "whole_run_min_available_gib": 35.4}, "logged_at": "2026-09-27 10:03:55"}

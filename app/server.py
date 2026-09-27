@@ -66,12 +66,15 @@ PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit i
 HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the prompt; Stop tracking ends observation sooner
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
+HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
+HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
 GPU_SAMPLE_SECONDS = 0.5                 # sampler thread cadence: a VAE decode's overflow into shared memory lasts about 3 s
 GPU_SETTLE_SECONDS = 3                   # after a prompt that spilled, how long shared memory may take to drain before it counts as lingering
 EVICT_WAIT_SECONDS = 30                  # ceiling for ComfyUI to act on /free before the next prompt is posted anyway
 MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt", ".sft", ".bin")
 HOST_COMMIT_MINIMUM = 32 * 1024**3
+HOST_COMMIT_WINDOWS = 16                 # per-job bound on host-commit telemetry windows (4 batch members plus resumed observations)
 COMMIT_RELEASE_SAMPLE_SECONDS = 0.5      # commit re-read cadence while ComfyUI releases its cache
 COMMIT_RELEASE_MAX_SECONDS = 300
 # A release first moves the GPU-resident weights into host RAM: qwen21's /free took headroom from 27.4 to 12.7 GiB (14.7 GiB used)
@@ -81,6 +84,11 @@ COMMIT_RELEASE_MAX_SECONDS = 300
 COMMIT_RELEASE_TRANSIENT_BYTES = 16 * 1024**3
 COMMIT_RELEASE_MARGIN_BYTES = 6 * 1024**3
 COMMIT_RELEASE_FLOOR_BYTES = COMMIT_RELEASE_TRANSIENT_BYTES + COMMIT_RELEASE_MARGIN_BYTES
+COMMIT_RELEASE_FLOOR_NOTE = f'a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely'
+
+def commit_release_blocked(available):
+    """The one floor rule for every /free the Studio sends on its own (the gate release and the idle release, #1167); an unknown reading blocks."""
+    return not isinstance(available, int) or isinstance(available, bool) or available <= COMMIT_RELEASE_FLOOR_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError):
@@ -762,8 +770,7 @@ class Studio:
         def finish(outcome, ok=False):
             record['outcome'] = outcome; record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
             job.setdefault('commit_releases', []).append(record); return ok
-        if not isinstance(record['before_available_bytes'], int) or record['before_available_bytes'] <= COMMIT_RELEASE_FLOOR_BYTES:
-            return finish(f'skipped: a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely')
+        if commit_release_blocked(record['before_available_bytes']): return finish('skipped: ' + COMMIT_RELEASE_FLOOR_NOTE)
         backends = getattr(self, 'backends', None)
         if backends is not None and getattr(backends, 'busy', False): return finish('skipped: a backend switch is running')
         with self.lock: others = [other for other in self.jobs.values() if other is not job and other.get('status') in ('submitting', 'running')]
@@ -882,7 +889,7 @@ class Studio:
         return data
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1759,6 +1766,12 @@ class Studio:
         if time.monotonic() - self._last_activity < self.idle_release_minutes * 60: return False
         backends = getattr(self, 'backends', None)
         if backends is not None and (getattr(backends, 'busy', False) or getattr(backends, 'active', 'primary') != 'primary'): return False
+        # The release's own transient (-14.7 GiB measured on qwen21, #1167) must not be what exhausts commit: check headroom first,
+        # post nothing at or below the floor, and look again on the next tick. An unreadable counter is not evidence of room.
+        reading = self.host_commit_reading(refresh=True); available = reading.get('available_bytes')
+        if commit_release_blocked(available):
+            measured = f'{available / 1024**3:.1f} GiB of commit headroom' if isinstance(available, int) else 'commit headroom unknown (' + str(reading.get('unknown_reason') or 'no reading')[:120] + ')'
+            self.cache_release["last_error"] = 'skipped with ' + measured + ': ' + COMMIT_RELEASE_FLOOR_NOTE; return False
         # Pin both calls to the endpoint checked here: a switch that activates another backend mid-tick retargets comfy_url.
         url = self.comfy_url
         try:
@@ -2021,14 +2034,32 @@ class Studio:
         return False
 
     def _wait_history(self, job, submission):
-        sampler = self._start_gpu_sampler()
+        sampler = self._start_gpu_sampler(); commit = self._start_commit_sampler()
         try: return self._observe_history(job, submission, sampler)
         finally:
             if sampler is not None: sampler.stop()
+            if commit is not None: self._record_host_commit(job, submission, commit)
+
+    def _start_commit_sampler(self):
+        """A host_memory.Sampler for this prompt's window (#302), or None. Never raises."""
+        try: return host_memory.Sampler(GPU_SAMPLE_SECONDS).start()
+        except Exception: return None
+
+    def _record_host_commit(self, job, submission, sampler):
+        """Keep the prompt window's commit peak and minimum headroom in job['host_commit_windows'] (#302), one entry per observed
+        window, at most HOST_COMMIT_WINDOWS. Submission receipts stay untouched. Optional evidence: never raises."""
+        try:
+            sampler.stop(); window = sampler.take()
+            if not window: return
+            windows = job.setdefault('host_commit_windows', [])
+            if len(windows) >= HOST_COMMIT_WINDOWS: return
+            windows.append(dict(window, index=submission.get('index'), prompt_id=submission.get('prompt_id'), interval_seconds=GPU_SAMPLE_SECONDS))
+            self._save(job)
+        except Exception: pass
 
     def _observe_history(self, job, submission, sampler=None):
         prompt_id = submission["prompt_id"]
-        deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0
+        deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0; read_failures = 0
         while time.monotonic() < deadline:
             with self.lock:
                 if self._tracking_stopped(job): return False
@@ -2040,11 +2071,20 @@ class Studio:
                 if not isinstance(response, dict): raise ValueError('Invalid history response')
                 history = response.get(prompt_id)
                 if history is not None and not isinstance(history, dict): raise ValueError('Invalid prompt history')
-            except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException):
+            except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException) as exc:
+                # A read is safe to repeat (the prompt is never posted again), so one dropped poll does not end the batch; a ComfyUI
+                # that stays unreadable still ends observation after a bounded number of reads, with the rest of the batch unsent.
+                read_failures += 1; error = (str(exc) or type(exc).__name__)[:200]
+                submission.setdefault("history_read_errors", []).append({"at": time.time(), "error": error})
+                if read_failures >= HISTORY_READ_STRIKES:
+                    with self.lock:
+                        if self._tracking_stopped(job): return False
+                        job["status"] = "uncertain"; job["message"] = f"Could not observe a known ComfyUI prompt: {read_failures} history reads in a row failed (last: {error}). It was not resubmitted. Use Resume observation when ComfyUI is available."; self._save(job)
+                    return False
                 with self.lock:
-                    if self._tracking_stopped(job): return False
-                    job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job)
-                return False
+                    if self._tracking_stopped(job): return False # the owner stopped tracking: no backoff wait before letting go
+                time.sleep(HISTORY_READ_BACKOFF_SECONDS * read_failures); continue
+            read_failures = 0
             if history:
                 # A prompt that finishes between samples (or before the first) still gets one reading at completion.
                 self._sample_gpu_memory(job, submission, sampler); self._settle_gpu_memory(submission)

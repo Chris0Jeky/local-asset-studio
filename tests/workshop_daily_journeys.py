@@ -451,6 +451,18 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.page.click('#generate')
         self.assertTrue(self.page.locator('#runOutcome').is_hidden(), 'a new Generate clears the old summary')
 
+    def test_a_run_that_came_close_to_the_commit_limit_says_so_and_a_roomy_one_stays_silent(self):
+        self.load_outcome()
+        gib = 2 ** 30
+        windows = [{'min_available_bytes': 30 * gib, 'peak_committed_bytes': 66 * gib, 'limit_bytes': 96 * gib},
+                   {'min_available_bytes': int(12.1 * gib), 'peak_committed_bytes': int(83.9 * gib), 'limit_bytes': 96 * gib}]
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': windows})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh. Memory was tight: Windows commit headroom fell to 12.1 GiB (87 % used); close memory-heavy programs before the next large job.')
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': windows[:1]})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.')
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': [{'min_available_bytes': None}]})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.', 'an unknown reading is never read as zero headroom')
+
     def test_a_failed_or_uncertain_run_points_at_its_problem_and_never_offers_a_rerun(self):
         self.load_outcome()
         self.settle({'id': 'bad-1', 'status': 'failed', 'failure': {'title': 'Memory allocation failed'}, 'message': 'Generation failed: bad allocation. More detail.'})
@@ -480,6 +492,12 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.settle({'id': 'ns', 'status': 'not_submitted', 'message': 'ComfyUI queue unavailable. Nothing was submitted. No retry was queued.'})
         self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: ComfyUI queue unavailable. Nothing was submitted.', True])
         self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
+        # #1120: a never-submitted run is a Recent runs card, not a Problems entry; See why reveals that card and leaves Problems shut.
+        self.page.evaluate("""document.querySelector('#gallery').insertAdjacentHTML('afterbegin','<article class="jobStatus not_submitted" data-problem="ns"><b>Krea · not_submitted</b><button class="recipe">Recipe</button></article>')""")
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'ns')
+        self.assertTrue(self.page.evaluate("document.querySelector('#workshopResults').open"))
+        self.assertFalse(self.page.evaluate("document.querySelector('#jobProblems').open"), 'Problems holds no entry for it')
 
     def test_a_cancelled_run_says_so_plainly_and_keeps_its_finished_outputs(self):
         # #1138: the owner's own cancel is not an error; kept outputs lead to the run, and nothing invites a re-run.
@@ -555,6 +573,24 @@ document.addEventListener('studio:job-settled',e=>events.push([e.detail.id,e.det
         self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
         self.assertEqual(self.page.evaluate('events'), [['first', 'not_submitted']], 'the earlier run settles once; the running one waits')
         self.assertEqual(self.page.evaluate('activeJobId'), 'second')
+
+    def test_started_runs_that_can_never_be_announced_are_pruned(self):
+        # #1120: an id seen in the list and then gone, or put straight into abandoned by the owner, never settles; drop it.
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[],jobsEtag=null,jobsDataSignature='',estimateKey='',estimateResultKey='',activeJobId=null;window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.reply=[{id:'gone',status:'running',preset_name:'P',message:'Generating'},{id:'dropped',status:'abandoned',preset_name:'P',message:'Abandoned locally'}];
+window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
+        self.page.evaluate("startedJobIds.add('gone');startedJobIds.add('dropped');startedJobIds.add('fresh');activeJobId='dropped'")
+        self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('[...startedJobIds]'), ['gone', 'fresh'], 'abandoned is pruned; an id the list has not shown yet is kept')
+        self.assertIsNone(self.page.evaluate('activeJobId'), 'an abandoned active run stops owning the status line (#1173 Codex P2)')
+        self.page.evaluate("reply=[{id:'fresh',status:'running',preset_name:'P',message:'Generating'}]"); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('[...startedJobIds]'), ['fresh'], 'an id the list showed and then lost is pruned')
+        self.page.evaluate("reply=[{id:'fresh',status:'completed',preset_name:'P',message:'Complete',outputs:[{}]}]"); self.page.evaluate('refreshJobs()')
+        self.assertEqual((self.page.evaluate('events'), self.page.evaluate('startedJobIds.size')), (['fresh'], 0))
 
 
     def test_running_cards_show_truthful_elapsed_time_not_progress(self):

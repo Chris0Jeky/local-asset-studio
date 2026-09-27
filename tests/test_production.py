@@ -121,6 +121,15 @@ class ProductionTests(unittest.TestCase):
             self.assertIsNone(db.execute("SELECT 1 FROM budgets WHERE id LIKE 'character-edit:%'").fetchone())
         self.assertEqual(studio.production.register_edit_campaign({'campaign':good})['campaign'],good)
 
+    def test_a_branch_that_can_never_fit_the_root_budget_is_refused_at_create(self):
+        # Reservations only grow, so a branch larger than what is left of the root allowance could never start.
+        studio=FakeStudio(self.root,[]);lab=studio.production
+        parent=lab.create(self.intent())
+        with self.assertRaisesRegex(ValueError,'remaining generation budget'):lab.create(self.intent(parent_project=parent['id'],values=[3,4,5]))
+        lab.start(parent['id'])
+        with self.assertRaisesRegex(ValueError,'remaining generation budget'):lab.create(self.intent(parent_project=parent['id'],values=[3,4]))
+        self.assertEqual([p['id'] for p in lab.list()],[parent['id']])
+
     def test_branch_budget_and_start_are_atomic_and_not_reset(self):
         studio=FakeStudio(self.root,[]);lab=studio.production
         parent=lab.create(self.intent());child=lab.create(self.intent(parent_project=parent['id']))
