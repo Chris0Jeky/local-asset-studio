@@ -1,4 +1,8 @@
-# Current state — 26 September 2026
+# Current state — 27 September 2026
+
+## Recipe thumbnails: 31 of 35 missing recipes now have a Creative Bundles example — 27 September 2026 (03:58-04:55 local)
+
+33 serial Studio jobs on the primary backend, one per recipe that had no showcase entry, each at the recipe's authored defaults; the nine Krea recipes ran on the GGUF twin `krea-anime-atelier-gguf` (same bindings) because the fp8 presets take about ten minutes each here. All 33 completed and every PNG was opened. 31 went into `app/static/bundle-showcase.json` as `examples/recipe-thumbs-20260927/<recipe-id>.jpg` (704 px, under 142 KB) with prompt IDs, SHA-256 values and per-job receipts in `experiments/curated/recipe-thumbs-20260927/`. Two renders stayed local: `pearly-anima-mix-v10-portrait` (read as youthful with body emphasis) and `krea-dark-scifi-comic-warrior` (a franchise-soldier lookalike). The two `adult-illustration` wildcard recipes were not run. Timing: Anima/SDXL 18-51 s per job, Krea GGUF 218-393 s (sampling ~4-5 s/step; the rest was the CPU text encode while host commit sat at 55-71 %). Generated and agent-inspected only, not art acceptance and not licence clearance; catalog `verified` flags unchanged.
 
 ## Qwen-Image 2.1 native 2K square: 2048² runs, paging-bound — 26 September 2026 (night local)
 
