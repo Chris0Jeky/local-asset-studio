@@ -11,16 +11,21 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+import urllib.request
 import zipfile
 import zlib
 
 ROOT = Path(__file__).resolve().parent
 
 
-def png(width, height, colour_type=6):
+def png(width, height, colour_type=6, extra=b''):
     def chunk(kind, body):
         return struct.pack('>I', len(body)) + kind + body + struct.pack('>I', zlib.crc32(kind + body))
-    return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, colour_type, 0, 0, 0)) + chunk(b'IEND', b'')
+    return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, colour_type, 0, 0, 0)) + extra + chunk(b'IEND', b'')
+
+
+def trns_chunk(body=b'\x00\xff\x00\xff\x00\xff'):
+    return struct.pack('>I', len(body)) + b'tRNS' + body + struct.pack('>I', zlib.crc32(b'tRNS' + body))
 
 
 def jpeg(width, height):
@@ -72,6 +77,11 @@ class IntakeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.mod.image_info(truncated)
 
+    def test_png_trns_chunk_counts_as_alpha(self):
+        self.assertEqual(self.mod.image_info(png(8, 4, colour_type=2, extra=trns_chunk())), ('png', 8, 4, True))
+        self.assertEqual(self.mod.image_info(png(8, 4, colour_type=2)[:33]), ('png', 8, 4, None))
+        self.assertEqual(self.mod.image_info(png(8, 4, colour_type=2)), ('png', 8, 4, False))
+
     def test_receipt_records_actual_bytes_and_the_prompt_section(self):
         data = png(1536, 1024)
         (self.kit / 'inbox' / 'workflow-create--1536x1024--candidate-1.png').write_bytes(data)
@@ -122,12 +132,25 @@ class IntakeTests(unittest.TestCase):
         self.assertIsNone(lab['production']['prompt_record'])
         self.assertFalse(any('Image 2.5' in u for u in lab['unknowns']))
 
+    def test_blank_provider_is_unknown(self):
+        (self.kit / 'inbox' / 'state-blank--candidate-1.png').write_bytes(png(4, 4))
+        self.assertEqual(self.run_receipts(provider='   '), 0, self.err.getvalue())
+        receipt = self.receipt('state-blank--candidate-1')
+        self.assertIsNone(receipt['production']['provider'])
+        self.assertTrue(any(u.startswith('Provider is unknown') for u in receipt['unknowns']))
+
     def test_truncated_image_gets_a_receipt_with_unknown_size(self):
         (self.kit / 'inbox' / 'state-blank--candidate-1.png').write_bytes(png(4, 4)[:20])
         self.assertEqual(self.run_receipts(), 0, self.err.getvalue())
         receipt = self.receipt('state-blank--candidate-1')
         self.assertIsNone(receipt['files'][0]['width'])
         self.assertTrue(any('truncated' in u for u in receipt['unknowns']))
+
+    def test_non_image_bytes_with_an_image_name_are_refused_without_a_receipt(self):
+        (self.kit / 'inbox' / 'state-blank--candidate-1.png').write_bytes(b'hello')
+        self.assertEqual(self.run_receipts(), 2)
+        self.assertFalse((self.kit / 'receipts' / 'state-blank--candidate-1.json').exists())
+        self.assertIn('state-blank--candidate-1.png', self.err.getvalue())
 
     def test_unreadable_existing_receipt_is_left_alone(self):
         (self.kit / 'inbox' / 'state-blank--candidate-1.png').write_bytes(png(4, 4))
@@ -205,6 +228,17 @@ class IntakeTests(unittest.TestCase):
         self.assertFalse((self.kit / 'acquired' / 't' / 'Paper.blend').exists())
         self.assertIn('nothing was written', self.err.getvalue())
 
+    def test_zip_member_is_bounded_before_it_is_read(self):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as archive:
+            archive.writestr('big.bin', b'x' * 100)
+        payload = buffer.getvalue()
+        self.write_manifest([self.entry('big.bin', b'x' * 100, archive={'member': 'big.bin'})])
+        with patch.object(self.mod, 'MAX_DOWNLOAD', 50), patch.object(self.mod, 'download', return_value=payload), patch('sys.stdout', self.out), patch('sys.stderr', self.err):
+            self.assertEqual(self.mod.fetch(self.kit), 2)
+        self.assertIn('exceeds', self.err.getvalue())
+        self.assertFalse((self.kit / 'acquired' / 'big.bin').exists())
+
     def test_fetch_never_overwrites_a_different_local_file_and_survives_bad_downloads(self):
         self.write_manifest([self.entry('kept.jpg', b'original'), self.entry('cut.jpg', b'whole'), self.entry('zip.jpg', b'z', archive={'member': 'z.jpg'})])
         (self.kit / 'acquired' / 'kept.jpg').write_bytes(b'owner edit')
@@ -224,6 +258,38 @@ class IntakeTests(unittest.TestCase):
         with patch.object(self.mod.urllib.request, 'urlopen') as opened, self.assertRaisesRegex(ValueError, 'allow-listed'):
             self.mod.download('https://example.com/icon.svg')
         opened.assert_not_called()
+
+    def test_redirect_off_the_allow_list_is_refused(self):
+        handler = self.mod.AllowListRedirect()
+        with self.assertRaisesRegex(ValueError, 'allow-list'):
+            handler.redirect_request(urllib.request.Request('https://dl.polyhaven.org/a'), None, 302, 'Found', {}, 'https://evil.example/a')
+        kept = handler.redirect_request(urllib.request.Request('https://dl.polyhaven.org/a'), None, 302, 'Found', {}, 'https://raw.githubusercontent.com/x')
+        self.assertIsInstance(kept, urllib.request.Request)
+        with self.assertRaisesRegex(ValueError, 'allow-list'):
+            handler.redirect_request(urllib.request.Request('https://dl.polyhaven.org/a'), None, 302, 'Found', {}, 'http://dl.polyhaven.org/x')
+
+        class FakeResponse:
+            def __init__(self):
+                self.read_called = False
+            def geturl(self):
+                return 'https://evil.example/x'
+            def read(self, limit=-1):
+                self.read_called = True
+                return b'x'
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+
+        fake = FakeResponse()
+
+        class FakeOpener:
+            def open(self, request, timeout=60):
+                return fake
+
+        with patch.object(self.mod, 'OPENER', FakeOpener()), self.assertRaisesRegex(ValueError, 'allow-list'):
+            self.mod.download('https://dl.polyhaven.org/x')
+        self.assertFalse(fake.read_called)
 
     def test_tracked_manifest_is_valid_and_permissively_licensed(self):
         data = self.mod.manifest(ROOT)

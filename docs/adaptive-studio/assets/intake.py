@@ -36,6 +36,22 @@ FETCH_HOSTS = {'raw.githubusercontent.com', 'dl.polyhaven.org', 'ambientcg.com'}
 MAX_DOWNLOAD = 32 * 1024 * 1024
 
 
+class TruncatedHeader(ValueError):
+    """A PNG, JPEG or WebP signature whose header ends before its size fields."""
+
+
+class AllowListRedirect(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect only to an https URL on FETCH_HOSTS."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        target = urlparse(newurl)
+        if target.scheme != 'https' or target.hostname not in FETCH_HOSTS:
+            raise ValueError(f'redirect leaves the allow-list: {newurl}')
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+OPENER = urllib.request.build_opener(AllowListRedirect)
+
+
 def sha256(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -45,7 +61,7 @@ def image_info(data):
     try:
         return _image_info(data)
     except (IndexError, struct.error) as exc:
-        raise ValueError(f'truncated image header ({exc})') from None
+        raise TruncatedHeader(f'truncated image header ({exc})') from None
 
 
 def _image_info(data):
@@ -53,7 +69,18 @@ def _image_info(data):
         if len(data) < 26:
             raise IndexError('PNG header shorter than IHDR')
         width, height = struct.unpack('>II', data[16:24])
-        return 'png', width, height, data[25] in (4, 6)
+        if data[25] in (4, 6):
+            return 'png', width, height, True
+        offset = 33
+        while offset + 8 <= len(data):
+            length = struct.unpack('>I', data[offset:offset + 4])[0]
+            kind = data[offset + 4:offset + 8]
+            if kind == b'tRNS':
+                return 'png', width, height, True
+            if kind in (b'IDAT', b'IEND'):
+                return 'png', width, height, False
+            offset += 12 + length
+        return 'png', width, height, None
     if data[:2] == b'\xff\xd8':
         i = 2
         while i + 9 < len(data):
@@ -69,7 +96,7 @@ def _image_info(data):
                 height, width = struct.unpack('>HH', data[i + 5:i + 9])
                 return 'jpeg', width, height, False
             i += 2 + length
-        raise ValueError('JPEG without a frame header')
+        raise TruncatedHeader('JPEG without a frame header')
     if data[:4] == b'RIFF' and data[8:12] == b'WEBP':
         chunk = data[12:16]
         if len(data) < {b'VP8X': 30, b'VP8L': 25, b'VP8 ': 30}.get(chunk, 0):
@@ -118,12 +145,15 @@ def receipt_for(root, path, rows, template, now, provider=None):
     unknowns = ['produced_at is unknown: the file time is when it was saved, not when it was generated.']
     try:
         fmt, width, height, alpha = image_info(data)
-    except ValueError as exc:
+    except TruncatedHeader as exc:
         fmt = width = height = alpha = None
         unknowns.append(f'Format, size and alpha are unknown: {exc}.')
+    except ValueError as exc:
+        raise ValueError(f'{path.name}: {exc}') from None
     if match['w'] and width is not None and (int(match['w']), int(match['h'])) != (width, height):
         unknowns.append(f'The file name says {match["w"]}x{match["h"]}; the header says {width}x{height}. The header is recorded.')
-    chatgpt = (provider or '').strip().lower() == 'chatgpt'
+    provider = (provider or '').strip() or None
+    chatgpt = provider is not None and provider.lower() == 'chatgpt'
     block = prompt_block(root, match['id']) if chatgpt else None
     if chatgpt:
         label = 'ChatGPT (owner-run native image tool)'
@@ -131,7 +161,7 @@ def receipt_for(root, path, rows, template, now, provider=None):
         if not block:
             unknowns.append('No CHATGPT-PROMPT-PACK.md section exists for this ID; the prompt used is unrecorded.')
     elif provider:
-        label = provider.strip()
+        label = provider
         unknowns.append('No prompt record: only --provider chatgpt links a receipt to the prompt pack; attach the producer\'s own prompt or job record.')
     else:
         label = None
@@ -224,7 +254,9 @@ def verify(root):
 def download(url):
     if urlparse(url).hostname not in FETCH_HOSTS:
         raise ValueError(f'host not allow-listed: {url}')
-    with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'local-asset-studio-intake'}), timeout=60) as response:
+    with OPENER.open(urllib.request.Request(url, headers={'User-Agent': 'local-asset-studio-intake'}), timeout=60) as response:
+        if urlparse(response.geturl()).hostname not in FETCH_HOSTS:
+            raise ValueError(f'redirect leaves the allow-list: {response.geturl()}')
         data = response.read(MAX_DOWNLOAD + 1)
     if len(data) > MAX_DOWNLOAD:
         raise ValueError(f'download exceeds {MAX_DOWNLOAD} bytes: {url}')
@@ -245,7 +277,13 @@ def fetch(root):
             member = (entry.get('archive') or {}).get('member')
             if member:
                 with zipfile.ZipFile(io.BytesIO(data)) as archive:
-                    data = archive.read(member)
+                    info = archive.getinfo(member)
+                    if info.file_size > MAX_DOWNLOAD:
+                        raise ValueError(f'archive member exceeds {MAX_DOWNLOAD} bytes: {member}')
+                    with archive.open(info) as stream:
+                        data = stream.read(MAX_DOWNLOAD + 1)
+                    if len(data) > MAX_DOWNLOAD:
+                        raise ValueError(f'archive member exceeds {MAX_DOWNLOAD} bytes: {member}')
             if sha256(data) != entry['sha256']:
                 raise ValueError('sha256 differs from the manifest; the upstream file changed, nothing was written')
         except (OSError, ValueError, KeyError, EOFError, RuntimeError, NotImplementedError, zipfile.BadZipFile, zlib.error, http.client.HTTPException) as exc:
