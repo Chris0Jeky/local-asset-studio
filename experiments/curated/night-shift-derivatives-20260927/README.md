@@ -101,6 +101,34 @@ crossfade frame shows no doubled furniture. Registration is measured on edges, a
 - **Card tight** (keep, 1st). At 96 px the lamp, CRT and window read clearly, and the train shows as a thin light strip.
   **Card wide** (keep, 2nd): a dark wall strip fills the left quarter.
 
+## "MA-sharp": sharper 4K attempts after the owner's acceptance (17:34-17:59 local; candidates only, not accepted)
+
+The owner asked to "try sharper 4K as well". There were three attempts, each starting from the accepted MA, which is not
+replaced. All ran straight on ComfyUI with the anchor's own model: Z-Image Turbo fp8, the `zimage-fast-api.json` graph, with
+`EmptySD3LatentImage` swapped for `LoadImage -> VAEEncode`.
+
+| Attempt | Method | Prompt IDs | Time | Edge NCC vs MA / shift | Edge mean (MA 2.96) | Agent verdict |
+| --- | --- | --- | ---: | --- | ---: | --- |
+| a1 | 15 tiles of 1024 px (>=128 px overlap, linear feather), denoise 0.25, neutral cel-background prompt | first `e38efc36` … last `1abab857` (all 15 in `receipts/runs.jsonl`) | 392 s (tiles 15.8-21.9 s; first 129 s for the load) | 0.968 / 0,0 | 2.75 | reject: not sharper; the wall gains a faint grain |
+| a2 | same tiles, denoise 0.40 | 15 prompts in `runs.jsonl` | 401 s | 0.926 / 0,0 | 2.54 | reject: not sharper; window details and chair screws redrawn |
+| a3 | whole frame at 1920x1088, denoise 0.30 with the anchor's prompt, then ESRGAN raw 4x (7680x4352) and Lanczos to 3840x2160 | refine `ac311627` (201.0 s), upscale `97b1b4b9` (401.0 s) | 606 s | 0.918 / 0,0 | 3.04 | fixable: marginally crisper lines, but the window view is redrawn (pole, rain) |
+
+**Result: none of the three is clearly sharper than MA without changing content.**
+- Low-denoise tiles mostly soften the line work. At a 1024 px tile of an already smooth upscale, Z-Image keeps the blur and
+  re-draws small details.
+- The 2K whole-frame route is the only one with crisper edges, and it repaints the focal window.
+- The agent recommendation stays MA. **The owner decides between MA and a3 (or the others).**
+- Because no master attempt clearly succeeded, the same method was **not** applied to quiet r1-2, so the accepted pair stays
+  aligned.
+
+Sheets:
+- `ma-sharp-crops.jpg`: 1:1 crops of the wall, window/train, monitor/lamp and desk/chair for MA, a1, a2 and a3.
+- `ma-sharp-fullframe.jpg`: the four full frames, plus MA's edges over a3 and a1.
+
+Files stay local under `retro-anime-master/candidates/`, and the rubric records are appended to `judgements.jsonl`.
+Composition was kept in all three: no measured shift, and the edge overlays sit on the furniture. Timings are from ComfyUI
+history. Host commit read 50.0-56.7 % around the runs.
+
 ## Not done or not verified
 
 - **Not made:** `retro-anime-wall` (ChatGPT, the owner's job). Nor were the parked commitments (the guide companion, all sound,
