@@ -419,6 +419,29 @@
         "5",
         "denoise"
       ],
+      "vary": {
+        "status": "starting-value",
+        "sources": [
+          "sdxl",
+          "abstract",
+          "stylized-prop",
+          "pixel-concept",
+          "gentle-variation",
+          "sdxl-variation"
+        ],
+        "subtle": {
+          "controls": {
+            "denoise": 0.3
+          },
+          "basis": "Starting value: the research brief's subtle strength (docs/research/EXPERIMENT-LOOP-RESEARCH-2026-09-27.md, #1202), also this graph's authored denoise. Not measured as a Vary strength on this PC."
+        },
+        "strong": {
+          "controls": {
+            "denoise": 0.55
+          },
+          "basis": "Starting value from the research brief (#1202). Not measured on this PC. Only plain SDXL base recipes are sources: this graph carries no style LoRA, so the LineAni, screentone, cinematic-lighting and pixel-art recipes fall back to new seeds instead."
+        }
+      },
       "modality": "image",
       "execution_note": "Executed 2026-09-11 in the initial batch: success, 5.942 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
       "visual": "workflows/comfyui/17 - SDXL Gentle Reference Variation.json"
@@ -5382,6 +5405,31 @@
         "13",
         "lora_name"
       ],
+      "vary": {
+        "status": "starting-value",
+        "sources": [
+          "krea-portrait",
+          "krea-portrait-gguf",
+          "krea-environment",
+          "krea-anime-atelier",
+          "krea-anime-atelier-gguf",
+          "krea-style-lab",
+          "krea-refine"
+        ],
+        "subtle": {
+          "controls": {
+            "denoise": 0.25
+          },
+          "basis": "This recipe's measured polish default: on 23 September 2026, 0.25 kept the fox shrine's composition on 3 of 3 seeds (jobs 36e5d833, 0cba57ec, 0887896e). Not yet judged by the owner as a Vary strength."
+        },
+        "strong": {
+          "controls": {
+            "denoise": 0.5,
+            "steps": 6
+          },
+          "basis": "Starting value: the recipe's own Redraw variant (denoise 0.5, 6 steps); the research brief suggests about 0.55 (#1202). At 0.35 the fox shrine already lost or doubled a fox on 3 of 3 seeds, so expect the composition to move. Not judged by the owner."
+        }
+      },
       "modality": "image",
       "family": "Krea 2 Turbo",
       "dimension_multiple": 16,
@@ -5651,16 +5699,15 @@
       ],
       "variants": [
         {
-          "name": "Style lighter, pose looser",
+          "name": "Style lighter (0.3)",
           "controls": {
-            "style_weight": 0.5,
-            "pose_strength": 0.7
+            "style_weight": 0.3
           }
         },
         {
-          "name": "Style stronger",
+          "name": "Style stronger (0.7, multi-picture boards)",
           "controls": {
-            "style_weight": 0.9
+            "style_weight": 0.7
           }
         },
         {
@@ -5675,7 +5722,7 @@
         }
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.4 / 0.9) favour the pose. The style default was 0.7 until 27 Sep 2026: with a single painterly picture as the board it burned the colours on 18 of 18 renders, while 0.45 and 0.3 did not (experiments/curated/overnight-20260923/stylepose-pack/); 0.7 stays as a variant for averaged multi-picture boards. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
       "reference_slots": [
         {
           "role": "style",
@@ -5709,7 +5756,7 @@
         "min": 1,
         "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       },
-      "execution_note": "Executed 2026-09-14 through Studio job 12be1c70-cd3b-456c-ae47-371e4b58f1ce (ComfyUI prompt a0e13d48-d073-4313-9451-e96646e4aec5), 121 s on the primary backend, graph sha256 0c195298454bb58e\u2026: three-picture style board (character sheet, KonoSuba group art, bodysuit study; averaged at the authored 0.7), throne pose picture, Mishima Kurone 0.8 + Glossy 0.6, seed 2026091410, 832x1216. Output WAI_00023_.png (sha256 cfa9450ad62a1e66\u2026, JPEG examples/style-pose/board-verify-wai.jpg) inspected: seated with the knee raised, one eye closed and the hand on the throne arm as in the pose picture; clean light-novel lineart with glossy skin highlights, the sheet's brown-black-gold witch costume with diamond trim, a starry dark-blue sky borrowed from the board's group art; no text, no extra limbs. One run, not a benchmark, not art acceptance."
+      "execution_note": "Executed 2026-09-14 through Studio job 12be1c70-cd3b-456c-ae47-371e4b58f1ce (ComfyUI prompt a0e13d48-d073-4313-9451-e96646e4aec5), 121 s on the primary backend, graph sha256 0c195298454bb58e\u2026: three-picture style board (character sheet, KonoSuba group art, bodysuit study; averaged at the authored 0.7), throne pose picture, Mishima Kurone 0.8 + Glossy 0.6, seed 2026091410, 832x1216. Output WAI_00023_.png (sha256 cfa9450ad62a1e66\u2026, JPEG examples/style-pose/board-verify-wai.jpg) inspected: seated with the knee raised, one eye closed and the hand on the throne arm as in the pose picture; clean light-novel lineart with glossy skin highlights, the sheet's brown-black-gold witch costume with diamond trim, a starry dark-blue sky borrowed from the board's group art; no text, no extra limbs. One run, not a benchmark, not art acceptance. Re-proved at the new 0.4 default on 2026-09-27: Studio job 6aa7317d-624e-4701-bfdc-c8f883d3f01a (prompt 05a9486c-b061-4ed8-aa87-a44db3f15a53, 309 s cold after a cache free, 2.9 GB spill), single-picture board Anima-v1-Baseline_00004_, the action pose picture, pose 0.9, seed 2026092372; the submitted graph equals this graph apart from the bound controls. Output Style-Pose/WAI_00049_.png (sha256 149017b94986306f…) pre-reviewed by an agent: no colour burn, raised arm held, the lowered fist indistinct (fixable). One seed, not art acceptance."
     },
     {
       "id": "style-pose-animagine",

@@ -9,8 +9,8 @@ from studio_prompt.reference_jobs import ReferenceJobs
 
 class ReferenceRetirementTests(unittest.TestCase):
     def setUp(self):
-        self.f=fixtures.ReferenceJobTests();self.f.setUp()
-        self.addCleanup(self.f.doCleanups);self.addCleanup(self.f.tearDown)
+        self.f=fixtures.ReferenceJobTests();self.addCleanup(self.f.doCleanups)
+        self.f.setUp();self.addCleanup(self.f.tearDown)
         self.command={'workspace_id':self.f.scope,'request_id':self.f.payload['request_id']}
 
     def test_retire_unknown_prevents_late_create_and_does_not_queue(self):
@@ -91,7 +91,7 @@ class ReferenceRetirementTests(unittest.TestCase):
 
 class ReferenceRetirementHttpTests(unittest.TestCase):
     def setUp(self):
-        self.http=http_fixtures.ReferenceJobHttpTests();self.http.setUp();self.addCleanup(self.http.doCleanups)
+        self.http=http_fixtures.ReferenceJobHttpTests();self.addCleanup(self.http.doCleanups);self.http.setUp()
         self.f=self.http.f;self.command={'workspace_id':self.f.scope,'request_id':self.f.payload['request_id']}
 
     def test_retire_and_status_use_real_http_without_inference(self):

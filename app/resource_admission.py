@@ -164,8 +164,11 @@ def workflow_identity(studio, preset, graph, runtime):
     return identity
 
 
-def external_vram(studio):
-    """(bytes, None) of dedicated VRAM held by processes other than the active ComfyUI, or (None, reason). Never raises."""
+def external_vram(studio, capacity_bytes=None, evidence=None):
+    """(bytes, None) of dedicated VRAM held by processes other than the active ComfyUI, or (None, reason). Never raises.
+
+    `capacity_bytes` (the card's size from ComfyUI) turns a total-less reading above it into unknown; a dict `evidence`
+    receives `counter_anomalies`, the impossible process counters of the same reading (issue #983)."""
     try:
         backends = getattr(studio, "backends", None)
         process = backends.process(backends.profiles[backends.active]) if backends else None
@@ -175,11 +178,14 @@ def external_vram(studio):
     if pid is None:
         return None, "the active ComfyUI process is not identified"
     reading = gpu_memory.read()
+    find_anomalies = getattr(gpu_memory, "anomalies", None)
+    if isinstance(evidence, dict) and callable(find_anomalies):
+        evidence["counter_anomalies"] = find_anomalies(reading, capacity_bytes=capacity_bytes)   # pure, never raises
     confidence_aware = getattr(gpu_memory, "others_for_admission", None)
     if callable(confidence_aware):
         # A reconciled bound from disagreeing counters (issue #983) is conservative for the
         # installed guard but is not a measurement, so admission treats it as unknown.
-        external, reason = confidence_aware(reading, pid)
+        external, reason = confidence_aware(reading, pid, capacity_bytes=capacity_bytes)
         if external is None:
             return None, reason or ((reading.get("unknown_reason") if isinstance(reading, dict) else None)
                                     or "no GPU adapter reading")
@@ -228,15 +234,18 @@ def observe(studio):
         elif free is None:
             vram_reason = "Selected device returned no valid free-VRAM counter"
         else:
-            external, external_reason = external_vram(studio)
-            total = _counter(device.get("vram_total_bytes"))
+            total, evidence = _counter(device.get("vram_total_bytes")), {}
+            external, external_reason = external_vram(studio, capacity_bytes=total, evidence=evidence)
+            if evidence.get("counter_anomalies"):
+                vram_parts["counter_anomalies"] = evidence["counter_anomalies"]
             if external is None:
                 vram_reason = "Other processes' dedicated VRAM is unmeasured: " + external_reason
             elif total is not None and external > total:
                 # Live 25 Sep 2026: dwm.exe's counter read 65.9 GiB on a 16 GiB card; a sum larger than the card is not evidence.
                 vram_reason = "Other processes' dedicated VRAM counters are implausible (%.1f GiB on a %.1f GiB card)" % (external / 1024 ** 3, total / 1024 ** 3)
             else:
-                vram, vram_reason, vram_parts = max(0, free - external), None, {"comfyui_free_bytes": free, "external_bytes": external}
+                vram, vram_reason = max(0, free - external), None
+                vram_parts.update(comfyui_free_bytes=free, external_bytes=external)
     elif vram_reason is None:
         vram_reason = "Configured admission device is unavailable"
     return {

@@ -1104,6 +1104,66 @@ def _combine_loop(c):
             else: asset['preset_id'] = preset_id
 
 
+VARY_STATE = """() => ({preset: selected.id, intent: continuationState && continuationState.intent,
+  source: continuationState && continuationState.source_asset_id, parents: parentAssets.slice(),
+  denoise: getControl('denoise') ? getControl('denoise').value : null, seed: getControl('seed') ? getControl('seed').value : null,
+  batch: document.querySelector('#batch').value, positive: document.querySelector('#positive').value,
+  notice: document.querySelector('#uxNotice').textContent})"""
+
+
+@driver('vary-a-keeper')
+def _vary(c):
+    """#1202: one press from a picture to a prepared round of close variations; Generate stays a separate press."""
+    import studio_browser_smoke as fixture
+    receipt = dict(status='completed', batch_count=1, message='Synthetic completed receipt; no model ran.')
+    # A Krea picture (its route is krea-refine) and one timing receipt each: 240 s per Refine picture is slow (2),
+    # 30 s per Anima portrait is fast (4). The Anima fixture job has no route, so it falls back to new seeds.
+    added = [] if c.live else [
+        dict(receipt, id='vary-krea-keeper', preset_id='krea-anime-atelier', preset_name='Krea 2 Anime Atelier', created_at=1789229900,
+             elapsed_seconds=95, controls={'positive': 'A fox shrine at dusk, anime illustration.', 'seed': 7},
+             outputs=[dict(filename='keeper.png', asset_id='asset-2', media_type='image', seed=7)]),
+        dict(receipt, id='vary-refine-timing', preset_id='krea-refine', preset_name='Krea 2 Refine Pass', created_at=1789229800,
+             elapsed_seconds=240, controls={'seed': 1}, outputs=[]),
+        dict(receipt, id='vary-anima-timing', preset_id='anima-portrait', preset_name='Anima portrait', created_at=1789229700,
+             elapsed_seconds=30, controls={'seed': 2}, outputs=[]),
+    ]
+    fixture.JOBS[:0] = added
+    try:
+        c.boot('#create')
+        c.page.wait_for_timeout(600)
+        c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
+        keeper = '#gallery [data-ux-vary="subtle"]' + ('' if c.live else '[data-job="vary-krea-keeper"]')
+        c.act('#gallery .ux-vary', 'read', note='the Vary controls and what they will do')
+        c.stop_before(c.act(keeper, note='prepares the img2img round'), 'stopped before preparing: Vary attaches a copy of the picture')
+        c.page.wait_for_timeout(800)
+        first = c.page.evaluate(VARY_STATE)
+        c.act('#uxNotice', 'read', note=first['notice'][:200])
+        c.act('#uxContinuation', 'read', note='lineage parents=%s' % first['parents'])
+        c.act('#gallery [data-ux-vary="reseed"][data-job="fixture-job"]', note='new seeds on a recipe with no close-variation route')
+        c.page.wait_for_timeout(800)
+        second = c.page.evaluate(VARY_STATE)
+        c.act('#uxNotice', 'read', note=second['notice'][:200])
+        # A picture with no recorded recipe: the asset panel shows Vary disabled, with the reason beside it.
+        c.page.evaluate("showView('assets');openAsset('asset-3')"); c.page.wait_for_timeout(300)
+        c.act('#assetDialog .ux-vary button', 'read', note='Vary disabled with its reason', supplementary=True)
+        why = c.page.evaluate("(() => { const b = document.querySelector('#assetDialog .ux-vary button'); return b && b.disabled ? document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()")
+        c.page.evaluate("document.querySelector('#assetDialog').close();showView('create')"); c.page.wait_for_timeout(300)
+        c.act('#generate', 'read', note='readiness only; never pressed')
+        img2img = (first['preset'] == 'krea-refine' and first['intent'] == 'edit' and first['source'] == 'asset-2'
+                   and first['parents'] == ['asset-2'] and first['denoise'] == '0.25' and first['batch'] == '2'
+                   and first['seed'] not in (None, '', '7') and 'Vary subtle prepared on' in first['notice']
+                   and 'Nothing was generated' in first['notice'] and '4 min per picture here' in first['notice'])
+        reseed = (second['preset'] == 'anima-portrait' and second['intent'] is None and second['parents'] == ['asset-0']
+                  and second['batch'] == '4' and second['seed'] not in (None, '', '42')
+                  and second['positive'] == fixture.JOBS[len(added)]['controls']['positive']
+                  and 'new seeds, same recipe' in second['notice'] and 'Nothing was generated' in second['notice'])
+        disabled = 'No Studio recipe is recorded' in why
+        return img2img and reseed and disabled, 'vary subtle: %s; fallback: %s; asset panel: %s' % (
+            {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')}, why or 'no disabled reason')
+    finally:
+        for job in added: fixture.JOBS.remove(job)
+
+
 @driver('reference-analysis-review-and-apply')
 def _reference_analysis_review(c):
     import base64

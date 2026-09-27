@@ -824,6 +824,81 @@
   async function openGalleryHandoff(id,preferred){const epoch=++handoffEpoch;if(!id){announce('This output has no saved asset identity. Refresh the workspace before attaching it.',true);return;}let asset=assetState.assets.find(a=>a.id===id);if(!asset)try{const data=await api('/api/workspace');if(epoch!==handoffEpoch)return;if(!data||!Array.isArray(data.assets))throw Error('Workspace assets are unavailable.');assetState=data;renderAssets();asset=assetState.assets.find(a=>a.id===id);}catch(err){if(epoch===handoffEpoch)announce('Could not refresh this output. '+err.message,true);return;}if(epoch!==handoffEpoch)return;openHandoff(id,preferred,epoch);}
   document.addEventListener('click',e=>{const button=e.target.closest('.reference-output,[data-handoff]');if(!button)return;e.preventDefault();e.stopImmediatePropagation();const output=button.dataset.job?jobs.find(j=>j.id===button.dataset.job)?.outputs?.[Number(button.dataset.index)]:null;if(button.classList.contains('reference-output')){void openGalleryHandoff(output?.asset_id,button.dataset.preset);return;}const id=activeAsset?.id;if(!id){announce('Choose an available image from the Asset library.',true);return;}openHandoff(id,button.dataset.preset||button.dataset.handoff);},true);
   after('openAsset',()=>{q('#uxAssetUnsaved')?.remove();if(!activeAsset)return;const a=activeAsset;const eligibility=U.sceneEligibility([a]);q('#assetHandoffs').innerHTML=(!a.trashed_at&&a.media_type==='image'?'<button class="primary" data-ux-handoff="'+a.id+'">Continue with this →</button><button id="uxFindSourceRecipes">Find recipes for this image</button>':'')+(!a.trashed_at&&['image','video','audio'].includes(a.media_type)?'<a class="ux-scene-link" href="/av.html?asset_ids='+encodeURIComponent(a.id)+'">'+(eligibility.ok?'Use in a scene':'Open scene source picker')+' ↗</a>':'');q('#assetRecipe').disabled=!a.job_id;q('#assetRecipe').textContent=a.job_id?'Recipe':'No recipe recorded';q('#assetRecipe').title=a.job_id?'':'This asset was not made by a Studio job, so there is no recipe to export.';});
+  // #1202 Vary subtle / Vary strong: one press from a picture to a prepared round of close variations. The img2img route
+  // attaches a copy through the same continuation as Continue with this (lineage = this picture); a recipe with no route
+  // reloads its own recipe with new seeds and records this picture as the parent. Generate stays the owner's press.
+  let varyBusy=false;
+  function varyMarkup(plan,attrs,why){
+    const hint='<small id="'+why+'">'+escape(StudioContinuation.varyHint(plan))+'</small>';
+    if(plan.kind==='none')return '<button type="button" disabled aria-describedby="'+why+'">Vary</button>'+hint;
+    if(plan.kind==='reseed')return '<button type="button" data-ux-vary="reseed" '+attrs+' aria-describedby="'+why+'">Vary · new seeds, same recipe</button>'+hint;
+    return '<button type="button" data-ux-vary="subtle" '+attrs+' aria-describedby="'+why+'">Vary subtle</button><button type="button" data-ux-vary="strong" '+attrs+' aria-describedby="'+why+'">Vary strong</button>'+hint;
+  }
+  function varyPlanFor(presetId,jobId,assetId,mediaType){
+    const asset=assetState.assets.find(a=>a.id===assetId);
+    if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
+    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset);
+  }
+  // Rebuilt only when its words change, so polling never steals focus from a Vary button.
+  function placeVary(holder,after,markup){
+    let box=holder.querySelector(':scope > .ux-vary');if(box&&box.dataset.markup===markup)return;
+    const next=element('div','ux-vary',markup);next.dataset.markup=markup;next.setAttribute('role','group');next.setAttribute('aria-label','Vary this picture');
+    if(box)box.replaceWith(next);else after.after(next);
+  }
+  function syncGalleryVary(){
+    if(!catalog)return;
+    for(const card of q('#gallery').querySelectorAll('.imageCard')){
+      const anchor=card.querySelector('.reference-output'),actions=card.querySelector('.card-actions');if(!anchor||!actions)continue;
+      const job=jobs.find(j=>j.id===anchor.dataset.job),index=Number(anchor.dataset.index),output=job?.outputs?.[index];if(!job||!output)continue;
+      const plan=varyPlanFor(job.preset_id,job.id,output.asset_id,output.media_type);
+      placeVary(card,actions,varyMarkup(plan,'data-asset="'+escape(output.asset_id||'')+'" data-preset="'+escape(job.preset_id||'')+'" data-job="'+escape(job.id)+'"','uxVaryWhy-'+escape(job.id)+'-'+index));
+    }
+  }
+  after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
+  after('openAsset',()=>{
+    const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
+    // Vary is for pictures; a video, sound or model asset shows no Vary control at all.
+    if(!a||a.media_type!=='image'){holder.querySelector(':scope > .ux-vary')?.remove();return;}
+    const plan=varyPlanFor(a.preset_id,a.job_id,a.id,a.media_type);
+    placeVary(holder,q('#assetHandoffs'),varyMarkup(plan,'data-asset="'+escape(a.id)+'" data-preset="'+escape(a.preset_id||'')+'" data-job="'+escape(a.job_id||'')+'"','uxVaryWhyAsset'));
+  });
+  async function prepareVary(button){
+    const strength=button.dataset.uxVary,assetId=button.dataset.asset;
+    if(varyBusy)return;
+    if(submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy){announce('Wait for the current Create action to finish, then press Vary again. Nothing was prepared.',true);return;}
+    if(assetDetailsDirty()){warnUnsavedAsset();return;}
+    if(!catalog){announce('Recipes are still loading.');return;}
+    const plan=varyPlanFor(button.dataset.preset,button.dataset.job,assetId);
+    if(plan.kind==='none'){announce(plan.reason,true);return;}
+    if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength)){announce('This Vary button is out of date. Nothing was prepared; press Vary again.',true);syncGalleryVary();return;}
+    varyBusy=true;syncReady();
+    const stamp=workbenchStamp();
+    try{
+      const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
+      if(plan.kind==='img2img'){
+        const result=await post('/api/assets/reference',{id:assetId});
+        if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. Nothing was applied; press Vary again.');
+        if(result?.parent_asset!==assetId||result.context?.asset_id!==assetId||result.sha256!==result.context?.sha256)throw Error('The copied picture could not be verified. Nothing was applied.');
+        beginContinuation(result,plan.route.id,'edit');sourceReadError='';
+        for(const [key,value] of Object.entries(plan.strengths[strength].controls)){const input=getControl(key);if(input)input.value=value;}
+        q('#referenceHint').textContent='Attached source · '+result.width+' × '+result.height;
+      }else{
+        // The same recipe and words, new seeds. The picture is recorded as the parent; its pixels are not an input.
+        const recipe=await api('/api/jobs/'+encodeURIComponent(button.dataset.job)+'/recipe');
+        if(stamp!==workbenchStamp())throw Error('The workbench changed while the recipe was being read. Nothing was applied; press Vary again.');
+        if(recipe?.preset_id!==plan.route.id)throw Error('This run no longer records '+plan.route.name+'. Nothing was applied.');
+        selectPreset(plan.route.id,true,true);applySaved({preset:plan.route.id,controls:{...(recipe.controls||{})},batch_count:1,parent_assets:[assetId]});
+      }
+      const seedInput=getControl('seed');if(seedInput)seedInput.value=seed;
+      q('#batch').value=String(plan.round.count);
+      if(q('#assetDialog').open)q('#assetDialog').close();
+      draftDirty=true;showView('create');saveDraft();syncCreate();updateReady();scheduleTimeEstimate();recipeChanged();
+      const words=selected?.positive&&!String(q('#positive').value||'').trim()?' No submitted wording was kept for this picture: describe it before running.':'';
+      announce(StudioContinuation.varyStatus(plan,strength==='reseed'?'subtle':strength,seed)+words);
+    }catch(error){announce(error.message,true);}
+    finally{varyBusy=false;syncReady();}
+  }
+  document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-vary]');if(!button||button.disabled)return;e.preventDefault();void prepareVary(button);});
   document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSourceRecipes'))return;
     if(assetDetailsDirty()){warnUnsavedAsset();return;}const a=activeAsset;
     if(!a||a.trashed_at||a.media_type!=='image'||!window.RecipeShortlist){announce('Choose an available image after recipe guidance has loaded.',true);return;}

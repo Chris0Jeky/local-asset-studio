@@ -16,7 +16,7 @@ resource_probe.project_stats = lambda value: value
 wan_capacity = types.ModuleType('wan_capacity')
 wan_capacity.projection = lambda preset, graph: preset.get('wan_projection')
 gpu_memory = types.ModuleType('gpu_memory'); gpu_memory.read = lambda: {}; gpu_memory.others_bytes = lambda reading, pid: None
-def _others_for_admission(reading, pid):
+def _others_for_admission(reading, pid, capacity_bytes=None):
     others = gpu_memory.others_bytes(reading, pid)
     if others is None:
         reason = reading.get('unknown_reason') if isinstance(reading, dict) else None
@@ -228,6 +228,34 @@ class ResourceAdmissionTests(unittest.TestCase):
             snapshot = admission.observe(studio)
         self.assertIsNone(snapshot['vram']['available_bytes'])
         self.assertIn('disagree', snapshot['vram']['unknown_reason'])
+
+    def test_observe_passes_card_capacity_and_carries_counter_anomalies_into_the_receipt(self):
+        # Issue #983, owner decision 27 Sep 2026: the card's size bounds a total-less reading, and impossible
+        # counters travel with the admission receipt as evidence.
+        studio = Studio()
+        studio.backends.process = lambda profile: types.SimpleNamespace(pid=40)
+        studio._request = lambda path, timeout=3, base_url=None: {
+            'devices': [{'type': 'cuda', 'vram_free_bytes': 12 * GIB, 'vram_total_bytes': 16 * GIB}], 'versions': {}}
+        rows = [{'adapter': 'a', 'pid': 2304, 'dedicated_bytes': 66 * GIB, 'adapter_total_bytes': 4 * GIB, 'limit_bytes': 5 * GIB}]
+        sample = {'adapters': {'a': {40: {'dedicated_bytes': GIB}}}, 'adapter_totals': {'a': 4 * GIB}}
+        with patch.object(admission.gpu_memory, 'read', return_value=sample), \
+                patch.object(admission.gpu_memory, 'anomalies', create=True, return_value=rows) as anomalies, \
+                patch.object(admission.gpu_memory, 'others_for_admission',
+                             return_value=(None, 'GPU adapter and process counters disagree')) as others:
+            snapshot = admission.observe(studio)
+        self.assertEqual(others.call_args.kwargs.get('capacity_bytes'), 16 * GIB)
+        self.assertEqual(anomalies.call_args.kwargs.get('capacity_bytes'), 16 * GIB)
+        self.assertIsNone(snapshot['vram']['available_bytes'])
+        self.assertEqual(snapshot['vram']['counter_anomalies'], rows)
+        profile, identity = profile_for(studio, obs=snapshot)
+        receipt = admission.ReservationLedger().admit('job', identity, profile, snapshot)
+        self.assertEqual(receipt['observation']['vram']['counter_anomalies'], rows)
+        # No anomaly, no extra key: existing observations keep their shape.
+        with patch.object(admission.gpu_memory, 'read', return_value=sample), \
+                patch.object(admission.gpu_memory, 'anomalies', create=True, return_value=[]), \
+                patch.object(admission.gpu_memory, 'others_for_admission', return_value=(GIB, None)):
+            clean = admission.observe(studio)
+        self.assertEqual(clean['vram']['available_bytes'], 11 * GIB); self.assertNotIn('counter_anomalies', clean['vram'])
 
     def test_observe_treats_cpu_mps_and_directml_counters_as_unknown(self):
         for kind in ('cpu', 'mps', 'privateuseone'):

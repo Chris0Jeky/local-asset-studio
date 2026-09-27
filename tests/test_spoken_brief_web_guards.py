@@ -12,8 +12,8 @@ from spoken_brief_qa import FINDINGS, record_review
 class WebWriteGuardTests(unittest.TestCase):
     def setUp(self):
         self.f = fixtures.ExportTests()
-        self.f.setUp()
         self.addCleanup(self.f.doCleanups)
+        self.f.setUp()
         self.archive = inspect_run(self.f.directory)
 
     def test_stale_bookmark_cannot_overwrite_a_newer_save(self):
