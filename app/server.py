@@ -66,6 +66,8 @@ PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit i
 HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the prompt; Stop tracking ends observation sooner
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
+HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
+HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
 GPU_SAMPLE_SECONDS = 0.5                 # sampler thread cadence: a VAE decode's overflow into shared memory lasts about 3 s
 GPU_SETTLE_SECONDS = 3                   # after a prompt that spilled, how long shared memory may take to drain before it counts as lingering
@@ -1943,7 +1945,7 @@ class Studio:
 
     def _observe_history(self, job, submission, sampler=None):
         prompt_id = submission["prompt_id"]
-        deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0
+        deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0; read_failures = 0
         while time.monotonic() < deadline:
             with self.lock:
                 if self._tracking_stopped(job): return False
@@ -1955,11 +1957,18 @@ class Studio:
                 if not isinstance(response, dict): raise ValueError('Invalid history response')
                 history = response.get(prompt_id)
                 if history is not None and not isinstance(history, dict): raise ValueError('Invalid prompt history')
-            except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException):
-                with self.lock:
-                    if self._tracking_stopped(job): return False
-                    job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job)
-                return False
+            except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException) as exc:
+                # A read is safe to repeat (the prompt is never posted again), so one dropped poll does not end the batch; a ComfyUI
+                # that stays unreadable still ends observation after a bounded number of reads, with the rest of the batch unsent.
+                read_failures += 1; error = (str(exc) or type(exc).__name__)[:200]
+                submission.setdefault("history_read_errors", []).append({"at": time.time(), "error": error})
+                if read_failures >= HISTORY_READ_STRIKES:
+                    with self.lock:
+                        if self._tracking_stopped(job): return False
+                        job["status"] = "uncertain"; job["message"] = f"Could not observe a known ComfyUI prompt: {read_failures} history reads in a row failed (last: {error}). It was not resubmitted. Use Resume observation when ComfyUI is available."; self._save(job)
+                    return False
+                time.sleep(HISTORY_READ_BACKOFF_SECONDS * read_failures); continue
+            read_failures = 0
             if history:
                 # A prompt that finishes between samples (or before the first) still gets one reading at completion.
                 self._sample_gpu_memory(job, submission, sampler); self._settle_gpu_memory(submission)
