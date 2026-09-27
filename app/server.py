@@ -73,6 +73,9 @@ MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt",
 HOST_COMMIT_MINIMUM = 32 * 1024**3
 COMMIT_RELEASE_SAMPLE_SECONDS = 0.5      # commit re-read cadence while ComfyUI releases its cache
 COMMIT_RELEASE_MAX_SECONDS = 300
+# A release first moves the GPU-resident weights into host RAM: qwen21's /free took headroom from 27.4 to 12.7 GiB before it
+# settled at 46.2 GiB (27 Sep 2026, experiments/curated/perf-20260927). Below this floor the release itself could exhaust commit.
+COMMIT_RELEASE_FLOOR_BYTES = 18 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError):
@@ -751,6 +754,8 @@ class Studio:
         def finish(outcome, ok=False):
             record['outcome'] = outcome; record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
             job.setdefault('commit_releases', []).append(record); return ok
+        if not isinstance(record['before_available_bytes'], int) or record['before_available_bytes'] < COMMIT_RELEASE_FLOOR_BYTES:
+            return finish(f'skipped: a release first moves GPU weights into RAM and needs {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely')
         backends = getattr(self, 'backends', None)
         if backends is not None and getattr(backends, 'busy', False): return finish('skipped: a backend switch is running')
         with self.lock: others = [other for other in self.jobs.values() if other is not job and other.get('status') in ('submitting', 'running')]

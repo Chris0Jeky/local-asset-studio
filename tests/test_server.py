@@ -167,6 +167,18 @@ class ServerTests(unittest.TestCase):
                 self.assertIn(outcome,job['commit_releases'][0]['outcome'])
                 self.assertIn('below the required 32 GiB',job['message'])
 
+    def test_commit_release_is_skipped_below_the_floor_its_own_transient_needs(self):
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES;self.assertEqual(floor,18*1024**3)
+        studio=self._heavy_studio([self.IDLE],release=5)
+        with patch.object(server.host_memory,'read',return_value=self._commit_reading(floor-1)),patch.object(server.time,'sleep'):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
+        self.assertIn('18 GiB',job['commit_releases'][0]['outcome']);self.assertIn('were not freed',job['message'])
+        studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'at-floor'},{'at-floor':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
+        with patch.object(server.host_memory,'read',side_effect=[self._commit_reading(floor)]*2+[self._commit_reading(32*1024**3)]*2),patch.object(server.time,'sleep'):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['commit_releases'][0]['outcome'],'released')
+
     def test_commit_release_never_follows_an_unknown_reading(self):
         unknown={'available_bytes':None,'limit_bytes':None,'committed_bytes':None,'unknown_reason':'counter unavailable'}
         with patch.object(server.host_memory,'read',return_value=unknown):
