@@ -1,0 +1,301 @@
+# qwen21 ComfyUI v0.37.0 (8196) in-memory log, /internal/logs/raw, window 18:08:00-18:22:30 local, unfiltered, colour codes stripped
+2026-09-27T18:09:55.121417 [INFO] Found quantization metadata version 1
+2026-09-27T18:09:55.122414 [INFO] Using MixedPrecisionOps for text encoder
+2026-09-27T18:09:55.818246 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\text_encoders\\qwen3vl_8b_int8_convrot.safetensors']
+2026-09-27T18:09:55.939665 [INFO] CLIP/text encoder model load device: cuda:0, offload device: cpu, current: cpu, dtype: torch.float16
+2026-09-27T18:09:55.945670 [INFO] Requested to load QwenImage21TEModel_
+2026-09-27T18:10:20.174144 [INFO] loaded completely; 11892.05 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:10:22.908880 [INFO] Found quantization metadata version 1
+2026-09-27T18:10:22.908880 [INFO] Detected mixed precision quantization
+2026-09-27T18:10:22.908880 [INFO] Using mixed precision operations
+2026-09-27T18:10:22.911388 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:10:22.924894 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:10:22.928894 [INFO] model_type FLUX
+2026-09-27T18:10:22.929897 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:10:22.995746 [INFO] Requested to load QwenImage21
+2026-09-27T18:10:25.372233 [INFO] Unloaded partially: 5182.83 MB freed, 3734.65 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:10:40.752310 [INFO] loaded completely; 8164.40 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:10:58.500538 100%|##########| 25/25 [00:16<00:00,  1.50it/s]
+2026-09-27T18:10:58.500538 100%|##########| 25/25 [00:16<00:00,  1.53it/s]
+2026-09-27T18:10:58.500538 
+2026-09-27T18:10:59.087470 [INFO] Requested to load WanVAE
+2026-09-27T18:10:59.382508 [INFO] Unloaded partially: 576.56 MB freed, 3158.08 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:11:00.447142 [INFO] loaded completely; 1714.39 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:11:04.199873 [INFO] Prompt executed in 70.76 seconds
+2026-09-27T18:11:04.996473 [INFO] got prompt
+2026-09-27T18:11:05.487152 [INFO] Requested to load QwenImage21
+2026-09-27T18:11:28.201648 [INFO] loaded completely; 7943.29 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:11:35.328970 100%|##########| 8/8 [00:07<00:00,  1.40it/s]
+2026-09-27T18:11:35.328970 100%|##########| 8/8 [00:07<00:00,  1.14it/s]
+2026-09-27T18:11:35.328970 
+2026-09-27T18:11:36.038518 [INFO] Unloaded partially: 96.09 MB freed, 3061.99 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:11:47.528670 [INFO] Prompt executed in 42.42 seconds
+2026-09-27T18:11:48.388304 [INFO] got prompt
+2026-09-27T18:11:49.016388 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\vae\\qwen_image_2.1_vae_bf16.safetensors']
+2026-09-27T18:11:49.036112 [INFO] Using split attention in VAE
+2026-09-27T18:11:49.039111 [INFO] Using split attention in VAE
+2026-09-27T18:11:50.980971 [INFO] VAE load device: cuda:0, offload device: cpu, dtype: torch.bfloat16
+2026-09-27T18:11:51.749549 [INFO] Found quantization metadata version 1
+2026-09-27T18:11:51.751550 [INFO] Using MixedPrecisionOps for text encoder
+2026-09-27T18:11:52.416450 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\text_encoders\\qwen3vl_8b_int8_convrot.safetensors']
+2026-09-27T18:11:52.586134 [INFO] CLIP/text encoder model load device: cuda:0, offload device: cpu, current: cpu, dtype: torch.float16
+2026-09-27T18:11:52.605022 [INFO] Requested to load QwenImage21TEModel_
+2026-09-27T18:12:20.122878 [INFO] loaded completely; 11848.86 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:12:23.015353 [INFO] Found quantization metadata version 1
+2026-09-27T18:12:23.015353 [INFO] Detected mixed precision quantization
+2026-09-27T18:12:23.016351 [INFO] Using mixed precision operations
+2026-09-27T18:12:23.016351 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:12:23.030760 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:12:23.035267 [INFO] model_type FLUX
+2026-09-27T18:12:23.036272 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:12:23.176152 [INFO] Requested to load QwenImage21
+2026-09-27T18:12:26.225368 [INFO] Unloaded partially: 5230.88 MB freed, 3686.60 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:12:53.571515 [INFO] loaded completely; 8167.26 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:12:58.682065 100%|##########| 8/8 [00:05<00:00,  1.51it/s]
+2026-09-27T18:12:58.682065 100%|##########| 8/8 [00:05<00:00,  1.59it/s]
+2026-09-27T18:12:58.682065 
+2026-09-27T18:13:00.573793 [INFO] Requested to load WanVAE
+2026-09-27T18:13:01.189303 [INFO] loaded completely; 7186.46 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:13:06.130607 [INFO] Prompt executed in 77.25 seconds
+2026-09-27T18:13:06.702335 [INFO] got prompt
+2026-09-27T18:13:09.918779 [INFO] loaded completely; 11206.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:13:11.539202 [INFO] Found quantization metadata version 1
+2026-09-27T18:13:11.539202 [INFO] Detected mixed precision quantization
+2026-09-27T18:13:11.539202 [INFO] Using mixed precision operations
+2026-09-27T18:13:11.539202 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:13:11.553712 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:13:11.554714 [INFO] model_type FLUX
+2026-09-27T18:13:11.556217 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:13:11.657023 [INFO] Requested to load QwenImage21
+2026-09-27T18:13:14.794592 [INFO] Unloaded partially: 5326.98 MB freed, 3590.51 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:13:24.109609 [INFO] loaded completely; 8271.36 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:13:28.968641 100%|##########| 8/8 [00:04<00:00,  1.57it/s]
+2026-09-27T18:13:28.969641 100%|##########| 8/8 [00:04<00:00,  1.66it/s]
+2026-09-27T18:13:28.969641 
+2026-09-27T18:13:30.778634 [INFO] Requested to load WanVAE
+2026-09-27T18:13:31.513847 [INFO] loaded completely; 7290.56 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:13:34.979222 [INFO] Prompt executed in 27.94 seconds
+2026-09-27T18:13:35.428787 [INFO] got prompt
+2026-09-27T18:13:39.310517 [INFO] loaded completely; 11210.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:13:40.936457 [INFO] Found quantization metadata version 1
+2026-09-27T18:13:40.936457 [INFO] Detected mixed precision quantization
+2026-09-27T18:13:40.936457 [INFO] Using mixed precision operations
+2026-09-27T18:13:40.937458 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:13:40.951517 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:13:40.955516 [INFO] model_type FLUX
+2026-09-27T18:13:40.956515 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:13:41.298341 [INFO] Requested to load QwenImage21
+2026-09-27T18:13:44.101147 [INFO] Unloaded partially: 5326.98 MB freed, 3590.51 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:13:58.183413 [INFO] loaded completely; 8265.36 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:14:14.315042 100%|##########| 25/25 [00:16<00:00,  1.44it/s]
+2026-09-27T18:14:14.315042 100%|##########| 25/25 [00:16<00:00,  1.55it/s]
+2026-09-27T18:14:14.315042 
+2026-09-27T18:14:16.094024 [INFO] Requested to load WanVAE
+2026-09-27T18:14:16.604845 [INFO] loaded completely; 7284.56 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:14:19.934057 [INFO] Prompt executed in 44.43 seconds
+2026-09-27T18:14:20.312227 [INFO] got prompt
+2026-09-27T18:14:23.556454 [INFO] loaded completely; 11204.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:14:25.144625 [INFO] Found quantization metadata version 1
+2026-09-27T18:14:25.144625 [INFO] Detected mixed precision quantization
+2026-09-27T18:14:25.144625 [INFO] Using mixed precision operations
+2026-09-27T18:14:25.144625 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:14:25.156632 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:14:25.158633 [INFO] model_type FLUX
+2026-09-27T18:14:25.159632 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:14:25.323056 [INFO] Requested to load QwenImage21
+2026-09-27T18:14:27.479249 [INFO] Unloaded partially: 5182.83 MB freed, 3734.65 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:14:41.908574 [INFO] loaded completely; 8125.22 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:14:57.921898 100%|##########| 25/25 [00:15<00:00,  1.52it/s]
+2026-09-27T18:14:57.921898 100%|##########| 25/25 [00:15<00:00,  1.56it/s]
+2026-09-27T18:14:57.921898 
+2026-09-27T18:14:59.720062 [INFO] Requested to load WanVAE
+2026-09-27T18:15:00.278967 [INFO] loaded completely; 7144.42 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:15:03.821842 [INFO] Prompt executed in 43.45 seconds
+2026-09-27T18:15:04.529555 [INFO] got prompt
+2026-09-27T18:15:08.724646 [INFO] loaded completely; 11208.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:15:10.601662 [INFO] Found quantization metadata version 1
+2026-09-27T18:15:10.601662 [INFO] Detected mixed precision quantization
+2026-09-27T18:15:10.603507 [INFO] Using mixed precision operations
+2026-09-27T18:15:10.603507 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:15:10.619023 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:15:10.629023 [INFO] model_type FLUX
+2026-09-27T18:15:10.631024 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:15:10.781246 [INFO] Requested to load QwenImage21
+2026-09-27T18:15:13.438452 [INFO] Unloaded partially: 5182.83 MB freed, 3734.65 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:15:28.989020 [INFO] loaded completely; 8129.22 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:15:45.026743 100%|##########| 25/25 [00:15<00:00,  1.53it/s]
+2026-09-27T18:15:45.027743 100%|##########| 25/25 [00:15<00:00,  1.56it/s]
+2026-09-27T18:15:45.027743 
+2026-09-27T18:15:46.891085 [INFO] Requested to load WanVAE
+2026-09-27T18:15:47.439494 [INFO] loaded completely; 7148.42 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:15:50.791931 [INFO] Prompt executed in 46.16 seconds
+2026-09-27T18:15:51.286906 [INFO] got prompt
+2026-09-27T18:15:54.117431 [INFO] loaded completely; 11212.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:15:55.722089 [INFO] Found quantization metadata version 1
+2026-09-27T18:15:55.722089 [INFO] Detected mixed precision quantization
+2026-09-27T18:15:55.722089 [INFO] Using mixed precision operations
+2026-09-27T18:15:55.722089 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:15:55.735154 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:15:55.740675 [INFO] model_type FLUX
+2026-09-27T18:15:55.741676 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:15:55.804250 [INFO] Requested to load QwenImage21
+2026-09-27T18:15:57.818183 [INFO] Unloaded partially: 5182.83 MB freed, 3734.65 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:16:06.041899 [INFO] loaded completely; 8129.22 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:16:23.144201 100%|##########| 25/25 [00:15<00:00,  1.51it/s]
+2026-09-27T18:16:23.145199 100%|##########| 25/25 [00:15<00:00,  1.58it/s]
+2026-09-27T18:16:23.145199 
+2026-09-27T18:16:23.714712 [INFO] Requested to load WanVAE
+2026-09-27T18:16:24.010528 [INFO] Unloaded partially: 624.61 MB freed, 3110.04 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:16:24.387152 [INFO] loaded completely; 1719.25 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:16:33.446772 [INFO] Prompt executed in 42.09 seconds
+2026-09-27T18:16:33.934478 [INFO] got prompt
+2026-09-27T18:16:34.118917 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\vae\\qwen_image_2.1_vae_bf16.safetensors']
+2026-09-27T18:16:34.124923 [INFO] Using split attention in VAE
+2026-09-27T18:16:34.127926 [INFO] Using split attention in VAE
+2026-09-27T18:16:35.143718 [INFO] VAE load device: cuda:0, offload device: cpu, dtype: torch.bfloat16
+2026-09-27T18:16:35.572981 [INFO] Found quantization metadata version 1
+2026-09-27T18:16:35.573981 [INFO] Using MixedPrecisionOps for text encoder
+2026-09-27T18:16:36.239012 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\text_encoders\\qwen3vl_8b_int8_convrot.safetensors']
+2026-09-27T18:16:36.330789 [INFO] CLIP/text encoder model load device: cuda:0, offload device: cpu, current: cpu, dtype: torch.float16
+2026-09-27T18:16:36.335243 [INFO] Requested to load QwenImage21TEModel_
+2026-09-27T18:17:00.671522 [INFO] loaded completely; 11848.86 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:17:03.524040 [INFO] Found quantization metadata version 1
+2026-09-27T18:17:03.524040 [INFO] Detected mixed precision quantization
+2026-09-27T18:17:03.524040 [INFO] Using mixed precision operations
+2026-09-27T18:17:03.524040 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:17:03.537548 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:17:03.539548 [INFO] model_type FLUX
+2026-09-27T18:17:03.540548 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:17:03.610079 [INFO] Requested to load QwenImage21
+2026-09-27T18:17:06.245710 [INFO] Unloaded partially: 5230.88 MB freed, 3686.60 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:17:21.731272 [INFO] loaded completely; 8167.26 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:17:39.148421 100%|##########| 25/25 [00:16<00:00,  1.51it/s]
+2026-09-27T18:17:39.148421 100%|##########| 25/25 [00:16<00:00,  1.56it/s]
+2026-09-27T18:17:39.148421 
+2026-09-27T18:17:39.722801 [INFO] Requested to load WanVAE
+2026-09-27T18:17:39.985383 [INFO] Unloaded partially: 576.56 MB freed, 3110.04 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:17:40.708167 [INFO] loaded completely; 1717.25 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:17:44.002355 [INFO] Prompt executed in 69.98 seconds
+2026-09-27T18:17:44.404709 [INFO] got prompt
+2026-09-27T18:18:00.758225 100%|##########| 25/25 [00:16<00:00,  1.51it/s]
+2026-09-27T18:18:00.758225 100%|##########| 25/25 [00:16<00:00,  1.56it/s]
+2026-09-27T18:18:00.758225 
+2026-09-27T18:18:01.376439 [INFO] Unloaded partially: 48.05 MB freed, 3061.99 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:18:11.072360 [INFO] Prompt executed in 26.56 seconds
+2026-09-27T18:18:11.300923 [INFO] got prompt
+2026-09-27T18:18:11.638706 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\vae\\qwen_image_2.1_vae_bf16.safetensors']
+2026-09-27T18:18:11.648702 [INFO] Using split attention in VAE
+2026-09-27T18:18:11.650701 [INFO] Using split attention in VAE
+2026-09-27T18:18:12.766384 [INFO] VAE load device: cuda:0, offload device: cpu, dtype: torch.bfloat16
+2026-09-27T18:18:13.256328 [INFO] Found quantization metadata version 1
+2026-09-27T18:18:13.257321 [INFO] Using MixedPrecisionOps for text encoder
+2026-09-27T18:18:13.807292 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\text_encoders\\qwen3vl_8b_int8_convrot.safetensors']
+2026-09-27T18:18:13.915004 [INFO] CLIP/text encoder model load device: cuda:0, offload device: cpu, current: cpu, dtype: torch.float16
+2026-09-27T18:18:13.923774 [INFO] Requested to load QwenImage21TEModel_
+2026-09-27T18:18:36.426443 [INFO] loaded completely; 11848.86 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:18:38.990263 [INFO] Found quantization metadata version 1
+2026-09-27T18:18:38.991257 [INFO] Detected mixed precision quantization
+2026-09-27T18:18:38.991257 [INFO] Using mixed precision operations
+2026-09-27T18:18:38.991257 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:18:39.003261 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:18:39.005260 [INFO] model_type FLUX
+2026-09-27T18:18:39.007344 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:18:39.297933 [INFO] Requested to load QwenImage21
+2026-09-27T18:18:41.445735 [INFO] Unloaded partially: 5230.88 MB freed, 3686.60 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:18:58.910670 [INFO] loaded completely; 8167.26 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:19:03.654114 100%|##########| 8/8 [00:04<00:00,  1.58it/s]
+2026-09-27T18:19:03.654114 100%|##########| 8/8 [00:04<00:00,  1.69it/s]
+2026-09-27T18:19:03.654114 
+2026-09-27T18:19:05.408422 [INFO] Requested to load WanVAE
+2026-09-27T18:19:05.864522 [INFO] loaded completely; 7186.46 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:19:09.744443 [INFO] Prompt executed in 58.16 seconds
+2026-09-27T18:19:10.226729 [INFO] got prompt
+2026-09-27T18:19:12.734479 [INFO] loaded completely; 11206.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:19:14.374131 [INFO] Found quantization metadata version 1
+2026-09-27T18:19:14.374131 [INFO] Detected mixed precision quantization
+2026-09-27T18:19:14.374131 [INFO] Using mixed precision operations
+2026-09-27T18:19:14.374131 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:19:14.385703 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:19:14.387703 [INFO] model_type FLUX
+2026-09-27T18:19:14.388702 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:19:14.482182 [INFO] Requested to load QwenImage21
+2026-09-27T18:19:17.378899 [INFO] Unloaded partially: 5326.98 MB freed, 3590.51 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:19:31.465292 [INFO] loaded completely; 8271.36 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:19:36.592558 100%|##########| 8/8 [00:05<00:00,  1.52it/s]
+2026-09-27T18:19:36.592558 100%|##########| 8/8 [00:05<00:00,  1.59it/s]
+2026-09-27T18:19:36.592558 
+2026-09-27T18:19:38.434779 [INFO] Requested to load WanVAE
+2026-09-27T18:19:39.608306 [INFO] loaded completely; 7290.56 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:19:43.340251 [INFO] Prompt executed in 33.08 seconds
+2026-09-27T18:19:44.149450 [INFO] got prompt
+2026-09-27T18:19:49.118914 [INFO] loaded completely; 11210.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:19:50.852806 [INFO] Found quantization metadata version 1
+2026-09-27T18:19:50.854310 [INFO] Detected mixed precision quantization
+2026-09-27T18:19:50.858851 [INFO] Using mixed precision operations
+2026-09-27T18:19:50.859850 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:19:50.872855 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:19:50.880854 [INFO] model_type FLUX
+2026-09-27T18:19:50.881854 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:19:51.006709 [INFO] Requested to load QwenImage21
+2026-09-27T18:19:53.371525 [INFO] Unloaded partially: 5326.98 MB freed, 3590.51 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:20:06.218659 [INFO] loaded completely; 8265.36 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:20:11.039763 100%|##########| 8/8 [00:04<00:00,  1.56it/s]
+2026-09-27T18:20:11.039763 100%|##########| 8/8 [00:04<00:00,  1.67it/s]
+2026-09-27T18:20:11.039763 
+2026-09-27T18:20:12.934807 [INFO] Requested to load WanVAE
+2026-09-27T18:20:13.403271 [INFO] loaded completely; 7284.56 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:20:16.626824 [INFO] Prompt executed in 32.38 seconds
+2026-09-27T18:20:17.073673 [INFO] got prompt
+2026-09-27T18:20:19.638904 [INFO] loaded completely; 11204.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:20:21.274280 [INFO] Found quantization metadata version 1
+2026-09-27T18:20:21.274280 [INFO] Detected mixed precision quantization
+2026-09-27T18:20:21.275281 [INFO] Using mixed precision operations
+2026-09-27T18:20:21.275281 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:20:21.289279 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:20:21.291280 [INFO] model_type FLUX
+2026-09-27T18:20:21.293282 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:20:21.692049 [INFO] Requested to load QwenImage21
+2026-09-27T18:20:24.789036 [INFO] Unloaded partially: 5326.98 MB freed, 3590.51 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:20:36.139759 [INFO] loaded completely; 8269.36 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:20:52.444543 100%|##########| 25/25 [00:16<00:00,  1.49it/s]
+2026-09-27T18:20:52.445539 100%|##########| 25/25 [00:16<00:00,  1.54it/s]
+2026-09-27T18:20:52.445539 
+2026-09-27T18:20:54.397156 [INFO] Requested to load WanVAE
+2026-09-27T18:20:55.095725 [INFO] loaded completely; 7288.56 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:20:58.653736 [INFO] Prompt executed in 41.58 seconds
+2026-09-27T18:20:58.987125 [INFO] got prompt
+2026-09-27T18:21:01.920110 [INFO] loaded completely; 11208.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:21:03.560032 [INFO] Found quantization metadata version 1
+2026-09-27T18:21:03.561031 [INFO] Detected mixed precision quantization
+2026-09-27T18:21:03.561031 [INFO] Using mixed precision operations
+2026-09-27T18:21:03.561031 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:21:03.577763 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:21:03.581182 [INFO] model_type FLUX
+2026-09-27T18:21:03.582334 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:21:03.689564 [INFO] Requested to load QwenImage21
+2026-09-27T18:21:06.339433 [INFO] Unloaded partially: 5182.83 MB freed, 3734.65 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:21:16.865619 [INFO] loaded completely; 8127.22 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:21:33.116015 100%|##########| 25/25 [00:16<00:00,  1.49it/s]
+2026-09-27T18:21:33.117566 100%|##########| 25/25 [00:16<00:00,  1.54it/s]
+2026-09-27T18:21:33.117566 
+2026-09-27T18:21:35.129545 [INFO] Requested to load WanVAE
+2026-09-27T18:21:35.974682 [INFO] loaded completely; 7146.42 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:21:39.091317 [INFO] Prompt executed in 40.04 seconds
+2026-09-27T18:21:39.445627 [INFO] got prompt
+2026-09-27T18:21:42.581578 [INFO] loaded completely; 11210.64 MB usable, 8917.48 MB loaded, full load: True
+2026-09-27T18:21:44.238251 [INFO] Found quantization metadata version 1
+2026-09-27T18:21:44.238251 [INFO] Detected mixed precision quantization
+2026-09-27T18:21:44.238763 [INFO] Using mixed precision operations
+2026-09-27T18:21:44.238763 [INFO] Native ops: asym_w4a8_int8, float8_e5m2, convrot_w4a4, float8_e4m3fn, int8_tensorwise , emulated ops: nvfp4, mxfp8
+2026-09-27T18:21:44.251498 [INFO] model weight dtype torch.bfloat16, manual cast: torch.bfloat16
+2026-09-27T18:21:44.253003 [INFO] model_type FLUX
+2026-09-27T18:21:44.253003 [INFO] Model storage policy: fast_disk=False paths=['C:\\AI\\experiments\\qwen-image-21\\ComfyUI\\models\\diffusion_models\\qwen_image_2.1_int8_convrot.safetensors']
+2026-09-27T18:21:44.359231 [INFO] Requested to load QwenImage21
+2026-09-27T18:21:46.505347 [INFO] Unloaded partially: 5182.83 MB freed, 3734.65 MB remains loaded, 336.14 MB buffer reserved, lowvram patches: 0
+2026-09-27T18:21:55.120313 [INFO] loaded completely; 8125.22 MB usable, 6920.54 MB loaded, full load: True
+2026-09-27T18:22:11.174148 100%|##########| 25/25 [00:16<00:00,  1.50it/s]
+2026-09-27T18:22:11.174148 100%|##########| 25/25 [00:16<00:00,  1.56it/s]
+2026-09-27T18:22:11.174148 
+2026-09-27T18:22:13.020447 [INFO] Requested to load WanVAE
+2026-09-27T18:22:13.362918 [INFO] loaded completely; 7144.42 MB usable, 644.19 MB loaded, full load: True
+2026-09-27T18:22:16.082489 [INFO] Prompt executed in 36.57 seconds
