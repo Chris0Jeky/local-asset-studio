@@ -376,6 +376,18 @@ function tileNote(job,output){
   const failed=job.tile_finish?.error;
   return '<p class="disabledReason"><small>'+esc(failed?'Tile not finished: '+failed:'This seam repaint has no finished tile yet.')+'</small></p><button class="finishTile" data-job="'+esc(job.id)+'" title="Composite, flatten, measure the seam and build the 3×3 preview. Nothing is generated.">Finish tile</button>';
 }
+// A parallax stage's card: its split when there is one, else what is missing and the one next press.
+function parallaxNote(job,output){
+  if(output.parallax){const p=output.parallax;return '<p class="tileNote"><small>'+esc(p.layer==='strip'?'Parallax strip, camera left / centre / right. ':p.layer[0].toUpperCase()+p.layer.slice(1)+' layer, shift '+p.shift_px+' px. ')+esc(p.summary)+'</small></p>';}
+  const claim=job.parallax;if(!claim||job.status!=='completed')return '';
+  if(job.parallax_finish?.job_id)return '<p class="tileNote"><small>Layers split: '+esc(job.parallax_finish.summary||'see the Parallax layers assets')+'</small></p>';
+  const other=claim.stage==='plate'?'isolate':'plate',name={plate:'clean plate',isolate:'isolate'},id=esc(job.id);
+  const siblings=jobs.filter(j=>j.parallax?.plan_id===claim.plan_id&&j.parallax.stage===other),done=siblings.find(j=>j.status==='completed'),live=siblings.find(j=>['queued','waiting','submitting','running','uncertain'].includes(j.status));
+  const failed=job.parallax_finish?.error?'Layers not split: '+job.parallax_finish.error+' ':'';
+  if(done)return '<p class="disabledReason"><small>'+esc(failed||'Both edits are in; the layers are not split yet.')+'</small></p><button class="parallaxFinish" data-job="'+id+'" title="Register both edits, build the far, mid and near layers, measure the recomposite error and make the strip. Nothing is generated.">Split layers</button>';
+  if(live)return '<p class="tileNote"><small>The '+name[other]+' edit is '+esc(live.status)+'; the layers split when it completes.</small></p>';
+  return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Create. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
+}
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
 const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
 function renderMixedBatch(job) {
@@ -662,18 +674,6 @@ async function afterParallaxSubmit(job,claim){
   const next=await post('/api/parallax/stage',{job_id:job.id,stage:'isolate'});
   if(selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id)return;
   beginParallax(next);message('Clean plate queued. The isolate edit is loaded: check its words, then press Generate.');
-}
-// A parallax stage's card: its split when there is one, else what is missing and the one next press.
-function parallaxNote(job,output){
-  if(output.parallax){const p=output.parallax;return '<p class="tileNote"><small>'+esc(p.layer==='strip'?'Parallax strip, camera left / centre / right. ':p.layer[0].toUpperCase()+p.layer.slice(1)+' layer, shift '+p.shift_px+' px. ')+esc(p.summary)+'</small></p>';}
-  const claim=job.parallax;if(!claim||job.status!=='completed')return '';
-  if(job.parallax_finish?.job_id)return '<p class="tileNote"><small>Layers split: '+esc(job.parallax_finish.summary||'see the Parallax layers assets')+'</small></p>';
-  const other=claim.stage==='plate'?'isolate':'plate',name={plate:'clean plate',isolate:'isolate'},id=esc(job.id);
-  const siblings=jobs.filter(j=>j.parallax?.plan_id===claim.plan_id&&j.parallax.stage===other),done=siblings.find(j=>j.status==='completed'),live=siblings.find(j=>['queued','waiting','submitting','running','uncertain'].includes(j.status));
-  const failed=job.parallax_finish?.error?'Layers not split: '+job.parallax_finish.error+' ':'';
-  if(done)return '<p class="disabledReason"><small>'+esc(failed||'Both edits are in; the layers are not split yet.')+'</small></p><button class="parallaxFinish" data-job="'+id+'" title="Register both edits, build the far, mid and near layers, measure the recomposite error and make the strip. Nothing is generated.">Split layers</button>';
-  if(live)return '<p class="tileNote"><small>The '+name[other]+' edit is '+esc(live.status)+'; the layers split when it completes.</small></p>';
-  return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Create. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
 }
 // Prepare from the library's Make seamless: the rolled seam cross becomes this recipe's picture, the source its parent.
 function beginTile(result){
