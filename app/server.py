@@ -68,6 +68,7 @@ HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) betwe
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
 HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
+HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
 GPU_SAMPLE_SECONDS = 0.5                 # sampler thread cadence: a VAE decode's overflow into shared memory lasts about 3 s
 GPU_SETTLE_SECONDS = 3                   # after a prompt that spilled, how long shared memory may take to drain before it counts as lingering
@@ -2078,7 +2079,10 @@ class Studio:
                 # A read is safe to repeat (the prompt is never posted again), so one dropped poll does not end the batch; a ComfyUI
                 # that stays unreadable still ends observation after a bounded number of reads, with the rest of the batch unsent.
                 read_failures += 1; error = (str(exc) or type(exc).__name__)[:200]
-                submission.setdefault("history_read_errors", []).append({"at": time.time(), "error": error})
+                # Failures reset after any good read, so a flaky ComfyUI over the 4-hour window would grow this without bound.
+                submission["history_read_error_count"] = submission.get("history_read_error_count", 0) + 1
+                kept = submission.setdefault("history_read_errors", [])
+                if len(kept) < HISTORY_READ_ERRORS_KEPT: kept.append({"at": time.time(), "error": error})
                 if read_failures >= HISTORY_READ_STRIKES:
                     with self.lock:
                         if self._tracking_stopped(job): return False

@@ -340,6 +340,16 @@ class ServerTests(unittest.TestCase):
         with patch.object(server.time,'sleep'): s._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual(len(job['submissions'][0]['history_read_errors']),4)
 
+    def test_intermittent_history_read_failures_keep_a_bounded_record_and_a_full_count(self):
+        """Each good read resets the strike count, so recorded failures are capped per submission while the count stays exact."""
+        flaky=[URLError('flaky'),{}]*(server.HISTORY_READ_ERRORS_KEPT+5)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'},*flaky,{'p':{'status':{'status_str':'success'},'outputs':{}}}])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        with patch.object(server.time,'sleep'),patch.object(server,'HISTORY_QUEUE_CHECK_EVERY',10**6): s._run(job)
+        submission=job['submissions'][0];self.assertEqual(job['status'],'completed')
+        self.assertEqual(len(submission['history_read_errors']),server.HISTORY_READ_ERRORS_KEPT)
+        self.assertEqual(submission['history_read_error_count'],server.HISTORY_READ_ERRORS_KEPT+5)
+
     def test_later_batch_member_uncertain_keeps_earlier_evidence_and_stops(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2}, enqueue=False)['id']]
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),
