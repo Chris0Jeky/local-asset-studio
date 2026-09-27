@@ -1,0 +1,22 @@
+{
+  "preset_id": "wai",
+  "controls": {
+    "positive": "no humans, scenery, indoors, anime screencap, 1990s \\(style\\), night, rain, window, rain on glass, cityscape, distant train, railway, desk, paper stack, desk lamp, crt monitor, dark wall, plain wall, empty space on left, rose and cyan reflections, muted colors, painted background, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, text, signature, watermark, logo, 1girl, 1boy, person",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092701,
+    "steps": 26,
+    "cfg": 6,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "denoise": 1.0,
+    "lora": 0,
+    "lora2": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\wai-api.json",
+  "created_at": 1790485303.1679184,
+  "references": [],
+  "parent_assets": []
+}

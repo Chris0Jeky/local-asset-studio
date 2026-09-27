@@ -1,0 +1,14 @@
+{
+  "preset_id": "qwen21-rgba",
+  "controls": {
+    "positive": "A quiet geometric line illustration of an empty picture frame with a small corner bracket at its lower left, thin even neutral grey line work with one soft warm amber accent, flat minimal style, centred, full object visible, no text.",
+    "width": 1248,
+    "height": 832,
+    "seed": 2026092741
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\qwen21-rgba-api.json",
+  "created_at": 1790484501.720584,
+  "references": [],
+  "parent_assets": []
+}

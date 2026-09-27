@@ -44,8 +44,8 @@ function sourceAttachment(file, parent = 'source-asset', sha256 = 'a'.repeat(64)
 // parent_asset lineage claim; `local` answers /api/upload, which never does. That asymmetry is what the
 // swap contracts below turn on, so the two responses must stay distinguishable. `availability` maps a
 // saved reference file to its sha256 for /api/references/check; anything absent reads as unavailable.
-function sandbox(attached, local, availability = null, diagnostic = null) {
-  const elements = new Map(), requests = [];
+function sandbox(attached, local, availability = null, diagnostic = null, boot = null) {
+  const elements = new Map(), requests = [], reads = [];
   let clickHandler;
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
@@ -60,6 +60,8 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
     sessionStorage: (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map()),
     window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
+      if (!options.method || options.method === 'GET') reads.push(url);
+      if (boot?.[url]) return boot[url]();
       if (url === '/api/catalog') return new Promise(() => {}); // Hold page startup.
       if (options.method === 'POST') requests.push({url, data: options.headers?.['Content-Type'] === 'application/json' ? JSON.parse(options.body) : null});
       const data = url === '/api/assets/reference' ? attached : url === '/api/upload' ? local
@@ -75,15 +77,27 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8'), context);
   }
   const run = source => vm.runInContext(source, context);
-  run(`catalog=${JSON.stringify({presets})}; online=schemaAvailable=true;
+  if (!boot) run(`catalog=${JSON.stringify({presets})}; online=schemaAvailable=true;
     jobs=[{id:'source-job',outputs:[{asset_id:'source-asset'}]}];
     refresh=async()=>{}; loadSetups=async()=>{};`);
-  return {element, requests, context, run, click: target => clickHandler({target}), parents: () => JSON.parse(run('JSON.stringify(parentAssets)'))};
+  return {element, requests, reads, context, run, click: target => clickHandler({target}), parents: () => JSON.parse(run('JSON.stringify(parentAssets)'))};
 }
 
 // The brief's "what to avoid" is part of the brief, not an advanced setting: the disclosure opens
 // whenever the recipe binds a negative prompt, stays collapsible, and remembers a manual collapse
 // for this tab only (#278 friction 3). A recipe that binds nothing keeps the field hidden.
+// Page start: one failing stage (saved setups here) must not leave health, jobs, the library and polling unstarted.
+async function aFailedStartupStageDoesNotStopTheRest() {
+  const reply = (ok, data) => async () => ({ok, status: ok ? 200 : 500, json: async () => data});
+  const {element, reads} = sandbox(null, null, null, null, {
+    '/api/catalog': reply(true, {presets: [{id: 'plain', name: 'plain', modality: 'image', positive: ['1', 'text'], defaults: {}}]}),
+    '/api/setups': reply(false, {error: 'Setup store unreadable'}),
+  });
+  for (let i = 0; i < 50 && !reads.includes('/api/health'); i++) await new Promise(resolve => setImmediate(resolve));
+  assert.ok(reads.includes('/api/health'), 'health still starts after saved setups fail: ' + reads.join(', '));
+  assert.match(element('#status').textContent + ' ' + element('#status').innerHTML, /Setup store unreadable|Saved setups/, 'the failed stage is reported');
+}
+
 async function avoidWordingIsVisibleWhenTheRecipeBindsIt() {
   const {element, context, run} = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
   run(`catalog.presets.push({id:'binds-avoid',name:'binds-avoid',modality:'image',positive:['1','text'],negative:['2','text'],defaults:{negative:'blurry'}},
@@ -1174,6 +1188,7 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await i2vDiagnosticEligibilityAndRetry();
   await unresolvedInputLineageCannotBeSaved();
   await avoidWordingIsVisibleWhenTheRecipeBindsIt();
+  await aFailedStartupStageDoesNotStopTheRest();
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');

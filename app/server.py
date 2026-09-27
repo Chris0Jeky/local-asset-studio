@@ -1827,8 +1827,9 @@ class Studio:
                 self._save(job)
             return
         for i in range(job["batch_count"]):
-            graph, seed = self._batch_graph(job, i)
             try:
+                # Building this member's graph is pre-submit too: a failure here sent nothing for it.
+                graph, seed = self._batch_graph(job, i)
                 try:preset=self.preset(job['preset_id'])
                 except StudioError:preset={}
                 continuation.validate(self, job, preset, graph, check_runtime=True)

@@ -308,7 +308,7 @@ class BackendManager:
         return listeners
 
     def switch(self, identifier):
-        if identifier not in self.profiles:raise ValueError('Unknown backend')
+        if not isinstance(identifier,str) or identifier not in self.profiles:raise ValueError('Unknown backend')
         if not self.available(self.profiles[identifier]):raise ValueError('This environment is not installed completely. '+self.readiness(self.profiles[identifier])['message'])
         with self.studio.lock:
             if self.busy:raise ValueError('A backend switch is already running; follow its current status')

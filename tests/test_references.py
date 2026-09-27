@@ -81,6 +81,12 @@ class ReferenceTests(unittest.TestCase):
         self.references[0]['file']='../outside.png'
         with self.assertRaises(ValueError):ref.compile_references(self.preset,self.graph,self.references,self.root)
 
+    def test_an_unhashable_role_is_the_role_refusal_not_a_type_error(self):
+        for role in (['style'], {'role': 'style'}):
+            with self.subTest(role=role):
+                with self.assertRaisesRegex(ValueError,'explicit supported role'):
+                    ref.compile_references(self.preset,copy.deepcopy(self.graph),[dict(self.references[0],role=role),self.references[1]],self.root)
+
     def test_reference_roles_do_not_mutate_user_records(self):
         before=copy.deepcopy(self.references)
         ref.compile_references(self.preset,self.graph,self.references,self.root)
@@ -193,6 +199,10 @@ class StyleBoardTests(unittest.TestCase):
         self.assertEqual(records[0]['transform']['policy'],'native IP-Adapter CLIP-vision preprocessing (224 px centre crop)')
         records[0]['transform']['policy']='mutated'
         self.assertNotEqual(records[1]['transform']['policy'],'mutated','each board record owns its transform')
+
+    def test_an_unhashable_board_role_is_the_role_refusal_not_a_type_error(self):
+        with self.assertRaisesRegex(ValueError,'explicit supported role'):
+            ref.compile_references(self.preset,board_graph(),[{'role':['style'],'file':'a.png'},{'role':'style','file':'b.png'},{'role':'style','file':'c.png'}],self.root)
 
     def test_empty_middle_slot_prunes_its_loader_and_encoder_and_drops_the_combiner_input(self):
         g=board_graph()

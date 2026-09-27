@@ -1,0 +1,1682 @@
+[
+ {
+  "key": "retro-anime-master-c1",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a narrow late-night animation workshop loft above a rain-washed city. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden desk with stacked blank drawing sheets, a warm amber desk lamp and a small glowing CRT monitor making a soft pool of cyan light. Faint rose and cyan reflections on the wet glass, muted graphite palette with small amber accents. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092731,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/retro-anime-master-c1"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "retro-anime-master-c2",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a narrow late-night animation workshop loft above a rain-washed city. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden desk with stacked blank drawing sheets, a warm amber desk lamp and a small glowing CRT monitor making a soft pool of cyan light. Faint rose and cyan reflections on the wet glass, muted graphite palette with small amber accents. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092732,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/retro-anime-master-c2"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "retro-anime-master-c3",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a narrow late-night animation workshop loft above a rain-washed city. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden desk with stacked blank drawing sheets, a warm amber desk lamp and a small glowing CRT monitor making a soft pool of cyan light. Faint rose and cyan reflections on the wet glass, muted graphite palette with small amber accents. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092733,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/retro-anime-master-c3"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "retro-anime-master-c4",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a narrow late-night animation workshop loft above a rain-washed city. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden desk with stacked blank drawing sheets, a warm amber desk lamp and a small glowing CRT monitor making a soft pool of cyan light. Faint rose and cyan reflections on the wet glass, muted graphite palette with small amber accents. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092734,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/retro-anime-master-c4"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "atelier-master-c1",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a warm artist's drafting room in the evening. The left half and centre of the frame is a plain cream plaster wall in soft shadow, almost empty and low in detail. At the right edge a walnut drafting desk with blank cream paper, a brushed-metal desk lamp with amber light and a linen curtain beside a tall open doorway onto a quiet courtyard with a small tree. Charcoal, cream, walnut and amber palette, tactile linen and paper textures. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092731,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/atelier-master-c1"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "atelier-master-c2",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a warm artist's drafting room in the evening. The left half and centre of the frame is a plain cream plaster wall in soft shadow, almost empty and low in detail. At the right edge a walnut drafting desk with blank cream paper, a brushed-metal desk lamp with amber light and a linen curtain beside a tall open doorway onto a quiet courtyard with a small tree. Charcoal, cream, walnut and amber palette, tactile linen and paper textures. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092732,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/atelier-master-c2"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "atelier-master-c3",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a warm artist's drafting room in the evening. The left half and centre of the frame is a plain cream plaster wall in soft shadow, almost empty and low in detail. At the right edge a walnut drafting desk with blank cream paper, a brushed-metal desk lamp with amber light and a linen curtain beside a tall open doorway onto a quiet courtyard with a small tree. Charcoal, cream, walnut and amber palette, tactile linen and paper textures. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092733,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/atelier-master-c3"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "atelier-master-c4",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a warm artist's drafting room in the evening. The left half and centre of the frame is a plain cream plaster wall in soft shadow, almost empty and low in detail. At the right edge a walnut drafting desk with blank cream paper, a brushed-metal desk lamp with amber light and a linen curtain beside a tall open doorway onto a quiet courtyard with a small tree. Charcoal, cream, walnut and amber palette, tactile linen and paper textures. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092734,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/atelier-master-c4"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "sakura-master-c1",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a dark timber illustration room looking onto a blossom courtyard after rain. The left half and centre of the frame is a plain dark plum-toned plaster wall, almost empty and low in detail. At the right edge an open wooden sliding window frames a cherry tree in full blossom in a wet stone courtyard, a few petals drifting outside the window only; a low ink-stained timber desk with blank paper beneath it. Plum, dusty rose and warm dark timber palette, restrained botanical atmosphere. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092731,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/sakura-master-c1"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "sakura-master-c2",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a dark timber illustration room looking onto a blossom courtyard after rain. The left half and centre of the frame is a plain dark plum-toned plaster wall, almost empty and low in detail. At the right edge an open wooden sliding window frames a cherry tree in full blossom in a wet stone courtyard, a few petals drifting outside the window only; a low ink-stained timber desk with blank paper beneath it. Plum, dusty rose and warm dark timber palette, restrained botanical atmosphere. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092732,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/sakura-master-c2"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "sakura-master-c3",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a dark timber illustration room looking onto a blossom courtyard after rain. The left half and centre of the frame is a plain dark plum-toned plaster wall, almost empty and low in detail. At the right edge an open wooden sliding window frames a cherry tree in full blossom in a wet stone courtyard, a few petals drifting outside the window only; a low ink-stained timber desk with blank paper beneath it. Plum, dusty rose and warm dark timber palette, restrained botanical atmosphere. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092733,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/sakura-master-c3"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "sakura-master-c4",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Hand-painted anime film background of a dark timber illustration room looking onto a blossom courtyard after rain. The left half and centre of the frame is a plain dark plum-toned plaster wall, almost empty and low in detail. At the right edge an open wooden sliding window frames a cherry tree in full blossom in a wet stone courtyard, a few petals drifting outside the window only; a low ink-stained timber desk with blank paper beneath it. Plum, dusty rose and warm dark timber palette, restrained botanical atmosphere. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092734,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/sakura-master-c4"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "minimal-pro-master-c1",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Minimal architectural interior painted as an anime film background: graphite walls, ivory paper and diffuse skylight from above. The left half and centre of the frame is a plain smooth graphite wall, almost empty and low in detail. At the right edge one pale desk with a single sheet of blank ivory paper under a soft rectangle of daylight. Almost monochrome graphite and ivory palette, precise and calm, no decoration, no neon. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092731,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/minimal-pro-master-c1"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "minimal-pro-master-c2",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Minimal architectural interior painted as an anime film background: graphite walls, ivory paper and diffuse skylight from above. The left half and centre of the frame is a plain smooth graphite wall, almost empty and low in detail. At the right edge one pale desk with a single sheet of blank ivory paper under a soft rectangle of daylight. Almost monochrome graphite and ivory palette, precise and calm, no decoration, no neon. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092732,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/minimal-pro-master-c2"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "minimal-pro-master-c3",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Minimal architectural interior painted as an anime film background: graphite walls, ivory paper and diffuse skylight from above. The left half and centre of the frame is a plain smooth graphite wall, almost empty and low in detail. At the right edge one pale desk with a single sheet of blank ivory paper under a soft rectangle of daylight. Almost monochrome graphite and ivory palette, precise and calm, no decoration, no neon. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092733,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/minimal-pro-master-c3"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "minimal-pro-master-c4",
+  "graph": {
+   "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+     "weight_dtype": "default"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+     "clip": [
+      "2",
+      0
+     ],
+     "prompt": "Minimal architectural interior painted as an anime film background: graphite walls, ivory paper and diffuse skylight from above. The left half and centre of the frame is a plain smooth graphite wall, almost empty and low in detail. At the right edge one pale desk with a single sheet of blank ivory paper under a soft rectangle of daylight. Almost monochrome graphite and ivory palette, precise and calm, no decoration, no neon. Eye-level camera at seated height, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people.",
+     "negative_prompt": "",
+     "resolution": 1024
+    }
+   },
+   "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+     "width": 1344,
+     "height": 768,
+     "batch_size": 1
+    }
+   },
+   "6": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "4",
+      0
+     ],
+     "negative": [
+      "4",
+      1
+     ],
+     "latent_image": [
+      "5",
+      0
+     ],
+     "seed": 2026092734,
+     "steps": 25,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0
+    }
+   },
+   "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "6",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "9",
+      0
+     ],
+     "filename_prefix": "Research/lab-20260927/asset-kit/minimal-pro-master-c4"
+    }
+   },
+   "9": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+     "image": [
+      "7",
+      0
+     ]
+    }
+   }
+  }
+ }
+]

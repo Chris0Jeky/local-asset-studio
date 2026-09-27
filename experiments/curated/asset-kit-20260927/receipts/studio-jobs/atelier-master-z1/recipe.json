@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "An empty room, no people. Hand-painted anime film background of a warm artist's drafting room in the evening. The left half and centre of the frame is a plain cream plaster wall in soft shadow, almost empty and low in detail. At the right edge a walnut drafting desk with blank cream paper, a brushed-metal desk lamp with amber light and a linen curtain beside a tall open doorway onto a quiet courtyard with a small tree. Charcoal, cream, walnut and amber palette, tactile linen and paper textures. An empty room with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092751
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790487174.5266964,
+  "references": [],
+  "parent_assets": []
+}
