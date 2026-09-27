@@ -72,7 +72,7 @@
   const advanced=element('details','ux-parameters');advanced.innerHTML='<summary>Parameters & adapter stack <small>Seed, size, sampling and model controls</small></summary>';q('#controls').before(advanced);advanced.append(q('#controls'),q('#loraSlots'));advanced.open=false;
   const runBox=element('div','ux-run-box','<div class="ux-section-heading"><span>03</span><h3>Review, then run</h3></div><p id="uxRunSummary"></p><div class="ux-readiness-heading"><p id="uxReadinessSummary" role="status" aria-live="polite" aria-atomic="true"></p><button type="button" id="uxRecheckReadiness">Recheck connection</button></div><div id="uxBlockers"></div><p id="uxReadinessActionStatus" class="muted" role="status" aria-live="polite"></p><p class="muted">Generate starts this recipe. Plan comparison prepares a budgeted study; Start remains separate.</p>');q('#generate').closest('.actions').before(runBox);runBox.append(q('#generate').closest('.actions'),q('#status'));
   q('#generate').setAttribute('aria-describedby','uxRunSummary uxReadinessSummary uxBlockers');q('.dependencies').open=false;
-  q('.gallery-panel .section-title h2').textContent='Recent runs';q('.gallery-panel .muted').textContent='Compare results, inspect recipes, or continue with a saved output.';
+  q('.gallery-panel .section-title h2').textContent='Recent runs';q('.gallery-panel .muted').textContent='Keep, flag or reject each result here (K, W, X on a focused card), or continue with it.';
   q('#assetsView .view-heading h2').textContent='A library, not a dead end.';
   q('#productionView .view-heading h2').textContent='Run with a question. Leave with a decision.';
   q('#assetScopes').insertAdjacentHTML('beforeend','<button data-scope="unreviewed">Awaiting review</button>');
