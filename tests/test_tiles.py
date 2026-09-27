@@ -280,6 +280,29 @@ class RouteTests(unittest.TestCase):
         self.assertEqual([j for j in studio.jobs.values() if j.get("operation") == tiles.OPERATION], [])
         with self.assertRaisesRegex(ValueError, "not a seamless-tile repaint"): tiles.finish(studio, next(j for j in studio.jobs if j != job["id"]))
 
+    def test_a_lost_link_to_the_finished_tile_is_rebuilt(self):
+        """Review on #1224: the repaint's save can fail after the finished job was stored (a Windows write lock), or the
+        Studio can stop between the two saves. The link must hold in memory, and Finish tile must restore it after a restart."""
+        studio = self.studio(); prepared = tiles.prepare(studio, {"asset_id": self.source(studio)["id"]})
+        original = server.Studio._save
+        def flaky(this, job):
+            if job.get("tile_finish", {}).get("job_id") and not getattr(flaky, "failed", False):
+                flaky.failed = True; raise OSError("record_write_locked")
+            return original(this, job)
+        with patch.object(server.Studio, "_save", flaky):
+            job = self.run_repaint(studio, prepared, tiles.roll_half(lit_texture()))
+        identifier = tiles.finish_id(job["id"])
+        self.assertTrue(flaky.failed); self.assertEqual(job["tile_finish"]["job_id"], identifier, "no false 'not finished' after a failed save")
+        # A restart that lost the link entirely: the finished job is on disk, the repaint record has no link.
+        state = studio.runs / job["id"] / "state.json"; record = json.loads(state.read_text(encoding="utf-8")); record.pop("tile_finish", None)
+        state.write_text(json.dumps(record), encoding="utf-8")
+        restarted = self.studio(); repaint = restarted.jobs[job["id"]]
+        self.assertNotIn("tile_finish", repaint)
+        self.assertEqual(tiles.finish(restarted, job["id"])["id"], identifier)
+        self.assertEqual(repaint["tile_finish"]["job_id"], identifier)
+        self.assertIn("Seam ", repaint["tile_finish"]["summary"])
+        self.assertEqual(json.loads(state.read_text(encoding="utf-8"))["tile_finish"]["job_id"], identifier, "the rebuilt link is saved")
+
     def test_finish_waits_for_a_completed_repaint(self):
         studio = self.studio(); prepared = tiles.prepare(studio, {"asset_id": self.source(studio)["id"]})
         job = studio.jobs[studio.create_job(self.payload(prepared), enqueue=False)["id"]]

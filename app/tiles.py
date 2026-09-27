@@ -265,7 +265,11 @@ def finish(studio, job_id):
         claim = job.get("tile")
         if not claim: raise ValueError("This job is not a seamless-tile repaint.")
         identifier = finish_id(job_id)
-        if identifier in studio.jobs: return studio.jobs[identifier]
+        if identifier in studio.jobs:
+            # A link lost to a failed save or a restart between the two saves is rebuilt here, so Finish tile is never a dead end.
+            finished = studio.jobs[identifier]
+            if (job.get("tile_finish") or {}).get("job_id") != identifier: _link(studio, job, finished)
+            return finished
         if job.get("status") != "completed": raise ValueError("Finish the tile after its repaint completes; this job is %s." % job.get("status"))
         _claim(claim)
         images = [output for output in job.get("outputs", []) if output.get("media_type", "image") == "image"]
@@ -309,11 +313,18 @@ def finish(studio, job_id):
                     "outputs": [{"filename": "tile.png", "run_file": "tile.png", "type": "output", "media_type": "image", "prompt_id": output.get("prompt_id"), "seed": output.get("seed"), "tile": tile},
                                 {"filename": "tile-3x3.png", "run_file": "tile-3x3.png", "type": "output", "media_type": "image", "prompt_id": output.get("prompt_id"), "tile_preview": {"of": "tile.png", "summary": metrics["summary"]}}]}
         studio.index_outputs(finished); studio._save(finished)
-        with studio.lock:
-            studio.jobs[identifier] = finished
-            job["tile_finish"] = {"job_id": identifier, "tile_asset_id": finished["outputs"][0].get("asset_id"), "preview_asset_id": finished["outputs"][1].get("asset_id"), "summary": metrics["summary"]}
-        studio._save(job)
+        with studio.lock: studio.jobs[identifier] = finished
+        _link(studio, job, finished)
         return finished
+
+
+def _link(studio, job, finished, save=True):
+    """Point the repaint at its finished tile; the in-memory link holds even when the save fails."""
+    outputs = finished.get("outputs") or [{}, {}]
+    with studio.lock:
+        job["tile_finish"] = {"job_id": finished["id"], "tile_asset_id": outputs[0].get("asset_id"), "preview_asset_id": outputs[1].get("asset_id") if len(outputs) > 1 else None,
+                              "summary": (outputs[0].get("tile") or {}).get("summary")}
+    if save: studio._save(job)
 
 
 def finish_after_run(studio, job):
@@ -321,6 +332,8 @@ def finish_after_run(studio, job):
     if not job.get("tile") or job.get("status") != "completed" or (job.get("tile_finish") or {}).get("job_id"): return
     try: finish(studio, job["id"])
     except Exception as exc:  # the repaint's own outcome never changes because its finishing step failed
-        job["tile_finish"] = {"error": str(exc)[:300], "failed_at": time.time()}
+        finished = studio.jobs.get(finish_id(job["id"]))
+        if finished: _link(studio, job, finished, save=False)   # the tile exists; only recording its link failed
+        else: job["tile_finish"] = {"error": str(exc)[:300], "failed_at": time.time()}
         try: studio._save(job)
         except Exception: pass
