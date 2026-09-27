@@ -19,7 +19,7 @@ Receipts:
 
 ## After: this branch, `commit_gate_release_seconds: 45`
 
-The Studio was run from the branch worktree against the same repository root, config and experiments store. The sequential run used commit `286d6122`. The batch used `677449f0`, which adds the 18 GiB floor described below; the floor did not trigger, because headroom before each release was 26.9-27.6 GiB.
+The Studio was run from the branch worktree against the same repository root, config and experiments store. The sequential run used commit `286d6122`. The batch used `677449f0`, which adds the floor described below; the floor did not trigger. That run used an 18 GiB floor. Review then raised it to 22 GiB, skipped at or below, and the releases measured here would still pass it: headroom before each release was 26.9-27.6 GiB.
 
 | Run (window) | Job, prompt ID(s) | Headroom at create or before release → after release | Release wait | Job elapsed (includes the release) |
 | --- | --- | --- | --- | --- |
@@ -48,7 +48,7 @@ The manual workaround has the same transient. The before windows simply did not 
 
 `release-transient.jsonl` measured this directly with no generation. The `/free` was posted at 08:58:09 with 27.36 GiB of headroom. Headroom fell to **12.65 GiB (86.8 %) 6.6 s later**, reached 32.72 GiB at +8.0 s, and settled at 46.2 GiB from +9 s to +25 s. ComfyUI moves the GPU-resident weights into host RAM before it drops them.
 
-This is why the release is skipped below **18 GiB** of headroom (`COMMIT_RELEASE_FLOOR_BYTES`). The release itself used about 14.7 GiB, so a release started below that could exhaust commit. The same transient applies to any manual or idle-timer `/free`. The idle timer (#470) does not check headroom first.
+This is why the release is skipped at or below **22 GiB** of headroom (`COMMIT_RELEASE_FLOOR_BYTES`). That is a 16 GiB budget for the transient (the whole card, since only VRAM-resident weights can move; 14.7 GiB was measured here) plus a 6 GiB margin. This host fails near 97 % commit, which is about 2.9 GiB left of 95.73 GiB. A release started with less headroom could exhaust commit on its own. The same transient applies to any manual or idle-timer `/free`. The idle timer (#470) does not check headroom first.
 
 ## Outputs
 
@@ -66,7 +66,7 @@ All ten have a real alpha channel, with 20.2-85.6 % of pixels fully transparent.
 
 ## Not verified
 
-- The failure paths were not exercised on the GPU: an insufficient release, the 18 GiB floor, a busy queue, a running switch and a failed `/free`. They are covered by `tests/test_server.py` with FakeStudio.
+- The failure paths were not exercised on the GPU: an insufficient release, the 22 GiB floor, a failed commit read after `/free`, a busy queue, a running switch and a failed `/free`. They are covered by `tests/test_server.py` with FakeStudio.
 - Production plan stages still call `prepare()`, which keeps the old refusal at the plan's own preflight. Only `create_job` and the worker's pre-submit check changed.
 - Releases on the primary backend and on Qwen-Image-Edit or FLUX.2 graphs were not measured.
 - Warm retention, meaning keeping Qwen resident between jobs, was not attempted. The gate cannot admit it with this machine's current baseline.

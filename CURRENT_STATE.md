@@ -8,7 +8,7 @@ The new opt-in `commit_gate_release_seconds` (branch `claude/lab3-commit-release
 - three sequential jobs, prompts `f3801bb7`, `85d0f8a6`, `8d431fc8`, 66.1-71.2 s each including the release;
 - one batch of 3, prompts `5872c64a`, `6e5df8d0`, `a7b637fc`.
 
-Nothing got faster: the reload after a release is the same cold load, and the generation part was 3-10 s slower on three samples, cause not isolated. A manual `/free` measured every 0.2 s first *lowered* headroom from 27.4 to 12.7 GiB, as the weights moved into RAM, before it settled at 46.2 GiB. So the release is skipped below 18 GiB.
+Nothing got faster: the reload after a release is the same cold load, and the generation part was 3-10 s slower on three samples, cause not isolated. A manual `/free` measured every 0.2 s first *lowered* headroom from 27.4 to 12.7 GiB, as the weights moved into RAM, before it settled at 46.2 GiB. So the release is skipped at or below 22 GiB: a 16 GiB transient budget plus a 6 GiB margin.
 
 The owner's `config/local.json` now has `commit_gate_release_seconds: 45`. It has no effect until the PR merges and the Studio restarts. Receipts are in `experiments/curated/perf-20260927/`. This was a scheduling benchmark only: no quality judgement, not art acceptance.
 

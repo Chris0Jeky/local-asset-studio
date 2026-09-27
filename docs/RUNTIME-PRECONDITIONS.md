@@ -140,10 +140,12 @@ once to that job's own backend. It does this only when no backend switch or othe
 running and that backend's queue reads empty. It then re-reads commit every 0.5 s for up to that many
 seconds, waits for an idle queue again, and runs the unchanged gate on a fresh reading. Only that
 fresh pass admits. Otherwise the job fails with nothing sent, and its message says whether the
-models were freed. An unknown reading never triggers a release, and neither does headroom below
-18 GiB. The reason is that a release first moves the GPU-resident weights into host RAM: qwen21's
-`/free` took headroom from 27.4 to 12.7 GiB before it settled at 46.2 GiB about 9 s after the post
-(27 September 2026). Each attempt leaves a
+models were freed. An unknown reading never triggers a release, and neither does headroom at or
+below 22 GiB. The reason is that a release first moves the GPU-resident weights into host RAM:
+qwen21's `/free` took headroom from 27.4 to 12.7 GiB, using 14.7 GiB, before it settled at 46.2 GiB
+about 9 s after the post (27 September 2026). The floor budgets 16 GiB for that transient (the whole
+card, since only VRAM-resident weights can move) plus a 6 GiB margin. This host fails near 97 %
+commit, which is about 2.9 GiB left. Each attempt leaves a
 `commit_releases` receipt in the run state. The receipt holds the URL, the required bytes,
 available and committed bytes before and after, the sample count, the seconds waited and the
 outcome. On 27 September 2026, before this setting existed, a `qwen21-rgba` job left 26.5 GiB of
