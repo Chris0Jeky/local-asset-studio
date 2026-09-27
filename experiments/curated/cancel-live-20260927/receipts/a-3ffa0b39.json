@@ -1,0 +1,354 @@
+{
+ "job_public": {
+  "id": "3ffa0b39-7454-4882-9751-948783a825cd",
+  "status": "cancelled",
+  "created_at": 1790523781.8806705,
+  "preset_id": "wai",
+  "preset_name": "WAI v17 \u2022 illustration",
+  "controls": {
+   "positive": "no humans, scenery, stone lighthouse on a sea cliff, calm ocean, sunset sky, soft clouds, wide shot, masterpiece, best quality",
+   "seed": 927201,
+   "steps": 30,
+   "width": 832,
+   "height": 1216
+  },
+  "batch_count": 2,
+  "prompt_ids": [
+   "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+   "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278"
+  ],
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+    "seed": 927201,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82563072,
+     "peak_dedicated_bytes": 11703853056,
+     "samples": 21,
+     "spilled": false
+    }
+   },
+   {
+    "index": 1,
+    "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+    "seed": 927202,
+    "status": "cancelled",
+    "gpu_memory": {
+     "peak_shared_bytes": 82563072,
+     "peak_dedicated_bytes": 11428593664,
+     "samples": 1,
+     "spilled": false
+    },
+    "cancelled": {
+     "basis": "dequeued",
+     "at": 1790523794.3284822
+    }
+   }
+  ],
+  "outputs": [
+   {
+    "filename": "WAI-Illustration_00050_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 927201,
+    "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+    "media_type": "image",
+    "asset_id": "9cc63e35ec5a5418a328bb819e091dc9"
+   }
+  ],
+  "message": "Cancelled by you: ComfyUI removed the prompt before it started. 1 of 2 outputs finished and are kept. Nothing is retried.",
+  "failure": null,
+  "parent_assets": [],
+  "references": [],
+  "project_id": null,
+  "started_at": 1790523781.8906782,
+  "finished_at": 1790523794.3284822,
+  "elapsed_seconds": 12.437803983688354,
+  "tracking_disposition": null,
+  "preparation": null,
+  "continuation": null,
+  "abandonment": null,
+  "label": "cancel-proof-a-pending",
+  "cancellation": {
+   "event_id": "fe198f9df39b4b4facc8708b908d49b0",
+   "requested_at": 1790523792.3694642,
+   "requested_by": "owner",
+   "status_at_request": "running",
+   "state": "cancelled",
+   "actions": [
+    {
+     "action": "dequeue",
+     "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+     "at": 1790523794.310652,
+     "reply": "ok"
+    }
+   ],
+   "observations": [
+    {
+     "queue": "pending",
+     "running": [
+      "3a9786c1-1397-4082-a278-55f0e9f6b966"
+     ],
+     "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+     "at": 1790523794.3046515
+    },
+    {
+     "queue": "absent",
+     "history": "absent",
+     "running": [
+      "3a9786c1-1397-4082-a278-55f0e9f6b966"
+     ],
+     "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+     "at": 1790523794.3284822
+    }
+   ],
+   "resolved_at": 1790523794.3284822,
+   "note": "Cancelled by you: ComfyUI removed the prompt before it started."
+  },
+  "commit_releases": null,
+  "host_commit_windows": [
+   {
+    "samples": 21,
+    "unknown_samples": 0,
+    "first_at": 1790523782.0248058,
+    "last_at": 1790523792.1347322,
+    "peak_committed_bytes": 60922830848,
+    "peak_at": 1790523791.2189095,
+    "limit_bytes": 102784090112,
+    "min_available_bytes": 41861259264,
+    "index": 0,
+    "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+    "interval_seconds": 0.5
+   },
+   {
+    "samples": 6,
+    "unknown_samples": 0,
+    "first_at": 1790523792.291493,
+    "last_at": 1790523794.3354812,
+    "peak_committed_bytes": 60560089088,
+    "peak_at": 1790523793.3161385,
+    "limit_bytes": 102784090112,
+    "min_available_bytes": 42224001024,
+    "index": 1,
+    "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+    "interval_seconds": 0.5
+   }
+  ],
+  "can_stop_tracking": false,
+  "can_resume_tracking": false,
+  "has_pending_submission": false,
+  "never_submitted": false,
+  "mixed_batch": null,
+  "can_abandon": false,
+  "abandon_requires_acknowledgement": false,
+  "put_away_at": null,
+  "put_away": false,
+  "put_away_basis": null,
+  "can_put_away": false,
+  "can_bring_back": false,
+  "can_cancel": false,
+  "cancel_blocked_reason": "Already cancelled",
+  "cancel_needs_confirm": false
+ },
+ "state_json": {
+  "id": "3ffa0b39-7454-4882-9751-948783a825cd",
+  "status": "cancelled",
+  "created_at": 1790523781.8806705,
+  "preset_id": "wai",
+  "preset_name": "WAI v17 \u2022 illustration",
+  "controls": {
+   "positive": "no humans, scenery, stone lighthouse on a sea cliff, calm ocean, sunset sky, soft clouds, wide shot, masterpiece, best quality",
+   "seed": 927201,
+   "steps": 30,
+   "width": 832,
+   "height": 1216
+  },
+  "batch_count": 2,
+  "prompt_ids": [
+   "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+   "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278"
+  ],
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+    "seed": 927201,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82563072,
+     "peak_dedicated_bytes": 11703853056,
+     "samples": 21,
+     "spilled": false
+    }
+   },
+   {
+    "index": 1,
+    "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+    "seed": 927202,
+    "status": "cancelled",
+    "gpu_memory": {
+     "peak_shared_bytes": 82563072,
+     "peak_dedicated_bytes": 11428593664,
+     "samples": 1,
+     "spilled": false
+    },
+    "cancelled": {
+     "basis": "dequeued",
+     "at": 1790523794.3284822
+    }
+   }
+  ],
+  "outputs": [
+   {
+    "filename": "WAI-Illustration_00050_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 927201,
+    "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+    "media_type": "image",
+    "asset_id": "9cc63e35ec5a5418a328bb819e091dc9"
+   }
+  ],
+  "message": "Cancelled by you: ComfyUI removed the prompt before it started. 1 of 2 outputs finished and are kept. Nothing is retried.",
+  "graph_path": "workflows\\api\\wai-api.json",
+  "seed_bindings": [
+   [
+    "5",
+    "seed"
+   ]
+  ],
+  "prompt_bindings": {
+   "positive": [
+    [
+     "2",
+     "text"
+    ]
+   ],
+   "negative": [
+    [
+     "3",
+     "text"
+    ]
+   ]
+  },
+  "parent_assets": [],
+  "label": "cancel-proof-a-pending",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790523781.8906782,
+  "host_commit_windows": [
+   {
+    "samples": 21,
+    "unknown_samples": 0,
+    "first_at": 1790523782.0248058,
+    "last_at": 1790523792.1347322,
+    "peak_committed_bytes": 60922830848,
+    "peak_at": 1790523791.2189095,
+    "limit_bytes": 102784090112,
+    "min_available_bytes": 41861259264,
+    "index": 0,
+    "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+    "interval_seconds": 0.5
+   },
+   {
+    "samples": 6,
+    "unknown_samples": 0,
+    "first_at": 1790523792.291493,
+    "last_at": 1790523794.3354812,
+    "peak_committed_bytes": 60560089088,
+    "peak_at": 1790523793.3161385,
+    "limit_bytes": 102784090112,
+    "min_available_bytes": 42224001024,
+    "index": 1,
+    "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+    "interval_seconds": 0.5
+   }
+  ],
+  "cancellation": {
+   "event_id": "fe198f9df39b4b4facc8708b908d49b0",
+   "requested_at": 1790523792.3694642,
+   "requested_by": "owner",
+   "status_at_request": "running",
+   "state": "cancelled",
+   "actions": [
+    {
+     "action": "dequeue",
+     "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+     "at": 1790523794.310652,
+     "reply": "ok"
+    }
+   ],
+   "observations": [
+    {
+     "queue": "pending",
+     "running": [
+      "3a9786c1-1397-4082-a278-55f0e9f6b966"
+     ],
+     "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+     "at": 1790523794.3046515
+    },
+    {
+     "queue": "absent",
+     "history": "absent",
+     "running": [
+      "3a9786c1-1397-4082-a278-55f0e9f6b966"
+     ],
+     "prompt_id": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+     "at": 1790523794.3284822
+    }
+   ],
+   "resolved_at": 1790523794.3284822,
+   "note": "Cancelled by you: ComfyUI removed the prompt before it started."
+  },
+  "finished_at": 1790523794.3284822,
+  "elapsed_seconds": 12.437803983688354
+ },
+ "history": {
+  "3d3715c6-5299-4176-9fd2-02be51d8ac97": {
+   "status": {
+    "status_str": "success",
+    "completed": true,
+    "messages": [
+     [
+      "execution_start",
+      {
+       "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+       "timestamp": 1790523782020
+      }
+     ],
+     [
+      "execution_cached",
+      {
+       "nodes": [
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+       "timestamp": 1790523782021
+      }
+     ],
+     [
+      "execution_success",
+      {
+       "prompt_id": "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+       "timestamp": 1790523791334
+      }
+     ]
+    ]
+   },
+   "client_id": "asset-studio",
+   "output_nodes": [
+    "7"
+   ]
+  },
+  "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278": null
+ },
+ "extra": {
+  "blocker_prompt_id": "3a9786c1-1397-4082-a278-55f0e9f6b966"
+ }
+}

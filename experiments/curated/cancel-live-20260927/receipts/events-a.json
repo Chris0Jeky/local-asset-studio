@@ -1,0 +1,130 @@
+[
+ {
+  "t": 1790523781.763,
+  "kind": "pre",
+  "name": "a",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 54.8,
+   "limit_gib": 95.7,
+   "pct": 57.2,
+   "phys_avail_gib": 5.3
+  },
+  "log": {
+   "got_prompt": 4,
+   "interrupted": 2,
+   "executed": 4,
+   "entries": 135
+  },
+  "lease": false
+ },
+ {
+  "t": 1790523781.889,
+  "kind": "create",
+  "label": "cancel-proof-a-pending",
+  "code": 201,
+  "id": "3ffa0b39-7454-4882-9751-948783a825cd",
+  "status": "queued"
+ },
+ {
+  "t": 1790523782.125,
+  "kind": "blocker_posted",
+  "code": 200,
+  "prompt_id": "3a9786c1-1397-4082-a278-55f0e9f6b966",
+  "a_running": [
+   "3d3715c6-5299-4176-9fd2-02be51d8ac97"
+  ]
+ },
+ {
+  "t": 1790523792.367,
+  "kind": "a_member2_posted",
+  "pid2": "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278",
+  "running": [
+   "3a9786c1-1397-4082-a278-55f0e9f6b966"
+  ],
+  "pending": [
+   "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278"
+  ],
+  "member2_pending": true,
+  "blocker_running": true
+ },
+ {
+  "t": 1790523792.372,
+  "kind": "cancel",
+  "id": "3ffa0b39-7454-4882-9751-948783a825cd",
+  "code": 202,
+  "took": 0.005,
+  "status": "running",
+  "cancellation": {
+   "event_id": "fe198f9df39b4b4facc8708b908d49b0",
+   "requested_at": 1790523792.3694642,
+   "requested_by": "owner",
+   "status_at_request": "running",
+   "state": "requested",
+   "actions": [],
+   "observations": []
+  }
+ },
+ {
+  "t": 1790523794.408,
+  "kind": "a_after",
+  "running": [
+   "3a9786c1-1397-4082-a278-55f0e9f6b966"
+  ],
+  "pending": []
+ },
+ {
+  "t": 1790523794.428,
+  "kind": "settled",
+  "name": "a",
+  "id": "3ffa0b39-7454-4882-9751-948783a825cd",
+  "status": "cancelled",
+  "message": "Cancelled by you: ComfyUI removed the prompt before it started. 1 of 2 outputs finished and are kept. Nothing is retried.",
+  "cancel_state": "cancelled",
+  "prompt_ids": [
+   "3d3715c6-5299-4176-9fd2-02be51d8ac97",
+   "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278"
+  ],
+  "subs": [
+   [
+    0,
+    "completed"
+   ],
+   [
+    1,
+    "cancelled"
+   ]
+  ],
+  "outputs": 1,
+  "history": {
+   "3d3715c6-5299-4176-9fd2-02be51d8ac97": "success",
+   "a898e17f-dbf6-4b1a-91f4-4d8d9a9ca278": null
+  }
+ },
+ {
+  "t": 1790523809.503,
+  "kind": "post",
+  "name": "a",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 55.4,
+   "limit_gib": 95.7,
+   "pct": 57.9,
+   "phys_avail_gib": 6.1
+  },
+  "log": {
+   "got_prompt": 7,
+   "interrupted": 2,
+   "executed": 6,
+   "entries": 148
+  }
+ },
+ {
+  "t": 1790523809.504,
+  "kind": "blocker_history",
+  "status": "success",
+  "client_id": "cancel-proof-blocker"
+ }
+]
