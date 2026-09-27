@@ -239,7 +239,8 @@ def compile_board(preset, graph, supplied, uploads):
             # two-picture board must still come back as three slots with the empty one marked.
             if not empty: prune_missing_slot(graph,node)
             records.append({'slot':index+1,'role':spec['roles'][index],'file':None,'pruned':True,'contribution':'','avoid':''}); continue
-        if reference.get('role',slot.get('role')) not in ROLES: raise ValueError('Every reference needs an explicit supported role')
+        role=reference.get('role',slot.get('role'))
+        if not isinstance(role,str) or role not in ROLES: raise ValueError('Every reference needs an explicit supported role')
         name=reference['file']
         if not isinstance(name,str) or name!=Path(name).name: raise ValueError('Choose an uploaded image for every reference slot')
         record=image_record(uploads,name)
@@ -288,7 +289,7 @@ def compile_references(preset, graph, supplied, uploads):
         raise ValueError(f'This recipe needs {len(slots)} reference images. Fill the slots or choose a different reference recipe.')
     records=[]
     for index,(slot,reference) in enumerate(zip(slots,supplied)):
-        if not isinstance(reference,dict) or reference.get('role') not in ROLES:
+        if not isinstance(reference,dict) or not isinstance(reference.get('role'),str) or reference['role'] not in ROLES:
             raise ValueError('Every reference needs an explicit supported role')
         name=reference.get('file')
         if not isinstance(name,str) or name!=Path(name).name:
