@@ -63,7 +63,7 @@ Original question: civitai's flags differ per file and are recorded in `models/l
 
 **q-25 — does Style + Pose stay part of the fantasy character pack? (answered 27 September 2026, see below; reworded 23 September 2026 at the owner's request).** **Answered by the owner, 27 September 2026 (in-session question, after seeing a sheet of the 23 September weight follow-up: board, action pose, style weight 0.7 / 0.45 / 0.3 on seeds 71-73):** (1) keep Style + Pose as a pack tool; (2) on WAI v17, at style weight 0.3-0.45 ("I'm torn between 0.3 and 0.45, they both look good for what it has to do"). Agents set the shipped `style-pose-wai` default to 0.4 on that answer, with 0.3 and 0.7 as variants (named assumption; reversible by one graph value). Not art acceptance of any render.
 *What Style + Pose is:* a Studio route that makes a new picture on an SDXL-family checkpoint from three inputs: your
-prompt, a *style board* of one to three pictures whose look is averaged in (IP-Adapter, weight 0.7 by default) and a
+prompt, a *style board* of one to three pictures whose look is averaged in (IP-Adapter, weight 0.7 by default; 0.4 on WAI v17 since 27 September 2026) and a
 *pose picture* (pose strength 0.9 by default). It draws a new picture; it does not edit an existing one.
 *What changed since the question was first asked:* the pack's look is now Anima look B, and in q-30 you chose to make
 the pack's variations by editing the reference portrait and through the pose and face routes. Correction (25 September
