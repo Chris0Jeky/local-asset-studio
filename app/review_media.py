@@ -125,7 +125,7 @@ def render_sheet(candidates, read_source, crop, path, background='dark'):
                     x = i % columns * 384; y = i // columns * 416
                     sheet.paste(thumb, (x + (384-thumb.width)//2, y + (368-thumb.height)//2), thumb)
                     draw.text((x+12, y+382), 'Candidate ' + candidate['alias'], fill=colours[1])
-                    transforms.append({'alias': candidate['alias'], 'basis_points': crop,
+                    transforms.append({'alias': candidate['alias'], 'basis_points': list(crop),
                                        'pixel_box': list(box), 'source_size': decoded['oriented_size'],
                                        'rendered_size': list(thumb.size)})
             finally:image.close()

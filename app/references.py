@@ -84,10 +84,15 @@ def image_record(root, name, *, strict_pixels=False):
     # The read bound also holds when a source grows after the stat precheck.
     with path.open('rb') as stream: raw=stream.read(MAX_REFERENCE_BYTES+1)
     if len(raw)>MAX_REFERENCE_BYTES: raise ValueError('Reference exceeds 20 MiB')
-    with io.BytesIO(raw) as stream, Image.open(stream) as image:
-        if strict_pixels and Image.MAX_IMAGE_PIXELS is not None and image.width*image.height>Image.MAX_IMAGE_PIXELS:
-            raise ValueError('Reference exceeds the image safety pixel limit')
-        with ImageOps.exif_transpose(image) as oriented: width,height=oriented.size
+    # A decode failure is a 400-class reference problem, not a server fault; an animation is not a still reference.
+    try:
+        with io.BytesIO(raw) as stream, Image.open(stream) as image:
+            if strict_pixels and Image.MAX_IMAGE_PIXELS is not None and image.width*image.height>Image.MAX_IMAGE_PIXELS:
+                raise ValueError('Reference exceeds the image safety pixel limit')
+            if getattr(image,'n_frames',1)!=1: raise ValueError('Reference must be a single still image; this file is animated. Attach one frame instead.')
+            with ImageOps.exif_transpose(image) as oriented: width,height=oriented.size
+    except (OSError,SyntaxError,Image.DecompressionBombError) as exc:
+        raise ValueError('Reference cannot be read as an image; attach it again.') from exc
     return {'file':name,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),'width':width,'height':height}
 
 
@@ -239,7 +244,7 @@ def compile_board(preset, graph, supplied, uploads):
         record=image_record(uploads,name)
         if reference.get('sha256') and reference['sha256']!=record['sha256']:
             raise ValueError('Reference bytes changed since this recipe was saved; reattach the intended image.')
-        record.update(role=reference.get('role',slot.get('role')),slot=index+1,contribution='',avoid='',transform=transform)
+        record.update(role=reference.get('role',slot.get('role')),slot=index+1,contribution='',avoid='',transform=copy.deepcopy(transform))
         apply_drawn_pose_sidecar(record,name,reference)
         graph[str(node)]['inputs'][field]=name
         records.append(record)
