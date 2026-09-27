@@ -63,8 +63,10 @@ const problemFields=()=>[field('INPUT','stopTrackingReason',{stopTrackingReason:
 
   // 5. A double click on Install sends one install request.
   requests.length=0;release=gate();
-  const installs=[run("install('model-a')"),run("install('model-a')")];await tick();
-  assert.equal(requests.filter(r=>r.url==='/api/models/install').length,1);release();await Promise.all(installs);
+  const installs=[run("install('model-a')"),run("install('model-a')"),run("install('model-b')")];await tick();
+  const installRequests=requests.filter(r=>r.url==='/api/models/install').map(r=>r.data.id);
+  assert.deepEqual(installRequests,['model-a','model-b'],'a repeat of the same model is dropped; a different model is still sent (the server decides)');
+  release();await Promise.all(installs);
 
   // 6. Starring a card whose asset left the library explains itself instead of surfacing a TypeError.
   run('assetState.assets=[]');requests.length=0;
