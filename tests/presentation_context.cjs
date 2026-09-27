@@ -83,6 +83,28 @@ test('staged required sources are satisfied, an empty optional slot is not missi
   assert.notEqual(none.primaryAction.id, C.ACTIONS.REVIEW_SOURCES);
 });
 
+test('every active state keeps Inspect primary over source attention; projected intents dispatch; a second reference for one slot is extra', () => {
+  for (const state of ['submitting', 'running', 'waiting', 'queued']) {
+    const input = baseInput();
+    input.capability.value.referenceSlots = [{id:'identity', role:'Identity', required:true}];
+    input.execution = knownExecution(state, {operationId:'op-' + state});
+    const view = C.project(C.captureContext(input), {});
+    assert.equal(view.primaryAction.id, C.ACTIONS.INSPECT_OPERATION, state);
+    assert.ok(view.secondaryActions.some(x => x.id === C.ACTIONS.REVIEW_SOURCES), state);
+  }
+  const input = baseInput();
+  input.execution = knownExecution('blocked', {blockers:[{code:'missing-model', message:'Install the model.'}]});
+  const context = C.captureContext(input), view = C.project(context, {});
+  assert.deepEqual([view.primaryAction.workspaceId, view.primaryAction.contextStamp], ['create', context.contextStamp]);
+  const adapter = C.createActionAdapter({workspaceId:'create', getContextStamp:() => context.contextStamp, actions:{[view.primaryAction.id]:() => {}}});
+  assert.deepEqual(adapter.dispatch(view.primaryAction), {ok:true, id:view.primaryAction.id});
+  const twice = baseInput();
+  twice.capability.value.referenceSlots = [{id:'identity', role:'Identity', required:true}];
+  twice.draft.references = [{id:'first', slotId:'identity', stage:'staged'}, {id:'second', slotId:'identity', stage:'staged'}];
+  const sources = C.project(C.captureContext(twice), {}).sourceSummary;
+  assert.deepEqual([sources.provided.map(x => x.id), sources.extra.map(x => x.id), sources.state], [['first'], ['second'], 'attention']);
+});
+
 test('an uncertain operation stays primary while draft conflict and source issues remain visible', () => {
   const input = baseInput();
   input.execution = knownExecution('uncertain', {operationId:'op-7'});
