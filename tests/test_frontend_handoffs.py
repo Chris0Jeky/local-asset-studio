@@ -86,6 +86,43 @@ class GalleryHandoffTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('PASS: exact-profile blocker wording', result.stdout, result.stdout + result.stderr)
 
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_quick_review_checks_fit_the_route_and_count_owner_answers(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('review_checks.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Review check contracts passed', result.stdout, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_looks_offer_prepare_and_save_with_reasons(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('looks_frontend.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Look contracts passed', result.stdout, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_comparison_candidates_save_and_count_quick_checks(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('production_review_checks_frontend.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Comparison quick checks save one owner answer per press', result.stdout, result.stdout + result.stderr)
+
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_combine_plan_form_shows_every_fill_and_belongs_to_one_pair(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('combine_plan_frontend.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('7 Combine plan form checks passed', result.stdout, result.stdout + result.stderr)
+
 
 class ProductionClockFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')

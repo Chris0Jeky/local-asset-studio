@@ -1,0 +1,53 @@
+[
+ {
+  "t": 1790524203.272,
+  "kind": "pre",
+  "name": "ui",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 56.5,
+   "limit_gib": 95.7,
+   "pct": 59.0,
+   "phys_avail_gib": 5.9
+  },
+  "log": {
+   "got_prompt": 9,
+   "interrupted": 2,
+   "executed": 8,
+   "entries": 155
+  },
+  "lease": false
+ },
+ {
+  "t": 1790524207.18,
+  "kind": "ui_page",
+  "results_open": true,
+  "gallery_visible": true,
+  "url": "http://127.0.0.1:8191/#create"
+ },
+ {
+  "t": 1790524207.32,
+  "kind": "create",
+  "label": "cancel-proof-ui-click",
+  "code": 201,
+  "id": "6154ba50-97d5-48cb-9dbd-899c71269712",
+  "status": "queued"
+ },
+ {
+  "t": 1790524222.114,
+  "kind": "ui_before_click",
+  "card_text": "WAI v17 \u2022 illustration \u00b7 running\n\nGenerating output 1 of 1\n\nStarted 16:50 \u00b7 14 s so far\n\nKnown prompt IDs: 657e3166-8098-4613-b716-aa76b28c7dab\n\nCancel\n\nStops the render in ComfyUI. Finished outputs are kept. Nothing is retried.\n\nRecipe",
+  "consequence": "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.",
+  "run_dock_reason": "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.",
+  "queue_running": [
+   "657e3166-8098-4613-b716-aa76b28c7dab"
+  ],
+  "prompt_id": "657e3166-8098-4613-b716-aa76b28c7dab"
+ },
+ {
+  "t": 1790524222.258,
+  "kind": "ui_clicked",
+  "at": 1790524222.208
+ }
+]

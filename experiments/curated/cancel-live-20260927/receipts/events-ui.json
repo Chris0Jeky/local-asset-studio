@@ -1,0 +1,136 @@
+[
+ {
+  "t": 1790524244.804,
+  "kind": "pre",
+  "name": "ui",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 55.3,
+   "limit_gib": 95.7,
+   "pct": 57.8,
+   "phys_avail_gib": 5.9
+  },
+  "log": {
+   "got_prompt": 10,
+   "interrupted": 3,
+   "executed": 9,
+   "entries": 162
+  },
+  "lease": false
+ },
+ {
+  "t": 1790524248.696,
+  "kind": "ui_page",
+  "results_open": true,
+  "gallery_visible": true,
+  "url": "http://127.0.0.1:8191/#create"
+ },
+ {
+  "t": 1790524248.823,
+  "kind": "create",
+  "label": "cancel-proof-ui-click",
+  "code": 201,
+  "id": "f9687adc-0cab-4406-8241-b17df32c6c44",
+  "status": "queued"
+ },
+ {
+  "t": 1790524262.842,
+  "kind": "ui_before_click",
+  "card_text": "WAI v17 \u2022 illustration \u00b7 running\n\nGenerating output 1 of 1\n\nStarted 16:50 \u00b7 13 s so far\n\nKnown prompt IDs: 9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa\n\nCancel\n\nStops the render in ComfyUI. Finished outputs are kept. Nothing is retried.\n\nRecipe",
+  "consequence": "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.",
+  "run_dock_reason": "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.",
+  "queue_running": [
+   "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+  ],
+  "prompt_id": "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+ },
+ {
+  "t": 1790524262.974,
+  "kind": "ui_clicked",
+  "at": 1790524262.927
+ },
+ {
+  "t": 1790524266.74,
+  "kind": "ui_after",
+  "card_count": 1,
+  "card_text": "WAI v17 \u2022 illustration \u00b7 running\n\nGenerating output 1 of 1\n\nStarted 16:50 \u00b7 16 s so far\n\nKnown prompt IDs: 9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa\n\nCancel requested (16:51:02): the Studio is checking ComfyUI for this job's prompt. Nothing is retried.\n\nRecipe",
+  "status_line": "Cancel requested. The Studio is checking ComfyUI; the card shows what it finds.",
+  "dialogs": [
+   {
+    "t": 1790524262.968,
+    "type": "confirm",
+    "message": "Cancel this render?\n\nStops the render in ComfyUI. Finished outputs are kept. Nothing is retried."
+   }
+  ],
+  "page_errors": [],
+  "page_posts": [
+   [
+    1790524246.015,
+    "POST",
+    "http://127.0.0.1:8191/api/estimate"
+   ],
+   [
+    1790524247.043,
+    "POST",
+    "http://127.0.0.1:8191/api/estimate"
+   ],
+   [
+    1790524262.935,
+    "POST",
+    "http://127.0.0.1:8191/api/estimate"
+   ],
+   [
+    1790524262.973,
+    "POST",
+    "http://127.0.0.1:8191/api/jobs/f9687adc-0cab-4406-8241-b17df32c6c44/cancel"
+   ],
+   [
+    1790524263.585,
+    "POST",
+    "http://127.0.0.1:8191/api/estimate"
+   ]
+  ]
+ },
+ {
+  "t": 1790524266.83,
+  "kind": "settled",
+  "name": "ui",
+  "id": "f9687adc-0cab-4406-8241-b17df32c6c44",
+  "status": "cancelled",
+  "message": "Stopped by you: ComfyUI reported the render interrupted. Nothing is retried.",
+  "cancel_state": "cancelled",
+  "prompt_ids": [
+   "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa"
+  ],
+  "subs": [
+   [
+    0,
+    "cancelled"
+   ]
+  ],
+  "outputs": 0,
+  "history": {
+   "9454cfd3-0f0b-4e9b-9cf4-85de5181f4aa": "error"
+  }
+ },
+ {
+  "t": 1790524266.848,
+  "kind": "post",
+  "name": "ui",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 55.5,
+   "limit_gib": 95.7,
+   "pct": 58.0,
+   "phys_avail_gib": 6.0
+  },
+  "log": {
+   "got_prompt": 11,
+   "interrupted": 4,
+   "executed": 10,
+   "entries": 169
+  }
+ }
+]

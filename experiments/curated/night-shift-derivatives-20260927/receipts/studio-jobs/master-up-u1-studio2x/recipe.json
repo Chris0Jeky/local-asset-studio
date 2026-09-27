@@ -1,0 +1,11 @@
+{
+  "preset_id": "anime-esrgan",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png"
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anime-esrgan-api.json",
+  "created_at": 1790524603.7178748,
+  "references": [],
+  "parent_assets": []
+}

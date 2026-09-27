@@ -43,6 +43,16 @@ METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashe
 ADDITIVE_COLUMNS = ("run_label", "prompt_excerpt")
 PROMPT_EXCERPT_CHARS = 60
 RUN_LABEL_MAX = 80
+# Quick review checks (#1203): one owner answer per check, stored as a `check:<name>=yes|no` tag so it saves with the
+# asset's revisioned review. The page picks which checks a recipe route shows; absent means not checked (K14).
+REVIEW_CHECKS = ("pose", "face", "outfit", "style", "clean", "anatomy", "composition")
+CHECK_TAG = re.compile(r"check:(%s)=(yes|no)" % "|".join(REVIEW_CHECKS))
+# Cards (#1221, #1205): named, revisioned Workspace records that are not pictures. `body` is the kind's JSON (a look's wording
+# template and recipe, app/looks.py), `lineage` the pictures it came from. A character card is a new kind here, not a migration.
+CARD_KINDS = ("look",)
+CARD_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{2,127}")
+CARD_BODY_MAX = 64 * 1024
+CARD_LINEAGE_MAX = 20
 
 
 def clean_run_label(value):
@@ -113,6 +123,11 @@ class AssetWorkspace:
                 CREATE TABLE IF NOT EXISTS setups (
                     id TEXT PRIMARY KEY, name TEXT NOT NULL, recipe TEXT NOT NULL,
                     created_at REAL NOT NULL);
+                CREATE TABLE IF NOT EXISTS cards (
+                    id TEXT PRIMARY KEY, kind TEXT NOT NULL, name TEXT NOT NULL,
+                    body TEXT NOT NULL DEFAULT '{}', lineage TEXT NOT NULL DEFAULT '[]',
+                    origin TEXT NOT NULL DEFAULT 'owner', revision INTEGER NOT NULL DEFAULT 0,
+                    created_at REAL NOT NULL, updated_at REAL NOT NULL, trashed_at REAL);
             """)
             # Serialize migration discovery with the ALTER, including simultaneous clients.
             db.execute("BEGIN IMMEDIATE")
@@ -463,7 +478,11 @@ class AssetWorkspace:
                             if isinstance(tag, str) and not tag:
                                 continue
                             valid_tags.append(self.text(tag, "Tag", 60))
-                        changes["tags"] = json.dumps(list(dict.fromkeys(valid_tags)))
+                        valid_tags = list(dict.fromkeys(valid_tags))
+                        answered = [CHECK_TAG.fullmatch(t) for t in valid_tags if t[:6].lower() == "check:"]
+                        if not all(answered) or len({m[1] for m in answered}) != len(answered):
+                            raise WorkspaceError("Check tags read check:<" + "|".join(REVIEW_CHECKS) + ">=yes or =no, one answer per check; nothing changed")
+                        changes["tags"] = json.dumps(valid_tags)
                     if "run_label" in payload:
                         # A label marks an agent run; null clears it (the operator's own). Reversible like every edit.
                         try: changes["run_label"] = clean_run_label(payload["run_label"])
@@ -526,3 +545,97 @@ class AssetWorkspace:
                     if winner["name"] != name or json.loads(winner["recipe"]) != recipe:
                         raise WorkspaceError("That setup ID already exists; the original was preserved. Save with a new ID.")
         return {"id": identifier, "name": name}
+
+    def asset_by_sha256(self, digest):
+        """The oldest live asset whose snapshot has these bytes, or None: a card's lineage names pictures by content, not by row."""
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest): return None
+        with self.connection() as db:
+            row = db.execute("SELECT * FROM assets WHERE sha256=? AND trashed_at IS NULL ORDER BY created_at,id LIMIT 1", (digest,)).fetchone()
+        return self._asset(row) if row else None
+
+    @staticmethod
+    def _card(row):
+        value = dict(row); value["body"] = json.loads(value["body"]); value["lineage"] = json.loads(value["lineage"]); return value
+
+    def cards(self, kind):
+        with self.connection() as db:
+            return [self._card(r) for r in db.execute("SELECT * FROM cards WHERE kind=? ORDER BY name COLLATE NOCASE,id", (kind,))]
+
+    def card(self, card_id):
+        if not isinstance(card_id, str): raise WorkspaceError("Card not found", status=404, code="card_not_found")
+        with self.connection() as db: row = db.execute("SELECT * FROM cards WHERE id=?", (card_id,)).fetchone()
+        if row is None: raise WorkspaceError("Card not found", status=404, code="card_not_found")
+        return self._card(row)
+
+    @staticmethod
+    def _card_json(value, name, kind):
+        if not isinstance(value, kind): raise WorkspaceError(f"Card {name} must be a JSON {'object' if kind is dict else 'list'}")
+        try: raw = json.dumps(value, sort_keys=True, allow_nan=False)
+        except (TypeError, ValueError, RecursionError) as error: raise WorkspaceError(f"Card {name} must contain finite JSON values") from error
+        if len(raw.encode()) > CARD_BODY_MAX: raise WorkspaceError(f"Card {name} exceeds {CARD_BODY_MAX // 1024} KiB")
+        if kind is list and (len(value) > CARD_LINEAGE_MAX or not all(isinstance(entry, dict) for entry in value)):
+            raise WorkspaceError(f"Card lineage is a list of up to {CARD_LINEAGE_MAX} objects")
+        return json.dumps(value, allow_nan=False)
+
+    def _card_fields(self, payload, required):
+        fields = {}
+        if "name" in payload or required:
+            name = self.text(payload.get("name"), "Card name", 120)
+            if not name: raise WorkspaceError("Card name is required")
+            fields["name"] = name
+        if "body" in payload or required: fields["body"] = self._card_json(payload.get("body"), "body", dict)
+        if "lineage" in payload or required: fields["lineage"] = self._card_json(payload.get("lineage", []), "lineage", list)
+        return fields
+
+    def card_command(self, payload):
+        """create (optional client id: the same id and content again is a no-op), edit, trash, restore. Every change after create
+        names the revision it read; a stale one is a 409 carrying the current card and changes nothing (no lost update)."""
+        if not isinstance(payload, dict): raise WorkspaceError("Card command must be an object")
+        action = payload.get("action")
+        allowed = {"create": {"action", "id", "kind", "name", "body", "lineage"}, "edit": {"action", "id", "expected_revision", "name", "body", "lineage"},
+                   "trash": {"action", "id", "expected_revision"}, "restore": {"action", "id", "expected_revision"}}
+        if action not in allowed: raise WorkspaceError("Unknown card action")
+        if set(payload) - allowed[action]: raise WorkspaceError("Unknown card command fields")
+        now = time.time()
+        if action == "create":
+            if payload.get("kind") not in CARD_KINDS: raise WorkspaceError("Unknown card kind; known: " + ", ".join(CARD_KINDS))
+            identifier = payload.get("id", uuid.uuid4().hex)
+            if not isinstance(identifier, str) or not CARD_ID.fullmatch(identifier): raise WorkspaceError("Card ID must be 3-128 letters, digits, underscores or hyphens")
+            fields = self._card_fields(payload, True)
+            with self.connection() as db:
+                db.execute("BEGIN IMMEDIATE")
+                existing = db.execute("SELECT * FROM cards WHERE id=?", (identifier,)).fetchone()
+                if existing:
+                    same = existing["kind"] == payload["kind"] and existing["name"] == fields["name"] and json.loads(existing["body"]) == json.loads(fields["body"]) and json.loads(existing["lineage"]) == json.loads(fields["lineage"])
+                    if not same: raise WorkspaceError("That card ID already names a different card; nothing changed", status=409, code="card_id_taken", current=self._card(existing))
+                    return self._card(existing)
+                db.execute("INSERT INTO cards (id,kind,name,body,lineage,origin,revision,created_at,updated_at) VALUES (?,?,?,?,?,'owner',0,?,?)",
+                           (identifier, payload["kind"], fields["name"], fields["body"], fields["lineage"], now, now))
+                return self._card(db.execute("SELECT * FROM cards WHERE id=?", (identifier,)).fetchone())
+        if "expected_revision" not in payload:
+            raise WorkspaceError("Reload the card and supply expected_revision; nothing changed", status=428, code="card_precondition_required")
+        expected = payload["expected_revision"]
+        if isinstance(expected, bool) or not isinstance(expected, int) or not 0 <= expected < MAX_REVISION: raise WorkspaceError("expected_revision must be a nonnegative safe integer")
+        fields = self._card_fields(payload, False) if action == "edit" else {"trashed_at": now if action == "trash" else None}
+        if not fields: raise WorkspaceError("No changes supplied")
+        with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT * FROM cards WHERE id=?", (payload.get("id"),)).fetchone() if isinstance(payload.get("id"), str) else None
+            if row is None: raise WorkspaceError("Card not found", status=404, code="card_not_found")
+            if row["revision"] != expected:
+                raise WorkspaceError("This card changed since you read it; nothing changed. Reload it and try again.", status=409, code="card_revision_conflict", current=self._card(row))
+            db.execute(f"UPDATE cards SET {','.join(k + '=?' for k in fields)},revision=revision+1,updated_at=? WHERE id=?", [*fields.values(), now, row["id"]])
+            return self._card(db.execute("SELECT * FROM cards WHERE id=?", (row["id"],)).fetchone())
+
+    def seed_cards(self, entries):
+        """Insert shipped cards whose id is absent; never overwrite or resurrect one the owner edited or put away. Returns the new ids."""
+        added, now = [], time.time()
+        with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            for entry in entries:
+                if entry.get("kind") not in CARD_KINDS or not CARD_ID.fullmatch(str(entry.get("id", ""))): raise WorkspaceError("Invalid seed card")
+                fields = self._card_fields(entry, True)
+                inserted = db.execute("INSERT OR IGNORE INTO cards (id,kind,name,body,lineage,origin,revision,created_at,updated_at) VALUES (?,?,?,?,?,'seed',0,?,?)",
+                                      (entry["id"], entry["kind"], fields["name"], fields["body"], fields["lineage"], now, now))
+                if inserted.rowcount: added.append(entry["id"])
+        return added

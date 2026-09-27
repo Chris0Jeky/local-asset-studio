@@ -1,0 +1,295 @@
+{
+  "id": "9d48b796-8ece-424b-99ab-5e52462dc867",
+  "status": "completed",
+  "created_at": 1790525848.0487812,
+  "preset_id": "flux-edit",
+  "preset_name": "Change one thing (FLUX.2 Klein 4B, keeps the rest)",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png",
+    "positive": "Change only the light and the weather: it is now a quiet early morning after the rain. Soft cool daylight and pale mist outside, a pale blue-grey sky, no rain falling; the warm desk lamp is still on and the monitor screen is dark. Keep everything else exactly as it is: the same camera and framing, the same room and plain graphite wall on the left, the same dark window frame with its vertical divider, the same view through the window with the elevated rail line, poles and buildings, the same desk, chair, lamp, CRT monitor and objects in the same places and shapes, the same floor, and the same hand-painted cel anime film background style.",
+    "seed": 2026092781,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "3bce25d6-3151-4163-a6ef-c2be3cb9a9fe"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "3bce25d6-3151-4163-a6ef-c2be3cb9a9fe",
+      "seed": 2026092781,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "flux-2-klein-4b-fp8.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "flux2",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "text": "Change only the light and the weather: it is now a quiet early morning after the rain. Soft cool daylight and pale mist outside, a pale blue-grey sky, no rain falling; the warm desk lamp is still on and the monitor screen is dark. Keep everything else exactly as it is: the same camera and framing, the same room and plain graphite wall on the left, the same dark window frame with its vertical divider, the same view through the window with the elevated rail line, poles and buildings, the same desk, chair, lamp, CRT monitor and objects in the same places and shapes, the same floor, and the same hand-painted cel anime film background style.",
+            "clip": [
+              "2",
+              0
+            ]
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "CFGGuider",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "17",
+              0
+            ],
+            "negative": [
+              "18",
+              0
+            ],
+            "cfg": 1.0
+          }
+        },
+        "7": {
+          "class_type": "RandomNoise",
+          "inputs": {
+            "noise_seed": 2026092781
+          }
+        },
+        "8": {
+          "class_type": "KSamplerSelect",
+          "inputs": {
+            "sampler_name": "euler"
+          }
+        },
+        "9": {
+          "class_type": "Flux2Scheduler",
+          "inputs": {
+            "steps": 4,
+            "width": 1344,
+            "height": 768
+          }
+        },
+        "10": {
+          "class_type": "EmptyFlux2LatentImage",
+          "inputs": {
+            "width": 1344,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "11": {
+          "class_type": "SamplerCustomAdvanced",
+          "inputs": {
+            "noise": [
+              "7",
+              0
+            ],
+            "guider": [
+              "6",
+              0
+            ],
+            "sampler": [
+              "8",
+              0
+            ],
+            "sigmas": [
+              "9",
+              0
+            ],
+            "latent_image": [
+              "10",
+              0
+            ]
+          }
+        },
+        "12": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "11",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "13": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "filename_prefix": "Verified/FLUX-Edit",
+            "images": [
+              "12",
+              0
+            ]
+          }
+        },
+        "14": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png"
+          }
+        },
+        "15": {
+          "class_type": "ImageScaleToTotalPixels",
+          "inputs": {
+            "image": [
+              "14",
+              0
+            ],
+            "upscale_method": "lanczos",
+            "megapixels": 1.0,
+            "resolution_steps": 1
+          }
+        },
+        "16": {
+          "class_type": "VAEEncode",
+          "inputs": {
+            "pixels": [
+              "15",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "17": {
+          "class_type": "ReferenceLatent",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ],
+            "latent": [
+              "16",
+              0
+            ]
+          }
+        },
+        "18": {
+          "class_type": "ReferenceLatent",
+          "inputs": {
+            "conditioning": [
+              "5",
+              0
+            ],
+            "latent": [
+              "16",
+              0
+            ]
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 222941184,
+        "peak_dedicated_bytes": 11648729088,
+        "samples": 80,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "FLUX-Edit_00018_.png",
+      "subfolder": "Verified",
+      "type": "output",
+      "seed": 2026092781,
+      "prompt_id": "3bce25d6-3151-4163-a6ef-c2be3cb9a9fe",
+      "media_type": "image",
+      "asset_id": "f5f7b409cb025f088080f30b06044eff"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\flux-edit-api.json",
+  "seed_bindings": [
+    [
+      "7",
+      "noise_seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "nightshift-quiet-r1-1",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "host_commit_readings": [
+    {
+      "available_bytes": 38744887296,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 64039202816,
+      "unknown_reason": null,
+      "phase": "prepared",
+      "recorded_at": 1790525848.0487812
+    },
+    {
+      "available_bytes": 38851842048,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 63932248064,
+      "unknown_reason": null,
+      "phase": "pre-submit",
+      "index": 0,
+      "recorded_at": 1790525848.1921632
+    }
+  ],
+  "started_at": 1790525848.0577886,
+  "host_commit_windows": [
+    {
+      "samples": 77,
+      "unknown_samples": 0,
+      "first_at": 1790525848.4791355,
+      "last_at": 1790525887.2704926,
+      "peak_committed_bytes": 78760271872,
+      "peak_at": 1790525883.7143216,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 24023818240,
+      "index": 0,
+      "prompt_id": "3bce25d6-3151-4163-a6ef-c2be3cb9a9fe",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790525887.276494,
+  "elapsed_seconds": 39.21870541572571
+}

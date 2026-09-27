@@ -1,0 +1,15 @@
+{
+  "preset_id": "flux-edit",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png",
+    "positive": "Remove the desk, the chair, the desk lamp, the computer monitor and everything on the desk, leaving the room empty. Keep everything else exactly as it is: the same camera and framing, the same plain graphite wall, the same window with its dark frame, the same rainy night view with the elevated train, the same wooden floor, and the same hand-painted cel anime film background style.",
+    "seed": 2026092761,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\flux-edit-api.json",
+  "created_at": 1790530244.3280354,
+  "references": [],
+  "parent_assets": []
+}

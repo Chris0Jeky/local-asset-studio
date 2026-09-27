@@ -52,6 +52,9 @@ import asset_thumbs
 import job_resources
 import continuation
 import pose_guide
+import tiles
+import parallax
+import looks
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -68,6 +71,7 @@ HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) betwe
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
 HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
+HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
 GPU_SAMPLE_SECONDS = 0.5                 # sampler thread cadence: a VAE decode's overflow into shared memory lasts about 3 s
 GPU_SETTLE_SECONDS = 3                   # after a prompt that spilled, how long shared memory may take to drain before it counts as lingering
@@ -180,6 +184,7 @@ class Studio:
         # and was refused (27 Sep 2026) until someone posted /free by hand. Opt-in: before refusing a measured shortfall, free the job's
         # own idle backend and re-measure for up to this many seconds; only a fresh reading that passes the unchanged gate admits.
         raw_release = self.config.get("commit_gate_release_seconds", 0)
+        self.history_read_backoff_seconds = HISTORY_READ_BACKOFF_SECONDS   # per instance so a scripted ComfyUI double need not wait
         self.commit_release_seconds = min(float(COMMIT_RELEASE_MAX_SECONDS), float(raw_release)) if self._finite_number(raw_release) and raw_release > 0 else 0.0
         self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
@@ -539,6 +544,8 @@ class Studio:
             if type(base) is int and base + batch - 1 > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range; lower the seed or the batch count")
         self.prune_disabled_loras(graph)
         continuation.validate(self, payload, preset, graph)
+        tiles.validate(self, payload, preset, graph, batch)
+        parallax.validate(self, payload, preset, graph, batch)
         self.ensure_reference_inputs(graph)
         self._validate_i2v_mode_source(preset, mode, graph, controls)
         wan_capacity.enforce(graph)
@@ -633,7 +640,7 @@ class Studio:
             others = f" The largest other GPU user was {label(credible[0])} with {credible[0].get('dedicated_bytes', 0) / 2**30:.1f} GB."
         elif holders:
             others = (f" The largest other GPU user is unknown: Windows reported an impossible {holders[0].get('dedicated_bytes', 0) / 2**30:.1f} GB"
-                      f" for {label(holders[0])}, more than the card holds.")
+                      f" for {label(holders[0])}, more than the whole card reported in use.")
         gib = worst.get('peak_shared_bytes', 0) / 2**30
         if any(p.get('lingering') for p in peaks):
             left = max((p.get('settled_shared_bytes') or 0) for p in peaks) / 2**30
@@ -868,12 +875,17 @@ class Studio:
         job["parent_assets"] = parents
         if label: job["label"] = label
         if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
+        if payload.get("tile") is not None: job["tile"] = copy.deepcopy(payload["tile"])
+        if payload.get("parallax") is not None: job["parallax"] = copy.deepcopy(payload["parallax"])
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
         if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time(), **({'deferred': True} if deferred else {}))]
         if deferred:
             available = reading.get('available_bytes') if isinstance(reading, dict) else None
-            job["message"] = f"Queued. Memory headroom is {available / 1024**3:.1f} GiB and this job needs {self.required_host_commit_bytes(preset, graph) / 1024**3:.0f} GiB; before sending it the Studio will free ComfyUI's cached models and measure again"
+            head = f"Queued. Memory headroom is {available / 1024**3:.1f} GiB and this job needs {self.required_host_commit_bytes(preset, graph) / 1024**3:.0f} GiB; the Studio measures again just before sending it"
+            # Promise only what _release_for_commit_gate can do: at or below its floor the release is always skipped.
+            if isinstance(available, int) and available > COMMIT_RELEASE_FLOOR_BYTES: job["message"] = head + " and, if headroom is still short and nothing else is running, frees ComfyUI's cached models and measures once more"
+            else: job["message"] = head + f". Freeing ComfyUI's cached models needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom, so unless memory is released before then the job fails with nothing sent"
         self._save(job); self.jobs[job_id] = job
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
@@ -889,7 +901,7 @@ class Studio:
         return data
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish", "parallax", "parallax_finish")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1085,7 +1097,7 @@ class Studio:
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
                 "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []),
-                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation")}
+                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation"), "tile": job.get("tile"), "tile_receipt": job.get("tile_receipt"), "parallax": job.get("parallax"), "parallax_receipt": job.get("parallax_receipt")}
 
     def i2v_diagnostic(self, job_id):
         job = self.jobs.get(job_id)
@@ -1108,6 +1120,9 @@ class Studio:
             if not re.fullmatch('[0-9a-f]{32}',identifier):raise StudioError('Invalid native project identity')
             base=(self.experiments/'projects'/identifier).resolve()
             return inside(base,base/output['native_path'])
+        if (job or {}).get('operation') in (tiles.OPERATION,parallax.OPERATION):
+            base=(self.runs/job['id']).resolve()
+            return inside(base,base/output['run_file'])
         if (job or {}).get('operation')=='asset.import':
             return inside((self.experiments/'uploads').resolve(),self.experiments/'uploads'/output['uploaded_file'])
         root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
@@ -1291,6 +1306,8 @@ class Studio:
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
         if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
+        if job.get("tile") is not None: recipe["tile"] = job["tile"]
+        if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]
         self._write_json_atomic(directory / "recipe.json", recipe)
         self._write_json_atomic(directory / "workflow.json", job["graph"])
         state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
@@ -1992,6 +2009,8 @@ class Studio:
                 try:preset=self.preset(job['preset_id'])
                 except StudioError:preset={}
                 continuation.validate(self, job, preset, graph, check_runtime=True)
+                tiles.validate(self, job, preset, graph, job["batch_count"], check_runtime=True)
+                parallax.validate(self, job, preset, graph, job["batch_count"], check_runtime=True)
                 wan_capacity.enforce(graph)
                 reading=self._pre_submit_commit_check(job, preset, graph, i)
             except (StudioError, ValueError, OSError) as exc:
@@ -2032,6 +2051,8 @@ class Studio:
         job["status"] = "completed"; job["message"] = "Complete"
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
+        tiles.finish_after_run(self, job)   # deterministic Pillow steps on a completed seam repaint; never a generation
+        parallax.finish_after_run(self, job)   # splits the layers once both parallax edits are in; never a generation
 
     def _prompt_listed(self, job, prompt_id):
         """True unless ComfyUI's queue proves the prompt is neither running nor pending; unreadable means listed."""
@@ -2084,11 +2105,19 @@ class Studio:
                 if not isinstance(response, dict): raise ValueError('Invalid history response')
                 history = response.get(prompt_id)
                 if history is not None and not isinstance(history, dict): raise ValueError('Invalid prompt history')
+                if isinstance(history, dict) and (not isinstance(history.get('status', {}), dict) or not isinstance(history.get('outputs', {}), dict)): raise ValueError('Invalid prompt history')
             except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException) as exc:
                 # A read is safe to repeat (the prompt is never posted again), so one dropped poll does not end the batch; a ComfyUI
                 # that stays unreadable still ends observation after a bounded number of reads, with the rest of the batch unsent.
                 read_failures += 1; error = (str(exc) or type(exc).__name__)[:200]
-                submission.setdefault("history_read_errors", []).append({"at": time.time(), "error": error})
+                # Failures reset after any good read, so a flaky ComfyUI over the 4-hour window would grow this without bound.
+                # Under the lock: HTTP handlers serialize this submission while the worker adds these keys (the backoff sleep stays outside).
+                with self.lock:
+                    kept = submission.setdefault("history_read_errors", [])
+                    # A submission resumed from before the cap has a list but no count: seed from it, then trim it.
+                    submission["history_read_error_count"] = submission.get("history_read_error_count", len(kept)) + 1
+                    del kept[HISTORY_READ_ERRORS_KEPT:]
+                    if len(kept) < HISTORY_READ_ERRORS_KEPT: kept.append({"at": time.time(), "error": error})
                 if read_failures >= HISTORY_READ_STRIKES:
                     with self.lock:
                         if self._tracking_stopped(job): return False
@@ -2096,7 +2125,7 @@ class Studio:
                     return False
                 with self.lock:
                     if self._tracking_stopped(job): return False # the owner stopped tracking: no backoff wait before letting go
-                time.sleep(HISTORY_READ_BACKOFF_SECONDS * read_failures); continue
+                time.sleep(self.history_read_backoff_seconds * read_failures); continue
             read_failures = 0
             if history:
                 # A prompt that finishes between samples (or before the first) still gets one reading at completion.
@@ -2214,6 +2243,8 @@ class Studio:
             message = prior_message if status == prior_status and prior_message else "Reconciled from retained receipts: " + message
         job["status"] = status; job["message"] = message
         self._save(job)
+        tiles.finish_after_run(self, job)
+        parallax.finish_after_run(self, job)
 
     def upload(self, filename, content_type, body):
         mime = content_type.split(";", 1)[0].lower()
@@ -2386,6 +2417,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
+            if path == "/api/looks": return self._json(200, looks.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
                 return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
@@ -2421,6 +2453,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")
                 file = inside(self.studio.assets.root, self.studio.assets.root / "exports" / (identifier + ".zip"))
                 return self._local_file(file, True)
+            if path.startswith("/api/tiles/source/") and len(path.split("/")) == 5: return self._json(200, tiles.source_status(self.studio, path.split("/")[4]))
+            if path.startswith("/api/parallax/source/") and len(path.split("/")) == 5: return self._json(200, parallax.source_status(self.studio, path.split("/")[4]))
             if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
                 return self._json(200, continuation.source_context(self.studio, path.split("/")[3]))
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
@@ -2527,6 +2561,7 @@ class Handler(BaseHTTPRequestHandler):
                 if parts[-1]=='put-away':
                     if len(parts)!=5:raise StudioError('Unknown put-away route')
                     return self._json(200,self.studio.production.put_away(identifier,payload))
+                return self._json(404, {"error":"Not found"})  # the body was read above: nothing is left to drain
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_object()))
             if self.path == "/api/assets/update":
                 try: return self._json(200, self.studio.assets.update(self._body_json()))
@@ -2535,6 +2570,9 @@ class Handler(BaseHTTPRequestHandler):
                                             "code": "asset_storage_unconfirmed"})
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
+            # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
+            if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
+            if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
@@ -2571,6 +2609,16 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
+            # Make seamless (#1220): prepare stores a rolled seam cross as an upload; finish runs Pillow steps. Neither queues a generation.
+            if self.path == "/api/tiles/prepare": return self._json(201, tiles.prepare(self.studio, self._body_object()))
+            if self.path == "/api/tiles/finish":
+                job = tiles.finish(self.studio, self._body_object().get("job_id")); return self._json(200, {"job": self.studio.public(job)})
+            # Parallax layers (#1219): prepare attaches the source and returns the plate stage; stage returns the other edit's
+            # wording for Create; finish runs Pillow steps on a completed plate + isolate pair. None queues a generation.
+            if self.path == "/api/parallax/prepare": return self._json(201, parallax.prepare(self.studio, self._body_object()))
+            if self.path == "/api/parallax/stage": return self._json(200, parallax.next_stage(self.studio, self._body_object()))
+            if self.path == "/api/parallax/finish":
+                body = self._body_object(); job = parallax.finish(self.studio, body.get("job_id"), body.get("other_job_id")); return self._json(200, {"job": self.studio.public(job)})
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             self._drain_refused_body(); return self._json(404, {"error":"Not found"})
         except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())

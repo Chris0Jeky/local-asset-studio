@@ -1,5 +1,36 @@
 # Current state — 27 September 2026
 
+## Background-technique lab: parallax, seamless tiles, backdrop variety — 27 September 2026 (18:29-19:03 local)
+
+Everything used installed tools on the primary and the accepted Night Shift anchor z2 (refs #422).
+- **Parallax:** naive Depth Anything V2 bands were rejected, because the window read as a near wall. What worked (keep): a `flux-edit` clean plate plus a `flux-edit` isolate-on-white matte, both registered to the anchor, a nearest-pixel ring behind the frame, and a colour-matched plate. Three layers recomposite to within 0.36/255. The window mask was drawn by hand.
+- **Seamless tiles:** roll by half, repaint the centre cross with Z-Image `SetLatentNoiseMask`, then a circular lighting flatten. The wall keeps and the floor is fixable (a repeating row of plank ends). A perspective floor source was rejected.
+- **Backdrop variety:** a z2 wording template on Z-Image carries the look (corridor keep, rooftop fixable). The Klein look-picture route leaks content and loses the night.
+
+Evidence: `experiments/curated/background-lab-20260927/`. Agent-judged only; not art acceptance, not licence clearance.
+
+## Qwen-Image 2.1 seed audition: Pruna F0 and the Fix LoRA parked, B0 holds — 27 September 2026 (18:07-18:22 local)
+
+On the isolated qwen21 backend (switched explicitly through the Studio), 2 prompts × 3 seeds × 3 conditions straight to ComfyUI: B0 (25 steps), F0 (Pruna 8-step at 2.0) and Q1 (the untested 2.1 Fix LoRA at 1.0). Even with the prompt text unchanged, ComfyUI recomputed the conditioning in 15 of 18 cells and reloaded the diffusion model before every sample, so the per-image floor is about 25 s of paging. F0 runs at 0.98× of B0 on warm cells (means 33.49 against 34.28 s; the gate is ~0.55×), with quality level (blind: 3 keeps, mean 4.12 against B0's 5 keeps, 3.92), so it is parked. Q1 costs about 1.23× B0 on warm cells and flattens the finish and worsens hands (1 keep, mean 3.39), so it is parked or rejected. B0 holds. Commit peaked at 86.3 %. Evidence: `experiments/curated/qi21-pareto-20260927/` (refs #1028). Agent-judged only; not art acceptance, not licence clearance.
+
+## Night Shift derivatives from the owner's anchor z2 — 27 September 2026 (16:56-17:26 local)
+
+From `retro-anime-master-z2` (sha256 `c22b723c…`, verified): a 3840x2160 master by ESRGAN raw 4x plus Lanczos (the Studio `anime-esrgan` job `c057d94c` took 455 s with a 9.0 GB GPU spill); `retro-anime-quiet` from Studio `flux-edit` (FLUX.2 Klein 4B), 4 candidates plus one refinement round. The first round redrew the window, so round 1 named the frame and the rail view; pick r1-2 (job `a08efbc3`, prompt `5702bc23`, 36.9 s). Klein returned it about 0.7 % larger; a recorded affine warp brings registration to 0.5 / 0.15 px, and the same upscale puts master and quiet on one 3840x2160 grid. `-hero` (3840x1600), `-poster` (1280/640) and `-card` (1024/512/256, tight and wide) are crops and encodes of the master, all within their byte budgets. Full files stay local under ComfyUI `output/Research/nightshift-20260927/`; contact sheets, receipts and rubric pre-review are in `experiments/curated/night-shift-derivatives-20260927/`. **Owner art review (27 Sep, in chat): "Accept, try sharper 4K as well"**. Accepted: master MA, quiet r1-2, hero, poster, card tight. Not runtime-qualified; licence not cleared. `retro-anime-wall` stays the owner's ChatGPT job.
+
+## Owner cancel (#1138) proved live on ComfyUI 0.35.0 — 27 September 2026 (16:41-16:44 local)
+
+Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<id>/cancel` on the primary backend. Every job ended `cancelled`, with who and when recorded. The three jobs that had reached ComfyUI also record the prompt ID, ComfyUI's reply and the `/queue` observations.
+- **Studio-queued** (`0519691a`): settled at once; nothing was sent.
+- **Running** (`660e5525` / `fb0f28c0`): the targeted `POST /interrupt {"prompt_id"}` was sent after `/queue` listed exactly that prompt, and ComfyUI logged `Interrupting prompt fb0f28c0-…`. It took 25 s to settle, because ComfyUI finished a cold checkpoint load before it stopped.
+- **Batch of 3** (`4cfc70ca`): interrupted on output 2. Output 1 was kept; output 3 was never submitted.
+- **Pending in ComfyUI's queue** (`3ffa0b39`, output 2 `a898e17f` waiting behind the driver's own blocker prompt): dequeued 1.9 s after the request. Output 1 was kept, and the blocker ran on to `success`.
+
+ComfyUI's `got prompt` count matched one POST per submission, with no resubmit. The queue was empty after each case. Resume on a cancelled job is refused.
+
+At 16:51 the running card's **Cancel** button was also clicked in a headless browser (job `f9687adc`, prompt `9454cfd3`). The card showed "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.", the confirm dialog opened, and the page sent one cancel POST. The job was `cancelled` 0.58 s after the click.
+
+Not verified live: a lost interrupt reply, the refusal paths, and restart reconciliation (covered offline by the FakeStudio tests). Evidence: `experiments/curated/cancel-live-20260927/`. No output was judged; generated only.
+
 ## Second seeds for two single-seed studies — 27 September 2026 (07:59-08:37 local)
 
 **Restyle denoise (#351):** seed 2026092762 at 0.75 and 0.85 on both sources (prompts `5e206d1b`, `c72f866d`, `4cb2e6f3`, `a84e184a`; 45-83 s, primary). Judged blind, this time with face, hand and prop crops recorded. Platform tied; on carto, 0.75 again kept the compass that 0.85 dropped, but its mean was only 0.17 higher (4.00 against 3.83), a tie under the rubric's 0.3 rule. Over 2 sources × 2 seeds, 0.75 is ahead on mean in 1 of 4 comparisons and ties in 3 (pooled 4.17 against 4.00, a tie); it never scored lower, and it was ahead on verdict and control on both seed-1 sources. **Qwen-Image 2.1 steps (#1028):** char and prop at seed + 100, 16 against 25 steps (`13b4878d`, `5b1ec3b1` at 08:35-08:37 against `f6ec0d2e`, `0e91964d`, which ran at 07:59 and 08:02 inside the Pruna session). Blind, 25 steps is keep on 3 of 4 cells over both seeds and 16 steps on 1 of 4, so the 25-step default holds. Evidence: the `seed2-lab2/` folders under `experiments/curated/restyle-denoise-20260927/` and `qi21-steps-20260927/`. Generated and agent-judged only; not art acceptance, not licence clearance.

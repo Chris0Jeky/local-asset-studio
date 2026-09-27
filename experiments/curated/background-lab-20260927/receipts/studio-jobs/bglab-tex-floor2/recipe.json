@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "Flat orthographic texture map of straight parallel dark wooden floor planks running vertically, seen exactly from above with no perspective, hand-painted cel anime film background art, muted graphite brown palette, even flat lighting, no objects, no text, fills the whole frame.",
+    "seed": 2026092773,
+    "width": 1024,
+    "height": 1024
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790531274.321177,
+  "references": [],
+  "parent_assets": []
+}

@@ -1,0 +1,104 @@
+{
+ "B": {
+  "route": "B",
+  "plate_affine_x": [
+   1.00833,
+   0.00051,
+   -4.33056
+  ],
+  "plate_affine_y": [
+   -0.00113,
+   1.00582,
+   -0.21918
+  ],
+  "patches": 26,
+  "mean_abs_shift_before": [
+   4.04,
+   1.69
+  ],
+  "mean_abs_shift_after": [
+   0.23,
+   0.58
+  ],
+  "near_pixels": 56074,
+  "glass_pixels": 145747,
+  "recomposite_mean_abs_error": 0.42,
+  "layers": [
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/b-far.png",
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/b-mid.png",
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/b-near.png"
+  ],
+  "strip": "C:/Users/jekyt/AppData/Local/Temp/bglab/strip-route-b.jpg",
+  "shifts_px": [
+   3,
+   10,
+   24
+  ]
+ },
+ "A": {
+  "route": "A",
+  "thresholds": {
+   "far": "<0.25",
+   "near": ">0.62"
+  },
+  "far_pixels": 752858,
+  "near_pixels": 20269,
+  "layers": [
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/a-far.png",
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/a-mid.png",
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/a-near.png"
+  ],
+  "strip": "C:/Users/jekyt/AppData/Local/Temp/bglab/strip-route-a.jpg"
+ },
+ "C": {
+  "route": "C",
+  "isolate_affine_x": [
+   1.01336,
+   0.00378,
+   -11.28616
+  ],
+  "isolate_affine_y": [
+   -0.00039,
+   1.0113,
+   -4.33962
+  ],
+  "patches": 11,
+  "mean_abs_shift_after": [
+   0.64,
+   0.09
+  ],
+  "near_pixels": 105753,
+  "recomposite_mean_abs_error": 0.35,
+  "layers": [
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/c-far.png",
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/c-mid.png",
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/c-near.png"
+  ],
+  "strip": "C:/Users/jekyt/AppData/Local/Temp/bglab/strip-route-c.jpg",
+  "shifts_px": [
+   3,
+   10,
+   24
+  ]
+ },
+ "C2": {
+  "route": "C2",
+  "near_pixels": 105753,
+  "recomposite_mean_abs_error": 0.36,
+  "layers": [
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/c2-far.png",
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/c2-mid.png",
+   "C:/AI/ComfyUI_windows_portable/ComfyUI/output/Research/bglab-20260927/parallax/c2-near.png"
+  ],
+  "strip": "C:/Users/jekyt/AppData/Local/Temp/bglab/strip-route-c2.jpg",
+  "shifts_px": [
+   3,
+   10,
+   24
+  ],
+  "fixes": [
+   "far ring filled from the nearest window-view pixel (no MAT), CRT excluded from the view",
+   "plate colour-matched to the anchor in a 24 px ring, 6 px feathered blend"
+  ]
+ }
+}

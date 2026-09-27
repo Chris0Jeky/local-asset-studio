@@ -168,8 +168,8 @@ class StyleBoardSetupTests(unittest.TestCase):
 class ShippedStyleBoardReachabilityTests(unittest.TestCase):
     def setUp(self):
         self.case = ContinuationTests(methodName="test_output_prompt_is_matched_by_prompt_id_not_template_or_batch_index")
-        self.case.setUp()
         self.addCleanup(self.case.doCleanups)
+        self.case.setUp()
         catalog = json.loads((REPOSITORY_ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
         self.nova = copy.deepcopy(next(preset for preset in catalog["presets"] if preset["id"] == "style-pose-nova"))
         self.graph_path = self.case.root / self.nova["graph"]

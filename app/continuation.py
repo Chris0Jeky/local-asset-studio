@@ -94,6 +94,7 @@ def capability(preset, graph):
     )
     if not consumed: operation = "new-image" if not preset.get("reference") else "unsupported-reference"
     elif preset.get("requires_rgba_mask"): operation = "masked-repair"
+    elif preset.get("parallax_route"): operation = "parallax-stage"   # #1219: reached only from Make parallax layers, never a Continue route
     elif combine_board: operation = "combine"
     elif restyle: operation = "restyle"
     elif role == "motion": operation = "image-to-video"
@@ -117,6 +118,129 @@ def capability(preset, graph):
         "keeps_picture": bool(consumed and (restyle_board and (latent_from_reference or preset.get("continuation_operation") == "restyle") or restyle_declared)),
         "scope": "Static registered graph wiring; not a guarantee of visual preservation.",
     }
+
+
+VARY_FIELDS = {"sources", "status", "subtle", "strong"}
+VARY_STATUS = {"starting-value", "owner-approved"}
+# A round picks its own new seeds and keeps the kept picture and its words; a strength only moves sampling settings.
+VARY_FIXED = {"seed", "positive", "negative", "reference", "last_reference", "width", "height"}
+
+
+def _models(graph):
+    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items() if key in ("ckpt_name", "unet_name") and isinstance(value, str)}
+
+
+VARY_LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+
+
+def _lora_nodes(graph):
+    return {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("LoraLoader")}
+
+
+def _slot_fields(preset, slot):
+    """Every input one LoRA strength control writes (the model strength plus any clip fan-out)."""
+    return sorted(str(item[1]) for item in [preset[slot]] + list((preset.get("bindings_extra") or {}).get(slot) or [])) if preset.get(slot) else []
+
+
+def _carry_problems(preset, graph, vary, sources, graph_of, bound):
+    """A route that carries its source's recorded LoRA stack (`carry`, a list of control names the page copies from the
+    picture's run) must draw with the same checkpoint, carry every adapter the source can use, and add none of its own."""
+    name, carry = preset.get("id"), vary["carry"]
+    if not isinstance(carry, list) or not carry or any(not isinstance(item, str) for item in carry) or len(set(carry)) != len(carry):
+        return ["%s: vary carry must be a non-empty list of distinct control names" % name]
+    problems, own = [], set()
+    for strength in ("subtle", "strong"):
+        if isinstance(vary.get(strength), dict) and isinstance(vary[strength].get("controls"), dict): own |= set(vary[strength]["controls"])
+    for key in carry:
+        if key in VARY_FIXED or key in own: problems.append("%s: vary may not carry %s: the round sets it itself" % (name, key))
+        elif key not in bound: problems.append("%s: vary carries %s, which the recipe does not bind" % (name, key))
+    for slot in VARY_LORA_SLOTS:
+        if (slot in carry) != (slot + "_name" in carry): problems.append("%s: vary carries %s without its file %s, or the file without its strength" % (name, slot, slot + "_name"))
+    carried_nodes = {str(preset[slot][0]) for slot in VARY_LORA_SLOTS if slot in carry and preset.get(slot)}
+    for node in sorted(_lora_nodes(graph) - carried_nodes):
+        problems.append("%s: vary route has an adapter it does not take from the source (node %s); it would change the picture's LoRA stack" % (name, node))
+    models = _models(graph)
+    for source in sources:
+        source_id, source_graph = source.get("id"), graph_of(source)
+        if not models or _models(source_graph) != models:
+            problems.append("%s: vary source %s draws with another checkpoint (%s, not %s); a route that carries the recipe keeps its model" % (
+                name, source_id, ", ".join(sorted(_models(source_graph))) or "none", ", ".join(sorted(models)) or "none"))
+        for node in sorted(_lora_nodes(source_graph)):
+            if not any(slot in carry and source.get(slot) and str(source[slot][0]) == node for slot in VARY_LORA_SLOTS):
+                problems.append("%s: vary source %s has an adapter the route does not carry (node %s); varying it here would drop it" % (name, source_id, node))
+        for key in carry:
+            if not source.get(key): problems.append("%s: vary source %s does not bind carried %s, so its recorded value is unknown" % (name, source_id, key)); continue
+            if key in VARY_LORA_SLOTS and preset.get(key) and _slot_fields(source, key) != _slot_fields(preset, key):
+                problems.append("%s: vary carries %s, but its strength reaches %s here and %s on %s" % (name, key, _slot_fields(preset, key), _slot_fields(source, key), source_id))
+            accepted = (preset.get("choices") or {}).get(key)
+            if accepted is not None:
+                recorded = (source.get("choices") or {}).get(key)
+                if recorded is None:
+                    try: recorded = [source_graph[str(source[key][0])]["inputs"][str(source[key][1])]]
+                    except (KeyError, TypeError, IndexError): recorded = [None]
+                refused = [value for value in recorded if value not in accepted]
+                if refused: problems.append("%s: vary source %s records %s values the route refuses: %s" % (name, source_id, key, ", ".join(map(str, refused))))
+    return problems
+
+
+def vary_problems(preset, graph, presets, graph_of):
+    """What is wrong with one recipe's declared Vary route (#1202); empty when sound or undeclared.
+
+    A route resamples the kept picture (img2img) at the declared denoise with new seeds. Its sources are the
+    recipes whose pictures it may vary: each must draw with the same model family or checkpoint as the route.
+    A route that declares `carry` copies those controls from the picture's recorded run (WAI keeps its LoRA stack);
+    it is held to the same checkpoint exactly, never a family label, and to the same adapters.
+    """
+    vary, name = preset.get("vary"), preset.get("id")
+    if vary is None: return []
+    if not isinstance(vary, dict) or set(vary) - {"carry"} != VARY_FIELDS: return ["%s: vary needs exactly %s (and optionally carry)" % (name, ", ".join(sorted(VARY_FIELDS)))]
+    problems = []
+    cap = capability(preset, graph)
+    if cap["operation"] != "image-to-image" or cap["prompt_role"] != "description" or not preset.get("denoise") or not preset.get("seed"):
+        problems.append("%s: a Vary route must be an image-to-image recipe with seed and denoise controls and a description prompt" % name)
+    if vary["status"] not in VARY_STATUS: problems.append("%s: vary status must be one of %s" % (name, ", ".join(sorted(VARY_STATUS))))
+    bound = {key for key, value in preset.items() if isinstance(value, list) and len(value) == 2 and all(isinstance(part, str) for part in value)} | set(preset.get("bindings_extra") or {})
+    denoise = {}
+    for strength in ("subtle", "strong"):
+        entry = vary[strength]
+        if not isinstance(entry, dict) or set(entry) != {"controls", "basis"} or not isinstance(entry["controls"], dict):
+            problems.append("%s: vary %s needs exactly controls and basis" % (name, strength)); continue
+        if not isinstance(entry["basis"], str) or not entry["basis"].strip(): problems.append("%s: vary %s needs a basis saying where its values come from" % (name, strength))
+        for key in sorted(set(entry["controls"]) - bound): problems.append("%s: vary %s sets %s, which the recipe does not bind" % (name, strength, key))
+        for key in sorted(set(entry["controls"]) & VARY_FIXED): problems.append("%s: vary %s may not set %s" % (name, strength, key))
+        value = entry["controls"].get("denoise")
+        if type(value) not in (int, float) or not 0 < value < 1: problems.append("%s: vary %s needs a denoise between 0 and 1" % (name, strength))
+        else: denoise[strength] = value
+    if len(denoise) == 2 and not denoise["subtle"] < denoise["strong"]: problems.append("%s: vary subtle must resample less than vary strong" % name)
+    sources = vary["sources"]
+    if not isinstance(sources, list) or not sources or any(not isinstance(item, str) for item in sources) or len(set(sources)) != len(sources):
+        return problems + ["%s: vary sources must be a non-empty list of distinct recipe ids" % name]
+    known = {p.get("id"): p for p in presets}
+    checked = []
+    for source_id in sources:
+        source = known.get(source_id)
+        if source is None: problems.append("%s: vary source %s is not a recipe" % (name, source_id)); continue
+        if source.get("modality", "image") != "image": problems.append("%s: vary source %s does not make pictures" % (name, source_id)); continue
+        checked.append(source)
+        if "carry" in vary: continue   # held to the exact checkpoint below
+        same_family = bool(preset.get("family")) and source.get("family") == preset.get("family")
+        if not same_family and not _models(graph) & _models(graph_of(source)):
+            problems.append("%s: vary source %s draws with another model; varying it here would change the model" % (name, source_id))
+    if "carry" in vary: problems += _carry_problems(preset, graph, vary, checked, graph_of, bound)
+    return problems
+
+
+def vary_catalog_problems(presets, graph_of):
+    """Every Vary route's problems, plus a source claimed by more than one route (the page must pick one)."""
+    problems, owner = [], {}
+    for preset in presets:
+        if preset.get("vary") is None: continue
+        problems += vary_problems(preset, graph_of(preset), presets, graph_of)
+        sources = (preset["vary"] or {}).get("sources") if isinstance(preset["vary"], dict) else None
+        for source_id in [item for item in sources if isinstance(item, str)] if isinstance(sources, list) else []:
+            if source_id in owner: problems.append("vary source %s is claimed by more than one route (%s, %s)" % (source_id, owner[source_id], preset["id"]))
+            owner.setdefault(source_id, preset["id"])
+    return problems
 
 
 def unfilled(preset, text):
@@ -268,3 +392,31 @@ def validate(studio, payload, preset, graph, check_runtime=False):
             raise ValueError("Fill in the wording: replace %s before running." % " and ".join("“%s”" % item for item in left))
     if check_runtime: resource_admission.pre_submit(studio, payload, preset, graph)
     return dict(claim)
+
+
+def tile_route_problems(presets):
+    """Catalog contract, checked by scripts/validate-repo.py (#1220; kept here because the validator lane has no Pillow): at most one tile route, and it is a masked repaint of one picture."""
+    routes = [preset for preset in presets if preset.get("tile_route")]
+    problems = ["more than one tile_route recipe: " + ", ".join(p["id"] for p in routes)] if len(routes) > 1 else []
+    for preset in routes:
+        if preset.get("tile_route") is not True: problems.append(preset["id"] + ": tile_route must be true")
+        if not preset.get("requires_rgba_mask") or not preset.get("reference"): problems.append(preset["id"] + ": a tile route repaints an RGBA cross, so it needs requires_rgba_mask and a reference binding")
+        if preset.get("modality", "image") != "image": problems.append(preset["id"] + ": a tile route makes pictures")
+        if preset.get("width") or preset.get("height"): problems.append(preset["id"] + ": a tile route draws at the source size; it binds no width or height")
+    return problems
+
+
+def parallax_route_problems(presets):
+    """Catalog contract, checked by scripts/validate-repo.py (#1219; Pillow-free like the tile check): at most one parallax
+    route, an instruction edit of one attached picture that draws at a bound width and height, one picture per run."""
+    routes = [preset for preset in presets if preset.get("parallax_route")]
+    problems = ["more than one parallax_route recipe: " + ", ".join(p["id"] for p in routes)] if len(routes) > 1 else []
+    for preset in routes:
+        if preset.get("parallax_route") is not True: problems.append(preset["id"] + ": parallax_route must be true")
+        if not preset.get("reference") or preset.get("reference_slots") or preset.get("last_reference"): problems.append(preset["id"] + ": a parallax route edits exactly one attached picture (reference)")
+        if not preset.get("positive") or not preset.get("width") or not preset.get("height"): problems.append(preset["id"] + ": a parallax route binds positive, width and height")
+        if preset.get("requires_rgba_mask") or preset.get("tile_route"): problems.append(preset["id"] + ": a parallax route is a whole-picture edit, not a masked repaint or a tile")
+        if preset.get("modality", "image") != "image": problems.append(preset["id"] + ": a parallax route makes pictures")
+        limits = preset.get("dimension_limits", [64, 1536])
+        if not (limits[0] <= 512 and 1536 <= limits[1]): problems.append(preset["id"] + ": a parallax route must accept every size Make parallax layers offers (512-1536 px a side)")
+    return problems

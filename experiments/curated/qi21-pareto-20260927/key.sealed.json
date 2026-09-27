@@ -1,0 +1,74 @@
+{
+ "char-A": {
+  "key": "char-B0-32",
+  "file": "Research\\qi21-pareto-20260927/char-B0-32_00001_.png"
+ },
+ "char-B": {
+  "key": "char-F0-31",
+  "file": "Research\\qi21-pareto-20260927/char-F0-31_00001_.png"
+ },
+ "char-C": {
+  "key": "char-F0-33",
+  "file": "Research\\qi21-pareto-20260927/char-F0-33_00001_.png"
+ },
+ "char-D": {
+  "key": "char-F0-32",
+  "file": "Research\\qi21-pareto-20260927/char-F0-32_00001_.png"
+ },
+ "char-E": {
+  "key": "char-B0-31",
+  "file": "Research\\qi21-pareto-20260927/char-B0-31_00001_.png"
+ },
+ "char-F": {
+  "key": "char-Q1-32",
+  "file": "Research\\qi21-pareto-20260927/char-Q1-32_00001_.png"
+ },
+ "char-G": {
+  "key": "char-Q1-31",
+  "file": "Research\\qi21-pareto-20260927/char-Q1-31_00001_.png"
+ },
+ "char-H": {
+  "key": "char-Q1-33",
+  "file": "Research\\qi21-pareto-20260927/char-Q1-33_00001_.png"
+ },
+ "char-I": {
+  "key": "char-B0-33",
+  "file": "Research\\qi21-pareto-20260927/char-B0-33_00001_.png"
+ },
+ "prop-A": {
+  "key": "prop-B0-32",
+  "file": "Research\\qi21-pareto-20260927/prop-B0-32_00001_.png"
+ },
+ "prop-B": {
+  "key": "prop-F0-31",
+  "file": "Research\\qi21-pareto-20260927/prop-F0-31_00001_.png"
+ },
+ "prop-C": {
+  "key": "prop-F0-33",
+  "file": "Research\\qi21-pareto-20260927/prop-F0-33_00001_.png"
+ },
+ "prop-D": {
+  "key": "prop-F0-32",
+  "file": "Research\\qi21-pareto-20260927/prop-F0-32_00001_.png"
+ },
+ "prop-E": {
+  "key": "prop-B0-31",
+  "file": "Research\\qi21-pareto-20260927/prop-B0-31_00001_.png"
+ },
+ "prop-F": {
+  "key": "prop-Q1-32",
+  "file": "Research\\qi21-pareto-20260927/prop-Q1-32_00001_.png"
+ },
+ "prop-G": {
+  "key": "prop-Q1-31",
+  "file": "Research\\qi21-pareto-20260927/prop-Q1-31_00001_.png"
+ },
+ "prop-H": {
+  "key": "prop-Q1-33",
+  "file": "Research\\qi21-pareto-20260927/prop-Q1-33_00001_.png"
+ },
+ "prop-I": {
+  "key": "prop-B0-33",
+  "file": "Research\\qi21-pareto-20260927/prop-B0-33_00001_.png"
+ }
+}
