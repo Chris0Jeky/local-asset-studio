@@ -895,6 +895,17 @@ class ServerTests(unittest.TestCase):
         self.assertIn('Required input missing',job['message']);self.assertIn('output 2',job['message'])
         self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),2)
 
+    def test_a_non_object_400_body_is_still_a_proven_rejection(self):
+        # A 400 proves nothing was queued whatever its body; a JSON list or string must not turn into an AttributeError.
+        for body,batch,expected in (([1],1,'failed'),('text',2,'partial')):
+            with self.subTest(body=body):
+                error=HTTPError('http://localhost/prompt',400,'Bad Request',{},io.BytesIO(json.dumps(body).encode()));self.addCleanup(error.close)
+                answers=[{'queue_running':[],'queue_pending':[]}]+([{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}}] if batch==2 else [])+[error]
+                s=FakeStudio(self.root,answers)
+                job=s.jobs[s.create_job({'preset_id':'demo','controls':{},'batch_count':batch})['id']];s._run(job)
+                self.assertEqual(job['status'],expected);self.assertIn('ComfyUI rejected the workflow before queuing: Invalid workflow',job['message'])
+                self.assertEqual(job['validation_errors'],{});self.assertNotIn('pending_submission',job)
+
     def test_seed_plus_batch_past_the_seed_range_is_refused_before_queueing(self):
         s=self.studio()
         with self.assertRaisesRegex(server.StudioError,'seed plus batch count'):

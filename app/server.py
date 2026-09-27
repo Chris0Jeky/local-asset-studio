@@ -1842,6 +1842,7 @@ class Studio:
                     if exc.code == 400:
                         try: details = json.loads(exc.read(65536))
                         except (ValueError, OSError): details = {}
+                        if not isinstance(details, dict): details = {}  # a 400 is still a proven rejection whatever its body
                         job.pop("pending_submission", None)
                         # Earlier members completed (the loop only continues past a completed one): partial, as for a pre-submit refusal.
                         job["status"] = "partial" if job.get("prompt_ids") else "failed"
