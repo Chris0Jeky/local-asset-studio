@@ -53,6 +53,7 @@ import job_resources
 import continuation
 import pose_guide
 import tiles
+import parallax
 import looks
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
@@ -544,6 +545,7 @@ class Studio:
         self.prune_disabled_loras(graph)
         continuation.validate(self, payload, preset, graph)
         tiles.validate(self, payload, preset, graph, batch)
+        parallax.validate(self, payload, preset, graph, batch)
         self.ensure_reference_inputs(graph)
         self._validate_i2v_mode_source(preset, mode, graph, controls)
         wan_capacity.enforce(graph)
@@ -874,6 +876,7 @@ class Studio:
         if label: job["label"] = label
         if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
         if payload.get("tile") is not None: job["tile"] = copy.deepcopy(payload["tile"])
+        if payload.get("parallax") is not None: job["parallax"] = copy.deepcopy(payload["parallax"])
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
         if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time(), **({'deferred': True} if deferred else {}))]
@@ -898,7 +901,7 @@ class Studio:
         return data
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish", "parallax", "parallax_finish")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1094,7 +1097,7 @@ class Studio:
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
                 "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []),
-                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation"), "tile": job.get("tile"), "tile_receipt": job.get("tile_receipt")}
+                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation"), "tile": job.get("tile"), "tile_receipt": job.get("tile_receipt"), "parallax": job.get("parallax"), "parallax_receipt": job.get("parallax_receipt")}
 
     def i2v_diagnostic(self, job_id):
         job = self.jobs.get(job_id)
@@ -1117,7 +1120,7 @@ class Studio:
             if not re.fullmatch('[0-9a-f]{32}',identifier):raise StudioError('Invalid native project identity')
             base=(self.experiments/'projects'/identifier).resolve()
             return inside(base,base/output['native_path'])
-        if (job or {}).get('operation')==tiles.OPERATION:
+        if (job or {}).get('operation') in (tiles.OPERATION,parallax.OPERATION):
             base=(self.runs/job['id']).resolve()
             return inside(base,base/output['run_file'])
         if (job or {}).get('operation')=='asset.import':
@@ -1304,6 +1307,7 @@ class Studio:
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
         if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
         if job.get("tile") is not None: recipe["tile"] = job["tile"]
+        if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]
         self._write_json_atomic(directory / "recipe.json", recipe)
         self._write_json_atomic(directory / "workflow.json", job["graph"])
         state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
@@ -2006,6 +2010,7 @@ class Studio:
                 except StudioError:preset={}
                 continuation.validate(self, job, preset, graph, check_runtime=True)
                 tiles.validate(self, job, preset, graph, job["batch_count"], check_runtime=True)
+                parallax.validate(self, job, preset, graph, job["batch_count"], check_runtime=True)
                 wan_capacity.enforce(graph)
                 reading=self._pre_submit_commit_check(job, preset, graph, i)
             except (StudioError, ValueError, OSError) as exc:
@@ -2047,6 +2052,7 @@ class Studio:
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
         tiles.finish_after_run(self, job)   # deterministic Pillow steps on a completed seam repaint; never a generation
+        parallax.finish_after_run(self, job)   # splits the layers once both parallax edits are in; never a generation
 
     def _prompt_listed(self, job, prompt_id):
         """True unless ComfyUI's queue proves the prompt is neither running nor pending; unreadable means listed."""
@@ -2238,6 +2244,7 @@ class Studio:
         job["status"] = status; job["message"] = message
         self._save(job)
         tiles.finish_after_run(self, job)
+        parallax.finish_after_run(self, job)
 
     def upload(self, filename, content_type, body):
         mime = content_type.split(";", 1)[0].lower()
@@ -2447,6 +2454,7 @@ class Handler(BaseHTTPRequestHandler):
                 file = inside(self.studio.assets.root, self.studio.assets.root / "exports" / (identifier + ".zip"))
                 return self._local_file(file, True)
             if path.startswith("/api/tiles/source/") and len(path.split("/")) == 5: return self._json(200, tiles.source_status(self.studio, path.split("/")[4]))
+            if path.startswith("/api/parallax/source/") and len(path.split("/")) == 5: return self._json(200, parallax.source_status(self.studio, path.split("/")[4]))
             if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
                 return self._json(200, continuation.source_context(self.studio, path.split("/")[3]))
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
@@ -2605,6 +2613,12 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/tiles/prepare": return self._json(201, tiles.prepare(self.studio, self._body_object()))
             if self.path == "/api/tiles/finish":
                 job = tiles.finish(self.studio, self._body_object().get("job_id")); return self._json(200, {"job": self.studio.public(job)})
+            # Parallax layers (#1219): prepare attaches the source and returns the plate stage; stage returns the other edit's
+            # wording for Create; finish runs Pillow steps on a completed plate + isolate pair. None queues a generation.
+            if self.path == "/api/parallax/prepare": return self._json(201, parallax.prepare(self.studio, self._body_object()))
+            if self.path == "/api/parallax/stage": return self._json(200, parallax.next_stage(self.studio, self._body_object()))
+            if self.path == "/api/parallax/finish":
+                body = self._body_object(); job = parallax.finish(self.studio, body.get("job_id"), body.get("other_job_id")); return self._json(200, {"job": self.studio.public(job)})
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             self._drain_refused_body(); return self._json(404, {"error":"Not found"})
         except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())

@@ -96,6 +96,9 @@ assert not vary_problems, vary_problems
 # Make seamless (#1220): one tile route at most, a masked repaint of one picture at the source size.
 tile_problems=continuation.tile_route_problems(catalog)
 assert not tile_problems, tile_problems
+# Parallax layers (#1219): one parallax route at most, a whole-picture edit of one attached picture at a bound size.
+parallax_problems=continuation.parallax_route_problems(catalog)
+assert not parallax_problems, parallax_problems
 kb_path=root/'presets/settings-kb.json'
 if kb_path.is_file():
     kb=json.loads(kb_path.read_text(encoding='utf-8'))

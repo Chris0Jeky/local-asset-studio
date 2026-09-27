@@ -94,6 +94,7 @@ def capability(preset, graph):
     )
     if not consumed: operation = "new-image" if not preset.get("reference") else "unsupported-reference"
     elif preset.get("requires_rgba_mask"): operation = "masked-repair"
+    elif preset.get("parallax_route"): operation = "parallax-stage"   # #1219: reached only from Make parallax layers, never a Continue route
     elif combine_board: operation = "combine"
     elif restyle: operation = "restyle"
     elif role == "motion": operation = "image-to-video"
@@ -343,4 +344,18 @@ def tile_route_problems(presets):
         if not preset.get("requires_rgba_mask") or not preset.get("reference"): problems.append(preset["id"] + ": a tile route repaints an RGBA cross, so it needs requires_rgba_mask and a reference binding")
         if preset.get("modality", "image") != "image": problems.append(preset["id"] + ": a tile route makes pictures")
         if preset.get("width") or preset.get("height"): problems.append(preset["id"] + ": a tile route draws at the source size; it binds no width or height")
+    return problems
+
+
+def parallax_route_problems(presets):
+    """Catalog contract, checked by scripts/validate-repo.py (#1219; Pillow-free like the tile check): at most one parallax
+    route, an instruction edit of one attached picture that draws at a bound width and height, one picture per run."""
+    routes = [preset for preset in presets if preset.get("parallax_route")]
+    problems = ["more than one parallax_route recipe: " + ", ".join(p["id"] for p in routes)] if len(routes) > 1 else []
+    for preset in routes:
+        if preset.get("parallax_route") is not True: problems.append(preset["id"] + ": parallax_route must be true")
+        if not preset.get("reference") or preset.get("reference_slots") or preset.get("last_reference"): problems.append(preset["id"] + ": a parallax route edits exactly one attached picture (reference)")
+        if not preset.get("positive") or not preset.get("width") or not preset.get("height"): problems.append(preset["id"] + ": a parallax route binds positive, width and height")
+        if preset.get("requires_rgba_mask") or preset.get("tile_route"): problems.append(preset["id"] + ": a parallax route is a whole-picture edit, not a masked repaint or a tile")
+        if preset.get("modality", "image") != "image": problems.append(preset["id"] + ": a parallax route makes pictures")
     return problems
