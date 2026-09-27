@@ -646,7 +646,7 @@ function beginTile(result){
   if(continuationState)throw Error('You are continuing an image. Use “Leave this continuation” before making a tile.');
   selectPreset(target.id,true,true);
   tileState={...result.plan};uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);$('#reference').value='';
-  const words=result.context?.positive;if(words)$('#positive').value=words;
+  const words=result.context?.positive||target.continuation_prompt;if(words)$('#positive').value=words;
   $('#batch').value=1;
   $('#referenceHint').textContent='Seam cross prepared from '+(result.context?.title||'the texture')+' · '+result.width+' × '+result.height+'. '+result.flag;
   updateReady();

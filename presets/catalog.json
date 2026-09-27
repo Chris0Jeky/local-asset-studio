@@ -1475,6 +1475,7 @@
       ],
       "reference_hint": "Prepared by Make seamless: the texture rolled by half, its seam cross transparent. Open a square, flat texture in the Asset library and press Make seamless.",
       "continuation_placeholder": "[describe the flat texture: e.g. front view of a dark graphite plaster wall with faint water stains]",
+    "continuation_prompt": "Seamless texture, [describe the flat texture: e.g. front view of a dark graphite plaster wall with faint water stains], even soft lighting, no objects, no text, fills the whole frame.",
       "modality": "image",
       "backend_id": "primary",
       "stages": [
