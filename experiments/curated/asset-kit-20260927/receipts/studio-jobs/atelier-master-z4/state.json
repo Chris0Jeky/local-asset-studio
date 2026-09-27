@@ -1,0 +1,181 @@
+{
+  "id": "b32293e0-6d23-4b9b-800b-d2a1e7e10465",
+  "status": "completed",
+  "created_at": 1790487349.6004748,
+  "preset_id": "zimage-fast",
+  "preset_name": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)",
+  "controls": {
+    "positive": "An empty room, no people. Hand-painted anime film background of a warm artist's drafting room in the evening. The left half and centre of the frame is a plain cream plaster wall in soft shadow, almost empty and low in detail. At the right edge a walnut drafting desk with blank cream paper, a brushed-metal desk lamp with amber light and a linen curtain beside a tall open doorway onto a quiet courtyard with a small tree. Charcoal, cream, walnut and amber palette, tactile linen and paper textures. An empty room with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092754
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "d438e673-3052-4996-90cf-466508cd7d30"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "d438e673-3052-4996-90cf-466508cd7d30",
+      "seed": 2026092754,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "lumina2",
+            "device": "cpu"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "ae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "An empty room, no people. Hand-painted anime film background of a warm artist's drafting room in the evening. The left half and centre of the frame is a plain cream plaster wall in soft shadow, almost empty and low in detail. At the right edge a walnut drafting desk with blank cream paper, a brushed-metal desk lamp with amber light and a linen curtain beside a tall open doorway onto a quiet courtyard with a small tree. Charcoal, cream, walnut and amber palette, tactile linen and paper textures. An empty room with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures."
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "ModelSamplingAuraFlow",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "shift": 3.0
+          }
+        },
+        "7": {
+          "class_type": "EmptySD3LatentImage",
+          "inputs": {
+            "width": 1344,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "8": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "6",
+              0
+            ],
+            "seed": 2026092754,
+            "steps": 8,
+            "cfg": 1.0,
+            "sampler_name": "res_multistep",
+            "scheduler": "simple",
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "7",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "9": {
+          "class_type": "VAEDecodeTiled",
+          "inputs": {
+            "samples": [
+              "8",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8
+          }
+        },
+        "10": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "9",
+              0
+            ],
+            "filename_prefix": "Studio/Z-Image-Fast"
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 84254720,
+        "peak_dedicated_bytes": 11043274752,
+        "samples": 17,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "Z-Image-Fast_00010_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092754,
+      "prompt_id": "d438e673-3052-4996-90cf-466508cd7d30",
+      "media_type": "image",
+      "asset_id": "faad15d1fed256ed8ab6c43d8c1236af"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "seed_bindings": [
+    [
+      "8",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "lab-0927 asset-kit zimage atelier-master",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790487349.6104808,
+  "finished_at": 1790487357.831276,
+  "elapsed_seconds": 8.220795154571533
+}
