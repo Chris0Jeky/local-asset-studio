@@ -1552,7 +1552,11 @@ class Studio:
         visual = isinstance(data.get("nodes"), list)
         groups = [data]
         if visual:
-            groups += data.get("definitions", {}).get("subgraphs", [])
+            definitions = data.get("definitions", {}); subgraphs = definitions.get("subgraphs", []) if isinstance(definitions, dict) else None
+            if not isinstance(subgraphs, list): raise StudioError("Invalid workflow subgraph")
+            groups += subgraphs
+            # A subgraph id becomes a node type alias; an unhashable id once escaped do_POST as TypeError.
+            if any(isinstance(g, dict) and g.get("id") is not None and not isinstance(g.get("id"), (str, int)) for g in groups): raise StudioError("Invalid workflow subgraph")
             aliases = {g.get("id") for g in groups if isinstance(g, dict)}
         def filenames(value, depth=0):
             if depth > 25: raise StudioError("Workflow nesting is too deep")
@@ -1565,6 +1569,7 @@ class Studio:
         for group in groups:
             if not isinstance(group, dict): raise StudioError("Invalid workflow subgraph")
             nodes = group.get("nodes", []) if visual else group.values()
+            if visual and not isinstance(nodes, list): raise StudioError("Invalid workflow subgraph")
             for item in nodes:
                 if not isinstance(item, dict): continue
                 kind = item.get("type") if visual else item.get("class_type")

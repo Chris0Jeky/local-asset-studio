@@ -946,6 +946,19 @@ class ServerTests(unittest.TestCase):
         self.assertTrue(all(call[0][0]=='/object_info' and call[1].get('method','GET')=='GET' for call in s.requests))
         self.assertEqual(s.jobs,{})
 
+    def test_workflow_inspection_refuses_malformed_subgraph_shapes_with_400(self):
+        # These escaped do_POST as AttributeError/TypeError: a dropped connection instead of a 400.
+        node={'type':'KSampler','widgets_values':[]};sent=[];studio=self.studio()
+        for workflow in ({'nodes':[node],'definitions':[]},{'nodes':[node],'definitions':{'subgraphs':None}},{'nodes':[node],'definitions':{'subgraphs':'text'}},
+                         {'nodes':[node],'definitions':{'subgraphs':[{'nodes':5}]}},{'nodes':[node],'definitions':None},
+                         {'nodes':[node],'definitions':{'subgraphs':[{'id':[],'nodes':[]}]}},{'nodes':[node],'id':{'a':1}}):
+            with self.subTest(workflow=repr(workflow)[:90]):
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/workflow-inspect'
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a,body={'workflow':workflow}:body
+                sent.clear();handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_POST()
+                self.assertEqual(sent[0][0],400,sent)
+
     def test_shared_experiments_and_waiting_restart(self):
         shared=self.root/'existing-experiments'
         (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'experiments_root':str(shared)}))

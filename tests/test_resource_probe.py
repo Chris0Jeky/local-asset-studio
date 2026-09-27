@@ -201,5 +201,33 @@ class ProbeGuardTests(unittest.TestCase):
         observer.provider = NS(Process=lambda pid: original)
         self.assertIsNone(observer.read()['working_set_bytes'], 'An observer never rebinds after reuse')
 
+    def test_sampler_records_an_observed_comfy_reading_and_its_timing(self):
+        ticks = iter(range(10))
+        sampler = ResourceSampler(comfy_url='http://127.0.0.1:8188', provider=NS(virtual_memory=lambda: NS(total=2, available=1)),
+                                  commit_reader=lambda: {}, fetcher=lambda url: (project_stats(STATS), 123), clock=lambda: next(ticks))
+        comfy = sampler.sample()['comfy']
+        self.assertTrue(comfy['observed']); self.assertIsNone(comfy['unknown_reason']); self.assertEqual(comfy['response_bytes'], 123)
+        self.assertEqual(comfy['versions'], {'comfyui_version': '0.35.0', 'pytorch_version': '2.9.1'})
+        self.assertEqual(comfy['devices'][0]['vram_free_bytes'], 40); self.assertEqual(comfy['elapsed_seconds'], 1)
+
+    def test_projection_caps_versions_devices_and_drops_an_inconsistent_torch_pair(self):
+        data = {'system': {'comfyui_version': 'x' * 129, 'pytorch_version': '2.9.1', 'argv': ['PRIVATE']},
+                'devices': [{'vram_total': 10, 'vram_free': 5, 'torch_vram_total': 4, 'torch_vram_free': 6}] * 9}
+        projected = project_stats(data)
+        self.assertEqual(projected['versions'], {'pytorch_version': '2.9.1'}); self.assertEqual(len(projected['devices']), 8)
+        self.assertEqual(projected['devices'][0]['vram_free_bytes'], 5)
+        self.assertIsNone(projected['devices'][0]['torch_vram_total_bytes']); self.assertIsNone(projected['devices'][0]['torch_vram_free_bytes'])
+
+    def test_sample_receipt_metadata_pins_schema_source_hash_and_finite_json(self):
+        import hashlib, resource_probe
+        stream = io.StringIO(); write_samples(stream, NS(sample=lambda: {'type': 'sample'}), samples=1, sleep=lambda seconds: None)
+        metadata = json.loads(stream.getvalue().splitlines()[0])
+        self.assertEqual(metadata['schema'], 'studio.resource-profile/v1'); self.assertEqual(metadata['samples_requested'], 1)
+        self.assertEqual(metadata['sampler_sha256'], hashlib.sha256(Path(resource_probe.__file__).read_bytes()).hexdigest())
+        self.assertEqual(len(metadata['notes']), 6)
+        with self.assertRaises(ValueError): write_samples(io.StringIO(), NS(sample=lambda: {'x': float('nan')}), samples=1)
+        for kwargs in ({'samples': True}, {'interval': '5'}, {'interval': 61}):
+            with self.subTest(**kwargs), self.assertRaises(ValueError): write_samples(io.StringIO(), NS(sample=lambda: {}), **kwargs)
+
 
 if __name__ == '__main__': unittest.main()
