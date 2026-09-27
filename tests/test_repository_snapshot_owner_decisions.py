@@ -55,7 +55,8 @@ class OwnerDecisionFactsTests(unittest.TestCase):
                     self.facts(line)
 
     def test_live_human_todo_has_no_unreadable_owner_item(self):
-        self.assertGreater(snapshot.human_todo_facts(ROOT)["open_count"], 0)
+        # Parsing must not raise; an empty backlog (every item answered) is valid.
+        self.assertGreaterEqual(snapshot.human_todo_facts(ROOT)["open_count"], 0)
 
     def test_examples_nested_checklists_and_answered_headings_do_not_count(self):
         for fence in ("```", "~~~~"):
