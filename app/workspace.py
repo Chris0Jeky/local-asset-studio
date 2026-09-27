@@ -238,6 +238,7 @@ class AssetWorkspace:
         return value
 
     def get(self, asset_id):
+        if not isinstance(asset_id, str): raise WorkspaceError("Asset not found")  # caller JSON; SQLite would raise a non-ValueError
         with self.connection() as db:
             row = db.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
         if row is None:
