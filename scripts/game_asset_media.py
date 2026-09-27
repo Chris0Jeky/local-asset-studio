@@ -193,11 +193,13 @@ def despeckle(im):
     and a detached sparkle with a bright core is kept whatever its size. In rgba-despeckle this runs after
     alpha_cleanup, so dust (alpha below ALPHA_DUST_BELOW) no longer bridges: a speck joined to the subject only
     through dust counts as detached. That is the point of the mode: all 16 crystal specks of 27 Sep 2026 were
-    such dust-bridged residue. RGB bytes pass through unchanged.
+    such dust-bridged residue. RGB bytes pass through unchanged. The largest region (first in scan order on a tie) is
+    the subject and is never cleared, so a sprite that is faint all over (glow, mist, shadow) is not erased to nothing.
     """
     w, h = im.size; alpha = bytearray(im.getchannel('A').tobytes()); cleared = 0; pixels = 0
+    subject = max(matte_regions(im), key=lambda region: region[1], default=(None,))[0]  # max keeps the first of equals
     for seed, count, peak in matte_regions(im):
-        if peak >= SPECK_PEAK_BELOW: continue
+        if peak >= SPECK_PEAK_BELOW or seed == subject: continue
         cleared += 1; pixels += count
         stack = array('I', (seed,)); alpha[seed] = 0  # second fill over the mutable copy: zeroing marks visited, regions are disjoint
         while stack:
