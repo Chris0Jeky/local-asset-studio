@@ -21,7 +21,7 @@ python app/server.py --repo-root .             # needs config/local.json (copy c
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
 `http://127.0.0.1:8191`). The server rereads `presets/catalog.json` and `app/static/` per request (reload the page); only `app/*.py` changes need a restart, with no Studio work active. The runtime has no build step or package manager:
 Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`, a vendored model-viewer, and
-committed `app/static/ui-dist/` from `frontend/` (Vue islands; maintainers only: Node 24, `npm ci && npm test && npm run build`, `ui-island.yml`). Skips vary by host (30 on 27 Sep 2026 with FFmpeg/pwsh/Node on `PATH`; the run is the record).
+committed `app/static/ui-dist/` from `frontend/` (Vue islands; maintainers only: Node 24, `cd frontend && npm ci && npm test && npm run build`, `ui-island.yml`). Skips vary by host (30 on 27 Sep 2026 with FFmpeg/pwsh/Node on `PATH`; the run is the record).
 
 ## Proving checks (narrowest command per seam)
 
