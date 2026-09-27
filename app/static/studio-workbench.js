@@ -7,7 +7,7 @@
   if(!document.querySelector('#createView'))return;
   const U=StudioUX,q=s=>document.querySelector(s),escape=esc;
   let sharedAdoptionError='';
-  let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='';
+  let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='',varyUnapplied=null;
   let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0,handoffEpoch=0;
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
   let homeBusy=false,homeData=null,homeErrors=[],homeUpdated=null,homeSignature='';
@@ -189,6 +189,8 @@
     if(secondPicture)items.push({code:'second',message:selected?.reference_slots?.length>1?'Picture 1 remains your source. Choose another slot or explicitly start from the extra picture.':'You added a second picture, but this recipe reads one. Say what it is for.',action:'second'});
     if(sharedAdoptionError)items.push({code:'shared-setup',message:sharedAdoptionError,action:null});
     if(continuationState&&!continuationSource)items.push({code:'source',message:sourceReadError||'Checking the retained source metadata…',action:'continuation'});
+    // A Vary round whose carried stack did not apply stays blocked while that same continuation is open.
+    if(varyUnapplied&&continuationState&&varyUnapplied.stamp===JSON.stringify(continuationState))items.push({code:'vary',message:varyUnapplied.message,action:null});
     return{items,required};
   }
   function syncReady(){
@@ -919,7 +921,8 @@
   document.addEventListener('click',e=>{const button=e.target.closest('.reference-output,[data-handoff]');if(!button)return;e.preventDefault();e.stopImmediatePropagation();const output=button.dataset.job?jobs.find(j=>j.id===button.dataset.job)?.outputs?.[Number(button.dataset.index)]:null;if(button.classList.contains('reference-output')){void openGalleryHandoff(output?.asset_id,button.dataset.preset);return;}const id=activeAsset?.id;if(!id){announce('Choose an available image from the Asset library.',true);return;}openHandoff(id,button.dataset.preset||button.dataset.handoff);},true);
   after('openAsset',()=>{q('#uxAssetUnsaved')?.remove();if(!activeAsset)return;const a=activeAsset;const eligibility=U.sceneEligibility([a]);q('#assetHandoffs').innerHTML=(!a.trashed_at&&a.media_type==='image'?'<button class="primary" data-ux-handoff="'+a.id+'">Continue with this →</button><button id="uxFindSourceRecipes">Find recipes for this image</button>':'')+(!a.trashed_at&&['image','video','audio'].includes(a.media_type)?'<a class="ux-scene-link" href="/av.html?asset_ids='+encodeURIComponent(a.id)+'">'+(eligibility.ok?'Use in a scene':'Open scene source picker')+' ↗</a>':'');q('#assetRecipe').disabled=!a.job_id;q('#assetRecipe').textContent=a.job_id?'Recipe':'No recipe recorded';q('#assetRecipe').title=a.job_id?'':'This asset was not made by a Studio job, so there is no recipe to export.';});
   // #1202 Vary subtle / Vary strong: one press from a picture to a prepared round of close variations. The img2img route
-  // attaches a copy through the same continuation as Continue with this (lineage = this picture); a recipe with no route
+  // attaches a copy through the same continuation as Continue with this (lineage = this picture) and, when it carries the
+  // source's stack (WAI), copies the picture's recorded LoRA slots and sampling settings; a recipe with no route
   // reloads its own recipe with new seeds and records this picture as the parent. Generate stays the owner's press.
   let varyBusy=false;
   function varyMarkup(plan,attrs,why){
@@ -931,7 +934,7 @@
   function varyPlanFor(presetId,jobId,assetId,mediaType){
     const asset=assetState.assets.find(a=>a.id===assetId);
     if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
-    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset);
+    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
   }
   // Rebuilt only when its words change, so polling never steals focus from a Vary button.
   function placeVary(holder,after,markup){
@@ -973,7 +976,20 @@
         const result=await post('/api/assets/reference',{id:assetId});
         if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. Nothing was applied; press Vary again.');
         if(result?.parent_asset!==assetId||result.context?.asset_id!==assetId||result.sha256!==result.context?.sha256)throw Error('The copied picture could not be verified. Nothing was applied.');
-        beginContinuation(result,plan.route.id,'edit');sourceReadError='';
+        beginContinuation(result,plan.route.id,'edit');sourceReadError='';varyUnapplied=null;
+        // A carrying route (WAI) keeps the picture's recorded LoRA stack and sampling settings. A recorded file the
+        // offline list does not offer is added as it was recorded; the server still refuses one that is not installed.
+        // If one value cannot be set, Generate stays blocked on this continuation until Vary is pressed again.
+        for(const [key,value] of Object.entries(plan.carry||{})){
+          const input=getControl(key),text=String(value);
+          if(input&&input.tagName==='SELECT'&&![...input.options].some(option=>option.value===text))input.append(new Option(text,text));
+          if(input)input.value=text;
+          if(!input||input.value!==text){
+            const message='Vary could not keep '+key+' = '+text+' from the run of this picture, so Generate is blocked. Press Vary again or reopen Continue with this. Nothing was generated.';
+            varyUnapplied={stamp:JSON.stringify(continuationState),message};updateReady();throw Error(message);
+          }
+        }
+        if(plan.carry&&typeof updateLoraHints==='function')updateLoraHints();
         for(const [key,value] of Object.entries(plan.strengths[strength].controls)){const input=getControl(key);if(input)input.value=value;}
         q('#referenceHint').textContent='Attached source · '+result.width+' × '+result.height;
       }else{

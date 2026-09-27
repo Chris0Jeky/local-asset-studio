@@ -765,6 +765,138 @@
       "execution_note": "Executed 2026-09-12 through Studio job b69ec018-c789-44f3-94d8-971854c0226e (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee. Changed 23 September 2026 (HOLD PR): the decoder is now VAEDecodeTiled 512/64 instead of VAEDecode (experiments/curated/overnight-20260923/sdxl-vae-decode/: a blind tie on quality, 1.3 s median decode against 2.4-6.8 s); unverified until a Studio proof of the new graph is inspected."
     },
     {
+      "id": "wai-vary",
+      "name": "WAI v17 · vary (img2img, keeps the adapters)",
+      "category": "Characters",
+      "graph": "workflows/api/wai-vary-api.json",
+      "verified": false,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved. Each carried LoRA keeps its own terms; a varied picture inherits its source's rights questions.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "vary": {
+        "status": "starting-value",
+        "sources": [
+          "wai",
+          "anime-wai-quality",
+          "wai-vary"
+        ],
+        "carry": [
+          "lora",
+          "lora_name",
+          "lora2",
+          "lora2_name",
+          "sampler",
+          "scheduler",
+          "cfg",
+          "steps"
+        ],
+        "subtle": {
+          "controls": {
+            "denoise": 0.5
+          },
+          "basis": "Starting value: the owner's SDXL gentle-variation subtle strength (0.5, owner in chat 27 September 2026, recorded by #1238), reused on WAI v17 because both are SDXL-architecture img2img. Not run on WAI on this PC and not judged by the owner as a WAI strength."
+        },
+        "strong": {
+          "controls": {
+            "denoise": 0.7
+          },
+          "basis": "Starting value: the owner's SDXL gentle-variation strong strength (0.7, owner in chat 27 September 2026, recorded by #1238). Not run on WAI on this PC; expect the pose and composition to move at 0.7."
+        }
+      },
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "description": "Close variations of a WAI v17 picture (#1202; owner decision 27 September 2026, \"Yes, WAI img2img\"). The picture is encoded with the checkpoint's own VAE and re-sampled at a partial denoise with new seeds. Vary copies the picture's recorded LoRA stack (both slots, strengths and files) and its sampler, scheduler, CFG and steps from its run, so an anime picture varies without losing its style. Same checkpoint as the WAI recipes; the validator refuses a source drawn on another checkpoint or with an adapter this graph would drop.",
+      "stages": [
+        "Kept picture",
+        "WAI v17 checkpoint + the picture's own LoRA stack",
+        "VAE encode",
+        "Re-sample at partial denoise",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "execution_note": "Not executed. Added 27 September 2026 without a GPU run: the graph is the WAI v17 recipe's own chain (checkpoint, two LoRA slots, tiled decode) with its empty latent replaced by the attached picture's VAE encode. Needs one Studio proof and the owner's look at subtle and strong before verified or owner-approved."
+    },
+    {
       "id": "wai-pose",
       "name": "WAI \u2022 pose guide",
       "category": "Characters",

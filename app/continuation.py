@@ -130,15 +130,70 @@ def _models(graph):
     return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items() if key in ("ckpt_name", "unet_name") and isinstance(value, str)}
 
 
+VARY_LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+
+
+def _lora_nodes(graph):
+    return {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("LoraLoader")}
+
+
+def _slot_fields(preset, slot):
+    """Every input one LoRA strength control writes (the model strength plus any clip fan-out)."""
+    return sorted(str(item[1]) for item in [preset[slot]] + list((preset.get("bindings_extra") or {}).get(slot) or [])) if preset.get(slot) else []
+
+
+def _carry_problems(preset, graph, vary, sources, graph_of, bound):
+    """A route that carries its source's recorded LoRA stack (`carry`, a list of control names the page copies from the
+    picture's run) must draw with the same checkpoint, carry every adapter the source can use, and add none of its own."""
+    name, carry = preset.get("id"), vary["carry"]
+    if not isinstance(carry, list) or not carry or any(not isinstance(item, str) for item in carry) or len(set(carry)) != len(carry):
+        return ["%s: vary carry must be a non-empty list of distinct control names" % name]
+    problems, own = [], set()
+    for strength in ("subtle", "strong"):
+        if isinstance(vary.get(strength), dict) and isinstance(vary[strength].get("controls"), dict): own |= set(vary[strength]["controls"])
+    for key in carry:
+        if key in VARY_FIXED or key in own: problems.append("%s: vary may not carry %s: the round sets it itself" % (name, key))
+        elif key not in bound: problems.append("%s: vary carries %s, which the recipe does not bind" % (name, key))
+    for slot in VARY_LORA_SLOTS:
+        if (slot in carry) != (slot + "_name" in carry): problems.append("%s: vary carries %s without its file %s, or the file without its strength" % (name, slot, slot + "_name"))
+    carried_nodes = {str(preset[slot][0]) for slot in VARY_LORA_SLOTS if slot in carry and preset.get(slot)}
+    for node in sorted(_lora_nodes(graph) - carried_nodes):
+        problems.append("%s: vary route has an adapter it does not take from the source (node %s); it would change the picture's LoRA stack" % (name, node))
+    models = _models(graph)
+    for source in sources:
+        source_id, source_graph = source.get("id"), graph_of(source)
+        if not models or _models(source_graph) != models:
+            problems.append("%s: vary source %s draws with another checkpoint (%s, not %s); a route that carries the recipe keeps its model" % (
+                name, source_id, ", ".join(sorted(_models(source_graph))) or "none", ", ".join(sorted(models)) or "none"))
+        for node in sorted(_lora_nodes(source_graph)):
+            if not any(slot in carry and source.get(slot) and str(source[slot][0]) == node for slot in VARY_LORA_SLOTS):
+                problems.append("%s: vary source %s has an adapter the route does not carry (node %s); varying it here would drop it" % (name, source_id, node))
+        for key in carry:
+            if not source.get(key): problems.append("%s: vary source %s does not bind carried %s, so its recorded value is unknown" % (name, source_id, key)); continue
+            if key in VARY_LORA_SLOTS and preset.get(key) and _slot_fields(source, key) != _slot_fields(preset, key):
+                problems.append("%s: vary carries %s, but its strength reaches %s here and %s on %s" % (name, key, _slot_fields(preset, key), _slot_fields(source, key), source_id))
+            accepted = (preset.get("choices") or {}).get(key)
+            if accepted is not None:
+                recorded = (source.get("choices") or {}).get(key)
+                if recorded is None:
+                    try: recorded = [source_graph[str(source[key][0])]["inputs"][str(source[key][1])]]
+                    except (KeyError, TypeError, IndexError): recorded = [None]
+                refused = [value for value in recorded if value not in accepted]
+                if refused: problems.append("%s: vary source %s records %s values the route refuses: %s" % (name, source_id, key, ", ".join(map(str, refused))))
+    return problems
+
+
 def vary_problems(preset, graph, presets, graph_of):
     """What is wrong with one recipe's declared Vary route (#1202); empty when sound or undeclared.
 
     A route resamples the kept picture (img2img) at the declared denoise with new seeds. Its sources are the
     recipes whose pictures it may vary: each must draw with the same model family or checkpoint as the route.
+    A route that declares `carry` copies those controls from the picture's recorded run (WAI keeps its LoRA stack);
+    it is held to the same checkpoint exactly, never a family label, and to the same adapters.
     """
     vary, name = preset.get("vary"), preset.get("id")
     if vary is None: return []
-    if not isinstance(vary, dict) or set(vary) != VARY_FIELDS: return ["%s: vary needs exactly %s" % (name, ", ".join(sorted(VARY_FIELDS)))]
+    if not isinstance(vary, dict) or set(vary) - {"carry"} != VARY_FIELDS: return ["%s: vary needs exactly %s (and optionally carry)" % (name, ", ".join(sorted(VARY_FIELDS)))]
     problems = []
     cap = capability(preset, graph)
     if cap["operation"] != "image-to-image" or cap["prompt_role"] != "description" or not preset.get("denoise") or not preset.get("seed"):
@@ -161,13 +216,17 @@ def vary_problems(preset, graph, presets, graph_of):
     if not isinstance(sources, list) or not sources or any(not isinstance(item, str) for item in sources) or len(set(sources)) != len(sources):
         return problems + ["%s: vary sources must be a non-empty list of distinct recipe ids" % name]
     known = {p.get("id"): p for p in presets}
+    checked = []
     for source_id in sources:
         source = known.get(source_id)
         if source is None: problems.append("%s: vary source %s is not a recipe" % (name, source_id)); continue
         if source.get("modality", "image") != "image": problems.append("%s: vary source %s does not make pictures" % (name, source_id)); continue
+        checked.append(source)
+        if "carry" in vary: continue   # held to the exact checkpoint below
         same_family = bool(preset.get("family")) and source.get("family") == preset.get("family")
         if not same_family and not _models(graph) & _models(graph_of(source)):
             problems.append("%s: vary source %s draws with another model; varying it here would change the model" % (name, source_id))
+    if "carry" in vary: problems += _carry_problems(preset, graph, vary, checked, graph_of, bound)
     return problems
 
 

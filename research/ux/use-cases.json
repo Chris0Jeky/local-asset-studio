@@ -630,7 +630,7 @@
       "id": "vary-a-keeper",
       "goal": "From a picture I like, get a small round of close variations ready with one press (Vary subtle); on a recipe that cannot resample its pictures, get new seeds of the same recipe instead. Nothing is generated.",
       "starting_view": "create",
-      "success_condition": "Vary subtle prepares the picture's img2img route with this picture attached as the source and recorded as the parent, at the recorded starting strength, with new seeds and the owner's round size; the fallback loads the same recipe with new seeds and the picture as parent; the status names the recipe, strength, seeds and time; no generation is requested.",
+      "success_condition": "Vary subtle prepares the picture's img2img route with this picture attached as the source and recorded as the parent, at the recorded starting strength, with new seeds and the owner's round size; the fallback loads the same recipe with new seeds and the picture as parent; Vary strong on a WAI picture made with an adapter prepares the WAI route with the picture's recorded adapters and sampling settings; the status names the recipe, strength, seeds and time; no generation is requested.",
       "wrong_turn": false,
       "steps": [
         {"intent": "see what Vary would do with a picture I like", "expect": "subtle and strong are offered with the recipe, round size and starting strengths named"},
@@ -639,6 +639,8 @@
         {"intent": "check where the new pictures will come from", "expect": "the kept picture is the source and the recorded parent"},
         {"intent": "vary a picture whose recipe cannot resample it", "expect": "the same recipe loads with new seeds and the picture as parent"},
         {"intent": "read what the fallback prepared", "expect": "it says new seeds, same recipe and nothing was generated"},
+        {"intent": "vary an anime picture made with an adapter, strongly", "expect": "its WAI route is prepared with the picture's own adapters and sampling settings, and nothing runs"},
+        {"intent": "read what the anime round keeps", "expect": "the status names the same checkpoint and the kept adapter with its strength"},
         {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
     },
