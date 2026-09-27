@@ -436,6 +436,18 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.page.click('#generate')
         self.assertTrue(self.page.locator('#runOutcome').is_hidden(), 'a new Generate clears the old summary')
 
+    def test_a_run_that_came_close_to_the_commit_limit_says_so_and_a_roomy_one_stays_silent(self):
+        self.load_outcome()
+        gib = 2 ** 30
+        windows = [{'min_available_bytes': 30 * gib, 'peak_committed_bytes': 66 * gib, 'limit_bytes': 96 * gib},
+                   {'min_available_bytes': int(12.1 * gib), 'peak_committed_bytes': int(83.9 * gib), 'limit_bytes': 96 * gib}]
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': windows})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh. Memory was tight: Windows commit headroom fell to 12.1 GiB (87 % used); close memory-heavy programs before the next large job.')
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': windows[:1]})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.')
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': [{'min_available_bytes': None}]})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.', 'an unknown reading is never read as zero headroom')
+
     def test_a_failed_or_uncertain_run_points_at_its_problem_and_never_offers_a_rerun(self):
         self.load_outcome()
         self.settle({'id': 'bad-1', 'status': 'failed', 'failure': {'title': 'Memory allocation failed'}, 'message': 'Generation failed: bad allocation. More detail.'})
