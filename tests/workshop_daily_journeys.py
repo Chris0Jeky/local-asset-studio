@@ -86,6 +86,60 @@ let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{a
         self.assertIn('A clear desk', desk); self.assertIn('2 run(s) put away', desk)
         self.assertEqual(self.page.locator('#uxAttention a[href="/#create"]').count(), 2)
 
+    def load_outcome(self):
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status" role="status"></p><button id="generate">Generate</button>
+<details id="workshopResults"><summary>Recent runs</summary><div id="gallery"><article class="imageCard" data-output="done-1:0"><img alt=""><div class="card-actions"><button class="pin">Compare</button></div></article></div></details>
+<div id="jobProblemsHost"><details id="jobProblems"><summary>Problems</summary><article class="jobStatus failed" data-problem="bad-1"><b>Krea · failed</b><button class="recipe">Recipe</button></article></details></div>
+<script>let jobs=[];window.said=[];function message(text,error=false){said.push([text,error]);document.querySelector('#status').textContent=text;}
+function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source('run-outcome.js')+'</script>')
+
+    def settle(self, job):
+        self.page.evaluate('job=>document.dispatchEvent(new CustomEvent("studio:job-settled",{detail:job}))', job)
+
+    def test_a_finished_run_says_what_happened_and_shows_its_result(self):
+        self.load_outcome()
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 72, 'outputs': [{}, {}], 'batch_count': 2})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 72 s · 2 outputs. Review it while it is fresh.')
+        self.page.click('[data-run-outcome="show"]')
+        self.assertTrue(self.page.evaluate("document.querySelector('#workshopResults').open"))
+        self.assertEqual(self.page.evaluate('document.activeElement.className'), 'pin', 'focus lands on the result so K/W/X can review it')
+        self.page.click('#generate')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden(), 'a new Generate clears the old summary')
+
+    def test_a_failed_or_uncertain_run_points_at_its_problem_and_never_offers_a_rerun(self):
+        self.load_outcome()
+        self.settle({'id': 'bad-1', 'status': 'failed', 'failure': {'title': 'Memory allocation failed'}, 'message': 'Generation failed: bad allocation. More detail.'})
+        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Failed: Memory allocation failed', True])
+        self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
+        self.page.click('[data-run-outcome="show"]')
+        self.assertTrue(self.page.evaluate("document.querySelector('#jobProblems').open"))
+        self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'bad-1', 'focus lands on the record, reason first, not on an action')
+        self.settle({'id': 'lost', 'status': 'uncertain', 'message': 'Submission outcome is uncertain.'})
+        self.assertIn('It will not be run again', self.page.locator('#status').inner_text())
+        outcome = self.page.locator('#runOutcome').inner_text()
+        self.assertNotRegex(outcome.lower(), 'retry|run again|generate')
+        self.page.click('[data-run-outcome="show"]')
+        self.assertIn('no longer listed', self.page.evaluate('said.at(-1)[0]'))
+        self.settle({'id': 'half', 'status': 'partial', 'outputs': [{}], 'batch_count': 3})
+        self.assertIn('Partly done: 1 of 3 outputs', self.page.locator('#status').inner_text())
+        self.page.click('[data-run-outcome="dismiss"]')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden())
+        self.assertEqual(self.page.locator('#status').inner_text(), '')
+
+    def test_refresh_jobs_announces_the_started_run_once_when_it_settles(self):
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[],jobsEtag=null,jobsDataSignature='',estimateKey='',estimateResultKey='',activeJobId='mine';window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.reply=[{id:'mine',status:'running',preset_name:'P',message:'Generating'}];window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
+        self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), [])
+        self.page.evaluate("reply=[{id:'mine',status:'completed',preset_name:'P',message:'Complete',outputs:[{}]}]")
+        self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), ['mine'])
+
     def load_picker(self):
         production = region(source('studio-workbench.js'), '  // Pull any existing image', '  // Drafts are data only')
         self.page.set_content('''<button id="uxPullAsset">Pull from library</button><script>
