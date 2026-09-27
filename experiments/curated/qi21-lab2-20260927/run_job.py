@@ -1,5 +1,6 @@
 """One deliberate Studio job per call, never a retry: `python run_job.py <log.json> <label> <preset> '<controls json>' [reference.png ...]`.
-Reference pictures are uploaded first (the page's path); with several they fill `reference`, `reference2`, ... in order.
+Reference pictures are uploaded first (the page's path); they fill the free `reference`, `reference2`, ... slots in order
+(a slot pre-filled in the controls JSON is skipped, never overwritten), and the log records which slot got which file.
 Appends job id, prompt IDs, timing, host-commit samples and outputs to <log.json>; saves the job's recipe beside it."""
 import json, os, subprocess, sys, time, urllib.error, urllib.request
 
@@ -17,11 +18,12 @@ def commit_pct():
 
 log, label, preset_id, controls = sys.argv[1], sys.argv[2], sys.argv[3], json.loads(sys.argv[4])
 refs = sys.argv[5:]
-keys = ['reference'] + ['reference%d' % i for i in range(2, 11)]
-for key, path in zip(keys, refs):
-    if key in controls: continue
+free = [k for k in ['reference'] + ['reference%d' % i for i in range(2, 11)] if k not in controls]
+if len(refs) > len(free): sys.exit(f'refused: {len(refs)} reference files but only {len(free)} free reference slots')
+placed = {}
+for key, path in zip(free, refs):
     upload = urllib.request.Request(STUDIO + '/api/upload', open(path, 'rb').read(), {'Content-Type': 'image/png', 'X-Filename': os.path.basename(path), 'Origin': STUDIO})
-    controls[key] = json.load(urllib.request.urlopen(upload, timeout=60))['file']
+    controls[key] = json.load(urllib.request.urlopen(upload, timeout=60))['file']; placed[key] = os.path.basename(path)
 intent = {'preset_id': preset_id, 'controls': controls, 'batch_count': 1, 'parent_assets': []}
 commit_before = commit_pct()
 request = urllib.request.Request(STUDIO + '/api/jobs', json.dumps(intent).encode(), {'Content-Type': 'application/json', 'Origin': STUDIO})
@@ -34,7 +36,7 @@ while time.time() - started < 3600:
     except Exception: pass
     if state.get('status') in ('completed', 'failed', 'not_submitted', 'uncertain', 'abandoned', 'stopped'):
         result = {k: state.get(k) for k in ('id', 'status', 'preset_id', 'prompt_ids', 'outputs', 'elapsed_seconds', 'error', 'created_at', 'finished_at')}
-        result.update(label=label, controls=controls, references=[os.path.basename(r) for r in refs], commit_before_pct=commit_before, commit_peak_pct=peak,
+        result.update(label=label, controls=controls, references=placed, commit_before_pct=commit_before, commit_peak_pct=peak,
                       poll_wall_s=round(time.time() - started, 1))
         results = json.load(open(log, encoding='utf-8')) if os.path.exists(log) else []
         results.append(result); json.dump(results, open(log, 'w', encoding='utf-8'), indent=1)

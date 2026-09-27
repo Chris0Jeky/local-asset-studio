@@ -29,8 +29,8 @@ while time.time() - started < 3600:
     try: peak = max(peak, commit()[0])
     except Exception: pass
     h = json.load(urllib.request.urlopen(url + '/history/' + pid, timeout=60))
-    if pid in h and h[pid].get('status', {}).get('completed') is not None or (pid in h and h[pid].get('status', {}).get('status_str') in ('success', 'error')):
-        entry = h[pid]; break
+    st = h.get(pid, {}).get('status', {})  # done only on completed true or a terminal status_str; an in-flight completed:false is not done
+    if st.get('completed') is True or st.get('status_str') in ('success', 'error'): entry = h[pid]; break
 wall = round(time.time() - started, 1)
 result = {'label': label, 'prompt_id': pid, 'url': url, 'submitted_at': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(started)), 'wall_s': wall,
           'commit_before_pct': pct, 'commit_peak_pct': peak}
