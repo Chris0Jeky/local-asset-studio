@@ -410,19 +410,32 @@ async function mixedBatchAction(button) {
 // also release the playback wait (an errored clip never counts as playing), and held Problems hides the gallery cards
 // its records supersede (#1074): removed, not hidden, so focus restoration reaches the visible Problems card.
 // The key uses the first class only: studio-workbench.js adds `primary` to the kept reference button after each render.
-const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer';let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='';
+// While held, #recentHeld (outside #gallery, height always reserved, so no card moves) counts what the release will
+// show against the last full render: "1 run finished · 1 new run · 2 other changes, shown when the clip stops".
+// A run counts as finished once completed; new means a new non-problem run; any other status, cancel or kept-output
+// difference is a change. Problems-only changes never raise it (Problems is live); running messages are not counted.
+// The release and every forced render clear it; unchanged text is never rewritten (owner decision, 27 Sep 2026).
+const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer',RECENT_PROBLEM=['failed','partial','uncertain','abandoned'];let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='',recentShownKeys=new Map(),recentHeldText='';
+function recentWaiting(keys){
+  const status=key=>String(key||'').split('|')[0],problem=key=>RECENT_PROBLEM.includes(status(key));let finished=0,started=0,other=0;
+  for(const [id,key] of keys){if(problem(key))continue;const prev=recentShownKeys.get(id);if(status(key)==='completed'&&status(prev)!=='completed')finished++;else if(!prev)started++;else if(prev!==key)other++;}
+  for(const [id,key] of recentShownKeys)if(!keys.has(id)&&!problem(key))other++;
+  const parts=[];if(finished)parts.push(finished+(finished===1?' run finished':' runs finished'));if(started)parts.push(started+(started===1?' new run':' new runs'));if(other)parts.push(other+(parts.length?' other':'')+(other===1?' change':' changes'));
+  return parts.length?parts.join(' · ')+', shown when the clip stops':'';
+}
+function showRecentHeld(text){if(text===recentHeldText)return;recentHeldText=text;const line=$('#recentHeld');if(line)line.textContent=text;}
 function jobControlKey(el){
   if(!el?.dataset||!el.tagName)return null;const owner=el.closest?.('[data-output],[data-problem]');
   return [owner?.dataset.output??(owner?'problem:'+owner.dataset.problem:''),el.tagName,String(el.className||'').split(/\s+/)[0],...Object.keys(el.dataset).filter(k=>k!=='job'&&k!=='index').sort().map(k=>k+'='+el.dataset[k])].join('|');
 }
 function renderJobs(signature=JSON.stringify(jobs),force=false) {
-  if(signature===jobsSignature)return;
+  if(signature===jobsSignature){showRecentHeld('');return;}
   const gallery=$('#gallery'),host=document.getElementById?.('jobProblemsHost')||null,playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended&&!m.loop&&!m.error);
   const focusHosts=[gallery,host].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null,focusInGallery=gallery.contains?.(active);
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
   // Typed stop-tracking/abandon reasons and the acknowledgement are drafts too: a poll re-render must not erase them.
   const reasonFields='[data-stop-tracking-reason],[data-abandon-reason],[data-abandon-ack]',reasonDrafts=[...document.querySelectorAll(reasonFields)].map(el=>[jobControlKey(el),el.type==='checkbox'?el.checked:el.value]).filter(([key,value])=>key&&value);
-  const cards=[],problems=[],problemsOpen=$('#jobProblems')?.open;let recentHidden=0;
+  const cards=[],problems=[],keys=new Map(),problemsOpen=$('#jobProblems')?.open;let recentHidden=0;
   jobs.forEach(job=>{
     if(job.status!=='completed'){
       const stopped=job.tracking_disposition?.status==='stopped', promptIds=(job.prompt_ids||[]).join(', ');
@@ -442,14 +455,16 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
       // A finished run whose cancel did not take effect still says so (#1160 review); its outputs follow as usual.
       cards.push('<article class="jobStatus completed" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · completed</b>'+renderCancel(job)+'</article>');
     }
-    job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
+    const kept=[];job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;kept.push(o.asset_id??i);if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
+    keys.set(job.id,job.status+'|'+(job.cancellation?.state||'')+'|'+kept.join(','));
   });
   const problemMarkup=renderProblems(problems,problemsOpen);
   if(playing){
     if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);playing.removeEventListener('error',resume);playing.removeEventListener('emptied',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);playing.addEventListener('error',resume);playing.addEventListener('emptied',resume);}
+    showRecentHeld(recentWaiting(keys));
     if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host){host.innerHTML=problemMarkup;gallery.querySelector?.('#jobProblems')?.remove();}else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}for(const p of problems)for(const el of gallery.querySelectorAll?.('[data-problem]')||[])if(el.dataset?.problem===p.job.id&&!el.closest?.('#jobProblems'))el.remove();}
   } else {
-  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;
+  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;recentShownKeys=keys;showRecentHeld('');
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
   gallery.className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
   gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
