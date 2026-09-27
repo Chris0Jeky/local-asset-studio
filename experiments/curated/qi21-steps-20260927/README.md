@@ -19,7 +19,7 @@ I judged the twelve pictures blind with `docs/quality/JUDGING-RUBRIC.md`. The pi
 | 25 | 15-16 s at ~1.58 it/s | 56-58 s |
 | 40 | 25 s at 1.56 it/s; two stalled to 71-88 s at 1.8-2.2 s/it | 37-100 s |
 
-At 1 MP the sampler costs about 0.63 s per step. The text encode, model paging and VAE decode add 20-40 s of overhead, and that overhead varies more between runs than the sampler does. Host commit sat at 77-82 % during the run, so the stalls are paging, not steps. On this PC, **going from 25 to 16 steps saves about 6 s of a 40-60 s job**, and going to 10 saves about 10 s.
+At 1 MP the sampler costs about 0.63 s per step. The text encode, model paging and VAE decode add 20-40 s of overhead, and that overhead varies more between runs than the sampler does. Host commit sat at 77-82 % during the run, so the stalls are paging, not steps. The saving is **sampler-only**: going from 25 to 16 steps saves about 6 s of sampling, and going to 10 saves about 10 s. The recorded whole-job `exec_s` does not show a clean saving. The 25-step jobs took 55.96-58.42 s, the 16-step jobs 19.26-38.45 s and the 10-step jobs 21.91-48.54 s. Those spreads come mostly from overhead: the first cell of each prompt pays the text encode, and the paging stalls vary. One seed per cell cannot separate a whole-job saving from that noise.
 
 ## Blind verdicts (revealed after judging)
 
@@ -39,4 +39,9 @@ All four scene pictures came out **photographic**, even though the prompt said "
 
 ## Not covered
 
-This probe covers one seed per cell and one agent judge, with no owner review. It includes no Pruna, GGUF, FP8 or alternative encoders, and no VRAM peak. Treat it as a first ladder rung, not the Pareto answer. The pictures are local only, under the qwen21 backend's `output/Research/lab-20260927/qi21-steps/`. The results are generated and agent-judged only; they are not art acceptance.
+This probe covers one seed per cell and one agent judge, with no owner review. It includes no Pruna, GGUF, FP8 or alternative encoders, and no VRAM peak. Treat it as a first ladder rung, not the Pareto answer. The pictures are local only, under the qwen21 backend's `output/Research/lab-20260927/qi21-steps/`.
+
+## Status
+
+- **Generated and agent-judged only.** Nothing here is owner art acceptance.
+- **Licence: not cleared.** Qwen-Image 2.1 weights are under the Qwen Research License (non-commercial, per the `qwen21-t2i` catalog note). A successful render is not licence clearance, and this study does not change that.
