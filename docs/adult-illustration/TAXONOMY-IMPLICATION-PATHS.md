@@ -7,14 +7,20 @@ namespace/depth checks, #733's contract reader and #741/#745's fallback budgets.
 
 Previously the resolver built the complete transitive closure before checking
 individual entry eligibility. Given accepted A -> rejected B -> accepted C,
-compilation omitted B but still emitted C from that same rejected branch. A root
-with no usable profile-ordering facet could similarly emit its descendants.
+compilation omitted B but still emitted C from that same rejected branch.
 
 Resolution now admits an entry before scheduling its outgoing implications. A
 rejected entry is retained in the trace and produces its existing diagnostic,
 but traversal stops on that branch. Deprecated entries are ineligible under the
 existing review contract, so their implications and suggested replacements do
 not become an automatic route around deprecation.
+
+An accepted, in-profile entry without a profile ordering facet is filtered,
+not rejected. It is traced, gets TAXONOMY_UNORDERED_FOR_PROFILE, is not
+emitted, and its implications still resolve. Only unaccepted (including
+deprecated) entries stop a branch. Polarity and profile mismatches also stop
+it, and are monotone along edges by contract. Owner decision of 27 Sep 2026
+on #798: filter the node only and keep descending.
 
 This is path-local, not a global ban on a descendant. An independent eligible
 A -> D -> C path can still reach C, in that path's ordinary depth-first order.
@@ -44,8 +50,9 @@ this correction does not replace #690's pre-descent bound.
 
 ## Offline tests
 
-Seven methods cover blocked/deprecated bridges, alias/canonical and tag/hybrid
-inputs, missing ordering facets, an independent eligible route, explicit leaf
+Eight methods cover blocked/deprecated bridges, alias/canonical and tag/hybrid
+inputs, node-only filtering for missing ordering facets, an unaccepted bridge
+below an unordered root, an independent eligible route, explicit leaf
 input, unchanged eligible diamonds, and source-authenticated membership. The
 sources and reviews are synthetic temporary fixtures, never downloaded CSVs.
 
