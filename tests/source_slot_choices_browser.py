@@ -17,10 +17,15 @@ async def exercise_source_choices(page, check):
     await page.evaluate("""() => {
       window.__choiceCalls=[];window.__choiceFailure=false;window.__choiceDelay=false;
       const original=api;
+      // A resolved handle must never satisfy readiness for the next request (#1132).
+      const hold=name=>new Promise(resolve=>{
+        const release=()=>{if(window[name]===release)delete window[name];resolve()};
+        window[name]=release;
+      });
       api=async(url,options={})=>{
         if(url==='/api/upload'&&window.__choiceUploadDelay){
           window.__choiceUploadedFile=options.body;
-          await new Promise(resolve=>{window.__choiceUploadRelease=resolve});
+          await hold('__choiceUploadRelease');
           return {file:'later-role.png',sha256:'d'.repeat(64),width:640,height:640};
         }
         if(url==='/api/assets/reference'){
@@ -28,7 +33,7 @@ async def exercise_source_choices(page, check):
           if(window.__choiceFailure)throw Error('Synthetic copy unavailable');
           if(window.__choiceDelay){
             const result=await original(url,options);
-            await new Promise(resolve=>{window.__choiceRelease=resolve});return result;
+            await hold('__choiceRelease');return result;
           }
         }
         return original(url,options);
