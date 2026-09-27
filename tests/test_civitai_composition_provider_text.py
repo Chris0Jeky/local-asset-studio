@@ -74,6 +74,15 @@ class CivitaiCompositionProviderTextTests(unittest.TestCase):
         bad = [item for item in result['diagnostics'] if item['code'] == 'invalid_trained_word']
         self.assertEqual([item['index'] for item in bad], [1, 2])
 
+    def test_many_invalid_trained_words_have_bounded_diagnostics(self):
+        words = ['ok'] + [7] * 10000 + ['fine']
+        result = C.normalize(request(model_payload=payload(trained=words)))
+        self.assertEqual(result['resource']['trained_words'], ['ok', 'fine'])
+        each = [item for item in result['diagnostics'] if item['code'] == 'invalid_trained_word']
+        self.assertEqual([item['index'] for item in each], list(range(1, 17)))
+        rest = [item for item in result['diagnostics'] if item['code'] == 'invalid_trained_words_summarized']
+        self.assertEqual([item['count'] for item in rest], [10000 - 16])
+
     def test_distinct_trained_words_truncate_at_256(self):
         words = ['word-%d' % index for index in range(300)]
         result = C.normalize(request(model_payload=payload(trained=words)))

@@ -25,6 +25,7 @@ MAX_QUERY = 64
 MAX_BYTES = (1 << 63) - 1
 MAX_INPUT_BYTES = 1048576
 MAX_SCOPE_BYTES = 16384
+MAX_WORD_DIAGNOSTICS = 16
 SHA256 = re.compile(r'[a-fA-F0-9]{64}\Z')
 VERSION_ROUTE = re.compile(r'/api/v1/model-versions/([1-9][0-9]{0,19})\Z')
 AIR = re.compile(
@@ -162,14 +163,20 @@ def trained_words(value: Any, diagnostics: list[dict[str, Any]]) -> list[str]:
         diagnostics.append({'code': 'invalid_trained_words',
                             'message': 'Provider trainedWords was not a list and was omitted.'})
         return []
-    result, seen = [], set()
+    result, seen, invalid = [], set(), 0
     for index, item in enumerate(value):
         if text(item, 1000):
             if item not in seen: seen.add(item); result.append(item)
         else:
-            diagnostics.append({'code': 'invalid_trained_word',
-                                'message': 'A provider trained word was invalid and was omitted.',
-                                'index': index})
+            invalid += 1
+            if invalid <= MAX_WORD_DIAGNOSTICS:
+                diagnostics.append({'code': 'invalid_trained_word',
+                                    'message': 'A provider trained word was invalid and was omitted.',
+                                    'index': index})
+    if invalid > MAX_WORD_DIAGNOSTICS:
+        diagnostics.append({'code': 'invalid_trained_words_summarized',
+                            'message': 'Further invalid provider trained words were omitted without one diagnostic each.',
+                            'count': invalid - MAX_WORD_DIAGNOSTICS})
     if len(result) > 256:
         count = len(result); del result[256:]
         diagnostics.append({'code': 'trained_words_truncated',

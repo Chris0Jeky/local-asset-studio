@@ -114,7 +114,8 @@ The normalizer retains bounded fields needed for later review:
 Provider model/version names, `baseModel`/`baseModelType` and trained words are kept
 verbatim, whitespace included. An invalid value (wrong type, NUL, over 500 characters, or a
 trained word over 1,000) is omitted with an `invalid_provider_text`, `invalid_trained_word` or
-`invalid_trained_words` diagnostic instead of refusing the snapshot; more than 256 distinct
+`invalid_trained_words` diagnostic instead of refusing the snapshot (the first 16 invalid trained
+words get one diagnostic each, the rest one `invalid_trained_words_summarized` count); more than 256 distinct
 trained words keeps the first 256 with `trained_words_truncated`. Model type, dates, status,
 file facts and permission claims stay strict.
 
