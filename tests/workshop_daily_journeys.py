@@ -363,14 +363,15 @@ window.show=(status,b)=>{document.querySelector('#out').innerHTML=renderMixedBat
     def test_combine_seed_buttons_say_why_they_are_locked(self):
         combine = region(source('studio-workbench.js'), '  function syncCombineResults(', '  resultPanel.onclick=')
         self.page.goto('about:blank')
-        self.page.set_content("""<div id="panel"></div><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const StudioContinuation={combineKind:()=>'depth',sameCombinePair:()=>true};let selected={},catalog={presets:[]},referenceRecords=[],lastUploaded=null,resultMarkup='',pairActionBusy=false,busy=false;
+        self.page.set_content("""<div id="panel"></div><script>"""+source('continuation-core.js')+"""</script><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const StudioContinuation={...globalThis.StudioContinuation,combineKind:()=>'depth',sameCombinePair:()=>true};let selected={},catalog={presets:[]},referenceRecords=[],lastUploaded=null,resultMarkup='',pairActionBusy=false,busy=false;
 const resultPanel=document.querySelector('#panel');function currentPair(){return {};}function combineBusy(){return busy||dirty;}let submitting=false,poseBusy=false,dirty=false;function posePositionDirty(){return dirty;}function durationLabel(s){return s+' s';}
 let assetState={assets:[]},jobs=[{id:'done',status:'completed',preset_name:'P',outputs:[{seed:1}]},{id:'half',status:'partial',preset_name:'P',outputs:[{seed:2}]}];
 </script><script>"""+combine+'</script>')
         titles = lambda: self.page.evaluate("syncCombineResults();[...document.querySelectorAll('[data-ux-rerun]')].map(b=>[b.dataset.job,b.disabled,b.title])")
-        self.assertEqual(titles(), [['done', False, ''], ['done', False, ''],
-                                    ['half', True, 'Only a completed run can prepare another seed.'], ['half', True, 'Only a completed run can prepare another seed.']])
+        # #422: a partial run is folded under "needs attention" with no seed control at all, only a way to Problems.
+        self.assertEqual(titles(), [['done', False, ''], ['done', False, '']])
+        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('.ux-run-attention [data-ux-problem]')].map(b=>b.dataset.uxProblem)"), ['half'])
         self.page.evaluate('busy=true;resultMarkup=""')
         self.assertEqual(titles()[0], ['done', True, 'Wait for the current Combine action to finish.'])
         self.page.evaluate('busy=false;dirty=true;resultMarkup=""')

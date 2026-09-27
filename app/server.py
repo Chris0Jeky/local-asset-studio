@@ -45,6 +45,7 @@ from large_job_prep_common import PreparationError
 from studio_workflow.http_body import drain_for_reset
 import prompting
 import submission_evidence
+import job_cancel
 import observation_state
 import file_replace
 import asset_thumbs
@@ -147,6 +148,7 @@ class Studio:
         self._host_commit = None; self._host_commit_at = 0
         self._gpu_memory = None; self._gpu_memory_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
+        self.cancel_requests = {}   # job id -> open owner cancel request; the worker that owns the job resolves it (app/job_cancel.py)
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
         # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
         raw_minutes = self.config.get("idle_cache_release_minutes", 10)
@@ -796,7 +798,7 @@ class Studio:
         return data
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "host_commit_windows")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "host_commit_windows")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -816,6 +818,12 @@ class Studio:
         result["put_away_basis"] = "owner" if owner else "tracking_stopped" if stopped else None
         result["can_put_away"] = not result["put_away"] and Studio._put_away_error(job) is None
         result["can_bring_back"] = "put_away_at" in job and job.get("status") not in Studio.ACTIVE_JOB_STATUSES
+        # Cancel (#1138): an open request shows at once, before the worker adopts it into the record.
+        request = (getattr(self, "cancel_requests", None) or {}).get(job.get("id"))
+        if request is not None and (job.get("cancellation") or {}).get("event_id") != request.get("event_id"): result["cancellation"] = copy.deepcopy(request)
+        blocked = job_cancel.blocked(self, job)
+        result["can_cancel"] = blocked is None; result["cancel_blocked_reason"] = blocked
+        result["cancel_needs_confirm"] = blocked is None and job_cancel.confirm_needed(job)
         return result
 
     @staticmethod
@@ -1236,6 +1244,7 @@ class Studio:
         if not isinstance(job, dict) or not job: return "Unknown job"
         if job.get('status') == 'abandoned' or 'pending_submission' in job:
             return 'An abandoned or unknown submission cannot be resumed as a known prompt'
+        if job.get('status') == 'cancelled': return 'A cancelled job is closed; reopen its recipe as a new draft instead'
         stopped = Studio._tracking_stopped(job)
         if stopped and job.get("status") != "uncertain": return "Only an uncertain job can resume observation"
         if job.get("status") in ("queued", "waiting", "submitting", "running"):
@@ -1403,6 +1412,29 @@ class Studio:
             job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
             return self.public(job)
 
+    def cancel_job(self, job_id):
+        """Owner cancel (#1138). Settles a job the worker has not started; otherwise records a request the worker resolves.
+
+        Double requests return the open record. The worker, not this thread, talks to ComfyUI for a started job, so
+        a cancel cannot race its submission or observation; nothing is ever resubmitted."""
+        with self.lock:
+            job = self.jobs.get(job_id)
+            if not job: raise StudioError("Unknown job")
+            if job.get("status") == "cancelled" or job_cancel.pending(self, job): return self.public(job)
+            error = job_cancel.blocked(self, job)
+            if error: raise StudioError(error)
+            now = time.time(); record = job_cancel.new_record(job, now)
+            if job_cancel.not_started(job):
+                record.update(state="cancelled", resolved_at=now, note="Removed from the Studio queue before submission; nothing was sent to ComfyUI.")
+                prospective = dict(job, status="cancelled", message=job_cancel.not_started_message(), cancellation=record, finished_at=now)
+                self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+                job.update(status=prospective["status"], message=prospective["message"], cancellation=record, finished_at=now)
+                return self.public(job)
+            # The worker owns this job's state file; the request gets its own durable receipt.
+            self._write_json_atomic(self.runs / job_id / job_cancel.REQUEST_FILE, record)
+            self.cancel_requests[job_id] = record
+            return self.public(job)
+
     ACTIVE_JOB_STATUSES = ("queued", "waiting", "submitting", "running")
     PUT_AWAY_STATUSES = ("failed", "partial", "uncertain", "abandoned")
 
@@ -1460,6 +1492,8 @@ class Studio:
                         self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
                     else:
                         self._save(data)
+                if job_cancel.reconcile_restart(data, state_path.parent):
+                    self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
                 self.jobs[data["id"]] = data
 
     def _request(self, path, method="GET", data=None, timeout=15, base_url=None, allow_empty=False):
@@ -1589,13 +1623,14 @@ class Studio:
                 "models": sorted(models), "missing_models": sorted(m for m in models if m not in names), "schema_available": available,
                 "note": "Static dependency inspection only. No graph was run or code installed. Bypassed nodes are included; filenames selected dynamically may be absent." if available else "ComfyUI is offline: missing node status is unknown. Model filenames were inspected locally; nothing was run."}
 
-    def _wait_for_queue(self, base_url=None):
+    def _wait_for_queue(self, base_url=None, stop=None):
         # The single pre-submit gate for every generation path: a job that raced a GPU lease is never posted.
         lease = getattr(self, "gpu_lease", None)
         refusal = lease.refusal() if lease else None
         if refusal: raise QueueWaitUnavailable(refusal)
         deadline = time.monotonic() + PRE_SUBMIT_QUEUE_WAIT_SECONDS
         while True:
+            if stop is not None and stop(): return False   # an owner cancel ends the wait; the caller settles it
             remaining = deadline - time.monotonic()
             if remaining <= 0: raise QueueWaitUnavailable("ComfyUI's queue is still busy or its idle check expired")
             try: data = self._request("/queue", timeout=min(10, remaining), base_url=base_url)
@@ -1615,13 +1650,14 @@ class Studio:
             # A failed persistence of the pre-submit queue timeout still proves no POST.
             if job.get('status') == 'not_submitted' and submission_evidence.never_submitted(job):
                 self._save(job); return
-            if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed'):
+            if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed', 'cancelled'):
                 uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
                 locked = not uncertain and submission_evidence.never_submitted(job) and self._run_folder_lock(job, exc)
                 job['status'] = 'uncertain' if uncertain else 'failed'
                 job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
                 if locked: job['failure'] = {'kind': 'record_write_locked', 'title': "The Studio could not write this job's record", 'summary': "Another program had the run folder's file open. Nothing was sent to ComfyUI.", 'action': 'Safe to generate again with the same settings.', 'detail': str(exc)[:300]}
             self._save(job)
+        job_cancel.finish(self, job)
 
     def _run_folder_lock(self, job, exc):
         """A transient Windows refusal on a file inside this job's own run folder (another program held it open)."""
@@ -1804,12 +1840,15 @@ class Studio:
     def _run(self, job):
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         with self.lock:
+            if job.get('status') == 'cancelled': return   # the owner cancelled it before the worker reached it: nothing to send
             if job.get('status') not in ('queued', 'not_submitted') or not submission_evidence.never_submitted(job):
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
             job['started_at']=time.time()
             job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
         try: return self._run_generation(job)
-        finally: self._resource_observation_event('finish', job)
+        finally:
+            self._resource_observation_event('finish', job)
+            job_cancel.finish(self, job)
 
     def _resource_observation_event(self, kind, job, **details):
         observer = getattr(self, 'resource_observations', None)
@@ -1818,16 +1857,25 @@ class Studio:
         try: getattr(observer, kind)(job_resources.event_snapshot(kind, job, **details))
         except Exception: pass
 
+    def _cancel_checkpoint(self, job):
+        """Worker, before any new submission: an open owner cancel settles the job here (caller holds the lock)."""
+        if job.get('status') == 'cancelled': return True
+        if job_cancel.pickup(self, job) is None and not job_cancel.stop_pending(job): return False
+        job_cancel.settle(self, job); return True
+
     def _run_generation(self, job):
-        try: self._wait_for_queue(job.get('comfy_url'))
+        try: self._wait_for_queue(job.get('comfy_url'), stop=lambda: job.get('id') in self.cancel_requests)
         except QueueWaitUnavailable as exc:
             with self.lock:
+                if self._cancel_checkpoint(job): return
                 job['status'] = 'not_submitted'
                 recovery = 'Resume the owning experiment explicitly after checking the queue, or abandon this local job.' if job.get('project_id') else 'You can abandon this local job; its recipe is retained.'
                 job['message'] = str(exc) + '. Nothing was submitted. No retry was queued. ' + recovery
                 self._save(job)
             return
         for i in range(job["batch_count"]):
+            with self.lock:
+                if self._cancel_checkpoint(job): return
             try:
                 # Building this member's graph is pre-submit too: a failure here sent nothing for it.
                 graph, seed = self._batch_graph(job, i)
@@ -1841,7 +1889,10 @@ class Studio:
             if reading:
                 job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
             self._evict_before_submit(job, graph, i)
-            job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+            with self.lock:
+                # Last point before the POST: a cancel that arrived during the wait or the eviction sends nothing.
+                if self._cancel_checkpoint(job): return
+                job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
             self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
@@ -1915,6 +1966,9 @@ class Studio:
         while time.monotonic() < deadline:
             with self.lock:
                 if self._tracking_stopped(job): return False
+                cancel = job_cancel.pickup(self, job) is not None and not job_cancel.interrupt_sent(job, prompt_id)
+            # The owner's cancel is acted on here, by the thread that owns this prompt's observation.
+            if cancel and job_cancel.act(self, job, submission): return False
             try:
                 response = self._request("/history/" + quote(prompt_id, safe=''), timeout=15, base_url=job.get('comfy_url'))
                 if not isinstance(response, dict): raise ValueError('Invalid history response')
@@ -1929,6 +1983,9 @@ class Studio:
                 # A prompt that finishes between samples (or before the first) still gets one reading at completion.
                 self._sample_gpu_memory(job, submission, sampler); self._settle_gpu_memory(submission)
                 status = history.get("status", {})
+                if job_cancel.interrupted(history) and job_cancel.interrupt_sent(job, prompt_id):
+                    self._collect_outputs(job, submission, history); self.index_outputs(job)
+                    job_cancel.record_interrupted(self, job, submission); return False
                 if status.get("status_str") == "error":
                     errors = [m[1] for m in status.get("messages", []) if isinstance(m, list) and len(m) > 1 and m[0] == "execution_error" and isinstance(m[1], dict)]
                     detail = errors[-1] if errors else {}
@@ -1939,17 +1996,7 @@ class Studio:
                     message = label + (": " + detail_text[:450] if detail_text else "")
                     self._record_history_failure(job, submission, message)
                     raise StudioError(message)
-                outputs = history.get("outputs", {})
-                for node in outputs.values():
-                    for collection in ("images", "gifs", "videos", "audio", "3d"):
-                        for output in node.get(collection, []):
-                            if not isinstance(output, dict): continue
-                            descriptor = {k: output.get(k) for k in ("filename", "subfolder", "type")}
-                            if descriptor["filename"]:
-                                ext = Path(descriptor["filename"]).suffix.lower()
-                                descriptor.update(seed=submission.get("seed"), prompt_id=prompt_id,
-                                                  media_type="video" if ext in (".mp4", ".webm", ".mov") else "3d" if ext in (".glb", ".gltf", ".obj", ".ply", ".stl") else "audio" if ext in (".mp3", ".wav", ".flac") else "image")
-                                if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
+                self._collect_outputs(job, submission, history)
                 submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
             empty_polls += 1
             if empty_polls % GPU_SAMPLE_EVERY == 1: self._sample_gpu_memory(job, submission, sampler)
@@ -1966,6 +2013,21 @@ class Studio:
             if self._tracking_stopped(job): return False
             job["status"] = "uncertain"; job["message"] = "Timed out while observing ComfyUI; it was not resubmitted."; self._save(job)
         return False
+
+    @staticmethod
+    def _collect_outputs(job, submission, history):
+        prompt_id = submission["prompt_id"]
+        outputs = history.get("outputs", {})
+        for node in outputs.values():
+            for collection in ("images", "gifs", "videos", "audio", "3d"):
+                for output in node.get(collection, []):
+                    if not isinstance(output, dict): continue
+                    descriptor = {k: output.get(k) for k in ("filename", "subfolder", "type")}
+                    if descriptor["filename"]:
+                        ext = Path(descriptor["filename"]).suffix.lower()
+                        descriptor.update(seed=submission.get("seed"), prompt_id=prompt_id,
+                                          media_type="video" if ext in (".mp4", ".webm", ".mov") else "3d" if ext in (".glb", ".gltf", ".obj", ".ply", ".stl") else "audio" if ext in (".mp3", ".wav", ".flac") else "image")
+                        if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
 
     def resume_job(self, job_id):
         with self.lock:
@@ -2007,8 +2069,12 @@ class Studio:
         return self.public(job)
 
     def _resume(self, job):
+        try: return self._resume_observation(job)
+        finally: job_cancel.finish(self, job)
+
+    def _resume_observation(self, job):
         with self.lock:
-            if self._tracking_stopped(job): return
+            if self._tracking_stopped(job) or job.get('status') == 'cancelled': return
             if job.get('status') == 'abandoned' or 'pending_submission' in job:
                 raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
             prior = job.pop("reconciliation", None) or {}
@@ -2016,7 +2082,7 @@ class Studio:
             unresolved = any(s.get("status") != "completed" for s in job.get("submissions", []))
             job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
         for submission in job.get("submissions", []):
-            if submission.get("status") != "completed" and not self._wait_history(job, submission): return
+            if submission.get("status") not in ("completed", "cancelled") and not self._wait_history(job, submission): return
         observed = len(job.get("submissions", []))
         if observed < job["batch_count"]:
             status = "partial"; message = f"Observed {observed} of {job['batch_count']} requested images. Remaining images were not submitted; start a new job for those."
@@ -2367,6 +2433,11 @@ class Handler(BaseHTTPRequestHandler):
                 payload = self._body_json()
                 if not isinstance(payload, dict): raise StudioError('Abandonment command must be an object')
                 return self._json(200, self.studio.abandon_job(parts[3], payload.get('reason'), payload.get('acknowledge_unknown', False)))
+            if self.path.startswith("/api/jobs/") and self.path.endswith("/cancel"):
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown cancel route')
+                if not isinstance(self._body_json(), dict): raise StudioError('Cancel command must be an object')
+                return self._json(202, self.studio.cancel_job(parts[3]))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
                 return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_object().get("reason")))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/put-away"):
