@@ -182,6 +182,23 @@ test('Combine results follow the exact pictures across engines, not filenames, r
   assert.equal(C.sameCombinePair(current,{...other,references:[]},presets),false);
   assert.equal(C.sameCombinePair(current,{...other,references:[{...other.references[0],missing:true}]},presets),false);
 });
+test('a pair’s runs are grouped newest first; unfinished work is live, problems fold away and never offer a seed',()=>{
+  const out=(seed,asset)=>({seed,asset_id:asset,filename:asset+'.png'});
+  const jobs=[{id:'old',status:'completed',created_at:100,outputs:[out(1,'a1'),out(2,'a2')]},{id:'lost',status:'uncertain',created_at:400,outputs:[out(3,'a3')]},
+    {id:'new',status:'completed',created_at:300,outputs:[out(4,'a4'),out(5,'gone')]},{id:'live',status:'running',created_at:500},{id:'bin',status:'completed',created_at:200,outputs:[out(6,'gone')]},
+    {id:'shelved',status:'failed',created_at:50,put_away:true},{id:'odd',status:'cancelled',created_at:60},{id:'same-time',status:'completed',created_at:300,outputs:[out(7,'a7')]}];
+  const groups=C.combineRuns(jobs,output=>output.asset_id==='gone');
+  assert.deepEqual(groups.runs.map(r=>r.job.id),['new','same-time','old'],'newest completed run first; equal times keep list order; an all-trashed run is dropped');
+  assert.deepEqual(groups.runs[0].outputs.map(o=>[o.output.seed,o.index]),[[4,0]],'a trashed output leaves the strip but keeps its recorded index');
+  assert.deepEqual(groups.active.map(r=>r.job.id),['live']);
+  assert.deepEqual(groups.attention.map(r=>r.job.id),['lost','odd'],'an unknown or uncertain outcome is folded; a put-away problem stays put away');
+  assert.deepEqual(C.combineRuns(null),{runs:[],active:[],attention:[]});
+  // Problems lists only these statuses (app.js renderJobs); a folded run outside them must not promise a Problems card.
+  assert.deepEqual(['failed','partial','uncertain','abandoned','not_submitted','stopped','cancelled'].map(status=>C.combineInProblems({status})),[true,true,true,true,false,false,false]);
+  assert.equal(C.combineInProblems({status:'failed',put_away:true}),false,'a put-away problem is not in the open list');
+  assert.equal(C.combineEngineLabel({id:'combine-klein-9b-depth',name:'Long name'}),'Klein 9B · depth');
+  assert.equal(C.combineEngineLabel({id:'unknown-route',name:'Its own name'}),'Its own name');
+});
 test('engine changes carry character, pose and clothes by meaning and never reuse the old graph binding',()=>{
   const four={id:'four',reference_board:{min:1},reference_slots:[{role:'pose'},{role:'pose'}],last_reference:['14','image'],reference_board_label:'Pose picture (image 2)',continuation_capability:{operation:'combine',source_input:'last_reference'},continuation_placeholder:['[who is in image 1, e.g. a witch]','[the pose in a few words, e.g. leaning]']};
   const nine={...four,id:'nine',reference_slots:[{role:'pose'}],reference_board_label:'Pose picture (image 1)',continuation_placeholder:['[who is in image 2, e.g. a witch]',"[image 1's pose, e.g. leaning]","[image 2's clothes and colours, e.g. a robe]"]};
