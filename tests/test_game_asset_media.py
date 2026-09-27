@@ -42,6 +42,13 @@ class MediaTests(unittest.TestCase):
     def test_bad_hash(self):
         self.entry['sha256']='0'*64
         with self.assertRaises(ValueError):m.atlas(self.fm,self.root,self.root/'pack')
+    def test_wrongly_shaped_manifests_are_value_errors_and_a_json_cli_refusal(self):
+        for build in (lambda:m.atlas([1,2],self.root,self.root/'a1'),lambda:m.atlas(dict(self.fm,frames=['nope']),self.root,self.root/'a2'),
+                      lambda:m.ora('x',self.root,self.root/'o1.ora'),lambda:m.ora(dict(self.lm,layers=['x']),self.root,self.root/'o2.ora')):
+            with self.assertRaises(ValueError):build()
+        (self.root/'list.json').write_text('[1,2]',encoding='utf-8');err=io.StringIO()
+        with mock.patch('sys.stderr',err):rc=m.main(['atlas',str(self.root/'list.json'),'--workspace',str(self.root),'--out',str(self.root/'cli')])
+        self.assertEqual(rc,2);self.assertIn('error',json.loads(err.getvalue()));self.assertFalse((self.root/'cli').exists())
     def test_frame_canvas_mismatch(self):
         self.fm['canvas']=[5,6]
         with self.assertRaises(ValueError):m.atlas(self.fm,self.root,self.root/'pack')
