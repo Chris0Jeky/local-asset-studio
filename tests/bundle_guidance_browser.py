@@ -17,7 +17,6 @@ import sys
 import tempfile
 import threading
 import time
-from http.server import ThreadingHTTPServer
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -81,7 +80,7 @@ async function api(path){const r=await fetch(path);const value=await r.json();if
                         slow.set();time.sleep(.8)
                     try: return super()._json(status,value)
                     except (BrokenPipeError,ConnectionResetError): pass
-            return ThreadingHTTPServer(address,ObservedHandler)
+            return server.StudioHTTPServer(address,ObservedHandler)
         http=server.create_server(root,port=0 if args.inert else 8191,http_server=factory,studio_factory=ReadOnlyStudio)
         thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
         def bridge(value):

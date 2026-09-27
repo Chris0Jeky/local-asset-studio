@@ -12,7 +12,6 @@ import shutil
 import tempfile
 import threading
 import uuid
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -66,7 +65,7 @@ async def exercise(args):
                 # Any export/generation request is evidence of an unexpected action, not authorized work.
                 return fixture.Handler.do_POST(self)
 
-        http = ThreadingHTTPServer(('127.0.0.1', 8191), Handler)
+        http = production.StudioHTTPServer(('127.0.0.1', 8191), Handler)
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
         try:

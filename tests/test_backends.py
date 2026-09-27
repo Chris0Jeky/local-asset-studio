@@ -89,6 +89,25 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(argv[:3],[manager.profiles['primary']['python'],'-s',manager.profiles['primary']['entry']])
         self.assertEqual(manager.operation['status'],'failed');self.assertFalse(manager.busy)
 
+    def test_switch_keeps_the_reserve_anomaly_list_and_records_stopped_pids(self):
+        # Issue #983: the switch used to overwrite launch_reserve_gib's excluded_pids (counter anomalies) with
+        # the just-stopped backend PIDs. Drives the full _switch so line 379 executes.
+        manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid');manager.profiles['primary']['reserve_vram']='auto'
+        manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
+        stopped=MagicMock(pid=1111);stopped.create_time.return_value=111.0
+        launched=MagicMock(pid=4321);launched.poll.return_value=1
+        reserve={'reserve_gib':4.7,'basis':'reconciled','others_bytes':4*2**30,'adapter':'a','adapter_total_bytes':4*2**30,
+                 'excluded_pids':[2288],'unknown_reason':None}
+        def fake_process(profile):return stopped if profile['id']=='hidream' else None
+        with patch.object(manager,'available',return_value=True),patch.object(manager,'_idle',return_value=True), \
+             patch.object(manager,'process',side_effect=fake_process),patch.object(manager,'configured_processes',return_value=[]), \
+             patch('backends.gpu_memory.launch_reserve_gib',return_value=reserve), \
+             patch('backends.subprocess.Popen',return_value=launched):
+            manager._switch('primary')
+        record=manager.snapshot()['last_launch_reserve']
+        self.assertEqual(record['excluded_pids'],[2288]);self.assertEqual(record['stopped_pids'],[1111])
+        self.assertEqual(manager.operation['launch_reserve']['stopped_pids'],[1111])
+
     def test_local_uncertain_and_external_queue_each_prevent_switch(self):
         manager=self.studio.backends
         with patch.object(manager,'available',return_value=True),patch.object(manager,'configured_processes',return_value=[]), \

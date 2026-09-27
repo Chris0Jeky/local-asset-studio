@@ -14,7 +14,6 @@ import socket
 import tempfile
 import threading
 import uuid
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
 from PIL import Image
@@ -71,7 +70,7 @@ async def exercise(args):
                         conflict_ids=[identifier], missing_ids=[], current=[store.metadata(identifier, scope)])
                 return super()._json(status, data)
 
-        http = ThreadingHTTPServer(('127.0.0.1', 8191), Handler)
+        http = production.StudioHTTPServer(('127.0.0.1', 8191), Handler)
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
 

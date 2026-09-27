@@ -403,6 +403,9 @@ async function mixedBatchAction(button) {
 // same control of the same output, and waits while a clip in the list plays; unchanged data never touches the DOM.
 // Only the gallery waits for a clip: Problems holds no media and always shows the current record, so a new failure
 // or the result of Put away / Resume / Stop tracking / Abandon appears at once. A looping clip never waits (no `ended`).
+// A card that a poll pushes out of the capped list falls back to Show more (else the last list control); error/emptied
+// also release the playback wait (an errored clip never counts as playing), and held Problems hides the gallery cards
+// its records supersede (#1074): removed, not hidden, so focus restoration reaches the visible Problems card.
 // The key uses the first class only: studio-workbench.js adds `primary` to the kept reference button after each render.
 const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer';let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='';
 function jobControlKey(el){
@@ -411,8 +414,8 @@ function jobControlKey(el){
 }
 function renderJobs(signature=JSON.stringify(jobs),force=false) {
   if(signature===jobsSignature)return;
-  const gallery=$('#gallery'),host=document.getElementById?.('jobProblemsHost')||null,playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended&&!m.loop);
-  const focusHosts=[gallery,host].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null;
+  const gallery=$('#gallery'),host=document.getElementById?.('jobProblemsHost')||null,playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended&&!m.loop&&!m.error);
+  const focusHosts=[gallery,host].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null,focusInGallery=gallery.contains?.(active);
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
   // Typed stop-tracking/abandon reasons and the acknowledgement are drafts too: a poll re-render must not erase them.
   const reasonFields='[data-stop-tracking-reason],[data-abandon-reason],[data-abandon-ack]',reasonDrafts=[...document.querySelectorAll(reasonFields)].map(el=>[jobControlKey(el),el.type==='checkbox'?el.checked:el.value]).filter(([key,value])=>key&&value);
@@ -437,8 +440,8 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   });
   const problemMarkup=renderProblems(problems,problemsOpen);
   if(playing){
-    if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);}
-    if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host)host.innerHTML=problemMarkup;else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}}
+    if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);playing.removeEventListener('error',resume);playing.removeEventListener('emptied',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);playing.addEventListener('error',resume);playing.addEventListener('emptied',resume);}
+    if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host){host.innerHTML=problemMarkup;gallery.querySelector?.('#jobProblems')?.remove();}else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}for(const p of problems)for(const el of gallery.querySelectorAll?.('[data-problem]')||[])if(el.dataset?.problem===p.job.id&&!el.closest?.('#jobProblems'))el.remove();}
   } else {
   jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
@@ -449,6 +452,7 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
   if(reasonDrafts.length){const fields=[...document.querySelectorAll(reasonFields)];for(const [key,value] of reasonDrafts){const el=fields.find(f=>jobControlKey(f)===key);if(el){if(el.type==='checkbox')el.checked=value;else el.value=value;}}}
   if(focusKey&&!focusHosts.some(h=>h.contains?.(document.activeElement)))focusHosts.flatMap(h=>[...(h.querySelectorAll?.(JOB_FOCUSABLE)||[])]).find(el=>jobControlKey(el)===focusKey)?.focus({preventScroll:true});
+  if(focusKey&&focusInGallery&&!playing&&!force&&!focusHosts.some(h=>h.contains?.(document.activeElement)))(gallery.querySelector?.('[data-recent-more]')||[...(gallery.querySelectorAll?.(JOB_FOCUSABLE)||[])].pop())?.focus?.({preventScroll:true});
   if(!playing)renderCompare();
 }
 // #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
@@ -516,7 +520,7 @@ async function loadSetups(){
   renderSaved();
 }
 function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<span class="saved-chip"><button data-load="'+i+'">'+esc(s.name)+'</button><button data-delete-setup="'+esc(s.id)+'" aria-label="Delete '+esc(s.name)+' setup">×</button></span>').join('')||'<small>Save a variation once it is worth coming back to.</small>';}
-function applySaved(s){
+function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
   selectPreset(s.preset);
@@ -529,9 +533,11 @@ function applySaved(s){
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
   // A saved setup round-trips each role record's parent_asset and each supported named-input mapping.
   // Board recipes still have a named lastReference continuation source, independent of their role slots.
-  // Restore recorded mappings rather than re-deriving them; only a legacy record with no mapping
-  // falls back to the unambiguous single-parent, single-input guess. A job-exported recipe has neither,
-  // and an unattributed parent is never dropped by a later edit.
+  // Restore recorded mappings rather than re-deriving them; only a saved setup written before recorded
+  // mappings (no `attribution_recorded` marker) falls back to the unambiguous single-parent, single-input
+  // guess. A current setup carries the marker, so its empty mapping means "nothing attributed", never
+  // "unknown" (#1087 review). Drafts, job exports, production branches and reruns never guess,
+  // so an unattributed parent is never dropped by a later edit.
   const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);
   // An empty mapping is absence, not a recorded "nothing": a draft or setup written before #112 has
   // no attribution to restore, and reading {} as one would make the legacy fallback unreachable.
@@ -543,7 +549,7 @@ function applySaved(s){
   const savedMapping=s.parent_by_input,mapped=savedMapping&&typeof savedMapping==='object'&&!Array.isArray(savedMapping)&&Object.keys(savedMapping).length?savedMapping:null;
   const slotOccupied=typeof referenceRecords!=='undefined'&&referenceRecords.some(r=>r&&(r.file||r.parent_asset));
   if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>(!selected.reference_slots?.length||input==='lastReference')&&parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
-  else if(parentAssets.length===1&&filled.length===1&&!slotOccupied)parentByInput={[filled[0][0]]:parentAssets[0]};
+  else if(guessLegacyParent&&s.attribution_recorded!==true&&parentAssets.length===1&&filled.length===1&&!slotOccupied)parentByInput={[filled[0][0]]:parentAssets[0]};
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
@@ -690,8 +696,8 @@ function checkedSetupControls() {
 }
 function setupMessage(text,error=false){message(text,error);$('#setupStatus').textContent=text;$('#setupStatus').classList.toggle('error',error);}
 let savingSetup=false; // A double click stored two setups: each save without an id gets a fresh one.
-$('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
-$('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
+$('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
+$('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load],{guessLegacyParent:true});if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
 $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
 function configureReadPolling(){

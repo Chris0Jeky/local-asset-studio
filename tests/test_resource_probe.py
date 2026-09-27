@@ -183,4 +183,23 @@ class ProbeCommandTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
 
+
+class ProbeGuardTests(unittest.TestCase):
+    def test_fetch_stats_refuses_a_timeout_outside_the_window_before_any_socket(self):
+        with patch('resource_probe.http.client.HTTPConnection', side_effect=AssertionError('no socket for a refused timeout')):
+            for bad in (0, -1, 10.5, float('nan'), float('inf'), True, '2', None):
+                with self.subTest(timeout=bad), self.assertRaisesRegex(ValueError, 'Timeout'):
+                    fetch_stats('http://127.0.0.1:8188', timeout=bad)
+
+    def test_pid_reuse_during_the_counter_reads_is_not_attributed(self):
+        # psutil caches create_time on a handle, so read() re-checks identity on a fresh handle after the PID-addressed counter reads.
+        original, victim = FakeProcess(), FakeProcess(); victim.created = 200; handles = iter([original, original, victim])
+        observer = ProcessObservation(12, NS(Process=lambda pid: next(handles)))
+        record = observer.read()
+        self.assertIsNone(record['working_set_bytes']); self.assertIsNone(record['cpu_seconds'])
+        self.assertIn('will not rebind', record['unknown_reason'])
+        observer.provider = NS(Process=lambda pid: original)
+        self.assertIsNone(observer.read()['working_set_bytes'], 'An observer never rebinds after reuse')
+
+
 if __name__ == '__main__': unittest.main()

@@ -147,7 +147,7 @@ class GpuMemoryHoldersTest(unittest.TestCase):
     def test_holders_are_ranked_largest_first_and_exclude_the_process(self):
         with patch('psutil.Process', side_effect=lambda pid: types.SimpleNamespace(name=lambda: {2288: 'dwm.exe'}.get(pid, 'x.exe'))):
             rows = gpu_memory.holders(self.READING, 10, top=1)
-        self.assertEqual(rows, [{'pid': 2288, 'name': 'dwm.exe', 'dedicated_bytes': 5 * GIB}])
+        self.assertEqual(rows, [{'pid': 2288, 'name': 'dwm.exe', 'dedicated_bytes': 5 * GIB, 'plausible': None}])  # no adapter figure (#983)
         self.assertEqual(gpu_memory.holders(None, 10), [])
 
 
