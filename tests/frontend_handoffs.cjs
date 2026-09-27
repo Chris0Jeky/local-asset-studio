@@ -837,6 +837,24 @@ async function seedAndPinChangesAreAnnounced() {
 // weights (and the curated cards) to what needs action, combines with the text
 // search, and restores the stored choice. Without it every row renders always,
 // so the action-needed files stay buried among verified ones.
+// #1127: a model folder linked outside the library is one refused row and one unopenable folder, never an empty Models view.
+async function linkedModelFolderIsOneRow() {
+  const {element, run} = sandbox({}, {});
+  const library = {storage: {free_bytes: 1, total_bytes: 2, reserve_bytes: 0}, collections: [], inventory: [], model_root: 'C:/models',
+    assets: [{id: 'linked', name: 'Linked Model', family: 'Test', bytes: 8, file: 'checkpoints/big.safetensors', present: true, verified: false, installable: false,
+              verification: 'linked-path-refused', install_note: 'This folder is a link', download: {}}],
+    folders: [{id: 'checkpoints', label: 'Checkpoints', path: 'C:/models/checkpoints', unavailable: 'Model folder points outside the model library'},
+              {id: 'loras', label: 'LoRAs', path: 'C:/models/loras'}]};
+  element('#modelCards').querySelector = () => null;
+  run(`api=async()=>(${JSON.stringify(library)});`);
+  await run('refreshLibrary()');
+  assert.match(element('#modelCards').innerHTML, /Linked folder · not managed/);
+  assert.match(element('#modelCards').innerHTML, /data-install="linked" disabled/);
+  const folders = element('#folders').innerHTML;
+  assert.match(folders, /Model folder points outside the model library<\/small><\/p><button data-folder="checkpoints" disabled>Open folder/);
+  assert.match(folders, /<button data-folder="loras">Open folder/);
+}
+
 async function modelStatusFilter() {
   const {element, context, run} = sandbox({}, {});
   context.localStorage = (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map());
@@ -1245,6 +1263,7 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await unresolvedInputLineageCannotBeSaved();
   await avoidWordingIsVisibleWhenTheRecipeBindsIt();
   await aFailedStartupStageDoesNotStopTheRest();
+  await linkedModelFolderIsOneRow();
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
