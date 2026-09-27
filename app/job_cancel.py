@@ -132,10 +132,14 @@ def settle(studio, job, how=None):
 def finish(studio, job):
     """Reconcile a still-open request with the job's settled status, after the worker is done with it."""
     with studio.lock:
-        if pickup(studio, job) is None: return
+        record = job.get('cancellation')
+        # An `unresolved` cancel is settled later by an explicit Resume observation's definitive outcome (#1159 review).
+        later = isinstance(record, dict) and record.get('state') == 'unresolved'
+        if pickup(studio, job) is None and not later: return
         status = job.get('status')
-        if status in CANCELLABLE: return
+        if status in CANCELLABLE or (later and status == 'uncertain'): return
         if status == 'not_submitted' and submission_evidence.never_submitted(job): settle(studio, job); return
+        if later: job['cancellation']['unresolved_note'] = job['cancellation'].get('note')
         sent = any(a.get('action') == 'interrupt' for a in job['cancellation']['actions'])
         if status == 'uncertain':
             _resolve(studio, job, 'unresolved', 'The outcome could not be observed, so the cancel is not confirmed. Nothing was resubmitted.')

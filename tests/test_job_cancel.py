@@ -61,6 +61,7 @@ class JobCancelTests(unittest.TestCase):
         (self.root / "config/local.json").write_text(json.dumps({"comfy_root": str(self.root / "fake-comfy")}))
         (self.root / "presets/catalog.json").write_text(json.dumps({"presets": [PRESET]}))
         (self.root / "workflows/api/demo-api.json").write_text(json.dumps(GRAPH))
+        self.real_start = threading.Thread.start
         for target in (patch.object(threading.Thread, "start", lambda *_: None), patch.object(server.time, "sleep", lambda *_: None)):
             target.start(); self.addCleanup(target.stop)
         self.addCleanup(self.tmp.cleanup)
@@ -284,6 +285,55 @@ class JobCancelTests(unittest.TestCase):
         studio._run(job)
         self.assertEqual(job["status"], "uncertain"); self.assertEqual(job["cancellation"]["state"], "unresolved")
         self.assertIn("not confirmed", job["cancellation"]["note"]); self.assertNoResubmission(studio)
+
+    def unresolved_after_interrupt(self):
+        studio = self.studio(); job = self.job(studio)
+        studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", self.click(studio, job, {"prompt_id": "ours"})),
+                         ("GET", "/queue", queue(running=["ours"])), ("POST", "/interrupt", None), ("GET", "/history/ours", URLError("down"))]
+        studio._run(job)
+        self.assertEqual((job["status"], job["cancellation"]["state"]), ("uncertain", "unresolved"))
+        studio.resume_job(job["id"]); return studio, job
+
+    def test_resume_observation_settles_an_unresolved_cancel_from_the_observed_outcome(self):
+        # #1159 review (Codex): finish() used to ignore an `unresolved` cancel once Resume observation saw the outcome.
+        studio, job = self.unresolved_after_interrupt()
+        studio.script = [("GET", "/history/ours", success("ours"))]; studio._resume(job)
+        self.assertEqual(job["status"], "completed"); self.assertEqual(job["cancellation"]["state"], "too_late")
+        self.assertIn("before the interrupt took effect", job["cancellation"]["note"]); self.assertIn("not confirmed", job["cancellation"]["unresolved_note"])
+        self.assertEqual(self.state(studio, job)["cancellation"]["state"], "too_late"); self.assertNoResubmission(studio)
+        studio, job = self.unresolved_after_interrupt()
+        studio.script = [("GET", "/history/ours", interrupted("ours"))]; studio._resume(job)
+        self.assertEqual((job["status"], job["cancellation"]["state"]), ("cancelled", "cancelled")); self.assertNoResubmission(studio)
+        studio, job = self.unresolved_after_interrupt()
+        studio.script = [("GET", "/history/ours", URLError("still down"))]; studio._resume(job)
+        self.assertEqual((job["status"], job["cancellation"]["state"]), ("uncertain", "unresolved"), "still unknown stays unresolved")
+
+    def test_a_history_read_lost_while_verifying_a_delete_is_rechecked_on_the_next_pass(self):
+        # #1159 review (Muse): a transient /history failure right after the delete leaves the request open, never refused.
+        studio = self.studio(); job = self.job(studio)
+        studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", self.click(studio, job, {"prompt_id": "ours"})),
+                         ("GET", "/queue", queue(pending=["ours"])), ("POST", "/queue", None), ("GET", "/queue", IDLE), ("GET", "/history/ours", URLError("blip")),
+                         ("GET", "/history/ours", {}), ("GET", "/queue", IDLE), ("GET", "/history/ours", {})]
+        studio._run(job)
+        self.assertEqual((job["status"], job["cancellation"]["state"]), ("cancelled", "cancelled"))
+        self.assertEqual([(o["queue"], o.get("history")) for o in job["cancellation"]["observations"]], [("pending", None), ("absent", "unreadable"), ("absent", "absent")])
+        self.assertNoResubmission(studio)
+
+    def test_a_cancel_from_another_thread_while_the_worker_waits_on_comfyui(self):
+        # #1159 review (Muse): a real second thread. Events order the steps, so nothing depends on timing.
+        studio = self.studio(); job = self.job(studio); inside, release = threading.Event(), threading.Event()
+        def blocking_history():
+            inside.set(); self.assertTrue(release.wait(10)); return {}
+        studio.script = [("GET", "/queue", IDLE), ("POST", "/prompt", {"prompt_id": "ours"}), ("GET", "/history/ours", blocking_history),
+                         ("GET", "/queue", queue(running=["ours"])), ("POST", "/interrupt", None), ("GET", "/history/ours", interrupted("ours"))]
+        worker = threading.Thread(target=studio._run, args=(job,), daemon=True); self.real_start(worker)
+        self.assertTrue(inside.wait(10), "the worker reached its observation")
+        asked = studio.cancel_job(job["id"])
+        self.assertEqual((asked["status"], asked["cancellation"]["state"]), ("running", "requested"))
+        self.assertEqual(json.loads((studio.runs / job["id"] / "cancel-request.json").read_text())["event_id"], asked["cancellation"]["event_id"])
+        self.assertNotIn("cancellation", self.state(studio, job), "the request thread never writes the worker's state file")
+        release.set(); worker.join(10); self.assertFalse(worker.is_alive())
+        self.assertEqual((job["status"], job["cancellation"]["state"]), ("cancelled", "cancelled")); self.assertNoResubmission(studio)
 
     def test_interrupted_by_someone_else_before_our_interrupt_stays_a_failure(self):
         studio = self.studio(); job = self.job(studio)
