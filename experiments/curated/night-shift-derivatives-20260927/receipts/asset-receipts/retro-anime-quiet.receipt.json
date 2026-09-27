@@ -1,6 +1,6 @@
 {
  "schema": "studio.theme-asset.receipt/v1-proposed",
- "status": "candidate-produced",
+ "status": "art-reviewed",
  "requested_asset_id": "retro-anime-quiet",
  "brief_revision": "brief.py show retro-anime-quiet @ origin/main ffe5b3f9",
  "production": {
@@ -99,9 +99,14 @@
   }
  ],
  "art_review": {
-  "status": "not-reviewed",
-  "reviewer": null,
-  "notes": "agent pre-review only (docs/quality/JUDGING-RUBRIC.md); owner art acceptance pending; same camera by construction plus the recorded warp; the window view keeps the rail, train and poles in mist; monitor screen dark, lamp on"
+  "status": "accepted",
+  "reviewer": "Chris (owner)",
+  "at": "2026-09-27",
+  "notes": "Owner answer in chat on 2026-09-27 after seeing pack-contact.jpg and quiet-candidates-contact.jpg, relayed by the coordinator: \"Accept, try sharper 4K as well\". accepted: r1-2 (aligned, upscaled); r1-1 and round-0 candidates not chosen. This is the only art acceptance; the agent pre-review in judgements.jsonl is not acceptance.",
+  "accepted_files": [
+   "retro-anime-quiet/master/retro-anime-quiet--3840x2160--r1-2.png",
+   "retro-anime-quiet/renditions/"
+  ]
  },
  "rendition_review": {
   "status": "agent-checked",
@@ -122,5 +127,7 @@
   "status": "not-selected",
   "selected_by": null
  },
- "unknowns": []
+ "unknowns": [
+  "Licence status unchanged: not cleared (FLUX.2 Klein 4B and Real-ESRGAN terms not re-checked; Z-Image Turbo base weights Apache-2.0 per the asset-kit README)."
+ ]
 }

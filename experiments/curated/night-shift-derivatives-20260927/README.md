@@ -6,8 +6,28 @@ the pilot world. That anchor is Z-Image Turbo fp8, Studio job `c69e6e18-4739-458
 
 This run derives `retro-anime-quiet`, `-hero`, `-poster` and `-card`, plus the upscaled master, from that exact file. It
 follows `docs/adaptive-studio/assets/` (PRODUCTION-PLAN W1, DELIVERY-SPEC, ART-DIRECTION, and `brief.py show <id>`).
-`retro-anime-wall` is the owner's ChatGPT job and was not made. Every file here is **candidate-produced and agent-judged
-only**. None is art-accepted, runtime-qualified or licence-cleared. The owner picks.
+`retro-anime-wall` is the owner's ChatGPT job and was not made.
+
+## Owner art review — 27 September 2026 (the only art acceptance)
+
+The owner answered in chat on 27 September 2026, after seeing `pack-contact.jpg` and `quiet-candidates-contact.jpg`. The
+coordinator relayed the answer:
+- **Quiet Morning still:** r1-2.
+- **Card framing:** tight.
+- **The pack as shown:** *"Accept, try sharper 4K as well"*.
+
+**Accepted:**
+- `retro-anime-master` MA (3840x2160) and its previews
+- `retro-anime-quiet` r1-2 (aligned, 3840x2160) and its poster
+- the `retro-anime-hero` crop and its renditions
+- the `retro-anime-poster` renditions
+- the `retro-anime-card` tight framing (1024/512/256)
+
+**Not chosen:** master MB, quiet r1-1, a1, a2, b1 and b2, and the wide card framing.
+
+The per-asset receipts (`art_review`) and `receipts/pack-manifest.json` record this. A sharper 4K master ("MA-sharp") is being
+tried as a separate candidate; it is not accepted. The agent pre-review below is not acceptance. Nothing is runtime-qualified,
+and the licence status is unchanged: **not cleared**.
 
 **Anchor check.** `sha256` of `output/Research/lab-20260927/asset-kit/retro-anime-master/retro-anime-master-z2.png` is
 `c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9`. That matches the value given, and it is byte-identical to its
@@ -86,7 +106,7 @@ crossfade frame shows no doubled furniture. Registration is measured on edges, a
 - **Not made:** `retro-anime-wall` (ChatGPT, the owner's job). Nor were the parked commitments (the guide companion, all sound,
   7 of 8 promotion pieces, all parallax layers, 5 of 6 loops), per the owner's deferral.
 - **Not verified:**
-  - No art acceptance. No runtime qualification: nothing was shown in the actual slots at 390x844, 1440x900 or 1920x1080, and
+  - No runtime qualification: nothing was shown in the actual slots at 390x844, 1440x900 or 1920x1080, and
     nothing is wired into the app.
   - No decoded-memory test while inference runs.
   - Only the WebP and AVIF encoder byte counts were measured. They were not visually checked against the lossless masters
@@ -95,11 +115,12 @@ crossfade frame shows no doubled furniture. Registration is measured on edges, a
 - **Licence:** Z-Image Turbo's base weights are Apache-2.0 (per the asset-kit README); FLUX.2 Klein 4B terms and Real-ESRGAN
   terms were not re-checked here. A render is not licence clearance.
 
-## Next (owner)
+## Next
 
-1. Art-review the set in `pack-contact.jpg`, or the full files under ComfyUI `output/Research/nightshift-20260927/`.
-   Pick quiet r1-2 or r1-1, the card framing, and master MA or MB (or reject).
-2. Then `retro-anime-wall` in ChatGPT with the anchor uploaded. A later code session wires the accepted renditions in.
+1. Done 27 Sep: owner art review (above).
+2. Pending: the owner chooses between MA and the MA-sharp candidate once it exists.
+3. Owner: `retro-anime-wall` in ChatGPT, with the anchor uploaded.
+4. A later code session wires the accepted renditions in and runs runtime qualification.
 
 ## Files
 

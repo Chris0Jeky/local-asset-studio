@@ -1,6 +1,6 @@
 {
  "schema": "studio.theme-asset.receipt/v1-proposed",
- "status": "candidate-produced",
+ "status": "art-reviewed",
  "requested_asset_id": "retro-anime-master",
  "brief_revision": "brief.py show retro-anime-master @ origin/main ffe5b3f9",
  "production": {
@@ -125,9 +125,14 @@
   }
  ],
  "art_review": {
-  "status": "not-reviewed",
-  "reviewer": null,
-  "notes": "agent pre-review only (docs/quality/JUDGING-RUBRIC.md); owner art acceptance pending; not a native 4K generation: an ESRGAN upscale of a 1344x768 original; the painterly wall grain is smoothed. Composition: focal point CRT screen at normalised (0.76, 0.61); text-safe wall x 0-0.55; detail split {'left60_mean_edge': 1.31, 'right40_mean_edge': 12.78}"
+  "status": "accepted",
+  "reviewer": "Chris (owner)",
+  "at": "2026-09-27",
+  "notes": "Owner answer in chat on 2026-09-27 after seeing pack-contact.jpg and quiet-candidates-contact.jpg, relayed by the coordinator: \"Accept, try sharper 4K as well\". accepted: MA (raw 4x ESRGAN, Lanczos to 3840x2160); MB not chosen. Owner asked to also try a sharper 4K (candidate MA-sharp, not accepted). This is the only art acceptance; the agent pre-review in judgements.jsonl is not acceptance.",
+  "accepted_files": [
+   "retro-anime-master/master/retro-anime-master--3840x2160--ma.png",
+   "retro-anime-master/renditions/"
+  ]
  },
  "rendition_review": {
   "status": "agent-checked",
@@ -149,5 +154,7 @@
   "status": "not-selected",
   "selected_by": null
  },
- "unknowns": []
+ "unknowns": [
+  "Licence status unchanged: not cleared (FLUX.2 Klein 4B and Real-ESRGAN terms not re-checked; Z-Image Turbo base weights Apache-2.0 per the asset-kit README)."
+ ]
 }

@@ -1,6 +1,6 @@
 {
  "schema": "studio.theme-asset.receipt/v1-proposed",
- "status": "candidate-produced",
+ "status": "art-reviewed",
  "requested_asset_id": "retro-anime-card",
  "brief_revision": "brief.py show retro-anime-card @ origin/main ffe5b3f9",
  "production": {
@@ -157,9 +157,15 @@
   }
  ],
  "art_review": {
-  "status": "not-reviewed",
-  "reviewer": null,
-  "notes": "agent pre-review only (docs/quality/JUDGING-RUBRIC.md); owner art acceptance pending; two framings offered; the 96 px check images are in review/"
+  "status": "accepted",
+  "reviewer": "Chris (owner)",
+  "at": "2026-09-27",
+  "notes": "Owner answer in chat on 2026-09-27 after seeing pack-contact.jpg and quiet-candidates-contact.jpg, relayed by the coordinator: \"Accept, try sharper 4K as well\". accepted: the tight framing (1024/512/256); the wide framing not chosen. This is the only art acceptance; the agent pre-review in judgements.jsonl is not acceptance.",
+  "accepted_files": [
+   "retro-anime-card/master/retro-anime-card--1024x1024--tight.png",
+   "retro-anime-card/renditions/retro-anime-card--512x512--tight.webp",
+   "retro-anime-card/renditions/retro-anime-card--256x256--tight.webp"
+  ]
  },
  "rendition_review": {
   "status": "agent-checked",
@@ -182,5 +188,7 @@
   "status": "not-selected",
   "selected_by": null
  },
- "unknowns": []
+ "unknowns": [
+  "Licence status unchanged: not cleared (FLUX.2 Klein 4B and Real-ESRGAN terms not re-checked; Z-Image Turbo base weights Apache-2.0 per the asset-kit README)."
+ ]
 }
