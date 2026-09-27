@@ -1217,7 +1217,9 @@ class Studio:
         self.validate_graph(graph)
         if shutil.disk_usage(self.experiments).free<2*1024**3:raise StudioError('At least 2 GiB free workspace storage is required')
         inspection=self.inspect_preset(preset['id'],graph)
-        cache_path=self.root/'.runtime/model-fingerprints.json';models=[]
+        from model_requirements import pin_mismatch
+        pins={a['id']:a for a in self.library.manifest().get('assets',[]) if isinstance(a,dict) and isinstance(a.get('id'),str)}
+        cache_path=self.root/'.runtime/model-fingerprints.json';models=[];mismatches=[]
         with self._fingerprint_lock:
             cache=read_json(cache_path,{}) or {}
             for requirement in inspection['requirements']:
@@ -1230,7 +1232,12 @@ class Studio:
                 if record.get('bytes')!=stat.st_size or record.get('mtime_ns')!=stat.st_mtime_ns:
                     record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest_file(path)};cache[key]=record
                 models.append(dict(record,file=requirement['file']))
+                # #1112: an exact-path pin binds production; an unpinned file stays allowed.
+                pin=pins.get(requirement.get('asset_id'));mismatch=pin and pin.get('file')==requirement['file'] and pin_mismatch(pin,record['bytes'],record['sha256'])
+                if mismatch:mismatches.append('Required model does not match its library pin: '+requirement['file']+' — '+mismatch['note'])
             cache_path.parent.mkdir(exist_ok=True);self._write_json_atomic(cache_path,cache)
+        # The digests are cached first, so readiness can show the same mismatch without rehashing.
+        if mismatches:raise StudioError(' '.join(mismatches))
         inputs=[]
         for node in graph.values():
             if node['class_type']=='LoadImage':
@@ -1629,13 +1636,14 @@ class Studio:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
             except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): info, info_available = {}, False
-            missing = {}; observations = {}
+            missing = {}; observations = {}; pin_warnings = {}; fingerprints = self.model_fingerprints()
             assets = self.library.manifest().get('assets', [])
             from model_requirements import model_selection
             for preset in self.catalog()["presets"]:
                 try:
                     graph, _ = self.graph_for(preset)
-                    for requirement in self.preset_requirements(preset, graph, assets=assets, observations=observations):
+                    for requirement in self.preset_requirements(preset, graph, assets=assets, observations=observations, fingerprints=fingerprints):
+                        if requirement.get('pin_mismatch'): pin_warnings.setdefault(preset.get('id'), []).append(requirement['file'])
                         if requirement['present'] is not True:
                             label = requirement['file'] if requirement['present'] is False else 'Unresolved dependency: ' + requirement['file'] + ' — ' + requirement['note']
                             missing.setdefault(preset.get('id'), []).append(label)
@@ -1655,21 +1663,26 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+
+    def model_fingerprints(self):
+        # Read-only view of production preflight's digest cache; readiness never hashes.
+        cache = read_json(self.root/'.runtime/model-fingerprints.json', {})
+        return cache if isinstance(cache, dict) else {}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
         if graph is None: graph, _ = self.graph_for(preset)
-        return {"id": preset_id, "requirements": self.preset_requirements(preset, graph),
+        return {"id": preset_id, "requirements": self.preset_requirements(preset, graph, fingerprints=self.model_fingerprints()),
                 "nodes": [{"id": key, "type": node.get("class_type")} for key, node in graph.items()], "graph": graph}
 
-    def preset_requirements(self, preset, graph, *, assets=None, observations=None):
+    def preset_requirements(self, preset, graph, *, assets=None, observations=None, fingerprints=None):
         from model_requirements import requirements
         model_root = self.library.models
         if hasattr(self, 'backends'):
             model_root = Path(self.backends.profiles[preset.get('backend_id', 'primary')]['root']) / 'models'
-        return requirements(self.library, preset, graph, model_root, assets=assets, observations=observations)
+        return requirements(self.library, preset, graph, model_root, assets=assets, observations=observations, fingerprints=fingerprints)
 
     def inspect_workflow(self, payload):
         data = payload.get("workflow") if isinstance(payload, dict) else None
