@@ -2514,6 +2514,7 @@ class Handler(BaseHTTPRequestHandler):
                 if parts[-1]=='put-away':
                     if len(parts)!=5:raise StudioError('Unknown put-away route')
                     return self._json(200,self.studio.production.put_away(identifier,payload))
+                return self._json(404, {"error":"Not found"})  # the body was read above: nothing is left to drain
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_object()))
             if self.path == "/api/assets/update":
                 try: return self._json(200, self.studio.assets.update(self._body_json()))

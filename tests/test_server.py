@@ -490,6 +490,17 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(sent,[(404,{"error":"Not found"})])
         self.assertEqual(handler.rfile.read(),b"")
 
+    def test_unknown_production_route_does_not_drain_a_body_it_already_read(self):
+        # The production branch reads the JSON body before matching its sub-route; draining again would wait
+        # for bytes that already arrived and then drop the keep-alive connection.
+        body=b"{}"
+        handler=server.Handler.__new__(server.Handler)
+        handler.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Length":str(len(body)),"Content-Type":"application/json"}
+        handler.path="/api/production/plan-1/bogus";handler.rfile=io.BytesIO(body);handler.close_connection=False
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+        with patch.object(server,"drain_for_reset",side_effect=AssertionError("drained twice")):handler.do_POST()
+        self.assertEqual(sent,[(404,{"error":"Not found"})]);self.assertFalse(handler.close_connection)
+
     def test_estimate_wrong_content_type_drains_body_before_400(self):
         body=b"b"*(32*1024)
         handler=server.Handler.__new__(server.Handler)
