@@ -336,6 +336,19 @@ The primary's Krea 2 fp8 route (13.1 GB of diffusion weights) was recorded at 94
   for it off. The desktop path keeps `--enable-manager` (ComfyUI-Manager), which the Studio's switch and
   recovery launches still do not pass; the ownership checks only read `--listen`/`--port`. Run without
   `-ArgumentsFile`, the launcher defaults to `--reserve-vram 0.6 --disable-pinned-memory --enable-manager`.
+- **Where "others" comes from (issue #983; owner decision 27 Sep 2026).** Per-process counters can be impossible
+  (dwm.exe read 65.9 GiB on the 16 GiB card on 25 Sep 2026), so the figure every consumer uses — the launch reserve,
+  the installed VRAM guard and resource admission — prefers the adapter-level `\GPU Adapter Memory(*)\Dedicated Usage`
+  counter minus ComfyUI's own process counter. While the counters agree that figure never falls below the other
+  process counters (each bounded by the adapter figure), so memory no process counter attributes still counts as
+  used. The launch reserve also subtracts backends the switch just stopped, whose counters can lag their exit. A
+  counter beyond the adapter figure plus sampling headroom (10 % + 1 GiB) is excluded; the reserve and guard then use
+  the adapter figure and admission treats VRAM as unknown. Admission also passes the card size ComfyUI reports: a
+  reading without an adapter figure that exceeds it is unknown, never clamped to a guess. The impossible counters are
+  kept as evidence, at most 8 rows of `{adapter, pid, dedicated_bytes, adapter_total_bytes, limit_bytes}`, in
+  `last_launch_reserve.anomalies` and in admission receipts (`observation.vram.counter_anomalies`). The installed guard
+  still reads an unknown figure as zero (`runtime-patches/comfy-extensions/studio_vram_guard`), unchanged here.
+  Not verified against Task Manager: the owner skipped that manual check.
 - Pinned host memory is not counted as a spill: the primary started with about 13 GB pinned read
   9,755 MB dedicated and 79 MB shared through the same counters.
 - Each job records the peak dedicated and shared memory of the ComfyUI process while it runs

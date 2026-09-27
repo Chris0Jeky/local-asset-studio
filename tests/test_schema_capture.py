@@ -22,7 +22,7 @@ validator=fixtures.validator
 
 class SchemaCaptureTests(unittest.TestCase):
     def setUp(self):
-        self.fixture=fixtures.CatalogValidationTests();self.fixture.setUp();self.addCleanup(self.fixture.doCleanups)
+        self.fixture=fixtures.CatalogValidationTests();self.addCleanup(self.fixture.doCleanups);self.fixture.setUp()
         self.root=self.fixture.root;self.output=self.root/'capture.json';self.routes=[];self.route_audit=None
         self.raw=json.dumps(fixtures.SCHEMA,indent=2).encode()+b'\n'
         case=self

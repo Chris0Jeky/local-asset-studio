@@ -195,6 +195,18 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(removed,{'regions_cleared':1,'pixels_cleared':2})
         self.assertEqual([out.getpixel(xy)[3] for xy in ((10,1),(10,2),(7,4),(1,10),(2,10),(3,3))],[0,0,9,8,32,255])
         self.assertEqual(out.tobytes()[0::4],im.tobytes()[0::4]);self.assertEqual(m.matte_components(out)['components'],2)
+    def test_despeckle_never_clears_the_subject_of_a_faint_sprite(self):
+        im=Image.new('RGBA',(16,16),(0,0,0,0))
+        for y in range(2,10):
+            for x in range(2,10):im.putpixel((x,y),(9,9,9,24))  # a glow sprite that never reaches the speck peak
+        im.putpixel((14,14),(9,9,9,20))                          # a detached faint speck beside it
+        out,removed=m.despeckle(im)
+        self.assertEqual(removed,{'regions_cleared':1,'pixels_cleared':1})
+        self.assertEqual(out.getpixel((5,5))[3],24);self.assertEqual(out.getpixel((14,14))[3],0)
+        # With a bright subject present, a larger faint haze is residue and is still cleared.
+        im.putpixel((0,15),(9,9,9,255))
+        out,removed=m.despeckle(im)
+        self.assertEqual(removed,{'regions_cleared':2,'pixels_cleared':65});self.assertEqual(out.getpixel((5,5))[3],0)
     def test_despeckle_treats_a_dust_bridge_as_detached(self):
         im=Image.new('RGBA',(8,1),(0,0,0,0))
         for x,a in enumerate((255,255,5,20,0,255,9,40)):im.putpixel((x,0),(7,7,7,a))

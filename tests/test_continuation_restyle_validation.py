@@ -8,15 +8,15 @@ import unittest
 
 from PIL import Image
 
+import test_continuation as base  # puts app/ on sys.path first
 import continuation
-import test_continuation as base
 
 
 class RestyleValidationBranchTests(unittest.TestCase):
     def setUp(self):
         self.case = base.ContinuationTests()
-        self.case.setUp()
         self.addCleanup(self.case.doCleanups)
+        self.case.setUp()
 
         catalog = json.loads((base.ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
         nova = next(preset for preset in catalog["presets"] if preset["id"] == "style-pose-nova")
