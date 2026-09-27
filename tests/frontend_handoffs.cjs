@@ -446,6 +446,61 @@ async function explicitLocalAbandonment() {
   assert.match(element('#gallery').innerHTML,/Remote outcome remains unknown/);
 }
 
+// #1138: Cancel sits on every queued or running card and in the run dock. It stays visible but disabled with the
+// server's reason when it cannot act, asks before stopping a render that may be running, and sends one request per click.
+async function ownerCancelControls() {
+  const {element, requests, run} = sandbox({}, {});
+  const job = (id, fields) => JSON.stringify(Object.assign({id, preset_name: 'P ' + id, message: 'Working', outputs: [], prompt_ids: [], created_at: 1}, fields));
+  run(`jobs=[${[
+    job('queued', {status: 'queued', can_cancel: true, cancel_needs_confirm: false}),
+    job('running', {status: 'running', prompt_ids: ['p1'], created_at: 2, can_cancel: true, cancel_needs_confirm: true}),
+    job('stage', {status: 'running', prompt_ids: ['p2'], can_cancel: false, cancel_blocked_reason: 'This render belongs to a comparison; stop the comparison instead'}),
+    job('asked', {status: 'running', prompt_ids: ['p3'], can_cancel: false, cancel_blocked_reason: 'Cancel requested; the Studio is checking ComfyUI', cancellation: {state: 'requested', requested_at: 100}}),
+    job('refused', {status: 'running', prompt_ids: ['p4'], can_cancel: true, cancel_needs_confirm: true, cancellation: {state: 'refused', requested_at: 100, note: '<b>ComfyUI does not list this prompt</b>'}}),
+    job('done', {status: 'cancelled', message: 'Not started: cancelled by you. Nothing was sent to ComfyUI.', can_cancel: false, cancel_blocked_reason: 'Already cancelled', cancellation: {state: 'cancelled', requested_at: 100}}),
+  ].join(',')}];renderJobs();`);
+  const html = element('#gallery').innerHTML;
+  assert.match(html, /class="cancelJob" data-job="queued" data-confirm="0">Cancel<\/button><p class="cancelConsequence"><small>Removes it from the queue\. Nothing has been sent to ComfyUI\./);
+  assert.match(html, /class="cancelJob" data-job="running" data-confirm="1">Cancel<\/button><p class="cancelConsequence"><small>Stops the render in ComfyUI\. Finished outputs are kept\. Nothing is retried\./);
+  assert.match(html, /class="cancelJob" data-job="stage" disabled>Cancel<\/button><p class="disabledReason"><small>This render belongs to a comparison; stop the comparison instead/, 'A blocked cancel stays visible with its reason');
+  assert.match(html, /<b>Cancel requested<\/b>[^<]*: the Studio is checking ComfyUI for this job&#39;s prompt|<b>Cancel requested<\/b>[^<]*: the Studio is checking ComfyUI for this job's prompt/);
+  assert.doesNotMatch(html, /data-job="asked" /, 'An open request offers no second Cancel');
+  assert.match(html, /<b>Cancel refused<\/b>[^<]*: &lt;b&gt;ComfyUI does not list this prompt/, 'The refusal reason is shown, escaped, and Cancel can be asked again');
+  assert.match(html, /data-job="refused" data-confirm="1"/);
+  assert.doesNotMatch(html, /data-job="done" /, 'A cancelled job has no Cancel control');
+  assert.equal(requests.length, 0, 'Rendering sends nothing');
+  const click = (id, confirm, disabled = false) => element('#gallery').onclick({target: {closest: s => s === '.cancelJob' ? {dataset: {job: id, confirm}, disabled} : null}});
+  let asked = 0;
+  run('window.confirm=()=>false'); await click('running', '1');
+  assert.equal(requests.length, 0, 'Declining the confirmation sends nothing');
+  run('window.confirm=()=>{window.asked=(window.asked||0)+1;return true;}');
+  await click('stage', '0', true); assert.equal(requests.length, 0, 'A disabled control sends nothing');
+  await click('queued', '0'); asked = run('window.asked||0');
+  assert.equal(asked, 0, 'A job that has not started is cancelled without a confirmation');
+  await Promise.all([click('running', '1'), click('running', '1')]);
+  assert.deepEqual(requests, [{url: '/api/jobs/queued/cancel', data: {}}, {url: '/api/jobs/running/cancel', data: {}}], 'A double click sends one request');
+  assert.equal(run('window.asked'), 1);
+  assert.match(element('#status').textContent, /Cancel requested\. The Studio is checking ComfyUI/);
+  // The run dock follows the run started here, else the newest queued or running job.
+  run(`document.getElementById=id=>document.querySelector('#'+id);`);
+  element('#cancelRun').dataset = {};
+  run(`activeJobId=null;renderRunCancel();`);
+  assert.equal(element('#cancelRun').dataset.job, 'running'); assert.equal(element('#cancelRun').disabled, false); assert.equal(element('#runCancel').hidden, false);
+  assert.equal(element('#cancelRun').dataset.confirm, '1'); assert.match(element('#cancelRunReason').textContent, /Finished outputs are kept/);
+  run(`activeJobId='stage';renderRunCancel();`);
+  assert.equal(element('#cancelRun').disabled, true); assert.equal(element('#cancelRunReason').textContent, 'This render belongs to a comparison; stop the comparison instead');
+  run(`activeJobId='asked';renderRunCancel();`);
+  assert.equal(element('#cancelRun').disabled, true); assert.equal(element('#cancelRun').textContent, 'Cancelling…');
+  run(`jobs=jobs.filter(j=>j.status==='cancelled');renderRunCancel();`);
+  assert.equal(element('#runCancel').hidden, true, 'No queued or running job: no dock control');
+  assert.equal(requests.length, 2);
+  // A finished run whose cancel came too late still says so (#1160 review); a plain finished run adds no card.
+  run(`jobs=[${job('late', {status: 'completed', outputs: [], cancellation: {state: 'too_late', requested_at: 100, note: 'ComfyUI finished the render before the interrupt took effect'}})},${job('plain', {status: 'completed'})}];renderJobs();`);
+  const done = element('#gallery').innerHTML;
+  assert.match(done, /data-problem="late"><b>P late · completed<\/b><p class="cancelNote"><small><b>Cancel came too late<\/b> \([^)]*\): ComfyUI finished the render before the interrupt took effect/);
+  assert.doesNotMatch(done, /data-problem="plain"/); assert.doesNotMatch(done, /class="cancelJob"/);
+}
+
 // #940: Problems shows the newest five open problems; put-away ones stay one toggle away.
 async function problemsPanelPutAway() {
   const {element, requests, run} = sandbox({}, {});
@@ -1180,6 +1235,7 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await unstagedLocalFilesCannotBeSaved();
   await explicitLocalAbandonment();
   await problemsPanelPutAway();
+  await ownerCancelControls();
   await check('qwen-1ref', null, 1);
   await check('qwen-3ref', null, 3);
   await check('plain', null, 0);
