@@ -383,6 +383,7 @@ async function problemsPanelPutAway() {
   assert.match(html,/Problems · 8 run\(s\) · 1 put away/);
   assert.equal((html.match(/data-put-away="true"/g)||[]).length,4,'Newest five shown; the tracked uncertain job offers no Put away');
   assert.match(html,/Stop tracking before putting this away/);
+  assert.match(html,/a ComfyUI restart, relaunch or crash erases it/,'#864: stopping tracking says what a ComfyUI restart discards');
   assert.match(html,/3 older problem\(s\) not shown/);assert.doesNotMatch(html,/Failed 3/);
   assert.doesNotMatch(html,/Put away one/);assert.match(html,/Show put away \(1\)/);
   assert.equal(requests.length,0,'Rendering sends nothing');

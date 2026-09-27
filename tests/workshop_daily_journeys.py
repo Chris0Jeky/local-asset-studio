@@ -188,6 +188,72 @@ async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')th
         self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Unreviewed')
         self.page.click('[data-output-review="needs_work"]')
         self.page.wait_for_function('said.length===2', timeout=2000)
+    def load_desk(self, plans, jobs):
+        home = region(source('studio-workbench.js'), '  function renderHome(', "  q('#uxRefreshHome').onclick")
+        self.page.goto('about:blank')
+        activity = region(source('production.js'), 'function planActivity(', 'function planGroups(')
+        self.page.set_content('''<div id="uxHomeHealth"></div><div id="uxStats"></div><div id="uxAttention"></div><div id="uxRecent"></div><script>'''
+            + source('studio-core.js') + '''</script><script>
+const q=s=>document.querySelector(s),U=StudioUX,escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function assetPreview(){return '';}
+let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{assets:[]},plans:'''+plans+''',jobs:'''+jobs+'''};
+</script><script>'''+activity+home+'''renderHome();</script>''')
+        return self.page.locator('#uxAttention').inner_text()
+
+    def test_desk_folds_plans_untouched_for_a_week_but_keeps_live_and_undated_ones(self):
+        # #940: twelve-day-old comparisons left the desk permanently full. Runs & review keeps them under Older.
+        now = 'Date.now()/1000'
+        desk = self.load_desk('[{id:"old-review",name:"Old review",kind:"comparison",created_at:'+now+'-12*86400,state:{status:"awaiting_review"}},'
+            '{id:"old-uncertain",name:"Old uncertain",kind:"comparison",created_at:'+now+'-12*86400,state:{status:"uncertain"}},'
+            '{id:"old-running",name:"Old but running",kind:"comparison",created_at:'+now+'-12*86400,state:{status:"running"}},'
+            '{id:"fresh",name:"Fresh plan",kind:"comparison",created_at:'+now+'-86400,state:{status:"planned"}},'
+            '{id:"touched",name:"Old but reviewed today",kind:"comparison",created_at:'+now+'-30*86400,state:{status:"awaiting_review",finished_at:'+now+'-3600}},'
+            '{id:"undated",name:"Undated plan",kind:"comparison",state:{status:"planned"}}]', '[]')
+        for shown in ('Old but running', 'Fresh plan', 'Old but reviewed today', 'Undated plan'): self.assertIn(shown, desk)
+        for folded in ('Old review', 'Old uncertain'): self.assertNotIn(folded, desk)
+        self.assertIn('2 plan(s) untouched for 7 days', desk)
+        self.assertEqual(self.page.locator('#uxAttention .ux-desk-note a[href="/#production"]').count(), 1)
+        desk = self.load_desk('[{id:"old",name:"Only old",kind:"comparison",created_at:Date.now()/1000-9*86400,state:{status:"planned"}}]', '[]')
+        self.assertIn('A clear desk', desk); self.assertIn('1 plan(s) untouched for 7 days', desk)
+
+    def test_desk_job_rows_say_what_each_state_needs(self):
+        desk = self.load_desk('[]', '[{id:"f",preset_name:"Failed run",status:"failed"},{id:"u",preset_name:"Unknown run",status:"uncertain"},{id:"r",preset_name:"Live run",status:"running"}]')
+        self.assertIn('failed · see why, then put it away', desk)
+        self.assertIn('outcome unknown · inspect; do not run it again', desk)
+        self.assertIn('running · in progress', desk)
+        self.assertNotIn('do not repeat uncertain work', desk)
+
+    def load_inspector(self, job):
+        inspect = region(source('studio-workbench.js'), '  function inspectJob(', '  async function refreshHome(')
+        self.page.goto('about:blank')
+        self.page.set_content('''<button id="origin">Inspect job</button><dialog id="uxJobInspector" class="studio-dialog"></dialog><p id="said"></p><script>
+const q=s=>document.querySelector(s),escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const U={failureDetails:()=>null};window.posts=[];window.reads=0;
+let homeData={jobs:['''+job+''']},homeSignature='x';
+let homeUpdated=new Date(),jobInspector=document.querySelector('#uxJobInspector');function announce(text){q('#said').textContent=text;}
+async function post(path,body){posts.push({path,body});return {};}async function refreshHome(){reads++;}function refresh(){reads+=10;}
+</script><script>'''+inspect+'''document.querySelector('#origin').onclick=()=>inspectJob(homeData.jobs[0].id);
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-ux-put-away]');if(b)await putAwayFromDesk(b);});</script>''')
+        self.page.click('#origin')
+
+    def test_desk_inspector_puts_a_problem_away_without_touching_the_job(self):
+        self.load_inspector('{id:"failed-one",preset_name:"Old failure",status:"failed",message:"No memory",can_put_away:true}')
+        text = self.page.locator('#uxJobInspector').inner_text()
+        self.assertIn('Nothing is retried, cancelled or deleted', text)
+        self.page.click('[data-ux-put-away="true"]')
+        self.page.wait_for_function('!jobInspector.open')
+        self.assertEqual(self.page.evaluate('posts'), [{'path': '/api/jobs/failed-one/put-away', 'body': {'put_away': True}}])
+        self.assertEqual(self.page.evaluate('reads'), 11)
+        self.assertIn('Show put away', self.page.locator('#said').inner_text())
+
+    def test_desk_inspector_brings_back_and_explains_uncertain_holds(self):
+        self.load_inspector('{id:"away",preset_name:"Put away",status:"failed",put_away:true,can_bring_back:true}')
+        self.page.click('[data-ux-put-away="false"]')
+        self.assertEqual(self.page.evaluate('posts[0].body'), {'put_away': False})
+        self.load_inspector('{id:"u",preset_name:"Unknown",status:"uncertain",can_stop_tracking:true,can_put_away:false}')
+        self.assertEqual(self.page.locator('[data-ux-put-away]').count(), 0)
+        self.assertIn('stop tracking it first', self.page.locator('#uxJobInspector').inner_text())
+        self.assertEqual(self.page.locator('#uxJobInspector a[href="/#create"]').count(), 1)
 
     def load_picker(self):
         production = region(source('studio-workbench.js'), '  // Pull any existing image', '  // Drafts are data only')

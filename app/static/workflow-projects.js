@@ -8,6 +8,7 @@
   const btn = (text, action, id) => { const n = el('button', text, {type: 'button'}); if (id) n.id = id; n.onclick = guard(action); return n; };
   const uuid = () => crypto.randomUUID();
   let applying = false, readToken = 0, reduceToken = 0, state, mode = 'nodes', historyOwner = null;
+  let stepsDropTyped = false;
   const panel = el('section', null, {class: 'wf-panel wf-shared', 'aria-label': 'Saved workflows'});
   panel.append(el('h3', 'Saved workflows · shared with agents'));
   const actions = el('div', null, {class: 'wf-toolbar'}), choice = el('select', null, {id: 'sharedWorkflowChoice', 'aria-label': 'Saved workflow'});
@@ -110,7 +111,7 @@
     $('#restoreSharedWorkflow').disabled = blocked || !state.binding || !!state.binding.conflict || !history.value || historyOwner !== state.binding.id;
   }
   history.onchange = sync;
-  document.addEventListener('workflow:replace', () => { readToken++; if (!applying && state) { state.detach(); history.replaceChildren(el('option', 'Load revision history', {value: ''})); say('Local draft loaded. Save a new Workspace copy, or open a saved workflow to edit its revisions.'); } });
+  document.addEventListener('workflow:replace', () => { stepsDropTyped = true; readToken++; if (!applying && state) { state.detach(); history.replaceChildren(el('option', 'Load revision history', {value: ''})); say('Local draft loaded. Save a new Workspace copy, or open a saved workflow to edit its revisions.'); } });
   // Steps use the same pure reducer as saved commands, without committing a revision.
   const stepsPanel = el('section', null, {id: 'workflowSteps', class: 'wf-steps', 'aria-label': 'Workflow steps'}); stepsPanel.hidden = true;
   const viewbar = el('div', null, {class: 'wf-toolbar'}), nodesPanel = $('#builder .wf-builder');
@@ -183,8 +184,25 @@
     const position = (W.snapshot()?.steps || []).findIndex(item => item.id === step.id) + 1;
     say(`Moved ${step.name} to step ${position}. Save to Workspace to share this order; nothing was queued.`);
   }
+  // Steps-view typed text survives a background workflow:render with value, focus and caret, as the inspector does (#1062 mirrors #976).
+  function stepsContext(node) { let section = null, card = null, current = node; while (current && current !== stepsPanel) { if (!section && current.dataset?.wfNode) section = current; if (current.dataset?.stepId) card = current; current = current.parent || current.parentNode || null; } return section && card ? {step: card.dataset.stepId, node: section.dataset.wfNode} : null; }
+  function typedStepsField() {
+    const active = document.activeElement;
+    if (!active?.dataset?.wfField || !stepsPanel.contains(active) || active.value === active.wfRendered || (active.type === 'number' && active.validity?.badInput)) return null;
+    const where = active.closest ? (() => { const section = active.closest('[data-wf-node]'), card = active.closest('[data-step-id]'); return section && card ? {step: card.dataset.stepId, node: section.dataset.wfNode} : null; })() : stepsContext(active);
+    if (!where) return null;
+    return {step: where.step, node: where.node, key: active.dataset.wfField, value: active.value, start: active.selectionStart, end: active.selectionEnd, direction: active.selectionDirection};
+  }
+  function restoreStepsField(typed) {
+    if (!typed) return;
+    const input = [...stepsPanel.querySelectorAll('[data-wf-field]')].find(x => x.dataset.wfField === typed.key && stepsContext(x)?.step === typed.step && stepsContext(x)?.node === typed.node);
+    if (!input) return;
+    input.value = typed.value; input.oninput?.(); input.focus({preventScroll: true});
+    try { if (typeof typed.start === 'number' && typeof typed.end === 'number') input.setSelectionRange(typed.start, typed.end, typed.direction || 'none'); } catch (_) {}
+  }
   function renderSteps() {
     if (mode !== 'steps') return;
+    const typed = stepsDropTyped ? null : typedStepsField(); stepsDropTyped = false;
     const doc = W.snapshot(); stepsPanel.replaceChildren(el('p', 'Steps are named groups over the same nodes. Disabling a step never guesses a bypass. Save and check the graph explicitly.'));
     if (!doc?.steps?.length) { stepsPanel.append(el('p', 'No named steps yet. Create one by selecting its nodes and the settings you want to expose.')); return; }
     for (const [index, step] of doc.steps.entries()) {
@@ -194,7 +212,7 @@
       const count = step.nodes.filter(id => !doc.disabled.includes(id)).length;
       toggle.checked = !!step.nodes.length && count === step.nodes.length; toggle.indeterminate = count > 0 && count < step.nodes.length; toggle.disabled = !step.nodes.length;
       toggle.onchange = guard(() => reduce([{op: 'set_step_enabled', id: step.id, enabled: toggle.checked}])); label.append(toggle, document.createTextNode('Enable this step')); card.append(label);
-      for (const c of step.controls) { const setting = el('section', null, {class: 'wf-step-setting', 'aria-label': c.name}); setting.append(el('h4', c.name)); W.field(setting, c.node, c.input); card.append(setting); }
+      for (const c of step.controls) { const setting = el('section', null, {class: 'wf-step-setting', 'aria-label': c.name, 'data-wf-node': c.node}); setting.append(el('h4', c.name)); W.field(setting, c.node, c.input); card.append(setting); }
       const actions = el('div', null, {class: 'wf-toolbar'});
       const up = btn('Move up', () => moveStep(step, 'up')), down = btn('Move down', () => moveStep(step, 'down'));
       up.dataset.stepMove = 'up'; down.dataset.stepMove = 'down';
@@ -203,6 +221,7 @@
       for (const id of step.nodes) actions.append(btn('Inspect node ' + id, () => { view('nodes'); W.inspect(id); }));
       card.append(actions); stepsPanel.append(card);
     }
+    restoreStepsField(typed);
   }
   document.addEventListener('workflow:render', () => { sync(); renderSteps(); });
   view('nodes'); sync(); // No GET/POST, restoration or model work is started here.

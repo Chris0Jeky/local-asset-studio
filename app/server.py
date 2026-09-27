@@ -1323,12 +1323,15 @@ class Studio:
 
         A parent-directory failure after replacement leaves the markerless
         prospective state on disk while live memory still hides the job. When
-        the on-disk bytes are exactly the prospective state, only the
+        the parsed on-disk state equals the prospective state, only the
         acknowledgement bit converges to disk truth; status, disposition and
         queueing still await an explicit retry, and the caller re-raises.
+        A failure while reading back is swallowed so the caller re-raises the original publication error.
         """
         if "put_away_at" not in job: return False
-        if read_json(state_path, None) != state: return False
+        try: landed = read_json(state_path, None) == state
+        except Exception: return False
+        if not landed: return False
         job.pop("put_away_at", None)
         return True
 
