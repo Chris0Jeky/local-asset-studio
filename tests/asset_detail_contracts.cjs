@@ -44,6 +44,7 @@ function setup(options={}) {
   const dispatch=(name,event)=>{const results=[];for(const capture of [true,false])for(const h of handlers)if(h.name===name && !!h.capture===capture)results.push(h.fn(event));return Promise.all(results);};
   return {el,run,writes,reads,timers,storage,payload,actualRefresh,dispatch,metadata:index=>{const {workspace_id,request_id,expected_revisions,...fields}=payload(index);return fields;},receipt,accept:index=>writes[index].resolve(receipt(index)),confirmations:()=>requests,approve(value){approve=value;},
     async diagnostic(job='job-a') {const target={closest:selector=>selector==='[data-i2v-diagnostic]'?{dataset:{i2vDiagnostic:job}}:null};for(const h of handlers)if(h.name==='click'&&!h.capture)await h.fn({target});},
+    async clickClosest(selector,dataset){const target={closest:s=>s===selector?{dataset}:null};for(const h of handlers)if(h.name==='click'&&!h.capture)await h.fn({target});},
     capturedHandoff(){let prevented=false;for(const h of handlers)if(h.name==='click'&&h.capture)h.fn({target:{closest:()=>true},preventDefault(){prevented=true;},stopImmediatePropagation(){}});return prevented;}
   };
 }
