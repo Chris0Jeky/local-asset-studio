@@ -9,6 +9,7 @@
     const made=(job.outputs||[]).length;
     if(job.status==='completed')return {text:'Done'+took(job)+' · '+plural(made,'output')+'. Review it while it is fresh.',action:'Show result',error:false};
     if(job.status==='partial')return {text:'Partly done: '+plural(made,'output')+' saved. The rest will not be run again automatically.',action:'See what happened',error:true};
+    if(job.status==='not_submitted')return {text:'Not started: '+(String(job.message||'').split(/(?<=\.)\s/)[0]||'the queue could not be checked.')+' Nothing was submitted.',action:'See why',error:true};
     if(job.status==='uncertain')return {text:'Outcome unknown. It will not be run again; inspect it before starting new work.',action:'Inspect',error:true};
     const why=job.failure?.title||String(job.message||'').split(/(?<=\.)\s/)[0]||'No reason was recorded.';
     return {text:'Failed: '+why,action:'See why',error:true};

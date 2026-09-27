@@ -461,7 +461,10 @@ function renderProblems(problems,open){
 }
 async function refreshJobs(){try{const response=await fetch('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{});if(response.status===304){const current=response.headers?.get?.('ETag');if(current)jobsEtag=current;settleActiveJob();return;}if(!response.ok){let detail='Request failed';try{const data=await response.json();if(data&&data.error)detail=data.error;}catch{}const error=Error(detail);error.status=response.status;throw error;}const next=await response.json(),etag=response.headers?.get?.('ETag');jobsEtag=etag||null;const signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}settleActiveJob();}catch(e){message(e.message,true);}}
 // The run started here may already be settled in the list a 304 confirms (a fast failure seen by an earlier poll).
-function settleActiveJob(){const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status)){activeJobId=null;document.dispatchEvent(new CustomEvent('studio:job-settled',{detail:job}));}}}
+// Every run started from this page is announced once when it settles, even after a newer Generate took the status line.
+const SETTLED_JOB_STATUSES=['completed','failed','partial','uncertain','not_submitted'],startedJobIds=new Set();
+function settleActiveJob(){const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(SETTLED_JOB_STATUSES.includes(job.status))activeJobId=null;}
+  for(const id of [...startedJobIds]){const settled=jobs.find(j=>j.id===id&&SETTLED_JOB_STATUSES.includes(j.status));if(settled){startedJobIds.delete(id);document.dispatchEvent(new CustomEvent('studio:job-settled',{detail:settled}));}}}
 function refresh(){return readPoller?readPoller.refresh('jobs'):refreshJobs();}
 function showView(next){view=next;['create','assets','production','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();location.hash=next;}
 const MODEL_STATUS_KEY='studio.models.status',MODEL_STATUSES=['all','action','installed'];
@@ -610,7 +613,7 @@ $('#generate').onclick=async()=>{
     if(selected!==started||recipeTemplateHash!==startedHash)throw Error('The recipe changed while the source was uploading; nothing was submitted. Press Generate again.');
     uploaded=reference||uploaded;lastUploaded=lastReference||lastUploaded; // Bind the uploads only to the recipe they were made for.
     if(selected.reference&&uploaded)intent.controls.reference=uploaded;if(selected.last_reference&&lastUploaded)intent.controls.last_reference=lastUploaded;
-    const job=await post('/api/jobs',intent);activeJobId=job.id;message(job.message);await refresh();
+    const job=await post('/api/jobs',intent);activeJobId=job.id;startedJobIds.add(job.id);message(job.message);await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };
 // Ctrl+Enter (Cmd+Enter on a Mac) anywhere in Create does what one click on the Generate button does and nothing more:
