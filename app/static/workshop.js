@@ -480,10 +480,11 @@
     let blockerSignature = '';
     function renderBlockers(blockers) {
       const rows = blockers.map(n => { const fix = n.querySelector('[data-ux-resolve]'); return [n.dataset.readinessCode || '', n.querySelector('p').textContent, fix?.textContent || '', !!fix?.disabled]; });
-      blockerList.hidden = rows.length < 2;
+      // A lone blocker's text is already the summary above; its row then carries only the repair, if it has one.
+      const single = rows.length === 1; blockerList.hidden = !rows.length || single && !rows[0][2];
       const signature = JSON.stringify(rows); if (signature === blockerSignature) return; blockerSignature = signature;
       blockerList.replaceChildren(...rows.map(([code, message, label, disabled]) => {
-        const item = el('li'); item.append(el('span', '', message));
+        const item = el('li'); if (!single) item.append(el('span', '', message));
         if (label) {
           const fix = el('button', '', label); fix.type = 'button'; fix.disabled = disabled;
           // Forwards to the original readiness button, which owns focus and repair; nothing is decided here.
