@@ -873,7 +873,10 @@ class Studio:
         if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time(), **({'deferred': True} if deferred else {}))]
         if deferred:
             available = reading.get('available_bytes') if isinstance(reading, dict) else None
-            job["message"] = f"Queued. Memory headroom is {available / 1024**3:.1f} GiB and this job needs {self.required_host_commit_bytes(preset, graph) / 1024**3:.0f} GiB; before sending it the Studio will free ComfyUI's cached models and measure again"
+            head = f"Queued. Memory headroom is {available / 1024**3:.1f} GiB and this job needs {self.required_host_commit_bytes(preset, graph) / 1024**3:.0f} GiB; the Studio measures again just before sending it"
+            # Promise only what _release_for_commit_gate can do: at or below its floor the release is always skipped.
+            if isinstance(available, int) and available > COMMIT_RELEASE_FLOOR_BYTES: job["message"] = head + " and, if headroom is still short and nothing else is running, frees ComfyUI's cached models and measures once more"
+            else: job["message"] = head + f". Freeing ComfyUI's cached models needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom, so unless memory is released before then the job fails with nothing sent"
         self._save(job); self.jobs[job_id] = job
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)

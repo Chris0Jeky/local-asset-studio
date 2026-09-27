@@ -131,7 +131,7 @@ class ServerTests(unittest.TestCase):
         with patch.object(server.host_memory,'read',side_effect=[low,low,low,high,high]),patch.object(server.time,'sleep'):
             created=studio.create_job({'preset_id':'demo','controls':{}},enqueue=False);job=studio.jobs[created['id']]
             self.assertEqual(job['status'],'queued');self.assertTrue(job['host_commit_readings'][0]['deferred'])
-            self.assertIn('free ComfyUI',job['message']);self.assertIn('26.0 GiB',job['message'])
+            self.assertIn('frees ComfyUI',job['message']);self.assertIn('26.0 GiB',job['message'])
             studio._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual(job['prompt_ids'],['after-free'])
         calls=[(args[0],kwargs.get('data')) for args,kwargs in studio.requests if args]
@@ -179,7 +179,10 @@ class ServerTests(unittest.TestCase):
             with self.subTest(before=below):
                 studio=self._heavy_studio([self.IDLE],release=5)
                 with patch.object(server.host_memory,'read',return_value=self._commit_reading(below)),patch.object(server.time,'sleep'):
-                    job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+                    job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+                    # The queued message must not promise a release the worker will skip.
+                    self.assertNotIn('frees ComfyUI',job['message']);self.assertIn('needs more than 22 GiB',job['message'])
+                    studio._run(job)
                 self.assertEqual(job['status'],'failed');self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
                 self.assertIn('more than 22 GiB',job['commit_releases'][0]['outcome']);self.assertIn('were not freed',job['message'])
         studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'over-floor'},{'over-floor':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
