@@ -539,6 +539,9 @@ document.getElementById('gallery').innerHTML=jobs.map(j=>'<article class="jobSta
         self.assertTrue(stamp)
         self.page.wait_for_timeout(2200)
         self.assertEqual(self.page.evaluate("document.querySelector('#createView').__workshop.presentationView().contextStamp"), stamp)
+        # A real card change is still an execution change: the stamp advances (the filter ignores only the clock line).
+        self.page.evaluate("document.getElementById('gallery').insertAdjacentHTML('beforeend','<article class=\"jobStatus queued\" data-problem=\"queued-2\"><b>Fixture · queued</b><p>Queued</p></article>')")
+        self.page.wait_for_function("(s)=>document.querySelector('#createView').__workshop.presentationView().contextStamp!==s", arg=stamp)
         # A settled job loses its clock on the next tick.
         self.page.evaluate("jobs[0].status='completed'")
         self.page.wait_for_selector('[data-problem="run-1"] .job-elapsed', state='detached')

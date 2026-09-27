@@ -27,6 +27,12 @@ class WorkspaceTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def test_a_non_string_asset_id_is_not_found_not_a_sqlite_error(self):
+        # parent_assets and /api/assets/reference pass caller JSON here; a dict or list must be a 400, not a dropped request.
+        for identifier in ({}, [], None, 7):
+            with self.subTest(identifier=identifier):
+                with self.assertRaisesRegex(workspace.WorkspaceError, 'Asset not found'): self.store.get(identifier)
+
     def test_snapshot_survives_original_change_and_is_idempotent(self):
         self.source.write_bytes(b'changed original')
         self.assertEqual(self.store.file(self.asset).read_bytes(), b'original rendered bytes')
