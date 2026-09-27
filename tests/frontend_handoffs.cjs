@@ -1263,6 +1263,84 @@ async function recentRunsHostHeldProblemsDropTheStaleGalleryProblems() {
   assert.ok(s.nodes().includes(video), 'The playing clip is untouched');
 }
 
+// #1074 owner decision (27 Sep 2026): while a clip holds Recent runs, a status line outside #gallery counts what
+// is waiting (a finished run no longer vanishes silently); the release render clears it. Its text writes are counted.
+const heldLine = s => {
+  const line = s.element('#recentHeld'); let text = line.textContent || ''; line.lineWrites = 0;
+  Object.defineProperty(line, 'textContent', {configurable: true, get: () => text, set(value) {text = String(value); line.lineWrites++;}});
+  return line;
+};
+const runningJob = id => ({id, preset_name: 'Recipe ' + id, status: 'running', message: 'Running', outputs: [], prompt_ids: ['p-' + id]});
+
+async function recentRunsHeldLineCountsAFinishedRun() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '', 'Nothing waits before a clip plays');
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(line.textContent, '1 run finished, shown when the clip stops', 'The finished run is announced instead of vanishing');
+  await s.poll([runningJob('r2'), recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '1 run finished · 1 new run, shown when the clip stops', 'Each kind of change is counted');
+  await s.poll([recentJob('r3'), recentJob('r2'), recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '3 runs finished, shown when the clip stops', 'A run that appears already finished counts as finished');
+}
+
+async function recentRunsHeldLineClearsOnRelease() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.match(line.textContent, /1 run finished/);
+  video.paused = true; video.listeners.pause[0]();
+  assert.equal(s.writes, writes + 1, 'Pausing releases the held re-render once');
+  assert.match(s.element('#gallery').innerHTML, /data-output="r1:0"/, 'The finished run appears');
+  assert.equal(line.textContent, '', 'The line clears on the release render');
+  // A change that only Problems shows never raises the line; a forced render (Show more) clears it too.
+  const next = s.nodes().find(node => node.tagName === 'VIDEO'); next.paused = false;
+  await s.poll([{id: 'bad', preset_name: 'Bad', status: 'failed', message: 'OOM', outputs: [], prompt_ids: [], created_at: 3, can_put_away: true, put_away: false}, recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '', 'A new failure shows live in Problems, so nothing is waiting');
+  await s.poll([runningJob('r4'), recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '1 new run, shown when the clip stops');
+  s.run('jobsSignature="";renderJobs(undefined,true);');
+  assert.equal(line.textContent, '', 'A forced render shows everything, so the line clears');
+}
+
+async function recentRunsHeldLineIgnoresUnchangedPolls() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const before = line.lineWrites;
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.lineWrites, before + 1, 'The same waiting data writes the line once');
+  // Output changes on a run already shown count as changes; trashing it back to the shown state clears the line.
+  await s.poll([recentJob('r1'), recentJob('clip', 2, 'video')]);
+  assert.equal(line.textContent, '1 run finished · 1 other change, shown when the clip stops');
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '', 'Data back to what is on screen leaves nothing waiting');
+}
+
+async function recentRunsHeldLineNeverWritesTheGallery() {
+  for (const host of [false, true]) {
+    const s = recentRunsSandbox({host}), line = heldLine(s);
+    await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+    const video = s.nodes().find(node => node.tagName === 'VIDEO'); video.paused = false;
+    const writes = s.writes, nodes = s.nodes().length;
+    await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+    await s.poll([runningJob('r2'), recentJob('r1'), recentJob('clip', 1, 'video')]);
+    assert.match(line.textContent, /1 run finished · 1 new run/, 'Both layouts show the line (host ' + host + ')');
+    assert.equal(s.writes, writes, 'The line never replaces the gallery (host ' + host + ')');
+    assert.equal(s.nodes().length, nodes, 'The line adds nothing inside the gallery (host ' + host + ')');
+    assert.doesNotMatch(s.element('#gallery').innerHTML, /shown when the clip stops/);
+    assert.ok(s.nodes().includes(video) && !video.paused, 'The playing clip is untouched');
+  }
+}
+
 async function recentRunsLeaveOutsideFocusAlone() {
   const s = recentRunsSandbox();
   await s.poll(Array.from({length: 3}, (_, i) => recentJob('o' + i)));
@@ -1289,6 +1367,10 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await recentRunsHeldProblemsInsideTheGalleryKeepTheirCard();
   await recentRunsHeldProblemsReplaceTheGalleryProblems();
   await recentRunsHostHeldProblemsDropTheStaleGalleryProblems();
+  await recentRunsHeldLineCountsAFinishedRun();
+  await recentRunsHeldLineClearsOnRelease();
+  await recentRunsHeldLineIgnoresUnchangedPolls();
+  await recentRunsHeldLineNeverWritesTheGallery();
   await generateShortcutRoutesThroughTheButton();
   await seedAndPinChangesAreAnnounced();
   await pastedAndDroppedPicturesFillEmptySlots();

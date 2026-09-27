@@ -31,6 +31,12 @@
 .asset-reasons{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
 .asset-reason{font-size:10px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted)}
 .asset-reason.is-on{border-color:var(--accent);color:var(--accent);background:#c6f48a16}
+/* Quick checks (#1203): not checked / yes / no; the mark and the words carry the state, not colour alone. */
+.review-check,.studio-shell .review-check{font-size:10px;padding:2px 7px;min-height:26px;border-radius:999px;border:1px dashed var(--line);background:transparent;color:var(--muted)}
+.review-check.is-yes,.studio-shell .review-check.is-yes{border-style:solid;border-color:var(--accent);color:var(--accent)}
+.review-check.is-no,.studio-shell .review-check.is-no{border-style:solid;border-color:var(--danger);color:var(--danger)}
+@media(max-width:700px){.studio-shell .review-check{min-height:36px}}
+.ux-result-checks,.candidate-checks{display:flex;flex-wrap:wrap;gap:3px;margin:4px 0}.ux-run-checks{font-size:11px;opacity:.85}
 .asset-review-note{display:block;font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:8px}
 
 .asset-bulk-review{display:flex;align-items:center;gap:6px;flex-wrap:wrap}

@@ -73,4 +73,6 @@ model-viewer{display:block;width:100%;height:320px;background:radial-gradient(ci
 .collection-next{display:flex;flex-wrap:wrap;gap:8px}
 #collectionDialog .actions{flex-wrap:wrap}
 .recentMore{grid-column:1/-1;margin:0;font-size:11px;color:var(--muted)}
+/* #1074: waiting-changes line above Recent runs; its height is always reserved, so showing it moves no card. */
+.recentHeld{height:18px;margin:0 0 6px;font-size:11px;line-height:18px;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.recentHeld:empty{visibility:hidden}
 .output-review{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 12px 8px}.output-review-state{font-size:10px;color:var(--muted);margin-right:auto}.output-review-state.review-selected{color:var(--accent)}.output-review-state.review-needs_work,.output-review-state.review-rejected{color:var(--danger)}.output-review button{font-size:10px;padding:5px 8px}.output-review button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:#c6f48a16}

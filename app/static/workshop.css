@@ -218,7 +218,7 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
   .workshop[data-workshop-layout="studio"] .wk-results {grid-column:2;grid-row:3;position:sticky;top:84px;max-width:none;border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
   .workshop[data-workshop-layout="studio"] .wk-results>summary {border:0;border-bottom:1px solid var(--line);border-radius:0;padding:19px 20px}
   .workshop[data-workshop-layout="studio"] .gallery-panel {padding:16px;margin:0}
-  .workshop[data-workshop-layout="studio"] #gallery {max-height:calc(100dvh - var(--workshop-dock-space) - 235px);min-height:240px}
+  .workshop[data-workshop-layout="studio"] #gallery {max-height:calc(100dvh - var(--workshop-dock-space) - 259px);min-height:240px}
   .workshop[data-workshop-layout="studio"] .galleryEmpty {min-height:360px;font-size:21px}
   .workshop[data-workshop-layout="studio"] .imageCard img {width:100%;max-height:480px}
   .workshop[data-workshop-layout="studio"] .gallery-panel>.muted {font-size:11px;line-height:1.65;margin:0 0 14px}

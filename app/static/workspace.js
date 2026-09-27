@@ -529,7 +529,7 @@ function renderAssetQueue() {
   if(!assetQueue){panel.innerHTML='';return;}
   panel.innerHTML='<div class="asset-queue-head"><b>Review queue</b><span role="status" aria-live="polite">'+(assetQueue.index+1)+' of '+assetQueue.ids.length+'</span></div>'+
     '<div class="asset-queue-actions"><button type="button" data-queue-review="selected">Keeper <kbd>K</kbd></button><button type="button" data-queue-review="needs_work">Needs work <kbd>W</kbd></button><button type="button" data-queue-review="rejected">Rejected <kbd>X</kbd></button><button type="button" data-queue-skip>Skip <kbd>S</kbd></button><button type="button" data-queue-step="-1">← Previous</button><button type="button" data-queue-step="1">Next →</button><button type="button" data-queue-exit>Leave queue</button></div>'+
-    '<small class="asset-queue-legend">K keeper · W needs work · X rejected · S skip without saving · ← / → move. Typing in a field is never a shortcut. Each decision saves through Save details and then advances.</small>';
+    '<small class="asset-queue-legend">K keeper · W needs work · X rejected · S skip without saving · 1-5 quick checks · ← / → move. Typing in a field is never a shortcut. Each decision saves through Save details and then advances.</small>';
 }
 function startReviewQueue() {
   const pending=assetUnreviewed(visibleAssets()).slice().sort((a,b)=>(b.created_at||0)-(a.created_at||0));
@@ -565,7 +565,24 @@ async function assetQueueDecide(review) {
 function assetTagList(){return $('#assetTags').value.split(',').map(t=>t.trim()).filter(Boolean);}
 function renderAssetReasons() {
   const chosen=new Set(assetTagList().map(t=>t.toLowerCase()));
+  renderAssetChecks();
   $('#assetReviewReasons').innerHTML=assetReasonTags.map(reason=>'<button type="button" class="asset-reason'+(chosen.has(reason)?' is-on':'')+'" data-review-reason="'+esc(reason)+'" aria-pressed="'+(chosen.has(reason)?'true':'false')+'">'+esc(reason)+'</button>').join('');
+}
+// Quick checks (#1203) fit the picture's recipe route and live in the same tags draft as the reason chips: a press edits
+// the draft only, and Save details or a K/W/X decision saves them with the review. Keep never waits on them.
+function assetCheckNames(){return globalThis.StudioReviewChecks?StudioReviewChecks.forAsset(activeAsset,typeof catalog==='undefined'?[]:catalog?.presets):[];}
+function renderAssetChecks() {
+  const names=assetCheckNames(),box=$('#assetReviewChecks');box.hidden=!names.length;
+  box.innerHTML=names.length?StudioReviewChecks.chipsHTML({tags:assetTagList(),names,attr:'data-review-check',escape:esc}):'';
+}
+function toggleAssetReviewCheck(name) {
+  if(!assetCheckNames().includes(name))return;
+  if(assetDetailBusy){assetDetailStatus('A save is still pending; press that check again once it finishes.');return;}
+  const tags=StudioReviewChecks.cycle(assetTagList(),name);
+  $('#assetTags').value=tags.join(', ');renderAssetReasons();
+  if(!retainAssetDraft())return;
+  const now=StudioReviewChecks.answer(tags,name);
+  assetDetailStatus(name+' '+(now===null?'not checked':now?'yes':'no')+'. Unsaved until Save details or K / W / X.');
 }
 function toggleAssetReason(reason) {
   if(!assetReasonTags.includes(reason))return;
@@ -947,6 +964,13 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight'){e.preventDefault();assetQueueStep(1);return;}
   if(e.key==='ArrowLeft'){e.preventDefault();assetQueueStep(-1);}
 });
+// Number keys press the open picture's quick checks, in or out of the queue; typing in a field is never a shortcut.
+document.addEventListener('keydown',e=>{
+  if(!globalThis.StudioReviewChecks || !activeAsset || !$('#assetDialog').open || e.defaultPrevented)return;
+  const tag=(e.target?.tagName||'').toUpperCase();
+  if(['INPUT','TEXTAREA','SELECT'].includes(tag) || e.target?.isContentEditable)return;
+  const name=assetCheckNames()[StudioReviewChecks.keyIndex(e)];if(name){e.preventDefault();toggleAssetReviewCheck(name);}
+});
 // Queue decisions and the Save details button share one save path, payload and revision guard.
 async function saveAssetDetails() {
   const snapshot=assetDetailValues();
@@ -997,6 +1021,7 @@ document.addEventListener('click',async e=>{
       return;
     }
     const reason=e.target.closest('[data-review-reason]');if(reason){toggleAssetReason(reason.dataset.reviewReason);return;}
+    const check=e.target.closest('[data-review-check]');if(check){toggleAssetReviewCheck(check.dataset.reviewCheck);return;}
     const decide=e.target.closest('[data-queue-review]');if(decide){await assetQueueDecide(decide.dataset.queueReview);return;}
     if(e.target.closest('[data-queue-skip]')){assetDetailStatus('Skipped. No review was saved for this asset.');assetQueueStep(1);return;}
     const step=e.target.closest('[data-queue-step]');if(step){assetQueueStep(Number(step.dataset.queueStep));return;}

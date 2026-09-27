@@ -209,7 +209,7 @@ DENY_LABELS = re.compile(
     r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
 DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-review', 'data-asset-favorite', 'data-bulk',
-              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'download')
+              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'data-ux-check', 'data-candidate-check', 'download')
 
 # Controls whose press only changes this page, or reads, or validates without storing anything. Keyed by
 # the selector with attribute values stripped (see control_kind). The label heuristic misfires on them —
@@ -368,15 +368,18 @@ def build_handler():
                 return self.json({'template_sha256': preset['continuation_capability']['template_sha256']})
             if path == '/api/assets/update':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
-                if data.get('action') != 'edit' or set(data) != {'action', 'ids', 'review', 'workspace_id', 'expected_revisions', 'request_id'}:
+                # Tile review writes one field: a review decision, or the tags that carry a quick check (#1203).
+                fields = set(data) - {'action', 'ids', 'workspace_id', 'expected_revisions', 'request_id'}
+                if data.get('action') != 'edit' or fields not in ({'review'}, {'tags'}) or len(data) != 6:
                     return self.json({'error': 'Only explicit tile review is supported by this fixture'}, 400)
                 assets = [next(a for a in fixture.ASSETS if a['id'] == identifier) for identifier in data['ids']]
                 if any(a['metadata_revision'] != data['expected_revisions'][a['id']] for a in assets):
                     return self.json({'error': 'Synthetic metadata conflict'}, 409)
-                for asset in assets: asset.update(review=data['review'], metadata_revision=asset['metadata_revision'] + 1)
+                field = fields.pop()
+                for asset in assets: asset.update({field: data[field], 'metadata_revision': asset['metadata_revision'] + 1})
                 return self.json(dict(status='applied', workspace_id=data['workspace_id'], request_id=data['request_id'],
                                       action='edit', updated=data['ids'], revisions={a['id']: a['metadata_revision'] for a in assets},
-                                      applied={'review': data['review']}, current=copy.deepcopy(assets)))
+                                      applied={field: data[field]}, current=copy.deepcopy(assets)))
             if path == '/api/preview':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
@@ -1045,6 +1048,10 @@ def _combine_loop(c):
     unrelated = copy.deepcopy(added[0]); unrelated['id'] = 'combine-other-pair'
     unrelated['references'][0]['sha256'] = 'b' * 64
     fixture.JOBS[:0] = fillers + [unrelated] + added
+    # Registered outputs carry their run's recipe, as app/workspace.py records it; the engine chips count by it (#1203).
+    saved = {a['id']: (a.get('preset_id'), list(a['tags'])) for a in fixture.ASSETS}
+    for job in added[:4]:
+        next(a for a in fixture.ASSETS if a['id'] == job['outputs'][0]['asset_id'])['preset_id'] = job['preset_id']
     try:
         c.page.evaluate('refreshJobs()')
         c.page.wait_for_selector('#uxPairResults .ux-result-tile')
@@ -1107,6 +1114,26 @@ def _combine_loop(c):
         c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").review === "selected"')
         c.act('[data-ux-review="needs_work"][data-asset="asset-3"]', note='independent review for the other seed')
         c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-3").review === "needs_work"')
+        # #1203: quick checks fit the Combine route. Two presses on the keeper's tile save one answer each with its revision;
+        # key 2 on the focused tile changes the face answer; Keep stays available throughout, never waiting on a check.
+        tile = '#uxPairResults .ux-result-tile:has([data-ux-check][data-asset="asset-2"])'
+        assert c.page.locator(tile + ' [data-ux-check]').all_inner_texts() == ['pose', 'face', 'outfit', 'style', 'clean']
+        engine_chip = '[data-ux-engine="%s"] .ux-engine-checks' % initial['preset_id']
+        assert c.page.locator(engine_chip).inner_text() == 'Not checked yet'
+        c.act('[data-ux-check="pose"][data-asset="asset-2"]', note='quick check: the pose carried over')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:pose=yes")')
+        c.act('[data-ux-check="face"][data-asset="asset-2"]', note="quick check: the face is the character's")
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:face=yes")')
+        c.page.wait_for_function('document.activeElement && document.activeElement.dataset.uxCheck === "face"')
+        c.page.keyboard.press('2')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:face=no")')
+        writes = [p['data'] for p in fixture.POSTS if p['path'] == '/api/assets/update' and 'tags' in p['data']]
+        assert [w['tags'] for w in writes] == [['fixture', 'check:pose=yes'], ['fixture', 'check:pose=yes', 'check:face=yes'], ['fixture', 'check:pose=yes', 'check:face=no']], writes
+        assert all('review' not in w for w in writes) and c.page.evaluate('assetState.assets.find(a=>a.id === "asset-2").review') == 'selected'
+        assert c.page.locator('[data-ux-review="selected"][data-asset="asset-2"]').is_enabled()
+        c.act(engine_chip, 'read', note="the engine chip counts this PC's answers")
+        assert c.page.locator(engine_chip).inner_text() == 'pose 1/1 · face 0/1', c.page.locator(engine_chip).inner_text()
+        assert c.page.locator('#uxPairResults .ux-run-group:has([data-asset="asset-2"]) .ux-run-checks').inner_text() == 'pose 1/1 · face 0/1'
         c.act('[data-ux-rerun="same"][data-job="combine-loop-0"]', note='stage the exact recorded seed, without running it')
         c.page.wait_for_function('getControl("seed").value === "42" && !referencePending')
         assert c.page.locator('#positive').input_value() == initial['controls']['positive']
@@ -1116,9 +1143,13 @@ def _combine_loop(c):
         assert c.page.evaluate('referenceRecords[0].file') == initial['references'][0]['file']
         assert not [p for p in fixture.POSTS if p['path'] == '/api/jobs']
         c.act('#generate', 'read', note='the only generation action still requires a separate explicit click')
-        return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews saved; same/new seeds prepared; zero generation requests'
+        return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews and three quick-check answers saved; engine count read; same/new seeds prepared; zero generation requests'
     finally:
         fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith(('combine-loop-', 'combine-other-pair', 'combine-filler-'))]
+        for asset in fixture.ASSETS:
+            preset_id, tags = saved[asset['id']]; asset['tags'] = tags
+            if preset_id is None: asset.pop('preset_id', None)
+            else: asset['preset_id'] = preset_id
 
 
 VARY_STATE = """() => ({preset: selected.id, intent: continuationState && continuationState.intent,

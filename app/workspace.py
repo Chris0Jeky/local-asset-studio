@@ -43,6 +43,10 @@ METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashe
 ADDITIVE_COLUMNS = ("run_label", "prompt_excerpt")
 PROMPT_EXCERPT_CHARS = 60
 RUN_LABEL_MAX = 80
+# Quick review checks (#1203): one owner answer per check, stored as a `check:<name>=yes|no` tag so it saves with the
+# asset's revisioned review. The page picks which checks a recipe route shows; absent means not checked (K14).
+REVIEW_CHECKS = ("pose", "face", "outfit", "style", "clean", "anatomy", "composition")
+CHECK_TAG = re.compile(r"check:(%s)=(yes|no)" % "|".join(REVIEW_CHECKS))
 
 
 def clean_run_label(value):
@@ -463,7 +467,11 @@ class AssetWorkspace:
                             if isinstance(tag, str) and not tag:
                                 continue
                             valid_tags.append(self.text(tag, "Tag", 60))
-                        changes["tags"] = json.dumps(list(dict.fromkeys(valid_tags)))
+                        valid_tags = list(dict.fromkeys(valid_tags))
+                        answered = [CHECK_TAG.fullmatch(t) for t in valid_tags if t[:6].lower() == "check:"]
+                        if not all(answered) or len({m[1] for m in answered}) != len(answered):
+                            raise WorkspaceError("Check tags read check:<" + "|".join(REVIEW_CHECKS) + ">=yes or =no, one answer per check; nothing changed")
+                        changes["tags"] = json.dumps(valid_tags)
                     if "run_label" in payload:
                         # A label marks an agent run; null clears it (the operator's own). Reversible like every edit.
                         try: changes["run_label"] = clean_run_label(payload["run_label"])
