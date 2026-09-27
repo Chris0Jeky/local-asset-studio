@@ -25,8 +25,15 @@ _RESTART_BLOCKED_ALL_ABANDONED_MESSAGE = (
     "reopen an abandoned job. The restart stays refused until ComfyUI no longer holds those prompts; "
     "open the job under Problems first if you want its outputs."
 )
+# A timed-out, malformed or unbounded /history check stays "unknown" (#1082 review): say so, never "still holds".
+_RESTART_BLOCKED_ABANDONED_UNVERIFIED_MESSAGE = (
+    "Abandoned Studio jobs may still have prompts in ComfyUI's history: the history check could not confirm "
+    "they are gone. Resume observation does not reopen an abandoned job. The restart stays refused until the "
+    "check shows those prompts are gone; retry once ComfyUI answers, and open the job under Problems first if "
+    "you want its outputs."
+)
 _RESTART_BLOCKED_MIXED_ABANDONED_SUFFIX = (
-    " Abandoned jobs among them cannot be resumed; they block until ComfyUI no longer holds their prompts."
+    " Abandoned jobs among them cannot be resumed; they block until ComfyUI is shown not to hold their prompts."
 )
 
 
@@ -200,8 +207,10 @@ class RuntimeMixin:
         remaining, checks, absent = self._restart_history(blockers, verified_absent)
         summary = _blocker_summary(remaining, checks)
         if remaining:
+            results = {(check["kind"], check["id"]): check["result"] for check in checks}
             if all(item.get("status") == "abandoned" for item in remaining):
-                message = _RESTART_BLOCKED_ALL_ABANDONED_MESSAGE
+                present = all(results.get((item["kind"], item["id"])) == "history_present" for item in remaining)
+                message = _RESTART_BLOCKED_ALL_ABANDONED_MESSAGE if present else _RESTART_BLOCKED_ABANDONED_UNVERIFIED_MESSAGE
             elif any(item.get("status") == "abandoned" for item in remaining):
                 message = _RESTART_BLOCKED_MESSAGE + _RESTART_BLOCKED_MIXED_ABANDONED_SUFFIX
             else:

@@ -242,6 +242,19 @@ class LargeJobPreparationClassificationTests(LargeJobPreparationTestCase):
         self.assertEqual(result["phase"], "restart_blocked_by_unresolved_work")
         self.assertIn("Resume observation does not reopen an abandoned job", result["final"]["reason"])
         self.assertNotIn("Open the job and use Resume", result["final"]["reason"])
+        self.assertNotIn("could not confirm", result["final"]["reason"])
+        with self.subTest("history unknown"):
+            # A timed-out /history check is not proof the prompts are still held (#1082 review).
+            studio = Studio(self.root / "abandoned-unknown", [observation(commit=20 * GIB), observation(commit=20 * GIB)])
+            studio.jobs["ab"] = observing_job(status="abandoned", prompt="p-ab")
+            studio.backends.history_error = TimeoutError("slow")
+            studio.config["enable_large_job_backend_restart"] = True
+            self.restartable(studio)
+            result = self.controller(studio).run(self.request(allow_restart=True))
+            self.assertEqual(result["phase"], "restart_blocked_by_unresolved_work")
+            self.assertEqual(result["blockers"]["history_checks"][0]["result"], "unknown")
+            self.assertIn("could not confirm they are gone", result["final"]["reason"])
+            self.assertNotIn("jobs still have prompts", result["final"]["reason"])
         with self.subTest("mixed"):
             studio = Studio(self.root / "mixed-restart", [observation(commit=20 * GIB), observation(commit=20 * GIB)])
             studio.jobs["ab"] = observing_job(status="abandoned", prompt="p-ab")
