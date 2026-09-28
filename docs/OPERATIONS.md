@@ -147,12 +147,15 @@ python scripts/intake-downloads.py --dry-run
 
 - **`fetch-hf.py`** asks the repository tree API for the file's LFS oid and byte count first, then streams the
   download while hashing it. A mismatch preserves the `.part` file and installs nothing. If the tree advertises
-  no oid the script says so before downloading; that copy is unverified against its source.
+  no oid, the metadata-only `--dry-run` still reports that fact, but a real download is refused unless the operator
+  explicitly passes `--allow-unverified`; a refused transfer remains as `.part` and is not installed.
 - **`civitai-fetch.py`** resolves the filename and SHA-256 from `https://civitai.com/api/v1/model-versions/<id>`.
   The metadata is public, so `--dry-run` works with no credentials; the download endpoint is not. The API token
   is read **only** from the `CIVITAI_API_TOKEN` environment variable — never from the command line, never from
   `config/local.json`, never printed, and never forwarded when civitai redirects the download to its CDN host.
-  A 401, a 403 (including region blocks) and a 429 each produce a specific message; nothing is installed.
+  A 401, a 403 (including region blocks) and a 429 each produce a specific message; nothing is installed. A version
+  with no advertised SHA-256 is likewise refused unless the operator explicitly passes `--allow-unverified`;
+  metadata-only `--dry-run` remains available without that opt-in.
   Pass `--resume` only when the named `.part` file already exists. The script verifies a complete partial
   against the pinned size and SHA-256 and publishes it with a receipt without requesting another body; a
   missing or corrupted partial is refused and retained. An incomplete partial resumes only after strict
