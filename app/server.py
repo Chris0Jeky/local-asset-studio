@@ -1163,6 +1163,8 @@ class Studio:
         if not job['outputs'][0].get('asset_id'):
             job['status']='failed'
             job['message']='Asset storage could not confirm this request. Check its receipt before retrying the exact command.'
+            (self.runs/identifier).mkdir()
+            self._save(job)
             with self.lock:
                 self.jobs[identifier]=job
             raise sqlite3.Error(job['outputs'][0].get('snapshot_error') or 'Asset storage could not confirm this request')
