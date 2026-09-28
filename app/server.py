@@ -1153,13 +1153,21 @@ class Studio:
 
     def import_image(self, filename, content_type, body):
         uploaded=self.upload(filename,content_type,body)
-        identifier=str(uuid.uuid4());(self.runs/identifier).mkdir()
+        identifier=str(uuid.uuid4())
         job={'id':identifier,'operation':'asset.import','status':'completed','created_at':time.time(),
              'preset_id':'imported-image','preset_name':uploaded['original_name'],'controls':{},'batch_count':1,
              'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[uploaded],
              'message':'Imported original image. No generation submitted.','graph_path':'','graph':{},
              'outputs':[{'filename':uploaded['original_name'],'uploaded_file':uploaded['file'],'type':'output','media_type':'image'}]}
-        self.index_outputs(job);self._save(job)
+        self.index_outputs(job)
+        if not job['outputs'][0].get('asset_id'):
+            job['status']='failed'
+            job['message']='Asset storage could not confirm this request. Check its receipt before retrying the exact command.'
+            with self.lock:
+                self.jobs[identifier]=job
+            raise sqlite3.Error(job['outputs'][0].get('snapshot_error') or 'Asset storage could not confirm this request')
+        (self.runs/identifier).mkdir()
+        self._save(job)
         with self.lock:
             self.jobs[identifier] = job
         return {'asset':self.assets.get(job['outputs'][0]['asset_id']),'job':self.public(job)}
@@ -2536,7 +2544,10 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':
                 size=self._content_length(20*1024*1024)
-                return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),self.rfile.read(size)))
+                try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),self.rfile.read(size)))
+                except sqlite3.Error:
+                    return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
+                                            "code": "asset_storage_unconfirmed"})
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
             if self.path == '/api/av':return self._json(201,self.studio.production.av.create(self._body_json()))
             if self.path == '/api/voice-baseline':return self._json(201,self.studio.production.voice_baseline(self._body_json()))

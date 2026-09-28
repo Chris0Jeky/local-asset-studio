@@ -1812,6 +1812,39 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(ownership, [True])
         self.assertEqual(imported['job']['id'], next(iter(s.jobs)))
 
+    def test_import_indexing_failure_returns_storage_receipt_without_orphan(self):
+        # POST /api/assets/import must not raise KeyError nor leave runs/<uuid>/
+        # behind when assets.register fails. Like /api/assets/update, the HTTP
+        # layer returns 503 asset_storage_unconfirmed. Before the fix this raised
+        # KeyError from outputs[0]['asset_id'] after index_outputs swallowed the
+        # storage fault.
+        for fault in (sqlite3.OperationalError('database is locked'), OSError('disk full')):
+            with self.subTest(fault=type(fault).__name__):
+                s = self.studio()
+                runs_before = set(s.runs.iterdir())
+                body = png()
+                handler = server.Handler.__new__(server.Handler)
+                handler.studio = s
+                handler.path = '/api/assets/import'
+                handler.headers = {'X-Filename': 'frame.png', 'Content-Type': 'image/png'}
+                handler.rfile = io.BytesIO(body)
+                handler._safe_mutation = lambda: True
+                handler._content_length = lambda limit: len(body)
+                handler._drain_refused_body = lambda: None
+                seen = {}
+                handler._json = lambda status, obj: seen.update(status=status, obj=obj)
+                with patch.object(s.assets, 'register', side_effect=fault):
+                    handler.do_POST()
+                self.assertEqual(seen.get('status'), 503, seen)
+                self.assertEqual(seen['obj']['code'], 'asset_storage_unconfirmed')
+                self.assertIn('receipt', seen['obj']['error'])
+                self.assertEqual(len(s.jobs), 1)
+                job = next(iter(s.jobs.values()))
+                self.assertEqual(job['status'], 'failed')
+                self.assertNotIn('asset_id', job['outputs'][0])
+                self.assertIn('snapshot_error', job['outputs'][0])
+                self.assertEqual(set(s.runs.iterdir()), runs_before)
+
 class RefusalTransportTests(unittest.TestCase):
     """Real loopback sockets: ServerTests patches Thread.start, so the serving thread lives here (#1029)."""
     def test_unknown_route_with_large_body_serves_404_without_reset(self):
