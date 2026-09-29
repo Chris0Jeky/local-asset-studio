@@ -239,6 +239,13 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(job['status'],'failed');self.assertNotIn('commit_releases',job)
         self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
 
+    def test_commit_release_blocked_rejects_bool_and_unknown(self):
+        studio=self._heavy_studio(release=5);self.assertEqual(studio.commit_release_seconds,5)
+        self.assertTrue(server.commit_release_blocked(True));self.assertTrue(server.commit_release_blocked(False))
+        self.assertTrue(server.commit_release_blocked(None))
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES
+        self.assertTrue(server.commit_release_blocked(floor));self.assertFalse(server.commit_release_blocked(floor+1))
+
     def test_commit_release_between_batch_members_frees_after_the_first_prompt(self):
         minimum=32*1024**3;ok,low=self._commit_reading(minimum),self._commit_reading(26*1024**3)
         studio=self._heavy_studio([self.IDLE,{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}},self.IDLE,None,self.IDLE,{'prompt_id':'two'},{'two':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
