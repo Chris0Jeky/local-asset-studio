@@ -5,6 +5,7 @@ import json
 import tempfile
 import threading
 import unittest
+import uuid
 from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
@@ -144,6 +145,21 @@ class I2VDiagnosticTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             artifact_path(Stub(), "job", "../report.json")
+
+    def test_artifact_path_rejects_traversal(self):
+        class Stub:
+            experiments = self.root / "experiments"
+
+        valid_job_id = str(uuid.uuid4())
+        with self.assertRaises(ValueError):
+            artifact_path(Stub(), "not-a-uuid", "report.json")
+        with self.assertRaises(ValueError):
+            artifact_path(Stub(), valid_job_id, "../secret")
+        directory = self.root / "experiments" / "diagnostics" / valid_job_id
+        directory.mkdir(parents=True)
+        expected = directory / "report.json"
+        expected.write_text("{}", encoding="utf-8")
+        self.assertEqual(artifact_path(Stub(), valid_job_id, "report.json"), expected.resolve())
 
     def test_diagnostic_http_routes_are_read_only_gets(self):
         class Stub:
