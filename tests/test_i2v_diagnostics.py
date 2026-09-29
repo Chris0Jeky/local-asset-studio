@@ -151,8 +151,14 @@ class I2VDiagnosticTests(unittest.TestCase):
             experiments = self.root / "experiments"
 
         valid_job_id = str(uuid.uuid4())
+        invalid_job_id = "-" * 36
+        invalid_directory = self.root / "experiments" / "diagnostics" / invalid_job_id
+        invalid_directory.mkdir(parents=True)
+        (invalid_directory / "report.json").write_text("{}", encoding="utf-8")
         with self.assertRaises(ValueError):
             artifact_path(Stub(), "not-a-uuid", "report.json")
+        with self.assertRaises(ValueError):
+            artifact_path(Stub(), invalid_job_id, "report.json")
         with self.assertRaises(ValueError):
             artifact_path(Stub(), valid_job_id, "../secret")
         directory = self.root / "experiments" / "diagnostics" / valid_job_id
