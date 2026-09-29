@@ -17,7 +17,7 @@ ROOT = Path(__file__).parents[1]
 SPEC = importlib.util.spec_from_file_location("asset_server_i2v", ROOT / "app/server.py")
 server = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(server)
-from i2v_diagnostics import _supported_wan_job, artifact_path, centered_crop_plan, graph_diff
+from i2v_diagnostics import _supported_wan_job, artifact_path, centered_crop_plan, graph_diff, locate_source
 
 
 def png(width=832, height=1248):
@@ -166,6 +166,22 @@ class I2VDiagnosticTests(unittest.TestCase):
         expected = directory / "report.json"
         expected.write_text("{}", encoding="utf-8")
         self.assertEqual(artifact_path(Stub(), valid_job_id, "report.json"), expected.resolve())
+
+    def test_locate_source_rejects_escape(self):
+        studio = self.studio()
+        record = locate_source(studio, "../../outside.png")
+        self.assertIsNone(record["path"])
+        self.assertTrue(record["candidates"])
+        self.assertTrue(
+            any(
+                candidate.get("present") is False
+                and candidate.get("error") == "candidate escapes its source folder"
+                for candidate in record["candidates"]
+            )
+        )
+        self.assertFalse(any(candidate.get("present") for candidate in record["candidates"]))
+        inside = locate_source(studio, self.reference)
+        self.assertEqual(inside["path"], str((self.root / "experiments/uploads" / self.reference).resolve()))
 
     def test_diagnostic_http_routes_are_read_only_gets(self):
         class Stub:
