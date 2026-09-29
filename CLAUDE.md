@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Tier: daily-driver (T2) — authority: push free / merge free. Declared in `.agent-harness/tier.json`; read it live.
-Global laws auto-load from `~/.claude/CLAUDE.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter; `.grok/` is the Grok adapter.
+Global laws auto-load from `~/.claude/rules/laws.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter; `.grok/` is the Grok adapter.
 
 ## What this is
 
