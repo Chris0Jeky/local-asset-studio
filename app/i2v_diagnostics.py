@@ -784,7 +784,21 @@ def build_report(studio, job_id):
 
 
 def artifact_path(studio, job_id, filename):
-    if not isinstance(job_id, str) or not re.fullmatch(r"[0-9a-f-]{36}", job_id) or not isinstance(filename, str) or Path(filename).name != filename or filename in (".", ".."):
+    if not isinstance(job_id, str):
+        raise ValueError("Invalid diagnostic artifact")
+    try:
+        uuid.UUID(job_id)
+    except ValueError:
+        raise ValueError("Invalid diagnostic artifact")
+    if (
+        not isinstance(filename, str)
+        or not filename
+        or filename in (".", "..")
+        or "/" in filename
+        or "\\" in filename
+        or "\x00" in filename
+        or Path(filename).name != filename
+    ):
         raise ValueError("Invalid diagnostic artifact")
     root = (studio.experiments / "diagnostics" / job_id).resolve()
     path = (root / filename).resolve()

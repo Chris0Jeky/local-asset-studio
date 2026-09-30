@@ -239,6 +239,13 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(job['status'],'failed');self.assertNotIn('commit_releases',job)
         self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
 
+    def test_commit_release_blocked_rejects_bool_and_unknown(self):
+        studio=self._heavy_studio(release=5);self.assertEqual(studio.commit_release_seconds,5)
+        self.assertTrue(server.commit_release_blocked(True));self.assertTrue(server.commit_release_blocked(False))
+        self.assertTrue(server.commit_release_blocked(None))
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES
+        self.assertTrue(server.commit_release_blocked(floor));self.assertFalse(server.commit_release_blocked(floor+1))
+
     def test_commit_release_between_batch_members_frees_after_the_first_prompt(self):
         minimum=32*1024**3;ok,low=self._commit_reading(minimum),self._commit_reading(26*1024**3)
         studio=self._heavy_studio([self.IDLE,{'prompt_id':'one'},{'one':{'status':{'status_str':'success'},'outputs':{}}},self.IDLE,None,self.IDLE,{'prompt_id':'two'},{'two':{'status':{'status_str':'success'},'outputs':{}}}],release=5)
@@ -1811,6 +1818,49 @@ class ServerTests(unittest.TestCase):
         imported = s.import_image('frame.png', 'image/png', png())
         self.assertEqual(ownership, [True])
         self.assertEqual(imported['job']['id'], next(iter(s.jobs)))
+
+    def test_import_indexing_failure_returns_durable_storage_receipt(self):
+        # POST /api/assets/import must not raise KeyError or leave an empty
+        # runs/<uuid>/ behind when assets.register fails. Like
+        # /api/assets/update, the HTTP layer returns 503
+        # asset_storage_unconfirmed, while the failed receipt remains durable.
+        # Before the fix this raised KeyError from outputs[0]['asset_id'] after
+        # index_outputs swallowed the storage fault.
+        for fault in (sqlite3.OperationalError('database is locked'), OSError('disk full')):
+            with self.subTest(fault=type(fault).__name__):
+                s = self.studio()
+                runs_before = set(s.runs.iterdir())
+                jobs_before = set(s.jobs)
+                body = png()
+                handler = server.Handler.__new__(server.Handler)
+                handler.studio = s
+                handler.path = '/api/assets/import'
+                handler.headers = {'X-Filename': 'frame.png', 'Content-Type': 'image/png'}
+                handler.rfile = io.BytesIO(body)
+                handler._safe_mutation = lambda: True
+                handler._content_length = lambda limit: len(body)
+                handler._drain_refused_body = lambda: None
+                seen = {}
+                handler._json = lambda status, obj: seen.update(status=status, obj=obj)
+                with patch.object(s.assets, 'register', side_effect=fault):
+                    handler.do_POST()
+                self.assertEqual(seen.get('status'), 503, seen)
+                self.assertEqual(seen['obj']['code'], 'asset_storage_unconfirmed')
+                self.assertIn('receipt', seen['obj']['error'])
+                created_jobs = set(s.jobs) - jobs_before
+                self.assertEqual(len(created_jobs), 1)
+                job = s.jobs[created_jobs.pop()]
+                self.assertEqual(job['status'], 'failed')
+                self.assertNotIn('asset_id', job['outputs'][0])
+                self.assertIn('snapshot_error', job['outputs'][0])
+                created = set(s.runs.iterdir()) - runs_before
+                self.assertEqual(created, {s.runs / job['id']})
+                self.assertTrue((s.runs / job['id'] / 'state.json').is_file())
+                self.assertTrue(s.public(job)['can_put_away'])
+                s.put_away_job(job['id'], True)
+                restored = self.studio()
+                self.assertIn(job['id'], restored.jobs)
+                self.assertTrue(restored.jobs[job['id']]['put_away_at'])
 
 class RefusalTransportTests(unittest.TestCase):
     """Real loopback sockets: ServerTests patches Thread.start, so the serving thread lives here (#1029)."""

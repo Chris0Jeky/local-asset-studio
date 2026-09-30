@@ -1,7 +1,7 @@
 """Download one Hugging Face file into the configured ComfyUI model folder, verified against its LFS oid.
 
 Prints a `.runtime/downloads/receipts.json` receipt and a `models/library.json` entry stub. Standard
-library only; nothing is installed unless the SHA-256 matches what the repository tree advertises.
+library only; an unverified file is installed only with an explicit ``--allow-unverified`` opt-in.
 """
 import argparse,hashlib,json,re,stat,sys,time
 from pathlib import Path,PurePosixPath
@@ -79,7 +79,7 @@ def fetch_json(url,timeout=60):
  except HTTPError as error:raise SystemExit(f'{url} returned HTTP {error.code}')
  except URLError as error:raise SystemExit(f'{url} is unreachable: {error.reason}')
 
-def _resume_partial(part,target,expected_size,expected_sha):
+def _resume_partial(part,target,expected_size,expected_sha,allow_unverified=False):
  if not part.exists() and not part.is_symlink():raise SystemExit(f'--resume requires an existing partial file: {part}')
  try:info=part.lstat()
  except OSError as error:raise SystemExit(f'Cannot inspect the partial download: {part} ({error})')
@@ -88,7 +88,7 @@ def _resume_partial(part,target,expected_size,expected_sha):
  if part.resolve().parent!=target.parent.resolve():
   raise SystemExit(f'Partial download is outside the intended model directory: {part}')
  if expected_size is None:raise SystemExit('Cannot resume without the pinned file size')
- if not expected_sha:raise SystemExit('Cannot resume without the pinned SHA-256')
+ if not expected_sha and not allow_unverified:raise SystemExit('Refusing to resume without the pinned SHA-256; pass --allow-unverified to publish an unverified download')
  if info.st_size>expected_size:
   raise SystemExit(f'Partial download is larger than the pinned size ({info.st_size} > {expected_size}): {part}')
  digest=hashlib.sha256();size=0
@@ -113,18 +113,19 @@ def _validate_resume_response(response,offset,expected_size):
   raise SystemExit('Resume requires identity content encoding; partial file preserved')
 
 
-def download(url,target,expected_size=None,expected_sha=None,headers=None,chunk=4*1024**2,resume=False,opener=None):
+def download(url,target,expected_size=None,expected_sha=None,headers=None,chunk=4*1024**2,resume=False,opener=None,allow_unverified=False):
  """Stream to <target>.part, optionally resume, and publish only after pinned verification."""
  if target.exists():raise SystemExit('Destination already exists; nothing downloaded: '+str(target))
  target.parent.mkdir(parents=True,exist_ok=True)
  part=target.with_suffix(target.suffix+'.part')
  if (part.exists() or part.is_symlink()) and not resume:raise SystemExit('A partial download is already in place; inspect it first: '+str(part))
  start=time.time()
- if resume:size,digest=_resume_partial(part,target,expected_size,expected_sha)
+ if resume:size,digest=_resume_partial(part,target,expected_size,expected_sha,allow_unverified)
  else:size,digest=0,hashlib.sha256()
  if resume and size==expected_size:
+  if not expected_sha and not allow_unverified:raise SystemExit('Refusing to publish an unverified download (no pinned SHA-256); partial file preserved: '+str(part)+'. Pass --allow-unverified to publish it anyway.')
   actual=digest.hexdigest()
-  if actual!=expected_sha:raise SystemExit('SHA-256 mismatch for complete partial; partial file preserved: '+str(part))
+  if expected_sha and actual!=expected_sha:raise SystemExit('SHA-256 mismatch for complete partial; partial file preserved: '+str(part))
   if target.exists():raise SystemExit('Destination appeared during resume; both files preserved')
   part.rename(target)
   return size,actual,round(time.time()-start,1)
@@ -141,6 +142,7 @@ def download(url,target,expected_size=None,expected_sha=None,headers=None,chunk=
  except URLError as error:raise SystemExit(f'Download failed: {error.reason}. Partial file preserved: {part}')
  if expected_size is not None and size!=expected_size:raise SystemExit(f'Size mismatch ({size} != {expected_size}); partial file preserved: {part}')
  if expected_sha and digest.hexdigest()!=expected_sha:raise SystemExit('SHA-256 mismatch; partial file preserved: '+str(part))
+ if not expected_sha and not allow_unverified:raise SystemExit('Refusing to publish an unverified download (no pinned SHA-256); partial file preserved: '+str(part)+'. Pass --allow-unverified to publish it anyway.')
  if target.exists():raise SystemExit('Destination appeared during the download; both files preserved')
  part.rename(target)
  return size,digest.hexdigest(),round(time.time()-start,1)
@@ -156,15 +158,18 @@ def main(argv=None):
  parser.add_argument('--trigger',default='',help='trigger word recorded in the library stub')
  parser.add_argument('--dry-run',action='store_true')
  parser.add_argument('--resume',action='store_true',help='resume an existing .part file after strict range validation; never starts a fresh transfer')
+ parser.add_argument('--allow-unverified',action='store_true',help='publish the download even when the repository tree advertises no LFS sha256; the receipt records verified False')
  args=parser.parse_args(argv)
  name=safe_name(args.name or PurePosixPath(args.path).name)
  target=destination(load_config()['comfy_root'],args.dest_folder,name)
  url=resolve_url(args.repo,args.path,args.revision)
  expected_sha,expected_size=lfs_oid(fetch_json(tree_url(args.repo,args.path,args.revision)),args.path)
- if expected_sha is None:print('WARNING: the repository tree advertises no LFS sha256 for this path; the download cannot be verified against the source.')
+ if expected_sha is None:print('WARNING: the repository tree advertises no LFS sha256 for this path; it cannot be verified against the source.')
  print(json.dumps({'url':url,'destination':str(target),'expected_sha256':expected_sha,'expected_bytes':expected_size},indent=2))
  if args.dry_run:return 0
- size,digest,seconds=download(url,target,expected_size,expected_sha,resume=args.resume)
+ if expected_sha is None and not args.allow_unverified:raise SystemExit('Refusing to publish an unverified download (the repository tree advertises no LFS sha256 for this path). Pass --allow-unverified to publish it anyway; nothing was downloaded.')
+ if expected_sha is None:print('WARNING: publishing only because --allow-unverified was passed.')
+ size,digest,seconds=download(url,target,expected_size,expected_sha,resume=args.resume,allow_unverified=args.allow_unverified)
  receipt={'file':name,'repo':args.repo,'path':args.path,'url':url,'bytes':size,'sha256':digest,
           'expected_sha256':expected_sha,'verified':bool(expected_sha) and digest==expected_sha,'seconds':seconds,
           'licence':'TODO: read the model card','fetched':time.strftime('%Y-%m-%dT%H:%M:%S')}
