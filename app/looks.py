@@ -73,6 +73,12 @@ def _options(value, template):
         result.append(clean)
     if any(t in option["text"] for option in result for t in [SLOT, *(token(other["id"]) for other in result)]):
         raise WorkspaceError("An optional line is plain words: it holds no slot or line token")
+    # At most six lines: check all choices, including slots assembled by several replacements.
+    for mask in range(1 << len(result)):
+        wording = template
+        for index, option in enumerate(result):
+            wording = wording.replace(token(option["id"]), option["text"] if mask & (1 << index) else "")
+        if wording.count(SLOT) != 1: raise WorkspaceError("Optional lines must leave exactly one " + SLOT + " slot in the wording")
     return result
 
 
@@ -134,6 +140,7 @@ def compose(template, scene, options=(), chosen=None):
     if template.count(SLOT) != 1: raise WorkspaceError("This look's wording has no single " + SLOT + " slot; edit the look")
     on = chosen_options(options, chosen)
     for option in options: template = template.replace(token(option["id"]), option["text"] if on[option["id"]] else "")
+    if template.count(SLOT) != 1: raise WorkspaceError("This look's optional lines leave no single " + SLOT + " slot; edit the look")
     text = template.replace(SLOT, scene)
     return re.sub(r" {2,}", " ", text).strip() if options else text
 
