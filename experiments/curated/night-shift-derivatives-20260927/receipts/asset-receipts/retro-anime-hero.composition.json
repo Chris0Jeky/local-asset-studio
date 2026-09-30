@@ -1,0 +1,14 @@
+{
+ "portrait_crop_plan": "narrow screens (390x844): take a 9:16 box of height 1600 from this hero master, x from 2350 to 3250 (normalised 0.61-0.85), centred on the lamp, CRT and lower window; the heading moves above the art. Not produced: the plan only, per the brief.",
+ "focal_point_normalised": [
+  0.76,
+  0.52
+ ],
+ "heading_zone": "x 0-0.60 of the hero: plain wall, no detail",
+ "crop_box_in_master": [
+  0,
+  360,
+  3840,
+  1960
+ ]
+}

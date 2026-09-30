@@ -43,18 +43,28 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_full_suite*.py' -v
       - run: python -m unittest discover -s tests -p 'test_loopback_transport_audit.py' -v
   windows-full-suite:
+    # One process for the whole suite outgrew any sane single-job budget on the
+    # hosted Windows runner: run 36299263974 started 4,318 of about 5,140 tests in
+    # its 1,500 s with no hung test (Linux check.yml runs all of them in about
+    # 700 s). Three disjoint shards keep every module under the same lifetime,
+    # thread, process and ResourceWarning checks; the worker keeps each module
+    # whole and balances modules by test count. END lines carry each test's
+    # duration, so a timed-out shard still shows where the time went.
+    name: windows-full-suite (shard ${{ matrix.shard }}/3)
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
-      # The hosted Windows runner needs roughly 800 seconds for the 2,968 offline
-      # tests (run 35339291681 started 2,236 of them inside the 600-second default
-      # with no hung test). Hosted lanes set explicit budgets; the wrapper's
-      # default guard stays at 600 seconds.
+      # Hosted lanes set explicit budgets; the wrapper's default guard stays at 600 seconds.
       - run: python tests/check_full_suite_lifetime.py
         env:
-          FULL_SUITE_LIFETIME_BUDGET_SECONDS: '1500'
+          FULL_SUITE_LIFETIME_BUDGET_SECONDS: '900'
+          FULL_SUITE_SHARD: '${{ matrix.shard }}/3'

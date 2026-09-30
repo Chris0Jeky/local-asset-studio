@@ -60,6 +60,8 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop #positive {font-size:16px;line-height:1.75;padding:21px 22px;min-height:170px;max-height:55vh;resize:vertical;letter-spacing:.005em;border-color:var(--line);border-radius:12px;background:var(--wk-input);margin:0}
 .workshop #positive:focus {border-color:var(--accent)}
 .wk-prompt-hint {display:block;font-size:11px;line-height:1.6;margin:10px 0 18px}
+.ux-wording-undo {display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-8px 0 16px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--wk-soft);font-size:12px;line-height:1.45}
+.ux-wording-undo>span {flex:1 1 260px;min-width:0}.ux-wording-undo button {font-size:11px;min-height:36px;padding:6px 12px}
 .workshop #negativeWrap {background:none;border:0;border-top:1px solid var(--line);padding:12px 0;margin:0 0 18px}
 .workshop #negativeWrap>summary {font-size:12px;padding:5px 0;color:var(--muted);min-height:32px}
 .workshop #negative {margin-top:12px;font-size:14px;width:100%}
@@ -216,7 +218,7 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
   .workshop[data-workshop-layout="studio"] .wk-results {grid-column:2;grid-row:3;position:sticky;top:84px;max-width:none;border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
   .workshop[data-workshop-layout="studio"] .wk-results>summary {border:0;border-bottom:1px solid var(--line);border-radius:0;padding:19px 20px}
   .workshop[data-workshop-layout="studio"] .gallery-panel {padding:16px;margin:0}
-  .workshop[data-workshop-layout="studio"] #gallery {max-height:calc(100dvh - var(--workshop-dock-space) - 235px);min-height:240px}
+  .workshop[data-workshop-layout="studio"] #gallery {max-height:calc(100dvh - var(--workshop-dock-space) - 259px);min-height:240px}
   .workshop[data-workshop-layout="studio"] .galleryEmpty {min-height:360px;font-size:21px}
   .workshop[data-workshop-layout="studio"] .imageCard img {width:100%;max-height:480px}
   .workshop[data-workshop-layout="studio"] .gallery-panel>.muted {font-size:11px;line-height:1.65;margin:0 0 14px}
@@ -257,5 +259,8 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
 /* The settled run's one next step sits under its status line (run-outcome.js). */
 .run-outcome {grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .run-outcome[hidden] {display:none}
+.run-cancel {grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+.run-cancel[hidden] {display:none}
+.run-cancel button {font-size:11px;padding:6px 10px}
 .run-outcome button {font-size:11px;padding:6px 10px}
 .run-outcome button:first-child {border-color:var(--accent);color:var(--accent)}

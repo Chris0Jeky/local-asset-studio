@@ -32,6 +32,14 @@ def sha256(path):
     return digest.hexdigest()
 
 
+LINKED_ROW_NOTE = ("This file's folder is a link (symlink or junction). The Studio does not install or verify through links, "
+                   "so the original is preserved; copy the file into the real model folder to manage it here.")
+
+
+class LinkedPathError(ValueError):
+    """A pinned path crosses a symlink or junction: the no-link install policy refuses that row, never the library (#1127)."""
+
+
 class ModelLibrary:
     def __init__(self, root, comfy_root):
         self.root = Path(root).resolve()
@@ -94,7 +102,7 @@ class ModelLibrary:
         for candidate in (path,*path.parents):
             if candidate==self.models:break
             if candidate.is_symlink() or (hasattr(candidate,'is_junction') and candidate.is_junction()):
-                raise ValueError('Model or partial path is a link; original preserved')
+                raise LinkedPathError('Model or partial path is a link; original preserved')
 
     def folder(self, key):
         if key in FOLDERS:
@@ -107,6 +115,11 @@ class ModelLibrary:
         if key not in fixed:
             raise ValueError("Unknown studio folder")
         return fixed[key]
+
+    def _folder_row(self, key, label):
+        """One folder of the list; a folder linked outside the library is listed with its reason, not fatal (#1127)."""
+        try: return {"id": key, "label": label, "path": str(self.folder(key))}
+        except ValueError as exc: return {"id": key, "label": label, "path": str(self.models / key), "unavailable": str(exc)}
 
     def open_folder(self, key):
         path = self.folder(key)
@@ -133,7 +146,16 @@ class ModelLibrary:
         assets = []
         for asset in manifest.get("assets", []):
             item = dict(asset)
-            path = self.locate(asset)
+            try: path = self.locate(asset)
+            except LinkedPathError:
+                # #1127: refuse the linked row and keep every other row. The file may exist through the link (ComfyUI
+                # follows it), so presence is reported; it is never verified or installed through the link.
+                checked_id(asset['id'])
+                receipt = load(self.state / (asset["id"] + ".json"), {})
+                shown = self.models / relative_model_path(asset["file"])
+                item.update(path=str(shown), present=shown.is_file(), size_matches=False, verified=False, verification='linked-path-refused',
+                            installable=False, install_note=LINKED_ROW_NOTE, download=receipt if isinstance(receipt, dict) else {})
+                assets.append(item); continue
             present = path.is_file()
             blocked = self.install_block(asset, present)
             checked_id(asset['id'])
@@ -149,7 +171,7 @@ class ModelLibrary:
             item.update(path=str(path), present=present, size_matches=matches, verified=verified,
                         verification=reason, installable=blocked is None, install_note=blocked, download=receipt)
             assets.append(item)
-        folders = [{"id": key, "label": label, "path": str(self.folder(key))} for key, label in FOLDERS.items()]
+        folders = [self._folder_row(key, label) for key, label in FOLDERS.items()]
         folders += [{"id": key, "label": label, "path": str(self.folder(key))} for key, label in [("input", "Reference inputs"), ("output", "Generated outputs"), ("workflows", "Editable workflows"), ("downloads", "Browser downloads")]]
         inventory = []
         if self.models.is_dir():

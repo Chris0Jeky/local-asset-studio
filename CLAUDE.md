@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Tier: daily-driver (T2) — authority: push free / merge free. Declared in `.agent-harness/tier.json`; read it live.
-Global laws auto-load from `~/.claude/CLAUDE.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter; `.grok/` is the Grok adapter.
+Global laws auto-load from `~/.claude/rules/laws.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter; `.grok/` is the Grok adapter.
 
 ## What this is
 
@@ -13,15 +13,15 @@ a Radeon, no deploy, no other consumers. Models, ComfyUI and generated outputs l
 ## Run it
 
 ```bash
-python -m unittest discover -s tests          # ~3,000 tests, 11-15 minutes on this PC, offline; budget minutes, not seconds
+python -m unittest discover -s tests          # ~5,100 tests (27 Sep 2026), offline, 9+ minutes; budget minutes, not seconds
 python scripts/validate-repo.py                # catalog/graph bindings, model pins, Git payload rules, ~1 s
 python app/server.py --repo-root .             # needs config/local.json (copy config/example.json); ComfyUI on 8188
 ```
 
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
-`http://127.0.0.1:8191`). The server rereads `presets/catalog.json` and `app/static/` per request (reload the page); only `app/*.py` changes need a restart, with no Studio work active. No build step, no linter, no
-package manager: Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`
-with a vendored model-viewer. Skips are environment-dependent (72 on 19 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`; the run is the record).
+`http://127.0.0.1:8191`). The server rereads `presets/catalog.json` and `app/static/` per request (reload the page); only `app/*.py` changes need a restart, with no Studio work active. The runtime has no build step or package manager:
+Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`, a vendored model-viewer, and
+committed `app/static/ui-dist/` from `frontend/` (Vue islands; maintainers only: Node 24, `cd frontend && npm ci && npm test && npm run build`, `ui-island.yml`). Skips vary by host (30 on 27 Sep 2026 with FFmpeg/pwsh/Node on `PATH`; the run is the record).
 
 ## Proving checks (narrowest command per seam)
 

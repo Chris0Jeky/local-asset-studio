@@ -132,7 +132,25 @@ Set `enforce_host_commit_headroom` to `true` in the local configuration to enfor
 Windows host. The Studio reads `GetPerformanceInfo` commit counters rather than physical RAM,
 rechecks after waiting for the queue and immediately before each `/prompt`, and records each pass
 in the run state. It fails closed when that Windows reading is unavailable for a qualifying graph.
-The gate performs no restart, `/free`, paging change, or other automatic memory action. Qwen Plus
+By default the gate performs no restart, `/free`, paging change, or other automatic memory action.
+The one opt-in exception is `commit_gate_release_seconds` (default `0`, off; at most 300). With it
+set, a job that the gate would refuse only because the **measured** headroom is short is queued rather
+than refused at Create. Just before its `/prompt`, the worker posts `/free {unload_models, free_memory}`
+once to that job's own backend. It does this only when no backend switch or other Studio job is
+running and that backend's queue reads empty. It then re-reads commit every 0.5 s for up to that many
+seconds, waits for an idle queue again, and runs the unchanged gate on a fresh reading. Only that
+fresh pass admits. Otherwise the job fails with nothing sent, and its message says whether the
+models were freed. An unknown reading never triggers a release, and neither does headroom at or
+below 22 GiB. The reason is that a release first moves the GPU-resident weights into host RAM:
+qwen21's `/free` took headroom from 27.4 to 12.7 GiB, using 14.7 GiB, before it settled at 46.2 GiB
+about 9 s after the post (27 September 2026). The floor budgets 16 GiB for that transient (the whole
+card, since only VRAM-resident weights can move) plus a 6 GiB margin. This host fails near 97 %
+commit, which is about 2.9 GiB left. Each attempt leaves a
+`commit_releases` receipt in the run state. The receipt holds the URL, the required bytes,
+available and committed bytes before and after, the sample count, the seconds waited and the
+outcome. On 27 September 2026, before this setting existed, a `qwen21-rgba` job left 26.5 GiB of
+headroom and the next Create was refused (`experiments/curated/perf-20260927/`). No restart, and no
+change to production preflight or large-job preparation, is part of this. Qwen Plus
 reference scalers at 1 MP qualify even where the output canvas is smaller; a Qwen text encoder by
 itself does not. Qwen-Image 2.1 (the isolated `qwen21` backend) qualifies at **any** size: its 7B model and 9.35 GB int8
 text encoder left only 2.1-6.5 GiB of commit at 832 × 1248, and its edit graph has no width or height
@@ -318,6 +336,19 @@ The primary's Krea 2 fp8 route (13.1 GB of diffusion weights) was recorded at 94
   for it off. The desktop path keeps `--enable-manager` (ComfyUI-Manager), which the Studio's switch and
   recovery launches still do not pass; the ownership checks only read `--listen`/`--port`. Run without
   `-ArgumentsFile`, the launcher defaults to `--reserve-vram 0.6 --disable-pinned-memory --enable-manager`.
+- **Where "others" comes from (issue #983; owner decision 27 Sep 2026).** Per-process counters can be impossible
+  (dwm.exe read 65.9 GiB on the 16 GiB card on 25 Sep 2026), so the figure every consumer uses — the launch reserve,
+  the installed VRAM guard and resource admission — prefers the adapter-level `\GPU Adapter Memory(*)\Dedicated Usage`
+  counter minus ComfyUI's own process counter. While the counters agree that figure never falls below the other
+  process counters (each bounded by the adapter figure), so memory no process counter attributes still counts as
+  used. The launch reserve also subtracts backends the switch just stopped, whose counters can lag their exit. A
+  counter beyond the adapter figure plus sampling headroom (10 % + 1 GiB) is excluded; the reserve and guard then use
+  the adapter figure and admission treats VRAM as unknown. Admission also passes the card size ComfyUI reports: a
+  reading without an adapter figure that exceeds it is unknown, never clamped to a guess. The impossible counters are
+  kept as evidence, at most 8 rows of `{adapter, pid, dedicated_bytes, adapter_total_bytes, limit_bytes}`, in
+  `last_launch_reserve.anomalies` and in admission receipts (`observation.vram.counter_anomalies`). The installed guard
+  still reads an unknown figure as zero (`runtime-patches/comfy-extensions/studio_vram_guard`), unchanged here.
+  Not verified against Task Manager: the owner skipped that manual check.
 - Pinned host memory is not counted as a spill: the primary started with about 13 GB pinned read
   9,755 MB dedicated and 79 MB shared through the same counters.
 - Each job records the peak dedicated and shared memory of the ComfyUI process while it runs
@@ -326,6 +357,13 @@ The primary's Krea 2 fp8 route (13.1 GB of diffusion weights) was recorded at 94
   shared memory drained within 3 s (`settled_shared_bytes`, `lingering`). A spill that drained completes with *Complete. GPU
   memory overflowed … while it ran*; only a lingering one says *Complete, but slowly* and suggests a restart. Both name the
   largest other holder. `/api/health` carries the live `gpu_memory` reading and `vram_guard` (§10).
+- Each prompt also records its Windows commit window in `host_commit_windows` on the job (#302). A second thread
+  samples every 0.5 s, from when ComfyUI accepts the prompt until its observation ends. Each window carries its index and prompt ID,
+  the known and unknown sample counts, the peak committed bytes with their time and the commit limit, and the minimum
+  headroom. There are at most 16 windows per job, and submission receipts are not changed. An unknown reading is
+  counted, never folded in as zero. Only when a window's headroom fell below 16 GiB does the finished-run line add
+  *Memory was tight: Windows commit headroom fell to … GiB*. The `qwen-2ref` host-allocation failure on 12 September
+  had about 9 GB left.
 
 **Measured on the primary: the measured reserve is the wrong default there.** Krea 2 fp8 (`krea-portrait`
 graph unchanged, 768x1152, 8 steps, seed 2026091103; `experiments/curated/vram-spill-20260923/krea_bench.json`):

@@ -68,11 +68,19 @@ def precision_checks(page, check):
     check(page.locator('#uxPoseY').input_value() == '123.45' and page.locator('#uxPoseUse').is_enabled(), 'A rounded no-op clears the field hold without adding a geometry change')
 
 
+def open_pose(page, check):
+    """#422: on a picture route the drawing panel starts folded; the owner opens it (a skeleton recipe opens it itself)."""
+    check(not page.evaluate("document.querySelector('#uxPoseDisclosure').open"), 'A picture route folds Draw the pose until asked')
+    page.locator('#uxPoseDisclosure > summary').click()
+    page.wait_for_function("document.querySelector('#uxPoseDisclosure').open")
+
+
 def sdxl_in_place(page, origin, out, check, drawings, posts):
     """#445/#761: an SDXL skeleton recipe draws in place: its own renderer, its own pose slot, no recipe switch, no job."""
     run = ux.CaseRun(dict(id='pose-handoff-sdxl-in-place'), page, origin, False, out / 'setup')
     run.boot('#create'); run.select_preset(SDXL)
     page.wait_for_function("selected.id==='" + SDXL + "' && !document.querySelector('#uxPoseEditor').hidden")
+    check(page.evaluate("document.querySelector('#uxPoseDisclosure').open"), 'A recipe drawn for opens Draw the pose itself')
     check(page.locator('#uxPoseUse').inner_text() == 'Use this pose', 'The SDXL recipe draws in place, not as a replacement')
     check(page.locator('#generate').is_disabled(), 'Generate waits for a guide on the pose slot')
     count_before = posts.count('/api/pose/render')
@@ -126,6 +134,7 @@ def restored_guide(page, origin, out, check, drawings, posts, spec):
     check(ready, 'Existing Combine source-pair journey is ready: ' + detail)
     page.locator('[data-ux-engine="combine-klein"]').click()  # A two-picture board: its second slot can block the replacement.
     page.wait_for_function("selected.id==='combine-klein' && !document.querySelector('#uxPoseEditor').hidden")
+    open_pose(page, check)
     check(page.locator('#uxPoseUse').inner_text() == 'Replace pose picture with drawing', 'A picture recipe offers the replacement')
     held, lost = 'a' * 64, 'b' * 64
     joints = page.evaluate('StudioPoseEditor.JOINTS')
@@ -254,6 +263,7 @@ def pending_read_drag_and_draft(page, origin, out, check, drawings, posts, spec)
     check(ready, 'Existing Combine source-pair journey is ready: ' + detail)
     page.locator('[data-ux-engine="combine-klein"]').click()
     page.wait_for_function("selected.id==='combine-klein' && !document.querySelector('#uxPoseEditor').hidden")
+    open_pose(page, check)
     joints = page.evaluate('StudioPoseEditor.JOINTS')
 
     def stored(artifact_id):
@@ -401,6 +411,7 @@ def stalled_read_timeout(page, origin, out, check, drawings, posts, spec):
     check(ready, 'Existing Combine source-pair journey is ready: ' + detail)
     page.locator('[data-ux-engine="combine-klein"]').click()
     page.wait_for_function("selected.id==='combine-klein' && !document.querySelector('#uxPoseEditor').hidden")
+    open_pose(page, check)
     stalled = 'f' * 64
     reads, waiting = [], []
 
@@ -482,6 +493,7 @@ def main(argv=None):
                         before = page.evaluate(SNAPSHOT)
                         check(page.locator('[data-ux-engine="'+SKELETON+'"]').is_disabled(),
                               'Ordinary engine switch still rejects picture-to-skeleton reinterpretation')
+                        open_pose(page, check)
                         check(page.locator('#uxPoseUse').inner_text() == 'Replace pose picture with drawing',
                               'The separate action explicitly names replacement')
                         if name == 'missing-slot':

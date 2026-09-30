@@ -104,7 +104,7 @@
         "22",
         0
       ],
-      "weight": 0.7,
+      "weight": 0.4,
       "weight_type": "linear",
       "start_at": 0.0,
       "end_at": 0.9,

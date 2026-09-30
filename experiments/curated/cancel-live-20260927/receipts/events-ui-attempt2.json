@@ -1,0 +1,37 @@
+[
+ {
+  "t": 1790524189.481,
+  "kind": "pre",
+  "name": "ui",
+  "running": [],
+  "pending": [],
+  "commit": {
+   "commit_gib": 56.1,
+   "limit_gib": 95.7,
+   "pct": 58.6,
+   "phys_avail_gib": 6.0
+  },
+  "log": {
+   "got_prompt": 8,
+   "interrupted": 2,
+   "executed": 7,
+   "entries": 153
+  },
+  "lease": false
+ },
+ {
+  "t": 1790524193.321,
+  "kind": "ui_page",
+  "results_open": true,
+  "gallery_visible": true,
+  "url": "http://127.0.0.1:8191/#create"
+ },
+ {
+  "t": 1790524193.541,
+  "kind": "create",
+  "label": "cancel-proof-ui-click",
+  "code": 201,
+  "id": "5e4ce0fa-1738-4ac9-a827-9be65ed9b1d9",
+  "status": "queued"
+ }
+]

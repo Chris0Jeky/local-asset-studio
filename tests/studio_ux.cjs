@@ -63,6 +63,32 @@ test('memory allocation failures explain the cause and next action', () => {
   const host=U.failureDetails({status:'failed',message:'Generation failed: ComfyUI reported an execution error: VAEDecode: DefaultCPUAllocator: not enough memory'});
   assert.equal(host.kind,'memory_allocation');
 });
+test('memory headroom refusals are explained in plain words, claiming only what the evidence shows (#308)', () => {
+  const low=U.failureDetails({status:'failed',prompt_ids:[],message:'Host commit headroom 20.0 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission. No prompt was submitted for output 1.'});
+  assert.equal(low.kind,'host_headroom');
+  assert.match(low.title,/^Held/);
+  assert.match(low.summary,/20\.0 GiB/);assert.match(low.summary,/32 GiB/);assert.match(low.summary,/commit headroom/);assert.match(low.summary,/RAM plus the page file/);assert.match(low.summary,/Nothing was sent to ComfyUI/);
+  assert.doesNotMatch(low.summary+low.action,/GPU/,'the check measures commit, not GPU memory');
+  assert.match(low.action,/Generate again/);assert.doesNotMatch(low.action,/retr(y|ied) automatically/i);
+  assert.match(low.detail,/Host commit headroom 20\.0 GiB/,'the engine wording stays available');
+  const partial=U.failureDetails({status:'partial',prompt_ids:['p1'],message:'Host commit headroom 19.5 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission. No prompt was submitted for output 2.'});
+  assert.equal(partial.kind,'host_headroom');assert.match(partial.summary,/Output 2 was not sent/);assert.doesNotMatch(partial.summary,/Nothing was sent/);
+  const unknown=U.failureDetails({status:'failed',message:'Host commit headroom is unavailable: performance counters are unavailable. No prompt was submitted for output 1.'});
+  assert.equal(unknown.kind,'host_headroom');assert.match(unknown.title,/unknown/);assert.match(unknown.summary,/performance counters are unavailable/);assert.match(unknown.summary,/instead of guessing/);
+  // Without the server's no-submission clause, nothing is claimed about what was sent.
+  const bare=U.headroomExplanation('Host commit headroom 12.3 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission');
+  assert.match(bare,/^Held: .*12\.3 GiB/);assert.doesNotMatch(bare,/sent/);
+  const evidence=U.failureDetails({status:'failed',prompt_ids:[],message:'Host commit headroom 12.3 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission'});
+  assert.doesNotMatch(evidence.summary,/sent/,'empty prompt_ids alone is not no-submission evidence (submission_evidence.never_submitted)');
+  const lone=U.failureDetails({status:'partial',prompt_ids:[],message:'Host commit headroom 12.3 GiB is below the required 32 GiB. No prompt was submitted for output 2.'});
+  assert.match(lone.summary,/Output 2 was not sent to ComfyUI\./);assert.doesNotMatch(lone.summary,/had already finished/);
+  // After the opt-in release: the card says the cache was already freed and points at other programs.
+  const freed=U.failureDetails({status:'failed',prompt_ids:[],message:"Host commit headroom 21.4 GiB is below the required 32 GiB for this Qwen/FLUX.2 submission even after the Studio freed ComfyUI's cached models. No prompt was submitted for output 1."});
+  assert.equal(freed.kind,'host_headroom');assert.match(freed.summary,/21\.4 GiB even after it freed ComfyUI's cached models; this job needs 32 GiB/);assert.match(freed.action,/outside ComfyUI/);assert.doesNotMatch(freed.action,/wait until a running job/);
+  assert.doesNotMatch(low.summary,/freed/);
+  assert.equal(U.headroomExplanation('Seed plus batch count exceeds supported range'),null);
+  assert.equal(U.failureDetails({status:'running',message:'Generating output 1 of 1'}),null);
+});
 test('structured execution failures retain engine context', () => {
   const failure=U.failureDetails({status:'failed',failure:{kind:'memory_allocation',title:'Memory allocation failed',summary:'Allocation summary',action:'Allocation action',node_type:'KSampler',exception_type:'RuntimeError',detail:'bad allocation'}});
   assert.equal(failure.title,'Memory allocation failed');
@@ -179,5 +205,17 @@ test('an unusable transfer says which limit it hit', () => {
   const none=U.promptBlockers({state:'review_required',profile:{name:'TRELLIS'},fields:{image_reference_id:'ref-a'},errors:[],diagnostics:[]});
   assert.deepEqual(none.map(x=>x.code),['NO_PROMPT_TEXT']);
   assert.ok(none[0].blocking&&long[0].blocking);
+});
+test('Make seamless offers the server seam bands, keeps a too-wide band listed with its reason, and sends a number',()=>{
+  const status={eligible:true,band_px:112,band_choices:[{name:'narrow',band_px:112,available:true,reason:null},{name:'wide',band_px:160,available:true,reason:null}]};
+  const both=U.tileBands(status);
+  assert.deepEqual(both.options,[{value:'112',label:'narrow (112 px)',disabled:false,selected:true},{value:'160',label:'wide (160 px)',disabled:false,selected:false}]);
+  assert.equal(both.note,'');
+  const small=U.tileBands({...status,band_choices:[status.band_choices[0],{name:'wide',band_px:160,available:false,reason:'A 160 px band needs a side of at least 320 px; this texture is 256 px.'}]});
+  assert.deepEqual(small.options.map(o=>o.disabled),[false,true]);
+  assert.equal(small.note,'Wide: A 160 px band needs a side of at least 320 px; this texture is 256 px.');
+  assert.deepEqual(U.tileBands({eligible:false,band_choices:status.band_choices}),{options:[],note:''},'no choice on a picture that cannot tile');
+  assert.deepEqual(U.tileBands(null),{options:[],note:''});
+  assert.equal(U.tileBandPx('160'),160);assert.equal(U.tileBandPx(''),null);assert.equal(U.tileBandPx(undefined),null);assert.equal(U.tileBandPx('wide'),null);
 });
 console.log(count+' Studio UX policy checks passed.');

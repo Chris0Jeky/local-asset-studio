@@ -1,0 +1,14 @@
+{
+  "preset_id": "zimage-fast",
+  "controls": {
+    "positive": "An empty room, no people. Hand-painted anime film background of a dark timber illustration room looking onto a blossom courtyard after rain. The left half and centre of the frame is a plain dark plum-toned plaster wall, almost empty and low in detail. At the right edge an open wooden sliding window frames a cherry tree in full blossom in a wet stone courtyard, a few petals drifting outside the window only; a low ink-stained timber desk with blank paper beneath it. Plum, dusty rose and warm dark timber palette, restrained botanical atmosphere. An empty room with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+    "width": 1344,
+    "height": 768,
+    "seed": 2026092751
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "created_at": 1790487359.2794943,
+  "references": [],
+  "parent_assets": []
+}

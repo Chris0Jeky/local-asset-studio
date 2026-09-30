@@ -45,3 +45,18 @@ This probe covers one seed per cell and one agent judge, with no owner review. I
 
 - **Generated and agent-judged only.** Nothing here is owner art acceptance.
 - **Licence: not cleared.** Qwen-Image 2.1 weights are under the Qwen Research License (non-commercial, per the `qwen21-t2i` catalog note). A successful render is not licence clearance, and this study does not change that.
+
+## Second seed, 16 vs 25 steps (lab 2) — 27 September 2026
+
+Char and prop were rerun at seed + 100 (2026092821 and 2026092823) with the same graphs at 16 and 25 steps. The 25-step cells ran at 07:59 and
+08:02 (prompts `f6ec0d2e` and `0e91964d`, inside the Pruna session, `seed2-lab2/runs-base25.json`). The 16-step cells ran at 08:35 and 08:36
+(`13b4878d` and `5b1ec3b1`, `seed2-lab2/runs.json`), each after a cache release, so their `exec_s` values are not comparable. They were judged blind before
+`seed2-lab2/key.sealed.json` was read:
+
+| Prompt | 16 steps | 25 steps |
+| --- | --- | --- |
+| char | fixable: murky, the lantern hand a dark smeared glove | keep |
+| prop | fixable: doubled nested bezel with an odd knob | fixable: pseudo-lettering round the rim despite "no text" |
+
+Over both seeds, 25 steps is keep on 3 of 4 cells and 16 steps on 1 of 4. **The 25-step default holds, more firmly.** The ~6 s of
+sampler time that 16 steps saves does not pay for the visible losses. One agent judge; not art acceptance, not licence clearance.

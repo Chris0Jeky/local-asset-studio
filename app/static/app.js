@@ -8,6 +8,10 @@ const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lor
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null, jobsEtag = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
+// Make seamless (#1220): the server's prepared tile plan, sent with Generate; any recipe change or reset drops it.
+let tileState = null;
+// Parallax layers (#1219): the server's plan for one stage (clean plate or isolate), sent with Generate; any recipe change or reset drops it.
+let parallaxState = null;
 let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResultKey = '';
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) {const error=Error(data.error || 'Request failed');error.status=r.status;error.data=data;throw error;} return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
@@ -329,6 +333,7 @@ function selectPreset(id, reset=true, transition=false) {
   const next=catalog.presets.find(p=>p.id===id);if(!next)throw Error('This preset is unavailable.');
   if(continuationState&&!transition&&(id!==selected?.id||reset))throw Error('You are continuing an image. Use “Leave this continuation” before loading a different recipe, or reopen Continue with this asset to choose another route.');
   if(transition){continuationState=null;continuationSource=null;}
+  if(reset||id!==selected?.id){tileState=null;parallaxState=null;}
   recipeTemplateHash=null;
   selected=next; recipeChanged();
   if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
@@ -362,7 +367,26 @@ async function uploadInput(id) {
 function mediaCard(job,index,output) {
   const id=esc(job.id), url='/api/image/'+id+'/'+index, type=output.media_type || 'image';
   const media=type==='video'?'<video controls preload="metadata" src="'+url+'"></video>':type==='audio'?'<audio controls src="'+url+'"></audio>':type==='3d'?'<model-viewer loading="lazy" camera-controls touch-action="pan-y" environment-image="neutral" shadow-intensity="0.7" src="'+url+'" alt="'+esc(job.preset_name)+' mesh"><span slot="poster">Load interactive 3D preview</span></model-viewer>':'<img loading="lazy" src="'+url+'" alt="'+esc(job.preset_name)+' output">';
-  return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div>'+(window.StudioOutputReview?.markup(output)||'')+'<p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
+  return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div>'+(window.StudioOutputReview?.markup(output)||'')+'<p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p>'+tileNote(job,output)+parallaxNote(job,output)+'</article>';
+}
+// Make seamless (#1220): a finished tile shows its seam score; a completed seam repaint that has no tile yet offers Finish tile.
+function tileNote(job,output){
+  if(output.tile)return '<p class="tileNote"><small>'+esc(output.tile.summary)+'</small></p>';
+  if(!job.tile||job.status!=='completed'||job.tile_finish?.job_id)return '';
+  const failed=job.tile_finish?.error;
+  return '<p class="disabledReason"><small>'+esc(failed?'Tile not finished: '+failed:'This seam repaint has no finished tile yet.')+'</small></p><button class="finishTile" data-job="'+esc(job.id)+'" title="Composite, flatten, measure the seam and build the 3×3 preview. Nothing is generated.">Finish tile</button>';
+}
+// A parallax stage's card: its split when there is one, else what is missing and the one next press.
+function parallaxNote(job,output){
+  if(output.parallax){const p=output.parallax;return '<p class="tileNote"><small>'+esc(p.layer==='strip'?'Parallax strip, camera left / centre / right. ':p.layer[0].toUpperCase()+p.layer.slice(1)+' layer, shift '+p.shift_px+' px. ')+esc(p.summary)+'</small></p>';}
+  const claim=job.parallax;if(!claim||job.status!=='completed')return '';
+  if(job.parallax_finish?.job_id)return '<p class="tileNote"><small>Layers split: '+esc(job.parallax_finish.summary||'see the Parallax layers assets')+'</small></p>';
+  const other=claim.stage==='plate'?'isolate':'plate',name={plate:'clean plate',isolate:'isolate'},id=esc(job.id);
+  const siblings=jobs.filter(j=>j.parallax?.plan_id===claim.plan_id&&j.parallax.stage===other),done=siblings.find(j=>j.status==='completed'),live=siblings.find(j=>['queued','waiting','submitting','running','uncertain'].includes(j.status));
+  const failed=job.parallax_finish?.error?'Layers not split: '+job.parallax_finish.error+' ':'';
+  if(done)return '<p class="disabledReason"><small>'+esc(failed||'Both edits are in; the layers are not split yet.')+'</small></p><button class="parallaxFinish" data-job="'+id+'" title="Register both edits, build the far, mid and near layers, measure the recomposite error and make the strip. Nothing is generated.">Split layers</button>';
+  if(live)return '<p class="tileNote"><small>The '+name[other]+' edit is '+esc(live.status)+'; the layers split when it completes.</small></p>';
+  return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Create. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
 const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
@@ -410,19 +434,24 @@ async function mixedBatchAction(button) {
 // also release the playback wait (an errored clip never counts as playing), and held Problems hides the gallery cards
 // its records supersede (#1074): removed, not hidden, so focus restoration reaches the visible Problems card.
 // The key uses the first class only: studio-workbench.js adds `primary` to the kept reference button after each render.
-const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer';let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='';
+// While held, #recentHeld (outside #gallery, height always reserved, so no card moves) counts what the release will
+// show against the last full render: "1 run finished · 1 new run · 2 other changes, shown when the clip stops".
+// A run counts as finished once completed; new means a new non-problem run; any other status, cancel or kept-output
+// difference is a change. Problems-only changes never raise it (Problems is live); running messages are not counted.
+// The release and every forced render clear it; unchanged text is never rewritten (owner decision, 27 Sep 2026).
+const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer',RECENT_PROBLEM=['failed','partial','uncertain','abandoned'];let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='',recentShownKeys=new Map();
 function jobControlKey(el){
   if(!el?.dataset||!el.tagName)return null;const owner=el.closest?.('[data-output],[data-problem]');
   return [owner?.dataset.output??(owner?'problem:'+owner.dataset.problem:''),el.tagName,String(el.className||'').split(/\s+/)[0],...Object.keys(el.dataset).filter(k=>k!=='job'&&k!=='index').sort().map(k=>k+'='+el.dataset[k])].join('|');
 }
 function renderJobs(signature=JSON.stringify(jobs),force=false) {
-  if(signature===jobsSignature)return;
+  if(signature===jobsSignature){showRecentHeld('');return;}
   const gallery=$('#gallery'),host=document.getElementById?.('jobProblemsHost')||null,playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended&&!m.loop&&!m.error);
   const focusHosts=[gallery,host].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null,focusInGallery=gallery.contains?.(active);
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
   // Typed stop-tracking/abandon reasons and the acknowledgement are drafts too: a poll re-render must not erase them.
   const reasonFields='[data-stop-tracking-reason],[data-abandon-reason],[data-abandon-ack]',reasonDrafts=[...document.querySelectorAll(reasonFields)].map(el=>[jobControlKey(el),el.type==='checkbox'?el.checked:el.value]).filter(([key,value])=>key&&value);
-  const cards=[],problems=[],problemsOpen=$('#jobProblems')?.open;let recentHidden=0;
+  const cards=[],problems=[],keys=new Map(),problemsOpen=$('#jobProblems')?.open;let recentHidden=0;
   jobs.forEach(job=>{
     if(job.status!=='completed'){
       const stopped=job.tracking_disposition?.status==='stopped', promptIds=(job.prompt_ids||[]).join(', ');
@@ -436,17 +465,22 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
       const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
       const problem=['failed','partial','uncertain','abandoned'].includes(job.status);
       const putAway=!problem?'':job.put_away?(job.put_away_basis==='owner'?'<p class="putAwayNote"><small>Put away '+esc(new Date(job.put_away_at*1000).toLocaleString())+'. Status, prompt IDs, outputs and reservations are unchanged.</small></p>':'<p class="putAwayNote"><small>Off your desk because tracking was stopped. Resume observation brings it back.</small></p>')+(job.can_bring_back?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="false">Bring back</button>':''):job.can_put_away?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="true" title="Hide from Problems and your desk. Nothing is retried, cancelled or deleted.">Put away</button>':job.status==='uncertain'?'<p class="putAwayNote"><small>'+esc(job.can_stop_tracking?'Stop tracking before putting this away; its resume path stays open until then.':'Resolve or abandon this uncertain job before putting it away.')+'</small></p>':'';
-      const html='<article class="jobStatus '+esc(job.status)+'" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button>'+putAway+'</article>';
+      const html='<article class="jobStatus '+esc(job.status)+'" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+renderCancel(job)+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button>'+putAway+'</article>';
       if(problem)problems.push({job,html});else cards.push(html);
+    }else if(['too_late','refused','unresolved'].includes(job.cancellation?.state)){
+      // A finished run whose cancel did not take effect still says so (#1160 review); its outputs follow as usual.
+      cards.push('<article class="jobStatus completed" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · completed</b>'+renderCancel(job)+'</article>');
     }
-    job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
+    const kept=[];job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;kept.push(o.asset_id??i);if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
+    keys.set(job.id,job.status+'|'+(job.cancellation?.state||'')+'|'+kept.join(','));
   });
   const problemMarkup=renderProblems(problems,problemsOpen);
   if(playing){
     if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);playing.removeEventListener('error',resume);playing.removeEventListener('emptied',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);playing.addEventListener('error',resume);playing.addEventListener('emptied',resume);}
+    showRecentHeld(recentWaiting(keys));
     if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host){host.innerHTML=problemMarkup;gallery.querySelector?.('#jobProblems')?.remove();}else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}for(const p of problems)for(const el of gallery.querySelectorAll?.('[data-problem]')||[])if(el.dataset?.problem===p.job.id&&!el.closest?.('#jobProblems'))el.remove();}
   } else {
-  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;
+  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;recentShownKeys=keys;showRecentHeld('');
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
   gallery.className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
   gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
@@ -457,7 +491,17 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   if(focusKey&&!focusHosts.some(h=>h.contains?.(document.activeElement)))focusHosts.flatMap(h=>[...(h.querySelectorAll?.(JOB_FOCUSABLE)||[])]).find(el=>jobControlKey(el)===focusKey)?.focus({preventScroll:true});
   if(focusKey&&focusInGallery&&!playing&&!force&&!focusHosts.some(h=>h.contains?.(document.activeElement)))(gallery.querySelector?.('[data-recent-more]')||[...(gallery.querySelectorAll?.(JOB_FOCUSABLE)||[])].pop())?.focus?.({preventScroll:true});
   if(!playing)renderCompare();
+  if(typeof renderRunCancel==='function')renderRunCancel();   // journeys load renderJobs alone
 }
+function recentWaiting(keys){
+  const status=key=>String(key||'').split('|')[0],problem=key=>RECENT_PROBLEM.includes(status(key));let finished=0,started=0,other=0;
+  for(const [id,key] of keys){if(problem(key))continue;const prev=recentShownKeys.get(id);if(status(key)==='completed'&&status(prev)!=='completed')finished++;else if(!prev)started++;else if(prev!==key)other++;}
+  for(const [id,key] of recentShownKeys)if(!keys.has(id)&&!problem(key))other++;
+  const parts=[];if(finished)parts.push(finished+(finished===1?' run finished':' runs finished'));if(started)parts.push(started+(started===1?' new run':' new runs'));if(other)parts.push(other+(parts.length?' other':'')+(other===1?' change':' changes'));
+  return parts.length?parts.join(' · ')+', shown when the clip stops':'';
+}
+// Stateless on purpose (journeys load renderJobs alone): the line's own text is the record, so equal text is never rewritten.
+function showRecentHeld(text){const line=$('#recentHeld');if(line&&line.textContent!==text)line.textContent=text;}
 // #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
 const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
 function renderProblems(problems,open){
@@ -469,13 +513,58 @@ function renderProblems(problems,open){
   const awayToggle=away.length?'<p class="problemsMore"><button type="button" data-problems-toggle="away" aria-expanded="'+problemsShowPutAway+'">'+(problemsShowPutAway?'Hide put away':'Show put away ('+away.length+')')+'</button></p>'+(problemsShowPutAway?'<div class="problemsPutAway">'+away.map(p=>p.html).join('')+'</div>':''):'';
   return '<details id="jobProblems" class="job-problems" '+(open?'open':'')+'><summary>Problems · '+active.length+' run(s)'+(away.length?' · '+away.length+' put away':'')+'</summary>'+(active.length?'':'<p><small>No open problems.</small></p>')+shown.map(p=>p.html).join('')+more+awayToggle+'</details>';
 }
+// #1138: Cancel targets only this job's own prompt. The server settles a queued job at once and hands anything already
+// sent to its worker, which removes a waiting prompt or interrupts this job's running one and records what ComfyUI then
+// shows. The control is on every queued or running card and in the run dock; when it cannot act it stays visible,
+// disabled, with the server's reason. A render that may be running asks first. Nothing here retries or resubmits.
+const ACTIVE_JOB_STATUSES=['queued','waiting','submitting','running'],cancelBusy=new Set();
+const CANCEL_STATES={requested:'Cancel requested',refused:'Cancel refused',too_late:'Cancel came too late',unresolved:'Cancel not confirmed'};
+function cancelConsequence(job){return job.cancel_needs_confirm?'Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.':'Removes it from the queue. Nothing has been sent to ComfyUI.';}
+function renderCancel(job){
+  const record=job.cancellation,state=record?.state,when=record?.requested_at?new Date(record.requested_at*1000).toLocaleTimeString():'';
+  const note=state&&CANCEL_STATES[state]?'<p class="cancelNote"><small><b>'+esc(CANCEL_STATES[state])+'</b>'+(when?' ('+esc(when)+')':'')+': '+esc(state==='requested'?'the Studio is checking ComfyUI for this job\'s prompt. Nothing is retried.':record.note||'')+'</small></p>':'';
+  if(!ACTIVE_JOB_STATUSES.includes(job.status))return note;
+  if(job.can_cancel)return note+'<button class="cancelJob" data-job="'+esc(job.id)+'" data-confirm="'+(job.cancel_needs_confirm?'1':'0')+'">Cancel</button><p class="cancelConsequence"><small>'+esc(cancelConsequence(job))+'</small></p>';
+  return note+(state==='requested'?'':'<button class="cancelJob" data-job="'+esc(job.id)+'" disabled>Cancel</button><p class="disabledReason"><small>'+esc(job.cancel_blocked_reason||'This job cannot be cancelled now.')+'</small></p>');
+}
+async function cancelJob(id,confirmNeeded){
+  if(!id||cancelBusy.has(id))return;
+  if(confirmNeeded&&!window.confirm('Cancel this render?\n\nStops the render in ComfyUI. Finished outputs are kept. Nothing is retried.'))return;
+  cancelBusy.add(id);renderRunCancel();
+  try{const job=await post('/api/jobs/'+encodeURIComponent(id)+'/cancel',{});message(job.status==='cancelled'?job.message:'Cancel requested. The Studio is checking ComfyUI; the card shows what it finds.');await refresh();}
+  finally{cancelBusy.delete(id);renderRunCancel();}
+}
+// The run dock follows the run started here, else the newest queued or running job. Its row sits under the status line
+// (like the run summary), so the dock's own controls keep their width.
+function runToCancel(){const active=jobs.filter(j=>ACTIVE_JOB_STATUSES.includes(j.status));const mine=typeof activeJobId==='undefined'?null:activeJobId;return active.find(j=>j.id===mine)||active.sort((a,b)=>(b.created_at||0)-(a.created_at||0))[0]||null;}
+function runCancelBox(){
+  let box=document.getElementById?.('runCancel');if(box||!document.createElement)return box||null;
+  const status=document.getElementById('status');if(!status)return null;
+  box=document.createElement('div');box.id='runCancel';box.className='run-cancel';box.hidden=true;
+  box.innerHTML='<button id="cancelRun" type="button">Cancel run</button><small id="cancelRunReason"></small>';status.after(box);
+  const button=box.querySelector('#cancelRun');button.onclick=async()=>{try{await cancelJob(button.dataset.job,button.dataset.confirm==='1');}catch(err){message(err.message,true);}};
+  return box;
+}
+function renderRunCancel(){
+  const box=runCancelBox(),button=document.getElementById?.('cancelRun'),reason=document.getElementById?.('cancelRunReason');if(!box||!button)return;
+  const job=runToCancel(),requested=job?.cancellation?.state==='requested',busy=job&&cancelBusy.has(job.id);
+  box.hidden=!job;if(!job)return;
+  button.dataset.job=job.id;button.dataset.confirm=job.cancel_needs_confirm?'1':'0';
+  button.disabled=!job.can_cancel||busy;button.textContent=requested||busy?'Cancelling…':'Cancel run';
+  const why=job.can_cancel?cancelConsequence(job):requested?'Cancel requested. The Studio is checking ComfyUI for this job\'s prompt.':job.cancel_blocked_reason||'This run cannot be cancelled now.';
+  button.title=why;if(reason)reason.textContent=why;
+}
 async function refreshJobs(){try{const response=await fetch('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{});if(response.status===304){const current=response.headers?.get?.('ETag');if(current)jobsEtag=current;settleActiveJob(false);return;}if(!response.ok){let detail='Request failed';try{const data=await response.json();if(data&&data.error)detail=data.error;}catch{}const error=Error(detail);error.status=response.status;throw error;}const next=await response.json(),etag=response.headers?.get?.('ETag');jobsEtag=etag||null;const signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}settleActiveJob();}catch(e){message(e.message,true);}}
 // The run started here may already be settled in the list a 304 confirms (a fast failure seen by an earlier poll).
 // Every run started from this page is announced once when it settles, even after a newer Generate took the status line.
-const SETTLED_JOB_STATUSES=['completed','failed','partial','uncertain','not_submitted'],startedJobIds=new Set();
+// #1120: an id that can never be announced is dropped: one the list showed and then lost, or one the owner abandoned before a poll saw
+// it settle. An id the list has not shown yet stays (a poll that began before the POST returned does not list it).
+const SETTLED_JOB_STATUSES=['completed','failed','partial','uncertain','not_submitted','cancelled'],startedJobIds=new Set(),listedStartedJobIds=new Set();
 // A 304 repeats no progress message (the list did not change); it only announces a run that had already settled.
-function settleActiveJob(fresh=true){const job=jobs.find(j=>j.id===activeJobId);if(job){if(fresh)message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(SETTLED_JOB_STATUSES.includes(job.status))activeJobId=null;}
-  for(const id of [...startedJobIds]){const settled=jobs.find(j=>j.id===id&&SETTLED_JOB_STATUSES.includes(j.status));if(settled){startedJobIds.delete(id);document.dispatchEvent(new CustomEvent('studio:job-settled',{detail:settled}));}}}
+function settleActiveJob(fresh=true){const job=jobs.find(j=>j.id===activeJobId);if(job){if(fresh)message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(SETTLED_JOB_STATUSES.includes(job.status)||job.status==='abandoned')activeJobId=null;}
+  for(const id of [...startedJobIds]){const listed=jobs.find(j=>j.id===id),settled=listed&&SETTLED_JOB_STATUSES.includes(listed.status)?listed:null;
+    if(settled||listed?.status==='abandoned'||(!listed&&listedStartedJobIds.has(id))){startedJobIds.delete(id);listedStartedJobIds.delete(id);}else if(listed)listedStartedJobIds.add(id);
+    if(settled)document.dispatchEvent(new CustomEvent('studio:job-settled',{detail:settled}));}}
 function refresh(){return readPoller?readPoller.refresh('jobs'):refreshJobs();}
 function showView(next){view=next;['create','assets','production','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();location.hash=next;}
 const MODEL_STATUS_KEY='studio.models.status',MODEL_STATUSES=['all','action','installed'];
@@ -501,11 +590,11 @@ async function refreshLibrary(){
     $('#modelCards').innerHTML=shownCards.map(a=>{
       const d=a.download||{},active=['queued','downloading','verifying'].includes(d.status)&&Date.now()/1000-d.updated_at<180;
       const pinOnly=a.installable!==true;
-      const state=a.verified?'SHA-256 verified':pinOnly?(a.present?'Present · pin only':'Pin only · not installed'):a.present?'Present · verify file':active?d.status:'Not installed';
+      const state=a.verified?'SHA-256 verified':a.verification==='linked-path-refused'?'Linked folder · not managed':pinOnly?(a.present?'Present · pin only':'Pin only · not installed'):a.present?'Present · verify file':active?d.status:'Not installed';
       return '<article class="model-card"><span class="badge '+(a.verified?'tested':'')+'">'+esc(state)+'</span><h3>'+esc(a.name)+'</h3><p>'+esc(a.family)+' · '+gib(a.bytes)+'</p><code>'+esc(a.file)+'</code>'+(a.trigger?'<p>Trigger: <b>'+esc(a.trigger)+'</b></p>':'')+'<p>'+esc(a.license)+'</p>'+(active?'<progress max="'+a.bytes+'" value="'+(d.bytes_done||0)+'"></progress><p>'+gib(d.bytes_done)+' / '+gib(a.bytes)+'</p>':'')+(d.status==='failed'?'<p class="error">'+esc(d.message)+'</p>':'')+'<div class="model-actions"><a href="'+esc(safeUrl(a.source))+'" target="_blank" rel="noreferrer">Source ↗</a><button data-install="'+esc(a.id)+'" '+(a.verified||pinOnly||busy?'disabled':'')+' title="'+esc(pinOnly?(a.install_note||'Automatic installation eligibility is unknown; refresh the library.'):'')+'">'+(a.verified?'Installed':pinOnly?'Copy in by hand':a.present?'Verify existing file':'Install / use download')+'</button></div></article>';
     }).join('')+(hiddenCards?'<p class="muted model-filter-note">'+hiddenCards+' curated model'+(hiddenCards===1?' is':'s are')+' hidden by the “'+esc($('#modelStatus').selectedOptions?.[0]?.textContent||cardStatus)+'” filter. <button type="button" data-model-status-all>Show everything</button></p>':'');
     $('#modelCards').querySelector('[data-model-status-all]')?.addEventListener('click',()=>{$('#modelStatus').value='all';$('#modelStatus').onchange();});
-    $('#folders').innerHTML=library.folders.map(f=>'<article class="folder"><b>'+esc(f.label)+'</b><code>'+esc(f.path)+'</code><button data-folder="'+esc(f.id)+'">Open folder</button><button data-copy="'+esc(f.path)+'">Copy path</button></article>').join('');
+    $('#folders').innerHTML=library.folders.map(f=>'<article class="folder"><b>'+esc(f.label)+'</b><code>'+esc(f.path)+'</code>'+(f.unavailable?'<p class="disabledReason"><small>'+esc(f.unavailable)+'</small></p><button data-folder="'+esc(f.id)+'" disabled>Open folder</button>':'<button data-folder="'+esc(f.id)+'">Open folder</button>')+'<button data-copy="'+esc(f.path)+'">Copy path</button></article>').join('');
     $('#collections').innerHTML=(library.collections || []).map(c=>'<article class="collection"><b><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noreferrer">'+esc(c.name)+' ↗</a></b><p>'+esc(c.description)+'</p><small>'+esc(c.status || '')+'</small></article>').join('');
     renderInventory();
   }catch(e){$('#downloadStatus').textContent=e.message;}
@@ -562,9 +651,48 @@ function applySaved(s,{guessLegacyParent=false}={}){
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
+function tilePayload(){return tileState&&selected?.id===tileState.preset_id?{tile:{...tileState}}:{};}
+function parallaxPayload(){return parallaxState&&selected?.id===parallaxState.preset_id?{parallax:{...parallaxState}}:{};}
+// Prepare or next stage of Make parallax layers: the unchanged source is this recipe's picture at its own size, the source its
+// parent, and the stage's words are loaded for review. Generate stays the owner's press.
+function beginParallax(result){
+  const target=catalog.presets.find(p=>p.id===result?.preset_id&&p.parallax_route);
+  if(!target)throw Error('The parallax-layers recipe is unavailable.');
+  if(continuationState)throw Error('You are continuing an image. Use “Leave this continuation” before making parallax layers.');
+  selectPreset(target.id,true,true);
+  parallaxState={...result.claim};uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);$('#reference').value='';
+  $('#positive').value=result.words;
+  for(const key of ['width','height']){const input=getControl(key);if(input)input.value=String(result[key]);}
+  $('#batch').value=1;
+  const step=result.stage==='plate'?'1 of 2, the clean plate':'2 of 2, the isolate';
+  $('#referenceHint').textContent='Parallax layers, edit '+step+': '+(result.context?.title||'the picture')+' · '+result.width+' × '+result.height+', attached unchanged. '+result.flag;
+  updateReady();
+}
+// After a stage is queued, the other stage's words are loaded (never run): the second Generate is the owner's own press.
+async function afterParallaxSubmit(job,claim){
+  if(claim.stage!=='plate'){message('Isolate edit queued. The Studio splits the layers when both edits complete; nothing else runs.');return;}
+  const next=await post('/api/parallax/stage',{job_id:job.id,stage:'isolate'});
+  if(selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id)return;
+  beginParallax(next);message('Clean plate queued. The isolate edit is loaded: check its words, then press Generate.');
+}
+// Prepare from the library's Make seamless: the rolled seam cross becomes this recipe's picture, the source its parent.
+function beginTile(result){
+  const target=catalog.presets.find(p=>p.id===result?.preset_id&&p.tile_route);
+  if(!target)throw Error('The seamless-tile recipe is unavailable.');
+  if(submitting)throw Error('Wait for the current submission before preparing a tile.');
+  if(continuationState)throw Error('You are continuing an image. Use “Leave this continuation” before making a tile.');
+  selectPreset(target.id,true,true);
+  tileState={...result.plan};uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);$('#reference').value='';
+  const words=result.context?.positive||target.continuation_prompt;if(words)$('#positive').value=words;
+  $('#batch').value=1;
+  $('#referenceHint').textContent='Seam cross prepared from '+(result.context?.title||'the texture')+' · '+result.width+' × '+result.height+' · seam band '+result.plan.band_px+' px. '+result.flag;
+  updateReady();
+}
 function continuationBlockerItems(){
   // Both the original run button and the workbench consume this shared list.
   // Source-free text recipes need wording too; image-only recipes have no binding.
+  if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Asset library.'}];
+  if(selected?.parallax_route&&!parallaxState)return [{code:'parallax',message:'Start from Make parallax layers on a picture in the Asset library.'}];
   if(!continuationState)return selected?.positive&&!String($('#positive')?.value||'').trim()?[{code:'wording',message:'Add a prompt to generate.'}]:[];
   const controls=values();
   if(selected?.last_reference&&!controls.last_reference&&$('#lastReference').files?.length)controls.last_reference='pending-local-upload';
@@ -622,13 +750,15 @@ $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');upda
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
   // The whole Create surface stays interactive while uploads are in flight: snapshot the intent the operator pressed Generate for.
-  const started=selected,startedHash=recipeTemplateHash,intent={preset_id:selected.id,...continuationPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
+  const started=selected,startedHash=recipeTemplateHash,intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
   try{
     const reference=await uploadInput('reference'),lastReference=await uploadInput('lastReference');
     if(selected!==started||recipeTemplateHash!==startedHash)throw Error('The recipe changed while the source was uploading; nothing was submitted. Press Generate again.');
     uploaded=reference||uploaded;lastUploaded=lastReference||lastUploaded; // Bind the uploads only to the recipe they were made for.
     if(selected.reference&&uploaded)intent.controls.reference=uploaded;if(selected.last_reference&&lastUploaded)intent.controls.last_reference=lastUploaded;
-    const job=await post('/api/jobs',intent);activeJobId=job.id;startedJobIds.add(job.id);message(job.message);await refresh();
+    const job=await post('/api/jobs',intent);activeJobId=job.id;startedJobIds.add(job.id);message(job.message);
+    if(intent.parallax)try{await afterParallaxSubmit(job,intent.parallax);}catch(e){message('Queued. The next parallax edit could not be loaded: '+e.message+' Use Load the isolate edit on the clean plate card.',true);}
+    await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };
 // Ctrl+Enter (Cmd+Enter on a Mac) anywhere in Create does what one click on the Generate button does and nothing more:
@@ -659,6 +789,10 @@ $('#gallery').onclick=async e=>{
     const mixed=e.target.closest('[data-mixed-action]');if(mixed){await mixedBatchAction(mixed);return;}
     const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index},unpin=pinned.some(x=>x.job===p.job&&x.index===p.index),dropped=!unpin&&pinned.length>=2;pinned=unpin?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();if(dropped)message('Side by side shows two pictures. The oldest pin was replaced by this one.');}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
+    const cancel=e.target.closest('.cancelJob');if(cancel){if(!cancel.disabled)await cancelJob(cancel.dataset.job,cancel.dataset.confirm==='1');return;}
+    const parallaxStage=e.target.closest('.parallaxStage');if(parallaxStage){if(submitting){message('Wait for the current submission, then load the next edit.',true);return;}await jobAction('parallax-stage:'+parallaxStage.dataset.job,async()=>{const next=await post('/api/parallax/stage',{job_id:parallaxStage.dataset.job,stage:parallaxStage.dataset.stage});beginParallax(next);showView('create');message('The '+next.stage_name+' edit is loaded: check its words, then press Generate.');});return;}
+    const parallaxFinish=e.target.closest('.parallaxFinish');if(parallaxFinish){await jobAction('parallax:'+parallaxFinish.dataset.job,async()=>{const data=await post('/api/parallax/finish',{job_id:parallaxFinish.dataset.job});message(data?.job?.message||'Layers split.');await refresh();});return;}
+    const finishTile=e.target.closest('.finishTile');if(finishTile){await jobAction('tile:'+finishTile.dataset.job,async()=>{const data=await post('/api/tiles/finish',{job_id:finishTile.dataset.job});message(data?.job?.message||'Tile finished.');await refresh();});return;}
     const resume=e.target.closest('.resume');if(resume)await jobAction('resume:'+resume.dataset.job,async()=>{await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();});
     const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs(undefined,true);return;}
     if(e.target.closest('[data-recent-more]')){
@@ -739,8 +873,15 @@ $('#importWorkflow').onchange=async e=>{
   try{
     catalog=await api('/api/catalog');await loadAtelier();$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
-    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);await loadSetups();await health();await refresh();await refreshAssets();await refreshLibrary();
-    const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);
-    configureReadPolling();readPoller?.start();
-  }catch(e){message(e.message,true);}
+    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);
+  }catch(e){message(e.message,true);return;}
+  // Each later stage is independent: one failing read (saved setups, a legacy migration) must not leave
+  // health, jobs, the library and polling unstarted until a reload. The first failure stays on screen.
+  const failed=[];
+  for(const [label,stage] of [['Saved setups',loadSetups],['Health',health],['Jobs',refresh],['Asset library',refreshAssets],['Models',refreshLibrary]]){
+    try{await stage();}catch(e){failed.push(label+' could not load: '+e.message);}
+  }
+  const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);
+  configureReadPolling();readPoller?.start();
+  if(failed.length)message(failed.join(' ')+' The rest of the Studio started; reload to retry.',true);
 })();

@@ -1,0 +1,60 @@
+{
+ "source": "GET http://127.0.0.1:8196/object_info (qwen21, ComfyUI v0.37.0), filtered to class names containing GGUF",
+ "captured_at": "2026-09-27T19:55:31",
+ "total_node_classes": 675,
+ "gguf_classes": {
+  "UnetLoaderGGUF": {
+   "category": "bootleg",
+   "python_module": "custom_nodes.ComfyUI-GGUF",
+   "input_required": [
+    "unet_name"
+   ]
+  },
+  "CLIPLoaderGGUF": {
+   "category": "bootleg",
+   "python_module": "custom_nodes.ComfyUI-GGUF",
+   "input_required": [
+    "clip_name",
+    "type"
+   ]
+  },
+  "DualCLIPLoaderGGUF": {
+   "category": "bootleg",
+   "python_module": "custom_nodes.ComfyUI-GGUF",
+   "input_required": [
+    "clip_name1",
+    "clip_name2",
+    "type"
+   ]
+  },
+  "TripleCLIPLoaderGGUF": {
+   "category": "bootleg",
+   "python_module": "custom_nodes.ComfyUI-GGUF",
+   "input_required": [
+    "clip_name1",
+    "clip_name2",
+    "clip_name3"
+   ]
+  },
+  "QuadrupleCLIPLoaderGGUF": {
+   "category": "bootleg",
+   "python_module": "custom_nodes.ComfyUI-GGUF",
+   "input_required": [
+    "clip_name1",
+    "clip_name2",
+    "clip_name3",
+    "clip_name4"
+   ]
+  },
+  "UnetLoaderGGUFAdvanced": {
+   "category": "bootleg",
+   "python_module": "custom_nodes.ComfyUI-GGUF",
+   "input_required": [
+    "dequant_dtype",
+    "patch_dtype",
+    "patch_on_device",
+    "unet_name"
+   ]
+  }
+ }
+}

@@ -71,9 +71,24 @@ class WorkerRecoveryTests(unittest.TestCase):
         lab=self.studio.production;project=lab.create(self.fixture.intent());lab.start(project['id']);lab.run(project['id'])
         job=self.studio.jobs[lab.get(project['id'])['state']['attempts']['0']['job_id']]
         before=copy.deepcopy(job['submissions']);lab.resume(project['id'])
-        self.studio.replies=iter([{'retained':{'status':[], 'outputs':{}}}])
+        # A well-formed entry (dict status and outputs, so a good read) whose output node is not a dict fails while it is processed.
+        self.studio.replies=iter([{'retained':{'status':{'status_str':'success'},'outputs':{'9':[]}}}])
         self.dispatch([('production',project['id'])])
         self.assertEqual(job['status'],'uncertain');self.assertEqual(job['submissions'],before)
+        self.assertEqual(lab.get(project['id'])['state']['status'],'uncertain')
+        self.assertEqual(self.fixture.post_count(self.studio),1);self.assertEqual(len(self.studio.jobs),1)
+    def test_comparison_observation_non_dict_status_is_a_bad_read_not_a_processing_error(self):
+        self.studio.replies=iter([{'queue_running':[],'queue_pending':[]},{'prompt_id':'retained'},OSError('history unavailable')])
+        lab=self.studio.production;project=lab.create(self.fixture.intent());lab.start(project['id']);lab.run(project['id'])
+        job=self.studio.jobs[lab.get(project['id'])['state']['attempts']['0']['job_id']]
+        before=copy.deepcopy(job['submissions']);lab.resume(project['id'])
+        self.studio.replies=iter([{'retained':{'status':[],'outputs':{}}}]*server.HISTORY_READ_STRIKES)
+        with patch.object(server.time,'sleep'):self.dispatch([('production',project['id'])])
+        self.assertEqual(job['status'],'uncertain');self.assertIn('history reads in a row failed',job['message'])
+        after=job['submissions'][0];errors=after['history_read_errors'][len(before[0].get('history_read_errors',[])):]
+        self.assertEqual([e['error'] for e in errors],['Invalid prompt history']*server.HISTORY_READ_STRIKES)
+        self.assertEqual(after['history_read_error_count'],before[0].get('history_read_error_count',0)+server.HISTORY_READ_STRIKES)
+        self.assertEqual({k:v for k,v in after.items() if not k.startswith('history_read_error')},{k:v for k,v in before[0].items() if not k.startswith('history_read_error')})
         self.assertEqual(lab.get(project['id'])['state']['status'],'uncertain')
         self.assertEqual(self.fixture.post_count(self.studio),1);self.assertEqual(len(self.studio.jobs),1)
 
@@ -126,7 +141,9 @@ class WorkerRecoveryTests(unittest.TestCase):
         for error in errors:
             with self.subTest(error=type(error).__name__):
                 job=self.job();job.update(status='uncertain',prompt_ids=['known'],submissions=[{'prompt_id':'known','status':'observing'}]);self.studio._save(job)
-                self.studio.replies=iter([error]);self.studio._resume(job)
+                # Every bounded read fails the same way (#1113), so the job stays uncertain.
+                self.studio.replies=iter([error]*server.HISTORY_READ_STRIKES)
+                with patch.object(server.time,'sleep'):self.studio._resume(job)
                 self.assertEqual(job['status'],'uncertain');self.assertEqual(job['prompt_ids'],['known'])
                 self.assertNotIn('finished_at',job)
         self.assertFalse(any(args[0]=='/prompt' for args,_ in self.studio.requests))
@@ -233,7 +250,8 @@ class WorkerRecoveryTests(unittest.TestCase):
         for response in ([],None,True,{'known':[]},{'known':'not history'}):
             with self.subTest(response=response):
                 job=self.job();job.update(status='uncertain',prompt_ids=['known'],submissions=[{'prompt_id':'known','status':'observing'}])
-                self.studio.replies=iter([response]);self.studio._resume(job)
+                self.studio.replies=iter([response]*server.HISTORY_READ_STRIKES)
+                with patch.object(server.time,'sleep'):self.studio._resume(job)
                 self.assertEqual(job['status'],'uncertain');self.assertEqual(job['submissions'][0]['status'],'observing')
         self.assertFalse(any(args[0]=='/prompt' for args,_ in self.studio.requests))
     @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg fixture required')

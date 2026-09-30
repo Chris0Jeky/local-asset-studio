@@ -1,0 +1,15 @@
+{
+  "preset_id": "flux-edit",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png",
+    "positive": "Replace everything except the desk, the chair, the desk lamp and the computer monitor with a plain pure white background. Keep the desk, the chair, the desk lamp, the monitor and the things on the desk exactly as they are: the same position, size, shape, colours and hand-painted cel anime style.",
+    "seed": 2026092763,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\flux-edit-api.json",
+  "created_at": 1790530466.071578,
+  "references": [],
+  "parent_assets": []
+}

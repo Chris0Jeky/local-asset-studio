@@ -1,5 +1,240 @@
 # UX use-case matrix
 
+## Seam band choice and a looser Night Shift — 27 September 2026
+
+Refs #1220 and #1221 (owner answers, 27 September 2026, after the live renders).
+
+- **Make seamless** now offers **Seam band: narrow (112 px) / wide (160 px)**. The owner found the wall result OK, but a wider
+  band can hide the floor's repeating plank ends. These are the lab's two measured widths. A band wider than half the texture
+  side stays listed, disabled, with its reason (*A 160 px band needs a side of at least 320 px; …*). The band is in the
+  plan, the status, the finished tile's summary and its receipt.
+- **Night Shift (retro anime)** no longer forces a quiet dark wall into every scene. The owner had asked to loosen it after
+  *a rain-soaked arcade entrance* rendered as a shutter. The quiet-wall sentence is now an optional line, **Keep the quiet
+  wall for UI backgrounds**, off by default. Ticked, the wording is exactly the template #1224 shipped. A Workspace that
+  holds the untouched #1224 copy takes the new version on the next Studio start; a copy the owner edited is kept.
+
+`python tests/studio_use_cases.py` passed **19/19** journeys with **zero generation submissions and zero page errors**.
+`make-a-texture-tile` now chooses the wide band before *Make seamless* and asserts that 160 px was sent and recorded.
+`new-scene-in-an-accepted-look` asserts four things:
+- the first prepare has no wall sentence;
+- the quiet-wall box starts unticked;
+- ticking it and preparing again writes the #1224 wording;
+- the status names the line.
+
+These are fixture screens; no model ran. Neither the loosened wording nor a Studio wide-band repaint has been rendered (the lab used 160 px for floor v2 outside the Studio).
+
+## Split a scene into parallax layers — 27 September 2026
+
+Refs #1219 (owner decision, 27 September 2026). A picture's asset panel now has a **Make parallax layers** control. It is
+disabled, with its reason beside it, for a picture outside 512-1536 px a side, off the 16 px grid or above 1.6 megapixels
+(*this picture is 128 × 128.*), and until the foreground is named (*Name the foreground to lift out first*). The far view is
+optional and yours: type boxes as `x0,y0,x1,y1`, or open *Mark the far view on the picture* and drag them inside the window
+glass or sky; no box gives two layers (mid and near). One press attaches the picture unchanged and opens *Parallax layers •
+Klein clean plate and isolate* at the picture's own size with the clean-plate words (*Remove <foreground>, leaving the space
+behind them empty…*) and the picture as the recorded parent. Generate stays your press. After it, Create loads the isolate
+words (*Replace everything except <foreground> with a plain pure white background…*); that is a second Generate. When both
+edits are in, the Studio registers them to the picture, splits the layers and records **far / mid / near** RGBA assets and a
+**3-frame parallax strip**, each with the recomposite error in its details. A completed edit whose other stage is missing
+shows **Load the isolate edit** (or the clean plate) on its card; both in but not split shows **Split layers**.
+
+`python tests/studio_use_cases.py` passed **20/20** journeys with **zero generation submissions and zero page errors**. The
+new `split-a-scene-into-parallax-layers` journey opens a 128 px picture and reads the disabled control and its size, opens a
+1344 × 768 scene, reads the name-the-foreground reason, types the foreground, drags one far view box on the picture and
+presses *Make parallax layers*: the parallax recipe is loaded with the picture attached at 1344 × 768, the plate words, the
+scene as source and parent, and a status that names Generate as the next press. It takes 5 clicks (one drag) and 161
+instruction words. Live mode stops before the press, which stores an upload. These are fixture screens; no model ran.
+
+## Make seamless from a library texture — 27 September 2026
+
+Refs #1220 (owner decision, 27 September 2026). A picture's asset panel now has a **Make seamless** control, flagged
+*Flat textures only* (top-down or front-on, no perspective). It is disabled, with its reason beside it, for a picture
+that is not square (*Needs a square texture: this picture is 1344 × 768.*), smaller than 256 px, larger than 1536 px or
+not on a 16 px grid. One press rolls the texture by half, stores it with its seam cross transparent and opens
+*Seamless tile • Z-Image seam repaint* with that picture attached, the texture as the recorded parent and the texture's
+own submitted words. Generate stays your press. When the repaint completes, the Studio composites the cross, flattens
+the lighting and records a **Seamless tile** asset and a **3×3 repeat** asset, both with the seam score in their details.
+A completed repaint without a tile (a failed or interrupted finish) shows **Finish tile** on its card.
+
+`python tests/studio_use_cases.py` passed **19/19** journeys (with #1163's several-recipe plan and #1221's saved look) with **zero
+generation submissions and zero page errors**. The new `make-a-texture-tile` journey opens a wide picture and reads the disabled control and its reason. It then opens
+a square texture and presses *Make seamless*: the seam-repair recipe is loaded with the rolled cross attached, the texture
+as source and parent, and a status that names Generate as the next press. It takes 4 clicks and 140 instruction words.
+Live mode stops before the press, which stores an upload. These are fixture screens; no model ran.
+
+## A new scene in a saved look — 27 September 2026
+
+Refs #1221 and #1205 (owner decision, 27 September 2026: build look templates as a Studio route). Create has a **Use a saved
+look** block above the wording. A look is a Workspace record (`app/workspace.py` `cards`, kind `look`, revisioned, with
+reversible put-away), not browser storage. It holds a wording template with one `{scene}` slot, its recipe and settings, a
+negative prompt where the recipe has one, and its anchor picture by sha256. The Studio ships one look, **Night Shift
+(retro anime)**, built from the accepted `retro-anime-master-z2` recipe on Z-Image Turbo fast (seed 2026092752,
+1344x768). The owner picks a look, types only the scene and presses **Prepare with this look**. The server composes the
+wording (`POST /api/looks/prepare`, which creates no job). The page then loads the look's recipe and settings and says
+that nothing was generated. Generate stays a separate press. **Save this wording as a look** stores the current wording
+(with `{scene}` written in it) and the recipe's settings; **Put away** / **Restore** are revision-guarded.
+
+The new journey `new-scene-in-an-accepted-look` starts on another recipe (Anima portrait) and takes 2 clicks: choose the
+look, then Prepare. It asserts four things:
+- the option names the look's recipe;
+- Prepare is off with the reason *Type the scene in a few words.* until a scene is typed;
+- the prepared recipe is `zimage-fast`, with the wording exactly the shipped template plus the scene, seed 2026092752 and 1344x768;
+- the status says the recipe switched and that nothing was generated.
+
+`python tests/studio_use_cases.py` passed **18/18** with zero generation submissions and zero page errors (fixture
+screens; no model ran). The look's one-slot wording has not been rendered: the lab carried the look with z2's full
+sentence structure, and this form is the next GPU check.
+
+## One Combine pair on several recipes as one plan — 27 September 2026
+
+Refs #1163 (owner decision 27 September 2026: "Yes, build it"). Under the engine buttons, **Run several recipes on this
+pair** is folded by default. It has a tick box per Combine recipe that fits the pair: the open recipe starts ticked, and
+a recipe for another input (the skeleton recipe on a pose picture) is disabled with its reason. Each box shows that
+recipe's time per picture. Below them are a seeds field (the open recipe's seed to start with), a line counting
+*recipes × seeds = pictures* with the time the page knows, **Prepare plan** and, once prepared, **Start plan**. Prepare
+sends the pair once. The server derives each recipe's image order and wording from the catalog, pins one comparison
+plan and returns its checked total. Start runs that plan on the one worker, and each picture then lands under **Runs for
+these pictures**, tagged *from a plan*. Any change to the pair, recipes, seeds or wording after preparing withdraws
+Start until the plan is prepared again.
+
+The new journey `combine-several-engines-one-plan` takes 10 clicks after the shared Combine setup: open the fold, tick
+two recipes, type two seeds, Prepare, read Start, change a seed. It asserts the posted intent (all three recipes, seeds
+[11, 12], the pair's claim and board picture, the answers), the prepared total, and that Start is withdrawn after the
+change. It also asserts that no `/api/jobs` or `/start` request was made. `python tests/studio_use_cases.py` passed
+**16/16** at the time (17/17 after the merge with Vary, 27 Sep) with zero generation submissions and zero page errors. These are fixture screens; no model ran.
+
+**Every fill is shown (live defect and owner decision, 27 September 2026).** With Klein 4B open (its wording asks who and
+the pose), ticking Copy Pose or depth used to be refused at Prepare for the clothes fill, a field the page never showed.
+The plan now shows each fill a ticked recipe reads and the open recipe lacks, once per meaning (e.g. *Clothes and colours
+for Klein 9B · Copy Pose, Klein 9B · depth*), filled from this character's remembered answer, and sends it in the answers.
+The server still refuses any recipe whose wording keeps a bracket. The form also belongs to one pair (#1198): switching
+engines keeps it, another pair starts from its own recipe and seed; the seeds field can be emptied; the stale notice
+clears when the page matches the prepared plan again; and a failed refresh after Start no longer offers Start again.
+The journey now leads with Klein 4B, ticks Copy Pose and depth and answers the clothes field (12 intents, 11 clicks).
+`python tests/studio_use_cases.py` passed **19/19** with zero generation submissions and zero page errors (fixture screens).
+
+## Quick checks on results — 27 September 2026
+
+Refs #1203 (owner decision, 27 September 2026). Keep / Needs work / Reject stay as they are. Each image result now also
+has one-tap yes/no **quick checks** that fit its recipe route:
+
+- Combine: *pose · face · outfit · style · clean*.
+- Every other image: *style · anatomy · composition · clean*.
+
+A press cycles one check: not checked → ✓ yes → ✗ no → not checked. Absent always means *not checked*, never *no*.
+Answers are `check:<name>=yes|no` tags. They are saved through the ordinary revision-guarded `/api/assets/update`, and
+`app/workspace.py` refuses unknown names, malformed answers and two answers for one check. Keep never waits on a check.
+Where the answers appear, and how they save:
+
+| Where | Checks | Count shown | Saves |
+| --- | --- | --- | --- |
+| **Runs for these pictures** seed tiles | Combine set; keys 1-5 on the focused tile | Each run head, e.g. "pose 1/1 · face 0/1" | One press, one write |
+| **Try this pair with another recipe** engine chips | none | This PC's answers for that recipe, or "Not checked yet" | none |
+| Comparison candidates (Runs & review) | Route set | Each candidate | One press, one write |
+| Library asset dialog and review queue | Route set; keys 1-5 whenever the dialog is open and no field has focus | none | With Save details or a K / W / X decision |
+
+`python tests/studio_use_cases.py` passed **16/16** journeys (with #1202's `vary-a-keeper`) with **zero generation
+submissions and zero page errors**. `combine-same-pair-second-engine` now takes 16 clicks: the earlier 14, plus *pose* and *face* on the keeper's tile. It
+then presses key 2 on the focused tile, which turns *face* to *no*. It asserts the three saved tag lists, that Keep
+stayed enabled and the review stayed *Keeper*, and that the engine chip and the run head both read
+`pose 1/1 · face 0/1`. A run that finishes after the page last read the Workspace still shows its chips: they come
+from the run's own output and recipe, and a press re-reads the Workspace before it saves (Codex review on #1212).
+These are fixture screens; no model ran and no picture was judged.
+
+## Vary subtle / Vary strong from a picture — 27 September 2026
+
+Refs #1202, research gap 1 (pattern P2). Every picture in **Recent runs** and in the asset panel now has a Vary control.
+One press prepares a round of close variations. It never submits: Generate is still your press.
+
+- **Vary subtle** and **Vary strong** appear when the picture's recipe has an img2img route. The route attaches a
+  copy of the picture through the same continuation as *Continue with this*: the picture is the source and the
+  recorded parent. The round keeps the picture's submitted words and sets the route's recorded denoise and new seeds.
+  Today Krea 2 pictures vary on *Krea 2 Refine Pass*, and plain SDXL base pictures on *SDXL gentle reference variation*.
+  WAI v17 pictures vary on *WAI v17 · vary* with their own adapters (see below).
+- **Vary · new seeds, same recipe** appears when the picture came from words alone and no route is recorded. It reloads
+  the run's own recipe with new seeds and records the picture as the parent. Each picture starts afresh.
+- A disabled **Vary** with its reason beside it covers the rest. Examples: a picture made from other pictures (use
+  *Prepare new seed* on its run), no recipe recorded, a recipe that cannot run here (missing model or wrong
+  environment), or a picture in the bin. Videos, sounds and models show no Vary.
+- A round is **4 pictures** when this PC's median time per picture for that recipe is under a minute, else **2**.
+  This is the owner's rule of 27 September 2026, using the same median as the Combine engine chips. A recipe with no
+  timing here yet counts as slow.
+- The status line names the recipe, the denoise (marked *a starting value, not yet judged*), the seeds and the time
+  per picture.
+
+The strengths are catalog data, not code: a `vary` block on the route recipe lists its `sources`, a `status` and
+`subtle` / `strong` control sets, each with a `basis` saying where the number comes from. `scripts/validate-repo.py`
+refuses a route that does not resample the picture, strengths outside 0-1 or in the wrong order, and a source that
+draws with another model. It also refuses a source claimed by two routes.
+
+`python tests/studio_use_cases.py` passed **16/16** journeys with **zero generation submissions and zero page errors**.
+The new `vary-a-keeper` journey presses *Vary subtle* on a Krea picture: it lands on Krea 2 Refine Pass with the
+picture as source and parent, denoise 0.25, a new seed and a round of 2 (one 240 s receipt). It then presses the
+fallback on an Anima picture: the same recipe, a new seed, a round of 4 (one 30 s receipt) and the picture as parent.
+Last, it reads the disabled Vary and its reason in the asset panel. These are fixture screens; no model ran, and
+nobody has judged the strengths yet.
+
+### WAI pictures keep their adapters — 27 September 2026
+
+Owner decision in chat, 27 September 2026: "Yes, WAI img2img". Pictures from *WAI v17 · illustration* and *Anime WAI
+Portrait* (and from the new route itself) now get **Vary subtle** and **Vary strong** on *WAI v17 · vary*. Before this,
+they got only new seeds on the same recipe. The route is one img2img graph on the same WAI v17 checkpoint with both LoRA
+slots bound. Its `vary` block adds `carry`: the controls the page copies from the picture's own run, falling back to the
+recipe's authored default. Those are both LoRA strengths and files, sampler, scheduler, CFG and steps. So a picture made
+with an adapter varies with that adapter at the same strength. The status line says *same checkpoint and adapters as
+this picture (file at strength)*, or *no adapters (it used none)*. Vary stays disabled, with its reason beside it, in
+four cases: no run is recorded, the run's recipe changed, a carried setting is unknown, or a carried LoRA file is not
+installed. An off slot's file counts too, because the server checks every named file. The route's own missing adapters
+still disable it as before. `scripts/validate-repo.py` (through `continuation.vary_problems`) proves each carrying route
+three ways:
+
+- It holds each source to the **exact same checkpoint**, never a family label.
+- Every LoRA loader in the source graph must be bound by a carried slot, and every loader in the route graph must be
+  carried, so no adapter is dropped or added.
+- Each carried key must be bound on both sides, with the same clip fan-out, and within the route's choices.
+
+Animagine, NoobAI, Pony, CSTati, YumeFlux and AniFox draw on other checkpoints. They keep the new-seeds fallback until a
+route takes the checkpoint too; Pony also needs its clip skip. The strengths start at the owner's SDXL values
+(0.5 / 0.7, status `starting-value`) until a GPU proof and the owner's look.
+
+`vary-a-keeper` now also presses *Vary strong* on a WAI fixture picture made with `noirpopwave.safetensors` at 0.85.
+It asserts WAI v17 · vary with the picture as source and parent, denoise 0.7 and a new seed. It also asserts the recorded
+stack and settings on the page, including a LoRA file the offline adapter list did not offer, and the status wording.
+Outside the measured steps it presses Vary on a run whose recorded strength the page cannot hold. Generate must then
+stay blocked with the reason, not half-applied, until Vary is pressed again or the continuation changes (review on #1240).
+`python tests/studio_use_cases.py` passed **20/20** with zero generation submissions and zero page errors (9 intents,
+4 clicks for this journey). These are fixture screens; no model ran.
+
+## Combine runs beside their pictures — 27 September 2026
+
+Refs #422, design handoff J4/D7. Before this change, at 1440×900 the pair sat at y≈854 and the result strip at y≈3499, with
+the pose editor, engine buttons, fills, wording and reference board in between. **Runs for these pictures** now follows
+the two pictures directly. Runs are grouped newest first, and each run heads its seeds with its engine, time, seed
+count and start time, plus one **Recipe** button. Queued or running work stays in view. A failed, uncertain, stopped
+or unknown-status run for this pair folds into one "needs attention" line with **Open in Problems**. It offers no seed
+action at all, so nothing there can run it again. **Draw the pose** is folded on picture routes and opens by itself on
+a recipe whose picture is the drawing.
+
+`python tests/studio_use_cases.py` passed **15/15** journeys with **zero generation submissions and zero page errors**.
+`combine-same-pair-second-engine` now adds a newer Klein 4B run and asserts three run groups with that run first. It
+checks that the uncertain run is folded with no seed control. It also checks that both pictures and the newest seed are
+unobscured on one 1440×900 screen once the pair is scrolled into view (measured with `elementFromPoint`, so the fixed
+dock counts as covering). The journey takes 14 clicks: the earlier 12, plus unfolding the attention line and pressing **Open in Problems**,
+which opens Problems at that run. `tests/pose_editor_handoff_browser.py` opens the fold
+before drawing on picture routes and passed 291 assertions. These are fixture screens; no model ran.
+
+### Engine chips: what each is for, and its time per picture here
+
+Each **Try this pair with another recipe** chip now carries the recipe's own purpose, taken from its catalog name
+(*Strongest pose*, *Keeps its own framing*, *Follows the pose*, …). It also shows a time per picture, found in this order:
+
+1. The median of this PC's completed runs of that recipe, with the run count.
+2. Otherwise, the read-only `POST /api/estimate` figure with its confidence. It is asked once per engine and canvas size.
+3. Otherwise, "No timing on this PC yet" (K13).
+
+The old line showed only the single most recent run's total. The driver now asserts that the Klein 4B chip reads
+"1.4 min per picture here · 1 run", that every chip carries a time or says it has none, and that the depth chip says
+*Strongest pose*. The use-case run passed **15/15** with zero generation submissions.
+
 ## Reference analysis review and Apply — 18 September 2026
 
 `reference-analysis-review-and-apply` now registers the Prompt Lab reference-review pipeline as an

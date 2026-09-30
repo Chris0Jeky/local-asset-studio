@@ -1,0 +1,289 @@
+{
+ "log_before": {
+  "got_prompt": 21,
+  "interrupted": 4,
+  "executed": 20,
+  "entries": 300
+ },
+ "P1": {
+  "job_id": "0bee0aae-23bd-4d17-89d9-0d43e1d77f44",
+  "status": "completed",
+  "message": "Complete",
+  "prompt_ids": [
+   "e9fa48e3-85e8-43fe-9cf8-5615eb321cfb"
+  ],
+  "outputs": [
+   {
+    "filename": "WAI-Illustration_00052_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092923,
+    "prompt_id": "e9fa48e3-85e8-43fe-9cf8-5615eb321cfb",
+    "media_type": "image",
+    "asset_id": "8e98ec835a7e53028d78cc737c51b68c"
+   }
+  ],
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "e9fa48e3-85e8-43fe-9cf8-5615eb321cfb",
+    "seed": 2026092923,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82563072,
+     "peak_dedicated_bytes": 11208826880,
+     "samples": 71,
+     "spilled": false
+    }
+   }
+  ],
+  "elapsed_seconds": 34.33471751213074,
+  "history": {
+   "status": {
+    "status_str": "success",
+    "completed": true,
+    "messages": [
+     [
+      "execution_start",
+      {
+       "prompt_id": "e9fa48e3-85e8-43fe-9cf8-5615eb321cfb",
+       "timestamp": 1790526686062
+      }
+     ],
+     [
+      "execution_cached",
+      {
+       "nodes": [],
+       "prompt_id": "e9fa48e3-85e8-43fe-9cf8-5615eb321cfb",
+       "timestamp": 1790526686063
+      }
+     ],
+     [
+      "execution_success",
+      {
+       "prompt_id": "e9fa48e3-85e8-43fe-9cf8-5615eb321cfb",
+       "timestamp": 1790526719601
+      }
+     ]
+    ]
+   },
+   "outputs": {
+    "7": {
+     "images": [
+      {
+       "filename": "WAI-Illustration_00052_.png",
+       "subfolder": "Studio",
+       "type": "output"
+      }
+     ]
+    }
+   },
+   "client_id": "asset-studio"
+  }
+ },
+ "P2": {
+  "job_id": "b7fb7ed4-4b8b-4680-8846-ea71988d5dc5",
+  "status": "completed",
+  "message": "Complete",
+  "prompt_ids": [
+   "482a6b29-b822-458b-80e7-95f57e2ae1c4"
+  ],
+  "outputs": [
+   {
+    "filename": "WAI-Illustration_00052_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026092923,
+    "prompt_id": "482a6b29-b822-458b-80e7-95f57e2ae1c4",
+    "media_type": "image",
+    "asset_id": "58ab073cdb4d55f9a23b5cb1c3357c24"
+   }
+  ],
+  "submissions": [
+   {
+    "index": 0,
+    "prompt_id": "482a6b29-b822-458b-80e7-95f57e2ae1c4",
+    "seed": 2026092923,
+    "status": "completed",
+    "gpu_memory": {
+     "peak_shared_bytes": 82563072,
+     "peak_dedicated_bytes": 9822044160,
+     "samples": 1,
+     "spilled": false
+    }
+   }
+  ],
+  "elapsed_seconds": 0.14989113807678223,
+  "history": {
+   "status": {
+    "status_str": "success",
+    "completed": true,
+    "messages": [
+     [
+      "execution_start",
+      {
+       "prompt_id": "482a6b29-b822-458b-80e7-95f57e2ae1c4",
+       "timestamp": 1790526721522
+      }
+     ],
+     [
+      "execution_cached",
+      {
+       "nodes": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+       ],
+       "prompt_id": "482a6b29-b822-458b-80e7-95f57e2ae1c4",
+       "timestamp": 1790526721523
+      }
+     ],
+     [
+      "execution_success",
+      {
+       "prompt_id": "482a6b29-b822-458b-80e7-95f57e2ae1c4",
+       "timestamp": 1790526721524
+      }
+     ]
+    ]
+   },
+   "outputs": {
+    "7": {
+     "images": [
+      {
+       "filename": "WAI-Illustration_00052_.png",
+       "subfolder": "Studio",
+       "type": "output"
+      }
+     ]
+    }
+   },
+   "client_id": "asset-studio"
+  }
+ },
+ "D1": {
+  "prompt_id": "1d16ef5b-dd49-4201-a92d-1f621ed304f1",
+  "history": {
+   "status": {
+    "status_str": "success",
+    "completed": true,
+    "messages": [
+     [
+      "execution_start",
+      {
+       "prompt_id": "1d16ef5b-dd49-4201-a92d-1f621ed304f1",
+       "timestamp": 1790526722513
+      }
+     ],
+     [
+      "execution_cached",
+      {
+       "nodes": [],
+       "prompt_id": "1d16ef5b-dd49-4201-a92d-1f621ed304f1",
+       "timestamp": 1790526722528
+      }
+     ],
+     [
+      "execution_success",
+      {
+       "prompt_id": "1d16ef5b-dd49-4201-a92d-1f621ed304f1",
+       "timestamp": 1790526722735
+      }
+     ]
+    ]
+   },
+   "outputs": {
+    "2": {
+     "images": [
+      {
+       "filename": "probe_00001_.png",
+       "subfolder": "Research\\zero-output-20260927",
+       "type": "output"
+      }
+     ]
+    }
+   },
+   "client_id": "zero-output-probe"
+  }
+ },
+ "D2": {
+  "prompt_id": "36650b10-9549-4ad7-94bf-eeb502103acc",
+  "history": {
+   "status": {
+    "status_str": "success",
+    "completed": true,
+    "messages": [
+     [
+      "execution_start",
+      {
+       "prompt_id": "36650b10-9549-4ad7-94bf-eeb502103acc",
+       "timestamp": 1790526723048
+      }
+     ],
+     [
+      "execution_cached",
+      {
+       "nodes": [
+        "1",
+        "2"
+       ],
+       "prompt_id": "36650b10-9549-4ad7-94bf-eeb502103acc",
+       "timestamp": 1790526723062
+      }
+     ],
+     [
+      "execution_success",
+      {
+       "prompt_id": "36650b10-9549-4ad7-94bf-eeb502103acc",
+       "timestamp": 1790526723063
+      }
+     ]
+    ]
+   },
+   "outputs": {
+    "2": {
+     "images": [
+      {
+       "filename": "probe_00001_.png",
+       "subfolder": "Research\\zero-output-20260927",
+       "type": "output"
+      }
+     ]
+    }
+   },
+   "client_id": "zero-output-probe"
+  }
+ },
+ "log_after": {
+  "got_prompt": 24,
+  "interrupted": 4,
+  "executed": 24,
+  "entries": 300
+ },
+ "queue_after": [
+  [],
+  []
+ ],
+ "graph_direct": {
+  "1": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png"
+   }
+  },
+  "2": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "1",
+     0
+    ],
+    "filename_prefix": "Research/zero-output-20260927/probe"
+   }
+  }
+ }
+}

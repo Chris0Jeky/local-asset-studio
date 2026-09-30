@@ -3,6 +3,7 @@ PNG source frames are never resized/trimmed. OpenRaster supports flat normal RGB
 """
 from __future__ import annotations
 import argparse
+from array import array
 import copy
 import hashlib
 import io
@@ -126,6 +127,7 @@ def png_bytes(im):
 
 ALPHA_DUST_BELOW = 8
 ALPHA_SOLID_FROM = 224
+SPECK_PEAK_BELOW = 32  # #878 measured the dust at alpha 1-31; a detached region never brighter than this is invisible residue
 
 
 def alpha_bands(im):
@@ -137,24 +139,36 @@ def alpha_bands(im):
             'body': sum(hist[ALPHA_SOLID_FROM:255]), 'opaque': hist[255]}
 
 
-def matte_components(im):
-    """Count 4-connected alpha>0 regions with a deterministic flood fill."""
+def _fill(mask, w, h, seen, i):
+    """Flood one 4-connected mask>0 region from i, marking seen; return (pixels, peak). Holds only a 4-byte-per-entry stack."""
+    stack = array('I', (i,)); seen[i] = 1; count = 0; peak = 0
+    while stack:
+        j = stack.pop(); count += 1; peak = max(peak, mask[j])
+        jy, jx = divmod(j, w)
+        if jx > 0 and mask[j - 1] and not seen[j - 1]: seen[j - 1] = 1; stack.append(j - 1)
+        if jx + 1 < w and mask[j + 1] and not seen[j + 1]: seen[j + 1] = 1; stack.append(j + 1)
+        if jy > 0 and mask[j - w] and not seen[j - w]: seen[j - w] = 1; stack.append(j - w)
+        if jy + 1 < h and mask[j + w] and not seen[j + w]: seen[j + w] = 1; stack.append(j + w)
+    return count, peak
+
+
+def matte_regions(im):
+    """Yield (seed index, pixel count, peak alpha) per 4-connected alpha>0 region, in scan order.
+
+    Streaming: no region's pixel indices are retained, so a 16 MP single-component matte costs the fill stack only.
+    """
     require(im.mode == 'RGBA', 'Alpha report needs RGBA pixels')
     w, h = im.size; mask = im.getchannel('A').tobytes(); seen = bytearray(w * h)
+    for i in range(w * h):
+        if seen[i] or not mask[i]: continue
+        count, peak = _fill(mask, w, h, seen, i)
+        yield i, count, peak
+
+
+def matte_components(im):
+    """Count 4-connected alpha>0 regions with a deterministic flood fill."""
     found = 0; largest = 0
-    for y in range(h):
-        for x in range(w):
-            i = y * w + x
-            if seen[i] or not mask[i]: continue
-            found += 1; size = 0; stack = [i]; seen[i] = 1
-            while stack:
-                j = stack.pop(); size += 1
-                jy, jx = divmod(j, w)
-                if jx > 0 and mask[j - 1] and not seen[j - 1]: seen[j - 1] = 1; stack.append(j - 1)
-                if jx + 1 < w and mask[j + 1] and not seen[j + 1]: seen[j + 1] = 1; stack.append(j + 1)
-                if jy > 0 and mask[j - w] and not seen[j - w]: seen[j - w] = 1; stack.append(j - w)
-                if jy + 1 < h and mask[j + w] and not seen[j + w]: seen[j + w] = 1; stack.append(j + w)
-            largest = max(largest, size)
+    for _, count, _ in matte_regions(im): found += 1; largest = max(largest, count)
     return {'components': found, 'largest_component': largest}
 
 
@@ -170,6 +184,36 @@ def alpha_cleanup(im):
     require(im.mode == 'RGBA', 'Alpha cleanup needs RGBA pixels')
     table = bytes([0] * ALPHA_DUST_BELOW + list(range(ALPHA_DUST_BELOW, ALPHA_SOLID_FROM)) + [255] * (256 - ALPHA_SOLID_FROM))
     out = im.copy(); out.putalpha(im.getchannel('A').point(table)); return out
+
+
+def despeckle(im):
+    """Clear every detached alpha region whose brightest pixel is below SPECK_PEAK_BELOW.
+
+    Regions are 4-connected alpha>0 areas of the image as given, so a faint glow touching the subject stays with it
+    and a detached sparkle with a bright core is kept whatever its size. In rgba-despeckle this runs after
+    alpha_cleanup, so dust (alpha below ALPHA_DUST_BELOW) no longer bridges: a speck joined to the subject only
+    through dust counts as detached. That is the point of the mode: all 16 crystal specks of 27 Sep 2026 were
+    such dust-bridged residue. RGB bytes pass through unchanged. When no region reaches SPECK_PEAK_BELOW (a sprite
+    that is faint all over: glow, mist, shadow) there is no bright subject for the rest to be detached from, so the
+    largest region (first in scan order on a tie) is kept as the subject instead of erasing the sprite to nothing.
+    """
+    w, h = im.size; alpha = bytearray(im.getchannel('A').tobytes()); cleared = 0; pixels = 0
+    subject, largest, bright = None, -1, False
+    for seed, count, peak in matte_regions(im):
+        bright = bright or peak >= SPECK_PEAK_BELOW
+        if count > largest: subject, largest = seed, count
+    if bright: subject = None
+    for seed, count, peak in matte_regions(im):
+        if peak >= SPECK_PEAK_BELOW or seed == subject: continue
+        cleared += 1; pixels += count
+        stack = array('I', (seed,)); alpha[seed] = 0  # second fill over the mutable copy: zeroing marks visited, regions are disjoint
+        while stack:
+            j = stack.pop(); jy, jx = divmod(j, w)
+            for k, ok in ((j - 1, jx > 0), (j + 1, jx + 1 < w), (j - w, jy > 0), (j + w, jy + 1 < h)):
+                if ok and alpha[k]: alpha[k] = 0; stack.append(k)
+    mask = im.getchannel('A'); mask.frombytes(bytes(alpha))  # getchannel returns a new image; frombytes fills it in place
+    out = im.copy(); out.putalpha(mask)
+    return out, {'regions_cleared': cleared, 'pixels_cleared': pixels}
 
 
 def to_rgb(im):
@@ -190,22 +234,34 @@ def decode_png(raw, what='Input image'):
         source.load(); return source.copy()
 
 
+CLEANUP_MODES = ('rgba-cleanup', 'rgba-despeckle', 'to-rgb')
+
+
 def cleanup(source, output, mode='rgba-cleanup', evidence=None):
-    """Explicit finishing step: clean alpha dust or drop a spurious channel. Never overwrites."""
-    require(mode in ('rgba-cleanup', 'to-rgb'), 'Unknown cleanup mode')
+    """Explicit finishing step: clean alpha dust or drop a spurious channel. Never overwrites.
+
+    rgba-cleanup snaps the dust and body bands; rgba-despeckle does that, then clears detached regions
+    that never reach SPECK_PEAK_BELOW (residue left at the dust threshold around soft glows); to-rgb drops alpha.
+    """
+    require(mode in CLEANUP_MODES, 'Unknown cleanup mode')
     require(evidence is None or not Path(evidence).exists(), 'Evidence file exists; outputs are never overwritten')
     with Path(source).open('rb') as stream: raw = stream.read(MAX_FILE + 1)
     before_image = decode_png(raw)
     before = alpha_report(before_image)
-    after_image = alpha_cleanup(before_image) if mode == 'rgba-cleanup' else to_rgb(before_image)
-    after = alpha_report(after_image) if mode == 'rgba-cleanup' else {'mode': 'RGB', 'size': list(after_image.size)}
+    thresholds = {'dust_below': ALPHA_DUST_BELOW, 'solid_from': ALPHA_SOLID_FROM}; removed = None
+    if mode == 'to-rgb': after_image = to_rgb(before_image)
+    else: after_image = alpha_cleanup(before_image)
+    if mode == 'rgba-despeckle':
+        after_image, removed = despeckle(after_image); thresholds['speck_peak_below'] = SPECK_PEAK_BELOW
+    after = {'mode': 'RGB', 'size': list(after_image.size)} if mode == 'to-rgb' else alpha_report(after_image)
+    if removed is not None: after['despeckle'] = removed
     out = Path(output)
     stream = out.open('xb')  # FileExistsError: never overwrite
     try:
         with stream: after_image.save(stream, format='PNG')
     except BaseException: out.unlink(missing_ok=True); raise  # a truncated PNG would read as finished and block the retry
     record = {'schema_version': 1, 'kind': 'alpha_cleanup', 'mode': mode,
-              'thresholds': {'dust_below': ALPHA_DUST_BELOW, 'solid_from': ALPHA_SOLID_FROM},
+              'thresholds': thresholds,
               'input': str(source), 'input_sha256': hashlib.sha256(raw).hexdigest(),
               'output': str(out), 'output_sha256': file_sha(out),
               'before': before, 'after': after}

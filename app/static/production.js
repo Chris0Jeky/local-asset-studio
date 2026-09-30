@@ -45,7 +45,7 @@ function planActivity(p){const stamps=r=>[r?.created_at,r?.started_at,r?.finishe
 function planGroups(plans,filter=planFilter,now=Date.now()/1000){
   const kinds=PLAN_TYPES[filter.type],typed=plans.filter(p=>!kinds||kinds.includes(p.kind));
   if(filter.status==='all')return {recent:typed,older:[],hidden:plans.length-typed.length};
-  const open=planOpenStatuses(),recent=[],older=[],active=typed.filter(p=>open.has(p.state?.status));
+  const open=planOpenStatuses(),recent=[],older=[],active=typed.filter(p=>open.has(p.state?.status)&&p.put_away!==true);
   // A plan with no readable date cannot be shown to be old, so it stays in view.
   for(const p of active){const at=planActivity(p);(at!==null&&now-at>PLAN_RECENT_SECONDS?older:recent).push(p);}
   return {recent,older,hidden:plans.length-active.length};
@@ -56,7 +56,14 @@ function setPlanFilter(next,focus=false){planFilter=cleanPlanFilter({...planFilt
   // Show all lives inside the list it re-renders; hand keyboard focus to the Status select instead of losing it.
   if(focus)$('#planStatus')?.focus?.();}
 function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStorage.getItem(PLAN_FILTER_KEY)||'{}'));}catch(err){}syncPlanFilter();}
-function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>';}
+function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+(p.put_away?' · put away':'')+'</small></button>';}
+// #940: the owner can put a settled plan away. Only its put_away marker changes (server-side Production.put_away);
+// nothing is started, stopped, retried or deleted, and a later status change brings it back on its own.
+function planPutAway(p){
+  if(p.put_away)return '<p class="plan-put-away"><small>Put away '+esc(planDate(p.put_away_at))+'. Its status, stages and files are unchanged; it is off your desk and the in-progress list.</small> '+(p.can_bring_back?'<button data-plan-put-away="false">Bring back</button>':'')+'</p>';
+  if(p.can_put_away)return '<p class="plan-put-away"><button data-plan-put-away="true">Put away</button> <small>Takes it off your desk and the in-progress list. Nothing is started, stopped or deleted; Show all still lists it.</small></p>';
+  return '';
+}
 function renderPlanList(){
   const list=$('#productionList');if(!productionPlans.length){list.innerHTML=PRODUCTION_EMPTY;return;}
   const groups=planGroups(productionPlans),shown=groups.recent.length+groups.older.length,showAll='<button data-plan-show-all>Show all</button>';
@@ -91,12 +98,12 @@ function renderProduction(){
   renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   if(p.kind==='av'){
-    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>');
+    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>'+planPutAway(p));
     return;
   }
   const terminalReconciliation=p.can_reconcile_tracking===true||p.can_reconcile_batch===true,active=['queued','running','observing'].includes(p.state.status),trackingRecoveryPending=!terminalReconciliation&&(p.stages||[]).some(s=>{const d=s.job?.tracking_disposition;return (d?.status==='stopped'||d?.history?.some(event=>event.status==='stopped'))&&s.job?.status!=='completed';}),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
   const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending?'disabled':'')+'>'+(terminalReconciliation?'Reconcile outcome only':p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
-  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
+  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
   if(p.kind==='comparison'){
     const clock=p.state.time_budget;
     if(clock&&!p.state.time_budget_error){
@@ -107,14 +114,17 @@ function renderProduction(){
     if(['awaiting_review','reviewed','failed'].includes(p.state.status))html+='<p><a class="primary artifact-download" href="/review.html?project='+p.id+'">Open review desk</a> <span class="muted">Stable blind candidates, matched crops, findings and an evidence pack. No generation.</span></p>';
     html+='<p class="muted">'+p.budget.reserved+' of '+p.budget.allowance+' graph runs reserved across this study and its branches. Uncertain attempts keep their reservation. No automatic repair runs.</p><label class="blind-toggle"><input id="blindComparison" type="checkbox" '+(blindComparison?'checked':'')+'> Hide settings while comparing</label><div class="candidate-grid">';
     for(const s of p.stages){const j=s.job,images=(j?.outputs||[]).filter(o=>o.asset_id);
-      const index=p.stages.indexOf(s),variant=(p.variants||[])[index];
-      html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(variant?variant.label:p.axis+' '+p.values[index])+'</small>'+(variant?.rationale?'<p class="muted">'+esc(variant.rationale)+'</p>':'')+(variant?.sources||[]).map(u=>'<a href="'+safeUrl(u)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' '))+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>';
+      const index=p.stages.indexOf(s),variant=(p.variants||[])[index],checked=images.map(o=>candidateCheckAsset(o.asset_id)).filter(Boolean),counted=checked.length?StudioReviewChecks.summary(checked,candidateCheckNames(j)):'';
+      html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(variant?variant.label:p.axis+' '+p.values[index])+'</small>'+(variant?.rationale?'<p class="muted">'+esc(variant.rationale)+'</p>':'')+(variant?.sources||[]).map(u=>'<a href="'+safeUrl(u)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' '))+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>'+(counted?'<p class="muted candidate-check-count">'+esc(counted)+'</p>':'');
       for(const o of images){const url='/api/assets/'+o.asset_id+'/file';html+=o.media_type==='image'?'<button class="candidate-image" data-candidate-open="'+o.asset_id+'"><img src="'+url+'" alt="Candidate '+esc(s.label)+'"></button>':o.media_type==='video'?'<video src="'+url+'" controls preload="metadata"></video>':'<a href="'+url+'" download>Download '+esc(o.media_type)+'</a>';
         if(['awaiting_review','reviewed'].includes(p.state.status)&&!p.state.review?.desk_url)html+='<button data-choose-candidate="'+o.asset_id+'">Choose '+esc(s.label)+'</button>';
         // Workspace review of one image, through the same guarded update the asset
         // dialog uses.  Blind mode hides settings, never the pictures, so marking a
         // keeper here reveals nothing about which variant produced it.
         if(o.media_type==='image')html+='<div class="candidate-review"><button data-candidate-review="selected" data-candidate-asset="'+o.asset_id+'">Keeper</button><button data-candidate-review="needs_work" data-candidate-asset="'+o.asset_id+'">Needs work</button></div>';
+        // The set comes from the stage's own recipe, so a candidate that finished after the last Workspace read still gets chips.
+        const checkNames=o.media_type==='image'?candidateCheckNames(j):[];
+        if(checkNames.length)html+='<div class="candidate-checks" role="group" aria-label="Quick checks for candidate '+esc(s.label)+'">'+StudioReviewChecks.chipsHTML({tags:candidateCheckAsset(o.asset_id)?.tags||[],names:checkNames,attr:'data-candidate-check',asset:o.asset_id,escape:esc})+'</div>';
       }
       if(j)html+='<details><summary>Execution record</summary><small>'+esc(j.message)+'</small><p>'+esc((j.prompt_ids||[]).join(', '))+'</p>'+(j.tracking_disposition?.status==='stopped'?'<p><b>Tracking stopped</b>: '+esc(j.tracking_disposition.reason)+'</p>':'')+'<button data-job-recipe="'+j.id+'">Recipe</button></details>';
       html+='</article>';
@@ -130,7 +140,7 @@ function renderProduction(){
   if(p.state.engine)html+='<p class="callout">Godot import and timed playback verified for this export.</p>';
   if(p.state.krita)html+='<p class="callout">Krita saved and reopened this document. '+p.state.krita.kra.layers.length+' layer records retained.</p><p><a class="artifact-download" href="/api/production/'+p.id+'/files/native/krita/roundtrip.kra?download" download>Download Krita document</a></p><img class="comparison-sheet" src="/api/production/'+p.id+'/files/native/krita/export.png" alt="Image exported from the reopened Krita document">';
   if(artifacts.length)html+='<details><summary>Files & provenance · '+artifacts.length+'</summary><div class="artifact-files">'+artifacts.map(a=>'<a href="'+a.url+'?download" download>'+esc(a.path)+'</a>').join('')+'</div></details>';
-  writeProductionDetail(p.id,html);
+  writeProductionDetail(p.id,html+planPutAway(p));
 }
 async function openComparison(parent=null){
   if(!selected)return;++plannerRequestId;comparisonParent=parent;
@@ -290,16 +300,33 @@ async function reviewCandidateAsset(id,review){
   await mutateAssets({ids:[id],action:'edit',review});
   productionMessage((review==='selected'?'Marked as a keeper':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
 }
+// #1203: quick yes/no checks on a candidate picture, saved one press at a time through the same guarded update.
+// Counts per candidate come only from those owner answers; the comparison's own outcome is untouched.
+function candidateCheckAsset(id){return globalThis.StudioReviewChecks&&typeof assetState!=='undefined'?assetState.assets.find(a=>a.id===id)||null:null;}
+function candidateCheckNames(job){return globalThis.StudioReviewChecks&&job?StudioReviewChecks.forPreset((typeof catalog==='undefined'?[]:catalog?.presets||[]).find(p=>p.id===job.preset_id)):[];}
+async function checkCandidateAsset(id,name){
+  if(!id||!globalThis.StudioReviewChecks)return;
+  await refreshAssets(true);const asset=assetState.assets.find(a=>a.id===id);
+  if(!asset)throw Error('This candidate is no longer in the library. Nothing was saved.');
+  const tags=StudioReviewChecks.cycle(asset.tags,name),now=StudioReviewChecks.answer(tags,name);
+  await mutateAssets({ids:[id],action:'edit',tags});renderProduction();
+  productionMessage('Saved for this candidate: '+name+' '+(now===null?'not checked':now?'yes':'no')+'. The comparison outcome is unchanged.');
+}
 $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
   if(coordinatorAction&&productionActionPending)return;
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
   try{
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
+  const putAway=e.target.closest('[data-plan-put-away]');
+  if(putAway){if(productionActionPending)return;productionActionPending=true;putAway.disabled=true;const away=putAway.dataset.planPutAway==='true';
+    try{await post('/api/production/'+p.id+'/put-away',{put_away:away});productionMessage(away?'Put away. Status: All statuses in Your plans still lists it; Bring back returns it to your desk.':'Back on your desk and in the in-progress list.');await refreshProduction(true);}
+    finally{productionActionPending=false;putAway.disabled=false;}return;}
   const choice=e.target.closest('[data-choose-candidate]')?.dataset.chooseCandidate;
   const open=e.target.closest('[data-candidate-open]')?.dataset.candidateOpen;
   const recipe=e.target.closest('[data-job-recipe]')?.dataset.jobRecipe;
   const mark=e.target.closest('[data-candidate-review]');
   if(mark){await reviewCandidateAsset(mark.dataset.candidateAsset,mark.dataset.candidateReview);return;}
+  const checkChip=e.target.closest('[data-candidate-check]');if(checkChip){await checkCandidateAsset(checkChip.dataset.asset,checkChip.dataset.candidateCheck);return;}
   if(open){await refreshAssets();openAsset(open);return;}if(recipe){await exportRecipe(recipe);return;}
   if(action==='branch'){applySaved({preset:p.recipe.preset_id,controls:p.recipe.controls,references:p.recipe.references,parent_assets:p.recipe.parent_assets});await openComparison(p);return;}
   if(choice||action==='needs_work'){const notes=$('#productionNotes').value;await post('/api/production/'+p.id+'/review',{asset_id:choice||null,notes,reviewer:'local-user'});dropProductionDrafts({productionNotes:notes});}
@@ -315,7 +342,7 @@ $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[d
 function renderNativeAssets(){
   $('#nativeAssetList').innerHTML=nativeAssets.map((a,i)=>'<div class="native-source"><span>'+esc(a.title)+'</span><button type="button" data-native-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move source '+(i+1)+' earlier">↑</button><button type="button" data-native-down="'+i+'" '+(i===nativeAssets.length-1?'disabled':'')+' aria-label="Move source '+(i+1)+' later">↓</button>'+(a.media_type==='image'?'<label>Duration ms<input type="number" min="1" max="60000" data-native-duration="'+a.id+'" value="'+a.duration+'"></label><label>Layer name<input data-native-layer="'+a.id+'" value="'+esc(a.layerName)+'"></label>':'<small>Optional GLB</small>')+'</div>').join('');
 }
-$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Experiments.';renderNativeAssets();$('#nativeDialog').showModal();};
+$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Runs & review.';renderNativeAssets();$('#nativeDialog').showModal();};
 $('#cancelNative').onclick=()=>$('#nativeDialog').close();$('#nativeKind').onchange=()=>{$('#nativeEngineWrap').hidden=$('#nativeKind').value!=='godot';$('#nativeKritaWrap').hidden=$('#nativeKind').value!=='ora';};
 function readNativeInputs(){
   for(const input of $('#nativeAssetList').querySelectorAll('input')){

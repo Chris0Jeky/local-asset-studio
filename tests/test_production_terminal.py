@@ -110,7 +110,7 @@ class TerminalHTTPTests(unittest.TestCase):
         from http.client import HTTPConnection
         from http.server import ThreadingHTTPServer
         import threading
-        fixture=TerminalObservationTests();fixture.setUp();self.addCleanup(fixture.doCleanups)
+        fixture=TerminalObservationTests();self.addCleanup(fixture.doCleanups);fixture.setUp()
         fixture.terminal(outcome);before=fixture.snapshot();state=fixture.lab._get(fixture.identifier)['state']
         fixture.fixture.patches[0].stop()
         handler=type('TerminalHandler',(server.Handler,),{'studio':fixture.studio})
@@ -136,8 +136,8 @@ class TerminalHTTPTests(unittest.TestCase):
 class TerminalPreservationTests(unittest.TestCase):
     """Real files/Workspace rows and competing calls, without a model runtime."""
     def setUp(self):
-        self.fixture=TerminalObservationTests();self.fixture.setUp()
-        self.addCleanup(self.fixture.doCleanups)
+        self.fixture=TerminalObservationTests();self.addCleanup(self.fixture.doCleanups)
+        self.fixture.setUp()
 
     def retain_image(self):
         fixture=self.fixture;studio=fixture.studio;job=fixture.job

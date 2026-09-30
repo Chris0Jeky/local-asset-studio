@@ -25,7 +25,11 @@ class ProductionTests(unittest.TestCase):
             patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url,'comfy_root':str(s.comfy_root)}),
             patch.object(server.Studio,'check_production_bundle',lambda *a:None),
             patch.object(server.Studio,'validate_graph',lambda *a:None)]
-        for p in self.patches:p.start()
+        # Stop through cleanups too: a subclass or borrower whose own setUp fails
+        # after this point never reaches tearDown, and a leaked Thread.start patch
+        # leaves later tests waiting forever on workers that never run.
+        self.addCleanup(self.tmp.cleanup)
+        for p in self.patches:p.start();self.addCleanup(p.stop)
     def tearDown(self):
         for p in reversed(self.patches):p.stop()
         self.tmp.cleanup()
@@ -120,6 +124,15 @@ class ProductionTests(unittest.TestCase):
             self.assertIsNone(db.execute('SELECT 1 FROM character_edit_campaigns').fetchone())
             self.assertIsNone(db.execute("SELECT 1 FROM budgets WHERE id LIKE 'character-edit:%'").fetchone())
         self.assertEqual(studio.production.register_edit_campaign({'campaign':good})['campaign'],good)
+
+    def test_a_branch_that_can_never_fit_the_root_budget_is_refused_at_create(self):
+        # Reservations only grow, so a branch larger than what is left of the root allowance could never start.
+        studio=FakeStudio(self.root,[]);lab=studio.production
+        parent=lab.create(self.intent())
+        with self.assertRaisesRegex(ValueError,'remaining generation budget'):lab.create(self.intent(parent_project=parent['id'],values=[3,4,5]))
+        lab.start(parent['id'])
+        with self.assertRaisesRegex(ValueError,'remaining generation budget'):lab.create(self.intent(parent_project=parent['id'],values=[3,4]))
+        self.assertEqual([p['id'] for p in lab.list()],[parent['id']])
 
     def test_branch_budget_and_start_are_atomic_and_not_reset(self):
         studio=FakeStudio(self.root,[]);lab=studio.production
@@ -276,7 +289,11 @@ class PlannedSweepTests(unittest.TestCase):
             patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url,'comfy_root':str(s.comfy_root)}),
             patch.object(server.Studio,'check_production_bundle',lambda *a:None),
             patch.object(server.Studio,'validate_graph',lambda *a:None)]
-        for p in self.patches:p.start()
+        # Stop through cleanups too: a subclass or borrower whose own setUp fails
+        # after this point never reaches tearDown, and a leaked Thread.start patch
+        # leaves later tests waiting forever on workers that never run.
+        self.addCleanup(self.tmp.cleanup)
+        for p in self.patches:p.start();self.addCleanup(p.stop)
     def tearDown(self):
         for p in reversed(self.patches):p.stop()
         self.tmp.cleanup()

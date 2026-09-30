@@ -44,8 +44,8 @@ function sourceAttachment(file, parent = 'source-asset', sha256 = 'a'.repeat(64)
 // parent_asset lineage claim; `local` answers /api/upload, which never does. That asymmetry is what the
 // swap contracts below turn on, so the two responses must stay distinguishable. `availability` maps a
 // saved reference file to its sha256 for /api/references/check; anything absent reads as unavailable.
-function sandbox(attached, local, availability = null, diagnostic = null) {
-  const elements = new Map(), requests = [];
+function sandbox(attached, local, availability = null, diagnostic = null, boot = null) {
+  const elements = new Map(), requests = [], reads = [];
   let clickHandler;
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
@@ -60,6 +60,8 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
     sessionStorage: (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map()),
     window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
+      if (!options.method || options.method === 'GET') reads.push(url);
+      if (boot?.[url]) return boot[url]();
       if (url === '/api/catalog') return new Promise(() => {}); // Hold page startup.
       if (options.method === 'POST') requests.push({url, data: options.headers?.['Content-Type'] === 'application/json' ? JSON.parse(options.body) : null});
       const data = url === '/api/assets/reference' ? attached : url === '/api/upload' ? local
@@ -75,15 +77,27 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8'), context);
   }
   const run = source => vm.runInContext(source, context);
-  run(`catalog=${JSON.stringify({presets})}; online=schemaAvailable=true;
+  if (!boot) run(`catalog=${JSON.stringify({presets})}; online=schemaAvailable=true;
     jobs=[{id:'source-job',outputs:[{asset_id:'source-asset'}]}];
     refresh=async()=>{}; loadSetups=async()=>{};`);
-  return {element, requests, context, run, click: target => clickHandler({target}), parents: () => JSON.parse(run('JSON.stringify(parentAssets)'))};
+  return {element, requests, reads, context, run, click: target => clickHandler({target}), parents: () => JSON.parse(run('JSON.stringify(parentAssets)'))};
 }
 
 // The brief's "what to avoid" is part of the brief, not an advanced setting: the disclosure opens
 // whenever the recipe binds a negative prompt, stays collapsible, and remembers a manual collapse
 // for this tab only (#278 friction 3). A recipe that binds nothing keeps the field hidden.
+// Page start: one failing stage (saved setups here) must not leave health, jobs, the library and polling unstarted.
+async function aFailedStartupStageDoesNotStopTheRest() {
+  const reply = (ok, data) => async () => ({ok, status: ok ? 200 : 500, json: async () => data});
+  const {element, reads} = sandbox(null, null, null, null, {
+    '/api/catalog': reply(true, {presets: [{id: 'plain', name: 'plain', modality: 'image', positive: ['1', 'text'], defaults: {}}]}),
+    '/api/setups': reply(false, {error: 'Setup store unreadable'}),
+  });
+  for (let i = 0; i < 50 && !reads.includes('/api/health'); i++) await new Promise(resolve => setImmediate(resolve));
+  assert.ok(reads.includes('/api/health'), 'health still starts after saved setups fail: ' + reads.join(', '));
+  assert.match(element('#status').textContent + ' ' + element('#status').innerHTML, /Setup store unreadable|Saved setups/, 'the failed stage is reported');
+}
+
 async function avoidWordingIsVisibleWhenTheRecipeBindsIt() {
   const {element, context, run} = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
   run(`catalog.presets.push({id:'binds-avoid',name:'binds-avoid',modality:'image',positive:['1','text'],negative:['2','text'],defaults:{negative:'blurry'}},
@@ -432,6 +446,61 @@ async function explicitLocalAbandonment() {
   assert.match(element('#gallery').innerHTML,/Remote outcome remains unknown/);
 }
 
+// #1138: Cancel sits on every queued or running card and in the run dock. It stays visible but disabled with the
+// server's reason when it cannot act, asks before stopping a render that may be running, and sends one request per click.
+async function ownerCancelControls() {
+  const {element, requests, run} = sandbox({}, {});
+  const job = (id, fields) => JSON.stringify(Object.assign({id, preset_name: 'P ' + id, message: 'Working', outputs: [], prompt_ids: [], created_at: 1}, fields));
+  run(`jobs=[${[
+    job('queued', {status: 'queued', can_cancel: true, cancel_needs_confirm: false}),
+    job('running', {status: 'running', prompt_ids: ['p1'], created_at: 2, can_cancel: true, cancel_needs_confirm: true}),
+    job('stage', {status: 'running', prompt_ids: ['p2'], can_cancel: false, cancel_blocked_reason: 'This render belongs to a comparison; stop the comparison instead'}),
+    job('asked', {status: 'running', prompt_ids: ['p3'], can_cancel: false, cancel_blocked_reason: 'Cancel requested; the Studio is checking ComfyUI', cancellation: {state: 'requested', requested_at: 100}}),
+    job('refused', {status: 'running', prompt_ids: ['p4'], can_cancel: true, cancel_needs_confirm: true, cancellation: {state: 'refused', requested_at: 100, note: '<b>ComfyUI does not list this prompt</b>'}}),
+    job('done', {status: 'cancelled', message: 'Not started: cancelled by you. Nothing was sent to ComfyUI.', can_cancel: false, cancel_blocked_reason: 'Already cancelled', cancellation: {state: 'cancelled', requested_at: 100}}),
+  ].join(',')}];renderJobs();`);
+  const html = element('#gallery').innerHTML;
+  assert.match(html, /class="cancelJob" data-job="queued" data-confirm="0">Cancel<\/button><p class="cancelConsequence"><small>Removes it from the queue\. Nothing has been sent to ComfyUI\./);
+  assert.match(html, /class="cancelJob" data-job="running" data-confirm="1">Cancel<\/button><p class="cancelConsequence"><small>Stops the render in ComfyUI\. Finished outputs are kept\. Nothing is retried\./);
+  assert.match(html, /class="cancelJob" data-job="stage" disabled>Cancel<\/button><p class="disabledReason"><small>This render belongs to a comparison; stop the comparison instead/, 'A blocked cancel stays visible with its reason');
+  assert.match(html, /<b>Cancel requested<\/b>[^<]*: the Studio is checking ComfyUI for this job&#39;s prompt|<b>Cancel requested<\/b>[^<]*: the Studio is checking ComfyUI for this job's prompt/);
+  assert.doesNotMatch(html, /data-job="asked" /, 'An open request offers no second Cancel');
+  assert.match(html, /<b>Cancel refused<\/b>[^<]*: &lt;b&gt;ComfyUI does not list this prompt/, 'The refusal reason is shown, escaped, and Cancel can be asked again');
+  assert.match(html, /data-job="refused" data-confirm="1"/);
+  assert.doesNotMatch(html, /data-job="done" /, 'A cancelled job has no Cancel control');
+  assert.equal(requests.length, 0, 'Rendering sends nothing');
+  const click = (id, confirm, disabled = false) => element('#gallery').onclick({target: {closest: s => s === '.cancelJob' ? {dataset: {job: id, confirm}, disabled} : null}});
+  let asked = 0;
+  run('window.confirm=()=>false'); await click('running', '1');
+  assert.equal(requests.length, 0, 'Declining the confirmation sends nothing');
+  run('window.confirm=()=>{window.asked=(window.asked||0)+1;return true;}');
+  await click('stage', '0', true); assert.equal(requests.length, 0, 'A disabled control sends nothing');
+  await click('queued', '0'); asked = run('window.asked||0');
+  assert.equal(asked, 0, 'A job that has not started is cancelled without a confirmation');
+  await Promise.all([click('running', '1'), click('running', '1')]);
+  assert.deepEqual(requests, [{url: '/api/jobs/queued/cancel', data: {}}, {url: '/api/jobs/running/cancel', data: {}}], 'A double click sends one request');
+  assert.equal(run('window.asked'), 1);
+  assert.match(element('#status').textContent, /Cancel requested\. The Studio is checking ComfyUI/);
+  // The run dock follows the run started here, else the newest queued or running job.
+  run(`document.getElementById=id=>document.querySelector('#'+id);`);
+  element('#cancelRun').dataset = {};
+  run(`activeJobId=null;renderRunCancel();`);
+  assert.equal(element('#cancelRun').dataset.job, 'running'); assert.equal(element('#cancelRun').disabled, false); assert.equal(element('#runCancel').hidden, false);
+  assert.equal(element('#cancelRun').dataset.confirm, '1'); assert.match(element('#cancelRunReason').textContent, /Finished outputs are kept/);
+  run(`activeJobId='stage';renderRunCancel();`);
+  assert.equal(element('#cancelRun').disabled, true); assert.equal(element('#cancelRunReason').textContent, 'This render belongs to a comparison; stop the comparison instead');
+  run(`activeJobId='asked';renderRunCancel();`);
+  assert.equal(element('#cancelRun').disabled, true); assert.equal(element('#cancelRun').textContent, 'Cancelling…');
+  run(`jobs=jobs.filter(j=>j.status==='cancelled');renderRunCancel();`);
+  assert.equal(element('#runCancel').hidden, true, 'No queued or running job: no dock control');
+  assert.equal(requests.length, 2);
+  // A finished run whose cancel came too late still says so (#1160 review); a plain finished run adds no card.
+  run(`jobs=[${job('late', {status: 'completed', outputs: [], cancellation: {state: 'too_late', requested_at: 100, note: 'ComfyUI finished the render before the interrupt took effect'}})},${job('plain', {status: 'completed'})}];renderJobs();`);
+  const done = element('#gallery').innerHTML;
+  assert.match(done, /data-problem="late"><b>P late · completed<\/b><p class="cancelNote"><small><b>Cancel came too late<\/b> \([^)]*\): ComfyUI finished the render before the interrupt took effect/);
+  assert.doesNotMatch(done, /data-problem="plain"/); assert.doesNotMatch(done, /class="cancelJob"/);
+}
+
 // #940: Problems shows the newest five open problems; put-away ones stay one toggle away.
 async function problemsPanelPutAway() {
   const {element, requests, run} = sandbox({}, {});
@@ -768,6 +837,24 @@ async function seedAndPinChangesAreAnnounced() {
 // weights (and the curated cards) to what needs action, combines with the text
 // search, and restores the stored choice. Without it every row renders always,
 // so the action-needed files stay buried among verified ones.
+// #1127: a model folder linked outside the library is one refused row and one unopenable folder, never an empty Models view.
+async function linkedModelFolderIsOneRow() {
+  const {element, run} = sandbox({}, {});
+  const library = {storage: {free_bytes: 1, total_bytes: 2, reserve_bytes: 0}, collections: [], inventory: [], model_root: 'C:/models',
+    assets: [{id: 'linked', name: 'Linked Model', family: 'Test', bytes: 8, file: 'checkpoints/big.safetensors', present: true, verified: false, installable: false,
+              verification: 'linked-path-refused', install_note: 'This folder is a link', download: {}}],
+    folders: [{id: 'checkpoints', label: 'Checkpoints', path: 'C:/models/checkpoints', unavailable: 'Model folder points outside the model library'},
+              {id: 'loras', label: 'LoRAs', path: 'C:/models/loras'}]};
+  element('#modelCards').querySelector = () => null;
+  run(`api=async()=>(${JSON.stringify(library)});`);
+  await run('refreshLibrary()');
+  assert.match(element('#modelCards').innerHTML, /Linked folder · not managed/);
+  assert.match(element('#modelCards').innerHTML, /data-install="linked" disabled/);
+  const folders = element('#folders').innerHTML;
+  assert.match(folders, /Model folder points outside the model library<\/small><\/p><button data-folder="checkpoints" disabled>Open folder/);
+  assert.match(folders, /<button data-folder="loras">Open folder/);
+}
+
 async function modelStatusFilter() {
   const {element, context, run} = sandbox({}, {});
   context.localStorage = (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map());
@@ -855,14 +942,25 @@ function recentRunsSandbox({host = false} = {}) {
     : selector.startsWith('.') ? node.className.split(/\s+/).includes(selector.slice(1)) : node.tagName === selector.toUpperCase();
   const any = (node, selector) => selector.split(',').some(part => matches(node, part.trim()));
   const parse = (markup, box) => {
-    const out = []; let owner = null, inProblems = false;
+    const out = []; let owner = null, inProblems = false, problemsNode = null;
     for (const m of markup.matchAll(/<(\/details|details|\/article|article|button|a|input|video|audio|summary)\b([^>]*)>/g)) {
       if (m[1] === '/article') {owner = null; continue;}
-      if (m[1] === '/details') {inProblems = false; continue;}
-      if (m[1] === 'details') {inProblems = /id="jobProblems"/.test(m[2]); continue;}
+      if (m[1] === '/details') {inProblems = false; problemsNode = null; continue;}
+      if (m[1] === 'details' && !/id="jobProblems"/.test(m[2])) {inProblems = false; continue;}
+      if (m[1] === 'details') {
+        const attrs = Object.fromEntries([...m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(a => [a[1], a[2] ?? '']));
+        const node = {tagName: 'DETAILS', className: attrs.class || '', dataset: {}, owner: null, inProblems: true, problems: null, paused: true, ended: false, hidden: false, loop: false, listeners: {},
+          remove() {box.nodes = box.nodes.filter(n => n !== this && n.problems !== this && n.owner?.problems !== this);},
+          focus(options) {this.focusOptions = options; s.context.document.activeElement = this;},
+          addEventListener(name, handler) {(this.listeners[name] ||= []).push(handler);},
+          removeEventListener(name, handler) {this.listeners[name] = (this.listeners[name] || []).filter(h => h !== handler);},
+          closest(selector) {return any(this, selector) ? this : this.owner && any(this.owner, selector) ? this.owner : null;}};
+        Object.defineProperty(node, 'outerHTML', {configurable: true, set(markup) {const at = box.nodes.indexOf(this); box.nodes = box.nodes.filter(n => n !== this && n.problems !== this && n.owner?.problems !== this); box.nodes.splice(at < 0 ? box.nodes.length : at, 0, ...parse(markup, box));}});
+        problemsNode = node; inProblems = true; out.push(node); continue;
+      }
       const attrs = Object.fromEntries([...m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(a => [a[1], a[2] ?? '']));
       const dataset = Object.fromEntries(Object.entries(attrs).filter(([k]) => k.startsWith('data-')).map(([k, v]) => [k.slice(5).replace(/-(\w)/g, (_, c) => c.toUpperCase()), v]));
-      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, inProblems, paused: true, ended: false, hidden: false, loop: 'loop' in attrs, listeners: {},
+      const node = {tagName: m[1].toUpperCase(), className: attrs.class || '', dataset, owner, inProblems, problems: problemsNode, paused: true, ended: false, hidden: false, loop: 'loop' in attrs, listeners: {},
         // Removing a card removes the controls it owns, as the DOM would.
         remove() {box.nodes = box.nodes.filter(n => n !== this && n.owner !== this);},
         focus(options) {this.focusOptions = options; s.context.document.activeElement = this;},
@@ -1117,6 +1215,132 @@ async function recentRunsHeldProblemsInsideTheGalleryKeepTheirCard() {
   assert.ok(cards[0].inProblems, 'It is the fresh card inside #jobProblems, spared by the guard');
 }
 
+// #1074: held no-host Problems replaces the in-gallery #jobProblems in place, and removes it once nothing
+// fails; the list itself is never replaced while the clip plays.
+async function recentRunsHeldProblemsReplaceTheGalleryProblems() {
+  const s = recentRunsSandbox();
+  const failedA = {id: 'held-a', preset_name: 'Failure A', status: 'failed', message: 'Out of memory', outputs: [], prompt_ids: [], created_at: 5, can_put_away: true, put_away: false};
+  const failedB = {id: 'held-b', preset_name: 'Failure B', status: 'failed', message: 'Still failing', outputs: [], prompt_ids: [], created_at: 6, can_put_away: true, put_away: false};
+  await s.poll([recentJob('clip', 1, 'video'), failedA]);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  const oldDetails = s.nodes().find(node => node.tagName === 'DETAILS');
+  assert.ok(oldDetails, 'Problems lands inside the gallery without a host');
+  const oldCard = s.nodes().find(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'held-a');
+  await s.poll([failedB, failedA, recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(s.nodes().filter(node => node.tagName === 'DETAILS').length, 1, 'Exactly one Problems block remains');
+  assert.equal(s.nodes().includes(oldDetails), false, 'The stale Problems block is replaced');
+  assert.equal(s.nodes().includes(oldCard), false, 'The stale Problems card goes with it');
+  assert.deepEqual(s.nodes().filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem).sort(), ['held-a', 'held-b'], 'Both failures render inside the fresh Problems');
+  assert.ok(s.nodes().includes(video), 'The playing clip is untouched');
+  await s.poll([recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'Clearing Problems still waits for the clip');
+  assert.equal(s.nodes().some(node => node.tagName === 'DETAILS'), false, 'Problems is removed once nothing fails');
+  assert.equal(s.nodes().some(node => node.inProblems), false, 'No Problems-owned node remains');
+}
+
+// #1074: a first render before the host mounts leaves a stale in-gallery Problems; the held host branch drops it.
+async function recentRunsHostHeldProblemsDropTheStaleGalleryProblems() {
+  const s = recentRunsSandbox({host: true});
+  const mount = s.context.document.getElementById;
+  s.context.document.getElementById = () => null;
+  const failedA = {id: 'held-a', preset_name: 'Failure A', status: 'failed', message: 'Out of memory', outputs: [], prompt_ids: [], created_at: 5, can_put_away: true, put_away: false};
+  const failedB = {id: 'held-b', preset_name: 'Failure B', status: 'failed', message: 'Still failing', outputs: [], prompt_ids: [], created_at: 6, can_put_away: true, put_away: false};
+  await s.poll([recentJob('clip', 1, 'video'), failedA]);
+  assert.ok(s.nodes().some(node => node.tagName === 'DETAILS'), 'Problems lands inside the gallery before the host mounts');
+  s.context.document.getElementById = mount;
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([failedB, failedA, recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(s.nodes().some(node => node.tagName === 'DETAILS'), false, 'The stale in-gallery Problems is dropped');
+  assert.equal(s.nodes().some(node => node.inProblems), false, 'No Problems-owned node stays in the gallery');
+  assert.equal(s.host.nodes.filter(node => node.tagName === 'DETAILS').length, 1, 'Problems renders once in the host');
+  assert.deepEqual(s.host.nodes.filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem).sort(), ['held-a', 'held-b'], 'Both failures render in the host Problems');
+  assert.ok(s.nodes().includes(video), 'The playing clip is untouched');
+}
+
+// #1074 owner decision (27 Sep 2026): while a clip holds Recent runs, a status line outside #gallery counts what
+// is waiting (a finished run no longer vanishes silently); the release render clears it. Its text writes are counted.
+const heldLine = s => {
+  const line = s.element('#recentHeld'); let text = line.textContent || ''; line.lineWrites = 0;
+  Object.defineProperty(line, 'textContent', {configurable: true, get: () => text, set(value) {text = String(value); line.lineWrites++;}});
+  return line;
+};
+const runningJob = id => ({id, preset_name: 'Recipe ' + id, status: 'running', message: 'Running', outputs: [], prompt_ids: ['p-' + id]});
+
+async function recentRunsHeldLineCountsAFinishedRun() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '', 'Nothing waits before a clip plays');
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(line.textContent, '1 run finished, shown when the clip stops', 'The finished run is announced instead of vanishing');
+  await s.poll([runningJob('r2'), recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '1 run finished · 1 new run, shown when the clip stops', 'Each kind of change is counted');
+  await s.poll([recentJob('r3'), recentJob('r2'), recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '3 runs finished, shown when the clip stops', 'A run that appears already finished counts as finished');
+}
+
+async function recentRunsHeldLineClearsOnRelease() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.match(line.textContent, /1 run finished/);
+  video.paused = true; video.listeners.pause[0]();
+  assert.equal(s.writes, writes + 1, 'Pausing releases the held re-render once');
+  assert.match(s.element('#gallery').innerHTML, /data-output="r1:0"/, 'The finished run appears');
+  assert.equal(line.textContent, '', 'The line clears on the release render');
+  // A change that only Problems shows never raises the line; a forced render (Show more) clears it too.
+  const next = s.nodes().find(node => node.tagName === 'VIDEO'); next.paused = false;
+  await s.poll([{id: 'bad', preset_name: 'Bad', status: 'failed', message: 'OOM', outputs: [], prompt_ids: [], created_at: 3, can_put_away: true, put_away: false}, recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '', 'A new failure shows live in Problems, so nothing is waiting');
+  await s.poll([runningJob('r4'), recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '1 new run, shown when the clip stops');
+  s.run('jobsSignature="";renderJobs(undefined,true);');
+  assert.equal(line.textContent, '', 'A forced render shows everything, so the line clears');
+}
+
+async function recentRunsHeldLineIgnoresUnchangedPolls() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const before = line.lineWrites;
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.lineWrites, before + 1, 'The same waiting data writes the line once');
+  // Output changes on a run already shown count as changes; trashing it back to the shown state clears the line.
+  await s.poll([recentJob('r1'), recentJob('clip', 2, 'video')]);
+  assert.equal(line.textContent, '1 run finished · 1 other change, shown when the clip stops');
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '', 'Data back to what is on screen leaves nothing waiting');
+}
+
+async function recentRunsHeldLineNeverWritesTheGallery() {
+  for (const host of [false, true]) {
+    const s = recentRunsSandbox({host}), line = heldLine(s);
+    await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+    const video = s.nodes().find(node => node.tagName === 'VIDEO'); video.paused = false;
+    const writes = s.writes, nodes = s.nodes().length;
+    await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+    await s.poll([runningJob('r2'), recentJob('r1'), recentJob('clip', 1, 'video')]);
+    assert.match(line.textContent, /1 run finished · 1 new run/, 'Both layouts show the line (host ' + host + ')');
+    assert.equal(s.writes, writes, 'The line never replaces the gallery (host ' + host + ')');
+    assert.equal(s.nodes().length, nodes, 'The line adds nothing inside the gallery (host ' + host + ')');
+    assert.doesNotMatch(s.element('#gallery').innerHTML, /shown when the clip stops/);
+    assert.ok(s.nodes().includes(video) && !video.paused, 'The playing clip is untouched');
+  }
+}
+
 async function recentRunsLeaveOutsideFocusAlone() {
   const s = recentRunsSandbox();
   await s.poll(Array.from({length: 3}, (_, i) => recentJob('o' + i)));
@@ -1125,6 +1349,88 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await s.poll(Array.from({length: 4}, (_, i) => recentJob('o' + i)));
   assert.equal(s.context.document.activeElement, prompt, 'Typing in the brief keeps focus through a poll');
   assert.ok(s.nodes().every(node => !node.focusOptions), 'No list control is focused');
+}
+
+// Make seamless (#1220): the tile recipe refuses to run without the server's prepared plan; beginTile attaches the seam
+// cross with the source as its parent, Generate sends the plan unchanged, any recipe change drops it, and a completed
+// repaint without a finished tile offers Finish tile, which calls only the deterministic finish route.
+async function seamlessTileSubmitsTheServerPlan() {
+  const {element, requests, run, parents} = sandbox(null, null);
+  const file = 'f'.repeat(32) + '_seam-cross.png';
+  const plan = {version: 1, preset_id: 'tile-route', source_asset_id: 'source-asset', source_sha256: 'a'.repeat(64), rolled_file: file, rolled_sha256: 'd'.repeat(64), size: 256, band_px: 112, feather_px: 12, flatten_sigma_px: 24};
+  run(`catalog.presets.push({id:'tile-route',name:'Seamless tile',modality:'image',tile_route:true,requires_rgba_mask:true,reference:['11','image'],positive:['4','text'],defaults:{}});selectPreset('tile-route');`);
+  assert.match(run('JSON.stringify(continuationBlockers())'), /Make seamless/, 'the tile recipe names its entry point');
+  assert.equal(element('#generate').disabled, true, 'no plan, no Generate');
+  run(`beginTile(${JSON.stringify({preset_id: 'tile-route', file, sha256: 'd'.repeat(64), width: 256, height: 256, plan, flag: 'Flat textures only: no perspective.', context: {title: 'Wall', positive: 'Flat graphite wall words'}})})`);
+  assert.equal(element('#positive').value, 'Flat graphite wall words', "the texture's own wording is kept");
+  assert.deepEqual(parents(), ['source-asset']);
+  assert.match(element('#referenceHint').textContent, /Flat textures only/);
+  assert.equal(requests.length, 0, 'preparing the workbench submits nothing');
+  assert.equal(element('#generate').disabled, false);
+  await element('#generate').onclick();
+  const submitted = requests.find(r => r.url === '/api/jobs').data;
+  assert.deepEqual(submitted.tile, plan); assert.equal(submitted.controls.reference, file); assert.deepEqual(submitted.parent_assets, ['source-asset']);
+  run(`selectPreset('plain')`);
+  assert.equal(run('JSON.stringify(tilePayload())'), '{}', 'another recipe drops the plan');
+  const card = job => run(`mediaCard(${JSON.stringify(job)},0,{media_type:'image',asset_id:'repaint'})`);
+  const repaint = {id: 'repaint-job', status: 'completed', controls: {}, preset_name: 'Seamless tile', tile: plan};
+  assert.match(card(repaint), /class="finishTile" data-job="repaint-job"/);
+  assert.match(card({...repaint, tile_finish: {error: 'size mismatch'}}), /Tile not finished: size mismatch/);
+  assert.doesNotMatch(card({...repaint, tile_finish: {job_id: 'done'}}), /finishTile/);
+  assert.match(run(`mediaCard({id:'f',controls:{},preset_name:'Seamless tile'},0,{media_type:'image',tile:{summary:'Seam 4.34 → 0.82'}})`), /Seam 4.34 → 0.82/);
+  await element('#gallery').onclick({target: {closest: selector => selector === '.finishTile' ? {dataset: {job: 'repaint-job'}} : null}});
+  assert.deepEqual(requests.filter(r => r.url === '/api/tiles/finish').map(r => r.data), [{job_id: 'repaint-job'}]);
+  assert.equal(requests.filter(r => r.url === '/api/jobs').length, 1, 'finishing never submits a generation');
+}
+
+// Parallax layers (#1219): the parallax recipe refuses to run without the server's plan; beginParallax attaches the unchanged
+// source at its own size with the source as parent; the first Generate sends the plate claim and then only LOADS the isolate
+// stage, so the second edit is a second press; any recipe change drops the plan; a stage card offers the one next step.
+async function parallaxStagesAreTwoOwnerPresses() {
+  const {element, requests, run, parents, context} = sandbox(null, null);
+  const file = 'f'.repeat(32) + '_room.png';
+  const plan = {version: 1, plan_id: 'b'.repeat(64), preset_id: 'parallax-route', source_asset_id: 'source-asset', source_sha256: 'a'.repeat(64), source_file: file, width: 1344, height: 768, objects: 'the desk', view_polygons: []};
+  const stage = name => ({plan, claim: {...plan, stage: name}, stage: name, stage_name: name === 'plate' ? 'clean plate' : 'isolate', words: name + ' words for the desk', file, width: 1344, height: 768, preset_id: 'parallax-route', context: {title: 'Room'}, flag: 'The view mask is yours, not detected.'});
+  const fetched = context.fetch;
+  context.fetch = async (url, options = {}) => url === '/api/parallax/stage' ? (requests.push({url, data: JSON.parse(options.body)}), {ok: true, json: async () => stage(JSON.parse(options.body).stage)}) : fetched(url, options);
+  run(`catalog.presets.push({id:'parallax-route',name:'Parallax layers',modality:'image',parallax_route:true,reference:['14','image'],positive:['4','text'],width:['10','width'],height:['10','height'],defaults:{}});selectPreset('parallax-route');`);
+  assert.match(run('JSON.stringify(continuationBlockers())'), /Make parallax layers/, 'the parallax recipe names its entry point');
+  assert.equal(element('#generate').disabled, true, 'no plan, no Generate');
+  run(`beginParallax(${JSON.stringify(stage('plate'))})`);
+  assert.equal(element('#positive').value, 'plate words for the desk');
+  assert.deepEqual(parents(), ['source-asset']);
+  assert.equal(element('[data-key="width"]').value, '1344'); assert.equal(element('[data-key="height"]').value, '768');
+  assert.match(element('#referenceHint').textContent, /edit 1 of 2, the clean plate.*not detected/);
+  assert.equal(requests.length, 0, 'preparing the workbench submits nothing');
+  await element('#generate').onclick();
+  const jobs = () => requests.filter(r => r.url === '/api/jobs').map(r => r.data);
+  assert.equal(jobs().length, 1, 'one press, one edit');
+  assert.deepEqual(jobs()[0].parallax, {...plan, stage: 'plate'}); assert.equal(jobs()[0].controls.reference, file); assert.equal(jobs()[0].controls.width, '1344');
+  assert.equal(run('parallaxState.stage'), 'isolate', 'the isolate edit is loaded, not run');
+  assert.equal(element('#positive').value, 'isolate words for the desk');
+  assert.match(element('#status').textContent, /isolate edit is loaded.*press Generate/);
+  await element('#generate').onclick();
+  assert.equal(jobs().length, 2); assert.equal(jobs()[1].parallax.stage, 'isolate');
+  assert.match(element('#status').textContent, /splits the layers when both edits complete/);
+  run(`selectPreset('plain')`);
+  assert.equal(run('JSON.stringify(parallaxPayload())'), '{}', 'another recipe drops the plan');
+  const card = (job, siblings = []) => { run(`jobs=${JSON.stringify(siblings)}`); return run(`mediaCard(${JSON.stringify(job)},0,{media_type:'image',asset_id:'edit'})`); };
+  const plate = {id: 'plate-job', status: 'completed', controls: {}, preset_name: 'Parallax layers', parallax: {...plan, stage: 'plate'}};
+  const isolate = status => ({id: 'isolate-job', status, controls: {}, parallax: {...plan, stage: 'isolate'}});
+  assert.match(card(plate), /class="parallaxStage" data-job="plate-job" data-stage="isolate"/);
+  assert.match(card(plate), /has no isolate edit yet/);
+  assert.match(card(plate, [isolate('running')]), /isolate edit is running; the layers split when it completes/);
+  assert.match(card(plate, [isolate('completed')]), /class="parallaxFinish" data-job="plate-job"/);
+  assert.match(card({...plate, parallax_finish: {error: 'no fit'}}, [isolate('completed')]), /Layers not split: no fit/);
+  assert.match(card({...plate, parallax_finish: {job_id: 'split', summary: 'within 0.36/255'}}), /Layers split: within 0.36\/255/);
+  assert.doesNotMatch(card({...plate, parallax_finish: {job_id: 'split'}}), /parallaxStage|parallaxFinish/);
+  assert.match(run(`mediaCard({id:'f',controls:{},preset_name:'Parallax layers'},0,{media_type:'image',parallax:{layer:'near',shift_px:24,summary:'within 0.36/255'}})`), /Near layer, shift 24 px\. within 0.36\/255/);
+  run(`jobs=[]`);
+  await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxFinish' ? {dataset: {job: 'plate-job'}} : null}});
+  assert.deepEqual(requests.filter(r => r.url === '/api/parallax/finish').map(r => r.data), [{job_id: 'plate-job'}]);
+  await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
+  assert.equal(run('selected.id'), 'parallax-route'); assert.equal(run('parallaxState.stage'), 'isolate');
+  assert.equal(jobs().length, 2, 'splitting or loading a stage never submits a generation');
 }
 
 (async () => {
@@ -1141,6 +1447,12 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await recentRunsReleaseOnErrorAndEmptied();
   await recentRunsSupersededGalleryCardHidden();
   await recentRunsHeldProblemsInsideTheGalleryKeepTheirCard();
+  await recentRunsHeldProblemsReplaceTheGalleryProblems();
+  await recentRunsHostHeldProblemsDropTheStaleGalleryProblems();
+  await recentRunsHeldLineCountsAFinishedRun();
+  await recentRunsHeldLineClearsOnRelease();
+  await recentRunsHeldLineIgnoresUnchangedPolls();
+  await recentRunsHeldLineNeverWritesTheGallery();
   await generateShortcutRoutesThroughTheButton();
   await seedAndPinChangesAreAnnounced();
   await pastedAndDroppedPicturesFillEmptySlots();
@@ -1148,6 +1460,7 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await unstagedLocalFilesCannotBeSaved();
   await explicitLocalAbandonment();
   await problemsPanelPutAway();
+  await ownerCancelControls();
   await check('qwen-1ref', null, 1);
   await check('qwen-3ref', null, 3);
   await check('plain', null, 0);
@@ -1174,8 +1487,12 @@ async function recentRunsLeaveOutsideFocusAlone() {
   await i2vDiagnosticEligibilityAndRetry();
   await unresolvedInputLineageCannotBeSaved();
   await avoidWordingIsVisibleWhenTheRecipeBindsIt();
+  await aFailedStartupStageDoesNotStopTheRest();
+  await linkedModelFolderIsOneRow();
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
+  await seamlessTileSubmitsTheServerPlan();
+  await parallaxStagesAreTwoOwnerPresses();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
 

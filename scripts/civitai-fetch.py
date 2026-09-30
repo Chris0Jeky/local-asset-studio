@@ -156,7 +156,7 @@ def _validate_resume_response(response,offset,expected_size):
  if response.headers.get('Content-Encoding','').strip().lower() not in ('','identity'):
   raise SystemExit('Resume requires identity content encoding; partial file preserved')
 
-def download(url,target,token,expected_size=None,expected_sha=None,chunk=4*1024**2,resume=False,opener=None):
+def download(url,target,token,expected_size=None,expected_sha=None,chunk=4*1024**2,resume=False,opener=None,allow_unverified=False):
  if target.exists():raise SystemExit('Destination already exists; nothing downloaded: '+str(target))
  target.parent.mkdir(parents=True,exist_ok=True)
  part=target.with_suffix(target.suffix+'.part')
@@ -165,9 +165,9 @@ def download(url,target,token,expected_size=None,expected_sha=None,chunk=4*1024*
  if resume:size,digest=_resume_partial(part,target,expected_size)
  else:size,digest=0,hashlib.sha256()
  if resume and size==expected_size:
-  if not expected_sha:raise SystemExit('Cannot publish a complete partial without a pinned SHA-256; partial file preserved: '+str(part))
+  if not expected_sha and not allow_unverified:raise SystemExit('Refusing to publish an unverified download (no pinned SHA-256); partial file preserved: '+str(part)+'. Pass --allow-unverified to publish it anyway.')
   actual=digest.hexdigest()
-  if actual!=expected_sha:raise SystemExit('SHA-256 mismatch for complete partial; partial file preserved: '+str(part))
+  if expected_sha and actual!=expected_sha:raise SystemExit('SHA-256 mismatch for complete partial; partial file preserved: '+str(part))
   if target.exists():raise SystemExit('Destination appeared during resume; both files preserved')
   part.rename(target)
   return size,actual,round(time.time()-start,1)
@@ -184,7 +184,8 @@ def download(url,target,token,expected_size=None,expected_sha=None,chunk=4*1024*
  except URLError as error:raise SystemExit(f'Download failed: {error.reason}. Partial file preserved: {part}')
  if expected_size is not None and size!=expected_size:raise SystemExit(f'Size mismatch ({size} != {expected_size}); partial file preserved: {part}')
  if expected_sha and digest.hexdigest()!=expected_sha:raise SystemExit('SHA-256 mismatch; partial file preserved: '+str(part))
- if expected_sha is None:print('WARNING: this version lists no SHA-256; the download could not be verified against the source.')
+ if not expected_sha and not allow_unverified:raise SystemExit('Refusing to publish an unverified download (this version lists no SHA-256); partial file preserved: '+str(part)+'. Pass --allow-unverified to publish it anyway.')
+ if expected_sha is None:print('WARNING: this version lists no SHA-256; publishing only because --allow-unverified was passed.')
  if target.exists():raise SystemExit('Destination appeared during the download; both files preserved')
  part.rename(target)
  return size,digest.hexdigest(),round(time.time()-start,1)
@@ -198,6 +199,7 @@ def main(argv=None):
  parser.add_argument('--family',default='');parser.add_argument('--trigger',default='')
  parser.add_argument('--dry-run',action='store_true',help='read the public metadata only; no token needed')
  parser.add_argument('--resume',action='store_true',help='resume an existing .part file after strict range validation; never starts a fresh transfer')
+ parser.add_argument('--allow-unverified',action='store_true',help='publish the download even when the version lists no SHA-256; the receipt records verified False')
  args=parser.parse_args(argv)
  token=None if args.dry_run else read_token()
  version=fetch_version(args.version_id,token)
@@ -208,7 +210,8 @@ def main(argv=None):
                    'destination':str(target),'expected_sha256':chosen['sha256'],'expected_bytes':chosen['bytes'],
                    'terms':terms_note(version)},indent=2,ensure_ascii=False))
  if args.dry_run:return 0
- size,digest,seconds=download(chosen['url'] or f'https://civitai.com/api/download/models/{args.version_id}',target,token,chosen['bytes'],chosen['sha256'],resume=args.resume)
+ if chosen['sha256'] is None and not args.allow_unverified:raise SystemExit('Refusing to publish an unverified download (this version lists no SHA-256). Pass --allow-unverified to publish it anyway; nothing was downloaded.')
+ size,digest,seconds=download(chosen['url'] or f'https://civitai.com/api/download/models/{args.version_id}',target,token,chosen['bytes'],chosen['sha256'],resume=args.resume,allow_unverified=args.allow_unverified)
  receipt={'file':name,'source':f'https://civitai.com/models/{version.get("modelId")}?modelVersionId={version.get("id")}',
           'url':f'https://civitai.com/api/download/models/{version.get("id")}','bytes':size,'sha256':digest,
           'expected_sha256':chosen['sha256'],'verified':bool(chosen['sha256']) and digest==chosen['sha256'],

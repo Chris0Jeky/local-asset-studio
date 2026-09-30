@@ -56,15 +56,15 @@ class OrdinaryObservationAdmissionTests(unittest.TestCase):
 
     def test_restart_and_lost_history_preserve_known_identity_without_replay(self):
         studio, job = self.fixture()
-        restarted = FakeStudio(self.root, [URLError('history unavailable')])
+        restarted = FakeStudio(self.root, [URLError('history unavailable')] * server.HISTORY_READ_STRIKES)
         restarted.reference_jobs = HeldReferenceJobs()
         restarted.resume_job(job['id'])
         self.assertEqual(restarted.queue.get_nowait(), ('observe', job['id']))
         restored = restarted.jobs[job['id']]
-        restarted._resume(restored)
+        with patch.object(server.time, 'sleep'): restarted._resume(restored)
         self.assertEqual(restored['status'], 'uncertain')
         self.assertEqual(restored['prompt_ids'], ['retained'])
-        self.assertEqual(restarted.requests, [(('/history/retained',), {'timeout': 15, 'base_url': 'http://127.0.0.1:8188'})])
+        self.assertEqual(restarted.requests, [(('/history/retained',), {'timeout': 15, 'base_url': 'http://127.0.0.1:8188'})] * server.HISTORY_READ_STRIKES)
         self.assertEqual(restarted.reference_jobs.calls, 0)
 
     def test_unsafe_or_unknown_records_do_not_bypass_the_hold(self):

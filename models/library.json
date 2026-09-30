@@ -2413,6 +2413,51 @@
       "trigger": ""
     },
     {
+      "id": "qwen-image-21-text-encoder-w4a8",
+      "name": "Qwen-Image 2.1 / Qwen3-VL 8B text encoder (w4a8, smaller)",
+      "file": "text_encoders/qwen3vl_8b_w4a8.safetensors",
+      "repo": "Comfy-Org/Qwen-Image-2.1",
+      "revision": "9a44dbdb47cefd046be9c0a13476192f34c8db8e",
+      "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/9a44dbdb47cefd046be9c0a13476192f34c8db8e/text_encoders/qwen3vl_8b_w4a8.safetensors",
+      "source": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1",
+      "bytes": 6312105364,
+      "sha256": "7754425e55e7bea2bfde4dde59a4cc236cb44e5ee9c215ea66ef8d47012824eb",
+      "family": "Qwen-Image 2.1",
+      "license": "qwen-research (non-commercial)",
+      "terms": "Qwen Research License Agreement, as for the other Qwen-Image 2.1 pins (the repository card declares license: other / qwen-research, Hugging Face API tree read 2026-09-27). Downloaded 2026-09-27 with curl -C - resume (owner-authorised downloads, 27 Sep 2026) and SHA-256 verified against the Hugging Face LFS oid. Lives in the isolated qwen21 checkout's models folder, not the primary one. Lab lane only (#1028, experiments/curated/qi21-lanes-20260927/): no recipe loads it.",
+      "trigger": ""
+    },
+    {
+      "id": "qwen-image-21-q4km-gguf-unsloth",
+      "name": "Qwen-Image 2.1 Q4_K_M / GGUF (unsloth)",
+      "file": "diffusion_models/qwen-image-2.1-Q4_K_M.gguf",
+      "repo": "unsloth/Qwen-Image-2.1-GGUF",
+      "revision": "2c31ccd392b367a6637841a143813320a02dff55",
+      "url": "https://huggingface.co/unsloth/Qwen-Image-2.1-GGUF/resolve/2c31ccd392b367a6637841a143813320a02dff55/qwen-image-2.1-Q4_K_M.gguf",
+      "source": "https://huggingface.co/unsloth/Qwen-Image-2.1-GGUF",
+      "bytes": 4199565024,
+      "sha256": "631d532e7ca71e8d90a87c71d3699761a812039d22e3370e87498d87754660fe",
+      "family": "Qwen-Image 2.1",
+      "license": "qwen-research (non-commercial)",
+      "terms": "Licence 'other / qwen-research' declared in the unsloth/Qwen-Image-2.1-GGUF card (Hugging Face API tree read 2026-09-27). Downloaded 2026-09-27 (owner-authorised), SHA-256 verified against the LFS oid; a hash match proves the bytes, not the creator. GGUF: pinned for presence and verification only, never installed automatically. It does not load with ComfyUI-GGUF 6ea2651e ('Unknown model architecture!'); it needs the unmerged city96/ComfyUI-GGUF#483, so this lane is parked (#1028). Lives in the qwen21 checkout.",
+      "trigger": ""
+    },
+    {
+      "id": "qwen-image-21-q4-gguf-realrebelai",
+      "name": "Qwen-Image 2.1 Q4 / GGUF (realrebelai)",
+      "file": "diffusion_models/Qwen-Image-2.1-Q4-realrebelai.gguf",
+      "repo": "realrebelai/Qwen-Image-2.1_GGUFs",
+      "revision": "8d393b750593a72ee040fe7d40611f479ccee679",
+      "url": "https://huggingface.co/realrebelai/Qwen-Image-2.1_GGUFs/resolve/8d393b750593a72ee040fe7d40611f479ccee679/Qwen-Image-2.1-Q4.gguf",
+      "source": "https://huggingface.co/realrebelai/Qwen-Image-2.1_GGUFs",
+      "bytes": 5959127264,
+      "sha256": "51998ad7c068ce7d68e233237537900ffe874ab4d5c72e20758f5f18ceb15b8a",
+      "family": "Qwen-Image 2.1",
+      "license": "not declared by the repository card; the base model is under the Qwen Research License (non-commercial)",
+      "terms": "The realrebelai/Qwen-Image-2.1_GGUFs card declares no licence (Hugging Face API tree read 2026-09-27); a quantisation of Qwen-Image 2.1 stays under the Qwen Research License terms of the base model (non-commercial). Saved locally as Qwen-Image-2.1-Q4-realrebelai.gguf (upstream name Qwen-Image-2.1-Q4.gguf). Downloaded 2026-09-27 (owner-authorised), SHA-256 verified against the LFS oid. GGUF: pinned for presence and verification only. Loads with ComfyUI-GGUF 6ea2651e (#1028 lanes). Lives in the qwen21 checkout.",
+      "trigger": ""
+    },
+    {
       "id": "illustriousxlv01-stabilizer-v1-198",
       "name": "Stabilizer IL/NAI/CK / illus01 v1.198",
       "file": "loras/illustriousXLv01_stabilizer_v1.198.safetensors",
@@ -2749,6 +2794,57 @@
       "trigger": "dark, dim lighting, dark background",
       "strength": [
         0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "klein4b-pixel-art-sprite-limbicnation",
+      "name": "klein4b-pixel-art-sprite-limbicnation.safetensors",
+      "file": "loras/klein4b-pixel-art-sprite-limbicnation.safetensors",
+      "source": "https://huggingface.co/Limbicnation/pixel-art-lora",
+      "url": "https://huggingface.co/Limbicnation/pixel-art-lora/resolve/0ac8e5c3400af68228811edc324721e25fc26777/pytorch_lora_weights.comfyui.safetensors",
+      "bytes": 325276656,
+      "sha256": "24e938f510f5dd0c890ac8b1078f4abb87a50c9c053b2e85c44821c0f30011ad",
+      "license": "apache-2.0 (model card, read 27 September 2026)",
+      "terms": "Hugging Face Limbicnation/pixel-art-lora revision 0ac8e5c3, file pytorch_lora_weights.comfyui.safetensors saved under a descriptive name. Card (read 27 September 2026): Apache-2.0, base FLUX.2-klein-4B, trained on the CC0 dataset Limbicnation/pixel-art-character; trigger \"pixel art sprite, <subject>, game asset, transparent background\", 4 steps, CFG 1, 512x512. On this PC ComfyUI reports 6 modulation keys not loaded; in a blind 2x2 test (experiments/curated/klein-loras-20260927/) the trigger words alone gave the crisper pixel grid on 3 of 4 pairs: parked, no recipe. Licence facts are not clearance for any particular use.",
+      "family": "FLUX.2 Klein 4B",
+      "trigger": "pixel art sprite, game asset, transparent background",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "klein9b-isometric-redmond",
+      "name": "klein9b-isometric-redmond.safetensors",
+      "file": "loras/klein9b-isometric-redmond.safetensors",
+      "source": "https://huggingface.co/artificialguybr/ISOMETRIC-REDMOND-FLUXKLEIN9B",
+      "url": "https://huggingface.co/artificialguybr/ISOMETRIC-REDMOND-FLUXKLEIN9B/resolve/63ce35f9e9ae574e1868d567d6d01661fd8a62fc/%5BFLUX.2.Klein%5DIsometric_Redmond.safetensors",
+      "bytes": 165704496,
+      "sha256": "633467a585b83b29e34ca133a4aa61c9bd219bba7f119f420644434e055d2188",
+      "license": "apache-2.0 (model card, read 27 September 2026)",
+      "terms": "Hugging Face artificialguybr/ISOMETRIC-REDMOND-FLUXKLEIN9B revision 63ce35f9, file [FLUX.2.Klein]Isometric_Redmond.safetensors saved under a descriptive name. Card (read 27 September 2026): Apache-2.0, base FLUX.2-klein-9B, triggers \"Isometric. IsometricRedm.\". The Klein 9B base itself carries its own FLUX non-commercial licence. In a blind 2x2 test (experiments/curated/klein-loras-20260927/) the words alone were preferred on 3 of 4 pairs and both pseudo-lettered signs came from the LoRA side: parked, no recipe.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "Isometric. IsometricRedm.",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "flux2-klein-9b-consistency-v2",
+      "name": "Flux2-Klein-9B-consistency-V2.safetensors",
+      "file": "loras/Flux2-Klein-9B-consistency-V2.safetensors",
+      "source": "https://huggingface.co/dx8152/Flux2-Klein-9B-Consistency",
+      "url": "https://huggingface.co/dx8152/Flux2-Klein-9B-Consistency/resolve/8df0c7338cf68cfcd89ca7e461fe679905634607/Flux2-Klein-9B-consistency-V2.safetensors",
+      "bytes": 331379608,
+      "sha256": "61db2017ce420b97bd5ef11984e5a894c90003a6bbf0dc9473f8d7b9ebb3ff93",
+      "license": "apache-2.0 (model card, read 27 September 2026)",
+      "terms": "Hugging Face dx8152/Flux2-Klein-9B-Consistency revision 8df0c733 (V2 file). Card (read 27 September 2026): Apache-2.0, base FLUX.2-klein-9B, image-to-image, no trigger words; V2 claims less colour cast and saturation. The Klein 9B base itself carries its own FLUX non-commercial licence. On two single-reference edits x 2 seeds (experiments/curated/klein-loras-20260927/) it was closer to the source on 2 of 4, further on 1, tied on 1, and raised saturation on the background change: parked, no recipe.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "",
+      "strength": [
+        1.0,
         1.0
       ]
     }

@@ -1,0 +1,245 @@
+{
+ "events": [
+  {
+   "t": 1790538907.838,
+   "kind": "fresh_session_reads_attempt1_taps",
+   "plan_groups": [
+    {
+     "head": "Klein 4B",
+     "facts": "1.1 min \u00b7 1 seed \u00b7 20:51 \u00b7 from a plan",
+     "checks": "pose 1/1",
+     "job": "c13dbf5c-2f80-5898-9217-bbaf9bc973f9",
+     "chips": [
+      "pose:is-yes",
+      "face:",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    },
+    {
+     "head": "Klein 9B \u00b7 depth",
+     "facts": "2.1 min \u00b7 1 seed \u00b7 20:49 \u00b7 from a plan",
+     "checks": "pose 0/1",
+     "job": "6e66575c-28e5-58be-8503-e87474f59eaa",
+     "chips": [
+      "pose:is-no",
+      "face:",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    },
+    {
+     "head": "Klein 9B \u00b7 Copy Pose",
+     "facts": "1.7 min \u00b7 1 seed \u00b7 20:47 \u00b7 from a plan",
+     "checks": "face 1/1",
+     "job": "227a9fe3-88da-542f-9613-ed4effc4c769",
+     "chips": [
+      "pose:",
+      "face:is-yes",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    }
+   ],
+   "server_tags": {
+    "c13dbf5c": [
+     [
+      "check:pose=yes"
+     ]
+    ],
+    "6e66575c": [
+     [
+      "check:pose=no"
+     ]
+    ],
+    "227a9fe3": [
+     [
+      "check:face=yes"
+     ]
+    ]
+   }
+  },
+  {
+   "t": 1790538921.332,
+   "kind": "after_clear",
+   "plan_groups": [
+    {
+     "head": "Klein 4B",
+     "facts": "1.1 min \u00b7 1 seed \u00b7 20:51 \u00b7 from a plan",
+     "checks": "",
+     "job": "c13dbf5c-2f80-5898-9217-bbaf9bc973f9",
+     "chips": [
+      "pose:",
+      "face:",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    },
+    {
+     "head": "Klein 9B \u00b7 depth",
+     "facts": "2.1 min \u00b7 1 seed \u00b7 20:49 \u00b7 from a plan",
+     "checks": "",
+     "job": "6e66575c-28e5-58be-8503-e87474f59eaa",
+     "chips": [
+      "pose:",
+      "face:",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    },
+    {
+     "head": "Klein 9B \u00b7 Copy Pose",
+     "facts": "1.7 min \u00b7 1 seed \u00b7 20:47 \u00b7 from a plan",
+     "checks": "",
+     "job": "227a9fe3-88da-542f-9613-ed4effc4c769",
+     "chips": [
+      "pose:",
+      "face:",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    }
+   ]
+  },
+  {
+   "t": 1790538942.174,
+   "kind": "fresh_session_after_clear",
+   "plan_groups": [
+    {
+     "head": "Klein 4B",
+     "facts": "1.1 min \u00b7 1 seed \u00b7 20:51 \u00b7 from a plan",
+     "checks": "",
+     "job": "c13dbf5c-2f80-5898-9217-bbaf9bc973f9",
+     "chips": [
+      "pose:",
+      "face:",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    },
+    {
+     "head": "Klein 9B \u00b7 depth",
+     "facts": "2.1 min \u00b7 1 seed \u00b7 20:49 \u00b7 from a plan",
+     "checks": "",
+     "job": "6e66575c-28e5-58be-8503-e87474f59eaa",
+     "chips": [
+      "pose:",
+      "face:",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    },
+    {
+     "head": "Klein 9B \u00b7 Copy Pose",
+     "facts": "1.7 min \u00b7 1 seed \u00b7 20:47 \u00b7 from a plan",
+     "checks": "",
+     "job": "227a9fe3-88da-542f-9613-ed4effc4c769",
+     "chips": [
+      "pose:",
+      "face:",
+      "outfit:",
+      "style:",
+      "clean:"
+     ]
+    }
+   ],
+   "server_tags": {
+    "c13dbf5c": [
+     []
+    ],
+    "6e66575c": [
+     []
+    ],
+    "227a9fe3": [
+     []
+    ]
+   }
+  }
+ ],
+ "page_errors": [],
+ "page_writes": [
+  [
+   1790538887.791,
+   "POST",
+   "/api/estimate"
+  ],
+  [
+   1790538888.738,
+   "POST",
+   "/api/estimate"
+  ],
+  [
+   1790538898.077,
+   "POST",
+   "/api/assets/reference"
+  ],
+  [
+   1790538898.346,
+   "POST",
+   "/api/estimate"
+  ],
+  [
+   1790538902.716,
+   "POST",
+   "/api/assets/reference"
+  ],
+  [
+   1790538908.594,
+   "POST",
+   "/api/assets/update"
+  ],
+  [
+   1790538911.188,
+   "POST",
+   "/api/assets/update"
+  ],
+  [
+   1790538913.763,
+   "POST",
+   "/api/assets/update"
+  ],
+  [
+   1790538916.339,
+   "POST",
+   "/api/assets/update"
+  ],
+  [
+   1790538918.911,
+   "POST",
+   "/api/assets/update"
+  ],
+  [
+   1790538922.118,
+   "POST",
+   "/api/estimate"
+  ],
+  [
+   1790538923.038,
+   "POST",
+   "/api/estimate"
+  ],
+  [
+   1790538932.409,
+   "POST",
+   "/api/assets/reference"
+  ],
+  [
+   1790538932.692,
+   "POST",
+   "/api/estimate"
+  ],
+  [
+   1790538937.058,
+   "POST",
+   "/api/assets/reference"
+  ]
+ ]
+}

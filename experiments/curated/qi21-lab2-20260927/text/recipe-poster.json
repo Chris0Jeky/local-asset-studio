@@ -1,0 +1,248 @@
+{
+ "version": 2,
+ "preset_id": "qwen21-t2i",
+ "controls": {
+  "positive": "A clean flat-design infographic poster on cream paper titled \"HOW TO BREW A HEALING POTION\". Four numbered panels in a 2x2 grid, each with a simple icon and a caption: \"1. Gather moonpetals\", \"2. Crush with a silver pestle\", \"3. Boil in spring water\", \"4. Cool under starlight\". A footer line reads \"Alchemy Guild Handbook, page 12\". Teal and gold palette, crisp sans-serif lettering.",
+  "seed": 2026092742,
+  "width": 1024,
+  "height": 1024
+ },
+ "batch_count": 1,
+ "created_at": 1790492712.2565665,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+    "type": "qwen_image",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "TextEncodeQwenImage21",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "prompt": "A clean flat-design infographic poster on cream paper titled \"HOW TO BREW A HEALING POTION\". Four numbered panels in a 2x2 grid, each with a simple icon and a caption: \"1. Gather moonpetals\", \"2. Crush with a silver pestle\", \"3. Boil in spring water\", \"4. Cool under starlight\". A footer line reads \"Alchemy Guild Handbook, page 12\". Teal and gold palette, crisp sans-serif lettering.",
+    "negative_prompt": "",
+    "resolution": 1024
+   }
+  },
+  "5": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 1024,
+    "height": 1024,
+    "batch_size": 1
+   }
+  },
+  "6": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "4",
+     1
+    ],
+    "latent_image": [
+     "5",
+     0
+    ],
+    "seed": 2026092742,
+    "steps": 25,
+    "cfg": 1.0,
+    "sampler_name": "euler",
+    "scheduler": "simple",
+    "denoise": 1.0
+   }
+  },
+  "7": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "6",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "8": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "9",
+     0
+    ],
+    "filename_prefix": "Studio/qwen21-t2i"
+   }
+  },
+  "9": {
+   "class_type": "SplitImageWithAlpha",
+   "inputs": {
+    "image": [
+     "7",
+     0
+    ]
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "df6b89d9-5379-47f8-b17a-a46d9459affc",
+   "seed": 2026092742,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "TextEncodeQwenImage21",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "prompt": "A clean flat-design infographic poster on cream paper titled \"HOW TO BREW A HEALING POTION\". Four numbered panels in a 2x2 grid, each with a simple icon and a caption: \"1. Gather moonpetals\", \"2. Crush with a silver pestle\", \"3. Boil in spring water\", \"4. Cool under starlight\". A footer line reads \"Alchemy Guild Handbook, page 12\". Teal and gold palette, crisp sans-serif lettering.",
+      "negative_prompt": "",
+      "resolution": 1024
+     }
+    },
+    "5": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "6": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "4",
+       1
+      ],
+      "latent_image": [
+       "5",
+       0
+      ],
+      "seed": 2026092742,
+      "steps": 25,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+     }
+    },
+    "7": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "6",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "8": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/qwen21-t2i"
+     }
+    },
+    "9": {
+     "class_type": "SplitImageWithAlpha",
+     "inputs": {
+      "image": [
+       "7",
+       0
+      ]
+     }
+    }
+   },
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 3409248256,
+    "peak_dedicated_bytes": 14709993472,
+    "samples": 150,
+    "spilled": true,
+    "settled_shared_bytes": 691339264,
+    "lingering": true
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "qwen21-t2i_00005_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026092742,
+   "prompt_id": "df6b89d9-5379-47f8-b17a-a46d9459affc",
+   "media_type": "image",
+   "asset_id": "3f53cdea8a8b52d2bc226e227210f002"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}

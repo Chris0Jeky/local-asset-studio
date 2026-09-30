@@ -1,0 +1,210 @@
+{
+  "id": "5675d65c-6d5a-4c81-b733-c9bf8d337f79",
+  "status": "completed",
+  "created_at": 1790496858.716326,
+  "preset_id": "zimage-fast",
+  "preset_name": "Z-Image Turbo \u2022 fast (fp8, text encoder on CPU)",
+  "controls": {
+    "seed": 2026092701
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "fb5ad836-5c7a-4c20-baae-8ef6032ac22e"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "fb5ad836-5c7a-4c20-baae-8ef6032ac22e",
+      "seed": 2026092701,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "lumina2",
+            "device": "cpu"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "ae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "Professional product photograph of a single compact teal enamel camping lantern with brass frame and warm amber light, on a charcoal stone pedestal, dark forest green seamless background, soft studio light, clean silhouette, realistic metal and enamel."
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "ModelSamplingAuraFlow",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "shift": 3.0
+          }
+        },
+        "7": {
+          "class_type": "EmptySD3LatentImage",
+          "inputs": {
+            "width": 1024,
+            "height": 1024,
+            "batch_size": 1
+          }
+        },
+        "8": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "6",
+              0
+            ],
+            "seed": 2026092701,
+            "steps": 8,
+            "cfg": 1.0,
+            "sampler_name": "res_multistep",
+            "scheduler": "simple",
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "7",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "9": {
+          "class_type": "VAEDecodeTiled",
+          "inputs": {
+            "samples": [
+              "8",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8
+          }
+        },
+        "10": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "9",
+              0
+            ],
+            "filename_prefix": "Studio/Z-Image-Fast"
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 88117248,
+        "peak_dedicated_bytes": 10874470400,
+        "samples": 241,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "Z-Image-Fast_00019_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026092701,
+      "prompt_id": "fb5ad836-5c7a-4c20-baae-8ef6032ac22e",
+      "media_type": "image",
+      "asset_id": "75459d5ba3d856c498029e67509e9fb8"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\zimage-fast-api.json",
+  "seed_bindings": [
+    [
+      "8",
+      "seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "lab3 telemetry primary",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "started_at": 1790496858.7203302,
+  "model_evictions": [
+    {
+      "index": 0,
+      "reason": "model change",
+      "dropped_models": [
+        "waiIllustriousSDXL_v170.safetensors"
+      ],
+      "shared_before": 82563072,
+      "dedicated_before": 10037084160,
+      "requested_at": 1790496858.7682343,
+      "torch_reserved_before": 7384072192,
+      "torch_reserved_after": 79691776,
+      "outcome": "unloaded",
+      "shared_after": 82563072,
+      "waited_seconds": 3.6
+    }
+  ],
+  "host_commit_windows": [
+    {
+      "samples": 231,
+      "unknown_samples": 0,
+      "first_at": 1790496862.365841,
+      "last_at": 1790496979.0903244,
+      "peak_committed_bytes": 77208838144,
+      "peak_at": 1790496968.6379511,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 25575251968,
+      "index": 0,
+      "prompt_id": "fb5ad836-5c7a-4c20-baae-8ef6032ac22e",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790496979.0958402,
+  "elapsed_seconds": 120.3755099773407
+}

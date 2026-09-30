@@ -16,8 +16,31 @@
   const normalizeView=hash=>VIEWS.includes(String(hash||'').replace(/^#/,''))?String(hash).replace(/^#/,''):'home';
   function recipesFor(id,presets,source=false){const intent=INTENTS.find(x=>x.id===id);if(!intent)return[];const rank=p=>{const i=intent.prefer.indexOf(p.id);return i<0?100:i;};return presets.filter(p=>intent.accept(p)&&(!source||!!p.reference)).sort((a,b)=>rank(a)-rank(b)||Number(!!b.verified)-Number(!!a.verified)||a.name.localeCompare(b.name));}
   function summarize(assets=[],plans=[],jobs=[]){const retained=assets.filter(a=>!a.trashed_at);return{assets:retained.length,keepers:retained.filter(a=>a.review==='selected').length,unreviewed:retained.filter(a=>!a.review||a.review==='unreviewed').length,needsWork:retained.filter(a=>a.review==='needs_work').length,activeJobs:jobs.filter(j=>ACTIVE.includes(j.status)),activePlans:plans.filter(p=>ACTIVE.includes(p.state?.status)),reviewPlans:plans.filter(p=>p.state?.status==='awaiting_review'),attentionJobs:jobs.filter(j=>ATTENTION.includes(j.status)&&!j.put_away),putAwayJobs:jobs.filter(j=>j.put_away&&!ACTIVE.includes(j.status)),attentionPlans:plans.filter(p=>ATTENTION.includes(p.state?.status)),prepared:plans.filter(p=>p.state?.status==='planned')};}
+  // #308 (first step): the pre-submit memory check's refusal, in plain words. It names what the check measures (Windows
+  // commit headroom), what the job needs and, only when the server's no-submission clause proves it, what was not sent; the server's
+  // own wording stays in `detail`. Presentation only: no policy here.
+  function headroomDetails(text,job=null){
+    const raw=String(text||''),low=raw.match(/Host commit headroom (\d+(?:\.\d+)? GiB|unknown) is below the required (\d+(?:\.\d+)? GiB)/),unknown=raw.match(/Host commit headroom is unavailable: (.+?)(?:\. No prompt was submitted|$)/);
+    if(!low&&!unknown)return null;
+    // Only the server's own no-submission clause proves what was not sent: an empty prompt_ids list alone does not
+    // (submission_evidence.never_submitted also needs empty submissions/outputs and no pending or abandoned receipt).
+    const output=raw.match(/No prompt was submitted for output (\d+)/),prior=!job||(Array.isArray(job.prompt_ids)&&job.prompt_ids.length>0);
+    const sent=output&&Number(output[1])>1?' Output '+output[1]+' was not sent to ComfyUI'+(prior?'; the earlier outputs in this batch had already finished.':'.'):output?' Nothing was sent to ComfyUI.':'';
+    const measured='the Studio checks Windows commit headroom: how much more memory Windows can still promise to programs, counting RAM plus the page file';
+    // The server appends this clause only after its opt-in release (commit_gate_release_seconds) actually posted /free and measured again.
+    const freed=/even after the Studio freed ComfyUI's cached models/.test(raw);
+    return low?{title:'Held: not enough memory headroom',
+      summary:'Before sending a Qwen or FLUX.2 job, '+measured+'. It had '+(low[1]==='unknown'?'an unknown amount':low[1])+(freed?" even after it freed ComfyUI's cached models":'')+'; this job needs '+low[2]+'.'+sent,
+      action:freed?'Something outside ComfyUI is holding the memory. Close other programs that use a lot of memory, then press Generate again.':'Close other programs that use a lot of memory, or wait until a running job finishes and its memory is released, then press Generate again. The Studio checks again just before sending.'}
+      :{title:'Held: memory headroom unknown',
+      summary:'Before sending a Qwen or FLUX.2 job, '+measured+', but it could not read it ('+unknown[1].trim()+'), so it held the job instead of guessing.'+sent,
+      action:'Try Generate again in a moment. If this keeps happening, check Models & setup or restart the Studio.'};
+  }
+  function headroomExplanation(text){const plain=headroomDetails(text);return plain?plain.title+'. '+plain.summary:null;}
   function failureDetails(job={}){
     const raw=typeof job.message==='string'?job.message:'';
+    const headroom=['failed','partial'].includes(job.status)&&!job.failure?headroomDetails(raw,job):null;
+    if(headroom)return{kind:'host_headroom',...headroom,detail:raw,node_type:'',node_id:'',exception_type:''};
     const failure=job.failure&&typeof job.failure==='object'?job.failure:null;
     if(failure||job.status==='failed'&&/ComfyUI reported an execution error|bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455/i.test(raw)){
       const memory=failure?.kind==='memory_allocation'||/bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455/i.test(raw);
@@ -127,5 +150,11 @@
   }
   // Text-only transfer. A compiler profile is NOT proof of executor compatibility.
   function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),recipes:promptRecipes(compilation.recipes||compilation.profile?.recipes),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}
-  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,readiness,readinessItems,sceneEligibility,normalizeDraft,promptBlockers,promptTransfer};
+  // #1220 seam band (owner, 27 Sep 2026): the server's measured widths (app/tiles.py band_choices). A width the texture is too
+  // small for stays listed but disabled, and its reason is shown beside the control; a picture that cannot tile offers none.
+  function tileBands(status){const choices=status?.eligible&&Array.isArray(status.band_choices)?status.band_choices:[];
+    return{options:choices.map(c=>({value:String(c.band_px),label:c.name+' ('+c.band_px+' px)',disabled:!c.available,selected:c.band_px===status.band_px})),
+      note:choices.filter(c=>!c.available).map(c=>c.name.charAt(0).toUpperCase()+c.name.slice(1)+': '+c.reason).join(' ')};}
+  function tileBandPx(value){const n=Number(value);return value!==''&&value!=null&&Number.isInteger(n)?n:null;}
+  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,headroomExplanation,readiness,readinessItems,sceneEligibility,normalizeDraft,promptBlockers,promptTransfer,tileBands,tileBandPx};
 });

@@ -199,7 +199,8 @@ def next_tasks(plan, receipts, workspace):
             p = inside(workspace, artifact['path'])
             require(p.stat().st_size > 0 and file_sha(p) == artifact['sha256'], 'Changed or empty artifact')
         done.add(task['id'])
-    ready = [t for t in plan['tasks'] if t['id'] not in done and set(t['depends_on']) <= done]
+    # Copies: a plan is hash-identified and never mutated mid-run, so a caller annotating a task must not edit it.
+    ready = [copy.deepcopy(t) for t in plan['tasks'] if t['id'] not in done and set(t['depends_on']) <= done]
     return {'plan_sha256': plan['plan_sha256'], 'completed': sorted(done), 'ready': ready,
             'finished': len(done) == len(plan['tasks']),
             'warning': 'Reviewer identities and semantic quality are attestations, not authenticated or machine-certified.'}

@@ -419,6 +419,29 @@
         "5",
         "denoise"
       ],
+      "vary": {
+        "status": "owner-approved",
+        "sources": [
+          "sdxl",
+          "abstract",
+          "stylized-prop",
+          "pixel-concept",
+          "gentle-variation",
+          "sdxl-variation"
+        ],
+        "subtle": {
+          "controls": {
+            "denoise": 0.5
+          },
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Subtle takes the old strong value (on the live proof 0.55 read \"right\" and 0.3 \"too close\"). Proved through the page on 27 Sep 2026 at 0.5: job bc31e7fe (2 pictures, 83.8 s), experiments/curated/live-proofs-20260927/. The earlier starting value was 0.3, from the research brief (#1202)."
+        },
+        "strong": {
+          "controls": {
+            "denoise": 0.7
+          },
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Strong goes further than the old 0.55. Proved through the page on 27 Sep 2026 at 0.7: job bc904e63 (2 pictures, 26.7 s), experiments/curated/live-proofs-20260927/. Only plain SDXL base recipes are sources: this graph carries no style LoRA, so the LineAni, screentone, cinematic-lighting and pixel-art recipes fall back to new seeds instead."
+        }
+      },
       "modality": "image",
       "execution_note": "Executed 2026-09-11 in the initial batch: success, 5.942 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
       "visual": "workflows/comfyui/17 - SDXL Gentle Reference Variation.json"
@@ -740,6 +763,138 @@
         }
       ],
       "execution_note": "Executed 2026-09-12 through Studio job b69ec018-c789-44f3-94d8-971854c0226e (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee. Changed 23 September 2026 (HOLD PR): the decoder is now VAEDecodeTiled 512/64 instead of VAEDecode (experiments/curated/overnight-20260923/sdxl-vae-decode/: a blind tie on quality, 1.3 s median decode against 2.4-6.8 s); unverified until a Studio proof of the new graph is inspected."
+    },
+    {
+      "id": "wai-vary",
+      "name": "WAI v17 · vary (img2img, keeps the adapters)",
+      "category": "Characters",
+      "graph": "workflows/api/wai-vary-api.json",
+      "verified": true,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved. Each carried LoRA keeps its own terms; a varied picture inherits its source's rights questions.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "vary": {
+        "status": "starting-value",
+        "sources": [
+          "wai",
+          "anime-wai-quality",
+          "wai-vary"
+        ],
+        "carry": [
+          "lora",
+          "lora_name",
+          "lora2",
+          "lora2_name",
+          "sampler",
+          "scheduler",
+          "cfg",
+          "steps"
+        ],
+        "subtle": {
+          "controls": {
+            "denoise": 0.5
+          },
+          "basis": "Starting value: the owner's SDXL gentle-variation subtle strength (0.5, owner in chat 27 September 2026, recorded by #1238), reused on WAI v17 because both are SDXL-architecture img2img. Not run on WAI on this PC and not judged by the owner as a WAI strength."
+        },
+        "strong": {
+          "controls": {
+            "denoise": 0.7
+          },
+          "basis": "Starting value: the owner's SDXL gentle-variation strong strength (0.7, owner in chat 27 September 2026, recorded by #1238). Not run on WAI on this PC; expect the pose and composition to move at 0.7."
+        }
+      },
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "description": "Close variations of a WAI v17 picture (#1202; owner decision 27 September 2026, \"Yes, WAI img2img\"). The picture is encoded with the checkpoint's own VAE and re-sampled at a partial denoise with new seeds. Vary copies the picture's recorded LoRA stack (both slots, strengths and files) and its sampler, scheduler, CFG and steps from its run, so an anime picture varies without losing its style. Same checkpoint as the WAI recipes; the validator refuses a source drawn on another checkpoint or with an adapter this graph would drop.",
+      "stages": [
+        "Kept picture",
+        "WAI v17 checkpoint + the picture's own LoRA stack",
+        "VAE encode",
+        "Re-sample at partial denoise",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "execution_note": "Executed 2026-09-27 through the Studio page (Asset library -> the picture -> Vary, then Generate; experiments/curated/wrapup-20260927/): parent WAI job eaf24185 (noirpopwave LoRA at 1.0, SFW fantasy cartographer), subtle 0.5: job 5a0b5775-be7a-475f-91cd-593235a3ee1c (2 pictures, 69.7 s), strong 0.7: job fe6462d2-bedf-44eb-84f9-b4478caa91e5 (4 pictures, the page's round size, 77.6 s). The submitted graphs carry the parent's LoRA (noirpopwave at 1.0) and sampler (euler_ancestral, 24 steps). Agent pre-review: subtle close with the style kept, strong moves further with the style kept. The strengths stay starting values until the owner judges them (HUMAN_TODO wai-vary-look-1202). Execution evidence only; not art acceptance."
     },
     {
       "id": "wai-pose",
@@ -1418,6 +1573,119 @@
       "modality": "image",
       "source": "https://civitai.com/models/2169712?modelVersionId=2445746",
       "execution_note": "Executed 2026-09-23 07:32:45 through the Studio (POST /api/jobs at the authored defaults, experiments/curated/overnight-20260923/zimage-fp8/prove_zimage_fast.py): job 4f5974cc-e4f1-4151-b9f2-93c56b6daef2, prompt 9bc91aa8-fc59-432e-ac79-0cb0ce0bd5af, 56.8 s including the model loads and the CPU text encode, sampling 0.75 s/step, no shared-memory spill (79 MB), backend primary, output Studio/Z-Image-Fast_00001_.png: the lantern product shot with the same composition as the bf16 preset's census output, agent-judged keep (the forest background is not the briefed seamless backdrop, as with bf16). Not art acceptance."
+    },
+    {
+      "id": "zimage-seam-repair",
+      "name": "Seamless tile \u2022 Z-Image seam repaint",
+      "category": "Image editing",
+      "collection": "workflow-lab",
+      "description": "Makes a flat, square texture tile (floor, wall, sky). Start from Make seamless on the texture in the Asset library: it rolls the picture by half so the wrap seam becomes a centre cross and attaches that picture with the cross transparent. Generate repaints only the cross with Z-Image Turbo (SetLatentNoiseMask, authored denoise 0.8); the Studio then composites the cross back through a 12 px feather, flattens the lighting with a circular Gaussian (so the correction tiles too), and records the seam score and a 3x3 repeat preview as a Seamless tile asset. Flat textures only: a perspective picture cannot tile. Lab evidence (27 Sep 2026, direct prompts, not this recipe): wall seam 4.34 to 0.82 against its own gradient of 0.95 (keep); flat floor fixable, with a repeating row of plank ends; perspective floor rejected.",
+      "graph": "workflows/api/zimage-seam-repair-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-27 through the Studio page (Asset library -> Make seamless -> Generate; experiments/curated/live-proofs-20260927/): wall texture job 632fc46a-08e5-48f2-806a-a9544edabd23 (prompt 0a213ed5, 141.8 s), seam 4.34 -> 0.84 against its own gradient 0.96, finish job a44c9cb2 wrote the tile and the 3x3 preview; flat floor job 93bc7e69-923e-403f-aad3-aa66dfb2c184 (prompt ad393351, 128.8 s), seam 13.53 -> 1.93 against 1.17, finish job b4bbc6fb. Agent pre-review: wall keep, floor fixable (a repeating row of plank ends at the tile period). Execution evidence only; not art acceptance.",
+      "tile_route": true,
+      "requires_rgba_mask": true,
+      "commercial_note": "Repaints the seam cross with Z-Image Turbo fp8, as the zimage-fast recipe; check the model terms before publishing. The source texture keeps its own terms; a successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "8",
+        "seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "denoise": [
+        "8",
+        "denoise"
+      ],
+      "reference": [
+        "11",
+        "image"
+      ],
+      "reference_hint": "Prepared by Make seamless: the texture rolled by half, its seam cross transparent. Open a square, flat texture in the Asset library and press Make seamless.",
+      "continuation_placeholder": "[describe the flat texture: e.g. front view of a dark graphite plaster wall with faint water stains]",
+    "continuation_prompt": "Seamless texture, [describe the flat texture: e.g. front view of a dark graphite plaster wall with faint water stains], even soft lighting, no objects, no text, fills the whole frame.",
+      "modality": "image",
+      "backend_id": "primary",
+      "stages": [
+        "Square flat texture rolled by half (Make seamless)",
+        "Seam cross transparent in the alpha channel",
+        "VAE encode",
+        "Latent noise mask on the cross",
+        "Z-Image Turbo repaint at authored denoise 0.8",
+        "Studio: 12 px feathered composite, circular lighting flatten, seam score, 3x3 preview"
+      ],
+      "source": "experiments/curated/background-lab-20260927/ (PR #1222); issue #1220"
+    },
+    {
+      "id": "parallax-edit",
+      "name": "Parallax layers • Klein clean plate and isolate",
+      "category": "Image editing",
+      "collection": "workflow-lab",
+      "description": "Splits a still (a room, a street) into far / mid / near layers for a parallax camera. Start from Make parallax layers on the picture in the Asset library: name the foreground to lift out and, optionally, mark the far view (window glass, sky) as boxes. The Studio attaches the picture and loads the clean-plate edit ('remove the foreground'); press Generate. Then load the isolate edit ('replace everything except the foreground with plain white') and press Generate again. Both are FLUX.2 Klein 4B edits on the verified flux-edit graph at the picture's own size. When both are in, the Studio registers them to the picture, builds the near matte from the isolate, colour-matches the plate under it, fills the far view behind its frame, records the recomposite error and makes a 3-frame parallax strip. Lab evidence (27 Sep 2026, route C2, not this recipe): recomposite error 0.36/255, agent-judged keep.",
+      "graph": "workflows/api/flux-edit-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-27 through the Studio page on the owner-accepted Night Shift anchor z2 (asset beecbff4, sha256 c22b723c...): foreground \"the desk, the chair, the desk lamp and the computer monitor\", two far-view boxes dragged inside the window glass. Clean plate job 7fb68111-0025-43b8-a0b8-6c8ca6bd9b2b (prompt c98b6858, 68.8 s); the first isolate job 37b9c16b was refused by the 32 GiB host-commit gate with nothing sent, and the isolate reloaded from the plate card ran as job d185ad3e-be28-45fe-9852-c4d600054823 (prompt 9b94fc31, 95.0 s). Split job 4b507f85: far / mid / near recomposite to the source within 0.34/255, near 10.1 % of the picture (lab route C2: 0.36/255, near 10.2 %); strip agent-judged keep. experiments/curated/live-proofs-20260927/. Execution evidence only; not art acceptance.",
+      "parallax_route": true,
+      "commercial_note": "Both edits run FLUX.2 Klein 4B, as the flux-edit recipe; check the model terms before publishing. The source picture keeps its own terms; a successful split is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "reference": [
+        "14",
+        "image"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "reference_hint": "Prepared by Make parallax layers: the picture itself, unchanged. Open a picture in the Asset library and press Make parallax layers.",
+      "modality": "image",
+      "backend_id": "primary",
+      "stages": [
+        "Picture attached unchanged, at its own size (Make parallax layers)",
+        "Clean plate: Klein edit removes the named foreground",
+        "Isolate: Klein edit keeps only the named foreground, on white",
+        "Studio: affine registration of both edits, near matte, colour-matched plate, far-view ring fill",
+        "Studio: far / mid / near RGBA layers, recomposite error, 3-frame parallax strip"
+      ],
+      "source": "experiments/curated/background-lab-20260927/ (PR #1222) route C2; issue #1219"
     },
     {
       "id": "sdxl",
@@ -5382,6 +5650,31 @@
         "13",
         "lora_name"
       ],
+      "vary": {
+        "status": "owner-approved",
+        "sources": [
+          "krea-portrait",
+          "krea-portrait-gguf",
+          "krea-environment",
+          "krea-anime-atelier",
+          "krea-anime-atelier-gguf",
+          "krea-style-lab",
+          "krea-refine"
+        ],
+        "subtle": {
+          "controls": {
+            "denoise": 0.45
+          },
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Subtle moves past the old strong value (on the live proof 0.25 read \"too close\" and 0.5 \"right\"). Proved through the page on 27 Sep 2026 at 0.45: job b4bfb680 (2 pictures, 900.1 s), experiments/curated/live-proofs-20260927/. The earlier starting value 0.25 was this recipe's measured polish default (23 Sep 2026, jobs 36e5d833, 0cba57ec, 0887896e)."
+        },
+        "strong": {
+          "controls": {
+            "denoise": 0.65,
+            "steps": 6
+          },
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Strong goes further and keeps the 6-step setting: the owner asked to keep it unless it clearly fights 0.65, and the live proof kept the composition at 6 steps. Proved through the page on 27 Sep 2026 at 0.65, 6 steps: job 213848b0 (2 pictures, 1322.2 s), experiments/curated/live-proofs-20260927/. The earlier starting value was the recipe's own Redraw variant (0.5, 6 steps)."
+        }
+      },
       "modality": "image",
       "family": "Krea 2 Turbo",
       "dimension_multiple": 16,
@@ -5651,16 +5944,15 @@
       ],
       "variants": [
         {
-          "name": "Style lighter, pose looser",
+          "name": "Style lighter (0.3)",
           "controls": {
-            "style_weight": 0.5,
-            "pose_strength": 0.7
+            "style_weight": 0.3
           }
         },
         {
-          "name": "Style stronger",
+          "name": "Style stronger (0.7, multi-picture boards)",
           "controls": {
-            "style_weight": 0.9
+            "style_weight": 0.7
           }
         },
         {
@@ -5675,7 +5967,7 @@
         }
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.4 / 0.9) favour the pose. The style default was 0.7 until 27 Sep 2026: with a single painterly picture as the board it burned the colours on 18 of 18 renders, while 0.45 and 0.3 did not (experiments/curated/overnight-20260923/stylepose-pack/); 0.7 stays as a variant for averaged multi-picture boards. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
       "reference_slots": [
         {
           "role": "style",
@@ -5709,7 +6001,7 @@
         "min": 1,
         "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       },
-      "execution_note": "Executed 2026-09-14 through Studio job 12be1c70-cd3b-456c-ae47-371e4b58f1ce (ComfyUI prompt a0e13d48-d073-4313-9451-e96646e4aec5), 121 s on the primary backend, graph sha256 0c195298454bb58e\u2026: three-picture style board (character sheet, KonoSuba group art, bodysuit study; averaged at the authored 0.7), throne pose picture, Mishima Kurone 0.8 + Glossy 0.6, seed 2026091410, 832x1216. Output WAI_00023_.png (sha256 cfa9450ad62a1e66\u2026, JPEG examples/style-pose/board-verify-wai.jpg) inspected: seated with the knee raised, one eye closed and the hand on the throne arm as in the pose picture; clean light-novel lineart with glossy skin highlights, the sheet's brown-black-gold witch costume with diamond trim, a starry dark-blue sky borrowed from the board's group art; no text, no extra limbs. One run, not a benchmark, not art acceptance."
+      "execution_note": "Executed 2026-09-14 through Studio job 12be1c70-cd3b-456c-ae47-371e4b58f1ce (ComfyUI prompt a0e13d48-d073-4313-9451-e96646e4aec5), 121 s on the primary backend, graph sha256 0c195298454bb58e\u2026: three-picture style board (character sheet, KonoSuba group art, bodysuit study; averaged at the authored 0.7), throne pose picture, Mishima Kurone 0.8 + Glossy 0.6, seed 2026091410, 832x1216. Output WAI_00023_.png (sha256 cfa9450ad62a1e66\u2026, JPEG examples/style-pose/board-verify-wai.jpg) inspected: seated with the knee raised, one eye closed and the hand on the throne arm as in the pose picture; clean light-novel lineart with glossy skin highlights, the sheet's brown-black-gold witch costume with diamond trim, a starry dark-blue sky borrowed from the board's group art; no text, no extra limbs. One run, not a benchmark, not art acceptance. Re-proved at the new 0.4 default on 2026-09-27: Studio job 6aa7317d-624e-4701-bfdc-c8f883d3f01a (prompt 05a9486c-b061-4ed8-aa87-a44db3f15a53, 309 s cold after a cache free, 2.9 GB spill), single-picture board Anima-v1-Baseline_00004_, the action pose picture, pose 0.9, seed 2026092372; the submitted graph equals this graph apart from the bound controls. Output Style-Pose/WAI_00049_.png (sha256 149017b94986306f…) pre-reviewed by an agent: no colour burn, raised arm held, the lowered fist indistinct (fixable). One seed, not art acceptance."
     },
     {
       "id": "style-pose-animagine",
@@ -7519,8 +7811,8 @@
           "beta"
         ]
       },
-      "verified": false,
-      "execution_note": "Not re-proved since 26 Sep 2026: #1059 routes SaveImage through SplitImageWithAlpha, so new PNGs save RGB and the RGBA remark later in this note describes the old graph. Verified 2026-09-23 05:06 through the Studio on the isolated qwen21 backend (POST /api/jobs after the switch from the primary; experiments/curated/qwen-image-21-20260922/prove_studio.py): job be94bd02-2575-4e4b-a28d-2b4e110b6fbc, prompt 457eabb0-b209-493d-9861-86a4be99543a, seed 2026092211, 832x1248, 25 steps, 52.9 s (686.6 s before the launcher's 3 GiB reserve), host commit headroom 58.6 GiB at submission, peak GPU 14.1 GiB dedicated with a 3.0 GiB shared spill on this cold load. Output Studio/qwen21-t2i_00001_.png: the adult silver-haired sorceress with the lit brass lantern on the rainy bridge at blue hour, as briefed; agent-inspected only, not art acceptance The PNG is saved as RGBA with faint partial alpha (224-254) on part of the frame, invisible on screen (PR #877). Qwen Research License: non-commercial.",
+      "verified": true,
+      "execution_note": "Re-proved 2026-09-27 07:22-07:23 local through the Studio on the isolated qwen21 backend after #1059: job c11448cc-b1cd-4fc2-af4d-1f0a95a549e8, prompt 7e6fdf05-918b-4674-ab59-b1d74f38affe, seed 2026092211, authored defaults (832x1248, 25 steps), 57.4 s, host commit 52.4 -> 74.6 %. Output Studio/qwen21-t2i_00003_.png is saved RGB (no alpha channel) and shows the adult silver-haired sorceress with the lit brass lantern on the rainy bridge at blue hour, as briefed; agent-inspected only, not art acceptance (experiments/curated/qwen21-alpha-cleanup/2026-09-27/reproof/). Earlier run on the pre-#1059 graph, whose RGBA remark no longer applies: Verified 2026-09-23 05:06 through the Studio on the isolated qwen21 backend (POST /api/jobs after the switch from the primary; experiments/curated/qwen-image-21-20260922/prove_studio.py): job be94bd02-2575-4e4b-a28d-2b4e110b6fbc, prompt 457eabb0-b209-493d-9861-86a4be99543a, seed 2026092211, 832x1248, 25 steps, 52.9 s (686.6 s before the launcher's 3 GiB reserve), host commit headroom 58.6 GiB at submission, peak GPU 14.1 GiB dedicated with a 3.0 GiB shared spill on this cold load. Output Studio/qwen21-t2i_00001_.png: the adult silver-haired sorceress with the lit brass lantern on the rainy bridge at blue hour, as briefed; agent-inspected only, not art acceptance The PNG is saved as RGBA with faint partial alpha (224-254) on part of the frame, invisible on screen (PR #877). Qwen Research License: non-commercial.",
       "model_files": [
         "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
         "text_encoders/qwen3vl_8b_int8_convrot.safetensors",
@@ -7835,8 +8127,8 @@
           "beta"
         ]
       },
-      "verified": false,
-      "execution_note": "Not re-proved since 26 Sep 2026: #1059 routes SaveImage through SplitImageWithAlpha, so new PNGs save RGB and the RGBA remark later in this note describes the old graph. Verified 2026-09-23 05:08 through the Studio on the isolated qwen21 backend (studio-lantern-cutout.png uploaded through /api/upload, then POST /api/jobs): job dc8f18f8-2094-444b-868c-fbe5d2aa3c1d, prompt 027b8a22-61da-4b96-a3d1-3888fd5036d6, seed 2026092211, 1024x1024, 25 steps, 78.6 s, 2.6 GiB shared GPU spill. Output Studio/qwen21-edit_00001_.png keeps the lantern's shape, proportions and teal/orange colours and redraws it with ink outlines and cel shading on a light background, as instructed; agent-inspected only, not art acceptance The PNG is saved as RGBA with faint partial alpha (224-254) on part of the frame, invisible on screen (PR #877). Qwen Research License: non-commercial.",
+      "verified": true,
+      "execution_note": "Re-proved 2026-09-27 07:24-07:26 local through the Studio on the isolated qwen21 backend after #1059: job 74597f0d-3e0b-4fb1-bab5-a2c79a8b6b22, prompt 6bb11e5a-1e75-4a97-b9d3-a4322263e5bb, seed 2026092211, studio-lantern-cutout.png uploaded through /api/upload, 25 steps, 114.7 s, host commit 52.0 -> 75.9 %. Output Studio/qwen21-edit_00002_.png (1024x1024) is saved RGB and keeps the lantern's shape and teal/orange colours, redrawn with ink outlines and cel shading on a light background, as instructed; agent-inspected only, not art acceptance (experiments/curated/qwen21-alpha-cleanup/2026-09-27/reproof/). Earlier run on the pre-#1059 graph, whose RGBA remark no longer applies: Verified 2026-09-23 05:08 through the Studio on the isolated qwen21 backend (studio-lantern-cutout.png uploaded through /api/upload, then POST /api/jobs): job dc8f18f8-2094-444b-868c-fbe5d2aa3c1d, prompt 027b8a22-61da-4b96-a3d1-3888fd5036d6, seed 2026092211, 1024x1024, 25 steps, 78.6 s, 2.6 GiB shared GPU spill. Output Studio/qwen21-edit_00001_.png keeps the lantern's shape, proportions and teal/orange colours and redraws it with ink outlines and cel shading on a light background, as instructed; agent-inspected only, not art acceptance The PNG is saved as RGBA with faint partial alpha (224-254) on part of the frame, invisible on screen (PR #877). Qwen Research License: non-commercial.",
       "model_files": [
         "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
         "text_encoders/qwen3vl_8b_int8_convrot.safetensors",

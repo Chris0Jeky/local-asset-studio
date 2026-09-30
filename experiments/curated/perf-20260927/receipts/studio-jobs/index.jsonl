@@ -1,0 +1,8 @@
+{"key": "before-1", "job_id": "7c20bc88-2d2a-48cd-9937-ecceb743bc71", "status": "completed", "prompt_ids": ["27312c98-1491-439c-a32f-a84692f449d7"], "outputs": ["qwen21-rgba_00009_.png"]}
+{"key": "before-manual-1", "job_id": "4b652de6-9a03-4cb0-96d2-021b86bc439f", "status": "completed", "prompt_ids": ["15e5ffe5-4e73-48e8-802a-ac181c1066b1"], "outputs": ["qwen21-rgba_00010_.png"]}
+{"key": "before-manual-2", "job_id": "94083679-f875-4fe9-bef6-818cea5d4c50", "status": "completed", "prompt_ids": ["717e8893-e212-4b63-a5e7-38cdd365e1fb"], "outputs": ["qwen21-rgba_00011_.png"]}
+{"key": "before-batch-1", "job_id": "66353ab7-35e0-44d5-ba8e-d6c815f4396f", "status": "partial", "prompt_ids": ["b3a81b85-6b55-4b63-bb26-ea6c85b281ec"], "outputs": ["qwen21-rgba_00018_.png"]}
+{"key": "after-1", "job_id": "60210246-a3f5-44d3-9dca-e2a00c087d1e", "status": "completed", "prompt_ids": ["f3801bb7-e31b-4a73-a037-1fc230dc7710"], "outputs": ["qwen21-rgba_00012_.png"]}
+{"key": "after-2", "job_id": "a146e6cf-b3fa-4e07-98e5-f45e9a2fd40a", "status": "completed", "prompt_ids": ["85d0f8a6-537b-48b6-ae37-9077f143773a"], "outputs": ["qwen21-rgba_00013_.png"]}
+{"key": "after-3", "job_id": "5d5c6c2c-c327-4498-b19e-f9f5c33e0e5a", "status": "completed", "prompt_ids": ["8d431fc8-2e40-494f-bd03-b59d8b87225a"], "outputs": ["qwen21-rgba_00014_.png"]}
+{"key": "after-batch-1", "job_id": "2c0a35f0-d3b3-452e-a01e-7289100cb122", "status": "completed", "prompt_ids": ["5872c64a-be7e-4661-9a07-bbc5b10809dd", "6e5df8d0-9e47-47d6-9673-c1a70357cd3d", "a7b637fc-619a-4c9e-a368-01ea946abbf2"], "outputs": ["qwen21-rgba_00015_.png", "qwen21-rgba_00016_.png", "qwen21-rgba_00017_.png"]}

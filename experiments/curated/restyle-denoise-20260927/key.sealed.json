@@ -1,0 +1,50 @@
+{
+ "platform-A": {
+  "key": "platform-d95",
+  "prompt_id": "87a2e871-2416-497c-a829-742e57ecabc1",
+  "sha256": "c6a9aeffdc4d7a0ee455d15af8c08c61fec44d266dc5cb7be8fc6355e6df0fce",
+  "file": "Research/lab-20260927/restyle-denoise/platform-d95_00001_.png"
+ },
+ "platform-B": {
+  "key": "platform-d60",
+  "prompt_id": "081f0317-1984-48ce-93ce-b7dd52dc93df",
+  "sha256": "9a951f370bb66e1f7d53a900ce934dff2d89ce19afb7f84b1ce4e937f5ff0c7f",
+  "file": "Research/lab-20260927/restyle-denoise/platform-d60_00001_.png"
+ },
+ "platform-C": {
+  "key": "platform-d85",
+  "prompt_id": "253fa1b5-5246-4ef8-ad2a-befc5e7dcea1",
+  "sha256": "517edc2ced84ca65c2ad440336cd157cfce8beabd5eada41223f14026e794006",
+  "file": "Research/lab-20260927/restyle-denoise/platform-d85_00001_.png"
+ },
+ "platform-D": {
+  "key": "platform-d75",
+  "prompt_id": "017a3589-eba5-4c4d-b7bf-2cb2a56b984d",
+  "sha256": "cfe5af3333c570e7441a3883f6a676bac4a206d16bc801154ea5b63cbc420c93",
+  "file": "Research/lab-20260927/restyle-denoise/platform-d75_00001_.png"
+ },
+ "carto-A": {
+  "key": "carto-d75",
+  "prompt_id": "2f946d69-0096-477f-9b88-0112c31b0358",
+  "sha256": "c6cc35b2fefea2948fb361bbc089d697a973eede65163ebcb7f94d507b0d04be",
+  "file": "Research/lab-20260927/restyle-denoise/carto-d75_00001_.png"
+ },
+ "carto-B": {
+  "key": "carto-d95",
+  "prompt_id": "e16b10e9-1a16-43b3-8a98-02cd45aeb110",
+  "sha256": "8c553411ef6c51a49fd9dd178541af11c77867085d03c9abc7f72ca24b115696",
+  "file": "Research/lab-20260927/restyle-denoise/carto-d95_00001_.png"
+ },
+ "carto-C": {
+  "key": "carto-d85",
+  "prompt_id": "d1d7946c-1e90-45ef-80f1-0dd66ce9fe62",
+  "sha256": "48a23b8ed77a69c21f476a2d9f39d9b7b92eff5e9dddc76d4fcef6542b3c32d9",
+  "file": "Research/lab-20260927/restyle-denoise/carto-d85_00001_.png"
+ },
+ "carto-D": {
+  "key": "carto-d60",
+  "prompt_id": "b4c77d34-ea60-4dc1-ac71-fc6180d5930a",
+  "sha256": "513ff8dabd585309612831b6d4682c1e143dc6970fb87c97613256912bd4e07f",
+  "file": "Research/lab-20260927/restyle-denoise/carto-d60_00001_.png"
+ }
+}

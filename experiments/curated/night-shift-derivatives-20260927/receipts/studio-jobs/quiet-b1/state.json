@@ -1,0 +1,295 @@
+{
+  "id": "c9a1ba4f-5546-4402-82ea-e71be64cfa1e",
+  "status": "completed",
+  "created_at": 1790525594.909238,
+  "preset_id": "flux-edit",
+  "preset_name": "Change one thing (FLUX.2 Klein 4B, keeps the rest)",
+  "controls": {
+    "reference": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png",
+    "positive": "Change the time of day from rainy night to calm early morning: cool pale daylight from the window gently lights the room, the city outside is misty and quiet, no rain, the desk lamp glows warm, the monitor screen is off. Keep the same camera, the same room layout, every object in the same position, the same plain wall on the left, and the same hand-painted cel anime background style.",
+    "seed": 2026092781,
+    "width": 1344,
+    "height": 768
+  },
+  "batch_count": 1,
+  "prompt_ids": [
+    "d783f1f2-6b33-48df-9400-551c96778802"
+  ],
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "d783f1f2-6b33-48df-9400-551c96778802",
+      "seed": 2026092781,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "flux-2-klein-4b-fp8.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "flux2",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "text": "Change the time of day from rainy night to calm early morning: cool pale daylight from the window gently lights the room, the city outside is misty and quiet, no rain, the desk lamp glows warm, the monitor screen is off. Keep the same camera, the same room layout, every object in the same position, the same plain wall on the left, and the same hand-painted cel anime background style.",
+            "clip": [
+              "2",
+              0
+            ]
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "CFGGuider",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "17",
+              0
+            ],
+            "negative": [
+              "18",
+              0
+            ],
+            "cfg": 1.0
+          }
+        },
+        "7": {
+          "class_type": "RandomNoise",
+          "inputs": {
+            "noise_seed": 2026092781
+          }
+        },
+        "8": {
+          "class_type": "KSamplerSelect",
+          "inputs": {
+            "sampler_name": "euler"
+          }
+        },
+        "9": {
+          "class_type": "Flux2Scheduler",
+          "inputs": {
+            "steps": 4,
+            "width": 1344,
+            "height": 768
+          }
+        },
+        "10": {
+          "class_type": "EmptyFlux2LatentImage",
+          "inputs": {
+            "width": 1344,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "11": {
+          "class_type": "SamplerCustomAdvanced",
+          "inputs": {
+            "noise": [
+              "7",
+              0
+            ],
+            "guider": [
+              "6",
+              0
+            ],
+            "sampler": [
+              "8",
+              0
+            ],
+            "sigmas": [
+              "9",
+              0
+            ],
+            "latent_image": [
+              "10",
+              0
+            ]
+          }
+        },
+        "12": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "11",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "13": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "filename_prefix": "Verified/FLUX-Edit",
+            "images": [
+              "12",
+              0
+            ]
+          }
+        },
+        "14": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "0ffb0c17b8304ce9a77d345924477377_retro-anime-master-z2.png.png"
+          }
+        },
+        "15": {
+          "class_type": "ImageScaleToTotalPixels",
+          "inputs": {
+            "image": [
+              "14",
+              0
+            ],
+            "upscale_method": "lanczos",
+            "megapixels": 1.0,
+            "resolution_steps": 1
+          }
+        },
+        "16": {
+          "class_type": "VAEEncode",
+          "inputs": {
+            "pixels": [
+              "15",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "17": {
+          "class_type": "ReferenceLatent",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ],
+            "latent": [
+              "16",
+              0
+            ]
+          }
+        },
+        "18": {
+          "class_type": "ReferenceLatent",
+          "inputs": {
+            "conditioning": [
+              "5",
+              0
+            ],
+            "latent": [
+              "16",
+              0
+            ]
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 82563072,
+        "peak_dedicated_bytes": 11345674240,
+        "samples": 58,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "FLUX-Edit_00016_.png",
+      "subfolder": "Verified",
+      "type": "output",
+      "seed": 2026092781,
+      "prompt_id": "d783f1f2-6b33-48df-9400-551c96778802",
+      "media_type": "image",
+      "asset_id": "e232b7911b4057a0af8ffa06771300ff"
+    }
+  ],
+  "message": "Complete",
+  "graph_path": "workflows\\api\\flux-edit-api.json",
+  "seed_bindings": [
+    [
+      "7",
+      "noise_seed"
+    ]
+  ],
+  "prompt_bindings": {
+    "positive": [
+      [
+        "4",
+        "text"
+      ]
+    ],
+    "negative": []
+  },
+  "parent_assets": [],
+  "label": "nightshift-quiet-b1",
+  "references": [],
+  "comfy_root": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI",
+  "comfy_url": "http://127.0.0.1:8188",
+  "host_commit_readings": [
+    {
+      "available_bytes": 38191771648,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 64592318464,
+      "unknown_reason": null,
+      "phase": "prepared",
+      "recorded_at": 1790525594.909238
+    },
+    {
+      "available_bytes": 38194843648,
+      "limit_bytes": 102784090112,
+      "committed_bytes": 64589246464,
+      "unknown_reason": null,
+      "phase": "pre-submit",
+      "index": 0,
+      "recorded_at": 1790525595.0078003
+    }
+  ],
+  "started_at": 1790525594.9192388,
+  "host_commit_windows": [
+    {
+      "samples": 57,
+      "unknown_samples": 0,
+      "first_at": 1790525595.0824175,
+      "last_at": 1790525623.2984576,
+      "peak_committed_bytes": 77733515264,
+      "peak_at": 1790525620.6413295,
+      "limit_bytes": 102784090112,
+      "min_available_bytes": 25050574848,
+      "index": 0,
+      "prompt_id": "d783f1f2-6b33-48df-9400-551c96778802",
+      "interval_seconds": 0.5
+    }
+  ],
+  "finished_at": 1790525623.3034592,
+  "elapsed_seconds": 28.384220361709595
+}

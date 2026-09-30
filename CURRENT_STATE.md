@@ -1,5 +1,119 @@
 # Current state — 27 September 2026
 
+## Wrap-up proofs: the wide seam band, the loosened Night Shift look, WAI Vary — 27 September 2026 (23:05-23:22 local)
+
+These ran through the page after #1236 and #1240 merged.
+- **Make seamless, wide band (#1220):** the floor with the wide 160 px band scored 13.53 → 2.17, against its own gradient of 1.22 (the narrow band gave 1.93). The plank-end row is softer but still repeats.
+- **Loosened Night Shift look (#1221):** on the arcade scene with the quiet-wall box off (2 seeds), the entrance reads as glass doors under an awning, no longer a shutter. With the box on, it returns to a plain wall.
+- **WAI Vary (#1202):** subtle made 2 pictures in 69.7 s; strong made 4 in 77.6 s. Both carried the parent's noirpopwave LoRA and sampler. `validate-live` passes and `wai-vary` is now verified; its strengths stay starting values.
+- **Qwen-Image 2.1 FP8 downloads (#1028):** stopped unfinished, with the partial files kept. The resume commands are in the README.
+
+Evidence: `experiments/curated/wrapup-20260927/`. The owner judges the sheets (HUMAN_TODO `seamless-tiles-1220`, `wai-vary-look-1202`); agent pre-review only.
+
+## Qwen-Image 2.1 lanes: GGUF Q4 and the w4a8 text encoder — 27 September 2026 (21:55-22:37 local)
+
+All runs were on the qwen21 backend (refs #1028).
+- **unsloth Q4_K_M GGUF:** does not load in ComfyUI-GGUF 6ea2651e ("Unknown model architecture"). It needs the unmerged city96/ComfyUI-GGUF#483; parked.
+- **realrebelai Q4 GGUF:** loads, with quality level with B0, but runs at about 1.6 s/it against 1.5 it/s, so it is about 1.4× slower. F1 fails.
+- **Comfy-Org w4a8 text encoder:** the same time as B0 (73.9 against 73.7 s). Blind, 4 of 4 keep against 2 of 4: no pseudo-lettering on the prop, on 2 seeds. A lead that needs more seeds and text-heavy prompts, not a pin.
+- The three downloads are SHA-verified and pinned in `models/library.json`. The FP8 downloads were stopped unfinished (see the wrap-up above).
+
+Evidence: `experiments/curated/qi21-lanes-20260927/`. Agent-judged only.
+
+## Live proofs through the page: Vary, multi-engine plan, review checks, Make seamless, look templates, parallax layers — 27 September 2026 (19:37-22:15 local)
+
+All five features were driven through the real Studio page in headless Chromium.
+- **Vary (#1202):** one page press prepares the round and one Generate is one job with the parent recorded. After the first sheets, the owner said "Nudge both up": SDXL is now 0.5 / 0.7 and Krea 0.45 / 0.65 (6 steps), proved once per strength and marked `owner-approved`.
+- **Multi-engine plan (#1163):** Copy Pose + 9B depth + 4B on one pair. The estimate was 3.8 min (up to 5.5); the run took 303.5 s, with one `/prompt` per stage. The runs are tagged "from a plan". A plan led by a two-field recipe is refused for a third recipe's missing fill (handed to a builder).
+- **Review checks (#1203):** per-engine tallies render and persist across a fresh session. The agent's test taps were cleared afterwards.
+- **Make seamless (#1220):** wall seam 4.34 → 0.84 (owner: "Wall ok"); flat floor 13.53 → 1.93 (needs the wide band). `zimage-seam-repair` is now verified.
+- **Look templates (#1224):** the Night Shift look carries, but the scene is drowned out (owner: "Loosen it").
+- **Make parallax layers (#1231), 22:07-22:15:** run on the z2 anchor through the page with two dragged far-view boxes. Far / mid / near recomposite within 0.34/255 (lab C2: 0.36), and the strip is keep. `parallax-edit` is now verified. The first isolate was refused by the 32 GiB commit gate with nothing sent; it ran after `/free`.
+
+Evidence: `experiments/curated/live-proofs-20260927/`. Agent pre-review plus the quoted owner answers; no other art acceptance.
+
+## Background-technique lab: parallax, seamless tiles, backdrop variety — 27 September 2026 (18:29-19:03 local)
+
+Everything used installed tools on the primary and the accepted Night Shift anchor z2 (refs #422).
+- **Parallax:** naive Depth Anything V2 bands were rejected, because the window read as a near wall. What worked (keep): a `flux-edit` clean plate plus a `flux-edit` isolate-on-white matte, both registered to the anchor, a nearest-pixel ring behind the frame, and a colour-matched plate. Three layers recomposite to within 0.36/255. The window mask was drawn by hand.
+- **Seamless tiles:** roll by half, repaint the centre cross with Z-Image `SetLatentNoiseMask`, then a circular lighting flatten. The wall keeps and the floor is fixable (a repeating row of plank ends). A perspective floor source was rejected.
+- **Backdrop variety:** a z2 wording template on Z-Image carries the look (corridor keep, rooftop fixable). The Klein look-picture route leaks content and loses the night.
+
+Evidence: `experiments/curated/background-lab-20260927/`. Agent-judged only; not art acceptance, not licence clearance.
+
+## Qwen-Image 2.1 seed audition: Pruna F0 and the Fix LoRA parked, B0 holds — 27 September 2026 (18:07-18:22 local)
+
+On the isolated qwen21 backend (switched explicitly through the Studio), 2 prompts × 3 seeds × 3 conditions straight to ComfyUI: B0 (25 steps), F0 (Pruna 8-step at 2.0) and Q1 (the untested 2.1 Fix LoRA at 1.0). Even with the prompt text unchanged, ComfyUI recomputed the conditioning in 15 of 18 cells and reloaded the diffusion model before every sample, so the per-image floor is about 25 s of paging. F0 runs at 0.98× of B0 on warm cells (means 33.49 against 34.28 s; the gate is ~0.55×), with quality level (blind: 3 keeps, mean 4.12 against B0's 5 keeps, 3.92), so it is parked. Q1 costs about 1.23× B0 on warm cells and flattens the finish and worsens hands (1 keep, mean 3.39), so it is parked or rejected. B0 holds. Commit peaked at 86.3 %. Evidence: `experiments/curated/qi21-pareto-20260927/` (refs #1028). Agent-judged only; not art acceptance, not licence clearance.
+
+## Night Shift derivatives from the owner's anchor z2 — 27 September 2026 (16:56-17:26 local)
+
+From `retro-anime-master-z2` (sha256 `c22b723c…`, verified): a 3840x2160 master by ESRGAN raw 4x plus Lanczos (the Studio `anime-esrgan` job `c057d94c` took 455 s with a 9.0 GB GPU spill); `retro-anime-quiet` from Studio `flux-edit` (FLUX.2 Klein 4B), 4 candidates plus one refinement round. The first round redrew the window, so round 1 named the frame and the rail view; pick r1-2 (job `a08efbc3`, prompt `5702bc23`, 36.9 s). Klein returned it about 0.7 % larger; a recorded affine warp brings registration to 0.5 / 0.15 px, and the same upscale puts master and quiet on one 3840x2160 grid. `-hero` (3840x1600), `-poster` (1280/640) and `-card` (1024/512/256, tight and wide) are crops and encodes of the master, all within their byte budgets. Full files stay local under ComfyUI `output/Research/nightshift-20260927/`; contact sheets, receipts and rubric pre-review are in `experiments/curated/night-shift-derivatives-20260927/`. **Owner art review (27 Sep, in chat): "Accept, try sharper 4K as well"**. Accepted: master MA, quiet r1-2, hero, poster, card tight. Not runtime-qualified; licence not cleared. `retro-anime-wall` stays the owner's ChatGPT job.
+
+## Owner cancel (#1138) proved live on ComfyUI 0.35.0 — 27 September 2026 (16:41-16:44 local)
+
+Four cheap SFW `wai` jobs were cancelled through the Studio's `POST /api/jobs/<id>/cancel` on the primary backend. Every job ended `cancelled`, with who and when recorded. The three jobs that had reached ComfyUI also record the prompt ID, ComfyUI's reply and the `/queue` observations.
+- **Studio-queued** (`0519691a`): settled at once; nothing was sent.
+- **Running** (`660e5525` / `fb0f28c0`): the targeted `POST /interrupt {"prompt_id"}` was sent after `/queue` listed exactly that prompt, and ComfyUI logged `Interrupting prompt fb0f28c0-…`. It took 25 s to settle, because ComfyUI finished a cold checkpoint load before it stopped.
+- **Batch of 3** (`4cfc70ca`): interrupted on output 2. Output 1 was kept; output 3 was never submitted.
+- **Pending in ComfyUI's queue** (`3ffa0b39`, output 2 `a898e17f` waiting behind the driver's own blocker prompt): dequeued 1.9 s after the request. Output 1 was kept, and the blocker ran on to `success`.
+
+ComfyUI's `got prompt` count matched one POST per submission, with no resubmit. The queue was empty after each case. Resume on a cancelled job is refused.
+
+At 16:51 the running card's **Cancel** button was also clicked in a headless browser (job `f9687adc`, prompt `9454cfd3`). The card showed "Stops the render in ComfyUI. Finished outputs are kept. Nothing is retried.", the confirm dialog opened, and the page sent one cancel POST. The job was `cancelled` 0.58 s after the click.
+
+Not verified live: a lost interrupt reply, the refusal paths, and restart reconciliation (covered offline by the FakeStudio tests). Evidence: `experiments/curated/cancel-live-20260927/`. No output was judged; generated only.
+
+## Second seeds for two single-seed studies — 27 September 2026 (07:59-08:37 local)
+
+**Restyle denoise (#351):** seed 2026092762 at 0.75 and 0.85 on both sources (prompts `5e206d1b`, `c72f866d`, `4cb2e6f3`, `a84e184a`; 45-83 s, primary). Judged blind, this time with face, hand and prop crops recorded. Platform tied; on carto, 0.75 again kept the compass that 0.85 dropped, but its mean was only 0.17 higher (4.00 against 3.83), a tie under the rubric's 0.3 rule. Over 2 sources × 2 seeds, 0.75 is ahead on mean in 1 of 4 comparisons and ties in 3 (pooled 4.17 against 4.00, a tie); it never scored lower, and it was ahead on verdict and control on both seed-1 sources. **Qwen-Image 2.1 steps (#1028):** char and prop at seed + 100, 16 against 25 steps (`13b4878d`, `5b1ec3b1` at 08:35-08:37 against `f6ec0d2e`, `0e91964d`, which ran at 07:59 and 08:02 inside the Pruna session). Blind, 25 steps is keep on 3 of 4 cells over both seeds and 16 steps on 1 of 4, so the 25-step default holds. Evidence: the `seed2-lab2/` folders under `experiments/curated/restyle-denoise-20260927/` and `qi21-steps-20260927/`. Generated and agent-judged only; not art acceptance, not licence clearance.
+
+## Every prompt now records its Windows commit peak (#302) — 27 September 2026 (09:13-09:18 local)
+
+On branch `claude/lab3-commit-telemetry`, the Studio samples Windows commit every 0.5 s while each prompt runs. It keeps the peak and the minimum headroom in `job.host_commit_windows`. The finished-run line adds "Memory was tight" only when headroom fell below 16 GiB.
+
+Proved with one job per family, each checked against an independent 0.5 s sampler: the Studio's figures agreed within 0.01 GiB.
+- `wai`: prompt `e39d2c83`, peak 63.1 %, 35.32 GiB left
+- `zimage-fast`: prompt `fb5ad836`, peak 75.1 %, 23.82 GiB left
+- `qwen21-t2i`: prompt `858d462e`, peak 76.4 %, 22.55 GiB left
+
+A read costs 47 µs. Receipts are in `experiments/curated/perf-20260927/telemetry/`. No quality judgement was made.
+
+## Back-to-back Qwen-Image 2.1 jobs no longer need a manual `/free` (opt-in) — 27 September 2026 (08:46-09:05 local)
+
+A `qwen21-rgba` job leaves the qwen21 ComfyUI holding enough host commit that the next heavy job reads 26.5-27.6 GiB of headroom, and the 32 GiB gate refused it. With current main, 7 creates were refused across three runs. Every job after the first needed a manual `POST /free`, which crossed 32 GiB after 7.0-11.0 s. A `batch_count` 3 job ended `partial` after output 1 (job `66353ab7`, prompt `b3a81b85`).
+
+The new opt-in `commit_gate_release_seconds` (branch `claude/lab3-commit-release`, #305) keeps the gate itself unchanged. Instead of refusing a measured shortfall, the Studio queues the job and, just before `/prompt`, frees that job's own idle backend. It then admits only on a fresh passing reading. Result: 6 of 6 outputs completed with no refusal and no manual step, after releases of 7.0-11.5 s:
+- three sequential jobs, prompts `f3801bb7`, `85d0f8a6`, `8d431fc8`, 66.1-71.2 s each including the release;
+- one batch of 3, prompts `5872c64a`, `6e5df8d0`, `a7b637fc`.
+
+Nothing got faster: the reload after a release is the same cold load, and the generation part was 3-10 s slower on three samples, cause not isolated. A manual `/free` measured every 0.2 s first *lowered* headroom from 27.4 to 12.7 GiB, as the weights moved into RAM, before it settled at 46.2 GiB. So the release is skipped at or below 22 GiB: a 16 GiB transient budget plus a 6 GiB margin.
+
+The owner's `config/local.json` now has `commit_gate_release_seconds: 45`. It has no effect until the PR merges and the Studio restarts. Receipts are in `experiments/curated/perf-20260927/`. This was a scheduling benchmark only: no quality judgement, not art acceptance.
+
+## Klein-matched LoRAs (#764): three downloaded, blind-tested, parked — 27 September 2026 (08:10-08:26 local)
+
+Three Apache-2.0 Hugging Face LoRAs declared for FLUX.2 Klein were downloaded with SHA-256 checks and pinned in `models/library.json`: pixel art (Klein 4B, `24e938f5…`), isometric (Klein 9B, `633467a5…`) and consistency V2 (Klein 9B edits, `61db2017…`). They were tested on the primary backend in 24 serial research cells (LoRA 1.0 against none, same seed and words, 2 seeds each), judged blind. The words alone were preferred on 3 of 4 pixel-art pairs (ComfyUI also left 6 modulation keys of that LoRA unloaded) and on 3 of 4 isometric pairs. The consistency LoRA was closer to the source on 2 of 4 edits (1 against, 1 tie), lowered face drift on background changes, but raised saturation. All three are parked; no recipe was added. Evidence: `experiments/curated/klein-loras-20260927/`. Generated and agent-judged only: not art acceptance, not licence clearance (Klein 9B itself is FLUX non-commercial).
+
+## Qwen-Image 2.1: multi-reference identity, text-heavy prompts and the Pruna 8-step LoRA — 27 September 2026 (07:30-08:06 local)
+
+On the isolated qwen21 backend, straight to ComfyUI unless noted, with one seed per cell. **Identity edit**: the fantasy pack traveller as 1, 3 and 5 references on the `qwen21-edit` graph (prompts `be316486` 126.2 s, `bb5ecbfc` 286.1 s, `31e15e37` 470.1 s). One reference kept the face, including the unprompted earrings. Three also carried the costume (boots, trousers, satchel). Five also showed the costume picture's belt and image 5's teal lantern, but its prompt also named the costume picture and asked for image 5's lantern, so that is not an effect of the references alone. Each extra reference adds text-encoder time. **Text-heavy**: two Studio `qwen21-t2i` jobs (`4b938317` menu 81.8 s, `af4fef50` infographic 75.8 s) spelled 12 of 12 requested strings exactly (6 each); the menu drifted semi-photographic, and one icon was wrong. **Pruna 8-step v0.1** (downloaded, SHA-256 `f0865d68…`, Qwen Research License): it loads on the int8 model; blind, it is level with the 25-step base on char and prop (the scene prompt came out photographic in every condition), and it doubled the lantern on 2 of 2 character seeds. The sampler drops from 16 s to 5 s, but the whole job does not (55-56 s warm against 31-61 s), because the 8.9 GB text encoder evicts the diffusion model on every new prompt; host commit peaked at 80.1-89.5 % with the LoRA against 76.3-78.0 % without it (2.5-12.8 points above the matching no-LoRA run, from differing starting levels; the LoRA's own cost was not isolated). Parked. Evidence: `experiments/curated/qi21-lab2-20260927/`. Generated and agent-judged only; not art acceptance, not licence clearance.
+
+## Qwen-Image 2.1: RGBA cleanup proved on three new sprites (despeckle mode added), t2i and edit re-proved as RGB — 27 September 2026 (07:14-07:26 local)
+
+Three `qwen21-rgba` Studio jobs on the isolated backend, one seed each: knight `7179db99` / prompt `f0fb24bb` 72.6 s (832x1248), sword `0b6b83b7` / `1f902a83` 55.7 s, crystal `254d368d` / `b3e4f7fe` 63.4 s (1024²); host commit peaked at 76-77 %, and the 32 GiB headroom gate refused each follow-up job until the qwen21 cache was released (`POST /free`, asynchronous, about 15 s). Every raw output had the #878 alpha dust (bbox = whole canvas, 15-20k matte components). `rgba-cleanup` gave one component on the knight and the sword; the crystal kept 16 specks of 1-12 px at alpha exactly 8 around its glow, so `game_asset_media.py cleanup --mode rgba-despeckle` now also clears regions that never reach alpha 32 and are detached once the dust is snapped to 0 (16 regions, 36 px, each joined to the glow only through alpha 1-7 dust in the raw file; the 5 real pieces including the requested sparkles kept). All four despeckled sprites, including the 23 September proof, pack with no edge warning. Evidence: `experiments/curated/qwen21-alpha-cleanup/2026-09-27/`. The same session re-proved `qwen21-t2i` (job `c11448cc` / prompt `7e6fdf05`, 57.4 s) and `qwen21-edit` (`74597f0d` / `6bb11e5a`, 114.7 s) through the Studio after #1059: both PNGs are RGB with no alpha channel and match their briefs, so both are `verified: true` again (receipts in `.../2026-09-27/reproof/`). Pixel measurements, contact sheets and agent inspection only: not art acceptance, not licence clearance.
+
+## Restyle (WAI) denoise sweep, blind — 27 September 2026 (06:43-07:04 local)
+
+Eight direct-ComfyUI runs on the primary of the shipped `restyle-wai` graph: two original SFW sources × denoise 0.6/0.75/0.85/0.95, seed 2026092761, other controls at the defaults. Prompt IDs: platform-d60 `081f0317`, platform-d75 `017a3589`, platform-d85 `253fa1b5`, platform-d95 `87a2e871`, carto-d60 `b4c77d34`, carto-d75 `2f946d69`, carto-d85 `d1d7946c`, carto-d95 `e16b10e9`. Blind agent verdicts: 0.60 and 0.75 kept layout and props on both sources (keep, control 4); the 0.85 default and 0.95 dropped named props or framing (fixable, control 3). The style scored 4-5 at every level. Jobs took 107-198 s at 79.3-85.3 % peak host commit; there was no #89 crash. The judgements recorded no face or hand crops and four of eight are whole-frame only, so they fall short of the rubric's crop evidence and need a re-judge before they carry rubric weight. The catalog default is unchanged; making 0.75 the default is proposed in `experiments/curated/restyle-denoise-20260927/` (refs #351). Generated and agent-inspected only: not art acceptance and not licence clearance.
+
+## Asset-kit candidates: four worlds and two helper states, Z-Image preferred on one seed — 27 September 2026 (05:00-06:40 local)
+
+A one-seed comparison on the Night Shift brief (1344x768) ran Z-Image fp8, Qwen-Image 2.1, Krea GGUF + retro LoRA, the Krea GGUF atelier stack and WAI; the Krea retro run had its LoRA trigger prepended and WAI got a tag rewrite with a negative prompt, so only three routes saw identical wording. On that one seed Z-Image matched the cel-anime brief best; more seeds are needed before calling it a winner. In the master series, 11 of 12 further same-text Z-Image seeds took 9.1-14.9 s, but one (`minimal-pro-master-z4`) took 190.2 s for an unrecorded reason. Qwen-Image 2.1 followed the prompt most literally, but drew a seated person in 8 of 8 early retro/atelier candidates, until an empty-room rewording fixed it. The Krea atelier comparison hit the ComfyUI slow state (65-77 s/step, 1244 s), which the qwen21 switch-and-return cleared. In all, 45 candidates were produced: Retro Anime, Atelier, Sakura and Minimal Pro masters on both Qwen-Image 2.1 and Z-Image, plus four RGBA helper states on `qwen21-rgba` with true alpha. The Studio's 32 GiB headroom gate refused three of those RGBA jobs until the qwen21 cache was freed between jobs. Prompt IDs, Studio job IDs with each job's exact submitted recipe and graph, SHA-256 values, rubric judgements, contact sheets and an agent shortlist are in `experiments/curated/asset-kit-20260927/`. The full PNGs stay local in ComfyUI `output/Research/lab-20260927/asset-kit/`. These are candidates only, generated and agent-judged: not art acceptance, not source review and not licence clearance. Qwen-Image 2.1 is non-commercial; Z-Image Turbo is Apache-2.0. The owner still has to pick an anchor before any derivatives, and the `adaptive-pilot-world` record is unchanged.
+
+## Z-Image fp8 with the four installed anime LoRAs, blind — 27 September 2026 (06:00-06:29 local)
+
+Fifteen pictures were submitted straight to ComfyUI on the primary: the `zimage-fast` graph plus one LoRA at 0.8 (none, z-image-anime-v1, anime_style_v1, elusarca with its trigger, aimaginedworlds) × three original SFW prompts, one seed each. Prompt IDs: p1-none `12f30529`, p1-zanime `860a3113`, p1-animestyle `4453fc04`, p1-elusarca `aee0fe89`, p1-aimagined `6aa1f94d`, p2-none `2f603b46`, p2-zanime `934c735f`, p2-animestyle `a33a103d`, p2-elusarca `7bb49604`, p2-aimagined `37dc786e`, p3-none `7175b876`, p3-zanime `c2b691c9`, p3-animestyle `0eea3d4a`, p3-elusarca `db7fd929`, p3-aimagined `e1e0e871`. Blind agent means: zanime 4.32 (3/3 keep), none 4.03, elusarca 4.00, aimagined 3.87, animestyle 3.72. Under the rubric's 0.3 rule, zanime ties with none; its 0.32-0.60 leads over the other three rest on one seed per prompt. The base model already draws cel anime from this wording. The first LoRA after the base, with the text unchanged, took 13-18 s. Every later LoRA swap took 94-185 s even with the text unchanged; the cause was not isolated. There is no recipe change. Evidence is in `experiments/curated/zimage-anime-loras-20260927/` (refs #357). Generated and agent-inspected only: not art acceptance and not licence clearance.
+
 ## Recipe thumbnails: 31 of 35 missing recipes now have a Creative Bundles example — 27 September 2026 (03:58-04:55 local)
 
 33 serial Studio jobs on the primary backend, one per recipe that had no showcase entry, each at the recipe's authored defaults; the nine Krea recipes ran on the GGUF twin `krea-anime-atelier-gguf` (same bindings) because the fp8 presets take about ten minutes each here. All 33 completed and every PNG was opened. 31 went into `app/static/bundle-showcase.json` as `examples/recipe-thumbs-20260927/<recipe-id>.jpg` (704 px, under 142 KB) with prompt IDs, SHA-256 values and per-job receipts in `experiments/curated/recipe-thumbs-20260927/`. Two renders stayed local: `pearly-anima-mix-v10-portrait` (read as youthful with body emphasis) and `krea-dark-scifi-comic-warrior` (a franchise-soldier lookalike). The two `adult-illustration` wildcard recipes were not run. Timing: Anima/SDXL 18-51 s per job, Krea GGUF 218-393 s (sampling ~4-5 s/step; the rest was the CPU text encode while host commit sat at 55-71 %). Generated and agent-inspected only, not art acceptance and not licence clearance; catalog `verified` flags unchanged.

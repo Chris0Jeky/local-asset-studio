@@ -5,6 +5,7 @@ import json
 import tempfile
 import threading
 import unittest
+import uuid
 from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
@@ -16,7 +17,7 @@ ROOT = Path(__file__).parents[1]
 SPEC = importlib.util.spec_from_file_location("asset_server_i2v", ROOT / "app/server.py")
 server = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(server)
-from i2v_diagnostics import _supported_wan_job, artifact_path, centered_crop_plan, graph_diff
+from i2v_diagnostics import _supported_wan_job, artifact_path, centered_crop_plan, graph_diff, locate_source
 
 
 def png(width=832, height=1248):
@@ -144,6 +145,43 @@ class I2VDiagnosticTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             artifact_path(Stub(), "job", "../report.json")
+
+    def test_artifact_path_rejects_traversal(self):
+        class Stub:
+            experiments = self.root / "experiments"
+
+        valid_job_id = str(uuid.uuid4())
+        invalid_job_id = "-" * 36
+        invalid_directory = self.root / "experiments" / "diagnostics" / invalid_job_id
+        invalid_directory.mkdir(parents=True)
+        (invalid_directory / "report.json").write_text("{}", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            artifact_path(Stub(), "not-a-uuid", "report.json")
+        with self.assertRaises(ValueError):
+            artifact_path(Stub(), invalid_job_id, "report.json")
+        with self.assertRaises(ValueError):
+            artifact_path(Stub(), valid_job_id, "../secret")
+        directory = self.root / "experiments" / "diagnostics" / valid_job_id
+        directory.mkdir(parents=True)
+        expected = directory / "report.json"
+        expected.write_text("{}", encoding="utf-8")
+        self.assertEqual(artifact_path(Stub(), valid_job_id, "report.json"), expected.resolve())
+
+    def test_locate_source_rejects_escape(self):
+        studio = self.studio()
+        record = locate_source(studio, "../../outside.png")
+        self.assertIsNone(record["path"])
+        self.assertTrue(record["candidates"])
+        self.assertTrue(
+            any(
+                candidate.get("present") is False
+                and candidate.get("error") == "candidate escapes its source folder"
+                for candidate in record["candidates"]
+            )
+        )
+        self.assertFalse(any(candidate.get("present") for candidate in record["candidates"]))
+        inside = locate_source(studio, self.reference)
+        self.assertEqual(inside["path"], str((self.root / "experiments/uploads" / self.reference).resolve()))
 
     def test_diagnostic_http_routes_are_read_only_gets(self):
         class Stub:

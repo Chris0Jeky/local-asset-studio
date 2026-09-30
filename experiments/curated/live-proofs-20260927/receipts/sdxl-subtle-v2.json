@@ -1,0 +1,205 @@
+{
+ "label": "sdxl",
+ "parent_asset": "8cb09d62bb82552e920ac23091939802",
+ "strength": "subtle",
+ "events": [
+  {
+   "t": 1790539632.036,
+   "kind": "asset_opened",
+   "vary_buttons": [
+    "Vary subtle",
+    "Vary strong"
+   ],
+   "hint": "On SDXL \u2022 gentle reference variation \u00b7 2 pictures \u00b7 denoise 0.3 / 0.55 (starting values)"
+  },
+  {
+   "t": 1790539635.093,
+   "kind": "vary_pressed",
+   "status": "Vary subtle prepared on SDXL \u2022 gentle reference variation from this picture: denoise 0.3 (a starting value, not yet judged), 2 new seeds from 1859201364, about 2 min per picture here \u00b7 2 runs. Nothing was generated; press Generate to run the round.",
+   "prepared": {
+    "preset": null,
+    "batch": "2",
+    "denoise": null,
+    "positive": "a small stone cottage with a red door beside a quiet stream in a spring meadow, wildflowers, soft morning light, storybook fantasy illustration, detailed, no people",
+    "hash": "#create"
+   },
+   "submitted_so_far": []
+  },
+  {
+   "t": 1790539635.908,
+   "kind": "denoise_override",
+   "control_id": null,
+   "catalog_value": "0.3",
+   "typed": 0.5,
+   "now": "0.5",
+   "steps": "30"
+  },
+  {
+   "t": 1790539635.976,
+   "kind": "generate_state",
+   "disabled": false,
+   "text": "Generate source-based pass \u2192"
+  },
+  {
+   "t": 1790539635.977,
+   "kind": "commit_before_generate",
+   "commit_gib": 67.1,
+   "limit_gib": 95.7,
+   "pct": 70.1,
+   "phys_avail_gib": 4.2
+  },
+  {
+   "t": 1790539640.097,
+   "kind": "generate_pressed",
+   "new_jobs": [
+    [
+     "bc31e7fe-4a1c-4a5d-aec0-9c068c7d38bd",
+     "gentle-variation",
+     2,
+     "waiting"
+    ]
+   ],
+   "job_posts": [
+    [
+     1790539636.026,
+     "/api/jobs"
+    ]
+   ]
+  }
+ ],
+ "job_id": "bc31e7fe-4a1c-4a5d-aec0-9c068c7d38bd",
+ "preset": "gentle-variation",
+ "status": "completed",
+ "message": "Complete. GPU memory overflowed 2.3 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+ "batch_count": 2,
+ "prompt_ids": [
+  "b61456dc-6cf6-468a-bba0-2c7a0a12d153",
+  "1290a70a-4a52-4b08-baac-06a36adc20fc"
+ ],
+ "outputs": [
+  {
+   "filename": "SDXL-Gentle-Variation_00010_.png",
+   "subfolder": "Studio",
+   "seed": 1859201364,
+   "prompt_id": "b61456dc-6cf6-468a-bba0-2c7a0a12d153",
+   "asset_id": "6f44315cd18e5884985c85a1dcdf2b74"
+  },
+  {
+   "filename": "SDXL-Gentle-Variation_00011_.png",
+   "subfolder": "Studio",
+   "seed": 1859201365,
+   "prompt_id": "1290a70a-4a52-4b08-baac-06a36adc20fc",
+   "asset_id": "4086198098bf5960b3e0dfe86f1ccc05"
+  }
+ ],
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "b61456dc-6cf6-468a-bba0-2c7a0a12d153",
+   "seed": 1859201364,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 2498572288,
+    "peak_dedicated_bytes": 10671104000,
+    "samples": 121,
+    "spilled": true,
+    "settled_shared_bytes": 82653184,
+    "lingering": false
+   }
+  },
+  {
+   "index": 1,
+   "prompt_id": "1290a70a-4a52-4b08-baac-06a36adc20fc",
+   "seed": 1859201365,
+   "status": "completed",
+   "gpu_memory": {
+    "peak_shared_bytes": 2498572288,
+    "peak_dedicated_bytes": 10513784832,
+    "samples": 42,
+    "spilled": true,
+    "top_holders": [
+     {
+      "pid": 13928,
+      "name": "explorer.exe",
+      "dedicated_bytes": 578367488,
+      "plausible": true
+     },
+     {
+      "pid": 20880,
+      "name": "ProtonVPN.Client.exe",
+      "dedicated_bytes": 236969984,
+      "plausible": true
+     },
+     {
+      "pid": 19044,
+      "name": "claude.exe",
+      "dedicated_bytes": 95760384,
+      "plausible": true
+     }
+    ],
+    "settled_shared_bytes": 82653184,
+    "lingering": false
+   }
+  }
+ ],
+ "graph_denoise": [
+  0.5
+ ],
+ "parent_assets": [
+  "8cb09d62bb82552e920ac23091939802"
+ ],
+ "continuation": {
+  "intent": "edit",
+  "preset_id": "gentle-variation",
+  "reference_file": "138e902caa5947eda17ba9e711047557_SDXL_00003_.png.png",
+  "source_asset_id": "8cb09d62bb82552e920ac23091939802",
+  "source_sha256": "61423162750878cff188c717d425dd0eb8fb273cfd891f2542bd6c68a9443bdf",
+  "template_sha256": "8e585df70da26bc99fbaf9015ac8b16023931731d15feee6360b35e9eecee059",
+  "version": 1
+ },
+ "controls": {
+  "positive": "a small stone cottage with a red door beside a quiet stream in a spring meadow, wildflowers, soft morning light, storybook fantasy illustration, detailed, no people",
+  "negative": "blurry, low quality, watermark, distorted",
+  "seed": "1859201364",
+  "steps": "30",
+  "cfg": "6",
+  "denoise": "0.5",
+  "reference": "138e902caa5947eda17ba9e711047557_SDXL_00003_.png.png"
+ },
+ "created_at": 1790539636.1655433,
+ "started_at": 1790539636.1750553,
+ "finished_at": 1790539719.9924366,
+ "elapsed_seconds": 83.81738138198853,
+ "page_errors": [],
+ "page_posts": [
+  [
+   1790539624.887,
+   "/api/estimate"
+  ],
+  [
+   1790539625.964,
+   "/api/estimate"
+  ],
+  [
+   1790539632.075,
+   "/api/assets/reference"
+  ],
+  [
+   1790539632.338,
+   "/api/estimate"
+  ],
+  [
+   1790539635.282,
+   "/api/estimate"
+  ],
+  [
+   1790539636.026,
+   "/api/jobs"
+  ],
+  [
+   1790539636.445,
+   "/api/estimate"
+  ]
+ ],
+ "dialogs": []
+}

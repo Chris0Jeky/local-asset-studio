@@ -216,6 +216,20 @@ let homeErrors=[],homeUpdated=new Date(),homeSignature='',homeData={workspace:{a
         desk = self.load_desk('[{id:"old",name:"Only old",kind:"comparison",created_at:Date.now()/1000-9*86400,state:{status:"planned"}}]', '[]')
         self.assertIn('A clear desk', desk); self.assertIn('1 plan(s) untouched for 7 days', desk)
 
+    def test_desk_hides_put_away_plans_and_counts_them(self):
+        # #940: an owner put-away plan leaves the desk; Runs & review with Status: All statuses brings it back.
+        now = 'Date.now()/1000'
+        desk = self.load_desk('[{id:"away",name:"Put away review",kind:"comparison",created_at:'+now+'-3600,put_away:true,state:{status:"awaiting_review"}},'
+            '{id:"kept",name:"Kept review",kind:"comparison",created_at:'+now+'-3600,state:{status:"awaiting_review"}}]', '[]')
+        self.assertIn('Kept review', desk); self.assertNotIn('Put away review', desk)
+        self.assertIn('1 plan(s) put away', desk)
+        # A put-away plan that was never on the desk (completed, reviewed) is still counted, so none vanishes silently.
+        desk = self.load_desk('[{id:"done",name:"Reviewed study",kind:"comparison",created_at:'+now+'-3600,put_away:true,state:{status:"reviewed"}},'
+            '{id:"exp",name:"Finished export",kind:"native",created_at:'+now+'-3600,put_away:true,state:{status:"completed"}}]', '[]')
+        self.assertIn('2 plan(s) put away', desk); self.assertEqual(self.page.locator('#uxAttention .ux-desk-note a[href="/#production"]').count(), 1)
+        desk = self.load_desk('[{id:"kept",name:"Kept review",kind:"comparison",created_at:'+now+'-3600,state:{status:"awaiting_review"}}]', '[]')
+        self.assertNotIn('put away', desk)
+
     def test_desk_job_rows_say_what_each_state_needs(self):
         desk = self.load_desk('[]', '[{id:"f",preset_name:"Failed run",status:"failed"},{id:"u",preset_name:"Unknown run",status:"uncertain"},{id:"r",preset_name:"Live run",status:"running"}]')
         self.assertIn('failed · see why, then put it away', desk)
@@ -363,18 +377,23 @@ window.show=(status,b)=>{document.querySelector('#out').innerHTML=renderMixedBat
     def test_combine_seed_buttons_say_why_they_are_locked(self):
         combine = region(source('studio-workbench.js'), '  function syncCombineResults(', '  resultPanel.onclick=')
         self.page.goto('about:blank')
-        self.page.set_content("""<div id="panel"></div><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const StudioContinuation={combineKind:()=>'depth',sameCombinePair:()=>true};let selected={},catalog={presets:[]},referenceRecords=[],lastUploaded=null,resultMarkup='',pairActionBusy=false,busy=false;
+        self.page.set_content("""<div id="panel"></div><script>"""+source('continuation-core.js')+source('review-checks.js')+"""</script><script>const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const StudioContinuation={...globalThis.StudioContinuation,combineKind:()=>'depth',sameCombinePair:()=>true};let selected={},catalog={presets:[]},referenceRecords=[],lastUploaded=null,resultMarkup='',pairActionBusy=false,busy=false;
 const resultPanel=document.querySelector('#panel');function currentPair(){return {};}function combineBusy(){return busy||dirty;}let submitting=false,poseBusy=false,dirty=false;function posePositionDirty(){return dirty;}function durationLabel(s){return s+' s';}
 let assetState={assets:[]},jobs=[{id:'done',status:'completed',preset_name:'P',outputs:[{seed:1}]},{id:'half',status:'partial',preset_name:'P',outputs:[{seed:2}]}];
 </script><script>"""+combine+'</script>')
         titles = lambda: self.page.evaluate("syncCombineResults();[...document.querySelectorAll('[data-ux-rerun]')].map(b=>[b.dataset.job,b.disabled,b.title])")
-        self.assertEqual(titles(), [['done', False, ''], ['done', False, ''],
-                                    ['half', True, 'Only a completed run can prepare another seed.'], ['half', True, 'Only a completed run can prepare another seed.']])
+        # #422: a partial run is folded under "needs attention" with no seed control at all, only a way to Problems.
+        self.assertEqual(titles(), [['done', False, ''], ['done', False, '']])
+        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('.ux-run-attention [data-ux-problem]')].map(b=>b.dataset.uxProblem)"), ['half'])
         self.page.evaluate('busy=true;resultMarkup=""')
         self.assertEqual(titles()[0], ['done', True, 'Wait for the current Combine action to finish.'])
         self.page.evaluate('busy=false;dirty=true;resultMarkup=""')
         self.assertEqual(titles()[0], ['done', True, 'Set or reset the typed joint position first.'], 'waiting never clears an unapplied joint edit')
+        # #1203 (Codex on #1212): a run that finished after the last Workspace read still offers its quick checks.
+        chips = self.page.evaluate("dirty=false;catalog.presets=[{id:'P',continuation_capability:{operation:'combine'}}];Object.assign(jobs[0],{preset_id:'P'});jobs[0].outputs[0].asset_id='fresh';resultMarkup='';syncCombineResults();"
+                                   "[...document.querySelectorAll('[data-ux-check][data-asset=\"fresh\"]')].map(b=>b.textContent)")
+        self.assertEqual(chips, ['pose', 'face', 'outfit', 'style', 'clean'])
 
     def test_restore_source_wording_says_why_and_keeps_its_lock_rule(self):
         sync = region(source('studio-workbench.js'), '  function syncContinuation(', '  async function readSource(')
@@ -436,6 +455,18 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.page.click('#generate')
         self.assertTrue(self.page.locator('#runOutcome').is_hidden(), 'a new Generate clears the old summary')
 
+    def test_a_run_that_came_close_to_the_commit_limit_says_so_and_a_roomy_one_stays_silent(self):
+        self.load_outcome()
+        gib = 2 ** 30
+        windows = [{'min_available_bytes': 30 * gib, 'peak_committed_bytes': 66 * gib, 'limit_bytes': 96 * gib},
+                   {'min_available_bytes': int(12.1 * gib), 'peak_committed_bytes': int(83.9 * gib), 'limit_bytes': 96 * gib}]
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': windows})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh. Memory was tight: Windows commit headroom fell to 12.1 GiB (87 % used); close memory-heavy programs before the next large job.')
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': windows[:1]})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.')
+        self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': [{'min_available_bytes': None}]})
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.', 'an unknown reading is never read as zero headroom')
+
     def test_a_failed_or_uncertain_run_points_at_its_problem_and_never_offers_a_rerun(self):
         self.load_outcome()
         self.settle({'id': 'bad-1', 'status': 'failed', 'failure': {'title': 'Memory allocation failed'}, 'message': 'Generation failed: bad allocation. More detail.'})
@@ -465,6 +496,41 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.settle({'id': 'ns', 'status': 'not_submitted', 'message': 'ComfyUI queue unavailable. Nothing was submitted. No retry was queued.'})
         self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: ComfyUI queue unavailable. Nothing was submitted.', True])
         self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
+        # #1120: a never-submitted run is a Recent runs card, not a Problems entry; See why reveals that card and leaves Problems shut.
+        self.page.evaluate("""document.querySelector('#gallery').insertAdjacentHTML('afterbegin','<article class="jobStatus not_submitted" data-problem="ns"><b>Krea · not_submitted</b><button class="recipe">Recipe</button></article>')""")
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'ns')
+        self.assertTrue(self.page.evaluate("document.querySelector('#workshopResults').open"))
+        self.assertFalse(self.page.evaluate("document.querySelector('#jobProblems').open"), 'Problems holds no entry for it')
+
+    def test_a_cancelled_run_says_so_plainly_and_keeps_its_finished_outputs(self):
+        # #1138: the owner's own cancel is not an error; kept outputs lead to the run, and nothing invites a re-run.
+        self.load_outcome()
+        self.settle({'id': 'done-1', 'status': 'cancelled', 'outputs': [{}], 'batch_count': 3, 'message': 'Cancelled by you between outputs.'})
+        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Cancelled: 1 finished output kept. Nothing was retried.', False])
+        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#runOutcome button')].map(b=>b.textContent)"), ['Show result →', 'Dismiss'])
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.className'), 'pin', 'kept outputs are the result, not the record (#1160 review)')
+        self.assertFalse(self.page.evaluate("document.querySelector('#jobProblems').open"))
+        self.settle({'id': 'bad-1', 'status': 'cancelled', 'outputs': [], 'message': 'Not started: cancelled by you. Nothing was sent to ComfyUI.'})
+        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: cancelled by you. Nothing was sent to ComfyUI.', False])
+        self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See the record →')
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'bad-1')
+
+    def test_a_cancelled_run_is_announced_once_when_it_settles(self):
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[],jobsEtag=null,jobsDataSignature='',estimateKey='',estimateResultKey='',activeJobId='mine';window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.reply=[{id:'mine',status:'running',preset_name:'P',message:'Generating',cancellation:{state:'requested'}}];window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
+        self.page.evaluate("startedJobIds.add('mine')"); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), [], 'an open cancel request is not a settled run')
+        self.page.evaluate("reply=[{id:'mine',status:'cancelled',preset_name:'P',message:'Stopped by you',outputs:[]}]")
+        self.page.evaluate('refreshJobs()'); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('events'), ['mine'])
+        self.assertIsNone(self.page.evaluate('activeJobId'), 'the dock stops following a cancelled run')
 
     def test_show_result_uses_any_shown_output_of_the_run(self):
         self.load_outcome()
@@ -512,6 +578,57 @@ document.addEventListener('studio:job-settled',e=>events.push([e.detail.id,e.det
         self.assertEqual(self.page.evaluate('events'), [['first', 'not_submitted']], 'the earlier run settles once; the running one waits')
         self.assertEqual(self.page.evaluate('activeJobId'), 'second')
 
+    def test_started_runs_that_can_never_be_announced_are_pruned(self):
+        # #1120: an id seen in the list and then gone, or put straight into abandoned by the owner, never settles; drop it.
+        refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
+        self.page.goto('about:blank')
+        self.page.set_content("""<p id="status"></p><script>let jobs=[],jobsEtag=null,jobsDataSignature='',estimateKey='',estimateResultKey='',activeJobId=null;window.events=[];
+function renderJobs(){}function scheduleTimeEstimate(){}function message(){}
+window.reply=[{id:'gone',status:'running',preset_name:'P',message:'Generating'},{id:'dropped',status:'abandoned',preset_name:'P',message:'Abandoned locally'}];
+window.fetch=async()=>({ok:true,status:200,headers:{get:()=>null},json:async()=>reply});
+document.addEventListener('studio:job-settled',e=>events.push(e.detail.id));</script><script>"""+refresh+'</script>')
+        self.page.evaluate("startedJobIds.add('gone');startedJobIds.add('dropped');startedJobIds.add('fresh');activeJobId='dropped'")
+        self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('[...startedJobIds]'), ['gone', 'fresh'], 'abandoned is pruned; an id the list has not shown yet is kept')
+        self.assertIsNone(self.page.evaluate('activeJobId'), 'an abandoned active run stops owning the status line (#1173 Codex P2)')
+        self.page.evaluate("reply=[{id:'fresh',status:'running',preset_name:'P',message:'Generating'}]"); self.page.evaluate('refreshJobs()')
+        self.assertEqual(self.page.evaluate('[...startedJobIds]'), ['fresh'], 'an id the list showed and then lost is pruned')
+        self.page.evaluate("reply=[{id:'fresh',status:'completed',preset_name:'P',message:'Complete',outputs:[{}]}]"); self.page.evaluate('refreshJobs()')
+        self.assertEqual((self.page.evaluate('events'), self.page.evaluate('startedJobIds.size')), (['fresh'], 0))
+
+
+    def test_running_cards_show_truthful_elapsed_time_not_progress(self):
+        """Handoff 03: a running card had no elapsed time. Only started_at is observed, so no progress bar is drawn (K13)."""
+        html = entry.workshop_html().replace('</body>', """<script>
+var jobs=[{id:'run-1',status:'running',started_at:Date.now()/1000-75,message:'Generating output 1 of 1'},
+  {id:'wait-1',status:'waiting',started_at:Date.now()/1000-5,message:'Waiting for existing ComfyUI work'},
+  {id:'queued-1',status:'queued',message:'Queued'},{id:'done-1',status:'completed',started_at:Date.now()/1000-300,message:'Complete'}];
+document.getElementById('gallery').innerHTML=jobs.map(j=>'<article class="jobStatus '+j.status+'" data-problem="'+j.id+'"><b>Fixture · '+j.status+'</b><p>'+j.message+'</p></article>').join('');
+</script></body>""")
+        self.page.set_content(html)
+        self.page.wait_for_selector('#workshopRecipeChange')
+        self.page.locator('#workshopResults').evaluate('(n)=>n.open=true')  # Generate opens Recent runs
+        self.page.wait_for_selector('[data-problem="run-1"] .job-elapsed')
+        running = self.page.locator('[data-problem="run-1"] .job-elapsed').inner_text()
+        self.assertRegex(running, r'^Started \d{1,2}:\d{2}.* · 1 min 1[5-7] s so far$')
+        self.assertIn('Generating output 1 of 1', self.page.locator('[data-problem="run-1"]').inner_text(), 'the job message stays')
+        self.assertRegex(self.page.locator('[data-problem="wait-1"] .job-elapsed').inner_text(), r' · [5-7] s so far$')
+        self.assertEqual(self.page.locator('[data-problem="queued-1"] .job-elapsed').count(), 0, 'not started, so no clock')
+        self.assertEqual(self.page.locator('[data-problem="done-1"] .job-elapsed').count(), 0)
+        self.assertEqual(self.page.locator('#gallery progress, #gallery [role=progressbar]').count(), 0)
+        self.page.wait_for_function("!document.querySelector('[data-problem=\"run-1\"] .job-elapsed').textContent.includes('"+running.split('·')[-1].strip()+"')")
+        # Codex P2 on #1139: the ticking clock is not an execution change, so the presentation context stays put.
+        stamp = self.page.evaluate("document.querySelector('#createView').__workshop.presentationView().contextStamp")
+        self.assertTrue(stamp)
+        self.page.wait_for_timeout(2200)
+        self.assertEqual(self.page.evaluate("document.querySelector('#createView').__workshop.presentationView().contextStamp"), stamp)
+        # A real card change is still an execution change: the stamp advances (the filter ignores only the clock line).
+        self.page.evaluate("document.getElementById('gallery').insertAdjacentHTML('beforeend','<article class=\"jobStatus queued\" data-problem=\"queued-2\"><b>Fixture · queued</b><p>Queued</p></article>')")
+        self.page.wait_for_function("(s)=>document.querySelector('#createView').__workshop.presentationView().contextStamp!==s", arg=stamp)
+        # A settled job loses its clock on the next tick.
+        self.page.evaluate("jobs[0].status='completed'")
+        self.page.wait_for_selector('[data-problem="run-1"] .job-elapsed', state='detached')
+        self.assertEqual(self.page.evaluate('submitted'), 0)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

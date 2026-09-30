@@ -45,12 +45,16 @@ from large_job_prep_common import PreparationError
 from studio_workflow.http_body import drain_for_reset
 import prompting
 import submission_evidence
+import job_cancel
 import observation_state
 import file_replace
 import asset_thumbs
 import job_resources
 import continuation
 import pose_guide
+import tiles
+import parallax
+import looks
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -65,12 +69,30 @@ PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit i
 HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the prompt; Stop tracking ends observation sooner
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
+HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
+HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
+HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
 GPU_SAMPLE_SECONDS = 0.5                 # sampler thread cadence: a VAE decode's overflow into shared memory lasts about 3 s
 GPU_SETTLE_SECONDS = 3                   # after a prompt that spilled, how long shared memory may take to drain before it counts as lingering
 EVICT_WAIT_SECONDS = 30                  # ceiling for ComfyUI to act on /free before the next prompt is posted anyway
 MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pt", ".pth", ".onnx", ".ckpt", ".sft", ".bin")
 HOST_COMMIT_MINIMUM = 32 * 1024**3
+HOST_COMMIT_WINDOWS = 16                 # per-job bound on host-commit telemetry windows (4 batch members plus resumed observations)
+COMMIT_RELEASE_SAMPLE_SECONDS = 0.5      # commit re-read cadence while ComfyUI releases its cache
+COMMIT_RELEASE_MAX_SECONDS = 300
+# A release first moves the GPU-resident weights into host RAM: qwen21's /free took headroom from 27.4 to 12.7 GiB (14.7 GiB used)
+# before it settled at 46.2 GiB (27 Sep 2026, experiments/curated/perf-20260927). Budget the whole 16 GiB card for that transient,
+# since at most the VRAM-resident weights can move, and keep a margin above it: this host dies near 97 % commit (about 2.9 GiB
+# left of its 95.7 GiB limit). At or below the floor the release is skipped, so its lowest point stays above the margin.
+COMMIT_RELEASE_TRANSIENT_BYTES = 16 * 1024**3
+COMMIT_RELEASE_MARGIN_BYTES = 6 * 1024**3
+COMMIT_RELEASE_FLOOR_BYTES = COMMIT_RELEASE_TRANSIENT_BYTES + COMMIT_RELEASE_MARGIN_BYTES
+COMMIT_RELEASE_FLOOR_NOTE = f'a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely'
+
+def commit_release_blocked(available):
+    """The one floor rule for every /free the Studio sends on its own (the gate release and the idle release, #1167); an unknown reading blocks."""
+    return not isinstance(available, int) or isinstance(available, bool) or available <= COMMIT_RELEASE_FLOOR_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError):
@@ -90,6 +112,9 @@ class StudioError(ValueError):
         return body
 
 class QueueWaitUnavailable(StudioError): pass
+
+class HostCommitShortfall(StudioError):
+    """The commit gate measured too little headroom (never raised for an unknown reading); ``details['reading']`` is that reading."""
 
 def combo_options(descriptor):
     """Both ComfyUI combo encodings: legacy [[...], {}] and V3 ['COMBO', {options}]."""
@@ -146,6 +171,7 @@ class Studio:
         self._host_commit = None; self._host_commit_at = 0
         self._gpu_memory = None; self._gpu_memory_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
+        self.cancel_requests = {}   # job id -> open owner cancel request; the worker that owns the job resolves it (app/job_cancel.py)
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
         # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
         raw_minutes = self.config.get("idle_cache_release_minutes", 10)
@@ -154,6 +180,12 @@ class Studio:
         # ComfyUI keeps part of the previous checkpoint on the GPU when the next one loads, because its free-VRAM figure ignores what the
         # desktop holds; three SDXL checkpoints in one process spilled 0, 3.7 and 6.0 GB into shared memory (23 Sep 2026). Unload first.
         self.evict_on_model_change = self.config.get("unload_models_on_change", True) is not False
+        # A Qwen-Image 2.1 job leaves its 7B model and 9.35 GB encoder in host commit, so the next heavy job read 26.5 GiB of headroom
+        # and was refused (27 Sep 2026) until someone posted /free by hand. Opt-in: before refusing a measured shortfall, free the job's
+        # own idle backend and re-measure for up to this many seconds; only a fresh reading that passes the unchanged gate admits.
+        raw_release = self.config.get("commit_gate_release_seconds", 0)
+        self.history_read_backoff_seconds = HISTORY_READ_BACKOFF_SECONDS   # per instance so a scripted ComfyUI double need not wait
+        self.commit_release_seconds = min(float(COMMIT_RELEASE_MAX_SECONDS), float(raw_release)) if self._finite_number(raw_release) and raw_release > 0 else 0.0
         self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
@@ -512,6 +544,8 @@ class Studio:
             if type(base) is int and base + batch - 1 > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range; lower the seed or the batch count")
         self.prune_disabled_loras(graph)
         continuation.validate(self, payload, preset, graph)
+        tiles.validate(self, payload, preset, graph, batch)
+        parallax.validate(self, payload, preset, graph, batch)
         self.ensure_reference_inputs(graph)
         self._validate_i2v_mode_source(preset, mode, graph, controls)
         wan_capacity.enforce(graph)
@@ -606,7 +640,7 @@ class Studio:
             others = f" The largest other GPU user was {label(credible[0])} with {credible[0].get('dedicated_bytes', 0) / 2**30:.1f} GB."
         elif holders:
             others = (f" The largest other GPU user is unknown: Windows reported an impossible {holders[0].get('dedicated_bytes', 0) / 2**30:.1f} GB"
-                      f" for {label(holders[0])}, more than the card holds.")
+                      f" for {label(holders[0])}, more than the whole card reported in use.")
         gib = worst.get('peak_shared_bytes', 0) / 2**30
         if any(p.get('lingering') for p in peaks):
             left = max((p.get('settled_shared_bytes') or 0) for p in peaks) / 2**30
@@ -711,8 +745,66 @@ class Studio:
         if reason: raise StudioError('Host commit headroom is unavailable: '+str(reason))
         if not isinstance(available,int) or available < minimum:
             actual='unknown' if not isinstance(available,int) else f'{available / 1024**3:.1f} GiB'
+            if isinstance(available, int): raise HostCommitShortfall(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission', reading=dict(reading))
             raise StudioError(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission')
         return reading
+
+    def _pre_submit_commit_check(self, job, preset, graph, index):
+        """The unchanged commit gate on a fresh reading, with one opt-in release of the job's own idle backend before a refusal."""
+        freed = " even after the Studio freed ComfyUI's cached models"
+        try: return self.host_commit_preflight(preset, graph, refresh=True)
+        except HostCommitShortfall as shortfall:
+            if self.commit_release_seconds <= 0: raise
+            if not self._release_for_commit_gate(job, preset, graph, index, shortfall):
+                outcome = job['commit_releases'][-1]['outcome']
+                note = freed if outcome.startswith(('insufficient', 'unknown after')) else "; ComfyUI's cached models were not freed (" + outcome + ")"
+                raise HostCommitShortfall(str(shortfall) + note, **shortfall.details) from shortfall
+        # The release wait can outlast the earlier idle proof. An owner cancel (#1159) ends this wait; the gate below still runs,
+        # and the caller's checkpoint settles the cancel before any POST.
+        self._wait_for_queue(job.get('comfy_url'), stop=lambda: job.get('id') in (getattr(self, 'cancel_requests', None) or {}))
+        try: return self.host_commit_preflight(preset, graph, refresh=True)
+        except HostCommitShortfall as exc: raise HostCommitShortfall(str(exc) + freed, **exc.details) from exc
+
+    def _release_for_commit_gate(self, job, preset, graph, index, shortfall):
+        """POST /free {unload_models, free_memory} to the job's idle backend and re-read commit until the gate would pass or time runs out.
+
+        Returns True only when a sampled reading reached the requirement; the caller still runs the gate itself on a fresh reading.
+        Every attempt, skipped or not, leaves a receipt in job['commit_releases']. Never retries, never submits."""
+        required = self.required_host_commit_bytes(preset, graph); url = job.get('comfy_url') or self.comfy_url
+        before = shortfall.details.get('reading') or {}
+        record = {'index': index, 'url': url, 'required_bytes': required, 'before_available_bytes': before.get('available_bytes'),
+                  'before_committed_bytes': before.get('committed_bytes'), 'limit_bytes': before.get('limit_bytes'), 'requested_at': time.time()}
+        def finish(outcome, ok=False):
+            record['outcome'] = outcome; record['waited_seconds'] = round(time.time() - record['requested_at'], 1)
+            job.setdefault('commit_releases', []).append(record); return ok
+        if commit_release_blocked(record['before_available_bytes']): return finish('skipped: ' + COMMIT_RELEASE_FLOOR_NOTE)
+        backends = getattr(self, 'backends', None)
+        if backends is not None and getattr(backends, 'busy', False): return finish('skipped: a backend switch is running')
+        with self.lock: others = [other for other in self.jobs.values() if other is not job and other.get('status') in ('submitting', 'running')]
+        if others: return finish('skipped: other Studio work is running')
+        try:
+            queue = self._request("/queue", timeout=5, base_url=url)
+            if not isinstance(queue, dict) or any(type(queue.get(key)) is not list or queue.get(key) for key in ("queue_running", "queue_pending")):
+                return finish('skipped: ComfyUI queue busy or unreadable')
+            job['message'] = f"Freeing ComfyUI's cached models: memory headroom {before.get('available_bytes', 0) / 1024**3:.1f} GiB, this job needs {required / 1024**3:.0f} GiB"; self._save(job)
+            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True, base_url=url)
+        except Exception as exc:   # a failing ComfyUI answer is evidence; the job then fails on the unchanged gate with nothing sent
+            return finish('failed: ' + (str(exc) or type(exc).__name__)[:200])
+        self._resident = None
+        deadline = time.monotonic() + self.commit_release_seconds; samples = 0; after = {}
+        while True:
+            # /free was posted: the models are gone whatever happens next, so a failing reading is still recorded honestly.
+            try: after = self.host_commit_reading(refresh=True)
+            except Exception as exc:
+                record['samples'] = samples
+                return finish('failed: commit could not be read after release: ' + (str(exc) or type(exc).__name__)[:200])
+            samples += 1; available = after.get('available_bytes')
+            if isinstance(available, int) and available >= required: break
+            if time.monotonic() >= deadline: break
+            time.sleep(COMMIT_RELEASE_SAMPLE_SECONDS)
+        record.update(after_available_bytes=after.get('available_bytes'), after_committed_bytes=after.get('committed_bytes'), samples=samples)
+        if isinstance(after.get('available_bytes'), int) and after['available_bytes'] >= required: return finish('released', True)
+        return finish(f'insufficient after {self.commit_release_seconds:g} s' if after.get('unknown_reason') is None else 'unknown after release: ' + str(after['unknown_reason'])[:200])
 
     def required_host_commit_bytes(self, preset, graph):
         if self.config.get('enforce_host_commit_headroom') and self.host_commit_required(preset, graph):
@@ -762,7 +854,14 @@ class Studio:
     def _create_job(self, payload, enqueue=True, job_id=None):
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         label = run_label(payload.get("label")) if isinstance(payload, dict) else None
-        preset, graph, graph_path, controls, batch = self.prepare(payload)
+        preset, graph, graph_path, controls, batch = self.prepare(payload, _defer_host_commit_preflight=True)
+        deferred = None
+        # A fresh reading: whether to defer (and so later free the backend) is decided on current counters, not a cached one.
+        try: reading = self.host_commit_preflight(preset, graph, refresh=True)
+        except HostCommitShortfall as exc:
+            # The worker's fresh pre-submit check stays the only admission; a shortfall here is queued for release-then-remeasure.
+            if self.commit_release_seconds <= 0: raise
+            reading = exc.details.get('reading'); deferred = exc
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
         for parent in parents: self.assets.get(parent)
@@ -776,10 +875,17 @@ class Studio:
         job["parent_assets"] = parents
         if label: job["label"] = label
         if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
+        if payload.get("tile") is not None: job["tile"] = copy.deepcopy(payload["tile"])
+        if payload.get("parallax") is not None: job["parallax"] = copy.deepcopy(payload["parallax"])
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
-        reading=self.host_commit_preflight(preset, graph)
-        if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time())]
+        if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time(), **({'deferred': True} if deferred else {}))]
+        if deferred:
+            available = reading.get('available_bytes') if isinstance(reading, dict) else None
+            head = f"Queued. Memory headroom is {available / 1024**3:.1f} GiB and this job needs {self.required_host_commit_bytes(preset, graph) / 1024**3:.0f} GiB; the Studio measures again just before sending it"
+            # Promise only what _release_for_commit_gate can do: at or below its floor the release is always skipped.
+            if isinstance(available, int) and available > COMMIT_RELEASE_FLOOR_BYTES: job["message"] = head + " and, if headroom is still short and nothing else is running, frees ComfyUI's cached models and measures once more"
+            else: job["message"] = head + f". Freeing ComfyUI's cached models needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom, so unless memory is released before then the job fails with nothing sent"
         self._save(job); self.jobs[job_id] = job
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
@@ -795,7 +901,7 @@ class Studio:
         return data
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish", "parallax", "parallax_finish")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -815,6 +921,12 @@ class Studio:
         result["put_away_basis"] = "owner" if owner else "tracking_stopped" if stopped else None
         result["can_put_away"] = not result["put_away"] and Studio._put_away_error(job) is None
         result["can_bring_back"] = "put_away_at" in job and job.get("status") not in Studio.ACTIVE_JOB_STATUSES
+        # Cancel (#1138): an open request shows at once, before the worker adopts it into the record.
+        request = (getattr(self, "cancel_requests", None) or {}).get(job.get("id"))
+        if request is not None and (job.get("cancellation") or {}).get("event_id") != request.get("event_id"): result["cancellation"] = copy.deepcopy(request)
+        blocked = job_cancel.blocked(self, job)
+        result["can_cancel"] = blocked is None; result["cancel_blocked_reason"] = blocked
+        result["cancel_needs_confirm"] = blocked is None and job_cancel.confirm_needed(job)
         return result
 
     @staticmethod
@@ -985,7 +1097,7 @@ class Studio:
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
                 "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []),
-                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation")}
+                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation"), "tile": job.get("tile"), "tile_receipt": job.get("tile_receipt"), "parallax": job.get("parallax"), "parallax_receipt": job.get("parallax_receipt")}
 
     def i2v_diagnostic(self, job_id):
         job = self.jobs.get(job_id)
@@ -1008,6 +1120,9 @@ class Studio:
             if not re.fullmatch('[0-9a-f]{32}',identifier):raise StudioError('Invalid native project identity')
             base=(self.experiments/'projects'/identifier).resolve()
             return inside(base,base/output['native_path'])
+        if (job or {}).get('operation') in (tiles.OPERATION,parallax.OPERATION):
+            base=(self.runs/job['id']).resolve()
+            return inside(base,base/output['run_file'])
         if (job or {}).get('operation')=='asset.import':
             return inside((self.experiments/'uploads').resolve(),self.experiments/'uploads'/output['uploaded_file'])
         root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
@@ -1038,13 +1153,23 @@ class Studio:
 
     def import_image(self, filename, content_type, body):
         uploaded=self.upload(filename,content_type,body)
-        identifier=str(uuid.uuid4());(self.runs/identifier).mkdir()
+        identifier=str(uuid.uuid4())
         job={'id':identifier,'operation':'asset.import','status':'completed','created_at':time.time(),
              'preset_id':'imported-image','preset_name':uploaded['original_name'],'controls':{},'batch_count':1,
              'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[uploaded],
              'message':'Imported original image. No generation submitted.','graph_path':'','graph':{},
              'outputs':[{'filename':uploaded['original_name'],'uploaded_file':uploaded['file'],'type':'output','media_type':'image'}]}
-        self.index_outputs(job);self._save(job)
+        self.index_outputs(job)
+        if not job['outputs'][0].get('asset_id'):
+            job['status']='failed'
+            job['message']='Asset storage could not confirm this request. Check its receipt before retrying the exact command.'
+            (self.runs/identifier).mkdir()
+            self._save(job)
+            with self.lock:
+                self.jobs[identifier]=job
+            raise sqlite3.Error(job['outputs'][0].get('snapshot_error') or 'Asset storage could not confirm this request')
+        (self.runs/identifier).mkdir()
+        self._save(job)
         with self.lock:
             self.jobs[identifier] = job
         return {'asset':self.assets.get(job['outputs'][0]['asset_id']),'job':self.public(job)}
@@ -1117,7 +1242,9 @@ class Studio:
         self.validate_graph(graph)
         if shutil.disk_usage(self.experiments).free<2*1024**3:raise StudioError('At least 2 GiB free workspace storage is required')
         inspection=self.inspect_preset(preset['id'],graph)
-        cache_path=self.root/'.runtime/model-fingerprints.json';models=[]
+        from model_requirements import pin_mismatch
+        pins={a['id']:a for a in self.library.manifest().get('assets',[]) if isinstance(a,dict) and isinstance(a.get('id'),str)}
+        cache_path=self.root/'.runtime/model-fingerprints.json';models=[];mismatches=[]
         with self._fingerprint_lock:
             cache=read_json(cache_path,{}) or {}
             for requirement in inspection['requirements']:
@@ -1130,7 +1257,12 @@ class Studio:
                 if record.get('bytes')!=stat.st_size or record.get('mtime_ns')!=stat.st_mtime_ns:
                     record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest_file(path)};cache[key]=record
                 models.append(dict(record,file=requirement['file']))
+                # #1112: an exact-path pin binds production; an unpinned file stays allowed.
+                pin=pins.get(requirement.get('asset_id'));mismatch=pin and pin.get('file')==requirement['file'] and pin_mismatch(pin,record['bytes'],record['sha256'])
+                if mismatch:mismatches.append('Required model does not match its library pin: '+requirement['file']+' — '+mismatch['note'])
             cache_path.parent.mkdir(exist_ok=True);self._write_json_atomic(cache_path,cache)
+        # The digests are cached first, so readiness can show the same mismatch without rehashing.
+        if mismatches:raise StudioError(' '.join(mismatches))
         inputs=[]
         for node in graph.values():
             if node['class_type']=='LoadImage':
@@ -1184,6 +1316,8 @@ class Studio:
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
         if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
+        if job.get("tile") is not None: recipe["tile"] = job["tile"]
+        if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]
         self._write_json_atomic(directory / "recipe.json", recipe)
         self._write_json_atomic(directory / "workflow.json", job["graph"])
         state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
@@ -1235,6 +1369,7 @@ class Studio:
         if not isinstance(job, dict) or not job: return "Unknown job"
         if job.get('status') == 'abandoned' or 'pending_submission' in job:
             return 'An abandoned or unknown submission cannot be resumed as a known prompt'
+        if job.get('status') == 'cancelled': return 'A cancelled job is closed; reopen its recipe as a new draft instead'
         stopped = Studio._tracking_stopped(job)
         if stopped and job.get("status") != "uncertain": return "Only an uncertain job can resume observation"
         if job.get("status") in ("queued", "waiting", "submitting", "running"):
@@ -1402,6 +1537,29 @@ class Studio:
             job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
             return self.public(job)
 
+    def cancel_job(self, job_id):
+        """Owner cancel (#1138). Settles a job the worker has not started; otherwise records a request the worker resolves.
+
+        Double requests return the open record. The worker, not this thread, talks to ComfyUI for a started job, so
+        a cancel cannot race its submission or observation; nothing is ever resubmitted."""
+        with self.lock:
+            job = self.jobs.get(job_id)
+            if not job: raise StudioError("Unknown job")
+            if job.get("status") == "cancelled" or job_cancel.pending(self, job): return self.public(job)
+            error = job_cancel.blocked(self, job)
+            if error: raise StudioError(error)
+            now = time.time(); record = job_cancel.new_record(job, now)
+            if job_cancel.not_started(job):
+                record.update(state="cancelled", resolved_at=now, note="Removed from the Studio queue before submission; nothing was sent to ComfyUI.")
+                prospective = dict(job, status="cancelled", message=job_cancel.not_started_message(), cancellation=record, finished_at=now)
+                self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+                job.update(status=prospective["status"], message=prospective["message"], cancellation=record, finished_at=now)
+                return self.public(job)
+            # The worker owns this job's state file; the request gets its own durable receipt.
+            self._write_json_atomic(self.runs / job_id / job_cancel.REQUEST_FILE, record)
+            self.cancel_requests[job_id] = record
+            return self.public(job)
+
     ACTIVE_JOB_STATUSES = ("queued", "waiting", "submitting", "running")
     PUT_AWAY_STATUSES = ("failed", "partial", "uncertain", "abandoned")
 
@@ -1459,6 +1617,8 @@ class Studio:
                         self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
                     else:
                         self._save(data)
+                if job_cancel.reconcile_restart(data, state_path.parent):
+                    self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
                 self.jobs[data["id"]] = data
 
     def _request(self, path, method="GET", data=None, timeout=15, base_url=None, allow_empty=False):
@@ -1503,13 +1663,14 @@ class Studio:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
             except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): info, info_available = {}, False
-            missing = {}; observations = {}
+            missing = {}; observations = {}; pin_warnings = {}; fingerprints = self.model_fingerprints()
             assets = self.library.manifest().get('assets', [])
             from model_requirements import model_selection
             for preset in self.catalog()["presets"]:
                 try:
                     graph, _ = self.graph_for(preset)
-                    for requirement in self.preset_requirements(preset, graph, assets=assets, observations=observations):
+                    for requirement in self.preset_requirements(preset, graph, assets=assets, observations=observations, fingerprints=fingerprints):
+                        if requirement.get('pin_mismatch'): pin_warnings.setdefault(preset.get('id'), []).append(requirement['file'])
                         if requirement['present'] is not True:
                             label = requirement['file'] if requirement['present'] is False else 'Unresolved dependency: ' + requirement['file'] + ' — ' + requirement['note']
                             missing.setdefault(preset.get('id'), []).append(label)
@@ -1529,21 +1690,26 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+
+    def model_fingerprints(self):
+        # Read-only view of production preflight's digest cache; readiness never hashes.
+        cache = read_json(self.root/'.runtime/model-fingerprints.json', {})
+        return cache if isinstance(cache, dict) else {}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
         if graph is None: graph, _ = self.graph_for(preset)
-        return {"id": preset_id, "requirements": self.preset_requirements(preset, graph),
+        return {"id": preset_id, "requirements": self.preset_requirements(preset, graph, fingerprints=self.model_fingerprints()),
                 "nodes": [{"id": key, "type": node.get("class_type")} for key, node in graph.items()], "graph": graph}
 
-    def preset_requirements(self, preset, graph, *, assets=None, observations=None):
+    def preset_requirements(self, preset, graph, *, assets=None, observations=None, fingerprints=None):
         from model_requirements import requirements
         model_root = self.library.models
         if hasattr(self, 'backends'):
             model_root = Path(self.backends.profiles[preset.get('backend_id', 'primary')]['root']) / 'models'
-        return requirements(self.library, preset, graph, model_root, assets=assets, observations=observations)
+        return requirements(self.library, preset, graph, model_root, assets=assets, observations=observations, fingerprints=fingerprints)
 
     def inspect_workflow(self, payload):
         data = payload.get("workflow") if isinstance(payload, dict) else None
@@ -1588,13 +1754,14 @@ class Studio:
                 "models": sorted(models), "missing_models": sorted(m for m in models if m not in names), "schema_available": available,
                 "note": "Static dependency inspection only. No graph was run or code installed. Bypassed nodes are included; filenames selected dynamically may be absent." if available else "ComfyUI is offline: missing node status is unknown. Model filenames were inspected locally; nothing was run."}
 
-    def _wait_for_queue(self, base_url=None):
+    def _wait_for_queue(self, base_url=None, stop=None):
         # The single pre-submit gate for every generation path: a job that raced a GPU lease is never posted.
         lease = getattr(self, "gpu_lease", None)
         refusal = lease.refusal() if lease else None
         if refusal: raise QueueWaitUnavailable(refusal)
         deadline = time.monotonic() + PRE_SUBMIT_QUEUE_WAIT_SECONDS
         while True:
+            if stop is not None and stop(): return False   # an owner cancel ends the wait; the caller settles it
             remaining = deadline - time.monotonic()
             if remaining <= 0: raise QueueWaitUnavailable("ComfyUI's queue is still busy or its idle check expired")
             try: data = self._request("/queue", timeout=min(10, remaining), base_url=base_url)
@@ -1614,13 +1781,14 @@ class Studio:
             # A failed persistence of the pre-submit queue timeout still proves no POST.
             if job.get('status') == 'not_submitted' and submission_evidence.never_submitted(job):
                 self._save(job); return
-            if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed'):
+            if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed', 'cancelled'):
                 uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
                 locked = not uncertain and submission_evidence.never_submitted(job) and self._run_folder_lock(job, exc)
                 job['status'] = 'uncertain' if uncertain else 'failed'
                 job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
                 if locked: job['failure'] = {'kind': 'record_write_locked', 'title': "The Studio could not write this job's record", 'summary': "Another program had the run folder's file open. Nothing was sent to ComfyUI.", 'action': 'Safe to generate again with the same settings.', 'detail': str(exc)[:300]}
             self._save(job)
+        job_cancel.finish(self, job)
 
     def _run_folder_lock(self, job, exc):
         """A transient Windows refusal on a file inside this job's own run folder (another program held it open)."""
@@ -1638,6 +1806,12 @@ class Studio:
         if time.monotonic() - self._last_activity < self.idle_release_minutes * 60: return False
         backends = getattr(self, 'backends', None)
         if backends is not None and (getattr(backends, 'busy', False) or getattr(backends, 'active', 'primary') != 'primary'): return False
+        # The release's own transient (-14.7 GiB measured on qwen21, #1167) must not be what exhausts commit: check headroom first,
+        # post nothing at or below the floor, and look again on the next tick. An unreadable counter is not evidence of room.
+        reading = self.host_commit_reading(refresh=True); available = reading.get('available_bytes')
+        if commit_release_blocked(available):
+            measured = f'{available / 1024**3:.1f} GiB of commit headroom' if isinstance(available, int) else 'commit headroom unknown (' + str(reading.get('unknown_reason') or 'no reading')[:120] + ')'
+            self.cache_release["last_error"] = 'skipped with ' + measured + ': ' + COMMIT_RELEASE_FLOOR_NOTE; return False
         # Pin both calls to the endpoint checked here: a switch that activates another backend mid-tick retargets comfy_url.
         url = self.comfy_url
         try:
@@ -1803,12 +1977,15 @@ class Studio:
     def _run(self, job):
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         with self.lock:
+            if job.get('status') == 'cancelled': return   # the owner cancelled it before the worker reached it: nothing to send
             if job.get('status') not in ('queued', 'not_submitted') or not submission_evidence.never_submitted(job):
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
             job['started_at']=time.time()
             job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
         try: return self._run_generation(job)
-        finally: self._resource_observation_event('finish', job)
+        finally:
+            self._resource_observation_event('finish', job)
+            job_cancel.finish(self, job)
 
     def _resource_observation_event(self, kind, job, **details):
         observer = getattr(self, 'resource_observations', None)
@@ -1817,29 +1994,44 @@ class Studio:
         try: getattr(observer, kind)(job_resources.event_snapshot(kind, job, **details))
         except Exception: pass
 
+    def _cancel_checkpoint(self, job):
+        """Worker, before any new submission: an open owner cancel settles the job here (caller holds the lock)."""
+        if job.get('status') == 'cancelled': return True
+        if job_cancel.pickup(self, job) is None and not job_cancel.stop_pending(job): return False
+        job_cancel.settle(self, job); return True
+
     def _run_generation(self, job):
-        try: self._wait_for_queue(job.get('comfy_url'))
+        try: self._wait_for_queue(job.get('comfy_url'), stop=lambda: job.get('id') in self.cancel_requests)
         except QueueWaitUnavailable as exc:
             with self.lock:
+                if self._cancel_checkpoint(job): return
                 job['status'] = 'not_submitted'
                 recovery = 'Resume the owning experiment explicitly after checking the queue, or abandon this local job.' if job.get('project_id') else 'You can abandon this local job; its recipe is retained.'
                 job['message'] = str(exc) + '. Nothing was submitted. No retry was queued. ' + recovery
                 self._save(job)
             return
         for i in range(job["batch_count"]):
-            graph, seed = self._batch_graph(job, i)
+            with self.lock:
+                if self._cancel_checkpoint(job): return
             try:
+                # Building this member's graph is pre-submit too: a failure here sent nothing for it.
+                graph, seed = self._batch_graph(job, i)
                 try:preset=self.preset(job['preset_id'])
                 except StudioError:preset={}
                 continuation.validate(self, job, preset, graph, check_runtime=True)
+                tiles.validate(self, job, preset, graph, job["batch_count"], check_runtime=True)
+                parallax.validate(self, job, preset, graph, job["batch_count"], check_runtime=True)
                 wan_capacity.enforce(graph)
-                reading=self.host_commit_preflight(preset, graph, refresh=True)
+                reading=self._pre_submit_commit_check(job, preset, graph, i)
             except (StudioError, ValueError, OSError) as exc:
                 job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._stamp_finished(job);self._save(job);return
             if reading:
                 job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
             self._evict_before_submit(job, graph, i)
-            job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+            with self.lock:
+                # Last point before the POST: a cancel that arrived during the wait or the eviction sends nothing.
+                if self._cancel_checkpoint(job): return
+                job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
             self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
@@ -1869,6 +2061,8 @@ class Studio:
         job["status"] = "completed"; job["message"] = "Complete"
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
+        tiles.finish_after_run(self, job)   # deterministic Pillow steps on a completed seam repaint; never a generation
+        parallax.finish_after_run(self, job)   # splits the layers once both parallax edits are in; never a generation
 
     def _prompt_listed(self, job, prompt_id):
         """True unless ComfyUI's queue proves the prompt is neither running nor pending; unreadable means listed."""
@@ -1884,31 +2078,72 @@ class Studio:
         return False
 
     def _wait_history(self, job, submission):
-        sampler = self._start_gpu_sampler()
+        sampler = self._start_gpu_sampler(); commit = self._start_commit_sampler()
         try: return self._observe_history(job, submission, sampler)
         finally:
             if sampler is not None: sampler.stop()
+            if commit is not None: self._record_host_commit(job, submission, commit)
+
+    def _start_commit_sampler(self):
+        """A host_memory.Sampler for this prompt's window (#302), or None. Never raises."""
+        try: return host_memory.Sampler(GPU_SAMPLE_SECONDS).start()
+        except Exception: return None
+
+    def _record_host_commit(self, job, submission, sampler):
+        """Keep the prompt window's commit peak and minimum headroom in job['host_commit_windows'] (#302), one entry per observed
+        window, at most HOST_COMMIT_WINDOWS. Submission receipts stay untouched. Optional evidence: never raises."""
+        try:
+            sampler.stop(); window = sampler.take()
+            if not window: return
+            windows = job.setdefault('host_commit_windows', [])
+            if len(windows) >= HOST_COMMIT_WINDOWS: return
+            windows.append(dict(window, index=submission.get('index'), prompt_id=submission.get('prompt_id'), interval_seconds=GPU_SAMPLE_SECONDS))
+            self._save(job)
+        except Exception: pass
 
     def _observe_history(self, job, submission, sampler=None):
         prompt_id = submission["prompt_id"]
-        deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0
+        deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0; read_failures = 0
         while time.monotonic() < deadline:
             with self.lock:
                 if self._tracking_stopped(job): return False
+                cancel = job_cancel.pickup(self, job) is not None and not job_cancel.interrupt_sent(job, prompt_id)
+            # The owner's cancel is acted on here, by the thread that owns this prompt's observation.
+            if cancel and job_cancel.act(self, job, submission): return False
             try:
                 response = self._request("/history/" + quote(prompt_id, safe=''), timeout=15, base_url=job.get('comfy_url'))
                 if not isinstance(response, dict): raise ValueError('Invalid history response')
                 history = response.get(prompt_id)
                 if history is not None and not isinstance(history, dict): raise ValueError('Invalid prompt history')
-            except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException):
+                if isinstance(history, dict) and (not isinstance(history.get('status', {}), dict) or not isinstance(history.get('outputs', {}), dict)): raise ValueError('Invalid prompt history')
+            except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException) as exc:
+                # A read is safe to repeat (the prompt is never posted again), so one dropped poll does not end the batch; a ComfyUI
+                # that stays unreadable still ends observation after a bounded number of reads, with the rest of the batch unsent.
+                read_failures += 1; error = (str(exc) or type(exc).__name__)[:200]
+                # Failures reset after any good read, so a flaky ComfyUI over the 4-hour window would grow this without bound.
+                # Under the lock: HTTP handlers serialize this submission while the worker adds these keys (the backoff sleep stays outside).
                 with self.lock:
-                    if self._tracking_stopped(job): return False
-                    job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job)
-                return False
+                    kept = submission.setdefault("history_read_errors", [])
+                    # A submission resumed from before the cap has a list but no count: seed from it, then trim it.
+                    submission["history_read_error_count"] = submission.get("history_read_error_count", len(kept)) + 1
+                    del kept[HISTORY_READ_ERRORS_KEPT:]
+                    if len(kept) < HISTORY_READ_ERRORS_KEPT: kept.append({"at": time.time(), "error": error})
+                if read_failures >= HISTORY_READ_STRIKES:
+                    with self.lock:
+                        if self._tracking_stopped(job): return False
+                        job["status"] = "uncertain"; job["message"] = f"Could not observe a known ComfyUI prompt: {read_failures} history reads in a row failed (last: {error}). It was not resubmitted. Use Resume observation when ComfyUI is available."; self._save(job)
+                    return False
+                with self.lock:
+                    if self._tracking_stopped(job): return False # the owner stopped tracking: no backoff wait before letting go
+                time.sleep(self.history_read_backoff_seconds * read_failures); continue
+            read_failures = 0
             if history:
                 # A prompt that finishes between samples (or before the first) still gets one reading at completion.
                 self._sample_gpu_memory(job, submission, sampler); self._settle_gpu_memory(submission)
                 status = history.get("status", {})
+                if job_cancel.interrupted(history) and job_cancel.interrupt_sent(job, prompt_id):
+                    self._collect_outputs(job, submission, history); self.index_outputs(job)
+                    job_cancel.record_interrupted(self, job, submission); return False
                 if status.get("status_str") == "error":
                     errors = [m[1] for m in status.get("messages", []) if isinstance(m, list) and len(m) > 1 and m[0] == "execution_error" and isinstance(m[1], dict)]
                     detail = errors[-1] if errors else {}
@@ -1919,17 +2154,7 @@ class Studio:
                     message = label + (": " + detail_text[:450] if detail_text else "")
                     self._record_history_failure(job, submission, message)
                     raise StudioError(message)
-                outputs = history.get("outputs", {})
-                for node in outputs.values():
-                    for collection in ("images", "gifs", "videos", "audio", "3d"):
-                        for output in node.get(collection, []):
-                            if not isinstance(output, dict): continue
-                            descriptor = {k: output.get(k) for k in ("filename", "subfolder", "type")}
-                            if descriptor["filename"]:
-                                ext = Path(descriptor["filename"]).suffix.lower()
-                                descriptor.update(seed=submission.get("seed"), prompt_id=prompt_id,
-                                                  media_type="video" if ext in (".mp4", ".webm", ".mov") else "3d" if ext in (".glb", ".gltf", ".obj", ".ply", ".stl") else "audio" if ext in (".mp3", ".wav", ".flac") else "image")
-                                if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
+                self._collect_outputs(job, submission, history)
                 submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
             empty_polls += 1
             if empty_polls % GPU_SAMPLE_EVERY == 1: self._sample_gpu_memory(job, submission, sampler)
@@ -1946,6 +2171,21 @@ class Studio:
             if self._tracking_stopped(job): return False
             job["status"] = "uncertain"; job["message"] = "Timed out while observing ComfyUI; it was not resubmitted."; self._save(job)
         return False
+
+    @staticmethod
+    def _collect_outputs(job, submission, history):
+        prompt_id = submission["prompt_id"]
+        outputs = history.get("outputs", {})
+        for node in outputs.values():
+            for collection in ("images", "gifs", "videos", "audio", "3d"):
+                for output in node.get(collection, []):
+                    if not isinstance(output, dict): continue
+                    descriptor = {k: output.get(k) for k in ("filename", "subfolder", "type")}
+                    if descriptor["filename"]:
+                        ext = Path(descriptor["filename"]).suffix.lower()
+                        descriptor.update(seed=submission.get("seed"), prompt_id=prompt_id,
+                                          media_type="video" if ext in (".mp4", ".webm", ".mov") else "3d" if ext in (".glb", ".gltf", ".obj", ".ply", ".stl") else "audio" if ext in (".mp3", ".wav", ".flac") else "image")
+                        if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
 
     def resume_job(self, job_id):
         with self.lock:
@@ -1987,8 +2227,12 @@ class Studio:
         return self.public(job)
 
     def _resume(self, job):
+        try: return self._resume_observation(job)
+        finally: job_cancel.finish(self, job)
+
+    def _resume_observation(self, job):
         with self.lock:
-            if self._tracking_stopped(job): return
+            if self._tracking_stopped(job) or job.get('status') == 'cancelled': return
             if job.get('status') == 'abandoned' or 'pending_submission' in job:
                 raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
             prior = job.pop("reconciliation", None) or {}
@@ -1996,7 +2240,7 @@ class Studio:
             unresolved = any(s.get("status") != "completed" for s in job.get("submissions", []))
             job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
         for submission in job.get("submissions", []):
-            if submission.get("status") != "completed" and not self._wait_history(job, submission): return
+            if submission.get("status") not in ("completed", "cancelled") and not self._wait_history(job, submission): return
         observed = len(job.get("submissions", []))
         if observed < job["batch_count"]:
             status = "partial"; message = f"Observed {observed} of {job['batch_count']} requested images. Remaining images were not submitted; start a new job for those."
@@ -2009,6 +2253,8 @@ class Studio:
             message = prior_message if status == prior_status and prior_message else "Reconciled from retained receipts: " + message
         job["status"] = status; job["message"] = message
         self._save(job)
+        tiles.finish_after_run(self, job)
+        parallax.finish_after_run(self, job)
 
     def upload(self, filename, content_type, body):
         mime = content_type.split(";", 1)[0].lower()
@@ -2088,7 +2334,7 @@ class Handler(BaseHTTPRequestHandler):
         if size < 0 or size > limit: raise StudioError("Request body is too large")
         return size
     def _body_json(self, limit=1024 * 1024):
-        if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": raise StudioError("application/json required")
+        if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": self._drain_refused_body(); raise StudioError("application/json required")
         raw = self.rfile.read(self._content_length(limit))
         try: return json.loads(raw.decode())
         except RecursionError: raise StudioError("JSON body is nested too deeply") from None
@@ -2181,6 +2427,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
+            if path == "/api/looks": return self._json(200, looks.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
                 return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
@@ -2216,6 +2463,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")
                 file = inside(self.studio.assets.root, self.studio.assets.root / "exports" / (identifier + ".zip"))
                 return self._local_file(file, True)
+            if path.startswith("/api/tiles/source/") and len(path.split("/")) == 5: return self._json(200, tiles.source_status(self.studio, path.split("/")[4]))
+            if path.startswith("/api/parallax/source/") and len(path.split("/")) == 5: return self._json(200, parallax.source_status(self.studio, path.split("/")[4]))
             if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
                 return self._json(200, continuation.source_context(self.studio, path.split("/")[3]))
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
@@ -2297,7 +2546,10 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':
                 size=self._content_length(20*1024*1024)
-                return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),self.rfile.read(size)))
+                try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),self.rfile.read(size)))
+                except sqlite3.Error:
+                    return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
+                                            "code": "asset_storage_unconfirmed"})
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
             if self.path == '/api/av':return self._json(201,self.studio.production.av.create(self._body_json()))
             if self.path == '/api/voice-baseline':return self._json(201,self.studio.production.voice_baseline(self._body_json()))
@@ -2319,6 +2571,10 @@ class Handler(BaseHTTPRequestHandler):
                     if len(parts)!=5:raise StudioError('Unknown time extension route')
                     return self._json(200,self.studio.production.extend_time(identifier,payload))
                 if parts[-1]=='review':return self._json(200,self.studio.production.review(identifier,payload))
+                if parts[-1]=='put-away':
+                    if len(parts)!=5:raise StudioError('Unknown put-away route')
+                    return self._json(200,self.studio.production.put_away(identifier,payload))
+                return self._json(404, {"error":"Not found"})  # the body was read above: nothing is left to drain
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_object()))
             if self.path == "/api/assets/update":
                 try: return self._json(200, self.studio.assets.update(self._body_json()))
@@ -2327,6 +2583,9 @@ class Handler(BaseHTTPRequestHandler):
                                             "code": "asset_storage_unconfirmed"})
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
+            # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
+            if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
+            if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
@@ -2347,6 +2606,11 @@ class Handler(BaseHTTPRequestHandler):
                 payload = self._body_json()
                 if not isinstance(payload, dict): raise StudioError('Abandonment command must be an object')
                 return self._json(200, self.studio.abandon_job(parts[3], payload.get('reason'), payload.get('acknowledge_unknown', False)))
+            if self.path.startswith("/api/jobs/") and self.path.endswith("/cancel"):
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown cancel route')
+                if not isinstance(self._body_json(), dict): raise StudioError('Cancel command must be an object')
+                return self._json(202, self.studio.cancel_job(parts[3]))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
                 return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_object().get("reason")))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/put-away"):
@@ -2358,8 +2622,18 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
+            # Make seamless (#1220): prepare stores a rolled seam cross as an upload; finish runs Pillow steps. Neither queues a generation.
+            if self.path == "/api/tiles/prepare": return self._json(201, tiles.prepare(self.studio, self._body_object()))
+            if self.path == "/api/tiles/finish":
+                job = tiles.finish(self.studio, self._body_object().get("job_id")); return self._json(200, {"job": self.studio.public(job)})
+            # Parallax layers (#1219): prepare attaches the source and returns the plate stage; stage returns the other edit's
+            # wording for Create; finish runs Pillow steps on a completed plate + isolate pair. None queues a generation.
+            if self.path == "/api/parallax/prepare": return self._json(201, parallax.prepare(self.studio, self._body_object()))
+            if self.path == "/api/parallax/stage": return self._json(200, parallax.next_stage(self.studio, self._body_object()))
+            if self.path == "/api/parallax/finish":
+                body = self._body_object(); job = parallax.finish(self.studio, body.get("job_id"), body.get("other_job_id")); return self._json(200, {"job": self.studio.public(job)})
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
-            return self._json(404, {"error":"Not found"})
+            self._drain_refused_body(); return self._json(404, {"error":"Not found"})
         except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc:
             if isinstance(exc, StudioError) and getattr(exc, "code", None): self._json(400, exc.response())

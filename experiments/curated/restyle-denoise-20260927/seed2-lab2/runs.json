@@ -1,0 +1,74 @@
+[
+ {
+  "label": "platform-d75-s2",
+  "prompt_id": "5e206d1b-ba21-4763-a3a8-2299eebbae8b",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:29:04",
+  "wall_s": 86.3,
+  "commit_before_pct": 69.0,
+  "commit_peak_pct": 80.5,
+  "status": "success",
+  "exec_s": 83.3,
+  "outputs": [
+   {
+    "filename": "platform-d75-s2_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\restyle-denoise",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "platform-d85-s2",
+  "prompt_id": "c72f866d-904f-49ad-be57-88d05e3ad85f",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:30:31",
+  "wall_s": 54.6,
+  "commit_before_pct": 63.8,
+  "commit_peak_pct": 80.9,
+  "status": "success",
+  "exec_s": 52.3,
+  "outputs": [
+   {
+    "filename": "platform-d85-s2_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\restyle-denoise",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "carto-d75-s2",
+  "prompt_id": "4cb2e6f3-c76b-4e4f-b8dc-aeea25fe2e8d",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:31:27",
+  "wall_s": 54.2,
+  "commit_before_pct": 62.7,
+  "commit_peak_pct": 78.2,
+  "status": "success",
+  "exec_s": 50.9,
+  "outputs": [
+   {
+    "filename": "carto-d75-s2_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\restyle-denoise",
+    "type": "output"
+   }
+  ]
+ },
+ {
+  "label": "carto-d85-s2",
+  "prompt_id": "a84e184a-9a6f-4e73-ae1c-21bafa163b0c",
+  "url": "http://127.0.0.1:8188",
+  "submitted_at": "2026-09-27 08:32:22",
+  "wall_s": 45.0,
+  "commit_before_pct": 62.3,
+  "commit_peak_pct": 78.4,
+  "status": "success",
+  "exec_s": 44.6,
+  "outputs": [
+   {
+    "filename": "carto-d85-s2_00001_.png",
+    "subfolder": "Research\\lab2-20260927\\restyle-denoise",
+    "type": "output"
+   }
+  ]
+ }
+]

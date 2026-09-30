@@ -76,7 +76,7 @@ class Handler(BaseHTTPRequestHandler):
             if FAIL_WORKSPACE:return self.json({'error':'Fixture workspace unavailable'},503)
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
-            '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/jobs':JOBS,
+            '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/looks':{'looks':[],'seed_errors':[],'generation_submitted':False}, '/api/jobs':JOBS,
             '/api/workspace':{'workspace_id':'1'*32,'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
             '/api/health':{'online':ONLINE,'schema_available':ONLINE,'missing_models':{},'devices':[]},
             '/api/backends':{'active':'primary','busy':False,'operation':None,'profiles':[{'id':'primary','name':'Main library','active':True,'online':ONLINE,'installed':True}]},

@@ -54,6 +54,8 @@ jobs:
         run: python tests/workshop_entry_points.py
       - name: Reachable run decisions across short and narrow viewports
         run: python tests/workshop_run_decisions.py
+      - name: Memory-check refusals in plain words (#308)
+        run: python tests/workshop_failure_words.py
       - name: Dashboard and library renderer regressions
         run: python tests/workshop_daily_journeys.py
       - name: Overview and library journeys on native HTTP
@@ -66,6 +68,8 @@ jobs:
         run: python tests/workshop_application.py --output .runtime/workshop-application
       - name: Studio UX smoke on synthetic fixture data (Problems host, stop tracking, finder, picker)
         run: python tests/studio_browser_smoke.py
+      - name: Recipe switch keeps a way back to your own wording (#1100)
+        run: python tests/workshop_recipe_wording.py
       - name: Prompt Lab handoff placement across presentations
         run: python tests/workshop_transfer_handoff.py --output .runtime/workshop-transfer
       - name: Offline prototype interactions and screenshots

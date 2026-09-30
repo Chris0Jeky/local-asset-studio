@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import sqlite3
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 import zipfile
@@ -205,6 +206,49 @@ class ReviewTests(unittest.TestCase):
         self.assertFalse(self.get()['exists']);self.assertFalse(self.production.reviews.media_lock.locked())
         with self.production.connect() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM comparison_review_files').fetchone()[0],0)
         self.assertTrue(list((self.production.root/self.id/'reviews').rglob('*.png')))
+    def test_open_failure_keeps_the_folder_with_an_incomplete_marker(self):
+        before=time.time()
+        with patch.object(review_desk,'make_preview',side_effect=OSError('simulated disk fault')):
+            with self.assertRaises(OSError):self.open()
+        after=time.time()
+        self.assertFalse(self.get()['exists']);self.assertFalse(self.production.reviews.media_lock.locked())
+        with self.production.connect() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM comparison_review_files').fetchone()[0],0)
+        folders=list((self.production.root/self.id/'reviews').iterdir());self.assertEqual(len(folders),1)
+        self.assertTrue(list(folders[0].rglob('*.png')))
+        marker=json.loads((folders[0]/'INCOMPLETE.json').read_text(encoding='utf-8'))
+        self.assertEqual(marker['version'],1);self.assertEqual(marker['kind'],'incomplete-review-open')
+        self.assertEqual(marker['project_id'],self.id);self.assertEqual(marker['session_id'],folders[0].name)
+        self.assertEqual(marker['step'],'preview');self.assertEqual(marker['alias'],'A')
+        self.assertEqual(marker['error'],{'type': 'OSError', 'message': 'simulated disk fault'})
+        self.assertIs(marker['registered'],False);self.assertIsNone(marker['superseded_by'])
+        self.assertIsInstance(marker['at'],float);self.assertGreaterEqual(marker['at'],before);self.assertLessEqual(marker['at'],after)
+    def test_open_hash_mismatch_marks_the_copy_step(self):
+        with patch.object(review_desk,'checked_bytes',side_effect=ValueError('bytes changed')):
+            with self.assertRaises(ValueError):self.open()
+        folders=list((self.production.root/self.id/'reviews').iterdir());self.assertEqual(len(folders),1)
+        marker=json.loads((folders[0]/'INCOMPLETE.json').read_text(encoding='utf-8'))
+        self.assertEqual(marker['step'],'copy_source');self.assertEqual(marker['alias'],'A')
+        self.assertEqual(marker['error'],{'type': 'ValueError', 'message': 'bytes changed'})
+        self.assertIs(marker['registered'],False);self.assertIsNone(marker['superseded_by'])
+        self.assertEqual(marker['session_id'],folders[0].name)
+    def test_lost_open_race_keeps_its_folder_marked_superseded(self):
+        first=self.open();winner=self.document()['session_id']
+        original=review_desk.ReviewDesk._read;calls=[]
+        def wrapper(db,identifier):
+            if not calls:calls.append(1);return None
+            return original(db,identifier)
+        with patch.object(review_desk.ReviewDesk,'_read',staticmethod(wrapper)):second=self.open()
+        self.assertEqual(second,first)
+        folders=sorted((self.production.root/self.id/'reviews').iterdir());self.assertEqual(len(folders),2)
+        new=next(p for p in folders if p.name!=winner)
+        marker=json.loads((new/'INCOMPLETE.json').read_text(encoding='utf-8'))
+        self.assertEqual(marker['step'],'superseded');self.assertEqual(marker['superseded_by'],winner)
+        self.assertIsNone(marker['error']);self.assertIsNone(marker['alias']);self.assertIs(marker['registered'],False)
+        self.assertEqual(marker['session_id'],new.name)
+        self.assertFalse((self.production.root/self.id/'reviews'/winner/'INCOMPLETE.json').exists())
+    def test_successful_open_writes_no_marker(self):
+        self.open()
+        self.assertEqual(list((self.production.root/self.id/'reviews').rglob('INCOMPLETE.json')),[])
     def test_view_records_exact_integer_crop_and_background(self):
         self.open();state=self.change('view',crop=[2500,1000,7500,9000],background='light')
         self.assertEqual(state['crop'],[2500,1000,7500,9000]);self.assertEqual(state['background'],'light')
@@ -321,6 +365,12 @@ class ReviewTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'decode budget'):decode(buffer.getvalue())
         with self.assertRaisesRegex(ValueError,'could not be decoded'):decode(b'not an image')
         image.close()
+
+    def test_a_pillow_syntax_error_is_the_still_image_refusal(self):
+        # Pillow reports some damaged files as SyntaxError; references.py and upload() already map it.
+        from PIL import Image
+        with patch.object(Image,'open',side_effect=SyntaxError('broken PNG file')):
+            with self.assertRaisesRegex(ValueError,'could not be decoded'):decode(b'damaged png bytes')
 
 
 if __name__=='__main__':unittest.main()

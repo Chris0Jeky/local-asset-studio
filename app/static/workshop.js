@@ -328,7 +328,16 @@
       if (box.top < limit || box.bottom > bottom) w.scrollBy(0, box.top < limit || box.height > bottom - limit ? box.top - limit : box.bottom - bottom);
       if (passes > 1) clearOfDock(field, passes - 1);
     });
-    create.addEventListener('focusout', e => { if (typing(e.target)) dock.classList.remove('wk-typing'); });
+    // A press that takes focus out of a text field ends on the control it started on: the compact dock keeps its size
+    // until the pointer is released, so it cannot grow under the pointer between mousedown and mouseup and eat the click (#1229).
+    let pressing = false, relaxPending = false;
+    const relax = () => { relaxPending = false; const n = d.activeElement; if (!(create.contains(n) && typing(n))) dock.classList.remove('wk-typing'); };
+    const released = () => { pressing = false; if (relaxPending) w.setTimeout(relax, 0); };
+    w.addEventListener('pointerdown', () => { pressing = true; }, true);
+    // A release the window never sees (Alt+Tab mid-press, a native popup taking it) must not leave the dock compact.
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) w.addEventListener(type, released, true);
+    w.addEventListener('blur', e => { if (e.target === w) released(); });
+    create.addEventListener('focusout', e => { if (!typing(e.target)) return; if (pressing) relaxPending = true; else dock.classList.remove('wk-typing'); });
     create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
     const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('aria-label', 'Plan and vary this run');
@@ -340,6 +349,22 @@
     if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
     const saved = q('#createView .saved');
     const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); editor.append(savedDetails);
+    // A started run says when it started and how long it has taken so far (handoff 03). Only started_at is observed,
+    // so there is no progress bar and no guessed finish (K13); the job's own message stays as it is.
+    const clock = seconds => { const s = Math.max(0, Math.floor(seconds)); return s < 60 ? s+' s' : Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; };
+    const tickElapsed = () => {
+      if (create.hidden || d.hidden) return;
+      const list = typeof jobs !== 'undefined' && Array.isArray(jobs) ? jobs : [];
+      for (const card of d.querySelectorAll('#gallery .jobStatus[data-problem]')) {
+        const job = list.find(j => j.id === card.dataset.problem), started = Number(job?.started_at);
+        let line = card.querySelector('.job-elapsed');
+        if (!job || !['waiting','submitting','running'].includes(job.status) || !Number.isFinite(started) || started <= 0) { line?.remove(); continue; }
+        if (!line) { line = el('p', 'job-elapsed'); const message = card.querySelector(':scope > p'); if (message) message.after(line); else card.append(line); }
+        text(line, 'Started '+new Date(started*1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})+' · '+clock(Date.now()/1000 - started)+' so far');
+      }
+    };
+    // Re-rendered cards get their line at once (the observer watches only the card list, not the lines it adds).
+    w.setInterval(tickElapsed, 1000); tickElapsed(); const jobList = q('#gallery'); if (jobList) new w.MutationObserver(tickElapsed).observe(jobList, {childList:true});
     const gallery = q('#createView .gallery-panel');
     const problemsHost = el('div'); problemsHost.id = 'jobProblemsHost';
     const results = disclosure('workshopResults', 'Recent runs', [gallery]); results.classList.add('wk-results');
@@ -564,7 +589,10 @@
     };
     d.addEventListener('studio:recipe', schedule);
     create.addEventListener('input', schedule); create.addEventListener('change', schedule);
-    const observer = new w.MutationObserver(schedule);
+    // The elapsed clock on running cards is presentation, not execution state: its ticks never re-stamp the context.
+    const inClock = n => !!(n.nodeType === 1 ? n : n.parentElement)?.closest?.('.job-elapsed') || !!n.classList?.contains('job-elapsed');
+    const clockOnly = r => inClock(r.target) || r.type === 'childList' && [...r.addedNodes, ...r.removedNodes].every(inClock);
+    const observer = new w.MutationObserver(records => { if (!records.every(clockOnly)) schedule(); });
     for (const id of ['selectedPreset','controls','loraSlots','gallery','uxBlockers','estimateValue','uxDraftStatus']) {
       const node = q('#'+id); if (node) observer.observe(node, {childList:true,subtree:true,characterData:true});
     }

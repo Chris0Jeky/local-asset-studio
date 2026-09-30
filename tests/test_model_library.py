@@ -52,6 +52,33 @@ class ModelLibraryTests(unittest.TestCase):
         response=Reply(self.body[5:]);response.status=206;response.headers={'Content-Range':f'bytes 5-{len(self.body)-1}/{len(self.body)}'}
         with patch.object(models,'urlopen',return_value=response):self.lib.install('demo')
         self.assertEqual(target.read_bytes(),self.body)
+    def link_directory(self, link, target):
+        """A real directory link: a symlink, or a junction where Windows refuses unprivileged symlinks."""
+        import os, subprocess
+        try: os.symlink(target, link, target_is_directory=True); return
+        except OSError:
+            if os.name != 'nt': self.skipTest('directory links are unavailable here')
+        made = subprocess.run(['cmd', '/c', 'mklink', '/J', str(link), str(target)], capture_output=True, text=True)
+        if made.returncode: self.skipTest('neither a symlink nor a junction could be created: ' + made.stdout + made.stderr)
+    def test_one_linked_model_folder_refuses_its_rows_and_keeps_the_rest_of_the_library(self):
+        # #1127: the no-link policy used to abort GET /api/library for every row and folder.
+        outside=self.root/'second-drive/checkpoints';outside.mkdir(parents=True);(outside/'big.safetensors').write_bytes(self.body)
+        (self.root/'comfy/models').mkdir(parents=True);self.link_directory(self.root/'comfy/models/checkpoints',outside)
+        linked={'id':'linked','file':'checkpoints/big.safetensors','bytes':len(self.body),'sha256':self.asset['sha256'],'url':self.asset['url']}
+        (self.root/'models/library.json').write_text(json.dumps({'assets':[self.asset,linked]}))
+        with patch.object(models,'urlopen',return_value=Reply(self.body)):self.lib.install('demo')
+        snapshot=self.lib.snapshot();rows={a['id']:a for a in snapshot['assets']}
+        self.assertTrue(rows['demo']['verified']);self.assertEqual(rows['demo']['verification'],'stat-fresh-sha256-receipt')
+        row=rows['linked']
+        self.assertEqual((row['verification'],row['verified'],row['installable'],row['size_matches']),('linked-path-refused',False,False,False))
+        self.assertTrue(row['present'],'the file exists through the link and ComfyUI follows it');self.assertIn('link',row['install_note'])
+        folders={f['id']:f for f in snapshot['folders']}
+        self.assertIn('outside the model library',folders['checkpoints']['unavailable']);self.assertNotIn('unavailable',folders['loras'])
+        with self.assertRaisesRegex(ValueError,'link'):self.lib.install('linked')
+        self.assertEqual((outside/'big.safetensors').read_bytes(),self.body,'the linked original is preserved')
+        from studio_workflow import setup_context_compatibility as compatibility
+        shape={'asset_id':row['id'],'file':row['file'],'sha256':row['sha256'],'present':row['present'],'verified':row['verified'],'verification':row['verification']}
+        self.assertEqual(compatibility._validate_asset(shape)['verification'],'linked-path-refused')
     def test_paths_space_and_concurrent_installer(self):
         for file in ('../outside.safetensors','loras/../../outside.safetensors','loras/file.exe'):
             with self.assertRaises(ValueError):self.lib.destination(dict(self.asset,file=file))

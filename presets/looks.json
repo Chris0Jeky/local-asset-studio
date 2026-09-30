@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "updated": "2026-09-27",
+  "note": "Looks shipped with the Studio (#1221). Each is copied into the Workspace once, by id. An updated look lists in `supersedes` the digests (workspace.AssetWorkspace.card_digest: name, body and lineage) of the versions it replaces: a Workspace copy whose content still matches one was never edited and takes the new version as a revision, put-away state kept. A copy the owner edited keeps the owner's version; the shipped wording stays here to copy from. A look is wording plus its recipe; the owner types only the scene and may switch on its optional lines. Picking one prepares Create and never generates.",
+  "looks": [
+    {
+      "id": "look-night-shift-retro-anime",
+      "kind": "look",
+      "name": "Night Shift (retro anime)",
+      "supersedes": ["a0f3bf6b6dbcb3502da9bee83e20d59ccb3e20e252c5511bafcaac37cbb25fbc"],
+      "body": {
+        "preset_id": "zimage-fast",
+        "template": "No people. Hand-painted anime film background of {scene}. {quiet_wall} Faint rose and cyan reflections on the wet surfaces, muted graphite palette with small amber accents. Nobody in the picture. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+        "options": [
+          {
+            "id": "quiet_wall",
+            "label": "Keep the quiet wall for UI backgrounds",
+            "text": "The left half and centre of the frame is a plain dark graphite wall, softly lit, almost empty and low in detail.",
+            "default": false
+          }
+        ],
+        "negative": "",
+        "controls": {"seed": 2026092752, "width": 1344, "height": 768},
+        "scene_example": "a narrow late-night apartment corridor; at the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line, with a small wooden bench, a warm amber wall lamp and the soft cyan glow of a vending machine",
+        "source_prompt": "An empty room, no people. Hand-painted anime film background of a narrow late-night animation workshop loft above a rain-washed city. The left half and centre of the frame is a plain dark graphite plaster wall, softly lit, almost empty and low in detail. At the right edge a tall rain-streaked window shows the city at night and a distant elevated train crossing on a rail line; below it a small wooden desk with stacked blank drawing sheets, a warm amber desk lamp and a small glowing CRT monitor making a soft pool of cyan light. Faint rose and cyan reflections on the wet glass, muted graphite palette with small amber accents. An empty room with nobody in it. Fixed eye-level camera, calm and quiet, hand-painted cel anime film background art. No text, no signs, no logos, no characters, no people, no figures.",
+        "notes": "From the accepted anchor's recipe (source_prompt, verbatim). The palette, wet reflections, style, camera and exclusion sentences are kept word for word; the place and its props are the scene, and the scene decides the layout. Loosened 27 September 2026 at the owner's request, after a live render in which 'a rain-soaked arcade entrance' came out as a shutter: the quiet-wall composition sentence left the always-on wording for the optional line 'Keep the quiet wall for UI backgrounds', off by default. With it on, the wording is exactly the template #1224 shipped; then keep the scene's detail at the right edge so the left half stays quiet for text. Z-Image Turbo takes no negative prompt, so the exclusions are in the wording. The loosened wording has not been rendered yet: run 2-4 seeds and judge whether the scene now shapes the picture."
+      },
+      "lineage": [
+        {
+          "role": "anchor",
+          "key": "retro-anime-master-z2",
+          "sha256": "c22b723c65198b896ff9e542b05745742a447b62e91a7e5cfb8c0f593df7dfa9",
+          "job_id": "c69e6e18-4739-458d-b546-1dd6e8174e19",
+          "prompt_id": "adfc94c4-0de0-44af-ae72-72b3133742f0",
+          "preset_id": "zimage-fast",
+          "seed": 2026092752,
+          "accepted": "owner, HUMAN_TODO.md asset-plan-2026-09-27 (b), 27 September 2026",
+          "evidence": "experiments/curated/asset-kit-20260927/receipts/zimage-studio-plan.json"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/background-lab-20260927/README.md (PR #1222), strand (c): corridor 95fae07b keep, rooftop a0e1e212 fixable; agent-judged only"
+        },
+        {
+          "role": "evidence",
+          "decision": "owner, 27 September 2026 (Refs #1221)",
+          "evidence": "Owner asked to loosen the look after a live render where 'a rain-soaked arcade entrance' came out as a shutter. The quiet-wall sentence became an optional line, off by default; the template before this change is tests/fixtures/looks-v1-2026-09-27.json (card digest in supersedes)."
+        }
+      ]
+    }
+  ]
+}
