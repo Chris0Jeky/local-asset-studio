@@ -1961,7 +1961,15 @@ class Studio:
         return result
 
     def _record_history_failure(self, job, submission, message):
-        submission["status"] = "failed"; job["status"] = "failed"; job["message"] = message
+        submission["status"] = "failed"
+        # Same rule as pre-submit refusals and ComfyUI 400 rejections: earlier
+        # completed members make the job partial, not failed. The failing
+        # submission already reads "failed", so any "completed" receipt is an
+        # earlier member; engine detail (job["failure"]) and finished outputs
+        # are left untouched.
+        submissions = job.get("submissions")
+        completed = any(isinstance(s, dict) and s.get("status") == "completed" for s in submissions) if isinstance(submissions, list) else False
+        job["status"] = "partial" if completed else "failed"; job["message"] = message
         self._stamp_finished(job); self._save(job)
 
     def _stamp_finished(self, job):

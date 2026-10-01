@@ -1057,6 +1057,24 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(len([x for x in s.requests if x[0][0]=="/prompt"]),1)
         self.assertEqual(self.studio().jobs[job["id"]]["status"],"partial")
 
+    def test_history_error_after_completed_members_is_partial(self):
+        # A history execution error after completed members is partial (same rule as pre-submit/400); with no completions it stays failed.
+        image={'filename':'kept.png','subfolder':'Studio','type':'output'}
+        ok=lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{'9':{'images':[image]}}}}
+        err=lambda pid:{pid:{'status':{'status_str':'error'},'messages':[['execution_error',{'node_type':'KSampler','exception_message':'boom'}]]}}
+        replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'one'},ok('one'),{'prompt_id':'two'},ok('two'),{'prompt_id':'three'},err('three')]
+        s=FakeStudio(self.root,replies); created=s.create_job({'preset_id':'demo','controls':{},'batch_count':3}); job=s.jobs[created['id']]
+        with self.assertRaises(server.StudioError): s._run(job)
+        self.assertEqual(job['status'],'partial'); self.assertEqual(job['prompt_ids'],['one','two','three'])
+        self.assertEqual([x.get('status') for x in job['submissions']],['completed','completed','failed'])
+        self.assertIn('failure',job); self.assertTrue(job['outputs'])
+        self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),3)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'solo'},err('solo')])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}})['id']]
+        with self.assertRaises(server.StudioError): s._run(job)
+        self.assertEqual(job['status'],'failed'); self.assertEqual(job['prompt_ids'],['solo'])
+        self.assertEqual(job['submissions'][0]['status'],'failed')
+
     def test_health_identifies_offline_and_missing_node_class(self):
         offline=FakeStudio(self.root,[URLError("offline")]).health()
         self.assertEqual(offline["app"],"local-asset-studio"); self.assertFalse(offline["online"])
