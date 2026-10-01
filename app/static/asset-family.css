@@ -1,0 +1,12 @@
+/* Bounded family strips share the existing Studio palette and preserve focus at narrow widths. */
+.asset-family{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line,#334155);min-width:0}
+.asset-family h3{margin:0 0 .6rem}.asset-family-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+.asset-family-actions button{flex:1 1 10rem;white-space:normal;min-height:2.75rem}
+.asset-family-strip{list-style:none;display:flex;flex-direction:column;gap:.45rem;margin:.7rem 0;padding:0;max-height:24rem;overflow:auto;overscroll-behavior:contain}
+.asset-family-strip li{min-width:0}.asset-family-strip button,.asset-family-gap{display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.asset-family-strip b,.asset-family-strip small{display:block}.asset-family-strip small{margin-top:.2rem;font-weight:400}
+.asset-family-strip [aria-current="step"]{border-width:2px}.asset-family-gap{padding:.5rem;border:1px dashed currentColor}
+.asset-family-result{padding:.5rem}.asset-family-result summary{cursor:pointer}.asset-family-result .asset-family-strip{max-height:16rem}
+#assetFamilyChildren button{max-width:100%;white-space:normal;margin:.3rem;overflow-wrap:anywhere}
+@media(max-width:600px){.asset-family-actions{display:grid;grid-template-columns:minmax(0,1fr)}.asset-family-strip{max-height:18rem}}
+@media(prefers-reduced-motion:reduce){.asset-family *{scroll-behavior:auto}}

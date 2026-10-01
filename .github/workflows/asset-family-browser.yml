@@ -1,0 +1,54 @@
+name: Asset family browser journey
+on:
+  pull_request:
+    paths:
+      - 'app/static/asset-family*'
+      - 'app/static/index.html'
+      - 'app/static/app.js'
+      - 'app/static/workspace.js'
+      - 'app/static/studio-workbench.js'
+      - 'app/static/studio-core.js'
+      - 'app/static/references.js'
+      - 'app/static/backends.js'
+      - 'studio_workflow/asset_family*.py'
+      - 'studio_workflow/asset_read_http.py'
+      - 'tests/test_asset_family*'
+      - 'tests/asset_family_browser.py'
+      - '.github/workflows/asset-family-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asset-family-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Pure recall and public draft-owner contracts
+        run: python -m unittest discover -s tests -p test_asset_family_frontend.py -v
+      - name: Native family navigation and one-output recall
+        run: python tests/asset_family_browser.py --out .runtime/asset-family
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: asset-family-${{ matrix.os }}
+          path: .runtime/asset-family
+          retention-days: 7
