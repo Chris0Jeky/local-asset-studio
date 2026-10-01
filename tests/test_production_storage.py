@@ -167,7 +167,7 @@ class ProductionStorageTests(unittest.TestCase):
     def test_directory_collision_preserves_other_attempt(self):
         identifier='b'*32;directory=self.lab.root/identifier;directory.mkdir();(directory/'keep').write_bytes(b'original')
         with patch('production.uuid.uuid4',return_value=SimpleNamespace(hex=identifier)):
-            with self.assertRaises(FileExistsError):self.create()
+            with self.assertRaisesRegex(ValueError, 'already exists'):self.create()
         self.assertEqual((directory/'keep').read_bytes(),b'original');self.assertEqual(self.counts(),(0,0));self.inert()
 
     def test_duplicate_deterministic_import_preserves_plan_and_shared_budget(self):

@@ -69,11 +69,14 @@ def materialize(root, identifier, plan, write_json):
     if len(json.dumps(plan, indent=2).encode()) > PLAN_LIMIT:
         raise ValueError('Project plan exceeds the 16 MiB publication limit')
     path = directory(root, identifier)
-    path.mkdir()  # A collision belongs to another attempt; never overwrite it.
-    with (path / MARKER).open('x', encoding='utf-8') as marker:
-        json.dump({'project_id': identifier, 'plan_sha256': plan['sha256'],
-                   'note': 'Inspect SQLite and plan.json before recovery. No automatic retry.'}, marker)
-        marker.flush();os.fsync(marker.fileno())
+    try:
+        path.mkdir()  # A collision belongs to another attempt; never overwrite it.
+        with (path / MARKER).open('x', encoding='utf-8') as marker:
+            json.dump({'project_id': identifier, 'plan_sha256': plan['sha256'],
+                       'note': 'Inspect SQLite and plan.json before recovery. No automatic retry.'}, marker)
+            marker.flush();os.fsync(marker.fileno())
+    except FileExistsError as exc:
+        raise ValueError('Project directory already exists; inspect retained project files before explicitly starting or resuming; jobs and reservations are preserved.') from exc
     write_json(path / 'plan.json', plan)
     # The shared writer provides atomic replacement. Flush/readback precede DB visibility.
     target = path / 'plan.json'
