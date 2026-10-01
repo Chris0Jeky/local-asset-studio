@@ -192,6 +192,7 @@ class AssetWorkspace:
                     dst.write(chunk)
                     digest.update(chunk)
                     size += len(chunk)
+                dst.flush(); os.fsync(dst.fileno())
             if not size:
                 raise WorkspaceError("The output file is empty")
             hexdigest = digest.hexdigest()
@@ -206,6 +207,11 @@ class AssetWorkspace:
                 # competing name is checked, not overwritten by a rename fallback.
                 try: os.link(temporary, destination)
                 except FileExistsError: self._verify_snapshot(destination, hexdigest)
+                else:
+                    if os.name != 'nt':
+                        fd = os.open(self.media, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+                        try: os.fsync(fd)
+                        finally: os.close(fd)
             return str(destination.relative_to(self.root)), hexdigest, size
         finally:
             temporary.unlink(missing_ok=True)
