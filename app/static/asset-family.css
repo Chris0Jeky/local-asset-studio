@@ -10,3 +10,7 @@
 #assetFamilyChildren button{max-width:100%;white-space:normal;margin:.3rem;overflow-wrap:anywhere}
 @media(max-width:600px){.asset-family-actions{display:grid;grid-template-columns:minmax(0,1fr)}.asset-family-strip{max-height:18rem}}
 @media(prefers-reduced-motion:reduce){.asset-family *{scroll-behavior:auto}}
+/* Percentages follow the zoomed containing block; vw would double the dialog at 200% CSS zoom. */
+.studio-shell #assetDialog{width:min(1150px,calc(100% - 20px));max-width:calc(100% - 20px)}
+#assetDialog .asset-detail-layout{grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr))}
+.asset-family-actions button{min-width:0;overflow-wrap:anywhere}

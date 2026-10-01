@@ -146,6 +146,9 @@ def exercise(out, browser_executable=None):
                         page.evaluate('document.documentElement.style.zoom="2"')
                         page.locator('#assetFamily').scroll_into_view_if_needed()
                         assert page.locator('#assetFamily').evaluate('(el)=>el.scrollWidth<=el.clientWidth+2')
+                        bounds = page.locator('#assetDialog,#assetFamily,#assetFamily button').evaluate_all(
+                            '(els)=>els.map(el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,viewport:innerWidth}})')
+                        assert all(r['left'] >= -1 and r['right'] <= r['viewport']+1 for r in bounds), bounds
                         page.screenshot(path=str(out/('family-'+str(width)+'.png')), full_page=True)
                         checks.append({'width': width, 'four_steps': True, 'navigation': True, 'recall': True, 'new_seed': True, 'draft_retained': True, 'stale_refused': True, 'source_picker_no_copy': True, 'keyboard_focus': True, 'zoom': 2})
                     except Exception as error:
