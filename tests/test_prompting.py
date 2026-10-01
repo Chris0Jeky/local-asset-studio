@@ -51,4 +51,9 @@ class PromptingTests(unittest.TestCase):
         cards = self.root / "presets/wildcards"; (cards / "loop.txt").write_text("__loop__\n", encoding="utf-8")
         self.assertEqual(prompting.expand("__loop__", random.Random("1:0"), self.root), "__loop__")
 
+    def test_expand_rejects_over_limit(self):
+        text = "x" * 9000 + "{" + "y" * 9000 + "|" + "z" * 9000 + "}"
+        with self.assertRaisesRegex(ValueError, "expand past 16000"):
+            prompting.expand(text, random.Random(0), self.root)
+
 if __name__ == "__main__": unittest.main()
