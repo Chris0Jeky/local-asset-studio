@@ -1,0 +1,42 @@
+name: Asset family read contracts
+on:
+  pull_request:
+    paths:
+      - 'studio_workflow/asset_family*.py'
+      - 'studio_workflow/asset_read*.py'
+      - 'studio_workflow/client.py'
+      - 'app/workspace.py'
+      - 'app/server.py'
+      - 'tests/test_asset_family*.py'
+      - 'tests/test_asset_read*.py'
+      - '.github/workflows/asset-family.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asset-family-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Family, real HTTP and read-only CLI contracts
+        run: python -m unittest discover -s tests -p 'test_asset_family*.py' -v
+      - name: Existing bounded asset-read contracts
+        run: python -m unittest discover -s tests -p 'test_asset_read*.py' -v
