@@ -7,9 +7,12 @@ from urllib.parse import parse_qsl, urlsplit
 from .asset_reads import AssetReadError, DEFAULT_FILTERS, require
 from .core import decode
 from .http_body import reject_json
+from . import asset_family
 
 PAGE = '/api/assets/page'
 SELECTION = '/api/assets/selection'
+FAMILY = '/api/assets/family/'
+RECALL = '/api/assets/recall/'
 MAX_QUERY = 4096
 MAX_BODY = 32768
 BODY_TIMEOUT = 5
@@ -45,6 +48,28 @@ def page_query(raw):
     return dict(query, filters=filters)
 
 
+def family_query(raw):
+    require(len(raw) <= MAX_QUERY, 'Asset query exceeds its bound')
+    parsed = urlsplit(raw)
+    require(not parsed.scheme and not parsed.netloc and not parsed.fragment,
+            'Relative family route required')
+    prefix = FAMILY if parsed.path.startswith(FAMILY) else RECALL
+    require(parsed.path.startswith(prefix), 'Unknown asset family route')
+    identifier = parsed.path[len(prefix):]
+    require(re.fullmatch(r'[A-Za-z0-9_-]{1,128}', identifier) is not None, 'Invalid asset identity')
+    require(re.search(r'%(?![0-9a-fA-F]{2})', parsed.query) is None, 'Malformed query escape')
+    pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
+                      encoding='utf-8', errors='strict', max_num_fields=2)
+    query = dict(pairs)
+    require(len(query) == len(pairs) and 'workspace_id' in query and
+            set(query) <= ({'workspace_id', 'children'} if prefix == FAMILY else {'workspace_id'}),
+            'Supply one Workspace identity and only supported family fields')
+    if 'children' in query:
+        require(query['children'] in ('true', 'false'), 'Children must be true or false')
+        query['children'] = query['children'] == 'true'
+    return prefix, identifier, query
+
+
 def _body(handler):
     # read1 returns after one underlying read, allowing an absolute deadline
     # rather than extending an idle timeout indefinitely for a slow sender.
@@ -73,7 +98,7 @@ def _body(handler):
 def extend_handler(base):
     class AssetReadHandler(base):
         def _asset_read_route(self):
-            return self.path.split('?', 1)[0] in (PAGE, SELECTION)
+            return self.path.split('?', 1)[0] in (PAGE, SELECTION) or self.path.startswith((FAMILY, RECALL))
 
         def _asset_read_reply(self, action):
             try:
@@ -91,6 +116,12 @@ def extend_handler(base):
         def do_GET(self):
             if not self._asset_read_route(): return super().do_GET()
             if not self._safe_host(): return self._json(403, _error(ValueError('Loopback Host required')))
+            if self.path.startswith((FAMILY, RECALL)):
+                def observe():
+                    prefix, identifier, query = family_query(self.path)
+                    action = asset_family.observe if prefix == FAMILY else asset_family.recall
+                    return action(self.studio, identifier, **query)
+                return self._asset_read_reply(observe)
             if self.path.split('?', 1)[0] != PAGE:
                 return self._json(405, _error(ValueError('Selection inspection requires POST')))
             return self._asset_read_reply(lambda: self.studio.assets.asset_page(**page_query(self.path)))
