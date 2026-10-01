@@ -93,61 +93,75 @@ def exercise(out, browser_executable=None):
                     page = context.new_page(); page.set_default_timeout(10000)
                     page.on('pageerror', lambda e: errors.append(str(e)))
                     page.on('dialog', lambda dialog: dialog.accept())
-                    page.goto(origin+'/#assets', wait_until='domcontentloaded')
-                    page.wait_for_function('window.StudioSetupDraft&&backendActive==="primary"&&catalog?.presets?.some(p=>p.id==="anima-portrait")')
-                    page.locator('[data-asset-open="'+ids[-1]+'"]').click()
-                    page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===4')
-                    assert page.locator('#assetFamily [data-family-step]').evaluate_all('(els)=>els.map(e=>e.dataset.familyStep)') == ids
-                    page.locator('#assetFamily [data-family-open="'+ids[1]+'"]').click()
-                    page.wait_for_function('(id)=>activeAsset.id===id', arg=ids[1])
-                    page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===2')
-                    page.locator('[data-family-children]').click()
-                    page.locator('#assetFamilyChildren [data-family-open="'+ids[2]+'"]').wait_for()
-                    page.locator('#assetFamilyChildren [data-family-open="'+ids[2]+'"]').click()
-                    page.wait_for_function('(id)=>activeAsset.id===id', arg=ids[2])
-                    # Unsaved metadata must survive recall; no hidden discard or mutation.
-                    page.locator('#assetNotes').fill('Keep this unsaved review')
-                    page.locator('[data-family-recall="new"]').click()
-                    page.wait_for_function('document.querySelector("#assetFamilyStatus").textContent.includes("Finish the current edit")')
-                    assert page.locator('#assetNotes').input_value() == 'Keep this unsaved review'
-                    page.locator('#assetNotes').fill('')
-                    page.locator('[data-family-recall="words"]').click()
-                    page.wait_for_function('!document.querySelector("#assetDialog").open')
-                    assert page.locator('#positive').input_value() == 'A forest at dusk'
-                    assert page.locator('[data-key="seed"]').input_value() == '12'
-                    assert page.evaluate('document.activeElement.id') == 'positive'
-                    assert page.locator('#batch').input_value() == '1'
-                    page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
-                    page.locator('[data-family-recall="new"]').click()
-                    page.wait_for_function('!document.querySelector("#assetDialog").open')
-                    assert page.locator('[data-key="seed"]').input_value() != '12'
-                    # One delayed check must not overwrite newer typing.
-                    page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
-                    controls['hold'] = True; controls['entered'].clear(); controls['release'].clear()
-                    page.locator('[data-family-recall="words"]').click()
-                    assert controls['entered'].wait(5)
-                    page.evaluate('document.querySelector("#positive").value="Newer human words";document.querySelector("#positive").dispatchEvent(new Event("input",{bubbles:true}))')
-                    controls['release'].set(); controls['hold'] = False
-                    page.wait_for_function('document.querySelector("#assetFamilyStatus").textContent.includes("changed")')
-                    assert page.locator('#positive').input_value() == 'Newer human words'
-                    # The reference action opens the existing picker and focuses this exact asset,
-                    # without selecting a recipe or copying source bytes on the user's behalf.
-                    page.locator('#closeAssetDialog').click()
-                    page.evaluate('(id)=>{selectPreset("gentle-variation");showView("assets");openAsset(id)}', ids[-1])
-                    page.locator('[data-family-reference]').click()
-                    page.wait_for_function('document.querySelector("#uxSourcePicker").open&&!document.querySelector("#uxSourceSearch").disabled')
-                    page.wait_for_function('(id)=>document.activeElement?.dataset.uxPull===id', arg=ids[-1])
-                    assert page.locator('#uxSourceSearch').input_value() == studio.assets.get(ids[-1])['title']
-                    page.locator('[data-ux-close="uxSourcePicker"]').click()
-                    page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
-                    page.locator('[data-family-recall="words"]').focus()
-                    assert page.evaluate('document.activeElement.dataset.familyRecall') == 'words'
-                    page.evaluate('document.documentElement.style.zoom="2"')
-                    page.locator('#assetFamily').scroll_into_view_if_needed()
-                    assert page.locator('#assetFamily').evaluate('(el)=>el.scrollWidth<=el.clientWidth+2')
-                    page.screenshot(path=str(out/('family-'+str(width)+'.png')), full_page=True)
-                    checks.append({'width': width, 'four_steps': True, 'navigation': True, 'recall': True, 'new_seed': True, 'draft_retained': True, 'stale_refused': True, 'source_picker_no_copy': True, 'keyboard_focus': True, 'zoom': 2})
-                    context.close()
+                    try:
+                        page.goto(origin+'/#assets', wait_until='domcontentloaded')
+                        page.wait_for_function('window.StudioSetupDraft&&backendActive==="primary"&&catalog?.presets?.some(p=>p.id==="anima-portrait")')
+                        page.locator('#assetGrid .asset-open[data-asset-open="'+ids[-1]+'"]').click()
+                        page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===4')
+                        assert page.locator('#assetFamily [data-family-step]').evaluate_all('(els)=>els.map(e=>e.dataset.familyStep)') == ids
+                        page.locator('#assetFamily [data-family-open="'+ids[1]+'"]').click()
+                        page.wait_for_function('(id)=>activeAsset.id===id', arg=ids[1])
+                        page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===2')
+                        page.locator('[data-family-children]').click()
+                        page.locator('#assetFamilyChildren [data-family-open="'+ids[2]+'"]').wait_for()
+                        page.locator('#assetFamilyChildren [data-family-open="'+ids[2]+'"]').click()
+                        page.wait_for_function('(id)=>activeAsset.id===id', arg=ids[2])
+                        # Unsaved metadata must survive recall; no hidden discard or mutation.
+                        page.locator('#assetNotes').fill('Keep this unsaved review')
+                        page.locator('[data-family-recall="new"]').click()
+                        page.wait_for_function('document.querySelector("#assetFamilyStatus").textContent.includes("Finish the current edit")')
+                        assert page.locator('#assetNotes').input_value() == 'Keep this unsaved review'
+                        page.locator('#assetNotes').fill('')
+                        page.locator('[data-family-recall="words"]').click()
+                        page.wait_for_function('!document.querySelector("#assetDialog").open')
+                        assert page.locator('#positive').input_value() == 'A forest at dusk'
+                        assert page.locator('[data-key="seed"]').input_value() == '12'
+                        assert page.evaluate('document.activeElement.id') == 'positive'
+                        assert page.locator('#batch').input_value() == '1'
+                        page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
+                        page.locator('[data-family-recall="new"]').click()
+                        page.wait_for_function('!document.querySelector("#assetDialog").open')
+                        assert page.locator('[data-key="seed"]').input_value() != '12'
+                        # One delayed check must not overwrite newer typing.
+                        page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
+                        controls['hold'] = True; controls['entered'].clear(); controls['release'].clear()
+                        page.locator('[data-family-recall="words"]').click()
+                        assert controls['entered'].wait(5)
+                        page.evaluate('document.querySelector("#positive").value="Newer human words";document.querySelector("#positive").dispatchEvent(new Event("input",{bubbles:true}))')
+                        controls['release'].set(); controls['hold'] = False
+                        page.wait_for_function('document.querySelector("#assetFamilyStatus").textContent.includes("changed")')
+                        assert page.locator('#positive').input_value() == 'Newer human words'
+                        # The reference action opens the existing picker and focuses this exact asset,
+                        # without selecting a recipe or copying source bytes on the user's behalf.
+                        page.locator('#closeAssetDialog').click()
+                        page.evaluate('(id)=>{selectPreset("gentle-variation");showView("assets");openAsset(id)}', ids[-1])
+                        page.locator('[data-family-reference]').click()
+                        page.wait_for_function('document.querySelector("#uxSourcePicker").open&&!document.querySelector("#uxSourceSearch").disabled')
+                        page.wait_for_function('(id)=>document.activeElement?.dataset.uxPull===id', arg=ids[-1])
+                        assert page.locator('#uxSourceSearch').input_value() == studio.assets.get(ids[-1])['title']
+                        page.locator('[data-ux-close="uxSourcePicker"]').click()
+                        page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
+                        page.locator('[data-family-recall="words"]').focus()
+                        assert page.evaluate('document.activeElement.dataset.familyRecall') == 'words'
+                        page.evaluate('document.documentElement.style.zoom="2"')
+                        page.locator('#assetFamily').scroll_into_view_if_needed()
+                        assert page.locator('#assetFamily').evaluate('(el)=>el.scrollWidth<=el.clientWidth+2')
+                        page.screenshot(path=str(out/('family-'+str(width)+'.png')), full_page=True)
+                        checks.append({'width': width, 'four_steps': True, 'navigation': True, 'recall': True, 'new_seed': True, 'draft_retained': True, 'stale_refused': True, 'source_picker_no_copy': True, 'keyboard_focus': True, 'zoom': 2})
+                    except Exception as error:
+                        evidence = {'status': 'failed', 'width': width, 'error': str(error)[:4000],
+                                    'page_errors': errors[:30], 'post_routes': sorted(set(posts)),
+                                    'completed_checks': checks}
+                        try:
+                            evidence['visible_status'] = page.locator('#assetFamilyStatus').all_text_contents()
+                            evidence['console_status'] = page.locator('#status').all_text_contents()
+                            page.screenshot(path=str(out/('failure-'+str(width)+'.png')), full_page=True, timeout=5000)
+                        except Exception as capture_error:
+                            evidence['capture_error'] = str(capture_error)[:500]
+                        (out/'failure.json').write_text(json.dumps(evidence, indent=2)+'\n', encoding='utf-8')
+                        raise
+                    finally:
+                        context.close()
                 browser.close()
         finally:
             controls['release'].set(); http.shutdown(); http.server_close(); thread.join(5)
