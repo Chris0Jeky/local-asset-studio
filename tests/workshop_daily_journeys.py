@@ -436,7 +436,7 @@ window.pending=[];function api(){return new Promise((resolve,reject)=>pending.pu
 
     def load_outcome(self):
         self.page.goto('about:blank')
-        self.page.set_content("""<p id="status" role="status"></p><button id="generate">Generate</button>
+        self.page.set_content("""<section id="createView"><section class="editor"></section><div class="wk-run-dock"><p id="status" role="status"></p><button id="generate">Generate</button></div></section>
 <details id="workshopResults"><summary>Recent runs</summary><div id="gallery"><article class="imageCard" data-output="done-1:0"><img alt=""><div class="card-actions"><button class="pin">Compare</button></div></article></div></details>
 <div id="jobProblemsHost"><details id="jobProblems"><summary>Problems</summary><article class="jobStatus failed" data-problem="bad-1"><b>Krea · failed</b><button class="recipe">Recipe</button></article></details></div>
 <script>let jobs=[];window.said=[];function message(text,error=false){said.push([text,error]);document.querySelector('#status').textContent=text;}
@@ -448,12 +448,14 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
     def test_a_finished_run_says_what_happened_and_shows_its_result(self):
         self.load_outcome()
         self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 72, 'outputs': [{}, {}], 'batch_count': 2})
-        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 72 s · 2 outputs. Review it while it is fresh.')
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Done in 72 s · 2 outputs. Review it while it is fresh.')
         self.page.click('[data-run-outcome="show"]')
         self.assertTrue(self.page.evaluate("document.querySelector('#workshopResults').open"))
         self.assertEqual(self.page.evaluate('document.activeElement.className'), 'pin', 'focus lands on the result so K/W/X can review it')
         self.page.click('#generate')
-        self.assertTrue(self.page.locator('#runOutcome').is_hidden(), 'a new Generate clears the old summary')
+        self.assertTrue(self.page.locator('#runOutcome').is_visible(), 'a new Generate preserves the settled summary')
+        self.page.click('[data-run-outcome="dismiss"]')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden())
 
     def test_a_run_that_came_close_to_the_commit_limit_says_so_and_a_roomy_one_stays_silent(self):
         self.load_outcome()
@@ -461,31 +463,36 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         windows = [{'min_available_bytes': 30 * gib, 'peak_committed_bytes': 66 * gib, 'limit_bytes': 96 * gib},
                    {'min_available_bytes': int(12.1 * gib), 'peak_committed_bytes': int(83.9 * gib), 'limit_bytes': 96 * gib}]
         self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': windows})
-        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh. Memory was tight: Windows commit headroom fell to 12.1 GiB (87 % used); close memory-heavy programs before the next large job.')
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh. Memory was tight: Windows commit headroom fell to 12.1 GiB (87 % used); close memory-heavy programs before the next large job.')
+        self.page.click('[data-run-outcome="dismiss"]')
         self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': windows[:1]})
-        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.')
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.')
+        self.page.click('[data-run-outcome="dismiss"]')
         self.settle({'id': 'done-1', 'status': 'completed', 'elapsed_seconds': 60, 'outputs': [{}], 'host_commit_windows': [{'min_available_bytes': None}]})
-        self.assertEqual(self.page.locator('#status').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.', 'an unknown reading is never read as zero headroom')
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Done in 60 s · 1 output. Review it while it is fresh.', 'an unknown reading is never read as zero headroom')
 
     def test_a_failed_or_uncertain_run_points_at_its_problem_and_never_offers_a_rerun(self):
         self.load_outcome()
         self.settle({'id': 'bad-1', 'status': 'failed', 'failure': {'title': 'Memory allocation failed'}, 'message': 'Generation failed: bad allocation. More detail.'})
-        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Failed: Memory allocation failed', True])
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Failed: Memory allocation failed')
+        self.assertIn('error', self.page.locator('.run-outcome-summary').get_attribute('class'))
         self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
         self.page.click('[data-run-outcome="show"]')
         self.assertTrue(self.page.evaluate("document.querySelector('#jobProblems').open"))
         self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'bad-1', 'focus lands on the record, reason first, not on an action')
+        self.page.click('[data-run-outcome="dismiss"]')
         self.settle({'id': 'lost', 'status': 'uncertain', 'message': 'Submission outcome is uncertain.'})
         # The exact sentence: it must promise no re-run and invite none.
-        self.assertEqual(self.page.locator('#status').inner_text(), 'Outcome unknown. It will not be run again; inspect it before starting new work.')
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Outcome unknown. It will not be run again; inspect it before starting new work.')
         self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#runOutcome button')].map(b=>b.textContent)"), ['Inspect →', 'Dismiss'])
         self.page.click('[data-run-outcome="show"]')
         self.assertIn('not shown here yet', self.page.evaluate('said.at(-1)[0]'))
+        self.page.click('[data-run-outcome="dismiss"]')
         self.settle({'id': 'half', 'status': 'partial', 'outputs': [{}], 'batch_count': 3})
-        self.assertEqual(self.page.locator('#status').inner_text(), 'Partly done: 1 output saved. The rest will not be run again automatically.')
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Partly done: 1 output saved. The rest will not be run again automatically.')
         self.page.click('[data-run-outcome="dismiss"]')
         self.assertTrue(self.page.locator('#runOutcome').is_hidden())
-        self.assertEqual(self.page.locator('#status').inner_text(), '')
+        self.assertIn('not shown here yet', self.page.locator('#status').inner_text(), 'dismiss preserves the reveal diagnostic')
         self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
         self.page.evaluate("message('A newer, unrelated message')")
         self.page.click('[data-run-outcome="dismiss"]')
@@ -494,7 +501,8 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
     def test_a_run_that_never_started_says_nothing_was_submitted(self):
         self.load_outcome()
         self.settle({'id': 'ns', 'status': 'not_submitted', 'message': 'ComfyUI queue unavailable. Nothing was submitted. No retry was queued.'})
-        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: ComfyUI queue unavailable. Nothing was submitted.', True])
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Not started: ComfyUI queue unavailable. Nothing was submitted.')
+        self.assertIn('error', self.page.locator('.run-outcome-summary').get_attribute('class'))
         self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See why →')
         # #1120: a never-submitted run is a Recent runs card, not a Problems entry; See why reveals that card and leaves Problems shut.
         self.page.evaluate("""document.querySelector('#gallery').insertAdjacentHTML('afterbegin','<article class="jobStatus not_submitted" data-problem="ns"><b>Krea · not_submitted</b><button class="recipe">Recipe</button></article>')""")
@@ -507,16 +515,75 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         # #1138: the owner's own cancel is not an error; kept outputs lead to the run, and nothing invites a re-run.
         self.load_outcome()
         self.settle({'id': 'done-1', 'status': 'cancelled', 'outputs': [{}], 'batch_count': 3, 'message': 'Cancelled by you between outputs.'})
-        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Cancelled: 1 finished output kept. Nothing was retried.', False])
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Cancelled: 1 finished output kept. Nothing was retried.')
+        self.assertNotIn('error', self.page.locator('.run-outcome-summary').get_attribute('class'))
         self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#runOutcome button')].map(b=>b.textContent)"), ['Show result →', 'Dismiss'])
         self.page.click('[data-run-outcome="show"]')
         self.assertEqual(self.page.evaluate('document.activeElement.className'), 'pin', 'kept outputs are the result, not the record (#1160 review)')
         self.assertFalse(self.page.evaluate("document.querySelector('#jobProblems').open"))
+        self.page.click('[data-run-outcome="dismiss"]')
         self.settle({'id': 'bad-1', 'status': 'cancelled', 'outputs': [], 'message': 'Not started: cancelled by you. Nothing was sent to ComfyUI.'})
-        self.assertEqual(self.page.evaluate('said.at(-1)'), ['Not started: cancelled by you. Nothing was sent to ComfyUI.', False])
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Not started: cancelled by you. Nothing was sent to ComfyUI.')
         self.assertEqual(self.page.locator('[data-run-outcome="show"]').inner_text(), 'See the record →')
         self.page.click('[data-run-outcome="show"]')
         self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'bad-1')
+
+    def test_settled_notices_queue_without_losing_focus_or_their_text(self):
+        self.load_outcome()
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
+        self.page.focus('[data-run-outcome="show"]')
+        self.page.evaluate("""() => {
+          document.dispatchEvent(new CustomEvent('studio:job-settled', {detail:{id:'bad-1',status:'failed',message:'Synthetic failure'}}));
+          document.dispatchEvent(new CustomEvent('studio:job-settled', {detail:{id:'not-started',status:'not_submitted',message:'Queue unavailable. Nothing submitted.'}}));
+          message('Jobs temporarily unavailable',true);
+        }""")
+        self.assertIn('Done', self.page.locator('.run-outcome-summary').inner_text())
+        self.assertIn('2 more runs settled', self.page.locator('#runOutcomeWaiting').inner_text())
+        self.assertTrue(self.page.locator('[data-run-outcome="show"]').evaluate('(n)=>n===document.activeElement'))
+        self.page.click('#generate')
+        self.assertTrue(self.page.locator('#runOutcome').is_visible())
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.className'), 'pin')
+        self.page.focus('[data-run-outcome="dismiss"]')
+        self.page.keyboard.press('Enter')
+        self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Failed: Synthetic failure')
+        self.assertTrue(self.page.locator('[data-run-outcome="dismiss"]').evaluate('(n)=>n===document.activeElement'))
+        self.page.click('[data-run-outcome="show"]')
+        self.assertEqual(self.page.evaluate('document.activeElement.dataset.problem'), 'bad-1')
+        self.page.click('[data-run-outcome="dismiss"]')
+        self.assertIn('Not started: Queue unavailable.', self.page.locator('.run-outcome-summary').inner_text())
+        self.assertTrue(self.page.locator('#runOutcomeWaiting').is_hidden())
+        self.page.focus('[data-run-outcome="dismiss"]')
+        self.page.keyboard.press('Enter')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden())
+        self.assertTrue(self.page.locator('#generate').evaluate('(n)=>n===document.activeElement'))
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Jobs temporarily unavailable')
+
+    def test_final_keyboard_dismissal_focuses_status_when_generate_is_unavailable(self):
+        self.load_outcome()
+        self.page.evaluate("generate.disabled=true;message('Generation is unavailable')")
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
+        self.page.focus('[data-run-outcome="dismiss"]')
+        self.page.keyboard.press('Enter')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden())
+        self.assertTrue(self.page.locator('#status').evaluate('(n)=>n===document.activeElement'))
+        self.assertEqual(self.page.locator('#status').get_attribute('tabindex'), '-1')
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Generation is unavailable')
+
+    def test_final_dismissal_focuses_generation_dock_when_status_is_hidden_in_typing_layout(self):
+        self.page.set_viewport_size({'width': 1280, 'height': 480})
+        self.load_workshop()
+        self.page.add_script_tag(content=source('run-outcome.js'))
+        self.page.evaluate("document.getElementById('generate').disabled=true;document.getElementById('status').textContent='Generation is unavailable'")
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
+        self.page.focus('#positive')
+        self.assertTrue(self.page.locator('#status').is_hidden(), 'the production short typing layout hides status')
+        self.page.click('[data-run-outcome="dismiss"]')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden())
+        self.assertTrue(self.page.locator('.wk-run-dock').evaluate('(n)=>n===document.activeElement'))
+        self.assertEqual(self.page.locator('.wk-run-dock').get_attribute('tabindex'), '-1')
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Generation is unavailable')
+        self.assertEqual(self.page.evaluate('submitted'), 0)
 
     def test_a_cancelled_run_is_announced_once_when_it_settles(self):
         refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
