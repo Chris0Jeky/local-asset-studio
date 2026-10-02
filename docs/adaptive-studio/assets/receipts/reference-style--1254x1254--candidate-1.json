@@ -1,0 +1,154 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "reference-style",
+  "brief_revision": "production/20261001-cloud-art/generation-prompts-complete.json#reference_style sha256:a70ad48f8ac05c003ab65d45c16899de7b6203962f65e75a9ea23b7e3b2f39d3",
+  "production": {
+    "method": "generate",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: generate",
+    "reported_model": null,
+    "output_id": "exec-88e5b474-d029-42bf-bf28-92bda958ec3a",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261001-cloud-art/generation-prompts-complete.json",
+      "json_key": "reference_style",
+      "sha256": "a70ad48f8ac05c003ab65d45c16899de7b6203962f65e75a9ea23b7e3b2f39d3",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Create a reference picture that teaches \"this is the drawing style\", with no character in it.\n\nSubject: an original ink study of a quiet city street corner: stacked rooftops, a small footbridge, overhead wires and a distant tower. No people, no animals, no vehicles with markings.\n\nStyle: confident black ink line work with varied brush pressure, loose cross-hatching and a few flat wash tones in warm grey and one muted teal, on off-white paper. The line texture is the point of the picture.\n\nComposition: square aspect ratio 1:1. A balanced composition with a clear foreground, middle ground and background.\n\nDo not include: any text, letters, numbers, shop signs, readable signage, logos, watermarks, user-interface elements, people or characters. Any sign shapes stay blank.",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)"
+    },
+    "input_anchors": [],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/reference-style--1254x1254--candidate-1.png",
+      "sha256": "82bc4b7c8d299967be2432fed8d889ae5044b6a1a9909264898f44d40353d11c",
+      "bytes": 3491860,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/reference-style--1254x1254--candidate-1--longedge320.webp",
+      "sha256": "96c08935133750476fd2826604b3810866f615b4921412984818dbd8211b23b9",
+      "bytes": 39060,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "inbox/reference-style--1254x1254--candidate-1.png",
+      "input_sha256": "82bc4b7c8d299967be2432fed8d889ae5044b6a1a9909264898f44d40353d11c",
+      "output_relative_path": "review-renditions/reference-style--1254x1254--candidate-1--longedge320.webp",
+      "output_sha256": "96c08935133750476fd2826604b3810866f615b4921412984818dbd8211b23b9",
+      "from_dimensions": [
+        1254,
+        1254
+      ],
+      "to_dimensions": [
+        320,
+        320
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "preserved, nearest-integer output dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "review rendition only; not runtime qualified or selected for release"
+    }
+  ],
+  "art_review": {
+    "status": "not-reviewed",
+    "reviewer": null,
+    "notes": null
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          320,
+          320
+        ],
+        "pass": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 39060,
+        "maximum_exclusive": 51200,
+        "pass": true
+      },
+      {
+        "check": "no-upscale-no-crop",
+        "pass": true
+      },
+      {
+        "check": "decode-WebP",
+        "pass": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: the file time records local save/copy, not generation time.",
+    "reported_model and reported_seed are unknown: image_gen.imagegen did not expose a verified model build or seed.",
+    "source terms evidence has not been independently captured; no license determination is made here.",
+    "No provider job ID, source item/page, creator credit or retrieval timestamp was reported for these locally saved generated candidates.",
+    "duration_seconds and codec are null because these files are still-image PNG/WebP renditions; format identifies their container."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T00:03:11Z",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+    "path_rules": {
+      "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+      "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+      "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "reference-composition",
+  "brief_revision": "production/20261001-cloud-art/generation-prompts-complete.json#reference_composition_refine2 sha256:a938d3a25c16cb03904fbfe282cca195b4d5413d438ab569c51ec2973324ad5d",
+  "production": {
+    "method": "edit",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: edit",
+    "reported_model": null,
+    "output_id": "exec-69a7d8bc-8bf8-45e1-aca7-0bb62476e51d",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261001-cloud-art/generation-prompts-complete.json",
+      "json_key": "reference_composition_refine2",
+      "sha256": "a938d3a25c16cb03904fbfe282cca195b4d5413d438ab569c51ec2973324ad5d",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Change only the horizon height in this square neutral clay composition: move the horizon upward from its present position to exactly one-third of the image height from the top (around row418 in a1254px tall image). Keep the three masses' positions and sizes unchanged: tall charcoal block left foreground, pale cube middle slightly right, low wide slab distant right. Maintain eye-height wide-angle depth and coherent ground plane. Preserve the neutral charcoal/stone/sand palette, soft shadows, no sky blue, no texture details, objects or text.",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)"
+    },
+    "input_anchors": [
+      {
+        "asset_id": "reference-composition",
+        "relative_path": "inbox/reference-composition--1254x1254--candidate-2.png",
+        "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+        "note": "Actual image supplied for this edit; not an art-accepted anchor."
+      }
+    ],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/reference-composition--1254x1254--candidate-3.png",
+      "sha256": "0c1f22ca98e46a07bc13eaa1d062b9d46b85fdfe8d6f46f69d9dd3b5e4fcb249",
+      "bytes": 1428503,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/reference-composition--1254x1254--candidate-3--longedge320.webp",
+      "sha256": "a73edff59d2bc68c646066cd38b2328ba87794fe1822bfc1386ddded7a18e524",
+      "bytes": 2330,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "inbox/reference-composition--1254x1254--candidate-3.png",
+      "input_sha256": "0c1f22ca98e46a07bc13eaa1d062b9d46b85fdfe8d6f46f69d9dd3b5e4fcb249",
+      "output_relative_path": "review-renditions/reference-composition--1254x1254--candidate-3--longedge320.webp",
+      "output_sha256": "a73edff59d2bc68c646066cd38b2328ba87794fe1822bfc1386ddded7a18e524",
+      "from_dimensions": [
+        1254,
+        1254
+      ],
+      "to_dimensions": [
+        320,
+        320
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "preserved, nearest-integer output dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "review rendition only; not runtime qualified or selected for release"
+    }
+  ],
+  "art_review": {
+    "status": "not-reviewed",
+    "reviewer": null,
+    "notes": null
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          320,
+          320
+        ],
+        "pass": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 2330,
+        "maximum_exclusive": 51200,
+        "pass": true
+      },
+      {
+        "check": "no-upscale-no-crop",
+        "pass": true
+      },
+      {
+        "check": "decode-WebP",
+        "pass": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: the file time records local save/copy, not generation time.",
+    "reported_model and reported_seed are unknown: image_gen.imagegen did not expose a verified model build or seed.",
+    "source terms evidence has not been independently captured; no license determination is made here.",
+    "No provider job ID, source item/page, creator credit or retrieval timestamp was reported for these locally saved generated candidates.",
+    "duration_seconds and codec are null because these files are still-image PNG/WebP renditions; format identifies their container."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T00:03:11Z",
+    "candidate": 3
+  },
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+    "path_rules": {
+      "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+      "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+      "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+    }
+  }
+}

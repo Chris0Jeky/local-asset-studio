@@ -1,0 +1,89 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "reference-composition",
+  "brief_revision": "production/20261001-cloud-art/generation-prompts-complete.json#reference_composition sha256:0bb80c648efaf21f53083de900d8fb7d212382a36033c4d6940d93960b03d2b3",
+  "production": {
+    "method": "generate",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: generate",
+    "reported_model": null,
+    "output_id": "exec-d7903746-c4b8-4545-a40f-62b01886cd76",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261001-cloud-art/generation-prompts-complete.json",
+      "json_key": "reference_composition",
+      "sha256": "0bb80c648efaf21f53083de900d8fb7d212382a36033c4d6940d93960b03d2b3",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Create a reference picture that teaches \"this is the layout and camera framing\", with nothing distracting in it.\n\nSubject: three simple, untextured masses arranged in depth on a plain ground: a tall dark block in the left foreground, a medium pale cube in the middle ground slightly right of centre, and a low wide slab far in the background. A clear horizon line sits at one third from the top. The camera is at standing eye height with a gentle wide-angle perspective, so the depth is obvious.\n\nStyle: simple clay-render look with flat muted colours (charcoal, stone grey, pale sand) and soft shadows.\n\nComposition: square aspect ratio 1:1.\n\nDo not include: any text, letters, numbers, logos, watermarks, user-interface elements, people, characters, plants or detailed objects.",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)"
+    },
+    "input_anchors": [],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/reference-composition--1254x1254--candidate-1.png",
+      "sha256": "0cac73cd6c36fba2c9e4a36ca702c640d3f8cf29ced6652d69e686514da23819",
+      "bytes": 1675763,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    }
+  ],
+  "transformations": [],
+  "art_review": {
+    "status": "not-reviewed",
+    "reviewer": null,
+    "notes": null
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "checks": []
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: the file time records local save/copy, not generation time.",
+    "reported_model and reported_seed are unknown: image_gen.imagegen did not expose a verified model build or seed.",
+    "source terms evidence has not been independently captured; no license determination is made here.",
+    "No provider job ID, source item/page, creator credit or retrieval timestamp was reported for these locally saved generated candidates.",
+    "duration_seconds and codec are null because these files are still-image PNG/WebP renditions; format identifies their container."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T00:03:11Z",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+    "path_rules": {
+      "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+      "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+      "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+    }
+  }
+}

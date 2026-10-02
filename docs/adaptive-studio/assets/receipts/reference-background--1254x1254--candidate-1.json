@@ -1,0 +1,154 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "reference-background",
+  "brief_revision": "production/20261001-cloud-art/generation-prompts-complete.json#reference_background sha256:1da4e6e520ba6e53f7928da80f841a2cf8e0a30f6888b7002184d3ae6943cf12",
+  "production": {
+    "method": "generate",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: generate",
+    "reported_model": null,
+    "output_id": "exec-0c4b776b-ad39-4801-96e4-b0700ab4f62d",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261001-cloud-art/generation-prompts-complete.json",
+      "json_key": "reference_background",
+      "sha256": "1da4e6e520ba6e53f7928da80f841a2cf8e0a30f6888b7002184d3ae6943cf12",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Create a reference picture that teaches \"this is the background environment\", with no subject in it.\n\nSubject: an original, empty open-air railway platform at dusk: a long platform edge leading into the distance, a simple canopy with slim columns, the rails, and soft sky behind low hills. Nobody is on the platform, and the foreground is uncluttered open floor where a character could later be placed.\n\nStyle: soft painterly anime background art with gentle gradients and atmospheric perspective.\n\nPalette: dusk blue and violet sky, warm lamp light under the canopy, muted concrete greys.\n\nComposition: square aspect ratio 1:1. Eye-level camera; the platform leads the eye from the lower left into the distance.\n\nDo not include: any text, letters, numbers, station names, signs with writing, timetables, advertisements, logos, watermarks, user-interface elements, people, animals or trains with markings. Any sign boards stay blank.",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)"
+    },
+    "input_anchors": [],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/reference-background--1254x1254--candidate-1.png",
+      "sha256": "d19f39fb462a46324bf32d5ec548bbe20f6e08d6ba262ae2c11bdda5205d95ae",
+      "bytes": 2317765,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/reference-background--1254x1254--candidate-1--longedge320.webp",
+      "sha256": "a21dae323a089efe2af92d33cf1cdf312136ba587cf324965860b0525698110b",
+      "bytes": 19724,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "inbox/reference-background--1254x1254--candidate-1.png",
+      "input_sha256": "d19f39fb462a46324bf32d5ec548bbe20f6e08d6ba262ae2c11bdda5205d95ae",
+      "output_relative_path": "review-renditions/reference-background--1254x1254--candidate-1--longedge320.webp",
+      "output_sha256": "a21dae323a089efe2af92d33cf1cdf312136ba587cf324965860b0525698110b",
+      "from_dimensions": [
+        1254,
+        1254
+      ],
+      "to_dimensions": [
+        320,
+        320
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "preserved, nearest-integer output dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "review rendition only; not runtime qualified or selected for release"
+    }
+  ],
+  "art_review": {
+    "status": "not-reviewed",
+    "reviewer": null,
+    "notes": null
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          320,
+          320
+        ],
+        "pass": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 19724,
+        "maximum_exclusive": 51200,
+        "pass": true
+      },
+      {
+        "check": "no-upscale-no-crop",
+        "pass": true
+      },
+      {
+        "check": "decode-WebP",
+        "pass": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: the file time records local save/copy, not generation time.",
+    "reported_model and reported_seed are unknown: image_gen.imagegen did not expose a verified model build or seed.",
+    "source terms evidence has not been independently captured; no license determination is made here.",
+    "No provider job ID, source item/page, creator credit or retrieval timestamp was reported for these locally saved generated candidates.",
+    "duration_seconds and codec are null because these files are still-image PNG/WebP renditions; format identifies their container."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T00:03:11Z",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+    "path_rules": {
+      "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+      "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+      "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+    }
+  }
+}
