@@ -571,14 +571,19 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.assertEqual(self.page.locator('#status').inner_text(), 'Generation is unavailable')
 
     def test_final_dismissal_focuses_generation_dock_when_status_is_hidden_in_typing_layout(self):
-        self.load_outcome()
-        self.page.evaluate("generate.disabled=true;message('Generation is unavailable');document.getElementById('status').style.display='none'")
+        self.page.set_viewport_size({'width': 1280, 'height': 480})
+        self.load_workshop()
+        self.page.add_script_tag(content=source('run-outcome.js'))
+        self.page.evaluate("document.getElementById('generate').disabled=true;document.getElementById('status').textContent='Generation is unavailable'")
         self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
+        self.page.focus('#positive')
+        self.assertTrue(self.page.locator('#status').is_hidden(), 'the production short typing layout hides status')
         self.page.click('[data-run-outcome="dismiss"]')
         self.assertTrue(self.page.locator('#runOutcome').is_hidden())
         self.assertTrue(self.page.locator('.wk-run-dock').evaluate('(n)=>n===document.activeElement'))
         self.assertEqual(self.page.locator('.wk-run-dock').get_attribute('tabindex'), '-1')
         self.assertEqual(self.page.locator('#status').inner_text(), 'Generation is unavailable')
+        self.assertEqual(self.page.evaluate('submitted'), 0)
 
     def test_a_cancelled_run_is_announced_once_when_it_settles(self):
         refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
