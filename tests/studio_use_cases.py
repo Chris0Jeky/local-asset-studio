@@ -576,7 +576,7 @@ class CaseRun:
         name = '%02d.png' % index
         try: self.page.screenshot(path=str(self.dir / name))
         except Exception: return ''
-        return str((self.dir / name).relative_to(ROOT)).replace('\\', '/')
+        return repo_path(self.dir / name)
 
     def _finish(self, record):
         state = self._page_state()
