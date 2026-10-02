@@ -1,0 +1,73 @@
+{
+  "catalog_id": "retro-anime-wall",
+  "method": "deterministic crop and downsample; no image generation",
+  "source_identity": "accepted Night Shift MA master, September27 Keep MA record",
+  "source_sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+  "source_dimensions": [
+    3840,
+    2160
+  ],
+  "source_evidence": "https://github.com/Chris0Jeky/local-asset-studio/tree/main/experiments/curated/night-shift-derivatives-20260927",
+  "crop_box_exclusive": [
+    0,
+    0,
+    2400,
+    1600
+  ],
+  "native_master": [
+    2400,
+    1600
+  ],
+  "resampling": "Pillow LANCZOS",
+  "webp_settings": {
+    "quality": 90,
+    "method": 6
+  },
+  "art_selection": "selected under owner-delegated judgment",
+  "reason": "Exact accepted wall pixels preserve the established room and leave the central70% low-detail. Small desk/chair slivers stay at bottom-right edge.",
+  "prompt_pack_difference": "Uses existing wall crop rather than generated new framing, avoiding source drift. No train/window is invented in the central panel.",
+  "original_generator": null,
+  "original_model": null,
+  "original_seed": null,
+  "source_terms": "not-reassessed",
+  "runtime": "not-qualified",
+  "release": "not-selected",
+  "files": [
+    {
+      "path": "renditions/retro-anime-wall--1200x800.webp",
+      "bytes": 8990,
+      "sha256": "c638fb28cec9c94ee8d7b5024d86efc1dd30bef0270cfeaf89e6a08c0fa3ba61",
+      "dimensions": [
+        1200,
+        800
+      ]
+    },
+    {
+      "path": "renditions/retro-anime-wall--2400x1600.png",
+      "bytes": 380992,
+      "sha256": "04cf72c28d1f634f57cc11a625b0875885d9d26c94064e9dd3ea9c9b476894d2",
+      "dimensions": [
+        2400,
+        1600
+      ]
+    },
+    {
+      "path": "renditions/retro-anime-wall--600x400.webp",
+      "bytes": 3320,
+      "sha256": "dabeb90e0ad061d3e5dc25a740bf8880f61f4d969be6de91da29b0e7ba612700",
+      "dimensions": [
+        600,
+        400
+      ]
+    },
+    {
+      "path": "source/retro-anime-master--3840x2160--ma.png",
+      "bytes": 2736794,
+      "sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+      "dimensions": [
+        3840,
+        2160
+      ]
+    }
+  ]
+}
