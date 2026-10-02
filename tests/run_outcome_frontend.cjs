@@ -17,8 +17,8 @@ function sandbox() {
     querySelectorAll() {return [];}
     addEventListener() {}
     scrollIntoView() {this.scrolled=true;}
-    focus() {document.activeElement=this;}
-    closest(selector) {return selector==='[data-run-outcome]'&&this.dataset.runOutcome?this:selector==='#generate'&&this.id==='generate'?this:null;}
+    focus() {if(!this.disabled&&!this.hidden)document.activeElement=this;}
+    closest(selector) {return selector==='[data-run-outcome]'&&this.dataset.runOutcome?this:selector==='#generate'&&this.id==='generate'?this:selector==='.wk-run-dock'&&this.parentElement?.className==='wk-run-dock'?this.parentElement:null;}
   }
   const nodes=new Map(),listeners=new Map(),requests=[];
   const element=selector=>{if(!nodes.has(selector))nodes.set(selector,new Element());return nodes.get(selector);};
@@ -89,6 +89,31 @@ test('a new Generate leaves settled notices reachable',()=>{
   const s=sandbox();s.settle(job('first'));s.settle(job('second','failed'));
   s.click(s.element('#generate'));assert.equal(s.outcome().hidden,false);
   s.click(s.button('dismiss'));assert.match(s.summary().textContent,/Failed:/);
+});
+
+test('final keyboard dismissal returns to Generate or the status when Generate is disabled',()=>{
+  for(const disabled of [false,true]) {
+    const s=sandbox(),generate=s.element('#generate'),status=s.element('#status');
+    generate.disabled=disabled;status.textContent='Generation is unavailable';s.settle(job('done'));
+    s.button('dismiss').focus();s.click(s.button('dismiss'));
+    assert.equal(s.outcome().hidden,true);
+    assert.equal(s.document.activeElement,disabled?status:generate);
+    if(disabled)assert.equal(status.tabIndex,-1,'the fallback does not enter the tab order');
+    assert.equal(status.textContent,'Generation is unavailable');
+    assert.equal(s.requests.filter(r=>r.options.method==='POST').length,0);
+  }
+});
+
+test('dismissal does not move focus from another control',()=>{
+  const s=sandbox(),elsewhere=s.element('#elsewhere');s.settle(job('done'));elsewhere.focus();
+  s.click(s.button('dismiss'));assert.equal(s.document.activeElement,elsewhere);
+});
+
+test('final dismissal uses the generation dock when the short typing layout hides status',()=>{
+  const s=sandbox(),status=s.element('#status'),dock=s.element('#dock');dock.className='wk-run-dock';dock.append(status);
+  status.hidden=true;s.element('#generate').disabled=true;s.settle(job('done'));
+  s.button('dismiss').focus();s.click(s.button('dismiss'));
+  assert.equal(s.document.activeElement,dock);assert.equal(dock.tabIndex,-1);
 });
 
 test('a 304 announces a run whose POST returned after its completed record was polled once',async()=>{

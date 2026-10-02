@@ -54,10 +54,15 @@
   // and own the summary text so a poll error or a newer Generate cannot erase the notice (#1250).
   function render(job){if(shown){pending.push(job);waiting();}else display(job);}
   function clear(){shown=null;pending.length=0;const el=document.getElementById('runOutcome');if(el){el.hidden=true;el.innerHTML='';}}
+  function returnFocus(){
+    const generate=document.getElementById('generate');generate?.focus();if(generate&&document.activeElement===generate)return;
+    const status=document.getElementById('status');
+    for(const target of [status,status?.closest('.wk-run-dock'),status?.closest('.editor')])if(target){if(!target.hasAttribute('tabindex'))target.tabIndex=-1;target.focus({preventScroll:true});if(document.activeElement===target)return;}
+  }
   document.addEventListener('studio:job-settled',e=>{if(e.detail?.id)render(e.detail);});
   document.addEventListener('click',e=>{
     const b=e.target.closest?.('[data-run-outcome]');
-    if(b){if(b.dataset.runOutcome==='dismiss'){const focused=document.activeElement===b,next=pending.shift();if(next){display(next);if(focused)document.querySelector('#runOutcome [data-run-outcome="dismiss"]')?.focus();}else{clear();if(focused)document.getElementById('generate')?.focus();}}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
+    if(b){if(b.dataset.runOutcome==='dismiss'){const focused=document.activeElement===b,next=pending.shift();if(next){display(next);if(focused)document.querySelector('#runOutcome [data-run-outcome="dismiss"]')?.focus();}else{clear();if(focused)returnFocus();}}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
   },true);
   window.StudioRunOutcome={summary,render,clear,reveal,tight};
 })();

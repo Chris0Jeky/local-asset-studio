@@ -436,7 +436,7 @@ window.pending=[];function api(){return new Promise((resolve,reject)=>pending.pu
 
     def load_outcome(self):
         self.page.goto('about:blank')
-        self.page.set_content("""<p id="status" role="status"></p><button id="generate">Generate</button>
+        self.page.set_content("""<section id="createView"><section class="editor"></section><div class="wk-run-dock"><p id="status" role="status"></p><button id="generate">Generate</button></div></section>
 <details id="workshopResults"><summary>Recent runs</summary><div id="gallery"><article class="imageCard" data-output="done-1:0"><img alt=""><div class="card-actions"><button class="pin">Compare</button></div></article></div></details>
 <div id="jobProblemsHost"><details id="jobProblems"><summary>Problems</summary><article class="jobStatus failed" data-problem="bad-1"><b>Krea · failed</b><button class="recipe">Recipe</button></article></details></div>
 <script>let jobs=[];window.said=[];function message(text,error=false){said.push([text,error]);document.querySelector('#status').textContent=text;}
@@ -558,6 +558,27 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.assertTrue(self.page.locator('#runOutcome').is_hidden())
         self.assertTrue(self.page.locator('#generate').evaluate('(n)=>n===document.activeElement'))
         self.assertEqual(self.page.locator('#status').inner_text(), 'Jobs temporarily unavailable')
+
+    def test_final_keyboard_dismissal_focuses_status_when_generate_is_unavailable(self):
+        self.load_outcome()
+        self.page.evaluate("generate.disabled=true;message('Generation is unavailable')")
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
+        self.page.focus('[data-run-outcome="dismiss"]')
+        self.page.keyboard.press('Enter')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden())
+        self.assertTrue(self.page.locator('#status').evaluate('(n)=>n===document.activeElement'))
+        self.assertEqual(self.page.locator('#status').get_attribute('tabindex'), '-1')
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Generation is unavailable')
+
+    def test_final_dismissal_focuses_generation_dock_when_status_is_hidden_in_typing_layout(self):
+        self.load_outcome()
+        self.page.evaluate("generate.disabled=true;message('Generation is unavailable');document.getElementById('status').style.display='none'")
+        self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
+        self.page.click('[data-run-outcome="dismiss"]')
+        self.assertTrue(self.page.locator('#runOutcome').is_hidden())
+        self.assertTrue(self.page.locator('.wk-run-dock').evaluate('(n)=>n===document.activeElement'))
+        self.assertEqual(self.page.locator('.wk-run-dock').get_attribute('tabindex'), '-1')
+        self.assertEqual(self.page.locator('#status').inner_text(), 'Generation is unavailable')
 
     def test_a_cancelled_run_is_announced_once_when_it_settles(self):
         refresh = region(source('app.js'), 'async function refreshJobs(', 'function refresh(')
