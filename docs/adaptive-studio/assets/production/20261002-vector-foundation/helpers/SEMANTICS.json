@@ -1,0 +1,110 @@
+[
+  {
+    "id": "state-loading",
+    "html_label": "Waiting or running",
+    "semantics": "Static dots; real progress and announcements remain HTML.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-internet-absent",
+    "html_label": "Internet unavailable",
+    "semantics": "Connectivity observation only; local work may remain available.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-api-unavailable",
+    "html_label": "API unavailable",
+    "semantics": "Service connection, distinct from internet and backend setup.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-backend-missing",
+    "html_label": "Backend not configured",
+    "semantics": "Backend setup observation; not a job result.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-model-missing",
+    "html_label": "Model unavailable",
+    "semantics": "The model slot needs attention; no download or install action is implied.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-adapter-missing",
+    "html_label": "Adapter unavailable",
+    "semantics": "Optional adapter observation stays distinct from the model.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-media-failed",
+    "html_label": "Decorative media unavailable",
+    "semantics": "Optional presentation media only. Never use as a job-failure message.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-uncertain",
+    "html_label": "Outcome unknown; receipt retained",
+    "semantics": "Retained receipt and unknown outcome. No retry arrow, success mark or error colour.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-conflict",
+    "html_label": "Conflicting alternatives",
+    "semantics": "Equal visual weight; neither option is selected, correct or approved.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-complete",
+    "html_label": "Execution complete",
+    "semantics": "Terminal execution record, not artistic acceptance or keeper status.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "state-failure",
+    "html_label": "Execution failed",
+    "semantics": "Failed execution only. Actual explanation and recovery actions stay HTML.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  },
+  {
+    "id": "reference-mask",
+    "html_label": "Example target-region mask",
+    "semantics": "Synthetic editable target-region diagram. It does not demonstrate a brush interaction or model masking support.",
+    "source": "Original folio/frame composition by dot; Tabler glyph paths where used, MIT v3.48.0",
+    "decorative": true,
+    "runtime_qualified": false,
+    "embedding_note": "Inline currentColor; keep labels in HTML. For reference-mask, prefix mask-hatch and its fill reference uniquely per inline instance."
+  }
+]
