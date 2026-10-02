@@ -7,6 +7,7 @@ import inspect
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 import sys
 
@@ -317,6 +318,51 @@ class LiveOutcomes(unittest.TestCase):
                        runner._native_export, runner._restyle, runner._combine, runner._draw_pose):
             self.assertIn('c.stop_before(', inspect.getsource(driver), driver.__name__)
         self.assertNotIn("== 'asset-1'", inspect.getsource(runner._reuse))
+
+
+class ScreenshotPaths(unittest.TestCase):
+    """Screenshot receipts work inside or outside the repository, without a browser (#1277)."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.temporary = Path(temporary.name).resolve()
+        self.root = self.temporary / 'repo'
+        self.root.mkdir()
+        patch = mock.patch.object(runner, 'ROOT', self.root)
+        patch.start(); self.addCleanup(patch.stop)
+        self.page = mock.Mock()
+        self.page.screenshot.side_effect = lambda *, path: Path(path).write_bytes(b'synthetic screenshot')
+
+    def case(self, screenshots):
+        return runner.CaseRun({'id': 'screenshot-stub'}, self.page, 'http://127.0.0.1:8191', False, screenshots)
+
+    def test_inside_repository_screenshot_receipt_is_relative(self):
+        case = self.case(self.root / '.runtime/ux-use-cases')
+        receipt = case._shot(1)
+        saved = case.dir / '01.png'
+        self.assertEqual(receipt, '.runtime/ux-use-cases/screenshot-stub/01.png')
+        self.page.screenshot.assert_called_once_with(path=str(saved))
+        self.assertEqual(saved.read_bytes(), b'synthetic screenshot')
+
+    def test_outside_repository_screenshot_receipt_is_absolute(self):
+        case = self.case(self.temporary / 'external screenshots')
+        saved = case.dir / '02.png'
+        try: receipt = case._shot(2)
+        except ValueError as error: self.fail('An outside-repository screenshot must return its absolute path: ' + str(error))
+        self.assertEqual(receipt, saved.as_posix())
+        self.page.screenshot.assert_called_once_with(path=str(saved))
+        self.assertEqual(saved.read_bytes(), b'synthetic screenshot')
+
+    def test_screenshot_exception_keeps_the_empty_receipt(self):
+        self.page.screenshot.side_effect = RuntimeError('synthetic screenshot failure')
+        for screenshots in (self.root / '.runtime/ux-use-cases', self.temporary / 'external screenshots'):
+            with self.subTest(screenshots=screenshots):
+                self.page.screenshot.reset_mock()
+                case = self.case(screenshots)
+                self.assertEqual(case._shot(3), '')
+                self.page.screenshot.assert_called_once_with(path=str(case.dir / '03.png'))
+                self.assertFalse((case.dir / '03.png').exists())
 
 
 class Table(unittest.TestCase):
