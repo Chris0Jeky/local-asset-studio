@@ -538,9 +538,9 @@
   ],
   "gates": {
     "source": "provenance-recorded-terms-not-reviewed",
-    "art": "twelve-recommended-three-superseded-alternatives",
+    "art": "12-accepted-under-owner-delegation; 3-unselected-alternatives-preserved",
     "rendition": "mechanical-and-visual-review-passed-with-source-caveats",
-    "owner": "pending-all-fifteen-new-candidates",
+    "owner": "delegated-art-choice-satisfied-for-12-selected-candidates",
     "runtime": "not-qualified",
     "release": "not-selected"
   },
@@ -644,5 +644,14 @@
     "Generated originals are preserved byte-for-byte.",
     "Each workflow preview is 600x450 at no more than 100 KiB.",
     "Only ordinary text files are in the repository-ready path/content list."
-  ]
+  ],
+  "art_selection_update": {
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "previous_art_and_owner_gates": {
+      "art": "twelve-recommended-three-superseded-alternatives",
+      "owner": "pending-all-fifteen-new-candidates"
+    },
+    "scope": "Later art decision only; frozen archive contents, source, rendition, runtime and release gates are unchanged."
+  }
 }

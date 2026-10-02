@@ -1,0 +1,50 @@
+{
+  "canon": {
+    "source_relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+    "minimum": 0,
+    "maximum": 254,
+    "bbox_any_alpha": [
+      65,
+      14,
+      1010,
+      1521
+    ],
+    "exact_counts": {
+      "0": 1089922,
+      "1": 9138,
+      "127": 54,
+      "128": 49,
+      "200": 60,
+      "253": 383088,
+      "254": 3129,
+      "255": 0
+    },
+    "zero_alpha_fraction": 0.6929537455240885,
+    "border_alpha_maximum": 0,
+    "note": "Real transparent background; subject interior predominantly alpha 253/255, no fully opaque pixels. Low-alpha fringe retained without cleanup or normalization."
+  },
+  "outfit_blue": {
+    "source_relative_path": "originals/sample-outfit-study--1024x1536--candidate-1.png",
+    "minimum": 0,
+    "maximum": 254,
+    "bbox_any_alpha": [
+      65,
+      15,
+      994,
+      1520
+    ],
+    "exact_counts": {
+      "0": 1097336,
+      "1": 9826,
+      "127": 50,
+      "128": 51,
+      "200": 75,
+      "253": 368230,
+      "254": 3497,
+      "255": 0
+    },
+    "zero_alpha_fraction": 0.6976674397786459,
+    "border_alpha_maximum": 0,
+    "note": "Real transparent background; subject interior predominantly alpha 253/255, no fully opaque pixels. Low-alpha fringe retained without cleanup or normalization."
+  }
+}

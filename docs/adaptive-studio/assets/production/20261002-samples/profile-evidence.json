@@ -1,0 +1,16 @@
+{
+  "source_url": "https://github.com/Chris0Jeky/local-asset-studio/blob/main/docs/adaptive-studio/assets/profiles.json",
+  "git_blob_sha": "bffc3557cb2f42f4121ba3994b536fe8f04d2365",
+  "profile": {
+    "master": "Original public-safe controlled sample set; target 1024px images with documented shared anchors.",
+    "deliverables": [
+      "Source masters and thumbnails",
+      "Manifest of roles and intended comparisons",
+      "Example-only captions and any actual execution receipts separately"
+    ],
+    "safe_zone": "Original adult characters where present; no copyrighted franchise, private input or implied model qualification.",
+    "fallback": "Text/diagram explaining the workflow.",
+    "budget": "Lazy thumbnails <=60 KiB each; masters outside app bundle.",
+    "motion": "Stills unless the individual request explicitly asks for a recorded sequence."
+  }
+}

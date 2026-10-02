@@ -88,9 +88,37 @@
     }
   ],
   "art_review": {
-    "status": "not-reviewed",
-    "reviewer": null,
-    "notes": null
+    "status": "accepted",
+    "reviewer": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "timestamp_meaning": "Time this delegated art-selection record was prepared",
+    "authority": {
+      "kind": "owner-delegated-assistant-art-selection",
+      "delegated_on": "2026-10-02",
+      "delegated_at": "2026-10-02T11:16:00Z",
+      "timestamp_precision": "Minute-level delegation record",
+      "scope": "Choose the best candidates for the current LAS workflow-illustration and reference-example task, using completed visual reviews. This is art judgment only.",
+      "exclusions": [
+        "Source or license clearance",
+        "Runtime qualification",
+        "Release selection",
+        "Merge",
+        "Deployment"
+      ]
+    },
+    "justification": "The ink hillside study makes linework, hatching and architectural treatment clear without introducing character identity.",
+    "retained_caveats": [
+      "The scene is more elaborate than a simple street-corner study."
+    ],
+    "prior_review": {
+      "status": "not-reviewed",
+      "reviewer": null,
+      "notes": null
+    },
+    "evidence": {
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+      "decision": "Selected after completed visual reviews under task-scoped owner delegation"
+    }
   },
   "rendition_review": {
     "status": "not-reviewed",
@@ -150,5 +178,14 @@
       "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
       "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
     }
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated art selector)",
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "acceptance_basis": "owner-delegated-assistant-art-selection",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "justification": "The ink hillside study makes linework, hatching and architectural treatment clear without introducing character identity.",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged."
   }
 }

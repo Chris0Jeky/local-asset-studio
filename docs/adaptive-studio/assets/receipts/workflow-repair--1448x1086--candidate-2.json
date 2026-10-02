@@ -126,21 +126,51 @@
     }
   ],
   "art_review": {
-    "status": "reviewed-recommended-for-owner-review",
-    "reviewer": "dot independent visual QA",
-    "reviewed_at": "2026-10-02T09:54:20Z",
-    "inspected": [
-      "Actual full original PNG",
-      "Actual 600x450 WebP at native review dimensions",
-      "Actual input PNGs and accepted anchor lineage"
-    ],
-    "notes": "The local seam and magnified study remain clear, with the success-like sparkle removed. This is the stronger neutral inspection illustration.",
-    "observations": [
+    "status": "accepted",
+    "reviewer": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "timestamp_meaning": "Time this delegated art-selection record was prepared",
+    "authority": {
+      "kind": "owner-delegated-assistant-art-selection",
+      "delegated_on": "2026-10-02",
+      "delegated_at": "2026-10-02T11:16:00Z",
+      "timestamp_precision": "Minute-level delegation record",
+      "scope": "Choose the best candidates for the current LAS workflow-illustration and reference-example task, using completed visual reviews. This is art judgment only.",
+      "exclusions": [
+        "Source or license clearance",
+        "Runtime qualification",
+        "Release selection",
+        "Merge",
+        "Deployment"
+      ]
+    },
+    "justification": "The local seam and magnified study remain clear, with the success-like sparkle removed. This is the stronger neutral inspection illustration.",
+    "retained_caveats": [
       "Candidate 2 is recommended over candidate 1. Seam, continuous surrounding fabric and connector are legible at 600x450.",
       "No brush, cursor, selection handles, controls, success mark or before/after comparison was observed.",
       "The edit regenerated fabric microdetail; it is not a pixel-identical local edit or evidence that a functioning repair tool preserves surrounding pixels."
     ],
-    "owner_acceptance_implied": false
+    "prior_review": {
+      "status": "reviewed-recommended-for-owner-review",
+      "reviewer": "dot independent visual QA",
+      "reviewed_at": "2026-10-02T09:54:20Z",
+      "inspected": [
+        "Actual full original PNG",
+        "Actual 600x450 WebP at native review dimensions",
+        "Actual input PNGs and accepted anchor lineage"
+      ],
+      "notes": "The local seam and magnified study remain clear, with the success-like sparkle removed. This is the stronger neutral inspection illustration.",
+      "observations": [
+        "Candidate 2 is recommended over candidate 1. Seam, continuous surrounding fabric and connector are legible at 600x450.",
+        "No brush, cursor, selection handles, controls, success mark or before/after comparison was observed.",
+        "The edit regenerated fabric microdetail; it is not a pixel-identical local edit or evidence that a functioning repair tool preserves surrounding pixels."
+      ],
+      "owner_acceptance_implied": false
+    },
+    "evidence": {
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+      "decision": "Selected after completed visual reviews under task-scoped owner delegation"
+    }
   },
   "rendition_review": {
     "status": "reviewed",
@@ -191,7 +221,7 @@
     "File save/copy times are not provider generation timestamps.",
     "Source page/item, creator credit, retrieval timestamp and independently captured terms evidence were not reported; no license determination is made.",
     "Duration and codec are null for these still images; format records PNG or WebP.",
-    "Owner acceptance, runtime qualification and release selection remain separate pending gates."
+    "Source/license review, application runtime qualification and release selection remain separate unresolved gates; art acceptance is recorded under owner delegation."
   ],
   "catalog_reference": {
     "url": "https://github.com/Chris0Jeky/local-asset-studio/blob/6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164/docs/adaptive-studio/assets/catalog.csv",
@@ -200,11 +230,14 @@
     "acceptance_constraint": "Clearly local repair concept, not a fictional functioning brush tool."
   },
   "owner_acceptance": {
-    "status": "pending",
-    "accepted_by": null,
-    "accepted_at": null,
-    "evidence": null,
-    "note": "Input anchor acceptance and permission to continue do not accept newly generated candidates."
+    "status": "satisfied-by-owner-delegated-art-selection",
+    "accepted_by": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "evidence": {
+      "delegation_date": "2026-10-02",
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json"
+    },
+    "note": "This is a delegated assistant art decision, not a claim that the owner directly reviewed this candidate. It does not clear source, runtime or release gates."
   },
   "intake": {
     "received_at": "2026-10-02T09:54:20Z",
@@ -217,5 +250,14 @@
     "archive_filename": "las-art-wave3-candidates-part-2.zip",
     "archive_relative_path_base": "Extracted named archive root",
     "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated art selector)",
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "acceptance_basis": "owner-delegated-assistant-art-selection",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "justification": "The local seam and magnified study remain clear, with the success-like sparkle removed. This is the stronger neutral inspection illustration.",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged."
   }
 }

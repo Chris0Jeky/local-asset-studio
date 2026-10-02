@@ -1,6 +1,8 @@
 # Wave 3 delivery and QA
 
-Fifteen generated candidates for twelve catalog workflow IDs. Original PNGs are preserved byte-for-byte. Three original candidates are retained alongside reviewed refinements. No candidate is owner accepted, runtime qualified or selected for release.
+**Current art decision, 2 October 2026:** [The selection record](../20261002-art-selection/README.md) supersedes earlier pending-owner wording for the selected candidates. The two prior anchor approvals remain direct-owner decisions; new choices are accepted under owner-delegated assistant art judgment. Alternatives stay unselected. Source/license, runtime and release gates are unchanged. Historical QA findings and frozen attachment archives are preserved.
+
+Fifteen generated candidates for twelve catalog workflow IDs. Original PNGs are preserved byte-for-byte. Three original candidates are retained alongside reviewed refinements. Twelve candidates are now art-accepted under owner delegation; three alternatives remain unselected. None is runtime qualified or selected for release.
 
 ## Review
 
@@ -28,4 +30,4 @@ Pillow 12.3.0, libwebp 1.6.0; RGB conversion, Lanczos downscale from 1448x1086 t
 
 ## Boundaries
 
-The producer is OpenAI image_gen.imagegen (dot-run), not an owner-operated model session. Output IDs are local tool output handles. Provider model, seed, provider job ID and provider generation timestamps are unknown. Independent terms/license clearance remains unresolved. Owner acceptance, runtime qualification and release selection remain separate pending gates. No GitHub mutation, browser operation, application integration or heavy CI occurred in this preparation.
+The producer is OpenAI image_gen.imagegen (dot-run), not an owner-operated model session. Output IDs are local tool output handles. Provider model, seed, provider job ID and provider generation timestamps are unknown. Independent terms/license clearance remains unresolved. Art acceptance is recorded for the twelve delegated selections. Runtime qualification and release selection remain separate pending gates. No GitHub mutation, browser operation, application integration or heavy CI occurred in this preparation.

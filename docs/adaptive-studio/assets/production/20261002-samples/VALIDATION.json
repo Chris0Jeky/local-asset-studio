@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "scope": "Offline file integrity, decode, dimensions, budgets, roles, prompt/input provenance, exact crop/silhouette derivation and unchanged gates",
+  "sample_count": 6,
+  "binary_files_checked": 41,
+  "unaltered_generated_originals": 4,
+  "unaltered_reference_inputs": 6,
+  "exact_pixel_derivatives": 6,
+  "thumbnails_checked": 16,
+  "thumbnail_max_bytes": 27724,
+  "contact_sheets": 7,
+  "alpha_qa_sheets": 2,
+  "source_terms": "not-reviewed",
+  "runtime": "not-qualified",
+  "release": "not-selected"
+}

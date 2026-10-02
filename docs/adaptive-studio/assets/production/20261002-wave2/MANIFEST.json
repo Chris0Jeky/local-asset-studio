@@ -153,9 +153,9 @@
   ],
   "gates": {
     "source": "provenance-recorded-terms-not-reviewed",
-    "art": "four-recommended-for-owner-review-one-superseded-review-alternative",
+    "art": "4-accepted-under-owner-delegation; 1-unselected-alternatives-preserved",
     "rendition": "mechanical-and-visual-review-passed-with-source-caveats",
-    "owner": "pending-all-five-new-candidates",
+    "owner": "delegated-art-choice-satisfied-for-4-selected-candidates",
     "runtime": "not-qualified",
     "release": "not-selected"
   },
@@ -168,5 +168,14 @@
     "Generated originals are preserved without modification.",
     "The contact sheet labels and background are review presentation only. It pastes workflow and outfit WebPs at their native review dimensions.",
     "No GitHub mutation, browser operation, application integration or heavy CI was performed."
-  ]
+  ],
+  "art_selection_update": {
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "previous_art_and_owner_gates": {
+      "art": "four-recommended-for-owner-review-one-superseded-review-alternative",
+      "owner": "pending-all-five-new-candidates"
+    },
+    "scope": "Later art decision only; frozen archive contents, source, rendition, runtime and release gates are unchanged."
+  }
 }

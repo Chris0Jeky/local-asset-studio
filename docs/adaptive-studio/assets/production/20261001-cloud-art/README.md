@@ -1,5 +1,7 @@
 # Cloud-generated art candidate evidence, 2026-10-01 session
 
+**Current art decision, 2 October 2026:** [The selection record](../20261002-art-selection/README.md) supersedes earlier pending-owner wording for the selected candidates. The two prior anchor approvals remain direct-owner decisions; new choices are accepted under owner-delegated assistant art judgment. Alternatives stay unselected. Source/license, runtime and release gates are unchanged. Historical QA findings and frozen attachment archives are preserved.
+
 This directory contains text-only evidence for 14 generated candidates across seven Local Asset Studio asset IDs. It records review preparation and provenance. It does not assemble or qualify a runtime asset pack, accept artwork, or select a release asset.
 
 ## Source and delivery
@@ -24,7 +26,7 @@ All `inbox/`, `review-renditions/` and `review-contact-sheet.jpg` paths in deliv
 - [Review notes](REVIEW.md), [original inventory](inventory.json) and [review rendition manifest](rendition-manifest.json) record checks and remaining deviations
 - Eight WebP review renditions passed decode, hash, dimension and byte-budget checks. Workflow3 is 600×450; reference long edges are 320px. No crop or upscale was applied
 - Model build, seed, provider timestamps and uncaptured source/terms evidence remain unknown
-- On 2026-10-02 at 09:27 UTC, the owner accepted workflow-create candidate 3 and reference-identity candidate 3 as the style and character anchors. Other candidates remain pending owner review; runtime review remains `not-qualified` and release selection remains `not-selected`
+- On 2026-10-02 at 09:27 UTC, the owner accepted workflow-create candidate 3 and reference-identity candidate 3 as the style and character anchors. Five additional candidates in this batch were later selected under owner delegation on 2 October 2026; seven alternatives remain unselected. Runtime review remains `not-qualified` and release selection remains `not-selected`
 - The accepted workflow3 and identity3 anchors now support dependent production in [Wave 2](../20261002-wave2/DELIVERY.md) and [Wave 3](../20261002-wave3/DELIVERY.md). Composition2 is the clearer thumbnail comparison; neither composition2 nor composition3 meets the exact one-third horizon target
 
 ## CI status

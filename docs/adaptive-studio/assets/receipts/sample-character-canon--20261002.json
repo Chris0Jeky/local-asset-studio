@@ -1,0 +1,645 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "sample-character-canon",
+  "brief_revision": "catalog sample row + production/20261002-samples/profile-evidence.json",
+  "production": {
+    "method": "reference-conditioned generation",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen",
+    "reported_model": null,
+    "reported_seed": null,
+    "provider_job_id": null,
+    "output_id": "exec-19ec7c8d-0f12-4b90-a2b9-7d3f25f3aada",
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-samples/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "sample_character_canon",
+      "text": "Create a full-body character-canon source asset with a genuine transparent background. Image1 is the accepted original adult explorer identity; image2 is her selected outfit on a dress form. Draw that SAME woman, clearly in her early thirties, wearing that olive field jacket with high collar over a dark tank top, practical brown belt/pouches, sturdy trousers, lace-up boots and canvas shoulder satchel. Keep her short asymmetric dark-teal bob, one silver streak at HER LEFT temple, amber eyes and small scar through HER LEFT eyebrow.\nNeutral relaxed standing pose facing the viewer in slight three-quarter turn; arms relaxed slightly away from body so both hands and the outer silhouette are legible; adult natural proportions. Full head-to-toe, feet and hair entirely inside a 2:3 portrait canvas with margins. Clean contemporary anime drawing, precise hands and boots, painterly soft shading, soft even frontal light. Character only, isolated alpha; no floor, shadow puddle, border, stand, mannequin, text, lettering, watermark, logo, UI or extra person. This is an original illustrative input asset, not a demonstration of a local model.",
+      "sha256": "b8a9298a12293d2cf19b335b7942fc2dff18e65d0ade5f10b3ccc70ecae95534",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline"
+    },
+    "input_anchors": [
+      {
+        "asset_role": "identity",
+        "relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+        "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+        "bytes": 1889270,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "asset_role": "clothing_reference",
+        "relative_path": "inputs/reference-outfit--1024x1536--candidate-1.png",
+        "sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+        "bytes": 1746036,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "input_evidence": {
+      "status": "confirmed",
+      "evidence": "Root confirmed these exact source files were supplied to all four generation calls in the 2026-10-02 sample-preparation conversation. This records source-input identity only, not source/license clearance."
+    }
+  },
+  "upstream_generation_records": [],
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+      "sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+      "bytes": 110009,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "mode": "RGBA",
+      "alpha": true,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "contact-sheets/sample-character-canon.jpg",
+      "sha256": "6099e7a526d2081d0f31ef465d95a85a52893195de997c736d430dd530d93694",
+      "bytes": 201874,
+      "width": 1232,
+      "height": 692,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+      "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+      "bytes": 1889270,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "inputs/reference-outfit--1024x1536--candidate-1.png",
+      "sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+      "bytes": 1746036,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+      "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+      "bytes": 1673341,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "mode": "RGBA",
+      "alpha": true,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "qa/sample-character-canon--1024x1536--candidate-1--alpha-check.jpg",
+      "sha256": "45a79b4e61fe838ecd9077ac44d1ee4814f1e9e9edf72c9d264471a77628e37d",
+      "bytes": 204965,
+      "width": 1040,
+      "height": 830,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "thumbnails/reference-identity--1024x1536--candidate-3--longedge320.webp",
+      "sha256": "a45e54c75f5231f59cfb157a69e0854d8dfb59915e051dcf079257235b9f19fe",
+      "bytes": 10952,
+      "width": 213,
+      "height": 320,
+      "format": "webp",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "thumbnails/reference-outfit--1024x1536--candidate-1--longedge320.webp",
+      "sha256": "ab8183c20c1d5284d18868171c909eda4d3df27b305b7aaf68b2ef2b3dad2b6d",
+      "bytes": 5560,
+      "width": 213,
+      "height": 320,
+      "format": "webp",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "thumbnails/sample-character-canon--1024x1536--candidate-1--longedge320.webp",
+      "sha256": "f64eb09cd0dc9ac110e1e4b8d11b06baaa02dc109f27339c16ffac62c33c88f7",
+      "bytes": 14780,
+      "width": 213,
+      "height": 320,
+      "format": "webp",
+      "mode": "RGBA",
+      "alpha": true,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "thumbnails/sample-character-canon--silhouette--1024x1536--longedge320.webp",
+      "sha256": "2dd88d57a711a3231dde2b6604241fd77050a0f3b079974f88d5eaa16f004946",
+      "bytes": 6600,
+      "width": 213,
+      "height": 320,
+      "format": "webp",
+      "mode": "RGBA",
+      "alpha": true,
+      "duration_seconds": null,
+      "codec": null
+    }
+  ],
+  "source_roles": [
+    {
+      "role": "identity_portrait",
+      "label": "Selected adult explorer identity portrait",
+      "source_key": "portrait",
+      "file": {
+        "relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+        "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+        "bytes": 1889270,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "thumbnail": {
+        "relative_path": "thumbnails/reference-identity--1024x1536--candidate-3--longedge320.webp",
+        "sha256": "a45e54c75f5231f59cfb157a69e0854d8dfb59915e051dcf079257235b9f19fe",
+        "bytes": 10952,
+        "width": 213,
+        "height": 320,
+        "format": "webp",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "intended_use": "Separate selectable source input/component",
+      "target_1024px_note": "actual size retained; no upscale"
+    },
+    {
+      "role": "identity_full_body",
+      "label": "New illustrative full-body canon, olive outfit",
+      "source_key": "canon",
+      "file": {
+        "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+        "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+        "bytes": 1673341,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "thumbnail": {
+        "relative_path": "thumbnails/sample-character-canon--1024x1536--candidate-1--longedge320.webp",
+        "sha256": "f64eb09cd0dc9ac110e1e4b8d11b06baaa02dc109f27339c16ffac62c33c88f7",
+        "bytes": 14780,
+        "width": 213,
+        "height": 320,
+        "format": "webp",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "intended_use": "Separate selectable source input/component",
+      "target_1024px_note": "actual size retained; no upscale"
+    },
+    {
+      "role": "silhouette",
+      "label": "Exact-alpha black silhouette derived from full-body canon",
+      "source_key": "silhouette",
+      "file": {
+        "relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+        "sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+        "bytes": 110009,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "thumbnail": {
+        "relative_path": "thumbnails/sample-character-canon--silhouette--1024x1536--longedge320.webp",
+        "sha256": "2dd88d57a711a3231dde2b6604241fd77050a0f3b079974f88d5eaa16f004946",
+        "bytes": 6600,
+        "width": 213,
+        "height": 320,
+        "format": "webp",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "intended_use": "Separate selectable source input/component",
+      "target_1024px_note": "actual size retained; no upscale"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "Set RGB to (0,0,0); copy exact alpha channel byte-for-byte",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+      "input_sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+      "output_relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+      "output_sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+      "from_dimensions": [
+        1024,
+        1536
+      ],
+      "to_dimensions": [
+        1024,
+        1536
+      ],
+      "upscale": false,
+      "alpha_normalized": false,
+      "alpha_threshold": null,
+      "crop": false,
+      "resampling": null
+    },
+    {
+      "operation": "Lazy/review thumbnail downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+      "input_sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+      "output_relative_path": "thumbnails/sample-character-canon--silhouette--1024x1536--longedge320.webp",
+      "output_sha256": "2dd88d57a711a3231dde2b6604241fd77050a0f3b079974f88d5eaa16f004946",
+      "from_dimensions": [
+        1024,
+        1536
+      ],
+      "to_dimensions": [
+        213,
+        320
+      ],
+      "upscale": false,
+      "resampling": "Lanczos",
+      "crop": false,
+      "aspect_ratio": "Preserved to nearest integer dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false,
+        "exact": true
+      },
+      "byte_budget_inclusive": 61440,
+      "metadata": "No EXIF/ICC copied",
+      "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+    },
+    {
+      "operation": "Lazy/review thumbnail downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+      "input_sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+      "output_relative_path": "thumbnails/reference-identity--1024x1536--candidate-3--longedge320.webp",
+      "output_sha256": "a45e54c75f5231f59cfb157a69e0854d8dfb59915e051dcf079257235b9f19fe",
+      "from_dimensions": [
+        1024,
+        1536
+      ],
+      "to_dimensions": [
+        213,
+        320
+      ],
+      "upscale": false,
+      "resampling": "Lanczos",
+      "crop": false,
+      "aspect_ratio": "Preserved to nearest integer dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false,
+        "exact": true
+      },
+      "byte_budget_inclusive": 61440,
+      "metadata": "No EXIF/ICC copied",
+      "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+    },
+    {
+      "operation": "Lazy/review thumbnail downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "inputs/reference-outfit--1024x1536--candidate-1.png",
+      "input_sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+      "output_relative_path": "thumbnails/reference-outfit--1024x1536--candidate-1--longedge320.webp",
+      "output_sha256": "ab8183c20c1d5284d18868171c909eda4d3df27b305b7aaf68b2ef2b3dad2b6d",
+      "from_dimensions": [
+        1024,
+        1536
+      ],
+      "to_dimensions": [
+        213,
+        320
+      ],
+      "upscale": false,
+      "resampling": "Lanczos",
+      "crop": false,
+      "aspect_ratio": "Preserved to nearest integer dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false,
+        "exact": true
+      },
+      "byte_budget_inclusive": 61440,
+      "metadata": "No EXIF/ICC copied",
+      "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+    },
+    {
+      "operation": "Lazy/review thumbnail downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+      "input_sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+      "output_relative_path": "thumbnails/sample-character-canon--1024x1536--candidate-1--longedge320.webp",
+      "output_sha256": "f64eb09cd0dc9ac110e1e4b8d11b06baaa02dc109f27339c16ffac62c33c88f7",
+      "from_dimensions": [
+        1024,
+        1536
+      ],
+      "to_dimensions": [
+        213,
+        320
+      ],
+      "upscale": false,
+      "resampling": "Lanczos",
+      "crop": false,
+      "aspect_ratio": "Preserved to nearest integer dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false,
+        "exact": true
+      },
+      "byte_budget_inclusive": 61440,
+      "metadata": "No EXIF/ICC copied",
+      "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+    }
+  ],
+  "art_review": {
+    "status": "reviewed-with-limitations",
+    "reviewer": "dot independent sample-preparation review",
+    "recommendation": "usable illustrative source set with disclosed limitations",
+    "findings": [
+      "Full body and all limbs remain inside 1024x1536 canvas; facial hair/eye/scar features follow the selected portrait closely, subject to illustration-level variation.",
+      "Both feet are fully visible but the rightmost boot has only about 15px bottom clearance in the source.",
+      "Real alpha is present; maximum alpha 254 and interior mostly 253 leaves slight global translucency and faint low-alpha fringe. Exact alpha is deliberately retained in silhouette."
+    ]
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated root art selector)",
+    "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "evidence": "production/20261002-samples/VALIDATION.json",
+    "checks": [
+      {
+        "check": "actual files match recorded SHA-256, byte count, dimensions and encoding",
+        "pass": true
+      },
+      {
+        "check": "thumbnails at most 320px and at most 60 KiB, no upscale",
+        "pass": true
+      },
+      {
+        "check": "crop and silhouette derivatives reproduce exact source pixels/alpha",
+        "pass": true
+      }
+    ],
+    "scope": "Offline technical checks only; separate rendition acceptance unchanged"
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "caption": "Illustrative adult character canon: portrait, full-body source and exact-alpha silhouette. Not a measured consistency result.",
+  "limitations": [
+    "Full body and all limbs remain inside 1024x1536 canvas; facial hair/eye/scar features follow the selected portrait closely, subject to illustration-level variation.",
+    "Both feet are fully visible but the rightmost boot has only about 15px bottom clearance in the source.",
+    "Real alpha is present; maximum alpha 254 and interior mostly 253 leaves slight global translucency and faint low-alpha fringe. Exact alpha is deliberately retained in silhouette."
+  ],
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments only; binary files are not committed",
+    "archive_relative_path_base": "Root after extracting all delivery parts together",
+    "text_path_base": "docs/adaptive-studio/assets"
+  },
+  "unknowns": [
+    "Model build, seed, provider job ID and generation timestamps were not exposed; null values are deliberate.",
+    "Local filesystem time is not evidence of generation time.",
+    "Source/license terms have not been independently reviewed; no clearance is asserted.",
+    "No local model execution, measured capability, runtime/device qualification or release selection is established."
+  ],
+  "review_composites": [
+    {
+      "kind": "per-sample review contact sheet",
+      "purpose": "Review presentation only; never an independent source component or runtime evidence",
+      "output": {
+        "relative_path": "contact-sheets/sample-character-canon.jpg",
+        "sha256": "6099e7a526d2081d0f31ef465d95a85a52893195de997c736d430dd530d93694",
+        "bytes": 201874,
+        "width": 1232,
+        "height": 692,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "inputs": [
+        {
+          "relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+          "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+          "bytes": 1889270,
+          "width": 1024,
+          "height": 1536,
+          "format": "png",
+          "mode": "RGB",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null
+        },
+        {
+          "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+          "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+          "bytes": 1673341,
+          "width": 1024,
+          "height": 1536,
+          "format": "png",
+          "mode": "RGBA",
+          "alpha": true,
+          "duration_seconds": null,
+          "codec": null
+        },
+        {
+          "relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+          "sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+          "bytes": 110009,
+          "width": 1024,
+          "height": 1536,
+          "format": "png",
+          "mode": "RGBA",
+          "alpha": true,
+          "duration_seconds": null,
+          "codec": null
+        }
+      ],
+      "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+      "checker": {
+        "cell_size_in_source_pixels": 32,
+        "colors_rgb": [
+          [
+            245,
+            245,
+            245
+          ],
+          [
+            204,
+            208,
+            214
+          ]
+        ]
+      },
+      "encoder": {
+        "format": "JPEG",
+        "quality": 90,
+        "subsampling": 0
+      },
+      "exact_layout_source": {
+        "relative_path": "production/20261002-samples/build_samples.py",
+        "relative_path_base": "docs/adaptive-studio/assets",
+        "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+      },
+      "source_function": "make_contact"
+    },
+    {
+      "kind": "alpha visual QA comparison",
+      "purpose": "View original alpha over two backdrops without changing the source",
+      "output": {
+        "relative_path": "qa/sample-character-canon--1024x1536--candidate-1--alpha-check.jpg",
+        "sha256": "45a79b4e61fe838ecd9077ac44d1ee4814f1e9e9edf72c9d264471a77628e37d",
+        "bytes": 204965,
+        "width": 1040,
+        "height": 830,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "inputs": [
+        {
+          "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+          "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+          "bytes": 1673341,
+          "width": 1024,
+          "height": 1536,
+          "format": "png",
+          "mode": "RGBA",
+          "alpha": true,
+          "duration_seconds": null,
+          "codec": null
+        }
+      ],
+      "method": "Alpha-composite original RGBA over full-size light and dark checkerboards; downscale each to 512x768; place side-by-side with labels on 1040x830 RGB canvas",
+      "checker": {
+        "cell_size_in_source_pixels": 32,
+        "light_colors_rgb": [
+          [
+            245,
+            245,
+            245
+          ],
+          [
+            204,
+            208,
+            214
+          ]
+        ],
+        "dark_colors_rgb": [
+          [
+            26,
+            31,
+            42
+          ],
+          [
+            64,
+            72,
+            88
+          ]
+        ]
+      },
+      "encoder": {
+        "format": "JPEG",
+        "quality": 92,
+        "subsampling": 0
+      },
+      "exact_layout_source": {
+        "relative_path": "production/20261002-samples/build_samples.py",
+        "relative_path_base": "docs/adaptive-studio/assets",
+        "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+      },
+      "source_functions": [
+        "checker",
+        "flatten",
+        "QA_ALPHA build loop"
+      ]
+    }
+  ]
+}

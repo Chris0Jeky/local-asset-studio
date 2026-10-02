@@ -1,6 +1,8 @@
 # Wave 3 delivery
 
-Fifteen candidates for twelve workflow IDs, including three retained originals and their refinements. All new candidates remain owner-review pending, runtime-unqualified and not selected for release.
+**Current art decision, 2 October 2026:** [The selection record](../20261002-art-selection/README.md) supersedes earlier pending-owner wording for the selected candidates. The two prior anchor approvals remain direct-owner decisions; new choices are accepted under owner-delegated assistant art judgment. Alternatives stay unselected. Source/license, runtime and release gates are unchanged. Historical QA findings and frozen attachment archives are preserved.
+
+Fifteen candidates for twelve workflow IDs, including three retained originals and their refinements. Twelve candidates are now art-accepted under owner delegation and three alternatives remain unselected. All remain runtime-unqualified and not selected for release.
 
 - [Delivery contents, extraction instructions and QA boundaries](README-QA.md)
 - [Candidate-by-candidate visual review](REVIEW.md)
@@ -8,7 +10,7 @@ Fifteen candidates for twelve workflow IDs, including three retained originals a
 - [Exact generation and refinement prompts](generation-prompts.json)
 - [Accepted input anchor scope](input-anchors.json)
 
-Recommended review set: candidate 2 for workflow-sheet, workflow-upscale and workflow-repair; candidate 1 for each other workflow ID in this batch. Originals, review WebPs and contact sheets are PR attachment binaries; only ordinary provenance and QA text is repository source.
+Art-selected set: candidate 2 for workflow-sheet, workflow-upscale and workflow-repair; candidate 1 for each other workflow ID in this batch. Originals, review WebPs and contact sheets are PR attachment binaries; only ordinary provenance and QA text is repository source.
 
 ## Published delivery
 

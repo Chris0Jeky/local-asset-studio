@@ -1,6 +1,8 @@
 # Local Asset Studio: generated candidate review
 
-Prepared locally on 2026-10-02 UTC. This package contains 14 unaltered generated PNG candidates for seven asset IDs, 14 provenance receipts, eight small WebP review renditions, and a contact sheet. No artwork is accepted, runtime-qualified, or selected for release. Catalog and profile files were not changed.
+**Current art decision, 2 October 2026:** [The selection record](../20261002-art-selection/README.md) supersedes earlier pending-owner wording for the selected candidates. The two prior anchor approvals remain direct-owner decisions; new choices are accepted under owner-delegated assistant art judgment. Alternatives stay unselected. Source/license, runtime and release gates are unchanged. Historical QA findings and frozen attachment archives are preserved.
+
+Prepared locally on 2026-10-02 UTC. This package contains 14 unaltered generated PNG candidates for seven asset IDs, 14 provenance receipts, eight small WebP review renditions, and a contact sheet. At original package preparation no artwork was accepted, runtime-qualified, or selected for release; the later art decisions are recorded above. Catalog and profile files were not changed.
 
 ## Repository placement and attachment base
 
@@ -12,17 +14,17 @@ Metadata lives at `docs/adaptive-studio/assets/production/20261001-cloud-art/`, 
 
 Open `review-contact-sheet.jpg`, then compare any full PNG in `inbox/`. The contact sheet is a labeled, padded review montage. Its composition slot shows candidate 2 for clearer thumbnail-scale readability; the latest candidate 3 and its WebP are also included.
 
-Suggested candidates to review:
+Originally suggested candidates; this seven-candidate set is now art-selected:
 
 - `workflow-create` candidate 3: the blank standing frame, star and single cyan folio retain a calm caption area
-- `reference-identity` candidate 3: anime-rendered adult explorer with teal hair, silver streak and olive jacket; proposed character anchor, awaiting owner acceptance
+- `reference-identity` candidate 3: anime-rendered adult explorer with teal hair, silver streak and olive jacket; character anchor directly accepted by the owner at 09:27 UTC on 2 October 2026
 - `reference-pose` candidate 1: readable asymmetrical mannequin with visible hands and feet; crossed-leg geometry is approximate, and this is not a skeleton-accuracy claim
 - `reference-style` candidate 1: detailed ink hillside street study with linework, wires, bridge and tower; more elaborate than a simple street-corner study
 - `reference-composition` candidate 2: larger, clearly separated masses read more strongly at 320px; horizon is approximately 39% from the top. Candidate 3 moves it to approximately 27% and reduces apparent mass sizes. Neither is exactly one-third. Both refinement rounds are exhausted; no exact compliance is claimed
 - `reference-lighting` candidate 2: clearer hard-edged cast shadow from upper-left light; the neutral plaster face remains a generated study, with no independent originality or identity audit
 - `reference-background` candidate 1: empty platform with usable foreground; main perspective lines enter from the lower right rather than the requested lower left
 
-These are preparation observations, not owner art acceptance. The proposed workflow and character anchors still need the owner's decision before dependent anchored production.
+These preparation observations remain unchanged. The owner subsequently accepted the two anchors directly; five further choices were accepted under the later delegated art selection. No new owner art-choice round is pending for these seven selections.
 
 ## Provenance
 
@@ -41,7 +43,7 @@ The generation session was observed between 2026-10-01 23:38 UTC and 2026-10-02 
 - Pillow Lanczos downscale and WebP quality 85/method 6; no crop, upscale or content edit
 - Original PNGs are untouched; no EXIF or ICC metadata is copied to review WebPs
 - `rendition-manifest.json` records dimensions, byte counts, hashes, contact-sheet choices and its montage treatment
-- Technical checks are recorded separately from owner `art_review`; its status remains `not-reviewed`
+- Technical checks are recorded separately from `art_review`; frozen archive receipts retain the original review state, while current repository receipts record the subsequent art acceptance
 
 These are review derivatives, not runtime artifacts. Runtime/device checks have not been performed, and release selection remains `not-selected`.
 

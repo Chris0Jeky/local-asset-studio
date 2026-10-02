@@ -1,0 +1,389 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "sample-composition-pair",
+  "brief_revision": "catalog sample row + production/20261002-samples/profile-evidence.json",
+  "production": {
+    "method": "curation and deterministic crop",
+    "provider": null,
+    "tool_action": "Local file curation with Pillow deterministic derivatives",
+    "reported_model": null,
+    "reported_seed": null,
+    "provider_job_id": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": [
+      {
+        "asset_role": "wide_source",
+        "relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+        "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+        "bytes": 1442857,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ]
+  },
+  "upstream_generation_records": [],
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+      "sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+      "bytes": 943587,
+      "width": 1024,
+      "height": 1024,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "contact-sheets/sample-composition-pair.jpg",
+      "sha256": "c81d7f07562efbf48cc3d7092c83bb1b912e0fc9fc547f5c78ff99d23fe547ce",
+      "bytes": 52002,
+      "width": 832,
+      "height": 552,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+      "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+      "bytes": 1442857,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "thumbnails/reference-composition--1254x1254--candidate-2--longedge320.webp",
+      "sha256": "08e4d033ea462fab7f04daa82ea87e359895d5b979f2022cf7ae064120a008a4",
+      "bytes": 2292,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "thumbnails/sample-composition-pair--crop--1024x1024--longedge320.webp",
+      "sha256": "ab265bbb5dc3cd5380f86a53399e1597e726bcdac4ece27b74b2b8671ed6e2c6",
+      "bytes": 2322,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    }
+  ],
+  "source_roles": [
+    {
+      "role": "wide_source",
+      "label": "Selected three-mass composition source",
+      "source_key": "composition",
+      "file": {
+        "relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+        "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+        "bytes": 1442857,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "thumbnail": {
+        "relative_path": "thumbnails/reference-composition--1254x1254--candidate-2--longedge320.webp",
+        "sha256": "08e4d033ea462fab7f04daa82ea87e359895d5b979f2022cf7ae064120a008a4",
+        "bytes": 2292,
+        "width": 320,
+        "height": 320,
+        "format": "webp",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "intended_use": "Separate selectable source input/component",
+      "target_1024px_note": "actual size retained; no upscale"
+    },
+    {
+      "role": "tight_crop",
+      "label": "1024px close crop retaining all three masses",
+      "source_key": "composition_crop",
+      "file": {
+        "relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+        "sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+        "bytes": 943587,
+        "width": 1024,
+        "height": 1024,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "thumbnail": {
+        "relative_path": "thumbnails/sample-composition-pair--crop--1024x1024--longedge320.webp",
+        "sha256": "ab265bbb5dc3cd5380f86a53399e1597e726bcdac4ece27b74b2b8671ed6e2c6",
+        "bytes": 2322,
+        "width": 320,
+        "height": 320,
+        "format": "webp",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "intended_use": "Separate selectable source input/component",
+      "target_1024px_note": "actual size retained; no upscale"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "Deterministic pixel crop only",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+      "input_sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+      "output_relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+      "output_sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+      "from_dimensions": [
+        1254,
+        1254
+      ],
+      "to_dimensions": [
+        1024,
+        1024
+      ],
+      "upscale": false,
+      "crop_box": [
+        170,
+        125,
+        1194,
+        1149
+      ],
+      "coordinate_convention": "[left, top, right, bottom), origin upper-left; right/bottom exclusive",
+      "resampling": null,
+      "claim": "Tighter camera framing by crop; no regenerated viewpoint or model test"
+    },
+    {
+      "operation": "Lazy/review thumbnail downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+      "input_sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+      "output_relative_path": "thumbnails/sample-composition-pair--crop--1024x1024--longedge320.webp",
+      "output_sha256": "ab265bbb5dc3cd5380f86a53399e1597e726bcdac4ece27b74b2b8671ed6e2c6",
+      "from_dimensions": [
+        1024,
+        1024
+      ],
+      "to_dimensions": [
+        320,
+        320
+      ],
+      "upscale": false,
+      "resampling": "Lanczos",
+      "crop": false,
+      "aspect_ratio": "Preserved to nearest integer dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false,
+        "exact": true
+      },
+      "byte_budget_inclusive": 61440,
+      "metadata": "No EXIF/ICC copied",
+      "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+    },
+    {
+      "operation": "Lazy/review thumbnail downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+      "input_sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+      "output_relative_path": "thumbnails/reference-composition--1254x1254--candidate-2--longedge320.webp",
+      "output_sha256": "08e4d033ea462fab7f04daa82ea87e359895d5b979f2022cf7ae064120a008a4",
+      "from_dimensions": [
+        1254,
+        1254
+      ],
+      "to_dimensions": [
+        320,
+        320
+      ],
+      "upscale": false,
+      "resampling": "Lanczos",
+      "crop": false,
+      "aspect_ratio": "Preserved to nearest integer dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false,
+        "exact": true
+      },
+      "byte_budget_inclusive": 61440,
+      "metadata": "No EXIF/ICC copied",
+      "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+    }
+  ],
+  "art_review": {
+    "status": "reviewed-with-limitations",
+    "reviewer": "dot independent sample-preparation review",
+    "recommendation": "recommended deliberate close crop preserving all three masses",
+    "findings": [
+      "Chosen crop [170,125,1194,1149) is pixel-exact at 1024x1024; it replaced the initial proposed 800px crop after visual comparison.",
+      "A useful amount of the dominant block, the complete middle cube and the distant slab remain; the left edge deliberately clips the foreground block. The 800px proposal left only a narrow strip and was rejected for weaker balance.",
+      "The 1024px square target is met by existing source pixels without upscaling. No parallax, camera movement, regenerated viewpoint or measured model ability is implied."
+    ]
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated root art selector)",
+    "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "evidence": "production/20261002-samples/VALIDATION.json",
+    "checks": [
+      {
+        "check": "actual files match recorded SHA-256, byte count, dimensions and encoding",
+        "pass": true
+      },
+      {
+        "check": "thumbnails at most 320px and at most 60 KiB, no upscale",
+        "pass": true
+      },
+      {
+        "check": "crop and silhouette derivatives reproduce exact source pixels/alpha",
+        "pass": true
+      }
+    ],
+    "scope": "Offline technical checks only; separate rendition acceptance unchanged"
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "caption": "One source and a deterministic tighter crop. The view was cropped, not regenerated or moved in 3D.",
+  "limitations": [
+    "Chosen crop [170,125,1194,1149) is pixel-exact at 1024x1024; it replaced the initial proposed 800px crop after visual comparison.",
+    "A useful amount of the dominant block, the complete middle cube and the distant slab remain; the left edge deliberately clips the foreground block. The 800px proposal left only a narrow strip and was rejected for weaker balance.",
+    "The 1024px square target is met by existing source pixels without upscaling. No parallax, camera movement, regenerated viewpoint or measured model ability is implied."
+  ],
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments only; binary files are not committed",
+    "archive_relative_path_base": "Root after extracting all delivery parts together",
+    "text_path_base": "docs/adaptive-studio/assets"
+  },
+  "unknowns": [
+    "Model build, seed, provider job ID and generation timestamps were not exposed; null values are deliberate.",
+    "Local filesystem time is not evidence of generation time.",
+    "Source/license terms have not been independently reviewed; no clearance is asserted.",
+    "No local model execution, measured capability, runtime/device qualification or release selection is established."
+  ],
+  "review_composites": [
+    {
+      "kind": "per-sample review contact sheet",
+      "purpose": "Review presentation only; never an independent source component or runtime evidence",
+      "output": {
+        "relative_path": "contact-sheets/sample-composition-pair.jpg",
+        "sha256": "c81d7f07562efbf48cc3d7092c83bb1b912e0fc9fc547f5c78ff99d23fe547ce",
+        "bytes": 52002,
+        "width": 832,
+        "height": 552,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "inputs": [
+        {
+          "relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+          "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+          "bytes": 1442857,
+          "width": 1254,
+          "height": 1254,
+          "format": "png",
+          "mode": "RGB",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null
+        },
+        {
+          "relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+          "sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+          "bytes": 943587,
+          "width": 1024,
+          "height": 1024,
+          "format": "png",
+          "mode": "RGB",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null
+        }
+      ],
+      "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+      "checker": {
+        "cell_size_in_source_pixels": 32,
+        "colors_rgb": [
+          [
+            245,
+            245,
+            245
+          ],
+          [
+            204,
+            208,
+            214
+          ]
+        ]
+      },
+      "encoder": {
+        "format": "JPEG",
+        "quality": 90,
+        "subsampling": 0
+      },
+      "exact_layout_source": {
+        "relative_path": "production/20261002-samples/build_samples.py",
+        "relative_path_base": "docs/adaptive-studio/assets",
+        "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+      },
+      "source_function": "make_contact"
+    }
+  ]
+}

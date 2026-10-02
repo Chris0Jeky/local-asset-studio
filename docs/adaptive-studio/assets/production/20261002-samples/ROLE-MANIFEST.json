@@ -1,0 +1,936 @@
+{
+  "schema": "studio.controlled-samples.manifest/v1-proposed",
+  "scope": "Six illustrative source sets; no actual model route execution receipt",
+  "included_sample_ids": [
+    "sample-character-canon",
+    "sample-pose-pair",
+    "sample-outfit-study",
+    "sample-lighting-pair",
+    "sample-composition-pair",
+    "sample-sequence-strip"
+  ],
+  "excluded": [
+    {
+      "asset_id": "sample-repair-pair",
+      "reason": "Deferred; requires actual repair route execution evidence. Concept artwork is not such evidence."
+    }
+  ],
+  "binary_path_base": "Root after extracting all delivery parts together; all image paths are attachment-only, not committed to Git",
+  "repo_text_path_base": "Repository root",
+  "profile_evidence": {
+    "source_url": "https://github.com/Chris0Jeky/local-asset-studio/blob/main/docs/adaptive-studio/assets/profiles.json",
+    "git_blob_sha": "bffc3557cb2f42f4121ba3994b536fe8f04d2365",
+    "profile": {
+      "master": "Original public-safe controlled sample set; target 1024px images with documented shared anchors.",
+      "deliverables": [
+        "Source masters and thumbnails",
+        "Manifest of roles and intended comparisons",
+        "Example-only captions and any actual execution receipts separately"
+      ],
+      "safe_zone": "Original adult characters where present; no copyrighted franchise, private input or implied model qualification.",
+      "fallback": "Text/diagram explaining the workflow.",
+      "budget": "Lazy thumbnails <=60 KiB each; masters outside app bundle.",
+      "motion": "Stills unless the individual request explicitly asks for a recorded sequence."
+    }
+  },
+  "source_gates": {
+    "source_terms": "not-reviewed",
+    "runtime": "not-qualified",
+    "release": "not-selected"
+  },
+  "samples": [
+    {
+      "asset_id": "sample-character-canon",
+      "caption": "Illustrative adult character canon: portrait, full-body source and exact-alpha silhouette. Not a measured consistency result.",
+      "comparison": [
+        {
+          "role": "identity_portrait",
+          "label": "Selected adult explorer identity portrait",
+          "source_key": "portrait",
+          "file": {
+            "relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+            "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+            "bytes": 1889270,
+            "width": 1024,
+            "height": 1536,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/reference-identity--1024x1536--candidate-3--longedge320.webp",
+            "sha256": "a45e54c75f5231f59cfb157a69e0854d8dfb59915e051dcf079257235b9f19fe",
+            "bytes": 10952,
+            "width": 213,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "identity_full_body",
+          "label": "New illustrative full-body canon, olive outfit",
+          "source_key": "canon",
+          "file": {
+            "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+            "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+            "bytes": 1673341,
+            "width": 1024,
+            "height": 1536,
+            "format": "png",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-character-canon--1024x1536--candidate-1--longedge320.webp",
+            "sha256": "f64eb09cd0dc9ac110e1e4b8d11b06baaa02dc109f27339c16ffac62c33c88f7",
+            "bytes": 14780,
+            "width": 213,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "silhouette",
+          "label": "Exact-alpha black silhouette derived from full-body canon",
+          "source_key": "silhouette",
+          "file": {
+            "relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+            "sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+            "bytes": 110009,
+            "width": 1024,
+            "height": 1536,
+            "format": "png",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-character-canon--silhouette--1024x1536--longedge320.webp",
+            "sha256": "2dd88d57a711a3231dde2b6604241fd77050a0f3b079974f88d5eaa16f004946",
+            "bytes": 6600,
+            "width": 213,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        }
+      ],
+      "contact_sheet": {
+        "relative_path": "contact-sheets/sample-character-canon.jpg",
+        "sha256": "6099e7a526d2081d0f31ef465d95a85a52893195de997c736d430dd530d93694",
+        "bytes": 201874,
+        "width": 1232,
+        "height": 692,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "visual_qa": {
+        "status": "reviewed-with-limitations",
+        "reviewer": "dot independent sample-preparation review",
+        "recommendation": "usable illustrative source set with disclosed limitations",
+        "findings": [
+          "Full body and all limbs remain inside 1024x1536 canvas; facial hair/eye/scar features follow the selected portrait closely, subject to illustration-level variation.",
+          "Both feet are fully visible but the rightmost boot has only about 15px bottom clearance in the source.",
+          "Real alpha is present; maximum alpha 254 and interior mostly 253 leaves slight global translucency and faint low-alpha fringe. Exact alpha is deliberately retained in silhouette."
+        ]
+      },
+      "art_selection": {
+        "status": "selected",
+        "selected_by": "dot (owner-delegated root art selector)",
+        "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+        "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+      },
+      "rendition_review": {
+        "status": "not-reviewed",
+        "technical_status": "mechanical-checks-passed",
+        "evidence": "production/20261002-samples/VALIDATION.json",
+        "scope": "File/decode/dimension/byte-budget/exact-derivative checks only; separate rendition acceptance unchanged"
+      },
+      "runtime_review": {
+        "status": "not-qualified"
+      },
+      "release_selection": {
+        "status": "not-selected"
+      },
+      "alpha_qa": [
+        {
+          "statistics": {
+            "source_relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+            "minimum": 0,
+            "maximum": 254,
+            "bbox_any_alpha": [
+              65,
+              14,
+              1010,
+              1521
+            ],
+            "exact_counts": {
+              "0": 1089922,
+              "1": 9138,
+              "127": 54,
+              "128": 49,
+              "200": 60,
+              "253": 383088,
+              "254": 3129,
+              "255": 0
+            },
+            "zero_alpha_fraction": 0.6929537455240885,
+            "border_alpha_maximum": 0,
+            "note": "Real transparent background; subject interior predominantly alpha 253/255, no fully opaque pixels. Low-alpha fringe retained without cleanup or normalization."
+          },
+          "comparison_view": {
+            "relative_path": "qa/sample-character-canon--1024x1536--candidate-1--alpha-check.jpg",
+            "sha256": "45a79b4e61fe838ecd9077ac44d1ee4814f1e9e9edf72c9d264471a77628e37d",
+            "bytes": 204965,
+            "width": 1040,
+            "height": 830,
+            "format": "jpeg",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "sample-pose-pair",
+      "caption": "Two separate example inputs: identity and mannequin pose. No pose-transfer output or model execution is shown.",
+      "comparison": [
+        {
+          "role": "identity_source",
+          "label": "Adult explorer full-body identity input",
+          "source_key": "canon",
+          "file": {
+            "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+            "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+            "bytes": 1673341,
+            "width": 1024,
+            "height": 1536,
+            "format": "png",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-character-canon--1024x1536--candidate-1--longedge320.webp",
+            "sha256": "f64eb09cd0dc9ac110e1e4b8d11b06baaa02dc109f27339c16ffac62c33c88f7",
+            "bytes": 14780,
+            "width": 213,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "pose_reference",
+          "label": "Separate jointed mannequin geometry input",
+          "source_key": "pose",
+          "file": {
+            "relative_path": "inputs/reference-pose--1024x1536--candidate-1.png",
+            "sha256": "526c988b621534eea50f08ba0666247cbd13a8f45e82d36502c20bf940c5b984",
+            "bytes": 1908246,
+            "width": 1024,
+            "height": 1536,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/reference-pose--1024x1536--candidate-1--longedge320.webp",
+            "sha256": "0f91a264d0bde7a62f2a461070a8410bfbaaf46a4172c10ad207edcbb97c2a4b",
+            "bytes": 4906,
+            "width": 213,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        }
+      ],
+      "contact_sheet": {
+        "relative_path": "contact-sheets/sample-pose-pair.jpg",
+        "sha256": "b62bfbf3181e375af34fbdfc08764738208e0776580ef6eaeee221c152730ce6",
+        "bytes": 121642,
+        "width": 832,
+        "height": 692,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "visual_qa": {
+        "status": "reviewed-with-limitations",
+        "reviewer": "dot independent sample-preparation review",
+        "recommendation": "usable illustrative source set with disclosed limitations",
+        "findings": [
+          "Inputs are deliberately different poses and distinct source roles. No transfer was executed.",
+          "Mannequin hands/feet remain visible; it is an illustrative jointed figure, not a validated anatomical skeleton.",
+          "The identity input inherits the canon alpha caveat."
+        ]
+      },
+      "art_selection": {
+        "status": "selected",
+        "selected_by": "dot (owner-delegated root art selector)",
+        "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+        "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+      },
+      "rendition_review": {
+        "status": "not-reviewed",
+        "technical_status": "mechanical-checks-passed",
+        "evidence": "production/20261002-samples/VALIDATION.json",
+        "scope": "File/decode/dimension/byte-budget/exact-derivative checks only; separate rendition acceptance unchanged"
+      },
+      "runtime_review": {
+        "status": "not-qualified"
+      },
+      "release_selection": {
+        "status": "not-selected"
+      }
+    },
+    {
+      "asset_id": "sample-outfit-study",
+      "caption": "Illustrative clothing variation using the same adult character source. Approximate visual continuity, not a measured model capability.",
+      "comparison": [
+        {
+          "role": "outfit_a",
+          "label": "Olive field jacket outfit",
+          "source_key": "canon",
+          "file": {
+            "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+            "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+            "bytes": 1673341,
+            "width": 1024,
+            "height": 1536,
+            "format": "png",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-character-canon--1024x1536--candidate-1--longedge320.webp",
+            "sha256": "f64eb09cd0dc9ac110e1e4b8d11b06baaa02dc109f27339c16ffac62c33c88f7",
+            "bytes": 14780,
+            "width": 213,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "outfit_b",
+          "label": "Slate-blue work jacket and cream knit outfit",
+          "source_key": "outfit_blue",
+          "file": {
+            "relative_path": "originals/sample-outfit-study--1024x1536--candidate-1.png",
+            "sha256": "190e73ef4c3314014f241a544f042c31caa16466b7e3d3d54504a7ff672262e1",
+            "bytes": 1562922,
+            "width": 1024,
+            "height": 1536,
+            "format": "png",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-outfit-study--1024x1536--candidate-1--longedge320.webp",
+            "sha256": "01142fc839089a8d399a657868215c90529fb15a7c48d9eeb752963c21102ec8",
+            "bytes": 14500,
+            "width": 213,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGBA",
+            "alpha": true,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        }
+      ],
+      "contact_sheet": {
+        "relative_path": "contact-sheets/sample-outfit-study.jpg",
+        "sha256": "4605d27f575d9091278e008c74b5a6c2bca77d382cdc82e619fafdc66a682156",
+        "bytes": 153930,
+        "width": 832,
+        "height": 692,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "visual_qa": {
+        "status": "reviewed-with-limitations",
+        "reviewer": "dot independent sample-preparation review",
+        "recommendation": "usable illustrative source set with disclosed limitations",
+        "findings": [
+          "Face, hair silhouette, relaxed body stance and hand positions are close between source and edit; clothing differences are clear.",
+          "Hands appear plausible at source size; no skeleton or hand-accuracy measurement was performed.",
+          "The changed sleeves, boot tops, trouser shape and bag contour are expected wardrobe differences. Minor rendered face/hair details differ.",
+          "Both originals have genuine alpha but mostly alpha 253 interiors and low-alpha fringe; light/dark checker composites are included."
+        ]
+      },
+      "art_selection": {
+        "status": "selected",
+        "selected_by": "dot (owner-delegated root art selector)",
+        "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+        "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+      },
+      "rendition_review": {
+        "status": "not-reviewed",
+        "technical_status": "mechanical-checks-passed",
+        "evidence": "production/20261002-samples/VALIDATION.json",
+        "scope": "File/decode/dimension/byte-budget/exact-derivative checks only; separate rendition acceptance unchanged"
+      },
+      "runtime_review": {
+        "status": "not-qualified"
+      },
+      "release_selection": {
+        "status": "not-selected"
+      },
+      "alpha_qa": [
+        {
+          "statistics": {
+            "source_relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+            "minimum": 0,
+            "maximum": 254,
+            "bbox_any_alpha": [
+              65,
+              14,
+              1010,
+              1521
+            ],
+            "exact_counts": {
+              "0": 1089922,
+              "1": 9138,
+              "127": 54,
+              "128": 49,
+              "200": 60,
+              "253": 383088,
+              "254": 3129,
+              "255": 0
+            },
+            "zero_alpha_fraction": 0.6929537455240885,
+            "border_alpha_maximum": 0,
+            "note": "Real transparent background; subject interior predominantly alpha 253/255, no fully opaque pixels. Low-alpha fringe retained without cleanup or normalization."
+          },
+          "comparison_view": {
+            "relative_path": "qa/sample-character-canon--1024x1536--candidate-1--alpha-check.jpg",
+            "sha256": "45a79b4e61fe838ecd9077ac44d1ee4814f1e9e9edf72c9d264471a77628e37d",
+            "bytes": 204965,
+            "width": 1040,
+            "height": 830,
+            "format": "jpeg",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          }
+        },
+        {
+          "statistics": {
+            "source_relative_path": "originals/sample-outfit-study--1024x1536--candidate-1.png",
+            "minimum": 0,
+            "maximum": 254,
+            "bbox_any_alpha": [
+              65,
+              15,
+              994,
+              1520
+            ],
+            "exact_counts": {
+              "0": 1097336,
+              "1": 9826,
+              "127": 50,
+              "128": 51,
+              "200": 75,
+              "253": 368230,
+              "254": 3497,
+              "255": 0
+            },
+            "zero_alpha_fraction": 0.6976674397786459,
+            "border_alpha_maximum": 0,
+            "note": "Real transparent background; subject interior predominantly alpha 253/255, no fully opaque pixels. Low-alpha fringe retained without cleanup or normalization."
+          },
+          "comparison_view": {
+            "relative_path": "qa/sample-outfit-study--1024x1536--candidate-1--alpha-check.jpg",
+            "sha256": "71f01ea2e5de86129097fc325b68cd8a6342a819fd7c4bc01e44dc5c09972071",
+            "bytes": 185308,
+            "width": 1040,
+            "height": 830,
+            "format": "jpeg",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "sample-lighting-pair",
+      "caption": "Illustrative opposing light directions on an approximately consistent plaster study. Geometry is not pixel-registered.",
+      "comparison": [
+        {
+          "role": "lighting_a",
+          "label": "Selected plaster study with upper-left light",
+          "source_key": "light_left",
+          "file": {
+            "relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+            "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+            "bytes": 1805697,
+            "width": 1254,
+            "height": 1254,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/reference-lighting--1254x1254--candidate-2--longedge320.webp",
+            "sha256": "2604a28e1d7a7bfcb210814b56f416cba612e8af890665ad382b29fe6f592ff8",
+            "bytes": 4208,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "lighting_b",
+          "label": "Generated upper-right light variant",
+          "source_key": "light_right",
+          "file": {
+            "relative_path": "originals/sample-lighting-pair--1254x1254--candidate-1.png",
+            "sha256": "db2ccb617cc14598865c7f3e4e70ddb719368eab7d68c36717bdebc339ad10a9",
+            "bytes": 1761387,
+            "width": 1254,
+            "height": 1254,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-lighting-pair--1254x1254--candidate-1--longedge320.webp",
+            "sha256": "890555fc6e69a7800a3b4a1e07fefa0058c9400d193f289d6c62930e4eb2eec3",
+            "bytes": 3792,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        }
+      ],
+      "contact_sheet": {
+        "relative_path": "contact-sheets/sample-lighting-pair.jpg",
+        "sha256": "3be2444d27fbcbe467847774aa84b2e4e3d4eadd640d6dbe234a4e1ac1b456fb",
+        "bytes": 58445,
+        "width": 832,
+        "height": 552,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "visual_qa": {
+        "status": "reviewed-with-limitations",
+        "reviewer": "dot independent sample-preparation review",
+        "recommendation": "usable illustrative source set with disclosed limitations",
+        "findings": [
+          "Upper-left versus upper-right illumination and opposing cast shadows read clearly.",
+          "Head silhouette, facial planes, wall texture and shadow form show small deviations; not an exact registered light-only edit.",
+          "Both remain 1254x1254; no digital mirror or registered comparison is claimed."
+        ]
+      },
+      "art_selection": {
+        "status": "selected",
+        "selected_by": "dot (owner-delegated root art selector)",
+        "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+        "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+      },
+      "rendition_review": {
+        "status": "not-reviewed",
+        "technical_status": "mechanical-checks-passed",
+        "evidence": "production/20261002-samples/VALIDATION.json",
+        "scope": "File/decode/dimension/byte-budget/exact-derivative checks only; separate rendition acceptance unchanged"
+      },
+      "runtime_review": {
+        "status": "not-qualified"
+      },
+      "release_selection": {
+        "status": "not-selected"
+      }
+    },
+    {
+      "asset_id": "sample-composition-pair",
+      "caption": "One source and a deterministic tighter crop. The view was cropped, not regenerated or moved in 3D.",
+      "comparison": [
+        {
+          "role": "wide_source",
+          "label": "Selected three-mass composition source",
+          "source_key": "composition",
+          "file": {
+            "relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+            "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+            "bytes": 1442857,
+            "width": 1254,
+            "height": 1254,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/reference-composition--1254x1254--candidate-2--longedge320.webp",
+            "sha256": "08e4d033ea462fab7f04daa82ea87e359895d5b979f2022cf7ae064120a008a4",
+            "bytes": 2292,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "tight_crop",
+          "label": "1024px close crop retaining all three masses",
+          "source_key": "composition_crop",
+          "file": {
+            "relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+            "sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+            "bytes": 943587,
+            "width": 1024,
+            "height": 1024,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-composition-pair--crop--1024x1024--longedge320.webp",
+            "sha256": "ab265bbb5dc3cd5380f86a53399e1597e726bcdac4ece27b74b2b8671ed6e2c6",
+            "bytes": 2322,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        }
+      ],
+      "contact_sheet": {
+        "relative_path": "contact-sheets/sample-composition-pair.jpg",
+        "sha256": "c81d7f07562efbf48cc3d7092c83bb1b912e0fc9fc547f5c78ff99d23fe547ce",
+        "bytes": 52002,
+        "width": 832,
+        "height": 552,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "visual_qa": {
+        "status": "reviewed-with-limitations",
+        "reviewer": "dot independent sample-preparation review",
+        "recommendation": "recommended deliberate close crop preserving all three masses",
+        "findings": [
+          "Chosen crop [170,125,1194,1149) is pixel-exact at 1024x1024; it replaced the initial proposed 800px crop after visual comparison.",
+          "A useful amount of the dominant block, the complete middle cube and the distant slab remain; the left edge deliberately clips the foreground block. The 800px proposal left only a narrow strip and was rejected for weaker balance.",
+          "The 1024px square target is met by existing source pixels without upscaling. No parallax, camera movement, regenerated viewpoint or measured model ability is implied."
+        ]
+      },
+      "art_selection": {
+        "status": "selected",
+        "selected_by": "dot (owner-delegated root art selector)",
+        "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+        "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+      },
+      "rendition_review": {
+        "status": "not-reviewed",
+        "technical_status": "mechanical-checks-passed",
+        "evidence": "production/20261002-samples/VALIDATION.json",
+        "scope": "File/decode/dimension/byte-budget/exact-derivative checks only; separate rendition acceptance unchanged"
+      },
+      "runtime_review": {
+        "status": "not-qualified"
+      },
+      "release_selection": {
+        "status": "not-selected"
+      }
+    },
+    {
+      "asset_id": "sample-sequence-strip",
+      "caption": "Four extracted illustrative storyboard stills with minor visible continuity drift. Not a temporal-consistency benchmark or generated video.",
+      "comparison": [
+        {
+          "role": "source_sheet",
+          "label": "Unaltered four-panel storyboard sheet",
+          "source_key": "sequence_sheet",
+          "file": {
+            "relative_path": "originals/sample-sequence-strip--1254x1254--candidate-1.png",
+            "sha256": "c7ada63ad97d514b34f9e932b801d3b0d6d78d55b7059e51a7ba9a53ecec2f10",
+            "bytes": 2693639,
+            "width": 1254,
+            "height": 1254,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-sequence-strip--1254x1254--candidate-1--longedge320.webp",
+            "sha256": "5029e6317b4e1ad8548133ae8274181c8985e7fa036d124c924ad630a726a9b2",
+            "bytes": 27724,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "frame_01",
+          "label": "Relaxed forward gaze",
+          "source_key": "panel_1",
+          "file": {
+            "relative_path": "components/sample-sequence-strip--panel-01--621x621.png",
+            "sha256": "4fd4868199029bfcb4272c9037ccfac17892c7330d333e7cc35e3b0ef1ff1293",
+            "bytes": 663670,
+            "width": 621,
+            "height": 621,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-sequence-strip--panel-01--621x621--longedge320.webp",
+            "sha256": "903fb6d350562dd220585a1896aca0ca504f554e0a7ffd2358694b7b7ba28187",
+            "bytes": 25596,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "frame_02",
+          "label": "One hand adjusts the satchel strap",
+          "source_key": "panel_2",
+          "file": {
+            "relative_path": "components/sample-sequence-strip--panel-02--621x621.png",
+            "sha256": "062d941795f7e7cc37e94650949bc16b63be93ab7456b914f60f180fd6de00f3",
+            "bytes": 659408,
+            "width": 621,
+            "height": 621,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-sequence-strip--panel-02--621x621--longedge320.webp",
+            "sha256": "b4465179e543c4cb893903e26d64b1e5367410c1e50b5e12ca1ab7d75f685448",
+            "bytes": 24998,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "frame_03",
+          "label": "Looks toward the track",
+          "source_key": "panel_3",
+          "file": {
+            "relative_path": "components/sample-sequence-strip--panel-03--621x621.png",
+            "sha256": "6923dc560ba8f6663d1d9cf7c167140a3d76203ffaf1057d1ad9eddd20b87e40",
+            "bytes": 657401,
+            "width": 621,
+            "height": 621,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-sequence-strip--panel-03--621x621--longedge320.webp",
+            "sha256": "89b9e813dc2df4d1b3c584bfb8159e2be60c9df4ecca4521c5a65e6d45473d4a",
+            "bytes": 24870,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        },
+        {
+          "role": "frame_04",
+          "label": "Returns to forward gaze",
+          "source_key": "panel_4",
+          "file": {
+            "relative_path": "components/sample-sequence-strip--panel-04--621x621.png",
+            "sha256": "0ba0de0d41268d5639b998fdf3b954c7c7cd9c8c0097b8908281a308a01c74be",
+            "bytes": 656003,
+            "width": 621,
+            "height": 621,
+            "format": "png",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "thumbnail": {
+            "relative_path": "thumbnails/sample-sequence-strip--panel-04--621x621--longedge320.webp",
+            "sha256": "09ccf41a586303cf1d8894e04ea6d2f68e8c09cbdea95430945a6b0c166372dd",
+            "bytes": 24876,
+            "width": 320,
+            "height": 320,
+            "format": "webp",
+            "mode": "RGB",
+            "alpha": false,
+            "duration_seconds": null,
+            "codec": null
+          },
+          "intended_use": "Separate selectable source input/component",
+          "target_1024px_note": "actual size retained; no upscale"
+        }
+      ],
+      "contact_sheet": {
+        "relative_path": "contact-sheets/sample-sequence-strip.jpg",
+        "sha256": "6ab961af5be7ca359aefb5c16cf64deab67db4a2cc5cee2073800f259c563e1b",
+        "bytes": 366211,
+        "width": 1232,
+        "height": 992,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "visual_qa": {
+        "status": "reviewed-with-limitations",
+        "reviewer": "dot independent sample-preparation review",
+        "recommendation": "usable illustrative storyboard; does not meet requested size or exact-continuity targets",
+        "findings": [
+          "Source is 1254x1254, below prompt target 2048x2048. Common-square extracted frames are 621x621, below the 1024px sample target.",
+          "Four actions read in row-major order and identity/outfit/environment remain recognizable.",
+          "Boot positions, stance/leg contours, shoulder/bag edges and hair change slightly; canopy/column/rail and foliage details shift. Fixed-camera, exact foot placement and pixel registration were not achieved.",
+          "Facial scar/eye details are not reliably resolvable at frame size. No temporal or identity capability benchmark is supported.",
+          "White gutters and boundary pixels are excluded by the documented crop boxes; whole sheet retained."
+        ]
+      },
+      "art_selection": {
+        "status": "selected",
+        "selected_by": "dot (owner-delegated root art selector)",
+        "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+        "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+      },
+      "rendition_review": {
+        "status": "not-reviewed",
+        "technical_status": "mechanical-checks-passed",
+        "evidence": "production/20261002-samples/VALIDATION.json",
+        "scope": "File/decode/dimension/byte-budget/exact-derivative checks only; separate rendition acceptance unchanged"
+      },
+      "runtime_review": {
+        "status": "not-qualified"
+      },
+      "release_selection": {
+        "status": "not-selected"
+      }
+    }
+  ]
+}

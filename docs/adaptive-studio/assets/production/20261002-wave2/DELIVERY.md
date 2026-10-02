@@ -1,5 +1,7 @@
 # Wave 2 delivery
 
+**Current art decision, 2 October 2026:** [The selection record](../20261002-art-selection/README.md) supersedes earlier pending-owner wording for the selected candidates. The two prior anchor approvals remain direct-owner decisions; new choices are accepted under owner-delegated assistant art judgment. Alternatives stay unselected. Source/license, runtime and release gates are unchanged. Historical QA findings and frozen attachment archives are preserved.
+
 Five generated candidates for four asset IDs, original PNGs preserved byte-for-byte, with review-only WebP renditions.
 
 ## Paths and scopes
@@ -19,7 +21,7 @@ Pillow 12.3.0 and libwebp 1.6.0; Lanczos downscale, WebP quality 85, method 6. N
 
 ## Release gates
 
-Source provenance is recorded; source terms/license clearance has not been independently determined. Visual QA and rendition validation do not imply owner acceptance. All five new candidates await owner acceptance. The contact sheet features combine 1, pose 1, recover 2 and outfit 1. Recover 1 is preserved with a direction-of-motion caveat; recover 2 resolves that caveat and is recommended for review. No runtime integration or release selection has happened.
+Source provenance is recorded; source terms/license clearance has not been independently determined. Visual QA and rendition validation do not imply owner acceptance. Combine 1, pose 1, recover 2 and outfit 1 are now art-accepted under owner delegation; recover 1 remains unselected. The contact sheet features combine 1, pose 1, recover 2 and outfit 1. Recover 1 is preserved with a direction-of-motion caveat; recover 2 resolves that caveat and is selected for art. No runtime integration or release selection has happened.
 
 The two prior anchor approvals are recorded separately in input-anchors.json. Prompt strings are exact; output handles are local tool handles, not provider job identifiers. Model, seed and provider generation timestamps are unknown.
 

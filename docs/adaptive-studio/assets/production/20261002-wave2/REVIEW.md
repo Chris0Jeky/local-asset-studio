@@ -1,5 +1,7 @@
 # Wave 2 independent art review
 
+**Current art decision, 2 October 2026:** [The selection record](../20261002-art-selection/README.md) supersedes earlier pending-owner wording for the selected candidates. The two prior anchor approvals remain direct-owner decisions; new choices are accepted under owner-delegated assistant art judgment. Alternatives stay unselected. Source/license, runtime and release gates are unchanged. Historical QA findings and frozen attachment archives are preserved.
+
 Reviewed 2026-10-02T09:43:28Z. Repository reference: `6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164`.
 
 The five originals (four asset IDs) and their actual review WebPs were inspected at native dimensions against the actual accepted PNG anchors. A visual recommendation is not owner acceptance, license clearance, runtime qualification or release selection.
@@ -8,7 +10,7 @@ The five originals (four asset IDs) and their actual review WebPs were inspected
 
 Three differently proportioned and tinted input frames connect to one visibly empty central frame. Clear combine metaphor, faithful paper/graphite style, ample quiet lower third.
 
-Recommendation: reviewed-recommended-for-owner-review
+Original QA recommendation: reviewed-recommended-for-owner-review; subsequently art-accepted under owner delegation
 
 - The connections are amber and more prominent than the prompt's word faint, but stay thin and preserve distinct input roles.
 - No text, brand, character, fake UI, extra source frame or finished result was observed.
@@ -18,7 +20,7 @@ Recommendation: reviewed-recommended-for-owner-review
 
 Filled standing silhouette and separate asymmetric stick-and-joint drawing read as different identity and geometry inputs. Clean linework and a quiet lower third.
 
-Recommendation: reviewed-recommended-for-owner-review
+Original QA recommendation: reviewed-recommended-for-owner-review; subsequently art-accepted under owner delegation
 
 - The raised frame treatment and ivory/graphite/amber color family are consistent with the accepted workflow anchor. Rose/cyan accents are absent; this is a minor palette variation, not a semantic defect.
 - No facial detail, clothing detail, lettering, realistic person or imitation UI was observed.
@@ -38,7 +40,7 @@ Recommendation: reviewed-refinement-recommended
 
 Headless neutral dress form cleanly separates clothing from identity. The olive high-collar jacket matches the anchor and the full belt/pouches, trousers, satchel and boots are visible.
 
-Recommendation: reviewed-recommended-for-owner-review
+Original QA recommendation: reviewed-recommended-for-owner-review; subsequently art-accepted under owner delegation
 
 - Painterly anime shading, neutral gray background and frontal visibility are coherent with the accepted identity anchor.
 - No person, lettering, watermark, brand or obvious garment/strap fusion was observed.
@@ -49,7 +51,7 @@ Recommendation: reviewed-recommended-for-owner-review
 
 The receipt now lies flat and is visibly retained by the intact folio, removing the print/eject reading while preserving the calm series style. Stronger than candidate 1.
 
-Recommendation: reviewed-recommended-for-owner-review
+Original QA recommendation: reviewed-recommended-for-owner-review; subsequently art-accepted under owner delegation
 
 - The receipt overlaps safely inside the folder edge; upward motion strokes and billowing paper are absent.
 - At 600x450 the folio, retained slip and quiet lower third remain legible.
@@ -59,12 +61,12 @@ Recommendation: reviewed-recommended-for-owner-review
 ## Gate summary
 
 - Source: generation provenance and bytes recorded; terms/license review unresolved
-- Art: combine 1, pose 1, recover 2 and outfit 1 recommended for owner review; recover 1 retained as a superseded review alternative
+- Art: combine 1, pose 1, recover 2 and outfit 1 accepted under owner delegation; recover 1 retained as an unselected alternative
 - Rendition: decoding, dimensions, byte budgets, no crop/upscale and native-size legibility checked
-- Owner: all five new candidates pending; anchor acceptance is not derivative acceptance
+- Art-choice authority: satisfied for the four selections by explicit owner delegation on 2 October 2026; no acceptance is inferred from the anchors
 - Runtime: not qualified; no app integration/browser/CI performed
 - Release: none selected
 
 ## Anchor evidence
 
-Owner accepted workflow-create candidate 3 and reference-identity candidate 3 on 2026-10-02 at approximately 09:27 UTC, response `messageSentinel_8fe97007c6b8819183f673c95d8e369d`. This evidence authorizes the anchors and continuation only.
+Owner accepted workflow-create candidate 3 and reference-identity candidate 3 on 2026-10-02 at approximately 09:27 UTC. That direct acceptance covers the anchors and continuation only. The later task-scoped delegation on 2 October supplies the authority for the four new art selections.

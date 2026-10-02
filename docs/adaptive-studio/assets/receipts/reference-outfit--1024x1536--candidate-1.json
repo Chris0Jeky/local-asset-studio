@@ -29,7 +29,7 @@
           "status": "accepted-as-series-anchor",
           "decision_at": "2026-10-02T09:27:00Z",
           "timestamp_precision": "minute-level owner response record",
-          "evidence": "messageSentinel_8fe97007c6b8819183f673c95d8e369d",
+          "evidence": "Owner accepted the two input anchors and continuation on 2026-10-02 at approximately 09:27 UTC; this historical anchor approval does not transfer to derivatives.",
           "scope": "This candidate is accepted as an input style/canon anchor; approval does not transfer to new candidates."
         },
         "note": "Actual PNG supplied to image generation; locally inspected and SHA-256 matched to the prior repository receipt."
@@ -109,22 +109,53 @@
     }
   ],
   "art_review": {
-    "status": "reviewed-recommended-for-owner-review",
-    "reviewer": "dot independent visual QA",
-    "reviewed_at": "2026-10-02T09:43:28Z",
-    "inspected": [
-      "actual original PNG at native dimensions",
-      "actual WebP review rendition at native dimensions",
-      "actual accepted input anchor PNG"
-    ],
-    "notes": "Headless neutral dress form cleanly separates clothing from identity. The olive high-collar jacket matches the anchor and the full belt/pouches, trousers, satchel and boots are visible.",
-    "observations": [
+    "status": "accepted",
+    "reviewer": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "timestamp_meaning": "Time this delegated art-selection record was prepared",
+    "authority": {
+      "kind": "owner-delegated-assistant-art-selection",
+      "delegated_on": "2026-10-02",
+      "delegated_at": "2026-10-02T11:16:00Z",
+      "timestamp_precision": "Minute-level delegation record",
+      "scope": "Choose the best candidates for the current LAS workflow-illustration and reference-example task, using completed visual reviews. This is art judgment only.",
+      "exclusions": [
+        "Source or license clearance",
+        "Runtime qualification",
+        "Release selection",
+        "Merge",
+        "Deployment"
+      ]
+    },
+    "justification": "Headless neutral dress form cleanly separates clothing from identity. The olive high-collar jacket matches the anchor and the full belt/pouches, trousers, satchel and boots are visible.",
+    "retained_caveats": [
       "Painterly anime shading, neutral gray background and frontal visibility are coherent with the accepted identity anchor.",
       "No person, lettering, watermark, brand or obvious garment/strap fusion was observed.",
       "The top finial has a narrow but intact margin. At 213x320, all clothing and both boots remain visible; garment details are necessarily reduced.",
       "Trousers, boots, belt and satchel elaborate beyond the portrait anchor, which did not show them; they are newly generated outfit choices, not previously owner-approved canon."
     ],
-    "owner_acceptance_implied": false
+    "prior_review": {
+      "status": "reviewed-recommended-for-owner-review",
+      "reviewer": "dot independent visual QA",
+      "reviewed_at": "2026-10-02T09:43:28Z",
+      "inspected": [
+        "actual original PNG at native dimensions",
+        "actual WebP review rendition at native dimensions",
+        "actual accepted input anchor PNG"
+      ],
+      "notes": "Headless neutral dress form cleanly separates clothing from identity. The olive high-collar jacket matches the anchor and the full belt/pouches, trousers, satchel and boots are visible.",
+      "observations": [
+        "Painterly anime shading, neutral gray background and frontal visibility are coherent with the accepted identity anchor.",
+        "No person, lettering, watermark, brand or obvious garment/strap fusion was observed.",
+        "The top finial has a narrow but intact margin. At 213x320, all clothing and both boots remain visible; garment details are necessarily reduced.",
+        "Trousers, boots, belt and satchel elaborate beyond the portrait anchor, which did not show them; they are newly generated outfit choices, not previously owner-approved canon."
+      ],
+      "owner_acceptance_implied": false
+    },
+    "evidence": {
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+      "decision": "Selected after completed visual reviews under task-scoped owner delegation"
+    }
   },
   "rendition_review": {
     "status": "reviewed",
@@ -175,14 +206,17 @@
     "reported_model, reported_seed and provider_job_id were not exposed by the image tool and remain null.",
     "source item/page, creator credit, retrieval timestamp and independently captured terms evidence were not reported; no license determination is made.",
     "duration_seconds and codec are null because these are still-image files; format records PNG/WebP.",
-    "Owner acceptance, application runtime qualification and release selection remain separate pending gates."
+    "Source/license review, application runtime qualification and release selection remain separate unresolved gates; art acceptance is recorded under owner delegation."
   ],
   "owner_acceptance": {
-    "status": "pending",
-    "accepted_by": null,
-    "accepted_at": null,
-    "evidence": null,
-    "note": "Owner accepted the two input anchors and continuation; this newly generated derivative has not been owner accepted."
+    "status": "satisfied-by-owner-delegated-art-selection",
+    "accepted_by": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "evidence": {
+      "delegation_date": "2026-10-02",
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json"
+    },
+    "note": "This is a delegated assistant art decision, not a claim that the owner directly reviewed this candidate. It does not clear source, runtime or release gates."
   },
   "intake": {
     "received_at": "2026-10-02T09:43:28Z",
@@ -195,5 +229,14 @@
     "archive_filename": "las-art-wave2-candidates.zip",
     "archive_relative_path_base": "Extracted archive root",
     "input_anchors": "Anchor paths refer to the prior delivery; anchors are not duplicated in this archive."
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated art selector)",
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "acceptance_basis": "owner-delegated-assistant-art-selection",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "justification": "Headless neutral dress form cleanly separates clothing from identity. The olive high-collar jacket matches the anchor and the full belt/pouches, trousers, satchel and boots are visible.",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged."
   }
 }

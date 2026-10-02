@@ -162,5 +162,14 @@
       "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
       "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
     }
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated art selector)",
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "acceptance_basis": "direct-owner-acceptance-preserved",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "justification": "Retains the directly accepted blank standing frame and single cyan folio, with a calm caption area and the established graphite, ivory and amber series direction.",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged."
   }
 }
