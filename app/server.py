@@ -1125,6 +1125,7 @@ class Studio:
             return inside(base,base/output['run_file'])
         if (job or {}).get('operation')=='asset.import':
             return inside((self.experiments/'uploads').resolve(),self.experiments/'uploads'/output['uploaded_file'])
+        if (job or {}).get('operation'): raise StudioError('Unsupported local output operation')
         root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
         kind = output.get("type", "output")
         if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
@@ -2518,6 +2519,12 @@ class Handler(BaseHTTPRequestHandler):
                 _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); index = int(index); outputs = job.get("outputs", []) if job else []; image = outputs[index] if 0 <= index < len(outputs) else None
                 if not image: return self._json(404, {"error":"Unknown image"})
                 if image.get("asset_id"): return self._local_file(self.studio.assets.file(image["asset_id"]))
+                # Local operations never produced a ComfyUI /view output. A failed snapshot must
+                # retain the original file identity, not borrow an unrelated matching filename (#1228).
+                if job.get("operation"):
+                    try: file = self.studio.output_path(image, job)
+                    except (StudioError, KeyError, TypeError): return self._json(404, {"error":"Unknown image"})
+                    return self._local_file(file) if file.is_file() else self._json(404, {"error":"Unknown image"})
                 return self._media(image, job)
             if path == "/": path = "/index.html"
             if path.startswith("/static/"): path = path[7:]
