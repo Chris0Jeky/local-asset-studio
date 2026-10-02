@@ -1,0 +1,12 @@
+{
+  "asset_id": "workflow-upscale",
+  "candidate": 2,
+  "filename": "workflow-upscale--1448x1086--candidate-2.png",
+  "output_id": "exec-ce56c90b-5361-474b-9b4c-23783d6c84cb",
+  "prompt_key": "workflow_upscale_refine",
+  "prompt": "Change only the lighting emphasis in this conceptual upscale illustration. Remove the gold sparkle/star and its surrounding dots above the large frame, and make the lighting neutral and evenly shared by both frames so the larger image does not look like a superior or magically improved result. Keep both frame sizes, exact matching geometric contents, line clarity, guide lines, perspective, background, paper grain and empty lower third unchanged. No new symbols, text or objects.",
+  "input_filenames": [
+    "workflow-upscale--1448x1086--candidate-1.png"
+  ],
+  "anchor_ids": []
+}

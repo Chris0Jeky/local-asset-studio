@@ -1,0 +1,212 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "workflow-recover",
+  "brief_revision": "production/20261002-wave2/generation-prompts.json#workflow_recover_refine1 sha256:8672e5543ab5adb13660da69a956d8594e17022d0f214d84e97e35a9ff64abbd",
+  "production": {
+    "method": "edit",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: edit with attached candidate-1 image",
+    "reported_model": null,
+    "output_id": "exec-23e27b79-959a-408c-85a4-d810d35c2bed",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-wave2/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "workflow_recover_refine1",
+      "sha256": "8672e5543ab5adb13660da69a956d8594e17022d0f214d84e97e35a9ff64abbd",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Refine only the receipt-return gesture in this conceptual recovery illustration. The receipt should lie almost flat, already halfway tucked safely into a small side pocket on the closed folder, with just its short blank-lined end still visible. Remove the rising motion strokes and upright billowing shape so it cannot look like a printer ejecting a new receipt. Keep the folder, preserved papers, colours, perspective, star, warm light, background and empty bottom third unchanged. No arrows, new objects, writing or UI."
+    },
+    "input_anchors": [
+      {
+        "asset_id": "workflow-recover",
+        "candidate": 1,
+        "relative_path": "inbox/workflow-recover--1448x1086--candidate-1.png",
+        "relative_path_base": "Extracted current delivery archive root",
+        "sha256": "3db913c0ffb6e1882be954de3d01d57d462a63abcaa76ee5590ed2acbff5ba43",
+        "owner_acceptance": {
+          "status": "pending"
+        },
+        "note": "Actual candidate-1 PNG supplied for this refinement; it was not an owner-accepted anchor."
+      }
+    ],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null,
+    "accepted_style_anchor_lineage": [
+      {
+        "asset_id": "workflow-create",
+        "candidate": 3,
+        "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+        "relative_path_base": "Previous delivery archive, not included again in this wave",
+        "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+        "owner_acceptance": {
+          "status": "accepted-as-series-anchor",
+          "decision_at": "2026-10-02T09:27:00Z",
+          "timestamp_precision": "minute-level owner response record",
+          "evidence": "messageSentinel_8fe97007c6b8819183f673c95d8e369d",
+          "scope": "This candidate is accepted as an input style/canon anchor; approval does not transfer to new candidates."
+        },
+        "note": "Actual PNG supplied to image generation; locally inspected and SHA-256 matched to the prior repository receipt."
+      }
+    ]
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded-terms-not-reviewed",
+    "provenance_check": "Generated output handle, exact prompt, actual anchor hash and original byte hash recorded; this is not a license determination."
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-recover--1448x1086--candidate-2.png",
+      "sha256": "19aec23fd4e750429af5d1ffa0cd0c56cce88cdce3a4b107c6e636ec5190d0f8",
+      "bytes": 1337064,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review-renditions/workflow-recover--1448x1086--candidate-2--600x450.webp",
+      "sha256": "d9132a3b3d6ac960ab44f239f48cce651be8a5460f0d6b8d49374a3f6ffb6fe6",
+      "bytes": 9282,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "libwebp": "1.6.0",
+      "input_relative_path": "inbox/workflow-recover--1448x1086--candidate-2.png",
+      "input_sha256": "19aec23fd4e750429af5d1ffa0cd0c56cce88cdce3a4b107c6e636ec5190d0f8",
+      "output_relative_path": "review-renditions/workflow-recover--1448x1086--candidate-2--600x450.webp",
+      "output_sha256": "d9132a3b3d6ac960ab44f239f48cce651be8a5460f0d6b8d49374a3f6ffb6fe6",
+      "relative_path_base": "Extracted delivery archive root",
+      "from_dimensions": [
+        1448,
+        1086
+      ],
+      "to_dimensions": [
+        600,
+        450
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "Preserved to nearest integer output dimension; reference-outfit 213x320 rounds 213.333px width",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "Review only; not runtime-qualified or selected for release"
+    }
+  ],
+  "art_review": {
+    "status": "reviewed-recommended-for-owner-review",
+    "reviewer": "dot independent visual QA",
+    "reviewed_at": "2026-10-02T09:43:28Z",
+    "inspected": [
+      "actual original PNG at native dimensions",
+      "actual WebP review rendition at native dimensions",
+      "actual input candidate PNG and accepted style lineage PNG"
+    ],
+    "notes": "The receipt now lies flat and is visibly retained by the intact folio, removing the print/eject reading while preserving the calm series style. Stronger than candidate 1.",
+    "observations": [
+      "The receipt overlaps safely inside the folder edge; upward motion strokes and billowing paper are absent.",
+      "At 600x450 the folio, retained slip and quiet lower third remain legible.",
+      "No broken objects, retry arrows, warnings, lettering, fake UI or destructive imagery was observed.",
+      "Recommended review candidate for this asset ID. This recommendation is not owner acceptance or release selection."
+    ],
+    "owner_acceptance_implied": false
+  },
+  "rendition_review": {
+    "status": "reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "visual_status": "reviewed-readable",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          600,
+          450
+        ],
+        "pass": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 9282,
+        "maximum_inclusive": 102400,
+        "pass": true
+      },
+      {
+        "check": "no-upscale-no-crop",
+        "pass": true
+      },
+      {
+        "check": "decode-WebP",
+        "pass": true
+      },
+      {
+        "check": "native-size-pixel-inspection",
+        "pass": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": [],
+    "note": "No application integration, runtime test, browser check or CI was performed."
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: file save/copy time is not a provider generation timestamp.",
+    "reported_model, reported_seed and provider_job_id were not exposed by the image tool and remain null.",
+    "source item/page, creator credit, retrieval timestamp and independently captured terms evidence were not reported; no license determination is made.",
+    "duration_seconds and codec are null because these are still-image files; format records PNG/WebP.",
+    "Owner acceptance, application runtime qualification and release selection remain separate pending gates."
+  ],
+  "owner_acceptance": {
+    "status": "pending",
+    "accepted_by": null,
+    "accepted_at": null,
+    "evidence": null,
+    "note": "Owner accepted the two input anchors and continuation; this newly generated derivative has not been owner accepted."
+  },
+  "intake": {
+    "received_at": "2026-10-02T09:43:28Z",
+    "timestamp_meaning": "Local receipt preparation, not provider generation time",
+    "candidate": 2
+  },
+  "delivery_base": {
+    "binary_storage": "Delivery archive attachments only; binaries are not in the text-only repository file list",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_filename": "las-art-wave2-candidates.zip",
+    "archive_relative_path_base": "Extracted archive root",
+    "input_anchors": "Anchor paths refer to the prior delivery; anchors are not duplicated in this archive."
+  }
+}

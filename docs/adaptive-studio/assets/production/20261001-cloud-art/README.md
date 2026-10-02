@@ -24,8 +24,8 @@ All `inbox/`, `review-renditions/` and `review-contact-sheet.jpg` paths in deliv
 - [Review notes](REVIEW.md), [original inventory](inventory.json) and [review rendition manifest](rendition-manifest.json) record checks and remaining deviations
 - Eight WebP review renditions passed decode, hash, dimension and byte-budget checks. Workflow3 is 600×450; reference long edges are 320px. No crop or upscale was applied
 - Model build, seed, provider timestamps and uncaptured source/terms evidence remain unknown
-- Owner art review remains `not-reviewed`; runtime review remains `not-qualified`; release selection remains `not-selected`
-- Workflow3 and identity3 are proposed anchors awaiting owner acceptance. Composition2 is the clearer thumbnail comparison; neither composition2 nor composition3 meets the exact one-third horizon target
+- On 2026-10-02 at 09:27 UTC, the owner accepted workflow-create candidate 3 and reference-identity candidate 3 as the style and character anchors. Other candidates remain pending owner review; runtime review remains `not-qualified` and release selection remains `not-selected`
+- The accepted workflow3 and identity3 anchors now support dependent production in [Wave 2](../20261002-wave2/DELIVERY.md) and [Wave 3](../20261002-wave3/DELIVERY.md). Composition2 is the clearer thumbnail comparison; neither composition2 nor composition3 meets the exact one-third horizon target
 
 ## CI status
 
@@ -36,3 +36,7 @@ The `CLAUDE.md` and test blobs were identical at base `0996cb0fafd85c6f63a7d2154
 The full **Check studio** run was still in progress at the last recorded observation, 2026-10-02 00:05:50 UTC. Other check results were pending; this document is a dated snapshot, not a live CI status.
 
 Local image-file validation is separate from repository CI and from runtime/device qualification. This text-only evidence package is not a claim that the application build or an assembled asset pack passes.
+
+## Later verification
+
+Both exact-head PR workflows passed for `6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164`: [Adaptive Studio specifications](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/36944817763) and [Check studio](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/36944817268), verified 2026-10-02 00:28 UTC. Earlier CI text above is retained as dated evidence. This does not qualify later commits or runtime integration.

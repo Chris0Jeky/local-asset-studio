@@ -95,9 +95,14 @@
     }
   ],
   "art_review": {
-    "status": "not-reviewed",
-    "reviewer": null,
-    "notes": null
+    "status": "accepted",
+    "reviewer": "Chris0Jeky (owner)",
+    "accepted_at": "2026-10-02T09:27:20Z",
+    "notes": "Owner explicitly accepted both proposed directions and authorized continuing dependent artwork. Acceptance applies to this specific candidate; source terms, rendition and runtime qualification remain separate.",
+    "evidence": {
+      "source": "Owner review of the two proposed anchor images",
+      "decision": "Accepted both directions and requested continued production"
+    }
   },
   "rendition_review": {
     "status": "not-reviewed",

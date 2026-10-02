@@ -1,0 +1,648 @@
+{
+  "schema": "studio.theme-asset.delivery/v1-proposed",
+  "production_batch": "20261002-wave3",
+  "prepared_at": "2026-10-02T09:54:20Z",
+  "timestamp_meaning": "Local QA/preparation time, not provider generation time",
+  "repository_reference": {
+    "repository": "Chris0Jeky/local-asset-studio",
+    "pr": 1269,
+    "read_head": "6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-edit--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "b21b193142367b356b060c21bd6dbbdf199499e1529db8dc208bec3059baa67f",
+      "bytes": 1563291,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-edit--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "9b246a11839efb9df1dd0db0eab3682ba87e013967f64272a848a037c8482320",
+      "bytes": 8150,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-sheet--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "f33143b19f8a775c50a921c53ff1f0bc0b7c1f75fe845465f2edead02f74fd69",
+      "bytes": 2151960,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-sheet--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "ff871815ac79c388dfb53b956c43321c5a2ecb4c1060ba763444f42b8c76ffa6",
+      "bytes": 28590,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-repair--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "dc51d918ffef64e4c10a737373554aad865142a38cfe7ec24ad3c90c42b0a635",
+      "bytes": 1757511,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-repair--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "ca0ac7cbba0f64753f960ebfe929ed65e0711e2ecabda826a493778a77644623",
+      "bytes": 15716,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-upscale--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "756e0fde3661c53c1331cb7ee5b141741680685b62e7a2fa536aa4dad6ec68da",
+      "bytes": 1526852,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-upscale--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "76412b18d749f3774235721032a8f6e09155ddbe75cf3dc54f66c7f87710f9b3",
+      "bytes": 10178,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-animate--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "5c2aceb42cac3a6608a9893ecfc4ca4c61511355b4118e6a69453d81e4a9947f",
+      "bytes": 1617300,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-animate--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "2370d9dbc1131c8050f9f055567feb75c43505825a9f74b6868028a5c648b935",
+      "bytes": 9262,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-sequence--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "b2e5847b612c95488f362aa321e9b9ea1bc6a7576f4c49be2fffb347b3ace60d",
+      "bytes": 1660218,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-sequence--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "fb4907eb2a7a01b12a5f39b0420da88d1c65679d904b7f5ce06a643c9253f822",
+      "bytes": 12306,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-compare--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "29f90fda086c86238706b8279f5638a5f132dfbeb731c6630e00fc21d5f74d53",
+      "bytes": 1589319,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-compare--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "7d7196b65ae85c7d983ffc189142a6a115e16e58c8ebaeabae2503f518f611dd",
+      "bytes": 10156,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-review--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "5af8b937b107ee6624104f60b56407e99685e0a6f0bc474f07fa738b6c8d2728",
+      "bytes": 1534919,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-review--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "106c9ab9ad040f5ae16c9ff5787939fc538a49d09f5ed9aec483b264927c9bcc",
+      "bytes": 9114,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-export--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "6eef32ae89fe78aa2ada4b2c7b04d7a30915956165240cf8caf4d9a0615e1c84",
+      "bytes": 1745358,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-export--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "031fee47a027c7969e8b242d53a7988b6aabc83a1bd66e7b4096c76578def6f3",
+      "bytes": 14084,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-workflow--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "b7d225ae6e5c12068e01cc4fa7d15850d229300edb2f3dc0ec633b5304270b0d",
+      "bytes": 1568375,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-workflow--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "4c1595b469bc2e25fb8b6759e15562c9b13e85a21fdd49e7779682fc3ba24a95",
+      "bytes": 7768,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-model--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "1ceeea4eff4a8e092bc7e8112a0432ca1237a5e41ff0b5242778e72dee96c8c2",
+      "bytes": 1555082,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-model--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "676d3748ba745587e3179a206fab0be85a275001d6d8e37d58d6e222ae636378",
+      "bytes": 6372,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-voice-3d--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "c563483fc0144248f7d00a79f80286633e16ba7e60cda41233897838a828f5a0",
+      "bytes": 1555414,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-voice-3d--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "7463fff75c1d5d60a1182a55ab1b4f9133276b87a7232cb67bb3edd7e46281f9",
+      "bytes": 7688,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-repair--1448x1086--candidate-2.png",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "714da5bc7c3f294dcf219afabee25be18a3807ac3e8c97c7720e7811f237c2c1",
+      "bytes": 1600951,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-repair--1448x1086--candidate-2--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-2.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "809e34b9cfec501a1a309f4a4d350d75bff1abac291f43230a7972147391e0ea",
+      "bytes": 15180,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-sheet--1448x1086--candidate-2.png",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "502e81ed0b7e8d18e547fe4936935b393b48054a0adaf3f1a6ddc5939181320a",
+      "bytes": 1873389,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-sheet--1448x1086--candidate-2--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-1.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "bccf959afdbb5db0b9990bf063e0f7900845e23f036cc4f9a7e376eb807b8e8d",
+      "bytes": 23150,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "inbox/workflow-upscale--1448x1086--candidate-2.png",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "5ee2050366936e441872ccd79ddcea369185df8877d1880c21f705ade17d31b5",
+      "bytes": 1427472,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-upscale--1448x1086--candidate-2--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "ad14d12ff5cab520e08fd59a68e88a81fba897cfa0eb2fb6ec975bbbec254d8e",
+      "bytes": 9478,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    },
+    {
+      "relative_path": "review/contact-sheet-1.jpg",
+      "archive_filename": "Repeated identically in all three ZIP parts",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "307ee7503ee5c44d7fee55c11dc2f49f06ba5f4c1f93a421ed346c8f977efb39",
+      "bytes": 217680,
+      "width": 1260,
+      "height": 1120,
+      "format": "jpeg",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "labeled contact sheet; review composition"
+    },
+    {
+      "relative_path": "review/contact-sheet-2.jpg",
+      "archive_filename": "Repeated identically in all three ZIP parts",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "1ee7a01f2e3501bb134db6cee02eedf30a1a34d0f1dcb4201d1d72ed085bbe23",
+      "bytes": 198007,
+      "width": 1260,
+      "height": 1120,
+      "format": "jpeg",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "labeled contact sheet; review composition"
+    },
+    {
+      "relative_path": "review/contact-sheet-3.jpg",
+      "archive_filename": "Repeated identically in all three ZIP parts",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "92b9a430a42d2703b1821b9a9186af1f4a93b85087e6eabee7502dc2060ac459",
+      "bytes": 182710,
+      "width": 1260,
+      "height": 1120,
+      "format": "jpeg",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "labeled contact sheet; review composition"
+    },
+    {
+      "relative_path": "review/contact-sheet-alternatives.jpg",
+      "archive_filename": "Repeated identically in all three ZIP parts",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "e234ed384503374e3cbefe6215afb9f066ab26d9a5cd178dc44e847244028df6",
+      "bytes": 201314,
+      "width": 1260,
+      "height": 1120,
+      "format": "jpeg",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "labeled contact sheet; review composition"
+    }
+  ],
+  "recommended_review_candidates": [
+    {
+      "asset_id": "workflow-edit",
+      "candidate": 1
+    },
+    {
+      "asset_id": "workflow-sheet",
+      "candidate": 2
+    },
+    {
+      "asset_id": "workflow-repair",
+      "candidate": 2
+    },
+    {
+      "asset_id": "workflow-upscale",
+      "candidate": 2
+    },
+    {
+      "asset_id": "workflow-animate",
+      "candidate": 1
+    },
+    {
+      "asset_id": "workflow-sequence",
+      "candidate": 1
+    },
+    {
+      "asset_id": "workflow-compare",
+      "candidate": 1
+    },
+    {
+      "asset_id": "workflow-review",
+      "candidate": 1
+    },
+    {
+      "asset_id": "workflow-export",
+      "candidate": 1
+    },
+    {
+      "asset_id": "workflow-workflow",
+      "candidate": 1
+    },
+    {
+      "asset_id": "workflow-model",
+      "candidate": 1
+    },
+    {
+      "asset_id": "workflow-voice-3d",
+      "candidate": 1
+    }
+  ],
+  "gates": {
+    "source": "provenance-recorded-terms-not-reviewed",
+    "art": "twelve-recommended-three-superseded-alternatives",
+    "rendition": "mechanical-and-visual-review-passed-with-source-caveats",
+    "owner": "pending-all-fifteen-new-candidates",
+    "runtime": "not-qualified",
+    "release": "not-selected"
+  },
+  "archives": {
+    "parts": [
+      {
+        "filename": "las-art-wave3-candidates-part-1.zip",
+        "candidates": [
+          {
+            "asset_id": "workflow-animate",
+            "candidate": 1,
+            "filename": "workflow-animate--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-edit",
+            "candidate": 1,
+            "filename": "workflow-edit--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-review",
+            "candidate": 1,
+            "filename": "workflow-review--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-sheet",
+            "candidate": 1,
+            "filename": "workflow-sheet--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-sheet",
+            "candidate": 2,
+            "filename": "workflow-sheet--1448x1086--candidate-2.png"
+          }
+        ]
+      },
+      {
+        "filename": "las-art-wave3-candidates-part-2.zip",
+        "candidates": [
+          {
+            "asset_id": "workflow-model",
+            "candidate": 1,
+            "filename": "workflow-model--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-repair",
+            "candidate": 1,
+            "filename": "workflow-repair--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-repair",
+            "candidate": 2,
+            "filename": "workflow-repair--1448x1086--candidate-2.png"
+          },
+          {
+            "asset_id": "workflow-sequence",
+            "candidate": 1,
+            "filename": "workflow-sequence--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-workflow",
+            "candidate": 1,
+            "filename": "workflow-workflow--1448x1086--candidate-1.png"
+          }
+        ]
+      },
+      {
+        "filename": "las-art-wave3-candidates-part-3.zip",
+        "candidates": [
+          {
+            "asset_id": "workflow-compare",
+            "candidate": 1,
+            "filename": "workflow-compare--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-export",
+            "candidate": 1,
+            "filename": "workflow-export--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-upscale",
+            "candidate": 1,
+            "filename": "workflow-upscale--1448x1086--candidate-1.png"
+          },
+          {
+            "asset_id": "workflow-upscale",
+            "candidate": 2,
+            "filename": "workflow-upscale--1448x1086--candidate-2.png"
+          },
+          {
+            "asset_id": "workflow-voice-3d",
+            "candidate": 1,
+            "filename": "workflow-voice-3d--1448x1086--candidate-1.png"
+          }
+        ]
+      }
+    ],
+    "maximum_bytes_exclusive": 10485760,
+    "hash_record": "External archive-record.json; omitted here to avoid circular checksums"
+  },
+  "notes": [
+    "Generated originals are preserved byte-for-byte.",
+    "Each workflow preview is 600x450 at no more than 100 KiB.",
+    "Only ordinary text files are in the repository-ready path/content list."
+  ]
+}

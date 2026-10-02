@@ -1,0 +1,207 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "workflow-voice-3d",
+  "brief_revision": "production/20261002-wave3/generation-prompts.json#workflow_voice_3d sha256:e2a68190ab6be86b151b4f60c1ad0d5ba348f100a2ef76eb4763cdeff5328652",
+  "production": {
+    "method": "generate-with-image-reference",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen with accepted reference image(s)",
+    "reported_model": null,
+    "output_id": "exec-dcf6dabc-4727-4fb0-a4ae-b32288d33310",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-wave3/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "workflow_voice_3d",
+      "sha256": "e2a68190ab6be86b151b4f60c1ad0d5ba348f100a2ef76eb4763cdeff5328652",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Use the attached accepted image as the STYLE anchor: quiet hand-drawn graphite outlines, soft flat ivory fills, faint paper grain, small desaturated rose and muted cyan accents, restrained amber light, raised front three-quarter viewpoint, very light warm-grey background. 4:3 landscape, compact subject slightly above centre and empty calm bottom third for HTML caption. No text, letters, numbers, logos, watermark, buttons, screens or UI. Subject: two separate tool concepts on the tabletop: a plain small card with a single simple unlabelled waveform drawn in graphite on the left; an untextured pale geometric study on the right, a low-poly sphere on a tiny plinth. Give both equal visual weight and clear space between them. No connecting controls, no play button, no shared generation panel, no human or character."
+    },
+    "input_anchors": [
+      {
+        "asset_id": "workflow-create",
+        "candidate": 3,
+        "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+        "relative_path_base": "Previous delivery archive; not duplicated in this wave",
+        "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+        "owner_acceptance": {
+          "status": "accepted-as-series-anchor",
+          "decision_at": "2026-10-02T09:27:00Z",
+          "timestamp_precision": "Minute-level owner response record",
+          "evidence": "Owner accepted these two input anchors and continuation at approximately 09:27 UTC; private response text is not reproduced.",
+          "scope": "Accepted as an input style/canon anchor only; approval does not transfer to new candidates."
+        },
+        "note": "Actual accepted PNG inspected and hashed locally. Initial candidate inputs are recorded in output-map.json; refinements name actual inputs separately."
+      }
+    ],
+    "reported_seed": null,
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded-terms-not-reviewed",
+    "provenance_check": "Exact prompt, output handle, actual input hashes and output byte hashes recorded. This is not a license determination."
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-voice-3d--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "c563483fc0144248f7d00a79f80286633e16ba7e60cda41233897838a828f5a0",
+      "bytes": 1555414,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-voice-3d--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "7463fff75c1d5d60a1182a55ab1b4f9133276b87a7232cb67bb3edd7e46281f9",
+      "bytes": 7688,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "libwebp": "1.6.0",
+      "input_relative_path": "inbox/workflow-voice-3d--1448x1086--candidate-1.png",
+      "input_sha256": "c563483fc0144248f7d00a79f80286633e16ba7e60cda41233897838a828f5a0",
+      "output_relative_path": "review-renditions/workflow-voice-3d--1448x1086--candidate-1--600x450.webp",
+      "output_sha256": "7463fff75c1d5d60a1182a55ab1b4f9133276b87a7232cb67bb3edd7e46281f9",
+      "relative_path_base": "Extracted named delivery archive root",
+      "from_dimensions": [
+        1448,
+        1086
+      ],
+      "to_dimensions": [
+        600,
+        450
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "Exact 4:3 preserved",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "color_conversion": "Pillow RGB conversion before downscale; generated originals unchanged",
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "Review only; not a runtime-qualified or selected release asset"
+    }
+  ],
+  "art_review": {
+    "status": "reviewed-recommended-for-owner-review",
+    "reviewer": "dot independent visual QA",
+    "reviewed_at": "2026-10-02T09:54:20Z",
+    "inspected": [
+      "Actual full original PNG",
+      "Actual 600x450 WebP at native review dimensions",
+      "Actual input PNGs and accepted anchor lineage"
+    ],
+    "notes": "A simple unlabelled waveform card and a faceted pale sphere on a plinth read as two separate tool concepts with balanced visual weight.",
+    "observations": [
+      "At 600x450 the waveform and polygon facets remain distinct, with clear space between the two objects.",
+      "No connecting controls, play button, shared generation panel, text, human or character was observed.",
+      "The pale geometric study has stylized paper grain consistent with the illustration family, not a material-map or texture-generation claim."
+    ],
+    "owner_acceptance_implied": false
+  },
+  "rendition_review": {
+    "status": "reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "visual_status": "reviewed-readable",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          600,
+          450
+        ],
+        "passed": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 7688,
+        "maximum_inclusive": 102400,
+        "passed": true
+      },
+      {
+        "check": "no-crop-no-upscale",
+        "passed": true
+      },
+      {
+        "check": "decode-WebP",
+        "passed": true
+      },
+      {
+        "check": "native-size-visual-inspection",
+        "passed": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": [],
+    "note": "No application integration, browser check, runtime qualification or CI was performed in this preparation."
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model, seed, provider job ID and generation timestamp were not exposed; related fields remain null.",
+    "File save/copy times are not provider generation timestamps.",
+    "Source page/item, creator credit, retrieval timestamp and independently captured terms evidence were not reported; no license determination is made.",
+    "Duration and codec are null for these still images; format records PNG or WebP.",
+    "Owner acceptance, runtime qualification and release selection remain separate pending gates."
+  ],
+  "catalog_reference": {
+    "url": "https://github.com/Chris0Jeky/local-asset-studio/blob/6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164/docs/adaptive-studio/assets/catalog.csv",
+    "git_commit": "6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164",
+    "subject": "A simple waveform beside an untextured geometric study",
+    "acceptance_constraint": "Separate tool concepts without a fake common generation control."
+  },
+  "owner_acceptance": {
+    "status": "pending",
+    "accepted_by": null,
+    "accepted_at": null,
+    "evidence": null,
+    "note": "Input anchor acceptance and permission to continue do not accept newly generated candidates."
+  },
+  "intake": {
+    "received_at": "2026-10-02T09:54:20Z",
+    "timestamp_meaning": "Local review/preparation time, not provider generation time",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "PR attachment archives only; not repository source",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_filename": "las-art-wave3-candidates-part-3.zip",
+    "archive_relative_path_base": "Extracted named archive root",
+    "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+  }
+}
