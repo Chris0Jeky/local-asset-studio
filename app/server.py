@@ -2522,8 +2522,11 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/": path = "/index.html"
             if path.startswith("/static/"): path = path[7:]
             file = inside(Path(__file__).parent / "static", Path(__file__).parent / "static" / path.lstrip("/"))
-            if not file.is_file() or file.suffix not in (".html", ".js", ".css"): return self._json(404, {"error":"Not found"})
-            data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
+            # App-owned code must not inherit host MIME overrides, including the Windows registry.
+            # Preserve the static allowlist without changing host settings.
+            static_types = {".html": "text/html", ".js": "text/javascript", ".css": "text/css"}
+            if not file.is_file() or file.suffix not in static_types: return self._json(404, {"error":"Not found"})
+            data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", static_types[file.suffix]); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
         except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return
