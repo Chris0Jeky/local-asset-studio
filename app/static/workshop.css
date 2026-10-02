@@ -256,11 +256,14 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   .workshop .wk-run-dock .actions {grid-column:3;grid-row:1}
   .workshop .wk-run-tools {grid-column:2;grid-row:1;border-top:0;border-left:1px solid var(--line);padding:0 0 0 12px;max-width:300px}
 }
-/* The settled run's one next step sits under its status line (run-outcome.js). */
+/* Settled summaries own their text so polling and new runs cannot erase them (run-outcome.js). */
 .run-outcome {grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .run-outcome[hidden] {display:none}
+.run-outcome-summary {flex-basis:100%;margin:0;font-size:11px;line-height:1.5;overflow-wrap:anywhere;color:var(--muted)}
+.run-outcome-summary.error {color:var(--danger)}
+#runOutcomeWaiting {flex-basis:100%;font-size:11px;color:var(--muted)}
 .run-cancel {grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted)}
 .run-cancel[hidden] {display:none}
 .run-cancel button {font-size:11px;padding:6px 10px}
 .run-outcome button {font-size:11px;padding:6px 10px}
-.run-outcome button:first-child {border-color:var(--accent);color:var(--accent)}
+.run-outcome [data-run-outcome="show"] {border-color:var(--accent);color:var(--accent)}
