@@ -40,20 +40,29 @@
     // A result focuses its first action (so K/W/X review it); a problem focuses its record, reason first.
     const first=output?target.querySelector('button,a,summary'):null;if(!first&&!target.hasAttribute('tabindex'))target.tabIndex=-1;(first||target).focus({preventScroll:true});return true;
   }
-  let shown=null;
-  function render(job){
+  let shown=null;const pending=[];
+  function waiting(){const el=document.getElementById('runOutcomeWaiting');if(el){el.textContent=pending.length?plural(pending.length,'more run')+' settled. Dismiss to see the next.':'';el.hidden=!pending.length;}}
+  function display(job){
     const el=box();if(!el)return;const s=summary(job);shown=job;
-    if(typeof message==='function')message(s.text,s.error);
-    el.innerHTML='';const go=document.createElement('button');go.type='button';go.dataset.runOutcome='show';go.textContent=s.action+' →';
+    el.innerHTML='';const text=document.createElement('p');text.className='run-outcome-summary'+(s.error?' error':'');text.textContent=s.text;text.setAttribute('role','status');
+    const more=document.createElement('small');more.id='runOutcomeWaiting';more.setAttribute('role','status');
+    const go=document.createElement('button');go.type='button';go.dataset.runOutcome='show';go.textContent=s.action+' →';
     const close=document.createElement('button');close.type='button';close.dataset.runOutcome='dismiss';close.textContent='Dismiss';close.setAttribute('aria-label','Dismiss this run summary');
-    el.append(go,close);el.hidden=false;
+    el.append(text,more,go,close);el.hidden=false;waiting();
   }
-  function clear(){shown=null;const el=document.getElementById('runOutcome');if(el){el.hidden=true;el.innerHTML='';}}
+  // A single poll can settle several started runs. Keep the current controls/focus until Dismiss,
+  // and own the summary text so a poll error or a newer Generate cannot erase the notice (#1250).
+  function render(job){if(shown){pending.push(job);waiting();}else display(job);}
+  function clear(){shown=null;pending.length=0;const el=document.getElementById('runOutcome');if(el){el.hidden=true;el.innerHTML='';}}
+  function returnFocus(){
+    const generate=document.getElementById('generate');generate?.focus();if(generate&&document.activeElement===generate)return;
+    const status=document.getElementById('status');
+    for(const target of [status,status?.closest('.wk-run-dock'),status?.closest('.editor')])if(target){if(!target.hasAttribute('tabindex'))target.tabIndex=-1;target.focus({preventScroll:true});if(document.activeElement===target)return;}
+  }
   document.addEventListener('studio:job-settled',e=>{if(e.detail?.id)render(e.detail);});
   document.addEventListener('click',e=>{
     const b=e.target.closest?.('[data-run-outcome]');
-    if(b){if(b.dataset.runOutcome==='dismiss'){const said=shown&&summary(shown).text;clear();if(typeof message==='function'&&document.getElementById('status')?.textContent===said)message('');}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
-    if(e.target.closest?.('#generate'))clear();
+    if(b){if(b.dataset.runOutcome==='dismiss'){const focused=document.activeElement===b,next=pending.shift();if(next){display(next);if(focused)document.querySelector('#runOutcome [data-run-outcome="dismiss"]')?.focus();}else{clear();if(focused)returnFocus();}}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
   },true);
   window.StudioRunOutcome={summary,render,clear,reveal,tight};
 })();
