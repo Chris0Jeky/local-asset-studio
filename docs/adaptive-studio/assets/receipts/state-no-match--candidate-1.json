@@ -1,0 +1,129 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "state-no-match",
+  "brief_revision": "production/20261002-empty-states/generation-prompts.json#state-no-match sha256:aba2c0e80f4298e14c8ec43181df15af1171b949da8f524032526f58b6e2b7fc",
+  "production": {
+    "method": "generate-with-image-reference",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen",
+    "reported_model": null,
+    "reported_seed": null,
+    "output_id": "exec-8ec168c4-00d4-4645-94d1-e799bcf9c942",
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null,
+    "produced_at": null,
+    "transparent_background_requested": true,
+    "prompt_record": {
+      "relative_path": "production/20261002-empty-states/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "json_key": "state-no-match",
+      "sha256": "aba2c0e80f4298e14c8ec43181df15af1171b949da8f524032526f58b6e2b7fc",
+      "hash_scope": "Exact prompt string encoded as UTF-8, without added newline",
+      "text": "Create a single original friendly no-search-results illustration for Local Asset Studio, matching the provided frame-and-folio illustration's restrained ivory paper, graphite outlines, subtle pale cyan accents, careful hand-drawn shading and professional quiet mood. Use reference as style only; replace subject with TWO small offset empty rectangular search frames, with a clearly visible quiet gap separating them. One frame slightly front left, other back right, neither containing a picture. A small understated magnifying-glass rim may be incorporated in one corner to make searching legible, but no punctuation or warning symbols. Complete isolated object group on genuinely transparent background. Landscape 3:2, generous clear margins, reads at 384x256. No background, tabletop, glow, checkerboard, vignette, lettering, buttons, arrows, crosses, checkmarks, progress indicators, face or mascot. No-results without blame or alarm. Preserve clean precise edges and actual transparency."
+    },
+    "input_anchors": [
+      {
+        "asset_id": "state-blank",
+        "candidate": 1,
+        "relative_path": "inbox/state-blank--candidate-1.png",
+        "relative_path_base": "Extracted current delivery archive root",
+        "sha256": "38b62c95bb06dc3f0d422f2d4c56929979885e7068acc009b58170231fbc0562",
+        "role": "Actual supplied style reference",
+        "acceptance_scope": "Generated candidate; not evidence of accepted state-system design."
+      }
+    ]
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded-terms-not-reviewed",
+    "provenance_check": "Exact prompt, actual input-reference hash, local tool handle and original byte hash recorded. This is not a license determination."
+  },
+  "files": [
+    {
+      "relative_path": "inbox/state-no-match--candidate-1.png",
+      "relative_path_base": "Extracted delivery archive root; attachment-only binary, not repository text",
+      "sha256": "aa3e4273894bb6d807d9cc9b376bcc244924a9b9c8101d5afc52050b33b27a1e",
+      "bytes": 1613219,
+      "width": 1536,
+      "height": 1024,
+      "format": "png",
+      "mode": "RGBA",
+      "alpha": true,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered native generated original"
+    }
+  ],
+  "transformations": [],
+  "art_review": {
+    "status": "superseded-review-alternative",
+    "reviewer": "Independent visual QA",
+    "reviewed_at": "2026-10-02T15:04:32Z",
+    "inspected": [
+      "actual native RGBA original",
+      "actual supplied style reference or edit target",
+      "actual 384x256 WebP over light #f7f5ef and dark #182027",
+      "actual 768x512 PNG over light and dark backgrounds"
+    ],
+    "notes": "Search magnifier is readable, but the two empty frames overlap rather than remaining separate.",
+    "observations": [
+      "This fails the intended quiet-gap arrangement and is not selected.",
+      "Kept unaltered for provenance and comparison; no attempt was made to extract or rearrange its objects manually."
+    ],
+    "candidate_art_selection": false,
+    "selection_scope": "Delegated aesthetic choice for candidate art exploration only"
+  },
+  "rendition_review": {
+    "status": "not-delivered-superseded-alternative",
+    "checks": [
+      {
+        "check": "native-original-byte-hash-preserved",
+        "pass": true
+      },
+      {
+        "check": "original-RGBA-1536x1024",
+        "pass": true
+      }
+    ],
+    "note": "Only the untouched original is delivered for the superseded candidate. Temporary local 768/384 previews were visually inspected for comparison but are not part of the deliverable."
+  },
+  "design_system_acceptance": {
+    "status": "outstanding",
+    "accepted_claude_design_output": null,
+    "note": "The accepted illustration family permits this exploration; no accepted Claude Design/state-system output was supplied or invented."
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": [],
+    "note": "No application integration, browser test or heavy CI was performed."
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model, seed, provider job ID and generation timestamp were not exposed and remain null. File modification times are not treated as generation timestamps.",
+    "Source terms/license evidence has not been independently captured; no rights or release clearance asserted.",
+    "Source item/page, creator credit and retrieval timestamp were not reported.",
+    "Duration and codec are null for still-image assets; format identifies PNG/WebP.",
+    "Accepted Claude Design/state-system output is absent; candidate art selection does not satisfy that gate."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T15:04:32Z",
+    "timestamp_meaning": "Local receipt/QA preparation time, not generation time",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "Delivery archive attachment only; not repository binaries",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_filename": "las-empty-state-candidates-20261002.zip",
+    "archive_relative_path_base": "Extracted archive root"
+  }
+}

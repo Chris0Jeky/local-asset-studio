@@ -1,0 +1,273 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "state-source-required",
+  "brief_revision": "production/20261002-empty-states/generation-prompts.json#state-source-required sha256:78bf4dd11cc7420eb868c09d0769e60e13c11c62a89e76c91eb8a83d89d7a0d9",
+  "production": {
+    "method": "generate-with-image-reference",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen",
+    "reported_model": null,
+    "reported_seed": null,
+    "output_id": "exec-cd5575cb-35cd-418c-aad1-2693ae59fc36",
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null,
+    "produced_at": null,
+    "transparent_background_requested": true,
+    "prompt_record": {
+      "relative_path": "production/20261002-empty-states/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "json_key": "state-source-required",
+      "sha256": "78bf4dd11cc7420eb868c09d0769e60e13c11c62a89e76c91eb8a83d89d7a0d9",
+      "hash_scope": "Exact prompt string encoded as UTF-8, without added newline",
+      "text": "Create a single original friendly source-image empty-state illustration for Local Asset Studio, matching the provided frame-and-folio illustration's restrained ivory paper, graphite edging, subtle cyan accent, careful hand-drawn shading and quiet professional mood. Style reference only. Subject: ONE empty picture frame viewed near front-on with a very slight dimensional angle, plus a small separate cyan right-angle corner bracket near the lower-right outer corner. The bracket suggests an image slot; it is not an upload arrow or button. The centre of the frame is clean empty ivory, no photo or scenery. Complete isolated object group on genuinely transparent alpha; landscape 3:2 with generous margins, legible at384x256. No background, tabletop, glow, vignette, checkerboard, text, lettering, button, arrows, checkmarks, exclamation marks, progress indicator, face or mascot. Calm and inviting, no error state or urgency."
+    },
+    "input_anchors": [
+      {
+        "asset_id": "state-blank",
+        "candidate": 1,
+        "relative_path": "inbox/state-blank--candidate-1.png",
+        "relative_path_base": "Extracted current delivery archive root",
+        "sha256": "38b62c95bb06dc3f0d422f2d4c56929979885e7068acc009b58170231fbc0562",
+        "role": "Actual supplied style reference",
+        "acceptance_scope": "Generated candidate; not evidence of accepted state-system design."
+      }
+    ]
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded-terms-not-reviewed",
+    "provenance_check": "Exact prompt, actual input-reference hash, local tool handle and original byte hash recorded. This is not a license determination."
+  },
+  "files": [
+    {
+      "relative_path": "inbox/state-source-required--candidate-1.png",
+      "relative_path_base": "Extracted delivery archive root; attachment-only binary, not repository text",
+      "sha256": "3f08fc87f564f137412fdd4fdc0a6408d48a788d2ca1f31cb8d62c341122f3f2",
+      "bytes": 1386799,
+      "width": 1536,
+      "height": 1024,
+      "format": "png",
+      "mode": "RGBA",
+      "alpha": true,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered native generated original"
+    },
+    {
+      "relative_path": "candidate-renditions/state-source-required--candidate-1--768x512.png",
+      "relative_path_base": "Extracted delivery archive root; attachment-only binary, not repository text",
+      "sha256": "17f4ee131a5f3ceebff48a092e22e8156669395ce7102b01e0ca89d624739eff",
+      "bytes": 191978,
+      "width": 768,
+      "height": 512,
+      "format": "png",
+      "mode": "RGBA",
+      "alpha": true,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "candidate production-size rendition; not runtime-qualified"
+    },
+    {
+      "relative_path": "candidate-renditions/state-source-required--candidate-1--384x256.webp",
+      "relative_path_base": "Extracted delivery archive root; attachment-only binary, not repository text",
+      "sha256": "42325507f6312becb0bb21911eb23d663a6b173f3cd77593dbbd5c85326e439d",
+      "bytes": 11040,
+      "width": 384,
+      "height": 256,
+      "format": "webp",
+      "mode": "RGBA",
+      "alpha": true,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "small-size review rendition; not runtime-qualified"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "uniform Lanczos downscale",
+      "tool": "Pillow 12.3.0",
+      "libwebp": null,
+      "input_relative_path": "inbox/state-source-required--candidate-1.png",
+      "input_sha256": "3f08fc87f564f137412fdd4fdc0a6408d48a788d2ca1f31cb8d62c341122f3f2",
+      "output_relative_path": "candidate-renditions/state-source-required--candidate-1--768x512.png",
+      "output_sha256": "17f4ee131a5f3ceebff48a092e22e8156669395ce7102b01e0ca89d624739eff",
+      "relative_path_base": "Extracted delivery archive root",
+      "from_dimensions": [
+        1536,
+        1024
+      ],
+      "resized_dimensions": [
+        768,
+        512
+      ],
+      "canvas_dimensions": [
+        768,
+        512
+      ],
+      "offset_pixels": [
+        0,
+        0
+      ],
+      "padding_rgba": null,
+      "nominal_canvas_fit_fraction": 1,
+      "actual_canvas_fit_fraction": 1.0,
+      "rounding": "None; exact 3:2 output size.",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "Preserved exactly",
+      "alpha_policy": "Original file and original alpha preserved byte-for-byte. RGBA resampled with Pillow Lanczos; no threshold, matte, opacity normalization or background removal. Lanczos edge ringing can produce 255 in derivatives even though source maximum is 254. Encoding preserves the resampled alpha exactly.",
+      "encoder": {
+        "format": "PNG",
+        "optimize": true
+      },
+      "metadata": "No EXIF or ICC metadata copied",
+      "purpose": "Candidate art exploration and size review only; not runtime qualification or release"
+    },
+    {
+      "operation": "uniform Lanczos downscale",
+      "tool": "Pillow 12.3.0",
+      "libwebp": "1.6.0",
+      "input_relative_path": "inbox/state-source-required--candidate-1.png",
+      "input_sha256": "3f08fc87f564f137412fdd4fdc0a6408d48a788d2ca1f31cb8d62c341122f3f2",
+      "output_relative_path": "candidate-renditions/state-source-required--candidate-1--384x256.webp",
+      "output_sha256": "42325507f6312becb0bb21911eb23d663a6b173f3cd77593dbbd5c85326e439d",
+      "relative_path_base": "Extracted delivery archive root",
+      "from_dimensions": [
+        1536,
+        1024
+      ],
+      "resized_dimensions": [
+        384,
+        256
+      ],
+      "canvas_dimensions": [
+        384,
+        256
+      ],
+      "offset_pixels": [
+        0,
+        0
+      ],
+      "padding_rgba": null,
+      "nominal_canvas_fit_fraction": 1,
+      "actual_canvas_fit_fraction": 1.0,
+      "rounding": "None; exact 3:2 output size.",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "Preserved exactly",
+      "alpha_policy": "Original file and original alpha preserved byte-for-byte. RGBA resampled with Pillow Lanczos; no threshold, matte, opacity normalization or background removal. Lanczos edge ringing can produce 255 in derivatives even though source maximum is 254. Encoding preserves the resampled alpha exactly.",
+      "encoder": {
+        "format": "WEBP",
+        "quality": 90,
+        "method": 6,
+        "lossless": false,
+        "exact": true,
+        "alpha": "lossless; decode equality verified"
+      },
+      "metadata": "No EXIF or ICC metadata copied",
+      "purpose": "Candidate art exploration and size review only; not runtime qualification or release"
+    }
+  ],
+  "art_review": {
+    "status": "selected-for-candidate-art-exploration",
+    "reviewer": "Independent visual QA",
+    "reviewed_at": "2026-10-02T15:04:32Z",
+    "inspected": [
+      "actual native RGBA original",
+      "actual supplied style reference or edit target",
+      "actual 384x256 WebP over light #f7f5ef and dark #182027",
+      "actual 768x512 PNG over light and dark backgrounds"
+    ],
+    "notes": "One clean empty ivory frame and a separate cyan right-angle bracket read as an image slot at 384x256.",
+    "observations": [
+      "The bracket remains distinct from the frame on light and dark composites.",
+      "No upload arrow, button, lettering, scenery, warning cue, progress signal, face or mascot observed.",
+      "The composition is calm, consistent with the selected illustration family, and does not substitute for accepted UI/state-system design."
+    ],
+    "candidate_art_selection": true,
+    "selection_scope": "Delegated aesthetic choice for candidate art exploration only"
+  },
+  "rendition_review": {
+    "status": "checked",
+    "checks": [
+      {
+        "check": "native-original-byte-hash-preserved",
+        "pass": true
+      },
+      {
+        "check": "original-RGBA-1536x1024",
+        "pass": true
+      },
+      {
+        "check": "768x512-RGBA-PNG",
+        "pass": true
+      },
+      {
+        "check": "384x256-RGBA-WebP",
+        "pass": true
+      },
+      {
+        "check": "384x256-byte-budget",
+        "actual": 11040,
+        "maximum_inclusive": 61440,
+        "pass": true
+      },
+      {
+        "check": "encoded-alpha-matches-resampled-alpha",
+        "pass": true
+      },
+      {
+        "check": "no-crop-no-upscale",
+        "pass": true
+      },
+      {
+        "check": "light-and-dark-composite-review",
+        "pass": true
+      }
+    ],
+    "alpha_caveats": [
+      "Source alpha ranges 0–254; no fully opaque source pixels.",
+      "Very faint nonzero alpha may reach canvas edges. Significant-alpha boxes are reported separately; alpha dust was not cleaned.",
+      "Lanczos resampling changes per-pixel alpha and may reach 255 through ringing. No alpha normalization was performed."
+    ]
+  },
+  "design_system_acceptance": {
+    "status": "outstanding",
+    "accepted_claude_design_output": null,
+    "note": "The accepted illustration family permits this exploration; no accepted Claude Design/state-system output was supplied or invented."
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": [],
+    "note": "No application integration, browser test or heavy CI was performed."
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model, seed, provider job ID and generation timestamp were not exposed and remain null. File modification times are not treated as generation timestamps.",
+    "Source terms/license evidence has not been independently captured; no rights or release clearance asserted.",
+    "Source item/page, creator credit and retrieval timestamp were not reported.",
+    "Duration and codec are null for still-image assets; format identifies PNG/WebP.",
+    "Accepted Claude Design/state-system output is absent; candidate art selection does not satisfy that gate."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T15:04:32Z",
+    "timestamp_meaning": "Local receipt/QA preparation time, not generation time",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "Delivery archive attachment only; not repository binaries",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_filename": "las-empty-state-candidates-20261002.zip",
+    "archive_relative_path_base": "Extracted archive root"
+  }
+}
