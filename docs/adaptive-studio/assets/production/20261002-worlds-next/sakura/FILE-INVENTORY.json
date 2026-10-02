@@ -1,0 +1,264 @@
+{
+  "asset_outputs": {
+    "sakura-master": [
+      {
+        "relative_path": "originals/sakura-master--candidate-1.png",
+        "sha256": "f2b8cbfdbb2a512ffe0b00508ded0d5d4a0ac45ad67b877feb7bd3164dd61f5e",
+        "bytes": 2548964,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/sakura-master--1280x720--preview.webp",
+        "sha256": "02e858e79f83bdea6f7767117a2ab7acc5eb0a8dca4c115fdf52a3a662b49ef9",
+        "bytes": 191596,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sakura-master--960x540--preview.webp",
+        "sha256": "f967b1b821c4f66d7f9c74984c3330e57796eac47b6e7630824b8c64bf185608",
+        "bytes": 118820,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "sakura-quiet": [
+      {
+        "relative_path": "originals/sakura-quiet--candidate-1.png",
+        "sha256": "3970ff875fb3256cb38f8d9beab5c6117db85e1d3d2ca7709f7e60160b18c9b8",
+        "bytes": 2453703,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/sakura-quiet--1280x720--preview.webp",
+        "sha256": "6c3a471e25d9b744cbff1ef3d2b2a36197ca4ed2ec81ba3b8ef86dc82b148254",
+        "bytes": 186286,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sakura-quiet--960x540--preview.webp",
+        "sha256": "755deec83edc83ec39d28b89307965184b9e88c7fa6ad47f946f8fde4c41ce36",
+        "bytes": 116820,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "sakura-wall": [
+      {
+        "relative_path": "originals/sakura-wall--candidate-1.png",
+        "sha256": "810ac100402e4910b9e65153467d84d3f509b61075111858e3e56f767b69e646",
+        "bytes": 2533834,
+        "width": 1536,
+        "height": 1024,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/sakura-wall--1200x800--panel.webp",
+        "sha256": "b2a158fdce8a82eca6b98839aec86d04f670d1f16bbe154b2d5fa6106091887f",
+        "bytes": 138918,
+        "width": 1200,
+        "height": 800,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sakura-wall--600x400--panel.webp",
+        "sha256": "3e7d948a4e62faa507b3399223ed82d04e102345bc7cc594b4ad095f64cc507a",
+        "bytes": 43056,
+        "width": 600,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      }
+    ],
+    "sakura-hero": [
+      {
+        "relative_path": "masters/sakura-hero--1668x695--native-wide-crop.png",
+        "sha256": "0f4c835759339f521f6cad05d10aefb3818c0a0bc58c4767e9d0f68e0cf2b2f4",
+        "bytes": 1896059,
+        "width": 1668,
+        "height": 695,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/sakura-hero--960x400--wide.webp",
+        "sha256": "a040c8637048307c5f92d3ce037ab50d5b3364473b653cb2c814afc1cd729dca",
+        "bytes": 89442,
+        "width": 960,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 256000,
+        "budget_pass": true
+      }
+    ],
+    "sakura-poster": [
+      {
+        "relative_path": "renditions/sakura-poster--1280x720--fallback.webp",
+        "sha256": "02e858e79f83bdea6f7767117a2ab7acc5eb0a8dca4c115fdf52a3a662b49ef9",
+        "bytes": 191596,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 225280,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sakura-poster--640x360--fallback.webp",
+        "sha256": "bee81fb6e0a2d11d02711b75eda3670a4f00457fcbf416c9d8a91fc8268274b8",
+        "bytes": 57666,
+        "width": 640,
+        "height": 360,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 92160,
+        "budget_pass": true
+      }
+    ],
+    "sakura-card": [
+      {
+        "relative_path": "masters/sakura-card--941x941--native-square-crop.png",
+        "sha256": "5371773783bc3488e7bd4b22a518fa3d389fa9af6a5bbec80363da4f5f0fa166",
+        "bytes": 1553953,
+        "width": 941,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/sakura-card--512x512--picker.webp",
+        "sha256": "af161455241b0164e8773c6b0aee37cd14df5118b2d1c64fa66a3747b157bd28",
+        "bytes": 80700,
+        "width": 512,
+        "height": 512,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 81920,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sakura-card--256x256--picker.webp",
+        "sha256": "98b79fdb7f67e015cd96905bf23d9803f15306eb662841a7f7e81fa86297407c",
+        "bytes": 23412,
+        "width": 256,
+        "height": 256,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 30720,
+        "budget_pass": true
+      }
+    ]
+  },
+  "review_files": [
+    {
+      "relative_path": "review/sakura-composition.jpg",
+      "sha256": "3685ddeed7d4b3d35d64267fb0992e9782a41df958ed61a0046495b2f14c2ea5",
+      "bytes": 295304,
+      "width": 1254,
+      "height": 706,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/sakura-contact-sheet.jpg",
+      "sha256": "53598bf48dbb80cfeb3f13ad3e20bb37b3fa2b3e8eae36ae63f0ab435ceafa5e",
+      "bytes": 367034,
+      "width": 1280,
+      "height": 1240,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/sakura-quiet-edge-overlay.jpg",
+      "sha256": "1e05ee02df2952cbb4e41511503e64ad724a6c1fd04e57d84aba08b0cb2b264d",
+      "bytes": 1000527,
+      "width": 1672,
+      "height": 941,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/sakura-quiet-landmarks.jpg",
+      "sha256": "3e5700830cee9c062913ecaa0c908f23c58cd8a808bb48ad77548584c855a4a1",
+      "bytes": 279589,
+      "width": 1672,
+      "height": 515,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ]
+}

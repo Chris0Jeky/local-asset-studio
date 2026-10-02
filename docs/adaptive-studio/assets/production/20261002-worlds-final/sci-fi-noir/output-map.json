@@ -1,0 +1,40 @@
+{
+  "pack_root": "sci-fi-noir-source-art-20261002",
+  "asset_outputs": {
+    "sci-fi-noir-master": [
+      "originals/sci-fi-noir-master--candidate-1.png",
+      "renditions/sci-fi-noir-master--1280x720--preview.webp",
+      "renditions/sci-fi-noir-master--960x540--preview.webp"
+    ],
+    "sci-fi-noir-quiet": [
+      "originals/sci-fi-noir-quiet--candidate-1.png",
+      "renditions/sci-fi-noir-quiet--1280x720--preview.webp",
+      "renditions/sci-fi-noir-quiet--960x540--preview.webp"
+    ],
+    "sci-fi-noir-wall": [
+      "originals/sci-fi-noir-wall--candidate-1.png",
+      "renditions/sci-fi-noir-wall--1200x800--panel.webp",
+      "renditions/sci-fi-noir-wall--600x400--panel.webp"
+    ],
+    "sci-fi-noir-hero": [
+      "masters/sci-fi-noir-hero--1668x695--native-wide-crop.png",
+      "renditions/sci-fi-noir-hero--960x400--wide.webp"
+    ],
+    "sci-fi-noir-poster": [
+      "renditions/sci-fi-noir-poster--1280x720--fallback.webp",
+      "renditions/sci-fi-noir-poster--640x360--fallback.webp"
+    ],
+    "sci-fi-noir-card": [
+      "masters/sci-fi-noir-card--941x941--native-square-crop.png",
+      "renditions/sci-fi-noir-card--512x512--picker.webp",
+      "renditions/sci-fi-noir-card--256x256--picker.webp"
+    ]
+  },
+  "preview": "review/sci-fi-noir-contact-sheet.jpg",
+  "archives": [
+    "sci-fi-noir-source-art-20261002-originals.zip",
+    "sci-fi-noir-source-art-20261002-renditions-review.zip"
+  ],
+  "delivery_urls": null,
+  "delivery_url_reason": "Prepared locally. Upload/delivery is outside this worker’s scope."
+}

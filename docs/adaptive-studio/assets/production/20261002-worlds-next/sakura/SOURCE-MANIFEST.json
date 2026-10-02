@@ -1,0 +1,77 @@
+{
+  "schema": "studio.theme-asset.source-pack/v1",
+  "pack": "sakura",
+  "prepared_at": "2026-10-02T15:40:40Z",
+  "requested_asset_ids": [
+    "sakura-master",
+    "sakura-quiet",
+    "sakura-wall",
+    "sakura-hero",
+    "sakura-poster",
+    "sakura-card"
+  ],
+  "source_count": 3,
+  "independent_generations": 1,
+  "reference_edits": 2,
+  "deterministic_derivative_ids": [
+    "sakura-hero",
+    "sakura-poster",
+    "sakura-card"
+  ],
+  "sources": [
+    {
+      "relative_path": "originals/sakura-master--candidate-1.png",
+      "sha256": "f2b8cbfdbb2a512ffe0b00508ded0d5d4a0ac45ad67b877feb7bd3164dd61f5e",
+      "bytes": 2548964,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/sakura-quiet--candidate-1.png",
+      "sha256": "3970ff875fb3256cb38f8d9beab5c6117db85e1d3d2ca7709f7e60160b18c9b8",
+      "bytes": 2453703,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/sakura-wall--candidate-1.png",
+      "sha256": "810ac100402e4910b9e65153467d84d3f509b61075111858e3e56f767b69e646",
+      "bytes": 2533834,
+      "width": 1536,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ],
+  "input_confirmation": {
+    "sakura-quiet": {
+      "input_id": "sakura-master",
+      "input_sha256": "f2b8cbfdbb2a512ffe0b00508ded0d5d4a0ac45ad67b877feb7bd3164dd61f5e",
+      "source": "Parent generation record: exact candidate-1 master supplied as image edit input."
+    },
+    "sakura-wall": {
+      "input_id": "sakura-master",
+      "input_sha256": "f2b8cbfdbb2a512ffe0b00508ded0d5d4a0ac45ad67b877feb7bd3164dd61f5e",
+      "source": "Parent generation record: exact candidate-1 master supplied as image edit input."
+    }
+  },
+  "source_art_selection": {
+    "status": "selected-with-caveats",
+    "selected_by": "lead assistant under user-delegated aesthetic choice",
+    "date": "2026-10-02",
+    "evidence": "Lead assistant viewed both six-ID contact sheets and selected all twelve source-art IDs."
+  },
+  "runtime_qualified": false,
+  "selected_for_release": false,
+  "planning_files_modified": false
+}

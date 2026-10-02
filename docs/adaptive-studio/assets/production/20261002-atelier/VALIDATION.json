@@ -1,0 +1,98 @@
+{
+  "status": "offline-artifact-checks-passed-with-documented-shortfalls",
+  "output_files_checked": 16,
+  "encoded_renditions_checked": 11,
+  "lossless_native_crops_checked": 2,
+  "unchanged_originals_checked": 3,
+  "review_images_checked": 4,
+  "deterministic_replay": "All 13 derivative outputs reproduced byte-for-byte from exact source hashes.",
+  "png_crop_pixels": "Both native PNG crops match the exact decoded original pixel regions.",
+  "aspect_ratio": "All crop-to-output scales are isotropic; all transforms are crop/downsample only.",
+  "prompt_record": "Matches exact original supplied prompts.",
+  "registration": "20 sampled landmarks: median/max integer shift 0 px; median NCC .90569; minimum .64772.",
+  "unfulfilled_targets": "See TRANSFORMATIONS.json. Native-size target shortfalls remain; no artificial upscaling.",
+  "runtime_qualification": "not-performed",
+  "release_selection": "not-selected",
+  "files": [
+    {
+      "path": "originals/atelier-master--candidate-1.png",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/atelier-master--1280x720--preview.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/atelier-master--960x540--preview.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "originals/atelier-quiet--candidate-1.png",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/atelier-quiet--1280x720--preview.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/atelier-quiet--960x540--preview.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "originals/atelier-wall--candidate-1.png",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/atelier-wall--1200x800--panel.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/atelier-wall--600x400--panel.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "masters/atelier-hero--1668x695--native-wide-crop.png",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/atelier-hero--960x400--wide.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/atelier-poster--1280x720--fallback.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/atelier-poster--640x360--fallback.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "masters/atelier-card--941x941--native-square-crop.png",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/atelier-card--512x512--picker.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/atelier-card--256x256--picker.webp",
+      "decode_dimensions_hash_bytes": "pass",
+      "budget": "pass"
+    }
+  ]
+}

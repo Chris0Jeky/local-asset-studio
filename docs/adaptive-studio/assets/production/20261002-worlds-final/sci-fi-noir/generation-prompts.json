@@ -1,0 +1,16 @@
+{
+  "world": "sci-fi-noir",
+  "master": "Sci-Fi Noir: an ORIGINAL shadowed observatory workshop with weathered blue-grey steel walls and a remote orbital horizon seen through a large right-side observation window. A compact unbranded workbench on the right holds a modest articulated instrument and one small warm amber practical lamp; instruments have no text or readable gauges. An immense softly lit crescent world and sparse distant stars are visible outside, understated scale and mystery. Left60% is a low-contrast empty weathered steel wall with structural seams confined near outer edges. Architectural shadows, muted blue-grey palette, small amber accents, tactile sophisticated hand-painted science-fiction background, calm rather than threatening. No franchise-specific design. Original landscape16:9 architectural environment illustration for a premium local creative workspace skin. Target3840x2160 if natively supported; do not print dimensions. Keep the middle-left60% low-detail and low-contrast for real HTML headings, interesting subject nearx.78,y.65 with12% edge overscan. No text, letters, numbers, interface, buttons, icons, logos, watermarks, people or fake status elements. One finished scene, not a collage.",
+  "edits": [
+    {
+      "world": "sci-fi-noir",
+      "type": "quiet",
+      "prompt": "Edit this exact sci-fi-noir workspace into a quieter diffuse-daylight alternative. Preserve EXACT camera, perspective, composition, architecture, every object and silhouette. Only relight: soft cool orbital dawn entering the same window, slightly lifted shadows, restrained dimmed amber lamp, same planet and star locations, no new celestial bodies. Do not redesign, move, add or remove objects. No text or UI. Registration is the priority. Match original16:9 dimensions."
+    },
+    {
+      "world": "sci-fi-noir",
+      "type": "wall",
+      "prompt": "Create a3:2 low-detail panel wall adaptation from this exact sci-fi-noir workspace. Same place, materials and palette. Almost entire image should be a calm matte blue-grey weathered steel wall, with weathering very fine and low contrast, a thin edge of the original orbital window confined to far right. Central70% empty and very low contrast; no desk, instruments, furniture, shadows or crossing structural seams there. Keep decorative details at outer15% margins. No text, labels, buttons, icons, numbers, UI, logos or people. Target2400x1600 if supported. Refined subtle background for real HTML panels."
+    }
+  ]
+}

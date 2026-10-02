@@ -1,0 +1,476 @@
+{
+  "world": "arcade",
+  "method": "20 manually selected architectural/object landmarks; up to 41x41 grayscale high-pass templates (Gaussian sigma 3), normalized cross-correlation within +/-12 source pixels. Border-adjacent points use a smaller symmetric patch, recorded per point. Original unscaled coordinates; no warp or registration correction.",
+  "dimensions": [
+    1672,
+    941
+  ],
+  "inputs": [
+    {
+      "name": "arcade-master--candidate-1.png",
+      "sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb"
+    },
+    {
+      "name": "arcade-quiet--candidate-1.png",
+      "sha256": "f0128ddb44923e1192922f3d7f71e0fe114f010a5b5a12620828dfa402f5c83a"
+    }
+  ],
+  "summary": {
+    "landmarks": 20,
+    "median_shift_px": 0.0,
+    "max_shift_px": 7.2801,
+    "median_ncc": 0.83549,
+    "min_ncc": 0.58751,
+    "search_boundary_hits": 0
+  },
+  "landmarks": [
+    {
+      "name": "Left pipe elbow",
+      "master_xy": [
+        73,
+        29
+      ],
+      "quiet_best_xy": [
+        73,
+        29
+      ],
+      "patch_size_px": 35,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.83544,
+      "identity_ncc": 0.83544,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Ceiling beam corner",
+      "master_xy": [
+        497,
+        59
+      ],
+      "quiet_best_xy": [
+        497,
+        59
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.81998,
+      "identity_ncc": 0.81998,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Upper wall pipe bracket",
+      "master_xy": [
+        817,
+        99
+      ],
+      "quiet_best_xy": [
+        817,
+        99
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.83555,
+      "identity_ncc": 0.83555,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Wall panel seam",
+      "master_xy": [
+        302,
+        436
+      ],
+      "quiet_best_xy": [
+        302,
+        436
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.68123,
+      "identity_ncc": 0.68123,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Wall floor seam",
+      "master_xy": [
+        519,
+        647
+      ],
+      "quiet_best_xy": [
+        518,
+        647
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.76155,
+      "identity_ncc": 0.75447,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Shelf top-left",
+      "master_xy": [
+        874,
+        249
+      ],
+      "quiet_best_xy": [
+        874,
+        249
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.58751,
+      "identity_ncc": 0.58751,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Shelf middle corner",
+      "master_xy": [
+        953,
+        366
+      ],
+      "quiet_best_xy": [
+        953,
+        366
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.74314,
+      "identity_ncc": 0.74314,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Plant pot top-left",
+      "master_xy": [
+        778,
+        576
+      ],
+      "quiet_best_xy": [
+        777,
+        576
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.69382,
+      "identity_ncc": 0.67121,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Rear stool seat",
+      "master_xy": [
+        965,
+        552
+      ],
+      "quiet_best_xy": [
+        964,
+        552
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.80864,
+      "identity_ncc": 0.76956,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Left cabinet top corner",
+      "master_xy": [
+        1186,
+        238
+      ],
+      "quiet_best_xy": [
+        1186,
+        238
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.8363,
+      "identity_ncc": 0.8363,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Left cabinet side elbow",
+      "master_xy": [
+        1059,
+        322
+      ],
+      "quiet_best_xy": [
+        1059,
+        322
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.84411,
+      "identity_ncc": 0.84411,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Left cabinet joystick",
+      "master_xy": [
+        1051,
+        482
+      ],
+      "quiet_best_xy": [
+        1051,
+        482
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.84332,
+      "identity_ncc": 0.84332,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Right cabinet top corner",
+      "master_xy": [
+        1406,
+        175
+      ],
+      "quiet_best_xy": [
+        1405,
+        175
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.84415,
+      "identity_ncc": 0.63825,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Right cabinet screen corner",
+      "master_xy": [
+        1429,
+        299
+      ],
+      "quiet_best_xy": [
+        1427,
+        306
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -2,
+        7
+      ],
+      "shift_distance_px": 7.2801,
+      "ncc": 0.9195,
+      "identity_ncc": 0.8291,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Right cabinet joystick",
+      "master_xy": [
+        1227,
+        480
+      ],
+      "quiet_best_xy": [
+        1227,
+        480
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.8314,
+      "identity_ncc": 0.8314,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Front stool seat-left",
+      "master_xy": [
+        1129,
+        612
+      ],
+      "quiet_best_xy": [
+        1129,
+        612
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.91397,
+      "identity_ncc": 0.91397,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Front stool crossbar",
+      "master_xy": [
+        1184,
+        755
+      ],
+      "quiet_best_xy": [
+        1184,
+        755
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.86191,
+      "identity_ncc": 0.86191,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Workbench front-left corner",
+      "master_xy": [
+        1361,
+        547
+      ],
+      "quiet_best_xy": [
+        1360,
+        547
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.92372,
+      "identity_ncc": 0.91644,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Lamp shade top",
+      "master_xy": [
+        1577,
+        314
+      ],
+      "quiet_best_xy": [
+        1577,
+        314
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.81269,
+      "identity_ncc": 0.81269,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Right cabinet lower corner",
+      "master_xy": [
+        1343,
+        778
+      ],
+      "quiet_best_xy": [
+        1342,
+        778
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.85152,
+      "identity_ncc": 0.83233,
+      "search_boundary_hit": false
+    }
+  ],
+  "limits": [
+    "Sampled measurements describe local correspondence only; lighting and generative detail redraw preclude a pixel-identity claim.",
+    "A +/-12px local search cannot rule out larger displacement or incorrect matches. Low correlation and boundary matches require visual interpretation.",
+    "The source-art plan requests pixel-for-pixel crossfade registration. These samples and edge overlays do not fulfill a whole-image or actual runtime crossfade acceptance gate.",
+    "No transform has been applied to either delivered original."
+  ],
+  "diagnostic_larger_patches": [
+    {
+      "master_xy": [
+        1429,
+        299
+      ],
+      "patch_size_px": 61,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "ncc": 0.8127800763,
+      "identity_ncc": 0.8127800763
+    },
+    {
+      "master_xy": [
+        1429,
+        299
+      ],
+      "patch_size_px": 81,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "ncc": 0.8229403344,
+      "identity_ncc": 0.804903238
+    },
+    {
+      "master_xy": [
+        1429,
+        299
+      ],
+      "patch_size_px": 101,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "ncc": 0.8402407722,
+      "identity_ncc": 0.8171438244
+    }
+  ],
+  "interpretation": "Most sampled structural points match at 0 or 1 pixel. The 41px screen-edge template has a 7.2801px best-match offset along a similar contour; this is local correspondence uncertainty, not proof of a camera shift. Keep the raw result. Larger-patch diagnostics below and visual review support same-room still use only."
+}
