@@ -277,7 +277,17 @@ class RecipeWording(unittest.TestCase):
                 self.stage_picture()
                 self.switch('sdxl')
                 self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
-                self.page.locator(selector).click()
+                control = self.page.locator(selector)
+                # Variants live in the initially folded Fine-tune disclosure.
+                # Follow the real interaction, not a force-click on hidden UI.
+                parents = control.locator('xpath=ancestor::details')
+                for parent in parents.all():
+                    if not parent.evaluate('(node) => node.open'):
+                        parent.locator(':scope > summary').click()
+                self.assertTrue(control.is_visible(), 'the edit must be reachable before clicking')
+                self.assertTrue(self.page.locator('#uxWordingUndoBack').is_visible(),
+                                'opening presentation controls must not consume recovery')
+                control.click()
                 self.assertTrue(self.page.locator('#uxWordingUndoBack').is_hidden())
                 self.assertEqual(self.page.evaluate('selected.id'), 'sdxl')
 
