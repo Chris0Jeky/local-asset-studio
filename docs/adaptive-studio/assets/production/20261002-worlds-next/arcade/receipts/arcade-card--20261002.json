@@ -1,0 +1,204 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "art-reviewed",
+  "requested_asset_id": "arcade-card",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "derive",
+    "provider": "local deterministic image processing",
+    "tool_action": "Pillow crop/resize/WebP encode",
+    "execution_surface": "dot cloud workspace",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": [
+      {
+        "asset_id": "arcade-master",
+        "relative_path": "originals/arcade-master--candidate-1.png",
+        "sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+        "role": "exact deterministic source"
+      }
+    ],
+    "orchestration_handle": null,
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "masters/arcade-card--941x941--native-square-crop.png",
+      "sha256": "40bd180d460dd8e03e06533a1aebfd7fb7ad105450a5ba73f5a7ec2b36d7858b",
+      "bytes": 1269251,
+      "width": 941,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": null,
+      "budget_pass": null
+    },
+    {
+      "relative_path": "renditions/arcade-card--512x512--picker.webp",
+      "sha256": "687eaaedb346608a521086b08343551d9054fb14de65da9df134c9316d84bd62",
+      "bytes": 50128,
+      "width": 512,
+      "height": 512,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 81920,
+      "budget_pass": true
+    },
+    {
+      "relative_path": "renditions/arcade-card--256x256--picker.webp",
+      "sha256": "86077e02861fafe144517590548f8c52eecd54bd0d9c0cad5ec1df83b12165db",
+      "bytes": 14126,
+      "width": 256,
+      "height": 256,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 30720,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "arcade-card",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "masters/arcade-card--941x941--native-square-crop.png",
+      "output_sha256": "40bd180d460dd8e03e06533a1aebfd7fb7ad105450a5ba73f5a7ec2b36d7858b",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        941,
+        941
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-card",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-card--512x512--picker.webp",
+      "output_sha256": "687eaaedb346608a521086b08343551d9054fb14de65da9df134c9316d84bd62",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        512,
+        512
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-card",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-card--256x256--picker.webp",
+      "output_sha256": "86077e02861fafe144517590548f8c52eecd54bd0d9c0cad5ec1df83b12165db",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        256,
+        256
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "source-art-selected-with-caveats",
+    "reviewer": "independent QA assistant; lead assistant visual selection",
+    "notes": "Selected as source art by the lead assistant after preview review, with native-size, crop and safe-zone caveats.",
+    "selection_record": "Lead assistant reviewed both six-ID contact sheets and selected all twelve source-art IDs on 2026-10-02. This is not runtime or release selection."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

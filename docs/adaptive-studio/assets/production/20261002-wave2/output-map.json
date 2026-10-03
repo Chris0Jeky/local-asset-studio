@@ -1,0 +1,63 @@
+[
+  {
+    "asset_id": "workflow-combine",
+    "candidate": 1,
+    "output_id": "exec-6b9447c5-fdda-4930-8472-49a1fbbd6feb",
+    "prompt_key": "workflow_combine",
+    "filename": "workflow-combine--1448x1086--candidate-1.png",
+    "sha256": "5edcaaef0d15f2bf4e4dd3ddb29aadf5e4fe3b8f5eec12b8f05435caa898fa5b",
+    "width": 1448,
+    "height": 1086,
+    "bytes": 1648790,
+    "anchor_id": "workflow-create"
+  },
+  {
+    "asset_id": "workflow-pose",
+    "candidate": 1,
+    "output_id": "exec-5f2cb8e8-1dd4-4c27-9932-26cdaabdef37",
+    "prompt_key": "workflow_pose",
+    "filename": "workflow-pose--1448x1086--candidate-1.png",
+    "sha256": "9587382ab53b9a4dfed0d970e916589d159d7783a6ec8beef7d31a197f01696e",
+    "width": 1448,
+    "height": 1086,
+    "bytes": 1494052,
+    "anchor_id": "workflow-create"
+  },
+  {
+    "asset_id": "workflow-recover",
+    "candidate": 1,
+    "output_id": "exec-23d5847d-1f27-4c4f-b0b0-c61bf75bf574",
+    "prompt_key": "workflow_recover",
+    "filename": "workflow-recover--1448x1086--candidate-1.png",
+    "sha256": "3db913c0ffb6e1882be954de3d01d57d462a63abcaa76ee5590ed2acbff5ba43",
+    "width": 1448,
+    "height": 1086,
+    "bytes": 1514086,
+    "anchor_id": "workflow-create"
+  },
+  {
+    "asset_id": "reference-outfit",
+    "candidate": 1,
+    "output_id": "exec-5d87d0a6-1710-4918-9294-b00384eec687",
+    "prompt_key": "reference_outfit",
+    "filename": "reference-outfit--1024x1536--candidate-1.png",
+    "sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 1746036,
+    "anchor_id": "reference-identity"
+  },
+  {
+    "asset_id": "workflow-recover",
+    "candidate": 2,
+    "output_id": "exec-23e27b79-959a-408c-85a4-d810d35c2bed",
+    "prompt_key": "workflow_recover_refine1",
+    "filename": "workflow-recover--1448x1086--candidate-2.png",
+    "sha256": "19aec23fd4e750429af5d1ffa0cd0c56cce88cdce3a4b107c6e636ec5190d0f8",
+    "width": 1448,
+    "height": 1086,
+    "bytes": 1337064,
+    "anchor_id": "workflow-recover",
+    "input_filename": "workflow-recover--1448x1086--candidate-1.png"
+  }
+]

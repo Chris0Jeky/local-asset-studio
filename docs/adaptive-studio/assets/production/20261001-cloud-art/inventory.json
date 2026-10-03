@@ -1,0 +1,156 @@
+[
+  {
+    "relative_path": "inbox/reference-background--1254x1254--candidate-1.png",
+    "sha256": "d19f39fb462a46324bf32d5ec548bbe20f6e08d6ba262ae2c11bdda5205d95ae",
+    "bytes": 2317765,
+    "width": 1254,
+    "height": 1254,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-composition--1254x1254--candidate-1.png",
+    "sha256": "0cac73cd6c36fba2c9e4a36ca702c640d3f8cf29ced6652d69e686514da23819",
+    "bytes": 1675763,
+    "width": 1254,
+    "height": 1254,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-composition--1254x1254--candidate-2.png",
+    "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+    "bytes": 1442857,
+    "width": 1254,
+    "height": 1254,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-composition--1254x1254--candidate-3.png",
+    "sha256": "0c1f22ca98e46a07bc13eaa1d062b9d46b85fdfe8d6f46f69d9dd3b5e4fcb249",
+    "bytes": 1428503,
+    "width": 1254,
+    "height": 1254,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-identity--1024x1536--candidate-1.png",
+    "sha256": "78eb4db22ef497eb4388d2b5c2aad4425e31983a5da268c79a4f867383d308a4",
+    "bytes": 2319925,
+    "width": 1024,
+    "height": 1536,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-identity--1024x1536--candidate-2.png",
+    "sha256": "4e0b04cb4d1d295852b6b1146e2261adce2d8b694e2d051a9e9d1c2d6e922986",
+    "bytes": 2162360,
+    "width": 1024,
+    "height": 1536,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-identity--1024x1536--candidate-3.png",
+    "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+    "bytes": 1889270,
+    "width": 1024,
+    "height": 1536,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-lighting--1254x1254--candidate-1.png",
+    "sha256": "678b05f2e06884872fbf560d2141bb069ea4d2581471ec99686e4df6f488d95a",
+    "bytes": 1870484,
+    "width": 1254,
+    "height": 1254,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-lighting--1254x1254--candidate-2.png",
+    "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+    "bytes": 1805697,
+    "width": 1254,
+    "height": 1254,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-pose--1024x1536--candidate-1.png",
+    "sha256": "526c988b621534eea50f08ba0666247cbd13a8f45e82d36502c20bf940c5b984",
+    "bytes": 1908246,
+    "width": 1024,
+    "height": 1536,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/reference-style--1254x1254--candidate-1.png",
+    "sha256": "82bc4b7c8d299967be2432fed8d889ae5044b6a1a9909264898f44d40353d11c",
+    "bytes": 3491860,
+    "width": 1254,
+    "height": 1254,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/workflow-create--1448x1086--candidate-1.png",
+    "sha256": "72c198b81e5e79cd29ca2606420b8750ab8e4c1c2c7d9cc20f3ecc04cd5090ca",
+    "bytes": 1993771,
+    "width": 1448,
+    "height": 1086,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/workflow-create--1448x1086--candidate-2.png",
+    "sha256": "acb9740ffa7214fa46515efdd6c8fdda834aa31c03dc760ce6dc6b9fe7c79af7",
+    "bytes": 1791215,
+    "width": 1448,
+    "height": 1086,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  },
+  {
+    "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+    "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+    "bytes": 1512700,
+    "width": 1448,
+    "height": 1086,
+    "format": "png",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null
+  }
+]

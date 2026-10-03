@@ -1,0 +1,170 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "art-reviewed",
+  "requested_asset_id": "sakura-wall",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "edit",
+    "provider": "OpenAI",
+    "tool_action": "image_gen.imagegen",
+    "execution_surface": "dot-run",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": "generation-prompts.json#/edits/1/prompt",
+    "input_anchors": [
+      {
+        "asset_id": "sakura-master",
+        "relative_path": "originals/sakura-master--candidate-1.png",
+        "sha256": "f2b8cbfdbb2a512ffe0b00508ded0d5d4a0ac45ad67b877feb7bd3164dd61f5e",
+        "role": "exact input image"
+      }
+    ],
+    "orchestration_handle": "exec-ca8b8011-69b6-499f-9171-a40d3b5d47f6",
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "originals/sakura-wall--candidate-1.png",
+      "sha256": "810ac100402e4910b9e65153467d84d3f509b61075111858e3e56f767b69e646",
+      "bytes": 2533834,
+      "width": 1536,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "renditions/sakura-wall--1200x800--panel.webp",
+      "sha256": "b2a158fdce8a82eca6b98839aec86d04f670d1f16bbe154b2d5fa6106091887f",
+      "bytes": 138918,
+      "width": 1200,
+      "height": 800,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 184320,
+      "budget_pass": true
+    },
+    {
+      "relative_path": "renditions/sakura-wall--600x400--panel.webp",
+      "sha256": "3e7d948a4e62faa507b3399223ed82d04e102345bc7cc594b4ad095f64cc507a",
+      "bytes": 43056,
+      "width": 600,
+      "height": 400,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 184320,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "sakura-wall",
+      "input_path": "originals/sakura-wall--candidate-1.png",
+      "input_sha256": "810ac100402e4910b9e65153467d84d3f509b61075111858e3e56f767b69e646",
+      "output_path": "renditions/sakura-wall--1200x800--panel.webp",
+      "output_sha256": "b2a158fdce8a82eca6b98839aec86d04f670d1f16bbe154b2d5fa6106091887f",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1200,
+        800
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sakura-wall",
+      "input_path": "originals/sakura-wall--candidate-1.png",
+      "input_sha256": "810ac100402e4910b9e65153467d84d3f509b61075111858e3e56f767b69e646",
+      "output_path": "renditions/sakura-wall--600x400--panel.webp",
+      "output_sha256": "3e7d948a4e62faa507b3399223ed82d04e102345bc7cc594b4ad095f64cc507a",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        600,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "source-art-selected-with-caveats",
+    "reviewer": "independent QA assistant; lead assistant visual selection",
+    "notes": "Selected as source art by the lead assistant after preview review, with native-size, crop and safe-zone caveats.",
+    "selection_record": "Lead assistant reviewed both six-ID contact sheets and selected all twelve source-art IDs on 2026-10-02. This is not runtime or release selection."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

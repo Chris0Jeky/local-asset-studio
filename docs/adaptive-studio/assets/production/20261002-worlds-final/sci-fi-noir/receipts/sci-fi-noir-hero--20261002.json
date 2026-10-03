@@ -1,0 +1,159 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "sci-fi-noir-hero",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "derive",
+    "provider": "local deterministic image processing",
+    "tool_action": "Pillow crop/resize/WebP encode",
+    "execution_surface": "dot cloud workspace",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": [
+      {
+        "asset_id": "sci-fi-noir-master",
+        "relative_path": "originals/sci-fi-noir-master--candidate-1.png",
+        "sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+        "role": "exact deterministic source"
+      }
+    ],
+    "orchestration_handle": null,
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "masters/sci-fi-noir-hero--1668x695--native-wide-crop.png",
+      "sha256": "4ce739768d11d0c0e09e4c9eaf0545be119865afee1c72ad846b2810dfa04ba3",
+      "bytes": 1783727,
+      "width": 1668,
+      "height": 695,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": null,
+      "budget_pass": null
+    },
+    {
+      "relative_path": "renditions/sci-fi-noir-hero--960x400--wide.webp",
+      "sha256": "d872eccaab34da0a12b1178c8602575ddaed553cd36a6812dcdf8488106982d1",
+      "bytes": 75470,
+      "width": 960,
+      "height": 400,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 256000,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "sci-fi-noir-hero",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "masters/sci-fi-noir-hero--1668x695--native-wide-crop.png",
+      "output_sha256": "4ce739768d11d0c0e09e4c9eaf0545be119865afee1c72ad846b2810dfa04ba3",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        55,
+        1670,
+        750
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1668,
+        695
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-hero",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-hero--960x400--wide.webp",
+      "output_sha256": "d872eccaab34da0a12b1178c8602575ddaed553cd36a6812dcdf8488106982d1",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        55,
+        1670,
+        750
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "accepted-by-delegated-assistant",
+    "reviewer": "lead assistant",
+    "scope": "source art only",
+    "notes": "Selected after visual review of the full six-ID contact sheet on 2026-10-02. Weathered steel texture and horizontal seam prevent an unqualified full-left60% text-safe claim. Keep crop, heading-zone, registration and native-size caveats."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

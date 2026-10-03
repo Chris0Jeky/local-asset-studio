@@ -1,0 +1,240 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "workflow-pose",
+  "brief_revision": "production/20261002-wave2/generation-prompts.json#workflow_pose sha256:043be92ff79c8ad14776714b431119a51ec5a49326f3209c55359bae7271d21b",
+  "production": {
+    "method": "generate-with-image-reference",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen with an attached accepted image reference",
+    "reported_model": null,
+    "output_id": "exec-5f2cb8e8-1dd4-4c27-9932-26cdaabdef37",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-wave2/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "workflow_pose",
+      "sha256": "043be92ff79c8ad14776714b431119a51ec5a49326f3209c55359bae7271d21b",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "The attached image is the accepted style anchor for a series of conceptual illustrations. Create a new illustration in exactly the same style: same line weight, same flat fills with faint paper grain, same raised front three-quarter viewpoint, same palette (graphite, warm ivory, small desaturated rose and muted cyan accents, a small amber glow) and the same plain very light warm grey background.\n\nSubject, for the \"put a character into a pose\" step: on the left, a plain filled silhouette of a standing figure inside a frame (who the character is); on the right, a separate frame holding a simple stick-and-joint pose sketch in a clearly different, asymmetric leaning pose (the geometry). The two must read as two different inputs: the silhouette is filled and soft, the pose sketch is thin lines and dots. No face details, no clothing detail.\n\nComposition: aspect ratio 4:3 landscape (or 3:2 with empty outer edges). The two frames side by side, centred slightly above the middle; the bottom third calm and nearly empty for a caption.\n\nDo not include: any text, letters, numbers, labels, arrows with words, logos, watermarks, user-interface elements, buttons, screens or realistic people."
+    },
+    "input_anchors": [
+      {
+        "asset_id": "workflow-create",
+        "candidate": 3,
+        "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+        "relative_path_base": "Previous delivery archive, not included again in this wave",
+        "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+        "owner_acceptance": {
+          "status": "accepted-as-series-anchor",
+          "decision_at": "2026-10-02T09:27:00Z",
+          "timestamp_precision": "minute-level owner response record",
+          "evidence": "Owner accepted the two input anchors and continuation on 2026-10-02 at approximately 09:27 UTC; this historical anchor approval does not transfer to derivatives.",
+          "scope": "This candidate is accepted as an input style/canon anchor; approval does not transfer to new candidates."
+        },
+        "note": "Actual PNG supplied to image generation; locally inspected and SHA-256 matched to the prior repository receipt."
+      }
+    ],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded-terms-not-reviewed",
+    "provenance_check": "Generated output handle, exact prompt, actual anchor hash and original byte hash recorded; this is not a license determination."
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-pose--1448x1086--candidate-1.png",
+      "sha256": "9587382ab53b9a4dfed0d970e916589d159d7783a6ec8beef7d31a197f01696e",
+      "bytes": 1494052,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review-renditions/workflow-pose--1448x1086--candidate-1--600x450.webp",
+      "sha256": "68f3adc213001322c1878d00f2adafaf8d4962c186f84a3445b11b1e8784f41b",
+      "bytes": 10522,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "libwebp": "1.6.0",
+      "input_relative_path": "inbox/workflow-pose--1448x1086--candidate-1.png",
+      "input_sha256": "9587382ab53b9a4dfed0d970e916589d159d7783a6ec8beef7d31a197f01696e",
+      "output_relative_path": "review-renditions/workflow-pose--1448x1086--candidate-1--600x450.webp",
+      "output_sha256": "68f3adc213001322c1878d00f2adafaf8d4962c186f84a3445b11b1e8784f41b",
+      "relative_path_base": "Extracted delivery archive root",
+      "from_dimensions": [
+        1448,
+        1086
+      ],
+      "to_dimensions": [
+        600,
+        450
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "Preserved to nearest integer output dimension; reference-outfit 213x320 rounds 213.333px width",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "Review only; not runtime-qualified or selected for release"
+    }
+  ],
+  "art_review": {
+    "status": "accepted",
+    "reviewer": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "timestamp_meaning": "Time this delegated art-selection record was prepared",
+    "authority": {
+      "kind": "owner-delegated-assistant-art-selection",
+      "delegated_on": "2026-10-02",
+      "delegated_at": "2026-10-02T11:16:00Z",
+      "timestamp_precision": "Minute-level delegation record",
+      "scope": "Choose the best candidates for the current LAS workflow-illustration and reference-example task, using completed visual reviews. This is art judgment only.",
+      "exclusions": [
+        "Source or license clearance",
+        "Runtime qualification",
+        "Release selection",
+        "Merge",
+        "Deployment"
+      ]
+    },
+    "justification": "Filled standing silhouette and separate asymmetric stick-and-joint drawing read as different identity and geometry inputs. Clean linework and a quiet lower third.",
+    "retained_caveats": [
+      "The raised frame treatment and ivory/graphite/amber color family are consistent with the accepted workflow anchor. Rose/cyan accents are absent; this is a minor palette variation, not a semantic defect.",
+      "No facial detail, clothing detail, lettering, realistic person or imitation UI was observed.",
+      "At 600x450, the leaning pose, joints and filled-vs-line distinction remain visible."
+    ],
+    "prior_review": {
+      "status": "reviewed-recommended-for-owner-review",
+      "reviewer": "dot independent visual QA",
+      "reviewed_at": "2026-10-02T09:43:28Z",
+      "inspected": [
+        "actual original PNG at native dimensions",
+        "actual WebP review rendition at native dimensions",
+        "actual accepted input anchor PNG"
+      ],
+      "notes": "Filled standing silhouette and separate asymmetric stick-and-joint drawing read as different identity and geometry inputs. Clean linework and a quiet lower third.",
+      "observations": [
+        "The raised frame treatment and ivory/graphite/amber color family are consistent with the accepted workflow anchor. Rose/cyan accents are absent; this is a minor palette variation, not a semantic defect.",
+        "No facial detail, clothing detail, lettering, realistic person or imitation UI was observed.",
+        "At 600x450, the leaning pose, joints and filled-vs-line distinction remain visible."
+      ],
+      "owner_acceptance_implied": false
+    },
+    "evidence": {
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+      "decision": "Selected after completed visual reviews under task-scoped owner delegation"
+    }
+  },
+  "rendition_review": {
+    "status": "reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "visual_status": "reviewed-readable",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          600,
+          450
+        ],
+        "pass": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 10522,
+        "maximum_inclusive": 102400,
+        "pass": true
+      },
+      {
+        "check": "no-upscale-no-crop",
+        "pass": true
+      },
+      {
+        "check": "decode-WebP",
+        "pass": true
+      },
+      {
+        "check": "native-size-pixel-inspection",
+        "pass": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": [],
+    "note": "No application integration, runtime test, browser check or CI was performed."
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: file save/copy time is not a provider generation timestamp.",
+    "reported_model, reported_seed and provider_job_id were not exposed by the image tool and remain null.",
+    "source item/page, creator credit, retrieval timestamp and independently captured terms evidence were not reported; no license determination is made.",
+    "duration_seconds and codec are null because these are still-image files; format records PNG/WebP.",
+    "Source/license review, application runtime qualification and release selection remain separate unresolved gates; art acceptance is recorded under owner delegation."
+  ],
+  "owner_acceptance": {
+    "status": "satisfied-by-owner-delegated-art-selection",
+    "accepted_by": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "evidence": {
+      "delegation_date": "2026-10-02",
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json"
+    },
+    "note": "This is a delegated assistant art decision, not a claim that the owner directly reviewed this candidate. It does not clear source, runtime or release gates."
+  },
+  "intake": {
+    "received_at": "2026-10-02T09:43:28Z",
+    "timestamp_meaning": "Local receipt preparation, not provider generation time",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "Delivery archive attachments only; binaries are not in the text-only repository file list",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_filename": "las-art-wave2-candidates.zip",
+    "archive_relative_path_base": "Extracted archive root",
+    "input_anchors": "Anchor paths refer to the prior delivery; anchors are not duplicated in this archive."
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated art selector)",
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "acceptance_basis": "owner-delegated-assistant-art-selection",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "justification": "Filled standing silhouette and separate asymmetric stick-and-joint drawing read as different identity and geometry inputs. Clean linework and a quiet lower third.",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged."
+  }
+}

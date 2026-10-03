@@ -1,0 +1,80 @@
+{
+  "coordinate_convention": "Normalized source-canvas regions; crops use original pixel edges, right/bottom exclusive.",
+  "source_dimensions": [
+    1672,
+    941
+  ],
+  "focal_point": {
+    "x": 0.79,
+    "y": 0.6
+  },
+  "scene_and_poster_crop": [
+    0,
+    0.25,
+    1672,
+    940.75
+  ],
+  "scene_crop_note": "Remove 0.25 source pixel from each vertical edge for exact 16:9, then one isotropic LANCZOS downsample; original untouched.",
+  "hero_crop": [
+    2,
+    55,
+    1670,
+    750
+  ],
+  "hero_focal_point": [
+    0.790695443645084,
+    0.7332374100719424
+  ],
+  "card_crop": [
+    731,
+    0,
+    1672,
+    941
+  ],
+  "heading_zone": {
+    "box_xyxy": [
+      0.15,
+      0.41,
+      0.46,
+      0.65
+    ],
+    "status": "Conservative visual proposal; contrast, HTML controls and actual slots untested."
+  },
+  "wall_control_zone": {
+    "box_xyxy": [
+      0.18,
+      0.22,
+      0.67,
+      0.7
+    ],
+    "status": "Conservative visual proposal only; tactile texture and illumination remain, so actual control contrast requires testing."
+  },
+  "portrait_plan": {
+    "status": "Plan only; no portrait asset shipped or tested.",
+    "art_only_crop_3_by_4_xyxy": [
+      936,
+      0,
+      1641.75,
+      941
+    ],
+    "native_extent": [
+      705.75,
+      941
+    ],
+    "proposed_small_output": [
+      600,
+      800
+    ],
+    "composition": "Keeps most of the planet/window and instrument/lamp workbench. Right storage and some floor are cropped; use a separate heading surface.",
+    "heading": "Place actual heading above the artwork on a solid theme surface; the art-only crop has no left heading zone.",
+    "390x844_note": "Use a bounded artwork region, not a full viewport cover. Actual slot needs testing."
+  },
+  "quiet_note": "Lifted cool orbital light preserves the same planet, horizon and workshop. Median local shift is 1px, maximum 2.2361px in ceiling conduit detail; the quiet scene is visibly brighter with changed reflections and fine texture. Same-room still only, not a pixel-exact crossfade.",
+  "caveats": [
+    "The left wall contains strongly visible weathering and a horizontal structural seam around y=.28-.36; it does not meet the requested full low-detail left60%.",
+    "The proposed heading area x=.15-.46, y=.41-.65 spans only31% of width and still has textured steel; use a solid or scrim-backed surface pending real-slot contrast testing.",
+    "The wall adaptation removes the crossing seam and desk but retains high-frequency rust/steel texture. Its central70% is not uniformly low-detail, and right window/lamp details need to stay outside controls.",
+    "Full12% overscan is not met: top planet/window framing and right/lower cases approach the canvas. The wide hero retains planet/lamp/instrument identity but crops lower bench and stool feet.",
+    "Any CSS scrim or solid heading surface is a recommendation only, not tested contrast."
+  ]
+}

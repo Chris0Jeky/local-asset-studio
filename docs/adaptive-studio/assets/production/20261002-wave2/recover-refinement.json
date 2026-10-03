@@ -1,0 +1,8 @@
+{
+  "asset_id": "workflow-recover",
+  "candidate": 2,
+  "output_id": "exec-23e27b79-959a-408c-85a4-d810d35c2bed",
+  "prompt": "Refine only the receipt-return gesture in this conceptual recovery illustration. The receipt should lie almost flat, already halfway tucked safely into a small side pocket on the closed folder, with just its short blank-lined end still visible. Remove the rising motion strokes and upright billowing shape so it cannot look like a printer ejecting a new receipt. Keep the folder, preserved papers, colours, perspective, star, warm light, background and empty bottom third unchanged. No arrows, new objects, writing or UI.",
+  "input_filename": "workflow-recover--1448x1086--candidate-1.png",
+  "filename": "workflow-recover--1448x1086--candidate-2.png"
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "atelier-master",
+    "pack": "atelier",
+    "category": "environment",
+    "placement": "environment-window",
+    "profile": "scene",
+    "wave": "P2",
+    "method": "generate",
+    "anchor": "",
+    "subject": "warm drafting room with a walnut desk and soft lamp near an open courtyard",
+    "acceptance": "The room reads as an artist workspace; no device brand or rendered text."
+  },
+  {
+    "id": "atelier-hero",
+    "pack": "atelier",
+    "category": "environment",
+    "placement": "workspace-header",
+    "profile": "hero",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "atelier-master",
+    "subject": "Wide header adaptation of warm drafting room with a walnut desk and soft lamp near an open courtyard",
+    "acceptance": "Preserve the approved world and empty heading zone at desktop and narrow crops."
+  },
+  {
+    "id": "atelier-wall",
+    "pack": "atelier",
+    "category": "environment",
+    "placement": "sidebar-wall",
+    "profile": "wall",
+    "wave": "P2",
+    "method": "edit",
+    "anchor": "atelier-master",
+    "subject": "Quiet panel wall extracted from the approved environment",
+    "acceptance": "No high-contrast edge crosses a control; center stays low-detail."
+  },
+  {
+    "id": "atelier-quiet",
+    "pack": "atelier",
+    "category": "environment",
+    "placement": "still-alternative",
+    "profile": "quiet",
+    "wave": "P2",
+    "method": "edit",
+    "anchor": "atelier-master",
+    "subject": "Quiet morning counterpart of the same room with unchanged camera",
+    "acceptance": "Switching to this still does not imply a failed connection or a different location."
+  },
+  {
+    "id": "atelier-poster",
+    "pack": "atelier",
+    "category": "environment",
+    "placement": "media-fallback",
+    "profile": "poster",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "atelier-master",
+    "subject": "Local still fallback for the accepted environment",
+    "acceptance": "Matches the anchor composition; requires no remote resource."
+  },
+  {
+    "id": "atelier-card",
+    "pack": "atelier",
+    "category": "environment",
+    "placement": "skin-picker",
+    "profile": "card",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "atelier-master",
+    "subject": "Recognizable thumbnail crop of the approved world",
+    "acceptance": "Readable at 96px without overlaid text or imitation UI."
+  }
+]

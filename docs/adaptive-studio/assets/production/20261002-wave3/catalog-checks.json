@@ -1,0 +1,152 @@
+{
+  "repository_reference": "6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164",
+  "source_url": "https://github.com/Chris0Jeky/local-asset-studio/blob/6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164/docs/adaptive-studio/assets/catalog.csv",
+  "catalog_git_blob_sha": "da7190961793f57d94e9b5fec062c50a51cc11de",
+  "rows": [
+    {
+      "id": "workflow-edit",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "An original scene with one small highlighted replaceable section",
+      "acceptance": "Keep/change distinction is clear without implying protected pixels."
+    },
+    {
+      "id": "workflow-sheet",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "An original adult explorer in three controlled view frames",
+      "acceptance": "Use the same canon; caption as illustrative rather than tested consistency."
+    },
+    {
+      "id": "workflow-repair",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "A magnified fabric seam beside its unchanged surrounding frame",
+      "acceptance": "Clearly local repair concept, not a fictional functioning brush tool."
+    },
+    {
+      "id": "workflow-upscale",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "One small square and a larger structured detail frame",
+      "acceptance": "No invented before/after quality improvement claim."
+    },
+    {
+      "id": "workflow-animate",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "A still frame and three restrained motion-position markers",
+      "acceptance": "No fake frame-rate or generation-performance labels."
+    },
+    {
+      "id": "workflow-sequence",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "Three ordered clip frames with a quiet timing ribbon",
+      "acceptance": "Order is readable through shapes; real timing labels remain HTML."
+    },
+    {
+      "id": "workflow-compare",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "Two equally prominent frames over a shared source card",
+      "acceptance": "No star rating or winner implied by brighter styling."
+    },
+    {
+      "id": "workflow-review",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "A large image frame next to a neutral checklist motif",
+      "acceptance": "Inspection, not automatic approval."
+    },
+    {
+      "id": "workflow-export",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "A coherent set of frames placed inside an open folio",
+      "acceptance": "No fake file format logos or unsupported delivery claim."
+    },
+    {
+      "id": "workflow-workflow",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "Three original node blocks with a selected connection",
+      "acceptance": "Concept only; no fabricated ComfyUI node schema."
+    },
+    {
+      "id": "workflow-model",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "One core module with two distinct attachable guide modules",
+      "acceptance": "Architecture-specific compatibility is not implied by the illustration."
+    },
+    {
+      "id": "workflow-voice-3d",
+      "pack": "shared",
+      "category": "workflow",
+      "placement": "task-picker",
+      "profile": "workflow",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "",
+      "subject": "A simple waveform beside an untextured geometric study",
+      "acceptance": "Separate tool concepts without a fake common generation control."
+    }
+  ],
+  "note": "Wave 3 is the delivery sequence. Catalog priority values remain P2. Art remains candidate-produced, not owner accepted."
+}

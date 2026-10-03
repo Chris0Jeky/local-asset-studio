@@ -1,0 +1,159 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "atelier-hero",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "derive",
+    "provider": "local deterministic image processing",
+    "tool_action": "Pillow crop/resize/WebP encode",
+    "execution_surface": "dot cloud workspace",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": [
+      {
+        "asset_id": "atelier-master",
+        "relative_path": "originals/atelier-master--candidate-1.png",
+        "sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+        "role": "exact deterministic source"
+      }
+    ],
+    "orchestration_handle": null,
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "masters/atelier-hero--1668x695--native-wide-crop.png",
+      "sha256": "bf43096399fe77f9467df3c24baf91e12bcfde435a385723c6e407ab5f47ccd0",
+      "bytes": 1794019,
+      "width": 1668,
+      "height": 695,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": null,
+      "budget_pass": null
+    },
+    {
+      "relative_path": "renditions/atelier-hero--960x400--wide.webp",
+      "sha256": "86533ff607c40a974344614ffe28dd25031782620e286c9f22e0a5e9e4e92776",
+      "bytes": 81244,
+      "width": 960,
+      "height": 400,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 256000,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "atelier-hero",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "masters/atelier-hero--1668x695--native-wide-crop.png",
+      "output_sha256": "bf43096399fe77f9467df3c24baf91e12bcfde435a385723c6e407ab5f47ccd0",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        155,
+        1670,
+        850
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        1668,
+        695
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-hero",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-hero--960x400--wide.webp",
+      "output_sha256": "86533ff607c40a974344614ffe28dd25031782620e286c9f22e0a5e9e4e92776",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        155,
+        1670,
+        850
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        960,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "accepted-by-delegated-assistant",
+    "reviewer": "lead assistant",
+    "scope": "source art only",
+    "notes": "Explicit lead selection on 2026-10-02 after original and six-ID contact-sheet review. Narrower safe zones, measured registration caveat and native-size shortfalls remain."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Files decode at recorded actual dimensions.",
+      "Every encoded target produced is within its individual profile byte budget.",
+      "No upscaling or nonuniform scaling.",
+      "See TRANSFORMATIONS.json for deliberately absent native-size targets."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model, seed, provider output/job ID and provider timestamps were not exposed; values remain null.",
+    "No license or source terms verification was performed.",
+    "No runtime slot, text contrast, accessibility, decoded-memory, loading or crossfade checks were performed."
+  ]
+}

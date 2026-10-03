@@ -1,0 +1,7 @@
+{
+  "id": "state-no-match",
+  "candidate": 2,
+  "prompt": "Edit this no-results illustration. Change only the arrangement: the two empty frames must NOT overlap or touch. Place the smaller second frame to the right and slightly above the first, with a visible transparent gap of about 6 percent of the whole canvas width between their nearest outer edges. Keep both complete, generously inside the canvas. Keep the small cyan magnifying glass on the first frame, the ivory paper, graphite edge linework, refined hand-drawn shading and all other style characteristics. Do not add objects. Landscape3:2. Preserve genuine transparent alpha; absolutely no visible glow, aura, shadows floating beyond edges, background or text. Clear, calm empty-search-result metaphor at384x256.",
+  "input": "originals/state-no-match--candidate-1.png",
+  "output_handle": "exec-7319cffc-9b0c-415e-9589-4b4e92707aa1"
+}

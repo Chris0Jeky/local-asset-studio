@@ -1,0 +1,77 @@
+{
+  "schema": "studio.theme-asset.source-pack/v1",
+  "pack": "arcade",
+  "prepared_at": "2026-10-02T15:40:40Z",
+  "requested_asset_ids": [
+    "arcade-master",
+    "arcade-quiet",
+    "arcade-wall",
+    "arcade-hero",
+    "arcade-poster",
+    "arcade-card"
+  ],
+  "source_count": 3,
+  "independent_generations": 1,
+  "reference_edits": 2,
+  "deterministic_derivative_ids": [
+    "arcade-hero",
+    "arcade-poster",
+    "arcade-card"
+  ],
+  "sources": [
+    {
+      "relative_path": "originals/arcade-master--candidate-1.png",
+      "sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "bytes": 2131780,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/arcade-quiet--candidate-1.png",
+      "sha256": "f0128ddb44923e1192922f3d7f71e0fe114f010a5b5a12620828dfa402f5c83a",
+      "bytes": 2454678,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/arcade-wall--candidate-1.png",
+      "sha256": "61cb9a90c68dcae37a49c1f7196b2b48d797a19d2c0df61d6d63749901db2d83",
+      "bytes": 2195088,
+      "width": 1536,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ],
+  "input_confirmation": {
+    "arcade-quiet": {
+      "input_id": "arcade-master",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "source": "Parent generation record: exact candidate-1 master supplied as image edit input."
+    },
+    "arcade-wall": {
+      "input_id": "arcade-master",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "source": "Parent generation record: exact candidate-1 master supplied as image edit input."
+    }
+  },
+  "source_art_selection": {
+    "status": "selected-with-caveats",
+    "selected_by": "lead assistant under user-delegated aesthetic choice",
+    "date": "2026-10-02",
+    "evidence": "Lead assistant viewed both six-ID contact sheets and selected all twelve source-art IDs."
+  },
+  "runtime_qualified": false,
+  "selected_for_release": false,
+  "planning_files_modified": false
+}

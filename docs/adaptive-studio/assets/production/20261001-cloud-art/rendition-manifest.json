@@ -1,0 +1,136 @@
+{
+  "purpose": "Review-only derivatives; latest candidates are not accepted or selected",
+  "renditions": [
+    {
+      "relative_path": "review-renditions/reference-background--1254x1254--candidate-1--longedge320.webp",
+      "sha256": "a21dae323a089efe2af92d33cf1cdf312136ba587cf324965860b0525698110b",
+      "bytes": 19724,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "asset_id": "reference-background",
+      "original_relative_path": "inbox/reference-background--1254x1254--candidate-1.png"
+    },
+    {
+      "relative_path": "review-renditions/reference-composition--1254x1254--candidate-3--longedge320.webp",
+      "sha256": "a73edff59d2bc68c646066cd38b2328ba87794fe1822bfc1386ddded7a18e524",
+      "bytes": 2330,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "asset_id": "reference-composition",
+      "original_relative_path": "inbox/reference-composition--1254x1254--candidate-3.png"
+    },
+    {
+      "relative_path": "review-renditions/reference-identity--1024x1536--candidate-3--longedge320.webp",
+      "sha256": "f68e891f99352a8948545f7c70cd599e4740cf3dcfcaafab3ecfb8934ce26ff6",
+      "bytes": 11134,
+      "width": 213,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "asset_id": "reference-identity",
+      "original_relative_path": "inbox/reference-identity--1024x1536--candidate-3.png"
+    },
+    {
+      "relative_path": "review-renditions/reference-lighting--1254x1254--candidate-2--longedge320.webp",
+      "sha256": "2604a28e1d7a7bfcb210814b56f416cba612e8af890665ad382b29fe6f592ff8",
+      "bytes": 4208,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "asset_id": "reference-lighting",
+      "original_relative_path": "inbox/reference-lighting--1254x1254--candidate-2.png"
+    },
+    {
+      "relative_path": "review-renditions/reference-pose--1024x1536--candidate-1--longedge320.webp",
+      "sha256": "32b7e7d37400622cac6404bd651fea03abb6df4511023f68778326e11a1975b4",
+      "bytes": 4932,
+      "width": 213,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "asset_id": "reference-pose",
+      "original_relative_path": "inbox/reference-pose--1024x1536--candidate-1.png"
+    },
+    {
+      "relative_path": "review-renditions/reference-style--1254x1254--candidate-1--longedge320.webp",
+      "sha256": "96c08935133750476fd2826604b3810866f615b4921412984818dbd8211b23b9",
+      "bytes": 39060,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "asset_id": "reference-style",
+      "original_relative_path": "inbox/reference-style--1254x1254--candidate-1.png"
+    },
+    {
+      "relative_path": "review-renditions/workflow-create--1448x1086--candidate-3--600x450.webp",
+      "sha256": "6e69e19d64567b2ab2b7692a6c7b278665168c56536f8c4c79d3214f1eccfe24",
+      "bytes": 7274,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "asset_id": "workflow-create",
+      "original_relative_path": "inbox/workflow-create--1448x1086--candidate-3.png"
+    },
+    {
+      "relative_path": "review-renditions/reference-composition--1254x1254--candidate-2--longedge320.webp",
+      "sha256": "08e4d033ea462fab7f04daa82ea87e359895d5b979f2022cf7ae064120a008a4",
+      "bytes": 2292,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "asset_id": "reference-composition",
+      "original_relative_path": "inbox/reference-composition--1254x1254--candidate-2.png"
+    }
+  ],
+  "contact_sheet_choices": {
+    "reference-background": "inbox/reference-background--1254x1254--candidate-1.png",
+    "reference-composition": "inbox/reference-composition--1254x1254--candidate-2.png",
+    "reference-identity": "inbox/reference-identity--1024x1536--candidate-3.png",
+    "reference-lighting": "inbox/reference-lighting--1254x1254--candidate-2.png",
+    "reference-pose": "inbox/reference-pose--1024x1536--candidate-1.png",
+    "reference-style": "inbox/reference-style--1254x1254--candidate-1.png",
+    "workflow-create": "inbox/workflow-create--1448x1086--candidate-3.png"
+  },
+  "composition_note": "Candidate 2 is preferred for visual review because masses are larger and depth remains clearer at thumbnail scale. Its horizon is approximately 39% from top, versus approximately 27% for candidate 3; neither satisfies the one-third target. Latest candidate 3 rendition also included. No art acceptance or release selection implied.",
+  "contact_sheet": {
+    "relative_path": "review-contact-sheet.jpg",
+    "sha256": "78f140d841e54cf3e608402380356168f44b565d037dab65935593704a6eb62c",
+    "bytes": 206198,
+    "width": 1360,
+    "height": 930,
+    "format": "jpeg",
+    "alpha": false,
+    "duration_seconds": null,
+    "codec": null,
+    "transformation": "Review-only montage; labels outside each image, white padding, aspect-preserving downscale from review WebPs; no original modified"
+  },
+  "delivery_base": {
+    "relative_path_base": "Root after extracting all three delivery ZIPs together; all binary paths in this manifest are attachment-only, not repository-relative",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "note": "inbox originals may optionally be copied to the ignored repository assets/inbox directory. Review WebPs and the contact sheet are not selected runtime assets."
+  }
+}

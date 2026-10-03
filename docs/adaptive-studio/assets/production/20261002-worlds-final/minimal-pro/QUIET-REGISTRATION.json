@@ -1,0 +1,435 @@
+{
+  "world": "minimal-pro",
+  "method": "20 manually selected architectural/object landmarks; up to 41x41 grayscale high-pass templates (Gaussian sigma 3), normalized cross-correlation within +/-12 source pixels. Border-adjacent points use a smaller symmetric patch, recorded per point. Original unscaled coordinates; no warp or registration correction.",
+  "dimensions": [
+    1672,
+    941
+  ],
+  "inputs": [
+    {
+      "name": "minimal-pro-master--candidate-1.png",
+      "sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2"
+    },
+    {
+      "name": "minimal-pro-quiet--candidate-1.png",
+      "sha256": "3d1637bc05b6611f0d027ef834c16fdb57ff7c974d13f1290ded2d98e32e367a"
+    }
+  ],
+  "summary": {
+    "landmarks": 20,
+    "median_shift_px": 1.0,
+    "max_shift_px": 3.1623,
+    "median_ncc": 0.90847,
+    "min_ncc": 0.65693,
+    "search_boundary_hits": 0
+  },
+  "landmarks": [
+    {
+      "name": "Skylight frame lower junction",
+      "master_xy": [
+        1493,
+        194
+      ],
+      "quiet_best_xy": [
+        1493,
+        193
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        -1
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.94983,
+      "identity_ncc": 0.6776,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Skylight inner bevel corner",
+      "master_xy": [
+        1454,
+        264
+      ],
+      "quiet_best_xy": [
+        1454,
+        263
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        -1
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.94517,
+      "identity_ncc": 0.70964,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Room upper corner",
+      "master_xy": [
+        1438,
+        327
+      ],
+      "quiet_best_xy": [
+        1438,
+        326
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        -1
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.82648,
+      "identity_ncc": 0.72223,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Leaning board upper corner",
+      "master_xy": [
+        1566,
+        373
+      ],
+      "quiet_best_xy": [
+        1567,
+        373
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.84773,
+      "identity_ncc": 0.81015,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Lamp shade upper corner",
+      "master_xy": [
+        1483,
+        422
+      ],
+      "quiet_best_xy": [
+        1484,
+        422
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.8994,
+      "identity_ncc": 0.87792,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Lamp arm bend",
+      "master_xy": [
+        1601,
+        427
+      ],
+      "quiet_best_xy": [
+        1602,
+        427
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.91754,
+      "identity_ncc": 0.89857,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Lamp base right edge",
+      "master_xy": [
+        1629,
+        593
+      ],
+      "quiet_best_xy": [
+        1630,
+        593
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.89369,
+      "identity_ncc": 0.88864,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Desk back-left corner",
+      "master_xy": [
+        1026,
+        568
+      ],
+      "quiet_best_xy": [
+        1026,
+        568
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.93088,
+      "identity_ncc": 0.93088,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Desk near-right corner",
+      "master_xy": [
+        1584,
+        669
+      ],
+      "quiet_best_xy": [
+        1584,
+        669
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.88322,
+      "identity_ncc": 0.88322,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Desk left foot corner",
+      "master_xy": [
+        1024,
+        795
+      ],
+      "quiet_best_xy": [
+        1024,
+        796
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        1
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.80588,
+      "identity_ncc": 0.49799,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Book stack left edge",
+      "master_xy": [
+        1146,
+        553
+      ],
+      "quiet_best_xy": [
+        1146,
+        553
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.96659,
+      "identity_ncc": 0.96659,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Tray left corner",
+      "master_xy": [
+        1390,
+        557
+      ],
+      "quiet_best_xy": [
+        1390,
+        557
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.94983,
+      "identity_ncc": 0.94983,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Pen cup upper edge",
+      "master_xy": [
+        1354,
+        535
+      ],
+      "quiet_best_xy": [
+        1354,
+        535
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.86303,
+      "identity_ncc": 0.86303,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Paper left corner",
+      "master_xy": [
+        1167,
+        581
+      ],
+      "quiet_best_xy": [
+        1166,
+        581
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.96793,
+      "identity_ncc": 0.95767,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Paper front corner",
+      "master_xy": [
+        1381,
+        617
+      ],
+      "quiet_best_xy": [
+        1384,
+        618
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        3,
+        1
+      ],
+      "shift_distance_px": 3.1623,
+      "ncc": 0.92976,
+      "identity_ncc": 0.86325,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Chair back upper left",
+      "master_xy": [
+        1124,
+        591
+      ],
+      "quiet_best_xy": [
+        1124,
+        591
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.93273,
+      "identity_ncc": 0.93273,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Chair back upper bend",
+      "master_xy": [
+        1228,
+        624
+      ],
+      "quiet_best_xy": [
+        1228,
+        624
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.94917,
+      "identity_ncc": 0.94917,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Chair seat left edge",
+      "master_xy": [
+        1131,
+        745
+      ],
+      "quiet_best_xy": [
+        1131,
+        746
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        1
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.87918,
+      "identity_ncc": 0.77721,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Chair front-leg edge",
+      "master_xy": [
+        1220,
+        857
+      ],
+      "quiet_best_xy": [
+        1220,
+        858
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        1
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.66926,
+      "identity_ncc": 0.61885,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Wall-floor line texture",
+      "master_xy": [
+        511,
+        746
+      ],
+      "quiet_best_xy": [
+        510,
+        747
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        1
+      ],
+      "shift_distance_px": 1.4142,
+      "ncc": 0.65693,
+      "identity_ncc": 0.50302,
+      "search_boundary_hit": false
+    }
+  ],
+  "limits": [
+    "Sampled measurements describe local correspondence only; lighting and generative detail redraw preclude a pixel-identity claim.",
+    "A +/-12px local search cannot rule out larger displacement or incorrect matches. Low correlation and boundary matches require visual interpretation.",
+    "The source-art plan requests pixel-for-pixel crossfade registration. These samples and edge overlays do not fulfill a whole-image or actual runtime crossfade acceptance gate.",
+    "No transform has been applied to either delivered original."
+  ],
+  "interpretation": "Cooler and more evenly lit still preserves the same room and object layout. Sampled local offsets reach 3.1623px around a paper edge; small generative geometry/detail changes remain, so no pixel-exact registration or crossfade acceptance. Local template offsets are correspondence measurements, not a global camera transform. Neither original was corrected or warped."
+}

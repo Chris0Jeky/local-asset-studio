@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "source_sha256_verified": true,
+  "exact_crop_pixels_verified": true,
+  "all_images_decode": true,
+  "both_webps_under_180KiB": true,
+  "runtime_checks": "not-run"
+}

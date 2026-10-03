@@ -1,0 +1,22 @@
+{
+  "schema": "studio.theme-asset.validation/v1-proposed",
+  "checked_at": "2026-10-02T15:04:32Z",
+  "status": "passed",
+  "native_originals": 4,
+  "derived_png_768x512": 3,
+  "derived_webp_384x256": 3,
+  "original_hashes_unchanged": true,
+  "alpha_encode_roundtrip_identical": true,
+  "no_crop_no_upscale": true,
+  "small_rendition_maximum_bytes_inclusive": 61440,
+  "small_rendition_bytes": {
+    "candidate-renditions/state-blank--candidate-1--384x256.webp": 12568,
+    "candidate-renditions/state-no-match--candidate-2--fit90--384x256.webp": 14216,
+    "candidate-renditions/state-source-required--candidate-1--384x256.webp": 11040
+  },
+  "visual_review_backgrounds": [
+    "#f7f5ef",
+    "#182027"
+  ],
+  "scope": "Local candidate artifact QA only; runtime/design/license/release gates unaffected."
+}

@@ -1,0 +1,99 @@
+{
+  "status": "offline-artifact-checks-passed-with-documented-shortfalls",
+  "originals_checked": 3,
+  "native_crops_checked": 2,
+  "encoded_renditions_checked": 11,
+  "review_images_checked": 4,
+  "replay": "All13 deterministic crop/encode outputs reproduced byte-for-byte from original source hashes.",
+  "native_crop_pixels": "Both native PNG crops equal the exact decoded source pixel rectangles.",
+  "no_upscaling_or_distortion": "All crop-to-output scales isotropic and <=1.",
+  "registration_replay": "All20 raw sample coordinates, shifts and scores reproduced exactly by the packaged script.",
+  "source_and_prompt_preservation": "Three original PNG files and exact combined prompt bytes match their received hashes; prompt subsets match.",
+  "per_file_budgets": "All11 actual WebP outputs meet individual profile budgets.",
+  "runtime_qualification": "not-performed",
+  "source_license_clearance": "not-asserted",
+  "release_selection": "not-selected",
+  "native_target_shortfalls": "See TRANSFORMATIONS.json. No invented4K or1920px hero.",
+  "files": [
+    {
+      "path": "originals/minimal-pro-master--candidate-1.png",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/minimal-pro-master--1280x720--preview.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/minimal-pro-master--960x540--preview.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "originals/minimal-pro-quiet--candidate-1.png",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/minimal-pro-quiet--1280x720--preview.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/minimal-pro-quiet--960x540--preview.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "originals/minimal-pro-wall--candidate-1.png",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/minimal-pro-wall--1200x800--panel.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/minimal-pro-wall--600x400--panel.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "masters/minimal-pro-hero--1668x695--native-wide-crop.png",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/minimal-pro-hero--960x400--wide.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/minimal-pro-poster--1280x720--fallback.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/minimal-pro-poster--640x360--fallback.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "masters/minimal-pro-card--941x941--native-square-crop.png",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "not-applicable"
+    },
+    {
+      "path": "renditions/minimal-pro-card--512x512--picker.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    },
+    {
+      "path": "renditions/minimal-pro-card--256x256--picker.webp",
+      "dimensions_hash_bytes_decode": "pass",
+      "budget": "pass"
+    }
+  ]
+}

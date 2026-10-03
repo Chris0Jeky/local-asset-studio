@@ -1,0 +1,264 @@
+{
+  "asset_outputs": {
+    "minimal-pro-master": [
+      {
+        "relative_path": "originals/minimal-pro-master--candidate-1.png",
+        "sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+        "bytes": 2211080,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/minimal-pro-master--1280x720--preview.webp",
+        "sha256": "3aa12559e457c9a6e2f1bdca69e4c25b148050f019900ad743da64e369758efb",
+        "bytes": 89394,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/minimal-pro-master--960x540--preview.webp",
+        "sha256": "eec231998e5ec540e104f158658fdaeaa9e5c36f3dd3d2282b356d64bb60b981",
+        "bytes": 46386,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "minimal-pro-quiet": [
+      {
+        "relative_path": "originals/minimal-pro-quiet--candidate-1.png",
+        "sha256": "3d1637bc05b6611f0d027ef834c16fdb57ff7c974d13f1290ded2d98e32e367a",
+        "bytes": 1963528,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/minimal-pro-quiet--1280x720--preview.webp",
+        "sha256": "9c7e7e6b1690acbe52e07b1a32e703c180eb8eb354d6af95786ea850b50ce9ed",
+        "bytes": 55398,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/minimal-pro-quiet--960x540--preview.webp",
+        "sha256": "1506509c345bc141cbf5ec87dea5f51819a28ef598b7a3baa0e22d1578cb07eb",
+        "bytes": 29896,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "minimal-pro-wall": [
+      {
+        "relative_path": "originals/minimal-pro-wall--candidate-1.png",
+        "sha256": "f4a66e99df0f4cdc3cb033e5bfe65dc8343e2f785fc289711440d6617d22e0c3",
+        "bytes": 2680616,
+        "width": 1536,
+        "height": 1024,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/minimal-pro-wall--1200x800--panel.webp",
+        "sha256": "1015a195243877500de6d4e03b203d937fb0bdf5d9cb89dbd0595715bfd6ee09",
+        "bytes": 105866,
+        "width": 1200,
+        "height": 800,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/minimal-pro-wall--600x400--panel.webp",
+        "sha256": "e8704c431b9d818a795a7558c659fe71355a46baa40fac82f63bf90596001516",
+        "bytes": 12228,
+        "width": 600,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      }
+    ],
+    "minimal-pro-hero": [
+      {
+        "relative_path": "masters/minimal-pro-hero--1668x695--native-wide-crop.png",
+        "sha256": "b9256b3da3e4fab0414d415690313b294212476afb6516cbac13cd85037f1202",
+        "bytes": 1520243,
+        "width": 1668,
+        "height": 695,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/minimal-pro-hero--960x400--wide.webp",
+        "sha256": "1997de949393798644d749d4f76d6cbef8f64c10f8f8b93dc0a57ca7aa2d7eed",
+        "bytes": 32124,
+        "width": 960,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 256000,
+        "budget_pass": true
+      }
+    ],
+    "minimal-pro-poster": [
+      {
+        "relative_path": "renditions/minimal-pro-poster--1280x720--fallback.webp",
+        "sha256": "3aa12559e457c9a6e2f1bdca69e4c25b148050f019900ad743da64e369758efb",
+        "bytes": 89394,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 225280,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/minimal-pro-poster--640x360--fallback.webp",
+        "sha256": "340f3f3e27878208f4bd40c82d773f4312972a10048feef42925f1850124cea1",
+        "bytes": 18538,
+        "width": 640,
+        "height": 360,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 92160,
+        "budget_pass": true
+      }
+    ],
+    "minimal-pro-card": [
+      {
+        "relative_path": "masters/minimal-pro-card--941x941--native-square-crop.png",
+        "sha256": "3a65b478acf3df6c09fc90389c5a2e1255a7f17f3c84f61b15e11a03f4816552",
+        "bytes": 1193108,
+        "width": 941,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/minimal-pro-card--512x512--picker.webp",
+        "sha256": "f2d2218ece7a91d8b54ac1d34ab8e1fd8dec16ad8b994d9d3354110460701c4c",
+        "bytes": 29628,
+        "width": 512,
+        "height": 512,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 81920,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/minimal-pro-card--256x256--picker.webp",
+        "sha256": "aaaff71116449cd40b985c11fbda653b5883c54a8d59f0801aecc978b478e96b",
+        "bytes": 7692,
+        "width": 256,
+        "height": 256,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 30720,
+        "budget_pass": true
+      }
+    ]
+  },
+  "review_files": [
+    {
+      "relative_path": "review/minimal-pro-composition.jpg",
+      "sha256": "17aaeaf01edbc72d3687a1a4a65d38e27b7fad0efbbb178f5da8be0cd0495c54",
+      "bytes": 192476,
+      "width": 1254,
+      "height": 706,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/minimal-pro-contact-sheet.jpg",
+      "sha256": "4572761d5757f53df1b9956e19a2a06b5c13ab1da1c5964f7e44912499963972",
+      "bytes": 223269,
+      "width": 1280,
+      "height": 1240,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/minimal-pro-quiet-edge-overlay.jpg",
+      "sha256": "836ccfd75f5af889bb4853337d7a6f183183a78470af6ed733184410ea4f5810",
+      "bytes": 786617,
+      "width": 1672,
+      "height": 941,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/minimal-pro-quiet-landmarks.jpg",
+      "sha256": "fc88639023ff1d1fb7ad9c8001d0ad30de394c14dae8c66942ea8efa6377f56b",
+      "bytes": 151574,
+      "width": 1672,
+      "height": 515,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ]
+}
