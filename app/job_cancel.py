@@ -258,7 +258,7 @@ def record_interrupted(studio, job, submission):
 
 
 def reconcile_restart(job, directory):
-    """At load: a request the worker never resolved. A never-sent job is cancelled; anything else is unresolved."""
+    """At load: cancel a never-sent job, mark a settled job too_late, otherwise leave cancellation unresolved."""
     try: request = json.loads((directory / REQUEST_FILE).read_text(encoding='utf-8'))
     except (OSError, ValueError): return False
     if not isinstance(request, dict) or type(request.get('event_id')) is not str: return False
