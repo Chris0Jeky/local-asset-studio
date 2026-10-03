@@ -1,0 +1,37 @@
+name: Publish reviewed picture way-back repair once
+on:
+  push:
+    branches: [codex/picture-wayback-20261003]
+    paths: [.github/maintenance/apply-picture-wayback.py]
+permissions: {}
+jobs:
+  publish:
+    if: github.repository == 'Chris0Jeky/local-asset-studio' && github.ref == 'refs/heads/codex/picture-wayback-20261003'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          test "$(git rev-parse HEAD^)" = f4bee5986191fe7a57efdb285f3775c6617387c3
+          python .github/maintenance/apply-picture-wayback.py
+          git diff --check
+          node tests/picture_wayback.cjs
+          node tests/studio_ux.cjs
+          python -m unittest discover -s tests -p test_picture_wayback.py -v
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/static/studio-workbench.js tests/workshop_recipe_wording.py
+          git commit -m 'fix: preserve template identity and newer edits during picture way-back'
+          git push origin HEAD:refs/heads/codex/picture-wayback-20261003
