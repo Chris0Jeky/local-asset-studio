@@ -98,8 +98,10 @@
     const attribution=Object.entries(mapped);
     if(attribution.length>8||attribution.some(([k,v])=>!['reference','lastReference'].includes(k)||typeof v!=='string'||!ids.includes(v)))return null;
     const batch=Number(value.recipe.batch??1);if(!Number.isInteger(batch)||batch<1||batch>4)return null;
+    const look=value.recipe.look_application;
+    if(look!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(look,value.recipe.preset)))return null;
     const continuation=value.recipe.continuation;if(continuation!=null&&(typeof StudioContinuation==='undefined'||!StudioContinuation.normalize(continuation)||continuation.preset_id!==value.recipe.preset))return null;
-    return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,...(continuation?{continuation:StudioContinuation.normalize(continuation)}:{}),parent_assets:[...ids],...(attribution.length?{parent_by_input:Object.fromEntries(attribution)}:{}),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
+    return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,...(look?{look_application:StudioLooks.normalizeApplication(look,value.recipe.preset)}:{}),...(continuation?{continuation:StudioContinuation.normalize(continuation)}:{}),parent_assets:[...ids],...(attribution.length?{parent_by_input:Object.fromEntries(attribution)}:{}),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
   }
   // Named recipes are a reading aid, never a selection: bounded, catalog-shaped ids only.
   function promptRecipes(value){const out=[];for(const id of Array.isArray(value)?value:[]){if(out.length>=8)break;if(typeof id==='string'&&/^[a-z0-9-]{1,60}$/.test(id)&&!out.includes(id))out.push(id);}return out;}

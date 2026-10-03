@@ -335,6 +335,7 @@ function selectPreset(id, reset=true, transition=false) {
   if(transition){continuationState=null;continuationSource=null;}
   if(reset||id!==selected?.id){tileState=null;parallaxState=null;}
   recipeTemplateHash=null;
+  if(typeof StudioLooks!=='undefined')StudioLooks.clearApplication();
   selected=next; recipeChanged();
   if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
   message(selected.runtime_block || 'Recipe loaded. Change a setting or choose a variation, then generate when ready.',!!selected.runtime_block);
@@ -621,7 +622,9 @@ function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<span class
 function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
+  if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
   selectPreset(s.preset);
+  if(typeof StudioLooks!=='undefined')StudioLooks.restoreApplication(s.look_application,s.preset);
   if(s.continuation!=null){continuationState=StudioContinuation.normalize(s.continuation);continuationSource=null;}
   parentAssets=Array.isArray(s.parent_assets)?s.parent_assets.filter(id=>typeof id==='string'):[];
   if(selected.reference_slots)restoreReferenceSlots(s.references);
@@ -689,6 +692,8 @@ function beginTile(result){
   updateReady();
 }
 function continuationBlockerItems(){
+  const lookProblem=typeof StudioLooks!=='undefined'?StudioLooks.applicationBlocker(selected?.id):'';
+  if(lookProblem)return [{code:'look',message:lookProblem}];
   // Both the original run button and the workbench consume this shared list.
   // Source-free text recipes need wording too; image-only recipes have no binding.
   if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Asset library.'}];
@@ -826,6 +831,8 @@ $('#gallery').onclick=async e=>{
 // A failed availability read can leave a source claim with no staged file. Preserve
 // that uncertainty in the draft, but do not persist it as unattributed setup lineage.
 function checkedSetupControls() {
+  const lookProblem=typeof StudioLooks!=='undefined'?StudioLooks.applicationBlocker(selected?.id):'';
+  if(lookProblem)throw Error('Setup not saved. '+lookProblem);
   const controls=values();
   const inputs=[['reference','reference',selected?.reference_label||'Reference / first frame'],['lastReference','last_reference',selected?.last_reference_label||'Last frame']];
   const unstaged=inputs.filter(([input,key])=>selected?.[key]&&$('#'+input).files?.length&&!controls[key]);
