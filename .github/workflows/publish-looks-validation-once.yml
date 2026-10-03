@@ -1,0 +1,41 @@
+name: Publish reviewed Looks validation once
+on:
+  push:
+    branches: [codex/looks-validation-20261003]
+    paths: [.github/maintenance/looks-validation.patch]
+permissions: {}
+jobs:
+  apply-reviewed-patch:
+    if: github.repository == 'Chris0Jeky/local-asset-studio' && github.ref == 'refs/heads/codex/looks-validation-20261003'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply reviewed patch and verify exact output
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD^)" = 2e4ae749b20f58e19ef9e4a9ceb43185343b16b3
+          test "$(git hash-object app/looks.py)" = b523cc41d7fa6641912062ec7e71653da217839b
+          git apply --check --index .github/maintenance/looks-validation.patch
+          git apply --index .github/maintenance/looks-validation.patch
+          git diff --cached --check
+          test "$(git hash-object app/looks.py)" = aa875df9b13eea038defc13694e68dcdf6227d2d
+          test "$(git hash-object tests/test_looks_validation_regressions.py)" = c950451de295194810bf8d5193a2ffdf50fe9a6e
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p 'test_looks*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_workspace*card*.py' -v
+      - name: Commit only reviewed edits to the feature branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: isolate invalid Looks seeds and revalidate saved control bindings'
+          git push origin HEAD:refs/heads/codex/looks-validation-20261003
