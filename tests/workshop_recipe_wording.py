@@ -245,5 +245,41 @@ class RecipeWording(unittest.TestCase):
         seed.fill('4242')
         self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden(), 'going back would discard that edit')
 
+    def test_picture_way_back_preserves_template_identity_and_refreshes_adapter_hints(self):
+        self.stage_picture()
+        self.page.evaluate("recipeTemplateHash='a'.repeat(64);window.hintCalls=0;const originalHints=updateLoraHints;updateLoraHints=function(){hintCalls++;return originalHints();}")
+        self.switch('sdxl')
+        self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+        self.page.evaluate('hintCalls=0')
+        self.page.click('#uxWordingUndoBack')
+        self.assertEqual(self.page.evaluate('recipeTemplateHash'), 'a'*64)
+        self.assertEqual(self.page.evaluate('StudioSetupDraft.capture().templateHash'), 'a'*64)
+        self.assertGreater(self.page.evaluate('hintCalls'), 0)
+
+    def test_picture_way_back_does_not_abort_an_in_flight_upload(self):
+        self.stage_picture()
+        self.switch('qwen-2ref')
+        self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+        self.page.evaluate('referencePending=1')
+        epoch = self.page.evaluate('referenceEpoch')
+        self.page.click('#uxWordingUndoBack')
+        self.assertEqual(self.page.evaluate('selected.id'), 'qwen-2ref')
+        self.assertEqual(self.page.evaluate('referenceEpoch'), epoch)
+        self.assertIn('upload', self.page.locator('#uxNotice').inner_text())
+        self.assertTrue(self.page.locator('#uxWordingUndoBack').is_visible())
+        self.page.evaluate('referencePending=0')
+        self.page.click('#uxWordingUndoBack')
+        self.assertEqual(self.page.evaluate('selected.id'), 'gentle-variation')
+
+    def test_click_only_seed_and_variant_edits_withdraw_picture_way_back(self):
+        for selector in ('#randomSeed', '[data-variant="0"]'):
+            with self.subTest(selector=selector):
+                self.stage_picture()
+                self.switch('sdxl')
+                self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+                self.page.locator(selector).click()
+                self.assertTrue(self.page.locator('#uxWordingUndoBack').is_hidden())
+                self.assertEqual(self.page.evaluate('selected.id'), 'sdxl')
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

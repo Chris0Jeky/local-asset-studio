@@ -102,8 +102,8 @@
   const presetWording=p=>({positive:p?.defaults?.positive||'',negative:p?.defaults?.negative||''});
   const forgetWording=()=>{wordingKept=pictureKept=null;wordingUndo.hidden=true;};
   const pickedFiles=id=>[...(q('#'+id)?.files||[])],stagedPicture=()=>!!(pickedFiles('reference').length||pickedFiles('lastReference').length||uploaded||lastUploaded||referenceRecords.some(r=>r.file));
-  const pictureStamp=()=>JSON.stringify([selected?.id,wording(),q('#batch')?.value,uploaded,lastUploaded,parentAssets,parentByInput,referenceRecords,['reference','lastReference'].map(id=>pickedFiles(id).map(f=>[f.name,f.size,f.lastModified]))]);
-  const pictureSnapshot=()=>({id:selected.id,name:selected.name,controls:values(),batch:q('#batch')?.value,wording:wording(),uploaded,lastUploaded,parentAssets:[...parentAssets],parentByInput:{...parentByInput},records:referenceRecords.map(r=>({...r})),files:{reference:pickedFiles('reference'),lastReference:pickedFiles('lastReference')}});
+  const pictureStamp=()=>JSON.stringify([selected?.id,wording(),values(),recipeTemplateHash,q('#batch')?.value,uploaded,lastUploaded,parentAssets,parentByInput,referenceRecords,['reference','lastReference'].map(id=>pickedFiles(id).map(f=>[f.name,f.size,f.lastModified]))]);
+  const pictureSnapshot=()=>({id:selected.id,name:selected.name,templateHash:recipeTemplateHash,controls:values(),batch:q('#batch')?.value,wording:wording(),uploaded,lastUploaded,parentAssets:[...parentAssets],parentByInput:{...parentByInput},records:referenceRecords.map(r=>({...r})),files:{reference:pickedFiles('reference'),lastReference:pickedFiles('lastReference')}});
   function renderUndo(){const kept=wordingKept,pic=pictureKept;if(!pic&&!kept?.line){wordingUndo.hidden=true;return;}
     wordingRestore.hidden=!kept?.restorable;wordingBack.hidden=!pic;if(pic)wordingBack.textContent='Go back to '+pic.name+' with your picture';
     wordingDismiss.textContent=pic?'Keep '+selected.name:'Keep the recipe wording';
@@ -145,16 +145,16 @@
     if(kept.negative!==null&&selected.negative&&q('#negative')){q('#negative').value=kept.negative;q('#negative').dispatchEvent(new Event('input',{bubbles:true}));}
     field.focus();announce('Your wording is back. The recipe stays '+selected.name+'.');};
   // Going back is the switch undone: the earlier recipe with its own picture, lineage, wording and settings, nothing carried across.
-  wordingBack.onclick=()=>{const pic=pictureKept;forgetWording();if(!pic||!selected)return;
+  wordingBack.onclick=()=>{if(referencePending>0){announce('Wait for the picture upload to finish before going back. Nothing was replaced.',true);return;}const pic=pictureKept;forgetWording();if(!pic||!selected)return;
     if(pictureStamp()!==pic.loaded){announce('Something changed after the switch, so nothing was replaced.');return;}
     try{selectPreset(pic.id);}catch(e){announce(e.message,true);return;}
     const mode=q('#i2vMode');if(mode&&pic.controls.mode)mode.value=pic.controls.mode;
     for(const [key,value] of Object.entries(pic.controls)){if(['positive','negative','reference','last_reference','mode'].includes(key))continue;const input=getControl(key);if(input)input.value=value;}
     for(const key of ['positive','negative'])if(q('#'+key))q('#'+key).value=pic.wording[key];if(q('#batch'))q('#batch').value=pic.batch;
-    uploaded=pic.uploaded;lastUploaded=pic.lastUploaded;parentAssets=[...pic.parentAssets];parentByInput={...pic.parentByInput};referenceRecords=pic.records.map(r=>({...r}));
+    recipeTemplateHash=pic.templateHash;uploaded=pic.uploaded;lastUploaded=pic.lastUploaded;parentAssets=[...pic.parentAssets];parentByInput={...pic.parentByInput};referenceRecords=pic.records.map(r=>({...r}));
     // A picked file goes back into its own input without a change event (that handler would drop an uploaded copy).
     for(const id of ['reference','lastReference']){const input=q('#'+id),files=pic.files[id];if(!input||!files.length)continue;const t=new DataTransfer();files.forEach(f=>t.items.add(f));input.files=t.files;}
-    q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof renderReferenceSlots==='function')renderReferenceSlots();updateReady();recipeChanged();
+    updateLoraHints();q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof renderReferenceSlots==='function')renderReferenceSlots();updateReady();recipeChanged();
     draftDirty=true;saveDraft();q('#positive').focus();announce('Back to '+selected.name+' with your picture and wording.');};
   wordingDismiss.onclick=()=>{forgetWording();q('#positive')?.focus();};
   for(const id of ['positive','negative'])q('#'+id)?.addEventListener('input',()=>{const kept=wordingKept;if(kept?.loaded&&(wording().positive!==kept.loaded.positive||wording().negative!==kept.loaded.negative))forgetWording();});
@@ -1270,7 +1270,7 @@
   window.addEventListener('storage',e=>{if(e.key===draftKey()){draftPaused=true;renderDraftNotice();}});
   window.addEventListener('pagehide',saveDraft);
   for(const event of ['input','change'])q('#createView').addEventListener(event,e=>{if(e.target.closest('.editor'))draftDirty=true;syncReady();clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,350);});
-  q('#createView').addEventListener('click',e=>{if(e.target.closest('[data-variant],#randomSeed,[data-ref-clear],[data-ref-up],[data-ref-down]')){draftDirty=true;syncReady();saveDraft();}});
+  q('#createView').addEventListener('click',e=>{if(e.target.closest('[data-variant],#randomSeed,[data-ref-clear],[data-ref-up],[data-ref-down]')){pictureKept=null;renderUndo();draftDirty=true;syncReady();saveDraft();}});
   const originalLoadSetups=loadSetups;loadSetups=async function(){try{localStorage.getItem('studio-storage-probe');}catch(_){serverSetups=await api('/api/setups');renderSaved();return;}return originalLoadSetups();};
   // Explicitly apply a reviewed Prompt Lab text handoff; never infer model bindings.
   const transfer=element('section','panel ux-transfer');transfer.id='uxTransfer';transfer.hidden=true;transfer.innerHTML='<h2>Text from Prompt Lab</h2><p id="uxTransferNotice"></p><pre id="uxTransferPreview"></pre><button id="uxApplyPrompt" class="primary">Apply text to the selected recipe</button><button id="uxDismissPrompt">Dismiss</button>';createHeading.after(transfer);
