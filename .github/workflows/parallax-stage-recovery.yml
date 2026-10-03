@@ -1,0 +1,53 @@
+name: Parallax stage recovery
+on:
+  pull_request:
+    paths:
+      - 'app/static/app.js'
+      - 'app/static/studio-shell.js'
+      - 'app/static/studio-workbench.js'
+      - 'app/static/parallax-stage-recovery.js'
+      - 'app/parallax.py'
+      - 'tests/parallax_stage_recovery*'
+      - 'tests/test_parallax_stage_recovery.py'
+      - 'tests/test_parallax.py'
+      - 'tests/studio_browser_smoke.py'
+      - 'tests/asset_detail_browser.py'
+      - '.github/workflows/parallax-stage-recovery.yml'
+permissions:
+  contents: read
+jobs:
+  stage-recovery:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record checked-out sources
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git show -s --format='commit %H%ntree %T%nparents %P'
+          git ls-files -s -- app/static/app.js app/static/studio-shell.js app/static/parallax-stage-recovery.js tests/parallax_stage_recovery_browser.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install pillow playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m unittest discover -s tests -p test_parallax_stage_recovery.py -v
+      - run: python tests/parallax_stage_recovery_browser.py --out .runtime/parallax-stage-recovery
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallax-stage-recovery-${{ matrix.os }}
+          path: .runtime/parallax-stage-recovery/
+          retention-days: 7
