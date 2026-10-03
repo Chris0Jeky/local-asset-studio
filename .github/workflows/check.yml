@@ -7,6 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record checkout and suite-runner provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git show -s --format='commit %H%ntree %T%nparents %P'
+          git ls-files -s -- .github/workflows/check.yml tests/check_full_suite_lifetime.py tests/full_suite_lifetime_worker.py
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

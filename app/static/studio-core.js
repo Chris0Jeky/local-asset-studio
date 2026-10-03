@@ -82,6 +82,36 @@
   function readiness(options){const items=readinessItems(options);return{ready:!items.length,blockers:items.map(item=>item.message)};}
 
   function sceneEligibility(assets){if(!assets.length)return{ok:false,reason:'Select a PNG image or MP4 video to begin.'};if(assets.some(a=>a.trashed_at||!{image:/\.png$/i,video:/\.mp4$/i,audio:/\.wav$/i}[a.media_type]?.test(a.filename||'')))return{ok:false,reason:'Scenes accept PNG, MP4 and WAV sources. Convert other formats first.'};const visuals=assets.filter(a=>['image','video'].includes(a.media_type)).length;if(!visuals)return{ok:false,reason:'Add a PNG or MP4 in the scene picker; audio needs a visual source.'};if(visuals>16||assets.filter(a=>a.media_type==='audio').length>32)return{ok:false,reason:'Use at most 16 visuals and 32 audio sources per scene.'};return{ok:true,reason:'Timing is chosen next. The Scene editor validates source bytes and WAV format.'};}
+  // Structural draft envelope only. The server rechecks plan identity, source bytes and
+  // prepared input before admission; restoring a draft never certifies those files.
+  function normalizePrepared(recipe){
+    const kinds=['tile','parallax'].filter(k=>recipe[k]!=null);
+    if(!kinds.length)return {};
+    if(kinds.length!==1||recipe.continuation!=null)return null;
+    const kind=kinds[0],c=recipe[kind],common=['version','preset_id','source_asset_id','source_sha256'];
+    const fields=common.concat(kind==='tile'?['rolled_file','rolled_sha256','size','band_px','feather_px','flatten_sigma_px']:['plan_id','stage','source_file','width','height','objects','view_polygons']);
+    const text=(v,n=255)=>typeof v==='string'&&v.length>0&&v.length<=n;
+    const sha=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
+    const integer=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
+    if(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).length!==fields.length||fields.some(k=>!Object.hasOwn(c,k))||c.version!==1||c.preset_id!==recipe.preset||!text(c.preset_id,120)||!text(c.source_asset_id)||!sha(c.source_sha256))return null;
+    if(kind==='tile'){
+      if(!sha(c.rolled_sha256)||!text(c.rolled_file)||!(/^[a-f0-9]{32}_[A-Za-z0-9._-]+\.png$/).test(c.rolled_file)||!integer(c.size,256,1536)||c.size%16||!integer(c.band_px,16,Math.min(512,c.size/2))||c.band_px%2||!integer(c.feather_px,0,64)||!integer(c.flatten_sigma_px,0,Math.floor(c.size/3)))return null;
+    }else{
+      if(!sha(c.plan_id)||!['plate','isolate'].includes(c.stage)||!text(c.source_file)||!(/^[a-f0-9]{32}_[A-Za-z0-9._-]+\.(png|jpg|webp)$/).test(c.source_file)||!integer(c.width,512,1536)||!integer(c.height,512,1536)||c.width%16||c.height%16||c.width*c.height>1600000||!text(c.objects,240)||c.objects.trim().split(/\s+/).join(' ')!==c.objects||/[{}\[\]]/.test(c.objects))return null;
+      if(!Array.isArray(c.view_polygons)||c.view_polygons.length>4||c.view_polygons.some(p=>!Array.isArray(p)||p.length<3||p.length>16||p.some(v=>!Array.isArray(v)||v.length!==2||!integer(v[0],0,c.width)||!integer(v[1],0,c.height))))return null;
+    }
+    return {[kind]:JSON.parse(JSON.stringify(c))};
+  }
+  function preparedBlocker(recipe){
+    const saved=normalizePrepared(recipe);if(!saved)return 'Invalid prepared plan. Prepare it again from the Asset library.';
+    const c=saved.tile||saved.parallax;if(!c)return '';
+    const action=saved.tile?'Make seamless':'Make parallax layers';
+    if(Number(recipe.batch??recipe.batch_count??1)!==1)return 'A prepared edit runs one picture at a time. Set batch to 1.';
+    if(!Array.isArray(recipe.parent_assets)||!recipe.parent_assets.includes(c.source_asset_id))return 'The prepared source is missing from lineage. Use '+action+' again.';
+    if(recipe.controls?.reference!==(c.rolled_file||c.source_file))return 'The prepared picture is missing or was replaced. Use '+action+' again.';
+    if(saved.parallax&&(Number(recipe.controls?.width)!==c.width||Number(recipe.controls?.height)!==c.height))return 'This parallax plan needs its source size, '+c.width+' × '+c.height+'. Restore that size or prepare it again.';
+    return '';
+  }
   function normalizeDraft(value){
     if(!value||value.version!==1||!Number.isFinite(value.updatedAt)||!value.recipe||typeof value.recipe.preset!=='string'||!value.recipe.preset||value.recipe.preset.length>120)return null;
     if(JSON.stringify(value).length>131072)return null;
@@ -100,8 +130,9 @@
     const batch=Number(value.recipe.batch??1);if(!Number.isInteger(batch)||batch<1||batch>4)return null;
     const look=value.recipe.look_application;
     if(look!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(look,value.recipe.preset)))return null;
+    const prepared=normalizePrepared(value.recipe);if(!prepared)return null;
     const continuation=value.recipe.continuation;if(continuation!=null&&(typeof StudioContinuation==='undefined'||!StudioContinuation.normalize(continuation)||continuation.preset_id!==value.recipe.preset))return null;
-    return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,...(look?{look_application:StudioLooks.normalizeApplication(look,value.recipe.preset)}:{}),...(continuation?{continuation:StudioContinuation.normalize(continuation)}:{}),parent_assets:[...ids],...(attribution.length?{parent_by_input:Object.fromEntries(attribution)}:{}),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
+    return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,...prepared,...(look?{look_application:StudioLooks.normalizeApplication(look,value.recipe.preset)}:{}),...(continuation?{continuation:StudioContinuation.normalize(continuation)}:{}),parent_assets:[...ids],...(attribution.length?{parent_by_input:Object.fromEntries(attribution)}:{}),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
   }
   // Named recipes are a reading aid, never a selection: bounded, catalog-shaped ids only.
   function promptRecipes(value){const out=[];for(const id of Array.isArray(value)?value:[]){if(out.length>=8)break;if(typeof id==='string'&&/^[a-z0-9-]{1,60}$/.test(id)&&!out.includes(id))out.push(id);}return out;}
@@ -158,5 +189,5 @@
     return{options:choices.map(c=>({value:String(c.band_px),label:c.name+' ('+c.band_px+' px)',disabled:!c.available,selected:c.band_px===status.band_px})),
       note:choices.filter(c=>!c.available).map(c=>c.name.charAt(0).toUpperCase()+c.name.slice(1)+': '+c.reason).join(' ')};}
   function tileBandPx(value){const n=Number(value);return value!==''&&value!=null&&Number.isInteger(n)?n:null;}
-  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,headroomExplanation,readiness,readinessItems,sceneEligibility,normalizeDraft,promptBlockers,promptTransfer,tileBands,tileBandPx};
+  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,headroomExplanation,readiness,readinessItems,sceneEligibility,normalizePrepared,preparedBlocker,normalizeDraft,promptBlockers,promptTransfer,tileBands,tileBandPx};
 });
