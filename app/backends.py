@@ -106,7 +106,7 @@ class BackendManager:
         from model_library import ModelLibrary
         profile=self.profiles[identifier]
         self.active=identifier;self.studio.comfy_url=profile['url'];self.studio.comfy_root=Path(profile['root'])
-        self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root)
+        self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root,backend_id=identifier)
         self.studio._schema=None;self.studio._schema_at=0
 
     def _local_work(self, ignore_job_ids=()):

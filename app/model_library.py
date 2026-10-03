@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import threading
@@ -40,8 +41,16 @@ class LinkedPathError(ValueError):
     """A pinned path crosses a symlink or junction: the no-link install policy refuses that row, never the library (#1127)."""
 
 
+def backend_affinity(asset):
+    value = asset.get('backend', 'all')
+    if not isinstance(value, str) or not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', value):
+        raise ValueError('Model backend must be all or a configured backend ID')
+    return value
+
+
 class ModelLibrary:
-    def __init__(self, root, comfy_root):
+    def __init__(self, root, comfy_root, *, backend_id='primary'):
+        self.backend_id = backend_affinity({'backend': backend_id})
         self.root = Path(root).resolve()
         self.comfy = Path(comfy_root).resolve()
         self.models = (self.comfy / "models").resolve()
@@ -56,6 +65,7 @@ class ModelLibrary:
         # A wrong shape must not read as an empty library (hiding every pin) or crash a caller with AttributeError.
         if not isinstance(data, dict) or not isinstance(data.get("assets", []), list) or not all(isinstance(a, dict) for a in data.get("assets", []))                 or not isinstance(data.get("collections", []), list):
             raise ValueError("models/library.json must be an object with an assets list and a collections list")
+        for asset in data.get("assets", []): backend_affinity(asset)
         return data
 
     def asset(self, asset_id):
@@ -89,6 +99,9 @@ class ModelLibrary:
         queued receipt exists; refuse it here instead. An already-installed copy still
         verifies, which is the whole point of pinning a file of unrecorded provenance.
         """
+        backend = backend_affinity(asset)
+        if backend not in ('all', self.backend_id):
+            return f'Select the {backend} backend explicitly before installing or verifying this model (active: {self.backend_id}).'
         try:target=self.destination(asset)
         except ValueError as exc:return str(exc)
         if present is None:present=target.is_file()
@@ -163,7 +176,7 @@ class ModelLibrary:
             if not isinstance(receipt,dict):receipt={}
             identity = file_identity(path) if present else None
             matches = present and identity['size'] == asset["bytes"]
-            verified = bool(matches and receipt.get('version')==2 and receipt.get("status")=="installed"
+            verified = bool(backend_affinity(asset) in ('all', self.backend_id) and matches and receipt.get('version')==2 and receipt.get("status")=="installed"
                             and receipt.get("sha256")==asset["sha256"] and receipt.get('path')==str(path)
                             and receipt.get('file_identity')==identity)
             reason = ('stat-fresh-sha256-receipt' if verified else 'missing' if not present
@@ -181,7 +194,7 @@ class ModelLibrary:
         disk = shutil.disk_usage(self.models if self.models.exists() else self.root)
         return {"assets": assets, "collections": manifest.get("collections", []), "folders": folders,
                 "inventory": inventory, "storage": {"free_bytes": disk.free, "total_bytes": disk.total, "reserve_bytes": RESERVE_BYTES},
-                "model_root": str(self.models)}
+                "model_root": str(self.models), "backend_id": self.backend_id}
 
     def _validated_asset(self, asset_id):
         asset=self.asset(asset_id);self.destination(asset)

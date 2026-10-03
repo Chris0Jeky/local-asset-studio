@@ -1243,23 +1243,24 @@ class Studio:
         self.validate_graph(graph)
         if shutil.disk_usage(self.experiments).free<2*1024**3:raise StudioError('At least 2 GiB free workspace storage is required')
         inspection=self.inspect_preset(preset['id'],graph)
-        from model_requirements import pin_mismatch
+        from model_requirements import path_key, pin_mismatch, valid_fingerprint
         pins={a['id']:a for a in self.library.manifest().get('assets',[]) if isinstance(a,dict) and isinstance(a.get('id'),str)}
         cache_path=self.root/'.runtime/model-fingerprints.json';models=[];mismatches=[]
         with self._fingerprint_lock:
-            cache=read_json(cache_path,{}) or {}
+            cache=self.model_fingerprints()
             for requirement in inspection['requirements']:
+                if requirement.get('pin_conflict'): raise StudioError(requirement['file'] + ': ' + requirement['note'])
                 if requirement.get('path') is None:
                     raise StudioError('Cannot resolve required model: ' + requirement['file'] + ' — ' + requirement.get('note', 'Inspect the declared location'))
                 if requirement.get('present') is not True: raise StudioError('Required model is unavailable: ' + requirement['file'])
                 path=Path(requirement['path']).resolve()
                 if not path.is_relative_to(self.library.models) or not path.is_file():raise StudioError('Required model is unavailable: '+requirement['file'])
                 stat=path.stat();key=str(path);record=cache.get(key,{})
-                if record.get('bytes')!=stat.st_size or record.get('mtime_ns')!=stat.st_mtime_ns:
+                if not valid_fingerprint(record, stat.st_size, stat.st_mtime_ns):
                     record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest_file(path)};cache[key]=record
                 models.append(dict(record,file=requirement['file']))
                 # #1112: an exact-path pin binds production; an unpinned file stays allowed.
-                pin=pins.get(requirement.get('asset_id'));mismatch=pin and pin.get('file')==requirement['file'] and pin_mismatch(pin,record['bytes'],record['sha256'])
+                pin=pins.get(requirement.get('asset_id'));mismatch=pin and path_key(pin.get('file', ''))==path_key(requirement['file']) and pin_mismatch(pin,record['bytes'],record['sha256'])
                 if mismatch:mismatches.append('Required model does not match its library pin: '+requirement['file']+' — '+mismatch['note'])
             cache_path.parent.mkdir(exist_ok=True);self._write_json_atomic(cache_path,cache)
         # The digests are cached first, so readiness can show the same mismatch without rehashing.
@@ -1672,7 +1673,7 @@ class Studio:
                     graph, _ = self.graph_for(preset)
                     for requirement in self.preset_requirements(preset, graph, assets=assets, observations=observations, fingerprints=fingerprints):
                         if requirement.get('pin_mismatch'): pin_warnings.setdefault(preset.get('id'), []).append(requirement['file'])
-                        if requirement['present'] is not True:
+                        if requirement['present'] is not True or requirement.get('pin_conflict'):
                             label = requirement['file'] if requirement['present'] is False else 'Unresolved dependency: ' + requirement['file'] + ' — ' + requirement['note']
                             missing.setdefault(preset.get('id'), []).append(label)
                     # One endpoint's schema cannot speak for another backend family.
@@ -1696,7 +1697,8 @@ class Studio:
 
     def model_fingerprints(self):
         # Read-only view of production preflight's digest cache; readiness never hashes.
-        cache = read_json(self.root/'.runtime/model-fingerprints.json', {})
+        try: cache = read_json(self.root/'.runtime/model-fingerprints.json', {})
+        except UnicodeError: cache = {}
         return cache if isinstance(cache, dict) else {}
 
     def inspect_preset(self, preset_id, graph=None):

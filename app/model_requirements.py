@@ -4,6 +4,8 @@ A loader contract or explicit declaration supplies a folder, never a basename ma
 Presence, install eligibility and runtime compatibility are independent observations.
 """
 from pathlib import Path
+import os
+import re
 import stat
 
 from download_contracts import relative_model_path, validate_pins
@@ -14,6 +16,19 @@ from studio_workflow.model_contracts import ANNOTATOR_SELECTIONS, MODEL_INPUT_FO
 # Do not misclassify ordinary prompt/output text merely because it ends in a suffix.
 TEXT_FIELDS = {'text', 'prompt', 'positive', 'negative', 'filename_prefix'}
 PIN_FIX = 're-download from the pinned source or update the pin deliberately'
+
+
+def path_key(value):
+    """Match Windows path aliases without conflating distinct POSIX files."""
+    return value.casefold() if os.name == 'nt' else value
+
+
+def valid_fingerprint(record, size, mtime_ns):
+    """A damaged cache is a miss, never pin evidence. This remains a stat cache."""
+    return (isinstance(record, dict) and type(record.get('bytes')) is int
+            and type(record.get('mtime_ns')) is int and record['bytes'] == size
+            and record['mtime_ns'] == mtime_ns and isinstance(record.get('sha256'), str)
+            and re.fullmatch(r'[0-9a-f]{64}', record['sha256']) is not None)
 
 
 def model_selection(kind, field, value):
@@ -45,8 +60,7 @@ def cached_pin_mismatch(asset, stamp, record):
     """Readiness never hashes: only a cached digest for this exact size and mtime is evidence; size alone is a stat fact."""
     if stamp is None: return None
     size, mtime_ns = stamp
-    fresh = (isinstance(record, dict) and record.get('bytes') == size and record.get('mtime_ns') == mtime_ns
-             and isinstance(record.get('sha256'), str) and bool(record['sha256']))
+    fresh = valid_fingerprint(record, size, mtime_ns)
     return pin_mismatch(asset, size, record['sha256'] if fresh else None)
 
 
@@ -86,7 +100,7 @@ def requirements(library, preset, graph, model_root, *, assets=None, observation
     known = {}
     for asset in assets:
         if isinstance(asset, dict) and isinstance(asset.get('file'), str):
-            known.setdefault(asset['file'], []).append(asset)
+            known.setdefault(path_key(asset['file']), []).append(asset)
     declarations = preset.get('model_files', [])
     if not isinstance(declarations, list): raise ValueError('model_files must be a list of relative model paths')
     declarations = list(dict.fromkeys(declared_path(value) for value in declarations))
@@ -100,7 +114,7 @@ def requirements(library, preset, graph, model_root, *, assets=None, observation
                'installable': False, 'install_note': error, 'note': error, 'pin_mismatch': None}
         if relative is not None:
             row['path'], row['present'], row['note'], row['occupied'], stamp = _presence(root, relative, observations)
-            pins = known.get(relative, [])
+            pins = known.get(path_key(relative), [])
             if len(pins) == 1:
                 asset = pins[0]; row.update(asset_id=asset.get('id'), source=asset.get('source'))
                 # A pin describes the curated library's exact path, not a same-named file under another backend.
@@ -116,6 +130,8 @@ def requirements(library, preset, graph, model_root, *, assets=None, observation
             else:
                 row['install_note'] = ('Multiple exact-path pins need review; automatic installation is unavailable.' if pins else
                     'No exact-path curated pin; review the source and checksum before installing manually.')
+                if pins and pinned_root:
+                    row.update(pin_conflict=True, note=row['install_note'])
         rows[key] = row
 
     for relative in declarations: add(relative)
