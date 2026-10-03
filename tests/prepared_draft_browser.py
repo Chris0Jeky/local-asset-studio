@@ -63,6 +63,16 @@ def main():
                             assert captured['recipe'][kind] == plan
                             page.evaluate('(d) => applySaved(d.recipe)', captured)
                             assert page.evaluate('(k) => (k === "tile" ? tilePayload() : parallaxPayload())[k]', kind) == plan
+                            # Shared revision loading uses its own mutation path, not applySaved.
+                            page.evaluate('(d) => StudioSetupDraft.adopt(d,StudioSetupDraft.stamp(),backendActive)', captured)
+                            assert page.evaluate('(k) => (k === "tile" ? tilePayload() : parallaxPayload())[k]', kind) == plan
+                            held = copy.deepcopy(captured)
+                            held['recipe']['look_application'] = {'version': 1, 'preset_id': plan['preset_id'], 'controls': ['sampler']}
+                            page.evaluate('(d) => StudioSetupDraft.adopt(d,StudioSetupDraft.stamp(),backendActive)', held)
+                            assert page.locator('#generate').is_disabled()
+                            assert 'sampler' in page.evaluate('StudioLooks.applicationBlocker(selected.id)')
+                            page.evaluate('(d) => StudioSetupDraft.adopt(d,StudioSetupDraft.stamp(),backendActive)', captured)
+                            assert page.evaluate('StudioLooks.applicationBlocker(selected.id)') == ''
                             before = len(SAVED)
                             page.evaluate("() => { document.querySelector('#saveName').value='Prepared browser test';document.querySelector('#save').click(); }")
                             page.wait_for_function("!savingSetup && document.querySelector('#setupStatus').textContent.includes('Setup saved')")
@@ -80,7 +90,7 @@ def main():
                     assert not errors, errors
                     allowed = {'/api/setups', '/api/recipe-check', '/api/estimate', '/api/references/check'}
                     assert all(row['path'] in allowed for row in fixture.POSTS), fixture.POSTS
-                    print('Prepared drafts: tile/parallax capture, restore, named save, checked import, stale-source hold at desktop/mobile; no generation')
+                    print('Prepared drafts: tile/parallax capture, restore, shared adoption and holds, named save, checked import, stale-source hold at desktop/mobile; no generation')
                 finally:
                     browser.close()
         finally:

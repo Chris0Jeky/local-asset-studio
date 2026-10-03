@@ -51,4 +51,25 @@ test('save, snapshot and checked recipe import carry both envelopes',()=>{
   for(const text of [save,snapshot]){assert.ok(text.includes('...tilePayload()'));assert.ok(text.includes('...parallaxPayload()'));}
   assert.ok(importing.includes('tile:recipe.tile'));assert.ok(importing.includes('parallax:recipe.parallax'));
 });
+const workbench=fs.readFileSync(require.resolve('../app/static/studio-workbench.js'),'utf8');
+const adopt=workbench.slice(workbench.indexOf('  function adoptSharedSetup('),workbench.indexOf('  window.StudioSetupDraft='));
+function sharedFixture(value){
+  const state=applyFixture({preset:'plain',controls:{}}),L=require('../app/static/looks.js');
+  for(const p of state.catalog.presets)Object.assign(p,{positive:['1','text'],width:['1','width'],height:['1','height']});
+  Object.assign(state,{U,StudioLooks:L,setupBusy:()=>false,setupStamp:()=>1,backendActive:'primary',controlKeys:['width','height'],referenceRoles:[],
+    q:state.$,pendingInputs:new Set(),renderReferenceSlots(){},updateLoraHints(){},syncCreate(){},syncReady(){},saveDraft(){},hydrateContinuation(){}});
+  state.values=()=>({positive:state.$('#positive').value,reference:state.uploaded,width:state.getControl('width').value,height:state.getControl('height').value});
+  const select=state.selectPreset;state.selectPreset=id=>{select(id);L.clearApplication();};
+  vm.runInContext(adopt,state);
+  global.StudioLooks=L;
+  try{state.adoptSharedSetup(value,1,'primary');return state;}finally{delete global.StudioLooks;}
+}
+test('shared adoption restores prepared envelopes and retained Look holds instead of dropping them',()=>{
+  for(const [kind,claim] of [['tile',tile],['parallax',parallax]]){
+    const state=sharedFixture(draft(recipe(kind,claim)));
+    assert.deepEqual(JSON.parse(JSON.stringify(state[kind+'State'])),claim);
+  }
+  const value=draft({preset:'plain',controls:{},look_application:{version:1,preset_id:'plain',controls:['sampler']}});
+  const state=sharedFixture(value);assert.match(state.StudioLooks.applicationBlocker('plain'),/sampler/);state.StudioLooks.clearApplication();
+});
 console.log(count+' prepared-draft checks passed');
