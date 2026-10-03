@@ -15,7 +15,7 @@ import math
 import re
 from pathlib import Path
 
-from workspace import WorkspaceError
+from workspace import CARD_ID, WorkspaceError
 
 KIND = "look"
 SLOT = "{scene}"
@@ -30,6 +30,11 @@ NOT_CONTROLS = {"positive", "negative", "reference", "last_reference", "mode"}
 PICTURE_KEYS = ("reference", "last_reference", "reference_slots")
 LINEAGE_ROLES = ("anchor", "evidence", "canon")
 SEEDS = "presets/looks.json"
+# Exact server control vocabulary minus wording and references. A parity test guards drift.
+CONTROL_KEYS = frozenset(("width", "height", "seed", "steps", "cfg", "denoise", "lora", "frames", "fps",
+                          "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name",
+                          "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name",
+                          "lora5", "lora5_name", "lora6", "lora6_name"))
 
 
 def _text(value, name, maximum, required=False):
@@ -41,7 +46,11 @@ def _text(value, name, maximum, required=False):
 
 
 def _bound(preset, key):
-    return bool(preset.get(key)) or bool((preset.get("bindings_extra") or {}).get(key))
+    if key not in CONTROL_KEYS: return False
+    extras = preset.get("bindings_extra")
+    binding = preset.get(key) or (extras.get(key) if isinstance(extras, dict) else None)
+    return (isinstance(binding, (list, tuple)) and len(binding) == 2
+            and all(isinstance(part, str) and bool(part.strip()) for part in binding))
 
 
 def recipe_problem(preset):
@@ -155,17 +164,26 @@ def ensure_seeds(studio):
     errors, valid, path = [], [], Path(studio.root) / SEEDS
     try: entries = json.loads(path.read_text(encoding="utf-8")).get("looks", []) if path.is_file() else []
     except (OSError, ValueError, AttributeError) as error: entries, errors = [], [f"{SEEDS} is unreadable: {error}"]
+    if not isinstance(entries, list):
+        errors.append(f"{SEEDS} looks must be a list")
+        entries = []
     presets = _presets(studio)
-    for entry in entries if isinstance(entries, list) else []:
+    for entry in entries:
         try:
             if not isinstance(entry, dict) or entry.get("kind") != KIND: raise WorkspaceError("not a look")
-            preset = presets.get((entry.get("body") or {}).get("preset_id"))
+            if not isinstance(entry.get("id"), str) or not CARD_ID.fullmatch(entry["id"]): raise WorkspaceError("Invalid seed card id")
+            name = _text(entry.get("name"), "Look name", 120, True)
+            if not isinstance(entry.get("body"), dict): raise WorkspaceError("A look must be an object")
+            preset = presets.get(entry["body"].get("preset_id"))
             if preset is None: raise WorkspaceError("its recipe is not in the recipe library")
             supersedes = entry.get("supersedes", [])
             if not isinstance(supersedes, list) or len(supersedes) > 20 or not all(isinstance(d, str) and re.fullmatch(r"[0-9a-f]{64}", d) for d in supersedes):
                 raise WorkspaceError("supersedes is a list of up to 20 sha256 digests of earlier shipped versions")
-            valid.append(dict(entry, body=validate_body(entry["body"], preset), lineage=validate_lineage(entry.get("lineage", []))))
-        except (WorkspaceError, KeyError, TypeError) as error: errors.append(f"{entry.get('id') if isinstance(entry, dict) else entry}: {error}")
+            candidate = dict(entry, name=name, body=validate_body(entry["body"], preset), lineage=validate_lineage(entry.get("lineage", [])))
+            # Reuse the Workspace size/JSON checks before its atomic batch, so a bad peer cannot roll back valid seeds.
+            studio.assets._card_fields(candidate, True)
+            valid.append(candidate)
+        except (WorkspaceError, KeyError, TypeError, AttributeError) as error: errors.append(f"{entry.get('id') if isinstance(entry, dict) else entry}: {error}")
     studio.assets.seed_cards(valid)
     studio._look_seed_errors = errors
     return errors
@@ -175,7 +193,10 @@ def listing(studio):
     errors = ensure_seeds(studio); presets = _presets(studio); result = []
     for card in studio.assets.cards(KIND):
         preset = presets.get(card["body"].get("preset_id"))
-        reason = "Its recipe (" + str(card["body"].get("preset_id")) + ") is not in the recipe library." if preset is None else recipe_problem(preset)
+        reason = "Its recipe (" + str(card["body"].get("preset_id")) + ") is not in the recipe library." if preset is None else None
+        if preset is not None:
+            try: validate_body(card["body"], preset)
+            except WorkspaceError as error: reason = str(error)
         anchor = next((entry for entry in card["lineage"] if entry.get("role") == "anchor"), None)
         found = studio.assets.asset_by_sha256(anchor.get("sha256")) if anchor else None
         result.append(dict(card, preset_name=(preset or {}).get("name"), usable=reason is None and not card["trashed_at"],
