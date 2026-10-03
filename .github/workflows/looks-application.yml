@@ -1,0 +1,32 @@
+name: Looks application integrity
+on:
+  pull_request:
+    paths:
+      - 'app/static/looks.js'
+      - 'app/static/app.js'
+      - 'app/static/studio-core.js'
+      - 'app/static/studio-workbench.js'
+      - 'tests/looks*'
+      - 'tests/studio_browser_smoke.py'
+      - '.github/workflows/looks-application.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install pillow playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - run: node tests/looks_frontend.cjs
+      - name: Shipped UI with fixture API, no generation
+        run: python tests/looks_application_browser.py
