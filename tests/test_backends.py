@@ -153,6 +153,39 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(manager.active,'hidream');self.assertEqual(manager.operation['status'],'interrupted')
         self.assertFalse(manager.busy)
 
+    def test_restart_restores_hidream_routing(self):
+        state=self.root/'.runtime/backend-state.json';state.parent.mkdir(exist_ok=True)
+        state.write_text(json.dumps({'active':'hidream'}))
+        self.studio._schema={'stale':True};self.studio._schema_at=123
+        manager=BackendManager(self.studio)
+        profile=manager.profiles['hidream']
+        self.assertEqual(manager.active,'hidream');self.assertEqual(manager.snapshot()['active'],'hidream')
+        self.assertEqual(self.studio.comfy_url,profile['url'])
+        self.assertEqual(self.studio.comfy_root,Path(profile['root']))
+        self.assertEqual(self.studio.library.backend_id,'hidream')
+        self.assertEqual(self.studio.library.comfy,Path(profile['root']).resolve())
+        self.assertIsNone(self.studio._schema);self.assertEqual(self.studio._schema_at,0)
+
+    def test_restart_with_invalid_or_missing_state_falls_back_to_primary(self):
+        state=self.root/'.runtime/backend-state.json';state.parent.mkdir(exist_ok=True)
+        for payload in ({'active':'no-such-backend'},{'active':None}, {},'not-json',None):
+            with self.subTest(payload=payload):
+                hidream=self.studio.backends.profiles['hidream']
+                self.studio.comfy_url=hidream['url'];self.studio.comfy_root=Path(hidream['root'])
+                self.studio._schema={'stale':True};self.studio._schema_at=123
+                if payload is None:
+                    if state.is_file():state.unlink()
+                elif payload=='not-json':state.write_text('{invalid')
+                else:state.write_text(json.dumps(payload))
+                manager=BackendManager(self.studio)
+                profile=manager.profiles['primary']
+                self.assertEqual(manager.active,'primary');self.assertEqual(manager.snapshot()['active'],'primary')
+                self.assertEqual(self.studio.comfy_url,profile['url'])
+                self.assertEqual(self.studio.comfy_root,Path(profile['root']))
+                self.assertEqual(self.studio.library.backend_id,'primary')
+                self.assertEqual(self.studio.library.comfy,Path(profile['root']).resolve())
+                self.assertIsNone(self.studio._schema);self.assertEqual(self.studio._schema_at,0)
+
     def test_prelisten_protected_python_candidate_blocks_recovery_launch(self):
         import psutil
         manager=self.studio.backends;profile=manager.profiles['primary'];candidate=MagicMock()
