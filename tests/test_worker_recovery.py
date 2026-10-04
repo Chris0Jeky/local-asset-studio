@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import io
 import shutil
+import subprocess
 import threading
 import unittest
 from unittest.mock import patch
@@ -12,6 +13,15 @@ from urllib.parse import unquote
 
 import test_production as fixtures
 from test_server import FakeStudio, server
+
+
+_REAL_THREAD_START=threading.Thread.start
+_SUBPROCESS_READER=getattr(subprocess.Popen,'_readerthread',None)  # Windows only
+
+
+def _start_subprocess_readers_only(thread):
+    # Windows communicate() reads pipes on helper threads and joins them (#1293); every other thread stays inert.
+    if _SUBPROCESS_READER is not None and getattr(getattr(thread,'_target',None),'__func__',None) is _SUBPROCESS_READER:_REAL_THREAD_START(thread)
 
 
 class WorkerRecoveryTests(unittest.TestCase):
@@ -258,8 +268,9 @@ class WorkerRecoveryTests(unittest.TestCase):
     def test_dead_worker_rejects_scene_render_without_inserting_attempt(self):
         from test_server import png
         self.studio.config.update({name:shutil.which(name) for name in ('ffmpeg','ffprobe')})
-        asset=self.studio.import_image('source.png','image/png',png())['asset']
-        av=self.studio.production.av;doc=av.create({'action':'create','name':'Scene','asset_ids':[asset['id']],'frames_per_shot':24})
+        with patch.object(threading.Thread,'start',_start_subprocess_readers_only):
+            asset=self.studio.import_image('source.png','image/png',png())['asset']
+            av=self.studio.production.av;doc=av.create({'action':'create','name':'Scene','asset_ids':[asset['id']],'frames_per_shot':24})
         before=av.inspect(doc['id']);self.dead_worker()
         with self.assertRaisesRegex(ValueError,'worker'):av.request_render(doc['id'],{'expected_revision':0})
         self.assertEqual(av.inspect(doc['id']),before);self.assertEqual(self.studio.queue.qsize(),0)
