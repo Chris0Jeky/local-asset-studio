@@ -238,6 +238,28 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
   The proof resumed after that PR merged; the owner approved running it while the GPU ran the local LLM, because no generation was involved. The receipt now exists (linked above).
 
+## Parked swarm PRs to land (5 October 2026) — open
+
+- [ ] **las-land-1291-1292: Merge local-asset-studio #1291 and #1292: both are requalified, and the swarm parked them for a person**
+  - (a) Done (recommended): An agent runs verify and closes the item.
+  - (b) Close them instead: An agent closes both PRs with a one-line reason; the fixes stay unshipped.
+  - Steps:
+    1. Open PowerShell (gh signed in as you) and confirm hosted checks are green on both heads:
+       ```powershell
+       gh pr checks 1291 -R Chris0Jeky/local-asset-studio; gh pr checks 1292 -R Chris0Jeky/local-asset-studio
+       ```
+    2. Merge both with a merge commit, pinned to the requalified heads:
+       ```powershell
+       gh pr merge 1291 -R Chris0Jeky/local-asset-studio --merge --match-head-commit 455a52de0a510f604db6e49759e507fc02286e49
+       gh pr merge 1292 -R Chris0Jeky/local-asset-studio --merge --match-head-commit 65cfdc74d290279a466464a0cbcfb3c078bc6e6d
+       ```
+    3. If a tripwire-hold card appears afterwards, answer it a (acknowledge): these merges were yours.
+    4. Answer Done here. An agent checks the result.
+  - Verify: gh pr view 1291 -R Chris0Jeky/local-asset-studio --json state and the same for 1292 both report MERGED, and the estate situation shows no-failing-pr without either PR in its evidence.
+  - Why: Both pass the full local suite on current main and the change itself was already reviewed; merging clears the red estate intent.
+  - Why an agent may not decide: A merge in a swarm repository outside EstateGate is attributed only to the owner. An agent merge would trip an estate-wide hold, and the coordinator will not land a parked item again.
+  - Source: `decisions/las-land-1291-1292.json`
+
 ## Things to glance at when convenient (not blockers)
 
 [docs/OWNER-REVIEW-QUEUE.md](docs/OWNER-REVIEW-QUEUE.md) lists the design defaults, copy changes and small decisions agents made on your behalf. Each row has a place to acknowledge or object. Nothing there blocks work.
