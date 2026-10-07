@@ -178,7 +178,7 @@
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy||varyBusy,unfilled,sourceMissing});
     if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
     poseHeldShown=poseHeldArtifact();const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
@@ -968,9 +968,10 @@
     const plan=varyPlanFor(button.dataset.preset,button.dataset.job,assetId);
     if(plan.kind==='none'){announce(plan.reason,true);return;}
     if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength)){announce('This Vary button is out of date. Nothing was prepared; press Vary again.',true);syncGalleryVary();return;}
-    varyBusy=true;syncReady();
-    const stamp=workbenchStamp();
+    varyBusy=true;
     try{
+      syncReady();
+      const stamp=workbenchStamp();
       const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
       if(plan.kind==='img2img'){
         const result=await post('/api/assets/reference',{id:assetId});
@@ -997,7 +998,10 @@
         const recipe=await api('/api/jobs/'+encodeURIComponent(button.dataset.job)+'/recipe');
         if(stamp!==workbenchStamp())throw Error('The workbench changed while the recipe was being read. Nothing was applied; press Vary again.');
         if(recipe?.preset_id!==plan.route.id)throw Error('This run no longer records '+plan.route.name+'. Nothing was applied.');
+        const check=await post('/api/recipe-check',recipe);
+        if(stamp!==workbenchStamp())throw Error('The workbench changed while the recipe was being checked. Nothing was applied; press Vary again.');
         selectPreset(plan.route.id,true,true);applySaved({preset:plan.route.id,controls:{...(recipe.controls||{})},batch_count:1,parent_assets:[assetId]});
+        recipeTemplateHash=check.template_sha256;
       }
       const seedInput=getControl('seed');if(seedInput)seedInput.value=seed;
       q('#batch').value=String(plan.round.count);
