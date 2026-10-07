@@ -70,6 +70,8 @@ class BackendManager:
             self.operation=saved.get('operation') if isinstance(saved.get('operation'),dict) else None
             if self.operation and self.operation.get('status')=='running':self.operation.update(status='interrupted',message='Studio restarted during a switch. Inspect the runtime before trying again.')
         except (OSError,ValueError):pass
+        if self.active not in self.profiles:self.active='primary'
+        self.activate(self.active)
 
     @staticmethod
     def request(profile, route, timeout=2):
