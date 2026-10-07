@@ -143,13 +143,18 @@ function renderLoraSlots() {
   box.hidden = !slots.length;
   if (!slots.length) { box.innerHTML = ''; return; }
   const missing = selected.missing_loras || [];
+  const kept = {};
+  for (const select of box.querySelectorAll('select[data-key]')) if (select.value) kept[select.dataset.key] = select.value;
   box.innerHTML = '<div class="section-title"><h3>Adapter stack</h3><small>Strength 0 turns a slot off and removes it from the submitted graph</small></div>'
     + (missing.length ? '<p class="lora-missing">Authored adapters not installed: ' + esc(missing.join(', ')) + '</p>' : '')
     + slots.map((key,index) => {
       const nameKey = loraNameKey(key), authored = selected.defaults?.[nameKey] || '';
       const options = selected.choices?.[nameKey]?.length ? selected.choices[nameKey] : installedLoras;
-      const list = !options.length ? (authored ? [authored] : []) : authored && !options.includes(authored) ? [authored, ...options] : options;
-      return '<div class="lora-slot"><label class="lora-file"><span>Slot ' + (index + 1) + '</span><select data-key="' + nameKey + '">' + (list.length ? '' : '<option value="">No installed adapter found</option>') + list.map(v => '<option' + (v === authored ? ' selected' : '') + '>' + esc(v) + '</option>').join('') + '</select></label>'
+      const base = !options.length ? (authored ? [authored] : []) : authored && !options.includes(authored) ? [authored, ...options] : options;
+      const extra = kept[nameKey];
+      const list = extra && !base.includes(extra) ? [extra, ...base] : base;
+      const chosen = extra || authored;
+      return '<div class="lora-slot"><label class="lora-file"><span>Slot ' + (index + 1) + '</span><select data-key="' + nameKey + '">' + (list.length ? '' : '<option value="">No installed adapter found</option>') + list.map(v => '<option' + (v === chosen ? ' selected' : '') + '>' + esc(v) + '</option>').join('') + '</select></label>'
         + '<label class="lora-strength"><span>Strength</span><input data-key="' + key + '" type="number" min="0" max="2" step="0.05"></label>'
         + '<small class="lora-hint" data-hint="' + esc(key) + '"></small></div>';
     }).join('');

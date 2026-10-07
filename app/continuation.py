@@ -127,7 +127,24 @@ VARY_FIXED = {"seed", "positive", "negative", "reference", "last_reference", "wi
 
 
 def _models(graph):
-    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items() if key in ("ckpt_name", "unet_name") and isinstance(value, str)}
+    # checkpoint_name is a loader field too. model_name is not: face detectors use it, and counting it would call two checkpoints the same family.
+    keys = ("ckpt_name", "unet_name", "checkpoint_name")
+    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items() if key in keys and isinstance(value, str)}
+
+
+def _downstream(graph, start):
+    """Node ids reachable forward from start, including start. A LoRA chained through another LoRA still reaches the sampler."""
+    seen, stack = set(), [str(start)]
+    while stack:
+        node = stack.pop()
+        if node in seen: continue
+        seen.add(node)
+        for key, other in graph.items():
+            if str(key) in seen: continue
+            for value in (other.get("inputs") or {}).values():
+                if isinstance(value, list) and value and str(value[0]) == node:
+                    stack.append(str(key)); break
+    return seen
 
 
 VARY_LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
@@ -156,7 +173,15 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
         elif key not in bound: problems.append("%s: vary carries %s, which the recipe does not bind" % (name, key))
     for slot in VARY_LORA_SLOTS:
         if (slot in carry) != (slot + "_name" in carry): problems.append("%s: vary carries %s without its file %s, or the file without its strength" % (name, slot, slot + "_name"))
+        elif slot in carry and preset.get(slot) and preset.get(slot + "_name") and str(preset[slot][0]) != str(preset[slot + "_name"][0]):
+            problems.append("%s: vary %s and %s_name bind different nodes" % (name, slot, slot))
     carried_nodes = {str(preset[slot][0]) for slot in VARY_LORA_SLOTS if slot in carry and preset.get(slot)}
+    samplers = {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("KSampler")}
+    encoders = {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("CLIPTextEncode")}
+    for node in sorted(carried_nodes):
+        reached = _downstream(graph, node)
+        if (samplers and not reached & samplers) or (encoders and not reached & encoders):
+            problems.append("%s: vary adapter node %s does not feed the sampler and the text encoders" % (name, node))
     for node in sorted(_lora_nodes(graph) - carried_nodes):
         problems.append("%s: vary route has an adapter it does not take from the source (node %s); it would change the picture's LoRA stack" % (name, node))
     models = _models(graph)

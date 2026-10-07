@@ -45,7 +45,7 @@ async function refreshBackends() {
     renderRecovery(state.recovery);
     backendActive=state.active;$('#activeBackend').textContent=state.profiles.find(p=>p.active)?.name||'';
     updateReady();
-    if(changed){await health();if(current()&&view==='models')await refreshLibrary();}
+    if(changed){if(typeof loadAtelier==='function')await loadAtelier();if(!current())return;await health();if(current()&&view==='models')await refreshLibrary();}
   } catch(e){if(current())$('#backendStatus').textContent=e.message;}
   finally{if(backendReadPending===epoch)backendReadPending=null;}
 }

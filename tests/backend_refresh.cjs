@@ -95,6 +95,13 @@ for(const operation of [{status:'running',message:'Switching'},{status:'running'
  assert.ok(f.node('#backendStatus').textContent.includes('incomplete'));
  assert.equal(f.node('#positive').value,'draft');
 });
+test('switching the active backend reloads the LoRA inventory',async()=>{
+  const f=fixture();let calls=0;f.context.loadAtelier=async()=>{calls+=1;};
+  const {work}=await begin(f);f.pending[1].resolve({presets:[f.a,f.b]});await work;
+  assert.equal(calls,1);
+  const again=f.run();f.pending.at(-1).resolve(f.backend('new'));await again;
+  assert.equal(calls,1,'an unchanged backend does not reload the inventory');
+});
 test('missing backend status reports incomplete without losing the draft',async()=>{
  const f=fixture();f.node('#positive').value='draft';
  const work=f.run();f.pending[0].resolve(null);await work;
