@@ -45,7 +45,13 @@ async function refreshBackends() {
     renderRecovery(state.recovery);
     backendActive=state.active;$('#activeBackend').textContent=state.profiles.find(p=>p.active)?.name||'';
     updateReady();
-    if(changed){if(typeof loadAtelier==='function')await loadAtelier();if(!current())return;await health();if(current()&&view==='models')await refreshLibrary();}
+    if(changed){
+      if(typeof loadAtelier==='function')await loadAtelier();if(!current())return;
+      // The catalogue redraw above ran before this inventory arrived, so the adapter selects and the already-drawn Vary buttons are still the previous backend's.
+      if(selected&&typeof renderLoraSlots==='function'){const snapshot=backendEditorSnapshot();renderLoraSlots();restoreBackendEditor(snapshot);}
+      if(typeof refreshCarriedVary==='function')refreshCarriedVary();
+      await health();if(current()&&view==='models')await refreshLibrary();
+    }
   } catch(e){if(current())$('#backendStatus').textContent=e.message;}
   finally{if(backendReadPending===epoch)backendReadPending=null;}
 }

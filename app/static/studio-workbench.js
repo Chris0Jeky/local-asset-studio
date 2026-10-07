@@ -951,14 +951,18 @@
       placeVary(card,actions,varyMarkup(plan,'data-asset="'+escape(output.asset_id||'')+'" data-preset="'+escape(job.preset_id||'')+'" data-job="'+escape(job.id)+'"','uxVaryWhy-'+escape(job.id)+'-'+index));
     }
   }
-  after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
-  after('openAsset',()=>{
+  function syncOpenAssetVary(){
     const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
     // Vary is for pictures; a video, sound or model asset shows no Vary control at all.
     if(!a||a.media_type!=='image'){holder.querySelector(':scope > .ux-vary')?.remove();return;}
     const plan=varyPlanFor(a.preset_id,a.job_id,a.id,a.media_type);
     placeVary(holder,q('#assetHandoffs'),varyMarkup(plan,'data-asset="'+escape(a.id)+'" data-preset="'+escape(a.preset_id||'')+'" data-job="'+escape(a.job_id||'')+'"','uxVaryWhyAsset'));
-  });
+  }
+  // A backend switch reloads the LoRA inventory after these buttons were drawn. A 304 jobs poll does not redraw them.
+  function refreshCarriedVary(){syncGalleryVary();syncOpenAssetVary();}
+  globalThis.refreshCarriedVary=refreshCarriedVary;
+  after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
+  after('openAsset',syncOpenAssetVary);
   async function prepareVary(button){
     const strength=button.dataset.uxVary,assetId=button.dataset.asset;
     if(varyBusy)return;
