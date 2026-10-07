@@ -51,5 +51,7 @@ test('chips name their state and their key in words, and escape through the call
 test('number keys 1-5 pick a check; anything else, or a modified key, does not',()=>{
   assert.equal(R.keyIndex({key:'1'}),0);assert.equal(R.keyIndex({key:'5'}),4);
   for(const e of [{key:'0'},{key:'6'},{key:'k'},{key:'1',ctrlKey:true},{key:'2',altKey:true},{key:'3',metaKey:true}])assert.equal(R.keyIndex(e),-1);
+  for(const key of ['1','2','3','4','5'])assert.equal(R.keyIndex({key,repeat:true}),-1,'a held digit auto-repeats and must not save a second answer');
+  assert.equal(R.keyIndex({key:'1',repeat:false}),0);
 });
 console.log('Review check contracts passed ('+count+')');
