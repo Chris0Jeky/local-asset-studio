@@ -1309,6 +1309,40 @@ async function recentRunsHeldLineClearsOnRelease() {
   assert.equal(line.textContent, '', 'A forced render shows everything, so the line clears');
 }
 
+// #1215: pause, ended, error and emptied each release the hold once and clear the waiting line.
+async function recentRunsHeldLineClearsOnEveryRelease() {
+  for (const event of ['pause', 'ended', 'error', 'emptied']) {
+    const s = recentRunsSandbox(), line = heldLine(s);
+    await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+    const video = s.nodes().find(node => node.tagName === 'VIDEO');
+    video.paused = false;
+    const writes = s.writes;
+    await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+    assert.equal(line.textContent, '1 run finished, shown when the clip stops', event + ' starts from a waiting line');
+    if (event === 'error') video.error = {code: 4}; // a browser sets MediaError before firing error; paused may stay false
+    if (event === 'ended') video.ended = true;
+    if (event === 'pause' || event === 'emptied') video.paused = true; // emptied follows the media load algorithm, which pauses first
+    video.listeners[event][0]();
+    assert.equal(s.writes, writes + 1, event + ' re-renders the gallery once');
+    assert.equal(line.textContent, '', event + ' clears the line');
+  }
+}
+
+// #1215: refreshAssets, when the asset snapshot changed, clears the jobs signature and calls
+// renderJobs without force. A playing clip must keep the gallery and the waiting count.
+async function recentRunsHeldLineSurvivesAnAssetRefresh() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const writes = s.writes;
+  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  const waiting = line.textContent;
+  assert.equal(waiting, '1 run finished, shown when the clip stops');
+  s.run('jobsSignature="";renderJobs();');
+  assert.equal(s.writes, writes, 'An asset refresh does not write the gallery while a clip plays');
+  assert.equal(line.textContent, waiting, 'The waiting count survives the asset refresh');
+}
+
 async function recentRunsHeldLineIgnoresUnchangedPolls() {
   const s = recentRunsSandbox(), line = heldLine(s);
   await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
@@ -1451,6 +1485,8 @@ async function parallaxStagesAreTwoOwnerPresses() {
   await recentRunsHostHeldProblemsDropTheStaleGalleryProblems();
   await recentRunsHeldLineCountsAFinishedRun();
   await recentRunsHeldLineClearsOnRelease();
+  await recentRunsHeldLineClearsOnEveryRelease();
+  await recentRunsHeldLineSurvivesAnAssetRefresh();
   await recentRunsHeldLineIgnoresUnchangedPolls();
   await recentRunsHeldLineNeverWritesTheGallery();
   await generateShortcutRoutesThroughTheButton();
