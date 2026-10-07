@@ -32,6 +32,6 @@
       return '<button type="button" class="review-check'+(now===null?'':now?' is-yes':' is-no')+'" '+attr+'="'+name+'"'+(asset!=null?' data-asset="'+escape(asset)+'"':'')+' aria-label="'+name+': '+state+'. Key '+(i+1)+' changes it." title="'+escape(HELP[name])+'"'+(disabled?' disabled':'')+'>'+(now===null?'':now?'✓ ':'✗ ')+name+'</button>';
     }).join('');
   }
-  function keyIndex(e){return e.ctrlKey||e.metaKey||e.altKey||!/^[1-5]$/.test(e.key||'')?-1:Number(e.key)-1;}
+  function keyIndex(e){return e.repeat||e.ctrlKey||e.metaKey||e.altKey||!/^[1-5]$/.test(e.key||'')?-1:Number(e.key)-1;}
   return{COMBINE,CREATE,HELP,forPreset,forAsset,answers,answer,cycle,tally,summary,chipsHTML,keyIndex};
 });

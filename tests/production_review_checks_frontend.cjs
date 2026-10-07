@@ -3,6 +3,7 @@
 // ordinary guarded asset update and changes nothing about the study itself.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const elements=new Map(),requests=[],updates=[],messages=[];
+let mutateGate=null,mutateError=null;
 const $=selector=>{if(!elements.has(selector))elements.set(selector,{innerHTML:'',value:'',textContent:'',disabled:false,classList:{toggle(){}}});return elements.get(selector);};
 const esc=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 const assetState={workspace_id:'1'.repeat(32),assets:[
@@ -10,7 +11,7 @@ const assetState={workspace_id:'1'.repeat(32),assets:[
   {id:'asset-b',media_type:'image',preset_id:'anima-portrait',tags:[],metadata_revision:0}]};
 const context=vm.createContext({$,document:{querySelector:$,querySelectorAll:()=>[]},esc,setInterval(){},showView(){},assetState,
   catalog:{presets:[{id:'anima-portrait'}]},api:async()=>[],post:async(url,data)=>{requests.push({url,data});return {};},
-  refreshAssets:async()=>{if(!assetState.assets.some(a=>a.id==='asset-c'))assetState.assets.push({id:'asset-c',media_type:'image',preset_id:'anima-portrait',tags:['late'],metadata_revision:0});return true;},mutateAssets:async payload=>{updates.push(JSON.parse(JSON.stringify(payload)));const a=assetState.assets.find(x=>x.id===payload.ids[0]);a.tags=payload.tags;a.metadata_revision++;return {status:'applied'};}});
+  refreshAssets:async()=>{if(!assetState.assets.some(a=>a.id==='asset-c'))assetState.assets.push({id:'asset-c',media_type:'image',preset_id:'anima-portrait',tags:['late'],metadata_revision:0});return true;},mutateAssets:async payload=>{updates.push(JSON.parse(JSON.stringify(payload)));const a=assetState.assets.find(x=>x.id===payload.ids[0]);a.tags=payload.tags;a.metadata_revision++;if(mutateGate)await mutateGate;if(mutateError){const err=mutateError;mutateError=null;throw err;}return {status:'applied'};}});
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/review-checks.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/production.js'),'utf8'),context);
 const stage=(label,asset)=>({label,operation:'generate',job:{id:'job-'+label,preset_id:'anima-portrait',status:'completed',outputs:[{asset_id:asset,media_type:'image',seed:42}]}});
@@ -19,6 +20,7 @@ const plan={id:'c'.repeat(32),name:'Lantern keeper',kind:'comparison',axis:'cfg'
 vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.stringify(plan.id)};renderProduction();`,context);
 (async()=>{
   let html=$('#productionDetail').innerHTML;
+  assert.deepEqual([...html.matchAll(/data-candidate-check="(\w+)" data-asset="asset-c"/g)].map(m=>m[1]),['style','anatomy','composition','clean'],'asset-c has its four chips on the first render, before any refresh');
   assert.match(html,/<p class="muted candidate-check-count">style 1\/1 · clean 0\/1<\/p>/,'candidate A counts its owner answers');
   assert.equal((html.match(/candidate-check-count/g)||[]).length,1,'candidate B has no answers, so no count');
   assert.deepEqual([...html.matchAll(/data-candidate-check="(\w+)" data-asset="asset-b"/g)].map(m=>m[1]),['style','anatomy','composition','clean']);
@@ -35,5 +37,25 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   assert.equal((html.match(/data-candidate-check="\w+" data-asset="asset-c"/g)||[]).length,4);
   await $('#productionDetail').onclick({target:{closest:s=>s==='[data-candidate-check]'?{dataset:{candidateCheck:'clean',asset:'asset-c'}}:null}});
   assert.deepEqual(updates[1],{ids:['asset-c'],action:'edit',tags:['late','check:clean=yes']},'the other tags read after the refresh survive');
+  // #1211 M1: a second press while the first save is still in flight must not read or write.
+  const pending=updates.length;let release;mutateGate=new Promise(resolve=>{release=resolve;});
+  const again={dataset:{candidateCheck:'clean',asset:'asset-c'}};
+  const detail=$('#productionDetail');
+  const press=()=>detail.onclick({target:{closest:s=>s==='[data-candidate-check]'?again:null}});
+  const first=press();const second=press();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(updates.length,pending+1,'exactly one update is recorded while the first save is pending');
+  assert.equal($('#productionMessage').textContent,'Still saving the last answer. Press again in a moment. Nothing was changed.');
+  release();mutateGate=null;await first;await second;
+  await press();
+  assert.equal(updates.length,pending+2,'a press after the first save settles records its own update');
+  assert.match($('#productionMessage').textContent,/Saved for this candidate: clean /);
+  mutateError=Error('save refused');const refused=updates.length;
+  await press();
+  assert.equal(updates.length,refused+1,'the refused save is the call that rejected');
+  assert.equal($('#productionMessage').textContent,'save refused');
+  await press();
+  assert.equal(updates.length,refused+2,'a refused save releases the busy flag so a later press works');
+  assert.match($('#productionMessage').textContent,/Saved for this candidate: clean /);
   console.log('Comparison quick checks save one owner answer per press and count them per candidate.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

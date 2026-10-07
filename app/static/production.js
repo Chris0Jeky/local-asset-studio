@@ -304,13 +304,18 @@ async function reviewCandidateAsset(id,review){
 // Counts per candidate come only from those owner answers; the comparison's own outcome is untouched.
 function candidateCheckAsset(id){return globalThis.StudioReviewChecks&&typeof assetState!=='undefined'?assetState.assets.find(a=>a.id===id)||null:null;}
 function candidateCheckNames(job){return globalThis.StudioReviewChecks&&job?StudioReviewChecks.forPreset((typeof catalog==='undefined'?[]:catalog?.presets||[]).find(p=>p.id===job.preset_id)):[];}
+let candidateCheckBusy=false;
 async function checkCandidateAsset(id,name){
+  if(candidateCheckBusy){productionMessage('Still saving the last answer. Press again in a moment. Nothing was changed.');return;}
   if(!id||!globalThis.StudioReviewChecks)return;
-  await refreshAssets(true);const asset=assetState.assets.find(a=>a.id===id);
-  if(!asset)throw Error('This candidate is no longer in the library. Nothing was saved.');
-  const tags=StudioReviewChecks.cycle(asset.tags,name),now=StudioReviewChecks.answer(tags,name);
-  await mutateAssets({ids:[id],action:'edit',tags});renderProduction();
-  productionMessage('Saved for this candidate: '+name+' '+(now===null?'not checked':now?'yes':'no')+'. The comparison outcome is unchanged.');
+  candidateCheckBusy=true;
+  try{
+    await refreshAssets(true);const asset=assetState.assets.find(a=>a.id===id);
+    if(!asset)throw Error('This candidate is no longer in the library. Nothing was saved.');
+    const tags=StudioReviewChecks.cycle(asset.tags,name),now=StudioReviewChecks.answer(tags,name);
+    await mutateAssets({ids:[id],action:'edit',tags});renderProduction();
+    productionMessage('Saved for this candidate: '+name+' '+(now===null?'not checked':now?'yes':'no')+'. The comparison outcome is unchanged.');
+  }finally{candidateCheckBusy=false;}
 }
 $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
   if(coordinatorAction&&productionActionPending)return;
