@@ -306,3 +306,31 @@ class WorkspaceTests(unittest.TestCase):
                     self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': [bad]})
                 self.assertEqual(self.store.get(self.asset), before)
                 self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_request_reuse(self):
+        rev = self.store.get(self.asset)['metadata_revision']
+        request_id = uuid.uuid4().hex
+        payload = {'ids': [self.asset], 'action': 'edit', 'title': 'Reuse title',
+                   'request_id': request_id, 'expected_revisions': {self.asset: rev}}
+        first = self.store.update(payload)
+        self.assertEqual(first['status'], 'applied')
+        self.assertEqual(first['request_id'], request_id)
+        self.assertEqual(self._receipt_count(), 1)
+        self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
+        # Identical retry returns the stored receipt without a second row,
+        # even though expected_revisions is now stale.
+        second = self.store.update(dict(payload))
+        self.assertEqual(second, first)
+        self.assertEqual(self._receipt_count(), 1)
+        self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
+        # Same request_id with a different fingerprint is a 409 reuse.
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update(dict(payload, title='Different title'))
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_request_reused')
+        self.assertEqual(cm.exception.details.get('request_id'), request_id)
+        self.assertEqual(self._receipt_count(), 1)
+        self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
