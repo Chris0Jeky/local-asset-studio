@@ -125,9 +125,38 @@ class ServerTests(unittest.TestCase):
                 studio=self._heavy_studio(release=release);self.assertEqual(studio.commit_release_seconds,0)
                 with self.assertRaisesRegex(server.StudioError,'below the required 32 GiB'):studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)
                 self.assertFalse(studio.jobs);self.assertEqual(studio.requests,[])
-        for raw in ('45',True,float('nan'),-5):
+        for raw in (True,float('nan'),-5):
             with self.subTest(raw=raw):self.assertEqual(self._heavy_studio(release=raw).commit_release_seconds,0)
+        self.assertEqual(self._heavy_studio(release='45').commit_release_seconds,45)
+        self.assertEqual(self._heavy_studio(release='10000').commit_release_seconds,300)
         self.assertEqual(self._heavy_studio(release=10000).commit_release_seconds,300)
+
+    def test_config_numeric_strings_count_and_bad_values_warn_on_health(self):
+        """A quoted number in config/local.json is that number. A bad value keeps today's fail-safe and is named on /api/health."""
+        def write(payload):
+            (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),**payload}))
+        write({'commit_gate_release_seconds':'45','idle_cache_release_minutes':'30'})
+        studio=self.studio()
+        self.assertEqual(studio.commit_release_seconds,45.0)
+        self.assertEqual(studio.idle_release_minutes,30.0)
+        self.assertEqual(studio.config_warnings,[])
+        write({'commit_gate_release_seconds':'nope','idle_cache_release_minutes':True})
+        offline=FakeStudio(self.root,[URLError('offline')])
+        self.assertEqual(offline.commit_release_seconds,0.0)
+        self.assertEqual(offline.idle_release_minutes,10.0)
+        offline_health=offline.health()
+        self.assertFalse(offline_health['online'])
+        self.assertTrue(any('commit_gate_release_seconds' in item for item in offline_health['config_warnings']))
+        self.assertTrue(any('idle_cache_release_minutes' in item for item in offline_health['config_warnings']))
+        live=FakeStudio(self.root,[{},{}]).health()
+        self.assertTrue(live['online'])
+        self.assertTrue(any('commit_gate_release_seconds' in item for item in live['config_warnings']))
+        self.assertTrue(any('idle_cache_release_minutes' in item for item in live['config_warnings']))
+        write({'commit_gate_release_seconds':'10000','idle_cache_release_minutes':'-5'})
+        clamped=self.studio()
+        self.assertEqual(clamped.commit_release_seconds,300.0)
+        self.assertEqual(clamped.idle_release_minutes,0.0)
+        self.assertEqual(clamped.config_warnings,[])
 
     def test_commit_release_frees_the_backend_and_admits_only_on_a_fresh_passing_reading(self):
         minimum=32*1024**3;low,high=self._commit_reading(26*1024**3),self._commit_reading(minimum)
