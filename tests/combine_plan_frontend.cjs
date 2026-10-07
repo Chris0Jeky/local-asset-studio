@@ -11,7 +11,7 @@ for(const preset of catalog.presets)if(preset.continuation_operation==='combine'
 const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
 const start=code.indexOf('  // #1163: the same pair on several recipes'),end=code.indexOf("  // #1203: this PC's owner answers");
 assert.ok(start>=0&&end>start,'the plan section is where this contract expects it');
-const FOUR='combine-klein',COPY='combine-klein-9b-copypose',DEPTH='combine-klein-9b-depth';
+const FOUR='combine-klein',COPY='combine-klein-9b-copypose',DEPTH='combine-klein-9b-depth',REPLACE='combine-klein-9b-replace';
 
 function page({saved={},refresh=async()=>{}}={}){
   const elements={},storage=new Map([['studio-fills:source-asset',JSON.stringify(saved)]]),posts=[],announced=[];
@@ -76,6 +76,37 @@ await test('a stored answer for this character fills the extra field; an empty o
   await p.q('#uxPlanPrepare').onclick();assert.equal(p.posts.at(-1).body.combine_plan.answers.clothes,'a stored robe');
   const empty=page();empty.tick(COPY);assert.equal(empty.q('#uxPlanPrepare').disabled,false,'the page does not second-guess the server');
   await empty.q('#uxPlanPrepare').onclick();assert.equal('clothes' in empty.posts.at(-1).body.combine_plan.answers,false,'an empty answer is not sent');
+  // #1233: outfit is the scene picture's clothes. Klein 4B has no outfit fill, so ticking replace shows it, and a remembered @outfit is neither shown nor sent.
+  const scene=page({saved:{'@outfit':'old scene outfit'}});scene.tick(REPLACE);
+  const box=scene.q('#uxPlanFills');
+  assert.equal(box.hidden,false);assert.match(box.innerHTML,/data-ux-plan-fill="outfit"/);
+  assert.match(box.innerHTML,/value=""/);assert.equal(box.innerHTML.includes('old scene outfit'),false);
+  await scene.q('#uxPlanPrepare').onclick();
+  assert.equal('outfit' in scene.posts.at(-1).body.combine_plan.answers,false,'Prepare sends no outfit taken from memory');
+  scene.type('outfit','a navy coat');
+  assert.equal(JSON.parse(scene.storage.get('studio-fills:source-asset'))['@outfit'],'old scene outfit','typing outfit does not change @outfit');
+  scene.tick(COPY);assert.match(scene.q('#uxPlanFills').innerHTML,/data-ux-plan-fill="outfit"[\s\S]*?value="a navy coat"/);
+  const fresh=page();fresh.tick(REPLACE);fresh.type('outfit','a navy coat');
+  assert.equal('@outfit' in JSON.parse(fresh.storage.get('studio-fills:source-asset')),false,'typing outfit does not create @outfit');
+  const clothes=page();clothes.tick(COPY);clothes.type('clothes','a black robe');
+  assert.equal(JSON.parse(clothes.storage.get('studio-fills:source-asset'))['@clothes'],'a black robe');
+  // A typed value wins when setItem throws, and clearing the field stays empty instead of falling back to the older stored text.
+  const refused=page({saved:{'@clothes':'older robe'}});
+  refused.context.localStorage.setItem=()=>{throw Error('full');};
+  refused.tick(COPY);assert.match(refused.q('#uxPlanFills').innerHTML,/value="older robe"/);
+  refused.type('clothes','typed value');refused.tick(DEPTH);
+  assert.match(refused.q('#uxPlanFills').innerHTML,/value="typed value"/);
+  assert.equal(refused.q('#uxPlanFills').innerHTML.includes('older robe'),false);
+  await refused.q('#uxPlanPrepare').onclick();
+  assert.equal(refused.posts.at(-1).body.combine_plan.answers.clothes,'typed value');
+  assert.equal(JSON.parse(refused.storage.get('studio-fills:source-asset'))['@clothes'],'older robe');
+  const cleared=page({saved:{'@clothes':'older robe'}});
+  cleared.context.localStorage.setItem=()=>{throw Error('full');};
+  cleared.tick(COPY);cleared.type('clothes','');cleared.tick(DEPTH);
+  assert.match(cleared.q('#uxPlanFills').innerHTML,/value=""/);
+  assert.equal(cleared.q('#uxPlanFills').innerHTML.includes('older robe'),false);
+  await cleared.q('#uxPlanPrepare').onclick();
+  assert.equal('clothes' in cleared.posts.at(-1).body.combine_plan.answers,false);
 });
 await test('no extra field when the open recipe asks it, or the ticked recipe has its own edited wording',async()=>{
   const p=page();p.context.selected=p.preset(COPY);p.context.continuationState.preset_id=COPY;p.run('syncCombinePlan()');p.tick(FOUR);

@@ -329,7 +329,7 @@
   // for a field the page never showed. Each fill a ticked recipe reads and the open recipe lacks is shown here, starting from this
   // character's remembered answer; a recipe with its own edited wording reads no answers. The server still refuses any bracket left.
   function planNeeds(engines=planEngines()){const identity=pairKey();return StudioContinuation.combinePlanFills(selected,engines.filter(p=>p.id!==selected.id&&!combineWording.has(identity+'|'+p.id)));}
-  function planFill(meaning){const saved=rememberedFills();return String(('@'+meaning) in saved?saved['@'+meaning]||'':planFills[meaning]||'');}
+  function planFill(meaning){if(meaning==='outfit')return String(planFills.outfit||'');if(Object.prototype.hasOwnProperty.call(planFills,meaning))return String(planFills[meaning]||'');const saved=rememberedFills();return String(saved['@'+meaning]||'');}
   // What Prepare sends: the recipe Generate would run, the ticked recipes, the seeds, the answers and any wording edited per recipe.
   function planIntent(engines,seeds){
     const identity=pairKey(),wording={},answers=combineAnswers();for(const fill of planNeeds(engines))answers[fill.meaning]=planFill(fill.meaning);
@@ -373,7 +373,7 @@
   // An extra answer is this character's, like the fields above the wording: kept for the next recipe and the next visit.
   q('#uxPlanFills').oninput=e=>{
     const meaning=e.target?.dataset?.uxPlanFill;if(!meaning)return;planFills[meaning]=e.target.value;
-    const key=fillsKey();if(key)try{localStorage.setItem(key,JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value}));}catch(error){}
+    if(meaning!=='outfit'){const key=fillsKey();if(key)try{localStorage.setItem(key,JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value}));}catch(error){}}
     syncCombinePlan();
   };
   const planTime=seconds=>Number(seconds)>0?durationLabel(seconds):'unknown';
