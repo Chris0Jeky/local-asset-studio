@@ -214,7 +214,7 @@ def run(screenshots):
             check(not errors,'no browser exceptions through all journeys: '+str(errors))
             # Handoff 03: dialog actions sat below the fold (Plan comparison at 1440x900, asset details at 900 px tall).
             reachable="([s,d])=>{const r=document.querySelector(s).getBoundingClientRect(),b=document.querySelector(d).getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;return r.height>0&&r.top>=Math.max(0,b.top)&&r.bottom<=Math.min(innerHeight,b.bottom)&&document.querySelector(s).contains(document.elementFromPoint(x,y))}"
-            hit="sel=>[...document.querySelectorAll(sel)].filter(el=>el.getClientRects().length).map(el=>{const r=el.getBoundingClientRect();return {name:(el.innerText||'').replace(/\\s+/g,' ').trim(),w:r.width,h:r.height}})"
+            hit="sel=>[...document.querySelectorAll(sel)].filter(el=>el.getClientRects().length).map(el=>{const r=el.getBoundingClientRect();return {name:(el.innerText||'').replace(/[^ -~]/g,'').replace(/\\s+/g,' ').trim(),w:r.width,h:r.height}})"
             for width,height in ((1440,900),(390,844)):
                 v=browser.new_page(viewport={'width':width,'height':height});v.goto(origin+'/#home');v.wait_for_selector('#homeView .section-title a');v.wait_for_selector('#homeView .ux-tool-links a')
                 for sel in ('#homeView .section-title a','#homeView .ux-tool-links a'):
