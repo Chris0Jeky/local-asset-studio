@@ -4,7 +4,12 @@ from workshop_entry_points import workshop_html, script
 
 
 class RunDecisions(entry.EntryPoints):
-    def load_workshop(self):
+    def load_workshop(self, touch=False):
+        if touch:
+            self.page.close()
+            self.page = self.browser.new_page(viewport={'width': 390, 'height': 844}, has_touch=True)
+            self.page.on('pageerror', lambda error: self.errors.append(str(error)))
+            self.page.set_default_timeout(3000)
         html = workshop_html().replace(script('workshop.js'), '''<script>
 window.runOriginals=Object.fromEntries(['generate','batch','randomSeed','planComparison'].map(id=>[id,document.getElementById(id)]));
 window.comparisonPlans=0;
@@ -117,6 +122,29 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.assertTrue(self.page.evaluate("document.querySelector('.wk-run-dock').classList.contains('wk-typing')"), 'held while the press lasts')
         self.page.evaluate("dispatchEvent(new Event('blur'))")
         self.page.wait_for_function("!document.querySelector('.wk-run-dock').classList.contains('wk-typing')")
+        self.assertEqual(self.page.evaluate('submitted'), 0)
+
+    def test_a_touch_tap_that_leaves_a_text_field_lands_on_its_control(self):
+        """#1245: a touch pointerup precedes the compatibility click, so the compact dock must hold until that click."""
+        self.load_workshop(touch=True)
+        self.page.set_viewport_size({'width': 390, 'height': 844})
+        self.page.select_option('#workshopLayout', 'focus', force=True)
+        self.page.evaluate("document.activeElement?.blur()")
+        full = self.page.evaluate("""()=>[...document.querySelectorAll('.wk-run-dock :is(button,select,input)')].filter(n=>n.offsetParent)
+          .map(n=>{const r=n.getBoundingClientRect();return {top:r.top,left:r.left,width:r.width}})""")
+        self.page.focus('#positive')
+        self.page.wait_for_timeout(120)
+        compact = self.page.evaluate("document.querySelector('.wk-run-dock').getBoundingClientRect().top")
+        target = min(full, key=lambda r: r['top'])
+        self.assertLess(target['top'] + 12, compact, 'the premise: the full dock reaches above the compact one')
+        self.page.evaluate("""([r,bottom])=>{window.pressed=0;const b=document.createElement('button');b.id='pressProbe';b.type='button';b.textContent='Probe';
+          b.style.cssText='position:fixed;z-index:1;margin:0;left:'+r.left+'px;width:'+r.width+'px;top:'+(r.top+2)+'px;height:'+(bottom-r.top-4)+'px';
+          b.onclick=()=>pressed++;document.getElementById('createView').append(b)}""", [target, compact])
+        self.assertTrue(self.page.locator('#positive').evaluate('(n)=>n===document.activeElement'))
+        self.page.tap('#pressProbe')
+        self.assertEqual(self.page.evaluate('pressed'), 1, 'the tap lands on the control under the finger')
+        self.page.wait_for_function("!document.querySelector('.wk-run-dock').classList.contains('wk-typing')")
+        self.assertLess(self.page.evaluate("document.querySelector('.wk-run-dock').getBoundingClientRect().top"), compact, 'the dock relaxes after the tap')
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
     def test_no_seed_control_has_no_dead_randomize_button(self):

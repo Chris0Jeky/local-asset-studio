@@ -330,12 +330,17 @@
     });
     // A press that takes focus out of a text field ends on the control it started on: the compact dock keeps its size
     // until the pointer is released, so it cannot grow under the pointer between mousedown and mouseup and eat the click (#1229).
-    let pressing = false, relaxPending = false;
+    // A touch pointerup precedes the compatibility click that moves focus; hold the compact dock until that click, or 600 ms (#1245).
+    let pressing = false, relaxPending = false, touchWait = 0;
     const relax = () => { relaxPending = false; const n = d.activeElement; if (!(create.contains(n) && typing(n))) dock.classList.remove('wk-typing'); };
-    const released = () => { pressing = false; if (relaxPending) w.setTimeout(relax, 0); };
-    w.addEventListener('pointerdown', () => { pressing = true; }, true);
+    const released = () => { pressing = false; w.clearTimeout(touchWait); touchWait = 0; if (relaxPending) w.setTimeout(relax, 0); };
+    w.addEventListener('pointerdown', () => { pressing = true; w.clearTimeout(touchWait); touchWait = 0; }, true);
+    w.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { w.clearTimeout(touchWait); touchWait = w.setTimeout(released, 600); } else released(); }, true);
+    w.addEventListener('click', () => { if (touchWait) released(); }, true);
     // A release the window never sees (Alt+Tab mid-press, a native popup taking it) must not leave the dock compact.
-    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) w.addEventListener(type, released, true);
+    // A touch tap's implicit capture ends on pointerup, before the compatibility click, so that lostpointercapture must not drop the hold (#1245).
+    w.addEventListener('pointercancel', released, true);
+    w.addEventListener('lostpointercapture', () => { if (!touchWait) released(); }, true);
     w.addEventListener('blur', e => { if (e.target === w) released(); });
     create.addEventListener('focusout', e => { if (!typing(e.target)) return; if (pressing) relaxPending = true; else dock.classList.remove('wk-typing'); });
     create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
