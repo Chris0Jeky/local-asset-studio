@@ -15,6 +15,7 @@ function between(start, end) {
   return source.slice(first, last);
 }
 const readinessSource = between('  function readinessItems(){', '\n  function syncReady(){');
+const combineSource = between('  function combineBusy(){', '\n  // Each engine');
 const prepareSource = between('  async function prepareVary(button){', "\n  document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-vary]')");
 const U = require('../app/static/studio-core.js');
 
@@ -44,7 +45,7 @@ function context(extra) {
   };
   Object.assign(sandbox, extra || {});
   vm.createContext(sandbox);
-  vm.runInContext(readinessSource + '\n' + prepareSource + '\nthis.readinessItems=readinessItems;this.prepareVary=prepareVary;', sandbox);
+  vm.runInContext(readinessSource + '\n' + combineSource + '\n' + prepareSource + '\nthis.readinessItems=readinessItems;this.combineBusy=combineBusy;this.prepareVary=prepareVary;', sandbox);
   return sandbox;
 }
 
@@ -61,6 +62,7 @@ test('Generate readiness stays busy while Vary is preparing', () => {
   const box = context({varyBusy: true});
   const items = box.readinessItems().items;
   assert.ok(items.some(item => item.code === 'busy'), items);
+  assert.equal(box.combineBusy(), true, 'Combine stays locked while Vary is preparing');
 });
 
 test('prepare new seed checks the recipe against the current graph', async () => {
