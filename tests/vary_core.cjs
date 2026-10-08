@@ -110,8 +110,17 @@ test('the status and hint say the checkpoint and adapters are kept',()=>{
   assert.match(status,/Vary strong prepared on WAI vary/);assert.match(status,/same checkpoint and adapters as this picture \(noirpopwave\.safetensors at 1\)/);
   assert.match(status,/denoise 0\.7/);assert.match(status,/Nothing was generated/);
   const bare=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({seed:5})],{},[]);
-  assert.match(C.varyStatus(bare,'subtle',3),/same checkpoint as this picture, no adapters \(it used none\)/);
+  assert.match(C.varyStatus(bare,'subtle',3),/recipe default/);
   assert.equal(C.varyHint(plan),'On WAI vary · keeps its adapters · 2 pictures · denoise 0.5 / 0.7 (starting values)');
+});
+test('a value filled from the recipe default is named as a recipe default',()=>{
+  const bare=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({seed:5})],{},[]);
+  const status=C.varyStatus(bare,'subtle',3);
+  assert.match(status,/recipe default/);
+  assert.doesNotMatch(status,/it used none/);
+  const recordedOff={seed:5,lora:0,lora_name:'cinematic lighting.safetensors',lora2:0,lora2_name:'manga-ink-screentone.safetensors',sampler:'euler',steps:24};
+  const off=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob(recordedOff)],{},['cinematic lighting.safetensors','manga-ink-screentone.safetensors']);
+  assert.match(C.varyStatus(off,'subtle',3),/it used none/);
 });
 test('the shipped catalog routes Krea, plain SDXL and WAI pictures and nothing else',()=>{
   const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8')).presets;

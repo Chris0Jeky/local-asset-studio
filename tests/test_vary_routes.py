@@ -182,6 +182,30 @@ class CarryContract(unittest.TestCase):
         del self.route["bindings_extra"]["lora2"]
         self.assertTrue(any("lora2" in p and "strength" in p for p in self.problems()), self.problems())
 
+    def test_a_carried_lora_file_binds_the_same_node_as_its_strength(self):
+        self.route["lora_name"] = ["9", "lora_name"]
+        self.assertTrue(any("lora_name" in p and "different nodes" in p for p in self.problems()), self.problems())
+
+    def test_a_carried_lora_must_reach_the_sampler_and_the_text_encoders(self):
+        def disconnect(graph):
+            graph["5"]["inputs"]["model"] = ["1", 0]
+            graph["2"]["inputs"]["clip"] = ["1", 1]
+            graph["3"]["inputs"]["clip"] = ["1", 1]
+        self.edits["wai-vary"] = [disconnect]
+        self.assertTrue(any("does not feed" in p for p in self.problems()), self.problems())
+
+    def test_checkpoint_name_is_the_checkpoint_and_a_detector_model_name_is_not(self):
+        def use_checkpoint_name(graph):
+            for node in graph.values():
+                inputs = node.get("inputs") or {}
+                if "ckpt_name" in inputs: inputs["checkpoint_name"] = inputs.pop("ckpt_name")
+        def detector(graph):
+            graph["1"]["inputs"]["model_name"] = "bbox/face_yolov8s.pt"
+        for preset_id in ("wai-vary", "wai", "anime-wai-quality"):
+            self.edits[preset_id] = [use_checkpoint_name]
+        self.edits["wai-vary"].append(detector)
+        self.assertEqual(self.problems(), [], self.problems())
+
 
 class VaryClientPolicy(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")

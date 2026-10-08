@@ -95,6 +95,82 @@ for(const operation of [{status:'running',message:'Switching'},{status:'running'
  assert.ok(f.node('#backendStatus').textContent.includes('incomplete'));
  assert.equal(f.node('#positive').value,'draft');
 });
+// Slot options and Vary buttons are what the page draws. Counting loadAtelier stays green while both stay stale.
+function cut(text,start,end){const i=text.indexOf(start),j=text.indexOf(end,i+start.length);assert.ok(i>=0&&j>i,start);return text.slice(i,j);}
+function classNames(node){return String(node.className||'').split(/\s+/).filter(Boolean);}
+function matches(node,sel){return sel.startsWith('.')&&classNames(node).includes(sel.slice(1));}
+function queryAll(node,sel){
+  if(sel===':scope > .ux-vary')return node.childNodes.filter(child=>matches(child,'.ux-vary'));
+  const out=[];
+  for(const child of node.childNodes){if(matches(child,sel))out.push(child);out.push(...queryAll(child,sel));}
+  return out;
+}
+function domNode(tag){
+  const node={tagName:String(tag).toUpperCase(),className:'',id:'',dataset:{},childNodes:[],parentNode:null,_html:'',
+    setAttribute(){},querySelector(sel){return this.querySelectorAll(sel)[0]||null;},querySelectorAll(sel){return queryAll(this,sel);},
+    after(next){const parent=this.parentNode;if(!parent)return;parent.childNodes.splice(parent.childNodes.indexOf(this)+1,0,next);next.parentNode=parent;},
+    replaceWith(next){const parent=this.parentNode;if(!parent)return;parent.childNodes.splice(parent.childNodes.indexOf(this),1,next);next.parentNode=parent;this.parentNode=null;},
+    remove(){if(this.parentNode)this.parentNode.childNodes=this.parentNode.childNodes.filter(child=>child!==this);this.parentNode=null;},
+    append(child){this.childNodes.push(child);child.parentNode=this;}};
+  Object.defineProperty(node,'parentElement',{get(){return this.parentNode;}});
+  Object.defineProperty(node,'innerHTML',{get(){return this._html;},set(html){this._html=String(html);}});
+  return node;
+}
+function slotSelects(html){
+  const out=[],re=/<select data-key="([^"]*)">([\s\S]*?)<\/select>/g;let match;
+  while((match=re.exec(html))){
+    const options=[...match[2].matchAll(/<option([^>]*)>([^<]*)<\/option>/g)].map(option=>({selected:/\bselected\b/.test(option[1]),text:option[2]}));
+    const chosen=options.find(option=>option.selected)||options[0];
+    out.push({dataset:{key:match[1]},value:chosen?chosen.text:''});
+  }
+  return out;
+}
+test('a backend switch rebuilds adapter slots and enables Vary for adapters the new backend has',async()=>{
+  const f=fixture();
+  const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8'));
+  const wai=catalog.presets.find(preset=>preset.id==='wai'),vary=catalog.presets.find(preset=>preset.id==='wai-vary');
+  vary.continuation_capability={version:1,consumes_source:true,operation:'image-to-image',prompt_role:'description',requires_mask:false};
+  f.a.lora_name=['8','lora_name'];f.a.lora2_name=['9','lora_name'];
+  const gallery=domNode('div'),card=domNode('article'),anchor=domNode('a'),actions=domNode('div'),handoffs=domNode('div'),holder=domNode('div');
+  gallery.id='gallery';card.className='imageCard';anchor.className='reference-output';anchor.dataset.job='job-1';anchor.dataset.index='0';actions.className='card-actions';
+  card.append(anchor);card.append(actions);gallery.append(card);handoffs.id='assetHandoffs';holder.append(handoffs);
+  f.context.document.querySelector=sel=>sel==='#gallery'?gallery:sel==='#assetHandoffs'?handoffs:null;
+  f.context.document.createElement=tag=>domNode(tag);
+  f.context.q=sel=>f.context.document.querySelector(sel);
+  f.context.escape=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  f.context.StudioContinuation=require('../app/static/continuation-core.js');
+  f.context.installedLoras=['qwen-only.safetensors'];
+  f.context.jobs=[{id:'job-1',preset_id:'wai',status:'completed',outputs:[{asset_id:'asset-1',media_type:'image'}],controls:{lora:'1',lora_name:'primary-only.safetensors',lora2:'0',lora2_name:'primary-two.safetensors',sampler:'euler_ancestral',scheduler:'normal',cfg:'5',steps:'20'}}];
+  f.context.assetState={assets:[{id:'asset-1',media_type:'image',preset_id:'wai',job_id:'job-1'}]};
+  f.context.activeAsset=f.context.assetState.assets[0];
+  f.context.missingByPreset={};
+  f.context.catalog={presets:[f.a,f.b,wai,vary]};
+  const app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+  const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const box=f.node('#loraSlots');
+  box.querySelectorAll=function(sel){return sel==='select[data-key]'?slotSelects(this.innerHTML):[];};
+  vm.runInContext(cut(app,'const loraSlotKeys = ','const controlKeys = ')+cut(app,'const activeLoraSlots = () =>','function updateLoraHints')+cut(app,'async function loadAtelier()','const NEGATIVE_COLLAPSE_KEY')+cut(workbench,'  function element(tag,className,html)','  function announce')+cut(workbench,'  function varyMarkup','  after(\'renderJobs\',syncGalleryVary)'),f.context);
+  f.context.renderLoraSlots();f.context.refreshCarriedVary();
+  const staleSlots=box.innerHTML,staleGallery=card.querySelector('.ux-vary').innerHTML,staleAsset=holder.querySelector('.ux-vary').innerHTML;
+  assert.match(staleSlots,/qwen-only\.safetensors/);assert.doesNotMatch(staleSlots,/primary-only\.safetensors/);
+  assert.match(staleGallery,/\bdisabled\b/);assert.match(staleGallery,/Missing here/);assert.match(staleGallery,/primary-only\.safetensors/);
+  assert.match(staleAsset,/\bdisabled\b/);assert.doesNotMatch(staleAsset,/data-ux-vary="subtle"/);
+  const {work}=await begin(f);
+  f.pending[1].resolve({presets:[f.a,f.b,wai,vary]});await f.tick();
+  assert.equal(f.pending[2].url,'/api/options');
+  f.pending[2].resolve({loras:['primary-only.safetensors','primary-two.safetensors']});await f.tick();
+  assert.equal(f.pending[3].url,'/api/knowledge');f.pending[3].resolve({});await f.tick();
+  assert.equal(f.pending[4].url,'/api/recipes');f.pending[4].resolve({recipes:[]});
+  await work;
+  assert.match(box.innerHTML,/primary-only\.safetensors/);assert.match(box.innerHTML,/primary-two\.safetensors/);
+  const galleryNow=card.querySelector('.ux-vary').innerHTML,assetNow=holder.querySelector('.ux-vary').innerHTML;
+  assert.match(galleryNow,/data-ux-vary="subtle"/);assert.match(galleryNow,/data-ux-vary="strong"/);assert.doesNotMatch(galleryNow,/\bdisabled\b/);assert.doesNotMatch(galleryNow,/Missing here/);
+  assert.match(assetNow,/data-ux-vary="subtle"/);assert.doesNotMatch(assetNow,/\bdisabled\b/);
+  const settledSlots=box.innerHTML,options=f.pending.filter(item=>item.url==='/api/options').length;
+  const again=f.run();f.pending.at(-1).resolve(f.backend('new'));await again;
+  assert.equal(f.pending.filter(item=>item.url==='/api/options').length,options,'an unchanged backend does not reload the inventory');
+  assert.equal(box.innerHTML,settledSlots);assert.equal(card.querySelector('.ux-vary').innerHTML,galleryNow);assert.equal(holder.querySelector('.ux-vary').innerHTML,assetNow);
+});
 test('missing backend status reports incomplete without losing the draft',async()=>{
  const f=fixture();f.node('#positive').value='draft';
  const work=f.run();f.pending[0].resolve(null);await work;

@@ -322,15 +322,18 @@
     const job=item.job_id?(jobs||[]).find(j=>j.id===item.job_id):null;
     if(!job)return 'No run is recorded for this picture, so '+route.name+' cannot keep its adapters. Use Continue with this.';
     if(job.preset_id!==source.id)return 'This picture\'s run no longer records '+source.name+', so its adapters cannot be kept. Use Continue with this.';
-    const values={};
+    const values={},fallbacks=[];
     for(const key of route.vary.carry){
-      const recorded=job.controls?.[key],value=recorded!==undefined&&recorded!==null&&recorded!==''?recorded:source.defaults?.[key];
+      const recorded=job.controls?.[key],fromRun=recorded!==undefined&&recorded!==null&&recorded!=='';
+      const value=fromRun?recorded:source.defaults?.[key];
       if(value===undefined||value===null||value==='')return 'Setting '+key+' is not recorded for this picture\'s run, so its adapters cannot be kept. Use Continue with this.';
+      if(!fromRun)fallbacks.push(key);
       values[key]=value;
     }
     const known=Array.isArray(installed)&&installed.length?installed:null;
     const absent=known?[...new Set(Object.keys(values).filter(key=>/^lora\d*_name$/.test(key)).map(key=>values[key]).filter(name=>!known.includes(name)))]:[];
-    return absent.length?'Vary uses '+route.name+'. Missing here: '+absent.join(', ')+'. Open Models & setup.':values;
+    // fallbacks stay beside the values. prepareVary copies every key of carry into the job, so a marker inside values would be submitted.
+    return absent.length?'Vary uses '+route.name+'. Missing here: '+absent.join(', ')+'. Open Models & setup.':{values,fallbacks};
   }
   function varyAdapters(carry){
     return Object.keys(carry||{}).filter(key=>/^lora\d*$/.test(key)&&Number(carry[key])!==0).map(key=>carry[key+'_name']+' at '+carry[key]);
@@ -343,8 +346,8 @@
     if(!source)return none('No Studio recipe is recorded for this picture, so there is nothing to vary from. Use Continue with this.');
     const route=varyRoute(source.id,presets);
     if(route){const blocked=varyBlocked(route,missing);if(blocked)return none('Vary uses '+route.name+'. '+blocked);
-      const carry=route.vary.carry?varyCarry(item,source,route,jobs,installed):null;if(typeof carry==='string')return none(carry);
-      return{kind:'img2img',source,route,carry,round:varyRound(jobs,route.id),strengths:{subtle:route.vary.subtle,strong:route.vary.strong},starting:route.vary.status!=='owner-approved'};}
+      const carried=route.vary.carry?varyCarry(item,source,route,jobs,installed):null;if(typeof carried==='string')return none(carried);
+      return{kind:'img2img',source,route,carry:carried?carried.values:null,carryFallback:carried?carried.fallbacks:[],round:varyRound(jobs,route.id),strengths:{subtle:route.vary.subtle,strong:route.vary.strong},starting:route.vary.status!=='owner-approved'};}
     // No route: the honest fallback is the same recipe with new seeds, only for a recipe that starts from words alone.
     if(source.continuation_capability?.operation!=='new-image')return none('No close-variation route is recorded for '+source.name+', which starts from other pictures. Use Prepare new seed on its run, or Continue with this.');
     if(!source.seed)return none(source.name+' has no seed to change, so a new round would repeat this picture.');
@@ -361,7 +364,8 @@
     const count=plan.round.count,seeds=count+' new seeds from '+seed;
     if(plan.kind==='reseed')return 'Vary prepared as new seeds, same recipe ('+plan.route.name+'): '+seeds+', '+varyTime(plan.round.timing)+'. No close-variation route is recorded for this recipe, so each picture starts afresh from the same words. Nothing was generated; press Generate to run the round.';
     const controls=plan.strengths[strength].controls;
-    const adapters=varyAdapters(plan.carry),kept=!plan.carry?'':adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':', same checkpoint as this picture, no adapters (it used none)';
+    const adapters=varyAdapters(plan.carry),fellBack=Array.isArray(plan.carryFallback)&&plan.carryFallback.length;
+    const kept=!plan.carry?'':adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':fellBack?', same checkpoint, recipe default for '+plan.carryFallback.join(', '):', same checkpoint as this picture, no adapters (it used none)';
     return 'Vary '+strength+' prepared on '+plan.route.name+' from this picture'+kept+': denoise '+controls.denoise+(plan.starting?' (a starting value, not yet judged)':'')+', '+seeds+', '+varyTime(plan.round.timing)+'. Nothing was generated; press Generate to run the round.';
   }
   function varyHint(plan){
