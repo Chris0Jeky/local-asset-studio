@@ -174,8 +174,9 @@ class Studio:
         self.cancel_requests = {}   # job id -> open owner cancel request; the worker that owns the job resolves it (app/job_cancel.py)
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
         # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
+        self.config_warnings = []
         raw_minutes = self.config.get("idle_cache_release_minutes", 10)
-        self.idle_release_minutes = max(0.0, float(raw_minutes)) if self._finite_number(raw_minutes) else 10.0   # 0 or a negative value switches it off
+        self.idle_release_minutes = self._config_number("idle_cache_release_minutes", raw_minutes, default=10.0)   # 0 or a negative value switches it off
         self._last_activity = time.monotonic(); self._released_since_activity = False; self.cache_release = {"count": 0, "last_at": None, "last_error": None}
         # ComfyUI keeps part of the previous checkpoint on the GPU when the next one loads, because its free-VRAM figure ignores what the
         # desktop holds; three SDXL checkpoints in one process spilled 0, 3.7 and 6.0 GB into shared memory (23 Sep 2026). Unload first.
@@ -185,7 +186,7 @@ class Studio:
         # own idle backend and re-measure for up to this many seconds; only a fresh reading that passes the unchanged gate admits.
         raw_release = self.config.get("commit_gate_release_seconds", 0)
         self.history_read_backoff_seconds = HISTORY_READ_BACKOFF_SECONDS   # per instance so a scripted ComfyUI double need not wait
-        self.commit_release_seconds = min(float(COMMIT_RELEASE_MAX_SECONDS), float(raw_release)) if self._finite_number(raw_release) and raw_release > 0 else 0.0
+        self.commit_release_seconds = self._config_number("commit_gate_release_seconds", raw_release, default=0.0, maximum=float(COMMIT_RELEASE_MAX_SECONDS))
         self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
@@ -1692,8 +1693,8 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
 
     def model_fingerprints(self):
         # Read-only view of production preflight's digest cache; readiness never hashes.
@@ -1903,6 +1904,23 @@ class Studio:
                 except (KeyError, TypeError, IndexError): continue
                 if not prompting.has_wildcards(text): continue
                 graph[node]["inputs"][field] = prompting.expand(text, rng, self.root)
+
+    def _config_number(self, key, raw, *, default, maximum=None):
+        """A config number, including a numeric string. A bad value keeps the fail-safe default and is named on /api/health. Zero and below stay the documented off switch; above maximum clamps with no warning."""
+        parsed = self._parse_config_number(raw)
+        if parsed is None:
+            self.config_warnings.append("%s must be a finite number; keeping %s" % (key, default))
+            return float(default)
+        if parsed <= 0: return 0.0
+        if maximum is not None and parsed > maximum: return float(maximum)
+        return float(parsed)
+
+    @staticmethod
+    def _parse_config_number(raw):
+        if isinstance(raw, bool): return None
+        try: number = Decimal(str(raw))
+        except (InvalidOperation, ValueError, TypeError): return None
+        return number if number.is_finite() else None
 
     @staticmethod
     def _finite_number(value):
