@@ -178,7 +178,7 @@
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy||varyBusy,unfilled,sourceMissing});
     if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
     poseHeldShown=poseHeldArtifact();const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
@@ -282,7 +282,7 @@
   function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
   function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes','outfit'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
-  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty();}
+  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty()||varyBusy;}
   // Each engine's time per picture: this PC's own completed runs of it first; otherwise the read-only local estimate
   // (POST /api/estimate reads timing history and runs nothing), asked once per engine and canvas; otherwise say so (K13).
   const engineEstimates=new Map();let engineEstimateQueue=Promise.resolve();
@@ -972,9 +972,10 @@
     const plan=varyPlanFor(button.dataset.preset,button.dataset.job,assetId);
     if(plan.kind==='none'){announce(plan.reason,true);return;}
     if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength)){announce('This Vary button is out of date. Nothing was prepared; press Vary again.',true);syncGalleryVary();return;}
-    varyBusy=true;syncReady();
-    const stamp=workbenchStamp();
+    varyBusy=true;
     try{
+      syncReady();
+      const stamp=workbenchStamp();
       const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
       if(plan.kind==='img2img'){
         const result=await post('/api/assets/reference',{id:assetId});
@@ -1001,7 +1002,10 @@
         const recipe=await api('/api/jobs/'+encodeURIComponent(button.dataset.job)+'/recipe');
         if(stamp!==workbenchStamp())throw Error('The workbench changed while the recipe was being read. Nothing was applied; press Vary again.');
         if(recipe?.preset_id!==plan.route.id)throw Error('This run no longer records '+plan.route.name+'. Nothing was applied.');
+        const check=await post('/api/recipe-check',recipe);
+        if(stamp!==workbenchStamp())throw Error('The workbench changed while the recipe was being checked. Nothing was applied; press Vary again.');
         selectPreset(plan.route.id,true,true);applySaved({preset:plan.route.id,controls:{...(recipe.controls||{})},batch_count:1,parent_assets:[assetId]});
+        recipeTemplateHash=check.template_sha256;
       }
       const seedInput=getControl('seed');if(seedInput)seedInput.value=seed;
       q('#batch').value=String(plan.round.count);
