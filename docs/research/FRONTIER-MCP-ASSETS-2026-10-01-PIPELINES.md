@@ -92,14 +92,11 @@ Still or prompt → fal/Replicate video model OR Figma weave_run_model (Veo-clas
 
 ## P8 — Comfy partner / Cloud (PC agents) — G
 
-```
-Codex/Claude with comfy-mcp partner_generate OR comfy-cloud
-→ hosted Flux/Ideogram/Kling/… (credits)
-→ download into Studio-labeled agent run (docs/AGENT-TOOLING.md rules)
-```
+Research capability only: hosted partner/cloud models may offer stills and clips, subject to current availability and cost. Availability is not authorization to submit.
 
-**Do not** bypass Studio evidence from Grok Bot against shared portable Comfy.  
-**Quality:** Model-dependent; treat as paid Experiment Lab.
+PC-agent generations must use a supported Studio submission path so admission, recipe/prompt-ID evidence and uncertain-submission handling apply. `comfy-local` remains read-only in this repository. Paid execution needs explicit owner scope; if Studio has no supported cloud path, leave this pipeline unexecuted. A label added after a direct submission cannot substitute for Studio admission.
+
+**Quality:** Model-dependent; a paid Experiment Lab proposal, not an executed or accepted result.
 
 ## Landing contract (all pipelines)
 

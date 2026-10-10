@@ -20,15 +20,14 @@ Pipelines covered:
 
 | File | Role |
 |---|---|
-| [LANDSCAPE.md](./LANDSCAPE.md) | Connected vs installable MCP inventory + capability matrix |
-| [PIPELINES.md](./PIPELINES.md) | End-to-end recipes (bot → MCP → artifact → LAS) + quality bar |
-| [LAS_MAP.md](./LAS_MAP.md) | Plug points into Create / Uncensored / docs; Civitai vs frontier lanes |
-| [RANKED.md](./RANKED.md) | Ranked next actions A–D (docs preferred) |
-| [GAPS.md](./GAPS.md) | Blockers (no MCP, auth, cost, quality) |
-| [COMPRESSED.md](./COMPRESSED.md) | One-screen spoken TLDR |
-| [SOURCES.md](./SOURCES.md) | URLs, plugin/server ids, timestamps |
-| [ISSUES.md](./ISSUES.md) | Comments posted + draft PR URL |
-| [EXPLICIT.md](./EXPLICIT.md) | Quarantine notes (adults 18+ / Uncensored only) |
+| [LANDSCAPE.md](./FRONTIER-MCP-ASSETS-2026-10-01-LANDSCAPE.md) | Connected vs installable MCP inventory + capability matrix |
+| [PIPELINES.md](./FRONTIER-MCP-ASSETS-2026-10-01-PIPELINES.md) | End-to-end recipes (bot → MCP → artifact → LAS) + quality bar |
+| [LAS_MAP.md](./FRONTIER-MCP-ASSETS-2026-10-01-LAS-MAP.md) | Plug points into Create / Uncensored / docs; Civitai vs frontier lanes |
+| [RANKED.md](./FRONTIER-MCP-ASSETS-2026-10-01-RANKED.md) | Ranked next actions A–D (docs preferred) |
+| [GAPS.md](./FRONTIER-MCP-ASSETS-2026-10-01-GAPS.md) | Blockers (no MCP, auth, cost, quality) |
+| [COMPRESSED.md](./FRONTIER-MCP-ASSETS-2026-10-01-COMPRESSED.md) | One-screen spoken TLDR |
+| [SOURCES.md](./FRONTIER-MCP-ASSETS-2026-10-01-SOURCES.md) | URLs, plugin/server ids, timestamps |
+| [EXPLICIT.md](./FRONTIER-MCP-ASSETS-2026-10-01-EXPLICIT.md) | Quarantine notes (adults 18+ / Uncensored only) |
 
 ## Prior packs (do not duplicate)
 
