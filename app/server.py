@@ -1257,11 +1257,17 @@ class Studio:
                 path=Path(requirement['path']).resolve()
                 if not path.is_relative_to(self.library.models) or not path.is_file():raise StudioError('Required model is unavailable: '+requirement['file'])
                 stat=path.stat();key=str(path);record=cache.get(key,{})
-                if not valid_fingerprint(record, stat.st_size, stat.st_mtime_ns):
-                    record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest_file(path)};cache[key]=record
+                pin=pins.get(requirement.get('asset_id'))
+                if pin and path_key(pin.get('file', ''))!=path_key(requirement['file']): pin=None
+                # Stat caches are a performance hint, not content evidence for pinned production inputs.
+                if pin or not valid_fingerprint(record, stat.st_size, stat.st_mtime_ns):
+                    digest=digest_file(path);after=path.stat()
+                    identity=lambda info:(info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns)
+                    if identity(stat)!=identity(after): raise StudioError('Required model changed while hashing: '+requirement['file'])
+                    record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest};cache[key]=record
                 models.append(dict(record,file=requirement['file']))
                 # #1112: an exact-path pin binds production; an unpinned file stays allowed.
-                pin=pins.get(requirement.get('asset_id'));mismatch=pin and path_key(pin.get('file', ''))==path_key(requirement['file']) and pin_mismatch(pin,record['bytes'],record['sha256'])
+                mismatch=pin and pin_mismatch(pin,record['bytes'],record['sha256'])
                 if mismatch:mismatches.append('Required model does not match its library pin: '+requirement['file']+' — '+mismatch['note'])
             cache_path.parent.mkdir(exist_ok=True);self._write_json_atomic(cache_path,cache)
         # The digests are cached first, so readiness can show the same mismatch without rehashing.

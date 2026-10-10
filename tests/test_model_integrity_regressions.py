@@ -58,8 +58,8 @@ class FingerprintAndPinTests(unittest.TestCase):
         (self.root/'.runtime/model-fingerprints.json').write_bytes(b'\xff')
         self.assertEqual(studio.model_fingerprints(), {})
 
-    def test_valid_stat_fresh_cache_is_reused_without_rehashing(self):
-        pin, path = self.pinned_file(); studio = self.studio(); self.cache(path, pin['sha256'])
+    def test_valid_stat_fresh_cache_is_reused_for_unpinned_files(self):
+        pin, path = self.pinned_file(); self.manifest.clear(); studio = self.studio(); self.cache(path, pin['sha256'])
         with patch.object(readiness.server, 'digest_file', side_effect=AssertionError('unexpected rehash')):
             self.assertEqual(self.preflight(studio)['models'][0]['sha256'], pin['sha256'])
 
