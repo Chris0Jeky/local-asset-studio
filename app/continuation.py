@@ -261,7 +261,7 @@ def vary_catalog_problems(presets, graph_of):
     for preset in presets:
         if preset.get("vary") is None: continue
         problems += vary_problems(preset, graph_of(preset), presets, graph_of)
-        sources = (preset["vary"] or {}).get("sources") if isinstance(preset["vary"], dict) else None
+        sources = (preset["vary"] or {}).get("sources") if isinstance(preset.get("vary"), dict) else None
         for source_id in [item for item in sources if isinstance(item, str)] if isinstance(sources, list) else []:
             if source_id in owner: problems.append("vary source %s is claimed by more than one route (%s, %s)" % (source_id, owner[source_id], preset["id"]))
             owner.setdefault(source_id, preset["id"])
@@ -306,7 +306,11 @@ def source_context(studio, asset_id):
     warning = "" if positive is not None else "No unambiguous submitted prompt is retained for this output. Describe the desired result; the recipe example will not be used."
     role = prompt_role(graph, True) if isinstance(graph, dict) else "unknown"
     from PIL import Image
-    with Image.open(path) as image: width, height = image.size
+    with Image.open(path) as image:
+        width, height = image.size
+        # Source coordinates follow the displayed/engine-oriented pixels. Read the
+        # header only here; the source digest still covers the untouched file.
+        if image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
     return {
         "version": 1,
         "asset_id": asset["id"],
