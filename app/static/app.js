@@ -633,7 +633,12 @@ function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
   if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
+  const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(s):(s.tile!=null||s.parallax!=null?null:{});
+  const target=catalog.presets.find(p=>p.id===s.preset);
+  if(!prepared||prepared.tile&&!target.tile_route||prepared.parallax&&!target.parallax_route)throw Error('Invalid saved prepared plan for this recipe. Prepare it again from the Asset library.');
   selectPreset(s.preset);
+  tileState=prepared.tile||null;parallaxState=prepared.parallax||null;
+
   if(typeof StudioLooks!=='undefined')StudioLooks.restoreApplication(s.look_application,s.preset);
   if(s.continuation!=null){continuationState=StudioContinuation.normalize(s.continuation);continuationSource=null;}
   parentAssets=Array.isArray(s.parent_assets)?s.parent_assets.filter(id=>typeof id==='string'):[];
@@ -708,6 +713,7 @@ function continuationBlockerItems(){
   // Source-free text recipes need wording too; image-only recipes have no binding.
   if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Asset library.'}];
   if(selected?.parallax_route&&!parallaxState)return [{code:'parallax',message:'Start from Make parallax layers on a picture in the Asset library.'}];
+  if(tileState||parallaxState){const problem=StudioUX.preparedBlocker({preset:selected.id,...tilePayload(),...parallaxPayload(),controls:values(),parent_assets:parentAssets,batch:$('#batch').value});if(problem)return [{code:tileState?'tile':'parallax',message:problem}];}
   if(!continuationState)return selected?.positive&&!String($('#positive')?.value||'').trim()?[{code:'wording',message:'Add a prompt to generate.'}]:[];
   const controls=values();
   if(selected?.last_reference&&!controls.last_reference&&$('#lastReference').files?.length)controls.last_reference='pending-local-upload';
@@ -856,9 +862,9 @@ function checkedSetupControls() {
 }
 function setupMessage(text,error=false){message(text,error);$('#setupStatus').textContent=text;$('#setupStatus').classList.toggle('error',error);}
 let savingSetup=false; // A double click stored two setups: each save without an id gets a fresh one.
-$('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
+$('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load],{guessLegacyParent:true});if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
-$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
+$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,tile:recipe.tile,parallax:recipe.parallax,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
 function configureReadPolling(){
   if(!window.ReadPoller||readPoller)return;

@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const StudioContinuation = require('../app/static/continuation-core.js');
 const StudioAssetRecovery = require('../app/static/asset-recovery.js');
+const StudioUX = require('../app/static/studio-core.js');
 
 const templateSha = 'b'.repeat(64);
 const operation = id => id === 'plain' ? 'new-image'
@@ -56,7 +57,7 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
   };
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener(name, handler) {if (name === 'click') clickHandler = handler;}},
-    URL, Blob, StudioContinuation, StudioAssetRecovery,
+    URL, Blob, StudioContinuation, StudioAssetRecovery, StudioUX,
     sessionStorage: (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map()),
     window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
