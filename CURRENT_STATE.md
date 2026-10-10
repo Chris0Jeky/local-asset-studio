@@ -1,5 +1,13 @@
 # Current state — 27 September 2026
 
+## Overnight reconciliation — 11 October 2026
+
+PRs #1291 and #1292 are merged, verified live as `d4107a3` and `7343f52`; their stale human-action entry now points to the existing owner answer and the remaining source-record reconciliation. No creative or licensing acceptance was inferred.
+
+The unpublished Muse registration draft (`fd9367a`, worker `c5de39c7-0`) returns the stored asset ID after an ignored SQLite insert instead of an ID that does not resolve. On current main `06258477`, the new regression fails against the original function and passes with the patch; the 26 workspace tests and 12 publication/durability tests pass with two platform skips. Independent Sol Medium review found no blocker. Full-suite and hosted qualification are pending; this is not a merged milestone.
+
+Two clean Muse trees whose commits were already merged were removed after preserving their runtime and test receipts outside Git at `C:/Users/jekyt/Documents/Codex/2026-10-10/ar/outputs/overnight/local-asset-studio/preserved-muse/`. The deletion-only `c92fc40f-0` tree is preserved for investigation.
+
 ## Wrap-up proofs: the wide seam band, the loosened Night Shift look, WAI Vary — 27 September 2026 (23:05-23:22 local)
 
 These ran through the page after #1236 and #1240 merged.

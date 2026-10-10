@@ -241,6 +241,7 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 ## Parked swarm PRs to land (5 October 2026) — open
 
 - [ ] **las-land-1291-1292: Merge local-asset-studio #1291 and #1292: both are requalified, and the swarm parked them for a person**
+  - **Reconciled 11 October 2026:** live GitHub reports both MERGED on 7 October, as `d4107a3ba9fa5d8f719d2dbc91ae4a18887b5890` and `7343f5232b6e311e939b646c1bbf594e8d8cfa35`. The canonical decision records the owner's cockpit answer **a** at `2026-10-07T03:07:19Z`, with notes that the merges were owner-directed. The merge steps below are historical; do not repeat them. The source decision's acted record and the remaining estate-situation predicate still need reconciliation, so this item stays open.
   - (a) Done (recommended): An agent runs verify and closes the item.
   - (b) Close them instead: An agent closes both PRs with a one-line reason; the fixes stay unshipped.
   - Steps:
