@@ -334,3 +334,34 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self._receipt_count(), 1)
         self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
         self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
+
+    def test_register_returns_stored_id_on_conflict(self):
+        # Normal path: a fresh (job_id, output_index) registers under its uuid5 id.
+        fresh_source = self.root / 'fresh.png'
+        fresh_source.write_bytes(b'fresh rendered bytes')
+        fresh_job = {'id': 'fresh-job', 'preset_name': 'Study',
+                     'outputs': [{'filename': 'fresh.png', 'media_type': 'image'}]}
+        fresh_id = self.store.register(fresh_job, 0, fresh_source)
+        self.assertEqual(fresh_id, uuid.uuid5(uuid.NAMESPACE_URL, 'asset-studio:fresh-job:0').hex)
+        self.assertEqual(self.store.get(fresh_id)['job_id'], 'fresh-job')
+        # Conflict path: a stored row already owns (job_id, output_index) under another id.
+        stored_id = '0' * 32
+        with self.store.connection() as db:
+            db.execute(
+                "INSERT INTO assets (id,job_id,output_index,title,media_type,path,filename,"
+                "sha256,bytes,created_at,source,lineage) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (stored_id, 'abc', 0, 'Seeded', 'image', 'media/seed.png', 'x.png',
+                 '0' * 64, 1, time.time(), '{}', '[]'))
+        conflict_source = self.root / 'x.png'
+        conflict_source.write_bytes(b'conflicting rendered bytes')
+        conflict_job = {'id': 'abc', 'preset_name': 'Study',
+                        'outputs': [{'filename': 'x.png', 'media_type': 'image'}]}
+        computed_id = uuid.uuid5(uuid.NAMESPACE_URL, 'asset-studio:abc:0').hex
+        self.assertNotEqual(computed_id, stored_id)
+        returned = self.store.register(conflict_job, 0, conflict_source)
+        self.assertEqual(returned, stored_id)
+        self.assertNotEqual(returned, computed_id)
+        # The returned id resolves; no orphan id is handed out.
+        self.assertEqual(self.store.get(returned)['job_id'], 'abc')
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'Asset not found'):
+            self.store.get(computed_id)

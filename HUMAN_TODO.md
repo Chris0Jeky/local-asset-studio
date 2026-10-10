@@ -238,27 +238,10 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 
   The proof resumed after that PR merged; the owner approved running it while the GPU ran the local LLM, because no generation was involved. The receipt now exists (linked above).
 
-## Parked swarm PRs to land (5 October 2026) — open
+## Parked swarm PRs to land (5 October 2026) — completed
 
-- [ ] **las-land-1291-1292: Merge local-asset-studio #1291 and #1292: both are requalified, and the swarm parked them for a person**
-  - (a) Done (recommended): An agent runs verify and closes the item.
-  - (b) Close them instead: An agent closes both PRs with a one-line reason; the fixes stay unshipped.
-  - Steps:
-    1. Open PowerShell (gh signed in as you) and confirm hosted checks are green on both heads:
-       ```powershell
-       gh pr checks 1291 -R Chris0Jeky/local-asset-studio; gh pr checks 1292 -R Chris0Jeky/local-asset-studio
-       ```
-    2. Merge both with a merge commit, pinned to the requalified heads:
-       ```powershell
-       gh pr merge 1291 -R Chris0Jeky/local-asset-studio --merge --match-head-commit 455a52de0a510f604db6e49759e507fc02286e49
-       gh pr merge 1292 -R Chris0Jeky/local-asset-studio --merge --match-head-commit 65cfdc74d290279a466464a0cbcfb3c078bc6e6d
-       ```
-    3. If a tripwire-hold card appears afterwards, answer it a (acknowledge): these merges were yours.
-    4. Answer Done here. An agent checks the result.
-  - Verify: gh pr view 1291 -R Chris0Jeky/local-asset-studio --json state and the same for 1292 both report MERGED, and the estate situation shows no-failing-pr without either PR in its evidence.
-  - Why: Both pass the full local suite on current main and the change itself was already reviewed; merging clears the red estate intent.
-  - Why an agent may not decide: A merge in a swarm repository outside EstateGate is attributed only to the owner. An agent merge would trip an estate-wide hold, and the coordinator will not land a parked item again.
-  - Source: `decisions/las-land-1291-1292.json`
+- [x] **las-land-1291-1292: Land local-asset-studio #1291 and #1292.** Verified 11 October 2026: both PRs are MERGED on GitHub, as `d4107a3ba9fa5d8f719d2dbc91ae4a18887b5890` and `7343f5232b6e311e939b646c1bbf594e8d8cfa35`. The owner's cockpit answer **a** at `2026-10-07T03:07:19Z` records that the merges were owner-directed. Agent HQ reconciled the canonical decision as **acted** in PR #356, merged as `02bb2e9`; its summary verifies both merges and states nothing remains to land. The obsolete merge commands have been removed.
+  - Source: `decisions/las-land-1291-1292.json` at agent-hq commit `02bb2e9`, acted `2026-10-10T22:47:46Z`. Other open PR failures are separate work and do not reopen this completed action.
 
 ## Things to glance at when convenient (not blockers)
 
