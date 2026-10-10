@@ -1,0 +1,40 @@
+{
+  "pack_root": "atelier-source-art-20261002",
+  "asset_outputs": {
+    "atelier-master": [
+      "originals/atelier-master--candidate-1.png",
+      "renditions/atelier-master--1280x720--preview.webp",
+      "renditions/atelier-master--960x540--preview.webp"
+    ],
+    "atelier-quiet": [
+      "originals/atelier-quiet--candidate-1.png",
+      "renditions/atelier-quiet--1280x720--preview.webp",
+      "renditions/atelier-quiet--960x540--preview.webp"
+    ],
+    "atelier-wall": [
+      "originals/atelier-wall--candidate-1.png",
+      "renditions/atelier-wall--1200x800--panel.webp",
+      "renditions/atelier-wall--600x400--panel.webp"
+    ],
+    "atelier-hero": [
+      "masters/atelier-hero--1668x695--native-wide-crop.png",
+      "renditions/atelier-hero--960x400--wide.webp"
+    ],
+    "atelier-poster": [
+      "renditions/atelier-poster--1280x720--fallback.webp",
+      "renditions/atelier-poster--640x360--fallback.webp"
+    ],
+    "atelier-card": [
+      "masters/atelier-card--941x941--native-square-crop.png",
+      "renditions/atelier-card--512x512--picker.webp",
+      "renditions/atelier-card--256x256--picker.webp"
+    ]
+  },
+  "preview": "review/atelier-contact-sheet.jpg",
+  "source_archives": [
+    "atelier-source-art-20261002-originals.zip",
+    "atelier-source-art-20261002-renditions-review.zip"
+  ],
+  "delivery_urls": null,
+  "delivery_url_reason": "Archives are prepared locally; upload/delivery is outside this worker’s scope."
+}

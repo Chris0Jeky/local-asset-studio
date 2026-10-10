@@ -1,0 +1,16 @@
+{
+  "world": "sakura",
+  "master": "An original dark-timber illustration room opening on the RIGHT onto a plum-and-rose blossom courtyard after rain. Simple artist desk near the right window with blank cream paper and a ceramic pen cup, restrained botanical atmosphere, just a few sparse petals outside. Left60% is a quiet softly lit nearly empty plum-grey plaster wall framed by dark ink timber only at outer edges. Delicate original anime-background painting, architectural perspective readable, refined brushwork and moist stone courtyard reflections, muted rose blossom branches beyond opening, no gaudy pink saturation. Beautiful peaceful creative workspace, no characters. Original premium architectural illustration for a local creative software workspace, landscape16:9, target3840x2160 only if natively supported. No text, numbers, logos, watermarks, UI, buttons, graphs, people or branded objects. Middle-left60% must be very low-detail and low-contrast for real HTML headings; focal objects nearx.78,y.65. Protect important objects with12% overscan. Precise perspective, refined tactile surfaces, atmospheric yet restrained. One finished scene, not a mockup.",
+  "edits": [
+    {
+      "world": "sakura",
+      "type": "quiet",
+      "prompt": "Edit this exact sakura workshop into its quiet morning counterpart. Preserve the EXACT camera, perspective, composition, architecture and every object silhouette and placement. Change ONLY illumination: gentle diffuse morning daylight, calmer lower-intensity accent lights, soft restrained shadows. The courtyard remains wet after rain, with the same blossom branches and all furniture unchanged. No objects added/removed, no lettering, no people, no UI. Matching pixel geometry is more important than dramatic relighting. Keep original16:9 framing."
+    },
+    {
+      "world": "sakura",
+      "type": "wall",
+      "prompt": "Adapt this exact sakura workshop into a3:2 landscape panel background of the SAME place and materials. Show almost entirely the quiet plum-grey plaster wall with only a narrow dark timber/window edge and tiny blossom glimpse at the far right. Central70% must be low-detail and low-contrast, no furniture, plants, shadows or high-contrast edges crossing that area. Decorative interest confined to outer15% edges. No lettering, icons, buttons, screens with text, logos, people or UI. Refined original architectural illustration, intended behind real HTML controls. Target2400x1600 if supported."
+    }
+  ]
+}

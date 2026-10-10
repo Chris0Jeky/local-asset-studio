@@ -1,0 +1,46 @@
+[
+  {
+    "asset_id": "sample-character-canon",
+    "candidate": 1,
+    "filename": "sample-character-canon--1024x1536--candidate-1.png",
+    "output_id": "exec-19ec7c8d-0f12-4b90-a2b9-7d3f25f3aada",
+    "prompt_key": "sample_character_canon",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 1673341,
+    "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172"
+  },
+  {
+    "asset_id": "sample-outfit-study",
+    "candidate": 1,
+    "filename": "sample-outfit-study--1024x1536--candidate-1.png",
+    "output_id": "exec-3ec9b029-9271-4439-b8af-51803f4702a4",
+    "prompt_key": "sample_outfit_study",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 1562922,
+    "sha256": "190e73ef4c3314014f241a544f042c31caa16466b7e3d3d54504a7ff672262e1"
+  },
+  {
+    "asset_id": "sample-lighting-pair",
+    "candidate": 1,
+    "filename": "sample-lighting-pair--1254x1254--candidate-1.png",
+    "output_id": "exec-92a2ee59-2e91-4b1e-b3fe-681d548326f4",
+    "prompt_key": "sample_lighting_pair",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1761387,
+    "sha256": "db2ccb617cc14598865c7f3e4e70ddb719368eab7d68c36717bdebc339ad10a9"
+  },
+  {
+    "asset_id": "sample-sequence-strip",
+    "candidate": 1,
+    "filename": "sample-sequence-strip--1254x1254--candidate-1.png",
+    "output_id": "exec-1a36f0e7-7e8e-48ec-995f-09b312fe912e",
+    "prompt_key": "sample_sequence_strip",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 2693639,
+    "sha256": "c7ada63ad97d514b34f9e932b801d3b0d6d78d55b7059e51a7ba9a53ecec2f10"
+  }
+]

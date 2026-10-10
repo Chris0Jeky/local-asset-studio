@@ -1,0 +1,163 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "atelier-master",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "generate",
+    "provider": "OpenAI",
+    "tool_action": "image_gen.imagegen",
+    "execution_surface": "dot-run",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": "generation-prompts.json#/master",
+    "input_anchors": [],
+    "orchestration_handle": "exec-dccde5c4-8801-48e6-a330-a31b7b0f24ae",
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "originals/atelier-master--candidate-1.png",
+      "sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "bytes": 2471816,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "renditions/atelier-master--1280x720--preview.webp",
+      "sha256": "dcead9b11b9e04e1eed8c82fff932138c9a98404111dc260b9b043ce5258ca27",
+      "bytes": 174620,
+      "width": 1280,
+      "height": 720,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 307200,
+      "budget_pass": true
+    },
+    {
+      "relative_path": "renditions/atelier-master--960x540--preview.webp",
+      "sha256": "2dbebeb065851242c7fb65f27cc0ab152df53f3685f487ae8a67fc6bfa2fc587",
+      "bytes": 107914,
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 307200,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "atelier-master",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-master--1280x720--preview.webp",
+      "output_sha256": "dcead9b11b9e04e1eed8c82fff932138c9a98404111dc260b9b043ce5258ca27",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-master",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-master--960x540--preview.webp",
+      "output_sha256": "2dbebeb065851242c7fb65f27cc0ab152df53f3685f487ae8a67fc6bfa2fc587",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "accepted-by-delegated-assistant",
+    "reviewer": "lead assistant",
+    "scope": "source art only",
+    "notes": "Explicit lead selection on 2026-10-02 after original and six-ID contact-sheet review. Narrower safe zones, measured registration caveat and native-size shortfalls remain."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Files decode at recorded actual dimensions.",
+      "Every encoded target produced is within its individual profile byte budget.",
+      "No upscaling or nonuniform scaling.",
+      "See TRANSFORMATIONS.json for deliberately absent native-size targets."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model, seed, provider output/job ID and provider timestamps were not exposed; values remain null.",
+    "No license or source terms verification was performed.",
+    "No runtime slot, text contrast, accessibility, decoded-memory, loading or crossfade checks were performed."
+  ]
+}

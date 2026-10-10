@@ -1,0 +1,435 @@
+{
+  "world": "sci-fi-noir",
+  "method": "20 manually selected architectural/object landmarks; up to 41x41 grayscale high-pass templates (Gaussian sigma 3), normalized cross-correlation within +/-12 source pixels. Border-adjacent points use a smaller symmetric patch, recorded per point. Original unscaled coordinates; no warp or registration correction.",
+  "dimensions": [
+    1672,
+    941
+  ],
+  "inputs": [
+    {
+      "name": "sci-fi-noir-master--candidate-1.png",
+      "sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075"
+    },
+    {
+      "name": "sci-fi-noir-quiet--candidate-1.png",
+      "sha256": "3f6321021ec780f55242cc2589e2b2b6b103e97bb5c9af792067eddfc0bb6403"
+    }
+  ],
+  "summary": {
+    "landmarks": 20,
+    "median_shift_px": 1.0,
+    "max_shift_px": 2.2361,
+    "median_ncc": 0.82224,
+    "min_ncc": 0.66699,
+    "search_boundary_hits": 0
+  },
+  "landmarks": [
+    {
+      "name": "Window upper frame joint",
+      "master_xy": [
+        1107,
+        127
+      ],
+      "quiet_best_xy": [
+        1106,
+        126
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        -1
+      ],
+      "shift_distance_px": 1.4142,
+      "ncc": 0.82983,
+      "identity_ncc": 0.06738,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Planet right limb",
+      "master_xy": [
+        1543,
+        283
+      ],
+      "quiet_best_xy": [
+        1543,
+        282
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        -1
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.95815,
+      "identity_ncc": 0.94774,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Planet crater detail",
+      "master_xy": [
+        1413,
+        151
+      ],
+      "quiet_best_xy": [
+        1413,
+        150
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        -1
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.69964,
+      "identity_ncc": 0.33017,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Left conduit elbow",
+      "master_xy": [
+        78,
+        330
+      ],
+      "quiet_best_xy": [
+        77,
+        329
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        -1
+      ],
+      "shift_distance_px": 1.4142,
+      "ncc": 0.75216,
+      "identity_ncc": 0.57606,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Wall seam first fastener",
+      "master_xy": [
+        307,
+        279
+      ],
+      "quiet_best_xy": [
+        306,
+        278
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        -1
+      ],
+      "shift_distance_px": 1.4142,
+      "ncc": 0.80332,
+      "identity_ncc": 0.25412,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Wall seam second fastener",
+      "master_xy": [
+        681,
+        313
+      ],
+      "quiet_best_xy": [
+        680,
+        312
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        -1
+      ],
+      "shift_distance_px": 1.4142,
+      "ncc": 0.82664,
+      "identity_ncc": 0.09165,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Left floor frame lamp",
+      "master_xy": [
+        93,
+        755
+      ],
+      "quiet_best_xy": [
+        93,
+        755
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.79922,
+      "identity_ncc": 0.79922,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Workbench front-left corner",
+      "master_xy": [
+        1039,
+        610
+      ],
+      "quiet_best_xy": [
+        1038,
+        610
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.9318,
+      "identity_ncc": 0.75404,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Lamp shade top",
+      "master_xy": [
+        1215,
+        488
+      ],
+      "quiet_best_xy": [
+        1214,
+        488
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.79113,
+      "identity_ncc": 0.64836,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Lamp elbow",
+      "master_xy": [
+        1141,
+        544
+      ],
+      "quiet_best_xy": [
+        1140,
+        544
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.72016,
+      "identity_ncc": 0.63898,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Instrument barrel left",
+      "master_xy": [
+        1272,
+        479
+      ],
+      "quiet_best_xy": [
+        1272,
+        479
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.68799,
+      "identity_ncc": 0.68799,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Instrument right joint",
+      "master_xy": [
+        1440,
+        521
+      ],
+      "quiet_best_xy": [
+        1440,
+        521
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.82453,
+      "identity_ncc": 0.82453,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Instrument base edge",
+      "master_xy": [
+        1375,
+        614
+      ],
+      "quiet_best_xy": [
+        1375,
+        614
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.85818,
+      "identity_ncc": 0.85818,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Stool seat left",
+      "master_xy": [
+        1150,
+        665
+      ],
+      "quiet_best_xy": [
+        1149,
+        665
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.91886,
+      "identity_ncc": 0.91634,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Stool foot left",
+      "master_xy": [
+        1138,
+        778
+      ],
+      "quiet_best_xy": [
+        1138,
+        778
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.77417,
+      "identity_ncc": 0.77417,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Case upper-left corner",
+      "master_xy": [
+        907,
+        611
+      ],
+      "quiet_best_xy": [
+        906,
+        611
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.66699,
+      "identity_ncc": 0.33039,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Window lower elbow",
+      "master_xy": [
+        1059,
+        482
+      ],
+      "quiet_best_xy": [
+        1058,
+        481
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        -1
+      ],
+      "shift_distance_px": 1.4142,
+      "ncc": 0.82493,
+      "identity_ncc": 0.70522,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Canister upper-left",
+      "master_xy": [
+        1010,
+        655
+      ],
+      "quiet_best_xy": [
+        1009,
+        655
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        0
+      ],
+      "shift_distance_px": 1.0,
+      "ncc": 0.82953,
+      "identity_ncc": 0.57429,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Right toolbox upper edge",
+      "master_xy": [
+        1565,
+        652
+      ],
+      "quiet_best_xy": [
+        1565,
+        652
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.94126,
+      "identity_ncc": 0.94126,
+      "search_boundary_hit": false
+    },
+    {
+      "name": "Ceiling conduit joint",
+      "master_xy": [
+        961,
+        62
+      ],
+      "quiet_best_xy": [
+        960,
+        60
+      ],
+      "patch_size_px": 41,
+      "shift_xy_px": [
+        -1,
+        -2
+      ],
+      "shift_distance_px": 2.2361,
+      "ncc": 0.81995,
+      "identity_ncc": 0.5347,
+      "search_boundary_hit": false
+    }
+  ],
+  "limits": [
+    "Sampled measurements describe local correspondence only; lighting and generative detail redraw preclude a pixel-identity claim.",
+    "A +/-12px local search cannot rule out larger displacement or incorrect matches. Low correlation and boundary matches require visual interpretation.",
+    "The source-art plan requests pixel-for-pixel crossfade registration. These samples and edge overlays do not fulfill a whole-image or actual runtime crossfade acceptance gate.",
+    "No transform has been applied to either delivered original."
+  ],
+  "interpretation": "Lifted cool orbital light preserves the same planet, horizon and workshop. Median local shift is 1px, maximum 2.2361px in ceiling conduit detail; the quiet scene is visibly brighter with changed reflections and fine texture. Same-room still only, not a pixel-exact crossfade. Local template offsets are correspondence measurements, not a global camera transform. Neither original was corrected or warped."
+}

@@ -1,0 +1,72 @@
+{
+  "schema": "studio.theme-asset.source-pack/v1",
+  "pack": "atelier",
+  "prepared_at": "2026-10-02T15:29:33Z",
+  "requested_asset_ids": [
+    "atelier-master",
+    "atelier-quiet",
+    "atelier-wall",
+    "atelier-hero",
+    "atelier-poster",
+    "atelier-card"
+  ],
+  "source_count": 3,
+  "independent_generations": 1,
+  "reference_edits": 2,
+  "deterministic_derivative_ids": [
+    "atelier-hero",
+    "atelier-poster",
+    "atelier-card"
+  ],
+  "sources": [
+    {
+      "relative_path": "originals/atelier-master--candidate-1.png",
+      "sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "bytes": 2471816,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/atelier-quiet--candidate-1.png",
+      "sha256": "3145515f3ee1e7c4d3da4d40a78ba59e23da51833d7be4cc4508822a59854e34",
+      "bytes": 2530290,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/atelier-wall--candidate-1.png",
+      "sha256": "3df639a17ecdd264b62d1dbdd7c1dc2580ce9b52135f34dcfdd89d710594a164",
+      "bytes": 2456151,
+      "width": 1536,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ],
+  "input_confirmation": {
+    "atelier-quiet": {
+      "input_id": "atelier-master",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "source": "parent generation record; exact master1 supplied"
+    },
+    "atelier-wall": {
+      "input_id": "atelier-master",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "source": "parent generation record; exact master1 supplied"
+    }
+  },
+  "runtime_qualified": false,
+  "selected_for_release": false,
+  "planning_files_modified": false,
+  "source_art_selection": "All six IDs accepted by the lead assistant within task-scoped delegation, after review of originals and complete crop contact sheet. Scope is source art only; native-size, safe-zone and registration caveats remain."
+}

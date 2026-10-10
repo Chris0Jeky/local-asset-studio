@@ -1,0 +1,80 @@
+{
+  "coordinate_convention": "Normalized source-canvas regions; crops use original pixel edges, right/bottom exclusive.",
+  "source_dimensions": [
+    1672,
+    941
+  ],
+  "focal_point": {
+    "x": 0.78,
+    "y": 0.54
+  },
+  "scene_and_poster_crop": [
+    0,
+    0.25,
+    1672,
+    940.75
+  ],
+  "scene_crop_note": "Remove 0.25 source pixel from each vertical edge for exact 16:9, then one isotropic LANCZOS downsample; original untouched.",
+  "hero_crop": [
+    2,
+    130,
+    1670,
+    825
+  ],
+  "hero_focal_point": [
+    0.7806714628297362,
+    0.5440863309352518
+  ],
+  "card_crop": [
+    731,
+    0,
+    1672,
+    941
+  ],
+  "heading_zone": {
+    "box_xyxy": [
+      0.08,
+      0.16,
+      0.42,
+      0.62
+    ],
+    "status": "Conservative visual proposal; contrast, HTML controls and actual slots untested."
+  },
+  "wall_control_zone": {
+    "box_xyxy": [
+      0.1,
+      0.1,
+      0.84,
+      0.73
+    ],
+    "status": "Conservative visual proposal; central texture/seams remain."
+  },
+  "portrait_plan": {
+    "status": "Plan only; no portrait asset shipped or tested.",
+    "art_only_crop_3_by_4_xyxy": [
+      931,
+      0,
+      1636.75,
+      941
+    ],
+    "native_extent": [
+      705.75,
+      941
+    ],
+    "proposed_small_output": [
+      600,
+      800
+    ],
+    "composition": "Keeps both cabinet identities and front stool while trimming much of the repair bench; no left heading zone remains.",
+    "heading": "Place actual heading above the artwork on a solid theme surface; the art-only crop has no left heading zone.",
+    "390x844_note": "Use a bounded artwork region, not a full viewport cover. Actual slot needs testing."
+  },
+  "quiet_note": "Same-room daylight alternative; strong diagonal sun/shadow bands cross the left wall. The requested diffuse light and low-contrast heading zone are not fully met. Use a separate solid heading surface pending real-slot review.",
+  "caveats": [
+    "The low-detail heading proposal spans 34% of source width, not the requested 60%; plants, shelving and cabinets begin near x .43.",
+    "Strongly lit quiet alternative is not a low-contrast header.",
+    "Wall seams cross the nominal central 70%; they are subtle in this dark source but not absent.",
+    "Full 12% overscan is not met: right workbench and lower furniture approach or intersect canvas edges.",
+    "Any CSS scrim or solid heading surface is a recommendation only, not tested contrast."
+  ]
+}

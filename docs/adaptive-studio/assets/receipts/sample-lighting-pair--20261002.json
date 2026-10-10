@@ -1,0 +1,375 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "sample-lighting-pair",
+  "brief_revision": "catalog sample row + production/20261002-samples/profile-evidence.json",
+  "production": {
+    "method": "reference-conditioned edit",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen",
+    "reported_model": null,
+    "reported_seed": null,
+    "provider_job_id": null,
+    "output_id": "exec-92a2ee59-2e91-4b1e-b3fe-681d548326f4",
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-samples/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "sample_lighting_pair",
+      "text": "This is the selected neutral plaster study for an illustrative lighting pair. Change ONLY the light direction: illuminate the same head and plinth with a small hard light from the upper RIGHT, about45degrees to the side and above. The lit planes and crisp cast shadow must change consistently, with the cast shadow falling to the LEFT. Preserve the exact generic original plaster head, face, pose, camera, framing, plinth, grey wall, material and monochrome palette. Do not mirror or rotate the head, change facial geometry, add fill/rim light, or move objects. No text, labels, watermark or UI. Output same square composition.",
+      "sha256": "284155d7484332f92ddd970fa09b57ffa797a480f239108e294bf14346c40bb9",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline"
+    },
+    "input_anchors": [
+      {
+        "asset_role": "edit_source",
+        "relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+        "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+        "bytes": 1805697,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "input_evidence": {
+      "status": "confirmed",
+      "evidence": "Root confirmed these exact source files were supplied to all four generation calls in the 2026-10-02 sample-preparation conversation. This records source-input identity only, not source/license clearance."
+    }
+  },
+  "upstream_generation_records": [],
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "contact-sheets/sample-lighting-pair.jpg",
+      "sha256": "3be2444d27fbcbe467847774aa84b2e4e3d4eadd640d6dbe234a4e1ac1b456fb",
+      "bytes": 58445,
+      "width": 832,
+      "height": 552,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+      "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+      "bytes": 1805697,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/sample-lighting-pair--1254x1254--candidate-1.png",
+      "sha256": "db2ccb617cc14598865c7f3e4e70ddb719368eab7d68c36717bdebc339ad10a9",
+      "bytes": 1761387,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "thumbnails/reference-lighting--1254x1254--candidate-2--longedge320.webp",
+      "sha256": "2604a28e1d7a7bfcb210814b56f416cba612e8af890665ad382b29fe6f592ff8",
+      "bytes": 4208,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "thumbnails/sample-lighting-pair--1254x1254--candidate-1--longedge320.webp",
+      "sha256": "890555fc6e69a7800a3b4a1e07fefa0058c9400d193f289d6c62930e4eb2eec3",
+      "bytes": 3792,
+      "width": 320,
+      "height": 320,
+      "format": "webp",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    }
+  ],
+  "source_roles": [
+    {
+      "role": "lighting_a",
+      "label": "Selected plaster study with upper-left light",
+      "source_key": "light_left",
+      "file": {
+        "relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+        "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+        "bytes": 1805697,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "thumbnail": {
+        "relative_path": "thumbnails/reference-lighting--1254x1254--candidate-2--longedge320.webp",
+        "sha256": "2604a28e1d7a7bfcb210814b56f416cba612e8af890665ad382b29fe6f592ff8",
+        "bytes": 4208,
+        "width": 320,
+        "height": 320,
+        "format": "webp",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "intended_use": "Separate selectable source input/component",
+      "target_1024px_note": "actual size retained; no upscale"
+    },
+    {
+      "role": "lighting_b",
+      "label": "Generated upper-right light variant",
+      "source_key": "light_right",
+      "file": {
+        "relative_path": "originals/sample-lighting-pair--1254x1254--candidate-1.png",
+        "sha256": "db2ccb617cc14598865c7f3e4e70ddb719368eab7d68c36717bdebc339ad10a9",
+        "bytes": 1761387,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "thumbnail": {
+        "relative_path": "thumbnails/sample-lighting-pair--1254x1254--candidate-1--longedge320.webp",
+        "sha256": "890555fc6e69a7800a3b4a1e07fefa0058c9400d193f289d6c62930e4eb2eec3",
+        "bytes": 3792,
+        "width": 320,
+        "height": 320,
+        "format": "webp",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "intended_use": "Separate selectable source input/component",
+      "target_1024px_note": "actual size retained; no upscale"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "Lazy/review thumbnail downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+      "input_sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+      "output_relative_path": "thumbnails/reference-lighting--1254x1254--candidate-2--longedge320.webp",
+      "output_sha256": "2604a28e1d7a7bfcb210814b56f416cba612e8af890665ad382b29fe6f592ff8",
+      "from_dimensions": [
+        1254,
+        1254
+      ],
+      "to_dimensions": [
+        320,
+        320
+      ],
+      "upscale": false,
+      "resampling": "Lanczos",
+      "crop": false,
+      "aspect_ratio": "Preserved to nearest integer dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false,
+        "exact": true
+      },
+      "byte_budget_inclusive": 61440,
+      "metadata": "No EXIF/ICC copied",
+      "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+    },
+    {
+      "operation": "Lazy/review thumbnail downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "input_relative_path": "originals/sample-lighting-pair--1254x1254--candidate-1.png",
+      "input_sha256": "db2ccb617cc14598865c7f3e4e70ddb719368eab7d68c36717bdebc339ad10a9",
+      "output_relative_path": "thumbnails/sample-lighting-pair--1254x1254--candidate-1--longedge320.webp",
+      "output_sha256": "890555fc6e69a7800a3b4a1e07fefa0058c9400d193f289d6c62930e4eb2eec3",
+      "from_dimensions": [
+        1254,
+        1254
+      ],
+      "to_dimensions": [
+        320,
+        320
+      ],
+      "upscale": false,
+      "resampling": "Lanczos",
+      "crop": false,
+      "aspect_ratio": "Preserved to nearest integer dimensions",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false,
+        "exact": true
+      },
+      "byte_budget_inclusive": 61440,
+      "metadata": "No EXIF/ICC copied",
+      "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+    }
+  ],
+  "art_review": {
+    "status": "reviewed-with-limitations",
+    "reviewer": "dot independent sample-preparation review",
+    "recommendation": "usable illustrative source set with disclosed limitations",
+    "findings": [
+      "Upper-left versus upper-right illumination and opposing cast shadows read clearly.",
+      "Head silhouette, facial planes, wall texture and shadow form show small deviations; not an exact registered light-only edit.",
+      "Both remain 1254x1254; no digital mirror or registered comparison is claimed."
+    ]
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated root art selector)",
+    "evidence": "Root visually reviewed all six sample sets, individual lighting and storyboard sheets, alpha QA, and composition alternatives, then explicitly selected all six for illustrative source delivery on 2026-10-02. The chosen composition crop is [170,125,1194,1149).",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged"
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "evidence": "production/20261002-samples/VALIDATION.json",
+    "checks": [
+      {
+        "check": "actual files match recorded SHA-256, byte count, dimensions and encoding",
+        "pass": true
+      },
+      {
+        "check": "thumbnails at most 320px and at most 60 KiB, no upscale",
+        "pass": true
+      },
+      {
+        "check": "crop and silhouette derivatives reproduce exact source pixels/alpha",
+        "pass": true
+      }
+    ],
+    "scope": "Offline technical checks only; separate rendition acceptance unchanged"
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "caption": "Illustrative opposing light directions on an approximately consistent plaster study. Geometry is not pixel-registered.",
+  "limitations": [
+    "Upper-left versus upper-right illumination and opposing cast shadows read clearly.",
+    "Head silhouette, facial planes, wall texture and shadow form show small deviations; not an exact registered light-only edit.",
+    "Both remain 1254x1254; no digital mirror or registered comparison is claimed."
+  ],
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments only; binary files are not committed",
+    "archive_relative_path_base": "Root after extracting all delivery parts together",
+    "text_path_base": "docs/adaptive-studio/assets"
+  },
+  "unknowns": [
+    "Model build, seed, provider job ID and generation timestamps were not exposed; null values are deliberate.",
+    "Local filesystem time is not evidence of generation time.",
+    "Source/license terms have not been independently reviewed; no clearance is asserted.",
+    "No local model execution, measured capability, runtime/device qualification or release selection is established."
+  ],
+  "review_composites": [
+    {
+      "kind": "per-sample review contact sheet",
+      "purpose": "Review presentation only; never an independent source component or runtime evidence",
+      "output": {
+        "relative_path": "contact-sheets/sample-lighting-pair.jpg",
+        "sha256": "3be2444d27fbcbe467847774aa84b2e4e3d4eadd640d6dbe234a4e1ac1b456fb",
+        "bytes": 58445,
+        "width": 832,
+        "height": 552,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      "inputs": [
+        {
+          "relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+          "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+          "bytes": 1805697,
+          "width": 1254,
+          "height": 1254,
+          "format": "png",
+          "mode": "RGB",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null
+        },
+        {
+          "relative_path": "originals/sample-lighting-pair--1254x1254--candidate-1.png",
+          "sha256": "db2ccb617cc14598865c7f3e4e70ddb719368eab7d68c36717bdebc339ad10a9",
+          "bytes": 1761387,
+          "width": 1254,
+          "height": 1254,
+          "format": "png",
+          "mode": "RGB",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null
+        }
+      ],
+      "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+      "checker": {
+        "cell_size_in_source_pixels": 32,
+        "colors_rgb": [
+          [
+            245,
+            245,
+            245
+          ],
+          [
+            204,
+            208,
+            214
+          ]
+        ]
+      },
+      "encoder": {
+        "format": "JPEG",
+        "quality": 90,
+        "subsampling": 0
+      },
+      "exact_layout_source": {
+        "relative_path": "production/20261002-samples/build_samples.py",
+        "relative_path_base": "docs/adaptive-studio/assets",
+        "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+      },
+      "source_function": "make_contact"
+    }
+  ]
+}

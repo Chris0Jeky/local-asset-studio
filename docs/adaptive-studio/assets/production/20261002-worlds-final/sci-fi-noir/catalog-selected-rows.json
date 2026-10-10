@@ -1,0 +1,74 @@
+[
+  {
+    "id": "sci-fi-noir-master",
+    "pack": "sci-fi-noir",
+    "category": "environment",
+    "placement": "environment-window",
+    "profile": "scene",
+    "wave": "P2",
+    "method": "generate",
+    "anchor": "",
+    "subject": "shadowed observatory workshop with weathered steel and a remote orbital horizon",
+    "acceptance": "Distant instruments are nonsemantic shapes; no fake readouts or recognizable franchise props."
+  },
+  {
+    "id": "sci-fi-noir-hero",
+    "pack": "sci-fi-noir",
+    "category": "environment",
+    "placement": "workspace-header",
+    "profile": "hero",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "sci-fi-noir-master",
+    "subject": "Wide header adaptation of shadowed observatory workshop with weathered steel and a remote orbital horizon",
+    "acceptance": "Preserve the approved world and empty heading zone at desktop and narrow crops."
+  },
+  {
+    "id": "sci-fi-noir-wall",
+    "pack": "sci-fi-noir",
+    "category": "environment",
+    "placement": "sidebar-wall",
+    "profile": "wall",
+    "wave": "P2",
+    "method": "edit",
+    "anchor": "sci-fi-noir-master",
+    "subject": "Quiet panel wall extracted from the approved environment",
+    "acceptance": "No high-contrast edge crosses a control; center stays low-detail."
+  },
+  {
+    "id": "sci-fi-noir-quiet",
+    "pack": "sci-fi-noir",
+    "category": "environment",
+    "placement": "still-alternative",
+    "profile": "quiet",
+    "wave": "P2",
+    "method": "edit",
+    "anchor": "sci-fi-noir-master",
+    "subject": "Quiet morning counterpart of the same room with unchanged camera",
+    "acceptance": "Switching to this still does not imply a failed connection or a different location."
+  },
+  {
+    "id": "sci-fi-noir-poster",
+    "pack": "sci-fi-noir",
+    "category": "environment",
+    "placement": "media-fallback",
+    "profile": "poster",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "sci-fi-noir-master",
+    "subject": "Local still fallback for the accepted environment",
+    "acceptance": "Matches the anchor composition; requires no remote resource."
+  },
+  {
+    "id": "sci-fi-noir-card",
+    "pack": "sci-fi-noir",
+    "category": "environment",
+    "placement": "skin-picker",
+    "profile": "card",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "sci-fi-noir-master",
+    "subject": "Recognizable thumbnail crop of the approved world",
+    "acceptance": "Readable at 96px without overlaid text or imitation UI."
+  }
+]

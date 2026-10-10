@@ -1,5 +1,7 @@
 # Next-session production handoff
 
+**Art-selection update, 2 October 2026:** [Twenty-three workflow/reference choices](production/20261002-art-selection/README.md) are recorded after visual review. Two anchors retain direct-owner acceptance; the other 21 choices are accepted under the owner's task-scoped delegation to the assistant. These selections no longer await another owner art-choice round. Future generated samples require independent QA and a separate explicit selection by the lead assistant within the delegation. Source/license, runtime and release gates remain separate, and existing accepted Night Shift artwork is preserved.
+
 ## Paste this into a future image/asset session
 
 > Work from `docs/adaptive-studio/assets/` in `Chris0Jeky/local-asset-studio`. Read README, ART-DIRECTION, DELIVERY-SPEC and the selected catalogue rows. This is a future production session; the strategy pass produced no art. First reconcile the repository and existing accepted assets. Do not replace current work or generate the entire catalogue.
@@ -12,7 +14,7 @@
 >
 > Build each brief by running `python docs/adaptive-studio/assets/brief.py show <id>` or reading its row and referenced profile. Keep the approved anchor as the actual reference. Preserve camera, palette, proportions and text-safe areas. Generate artwork without UI copy or logos; type labels later as real HTML/vector content. Export actual sizes and record any resizing, alpha repair, cropping or compositing.
 >
-> Return the actual files, a small candidate review view, per-ID receipts and a clear distinction between produced, source-reviewed, artistically reviewed and runtime-qualified. Ask for owner art acceptance before declaring that stage complete. Package local renditions outside the normal source tree; submit manifests, prompts, accepted public preview selections and integration notes via reviewable PRs. Do not change ComfyUI packages, generation gates, API origins or existing private drafts to install a skin.
+> Return the actual files, a small candidate review view, per-ID receipts and a clear distinction between produced, source-reviewed, artistically reviewed and runtime-qualified. For a candidate not already selected, complete independent visual QA and record a separate explicit art decision by the owner or the lead assistant within a current task-scoped delegation. Do not reopen the recorded 23 choices merely because an older frozen receipt says pending. Package local renditions outside the normal source tree; submit manifests, prompts, accepted public preview selections and integration notes via reviewable PRs. Do not change ComfyUI packages, generation gates, API origins or existing private drafts to install a skin.
 
 Owner-made ChatGPT files come back through `inbox/` and `python docs/adaptive-studio/assets/intake.py receipts --provider chatgpt`; see the prompt pack. Files from any other producer need their own `--provider` value, never `chatgpt`.
 

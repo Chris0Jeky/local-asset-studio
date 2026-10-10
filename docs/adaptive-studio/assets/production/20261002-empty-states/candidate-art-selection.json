@@ -1,0 +1,33 @@
+{
+  "schema": "studio.theme-asset.candidate-art-selection/v1-proposed",
+  "recorded_at": "2026-10-02T15:04:32Z",
+  "scope": "Candidate illustration exploration selected under delegated aesthetic authority; no accepted design-system output, runtime approval, source-license determination or release decision implied.",
+  "selected": [
+    {
+      "asset_id": "state-blank",
+      "candidate": 1
+    },
+    {
+      "asset_id": "state-no-match",
+      "candidate": 2,
+      "rendition": "Explicit nominal 90% fit with transparent padding; exact 3:2 integer fit is 89.84375%",
+      "accepted_caveat": "Inter-frame gap is visibly separate but remains narrower than the requested approximately 6% canvas width."
+    },
+    {
+      "asset_id": "state-source-required",
+      "candidate": 1
+    }
+  ],
+  "not_selected": [
+    {
+      "asset_id": "state-no-match",
+      "candidate": 1,
+      "reason": "Frames overlap; superseded by separated candidate 2."
+    }
+  ],
+  "design_system_acceptance": {
+    "status": "outstanding",
+    "accepted_claude_design_output": null,
+    "note": "The accepted illustration family permits this exploration; no accepted Claude Design/state-system output was supplied or invented."
+  }
+}

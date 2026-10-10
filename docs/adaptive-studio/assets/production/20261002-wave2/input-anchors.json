@@ -1,0 +1,32 @@
+[
+  {
+    "asset_id": "workflow-create",
+    "candidate": 3,
+    "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+    "relative_path_base": "Previous delivery archive, not included again in this wave",
+    "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+    "owner_acceptance": {
+      "status": "accepted-as-series-anchor",
+      "decision_at": "2026-10-02T09:27:00Z",
+      "timestamp_precision": "minute-level owner response record",
+      "evidence": "messageSentinel_8fe97007c6b8819183f673c95d8e369d",
+      "scope": "This candidate is accepted as an input style/canon anchor; approval does not transfer to new candidates."
+    },
+    "note": "Actual PNG supplied to image generation; locally inspected and SHA-256 matched to the prior repository receipt."
+  },
+  {
+    "asset_id": "reference-identity",
+    "candidate": 3,
+    "relative_path": "inbox/reference-identity--1024x1536--candidate-3.png",
+    "relative_path_base": "Previous delivery archive, not included again in this wave",
+    "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+    "owner_acceptance": {
+      "status": "accepted-as-series-anchor",
+      "decision_at": "2026-10-02T09:27:00Z",
+      "timestamp_precision": "minute-level owner response record",
+      "evidence": "messageSentinel_8fe97007c6b8819183f673c95d8e369d",
+      "scope": "This candidate is accepted as an input style/canon anchor; approval does not transfer to new candidates."
+    },
+    "note": "Actual PNG supplied to image generation; locally inspected and SHA-256 matched to the prior repository receipt."
+  }
+]

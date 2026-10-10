@@ -1,0 +1,16 @@
+{
+  "world": "arcade",
+  "master": "An original indigo arcade REPAIR WORKSHOP with two abstract illuminated cabinets on the right, cyan cabinet light and restrained violet edge trim; distant grid-horizon imagery only on their unbranded screens, no readable content and no recognizable existing game cabinet designs. Modest workbench on right with a few small plain tools, quiet matte indigo left wall almost empty. Midnight blue/cyan palette, warm tiny task lamp accent, beautifully hand-painted retro-futurist anime background with subtle grain and crisp structural linework. The glow is physically localized and stays away from the left text-safe wall. Calm working room, not crowded gaming floor. Original premium architectural illustration for a local creative software workspace, landscape16:9, target3840x2160 only if natively supported. No text, numbers, logos, watermarks, UI, buttons, graphs, people or branded objects. Middle-left60% must be very low-detail and low-contrast for real HTML headings; focal objects nearx.78,y.65. Protect important objects with12% overscan. Precise perspective, refined tactile surfaces, atmospheric yet restrained. One finished scene, not a mockup.",
+  "edits": [
+    {
+      "world": "arcade",
+      "type": "quiet",
+      "prompt": "Edit this exact arcade workshop into its quiet morning counterpart. Preserve the EXACT camera, perspective, composition, architecture and every object silhouette and placement. Change ONLY illumination: gentle diffuse morning daylight, calmer lower-intensity accent lights, soft restrained shadows. The cabinets stay in place and retain faint cyan grid-horizon screens; no new screen text. No objects added/removed, no lettering, no people, no UI. Matching pixel geometry is more important than dramatic relighting. Keep original16:9 framing."
+    },
+    {
+      "world": "arcade",
+      "type": "wall",
+      "prompt": "Adapt this exact arcade workshop into a3:2 landscape panel background of the SAME place and materials. Show almost entirely the matte indigo wall with only a sliver of cabinet cyan light at the far right edge. Central70% must be low-detail and low-contrast, no furniture, plants, shadows or high-contrast edges crossing that area. Decorative interest confined to outer15% edges. No lettering, icons, buttons, screens with text, logos, people or UI. Refined original architectural illustration, intended behind real HTML controls. Target2400x1600 if supported."
+    }
+  ]
+}

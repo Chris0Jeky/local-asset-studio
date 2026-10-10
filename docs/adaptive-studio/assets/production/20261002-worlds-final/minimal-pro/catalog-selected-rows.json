@@ -1,0 +1,74 @@
+[
+  {
+    "id": "minimal-pro-master",
+    "pack": "minimal-pro",
+    "category": "environment",
+    "placement": "environment-window",
+    "profile": "scene",
+    "wave": "P2",
+    "method": "generate",
+    "anchor": "",
+    "subject": "graphite paper-and-light workspace with one pale desk and diffuse skylight",
+    "acceptance": "Neutral surfaces remain useful under any accent color; no ornament competing with work."
+  },
+  {
+    "id": "minimal-pro-hero",
+    "pack": "minimal-pro",
+    "category": "environment",
+    "placement": "workspace-header",
+    "profile": "hero",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "minimal-pro-master",
+    "subject": "Wide header adaptation of graphite paper-and-light workspace with one pale desk and diffuse skylight",
+    "acceptance": "Preserve the approved world and empty heading zone at desktop and narrow crops."
+  },
+  {
+    "id": "minimal-pro-wall",
+    "pack": "minimal-pro",
+    "category": "environment",
+    "placement": "sidebar-wall",
+    "profile": "wall",
+    "wave": "P2",
+    "method": "edit",
+    "anchor": "minimal-pro-master",
+    "subject": "Quiet panel wall extracted from the approved environment",
+    "acceptance": "No high-contrast edge crosses a control; center stays low-detail."
+  },
+  {
+    "id": "minimal-pro-quiet",
+    "pack": "minimal-pro",
+    "category": "environment",
+    "placement": "still-alternative",
+    "profile": "quiet",
+    "wave": "P2",
+    "method": "edit",
+    "anchor": "minimal-pro-master",
+    "subject": "Quiet morning counterpart of the same room with unchanged camera",
+    "acceptance": "Switching to this still does not imply a failed connection or a different location."
+  },
+  {
+    "id": "minimal-pro-poster",
+    "pack": "minimal-pro",
+    "category": "environment",
+    "placement": "media-fallback",
+    "profile": "poster",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "minimal-pro-master",
+    "subject": "Local still fallback for the accepted environment",
+    "acceptance": "Matches the anchor composition; requires no remote resource."
+  },
+  {
+    "id": "minimal-pro-card",
+    "pack": "minimal-pro",
+    "category": "environment",
+    "placement": "skin-picker",
+    "profile": "card",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "minimal-pro-master",
+    "subject": "Recognizable thumbnail crop of the approved world",
+    "acceptance": "Readable at 96px without overlaid text or imitation UI."
+  }
+]

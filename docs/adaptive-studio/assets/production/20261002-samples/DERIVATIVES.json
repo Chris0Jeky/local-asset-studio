@@ -1,0 +1,673 @@
+[
+  {
+    "operation": "Set RGB to (0,0,0); copy exact alpha channel byte-for-byte",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+    "input_sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+    "output_relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+    "output_sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+    "from_dimensions": [
+      1024,
+      1536
+    ],
+    "to_dimensions": [
+      1024,
+      1536
+    ],
+    "upscale": false,
+    "alpha_normalized": false,
+    "alpha_threshold": null,
+    "crop": false,
+    "resampling": null
+  },
+  {
+    "operation": "Deterministic pixel crop only",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+    "input_sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+    "output_relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+    "output_sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      1024,
+      1024
+    ],
+    "upscale": false,
+    "crop_box": [
+      170,
+      125,
+      1194,
+      1149
+    ],
+    "coordinate_convention": "[left, top, right, bottom), origin upper-left; right/bottom exclusive",
+    "resampling": null,
+    "claim": "Tighter camera framing by crop; no regenerated viewpoint or model test"
+  },
+  {
+    "operation": "Deterministic panel extraction and common-square inner trim",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-sequence-strip--1254x1254--candidate-1.png",
+    "input_sha256": "c7ada63ad97d514b34f9e932b801d3b0d6d78d55b7059e51a7ba9a53ecec2f10",
+    "output_relative_path": "components/sample-sequence-strip--panel-01--621x621.png",
+    "output_sha256": "4fd4868199029bfcb4272c9037ccfac17892c7330d333e7cc35e3b0ef1ff1293",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      621,
+      621
+    ],
+    "upscale": false,
+    "crop_box": [
+      0,
+      0,
+      621,
+      621
+    ],
+    "coordinate_convention": "[left, top, right, bottom), origin upper-left; right/bottom exclusive",
+    "resampling": null,
+    "observed_gutters": {
+      "solid_white_columns_inclusive": [
+        622,
+        631
+      ],
+      "solid_white_rows_inclusive": [
+        622,
+        630
+      ],
+      "trim_note": "Conservative 621px square interior avoids partial boundary lines at x621/x632 and y621/y631/y632. At most 1–2 additional image-edge pixels are omitted to keep common square panel dimensions."
+    }
+  },
+  {
+    "operation": "Deterministic panel extraction and common-square inner trim",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-sequence-strip--1254x1254--candidate-1.png",
+    "input_sha256": "c7ada63ad97d514b34f9e932b801d3b0d6d78d55b7059e51a7ba9a53ecec2f10",
+    "output_relative_path": "components/sample-sequence-strip--panel-02--621x621.png",
+    "output_sha256": "062d941795f7e7cc37e94650949bc16b63be93ab7456b914f60f180fd6de00f3",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      621,
+      621
+    ],
+    "upscale": false,
+    "crop_box": [
+      633,
+      0,
+      1254,
+      621
+    ],
+    "coordinate_convention": "[left, top, right, bottom), origin upper-left; right/bottom exclusive",
+    "resampling": null,
+    "observed_gutters": {
+      "solid_white_columns_inclusive": [
+        622,
+        631
+      ],
+      "solid_white_rows_inclusive": [
+        622,
+        630
+      ],
+      "trim_note": "Conservative 621px square interior avoids partial boundary lines at x621/x632 and y621/y631/y632. At most 1–2 additional image-edge pixels are omitted to keep common square panel dimensions."
+    }
+  },
+  {
+    "operation": "Deterministic panel extraction and common-square inner trim",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-sequence-strip--1254x1254--candidate-1.png",
+    "input_sha256": "c7ada63ad97d514b34f9e932b801d3b0d6d78d55b7059e51a7ba9a53ecec2f10",
+    "output_relative_path": "components/sample-sequence-strip--panel-03--621x621.png",
+    "output_sha256": "6923dc560ba8f6663d1d9cf7c167140a3d76203ffaf1057d1ad9eddd20b87e40",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      621,
+      621
+    ],
+    "upscale": false,
+    "crop_box": [
+      0,
+      633,
+      621,
+      1254
+    ],
+    "coordinate_convention": "[left, top, right, bottom), origin upper-left; right/bottom exclusive",
+    "resampling": null,
+    "observed_gutters": {
+      "solid_white_columns_inclusive": [
+        622,
+        631
+      ],
+      "solid_white_rows_inclusive": [
+        622,
+        630
+      ],
+      "trim_note": "Conservative 621px square interior avoids partial boundary lines at x621/x632 and y621/y631/y632. At most 1–2 additional image-edge pixels are omitted to keep common square panel dimensions."
+    }
+  },
+  {
+    "operation": "Deterministic panel extraction and common-square inner trim",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-sequence-strip--1254x1254--candidate-1.png",
+    "input_sha256": "c7ada63ad97d514b34f9e932b801d3b0d6d78d55b7059e51a7ba9a53ecec2f10",
+    "output_relative_path": "components/sample-sequence-strip--panel-04--621x621.png",
+    "output_sha256": "0ba0de0d41268d5639b998fdf3b954c7c7cd9c8c0097b8908281a308a01c74be",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      621,
+      621
+    ],
+    "upscale": false,
+    "crop_box": [
+      633,
+      633,
+      1254,
+      1254
+    ],
+    "coordinate_convention": "[left, top, right, bottom), origin upper-left; right/bottom exclusive",
+    "resampling": null,
+    "observed_gutters": {
+      "solid_white_columns_inclusive": [
+        622,
+        631
+      ],
+      "solid_white_rows_inclusive": [
+        622,
+        630
+      ],
+      "trim_note": "Conservative 621px square interior avoids partial boundary lines at x621/x632 and y621/y631/y632. At most 1–2 additional image-edge pixels are omitted to keep common square panel dimensions."
+    }
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+    "input_sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+    "output_relative_path": "thumbnails/sample-character-canon--silhouette--1024x1536--longedge320.webp",
+    "output_sha256": "2dd88d57a711a3231dde2b6604241fd77050a0f3b079974f88d5eaa16f004946",
+    "from_dimensions": [
+      1024,
+      1536
+    ],
+    "to_dimensions": [
+      213,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+    "input_sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+    "output_relative_path": "thumbnails/sample-composition-pair--crop--1024x1024--longedge320.webp",
+    "output_sha256": "ab265bbb5dc3cd5380f86a53399e1597e726bcdac4ece27b74b2b8671ed6e2c6",
+    "from_dimensions": [
+      1024,
+      1024
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "components/sample-sequence-strip--panel-01--621x621.png",
+    "input_sha256": "4fd4868199029bfcb4272c9037ccfac17892c7330d333e7cc35e3b0ef1ff1293",
+    "output_relative_path": "thumbnails/sample-sequence-strip--panel-01--621x621--longedge320.webp",
+    "output_sha256": "903fb6d350562dd220585a1896aca0ca504f554e0a7ffd2358694b7b7ba28187",
+    "from_dimensions": [
+      621,
+      621
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "components/sample-sequence-strip--panel-02--621x621.png",
+    "input_sha256": "062d941795f7e7cc37e94650949bc16b63be93ab7456b914f60f180fd6de00f3",
+    "output_relative_path": "thumbnails/sample-sequence-strip--panel-02--621x621--longedge320.webp",
+    "output_sha256": "b4465179e543c4cb893903e26d64b1e5367410c1e50b5e12ca1ab7d75f685448",
+    "from_dimensions": [
+      621,
+      621
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "components/sample-sequence-strip--panel-03--621x621.png",
+    "input_sha256": "6923dc560ba8f6663d1d9cf7c167140a3d76203ffaf1057d1ad9eddd20b87e40",
+    "output_relative_path": "thumbnails/sample-sequence-strip--panel-03--621x621--longedge320.webp",
+    "output_sha256": "89b9e813dc2df4d1b3c584bfb8159e2be60c9df4ecca4521c5a65e6d45473d4a",
+    "from_dimensions": [
+      621,
+      621
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "components/sample-sequence-strip--panel-04--621x621.png",
+    "input_sha256": "0ba0de0d41268d5639b998fdf3b954c7c7cd9c8c0097b8908281a308a01c74be",
+    "output_relative_path": "thumbnails/sample-sequence-strip--panel-04--621x621--longedge320.webp",
+    "output_sha256": "09ccf41a586303cf1d8894e04ea6d2f68e8c09cbdea95430945a6b0c166372dd",
+    "from_dimensions": [
+      621,
+      621
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "inputs/reference-background--1254x1254--candidate-1.png",
+    "input_sha256": "d19f39fb462a46324bf32d5ec548bbe20f6e08d6ba262ae2c11bdda5205d95ae",
+    "output_relative_path": "thumbnails/reference-background--1254x1254--candidate-1--longedge320.webp",
+    "output_sha256": "a21dae323a089efe2af92d33cf1cdf312136ba587cf324965860b0525698110b",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+    "input_sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+    "output_relative_path": "thumbnails/reference-composition--1254x1254--candidate-2--longedge320.webp",
+    "output_sha256": "08e4d033ea462fab7f04daa82ea87e359895d5b979f2022cf7ae064120a008a4",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+    "input_sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+    "output_relative_path": "thumbnails/reference-identity--1024x1536--candidate-3--longedge320.webp",
+    "output_sha256": "a45e54c75f5231f59cfb157a69e0854d8dfb59915e051dcf079257235b9f19fe",
+    "from_dimensions": [
+      1024,
+      1536
+    ],
+    "to_dimensions": [
+      213,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+    "input_sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+    "output_relative_path": "thumbnails/reference-lighting--1254x1254--candidate-2--longedge320.webp",
+    "output_sha256": "2604a28e1d7a7bfcb210814b56f416cba612e8af890665ad382b29fe6f592ff8",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "inputs/reference-outfit--1024x1536--candidate-1.png",
+    "input_sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+    "output_relative_path": "thumbnails/reference-outfit--1024x1536--candidate-1--longedge320.webp",
+    "output_sha256": "ab8183c20c1d5284d18868171c909eda4d3df27b305b7aaf68b2ef2b3dad2b6d",
+    "from_dimensions": [
+      1024,
+      1536
+    ],
+    "to_dimensions": [
+      213,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "inputs/reference-pose--1024x1536--candidate-1.png",
+    "input_sha256": "526c988b621534eea50f08ba0666247cbd13a8f45e82d36502c20bf940c5b984",
+    "output_relative_path": "thumbnails/reference-pose--1024x1536--candidate-1--longedge320.webp",
+    "output_sha256": "0f91a264d0bde7a62f2a461070a8410bfbaaf46a4172c10ad207edcbb97c2a4b",
+    "from_dimensions": [
+      1024,
+      1536
+    ],
+    "to_dimensions": [
+      213,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+    "input_sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+    "output_relative_path": "thumbnails/sample-character-canon--1024x1536--candidate-1--longedge320.webp",
+    "output_sha256": "f64eb09cd0dc9ac110e1e4b8d11b06baaa02dc109f27339c16ffac62c33c88f7",
+    "from_dimensions": [
+      1024,
+      1536
+    ],
+    "to_dimensions": [
+      213,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-lighting-pair--1254x1254--candidate-1.png",
+    "input_sha256": "db2ccb617cc14598865c7f3e4e70ddb719368eab7d68c36717bdebc339ad10a9",
+    "output_relative_path": "thumbnails/sample-lighting-pair--1254x1254--candidate-1--longedge320.webp",
+    "output_sha256": "890555fc6e69a7800a3b4a1e07fefa0058c9400d193f289d6c62930e4eb2eec3",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-outfit-study--1024x1536--candidate-1.png",
+    "input_sha256": "190e73ef4c3314014f241a544f042c31caa16466b7e3d3d54504a7ff672262e1",
+    "output_relative_path": "thumbnails/sample-outfit-study--1024x1536--candidate-1--longedge320.webp",
+    "output_sha256": "01142fc839089a8d399a657868215c90529fb15a7c48d9eeb752963c21102ec8",
+    "from_dimensions": [
+      1024,
+      1536
+    ],
+    "to_dimensions": [
+      213,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  },
+  {
+    "operation": "Lazy/review thumbnail downscale and WebP encode",
+    "tool": "Pillow 12.3.0",
+    "input_relative_path": "originals/sample-sequence-strip--1254x1254--candidate-1.png",
+    "input_sha256": "c7ada63ad97d514b34f9e932b801d3b0d6d78d55b7059e51a7ba9a53ecec2f10",
+    "output_relative_path": "thumbnails/sample-sequence-strip--1254x1254--candidate-1--longedge320.webp",
+    "output_sha256": "5029e6317b4e1ad8548133ae8274181c8985e7fa036d124c924ad630a726a9b2",
+    "from_dimensions": [
+      1254,
+      1254
+    ],
+    "to_dimensions": [
+      320,
+      320
+    ],
+    "upscale": false,
+    "resampling": "Lanczos",
+    "crop": false,
+    "aspect_ratio": "Preserved to nearest integer dimensions",
+    "encoder": {
+      "format": "WebP",
+      "quality": 85,
+      "method": 6,
+      "lossless": false,
+      "exact": true
+    },
+    "byte_budget_inclusive": 61440,
+    "metadata": "No EXIF/ICC copied",
+    "purpose": "Lazy candidate thumbnail; runtime integration remains unqualified"
+  }
+]

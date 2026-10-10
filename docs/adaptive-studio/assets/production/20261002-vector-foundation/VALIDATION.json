@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "upstream_files": 63,
+  "unchanged_glyphs": 62,
+  "semantic_mappings": 40,
+  "xml_safety": "allowed SVG elements only; no script/event/style/href/raster/foreignObject",
+  "viewbox": "0 0 24 24",
+  "stroke": "2 currentColor",
+  "runtime": "not-qualified",
+  "forced_colours_os": "not-run",
+  "six_skin_runtime_contrast": "not-run",
+  "helper_svgs": 12,
+  "helper_largest_bytes": 743,
+  "visual_check": "Root inspected light/dark icon and helper contact sheets; Compare refined to columns-2",
+  "html_browser_preview": "blocked by browser client; not run",
+  "helper_render_count": 24,
+  "icon_render_count": 320,
+  "helper_review": "Independent review passed; equality symbol replaced with neutral separator; mask prefix instructions and licence copy added.",
+  "semantic_refinement": "Compare maps to columns-2 for image comparison.",
+  "specimen_contrast": {
+    "light": 14.28,
+    "dark": 14.36
+  }
+}

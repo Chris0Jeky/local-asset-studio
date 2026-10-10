@@ -1,0 +1,264 @@
+{
+  "asset_outputs": {
+    "atelier-master": [
+      {
+        "relative_path": "originals/atelier-master--candidate-1.png",
+        "sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+        "bytes": 2471816,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/atelier-master--1280x720--preview.webp",
+        "sha256": "dcead9b11b9e04e1eed8c82fff932138c9a98404111dc260b9b043ce5258ca27",
+        "bytes": 174620,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/atelier-master--960x540--preview.webp",
+        "sha256": "2dbebeb065851242c7fb65f27cc0ab152df53f3685f487ae8a67fc6bfa2fc587",
+        "bytes": 107914,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "atelier-quiet": [
+      {
+        "relative_path": "originals/atelier-quiet--candidate-1.png",
+        "sha256": "3145515f3ee1e7c4d3da4d40a78ba59e23da51833d7be4cc4508822a59854e34",
+        "bytes": 2530290,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/atelier-quiet--1280x720--preview.webp",
+        "sha256": "3a200469ca52086e80a003eab27c380c8241ff788859f3b77a1ee33d53901892",
+        "bytes": 176086,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/atelier-quiet--960x540--preview.webp",
+        "sha256": "077172de5b15e68d6e0bc263e02a4b97d831f9f0336f92a4924130a90ac9050c",
+        "bytes": 106744,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "atelier-wall": [
+      {
+        "relative_path": "originals/atelier-wall--candidate-1.png",
+        "sha256": "3df639a17ecdd264b62d1dbdd7c1dc2580ce9b52135f34dcfdd89d710594a164",
+        "bytes": 2456151,
+        "width": 1536,
+        "height": 1024,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/atelier-wall--1200x800--panel.webp",
+        "sha256": "a544835325e3344641a5d818ce7afd1a1ae2cb43bf97ab2bf36f602fdcc5d0dc",
+        "bytes": 108512,
+        "width": 1200,
+        "height": 800,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/atelier-wall--600x400--panel.webp",
+        "sha256": "2eb6e502f607a6123342df29d791da994c1722e87c2d8a51c8db2c0a60eccff8",
+        "bytes": 27754,
+        "width": 600,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      }
+    ],
+    "atelier-hero": [
+      {
+        "relative_path": "masters/atelier-hero--1668x695--native-wide-crop.png",
+        "sha256": "bf43096399fe77f9467df3c24baf91e12bcfde435a385723c6e407ab5f47ccd0",
+        "bytes": 1794019,
+        "width": 1668,
+        "height": 695,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/atelier-hero--960x400--wide.webp",
+        "sha256": "86533ff607c40a974344614ffe28dd25031782620e286c9f22e0a5e9e4e92776",
+        "bytes": 81244,
+        "width": 960,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 256000,
+        "budget_pass": true
+      }
+    ],
+    "atelier-poster": [
+      {
+        "relative_path": "renditions/atelier-poster--1280x720--fallback.webp",
+        "sha256": "dcead9b11b9e04e1eed8c82fff932138c9a98404111dc260b9b043ce5258ca27",
+        "bytes": 174620,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 225280,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/atelier-poster--640x360--fallback.webp",
+        "sha256": "abe1600fa9b8f04b5669203753e11165aed3bada98e3ffec84a14902928d3d32",
+        "bytes": 51166,
+        "width": 640,
+        "height": 360,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 92160,
+        "budget_pass": true
+      }
+    ],
+    "atelier-card": [
+      {
+        "relative_path": "masters/atelier-card--941x941--native-square-crop.png",
+        "sha256": "81522894f843158c44804feb82440a525141d3c416dd5d0d87f5d3791626004f",
+        "bytes": 1430045,
+        "width": 941,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/atelier-card--512x512--picker.webp",
+        "sha256": "334a41c5320093ce9b7a9e76d500cd96d146cce908ff12f0a4dd9fc2f48d11a6",
+        "bytes": 69110,
+        "width": 512,
+        "height": 512,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 81920,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/atelier-card--256x256--picker.webp",
+        "sha256": "4f1b89e47ab0675e709a57b1b63f267c1de5c03ae10cae5f8d642b2518d592e7",
+        "bytes": 19556,
+        "width": 256,
+        "height": 256,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 30720,
+        "budget_pass": true
+      }
+    ]
+  },
+  "review_files": [
+    {
+      "relative_path": "review/atelier-composition.jpg",
+      "sha256": "b12b9a6c1ca60a64578c6fdf6d99c42e9306402514aaa4b6b5aec642ec13423c",
+      "bytes": 278463,
+      "width": 1254,
+      "height": 706,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/atelier-contact-sheet.jpg",
+      "sha256": "2a3f2f8d27b60b7173e9f73645bd444536d043670ba376ca1daf46888e6beb21",
+      "bytes": 334911,
+      "width": 1280,
+      "height": 1240,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/quiet-edge-overlay.jpg",
+      "sha256": "ce8b3ce6cc209aba2e62c12ea7f7e2322bd6d8662a44b2272af4c4ef3deab153",
+      "bytes": 980443,
+      "width": 1672,
+      "height": 941,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/quiet-landmarks.jpg",
+      "sha256": "991e2e68b5b3a8bc9343d977dcb6022a4e93e1164cbbde91050f88be35a333a1",
+      "bytes": 253641,
+      "width": 1672,
+      "height": 515,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ]
+}

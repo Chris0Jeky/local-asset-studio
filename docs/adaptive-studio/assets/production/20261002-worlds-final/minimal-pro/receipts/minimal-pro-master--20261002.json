@@ -1,0 +1,163 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "minimal-pro-master",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "generate",
+    "provider": "OpenAI",
+    "tool_action": "image_gen.imagegen",
+    "execution_surface": "dot-run",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": "generation-prompts.json#/master",
+    "input_anchors": [],
+    "orchestration_handle": "exec-25f7b87f-e3a4-4a5c-8f3c-b023d874376b",
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "originals/minimal-pro-master--candidate-1.png",
+      "sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "bytes": 2211080,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "renditions/minimal-pro-master--1280x720--preview.webp",
+      "sha256": "3aa12559e457c9a6e2f1bdca69e4c25b148050f019900ad743da64e369758efb",
+      "bytes": 89394,
+      "width": 1280,
+      "height": 720,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 307200,
+      "budget_pass": true
+    },
+    {
+      "relative_path": "renditions/minimal-pro-master--960x540--preview.webp",
+      "sha256": "eec231998e5ec540e104f158658fdaeaa9e5c36f3dd3d2282b356d64bb60b981",
+      "bytes": 46386,
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 307200,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "minimal-pro-master",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-master--1280x720--preview.webp",
+      "output_sha256": "3aa12559e457c9a6e2f1bdca69e4c25b148050f019900ad743da64e369758efb",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-master",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-master--960x540--preview.webp",
+      "output_sha256": "eec231998e5ec540e104f158658fdaeaa9e5c36f3dd3d2282b356d64bb60b981",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "accepted-by-delegated-assistant",
+    "reviewer": "lead assistant",
+    "scope": "source art only",
+    "notes": "Selected after visual review of the full six-ID contact sheet on 2026-10-02. Warm stone/ivory is deliberately retained rather than the originally requested deep graphite. Keep crop, heading-zone, registration and native-size caveats."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

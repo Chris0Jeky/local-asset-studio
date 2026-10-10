@@ -1,0 +1,40 @@
+{
+  "pack_root": "minimal-pro-source-art-20261002",
+  "asset_outputs": {
+    "minimal-pro-master": [
+      "originals/minimal-pro-master--candidate-1.png",
+      "renditions/minimal-pro-master--1280x720--preview.webp",
+      "renditions/minimal-pro-master--960x540--preview.webp"
+    ],
+    "minimal-pro-quiet": [
+      "originals/minimal-pro-quiet--candidate-1.png",
+      "renditions/minimal-pro-quiet--1280x720--preview.webp",
+      "renditions/minimal-pro-quiet--960x540--preview.webp"
+    ],
+    "minimal-pro-wall": [
+      "originals/minimal-pro-wall--candidate-1.png",
+      "renditions/minimal-pro-wall--1200x800--panel.webp",
+      "renditions/minimal-pro-wall--600x400--panel.webp"
+    ],
+    "minimal-pro-hero": [
+      "masters/minimal-pro-hero--1668x695--native-wide-crop.png",
+      "renditions/minimal-pro-hero--960x400--wide.webp"
+    ],
+    "minimal-pro-poster": [
+      "renditions/minimal-pro-poster--1280x720--fallback.webp",
+      "renditions/minimal-pro-poster--640x360--fallback.webp"
+    ],
+    "minimal-pro-card": [
+      "masters/minimal-pro-card--941x941--native-square-crop.png",
+      "renditions/minimal-pro-card--512x512--picker.webp",
+      "renditions/minimal-pro-card--256x256--picker.webp"
+    ]
+  },
+  "preview": "review/minimal-pro-contact-sheet.jpg",
+  "archives": [
+    "minimal-pro-source-art-20261002-originals.zip",
+    "minimal-pro-source-art-20261002-renditions-review.zip"
+  ],
+  "delivery_urls": null,
+  "delivery_url_reason": "Prepared locally. Upload/delivery is outside this worker’s scope."
+}

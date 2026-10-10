@@ -1,0 +1,89 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "reference-lighting",
+  "brief_revision": "production/20261001-cloud-art/generation-prompts-complete.json#reference_lighting sha256:0a0bb60ba7320b7ec9fefed22a3d945b0c7cb4cabd0a8ba19e925812e8681ee5",
+  "production": {
+    "method": "generate",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: generate",
+    "reported_model": null,
+    "output_id": "exec-027ae0e3-6fe2-47e5-916c-c01f4c55b135",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261001-cloud-art/generation-prompts-complete.json",
+      "json_key": "reference_lighting",
+      "sha256": "0a0bb60ba7320b7ec9fefed22a3d945b0c7cb4cabd0a8ba19e925812e8681ee5",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Create a reference picture that teaches \"this is the lighting\", with a neutral subject.\n\nSubject: an original, generic plaster head on a plain plinth, in the manner of an art-class study cast. It must not copy any known sculpture or real person; the face is simplified and neutral.\n\nLighting: a single strong directional light from the upper left, about 45 degrees to the side and above, casting a clear shadow across the right side of the face and a crisp cast shadow on the wall behind. No fill light and no rim light, so the light direction is unmistakable.\n\nBackground: a plain matte mid-grey wall and surface.\n\nStyle: realistic, softly photographic rendering of matte white plaster.\n\nComposition: square aspect ratio 1:1, the head and plinth centred with space around them.\n\nDo not include: any text, letters, numbers, logos, watermarks, user-interface elements, colour gels or additional objects.",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)"
+    },
+    "input_anchors": [],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/reference-lighting--1254x1254--candidate-1.png",
+      "sha256": "678b05f2e06884872fbf560d2141bb069ea4d2581471ec99686e4df6f488d95a",
+      "bytes": 1870484,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    }
+  ],
+  "transformations": [],
+  "art_review": {
+    "status": "not-reviewed",
+    "reviewer": null,
+    "notes": null
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "checks": []
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: the file time records local save/copy, not generation time.",
+    "reported_model and reported_seed are unknown: image_gen.imagegen did not expose a verified model build or seed.",
+    "source terms evidence has not been independently captured; no license determination is made here.",
+    "No provider job ID, source item/page, creator credit or retrieval timestamp was reported for these locally saved generated candidates.",
+    "duration_seconds and codec are null because these files are still-image PNG/WebP renditions; format identifies their container."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T00:03:11Z",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+    "path_rules": {
+      "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+      "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+      "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+    }
+  }
+}

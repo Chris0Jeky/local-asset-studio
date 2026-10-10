@@ -1,0 +1,170 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "atelier-quiet",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "edit",
+    "provider": "OpenAI",
+    "tool_action": "image_gen.imagegen",
+    "execution_surface": "dot-run",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": "generation-prompts.json#/quiet",
+    "input_anchors": [
+      {
+        "asset_id": "atelier-master",
+        "relative_path": "originals/atelier-master--candidate-1.png",
+        "sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+        "role": "exact edit target"
+      }
+    ],
+    "orchestration_handle": "exec-8d1eb298-a67c-4792-91f5-b66ac8552171",
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "originals/atelier-quiet--candidate-1.png",
+      "sha256": "3145515f3ee1e7c4d3da4d40a78ba59e23da51833d7be4cc4508822a59854e34",
+      "bytes": 2530290,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "renditions/atelier-quiet--1280x720--preview.webp",
+      "sha256": "3a200469ca52086e80a003eab27c380c8241ff788859f3b77a1ee33d53901892",
+      "bytes": 176086,
+      "width": 1280,
+      "height": 720,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 307200,
+      "budget_pass": true
+    },
+    {
+      "relative_path": "renditions/atelier-quiet--960x540--preview.webp",
+      "sha256": "077172de5b15e68d6e0bc263e02a4b97d831f9f0336f92a4924130a90ac9050c",
+      "bytes": 106744,
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 307200,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "atelier-quiet",
+      "input_path": "originals/atelier-quiet--candidate-1.png",
+      "input_sha256": "3145515f3ee1e7c4d3da4d40a78ba59e23da51833d7be4cc4508822a59854e34",
+      "output_path": "renditions/atelier-quiet--1280x720--preview.webp",
+      "output_sha256": "3a200469ca52086e80a003eab27c380c8241ff788859f3b77a1ee33d53901892",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-quiet",
+      "input_path": "originals/atelier-quiet--candidate-1.png",
+      "input_sha256": "3145515f3ee1e7c4d3da4d40a78ba59e23da51833d7be4cc4508822a59854e34",
+      "output_path": "renditions/atelier-quiet--960x540--preview.webp",
+      "output_sha256": "077172de5b15e68d6e0bc263e02a4b97d831f9f0336f92a4924130a90ac9050c",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "accepted-by-delegated-assistant",
+    "reviewer": "lead assistant",
+    "scope": "source art only",
+    "notes": "Explicit lead selection on 2026-10-02 after original and six-ID contact-sheet review. Narrower safe zones, measured registration caveat and native-size shortfalls remain."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Files decode at recorded actual dimensions.",
+      "Every encoded target produced is within its individual profile byte budget.",
+      "No upscaling or nonuniform scaling.",
+      "See TRANSFORMATIONS.json for deliberately absent native-size targets."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model, seed, provider output/job ID and provider timestamps were not exposed; values remain null.",
+    "No license or source terms verification was performed.",
+    "No runtime slot, text contrast, accessibility, decoded-memory, loading or crossfade checks were performed."
+  ]
+}
