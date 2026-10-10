@@ -235,7 +235,7 @@ class AssetWorkspace:
         output = job["outputs"][index]
         label = job.get("label") if isinstance(job.get("label"), str) and job.get("label") else None
         with self.connection() as db:
-            db.execute("""INSERT OR IGNORE INTO assets
+            inserted = db.execute("""INSERT OR IGNORE INTO assets
                 (id,job_id,output_index,title,media_type,path,filename,sha256,bytes,
                  created_at,preset_id,preset_name,source,lineage,run_label,prompt_excerpt)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
@@ -244,6 +244,13 @@ class AssetWorkspace:
                 digest, size, job.get("created_at", time.time()), job.get("preset_id"),
                 job.get("preset_name"), json.dumps(output), json.dumps(job.get("parent_assets", [])),
                 label[:80] if label else None, prompt_excerpt(job)))
+            if inserted.rowcount == 0:
+                stored = db.execute("SELECT id FROM assets WHERE job_id=? AND output_index=?",
+                                    (job["id"], index)).fetchone()
+                if stored is None:
+                    raise WorkspaceError("That job output is already registered; nothing changed",
+                                         status=409, code="asset_register_conflict")
+                return stored["id"]
         return asset_id
 
     @staticmethod
