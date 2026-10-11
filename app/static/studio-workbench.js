@@ -178,7 +178,7 @@
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy||varyBusy,unfilled,sourceMissing});
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy||varyBusy||tileBusy||parallaxBusy,unfilled,sourceMissing});
     if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
     poseHeldShown=poseHeldArtifact();const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
@@ -1042,15 +1042,15 @@
   });
   async function prepareTile(button){
     const assetId=button.dataset.uxTile;if(tileBusy||!assetId)return;
-    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
+    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy||parallaxBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const bandPx=U.tileBandPx(button.parentElement?.querySelector('[data-ux-tile-band]')?.value);
     tileBusy=true;button.disabled=true;syncReady();
-    const stamp=workbenchStamp();
+    const stamp=workbenchStamp(),detailEpoch=assetDetailEpoch;
     try{
       const result=await post('/api/tiles/prepare',{asset_id:assetId,...(bandPx==null?{}:{band_px:bandPx})});
       if(bandPx!=null&&result?.plan?.band_px!==bandPx)throw Error('The seam band came back different from the one chosen. Nothing was applied; press Make seamless again.');
-      if(stamp!==workbenchStamp())throw Error('The workbench changed while the texture was being prepared. Nothing was applied; press Make seamless again.');
+      if(submitting||!assetDetailContextCurrent(assetId,detailEpoch)||stamp!==workbenchStamp())throw Error('The source picture or Create action changed while the texture was being prepared. Nothing was applied; press Make seamless again.');
       if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.rolled_file)throw Error('The prepared seam cross could not be verified. Nothing was applied.');
       beginTile(result);
       if(q('#assetDialog').open)q('#assetDialog').close();
@@ -1065,6 +1065,11 @@
   // qualifies; a disabled button carries its reason. Prepare attaches the picture unchanged and loads the clean-plate edit;
   // every Generate stays the owner's press.
   let parallaxBusy=false,parallaxRead=0,parallaxDrag=null;
+  const generateFromCreate=q('#generate').onclick;
+  q('#generate').onclick=function(...args){
+    if(tileBusy||parallaxBusy){announce('Wait for picture preparation to finish before pressing Generate. Nothing was submitted.',true);return;}
+    return generateFromCreate.apply(this,args);
+  };
   function parallaxBoxes(text){
     const boxes=String(text||'').split(';').map(part=>part.trim()).filter(Boolean).map(part=>part.split(/[\s,]+/).filter(Boolean).map(Number));
     return boxes.every(box=>box.length===4&&box.every(Number.isInteger))?boxes:null;
@@ -1126,10 +1131,10 @@
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const why=parallaxReason(group);if(why){announce(why,true);return;}
     parallaxBusy=true;button.disabled=true;syncReady();
-    const stamp=workbenchStamp(),boxes=parallaxBoxes(group.querySelector('#uxParallaxView').value);
+    const stamp=workbenchStamp(),detailEpoch=assetDetailEpoch,boxes=parallaxBoxes(group.querySelector('#uxParallaxView').value);
     try{
       const result=await post('/api/parallax/prepare',{asset_id:assetId,objects:group.querySelector('#uxParallaxObjects').value,...(boxes.length?{view:boxes}:{})});
-      if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being prepared. Nothing was applied; press Make parallax layers again.');
+      if(submitting||!assetDetailContextCurrent(assetId,detailEpoch)||stamp!==workbenchStamp())throw Error('The source picture or Create action changed while the picture was being prepared. Nothing was applied; press Make parallax layers again.');
       if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.source_file||result.stage!=='plate')throw Error('The prepared parallax plan could not be verified. Nothing was applied.');
       beginParallax(result);
       if(q('#assetDialog').open)q('#assetDialog').close();

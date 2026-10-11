@@ -21,6 +21,116 @@ ROOT = Path(__file__).resolve().parents[1]
 FIRST_LOAD_MS = 20000
 
 
+async def exercise_preparation_ownership(page, check, out):
+    """Native modal/click behavior and shipped handlers; deferred synthetic API only."""
+    await page.evaluate("""() => {
+      window.__beforePreparationAPI=api;window.__prepareWrites=[];window.__prepareFinish={};
+      window.__prepareHold=false;window.__finishPreparationJob=null;
+      api=async(url,options={})=>{
+        if(url.startsWith('/api/tiles/source/')||url.startsWith('/api/parallax/source/'))
+          return {asset_id:'asset-0',eligible:true,width:1024,height:1024,max_views:3,flag:'Synthetic eligible source'};
+        if(url==='/api/jobs'&&options.method==='POST'){
+          window.__prepareWrites.push(url);
+          await new Promise(resolve=>window.__finishPreparationJob=resolve);
+          return {id:'synthetic-preparation-job',message:'Synthetic queued receipt'};
+        }
+        if(url==='/api/tiles/prepare'||url==='/api/parallax/prepare'){
+          window.__prepareWrites.push(url);
+          const tile=url.includes('/tiles/'),request=JSON.parse(options.body),preset=tile?'zimage-seam-repair':'parallax-edit';
+          const file='a'.repeat(32)+'_prepared.png';
+          const plan={version:1,plan_id:'b'.repeat(64),source_asset_id:request.asset_id,source_sha256:'c'.repeat(64),
+            source_file:file,rolled_file:file,preset_id:preset,width:1024,height:1024,band_px:request.band_px??80};
+          const result={plan,claim:{...plan,stage:'plate'},stage:'plate',file,preset_id:preset,width:1024,height:1024,
+            words:'Synthetic clean plate wording',context:{title:'Synthetic source',positive:'Synthetic tile wording'},flag:'Synthetic preparation'};
+          if(window.__prepareHold)await new Promise(resolve=>window.__prepareFinish[tile?'tile':'parallax']=()=>resolve(result));
+          return result;
+        }
+        return window.__beforePreparationAPI(url,options);
+      };
+      window.__resetPreparation=()=>{
+        submitting=false;selectPreset('anima-portrait',true,true);document.querySelector('#positive').value='Existing editor intent';
+        window.__prepareWrites=[];window.__prepareFinish={};window.__finishPreparationJob=null;
+        document.querySelector('#uxNotice').textContent='';
+        showView('create');updateReady();
+      };
+      window.__preparationEditor=()=>JSON.stringify({preset:selected.id,controls:values(),parents:parentAssets,
+        uploaded,continuation:continuationState,tile:tileState,parallax:parallaxState});
+    }""")
+    results=[]
+    def record(name, value): results.append({'name':name,'passed':bool(value)})
+    async def start(kind, held=True):
+        await page.evaluate('(held)=>{window.__resetPreparation();window.__prepareHold=held;openAsset("asset-0")}', held)
+        await page.wait_for_function("document.querySelector('[data-ux-tile]')&&!document.querySelector('[data-ux-tile]').disabled")
+        await page.fill('#uxParallaxObjects', 'the foreground desk')
+        await page.wait_for_function("!document.querySelector('[data-ux-parallax]').disabled")
+        before=await page.evaluate('window.__preparationEditor()')
+        await page.click('[data-ux-'+kind+']')
+        if held: await page.wait_for_function('(kind)=>typeof window.__prepareFinish[kind]==="function"',arg=kind)
+        else: await page.wait_for_function('!document.querySelector("#assetDialog").open')
+        return before
+    async def finish(kind):
+        await page.evaluate('(kind)=>window.__prepareFinish[kind]()', kind)
+        # Each preparation announces its outcome before its synchronous finally.
+        await page.wait_for_function('''() => {
+          const text=document.querySelector('#uxNotice').textContent;
+          return ['Nothing was applied','Parallax layers prepared:','Seam cross prepared:',
+            'Wait for the current submission before preparing a tile.'].some(value=>text.includes(value));
+        }''')
+    try:
+        for kind,preset in (('tile','zimage-seam-repair'),('parallax','parallax-edit')):
+            await start(kind, held=False)
+            record(kind+' normal preparation adopts without generation',await page.evaluate('(preset)=>selected.id===preset&&!window.__prepareWrites.includes("/api/jobs")',preset))
+            before=await start(kind)
+            await page.keyboard.press('Escape')
+            await page.wait_for_function('!document.querySelector("#assetDialog").open')
+            record(kind+' pending preparation owns readiness after close',await page.evaluate('document.querySelector("#generate").disabled'))
+            await page.evaluate('document.querySelector("#generate").click()')
+            await page.evaluate('document.querySelector("#generate").onclick()')
+            record(kind+' shipped handler refuses jobs while preparing',not await page.evaluate('window.__prepareWrites.includes("/api/jobs")'))
+            await finish(kind)
+            record(kind+' closed-dialog response preserves editor',await page.evaluate('window.__preparationEditor()')==before)
+            record(kind+' pending preparation admits zero job posts',not await page.evaluate('window.__prepareWrites.includes("/api/jobs")'))
+            if await page.evaluate('typeof window.__finishPreparationJob==="function"'):
+                await page.evaluate('window.__finishPreparationJob()')
+                await page.wait_for_function('!submitting')
+            before=await start(kind)
+            await page.keyboard.press('Escape')
+            await page.wait_for_function('!document.querySelector("#assetDialog").open')
+            await page.evaluate('openAsset("asset-0")')
+            await page.wait_for_function('document.querySelector("#assetDialog").open')
+            await finish(kind)
+            record(kind+' reopened same asset rejects old request',await page.evaluate('window.__preparationEditor()')==before)
+            record(kind+' old request does not close newer dialog',await page.evaluate('document.querySelector("#assetDialog").open'))
+            await page.keyboard.press('Escape')
+            before=await start(kind)
+            await page.evaluate('submitting=true;updateReady()')
+            await page.keyboard.press('Escape')
+            await finish(kind)
+            record(kind+' competing submission refuses response',await page.evaluate('window.__preparationEditor()')==before)
+            await page.evaluate('submitting=false;updateReady()')
+        await start('parallax')
+        await page.click('[data-ux-tile]')
+        record('parallax preparation refuses competing tile request',not await page.evaluate('window.__prepareWrites.includes("/api/tiles/prepare")'))
+        if await page.evaluate('typeof window.__prepareFinish.tile==="function"'):
+            await page.evaluate('window.__prepareFinish.tile()')
+        await page.keyboard.press('Escape')
+        await finish('parallax')
+    finally:
+        await page.evaluate('''async () => {
+          Object.values(window.__prepareFinish).forEach(resolve=>resolve());
+          if(window.__finishPreparationJob)window.__finishPreparationJob();
+          await new Promise(resolve=>setTimeout(resolve,0));
+        }''')
+        await page.wait_for_function('!submitting')
+        await page.evaluate('''() => {
+          if(document.querySelector('#assetDialog').open)document.querySelector('#assetDialog').close();
+          api=window.__beforePreparationAPI;submitting=false;window.__resetPreparation();
+        }''')
+        (out/'preparation-report.json').write_text(json.dumps({'checks':results,'transport':'synthetic API/native DOM',
+            'model_execution':False},indent=2)+'\n',encoding='utf-8')
+    for result in results: check(result['name'],result['passed'])
+
+
 async def run(args):
     args.out.mkdir(parents=True, exist_ok=True)
     fixture.POSTS.clear()
@@ -53,6 +163,7 @@ async def run(args):
                 await page.wait_for_function('!!catalog && !!selected && schemaAvailable',timeout=FIRST_LOAD_MS)
                 await page.wait_for_function("assetState.assets.some(a=>a.id==='asset-0')",timeout=FIRST_LOAD_MS)
                 await exercise_source_choices(page, check)
+                await exercise_preparation_ownership(page, check, args.out)
                 await page.set_viewport_size({'width':1440, 'height':1100})
                 await page.evaluate("""() => {
                   window.__writes=[];window.__contextFails=false;window.__delayStyle=false;
