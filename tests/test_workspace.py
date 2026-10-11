@@ -334,3 +334,47 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self._receipt_count(), 1)
         self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
         self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
+
+    def test_update_wrong_workspace_conflicts(self):
+        workspace_id = self.store.snapshot()['workspace_id']
+        wrong = workspace_id[:-1] + ('0' if workspace_id[-1] != '0' else '1')
+        before = self.store.get(self.asset)
+        receipts = self._receipt_count()
+        revision = before['metadata_revision']
+
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update({'ids': [self.asset], 'action': 'edit', 'title': 'Elsewhere',
+                               'request_id': uuid.uuid4().hex,
+                               'expected_revisions': {self.asset: revision},
+                               'workspace_id': wrong})
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_workspace_conflict')
+        self.assertEqual(cm.exception.details.get('workspace_id'), workspace_id)
+        self.assertEqual(self.store.get(self.asset), before)
+        self.assertEqual(self._receipt_count(), receipts)
+
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.metadata(self.asset, wrong)
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_workspace_conflict')
+        self.assertEqual(cm.exception.details.get('workspace_id'), workspace_id)
+        self.assertEqual(self.store.get(self.asset), before)
+        self.assertEqual(self._receipt_count(), receipts)
+
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.command_status(uuid.uuid4().hex, wrong)
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_workspace_conflict')
+        self.assertEqual(cm.exception.details.get('workspace_id'), workspace_id)
+        self.assertEqual(self.store.get(self.asset), before)
+        self.assertEqual(self._receipt_count(), receipts)
+
+        scoped = self.store.update({'ids': [self.asset], 'action': 'edit', 'title': 'Scoped title',
+                                    'request_id': uuid.uuid4().hex,
+                                    'expected_revisions': {self.asset: revision},
+                                    'workspace_id': workspace_id})
+        self.assertEqual(scoped.get('workspace_id'), workspace_id)
+        observed = self.store.command_status(scoped['request_id'], workspace_id)
+        self.assertEqual(observed.get('workspace_id'), workspace_id)
+        described = self.store.metadata(self.asset, workspace_id)
+        self.assertEqual(described.get('workspace_id'), workspace_id)
