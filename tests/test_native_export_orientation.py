@@ -92,6 +92,40 @@ class NativeOrientationTests(unittest.TestCase):
             with self.assertRaisesRegex(native.NativeExportError, 'pixels'):
                 self.exports._images(records)
 
+    def test_png_header_orientation_and_late_metadata_do_not_bypass_canvas_contract(self):
+        path = self.root / 'oriented.png'
+        with Image.new('RGB', (12, 8)) as source:
+            source.putdata([(x * 19, y * 29, (x + y) * 11) for y in range(8) for x in range(12)])
+            exif = Image.Exif(); exif[274] = 6
+            source.save(path, exif=exif)
+        raw = path.read_bytes()
+        # Move the intact eXIf chunk after IDAT, preserving all chunk CRCs.
+        chunks = []; offset = 8
+        while offset < len(raw):
+            length = int.from_bytes(raw[offset:offset + 4], 'big') + 12
+            chunks.append(raw[offset:offset + length]); offset += length
+        exif_chunk = next(chunk for chunk in chunks if chunk[4:8] == b'eXIf')
+        late = raw[:8] + b''.join(chunk for chunk in chunks[:-1] if chunk != exif_chunk) + exif_chunk + chunks[-1]
+        for is_late, payload in ((False, raw), (True, late)):
+            with self.subTest(late=is_late):
+                path.write_bytes(payload)
+                asset = {'id': 'png-frame', 'path': path.name, 'filename': path.name,
+                         'media_type': 'image/png', 'sha256': native.sha256(path)}
+                records, _ = self.exports._asset_records('atlas', [asset])
+                dimensions, _, converted = self.exports._images(records)
+                try:
+                    with Image.open(path) as encoded:
+                        expected = encoded.copy() if is_late else encoded.transpose(Image.Transpose.ROTATE_270)
+                        with expected, expected.convert('RGBA') as rgba:
+                            self.assertEqual(dimensions, rgba.size)
+                            self.assertEqual(converted[0][1].tobytes(), rgba.tobytes())
+                    output = io.BytesIO(); converted[0][1].save(output, format='PNG')
+                    with Image.open(io.BytesIO(output.getvalue())) as image:
+                        self.assertNotIn(274, image.getexif())
+                    self.assertEqual(path.read_bytes(), payload)
+                finally:
+                    for _, image in converted: image.close()
+
     def test_all_packages_have_upright_interchange_and_original_snapshots(self):
         asset = self.asset()
         original = (self.root / asset['path']).read_bytes()

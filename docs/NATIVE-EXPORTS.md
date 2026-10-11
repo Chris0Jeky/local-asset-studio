@@ -51,7 +51,10 @@ dimensions after EXIF orientation. The exporter saves original bytes under
 `sources/`, normalizes EXIF rotation/mirroring before converting each still image
 to RGBA sRGB PNG under `interchange/`, and removes EXIF from those derived PNGs.
 Size and animation limits apply before pixel normalization. It never resizes
-or trims an individual image. `duration_ms` is either one
+or trims an individual image. PNG orientation is read from header metadata;
+layout metadata after pixel data is ignored, matching the
+[CSS image metadata contract](https://www.w3.org/TR/css-images-3/#image-metadata).
+`duration_ms` is either one
 integer or one integer per image. The default anchor is bottom-centre; durations,
 anchor, loop, and filter are shared by atlas and Godot packaging.
 
