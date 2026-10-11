@@ -981,12 +981,8 @@ class Studio:
                     elif key in limits:
                         lo, hi, integer = limits[key]
                         value = number(raw, key, lo, hi, integer)
-                    elif key in LORA_SLOTS:
-                        value = number(raw, key, 0, 2)
                     else:
-                        parsed = self._estimate_float(raw, None)
-                        if parsed is None: raise StudioError(f"{key} must be a number")
-                        value = parsed
+                        value = number(raw, key, 0, 2)
                 except StudioError as exc:
                     raise StudioError(str(exc), code="invalid_control", control=key) from None
             try: self._bind_control(graph, preset, key, value)
@@ -1054,8 +1050,7 @@ class Studio:
         try:
             graph = self._estimate_graph(preset, controls)
         except StudioError as exc:
-            details = getattr(exc, "details", None) or {}
-            if getattr(exc, "code", None) == "invalid_control" or "control" in details:
+            if exc.code == "invalid_control":
                 return {"available": False, "reason": str(exc) or "Invalid estimate control."}
             return {"available": False, "reason": "Choose a supported recipe before estimating."}
         except (KeyError, TypeError, OSError):
