@@ -1,8 +1,8 @@
 # FINDINGS — Ming Image Design family (2026-09-27 BST)
 
-**Audience:** Chris Local Asset Studio (LAS) → docs PR into `Chris0Jeky/local-asset-studio`  
-**GPU:** AMD RX 9070 XT **16GB** · 32GB system RAM · Comfy portable · LAS Create  
-**Tracking:** [#1174](https://github.com/Chris0Jeky/local-asset-studio/issues/1174) (cross-links #739 / #760 / #934 / #1028)  
+**Audience:** Chris Local Asset Studio (LAS) → docs PR into `Chris0Jeky/local-asset-studio`
+**GPU:** AMD RX 9070 XT **16GB** · 32GB system RAM · Comfy portable · LAS Create
+**Tracking:** [#1174](https://github.com/Chris0Jeky/local-asset-studio/issues/1174) (cross-links #739 / #760 / #934 / #1028)
 **Rule:** Page URLs + metadata + HEAD sizes only. **No weight downloads. No secrets. No merges. No cloud agents.**
 
 **Delta vs prior packs:** New family — not a Civitai week-scavenge. Do **not** rehash Pruna / QI-2.1 / Illu / Klein rows from `las-image-models-wave-2026-09-24` or civitai 09-21/09-23.
