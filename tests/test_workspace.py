@@ -431,3 +431,36 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(observed.get('workspace_id'), workspace_id)
         described = self.store.metadata(self.asset, workspace_id)
         self.assertEqual(described.get('workspace_id'), workspace_id)
+
+    def test_card_edit_rejects_stale_revision_without_changing_state(self):
+        create = {'action': 'create', 'id': 'card-abc', 'kind': 'look',
+                  'name': 'Original look', 'body': {'template': 'hello'}, 'lineage': []}
+        created = self.store.card_command(dict(create))
+        self.assertEqual(created['id'], 'card-abc')
+        self.assertEqual(created['revision'], 0)
+        self.assertEqual(created['name'], 'Original look')
+        # Create-idempotent subcase: identical content returns the same revision, not a duplicate.
+        repeated = self.store.card_command(dict(create))
+        self.assertEqual(repeated['id'], 'card-abc')
+        self.assertEqual(repeated['revision'], 0)
+        self.assertEqual(len(self.store.cards('look')), 1)
+        edited = self.store.card_command({'action': 'edit', 'id': 'card-abc',
+                                          'expected_revision': 0, 'name': 'Edited look'})
+        self.assertEqual(edited['revision'], 1)
+        self.assertEqual(edited['name'], 'Edited look')
+        after_edit = self.store.card('card-abc')
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.card_command({'action': 'edit', 'id': 'card-abc',
+                                     'expected_revision': 0, 'name': 'Stale look'})
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'card_revision_conflict')
+        current = self.store.card('card-abc')
+        self.assertEqual(current['revision'], 1)
+        self.assertEqual(current['name'], 'Edited look')
+        self.assertEqual(current, after_edit)
+        # Identical repeat of the stored content is a no-op returning the same revision.
+        same = self.store.card_command({'action': 'create', 'id': 'card-abc', 'kind': 'look',
+                                        'name': 'Edited look', 'body': {'template': 'hello'}, 'lineage': []})
+        self.assertEqual(same['revision'], 1)
+        self.assertEqual(same['name'], 'Edited look')
+        self.assertEqual(len(self.store.cards('look')), 1)
