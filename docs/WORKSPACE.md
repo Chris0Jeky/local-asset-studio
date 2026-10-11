@@ -73,6 +73,12 @@ reason without typing; they save with the asset, not on their own. **Same run**
 lists the other outputs of the same job so you can compare them without leaving
 the dialog.
 
+**Make seamless** and **Make parallax layers** prepare a source for Create.
+Generate stays unavailable while either preparation is pending. Closing the
+asset dialog, reopening it or changing the Create intent discards the late
+response; it cannot replace the current editor or close a newer dialog. A
+successful preparation still needs your separate **Generate** press.
+
 **Review next (n unreviewed)** opens the newest unreviewed asset in the current
 view as a queue. The dialog then shows *k of n* and accepts <kbd>K</kbd> keeper,
 <kbd>W</kbd> needs work, <kbd>X</kbd> rejected, <kbd>S</kbd> skip and the arrow
