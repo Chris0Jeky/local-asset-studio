@@ -334,3 +334,27 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self._receipt_count(), 1)
         self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
         self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
+
+    def test_update_stale_revision_conflicts(self):
+        r = self.store.get(self.asset)['metadata_revision']
+        self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'title': 'First write'})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], r + 1)
+        after_first = self.store.get(self.asset)
+        receipts = self._receipt_count()
+        self.assertEqual(after_first['title'], 'First write')
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update({'ids': [self.asset], 'action': 'edit', 'title': 'Stale write',
+                               'request_id': uuid.uuid4().hex, 'expected_revisions': {self.asset: r}})
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_revision_conflict')
+        details = cm.exception.details
+        self.assertEqual(details['conflict_ids'], [self.asset])
+        self.assertIn('workspace_id', details)
+        self.assertEqual(details['workspace_id'], self.store.snapshot()['workspace_id'])
+        self.assertLessEqual(len(details['current']), 10)
+        self.assertEqual(len(details['current']), 1)
+        self.assertEqual(details['current'][0]['id'], self.asset)
+        self.assertEqual(details['current'][0]['metadata_revision'], r + 1)
+        self.assertEqual(details['current'][0]['workspace_id'], details['workspace_id'])
+        self.assertEqual(self.store.get(self.asset), after_first)
+        self.assertEqual(self._receipt_count(), receipts)
