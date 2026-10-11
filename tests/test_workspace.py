@@ -431,3 +431,23 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(observed.get('workspace_id'), workspace_id)
         described = self.store.metadata(self.asset, workspace_id)
         self.assertEqual(described.get('workspace_id'), workspace_id)
+
+    def test_update_rejects_foreign_workspace_id_without_changing_state(self):
+        store_a = self.store
+        with tempfile.TemporaryDirectory() as other_dir:
+            store_b = workspace.AssetWorkspace(Path(other_dir))
+            current = store_a.snapshot()['workspace_id']
+            foreign = store_b.snapshot()['workspace_id']
+            self.assertNotEqual(foreign, current)
+            before = store_a.get(self.asset)
+            receipts = self._receipt_count()
+            with self.assertRaises(workspace.WorkspaceError) as cm:
+                store_a.update({'ids': [self.asset], 'action': 'edit', 'title': 'Foreign scope',
+                                'request_id': uuid.uuid4().hex,
+                                'expected_revisions': {self.asset: before['metadata_revision']},
+                                'workspace_id': foreign})
+            self.assertEqual(cm.exception.status, 409)
+            self.assertEqual(cm.exception.code, 'asset_workspace_conflict')
+            self.assertEqual(cm.exception.details.get('workspace_id'), current)
+            self.assertEqual(store_a.get(self.asset), before)
+            self.assertEqual(self._receipt_count(), receipts)
