@@ -14,6 +14,12 @@ nodes, selected model files and input images. It records the actual graph,
 reference roles, model hashes, runtime information and a plan hash. It submits
 nothing until **Start comparison** is pressed.
 
+Before each stage starts, Studio reads every recorded model again and checks
+its bytes against the prepared plan. A changed or unreadable model is refused
+before a job is created, even if its file size and timestamp match; prepare a
+new branch to use changed files. Large models add reading time at admission.
+These checks do not freeze files against changes after admission.
+
 A live summary at the top of that dialog states the question in one line -
 which setting, which values, on which recipe, how many graph runs and roughly
 how long, reusing the measured per-run time Create already shows. Under the
