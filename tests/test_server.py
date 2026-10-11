@@ -447,6 +447,16 @@ class ServerTests(unittest.TestCase):
         self.assertEqual((832,1248),(graph["2"]["inputs"]["width"],graph["2"]["inputs"]["height"]))
         with self.assertRaisesRegex(server.StudioError,"multiple of 16"): s.prepare({"preset_id":"demo","controls":{"width":840,"height":1248}})
         with self.assertRaisesRegex(server.StudioError,"pixel budget"): s.prepare({"preset_id":"demo","controls":{"width":1536,"height":1536}})
+    def test_stale_max_pixels_binding_raises_studio_error(self):
+        (self.root/"presets/catalog.json").write_text(json.dumps({"presets":[dict(PRESET,width=["999","width"],max_pixels=1024*1024)]}))
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,"invalid workflow binding"):
+            s.prepare({"preset_id":"demo","controls":{}})
+    def test_stale_resolution_choices_binding_raises_studio_error(self):
+        (self.root/"presets/catalog.json").write_text(json.dumps({"presets":[dict(PRESET,height=["1","missing_key"],resolution_choices=[[512,512]])]}))
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,"invalid workflow binding"):
+            s.prepare({"preset_id":"demo","controls":{}})
     def test_path_traversal_and_upload_magic(self):
         with self.assertRaises(server.StudioError): server.inside(self.root, self.root/"../outside")
         s=self.studio()
@@ -1911,6 +1921,34 @@ class ServerTests(unittest.TestCase):
 
 class RefusalTransportTests(unittest.TestCase):
     """Real loopback sockets: ServerTests patches Thread.start, so the serving thread lives here (#1029)."""
+    def test_stale_dimensions_refuse_job_without_publication(self):
+        fixture=ServerTests();fixture.setUp();fixture.start.stop()
+        self.addCleanup(fixture.doCleanups)
+        for preset in (dict(PRESET,width=["999","width"],max_pixels=1024*1024),
+                       dict(PRESET,height=["1","missing_key"],resolution_choices=[[512,512]])):
+            with self.subTest(preset=preset):
+                (fixture.root/"presets/catalog.json").write_text(json.dumps({"presets":[preset]}))
+                with patch.object(threading.Thread,"start",lambda *_:None):
+                    studio=FakeStudio(fixture.root,[])
+                with patch.object(server.Handler,"studio",studio,create=True),patch.object(socket,"getfqdn",return_value="127.0.0.1"):
+                    httpd=ThreadingHTTPServer(("127.0.0.1",0),server.Handler)
+                    thread=threading.Thread(target=httpd.serve_forever,kwargs={"poll_interval":.01},daemon=True);thread.start()
+                    conn=HTTPConnection("127.0.0.1",httpd.server_port,timeout=5)
+                    try:
+                        conn.request("POST","/api/jobs",body=json.dumps({"preset_id":"demo","controls":{}}),
+                                     headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Type":"application/json"})
+                        response=conn.getresponse()
+                        self.assertEqual(response.status,400)
+                        self.assertEqual(response.getheader("Content-Type"),"application/json")
+                        self.assertEqual(json.loads(response.read()),{"error":"Preset has an invalid workflow binding"})
+                        self.assertEqual(studio.jobs,{})
+                        self.assertTrue(studio.queue.empty())
+                        self.assertEqual(list(studio.runs.iterdir()),[])
+                        self.assertEqual(studio.requests,[])
+                    finally:
+                        conn.close();httpd.shutdown();httpd.server_close();thread.join(3)
+                    self.assertFalse(thread.is_alive())
+
     def test_unknown_route_with_large_body_serves_404_without_reset(self):
         with patch.object(socket,"getfqdn",return_value="127.0.0.1"):
             httpd=ThreadingHTTPServer(("127.0.0.1",0),server.Handler)
