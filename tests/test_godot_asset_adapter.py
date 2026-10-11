@@ -57,6 +57,27 @@ class GodotAdapterTests(unittest.TestCase):
         with self.assertRaises(adapter.GodotAdapterError):
             adapter.package_project(self.root, "../atlas/manifest.json", self.root / "new-output")
 
+    def test_execute_existing_output_surfaces_packaging_error_with_receipt(self):
+        output = self.root / "existing-output"
+        output.mkdir()
+        with self.assertRaises(adapter.GodotAdapterError) as ctx:
+            adapter.execute(self.root, "atlas/manifest.json", output, self.root / "godot")
+        self.assertNotIsInstance(ctx.exception, UnboundLocalError)
+        self.assertIn("already exists", str(ctx.exception))
+        receipt = output / "failure.json"
+        self.assertTrue(receipt.is_file())
+        payload = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(payload["state"], "failed")
+        self.assertIn("already exists", payload["error"])
+        self.assertIn("recovery", payload)
+
+    def test_execute_packaging_failure_without_target_writes_no_receipt(self):
+        output = self.root / "never-created-output"
+        with self.assertRaises(adapter.GodotAdapterError) as ctx:
+            adapter.execute(self.root, "atlas/missing.json", output, self.root / "godot")
+        self.assertNotIsInstance(ctx.exception, UnboundLocalError)
+        self.assertFalse((output / "failure.json").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

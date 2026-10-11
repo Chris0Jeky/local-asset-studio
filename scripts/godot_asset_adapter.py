@@ -249,15 +249,20 @@ def _verify_report(report, manifest, wants_glb, atlas=None):
 def execute(input_root, atlas_manifest, output_root, godot_path, glb_path=None, timeout=120, *, node_path=None):
     require(type(timeout) in (int, float) and math.isfinite(timeout) and 1 <= timeout <= 600, 'Timeout must be 1..600 seconds')
     started = time.monotonic()
-    package = package_project(input_root, atlas_manifest, output_root, glb_path)
-    target = Path(package['project_root'])
-    write_json(target / 'execution-intent.json', {'schema_version': 2, 'state': 'prepared', 'package': package,
-                                                'timeout_seconds': timeout, 'fixed_fps': FIXED_FPS})
-    def remaining():
-        seconds = timeout - (time.monotonic() - started)
-        require(seconds > 0, 'Execution time budget exhausted; no later command started')
-        return seconds
+    target = None
     try:
+        try:
+            target = Path(output_root).expanduser().resolve()
+        except OSError:
+            target = Path(output_root).expanduser()
+        package = package_project(input_root, atlas_manifest, output_root, glb_path)
+        target = Path(package['project_root'])
+        write_json(target / 'execution-intent.json', {'schema_version': 2, 'state': 'prepared', 'package': package,
+                                                    'timeout_seconds': timeout, 'fixed_fps': FIXED_FPS})
+        def remaining():
+            seconds = timeout - (time.monotonic() - started)
+            require(seconds > 0, 'Execution time budget exhausted; no later command started')
+            return seconds
         manifest = _read_atlas_manifest(target / 'atlas-manifest.json')
         require(sum(f['duration_ms'] for f in manifest['frames']) <= MAX_CYCLE_MS, 'Verification cycle exceeds the 30-second simulation budget')
         original = atlas_evidence(target / 'assets/atlas.png', manifest)
@@ -298,8 +303,9 @@ def execute(input_root, atlas_manifest, output_root, godot_path, glb_path=None, 
         return result
     except Exception as exc:
         try:
-            write_json(target / 'failure.json', {'state': 'failed', 'error': str(exc)[:2000], 'wall_seconds': time.monotonic() - started,
-                                                'recovery': 'Retained attempt is never rerun. Inspect reports/logs, then choose a new output directory.'})
+            if target is not None and target.is_dir():
+                write_json(target / 'failure.json', {'state': 'failed', 'error': str(exc)[:2000], 'wall_seconds': time.monotonic() - started,
+                                                    'recovery': 'Retained attempt is never rerun. Inspect reports/logs, then choose a new output directory.'})
         except OSError as reporting_error:
             exc.add_note('Could not write failure receipt: ' + str(reporting_error))
         raise
