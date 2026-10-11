@@ -962,8 +962,10 @@ class Studio:
         graph, _ = self.graph_for(preset)
         controls = controls if isinstance(controls, dict) else {}
         numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "depth_cut", *LORA_SLOTS}
-        integer = {"seed", "steps", "width", "height", "frames", "fps", "depth_cut"}
         extras = preset.get("bindings_extra") or {}
+        limits = {"seed": (0, 2**63 - 1, True), "steps": (1, 150, True), "cfg": (0, 30, False), "denoise": (0, 1, False),
+                  "style_weight": (0, 2, False), "pose_strength": (0, 2, False), "depth_cut": (0, 100, True),
+                  "frames": (5, 365, True), "fps": (1, 60, True)}
         for key, raw in controls.items():
             if key not in CONTROL_KEYS or not (preset.get(key) or extras.get(key)): continue
             value = raw
@@ -971,11 +973,25 @@ class Studio:
             try: existing = graph[str(binding[0])]["inputs"].get(str(binding[1]))
             except (KeyError, TypeError, IndexError): existing = None
             if key in numeric and (key not in LORA_SLOTS or isinstance(existing, (int, float)) and not isinstance(existing, bool)):
-                parsed = self._estimate_float(raw, None)
-                if parsed is None: continue
-                value = int(parsed) if key in integer else parsed
+                try:
+                    if key in ("width", "height"):
+                        bounds = preset.get("dimension_limits", [64, 1536])
+                        lo, hi = (bounds[0], bounds[1]) if isinstance(bounds, (list, tuple)) and len(bounds) == 2 else (64, 1536)
+                        value = number(raw, key, lo, hi, True)
+                    elif key in limits:
+                        lo, hi, integer = limits[key]
+                        value = number(raw, key, lo, hi, integer)
+                    elif key in LORA_SLOTS:
+                        value = number(raw, key, 0, 2)
+                    else:
+                        parsed = self._estimate_float(raw, None)
+                        if parsed is None: raise StudioError(f"{key} must be a number")
+                        value = parsed
+                except StudioError as exc:
+                    raise StudioError(str(exc), code="invalid_control", control=key) from None
             try: self._bind_control(graph, preset, key, value)
-            except StudioError: continue
+            except StudioError as exc:
+                raise StudioError(f"{key}: {exc}", code="invalid_control", control=key) from None
         try: self.prune_disabled_loras(graph)
         except (StudioError, KeyError, TypeError): pass
         return graph
@@ -1033,8 +1049,16 @@ class Studio:
             presets = self.catalog().get("presets", [])
             preset = next(p for p in presets if p.get("id") == payload.get("preset_id"))
             controls = payload.get("controls") if isinstance(payload.get("controls"), dict) else {}
-            graph = self._estimate_graph(preset, controls)
         except (StopIteration, StudioError, KeyError, TypeError, OSError):
+            return {"available": False, "reason": "Choose a supported recipe before estimating."}
+        try:
+            graph = self._estimate_graph(preset, controls)
+        except StudioError as exc:
+            details = getattr(exc, "details", None) or {}
+            if getattr(exc, "code", None) == "invalid_control" or "control" in details:
+                return {"available": False, "reason": str(exc) or "Invalid estimate control."}
+            return {"available": False, "reason": "Choose a supported recipe before estimating."}
+        except (KeyError, TypeError, OSError):
             return {"available": False, "reason": "Choose a supported recipe before estimating."}
         references = payload.get("reference_count", 0)
         target = self._estimate_features(preset, graph, controls, payload.get("batch_count", 1), references)
