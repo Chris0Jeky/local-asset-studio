@@ -9,9 +9,9 @@
 - Related issues: #756 era scavenges, #786, #988, #934/#936 EXPLICIT summary pattern, #761
 
 ## Civitai public list API (box curl 2026-09-27)
-Base: `https://civitai.com/api/v1/models` · `.../images` · `.../articles`  
-UA: `LAS-Scavenger/1.0` · **nsfw=true / nsfw=X** · sort Most Liked / Most Reactions / Most Comments  
-**Avoided** model-by-id endpoints (CF 1015).  
+Base: `https://civitai.com/api/v1/models` · `.../images` · `.../articles`
+UA: `LAS-Scavenger/1.0` · **nsfw=true / nsfw=X** · sort Most Liked / Most Reactions / Most Comments
+**Avoided** model-by-id endpoints (CF 1015).
 **Note:** image list responses returned IDs + reaction stats **without** generation `meta` on this date — recipes from model cards, articles, prior packs, lab.
 
 Cached under `raw/`:

@@ -2,7 +2,7 @@
 
 **ADULTS 18+ ONLY · LAS Uncensored quarantine.**
 
-Research pack (full tables, recipes, gallery index):  
+Research pack (full tables, recipes, gallery index):
 `handoffs/nsfw-north-star-2026-09-27/` on the operator workstation / agent box.
 
 This docs tree holds **craft-focused summaries only**. Do not merge into SFW Create presets or default FINDINGS.

@@ -50,8 +50,8 @@ Hardware: RX 9070 XT 16GB · Illu/Pony/Noob lanes · unload LLM during timed smo
 ---
 
 ## Smoke protocol
-1. One lever per cell; record Studio job id + Comfy prompt id before wait.  
-2. Same seed when A/B’ing slider/LoRA/CN.  
-3. Adult-in-canon casts only; shared age neg always on.  
-4. Append judgements to lab FINDINGS-style notes or this issue — **no graphic binaries in GitHub issue body**.  
+1. One lever per cell; record Studio job id + Comfy prompt id before wait.
+2. Same seed when A/B’ing slider/LoRA/CN.
+3. Adult-in-canon casts only; shared age neg always on.
+4. Append judgements to lab FINDINGS-style notes or this issue — **no graphic binaries in GitHub issue body**.
 5. Link pack path; mark try→keep/park after visual score (pose / light / identity / hands).
