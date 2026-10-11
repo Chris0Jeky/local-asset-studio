@@ -335,6 +335,33 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
         self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
 
+    def test_update_replays_identical_request_id_without_reapplying(self):
+        rev = self.store.get(self.asset)['metadata_revision']
+        request_id = uuid.uuid4().hex
+        payload = {'ids': [self.asset], 'action': 'edit', 'title': 'Replay title',
+                   'request_id': request_id, 'expected_revisions': {self.asset: rev}}
+        first = self.store.update(payload)
+        self.assertEqual(first['status'], 'applied')
+        self.assertEqual(first['request_id'], request_id)
+        revision = self.store.get(self.asset)['metadata_revision']
+        self.assertEqual(revision, rev + 1)
+        replay = dict(payload)
+        self.assertEqual(
+            json.dumps(replay, sort_keys=True, separators=(',', ':'), allow_nan=False),
+            json.dumps(payload, sort_keys=True, separators=(',', ':'), allow_nan=False))
+        second = self.store.update(replay)
+        self.assertEqual(second, first)
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], revision)
+        self.assertEqual(self.store.get(self.asset)['title'], 'Replay title')
+        self.assertEqual(self._receipt_count(), 1)
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update(dict(payload, title='Changed title'))
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_request_reused')
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], revision)
+        self.assertEqual(self.store.get(self.asset)['title'], 'Replay title')
+        self.assertEqual(self._receipt_count(), 1)
+
     def test_register_returns_stored_id_on_conflict(self):
         # Normal path: a fresh (job_id, output_index) registers under its uuid5 id.
         fresh_source = self.root / 'fresh.png'
