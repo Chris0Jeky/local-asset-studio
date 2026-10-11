@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import time
@@ -37,6 +38,11 @@ MIN_TRACEBACK_DEADLINE_SECONDS = 1.0
 # Keep this well inside the parent's hard budget while avoiding a false leak
 # report during ordinary teardown. Focused leaked-thread tests pass 0.15 seconds.
 SHUTDOWN_TRACEBACK_AFTER_SECONDS = 15.0
+# Normal warning headers (including Windows paths) and unraisable warning
+# tracebacks use these forms. Mere test names/source quotes are not warnings.
+UNAWAITED_COROUTINE_WARNING = re.compile(
+    r"(?m)^(?:[^\n]+:\d+: )?RuntimeWarning: coroutine [^\n]+ was never awaited\r?$"
+)
 
 
 def lifetime_budget(environ=None) -> float:
@@ -108,6 +114,10 @@ def suite_command(
         "-u",
         "-X",
         "tracemalloc=1",
+        "-X",
+        "faulthandler",
+        "-W",
+        "always::RuntimeWarning",
         "-W",
         "always::ResourceWarning",
         str(ROOT / "tests" / "full_suite_lifetime_worker.py"),
@@ -152,6 +162,17 @@ def main() -> int:
     if "ResourceWarning" in output:
         print(
             "offline suite emitted ResourceWarning; inspect the allocation line above",
+            file=sys.stderr,
+        )
+        return 1
+    # Inspect streams separately: stdout need not end with a newline, and its
+    # last partial line must not hide a real warning header on stderr. Wait for
+    # process exit first so atexit/GC warnings cannot arrive after qualification.
+    if any(UNAWAITED_COROUTINE_WARNING.search(stream)
+           for stream in (result.stdout, result.stderr)):
+        print(
+            "offline suite emitted an unawaited coroutine warning; "
+            "inspect the creation/allocation trace above",
             file=sys.stderr,
         )
         return 1

@@ -39,6 +39,10 @@ from runtime_observability import (  # noqa: E402
 # the C dump traversed it. Keep the two writers a real interval apart instead of
 # a fraction of a deadline that is only milliseconds long in a focused fixture.
 MARKER_SEPARATION_SECONDS = 0.25
+# Attribute unawaited work to its creation site while Python frames still exist.
+# Keep the origin bounded, and enable it only in the dedicated worker's main
+# thread, not at import time in the parent or focused in-process tests.
+COROUTINE_ORIGIN_DEPTH = 8
 
 
 def emit_current_test(stream=sys.stderr, prefix: str = "LIFETIME") -> None:
@@ -210,6 +214,7 @@ def parse_args(argv=None):
 def main(argv=None) -> int:
     args = parse_args(argv)
     start_dir = Path(args.start_dir).resolve()
+    sys.set_coroutine_origin_tracking_depth(COROUTINE_ORIGIN_DEPTH)
     # Install before discovery so threads, pooled tasks and module-level atexit
     # registrations created while importing tests are attributed, while importing
     # this worker itself remains side-effect free for focused contract tests. The
