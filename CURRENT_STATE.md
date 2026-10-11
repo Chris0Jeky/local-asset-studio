@@ -2,6 +2,10 @@
 
 ## Overnight reconciliation — 11 October 2026
 
+Lifetime self-test isolation PR #1143 is merged through EstateGate as `5bb587f4` (11 October 2026, 01:53 UTC), preserving its commits and closing #1141 after all stated acceptance passed. Two new causal regressions produced five failures on the original source; corrected focused proof passed 31 tests with one skip and validator. At head `cdbaf25e`, full runs `38102416241` and `38102418385` each passed 5,425 tests with 60 skips and clean shutdown. The older PowerShell fixture timeout's underlying cause remains unproven. Its qualification tree was removed after ignored-cache inspection.
+
+Civitai research PR #1259 is merged through EstateGate as `d096c6e9` (11 October 2026, 01:31 UTC), preserving its original commits. At head `a93d9b50`, both full lifetime runs `38101111266` and `38101108712` passed 5,423 tests with 60 skips and clean shutdown, alongside Markdown references, validator and an independent operational review. Issues #1176, #934 and #1174 remain open. The historical scan's missing raw cache is tracked in #1321; no current licence, quality or artistic acceptance was inferred. Its qualification tree was removed after ignored-cache inspection.
+
 PRs #1291 and #1292 are merged, verified live as `d4107a3` and `7343f52`; their stale human-action entry is completed against the existing owner answer and Agent HQ's canonical acted record in merged PR #356 (`02bb2e9`). No creative or licensing acceptance was inferred.
 
 The preserved Muse registration draft (`fd9367a`, worker `c5de39c7-0`) is merged through EstateGate in PR #1314 as `d69b90b4` (10 October 2026, 23:36 UTC). An ignored SQLite insert now returns the durable stored asset ID, not an ID that does not resolve. The causal baseline failure, 38 focused tests (two skips), validator and independent Sol review passed. Both hosted full lifetime jobs passed at head `5d605124`: 5,410 tests, 56 skips each, clean resource shutdown (runs `38094700881` and `38094670778`). The local full run reached its 600-second budget while progressing and is not claimed green; complete hosted proof qualified the gate without a redundant local retry.
