@@ -447,6 +447,16 @@ class ServerTests(unittest.TestCase):
         self.assertEqual((832,1248),(graph["2"]["inputs"]["width"],graph["2"]["inputs"]["height"]))
         with self.assertRaisesRegex(server.StudioError,"multiple of 16"): s.prepare({"preset_id":"demo","controls":{"width":840,"height":1248}})
         with self.assertRaisesRegex(server.StudioError,"pixel budget"): s.prepare({"preset_id":"demo","controls":{"width":1536,"height":1536}})
+    def test_stale_max_pixels_binding_raises_studio_error(self):
+        (self.root/"presets/catalog.json").write_text(json.dumps({"presets":[dict(PRESET,width=["999","width"],max_pixels=1024*1024)]}))
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,"invalid workflow binding"):
+            s.prepare({"preset_id":"demo","controls":{}})
+    def test_stale_resolution_choices_binding_raises_studio_error(self):
+        (self.root/"presets/catalog.json").write_text(json.dumps({"presets":[dict(PRESET,height=["1","missing_key"],resolution_choices=[[512,512]])]}))
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,"invalid workflow binding"):
+            s.prepare({"preset_id":"demo","controls":{}})
     def test_path_traversal_and_upload_magic(self):
         with self.assertRaises(server.StudioError): server.inside(self.root, self.root/"../outside")
         s=self.studio()

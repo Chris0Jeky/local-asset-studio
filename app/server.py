@@ -527,10 +527,12 @@ class Studio:
             label = preset.get(source_key + "_label") or ("Picture to keep (image 1)" if source_key == "last_reference" else "the picture")
             raise StudioError((preset.get("name") or preset.get("id") or "This recipe") + " needs your picture on " + label + "; the authored example picture cannot be queued")
         if preset.get("max_pixels"):
-            actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
+            try: actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
+            except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
             if actual["width"] * actual["height"] > preset["max_pixels"]: raise StudioError("Resolution exceeds this workflow's pixel budget")
         if preset.get('resolution_choices'):
-            actual = [graph[str(preset[k][0])]['inputs'][str(preset[k][1])] for k in ('width', 'height')]
+            try: actual = [graph[str(preset[k][0])]['inputs'][str(preset[k][1])] for k in ('width', 'height')]
+            except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
             if actual not in preset['resolution_choices']: raise StudioError('Choose an authored resolution pair from this recipe')
         if preset.get("reference_slots"):
             preset["_prepared_references"] = compile_references(preset, graph, payload.get("references"), self.experiments / "uploads")
