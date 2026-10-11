@@ -1913,6 +1913,11 @@ class ServerTests(unittest.TestCase):
                 created = set(s.runs.iterdir()) - runs_before
                 self.assertEqual(created, {s.runs / job['id']})
                 self.assertTrue((s.runs / job['id'] / 'state.json').is_file())
+                # Upload ownership ended successfully before indexing failed.
+                reference = job['references'][0]
+                for root in (s.experiments / 'uploads', s.comfy_root / 'input'):
+                    self.assertEqual((root / reference['file']).read_bytes(), body)
+                self.assertEqual(json.loads((s.experiments / 'uploads' / (reference['file'] + '.json')).read_text()), reference)
                 self.assertTrue(s.public(job)['can_put_away'])
                 s.put_away_job(job['id'], True)
                 restored = self.studio()

@@ -124,6 +124,16 @@ Back up the whole experiments directory, including uploads and runs, to retain
 recipes and their input references. Models and the ComfyUI installation remain
 separate dependencies. Existing outputs are indexed without executing workflows.
 
+Reference uploads stage complete bytes beside each destination, publish without
+overwriting an existing name, and publish their metadata last. A failed transfer
+removes only files whose identity and contents still match this request. Changed
+or undeletable files remain in place; a 503 response lists their exact
+`retained_paths` with code `upload_storage_unconfirmed`. Inspect those paths
+before removing anything. Successful uploads survive a later indexing failure.
+Publication requires filesystem hard links and safely refuses when unsupported.
+This bounds handled transfer failures; it does not promise crash atomicity or
+cross-process compare-and-delete protection.
+
 Saved setups now live in the same workspace database. Existing browser setups
 are migrated on first load. Deleting a saved setup requires its id and does not
 delete the setup's past outputs.

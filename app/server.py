@@ -9,12 +9,14 @@ import io
 import json
 import math
 import mimetypes
+import os
 import random
 import re
 import shutil
 import socket
 import sqlite3
 import sys
+import tempfile
 import threading
 import time
 import uuid
@@ -110,6 +112,9 @@ class StudioError(ValueError):
             body["code"] = self.code
             body.update(self.details)
         return body
+
+class UploadStorageError(StudioError):
+    status = 503
 
 class QueueWaitUnavailable(StudioError): pass
 
@@ -2329,17 +2334,79 @@ class Studio:
         safe = re.sub(r"[^A-Za-z0-9._-]", "_", Path(filename or "reference").name)[:100]
         if not safe or safe in (".", ".."): raise StudioError("Invalid upload filename")
         # ComfyUI only receives this generated basename; client paths are never used.
-        uploads = self.experiments / "uploads"; uploads.mkdir(parents=True, exist_ok=True)
-        name = f"{uuid.uuid4().hex}_{safe}{IMAGE_TYPES[mime]}"
-        path = uploads / name; path.write_bytes(body)
         comfy_input = self.comfy_root / "input"
         if not comfy_input.is_dir():
-            path.unlink(missing_ok=True)
             raise StudioError("Configured ComfyUI input folder is unavailable")
-        shutil.copyfile(path, comfy_input / name)
+        uploads = self.experiments / "uploads"; uploads.mkdir(parents=True, exist_ok=True)
+        name = f"{uuid.uuid4().hex}_{safe}{IMAGE_TYPES[mime]}"
         metadata = {"file": name, "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body), "width": width, "height": height, "original_name": safe}
-        self._write_json_atomic(uploads / (name + ".json"), metadata)
-        return metadata
+        payloads = ((uploads / name, body), (comfy_input / name, body),
+                    (uploads / (name + ".json"), json.dumps(metadata, indent=2).encode("utf-8")))
+        owned = {}
+        stages = []
+        def stamp(info):
+            return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+        def unchanged(path):
+            expected, digest = owned[path]
+            before = path.lstat()
+            return (stamp(before) == expected and digest_file(path) == digest
+                    and stamp(path.lstat()) == expected)
+        try:
+            for target, raw in payloads:
+                descriptor, filename = tempfile.mkstemp(prefix=".upload-", suffix=".tmp", dir=target.parent)
+                stage = Path(filename)
+                digest = hashlib.sha256()
+                owned[stage] = (stamp(os.fstat(descriptor)), digest.hexdigest())
+                stages.append((stage, target))
+                offset = 0
+                try:
+                    while offset < len(raw):
+                        count = os.write(descriptor, memoryview(raw)[offset:])
+                        if count <= 0: raise OSError("Upload staging write made no progress")
+                        digest.update(memoryview(raw)[offset:offset + count]); offset += count
+                        owned[stage] = (stamp(os.fstat(descriptor)), digest.hexdigest())
+                finally:
+                    os.close(descriptor)
+                    # Windows can finalize mtime on close; never adopt unknown failed-write bytes.
+                    try:
+                        info = stage.lstat()
+                        previous, expected_digest = owned[stage]
+                        if stamp(info)[:3] == previous[:3] and digest_file(stage) == expected_digest:
+                            owned[stage] = (stamp(info), expected_digest)
+                    except OSError:
+                        pass
+            for stage, target in stages:
+                if not unchanged(stage): raise OSError("Upload stage changed before publication")
+                owned[target] = owned[stage]  # Also covers a link that became visible before raising.
+                try:
+                    os.link(stage, target)  # Same-directory, complete bytes, atomic refusal to overwrite.
+                except FileExistsError:
+                    owned.pop(target)  # A definite collision never belongs to this request.
+                    raise
+                if not unchanged(target) or not unchanged(stage):
+                    raise OSError("Upload changed during publication")
+                stage.unlink(); owned.pop(stage)
+            if not all(unchanged(target) for _, target in stages):
+                raise OSError("Upload changed before completion")
+            return metadata  # The sidecar is last; subsequent indexing failure must retain this upload.
+        except BaseException as exc:
+            retained = []
+            for path in reversed(owned):
+                try:
+                    # shortcut: no cross-process stat/unlink CAS; add writer coordination if needed.
+                    if unchanged(path): path.unlink()
+                    else: retained.append(str(path))
+                except FileNotFoundError:
+                    pass
+                except OSError:
+                    retained.append(str(path))
+            if isinstance(exc, OSError):
+                detail = " Retained paths: " + ", ".join(retained) if retained else ""
+                raise UploadStorageError("Reference upload failed: " + str(exc) + detail,
+                                         code="upload_storage_unconfirmed" if retained else "upload_failed",
+                                         retained_paths=retained) from exc
+            if retained: exc.add_note("Upload retained paths: " + ", ".join(retained))
+            raise
 
 class Handler(BaseHTTPRequestHandler):
     def end_headers(self):
@@ -2581,7 +2648,7 @@ class Handler(BaseHTTPRequestHandler):
             static_types = {".html": "text/html", ".js": "text/javascript", ".css": "text/css"}
             if not file.is_file() or file.suffix not in static_types: return self._json(404, {"error":"Not found"})
             data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", static_types[file.suffix]); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
-        except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError, UploadStorageError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return
         except (URLError, HTTPError): self._json(502, {"error": "ComfyUI did not return this image. Check that ComfyUI is running (Models & setup shows its state), then reload."})
@@ -2699,7 +2766,7 @@ class Handler(BaseHTTPRequestHandler):
                 body = self._body_object(); job = parallax.finish(self.studio, body.get("job_id"), body.get("other_job_id")); return self._json(200, {"job": self.studio.public(job)})
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             self._drain_refused_body(); return self._json(404, {"error":"Not found"})
-        except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError, UploadStorageError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc:
             if isinstance(exc, StudioError) and getattr(exc, "code", None): self._json(400, exc.response())
             else: self._json(400, {"error": str(exc)})
