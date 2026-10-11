@@ -12,6 +12,16 @@ The child command enables fatal-error dumps and explicitly enables RuntimeWarnin
 
 Default 600-second budget, explicit hosted 900-second override, sharding, nonzero exit handling, ResourceWarning failure and actual process-exit waiting are unchanged. No synthetic scanner, resource-forcing cleanup, GC-policy change, dependency addition, alternate test command or new publisher workflow is introduced.
 
+## Current Windows qualification — 11 October 2026
+
+The coordinator refreshed this branch onto main `1525089e`, preserving its original commits. Against the unchanged old guard at `82f1e6b2`, all seven real-subprocess regressions ran on Windows Python 3.14: five expected failures and two passing controls in 2.907 seconds. These cover the missing warning rejection, warning suppression and diagnostic enablement; no historical Linux run is substituted for this baseline.
+
+At integrated source `b6334056`, all seven regressions pass in 3.057 seconds. The existing guard (two), lifetime (13), shard (four) and atexit (four) tests also pass: 30 focused tests total, followed by repository validation (92 graphs/bindings, 176 pins, 3,810 tracked paths). Source and the shared helper stayed frozen during execution. The coordinator observed exclusive admission above 4 GiB free, terminal exit 0 and lease release.
+
+Independent Sol Medium and distinct Muse source reviews found no confirmed merge blocker. A non-blocking outer fixture-timeout descendant-cleanup concern is tracked in #1322; this focused run neither demonstrates that failure nor changes any lifetime budget. Current published-head full Linux/Windows qualification remains pending. Refs #1270 stays open: no cause or resolution of its historical signal-11 crash is established.
+
+The archive identities and older measurements below remain historical provenance, not current qualification claims. No installed runtime, generation, licensing or owner art acceptance was inferred.
+
 ## Source identity
 
 Local execution uses the supplied archive identified by ZIP comment `81c7f8479c77937e44a0d721249c498d866d484f`, not a full current-main clone. The two modified existing preimages were verified against immutable main `accc8604311d2fd2f7a9e0278d3b05c0e2e96ba1` and match that archive:
