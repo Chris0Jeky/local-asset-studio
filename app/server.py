@@ -1311,7 +1311,7 @@ class Studio:
         return {'comfy_root':str(self.comfy_root),'comfy_url':self.comfy_url,'models':models,'inputs':inputs,
                 'schema_sha256':fingerprint(schema),'node_classes':classes,'system':stats.get('system',{}),
                 'devices':stats.get('devices',[]),'measured_at':time.time(),'terms_note':preset.get('commercial_note'),
-                'verification':'Model content hashes cached only while size and modification time match; inputs rehashed before each stage. Schema hash excludes changing file-choice inventories.'}
+                'verification':'Pinned model bytes freshly hashed when preparing the plan; recorded model and input hashes checked afresh at execution admission. Schema hash excludes changing file-choice inventories.'}
 
     def node_contract(self, classes):
         schema={name:copy.deepcopy(self.node_info().get(name)) for name in classes}
@@ -1330,8 +1330,17 @@ class Studio:
         if fingerprint(schema)!=bundle['schema_sha256']:raise StudioError('The runtime node schema changed; create a new experiment branch')
         for record in bundle['models']:
             path=Path(record['path'])
-            if not path.is_file() or path.stat().st_size!=record['bytes'] or path.stat().st_mtime_ns!=record['mtime_ns']:
+            try:
+                before=path.stat()
+                if not path.is_file() or before.st_size!=record['bytes'] or before.st_mtime_ns!=record['mtime_ns']:
+                    raise StudioError('A pinned model changed; prepare a new branch before executing')
+                digest=digest_file(path);after=path.stat()
+            except OSError as exc:
+                raise StudioError('A pinned model changed or became unavailable; prepare a new branch before executing') from exc
+            identity=lambda info:(info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns)
+            if digest!=record['sha256'] or identity(before)!=identity(after):
                 raise StudioError('A pinned model changed; prepare a new branch before executing')
+        # shortcut: admission does not freeze engine-open bytes; snapshot if the runtime requires atomic identity.
         for record in bundle['inputs']:
             path=Path(record['path'])
             if not path.is_file() or digest_file(path)!=record['sha256']:raise StudioError('A pinned input changed; original plan preserved')
