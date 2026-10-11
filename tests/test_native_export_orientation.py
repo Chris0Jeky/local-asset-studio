@@ -148,9 +148,11 @@ class NativeOrientationTests(unittest.TestCase):
                             stack = ET.fromstring(archive.read('stack.xml'))
                         self.assertEqual((stack.get('w'), stack.get('h')), ('8', '12'))
                     else:
-                        with Image.open(target / 'atlas/atlas.png') as image:
-                            self.assertEqual(image.tobytes(), expected.tobytes())
                         manifest = json.loads((target / 'atlas/manifest.json').read_text())
+                        x, y, width, height = manifest['frames'][0]['region']
+                        with Image.open(target / 'atlas/atlas.png') as image:
+                            with image.crop((x, y, x + width, y + height)) as frame:
+                                self.assertEqual(frame.tobytes(), expected.tobytes())
                         self.assertEqual(manifest['anchor'], [4, 12])
                     if kind == 'godot':
                         self.assertTrue((target / 'godot/project.godot').is_file())
@@ -203,7 +205,7 @@ class ProductionOrientationTests(unittest.TestCase):
             payload = io.BytesIO(); image.save(payload, format='JPEG', exif=exif)
         studio = FakeStudio(self.root, [])
         asset = studio.import_image('oriented.jpg', 'image/jpeg', payload.getvalue())['asset']
-        with patch.object(studio, 'submit', side_effect=AssertionError('generation submitted')), \
+        with patch.object(studio, '_request', side_effect=AssertionError('backend contacted')), \
                 patch.object(native.godot, 'execute', side_effect=AssertionError('engine launched')):
             project = studio.production.native({'kind': 'godot', 'ids': [asset['id']],
                                                 'verify_engine': False})
