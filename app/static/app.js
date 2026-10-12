@@ -769,7 +769,7 @@ $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');upda
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
   // The whole Create surface stays interactive while uploads are in flight: snapshot the intent the operator pressed Generate for.
-  const started=selected,startedHash=recipeTemplateHash,startedStamp=window.StudioSetupDraft?.stamp(),intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
+  const started=selected,startedHash=recipeTemplateHash,startedStamp=parallaxState?window.StudioSetupDraft?.stamp():null,intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
   try{
     const reference=await uploadInput('reference'),lastReference=await uploadInput('lastReference');
     if(selected!==started||recipeTemplateHash!==startedHash)throw Error('The recipe changed while the source was uploading; nothing was submitted. Press Generate again.');
