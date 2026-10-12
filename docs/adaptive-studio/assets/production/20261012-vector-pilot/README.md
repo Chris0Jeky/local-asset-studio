@@ -2,6 +2,14 @@
 
 Two original source alternatives: `night-shift-workshop.svg` (1600×900 native geometry, 14 named layers) and `night-shift-pixel.svg` (320×180 integer pixel geometry, 11 named layers). No embedded raster, external image, font dependency, tracing or GPU submission. Open `review.html` for static rendering and explicitly requested restrained motion. The SVG files contain no animation or script.
 
+## Individual Chromium previews
+
+These PNGs are rendered previews of the unchanged editable masters, not source substitutions or art acceptance.
+
+![Workshop interpretation at 1200×675](night-shift-workshop-preview.png)
+
+![Pixel interpretation at integer 3× scale](night-shift-pixel-preview.png)
+
 The workshop retains the accepted MA's quiet left wall, right window, elevated train, cyan CRT and brass task light. It deliberately uses a cleaner illustrative finish; it does not reproduce the painted texture or claim pixel identity. The pixel study is a distinct low-resolution interpretation. Actual Chromium pixels were inspected at 390 and 1440 widths. Inspection found and corrected an opaque window occlusion and a hard light-pool edge. The pixel grid remains editable rectangles rather than a bitmap disguised as SVG.
 
 The preserved accepted-MA sharpening sheet is linked for comparison. Full-resolution Library MA materialization is blocked: the current supplied transfer helper calls `os.setxattr`, unavailable in Windows Python. No helper patch, invented URL or stripped metadata workaround was used. Full-resolution original comparison remains a gate.
