@@ -1,4 +1,4 @@
-let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null;
+let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null, backendInventoryPending=false;
 function renderRecovery(recovery={}) {
   $('#recoveryStatus').textContent=recovery.message || (recovery.enabled ? 'Runtime recovery is watching the selected backend.' : 'Runtime recovery is disabled.');
   $('#retryRecovery').hidden=!recovery.enabled || recovery.status!=='breaker-open';
@@ -45,8 +45,10 @@ async function refreshBackends() {
     renderRecovery(state.recovery);
     backendActive=state.active;$('#activeBackend').textContent=state.profiles.find(p=>p.active)?.name||'';
     updateReady();
-    if(changed){
-      if(typeof loadAtelier==='function')await loadAtelier();if(!current())return;
+    if(changed||backendInventoryPending){
+      backendInventoryPending=true;
+      if(typeof loadAtelier==='function')await loadAtelier(current);if(!current())return;
+      backendInventoryPending=false;
       // The catalogue redraw above ran before this inventory arrived, so the adapter selects and the already-drawn Vary buttons are still the previous backend's.
       if(selected&&typeof renderLoraSlots==='function'){const snapshot=backendEditorSnapshot();renderLoraSlots();restoreBackendEditor(snapshot);}
       if(typeof refreshCarriedVary==='function')refreshCarriedVary();

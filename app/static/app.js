@@ -6,7 +6,7 @@ const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
 const loraNameKey = key => key + '_name';
 const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','style_weight','pose_strength','depth_cut','sampler','scheduler'];
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, pinMismatchByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null, jobsEtag = null;
-let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
+let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [], atelierReadEpoch = 0;
 let continuationState = null, continuationSource = null;
 // Make seamless (#1220): the server's prepared tile plan, sent with Generate; any recipe change or reset drops it.
 let tileState = null;
@@ -201,12 +201,16 @@ function applyRecipe(recipe) {
   message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
   scheduleTimeEstimate(); recipeChanged();
 }
-async function loadAtelier() {
+async function loadAtelier(current = () => true) {
   // /api/options also warms the server's node schema, so the catalog's own
   // per-preset choices fill in on the next poll; until then this is the list.
-  try { installedLoras = (await api('/api/options')).loras || []; } catch (e) { installedLoras = []; }
-  try { knowledge = await api('/api/knowledge'); } catch (e) { knowledge = null; }
-  try { atelierRecipes = (await api('/api/recipes')).recipes || []; } catch (e) { atelierRecipes = []; }
+  const epoch = ++atelierReadEpoch;
+  let loras = [], nextKnowledge = null, recipes = [];
+  try { loras = (await api('/api/options')).loras || []; } catch (e) {}
+  try { nextKnowledge = await api('/api/knowledge'); } catch (e) {}
+  try { recipes = (await api('/api/recipes')).recipes || []; } catch (e) {}
+  if (epoch !== atelierReadEpoch || !current()) return;
+  installedLoras = loras; knowledge = nextKnowledge; atelierRecipes = recipes;
 }
 const NEGATIVE_COLLAPSE_KEY = 'studio-negative-collapsed';
 function negativeCollapsed() { try { return sessionStorage.getItem(NEGATIVE_COLLAPSE_KEY) === '1'; } catch (e) { return false; } }

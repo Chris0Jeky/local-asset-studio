@@ -1,6 +1,7 @@
 """Actual loopback transport for the shared document reducer and persistence."""
 import copy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from io import BytesIO
 import json
 from pathlib import Path
 import sys
@@ -8,6 +9,7 @@ import tempfile
 import threading
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -57,7 +59,7 @@ class ModuleHTTPTests(unittest.TestCase):
         try:
             with urlopen(request, timeout=5) as response: return response.status, json.load(response)
         except HTTPError as error:
-            return error.code, json.loads(error.read())
+            with error: return error.code, json.loads(error.read())
 
     def test_export_inspect_reduce_plan_and_commit_have_identical_hashes(self):
         status, exported = self.call('/modules/export', {'document': self.doc, 'step_id': 'pipeline'})
@@ -119,6 +121,18 @@ class ModuleHTTPTests(unittest.TestCase):
         self.assertEqual(status, 200, result)
         with self.workspace.connection() as db:
             self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='workflow_documents_v1'").fetchone())
+
+    def test_rejected_response_is_closed_after_read_or_parse_failure(self):
+        for raw in (b'{"error":"synthetic rejection"}', b'not json'):
+            with self.subTest(raw=raw):
+                error = HTTPError(self.origin, 400, 'Bad Request', {}, BytesIO(raw))
+                self.addCleanup(error.close)
+                with patch(__name__ + '.urlopen', side_effect=error):
+                    if raw.startswith(b'{'):
+                        self.assertEqual(self.call('/plan', {}), (400, {'error': 'synthetic rejection'}))
+                    else:
+                        with self.assertRaises(json.JSONDecodeError): self.call('/plan', {})
+                self.assertTrue(error.closed, 'The helper must close rejected response wrappers')
 
 
 if __name__ == '__main__':
