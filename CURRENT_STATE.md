@@ -1,5 +1,18 @@
 # Current state — 12 October 2026
 
+## Native-vector Night Shift source pilot — 12 October 2026
+
+Two editable alternatives remain separate from runtime: the detailed workshop and
+320×180 pixel interpretation in docs/adaptive-studio/assets/production/20261012-vector-pilot/.
+Actual Chromium pixels at phone and desktop widths were inspected; a covered
+window layer and hard light edge were corrected. The source SVGs are static and
+contain no raster embedding; their review page offers explicit restrained motion.
+Tracked-payload validation passes (92 graphs, 176 pins, 3,844 paths before this note).
+Full-resolution MA Library materialization is blocked by the supplied Windows
+xattr helper; its preserved accepted comparison sheet was inspected instead.
+Original selections and 44 deferrals remain unchanged. No acceptance flag, app
+activation, merge or deployment. Other foundation/motion application QA remains open.
+
 ## Native AMD Animagine execution — 12 October 2026
 
 Exactly one deliberately submitted `anime-animagine-quality` job completed on the installed native AMD RX 9070 XT runtime: job `dd0c1838-8b91-4a03-ac1d-57b0688ebed8`, prompt `144091d1-db6e-4db3-af34-3511b64616d8`, authored graph SHA256 `6230dc971484ec8e45fa83e1ec1d69f51678167d7343ac3d14197110eac795a0`. Fresh hashing matched the installed 6,938,350,040-byte checkpoint pin in 12.295s, with stable before/after file identity. ComfyUI 0.35.0, embedded Python 3.12.10 and Torch 2.9.1+rocm7.2.1 reported the AMD device under the runtime's `cuda:0` namespace. No model, package or driver was installed or upgraded.
