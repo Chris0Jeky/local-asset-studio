@@ -12,6 +12,7 @@ historical baseline; `source_graph_sha256` still names the bytes this derives fr
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -30,6 +31,38 @@ PROMPTS = {
 }
 SLOTS = (('4', '5'), ('16', '18'), ('17', '19'))
 LATENT_NODE = '20'
+
+
+def _publish_text(path, raw):
+    """Publish UTF-8 text atomically: sibling .tmp, fsync, replace, readback.
+
+    Same sibling-`.tmp` shape as scripts/civitai-fetch.py and
+    scripts/fetch-hf.py, plus an fsync before replacement and a readback
+    afterwards so a torn write can never leave truncated JSON at the target.
+    """
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target.with_name(target.name + '.tmp')
+    try:
+        with tmp.open('w', encoding='utf-8', newline='\n') as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        tmp.replace(target)
+        if target.read_text(encoding='utf-8') != raw:
+            raise ValueError(f'Published file failed readback: {target}')
+    except BaseException as exc:
+        try:
+            tmp.unlink(missing_ok=True)
+        except FileNotFoundError:
+            pass
+        except OSError as cleanup_error:
+            exc.add_note('Temporary publish file cleanup failed: ' + str(cleanup_error))
+        # When replacement never ran the original target is untouched; when
+        # readback failed the replacement already happened, so the target is
+        # left for inspection and never silently truncated by this helper.
+        raise
+    return target
 
 
 def geometry(graph, count):
@@ -70,8 +103,8 @@ def build(info):
         raw=json.dumps(graph,indent=2)+'\n'
         path=ROOT/api_path
         unchanged=path.exists() and path.read_text(encoding='utf-8')==raw
-        path.write_text(raw,encoding='utf-8')
-        (ROOT/visual_path).write_text(json.dumps(builder.visual(graph,title,info),indent=2)+'\n',encoding='utf-8')
+        _publish_text(path, raw)
+        _publish_text(ROOT/visual_path, json.dumps(builder.visual(graph,title,info),indent=2)+'\n')
         entry={'id':identifier,'name':title,'category':'Reference atelier','collection':'production-workspace',
                'family':'Qwen Image Edit 2511','modality':'image','graph':api_path,'visual':visual_path,
                'positive':['6','prompt'],'negative':['7','prompt'],'seed':['11','seed'],
@@ -96,7 +129,7 @@ def build(info):
         if unchanged and originals.get(identifier,{}).get('execution_note'): entry['execution_note']=originals[identifier]['execution_note']
         added.append(entry)
     catalog['presets']=[p for p in catalog['presets'] if p['id'] not in {p['id'] for p in added}]+added
-    (ROOT/'presets/catalog.json').write_text(json.dumps(catalog,indent=2)+'\n',encoding='utf-8')
+    _publish_text(ROOT/'presets/catalog.json', json.dumps(catalog,indent=2)+'\n')
     return added
 
 
