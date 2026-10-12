@@ -229,6 +229,17 @@ def run(screenshots):
                 v.keyboard.press('Escape');v.evaluate("showView('assets');openAsset('asset-1')");v.wait_for_selector('#assetDialog[open]');v.wait_for_timeout(200)
                 for control in ('#saveAssetDetails','#assetTrash'):check(v.evaluate(reachable,[control,'#assetDialog']),f'{control} is on screen when asset details open at {width}x{height}')
                 v.close()
+            # #1260 follow-up: the empty-library link and the footer ComfyUI link measured 17px tall; both now need a 44px hit box.
+            assets_saved=list(ASSETS);ASSETS.clear()
+            for width,height in ((1440,900),(390,844)):
+                v=browser.new_page(viewport={'width':width,'height':height});v.goto(origin+'/#home');v.wait_for_selector('#uxRecent .ux-empty > a')
+                empty_links=v.evaluate(hit,'#uxRecent .ux-empty > a');check(len(empty_links)==1,f'empty Overview has one library link at {width}x{height}')
+                for box in empty_links:check(box['w']>=44 and box['h']>=44,f"{box['name']} pointer target is {box['w']:.1f}x{box['h']:.1f} at {width}x{height}")
+                v.goto(origin+'/');v.wait_for_selector('.studio-shell footer > a')
+                footer_links=v.evaluate(hit,'.studio-shell footer > a');check(len(footer_links)==1,f'footer has one ComfyUI link at {width}x{height}')
+                for box in footer_links:check(box['w']>=44 and box['h']>=44,f"{box['name']} pointer target is {box['w']:.1f}x{box['h']:.1f} at {width}x{height}")
+                v.close()
+            ASSETS[:]=assets_saved
             blocked=browser.new_context(viewport={'width':1280,'height':900});blocked.add_init_script("Object.defineProperty(window, 'localStorage', {get(){throw new DOMException('Storage disabled','SecurityError')}})")
             b=blocked.new_page();b.goto(origin+'/#create');b.wait_for_function('!!selected && schemaAvailable');check(b.locator('#createView').is_visible(),'blocked localStorage does not break startup');blocked.close();browser.close()
         print(json.dumps({'passed':len(checks),'checks':checks,'post_paths':[x['path'] for x in POSTS],'fixture_data':True},indent=2))
