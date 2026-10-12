@@ -6,7 +6,7 @@ const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
 const loraNameKey = key => key + '_name';
 const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','style_weight','pose_strength','depth_cut','sampler','scheduler'];
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, pinMismatchByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null, jobsEtag = null;
-let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
+let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [], atelierReadEpoch = 0;
 let continuationState = null, continuationSource = null;
 // Make seamless (#1220): the server's prepared tile plan, sent with Generate; any recipe change or reset drops it.
 let tileState = null;
@@ -201,12 +201,16 @@ function applyRecipe(recipe) {
   message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
   scheduleTimeEstimate(); recipeChanged();
 }
-async function loadAtelier() {
+async function loadAtelier(current = () => true) {
   // /api/options also warms the server's node schema, so the catalog's own
   // per-preset choices fill in on the next poll; until then this is the list.
-  try { installedLoras = (await api('/api/options')).loras || []; } catch (e) { installedLoras = []; }
-  try { knowledge = await api('/api/knowledge'); } catch (e) { knowledge = null; }
-  try { atelierRecipes = (await api('/api/recipes')).recipes || []; } catch (e) { atelierRecipes = []; }
+  const epoch = ++atelierReadEpoch;
+  let loras = [], nextKnowledge = null, recipes = [];
+  try { loras = (await api('/api/options')).loras || []; } catch (e) {}
+  try { nextKnowledge = await api('/api/knowledge'); } catch (e) {}
+  try { recipes = (await api('/api/recipes')).recipes || []; } catch (e) {}
+  if (epoch !== atelierReadEpoch || !current()) return;
+  installedLoras = loras; knowledge = nextKnowledge; atelierRecipes = recipes;
 }
 const NEGATIVE_COLLAPSE_KEY = 'studio-negative-collapsed';
 function negativeCollapsed() { try { return sessionStorage.getItem(NEGATIVE_COLLAPSE_KEY) === '1'; } catch (e) { return false; } }
@@ -682,10 +686,10 @@ function beginParallax(result){
   updateReady();
 }
 // After a stage is queued, the other stage's words are loaded (never run): the second Generate is the owner's own press.
-async function afterParallaxSubmit(job,claim){
+async function afterParallaxSubmit(job,claim,stamp){
   if(claim.stage!=='plate'){message('Isolate edit queued. The Studio splits the layers when both edits complete; nothing else runs.');return;}
   const next=await post('/api/parallax/stage',{job_id:job.id,stage:'isolate'});
-  if(selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id)return;
+  if(!stamp||window.StudioSetupDraft?.stamp()!==stamp||selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id||parallaxState?.stage!==claim.stage){message('Clean plate queued. Current Create inputs were kept. Use Load the isolate edit on the clean plate card when ready.');return;}
   beginParallax(next);message('Clean plate queued. The isolate edit is loaded: check its words, then press Generate.');
 }
 // Prepare from the library's Make seamless: the rolled seam cross becomes this recipe's picture, the source its parent.
@@ -765,14 +769,14 @@ $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');upda
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
   // The whole Create surface stays interactive while uploads are in flight: snapshot the intent the operator pressed Generate for.
-  const started=selected,startedHash=recipeTemplateHash,intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
+  const started=selected,startedHash=recipeTemplateHash,startedStamp=parallaxState?window.StudioSetupDraft?.stamp():null,intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
   try{
     const reference=await uploadInput('reference'),lastReference=await uploadInput('lastReference');
     if(selected!==started||recipeTemplateHash!==startedHash)throw Error('The recipe changed while the source was uploading; nothing was submitted. Press Generate again.');
     uploaded=reference||uploaded;lastUploaded=lastReference||lastUploaded; // Bind the uploads only to the recipe they were made for.
     if(selected.reference&&uploaded)intent.controls.reference=uploaded;if(selected.last_reference&&lastUploaded)intent.controls.last_reference=lastUploaded;
     const job=await post('/api/jobs',intent);activeJobId=job.id;startedJobIds.add(job.id);message(job.message);
-    if(intent.parallax)try{await afterParallaxSubmit(job,intent.parallax);}catch(e){message('Queued. The next parallax edit could not be loaded: '+e.message+' Use Load the isolate edit on the clean plate card.',true);}
+    if(intent.parallax)try{await afterParallaxSubmit(job,intent.parallax,startedStamp);}catch(e){message('Queued. The next parallax edit could not be loaded: '+e.message+' Use Load the isolate edit on the clean plate card.',true);}
     await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };

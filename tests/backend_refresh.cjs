@@ -21,6 +21,28 @@ test('late catalogue preserves latest wording, cleared settings and focused nume
  f.pending[1].resolve({presets:[f.a,f.b]});await work;
  assert.equal(f.node('#positive').value,'latest typing');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.node('[data-key="steps"]').value,'11');assert.equal(f.context.document.activeElement,f.node('[data-key="steps"]'));assert.equal(f.writes.length,0);
 });
+
+test('a same-backend refresh takes over the still-uncommitted inventory read',async()=>{
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+ f.context.atelierReadEpoch=0;f.context.installedLoras=['previous.safetensors'];f.context.knowledge={backend:'previous'};f.context.atelierRecipes=[{id:'previous'}];
+ vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ const older=f.run();f.pending.at(-1).resolve(f.backend('A'));await f.tick();f.pending.at(-1).resolve({presets:[f.a,f.b]});await f.tick();
+ const held=f.pending.at(-1),newer=f.run();f.pending.at(-1).resolve(f.backend('A'));await f.tick();
+ f.pending.at(-1).resolve({loras:['current-A.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'current-A'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'current-A'}]});await newer;
+ held.resolve({loras:['A.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'A'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'A'}]});await older;
+ assert.deepEqual(Array.from(f.context.installedLoras),['current-A.safetensors']);assert.equal(f.context.knowledge.backend,'current-A');assert.equal(f.context.atelierRecipes[0].id,'current-A');
+});
+
+test('startup atelier reads yield to a newer inventory and current failures keep the existing empty fallback',async()=>{
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');f.context.atelierReadEpoch=0;
+ vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ const older=f.context.loadAtelier(),held=f.pending.at(-1),newer=f.context.loadAtelier();
+ f.pending.at(-1).resolve({loras:['B.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'B'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'B'}]});await newer;
+ held.resolve({loras:['A.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'A'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'A'}]});await older;
+ assert.deepEqual(Array.from(f.context.installedLoras),['B.safetensors']);assert.equal(f.context.knowledge.backend,'B');assert.equal(f.context.atelierRecipes[0].id,'B');
+ const failed=f.context.loadAtelier();for(let i=0;i<3;i++){f.pending.at(-1).reject(Error('unavailable'));await f.tick();}await failed;
+ assert.deepEqual(Array.from(f.context.installedLoras),[]);assert.equal(f.context.knowledge,null);assert.deepEqual(Array.from(f.context.atelierRecipes),[]);
+});
 test('recipe chosen during catalogue read remains the selected recipe',async()=>{
  const f=fixture();const {work}=await begin(f);f.context.selected=f.b;f.node('#positive').value='B wording';f.pending[1].resolve({presets:[f.a,f.b]});await work;assert.equal(f.context.selected.id,'b');assert.equal(f.node('#positive').value,'B wording');
 });
@@ -139,7 +161,7 @@ test('a backend switch rebuilds adapter slots and enables Vary for adapters the 
   f.context.q=sel=>f.context.document.querySelector(sel);
   f.context.escape=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   f.context.StudioContinuation=require('../app/static/continuation-core.js');
-  f.context.installedLoras=['qwen-only.safetensors'];
+  f.context.installedLoras=['qwen-only.safetensors'];f.context.atelierReadEpoch=0;
   f.context.jobs=[{id:'job-1',preset_id:'wai',status:'completed',outputs:[{asset_id:'asset-1',media_type:'image'}],controls:{lora:'1',lora_name:'primary-only.safetensors',lora2:'0',lora2_name:'primary-two.safetensors',sampler:'euler_ancestral',scheduler:'normal',cfg:'5',steps:'20'}}];
   f.context.assetState={assets:[{id:'asset-1',media_type:'image',preset_id:'wai',job_id:'job-1'}]};
   f.context.activeAsset=f.context.assetState.assets[0];
@@ -149,7 +171,7 @@ test('a backend switch rebuilds adapter slots and enables Vary for adapters the 
   const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
   const box=f.node('#loraSlots');
   box.querySelectorAll=function(sel){return sel==='select[data-key]'?slotSelects(this.innerHTML):[];};
-  vm.runInContext(cut(app,'const loraSlotKeys = ','const controlKeys = ')+cut(app,'const activeLoraSlots = () =>','function updateLoraHints')+cut(app,'async function loadAtelier()','const NEGATIVE_COLLAPSE_KEY')+cut(workbench,'  function element(tag,className,html)','  function announce')+cut(workbench,'  function varyMarkup','  after(\'renderJobs\',syncGalleryVary)'),f.context);
+  vm.runInContext(cut(app,'const loraSlotKeys = ','const controlKeys = ')+cut(app,'const activeLoraSlots = () =>','function updateLoraHints')+cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY')+cut(workbench,'  function element(tag,className,html)','  function announce')+cut(workbench,'  function varyMarkup','  after(\'renderJobs\',syncGalleryVary)'),f.context);
   f.context.renderLoraSlots();f.context.refreshCarriedVary();
   const staleSlots=box.innerHTML,staleGallery=card.querySelector('.ux-vary').innerHTML,staleAsset=holder.querySelector('.ux-vary').innerHTML;
   assert.match(staleSlots,/qwen-only\.safetensors/);assert.doesNotMatch(staleSlots,/primary-only\.safetensors/);
@@ -176,4 +198,24 @@ test('missing backend status reports incomplete without losing the draft',async(
  const work=f.run();f.pending[0].resolve(null);await work;
  assert.ok(f.node('#backendStatus').textContent.includes('incomplete'));
  assert.equal(f.node('#positive').value,'draft');
+});
+
+for(const stage of ['options','knowledge','recipes'])for(const failed of [false,true])test('superseded atelier '+stage+' '+(failed?'failure':'success')+' keeps the newer inventory',async()=>{
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+ f.context.atelierReadEpoch=0;
+ vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ const settle=async(request,value)=>{request.resolve(value);await f.tick();};
+ const inventory=id=>({options:{loras:[id+'.safetensors']},knowledge:{backend:id},recipes:{recipes:[{id}]}});
+ const a=inventory('A'),b=inventory('B');
+ const older=f.run();await settle(f.pending.at(-1),f.backend('A'));await settle(f.pending.at(-1),{presets:[f.a,f.b]});
+ for(const prior of ['options','knowledge','recipes']){if(prior===stage)break;await settle(f.pending.at(-1),a[prior]);}
+ const held=f.pending.at(-1),newer=f.run();await settle(f.pending.at(-1),f.backend('B'));await settle(f.pending.at(-1),{presets:[f.a,f.b]});
+ for(const part of ['options','knowledge','recipes'])await settle(f.pending.at(-1),b[part]);
+ await newer;
+ f.node('#positive').value='new B wording';f.node('[data-key="seed"]').value='';
+ if(failed)held.reject(Error('old inventory failed'));else held.resolve(a[stage]);await f.tick();
+ for(const part of ['options','knowledge','recipes'].slice(['options','knowledge','recipes'].indexOf(stage)+1))await settle(f.pending.at(-1),a[part]);
+ await older;
+ assert.deepEqual(Array.from(f.context.installedLoras),['B.safetensors']);assert.equal(f.context.knowledge?.backend,'B');assert.equal(f.context.atelierRecipes[0]?.id,'B');
+ assert.equal(f.node('#activeBackend').textContent,'B');assert.equal(f.node('#positive').value,'new B wording');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.writes.length,0);
 });
