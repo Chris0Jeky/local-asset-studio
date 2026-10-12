@@ -1,5 +1,15 @@
 # Current state — 12 October 2026
 
+## Automatic parallax handoff ownership — 12 October 2026
+
+After a clean-plate Generate press, the automatic isolate reply now adopts its settings only if the captured full Create stamp, recipe, plan and stage remain current. Edits made while either the job submission or stage reply is pending survive; the original queued job stays recorded once and the existing Load isolate action remains available. An unchanged editor still loads the isolate for the owner's next Generate press. Capture is limited to parallax submissions, preserving ordinary Generate's existing dependencies.
+
+Original source overwrote newer wording in a deferred job-response fixture. Corrected source `2326a0da` passes 30 deferred parallax schedules, all 10 ordinary Generate prompt contracts and the complete 33-check native HTTP/Chromium workshop run, including desktop/phone parallax controls and unchanged positive cases. Final independent Sol medium source review passed. The full lifetime gate passed 5,472 tests with 87 skips in 812.236 seconds, clean shutdown; guardian/packet time was 815.761 seconds. Validator passed 92 preset graphs/bindings, 176 pinned assets and 3,831 tracked paths.
+
+The initial full packet was interrupted by queue-order guidance after admission and is retained as nongreen scheduling evidence. The first complete gate at `d99fa828` failed one frontend contract because two ordinary Generate fixtures lacked a browser global; the conditional capture above corrected it. Failed and interrupted logs remain separate from the passing retry. Issue #1308 remains open for immediate applied-stage browser-draft persistence; explicit card loading is the separate held #1289 path. No model execution, owner art verdict or licensing decision was used for this repair. `HUMAN_TODO.md` remains authoritative.
+
+The earlier inventory repair PR #1334 is actually merged as `fe244f9cc02eeb3464e8745ca6cee8f4548df0d6` (12 October, 02:01:23 UTC), closing #1307. Its connector P2 failed-switch inventory finding was reproduced, replied to and tracked in #1336; the original review thread is resolved. No further fix cascade was added to that PR.
+
 ## Backend inventory ownership and HTTP fixture lifetime — 12 October 2026
 
 Issue #1307's overlapping backend refreshes now collect LoRA options, knowledge and recipes locally and commit them together only while both the inventory read and backend observation remain current. A same-backend successor takes over unfinished inventory work. Six deferred-response schedules failed against the original source while 23 existing checks passed; the corrected 31 Node checks pass. Native HTTP Chromium checks pass at 1440 and 390 px, preserving wording, blank settings, focus, File identity and reference lineage without submitting a generation. Independent Sol Medium source review passed after the same-backend edge was corrected.
