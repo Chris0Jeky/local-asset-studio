@@ -18,9 +18,13 @@ One deliberately submitted Studio job completed on the installed AMD runtime. Th
 | Execution time | Native engine 17.42 s; Studio job 18.478 s; activation/hash/job/shutdown packet 95.049 s |
 | Output | `Anime-Animagine-Portrait_00002_.png`, RGB PNG, 1,392,418 bytes |
 | Output SHA-256 | `d9dc8968f1ac3c796dc6e1b595929c9e40cbfca435612f73632d0f9caa520bc3` |
-| Submitted graph file SHA-256 | `47eeb30fbb2f7272cefe3b2e277601da06e959e474ba6f0d72b0fbd382d73cf6` |
+| Raw submitted graph file SHA-256 (CRLF) | `47eeb30fbb2f7272cefe3b2e277601da06e959e474ba6f0d72b0fbd382d73cf6` |
+| Committed graph text SHA-256 (LF) | `f26d7d76ef4cccde046da9506db3777dde81b2adfdbb7621a8db678cd0245924` |
+| Canonical submitted JSON SHA-256 | `714c30684fb917be1c2c4e315512cfa32a87ad5bd22027ad2f7ca209bb0a9005` |
 
 The [recipe](recipe.json) records the complete submitted controls, references and parents. The [submitted workflow](submitted-workflow.json) retains the seven-node compiled graph: Studio removed the two disabled LoRA nodes from the nine-node authored graph. No input image, private source artwork or model binary was used or committed here. The original output and raw runtime records remain outside Git in the local maintenance evidence folder.
+
+Git normalizes text line endings, so the raw run file and committed text have distinct byte hashes while parsing to the same graph. The canonical hash uses UTF-8 `json.dumps(graph, sort_keys=True, separators=(',', ':'), ensure_ascii=False)`; it is identical for both records.
 
 Agent visual inspection opened the output: a silver-haired elf in an embroidered blue robe, side profile with downcast/closed eyes and a soft bright background. No hands were visible; no obvious text or watermark was observed. This is technical inspection, not an owner verdict.
 
