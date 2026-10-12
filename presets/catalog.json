@@ -1873,7 +1873,7 @@
       "category": "Anime quality",
       "graph": "workflows/api/anime-animagine-quality-api.json",
       "visual": "workflows/comfyui/22 - Anime Animagine Portrait.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Animagine publisher source: cagliostrolab/animagine-xl-4.0. Check the model and reference-image terms before publishing.",
       "positive": [
         "2",
@@ -1963,7 +1963,7 @@
       },
       "modality": "image",
       "family": "Animagine XL 4.0",
-      "description": "Prepared, schema-checked; not rendered. Adult character portrait at 832 x 1216, Euler ancestral, CFG 5, the author's tag order and two optional LoRA slots. See docs/ANIME-QUALITY.md.",
+      "description": "One portrait run verified at 832 x 1216, 28 Euler ancestral steps and CFG 5, with both optional LoRAs off. Adult character portrait with the author's tag order and two optional LoRA slots. Enabled adapters and other variants remain untested. See docs/ANIME-QUALITY.md.",
       "stages": [
         "Animagine 4.0 Opt checkpoint",
         "2 optional style LoRA slots",
@@ -2002,7 +2002,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
+      "execution_note": "Executed 2026-10-12 on native AMD RX 9070 XT; job dd0c1838-8b91-4a03-ac1d-57b0688ebed8, prompt 144091d1-db6e-4db3-af34-3511b64616d8, authored graph SHA256 6230dc971484ec8e45fa83e1ec1d69f51678167d7343ac3d14197110eac795a0. One 832x1216 portrait, seed 2026101201, 28 steps, CFG 5, optional LoRAs disabled; Studio time 18.478s. Output opened and inspected. Recipe, compiled graph and limits: experiments/curated/amd-animagine-20261012/README.md. Art and licence acceptance remain separate."
     },
     {
       "id": "anime-refine",
