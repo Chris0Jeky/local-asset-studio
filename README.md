@@ -1,6 +1,6 @@
 # Local Asset Studio
 
-<p align="center"><img src="docs/assets/hero.svg" alt="local-asset-studio" width="100%"></p>
+<p align="center"><img src="docs/assets/local-asset-studio-loop.svg" alt="local-asset-studio workflow, animated" width="100%"></p>
 
 **A local-first studio on top of ComfyUI that keeps each generated asset tied to the recipe, references and evidence that produced it.**
 
