@@ -1,5 +1,7 @@
 # Local Asset Studio
 
+<p align="center"><img src="docs/assets/hero.svg" alt="local-asset-studio" width="100%"></p>
+
 **A local-first studio on top of ComfyUI that keeps each generated asset tied to the recipe, references and evidence that produced it.**
 
 [![Check studio](https://github.com/Chris0Jeky/local-asset-studio/actions/workflows/check.yml/badge.svg)](https://github.com/Chris0Jeky/local-asset-studio/actions/workflows/check.yml)
@@ -80,6 +82,8 @@ Everything below exists in the code. Where a feature is only partly proven, the 
 - Opt-in runtime recovery for the selected ComfyUI backend (`app/runtime_recovery.py`). It is off unless `runtime_auto_recover` is set.
 
 ## Architecture
+
+<p align="center"><img src="docs/assets/architecture.svg" alt="local-asset-studio architecture" width="100%"></p>
 
 ```mermaid
 flowchart LR
@@ -275,17 +279,4 @@ Open work is tracked in [GitHub issues](https://github.com/Chris0Jeky/local-asse
 
 - [Start here: first image walkthrough](docs/START-HERE.md)
 - [Product direction](docs/PRODUCT_DIRECTION.md) and [strategy bundle](docs/strategy/README.md)
-- [Status by goal](docs/STATUS.md) and [current state](CURRENT_STATE.md)
-- [Operations](docs/OPERATIONS.md): local installation, GPU lease, troubleshooting, adding presets and models
-- [Workspace](docs/WORKSPACE.md) and [Review desk](docs/REVIEW-DESK.md)
-- [Reference Atelier](docs/REFERENCE-ATELIER.md) and [Style + Pose](docs/STYLE-AND-POSE.md)
-- [Workflow Lab](docs/WORKFLOW-LAB.md) and [Experiments](docs/EXPERIMENTS.md)
-- [Anime and fantasy atelier](docs/ANIME-FANTASY-ATELIER.md), [Anime quality](docs/ANIME-QUALITY.md) and [Anime detailing](docs/ANIME-DETAILING.md)
-- [HiDream O1](docs/HIDREAM.md), [MiniMax H3 on Windows](docs/H3-WINDOWS.md) and [Qwen-Image 2.1](docs/QWEN-IMAGE-21.md)
-- [Native exports](docs/NATIVE-EXPORTS.md) and [Krita round trip](docs/KRITA-ROUNDTRIP.md)
-- [Model intake](docs/MODEL-INTAKE.md) and [model requirements](docs/MODEL-REQUIREMENTS.md)
-- [Agent tooling](docs/AGENT-TOOLING.md) and [owner choices](HUMAN_TODO.md)
-
-## Licence
-
-No `LICENSE` file is committed, so the code has no open-source licence. Do not reuse it without asking. Generated media and models have their own terms, as described above.
+- [Status by goal](docs/STATUS.md) and [current state](CURRENT_STATE.[+1070 bytes at .content[1].resource.text]
