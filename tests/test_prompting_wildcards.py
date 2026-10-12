@@ -3,6 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
+
 SPEC = importlib.util.spec_from_file_location("asset_prompting_wildcards", Path(__file__).parents[1] / "app/prompting.py")
 prompting = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(prompting)
 
@@ -30,6 +32,13 @@ class PromptingWildcardsTests(unittest.TestCase):
         text = "{" + big + "|" + big + "}"
         with self.assertRaises(ValueError):
             prompting.expand(text, _StubRng(), self.root)
+
+
+def test_expand_limit_raises():
+    big = "y" * (prompting.LIMIT + 1)
+    text = "{" + big + "|" + big + "}"
+    with pytest.raises(ValueError):
+        prompting.expand(text, _StubRng())
 
 
 if __name__ == "__main__": unittest.main()
