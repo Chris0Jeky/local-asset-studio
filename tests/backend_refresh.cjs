@@ -22,14 +22,15 @@ test('late catalogue preserves latest wording, cleared settings and focused nume
  assert.equal(f.node('#positive').value,'latest typing');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.node('[data-key="steps"]').value,'11');assert.equal(f.context.document.activeElement,f.node('[data-key="steps"]'));assert.equal(f.writes.length,0);
 });
 
-test('a refresh without a catalogue change still supersedes an outstanding inventory read',async()=>{
+test('a same-backend refresh takes over the still-uncommitted inventory read',async()=>{
  const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
  f.context.atelierReadEpoch=0;f.context.installedLoras=['previous.safetensors'];f.context.knowledge={backend:'previous'};f.context.atelierRecipes=[{id:'previous'}];
  vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
  const older=f.run();f.pending.at(-1).resolve(f.backend('A'));await f.tick();f.pending.at(-1).resolve({presets:[f.a,f.b]});await f.tick();
- const held=f.pending.at(-1),newer=f.run();f.pending.at(-1).resolve(f.backend('A'));await newer;
+ const held=f.pending.at(-1),newer=f.run();f.pending.at(-1).resolve(f.backend('A'));await f.tick();
+ f.pending.at(-1).resolve({loras:['current-A.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'current-A'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'current-A'}]});await newer;
  held.resolve({loras:['A.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'A'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'A'}]});await older;
- assert.deepEqual(Array.from(f.context.installedLoras),['previous.safetensors']);assert.equal(f.context.knowledge.backend,'previous');assert.equal(f.context.atelierRecipes[0].id,'previous');
+ assert.deepEqual(Array.from(f.context.installedLoras),['current-A.safetensors']);assert.equal(f.context.knowledge.backend,'current-A');assert.equal(f.context.atelierRecipes[0].id,'current-A');
 });
 
 test('startup atelier reads yield to a newer inventory and current failures keep the existing empty fallback',async()=>{
