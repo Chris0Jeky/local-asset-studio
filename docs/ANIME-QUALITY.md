@@ -8,7 +8,7 @@ Open **Asset Studio** from the desktop (http://127.0.0.1:8191), refresh the page
 - **Anime Animagine Portrait**: Animagine XL 4.0 Opt, same composition, 28 steps, CFG 5. Its author documents these sampler/CFG/step defaults. Use this as an alternative aesthetic, not merely a fallback.
 - **Anime Refine 1.5x**: upload your chosen image, paste its original prompt and negative prompt, then generate. Defaults to WAI and 0.22 denoise. For an Animagine source, use workflow 23 in ComfyUI and switch its checkpoint to Animagine first.
 
-These are intended for clearly adult, non-explicit character art and costume exploration. All use your existing local models. No new generation was submitted while preparing them. The presets are deliberately marked not rendered; earlier versions of the base WAI and Animagine graphs have run successfully.
+These are intended for clearly adult, non-explicit character art and costume exploration. All use your existing local models. On 12 October 2026, the current Animagine portrait graph completed one native AMD run at 832 x 1216, 28 steps and CFG 5 with both optional LoRAs off. Its execution badge now records that exact graph; enabled adapters and other variants remain untested. The [curated recipe and graph evidence](../experiments/curated/amd-animagine-20261012/README.md) records the output, timing and memory observations. Art and licence acceptance remain separate owner decisions.
 
 For deeper control, ComfyUI at http://127.0.0.1:8188 has saved workflows **21 through 24**. Find them in its Workflows sidebar. The same editable JSON files are in `workflows/comfyui/`; API JSON under `workflows/api/` is for scripts, not the ordinary canvas importer.
 
@@ -87,6 +87,6 @@ Local status and logs are kept outside Git, under the original workspace's `work
 - [FLUX.2 GGUF model card](https://huggingface.co/city96/FLUX.2-dev-gguf): encoder/VAE dependencies and quantizations.
 - [Xinsir Union model card](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0): multi-condition model for future control workflows.
 
-All four graphs were checked against the running ComfyUI node schemas, available checkpoint names, enum values and link types. The Studio catalog exposes all three new presets. Nine regression tests and the catalog validator passed. **No new images were generated or accepted for quality**, per your request to leave experiments to you. Download completion and inference are separate states.
+At their original preparation, all four graphs were checked against the running ComfyUI node schemas, available checkpoint names, enum values and link types; nine regression tests and the catalog validator passed. No images were generated or accepted at that preparation. The 12 October 2026 Animagine run above is later execution evidence. Download completion, inference and owner acceptance are separate states.
 
 [HUMAN_TODO.md](../HUMAN_TODO.md) still contains optional creative choices. Pick what looks best to you; successful execution is not subjective approval.

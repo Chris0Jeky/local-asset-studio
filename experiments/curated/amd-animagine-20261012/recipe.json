@@ -1,0 +1,20 @@
+{
+  "preset_id": "anime-animagine-quality",
+  "controls": {
+    "positive": "1girl, original, safe, solo, adult woman, mature female, elven sorceress, long silver hair, pointy ears, embroidered blue robe, upper body, relaxed pose, soft lighting, simple background, masterpiece, high score, great score, absurdres",
+    "seed": 2026101201,
+    "width": 832,
+    "height": 1216,
+    "steps": 28,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\anime-animagine-quality-api.json",
+  "created_at": 1791769322.5282378,
+  "references": [],
+  "parent_assets": []
+}
