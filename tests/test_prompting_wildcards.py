@@ -37,4 +37,11 @@ class PromptingWildcardsTests(unittest.TestCase):
             prompting.expand(text, _StubRng(), self.root)
 
 
+    def test_expand_limit_raises(self):
+        big = "y" * (prompting.LIMIT + 1)
+        text = "{" + big + "|" + big + "}"
+        with self.assertRaises(ValueError):
+            prompting.expand(text, _StubRng())
+
+
 if __name__ == "__main__": unittest.main()
