@@ -1,4 +1,12 @@
-# Current state — 27 September 2026
+# Current state — 12 October 2026
+
+## Backend inventory ownership and HTTP fixture lifetime — 12 October 2026
+
+Issue #1307's overlapping backend refreshes now collect LoRA options, knowledge and recipes locally and commit them together only while both the inventory read and backend observation remain current. A same-backend successor takes over unfinished inventory work. Six deferred-response schedules failed against the original source while 23 existing checks passed; the corrected 31 Node checks pass. Native HTTP Chromium checks pass at 1440 and 390 px, preserving wording, blank settings, focus, File identity and reference lineage without submitting a generation. Independent Sol Medium source review passed after the same-backend edge was corrected.
+
+The first full run passed 5,471 assertions with 87 skips but failed its resource-lifetime guard on eight unclosed HTTP-error response warnings. The unchanged workflow-module HTTP fixture reproduced all eight warnings in four tests. A closure regression failed for both successful error-body parsing and parse failure; closing the response wrapper made all five fixture tests pass without warnings. At source `03cc00591c87f956b6a735f8fbea7054085b9817`, the complete lifetime run passed 5,472 tests with 87 skips in 824.750 seconds, with clean shutdown and no resource warnings; repository validation passed. The first failure remains preserved in the external campaign's `gate-attempt1/` receipt.
+
+Evidence is outside Git at `C:/Users/jekyt/Documents/Codex/2026-10-12/c/outputs/maintenance-20261012/local-asset-studio/`. The primary checkout and shared worker trees were preserved. A separate AMD recipe proof remains queued; generation, artistic acceptance and model terms are distinct. `HUMAN_TODO.md` retains the owner's creative and licensing choices.
 
 ## Overnight reconciliation — 11 October 2026
 
