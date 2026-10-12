@@ -25,6 +25,11 @@ class PromptingWildcardsTests(unittest.TestCase):
         self.assertIn("__typo__", result)
         self.assertTrue(result.strip() != "")
 
+    def test_unknown_wildcard_left_literal(self):
+        empty = Path(self.tmp.name) / "empty-root"
+        (empty / "presets/wildcards").mkdir(parents=True)
+        self.assertEqual(prompting.expand("__nosuch__ hello", _StubRng(), empty), "__nosuch__ hello")
+
     def test_over_limit_expansion_raises(self):
         big = "y" * (prompting.LIMIT + 1)
         text = "{" + big + "|" + big + "}"
