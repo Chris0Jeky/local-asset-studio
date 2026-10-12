@@ -1422,6 +1422,7 @@ async function seamlessTileSubmitsTheServerPlan() {
 // stage, so the second edit is a second press; any recipe change drops the plan; a stage card offers the one next step.
 async function parallaxStagesAreTwoOwnerPresses() {
   const {element, requests, run, parents, context} = sandbox(null, null);
+  installSetupStamp(run);
   const file = 'f'.repeat(32) + '_room.png';
   const plan = {version: 1, plan_id: 'b'.repeat(64), preset_id: 'parallax-route', source_asset_id: 'source-asset', source_sha256: 'a'.repeat(64), source_file: file, width: 1344, height: 768, objects: 'the desk', view_polygons: []};
   const stage = name => ({plan, claim: {...plan, stage: name}, stage: name, stage_name: name === 'plate' ? 'clean plate' : 'isolate', words: name + ' words for the desk', file, width: 1344, height: 768, preset_id: 'parallax-route', context: {title: 'Room'}, flag: 'The view mask is yours, not detected.'});
@@ -1465,6 +1466,65 @@ async function parallaxStagesAreTwoOwnerPresses() {
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
   assert.equal(run('selected.id'), 'parallax-route'); assert.equal(run('parallaxState.stage'), 'isolate');
   assert.equal(jobs().length, 2, 'splitting or loading a stage never submits a generation');
+}
+
+function installSetupStamp(run) {
+  const source = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
+  const functions = ['workbenchStamp', 'setupStamp'].map(name => source.match(new RegExp('  function ' + name + '\\(\\)\\{.*\\}'))[0]).join('\n');
+  run('const q=$;let selectionEpoch=0;' + functions + ';window.StudioSetupDraft={stamp:setupStamp};');
+}
+
+async function parallaxLateRepliesKeepCreateEdits() {
+  const edits = {
+    wording: "$('#positive').value='Newer wording'",
+    cleared: "$('#positive').value=''",
+    seed: "getControl('seed').value='77'",
+    size: "getControl('width').value='512'",
+    batch: "$('#batch').value='3'",
+    source: "uploaded='new-source.png'",
+    localFile: "$('#reference').files=[{name:'new.png',size:11,lastModified:12}]",
+    lineage: "parentAssets=['new-parent'];parentByInput={reference:'new-parent'}",
+    attachment: "referenceEpoch++",
+    backend: "backendActive='other'",
+    graph: "recipeTemplateHash='new-graph'",
+    recipe: "selectPreset('plain')",
+    plan: "parallaxState.plan_id='new-plan'",
+    stage: "parallaxState.stage='isolate'",
+    missingCapture: "delete window.StudioSetupDraft",
+  };
+  for (const waitAt of ['/api/jobs', '/api/parallax/stage']) for (const [name, edit] of Object.entries(edits)) {
+    const {element, requests, run, context} = sandbox(null, null);
+    installSetupStamp(run);
+    run("var backendActive='primary';catalog.presets.push({id:'parallax-route',name:'Parallax layers',modality:'image',parallax_route:true,reference:['14','image'],positive:['4','text'],seed:['10','seed'],width:['10','width'],height:['10','height'],defaults:{}})");
+    const plan = {plan_id:'old-plan',preset_id:'parallax-route',source_asset_id:'source-asset'};
+    const stage = {plan,claim:{...plan,stage:'plate'},stage:'plate',words:'plate words',file:'source.png',width:1344,height:768,preset_id:'parallax-route',flag:'fixture'};
+    run('beginParallax(' + JSON.stringify(stage) + ')');
+    const original = JSON.parse(run('JSON.stringify(values())'));
+    let release;
+    const fetched = context.fetch;
+    context.fetch = async (url, options) => {
+      if (url === '/api/parallax/stage') {
+        requests.push({url,data:JSON.parse(options.body)});
+        if (waitAt === url) await new Promise(resolve => {release=resolve;});
+        return {ok:true,json:async()=>({...stage,claim:{...plan,stage:'isolate'},stage:'isolate',words:'isolate words'})};
+      }
+      const reply = await fetched(url, options);
+      if (waitAt === url) await new Promise(resolve => {release=resolve;});
+      return reply;
+    };
+    const pending = element('#generate').onclick();
+    await flush();assert.equal(typeof release, 'function', waitAt + ' is actually pending');
+    run(edit);
+    const before = run('JSON.stringify([setupStamp(),parallaxState])');
+    release();await pending;
+    assert.equal(run('JSON.stringify([setupStamp(),parallaxState])'), before, waitAt + ': ' + name + ' survives the late handoff');
+    const submitted = requests.filter(row => row.url === '/api/jobs');
+    assert.equal(submitted.length, 1, 'never replay the queued job');
+    assert.deepEqual(submitted[0].data.controls, original, 'the queued job retains the original Create intent');
+    assert.equal(run('activeJobId'), 'child-job');
+    assert.match(element('#status').textContent, /Load the isolate edit/, 'the manual next action remains available');
+  }
+  console.log('Parallax late replies preserve Create edits across both submission waits (30 schedules).');
 }
 
 (async () => {
@@ -1529,6 +1589,7 @@ async function parallaxStagesAreTwoOwnerPresses() {
   await windowsInventoryStatusMatchesCaseAndSeparators();
   await seamlessTileSubmitsTheServerPlan();
   await parallaxStagesAreTwoOwnerPresses();
+  await parallaxLateRepliesKeepCreateEdits();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
 

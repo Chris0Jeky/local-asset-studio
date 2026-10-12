@@ -686,10 +686,10 @@ function beginParallax(result){
   updateReady();
 }
 // After a stage is queued, the other stage's words are loaded (never run): the second Generate is the owner's own press.
-async function afterParallaxSubmit(job,claim){
+async function afterParallaxSubmit(job,claim,stamp){
   if(claim.stage!=='plate'){message('Isolate edit queued. The Studio splits the layers when both edits complete; nothing else runs.');return;}
   const next=await post('/api/parallax/stage',{job_id:job.id,stage:'isolate'});
-  if(selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id)return;
+  if(!stamp||window.StudioSetupDraft?.stamp()!==stamp||selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id||parallaxState?.stage!==claim.stage){message('Clean plate queued. Current Create inputs were kept. Use Load the isolate edit on the clean plate card when ready.');return;}
   beginParallax(next);message('Clean plate queued. The isolate edit is loaded: check its words, then press Generate.');
 }
 // Prepare from the library's Make seamless: the rolled seam cross becomes this recipe's picture, the source its parent.
@@ -769,14 +769,14 @@ $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');upda
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
   // The whole Create surface stays interactive while uploads are in flight: snapshot the intent the operator pressed Generate for.
-  const started=selected,startedHash=recipeTemplateHash,intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
+  const started=selected,startedHash=recipeTemplateHash,startedStamp=window.StudioSetupDraft?.stamp(),intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
   try{
     const reference=await uploadInput('reference'),lastReference=await uploadInput('lastReference');
     if(selected!==started||recipeTemplateHash!==startedHash)throw Error('The recipe changed while the source was uploading; nothing was submitted. Press Generate again.');
     uploaded=reference||uploaded;lastUploaded=lastReference||lastUploaded; // Bind the uploads only to the recipe they were made for.
     if(selected.reference&&uploaded)intent.controls.reference=uploaded;if(selected.last_reference&&lastUploaded)intent.controls.last_reference=lastUploaded;
     const job=await post('/api/jobs',intent);activeJobId=job.id;startedJobIds.add(job.id);message(job.message);
-    if(intent.parallax)try{await afterParallaxSubmit(job,intent.parallax);}catch(e){message('Queued. The next parallax edit could not be loaded: '+e.message+' Use Load the isolate edit on the clean plate card.',true);}
+    if(intent.parallax)try{await afterParallaxSubmit(job,intent.parallax,startedStamp);}catch(e){message('Queued. The next parallax edit could not be loaded: '+e.message+' Use Load the isolate edit on the clean plate card.',true);}
     await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };
