@@ -22,7 +22,7 @@ One deliberately submitted Studio job completed on the installed AMD runtime. Th
 | Committed graph text SHA-256 (LF) | `f26d7d76ef4cccde046da9506db3777dde81b2adfdbb7621a8db678cd0245924` |
 | Canonical submitted JSON SHA-256 | `714c30684fb917be1c2c4e315512cfa32a87ad5bd22027ad2f7ca209bb0a9005` |
 
-The [recipe](recipe.json) records the complete submitted controls, references and parents. The [submitted workflow](submitted-workflow.json) retains the seven-node compiled graph: Studio removed the two disabled LoRA nodes from the nine-node authored graph. No input image, private source artwork or model binary was used or committed here. The original output and raw runtime records remain outside Git in the local maintenance evidence folder.
+The [recipe](recipe.json) records the complete submitted controls, references and parents. The [submitted workflow](submitted-workflow.json) retains the seven-node compiled graph: Studio removed the two disabled LoRA nodes from the nine-node authored graph. No input image or private source artwork was used. The listed checkpoint binary was used for inference; model binaries and output artwork are not committed here. The original output and raw runtime records remain outside Git in the local maintenance evidence folder.
 
 Git normalizes text line endings, so the raw run file and committed text have distinct byte hashes while parsing to the same graph. The canonical hash uses UTF-8 `json.dumps(graph, sort_keys=True, separators=(',', ':'), ensure_ascii=False)`; it is identical for both records.
 
