@@ -25,6 +25,7 @@ def path_key(value):
 
 def valid_fingerprint(record, size, mtime_ns):
     """A damaged cache is a miss, never pin evidence. This remains a stat cache."""
+    if isinstance(record, dict) and record.get('digest_unavailable'): return False
     return (isinstance(record, dict) and type(record.get('bytes')) is int
             and type(record.get('mtime_ns')) is int and record['bytes'] == size
             and record['mtime_ns'] == mtime_ns and isinstance(record.get('sha256'), str)
@@ -44,10 +45,15 @@ def declared_path(value):
     return path.as_posix()
 
 
-def pin_mismatch(asset, observed_bytes, observed_sha256=None):
+def pin_mismatch(asset, observed_bytes, observed_sha256=None, digest_unavailable=False):
     """Compare observed size (and digest, when one exists) with one exact-path pin. None when unpinned or agreeing."""
     try: validate_pins(asset)
     except (ValueError, TypeError): return None
+    if digest_unavailable:
+        note = (f"Content verification unavailable for library pin {asset['id']}: file changed while hashing so its digest is unavailable; "
+                f"pinned sha256 {asset['sha256']} ({asset['bytes']} bytes), observed sha256 unavailable ({observed_bytes} bytes); {PIN_FIX}.")
+        return {'asset_id': asset['id'], 'pinned_sha256': asset['sha256'], 'observed_sha256': None,
+                'pinned_bytes': asset['bytes'], 'observed_bytes': observed_bytes, 'note': note}
     if observed_bytes == asset['bytes'] and observed_sha256 in (None, asset['sha256']): return None
     observed = observed_sha256 or 'not hashed on a readiness poll'
     note = (f"Content differs from library pin {asset['id']}: pinned sha256 {asset['sha256']} ({asset['bytes']} bytes), "
@@ -61,7 +67,8 @@ def cached_pin_mismatch(asset, stamp, record):
     if stamp is None: return None
     size, mtime_ns = stamp
     fresh = valid_fingerprint(record, size, mtime_ns)
-    return pin_mismatch(asset, size, record['sha256'] if fresh else None)
+    unavailable = isinstance(record, dict) and bool(record.get('digest_unavailable'))
+    return pin_mismatch(asset, size, record['sha256'] if fresh else None, digest_unavailable=unavailable)
 
 
 def _presence(root, relative, observations):
