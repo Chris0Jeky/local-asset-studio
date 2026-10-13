@@ -7,8 +7,20 @@
   'use strict';
   const names={plate:'clean plate',isolate:'isolate'};
   const fields=['version','plan_id','preset_id','source_asset_id','source_sha256','source_file','width','height','objects','view_polygons'];
+  const activeSiblings=['queued','waiting','submitting','running','uncertain'];
   const identity=claim=>JSON.stringify(fields.map(key=>claim?.[key]));
   const need=(condition,text)=>{if(!condition)throw Error(text);};
+  function siblingNote(job,list){
+    const plan=job?.parallax?.plan_id;
+    if(!plan||!Array.isArray(list))return '';
+    const active=list.filter(entry=>entry&&entry.id!==job.id&&entry.parallax?.plan_id===plan&&activeSiblings.includes(entry.status));
+    if(!active.length)return '';
+    return ' '+active.map(entry=>{
+      const label=names[entry.parallax?.stage]||String(entry.parallax?.stage||'edit');
+      if(entry.status==='uncertain')return 'The '+label+' edit is uncertain. Inspect the original job and do not repeat it.';
+      return 'The '+label+' edit is '+entry.status+'. Wait for the original job before generating.';
+    }).join(' ');
+  }
   function render(job,output,original,escape){
     if(output?.parallax||job?.status!=='completed'||!Object.hasOwn(names,job.parallax?.stage))return original;
     const missing=Object.keys(names).filter(stage=>!original.includes('data-stage="'+stage+'"'));
@@ -16,6 +28,7 @@
   }
   function create(options){
     let pending=false;
+    const currentJobs=()=>typeof options.jobs==='function'?options.jobs():[];
     function ready(id,stage){
       need(Object.hasOwn(names,stage),'Choose the clean plate or isolate stage.');
       const job=options.job(id);
@@ -36,13 +49,14 @@
       if(pending)return false;
       pending=true;
       try{
-        const expected=identity(ready(id,stage).parallax),stamp=options.stamp();
-        if(!options.confirm('Load the '+names[stage]+' edit? This replaces the current Create settings. Nothing runs until you press Generate.'))return false;
+        const source=ready(id,stage),expected=identity(source.parallax),stamp=options.stamp();
+        const before=siblingNote(source,currentJobs());
+        if(!options.confirm('Load the '+names[stage]+' edit? This replaces the current Create settings. Nothing runs until you press Generate.'+before))return false;
         need(identity(ready(id,stage).parallax)===expected&&options.stamp()===stamp,'Create or the source plan changed. Nothing was replaced.');
         const result=await options.request({job_id:id,stage});
         need(identity(ready(id,stage).parallax)===expected&&options.stamp()===stamp,'Create or the source plan changed. Nothing was replaced.');
         checkResponse(result,expected,stage);
-        options.apply(result);
+        options.apply(result,siblingNote(options.job(id),currentJobs()));
         return true;
       }finally{pending=false;}
     }};
@@ -59,10 +73,11 @@
       stamp:()=>JSON.stringify([owner.stamp(),parallaxState,tileState]),
       busy:()=>owner.busy()||!!continuationState||!!root.document.querySelector('dialog[open]'),
       job:id=>jobs.find(job=>job.id===id),
+      jobs:()=>jobs,
       available:job=>{const target=catalog?.presets.find(p=>p.id===job.parallax.preset_id&&p.parallax_route);return !!target&&(target.backend_id||'primary')===backendActive;},
       confirm:text=>root.confirm(text),
       request:body=>post('/api/parallax/stage',body),
-      apply:result=>{beginParallax(result);showView('create');message('The '+names[result.stage]+' edit is loaded. Review its words, then press Generate.');}
+      apply:(result,note)=>{beginParallax(result);showView('create');message('The '+names[result.stage]+' edit is loaded. Review its words.'+(note||' Then press Generate.'));}
     });
     const previous=root.parallaxNote;
     root.parallaxNote=(job,output)=>render(job,output,previous(job,output),esc);
