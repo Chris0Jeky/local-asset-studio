@@ -38,6 +38,8 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
  const card=walk(el('rr-cards'),x=>x.dataset.reference==='picture-1'),trait=walk(card,x=>x.dataset.facet==='style');
  const role=walk(card,x=>x.tag==='select');
  assert.equal(role['aria-label'],'Use this picture for Picture 1 role');
+ const legends=[];(function collect(node){for(const child of node.children||[]){if(child.tag==='legend')legends.push(child.textContent);collect(child);}})(card);
+ assert.deepEqual(legends,['Traits to transfer','Suggested tags and unknowns']);
  const text=trait.querySelector('textarea'),check=trait.querySelector('input');text.value='bold ink';await text.fire('input');
  check.checked=false;await check.fire('change');check.checked=true;await check.fire('change');
  const request=el('rr-preview').fire('click');await tick();
