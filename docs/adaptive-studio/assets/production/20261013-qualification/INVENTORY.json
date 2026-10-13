@@ -1,0 +1,1902 @@
+{
+  "date": "2026-10-13",
+  "scope": "Durable source/qualification inventory; no runtime flags changed, no merge or deployment",
+  "source_ledger_head": "988e7c9636052e024073e1931f75268db916c9c9",
+  "legacy_source_counts_unchanged": {
+    "source-candidate-or-prior-source-record": 97,
+    "owner-deferred": 44,
+    "actual-execution-evidence-pending": 12,
+    "dependency-deferred": 1
+  },
+  "total_ids": 154,
+  "accepted_art_decisions": {
+    "selected_asset_ids": 23,
+    "workflow_ids": 16,
+    "reference_ids": 7,
+    "direct_owner_acceptances_preserved": 2,
+    "delegated_art_acceptances": 21,
+    "unselected_candidates_preserved": 11,
+    "total_candidates_preserved": 34
+  },
+  "completed_milestones": [
+    {
+      "item": "Existing source/design delivery",
+      "count": 97,
+      "scope": "Source coverage only; excludes runtime/release acceptance"
+    },
+    {
+      "item": "Existing workflow/reference choices",
+      "count": 23,
+      "scope": "2 direct-owner +21 delegated; preserved"
+    },
+    {
+      "item": "tutorial-reference",
+      "count": 1,
+      "scope": "Historical 4.73s recorded attachment walkthrough at merged1272"
+    },
+    {
+      "item": "LAS guide contract",
+      "scope": "Reused concurrent isolated93a4f59d;16 unchanged brief contracts pass"
+    },
+    {
+      "item": "Foundation source specimens",
+      "scope": "107 actual browser checks +32 Node contracts; not integrated dialogs/tabs/playback"
+    }
+  ],
+  "awaiting_visual_acceptance": [
+    {
+      "item": "LAS workshop v2",
+      "state": "Experimental native SVG; source-only; no further variants authorized now"
+    },
+    {
+      "item": "LAS pixel v2",
+      "state": "Experimental; coarse light patch/material clusters remain below intended finish"
+    },
+    {
+      "item": "Alibi lantern v2",
+      "state": "Experimental native material study; source-only"
+    }
+  ],
+  "blocked_or_unrun_native_checks": [
+    {
+      "item": "Library metadata",
+      "state": "xattr persistence fails; exact MA bytes independently decoded/hash-matched/inspected"
+    },
+    {
+      "item": "Remaining9tutorials, repair pair, Night Shift loop",
+      "state": "Actual native/recorded evidence required; not missing pictures"
+    },
+    {
+      "item": "Physical Android/TalkBack",
+      "state": "Device acceptance remains with HUMAN_TODO; browser evidence cannot close it"
+    },
+    {
+      "item": "Combined Alibi budget",
+      "state": "Prior ff32 checkpoint startup205531 over205248; continued diagnosis ongoing; see final live PR receipt"
+    }
+  ],
+  "owner_deferred": {
+    "count": 44,
+    "dependency_deferred": 1,
+    "scope": "18 layers,5 non-pilot loops,8 guide expressions,6 audio,7 promos; parallax depends on layers"
+  },
+  "accepted_MA": {
+    "library_id": "libfile_11b36cd483f881918e0dc2eb8b83cfa3",
+    "file_id": "file_00000000602081fab86565226330bd6d",
+    "bytes": 2736794,
+    "dimensions": [
+      3840,
+      2160
+    ],
+    "mode": "RGB",
+    "sha256": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+    "pixel_inspection": "Completed on exact full-resolution PNG bytes",
+    "metadata_persistence": "Failed: Windows Python has no os.setxattr",
+    "transfer": "Unchanged supported helper; normal metadata attempt failed; exact downloaded temporary bytes retained only for expressly authorized inspection"
+  },
+  "Alibi": {
+    "painted_masters": 16,
+    "painted_derivatives": 32,
+    "optional_integrated": [
+      "club-welcome",
+      "lantern-duel",
+      "pocket-borough"
+    ],
+    "source_only_other_paintings": 13,
+    "optional_bytes": 80960,
+    "cache_slots": 8,
+    "image_bound_bytes": 1048576,
+    "all16_offline_promised": false,
+    "full_runtime_gate": {
+      "head": "1d7949714c93259f04222ca8d0bbd120810e9050",
+      "passed": 1487,
+      "failed": 0,
+      "skipped": 3
+    },
+    "combined_stage": "Independent isolated tree; budgets must pass before qualification"
+  },
+  "LAS_items": [
+    {
+      "id": "atelier-master",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "atelier-hero",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "atelier-wall",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "atelier-quiet",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "atelier-poster",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "atelier-layer-far",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "atelier-layer-mid",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "atelier-layer-near",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "atelier-loop",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "atelier-card",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "arcade-master",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "arcade-hero",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "arcade-wall",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "arcade-quiet",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "arcade-poster",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "arcade-layer-far",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "arcade-layer-mid",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "arcade-layer-near",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "arcade-loop",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "arcade-card",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sakura-master",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sakura-hero",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sakura-wall",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sakura-quiet",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sakura-poster",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sakura-layer-far",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "sakura-layer-mid",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "sakura-layer-near",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "sakura-loop",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "sakura-card",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "retro-anime-master",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "retro-anime-hero",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "retro-anime-wall",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "retro-anime-quiet",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "retro-anime-poster",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "retro-anime-layer-far",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "retro-anime-layer-mid",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "retro-anime-layer-near",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "retro-anime-loop",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "retro-anime-card",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "minimal-pro-master",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "minimal-pro-hero",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "minimal-pro-wall",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "minimal-pro-quiet",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "minimal-pro-poster",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "minimal-pro-layer-far",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "minimal-pro-layer-mid",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "minimal-pro-layer-near",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "minimal-pro-loop",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "minimal-pro-card",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sci-fi-noir-master",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sci-fi-noir-hero",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sci-fi-noir-wall",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sci-fi-noir-quiet",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sci-fi-noir-poster",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sci-fi-noir-layer-far",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "sci-fi-noir-layer-mid",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "sci-fi-noir-layer-near",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "sci-fi-noir-loop",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "sci-fi-noir-card",
+      "category": "environment",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-create",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 3,
+      "art_review_status": "accepted",
+      "acceptance_basis": "direct-owner-acceptance-preserved",
+      "selected_original": {
+        "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+        "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+        "bytes": 1512700,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-edit",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-edit--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "b21b193142367b356b060c21bd6dbbdf199499e1529db8dc208bec3059baa67f",
+        "bytes": 1563291,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-combine",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-combine--1448x1086--candidate-1.png",
+        "sha256": "5edcaaef0d15f2bf4e4dd3ddb29aadf5e4fe3b8f5eec12b8f05435caa898fa5b",
+        "bytes": 1648790,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original",
+        "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-pose",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-pose--1448x1086--candidate-1.png",
+        "sha256": "9587382ab53b9a4dfed0d970e916589d159d7783a6ec8beef7d31a197f01696e",
+        "bytes": 1494052,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original",
+        "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-sheet",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 2,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-sheet--1448x1086--candidate-2.png",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "502e81ed0b7e8d18e547fe4936935b393b48054a0adaf3f1a6ddc5939181320a",
+        "bytes": 1873389,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-repair",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 2,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-repair--1448x1086--candidate-2.png",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "714da5bc7c3f294dcf219afabee25be18a3807ac3e8c97c7720e7811f237c2c1",
+        "bytes": 1600951,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-upscale",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 2,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-upscale--1448x1086--candidate-2.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "5ee2050366936e441872ccd79ddcea369185df8877d1880c21f705ade17d31b5",
+        "bytes": 1427472,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-animate",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-animate--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "5c2aceb42cac3a6608a9893ecfc4ca4c61511355b4118e6a69453d81e4a9947f",
+        "bytes": 1617300,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-sequence",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-sequence--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "b2e5847b612c95488f362aa321e9b9ea1bc6a7576f4c49be2fffb347b3ace60d",
+        "bytes": 1660218,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-compare",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-compare--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "29f90fda086c86238706b8279f5638a5f132dfbeb731c6630e00fc21d5f74d53",
+        "bytes": 1589319,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-review",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-review--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "5af8b937b107ee6624104f60b56407e99685e0a6f0bc474f07fa738b6c8d2728",
+        "bytes": 1534919,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-export",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-export--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "6eef32ae89fe78aa2ada4b2c7b04d7a30915956165240cf8caf4d9a0615e1c84",
+        "bytes": 1745358,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-workflow",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-workflow--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "b7d225ae6e5c12068e01cc4fa7d15850d229300edb2f3dc0ec633b5304270b0d",
+        "bytes": 1568375,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-model",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-model--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "1ceeea4eff4a8e092bc7e8112a0432ca1237a5e41ff0b5242778e72dee96c8c2",
+        "bytes": 1555082,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-recover",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 2,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-recover--1448x1086--candidate-2.png",
+        "sha256": "19aec23fd4e750429af5d1ffa0cd0c56cce88cdce3a4b107c6e636ec5190d0f8",
+        "bytes": 1337064,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original",
+        "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "workflow-voice-3d",
+      "category": "workflow",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/workflow-voice-3d--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "c563483fc0144248f7d00a79f80286633e16ba7e60cda41233897838a828f5a0",
+        "bytes": 1555414,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-blank",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-no-match",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-loading",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-internet-absent",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-api-unavailable",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-backend-missing",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-model-missing",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-adapter-missing",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-source-required",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-media-failed",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-uncertain",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-conflict",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-complete",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "state-failure",
+      "category": "state",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "reference-identity",
+      "category": "reference",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 3,
+      "art_review_status": "accepted",
+      "acceptance_basis": "direct-owner-acceptance-preserved",
+      "selected_original": {
+        "relative_path": "inbox/reference-identity--1024x1536--candidate-3.png",
+        "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+        "bytes": 1889270,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "reference-pose",
+      "category": "reference",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/reference-pose--1024x1536--candidate-1.png",
+        "sha256": "526c988b621534eea50f08ba0666247cbd13a8f45e82d36502c20bf940c5b984",
+        "bytes": 1908246,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "reference-style",
+      "category": "reference",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/reference-style--1254x1254--candidate-1.png",
+        "sha256": "82bc4b7c8d299967be2432fed8d889ae5044b6a1a9909264898f44d40353d11c",
+        "bytes": 3491860,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "reference-outfit",
+      "category": "reference",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/reference-outfit--1024x1536--candidate-1.png",
+        "sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+        "bytes": 1746036,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original",
+        "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "reference-composition",
+      "category": "reference",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 2,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/reference-composition--1254x1254--candidate-2.png",
+        "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+        "bytes": 1442857,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "reference-lighting",
+      "category": "reference",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 2,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/reference-lighting--1254x1254--candidate-2.png",
+        "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+        "bytes": 1805697,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "reference-background",
+      "category": "reference",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "selected_candidate": 1,
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "selected_original": {
+        "relative_path": "inbox/reference-background--1254x1254--candidate-1.png",
+        "sha256": "d19f39fb462a46324bf32d5ec548bbe20f6e08d6ba262ae2c11bdda5205d95ae",
+        "bytes": 2317765,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "reference-mask",
+      "category": "reference",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-icons",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-tokens",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-buttons",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-fields",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-cards",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-tabs",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-badges",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-dialogs",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-patterns",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "foundation-skeletons",
+      "category": "foundation",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "guide-neutral",
+      "category": "guide",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "guide-welcome",
+      "category": "guide",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "guide-point",
+      "category": "guide",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "guide-think",
+      "category": "guide",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "guide-question",
+      "category": "guide",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "guide-review",
+      "category": "guide",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "guide-rest",
+      "category": "guide",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "guide-celebrate",
+      "category": "guide",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "tutorial-first-run",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "tutorial-reference",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Recorded browser walkthrough complete",
+      "evidence": {
+        "pr": 1272,
+        "head": "c53146ec738e637df097877d368d9890ea1ebdf6",
+        "clip_seconds": 4.73,
+        "generation_requests": 0,
+        "scope": "Reference attachment walkthrough; not model generation or other tutorials"
+      }
+    },
+    {
+      "id": "tutorial-pose",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "tutorial-recipe-change",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "tutorial-adapters",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "tutorial-compare",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "tutorial-continue",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "tutorial-recover",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "tutorial-workflow",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "tutorial-export",
+      "category": "tutorial",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "promo-hero",
+      "category": "promotion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "promo-offline",
+      "category": "promotion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "promo-workflow",
+      "category": "promotion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "promo-skins",
+      "category": "promotion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "promo-social",
+      "category": "promotion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "promo-release",
+      "category": "promotion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "promo-readme",
+      "category": "promotion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "promo-showcase",
+      "category": "promotion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "audio-confirm",
+      "category": "audio",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "audio-complete",
+      "category": "audio",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "audio-attention",
+      "category": "audio",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "audio-navigate",
+      "category": "audio",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "audio-room",
+      "category": "audio",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "audio-rain",
+      "category": "audio",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "owner-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Owner-deferred; do not execute"
+    },
+    {
+      "id": "motion-disclose",
+      "category": "motion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "motion-crossfade",
+      "category": "motion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "motion-parallax",
+      "category": "motion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "dependency-deferred",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Dependency-deferred with parallax layers"
+    },
+    {
+      "id": "motion-focus",
+      "category": "motion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "motion-load",
+      "category": "motion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "motion-pause",
+      "category": "motion",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sample-character-canon",
+      "category": "sample",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sample-pose-pair",
+      "category": "sample",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sample-outfit-study",
+      "category": "sample",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sample-lighting-pair",
+      "category": "sample",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sample-composition-pair",
+      "category": "sample",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sample-repair-pair",
+      "category": "sample",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "actual-execution-evidence-pending",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Native execution/recording still required"
+    },
+    {
+      "id": "sample-sequence-strip",
+      "category": "sample",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    },
+    {
+      "id": "sample-material-board",
+      "category": "sample",
+      "runtime_qualified_by_this_pr": false,
+      "source_ledger_phase": "source-candidate-or-prior-source-record",
+      "art_decision": "Recorded source decision retained; no new selection requested",
+      "runtime_release_status": "Not certified by source coverage or this inventory",
+      "current_work_status": "Source/design delivery recorded; remaining rendition/terms/application/release gates are separate"
+    }
+  ],
+  "LAS_accepted_application_QA": {
+    "source_head": "bc8c2f1ba171291f24a53c36691fc16551bac181",
+    "python_passed": 28,
+    "node_passed": 25,
+    "accepted_MA_fixture_passed": 48,
+    "existing_browser_suites_passed": 2,
+    "scope": "Real shipped frontend/looks API with inert backend and evidence-only accepted-image CSS override; no runtime activation",
+    "phone_adoption_blocker": {
+      "description_contrast_diagnostic_430": 1.208,
+      "description_contrast_diagnostic_320": 1.051,
+      "reason": "Centred cover crop places bright CRT behind description; samples are diagnostic, not full WCAG certification"
+    },
+    "master_transfer_vs_poster_budget": 8.909,
+    "owned_remaining_listeners": 0,
+    "source_art_preserved": true
+  }
+}

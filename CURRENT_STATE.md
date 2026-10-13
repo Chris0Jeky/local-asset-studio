@@ -2,6 +2,14 @@
 
 ## Night Shift quality study 02 - 13 October 2026
 
+Continuation: the source alternatives stay experimental; no further near-identical
+variants are being made. Exact accepted 3840x2160 MA bytes now hash-match the original
+receipt and were decoded/inspected after the supported Library helper's Windows
+metadata failure. Metadata was not persisted. The guide count repair already merged
+through concurrent #1345; this branch reuses only that isolated one-line commit,
+with all 16 unchanged brief contracts passing. The durable per-ID inventory is in
+docs/adaptive-studio/assets/production/20261013-qualification/INVENTORY.json.
+
 Version 1 remains unchanged as an early study below the owner's quality bar.
 Separate quality-02 workshop and 384x216 pixel SVGs add material modelling,
 light hierarchy and deliberate pixel clusters. Individual PNGs and an unchanged
