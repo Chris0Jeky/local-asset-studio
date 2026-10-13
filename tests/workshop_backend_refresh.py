@@ -86,8 +86,10 @@ async def exercise_backend_refresh(page, checks, posts):
                 return window.__backendOriginalApi(url,options);
               };
             }""")
+            await page.evaluate("showView('models')")
             await page.click('#switchBackend')
             await page.wait_for_function("typeof __switchObserve==='function'")
+            await page.evaluate("showView('create')")
             await page.fill('#positive','Latest wording while uncertain switch is observed')
             await page.evaluate("""()=>{
               getControl('steps').focus();window.__switchBefore=__backendSnapshot();
