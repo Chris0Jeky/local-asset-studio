@@ -14,6 +14,7 @@
   const n=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   const message=text=>{el('rr-status').textContent=text;};
   const markInput=(input,invalid)=>{input.setAttribute('aria-invalid',invalid?'true':'false');input.setAttribute('aria-describedby','rr-status');};
+  for(const id of ['rr-source-status','rr-change-summary']){const node=el(id);node.setAttribute('role','status');node.setAttribute('aria-live','polite');}
   function releaseUrls(){for(const url of urls)URL.revokeObjectURL(url);urls.clear();}
   function controls(){
     const loading=loadingEpoch!==null;
