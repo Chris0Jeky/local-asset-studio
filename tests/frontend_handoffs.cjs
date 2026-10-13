@@ -1288,6 +1288,30 @@ async function recentRunsHeldLineCountsAFinishedRun() {
   assert.equal(line.textContent, '3 runs finished, shown when the clip stops', 'A run that appears already finished counts as finished');
 }
 
+// #1215: a partial or uncertain job's new kept outputs wait with the clip. Its status stays off the line.
+async function recentRunsHeldLineCountsPartialOutputs() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  const outputs = (prefix, count) => Array.from({length: count}, (_, i) => ({asset_id: prefix + '-' + i, filename: prefix + '-' + i + '.png', media_type: 'image'}));
+  const batch = count => ({id: 'batch', preset_name: 'Recipe batch', status: 'partial', message: 'Partial', outputs: outputs('batch', count), prompt_ids: ['p-batch'], controls: {positive: 'prompt batch'}, created_at: 4});
+  await s.poll([batch(3), recentJob('clip', 1, 'video')]);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([batch(4), recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(line.textContent, '1 new output, shown when the clip stops', 'One new kept output on a partial job is waiting');
+  await s.poll([batch(3), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '', 'The same kept outputs leave nothing waiting');
+  const seeded = {...runningJob('seeded'), controls: {positive: 'prompt seeded'}};
+  await s.poll([seeded, batch(3), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '1 new run, shown when the clip stops', 'A running job with no outputs is a new run');
+  await s.poll([{...seeded, status: 'uncertain', message: 'Three kept', outputs: outputs('seed', 3)}, batch(3), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '3 new outputs, shown when the clip stops', 'An uncertain job counts each new kept output and not a finished run');
+  await s.poll([{...seeded, status: 'uncertain', message: 'Three kept', outputs: outputs('seed', 3)}, batch(3), {id: 'bad', preset_name: 'Bad', status: 'failed', message: 'OOM', outputs: [], prompt_ids: [], created_at: 3, can_put_away: true, put_away: false}, recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '3 new outputs, shown when the clip stops', 'A failure with no outputs stays off the line');
+  assert.ok(s.nodes().includes(video) && !video.paused, 'The playing clip is untouched');
+}
+
 async function recentRunsHeldLineClearsOnRelease() {
   const s = recentRunsSandbox(), line = heldLine(s);
   await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
@@ -1545,6 +1569,7 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await recentRunsHeldProblemsReplaceTheGalleryProblems();
   await recentRunsHostHeldProblemsDropTheStaleGalleryProblems();
   await recentRunsHeldLineCountsAFinishedRun();
+  await recentRunsHeldLineCountsPartialOutputs();
   await recentRunsHeldLineClearsOnRelease();
   await recentRunsHeldLineClearsOnEveryRelease();
   await recentRunsHeldLineSurvivesAnAssetRefresh();
