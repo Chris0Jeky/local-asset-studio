@@ -29,11 +29,20 @@ test('running jobs and finished layer outputs receive no stage reload controls',
 
 function fixture(){
   assert.ok(api,'stage recovery controller must be shipped');
-  const f={stamp:'initial',busy:false,available:true,job:structuredClone(base),requests:[],applied:[],confirmations:[],accepted:true};
+  const f={stamp:'initial',busy:false,available:true,job:structuredClone(base),requests:[],applied:[],notes:[],confirmations:[],accepted:true,all:[]};
+  f.all=[f.job];
   f.result=()=>{const claim={...structuredClone(f.job.parallax),stage:'plate'};const {stage,...plan}=claim;return {plan,claim,stage,preset_id:claim.preset_id,file:claim.source_file,width:claim.width,height:claim.height,words:'Remove the desk.',generation_submitted:false};};
-  f.controller=api.create({stamp:()=>f.stamp,busy:()=>f.busy,available:()=>f.available,job:id=>id===f.job.id?f.job:null,
-    confirm:words=>{f.confirmations.push(words);return f.accepted;},request:async body=>{f.requests.push(body);return f.transport?f.transport():f.result();},apply:result=>f.applied.push(result)});
+  f.controller=api.create({stamp:()=>f.stamp,busy:()=>f.busy,available:()=>f.available,job:id=>f.all.find(entry=>entry.id===id)||null,jobs:()=>f.all,
+    confirm:words=>{f.confirmations.push(words);return f.accepted;},request:async body=>{f.requests.push(body);return f.transport?f.transport():f.result();},apply:(result,note)=>{f.applied.push(result);f.notes.push(note||'');}});
   return f;
+}
+function sibling(status){
+  const job=structuredClone(base);
+  job.id='isolate-job';
+  job.status=status;
+  job.parallax.stage='isolate';
+  job.outputs=[];
+  return job;
 }
 test('reload asks before replacing Create and sends only an explicit stage request',async()=>{
   const f=fixture();assert.equal(await f.controller.load('plate-job','plate'),true);
@@ -65,4 +74,44 @@ test('mismatched response identities and geometry never reach Create',async()=>{
     const f=fixture();f.transport=()=>{const r=f.result();alter(r);return r;};
     await assert.rejects(f.controller.load('plate-job','plate'),/response/);assert.equal(f.applied.length,0);
   }
+});
+test('live same-plan activity stays visible in the recall confirmation and success',async()=>{
+  const f=fixture();f.all.push(sibling('running'));
+  assert.equal(await f.controller.load('plate-job','plate'),true);
+  assert.deepEqual(f.requests,[{job_id:'plate-job',stage:'plate'}]);
+  assert.equal(f.applied.length,1);
+  assert.equal(f.applied[0].generation_submitted,false);
+  assert.equal(f.applied[0].plan.plan_id,base.parallax.plan_id);
+  assert.match(f.confirmations[0],/Nothing runs/);
+  assert.match(f.confirmations[0],/running/);
+  assert.match(f.confirmations[0],/Wait for the original job/);
+  assert.match(f.notes[0],/running/);
+  assert.match(f.notes[0],/Wait for the original job/);
+});
+test('uncertain same-plan activity forbids repetition in the recall confirmation and success',async()=>{
+  const f=fixture();f.all.push(sibling('uncertain'));
+  assert.equal(await f.controller.load('plate-job','plate'),true);
+  assert.deepEqual(f.requests,[{job_id:'plate-job',stage:'plate'}]);
+  assert.equal(f.applied.length,1);
+  assert.equal(f.applied[0].generation_submitted,false);
+  assert.equal(f.applied[0].plan.plan_id,base.parallax.plan_id);
+  assert.match(f.confirmations[0],/Nothing runs/);
+  assert.match(f.confirmations[0],/uncertain/);
+  assert.match(f.confirmations[0],/Inspect the original job/);
+  assert.match(f.confirmations[0],/do not repeat/i);
+  assert.match(f.notes[0],/uncertain/);
+  assert.match(f.notes[0],/Inspect the original job/);
+  assert.match(f.notes[0],/do not repeat/i);
+});
+test('success shows the current sibling context after the response, not stale data',async()=>{
+  const f=fixture();const live=sibling('running');f.all.push(live);
+  let release;f.transport=()=>new Promise(resolve=>{release=resolve;});
+  const pending=f.controller.load('plate-job','plate');
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.match(f.confirmations[0],/running/);
+  live.status='uncertain';
+  release(f.result());
+  assert.equal(await pending,true);
+  assert.match(f.notes[0],/uncertain/);
+  assert.match(f.notes[0],/Inspect the original job/);
 });
