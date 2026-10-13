@@ -96,6 +96,9 @@ class AVTests(unittest.TestCase):
     def test_hash_mismatch(self):
         self.doc['assets']['music']['sha256']='0'*64
         with self.assertRaises(ValueError):p.validate(self.doc,self.root)
+    def test_suffix_kind_mismatch_rejected(self):
+        self.doc['assets']['shot0']['path']='media/shot-0.jpg'
+        with self.assertRaisesRegex(ValueError,'Use PNG, MP4 or WAV interchange'):p.validate(self.doc)
     def test_edit_is_immutable(self):
         before=p.digest(self.doc);r=p.edit(self.doc,before,'audio','music-clip','gain_db',-24)
         self.assertEqual(p.digest(self.doc),before);self.assertNotEqual(r['revision'],before)
