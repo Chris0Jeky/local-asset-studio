@@ -38,6 +38,16 @@ PR #1376 merged as `c2404791294b60242002a767e994a4ed1171db2f` at 22:55:29Z. The 
 
 None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
 
+## Merges after the 23:58 note — 14 October 2026, 00:24+01
+
+The 23:58 note above was true when it was written. #1377 and #1378 were not merged then.
+
+PR #1378 merged as `3fe5cd36ed1a356bee7cb0270bd2a29c26df5bc4` at 23:14:29Z. It records the merges from #1370 through #1376. Issues #1358, #1366, and #1215 stayed open.
+
+PR #1377 merged as `4504bb51455ee5160cf6ed4765eb65dec2e4a80c` at 23:23:37Z. While a clip holds Recent runs, a gallery card that leaves and later returns to its shown key is counted. A journey that loads `renderJobs` alone can render the empty gallery. Issue #1215 stayed open. The empty held line, the narrow column, and the trash path while held were not changed.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
 ## Renewed maintenance qualification — 13 October 2026
 
 The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
