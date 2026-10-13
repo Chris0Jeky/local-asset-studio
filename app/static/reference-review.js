@@ -42,7 +42,7 @@
       card.append(n('h3','Picture '+(index+1)));
       if(originals){const preview=n('img');const url=URL.createObjectURL(originals[index]);urls.add(url);preview.src=url;preview.alt='Original picture '+(index+1);preview.className='rr-picture';card.append(preview);}
       card.append(n('p',image.description));
-      const label=n('label','Use this picture for');const role=n('select');role.setAttribute('aria-label','Picture '+(index+1)+' role');
+      const label=n('label','Use this picture for');const role=n('select');role.setAttribute('aria-label','Use this picture for Picture '+(index+1)+' role');
       for(const key of Object.keys(roles)){const option=n('option',key);option.value=key;role.append(option);}role.value=choice.role;
       role.addEventListener('change',()=>{
         choice.role=role.value;const permitted=roles[choice.role];
