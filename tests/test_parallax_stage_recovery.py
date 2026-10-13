@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 @unittest.skipUnless(shutil.which('node'), 'Node is required for frontend contracts')
 class FrontendStageRecoveryTests(unittest.TestCase):
     def test_stage_card_actions_and_deferred_response_ownership(self):
-        result = subprocess.run([shutil.which('node'), '--test', str(ROOT/'tests/parallax_stage_recovery.cjs')],
+        result = subprocess.run([shutil.which('node'), '--test', '--test-reporter=tap', str(ROOT/'tests/parallax_stage_recovery.cjs')],
                                 capture_output=True, text=True, timeout=20)
         self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
         self.assertIn('# fail 0', result.stdout)
