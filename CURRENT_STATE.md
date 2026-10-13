@@ -1,5 +1,22 @@
 # Current state — 12 October 2026
 
+## Actual isolated adapter-edit recording — 13 October 2026
+
+Source-only tutorial evidence at application revision `04c0091d89bb0248174d4050d60384607882c28e`
+records the authored YumeFlux ILv1 adapter stack and a single real UI strength edit
+1.0→0.8, with slot2 at0 and every other workbench value unchanged. Silent27.76s
+H264 is652945bytes; raw capture, editable captions/source and exact state/audit
+receipts are preserved in the additive deliverable. No generation, model launch,
+dependency install, catalogue/precache or acceptance flag change. Actual phone UI
+and manual-player checks at390/1280 pass; decoded pixels inspected. Readiness is
+unavailable (`psutil` absent); this is not installed-product or adapter-effect proof.
+Prior tutorial/source/art bytes and all decisions/deferrals remain intact. See
+[source evidence](docs/adaptive-studio/assets/production/20261013-adapter-tutorial/README.md).
+`HUMAN_TODO.md`, installed/native/performance and physical-device gates stay open.
+The accompanying read-only Alibi diagnosis identifies no simple697-byte recovery;
+its shell budget remains blocked, caps unchanged. Attribution correction names
+the coordinating assistant's steering, without inventing an owner decision.
+
 ## Native AMD Animagine execution — 12 October 2026
 
 Exactly one deliberately submitted `anime-animagine-quality` job completed on the installed native AMD RX 9070 XT runtime: job `dd0c1838-8b91-4a03-ac1d-57b0688ebed8`, prompt `144091d1-db6e-4db3-af34-3511b64616d8`, authored graph SHA256 `6230dc971484ec8e45fa83e1ec1d69f51678167d7343ac3d14197110eac795a0`. Fresh hashing matched the installed 6,938,350,040-byte checkpoint pin in 12.295s, with stable before/after file identity. ComfyUI 0.35.0, embedded Python 3.12.10 and Torch 2.9.1+rocm7.2.1 reported the AMD device under the runtime's `cuda:0` namespace. No model, package or driver was installed or upgraded.

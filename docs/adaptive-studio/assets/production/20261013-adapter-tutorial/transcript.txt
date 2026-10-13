@@ -1,0 +1,7 @@
+00:00:00.000 Actual isolated Studio. Readiness is unavailable; no image will be generated.
+00:00:04.837 Inspect the authored checkpoint and adapter files. Installed bytes are not verified.
+00:00:09.025 Read stored adapter notes: slot 1 is at 1.0; slot 2 is off.
+00:00:13.310 Return to the editable workbench. Slot 1 is 1.0 and slot 2 is 0.
+00:00:17.394 Change only slot 1 to 0.8. All other controls and adapter files stay unchanged.
+00:00:21.559 Slot 2 remains 0. This records an edit, not the visual effect of an adapter.
+00:00:24.670 Readiness remains unavailable. No generation, model launch or download occurred.
