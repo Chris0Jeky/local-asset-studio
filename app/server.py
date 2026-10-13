@@ -2656,8 +2656,12 @@ class Handler(BaseHTTPRequestHandler):
             # App-owned code must not inherit host MIME overrides, including the Windows registry.
             # Preserve the static allowlist without changing host settings.
             static_types = {".html": "text/html", ".js": "text/javascript", ".css": "text/css"}
-            if not file.is_file() or file.suffix not in static_types: return self._json(404, {"error":"Not found"})
-            data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", static_types[file.suffix]); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
+            static_type = static_types.get(file.suffix)
+            # One app-owned optional reference; no general media-directory admission.
+            if file == (Path(__file__).parent / "static/look-previews/night-shift-ma-responsive-1024.webp").resolve():
+                static_type = "image/webp"
+            if not file.is_file() or static_type is None: return self._json(404, {"error":"Not found"})
+            data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", static_type); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
         except (GpuLeaseError, WorkspaceError, UploadStorageError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return
