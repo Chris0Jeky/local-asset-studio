@@ -48,6 +48,16 @@ PR #1377 merged as `4504bb51455ee5160cf6ed4765eb65dec2e4a80c` at 23:23:37Z. Whil
 
 None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
 
+## Merges after the 00:24 note — 14 October 2026, 00:41+01
+
+The 00:24 note above was true when it was written. #1379 and #1380 were not merged then.
+
+PR #1379 merged as `b2471363d4eb8ed93ca00e14f686b1cfeb215dd7` at 23:33:04Z. An adapter total or an own counter past the card plus sampling headroom is unknown for admission. Issue #983 stayed open. The installed guard still returns the subtraction.
+
+PR #1380 merged as `bb3ebb3d3419fbc1e9c66518e380c3a1c37d9287` at 23:38:55Z. It records the #1377 and #1378 merges. Issues #1358, #1366, and #1215 stayed open.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
 ## Renewed maintenance qualification — 13 October 2026
 
 The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
