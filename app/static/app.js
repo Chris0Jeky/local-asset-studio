@@ -461,6 +461,7 @@ function jobControlKey(el){
   return [owner?.dataset.output??(owner?'problem:'+owner.dataset.problem:''),el.tagName,String(el.className||'').split(/\s+/)[0],...Object.keys(el.dataset).filter(k=>k!=='job'&&k!=='index').sort().map(k=>k+'='+el.dataset[k])].join('|');
 }
 function renderJobs(signature=JSON.stringify(jobs),force=false) {
+  if(typeof recentHeldRemoved==='undefined')recentHeldRemoved=new Set(); // journeys load renderJobs alone
   if(signature===jobsSignature&&!recentHeldRemoved.size){showRecentHeld('');return;}
   const gallery=$('#gallery'),host=document.getElementById?.('jobProblemsHost')||null,playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended&&!m.loop&&!m.error);
   const focusHosts=[gallery,host].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null,focusInGallery=gallery.contains?.(active);
