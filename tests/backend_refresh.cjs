@@ -61,6 +61,13 @@ test('an obsolete switch failure cannot clear a newer successful switch or its p
  assert.equal(vm.runInContext('backendSwitching',f.context),false);assert.equal(f.writes.length,2);
 });
 
+test('failed current switch remains visible after actual-backend reconciliation',async()=>{
+ const f=fixture();f.context.post=async()=>{throw Error('Requested backend is unavailable');};
+ const work=f.node('#switchBackend').onclick();await f.tick();f.pending[0].resolve(f.backend('old'));await work;
+ assert.match(f.node('#backendStatus').textContent,/Requested backend is unavailable/);
+ assert.equal(vm.runInContext('backendSwitching',f.context),false);assert.equal(f.node('#switchBackend').disabled,false);
+});
+
 test('startup atelier reads yield to a newer inventory and current failures keep the existing empty fallback',async()=>{
  const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');f.context.atelierReadEpoch=0;
  vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
