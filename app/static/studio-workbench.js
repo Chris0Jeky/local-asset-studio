@@ -87,6 +87,7 @@
   q('#uxIntent').onchange=()=>{intentId=q('#uxIntent').value;renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===intentId)?.hint||'Every installed and planned recipe. Readiness is checked separately.';};
   after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();dismissSecondPicture();syncCreate();renderDraftNotice();});
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
+  after('beginParallax',()=>{draftDirty=true;saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
   // #1100: loading a recipe still loads its wording, but wording you wrote gets one explicit way back until you type, dismiss
   // or put it back (reversible choice; nothing is carried over silently, nothing is sent). "Yours" means different from the
