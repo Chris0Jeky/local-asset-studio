@@ -7,8 +7,10 @@ async def exercise_parallax_handoff(page, checks):
       window.__parallaxApi=api;window.__parallaxRefresh=refresh;refresh=async()=>{};
       window.__parallaxPlate={preset_id:'parallax-edit',stage:'plate',words:'Clean plate fixture wording',
         file:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_fixture.png',width:1344,height:768,flag:'Synthetic fixture',
-        plan:{plan_id:'fixture-plan',source_asset_id:'asset-0'},
-        claim:{plan_id:'fixture-plan',preset_id:'parallax-edit',stage:'plate'},context:{title:'Fixture room'}};
+        plan:{plan_id:'a'.repeat(64),source_asset_id:'asset-0'},
+        claim:{version:1,preset_id:'parallax-edit',plan_id:'a'.repeat(64),source_asset_id:'asset-0',source_sha256:'b'.repeat(64),
+          source_file:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_fixture.png',width:1344,height:768,
+          objects:'fixture furniture',view_polygons:[[[0,0],[1,0],[1,1]]],stage:'plate'},context:{title:'Fixture room'}};
       api=async(url,options={})=>{
         if(url==='/api/jobs'){
           __parallaxRuns++;window.__parallaxSubmitted=JSON.parse(options.body);
