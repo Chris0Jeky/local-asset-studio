@@ -1,5 +1,6 @@
 """A stat-shaped cache is not content evidence for a pinned production model."""
 import hashlib
+import json
 import os
 import unittest
 from unittest.mock import patch
@@ -49,4 +50,7 @@ class PinnedFreshnessTests(unittest.TestCase):
         with patch.object(fixture.server, 'digest_file', side_effect=changing), \
              self.assertRaisesRegex(fixture.server.StudioError, 'changed while hashing'):
             self.preflight(studio)
-        self.assertFalse(target.exists()); self.assertFalse(studio.jobs); self.assertTrue(studio.queue.empty())
+        entry = json.loads(target.read_text())[str(path.resolve())]; after = path.stat()
+        self.assertNotIn('sha256', entry); self.assertTrue(entry.get('digest_unavailable'))
+        self.assertEqual((entry['bytes'], entry['mtime_ns']), (after.st_size, after.st_mtime_ns))
+        self.assertFalse(studio.jobs); self.assertTrue(studio.queue.empty())

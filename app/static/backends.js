@@ -1,4 +1,4 @@
-let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null, backendInventoryPending=false;
+let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null, backendInventoryPending=false, backendSwitchEpoch=0;
 function renderRecovery(recovery={}) {
   $('#recoveryStatus').textContent=recovery.message || (recovery.enabled ? 'Runtime recovery is watching the selected backend.' : 'Runtime recovery is disabled.');
   $('#retryRecovery').hidden=!recovery.enabled || recovery.status!=='breaker-open';
@@ -58,9 +58,9 @@ async function refreshBackends() {
   finally{if(backendReadPending===epoch)backendReadPending=null;}
 }
 $('#switchBackend').onclick=async()=>{
-  backendReadEpoch++;backendSwitching=true;updateReady();$('#switchBackend').disabled=true;
+  const attempt=++backendSwitchEpoch;backendReadEpoch++;backendSwitching=true;updateReady();$('#switchBackend').disabled=true;
   try{await post('/api/backends/switch',{id:$('#backendChoice').value});await refreshBackends();}
-  catch(e){backendSwitching=false;$('#switchBackend').disabled=false;$('#backendStatus').textContent=e.message;updateReady();}
+  catch(e){if(attempt!==backendSwitchEpoch)return;const read=backendReadEpoch+1;await refreshBackends();if(attempt===backendSwitchEpoch&&read===backendReadEpoch)$('#backendStatus').textContent=e.message;}
 };
 $('#retryRecovery').onclick=async()=>{try{await post('/api/runtime-recovery/retry',{});await refreshBackends();}catch(e){$('#recoveryStatus').textContent=e.message;}};
 refreshBackends();setInterval(()=>{if(backendSwitching&&backendReadPending!==backendReadEpoch)refreshBackends();},3000);

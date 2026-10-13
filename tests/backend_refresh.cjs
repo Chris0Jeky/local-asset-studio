@@ -33,6 +33,41 @@ test('a same-backend refresh takes over the still-uncommitted inventory read',as
  assert.deepEqual(Array.from(f.context.installedLoras),['current-A.safetensors']);assert.equal(f.context.knowledge.backend,'current-A');assert.equal(f.context.atelierRecipes[0].id,'current-A');
 });
 
+for(const observed of ['A','B'])test('failed switch reconciles '+observed+' and retries pending inventory once',async()=>{
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+ f.context.atelierReadEpoch=0;f.context.installedLoras=['previous.safetensors'];f.context.knowledge={backend:'previous'};f.context.atelierRecipes=[{id:'previous'}];
+ vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ const older=f.run();f.pending.at(-1).resolve(f.backend('A'));await f.tick();f.pending.at(-1).resolve({presets:[f.a,f.b]});await f.tick();
+ const held=f.pending.at(-1),command=deferred();f.context.post=(...args)=>{f.writes.push(args);return command.promise;};
+ f.node('#positive').value='Latest authored wording';f.node('[data-key="seed"]').value='';f.node('[data-key="steps"]').value='19';f.node('[data-key="steps"]').focus();
+ const switchWork=f.node('#switchBackend').onclick();command.reject(Error('Switch reply lost'));await f.tick();
+ assert.equal(f.pending.at(-1).url,'/api/backends','failure must observe actual backend without replaying POST');
+ f.pending.at(-1).resolve(f.backend(observed));await f.tick();
+ if(observed==='B'){assert.equal(f.pending.at(-1).url,'/api/catalog');f.pending.at(-1).resolve({presets:[f.a,f.b]});await f.tick();}
+ assert.equal(f.pending.at(-1).url,'/api/options');f.pending.at(-1).resolve({loras:['current-'+observed+'.safetensors']});await f.tick();
+ f.pending.at(-1).resolve({backend:'current-'+observed});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'current-'+observed}]});await switchWork;
+ held.resolve({loras:['stale.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'stale'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'stale'}]});await older;
+ assert.deepEqual(Array.from(f.context.installedLoras),['current-'+observed+'.safetensors']);assert.equal(f.context.knowledge.backend,'current-'+observed);
+ assert.equal(vm.runInContext('backendInventoryPending',f.context),false);assert.equal(f.writes.length,1);
+ assert.equal(f.node('#positive').value,'Latest authored wording');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.node('[data-key="steps"]').value,'19');assert.equal(f.context.document.activeElement,f.node('[data-key="steps"]'));
+});
+
+test('an obsolete switch failure cannot clear a newer successful switch or its pending read',async()=>{
+ const f=fixture(),commands=[];f.context.post=(...args)=>{f.writes.push(args);const d=deferred();commands.push(d);return d.promise;};
+ const older=f.node('#switchBackend').onclick(),newer=f.node('#switchBackend').onclick();commands[1].resolve({});await f.tick();
+ commands[0].reject(Error('obsolete failure'));await older;
+ assert.equal(vm.runInContext('backendSwitching',f.context),true);assert.equal(f.node('#switchBackend').disabled,true);assert.notEqual(f.node('#backendStatus').textContent,'obsolete failure');
+ assert.equal(f.pending.length,1,'older failure must not launch a competing read');f.pending[0].resolve(f.backend('old'));await newer;
+ assert.equal(vm.runInContext('backendSwitching',f.context),false);assert.equal(f.writes.length,2);
+});
+
+test('failed current switch remains visible after actual-backend reconciliation',async()=>{
+ const f=fixture();f.context.post=async()=>{throw Error('Requested backend is unavailable');};
+ const work=f.node('#switchBackend').onclick();await f.tick();f.pending[0].resolve(f.backend('old'));await work;
+ assert.match(f.node('#backendStatus').textContent,/Requested backend is unavailable/);
+ assert.equal(vm.runInContext('backendSwitching',f.context),false);assert.equal(f.node('#switchBackend').disabled,false);
+});
+
 test('startup atelier reads yield to a newer inventory and current failures keep the existing empty fallback',async()=>{
  const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');f.context.atelierReadEpoch=0;
  vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
