@@ -20,6 +20,24 @@ PR #1369 merged as `56bb0a891e71af8b748e9864679954cd2b565d86` at 21:51:30Z. A te
 
 None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
 
+## Merges after the 22:53 note — 13 October 2026, 23:58+01
+
+The 22:53 note above was true when it was written. The zero-byte pin and the still-image `source_in` pin were not merged with #1369.
+
+PR #1370 merged as `5b80242c39ea8b04bbcc8145252aecd18976bc78` at 22:02:22Z. A test rejects a zero-byte PNG. Issue #1367 stayed open.
+
+PR #1371 merged as `ffcf9a3eaed489cadb52ad7d8c23167160ae86cc` at 22:06:50Z. A test rejects a still image whose `source_in` is not zero. Issue #1367 was closed completed at 22:07:28Z after the four named pins were on main. That close was an issue update.
+
+PR #1373 merged as `dbb1171fa0de1130eb390dd74af810e298136c5f` at 22:19:43Z. The trait group and the suggested-tag group each have a legend. Issue #1366 stayed open. A browser accessibility tree was not recorded.
+
+PR #1374 merged as `1a4c354d0ad790796bb59243c9e6d502209c9e65` at 22:36:29Z. A rejected analysis file or originals file is marked invalid and points at the status line. Issue #1366 stayed open.
+
+PR #1375 merged as `8e72cc992bcff61b8d1991e3206f6669e3882675` at 22:50:50Z. While a clip holds Recent runs, new kept outputs on a problem job are counted. Issue #1215 stayed open.
+
+PR #1376 merged as `c2404791294b60242002a767e994a4ed1171db2f` at 22:55:29Z. The reference source line and the change-count line are polite live regions. Issue #1366 stayed open. The 24px trait target was not measured and was not changed.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
 ## Renewed maintenance qualification — 13 October 2026
 
 The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
