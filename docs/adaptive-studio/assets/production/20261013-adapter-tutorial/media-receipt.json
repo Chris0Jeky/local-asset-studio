@@ -1,0 +1,64 @@
+{
+  "ffprobe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "27.760000",
+      "size": "652945"
+    }
+  },
+  "clip_sha256": "900f06de443569043165b903c72bde357512660b205a5261af9b2349a930ea75",
+  "decoded_frames": [
+    "decoded-01.png",
+    "decoded-06.png",
+    "decoded-10.png",
+    "decoded-14.png",
+    "decoded-18.png",
+    "decoded-22.png",
+    "decoded-26.png"
+  ],
+  "caption_cues": 7,
+  "encode_command": [
+    "ffmpeg",
+    "-y",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-ss",
+    "7.358",
+    "-i",
+    "C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\evidence\\adapter-tutorial\\capture\\raw\\page@eeea14f762b6d1495dc173ace2e9bbc1.webm",
+    "-t",
+    "27.728",
+    "-an",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "medium",
+    "-crf",
+    "23",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    "C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\evidence\\adapter-tutorial\\capture\\tutorial-adapters.mp4"
+  ],
+  "encode_attempts": 1,
+  "assertions": [
+    "one changed control only",
+    "slot2 unchanged",
+    "zero jobs",
+    "zero browser page errors",
+    "silent1280x720H264",
+    "20-35 seconds",
+    "under8MiB"
+  ]
+}

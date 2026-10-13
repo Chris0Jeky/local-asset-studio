@@ -1,0 +1,38 @@
+{
+  "ffprobe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "29.240000",
+      "size": "781514"
+    }
+  },
+  "decoded_frames": [
+    "decoded-01.png",
+    "decoded-06.png",
+    "decoded-11.png",
+    "decoded-16.png",
+    "decoded-19.png",
+    "decoded-24.png",
+    "decoded-27.png"
+  ],
+  "assertions": [
+    "cancel complete state equality",
+    "accepted target/prompt changed; batch one verified",
+    "zero jobs",
+    "only estimate/guidance POSTs",
+    "zero browser page errors",
+    "silent 1280x720 H264",
+    "15-40 seconds",
+    "under 8 MiB"
+  ],
+  "encode_command": "ffmpeg -ss <trim_start_seconds> -i <raw_video> -t <duration_seconds> -an -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart tutorial-recipe-change.mp4"
+}
