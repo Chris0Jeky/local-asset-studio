@@ -1,5 +1,7 @@
 # Creative choices
 
+Recorded owner answer, 13 October 2026 at 16:27 UTC: "Looks good enough" accepts R2 motion for both projects. Accepted art/motion bytes stay unchanged. This answer does not close licensing, runtime deployment, physical-device or other existing choices.
+
 Agents tick an item only on directly verified completion, or when the owner has answered every part it asks and its stated conditions hold; they record how and when. A line saying "Agents do not tick this" means an agent cannot decide the item, not that a recorded owner answer cannot close it.
 
 The earlier creative choices and q-1 through q-6 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.

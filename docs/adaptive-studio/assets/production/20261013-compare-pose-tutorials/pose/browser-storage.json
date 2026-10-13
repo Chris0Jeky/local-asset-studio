@@ -1,0 +1,38 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://127.0.0.1:8191",
+      "localStorage": [
+        {
+          "name": "asset-studio-setups-migrated:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-next-tutorials",
+          "value": "1"
+        },
+        {
+          "name": "studio.assets.scope",
+          "value": "all"
+        },
+        {
+          "name": "studio.assets.type",
+          "value": "all"
+        },
+        {
+          "name": "studio-draft-v1:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-next-tutorials:combine-klein-9b-copypose",
+          "value": "{\"version\":1,\"updatedAt\":1791935146839,\"recipe\":{\"preset\":\"combine-klein-9b-copypose\",\"controls\":{\"positive\":\"change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an original adult cartographer with short dark hair and round glasses; keep that character's face, hair and rendering style and the clothes with their colours (a long sage coat with brass trim, dark petrol trousers and dark shoes); only the pose and framing change, to image 2's: knees bent, right arm raised above the head, left arm bent outward, front camera, full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.\",\"seed\":\"2026091431\",\"steps\":\"6\",\"cfg\":\"1\",\"width\":\"1024\",\"height\":\"1536\",\"lora\":\"1\",\"lora_name\":\"KleinBase9B_PoseTransfer.safetensors\",\"last_reference\":\"521cee6fbb33452f964c3f2e471299f8_tutorial-character.png.png\"},\"batch\":1,\"continuation\":{\"intent\":\"combine\",\"preset_id\":\"combine-klein-9b-copypose\",\"reference_file\":\"521cee6fbb33452f964c3f2e471299f8_tutorial-character.png.png\",\"source_asset_id\":\"cc3bbc3bdc10521f85e4f4344bb5de22\",\"source_sha256\":\"1f16e2c144c95e15535928788ef89e2d9fe3a3f79d4db245a6f8d11cfd44d39b\",\"template_sha256\":\"b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956\",\"version\":1},\"parent_assets\":[\"cc3bbc3bdc10521f85e4f4344bb5de22\"],\"parent_by_input\":{\"lastReference\":\"cc3bbc3bdc10521f85e4f4344bb5de22\"},\"references\":[{\"role\":\"pose\",\"contribution\":\"\",\"avoid\":\"\",\"file\":\"e3e6ea0e09be449cb9235c0c60be4421_tutorial-pose.png.png\",\"parent_asset\":null,\"sha256\":\"cf721e8d9b35c86fe550064f55728b446f5e002bedc0bfaceff50d2ba655ca7d\",\"bytes\":23323,\"width\":512,\"height\":768,\"original_name\":\"tutorial-pose.png\",\"missing\":false}]},\"pendingInputs\":[],\"templateHash\":null}"
+        },
+        {
+          "name": "studio.assets.sort",
+          "value": "newest"
+        },
+        {
+          "name": "studio.workshop.presentation.v2",
+          "value": "{\"layout\":\"focus\",\"skin\":\"atelier\",\"ambience\":\"none\"}"
+        },
+        {
+          "name": "studio-fills:cc3bbc3bdc10521f85e4f4344bb5de22",
+          "value": "{\"[who is in image 1, e.g. Ellen Joe, a girl with short black hair with red tips]\":\"an original adult cartographer with short dark hair and round glasses\",\"[image 1's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]\":\"a long sage coat with brass trim, dark petrol trousers and dark shoes\",\"[image 2's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind, legs crossed, looking back over the shoulder]\":\"knees bent, right arm raised above the head, left arm bent outward, front camera, full body\",\"@who\":\"an original adult cartographer with short dark hair and round glasses\",\"@clothes\":\"a long sage coat with brass trim, dark petrol trousers and dark shoes\",\"@pose\":\"knees bent, right arm raised above the head, left arm bent outward, front camera, full body\"}"
+        }
+      ]
+    }
+  ]
+}

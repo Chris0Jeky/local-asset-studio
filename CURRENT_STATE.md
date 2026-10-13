@@ -1,5 +1,9 @@
 # Current state — 13 October 2026
 
+## Asset continuation batch — 13 October 2026
+
+Two actual source-only Compare/Pose preparation recordings were completed, with six/seven native offline captions, unchanged-draft/no-generation receipts, public original input diagrams, actual phone UI and complete normal-speed playback. Continue remains blocked by a genuine public historical output. See docs/adaptive-studio/assets/production/20261013-compare-pose-tutorials/README.md. The owner accepted R2 art/motion at 16:27 UTC; accepted bytes, 44 deferrals and existing HUMAN_TODO choices remain unchanged.
+
 ## Evening maintenance record — 13 October 2026, 22:16+01
 
 PR #1361 merged as `265f097c517dcbe5d7a8e469c329d8a7412945d8` at 21:16:05Z. The 30 September Civitai notes now say `raw/_prior_ids.txt`, `raw/_curated_new.json`, `raw/hf_pruna_README.md`, the list snapshots, `ISSUES.md`, and `github-docs/` are not in this repository. The 382 / 304 / ~165 figures stay historical handoff claims. No cache was reconstructed. Issue #1321 closed completed at 21:16:07Z. The 23 and 24 September notes were not part of that change.
