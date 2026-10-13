@@ -17,7 +17,8 @@ def need(ok, message):
 
 def number(value, low, high, name, integer=False):
     need(type(value) is int if integer else type(value) in (int, float), f'{name}: wrong numeric type')
-    need(math.isfinite(value) and low <= value <= high, f'{name}: outside {low}..{high}')
+    need(math.isfinite(value), f'{name}: not a finite number')
+    need(low <= value <= high, f'{name}: outside {low}..{high}')
 
 def fields(obj, required, optional=()):
     need(isinstance(obj, dict), 'Expected object')
