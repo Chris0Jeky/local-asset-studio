@@ -1170,8 +1170,9 @@ class Studio:
     def asset_reference(self, asset_id):
         asset = self.assets.get(asset_id)
         if asset["media_type"] != "image": raise StudioError("Choose an image as the reference")
-        context = continuation.source_context(self, asset_id)
         source = self.assets.file(asset_id)
+        if source.stat().st_size > 20 * 1024 * 1024: raise StudioError("Source exceeds the 20 MiB reference limit.")
+        context = continuation.source_context(self, asset_id)
         raw = source.read_bytes()
         if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise StudioError("Source changed during attachment; reopen the handoff.")
         result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", raw)
@@ -1289,7 +1290,10 @@ class Studio:
                 if pin or not valid_fingerprint(record, stat.st_size, stat.st_mtime_ns):
                     digest=digest_file(path);after=path.stat()
                     identity=lambda info:(info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns)
-                    if identity(stat)!=identity(after): raise StudioError('Required model changed while hashing: '+requirement['file'])
+                    if identity(stat)!=identity(after):
+                        cache[key]={'path':key,'bytes':after.st_size,'mtime_ns':after.st_mtime_ns,'digest_unavailable':True}
+                        cache_path.parent.mkdir(exist_ok=True);self._write_json_atomic(cache_path,cache)
+                        raise StudioError('Required model changed while hashing: '+requirement['file'])
                     record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest};cache[key]=record
                 models.append(dict(record,file=requirement['file']))
                 # #1112: an exact-path pin binds production; an unpinned file stays allowed.
