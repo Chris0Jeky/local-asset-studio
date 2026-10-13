@@ -24,4 +24,6 @@ python tests/looks_visual_reference_browser.py --output <owned-evidence-director
 
 Still unverified: installed runtime/model work, Radeon memory/performance, physical Android/TalkBack and whole-application accessibility. Existing licensing/art judgments and HUMAN_TODO decisions remain open. All 44 deferrals, experimental SVG studies and combined Alibi budget checkpoint are unchanged. No merge or deployment.
 
-The final strengthened gate passes 97 application assertions. Initial PageDown probes sampled scrolling in flight and were superseded by settled keyboard checks; a large PageDown can overshoot a short caption. The reproducible gate records actual focus/Arrow-key navigation and does not select replacement coordinates for that reachability proof.
+The final strengthened gate passes 109 application assertions. Initial PageDown probes sampled scrolling in flight and were superseded by settled keyboard checks; a large PageDown can overshoot a short caption. The reproducible gate records actual focus/Arrow-key navigation and does not select replacement coordinates for that reachability proof.
+
+Maximum-scroll verification checks the complete terminal control against both header and dock. The Tab recovery test preserves maximum scroll with preventScroll:true before starting, confirms active elements, and waits for keyboard scrolling to settle. Actual geometry is stored with the PNG provenance.

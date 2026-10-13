@@ -112,18 +112,22 @@ def main():
                             page.locator('#lookPreview>summary').focus()
                             for selector in ['#lookPrepare','#lookTrash']:
                                 page.keyboard.press('Tab')
+                                settle_keyboard_scroll(page)
                                 check(page.locator(selector).evaluate('e=>e===document.activeElement'), f'{width}: keyboard reaches {selector}')
                                 focused=page.locator(selector).evaluate(REACHABILITY)
                                 check(focused['visible'] and not focused['overlapDock'], f'{width}: keyboard focus clears dock for {selector}')
                                 reachability[selector] = focused
                             page.evaluate('window.scrollTo(0,document.documentElement.scrollHeight)')
-                            end=page.locator('#createView').evaluate('''e=>{const nodes=[...e.querySelectorAll('input,button,select,textarea,summary')].filter(n=>n.checkVisibility({contentVisibilityAuto:true,visibilityProperty:true})&&!n.closest('.wk-run-dock')),last=nodes.at(-1),r=last.getBoundingClientRect(),dock=document.querySelector('.wk-run-dock').getBoundingClientRect();return {lastText:last.textContent.slice(0,100),lastBottom:r.bottom,dockTop:dock.top,clear:r.bottom<=dock.top,scroll:[scrollY,document.documentElement.scrollHeight-innerHeight]}}''')
+                            end=page.locator('#createView').evaluate('''e=>{const nodes=[...e.querySelectorAll('input,button,select,textarea,summary')].filter(n=>n.checkVisibility({contentVisibilityAuto:true,visibilityProperty:true})&&!n.closest('.wk-run-dock')),last=nodes.at(-1),r=last.getBoundingClientRect(),dock=document.querySelector('.wk-run-dock').getBoundingClientRect(),header=document.querySelector('.studio-globalbar').getBoundingClientRect();return {lastText:last.textContent.slice(0,100),lastTop:r.top,lastBottom:r.bottom,dockTop:dock.top,headerBottom:header.bottom,clear:r.top>=header.bottom+4&&r.bottom<=dock.top&&r.bottom<=innerHeight,scroll:[scrollY,document.documentElement.scrollHeight-innerHeight]}}''')
                             check(end['clear'] and abs(end['scroll'][0]-end['scroll'][1])<2, f'{width}: maximum scroll retains bottom control clearance')
                             reachability['maximum_scroll']=end
                             page.screenshot(path=str(args.output/f'maximum-scroll-{width}.png'))
-                            page.locator('#lookPreview>summary').focus()
+                            page.locator('#lookPreview>summary').evaluate('e=>e.focus({preventScroll:true})')
+                            check(page.evaluate('Math.abs(scrollY-(document.documentElement.scrollHeight-innerHeight))<2'), f'{width}: keyboard starts at actual maximum scroll')
                             for selector in ['#lookPrepare','#lookTrash']:
-                                page.keyboard.press('Tab');focused=page.locator(selector).evaluate(REACHABILITY)
+                                page.keyboard.press('Tab');settle_keyboard_scroll(page)
+                                check(page.locator(selector).evaluate('e=>e===document.activeElement'), f'{width}: maximum-scroll Tab reaches {selector}')
+                                focused=page.locator(selector).evaluate(REACHABILITY)
                                 check(focused['visible'] and not focused['overlapDock'], f'{width}: keyboard recovers {selector} from maximum scroll')
                             page.locator('#lookPreview>summary').focus();settle_keyboard_scroll(page)
                             keys=[]
@@ -138,8 +142,9 @@ def main():
                             reachability['caption_navigation_keys']=keys
                             page.screenshot(path=str(args.output/f'keyboard-caption-{width}.png'))
                             # Separate art-inspection crop; the reachability checks above do not rely on this position.
-                            page.locator('#lookPreview').evaluate("e=>window.scrollTo(0,window.scrollY+e.getBoundingClientRect().top-120)")
-                            geometry = page.locator('#lookPreview').evaluate('''e=>{const i=e.querySelector('img'),c=e.querySelector('figcaption'),a=i.getBoundingClientRect(),b=c.getBoundingClientRect(),s=getComputedStyle(c),p=getComputedStyle(c.querySelector('p'));return {image:[a.x,a.y,a.width,a.height],copy:[b.x,b.y,b.width,b.height],copyBackground:s.backgroundColor,textColor:p.color,natural:[i.naturalWidth,i.naturalHeight],alt:i.alt,animation:getComputedStyle(i).animationName,docWidth:document.documentElement.scrollWidth}}''')
+                            page.locator('#lookPreview').evaluate("e=>window.scrollTo({top:window.scrollY+e.getBoundingClientRect().top-120,behavior:'instant'})")
+                            settle_keyboard_scroll(page)
+                            geometry = page.locator('#lookPreview').evaluate('''e=>{const i=e.querySelector('img'),c=e.querySelector('figcaption'),a=i.getBoundingClientRect(),b=c.getBoundingClientRect(),r=e.getBoundingClientRect(),s=getComputedStyle(c),p=getComputedStyle(c.querySelector('p'));return {preview:[r.x,r.y,r.width,r.height],image:[a.x,a.y,a.width,a.height],copy:[b.x,b.y,b.width,b.height],copyBackground:s.backgroundColor,textColor:p.color,natural:[i.naturalWidth,i.naturalHeight],alt:i.alt,animation:getComputedStyle(i).animationName,docWidth:document.documentElement.scrollWidth}}''')
                             check(geometry['docWidth'] <= width, f'{width}: no application horizontal overflow')
                             check(abs(geometry['image'][2]/geometry['image'][3] - 16/9) < .01, f'{width}: whole frame reserves 16:9')
                             check(geometry['copy'][1] >= geometry['image'][1] + geometry['image'][3] - 1, f'{width}: independent copy stays below art')
