@@ -36,6 +36,8 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
  el('rr-originals').files=fixture.images.map((row,i)=>{const bytes=Buffer.from(row.media_base64,'base64');return{size:bytes.length,name:'renamed-'+i+'.png',arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};});
  await el('rr-originals').fire('change');assert.equal(el('rr-preview').disabled,false);
  const card=walk(el('rr-cards'),x=>x.dataset.reference==='picture-1'),trait=walk(card,x=>x.dataset.facet==='style');
+ const role=walk(card,x=>x.tag==='select');
+ assert.equal(role['aria-label'],'Use this picture for Picture 1 role');
  const text=trait.querySelector('textarea'),check=trait.querySelector('input');text.value='bold ink';await text.fire('input');
  check.checked=false;await check.fire('change');check.checked=true;await check.fire('change');
  const request=el('rr-preview').fire('click');await tick();
