@@ -324,6 +324,76 @@ class PresetModelReadinessTests(unittest.TestCase):
         self.manifest.clear(); path.write_bytes(b'unpinned content'); studio = self.studio()
         self.assertEqual([m['file'] for m in self.preflight(studio)['models']], ['loras/pinned.safetensors'])
 
+    def test_observed_mutation_tombstones_matching_cache_and_warns_without_rehash(self):
+        import hashlib, os
+        pin, path = self.pinned_file(); studio = self.studio(); self.cache(path, pin['sha256'])
+        other = self.put('loras/other.safetensors'); other_key = str(other.resolve())
+        info = other.stat(); other_record = {'path': other_key, 'bytes': info.st_size, 'mtime_ns': info.st_mtime_ns, 'sha256': 'c'*64}
+        target = self.root/'.runtime/model-fingerprints.json'
+        cached = json.loads(target.read_text()); cached[other_key] = other_record; target.write_text(json.dumps(cached))
+        def swapping(candidate):
+            stamp = candidate.stat(); digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+            replacement = candidate.with_name('replacement.tmp')
+            replacement.write_bytes(b'x' * stamp.st_size); os.utime(replacement, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+            os.replace(replacement, candidate)
+            return digest
+        with patch.object(server, 'digest_file', side_effect=swapping), \
+             self.assertRaisesRegex(server.StudioError, 'changed while hashing'):
+            self.preflight(studio)
+        self.assertFalse(studio.jobs); self.assertTrue(studio.queue.empty())
+        persisted = json.loads(target.read_text()); entry = persisted[str(path.resolve())]
+        self.assertNotIn('sha256', entry); self.assertTrue(entry.get('digest_unavailable'))
+        after = path.stat(); self.assertEqual((entry['bytes'], entry['mtime_ns']), (after.st_size, after.st_mtime_ns))
+        self.assertNotIn(pin['sha256'], json.dumps(entry)); self.assertEqual(persisted[other_key], other_record)
+        fresh = self.studio()
+        with patch.object(server, 'digest_file', side_effect=AssertionError('no hashing on a readiness poll')), \
+             patch.object(server.Studio, '_write_json_atomic', side_effect=AssertionError('no writes on a readiness poll')):
+            report = self.health(fresh); row = self.requirements(fresh)['loras/pinned.safetensors']
+        self.assertNotIn('fixture', report['missing_models'])
+        self.assertEqual(report['pin_mismatch'], {'fixture': ['loras/pinned.safetensors']})
+        self.assertTrue(row['present']); self.assertIsNone(row['pin_mismatch']['observed_sha256'])
+        self.assertIn('digest', row['note'].lower()); self.assertIn('changed while hashing', row['note'])
+        self.assertNotIn('differs', row['note'].lower())
+        self.assertFalse(fresh.jobs); self.assertTrue(fresh.queue.empty())
+
+    def test_tombstone_clears_on_restored_preflight_and_persists_for_bad_bytes(self):
+        import hashlib, os
+        pin, path = self.pinned_file(); studio = self.studio(); self.cache(path, pin['sha256'])
+        target = self.root/'.runtime/model-fingerprints.json'
+        def swapping(candidate):
+            stamp = candidate.stat(); digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+            replacement = candidate.with_name('replacement.tmp')
+            replacement.write_bytes(b'x' * stamp.st_size); os.utime(replacement, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+            os.replace(replacement, candidate)
+            return digest
+        with patch.object(server, 'digest_file', side_effect=swapping), \
+             self.assertRaisesRegex(server.StudioError, 'changed while hashing'):
+            self.preflight(studio)
+        retained = dict(json.loads(target.read_text())[str(path.resolve())], sha256=pin['sha256'])
+        self.assertTrue(retained.get('digest_unavailable'))
+        from model_requirements import valid_fingerprint
+        self.assertFalse(valid_fingerprint(retained, retained['bytes'], retained['mtime_ns']))
+        target.write_text(json.dumps({str(path.resolve()): retained}))
+        fresh = self.studio()
+        with patch.object(server, 'digest_file', side_effect=AssertionError('no hashing on a readiness poll')):
+            row = self.requirements(fresh)['loras/pinned.safetensors']
+        self.assertIsNone(row['pin_mismatch']['observed_sha256']); self.assertIn('changed while hashing', row['note'])
+        again = self.studio()
+        with self.assertRaisesRegex(server.StudioError, 'does not match its library pin'):
+            self.preflight(again)
+        self.assertFalse(again.jobs); self.assertTrue(again.queue.empty())
+        self.assertEqual(self.health(self.studio())['pin_mismatch'], {'fixture': ['loras/pinned.safetensors']})
+        path.write_bytes(b'synthetic'); healed = self.studio()
+        bundle = self.preflight(healed)
+        self.assertEqual(bundle['models'][0]['sha256'], pin['sha256'])
+        entry = json.loads(target.read_text())[str(path.resolve())]
+        self.assertEqual(entry['sha256'], pin['sha256']); self.assertFalse(entry.get('digest_unavailable', False))
+        cleared = self.studio()
+        with patch.object(server, 'digest_file', side_effect=AssertionError('no hashing on a readiness poll')):
+            self.assertEqual(self.health(cleared)['pin_mismatch'], {})
+            self.assertIsNone(self.requirements(cleared)['loras/pinned.safetensors']['pin_mismatch'])
+        self.assertFalse(healed.jobs); self.assertTrue(healed.queue.empty())
+
     def test_real_http_readiness_inspection_and_pin_only_refusal(self):
         from http.client import HTTPConnection
         from http.server import ThreadingHTTPServer
