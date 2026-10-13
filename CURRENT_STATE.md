@@ -1,5 +1,13 @@
 # Current state — 13 October 2026
 
+## Evening maintenance record — 13 October 2026, 22:16+01
+
+PR #1361 merged as `265f097c517dcbe5d7a8e469c329d8a7412945d8` at 21:16:05Z. The 30 September Civitai notes now say `raw/_prior_ids.txt`, `raw/_curated_new.json`, `raw/hf_pruna_README.md`, the list snapshots, `ISSUES.md`, and `github-docs/` are not in this repository. The 382 / 304 / ~165 figures stay historical handoff claims. No cache was reconstructed. Issue #1321 closed completed at 21:16:07Z. The 23 and 24 September notes were not part of that change.
+
+PR #1362 merged as `708ea45272af15cb85c712ad90eea5ac188535f8` at 21:16:53Z. `studio_av/project.py` `number()` now says when a value is not finite, and a finite value past the bounds still says outside. Focused local tests passed before the PR, and the hosted Check studio and Studio AV lanes succeeded on head `3c427776`. No GitHub issue was attached.
+
+Neither merge is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job. `HUMAN_TODO.md` still holds the owner's asset, look, parallax, and WAI Vary choices.
+
 ## Renewed maintenance qualification — 13 October 2026
 
 The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
