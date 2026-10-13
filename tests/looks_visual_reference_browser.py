@@ -28,7 +28,12 @@ production_server = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_modu
 PATH = '/static/look-previews/night-shift-ma-responsive-1024.webp'
 SHA = '156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192'
 VIEWPORTS = [(320, 900), (390, 844), (430, 932), (1536, 1060)]
-REACHABILITY = '''e=>{const r=e.getBoundingClientRect(),dock=document.querySelector('.wk-run-dock').getBoundingClientRect();return {rect:[r.x,r.y,r.width,r.height],visible:r.top>=0&&r.bottom<=innerHeight,overlapDock:r.left<dock.right&&r.right>dock.left&&r.top<dock.bottom&&r.bottom>dock.top,dock:[dock.x,dock.y,dock.width,dock.height],scroll:[scrollY,document.documentElement.scrollHeight-innerHeight]}}'''
+REACHABILITY = '''e=>{const r=e.getBoundingClientRect(),dock=document.querySelector('.wk-run-dock').getBoundingClientRect(),header=document.querySelector('.studio-globalbar').getBoundingClientRect();return {rect:[r.x,r.y,r.width,r.height],visible:r.top>=header.bottom+4&&r.bottom<=innerHeight,overlapDock:r.left<dock.right&&r.right>dock.left&&r.top<dock.bottom&&r.bottom>dock.top,dock:[dock.x,dock.y,dock.width,dock.height],headerBottom:header.bottom,scroll:[scrollY,document.documentElement.scrollHeight-innerHeight]}}'''
+
+
+def settle_keyboard_scroll(page):
+    # Observe native keyboard scrolling; do not choose a replacement scroll position.
+    page.evaluate('''()=>new Promise(resolve=>{let previous=scrollY,stable=0;function frame(){const current=scrollY;stable=Math.abs(current-previous)<.1?stable+1:0;previous=current;if(stable>=4)resolve();else requestAnimationFrame(frame)}requestAnimationFrame(frame)})''')
 
 
 def main():
@@ -120,10 +125,17 @@ def main():
                             for selector in ['#lookPrepare','#lookTrash']:
                                 page.keyboard.press('Tab');focused=page.locator(selector).evaluate(REACHABILITY)
                                 check(focused['visible'] and not focused['overlapDock'], f'{width}: keyboard recovers {selector} from maximum scroll')
-                            page.locator('#lookPreview>summary').focus();page.keyboard.press('PageDown')
+                            page.locator('#lookPreview>summary').focus();settle_keyboard_scroll(page)
+                            keys=[]
+                            for _ in range(24):
+                                caption=page.locator('#lookPreview figcaption').evaluate(REACHABILITY)
+                                if caption['visible'] and not caption['overlapDock']:break
+                                key='ArrowUp' if caption['rect'][1]<caption['headerBottom']+4 else 'ArrowDown'
+                                page.keyboard.press(key);keys.append(key);settle_keyboard_scroll(page)
                             caption=page.locator('#lookPreview figcaption').evaluate(REACHABILITY)
-                            check(caption['visible'] and not caption['overlapDock'], f'{width}: PageDown exposes caption without pointer-selected scroll')
+                            check(caption['visible'] and not caption['overlapDock'], f'{width}: settled keyboard navigation exposes caption without pointer-selected scroll')
                             reachability['keyboard_caption']=caption
+                            reachability['caption_navigation_keys']=keys
                             page.screenshot(path=str(args.output/f'keyboard-caption-{width}.png'))
                             # Separate art-inspection crop; the reachability checks above do not rely on this position.
                             page.locator('#lookPreview').evaluate("e=>window.scrollTo(0,window.scrollY+e.getBoundingClientRect().top-120)")
