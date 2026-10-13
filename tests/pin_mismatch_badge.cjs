@@ -33,9 +33,9 @@ api=async()=>({online:true,worker_alive:true,schema_available:true,missing_model
 `, context);
 vm.runInContext('refreshHealth()', context).then(() => {
   const html = element('#presetList').innerHTML;
-  assert.match(html, /data-id="wai"[\s\S]*Checksum differs/);
+  assert.match(html, /data-id="wai"[\s\S]*Model verification needs attention/);
   assert.match(html, /loras\/pinned\.safetensors/);
-  assert.doesNotMatch(html, /data-id="plain"[\s\S]*Checksum differs/);
+  assert.doesNotMatch(html, /data-id="plain"[\s\S]*Model verification needs attention/);
   assert.equal(element('#generate').disabled, false, 'a pin mismatch warns and does not block Generate');
   console.log('pin mismatch badge passed');
 }).catch(error => { console.error(error); process.exitCode = 1; });

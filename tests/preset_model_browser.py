@@ -22,9 +22,9 @@ ROWS = [
     {'file': 'unknown.safetensors', 'path': None, 'present': None, 'asset_id': None, 'installable': False,
      'note': 'Model folder unknown; declare model_files.', 'install_note': 'Review the exact source and destination.'},
     {'file': 'loras/unavailable.safetensors', 'present': True, 'installable': False,
-     'note': 'Pinned file verification is unavailable after the file changed while hashing.'},
+     'note': 'Content verification unavailable for library pin fixture: file changed while hashing so its digest is unavailable.'},
     {'file': 'loras/different.safetensors', 'present': True, 'installable': False,
-     'note': 'Pinned file checksum differs from the recorded pin.'},
+     'note': 'Content differs from library pin fixture: pinned sha256 a, observed sha256 b.'},
 ]
 
 
@@ -76,8 +76,8 @@ def run(output):
                     assert badge.count() == 1
                     assert 'loras/unavailable.safetensors' in badge.get_attribute('title')
                     assert 'loras/different.safetensors' in badge.get_attribute('title')
-                    assert 'verification is unavailable' in panel.text_content()
-                    assert 'checksum differs' in panel.text_content()
+                    assert 'Content verification unavailable' in panel.text_content()
+                    assert 'Content differs from library pin' in panel.text_content()
                     page.evaluate('health()'); page.wait_for_function("document.querySelector('#health').textContent==='Recipe needs models'")
                     assert page.locator('#generate').is_disabled()
                     # Open the real dependency disclosure, then keyboard-focus its only valid install.
