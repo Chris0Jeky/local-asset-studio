@@ -1,3 +1,8 @@
+## Optional Look reference pilot - 13 October 2026
+
+An isolated main-based draft adds a folded display-only MA reference to the unchanged shipped Night Shift Look. Its 26,460-byte whole-frame WebP loads only on explicit preview opening; opaque copy, static rendering and missing-picture/forced-color text fallback keep preparation usable. Saved wording, Z2 lineage, recipe controls and revisions stay unchanged; edited/custom or put-away Looks get no automatic reference. No generation, activation, cap change, dependency, art reacceptance or deferral change.
+
+At implementation 7e970293, the actual frontend with production static serving/Look listing/prepare and disposable SQLite passed 65 browser checks at 320/390/430/1536. HTTP delivery bytes/hash/MIME and native PNG pixels were inspected. Independent review exposed the initial production WebP 404, proved by a causal regression; the narrow exact-file route repair passed and was rereviewed without a remaining blocker. Six new Python contracts, 15 frontend handoffs, five static-island contracts and 25 Node Look checks passed. Full lifetime/final hosted gates are recorded in the draft separately. Details: docs/adaptive-studio/assets/production/20261013-look-preview/README.md. Physical/native/runtime performance and existing HUMAN_TODO licensing/art decisions remain open. No merge or deployment.
 # Current state — 12 October 2026
 
 ## Native AMD Animagine execution — 12 October 2026
@@ -2529,3 +2534,4 @@ NoobAI remains hobby-only, and WAI mirror provenance is not creator authenticati
 alternative, pipeline controls, sources and recovery. The implementation branch is
 `codex/studio-workflow-lab`, based on `6bd4e5b`; final Git/CI status is reported with
 the handoff. [HUMAN_TODO.md](HUMAN_TODO.md) contains the optional creative choices.
+
