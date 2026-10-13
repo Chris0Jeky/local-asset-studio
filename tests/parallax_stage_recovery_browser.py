@@ -20,6 +20,26 @@ PLAN['plan_id'] = parallax.plan_id(PLAN)
 CALLS = []
 
 
+async def reload_saved_stage(page, stage, checks, width):
+    expected = await page.evaluate('StudioSetupDraft.capture()')
+    saved = await page.evaluate("""() => {
+      const key=Object.keys(localStorage).find(key=>key.startsWith('studio-draft-v1:')&&key.endsWith(':'+selected.id));
+      return key?JSON.parse(localStorage.getItem(key)):null;
+    }""")
+    assert saved and saved['recipe']['parallax']['stage'] == stage, 'Accepted stage must be saved before further input or pagehide'
+    assert saved['recipe'] == expected['recipe']
+    before = len(CALLS)
+    await page.reload()
+    await page.wait_for_function("!!window.StudioSetupDraft && backendActive==='primary' && !!selected")
+    await page.evaluate('(id) => { selectPreset(id,true,true);showView("create"); }', PRESET['id'])
+    await page.locator('#uxRestoreDraft').click()
+    await page.wait_for_function('(stage) => parallaxState?.stage===stage && uploaded===parallaxState.source_file', arg=stage)
+    assert await page.evaluate('StudioSetupDraft.capture().recipe') == expected['recipe']
+    assert len(CALLS) == before, 'Reload/Restore must not replay stage requests'
+    checks.append(f'{width}px {stage}: saved immediately, reload/Restore retains exact recipe without replay')
+    await page.evaluate("document.querySelectorAll('#gallery').forEach(node=>{for(let p=node;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;})")
+
+
 class Handler(fixture.Handler):
     def do_POST(self):
         if self.path != '/api/parallax/stage':
@@ -102,6 +122,8 @@ async def run(args):
                         assert 'Inspect the original job' in status_text, 'Create status keeps the uncertainty instruction'
                         assert 'do not repeat' in status_text.lower(), 'Create status forbids repeating uncertainty'
                         checks.append(f'{width}px {stage}: real card loads exact stage once with truthful sibling context')
+                        if not args.inert:
+                            await reload_saved_stage(page, stage, checks, width)
                     sibling['status'] = 'running'
                     await page.evaluate('refresh()')
                     dialogs.clear()
@@ -116,6 +138,12 @@ async def run(args):
                     checks.append(f'{width}px live isolate: original activity remains visible after real recall; no job request')
                     sibling['status'] = 'uncertain'
                     await page.evaluate('refresh()')
+                    if not args.inert:
+                        plate = parallax.stage_payload(PLAN, 'plate', fixture.source_context(fixture.ASSETS[0]))
+                        await page.evaluate('(plate) => beginParallax(plate)', plate)
+                        await page.evaluate('afterParallaxSubmit({id:"fixture-job"},parallaxState,StudioSetupDraft.stamp())')
+                        assert await page.evaluate('parallaxState.stage') == 'isolate'
+                        await reload_saved_stage(page, 'isolate', checks, width)
                     await page.evaluate("""() => {
                       const original=api;
                       api=async(url,options)=>{const response=await original(url,options);if(url==='/api/parallax/stage')await new Promise(resolve=>window.releaseStage=resolve);return response;};
