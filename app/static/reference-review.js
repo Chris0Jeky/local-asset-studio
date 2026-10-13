@@ -13,6 +13,7 @@
   const urls=new Set();
   const n=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   const message=text=>{el('rr-status').textContent=text;};
+  const markInput=(input,invalid)=>{input.setAttribute('aria-invalid',invalid?'true':'false');input.setAttribute('aria-describedby','rr-status');};
   function releaseUrls(){for(const url of urls)URL.revokeObjectURL(url);urls.clear();}
   function controls(){
     const loading=loadingEpoch!==null;
@@ -136,9 +137,9 @@
       if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
       applied=null;receipt=null;
       report=result.analysis;review=result.review;originals=null;releaseUrls();el('rr-cards').replaceChildren();
-      el('rr-originals').value='';el('rr-adopt').checked=false;controls();
+      el('rr-originals').value='';el('rr-adopt').checked=false;controls();markInput(el('rr-analysis'),false);
       el('rr-source-status').textContent='Choose '+report.request.references.length+' exact originals; order and filenames do not matter.';showReport();
-    }catch(error){if(current===epoch)message(error.message);}
+    }catch(error){if(current===epoch){markInput(el('rr-analysis'),true);message(error.message);}}
   });
   el('rr-originals').addEventListener('change',async event=>{
     changed();const current=epoch;originals=null;controls();renderCards();
@@ -153,9 +154,9 @@
         hashes.set(sha,file);
       }
       if(expected.some(r=>!hashes.has(r.sha256)))throw Error('An exact original is missing. Choose all pictures from this analysis.');
-      originals=expected.map(r=>hashes.get(r.sha256));renderCards();controls();
+      originals=expected.map(r=>hashes.get(r.sha256));renderCards();controls();markInput(el('rr-originals'),false);
       el('rr-source-status').textContent=expected.length+' originals matched by SHA-256.';message('Choose the traits to keep or edit their descriptions, then preview.');
-    }catch(error){if(current===epoch){el('rr-source-status').textContent='Originals are not ready.';message(error.message);}}
+    }catch(error){if(current===epoch){markInput(el('rr-originals'),true);el('rr-source-status').textContent='Originals are not ready.';message(error.message);}}
   });
   el('rr-adopt').addEventListener('change',()=>{changed();message('Instruction choice changed. Preview before applying.');});
   async function encoded(file){

@@ -32,9 +32,17 @@ for(const name of ['prompt-lab.js','reference-review.js'])vm.runInContext(fs.rea
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
  el('brief').value='Keep my instruction';
+ el('rr-analysis').files=[{size:128*1024+1}];await el('rr-analysis').fire('change');
+ assert.equal(el('rr-analysis')['aria-invalid'],'true');
+ assert.equal(el('rr-analysis')['aria-describedby'],'rr-status');
+ assert.equal(el('rr-status').textContent,'Choose an analysis JSON no larger than 128 KiB.');
  el('rr-analysis').files=[{size:100,text:async()=>JSON.stringify(fixture.report)}];await el('rr-analysis').fire('change');
+ assert.equal(el('rr-analysis')['aria-invalid'],'false');
+ el('rr-originals').files=[{size:0}];await el('rr-originals').fire('change');
+ assert.equal(el('rr-originals')['aria-invalid'],'true');
+ assert.equal(el('rr-status').textContent,'Choose one to four exact original images, each at most 8 MiB.');
  el('rr-originals').files=fixture.images.map((row,i)=>{const bytes=Buffer.from(row.media_base64,'base64');return{size:bytes.length,name:'renamed-'+i+'.png',arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};});
- await el('rr-originals').fire('change');assert.equal(el('rr-preview').disabled,false);
+ await el('rr-originals').fire('change');assert.equal(el('rr-originals')['aria-invalid'],'false');assert.equal(el('rr-preview').disabled,false);
  const card=walk(el('rr-cards'),x=>x.dataset.reference==='picture-1'),trait=walk(card,x=>x.dataset.facet==='style');
  const role=walk(card,x=>x.tag==='select');
  assert.equal(role['aria-label'],'Use this picture for Picture 1 role');
