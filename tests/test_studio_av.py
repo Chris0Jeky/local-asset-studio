@@ -104,6 +104,10 @@ class AVTests(unittest.TestCase):
         with self.assertRaises(ValueError):p.edit(self.doc,'wrong','audio','music-clip','gain_db',-24)
     def test_unsupported_edit(self):
         with self.assertRaises(ValueError):p.edit(self.doc,p.digest(self.doc),'audio','music-clip','asset','fx')
+    def test_edit_rejects_out_of_range_value(self):
+        before=p.digest(self.doc)
+        with self.assertRaisesRegex(ValueError,'clip gain: outside -60..6'):p.edit(self.doc,before,'audio','music-clip','gain_db',999)
+        self.assertEqual(p.digest(self.doc),before)
     def test_no_overwrite(self):
         path=self.root/'unique.json';p.write_new(path,{})
         with self.assertRaises(FileExistsError):p.write_new(path,{})
