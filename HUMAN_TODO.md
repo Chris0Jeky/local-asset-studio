@@ -1,5 +1,14 @@
 # Creative choices
 
+Recorded limited owner answer, 13 October 2026: after the displayed v2 workshop
+and Alibi v2 lantern PNGs and the responsive LAS card, Chris said “Yeah, I guess
+these are good enough for being SVGs.” Those displayed examples are provisionally
+visually accepted for now. Later failed coarse studies, the pixel alternative,
+runtime deployment, licensing and merge are not covered. The proposed conversion
+pivot is stopped. The separate optional-motion source preview is at
+[v2 motion draft](docs/adaptive-studio/assets/production/20261013-v2-motion-preview/README.md).
+No unrelated creative choice below is closed by this answer.
+
 Agents tick an item only on directly verified completion, or when the owner has answered every part it asks and its stated conditions hold; they record how and when. A line saying "Agents do not tick this" means an agent cannot decide the item, not that a recorded owner answer cannot close it.
 
 The earlier creative choices and q-1 through q-6 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.

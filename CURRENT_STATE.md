@@ -1,5 +1,24 @@
 # Current state — 13 October 2026
 
+## Provisionally accepted v2 source and optional motion draft — 13 October 2026
+
+The owner provisionally accepted the immediately displayed v2 LAS workshop and
+Alibi lantern renders, plus the responsive LAS card: “Yeah, I guess these are good
+enough for being SVGs.” This limited answer does not accept the later failed coarse
+studies, pixel variant, licensing, runtime deployment or a merge. The proposed
+vector-conversion pivot is stopped. Existing source files and archives are unchanged.
+
+`docs/adaptive-studio/assets/production/20261013-v2-motion-preview/index.html`
+is a separate source-only comparison: the exact v2 SVG remains script-free; an
+inline copy receives restrained rain/reflection motion and an optional train
+inside a stationary window clip. Initial pixels match the unmodified master in
+the same inline browser context. Play/Pause, reduced motion, real offscreen
+observation and 16-second loop endpoints pass 24 browser checks at 390/1440 px.
+Hidden-document behavior is a DOM-contract probe, not physical-device proof.
+No Studio/ComfyUI process, application file, catalogue, dependency, precache or
+budget changed. Exact-head hosted qualification belongs to the draft PR; owner
+choices in HUMAN_TODO.md remain separate.
+
 ## Renewed maintenance qualification — 13 October 2026
 
 The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
