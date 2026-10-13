@@ -1170,8 +1170,9 @@ class Studio:
     def asset_reference(self, asset_id):
         asset = self.assets.get(asset_id)
         if asset["media_type"] != "image": raise StudioError("Choose an image as the reference")
-        context = continuation.source_context(self, asset_id)
         source = self.assets.file(asset_id)
+        if source.stat().st_size > 20 * 1024 * 1024: raise StudioError("Source exceeds the 20 MiB reference limit.")
+        context = continuation.source_context(self, asset_id)
         raw = source.read_bytes()
         if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise StudioError("Source changed during attachment; reopen the handoff.")
         result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", raw)
