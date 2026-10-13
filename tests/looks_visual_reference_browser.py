@@ -28,6 +28,7 @@ production_server = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_modu
 PATH = '/static/look-previews/night-shift-ma-responsive-1024.webp'
 SHA = '156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192'
 VIEWPORTS = [(320, 900), (390, 844), (430, 932), (1536, 1060)]
+REACHABILITY = '''e=>{const r=e.getBoundingClientRect(),dock=document.querySelector('.wk-run-dock').getBoundingClientRect();return {rect:[r.x,r.y,r.width,r.height],visible:r.top>=0&&r.bottom<=innerHeight,overlapDock:r.left<dock.right&&r.right>dock.left&&r.top<dock.bottom&&r.bottom>dock.top,dock:[dock.x,dock.y,dock.width,dock.height],scroll:[scrollY,document.documentElement.scrollHeight-innerHeight]}}'''
 
 
 def main():
@@ -91,6 +92,7 @@ def main():
                             page.locator('#lookBlock > summary').click()
                             page.locator('#lookSelect').select_option(before['id'])
                             check(page.locator('#lookPreview').get_attribute('open') is None and page.locator('#lookPreviewImage').get_attribute('src') is None, f'{width}: Look selection leaves preview folded/unloaded')
+                            page.locator('#lookScene').fill('a rainy rooftop')
                             state = page.evaluate('JSON.stringify(StudioSetupDraft.capture())')
                             with page.expect_response(lambda response: urlsplit(response.url).path == PATH) as delivered:
                                 page.locator('#lookPreview > summary').click()
@@ -100,6 +102,30 @@ def main():
                             page.wait_for_function("const i=document.querySelector('#lookPreviewImage');i.complete&&i.naturalWidth===1024&&!i.hidden")
                             check(state == page.evaluate('JSON.stringify(StudioSetupDraft.capture())'), f'{width}: preview opening does not change recipe/draft')
                             check(len(report['transfers']) == transfers_start + 1, f'{width}: explicit opening transfers one small derivative')
+                            reachability = {'natural_caption': page.locator('#lookPreview figcaption').evaluate(REACHABILITY)}
+                            page.screenshot(path=str(args.output/f'natural-entry-{width}.png'))
+                            page.locator('#lookPreview>summary').focus()
+                            for selector in ['#lookPrepare','#lookTrash']:
+                                page.keyboard.press('Tab')
+                                check(page.locator(selector).evaluate('e=>e===document.activeElement'), f'{width}: keyboard reaches {selector}')
+                                focused=page.locator(selector).evaluate(REACHABILITY)
+                                check(focused['visible'] and not focused['overlapDock'], f'{width}: keyboard focus clears dock for {selector}')
+                                reachability[selector] = focused
+                            page.evaluate('window.scrollTo(0,document.documentElement.scrollHeight)')
+                            end=page.locator('#createView').evaluate('''e=>{const nodes=[...e.querySelectorAll('input,button,select,textarea,summary')].filter(n=>n.checkVisibility({contentVisibilityAuto:true,visibilityProperty:true})&&!n.closest('.wk-run-dock')),last=nodes.at(-1),r=last.getBoundingClientRect(),dock=document.querySelector('.wk-run-dock').getBoundingClientRect();return {lastText:last.textContent.slice(0,100),lastBottom:r.bottom,dockTop:dock.top,clear:r.bottom<=dock.top,scroll:[scrollY,document.documentElement.scrollHeight-innerHeight]}}''')
+                            check(end['clear'] and abs(end['scroll'][0]-end['scroll'][1])<2, f'{width}: maximum scroll retains bottom control clearance')
+                            reachability['maximum_scroll']=end
+                            page.screenshot(path=str(args.output/f'maximum-scroll-{width}.png'))
+                            page.locator('#lookPreview>summary').focus()
+                            for selector in ['#lookPrepare','#lookTrash']:
+                                page.keyboard.press('Tab');focused=page.locator(selector).evaluate(REACHABILITY)
+                                check(focused['visible'] and not focused['overlapDock'], f'{width}: keyboard recovers {selector} from maximum scroll')
+                            page.locator('#lookPreview>summary').focus();page.keyboard.press('PageDown')
+                            caption=page.locator('#lookPreview figcaption').evaluate(REACHABILITY)
+                            check(caption['visible'] and not caption['overlapDock'], f'{width}: PageDown exposes caption without pointer-selected scroll')
+                            reachability['keyboard_caption']=caption
+                            page.screenshot(path=str(args.output/f'keyboard-caption-{width}.png'))
+                            # Separate art-inspection crop; the reachability checks above do not rely on this position.
                             page.locator('#lookPreview').evaluate("e=>window.scrollTo(0,window.scrollY+e.getBoundingClientRect().top-120)")
                             geometry = page.locator('#lookPreview').evaluate('''e=>{const i=e.querySelector('img'),c=e.querySelector('figcaption'),a=i.getBoundingClientRect(),b=c.getBoundingClientRect(),s=getComputedStyle(c),p=getComputedStyle(c.querySelector('p'));return {image:[a.x,a.y,a.width,a.height],copy:[b.x,b.y,b.width,b.height],copyBackground:s.backgroundColor,textColor:p.color,natural:[i.naturalWidth,i.naturalHeight],alt:i.alt,animation:getComputedStyle(i).animationName,docWidth:document.documentElement.scrollWidth}}''')
                             check(geometry['docWidth'] <= width, f'{width}: no application horizontal overflow')
@@ -118,6 +144,7 @@ def main():
                             page.locator('#lookSelect').select_option('')
                             check(page.locator('#lookPreview').is_hidden() and page.locator('#lookPreviewImage').get_attribute('src') is None, f'{width}: changing selection clears preview')
                             report['viewports'].append({'viewport': [width,height], 'dpr': 1, 'reduced_motion': 'reduce', 'geometry': geometry,
+                                                       'reachability':reachability,
                                                        'http_delivery': {'status': response.status,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'content_type':response.headers['content-type']},
                                                        'preview_png': f'application-preview-{width}.png', 'context_png': f'application-context-{width}.png'})
                             context.close()
