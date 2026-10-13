@@ -452,7 +452,7 @@ async function mixedBatchAction(button) {
 // While held, #recentHeld (outside #gallery, height always reserved, so no card moves) counts what the release will
 // show against the last full render: "1 run finished · 1 new run · 2 other changes, shown when the clip stops".
 // A run counts as finished once completed; new means a new non-problem run; any other status, cancel or kept-output
-// difference is a change. Problems-only changes never raise it (Problems is live); running messages are not counted.
+// difference is a change. A problem job counts only new kept outputs; its status does not (Problems is live). Running messages are not counted.
 // The release and every forced render clear it; unchanged text is never rewritten (owner decision, 27 Sep 2026).
 const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer',RECENT_PROBLEM=['failed','partial','uncertain','abandoned'];let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='',recentShownKeys=new Map();
 function jobControlKey(el){
@@ -509,10 +509,10 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   if(typeof renderRunCancel==='function')renderRunCancel();   // journeys load renderJobs alone
 }
 function recentWaiting(keys){
-  const status=key=>String(key||'').split('|')[0],problem=key=>RECENT_PROBLEM.includes(status(key));let finished=0,started=0,other=0;
-  for(const [id,key] of keys){if(problem(key))continue;const prev=recentShownKeys.get(id);if(status(key)==='completed'&&status(prev)!=='completed')finished++;else if(!prev)started++;else if(prev!==key)other++;}
+  const status=key=>String(key||'').split('|')[0],kept=key=>(String(key||'').split('|')[2]||'').split(',').filter(Boolean),problem=key=>RECENT_PROBLEM.includes(status(key));let finished=0,started=0,outputs=0,other=0;
+  for(const [id,key] of keys){const prev=recentShownKeys.get(id);if(problem(key)){const before=new Set(kept(prev));outputs+=kept(key).filter(item=>!before.has(item)).length;continue;}if(status(key)==='completed'&&status(prev)!=='completed')finished++;else if(!prev)started++;else if(prev!==key)other++;}
   for(const [id,key] of recentShownKeys)if(!keys.has(id)&&!problem(key))other++;
-  const parts=[];if(finished)parts.push(finished+(finished===1?' run finished':' runs finished'));if(started)parts.push(started+(started===1?' new run':' new runs'));if(other)parts.push(other+(parts.length?' other':'')+(other===1?' change':' changes'));
+  const parts=[];if(finished)parts.push(finished+(finished===1?' run finished':' runs finished'));if(started)parts.push(started+(started===1?' new run':' new runs'));if(outputs)parts.push(outputs+(outputs===1?' new output':' new outputs'));if(other)parts.push(other+(parts.length?' other':'')+(other===1?' change':' changes'));
   return parts.length?parts.join(' · ')+', shown when the clip stops':'';
 }
 // Stateless on purpose (journeys load renderJobs alone): the line's own text is the record, so equal text is never rewritten.
