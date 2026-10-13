@@ -362,12 +362,17 @@ class PresetModelReadinessTests(unittest.TestCase):
         target = self.root/'.runtime/model-fingerprints.json'
         def swapping(candidate):
             stamp = candidate.stat(); digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
-            candidate.write_bytes(b'x' * stamp.st_size); os.utime(candidate, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+            replacement = candidate.with_name('replacement.tmp')
+            replacement.write_bytes(b'x' * stamp.st_size); os.utime(replacement, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+            os.replace(replacement, candidate)
             return digest
         with patch.object(server, 'digest_file', side_effect=swapping), \
              self.assertRaisesRegex(server.StudioError, 'changed while hashing'):
             self.preflight(studio)
         retained = dict(json.loads(target.read_text())[str(path.resolve())], sha256=pin['sha256'])
+        self.assertTrue(retained.get('digest_unavailable'))
+        from model_requirements import valid_fingerprint
+        self.assertFalse(valid_fingerprint(retained, retained['bytes'], retained['mtime_ns']))
         target.write_text(json.dumps({str(path.resolve()): retained}))
         fresh = self.studio()
         with patch.object(server, 'digest_file', side_effect=AssertionError('no hashing on a readiness poll')):
