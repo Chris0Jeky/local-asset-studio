@@ -21,6 +21,17 @@
       return 'The '+label+' edit is '+entry.status+'. Wait for the original job before generating.';
     }).join(' ');
   }
+  function retainedSiblingNote(before){
+    return ' The job list could not be refreshed. Retained observation: this is the sibling status from before the request.'+(before||'');
+  }
+  async function readJobList(load){
+    const response=await load();
+    if(response?.status===304)return {unchanged:true};
+    if(!response?.ok)throw Error('The job list could not be refreshed.');
+    const next=await response.json();
+    if(!Array.isArray(next))throw Error('The job list could not be refreshed.');
+    return {unchanged:false,jobs:next,etag:response.headers?.get?.('ETag')||null};
+  }
   function render(job,output,original,escape){
     if(output?.parallax||job?.status!=='completed'||!Object.hasOwn(names,job.parallax?.stage))return original;
     const missing=Object.keys(names).filter(stage=>!original.includes('data-stage="'+stage+'"'));
@@ -56,7 +67,9 @@
         const result=await options.request({job_id:id,stage});
         need(identity(ready(id,stage).parallax)===expected&&options.stamp()===stamp,'Create or the source plan changed. Nothing was replaced.');
         checkResponse(result,expected,stage);
-        options.apply(result,siblingNote(options.job(id),currentJobs()));
+        let fresh=true;
+        if(typeof options.refresh==='function'){try{await options.refresh();}catch{fresh=false;}}
+        options.apply(result,fresh?siblingNote(source,currentJobs()):retainedSiblingNote(before));
         return true;
       }finally{pending=false;}
     }};
@@ -74,6 +87,7 @@
       busy:()=>owner.busy()||!!continuationState||!!root.document.querySelector('dialog[open]'),
       job:id=>jobs.find(job=>job.id===id),
       jobs:()=>jobs,
+      refresh:async()=>{const read=await readJobList(()=>fetch('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{ }));if(read.unchanged)return;jobs=read.jobs;jobsEtag=read.etag;const signature=JSON.stringify(read.jobs);jobsDataSignature=signature;renderJobs(signature);},
       available:job=>{const target=catalog?.presets.find(p=>p.id===job.parallax.preset_id&&p.parallax_route);return !!target&&(target.backend_id||'primary')===backendActive;},
       confirm:text=>root.confirm(text),
       request:body=>post('/api/parallax/stage',body),
@@ -98,5 +112,5 @@
     // normal focus/media preservation applies; no polling or mutation observer.
     jobsSignature='';renderJobs();
   }
-  return {create,render,mount};
+  return {create,render,mount,readJobList};
 });
