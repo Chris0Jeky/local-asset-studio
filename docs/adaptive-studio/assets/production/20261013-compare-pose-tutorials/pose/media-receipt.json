@@ -56,7 +56,7 @@
     "-ss",
     "5.303",
     "-i",
-    "C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\evidence\\continuation-20261014\\tutorial-pose\\raw\\page@2a4784fa00a6cec44e9568e64436fb63.webm",
+    "<capture>\\raw\\page@2a4784fa00a6cec44e9568e64436fb63.webm",
     "-t",
     "32.267",
     "-an",
@@ -72,7 +72,8 @@
     "yuv420p",
     "-movflags",
     "+faststart",
-    "C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\evidence\\continuation-20261014\\tutorial-pose\\tutorial-pose.mp4"
+    "<capture>\\tutorial-pose.mp4"
   ],
-  "encode_attempts": 1
+  "encode_attempts": 1,
+  "curation": "Host capture paths replaced with <capture>; full original operational receipt remains in private delivery."
 }

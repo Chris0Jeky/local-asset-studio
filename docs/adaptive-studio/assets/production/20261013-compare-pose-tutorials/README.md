@@ -13,3 +13,5 @@ The isolated setup required an owned empty reference-staging folder; no ComfyUI 
 Continue is still blocked by the genuine public historical generated-output prerequisite. No imported diagram is presented as generated, and no cancellation/draft-restore tutorial is claimed. First-run, Continue, Recover, Workflow and Export remain actual tutorial gaps. The real repair pair, original raster Night Shift loop, 44 deferrals and dependent motion-parallax code are separate and unchanged. These preparation tutorials do not establish model readiness, pose-transfer quality, owner acceptance or licensing.
 
 R2 art/motion was accepted by the owner at 16:27 UTC ("Looks good enough") and is preserved without further polishing. No generation, merge, deployment, dependency or budget change. Existing HUMAN_TODO choices remain open.
+
+Public receipt copies replace the isolated Workspace namespace and host capture paths with explicit placeholders. Complete original operational receipts remain in the private delivery; control/reference/source hashes and timing fields are unchanged.

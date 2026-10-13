@@ -5,7 +5,7 @@
       "origin": "http://127.0.0.1:8191",
       "localStorage": [
         {
-          "name": "asset-studio-setups-migrated:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-next-tutorials",
+          "name": "asset-studio-setups-migrated:<isolated-workspace>",
           "value": "1"
         },
         {
@@ -25,7 +25,7 @@
           "value": "{\"layout\":\"focus\",\"skin\":\"atelier\",\"ambience\":\"none\"}"
         },
         {
-          "name": "studio-draft-v1:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-next-tutorials:anima-portrait",
+          "name": "studio-draft-v1:<isolated-workspace>:anima-portrait",
           "value": "{\"version\":1,\"updatedAt\":1791934185846,\"recipe\":{\"preset\":\"anima-portrait\",\"controls\":{\"positive\":\"An original fully clothed adult cartographer in a warm ivory coat, holding a folded map in a quiet workshop. Calm daylight, clean composition.\",\"negative\":\"worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark\",\"seed\":\"2026091103\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"768\",\"height\":\"1152\"},\"batch\":1,\"parent_assets\":[],\"references\":[]},\"pendingInputs\":[],\"templateHash\":null}"
         }
       ]
