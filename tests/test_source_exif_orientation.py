@@ -89,6 +89,31 @@ class SourceOrientationTests(unittest.TestCase):
                 self.assertEqual((context['width'], context['height']), expected.size)
                 self.assertEqual(context['sha256'], hashlib.sha256(raw).hexdigest())
 
+    def test_png_context_stays_header_only_and_non_jpeg_preparation_is_preserved(self):
+        for orientation in (None, 6):
+            with self.subTest(orientation=orientation):
+                image = Image.new('RGB', (640, 512), (30, 40, 50))
+                ImageDraw.Draw(image).rectangle((31, 67, 113, 151), fill=(240, 230, 210))
+                buffer = io.BytesIO()
+                options = {}
+                if orientation is not None:
+                    exif = Image.Exif(); exif[274] = orientation; options['exif'] = exif
+                image.save(buffer, 'PNG', **options)
+                raw = buffer.getvalue()
+                asset = self.studio.import_image('header-only.png', 'image/png', raw)['asset']
+                with patch('PIL.PngImagePlugin.PngImageFile.load', side_effect=AssertionError('Source readiness must not inflate a PNG raster')):
+                    context = continuation.source_context(self.studio, asset['id'])
+                self.assertEqual((context['width'], context['height']), image.size)
+                self.assertEqual(context['sha256'], hashlib.sha256(raw).hexdigest())
+                for reader in (parallax._source, tiles._source):
+                    with self.subTest(reader=reader.__module__):
+                        _, actual = reader(self.studio, asset['id'])
+                        try:
+                            self.assertEqual(actual.size, image.size)
+                            self.assertEqual(actual.tobytes(), image.tobytes())
+                        finally:
+                            actual.close()
+
     def test_both_loaders_decode_all_eight_pixel_transforms(self):
         for orientation in range(1, 9):
             asset, raw, expected = self.source(orientation)

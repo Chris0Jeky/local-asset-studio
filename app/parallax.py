@@ -468,6 +468,7 @@ def _source(studio, asset_id):
     if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise ValueError("Source bytes changed. Restore the original asset before splitting it.")
     # Match the displayed picture and the engine loader without rewriting source bytes.
     with Image.open(io.BytesIO(raw)) as decoded:
+        if decoded.format != 'JPEG': return context, decoded.convert('RGB')
         with ImageOps.exif_transpose(decoded) as oriented:
             return context, oriented.convert("RGB")
 

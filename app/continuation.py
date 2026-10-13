@@ -310,7 +310,7 @@ def source_context(studio, asset_id):
         width, height = image.size
         # Source coordinates follow the displayed/engine-oriented pixels. Read the
         # header only here; the source digest still covers the untouched file.
-        if image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
+        if image.format == 'JPEG' and image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
     return {
         "version": 1,
         "asset_id": asset["id"],
