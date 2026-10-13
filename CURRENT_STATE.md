@@ -1,5 +1,24 @@
 # Current state — 13 October 2026
 
+## Motion perceptual repair R2 — 13 October 2026
+
+Chris reported the delivered LAS clip looked entirely still. R1 timing tests
+were green but visual delivery failed: the export kept train_enabled=false and
+the tiny rain/reflection changes were below useful card-size visibility. The
+retained live/decoded diagnosis confirms clocks ran and reduced motion was off;
+this was insufficient amplitude and a missing enabled effect, not a frozen export.
+
+The separate `20261013-v2-motion-readable-r2` sibling preserves every R1 file and
+the accepted v2 static SVG bytes. It adds visibly falling native preview strokes
+and enables an8-second one-way train passage in the demo. The discrete train
+reset is fully outside the unchanged window clip; joinery remains stationary.
+Complete normal-speed live/MP4 playback at320px is retained, with immutable object
+geometry, readable-region tests and genuine all-still rejection. Final illustrative
+exports are24fps/192frames/8seconds with enabled effects explicitly recorded.
+Controls, reduced-motion still and hidden/offscreen pause remain tested. These
+checks do not record human acceptance of R2 motion. No runtime/catalogue/precache,
+dependency, budget, merge or deployment change; owner choices stay separate.
+
 ## Provisionally accepted v2 source and optional motion draft — 13 October 2026
 
 The owner provisionally accepted the immediately displayed v2 LAS workshop and
