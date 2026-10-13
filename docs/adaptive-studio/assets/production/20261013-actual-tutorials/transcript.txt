@@ -1,0 +1,6 @@
+00:00:00.000 Owned isolated Studio session. Readiness is unavailable; no image will be generated.
+00:00:05.863 Review the authored YumeFlux baseline replacement. Examples shown are historical.
+00:00:11.061 Close the review. The complete original draft is unchanged.
+00:00:16.838 Open the same replacement again and review it afresh.
+00:00:21.038 Consent explicitly to replacing the workbench settings.
+00:00:24.145 Apply changes the editable recipe. Generate remains a separate action.
