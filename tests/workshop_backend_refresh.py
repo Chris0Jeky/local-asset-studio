@@ -103,7 +103,7 @@ async def exercise_backend_refresh(page, checks, posts):
             assert await page.locator('[data-key="steps"]').evaluate('(n)=>n===document.activeElement && n.value==="19"')
             assert await page.evaluate('referenceRecords===__switchRecords && document.querySelector("#reference").files[0]===__switchFile')
             checks.append(f'{width}px uncertain switch reconciles actual backend without replay, keeping editor and reference lineage')
-        await page.evaluate('api=window.__backendOriginalApi')
+        await page.evaluate('()=>{api=window.__backendOriginalApi;}')
         assert sum(row['path']=='/api/backends/switch' for row in posts[switch_start:])==0, 'Synthetic switch must not reach the runtime'
         assert {row['path'] for row in posts[switch_start:]}<={'/api/estimate','/api/references/check'}, 'Uncertain switch recovery is read-only apart from estimates'
         assert {row['path'] for row in posts[start_writes:]}<={'/api/assets/reference','/api/estimate','/api/references/check'}
