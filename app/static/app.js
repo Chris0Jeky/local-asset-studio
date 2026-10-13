@@ -125,7 +125,7 @@ function renderPresets() {
   const focused = document.activeElement?.closest?.('#presetList [data-id]')?.dataset.id;
   $('#presetList').innerHTML = list.map(p => {
     const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [];
-    const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Checksum differs</em>' : '';
+    const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Model verification needs attention</em>' : '';
     return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '"><b>' + esc(p.name) + '</b><span>' + esc(p.description) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span><em class="badge ' + (p.verified ? 'tested' : '') + '">' + (p.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</em>' + pinBadge + '</div></button>';
   }).join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
   if (focused) ([...$('#presetList').querySelectorAll('[data-id]')].find(button => button.dataset.id === focused) || $('#presetSearch'))?.focus({preventScroll:true});
