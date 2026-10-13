@@ -73,6 +73,7 @@ async def run(args):
                         await page.goto(f'http://127.0.0.1:{server.server_port}/#create', timeout=20000)
                     await page.wait_for_function("document.querySelector('#gallery').dataset.parallaxRecovery==='mounted' && backendActive==='primary' && !!selected")
                     await page.evaluate("showView('create');document.querySelectorAll('#gallery').forEach(node=>{for(let p=node;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;})")
+                    await page.locator('.parallaxStage[data-job="fixture-job"]').first.wait_for(state='visible')
                     gallery_text = await page.locator('#gallery').inner_text()
                     assert 'uncertain' in gallery_text, 'Original card keeps the live sibling status'
                     assert 'isolate' in gallery_text.lower(), 'Original card names the sibling stage'
