@@ -275,6 +275,20 @@ class GpuMemoryTests(unittest.TestCase):
         agreeing = reading_with_totals({DGPU.format(40): 8 * GIB, DGPU.format(2304): 2 * GIB}, {DGPU_ADAPTER: 11 * GIB})
         self.assertEqual(gpu_memory.others_for_admission(agreeing, 40, capacity_bytes=16 * GIB), (3 * GIB, None))
 
+    def test_admission_rejects_an_over_card_source_even_when_the_difference_fits(self):
+        # 20 GiB adapter minus 17 GiB own is 3 GiB, which fits a 16 GiB card, but neither source could be measured on it.
+        over = reading_with_totals({DGPU.format(40): 17 * GIB}, {DGPU_ADAPTER: 20 * GIB})
+        self.assertEqual(gpu_memory.others_for_admission(over, 40), (3 * GIB, None))
+        external, reason = gpu_memory.others_for_admission(over, 40, capacity_bytes=16 * GIB)
+        self.assertIsNone(external); self.assertIn('capacity', reason)
+        self.assertEqual(gpu_memory.others_bytes(over, 40, capacity_bytes=16 * GIB), 3 * GIB)   # the guard is unchanged
+        own = reading({DGPU.format(40): 30 * GIB, DGPU.format(2304): 2 * GIB})
+        external, reason = gpu_memory.others_for_admission(own, 40, capacity_bytes=16 * GIB)
+        self.assertIsNone(external); self.assertIn('capacity', reason)
+        # A card that is only sampling-close to its stated size stays a measurement.
+        full = reading_with_totals({DGPU.format(40): 15 * GIB, DGPU.format(2304): GIB}, {DGPU_ADAPTER: 16 * GIB + 80 * MIB})
+        self.assertEqual(gpu_memory.others_for_admission(full, 40, capacity_bytes=16 * GIB), (GIB + 80 * MIB, None))
+
     def test_anomalies_are_bounded_evidence_rows(self):
         sample = reading_with_totals({DGPU.format(40): 2 * GIB, DGPU.format(2304): DWM_ANOMALY, DGPU.format(30868): 812 * MIB},
                                      {DGPU_ADAPTER: 4 * GIB})
