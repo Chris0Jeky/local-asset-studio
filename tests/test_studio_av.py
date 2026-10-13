@@ -69,6 +69,9 @@ class AVTests(unittest.TestCase):
     def test_first_transition(self):
         self.doc['shots'][0]['transition_frames']=1
         with self.assertRaises(ValueError):p.validate(self.doc)
+    def test_image_source_in_must_be_zero(self):
+        self.doc['shots'][0]['source_in']=1
+        with self.assertRaisesRegex(ValueError,'Still image source_in must be zero'):p.validate(self.doc)
     def test_transition_consumes_shot(self):
         self.doc['shots'][1]['transition_frames']=60
         with self.assertRaises(ValueError):p.validate(self.doc)
