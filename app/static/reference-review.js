@@ -51,7 +51,7 @@
         changed();renderCards();el('rr-cards').querySelector('[data-reference="'+ref.id+'"] select').focus();
         message('Role changed. Choose the traits to transfer, then preview again.');
       });label.append(role);card.append(label);
-      const traits=n('details');traits.open=true;traits.append(n('summary','Traits to transfer'));
+      const traits=n('details');traits.open=true;const traitFields=n('fieldset');traitFields.append(n('legend','Traits to transfer'));traits.append(n('summary','Traits to transfer'),traitFields);
       for(const facet of roles[choice.role]){
         if(!(facet in image.facets))continue;
         const box=n('div');box.className='rr-trait';box.dataset.facet=facet;
@@ -67,11 +67,11 @@
           if(!choice.facets.includes(facet)){choice.facets.push(facet);box.querySelector('input').checked=true;}
           if(text.value===image.facets[facet])delete choice.overrides[facet];else choice.overrides[facet]=text.value;
           changed();
-        });box.append(text);traits.append(box);
+        });box.append(text);traitFields.append(box);
       }
       card.append(traits);
-      const extra=n('details');extra.append(n('summary','Suggested tags and unknowns'));
-      for(const tag of [...new Set(image.tags)])extra.append(checkLabel(tag,choice.tags.includes(tag),checked=>{
+      const extra=n('details');const tagFields=n('fieldset');tagFields.append(n('legend','Suggested tags and unknowns'));extra.append(n('summary','Suggested tags and unknowns'),tagFields);
+      for(const tag of [...new Set(image.tags)])tagFields.append(checkLabel(tag,choice.tags.includes(tag),checked=>{
         choice.tags=checked?[...choice.tags,tag]:choice.tags.filter(k=>k!==tag);changed();
       }));
       for(const unknown of image.unknowns)extra.append(n('p','Unknown: '+unknown));
