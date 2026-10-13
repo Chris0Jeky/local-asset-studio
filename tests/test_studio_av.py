@@ -50,6 +50,10 @@ class AVTests(unittest.TestCase):
     def test_nonfinite(self):
         self.doc['master_gain_db']=float('nan')
         with self.assertRaises(ValueError):p.validate(self.doc)
+    def test_nonfinite_number_says_why(self):
+        with self.assertRaisesRegex(ValueError,'master gain: not a finite number'):p.number(float('nan'),-60,6,'master gain')
+        with self.assertRaisesRegex(ValueError,'master gain: not a finite number'):p.number(float('inf'),-60,6,'master gain')
+        with self.assertRaisesRegex(ValueError,r'master gain: outside -60\.\.6'):p.number(7,-60,6,'master gain')
     def test_bool_number(self):
         self.doc['shots'][0]['frames']=True
         with self.assertRaises(ValueError):p.validate(self.doc)
