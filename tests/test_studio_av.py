@@ -93,6 +93,10 @@ class AVTests(unittest.TestCase):
         try:link.symlink_to(path)
         except OSError:self.skipTest('Symlinks not supported')
         with self.assertRaises(ValueError):p.safe_path(self.root,'escaped')
+    def test_empty_asset_rejected(self):
+        path=self.root/'media'/'empty.png';path.write_bytes(b'')
+        self.doc['assets']['shot0']['path']='media/empty.png'
+        with self.assertRaisesRegex(ValueError,'Empty/oversize input'):p.validate(self.doc,self.root)
     def test_hash_mismatch(self):
         self.doc['assets']['music']['sha256']='0'*64
         with self.assertRaises(ValueError):p.validate(self.doc,self.root)
