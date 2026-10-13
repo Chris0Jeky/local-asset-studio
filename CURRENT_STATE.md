@@ -8,6 +8,18 @@ PR #1362 merged as `708ea45272af15cb85c712ad90eea5ac188535f8` at 21:16:53Z. `stu
 
 Neither merge is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job. `HUMAN_TODO.md` still holds the owner's asset, look, parallax, and WAI Vary choices.
 
+## Later evening merges — 13 October 2026, 22:53+01
+
+PR #1365 merged as `952be1b1348f8b3e84fc1bce5255a959d3a6f0c4` at 21:34:54Z. The reference-role control's accessible name is `Use this picture for Picture N role`. No GitHub issue was attached. A browser accessibility tree was not recorded.
+
+PR #1363 merged as `8bb1f16dd13588bcead2b9665cecd83d2aac0758` at 21:44:41Z. After a parallax stage recall, a changed job list is drawn again. An unchanged 304 response does not redraw and does not call the estimate endpoint. Issue #1358 stays open because the held Playwright stage was not run.
+
+PR #1368 merged as `acb80d865fc916439efcd0b8a6fa2ebf5199774d` at 21:49:07Z. A test now rejects an out-of-range studio_av edit and checks that the original project digest is unchanged. Issue #1367 stays open.
+
+PR #1369 merged as `56bb0a891e71af8b748e9864679954cd2b565d86` at 21:51:30Z. A test now rejects an image asset whose path ends in `.jpg`. Issue #1367 stays open. The zero-byte asset pin and the still-image `source_in` pin were not merged with it.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
 ## Renewed maintenance qualification — 13 October 2026
 
 The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
