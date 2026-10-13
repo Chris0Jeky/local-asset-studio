@@ -270,6 +270,7 @@ test('a plan names each fill a ticked recipe reads that the open recipe lacks, o
   assert.deepEqual(C.combinePlanFills(copy,[four,depth]),[],'Copy Pose already asks every fill the others read');
   assert.deepEqual(C.combinePlanFills(four,[replace]).map(f=>[f.meaning,f.label]),[['outfit','Outfit and its colours']],'the scene outfit is its own field, never the clothes');
   assert.deepEqual(C.combinePlanFills(replace,[copy]).map(f=>f.meaning),['clothes']);
+  assert.deepEqual(C.combinePlanFills(replace,[four]).map(f=>[f.meaning,f.label,f.recipes]),[['clothes','Clothes and colours',['Klein 4B']]],'Klein 4B folds a remembered clothes answer into who');
   assert.deepEqual(C.combinePlanFills(four,[]),[]);assert.deepEqual(C.combinePlanFills(null,[copy]).map(f=>f.meaning),['who','clothes','pose']);
 });
 console.log(count+' continuation client policy checks passed.');
