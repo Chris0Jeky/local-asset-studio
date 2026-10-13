@@ -1,5 +1,16 @@
 # Current state — 12 October 2026
 
+## Night Shift quality study 02 - 13 October 2026
+
+Version 1 remains unchanged as an early study below the owner's quality bar.
+Separate quality-02 workshop and 384x216 pixel SVGs add material modelling,
+light hierarchy and deliberate pixel clusters. Individual PNGs and an unchanged
+accepted-evidence comparison are reviewable at phone/desktop widths. All 36
+combined comparison/lifecycle checks pass; artistic acceptance and comparison
+with the full-resolution MA master remain open. No runtime or selection changes.
+The guide-count CI mismatch (46 documented versus 50 actual lanes) reproduces
+on the unchanged baseline guide blob and is outside this source-only art branch.
+
 ## Native-vector Night Shift source pilot — 12 October 2026
 
 Two editable alternatives remain separate from runtime: the detailed workshop and

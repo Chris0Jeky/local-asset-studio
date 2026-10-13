@@ -1,5 +1,7 @@
 # Night Shift editable pilot — 12 October 2026
 
+**Version 1 studies.** The owner found these below the requested pictorial quality bar. They are preserved unchanged for comparison; the targeted [quality study 02](quality-02/README.md) is the next visual checkpoint. Neither version is finished or production-accepted art.
+
 Two original source alternatives: `night-shift-workshop.svg` (1600×900 native geometry, 14 named layers) and `night-shift-pixel.svg` (320×180 integer pixel geometry, 11 named layers). No embedded raster, external image, font dependency, tracing or GPU submission. Open `review.html` for static rendering and explicitly requested restrained motion. The SVG files contain no animation or script.
 
 ## Individual Chromium previews
