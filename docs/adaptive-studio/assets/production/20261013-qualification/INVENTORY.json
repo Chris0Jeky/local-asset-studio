@@ -72,7 +72,7 @@
     },
     {
       "item": "Combined Alibi budget",
-      "state": "Prior ff32 checkpoint startup205531 over205248; continued diagnosis ongoing; see final live PR receipt"
+      "state": "Blocked: canonical startup 205531 exceeds unchanged 205248 cap by 283 bytes; best exact-preserving discarded probe remains 206 bytes over. No continuation probe adopted."
     }
   ],
   "owner_deferred": {
@@ -113,7 +113,18 @@
       "failed": 0,
       "skipped": 3
     },
-    "combined_stage": "Independent isolated tree; budgets must pass before qualification"
+    "combined_stage": {
+      "state": "Blocked; clean local checkpoint preserved, not published or qualified",
+      "head": "ff32dc41066739796084264f181297958b3fdae7",
+      "canonical_startup_gzip": 205531,
+      "unchanged_cap": 205248,
+      "over_cap": 283,
+      "best_discarded_probe_startup_gzip": 205454,
+      "best_probe_over_cap": 206,
+      "continuation_probe_changes_retained": false,
+      "decoder_and_budget_gates_unchanged": true,
+      "receipt": "COMBINED-BUDGET-DIAGNOSIS.md"
+    }
   },
   "LAS_items": [
     {
@@ -1898,5 +1909,28 @@
     "master_transfer_vs_poster_budget": 8.909,
     "owned_remaining_listeners": 0,
     "source_art_preserved": true
+  },
+  "responsive_MA_pilot": {
+    "state": "Qualified static review pilot; no application/catalog activation or art reacceptance",
+    "file": "../20261013-responsive-ma-pilot/night-shift-ma-responsive-1024.webp",
+    "dimensions": [
+      1024,
+      576
+    ],
+    "bytes": 26460,
+    "sha256": "156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192",
+    "master_unchanged": true,
+    "recipe": "Lanczos resize; WebP quality 85, method 6; whole frame",
+    "browser_checks": 96,
+    "viewport_widths": [
+      320,
+      390,
+      430,
+      1536
+    ],
+    "phone_copy": "Opaque #11171f backing below complete image",
+    "minimum_body_contrast_phone": 8.535,
+    "body_contrast_desktop": 8.159,
+    "remaining": "Application integration/performance, physical-device/native-media acceptance and metadata persistence"
   }
 }
