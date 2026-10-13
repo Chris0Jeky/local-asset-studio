@@ -80,9 +80,8 @@ async def exercise_backend_refresh(page, checks, posts):
               getControl('steps').focus();
               window.__switchAttempts=0;
               delete window.__switchObserve;
-              window.__switchOriginalPost=window.__switchOriginalPost||post;
-              post=async(path,data)=>{if(path==='/api/backends/switch'){window.__switchAttempts++;throw Error('Switch reply lost');}return window.__switchOriginalPost(path,data);};
               api=async(url,options={})=>{
+                if(url==='/api/backends/switch'){window.__switchAttempts++;throw Error('Switch reply lost');}
                 if(url==='/api/backends')return new Promise(resolve=>window.__switchObserve=resolve);
                 return window.__backendOriginalApi(url,options);
               };
@@ -96,17 +95,17 @@ async def exercise_backend_refresh(page, checks, posts):
             }""")
             await page.wait_for_function('!backendSwitching && backendInventoryPending===false')
             assert await page.evaluate('window.__switchAttempts')==1, 'Uncertain switch must attempt exactly one synthetic POST without replay'
-            assert await page.evaluate("backendActive")==='primary', 'Recovery must reconcile the actual backend'
+            assert await page.evaluate("backendActive")=='primary', 'Recovery must reconcile the actual backend'
             assert await page.evaluate('__switchBefore===__backendSnapshot()'), 'Uncertain switch recovery replaced the live draft'
             assert await page.locator('[data-key="seed"]').input_value()=='', 'Cleared setting regained a default after uncertain switch'
             assert await page.locator('[data-key="steps"]').evaluate('(n)=>n===document.activeElement && n.value==="19"')
             assert await page.evaluate('referenceRecords===__switchRecords && document.querySelector("#reference").files[0]===__switchFile')
             checks.append(f'{width}px uncertain switch reconciles actual backend without replay, keeping editor and reference lineage')
-        await page.evaluate('post=window.__switchOriginalPost;api=window.__backendOriginalApi')
+        await page.evaluate('api=window.__backendOriginalApi')
         assert sum(row['path']=='/api/backends/switch' for row in posts[switch_start:])==0, 'Synthetic switch must not reach the runtime'
         assert {row['path'] for row in posts[switch_start:]}<={'/api/estimate','/api/references/check'}, 'Uncertain switch recovery is read-only apart from estimates'
         assert {row['path'] for row in posts[start_writes:]}<={'/api/assets/reference','/api/estimate','/api/references/check'}
         assert sum(row['path']=='/api/assets/reference' for row in posts[start_writes:])==2, 'Only the two explicit fixture preparations may copy a source'
         assert not [row for row in posts if row['path']=='/api/jobs'], 'No generation'
     finally:
-        await page.evaluate('if(window.__switchOriginalPost)post=window.__switchOriginalPost;api=__backendOriginalApi;backendActive=__backendOriginalActive')
+        await page.evaluate('api=__backendOriginalApi;backendActive=__backendOriginalActive')
