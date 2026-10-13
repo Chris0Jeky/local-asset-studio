@@ -7,12 +7,15 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import threading
 import unittest
+from unittest.mock import patch
 
 import test_tiles as tile_fixture
 import test_parallax as parallax_fixture
 
 ROOT = Path(__file__).resolve().parents[1]
+START_THREAD = threading.Thread.start
 
 
 def round_trip(studio, payload):
@@ -20,7 +23,9 @@ def round_trip(studio, payload):
     saved = studio.assets.save_setup({'name': 'Prepared route regression', 'recipe': recipe})
     stored = next(row['recipe'] for row in studio.assets.setups() if row['id'] == saved['id'])
     script = "const U=require('./app/static/studio-core.js');let s='';process.stdin.on('data',b=>s+=b);process.stdin.on('end',()=>{const d=U.normalizeDraft(JSON.parse(s));if(!d)throw Error('invalid draft');console.log(JSON.stringify(d.recipe));});"
-    result = subprocess.run([shutil.which('node'), '-e', script], cwd=ROOT, input=json.dumps({'version': 1, 'updatedAt': 1, 'recipe': stored}), text=True, capture_output=True, timeout=15, check=True)
+    # Windows pipe communication needs real reader threads; fixture workers stay stopped.
+    with patch.object(threading.Thread, 'start', START_THREAD):
+        result = subprocess.run([shutil.which('node'), '-e', script], cwd=ROOT, input=json.dumps({'version': 1, 'updatedAt': 1, 'recipe': stored}), text=True, capture_output=True, timeout=15, check=True)
     restored = json.loads(result.stdout)
     return dict(restored, preset_id=restored['preset'], batch_count=restored['batch'])
 
@@ -37,6 +42,7 @@ class TileRecoveryTests(unittest.TestCase):
         prepared = tile_fixture.tiles.prepare(studio, {'asset_id': self.source(studio)['id']})
         before = set(studio.jobs)
         restored = round_trip(studio, self.payload(prepared))
+        self.assertIn('tile', restored)
         self.assertEqual(restored['tile'], prepared['plan'])
         studio.prepare(restored)
         (studio.experiments / 'uploads' / prepared['file']).write_bytes(tile_fixture.png(tile_fixture.Image.new('RGBA', (256, 256))))
@@ -63,6 +69,7 @@ class ParallaxRecoveryTests(unittest.TestCase):
                 body = self.payload(prepared)
                 body['parallax'] = dict(body['parallax'], stage=stage)
                 restored = round_trip(studio, body)
+                self.assertIn('parallax', restored)
                 self.assertEqual(restored['parallax'], body['parallax'])
                 studio.prepare(restored)
                 restored['parallax']['objects'] = 'a different foreground'

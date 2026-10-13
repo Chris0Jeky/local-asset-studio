@@ -1497,8 +1497,8 @@ async function parallaxLateRepliesKeepCreateEdits() {
     const {element, requests, run, context} = sandbox(null, null);
     installSetupStamp(run);
     run("var backendActive='primary';catalog.presets.push({id:'parallax-route',name:'Parallax layers',modality:'image',parallax_route:true,reference:['14','image'],positive:['4','text'],seed:['10','seed'],width:['10','width'],height:['10','height'],defaults:{}})");
-    const plan = {plan_id:'old-plan',preset_id:'parallax-route',source_asset_id:'source-asset'};
-    const stage = {plan,claim:{...plan,stage:'plate'},stage:'plate',words:'plate words',file:'source.png',width:1344,height:768,preset_id:'parallax-route',flag:'fixture'};
+    const plan = {version:1,plan_id:'a'.repeat(64),preset_id:'parallax-route',source_asset_id:'source-asset',source_sha256:'b'.repeat(64),source_file:'c'.repeat(32)+'_source.png',width:1344,height:768,objects:'the desk',view_polygons:[]};
+    const stage = {plan,claim:{...plan,stage:'plate'},stage:'plate',words:'plate words',file:plan.source_file,width:1344,height:768,preset_id:'parallax-route',flag:'fixture'};
     run('beginParallax(' + JSON.stringify(stage) + ')');
     const original = JSON.parse(run('JSON.stringify(values())'));
     let release;
