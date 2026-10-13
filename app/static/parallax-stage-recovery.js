@@ -87,7 +87,7 @@
       busy:()=>owner.busy()||!!continuationState||!!root.document.querySelector('dialog[open]'),
       job:id=>jobs.find(job=>job.id===id),
       jobs:()=>jobs,
-      refresh:async()=>{const read=await readJobList(()=>fetch('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{ }));if(read.unchanged)return;jobs=read.jobs;jobsEtag=read.etag;jobsDataSignature=JSON.stringify(read.jobs);},
+      refresh:async()=>{const read=await readJobList(()=>fetch('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{ }));if(read.unchanged)return;jobs=read.jobs;jobsEtag=read.etag;const signature=JSON.stringify(read.jobs);jobsDataSignature=signature;renderJobs(signature);},
       available:job=>{const target=catalog?.presets.find(p=>p.id===job.parallax.preset_id&&p.parallax_route);return !!target&&(target.backend_id||'primary')===backendActive;},
       confirm:text=>root.confirm(text),
       request:body=>post('/api/parallax/stage',body),

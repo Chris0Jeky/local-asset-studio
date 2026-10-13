@@ -207,9 +207,9 @@ test('readJobList keeps a 304, accepts a job array, and refuses a failed or non-
   await assert.rejects(api.readJobList(async()=>({status:500,ok:false,headers})),/could not be refreshed/);
   await assert.rejects(api.readJobList(async()=>({status:200,ok:true,json:async()=>({error:'no'}),headers})),/could not be refreshed/);
 });
-test('mount refreshes through readJobList and does not poll, render or estimate',()=>{
+test('mount refreshes through readJobList, redraws a changed list, and does not poll or estimate',()=>{
   const body=fs.readFileSync(path,'utf8');
   const refresh=body.slice(body.indexOf('refresh:'),body.indexOf('available:'));
-  assert.match(refresh,/readJobList/);assert.match(refresh,/\/api\/jobs/);
-  assert.doesNotMatch(refresh,/refreshJobs|renderJobs|scheduleTimeEstimate/);
+  assert.match(refresh,/readJobList/);assert.match(refresh,/\/api\/jobs/);assert.match(refresh,/renderJobs\(signature\)/);
+  assert.doesNotMatch(refresh,/refreshJobs|scheduleTimeEstimate/);
 });
