@@ -13,7 +13,7 @@ is a separate source-only comparison: the exact v2 SVG remains script-free; an
 inline copy receives restrained rain/reflection motion and an optional train
 inside a stationary window clip. Initial pixels match the unmodified master in
 the same inline browser context. Play/Pause, reduced motion, real offscreen
-observation and 16-second loop endpoints pass 24 browser checks at 390/1440 px.
+observation and 16-second loop endpoints pass 26 browser checks at 390/1440 px.
 Hidden-document behavior is a DOM-contract probe, not physical-device proof.
 No Studio/ComfyUI process, application file, catalogue, dependency, precache or
 budget changed. Exact-head hosted qualification belongs to the draft PR; owner

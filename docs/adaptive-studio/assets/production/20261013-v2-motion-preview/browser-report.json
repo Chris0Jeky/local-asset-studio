@@ -25,9 +25,11 @@
     "no horizontal overflow at 1440",
     "no page errors",
     "offline file-only requests",
-    "script-free complete fallback"
+    "script-free complete fallback",
+    "missing visibility observation keeps Play disabled after lifecycle events",
+    "missing observation preserves complete still"
   ],
-  "check_count": 24,
+  "check_count": 26,
   "loop_seam_changed_fraction": 0.0,
   "hidden_test": "explicit DOM visibility contract; actual offscreen via IntersectionObserver",
   "page_errors": [],
