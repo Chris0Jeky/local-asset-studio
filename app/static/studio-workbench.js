@@ -365,9 +365,9 @@
     // Start runs exactly what was prepared: any later change to the pair, recipes, seeds or wording withdraws it.
     const fresh=!!planPrepared&&!planPrepared.started&&planPrepared.stamp===planStamp();
     q('#uxPlanStart').hidden=!fresh;q('#uxPlanStart').disabled=busy;
-    if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Runs & review, not started.');}
+    if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;if(!planPrepared.failure)planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Runs & review, not started.');}
     // Undoing the change brings Start back with its Prepared line; the next change is announced again (#1198).
-    else if(fresh&&planPrepared.stale){planPrepared.stale=false;planStatus(planPrepared.message);}
+    else if(fresh&&planPrepared.stale){planPrepared.stale=false;delete planPrepared.failure;planStatus(planPrepared.message);}
   }
   q('#uxPlanEngines').onchange=e=>{const box=e.target.closest('[data-ux-plan-engine]');if(!box)return;if(box.checked)planChoice.add(box.dataset.uxPlanEngine);else planChoice.delete(box.dataset.uxPlanEngine);syncCombinePlan();};
   q('#uxPlanSeeds').oninput=()=>syncCombinePlan();
@@ -403,7 +403,7 @@
       const project=await post('/api/production/'+encodeURIComponent(prepared.project.id)+'/start',{});begun=true;
       planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Runs & review.');
       await refresh();
-    }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;planStatus(error.message);announce(error.message,true);}}
+    }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;prepared.failure=error.message;planStatus(error.message);announce(error.message,true);}}
     finally{planBusy=false;syncCombinePlan();}
   };
   // #1203: this PC's owner answers for every picture the recipe made, e.g. "pose 3/4 · face 1/4"; none reads as such (K14).

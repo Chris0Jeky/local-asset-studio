@@ -141,5 +141,21 @@ await test('Start stays withdrawn and reads Started when the refresh after it fa
   assert.equal(p.posts.filter(r=>r.url.endsWith('/start')).length,1);
   await p.q('#uxPlanStart').onclick();assert.equal(p.posts.filter(r=>r.url.endsWith('/start')).length,1,'no second Start');
 });
+await test('a failed Start keeps its error when the plan changed during the request (#1233)',async()=>{
+  const p=page();await p.q('#uxPlanPrepare').onclick();
+  p.context.post=async(url,body)=>{
+    p.posts.push({url,body});
+    if(String(url).endsWith('/start')){p.seeds('9');throw Error('the backend refused the plan');}
+    return{id:'plan-1',stages:[],combine:{estimate:{total_seconds:60,confidence:'medium'}}};
+  };
+  await p.q('#uxPlanStart').onclick();
+  assert.match(p.q('#uxPlanStatus').textContent,/the backend refused the plan/);
+  assert.equal(/Prepare again/.test(p.q('#uxPlanStatus').textContent),false,'the stale notice must not replace the Start error');
+  assert.ok(p.announced.some(a=>/the backend refused the plan/.test(a.text)));
+  assert.equal(p.q('#uxPlanStart').hidden,true);
+  p.seeds('7');
+  assert.match(p.q('#uxPlanStatus').textContent,/^Prepared /,'undoing the change brings the Prepared line back');
+  assert.equal(p.q('#uxPlanStart').hidden,false);
+});
 console.log(count+' Combine plan form checks passed.');
 })().catch(error=>{console.error(error);process.exit(1);});
