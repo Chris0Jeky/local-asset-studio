@@ -1,7 +1,7 @@
 from pathlib import Path
-import json
+import argparse,json
 from playwright.sync_api import sync_playwright
-R=Path(__file__).resolve().parents[1];E=R/'evidence/follow-on-20261014';base='http://127.0.0.1:8191';identifier='controlled-recover-tutorial-20261014'
+R=Path(__file__).resolve().parents[1];p=argparse.ArgumentParser();p.add_argument('--evidence',type=Path,default=R/'evidence/follow-on-20261014');p.add_argument('--tutorial-folder',type=Path);a=p.parse_args();E=a.evidence.resolve();E.mkdir(parents=True,exist_ok=True);tutorial=a.tutorial_folder.resolve() if a.tutorial_folder else E/'tutorial-recover';base='http://127.0.0.1:8191';identifier='controlled-recover-tutorial-20261014'
 with sync_playwright() as pw:
  b=pw.chromium.launch();page=b.new_page(viewport={'width':390,'height':1000},accept_downloads=True);errors=[];requests=[]
  page.on('pageerror',lambda e:errors.append(str(e)));page.on('request',lambda r:requests.append(dict(method=r.method,path=r.url.replace(base,''))))
@@ -12,7 +12,7 @@ with sync_playwright() as pw:
  card.get_by_role('button',name='Recipe',exact=True).scroll_into_view_if_needed()
  with page.expect_download() as event:card.get_by_role('button',name='Recipe',exact=True).click()
  path=E/'recover-phone-recipe.json';event.value.save_as(path)
- assert json.loads(path.read_text())==json.loads((E/'tutorial-recover/asset-studio-recipe.json').read_text())
+ assert json.loads(path.read_text())==json.loads((tutorial/'asset-studio-recipe.json').read_text())
  assert before==page.request.get(base+'/api/jobs').json() and page.request.get(base+'/api/production').json()==[]
  forbidden=[r for r in requests if r['method']!='GET' and not r['path'].startswith(('/api/estimate','/api/guidance'))];assert not forbidden and not errors
  result=dict(width=390,actual_unpatched_app=True,clearly_labelled_fixture=True,recipe_download_exact=True,jobs_unchanged=True,production_empty=True,no_resume_or_tracking_controls=True,generate_disabled=True,no_overflow=True,page_errors=errors,forbidden_requests=forbidden,physical_phone=False)
