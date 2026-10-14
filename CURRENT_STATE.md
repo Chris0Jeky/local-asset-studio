@@ -1,5 +1,9 @@
 # Current state — 13 October 2026
 
+## 14 October 2026: controlled Recover inspection tutorial
+
+The catalogue-approved simulated uncertain-request brief is now recorded in the actual unpatched app using a visibly labelled public retained-state fixture, not a real failure/output. Actual read-only Recipe download and native JSON inspection return to the exact unchanged uncertain job; no mutation/replay/Resume/Abandon/Generate occurs. The38.5s720p/24fps clip has six editable offline captions, complete normal-speed playback and actual390px inspection receipts. Sources and curated public receipts: docs/adaptive-studio/assets/production/20261014-recover-fixture-tutorial/README.md. First-run/Continue prerequisites remain blocked; Workflow/Export, separate repair/loop gaps,44 deferrals, parallax recall path and existing HUMAN_TODO decisions remain untouched. Accepted R2 art/motion unchanged; no merge/deploy/generation.
+
 ## Asset continuation batch — 13 October 2026
 
 Two actual source-only Compare/Pose preparation recordings were completed, with six/seven native offline captions, unchanged-draft/no-generation receipts, public original input diagrams, actual phone UI and complete normal-speed playback. Continue remains blocked by a genuine public historical output. See docs/adaptive-studio/assets/production/20261013-compare-pose-tutorials/README.md. The owner accepted R2 art/motion at 16:27 UTC; accepted bytes, 44 deferrals and existing HUMAN_TODO choices remain unchanged.

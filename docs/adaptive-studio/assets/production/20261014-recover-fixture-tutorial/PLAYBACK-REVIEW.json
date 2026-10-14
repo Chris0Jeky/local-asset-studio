@@ -1,0 +1,301 @@
+{
+  "checks": [
+    {
+      "width": 390,
+      "no_autoplay": true,
+      "no_video_request_before_explicit_load": true,
+      "no_overflow": true,
+      "page_errors": []
+    },
+    {
+      "complete_normal_speed_playback": {
+        "time": 38.5,
+        "ended": true,
+        "error": null
+      },
+      "no_seeks_or_pause_during_playback": true
+    },
+    {
+      "width": 1280,
+      "no_autoplay": true,
+      "no_video_request_before_explicit_load": true,
+      "no_overflow": true,
+      "page_errors": []
+    }
+  ],
+  "chronological_frames": [
+    {
+      "wall_seconds": 0.148,
+      "time": 0.041016,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-00.png"
+    },
+    {
+      "wall_seconds": 1.281,
+      "time": 1.195859,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-02.png"
+    },
+    {
+      "wall_seconds": 2.499,
+      "time": 2.362436,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-04.png"
+    },
+    {
+      "wall_seconds": 3.671,
+      "time": 3.557797,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-06.png"
+    },
+    {
+      "wall_seconds": 4.867,
+      "time": 4.733019,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-08.png"
+    },
+    {
+      "wall_seconds": 6.052,
+      "time": 5.924042,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-10.png"
+    },
+    {
+      "wall_seconds": 7.237,
+      "time": 7.115377,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-12.png"
+    },
+    {
+      "wall_seconds": 8.42,
+      "time": 8.296051,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-14.png"
+    },
+    {
+      "wall_seconds": 9.607,
+      "time": 9.48649,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-16.png"
+    },
+    {
+      "wall_seconds": 10.776,
+      "time": 10.660675,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-18.png"
+    },
+    {
+      "wall_seconds": 11.952,
+      "time": 11.830499,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-20.png"
+    },
+    {
+      "wall_seconds": 13.121,
+      "time": 13.005392,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-22.png"
+    },
+    {
+      "wall_seconds": 14.305,
+      "time": 14.187576,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-24.png"
+    },
+    {
+      "wall_seconds": 15.491,
+      "time": 15.363266,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-26.png"
+    },
+    {
+      "wall_seconds": 16.665,
+      "time": 16.545882,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-28.png"
+    },
+    {
+      "wall_seconds": 17.831,
+      "time": 17.730377,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-30.png"
+    },
+    {
+      "wall_seconds": 19.018,
+      "time": 18.892766,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-32.png"
+    },
+    {
+      "wall_seconds": 20.181,
+      "time": 20.070338,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-34.png"
+    },
+    {
+      "wall_seconds": 21.352,
+      "time": 21.236975,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-36.png"
+    },
+    {
+      "wall_seconds": 22.506,
+      "time": 22.404467,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-38.png"
+    },
+    {
+      "wall_seconds": 23.656,
+      "time": 23.54872,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-40.png"
+    },
+    {
+      "wall_seconds": 24.801,
+      "time": 24.709695,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-42.png"
+    },
+    {
+      "wall_seconds": 25.956,
+      "time": 25.852659,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-44.png"
+    },
+    {
+      "wall_seconds": 27.091,
+      "time": 27.001217,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-46.png"
+    },
+    {
+      "wall_seconds": 28.272,
+      "time": 28.144133,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-48.png"
+    },
+    {
+      "wall_seconds": 29.451,
+      "time": 29.33105,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-50.png"
+    },
+    {
+      "wall_seconds": 30.606,
+      "time": 30.508186,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-52.png"
+    },
+    {
+      "wall_seconds": 31.744,
+      "time": 31.64789,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-54.png"
+    },
+    {
+      "wall_seconds": 32.894,
+      "time": 32.806493,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-56.png"
+    },
+    {
+      "wall_seconds": 34.041,
+      "time": 33.946827,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-58.png"
+    },
+    {
+      "wall_seconds": 35.188,
+      "time": 35.087455,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-60.png"
+    },
+    {
+      "wall_seconds": 36.315,
+      "time": 36.233161,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-62.png"
+    },
+    {
+      "wall_seconds": 37.471,
+      "time": 37.372813,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-64.png"
+    },
+    {
+      "wall_seconds": 38.663,
+      "time": 38.5,
+      "paused": false,
+      "ended": false,
+      "error": null,
+      "file": "playback-66.png"
+    }
+  ],
+  "visual_acceptance": "Not inferred; reviewer must inspect actual decoded and chronological pixels"
+}
