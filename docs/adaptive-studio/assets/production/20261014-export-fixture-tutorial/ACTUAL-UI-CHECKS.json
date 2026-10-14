@@ -1,0 +1,40 @@
+[
+  {
+    "width": 390,
+    "actual_unpatched_app": true,
+    "collision_message_visible": true,
+    "atlas_dimensions": [
+      648,
+      296
+    ],
+    "logical_canvas": [
+      320,
+      292
+    ],
+    "downloaded_pack_exact": true,
+    "jobs_and_plans_unchanged": true,
+    "no_overflow": true,
+    "browser_errors": [],
+    "forbidden_requests": [],
+    "physical_device": false
+  },
+  {
+    "width": 1440,
+    "actual_unpatched_app": true,
+    "collision_message_visible": true,
+    "atlas_dimensions": [
+      648,
+      296
+    ],
+    "logical_canvas": [
+      320,
+      292
+    ],
+    "downloaded_pack_exact": true,
+    "jobs_and_plans_unchanged": true,
+    "no_overflow": true,
+    "browser_errors": [],
+    "forbidden_requests": [],
+    "physical_device": false
+  }
+]

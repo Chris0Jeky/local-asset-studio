@@ -1,0 +1,32 @@
+{
+  "id": "tutorial-export",
+  "classification": "CONTROLLED PUBLIC IMPORT AND DESTINATION-COLLISION FIXTURE; no generated output or actual prior failed export",
+  "application_revision": "f5b1a6afa6e67cfdb58cb728035f1a7337ab6cee",
+  "duration_seconds": 67.791667,
+  "frames": 1627,
+  "fps": 24,
+  "bytes": 1571511,
+  "sha256": "fbc5a308bbc3a6ec565f3e9a58ac264f0adfdd3697dcfa1d09437687aab53435",
+  "caption_cues": 8,
+  "public_imports": 2,
+  "native_plans": 2,
+  "collision_sentinel_unchanged": true,
+  "downloaded_pack_bytes": 628263,
+  "downloaded_pack_sha256": "3f53de91cd96027f4b0c64489d34870bf42f66e6cc537185dca716216d05ba1c",
+  "generation_submitted": false,
+  "native_editor_launched": false,
+  "runtime_registration": false,
+  "owner_acceptance": false,
+  "catalogue_ids": 154,
+  "remaining_actual_tutorials": [
+    "tutorial-first-run",
+    "tutorial-continue",
+    "tutorial-workflow"
+  ],
+  "separate_gaps": [
+    "real repair pair",
+    "original Night Shift loop",
+    "44 explicit deferrals",
+    "dependent motion-parallax work"
+  ]
+}

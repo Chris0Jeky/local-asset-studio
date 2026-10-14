@@ -1,5 +1,9 @@
 # Current state — 13 October 2026
 
+## 14 October 2026: public import and Export collision tutorial
+
+Actual unpatched app f5b1a6af imports two pinned public Alibi derivatives, previews a run-owned pre-existing file explicitly labelled controlled collision, refuses the existing native destination without an attempt/overwrite, then completes a fresh native atlas export and exact ZIP download. The67.79s720p/24fps source recording has eight offline captions, complete normal-speed playback and actual390/1440px UI receipts. Sources: docs/adaptive-studio/assets/production/20261014-export-fixture-tutorial/README.md. No generation or editor/backend launch. Workflow remains blocked by a genuine unavailable installed-node schema (actualHTTP400); first-run/Continue prerequisites, repair/original-loop/44deferrals/parallax and HUMAN_TODO decisions are preserved. Accepted art/motion unchanged; no merge/deploy/runtime activation.
+
 ## 14 October 2026: controlled Recover inspection tutorial
 
 The catalogue-approved simulated uncertain-request brief is now recorded in the actual unpatched app using a visibly labelled public retained-state fixture, not a real failure/output. Actual read-only Recipe download and native JSON inspection return to the exact unchanged uncertain job; no mutation/replay/Resume/Abandon/Generate occurs. The38.5s720p/24fps clip has six editable offline captions, complete normal-speed playback and actual390px inspection receipts. Sources and curated public receipts: docs/adaptive-studio/assets/production/20261014-recover-fixture-tutorial/README.md. First-run/Continue prerequisites remain blocked; Workflow/Export, separate repair/loop gaps,44 deferrals, parallax recall path and existing HUMAN_TODO decisions remain untouched. Accepted R2 art/motion unchanged; no merge/deploy/generation.
