@@ -72,6 +72,10 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   assert.equal(updates.length,saved+1,'one key press saves one answer');
   assert.equal(refocused,'anatomy','focus returns to the re-rendered chip that was pressed');
   delete $('#productionDetail').querySelectorAll;
+  // A refused save on the key path is shown like a click's, not dropped as an unhandled rejection.
+  mutateError=Error('key save refused');$('#productionMessage').textContent='';
+  if(typeof listen==='function')await listen(key({tagName:'BUTTON',closest:s=>s==='article.candidate'||s==='.candidate'?candidate:null}));
+  assert.equal($('#productionMessage').textContent,'key save refused','a refused key save shows its error');
   const typed=updates.length;
   if(typeof listen==='function')await listen(key({tagName:'TEXTAREA',id:'productionNotes',closest:s=>s==='article.candidate'||s==='.candidate'?candidate:null}));
   assert.equal(updates.length,typed,'a key typed in a notes/input target does not save');
