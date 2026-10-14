@@ -68,6 +68,16 @@ PR #1382 merged as `89f829563dd806e8f585ba4a68bba4ff0870f4c5` at 23:56:10Z. It r
 
 None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
 
+## Merges after the 00:57 note — 14 October 2026, 01:25+01
+
+The 00:57 note above was true when it was written. #1385 and #1383 were not merged then.
+
+PR #1385 merged as `280c8356a3a16d43a2ebe8cde3fe591c8da7533e` at 00:24:44Z. It is the 00:57 note above. Issues #1233, #983, #1358, #1366, and #1215 stayed open.
+
+PR #1383 merged as `1de6f6be6350dae89eaf2a0ebd4c64a86b4140f4` at 00:24:54Z. A failed Start plan keeps its error on the status line when the form changes during the request. Issue #1233 stayed open. Item 5 of that issue is this merge. Items 1, 3, and 4 remain.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
 ## Renewed maintenance qualification — 13 October 2026
 
 The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
