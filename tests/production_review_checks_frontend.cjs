@@ -64,9 +64,14 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   const candidate={querySelectorAll:s=>s==='[data-candidate-check]'?checks:[]};
   const key=target=>({key:'2',preventDefault(){this.defaultPrevented=true;},target});
   const listen=$('#productionDetail').onkeydown;
+  // The save re-renders the detail: focus returns to the same chip so the next key still lands (#1386 Codex P2).
+  let refocused=null;const rerendered=['style','anatomy'].map(name=>({dataset:{candidateCheck:name,asset:'asset-b'},focus(){refocused=name;}}));
+  $('#productionDetail').querySelectorAll=s=>s==='[data-candidate-check]'?rerendered:[];
   if(typeof listen==='function')await listen(key({tagName:'BUTTON',closest:s=>s==='article.candidate'||s==='.candidate'?candidate:null}));
   assert.deepEqual(updates[saved],{ids:['asset-b'],action:'edit',tags:['check:anatomy=yes']},'key 2 on candidate B reaches the anatomy chip and saves the same guarded tags update as a click');
   assert.equal(updates.length,saved+1,'one key press saves one answer');
+  assert.equal(refocused,'anatomy','focus returns to the re-rendered chip that was pressed');
+  delete $('#productionDetail').querySelectorAll;
   const typed=updates.length;
   if(typeof listen==='function')await listen(key({tagName:'TEXTAREA',id:'productionNotes',closest:s=>s==='article.candidate'||s==='.candidate'?candidate:null}));
   assert.equal(updates.length,typed,'a key typed in a notes/input target does not save');
