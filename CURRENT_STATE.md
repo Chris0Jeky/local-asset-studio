@@ -58,6 +58,16 @@ PR #1380 merged as `bb3ebb3d3419fbc1e9c66518e380c3a1c37d9287` at 23:38:55Z. It r
 
 None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
 
+## Merges after the 00:41 note — 14 October 2026, 00:57+01
+
+The 00:41 note above was true when it was written. #1381 and #1382 were not merged then.
+
+PR #1381 merged as `e32728a6b9968397c2e95e4adf3db72377737740` at 23:53:55Z. When Klein 4B is ticked from replace, the plan shows the remembered clothes answer. Issue #1233 stayed open. Items 1, 3, 4, and 5 were not part of this merge.
+
+PR #1382 merged as `89f829563dd806e8f585ba4a68bba4ff0870f4c5` at 23:56:10Z. It records the #1379 and #1380 merges. Issues #983, #1358, #1366, and #1215 stayed open.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
 ## Renewed maintenance qualification — 13 October 2026
 
 The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
