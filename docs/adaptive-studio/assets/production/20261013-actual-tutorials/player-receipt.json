@@ -1,0 +1,24 @@
+[
+  {
+    "viewport": [
+      1280,
+      720
+    ],
+    "no_video_request_before_explicit_load": true,
+    "no_autoplay_after_load": true,
+    "caption_cues": 6,
+    "offscreen_pause": true,
+    "reduced_motion": true
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "no_video_request_before_explicit_load": true,
+    "no_autoplay_after_load": true,
+    "caption_cues": 6,
+    "offscreen_pause": true,
+    "reduced_motion": true
+  }
+]

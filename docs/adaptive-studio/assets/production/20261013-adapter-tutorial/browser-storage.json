@@ -1,0 +1,34 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://127.0.0.1:8191",
+      "localStorage": [
+        {
+          "name": "asset-studio-setups-migrated:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-adapters",
+          "value": "1"
+        },
+        {
+          "name": "studio.assets.scope",
+          "value": "all"
+        },
+        {
+          "name": "studio.assets.type",
+          "value": "all"
+        },
+        {
+          "name": "studio-draft-v1:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-adapters:yumeflux-ilv1-baseline",
+          "value": "{\"version\":1,\"updatedAt\":1791882631926,\"recipe\":{\"preset\":\"yumeflux-ilv1-baseline\",\"controls\":{\"positive\":\"1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality\",\"negative\":\"bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark\",\"seed\":\"2026091301\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"832\",\"height\":\"1216\",\"denoise\":\"1\",\"lora\":\"0.8\",\"lora2\":\"0\",\"lora_name\":\"nsfw_girls.safetensors\",\"lora2_name\":\"noirpopwave.safetensors\",\"sampler\":\"euler_ancestral\",\"scheduler\":\"karras\"},\"batch\":1,\"parent_assets\":[],\"references\":[]},\"pendingInputs\":[],\"templateHash\":null}"
+        },
+        {
+          "name": "studio.assets.sort",
+          "value": "newest"
+        },
+        {
+          "name": "studio.workshop.presentation.v2",
+          "value": "{\"layout\":\"focus\",\"skin\":\"atelier\",\"ambience\":\"none\"}"
+        }
+      ]
+    }
+  ]
+}
