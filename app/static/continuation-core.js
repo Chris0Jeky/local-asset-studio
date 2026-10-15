@@ -356,8 +356,9 @@
     if(!POLISH[kind])return none('Unknown polish: '+kind+'.');
     if(!source||source.version!==1)return none('This picture’s record could not be read. Refresh and try again.');
     const made=(presets||[]).find(p=>p.id===source.preset_id),family=made?.family||'';
-    // A picture already polished by one of these routes is an anime picture whatever that route's family says.
-    const anime=POLISH_ANIME.test(family)||['anime-face','animagine-face','anime-detail-fix','anime-esrgan'].includes(made?.id);
+    // A face or detail repaint is anime work whatever its route's family says. An upscale is not: it accepts any picture,
+    // so an upscaled photo must not become eligible for an anime repaint (#1409 review).
+    const anime=POLISH_ANIME.test(family)||['anime-face','animagine-face','anime-detail-fix'].includes(made?.id);
     let id='anime-esrgan';
     if(kind!=='upscale'){
       if(!made)return none(POLISH[kind]+' needs a picture made by a Studio recipe; this one has none recorded. Use Continue with this.');

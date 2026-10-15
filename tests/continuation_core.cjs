@@ -285,6 +285,7 @@ test('one-press Polish picks the face pass by source family and refuses with a r
   for(const from of ['wai','anime','noob'])assert.equal(id('details',from),'anime-detail-fix');
   for(const from of ['wai','krea-portrait','zimage'])assert.equal(id('upscale',from),'anime-esrgan');
   assert.equal(id('upscale','anime-esrgan'),'anime-esrgan');
+  assert.equal(pick('face','anime-esrgan').ok,false,'an upscaled picture (any source) is not anime by route');
   for(const from of ['krea-portrait','zimage','qwen21-t2i']){const r=pick('face',from);assert.equal(r.ok,false);assert.match(r.reason,/anime model.*Continue with this/);}
   assert.match(pick('details','not-a-recipe').reason,/no[a-z ]*recorded/i);
   assert.match(pick('face','wai',{prompt_origin:'unavailable',positive:null}).reason,/No description was kept/);

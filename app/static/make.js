@@ -27,8 +27,8 @@
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
   const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set()};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:state.runs.slice(0,6).map(({job,look,lookId,goal,scene})=>({id:job.id,look,lookId,goal,scene}))}));}catch{}};
-  let savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene})=>({id:job.id,look,lookId,goal,scene}))}));}catch{}};
+  let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
   const recipeOf=look=>{for(const l of look?.lineage||[]){const m=/^presets\/recipes\.json · (\S+)/.exec(l.evidence||'');if(m)return m[1];}return null;};
@@ -143,11 +143,12 @@
   }
   // Keep / Not this: the library's own review field, one press, pressing again clears it.
   async function review(button){
-    const id=button.dataset.asset,value=state.review[id]===button.dataset.makeReview?'unreviewed':button.dataset.makeReview,status=q('#makeStatus');button.disabled=true;
-    try{await refreshAssets(true);await mutateAssets({action:'edit',ids:[id],review:value});state.review[id]=value;renderRuns();
+    const id=button.dataset.asset,value=reviewOf(id)===button.dataset.makeReview?'unreviewed':button.dataset.makeReview,status=q('#makeStatus');button.disabled=true;
+    try{if(await refreshAssets(true)===false){await new Promise(r=>setTimeout(r,600));await refreshAssets(true);}await mutateAssets({action:'edit',ids:[id],review:value});state.review[id]=value;renderRuns();
       if(status)status.textContent=value==='selected'?'Kept. Your keepers are in the library under Keepers.':value==='rejected'?'Marked: not this one.':'Decision cleared.';}
     catch(error){button.disabled=false;if(status)status.textContent='Could not save that: '+error.message;}
   }
+  const reviewOf=id=>state.review[id]??(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id)?.review)??'unreviewed';
   const timers=new Map();
   const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'');
   function poll(id,misses=0){clearTimeout(timers.get(id));timers.set(id,setTimeout(async()=>{
@@ -162,7 +163,7 @@
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
     const vary=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a)||'';
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>';
-    const review=state.review[a],mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+label+'</button>';
+    const review=reviewOf(a),mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+label+'</button>';
     const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?plan.reason:'',busy=state.polishing.has(a+':'+kind);
       return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(why||busy?' disabled':'')+(why?' title="'+escape(why)+'"':'')+'>'+POLISH[kind]+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
     return '<div class="make-actions">'+mark('selected','\u2605 Keep')+mark('rejected','Not this')+vary+polish('face')+polish('details')+polish('upscale')
@@ -174,7 +175,7 @@
     const api=window.StudioWorkbench;if(!api?.polishPlan)return;
     for(const {job} of list)for(const o of job.outputs||[])if(o.asset_id&&(!o.media_type||o.media_type==='image'))for(const kind of Object.keys(POLISH)){
       const key=o.asset_id+':'+kind;if(planning.has(key))continue;planning.add(key);
-      api.polishPlan(o.asset_id,kind).then(plan=>{state.polish[key]=plan;scheduleRuns();},error=>{state.polish[key]={ok:false,reason:error.message};scheduleRuns();});}
+      api.polishPlan(o.asset_id,kind).then(plan=>{state.polish[key]=plan;scheduleRuns();},error=>{state.polish[key]={ok:false,reason:error.message};planning.delete(key);setTimeout(()=>{delete state.polish[key];scheduleRuns();},15000);scheduleRuns();});}
   }
   let runsFrame=0;const scheduleRuns=()=>{if(!runsFrame)runsFrame=requestAnimationFrame(()=>{runsFrame=0;renderRuns();});};
   async function polishPicture(button){
@@ -216,6 +217,7 @@
     // Earlier Make runs come back from their job records; one that is gone is dropped, one still running is followed again.
     const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id))};}catch{return null;}}));
     state.runs=[...state.runs,...restored.filter(r=>r&&!state.runs.some(x=>x.job.id===r.id)).map(({id,...r})=>r)];
+    restoredRuns=true;
     for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id);
     // With no Make runs yet, recent pictures come from the job list app.js loads; wait for it briefly.
     for(let i=0;i<40&&!state.runs.length&&!(typeof jobs!=='undefined'&&jobs.length);i++)await new Promise(r=>setTimeout(r,250));
