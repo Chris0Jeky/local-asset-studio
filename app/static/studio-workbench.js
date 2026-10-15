@@ -1046,7 +1046,7 @@
       return await post('/api/jobs',{preset_id:preset.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+StudioContinuation.POLISH[kind]});
     }finally{polishBusy.delete(key);}
   }
-  Object.assign(window.StudioWorkbench,{polish,polishPlan});
+  Object.assign(globalThis.StudioWorkbench,{polish,polishPlan});
   // #1220 Make seamless: square, flat textures only. The server says whether this picture qualifies and a disabled button
   // carries its reason. Prepare rolls the texture and attaches its seam cross to the tile recipe; Generate stays the owner's press.
   let tileBusy=false,tileRead=0;
