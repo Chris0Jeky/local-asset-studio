@@ -1,0 +1,75 @@
+{
+  "ffprobe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1280,
+        "height": 720,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "691"
+      }
+    ],
+    "format": {
+      "duration": "28.791667",
+      "size": "518920"
+    }
+  },
+  "sha256": "713e37724ac33a4b1bbaaf78aa28f7a37fc88d46d4ed3d55e006327e4128a437",
+  "caption_cues": 6,
+  "decoded_frames": [
+    {
+      "seconds": 0.7899999999999999,
+      "file": "decoded-01.png"
+    },
+    {
+      "seconds": 4.923,
+      "file": "decoded-02.png"
+    },
+    {
+      "seconds": 10.029,
+      "file": "decoded-03.png"
+    },
+    {
+      "seconds": 16.172,
+      "file": "decoded-04.png"
+    },
+    {
+      "seconds": 20.288,
+      "file": "decoded-05.png"
+    },
+    {
+      "seconds": 24.416,
+      "file": "decoded-06.png"
+    }
+  ],
+  "encode_command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-ss",
+    "5.358",
+    "-i",
+    "<capture>\\raw\\page@326e10c0b3ae1de591d9f33c97d338ed.webm",
+    "-t",
+    "28.751",
+    "-an",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "medium",
+    "-crf",
+    "22",
+    "-r",
+    "24",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    "<capture>\\tutorial-compare.mp4"
+  ],
+  "encode_attempts": 1,
+  "curation": "Host capture paths replaced with <capture>; full original operational receipt remains in private delivery."
+}

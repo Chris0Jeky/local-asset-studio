@@ -1,0 +1,22 @@
+[
+  {
+    "file": "tutorial-character.png",
+    "width": 512,
+    "height": 768,
+    "sha256": "1f16e2c144c95e15535928788ef89e2d9fe3a3f79d4db245a6f8d11cfd44d39b",
+    "bytes": 17088,
+    "source": "Original deterministic native SVG teaching diagram",
+    "generated_by_model": false,
+    "public_safe": true
+  },
+  {
+    "file": "tutorial-pose.png",
+    "width": 512,
+    "height": 768,
+    "sha256": "cf721e8d9b35c86fe550064f55728b446f5e002bedc0bfaceff50d2ba655ca7d",
+    "bytes": 23323,
+    "source": "Original deterministic native SVG teaching diagram",
+    "generated_by_model": false,
+    "public_safe": true
+  }
+]

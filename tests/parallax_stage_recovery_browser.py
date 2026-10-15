@@ -67,7 +67,7 @@ async def run(args):
                    status='uncertain', message='Synthetic uncertain sibling, not a model run',
                    controls={}, outputs=[], parallax=dict(PLAN, stage='isolate'))
     fixture.JOBS[:] = [job, sibling]
-    server = fixture.ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server = fixture.browser_server(Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     errors, checks, completed = [], [], False

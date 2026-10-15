@@ -1,5 +1,17 @@
 # Current state — 13 October 2026
 
+## 14 October 2026: public import and Export collision tutorial
+
+Actual unpatched app f5b1a6af imports two pinned public Alibi derivatives, previews a run-owned pre-existing file explicitly labelled controlled collision, refuses the existing native destination without an attempt/overwrite, then completes a fresh native atlas export and exact ZIP download. The67.79s720p/24fps source recording has eight offline captions, complete normal-speed playback and actual390/1440px UI receipts. Sources: docs/adaptive-studio/assets/production/20261014-export-fixture-tutorial/README.md. No generation or editor/backend launch. Workflow remains blocked by a genuine unavailable installed-node schema (actualHTTP400); first-run/Continue prerequisites, repair/original-loop/44deferrals/parallax and HUMAN_TODO decisions are preserved. Accepted art/motion unchanged; no merge/deploy/runtime activation.
+
+## 14 October 2026: controlled Recover inspection tutorial
+
+The catalogue-approved simulated uncertain-request brief is now recorded in the actual unpatched app using a visibly labelled public retained-state fixture, not a real failure/output. Actual read-only Recipe download and native JSON inspection return to the exact unchanged uncertain job; no mutation/replay/Resume/Abandon/Generate occurs. The38.5s720p/24fps clip has six editable offline captions, complete normal-speed playback and actual390px inspection receipts. Sources and curated public receipts: docs/adaptive-studio/assets/production/20261014-recover-fixture-tutorial/README.md. First-run/Continue prerequisites remain blocked; Workflow/Export, separate repair/loop gaps,44 deferrals, parallax recall path and existing HUMAN_TODO decisions remain untouched. Accepted R2 art/motion unchanged; no merge/deploy/generation.
+
+## Asset continuation batch — 13 October 2026
+
+Two actual source-only Compare/Pose preparation recordings were completed, with six/seven native offline captions, unchanged-draft/no-generation receipts, public original input diagrams, actual phone UI and complete normal-speed playback. Continue remains blocked by a genuine public historical output. See docs/adaptive-studio/assets/production/20261013-compare-pose-tutorials/README.md. The owner accepted R2 art/motion at 16:27 UTC; accepted bytes, 44 deferrals and existing HUMAN_TODO choices remain unchanged.
+
 ## Evening maintenance record — 13 October 2026, 22:16+01
 
 PR #1361 merged as `265f097c517dcbe5d7a8e469c329d8a7412945d8` at 21:16:05Z. The 30 September Civitai notes now say `raw/_prior_ids.txt`, `raw/_curated_new.json`, `raw/hf_pruna_README.md`, the list snapshots, `ISSUES.md`, and `github-docs/` are not in this repository. The 382 / 304 / ~165 figures stay historical handoff claims. No cache was reconstructed. Issue #1321 closed completed at 21:16:07Z. The 23 and 24 September notes were not part of that change.
@@ -103,6 +115,55 @@ Full-resolution output remains at `C:/AI/ComfyUI_windows_portable/ComfyUI/output
 The dedicated Muse lane is drained after six bounded lenses and two file-only worker drafts; their initial claims were independently triaged and reproduced by the lead. The hash worker's initial Windows verification failure remains visible alongside the corrected atomic-replacement regression. Foreign Studio/ComfyUI services and five uncertain/one partial historical Studio jobs were preserved. No installed runtime, model, package or driver was changed. Primary checkout stays clean at its existing `11149eb7`; qualification does not activate that owner-managed runtime.
 
 Nonblocking follow-ups are tracked as noticed #1349 (additional stage-card context) and #1350 (overview badge wording for unavailable hash). Immediate automatic stage-transition draft persistence remains the final acceptance in #1308. #1175 keeps its explicit Chris-review hold; author-owned #1342/#1343/#1344 remain untouched. HUMAN_TODO.md retains the ChatGPT asset wishlist, seamless/floor and Look judgments, own-scene parallax masks, WAI Vary and other creative/licensing choices. The retained c92fc worker's 3,692 deletion-only edits remain intact. Ignored source-worker logs and remote checkpoints were preserved before plain worktree removal.
+
+## Night Shift quality study 02 - 13 October 2026
+
+Continuation: the source alternatives stay experimental; no further near-identical
+variants are being made. Exact accepted 3840x2160 MA bytes now hash-match the original
+receipt and were decoded/inspected after the supported Library helper's Windows
+metadata failure. Metadata was not persisted. The guide count repair already merged
+through concurrent #1345; this branch reuses only that isolated one-line commit,
+with all 16 unchanged brief contracts passing. The durable per-ID inventory is in
+docs/adaptive-studio/assets/production/20261013-qualification/INVENTORY.json.
+
+Version 1 remains unchanged as an early study below the owner's quality bar.
+Separate quality-02 workshop and 384x216 pixel SVGs add material modelling,
+light hierarchy and deliberate pixel clusters. Individual PNGs and an unchanged
+accepted-evidence comparison are reviewable at phone/desktop widths. All 36
+combined comparison/lifecycle checks pass; artistic acceptance and comparison
+with the full-resolution MA master remain open. No runtime or selection changes.
+The guide-count CI mismatch (46 documented versus 50 actual lanes) reproduces
+on the unchanged baseline guide blob and is outside this source-only art branch.
+
+## Native-vector Night Shift source pilot — 12 October 2026
+
+Two editable alternatives remain separate from runtime: the detailed workshop and
+320×180 pixel interpretation in docs/adaptive-studio/assets/production/20261012-vector-pilot/.
+Actual Chromium pixels at phone and desktop widths were inspected; a covered
+window layer and hard light edge were corrected. The source SVGs are static and
+contain no raster embedding; their review page offers explicit restrained motion.
+Tracked-payload validation passes (92 graphs, 176 pins, 3,844 paths before this note).
+Full-resolution MA Library materialization is blocked by the supplied Windows
+xattr helper; its preserved accepted comparison sheet was inspected instead.
+Original selections and 44 deferrals remain unchanged. No acceptance flag, app
+activation, merge or deployment. Other foundation/motion application QA remains open.
+
+## Actual isolated adapter-edit recording — 13 October 2026
+
+Source-only tutorial evidence at application revision `04c0091d89bb0248174d4050d60384607882c28e`
+records the authored YumeFlux ILv1 adapter stack and a single real UI strength edit
+1.0→0.8, with slot2 at0 and every other workbench value unchanged. Silent27.76s
+H264 is652945bytes; raw capture, editable captions/source and exact state/audit
+receipts are preserved in the additive deliverable. No generation, model launch,
+dependency install, catalogue/precache or acceptance flag change. Actual phone UI
+and manual-player checks at390/1280 pass; decoded pixels inspected. Readiness is
+unavailable (`psutil` absent); this is not installed-product or adapter-effect proof.
+Prior tutorial/source/art bytes and all decisions/deferrals remain intact. See
+[source evidence](docs/adaptive-studio/assets/production/20261013-adapter-tutorial/README.md).
+`HUMAN_TODO.md`, installed/native/performance and physical-device gates stay open.
+The accompanying read-only Alibi diagnosis identifies no simple697-byte recovery;
+its shell budget remains blocked, caps unchanged. Attribution correction names
+the coordinating assistant's steering, without inventing an owner decision.
 
 ## Native AMD Animagine execution — 12 October 2026
 

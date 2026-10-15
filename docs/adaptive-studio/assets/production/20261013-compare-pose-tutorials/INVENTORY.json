@@ -1,0 +1,56 @@
+{
+  "total_source_design_ids": 154,
+  "source_catalogue_unchanged": true,
+  "catalogue_ids_sha256": "00d385387e7ecfbd759c10640b41e8128adc6c7d859506dd53f80796abf05dca",
+  "new_source_evidence": [
+    {
+      "id": "tutorial-compare",
+      "application_revision": "3fe5cd36ed1a356bee7cb0270bd2a29c26df5bc4",
+      "duration_seconds": 28.791667,
+      "frames": 691,
+      "fps": 24,
+      "bytes": 518920,
+      "sha256": "713e37724ac33a4b1bbaaf78aa28f7a37fc88d46d4ed3d55e006327e4128a437",
+      "caption_cues": 6,
+      "actual_ui": true,
+      "model_execution": false,
+      "runtime_registration": false,
+      "owner_acceptance": false
+    },
+    {
+      "id": "tutorial-pose",
+      "application_revision": "e3183a1a36e7e9cc8ed1bdbae5a981590b84d06b",
+      "duration_seconds": 32.291667,
+      "frames": 775,
+      "fps": 24,
+      "bytes": 942376,
+      "sha256": "a968911fb639e438ec8f49ad240cb756895120dbfeba6db8c7e51c7a32539487",
+      "caption_cues": 7,
+      "actual_ui": true,
+      "model_execution": false,
+      "runtime_registration": false,
+      "owner_acceptance": false
+    }
+  ],
+  "remaining_actual_tutorial_ids": [
+    "tutorial-first-run",
+    "tutorial-continue",
+    "tutorial-recover",
+    "tutorial-workflow",
+    "tutorial-export"
+  ],
+  "continue_blocker": "Owned isolated history contains only a verified imported teaching diagram; no eligible genuine public generated output. No import is relabelled as generated, and cancellation/restore claims are not published without that prerequisite.",
+  "preserved": [
+    "97/154 historical source/design ledger",
+    "23 prior selections",
+    "44 explicitly deferred assets",
+    "dependent motion-parallax deferral",
+    "accepted Night Shift MA",
+    "all previous tutorial sources",
+    "owner-accepted R2 artwork and motion"
+  ],
+  "separate_gaps": [
+    "real repair input/output pair",
+    "original raster Night Shift loop"
+  ]
+}

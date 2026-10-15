@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 
 from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
@@ -30,7 +30,7 @@ async def run(args):
     previous_wildcards = fixture.CATALOG.get("wildcards")
     if args.case in ("all", "wildcards"):
         fixture.CATALOG["wildcards"] = WILDCARDS
-    server = ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
+    server = browser_server(fixture.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     checks, errors = [], []
