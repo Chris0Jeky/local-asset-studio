@@ -78,6 +78,52 @@ class ProductionBundleCallerTests(unittest.TestCase):
     intent = production_fixture.ProductionTests.intent
     post_count = production_fixture.ProductionTests.post_count
 
+    def test_each_unsubmitted_stage_checks_model_bytes_before_dispatch(self):
+        self.patches[2].stop()
+        for timing in ('before_start', 'between_stages', 'job_creation', 'unchanged'):
+            for replace in (False, True):
+                with self.subTest(timing=timing, replace=replace):
+                    replies = []
+                    for prompt in ('first', 'second'):
+                        replies.extend([{'queue_running': [], 'queue_pending': []}, {'prompt_id': prompt},
+                                        {prompt: {'status': {'status_str': 'success'}, 'outputs': {}}}])
+                    studio = production_fixture.FakeStudio(self.root, replies)
+                    path = self.root / 'fake-comfy/models/synthetic.safetensors'
+                    path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(b'synthetic')
+                    stamp = path.stat()
+                    bundle = dict(comfy_url=studio.comfy_url, comfy_root=str(studio.comfy_root),
+                                  node_classes=[], schema_sha256=server.fingerprint({}), inputs=[],
+                                  models=[dict(path=str(path), bytes=stamp.st_size, mtime_ns=stamp.st_mtime_ns,
+                                               sha256=hashlib.sha256(path.read_bytes()).hexdigest())])
+                    with patch.object(studio, 'production_preflight', return_value=bundle):
+                        project = studio.production.create(self.intent())
+                    plan_path = studio.production.root / project['id'] / 'plan.json'
+                    planned = plan_path.read_bytes()
+                    def rewrite():
+                        target = path.with_name('replacement.tmp') if replace else path
+                        target.write_bytes(b'x' * stamp.st_size)
+                        os.utime(target, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+                        if replace: os.replace(target, path)
+                        self.assertEqual(path.stat().st_size, stamp.st_size)
+                        self.assertEqual(path.stat().st_mtime_ns, stamp.st_mtime_ns)
+                    create_job, run = studio.create_job, studio._run
+                    def create(*args, **kwargs):
+                        result = create_job(*args, **kwargs)
+                        if timing == 'job_creation': rewrite()
+                        return result
+                    def generate(job):
+                        run(job)
+                        if timing == 'between_stages': rewrite()
+                    if timing == 'before_start': rewrite()
+                    studio.production.start(project['id'])
+                    with patch.object(studio, 'create_job', side_effect=create), patch.object(studio, '_run', side_effect=generate):
+                        if timing == 'unchanged': studio.production.run(project['id'])
+                        else:
+                            with self.assertRaisesRegex(server.StudioError, 'pinned model changed'):
+                                studio.production.run(project['id'])
+                    self.assertEqual(self.post_count(studio), 2 if timing == 'unchanged' else 1 if timing == 'between_stages' else 0)
+                    self.assertEqual(plan_path.read_bytes(), planned)
+
     def test_changed_recorded_model_refuses_comparison_before_job_creation(self):
         # The normal Production fixture bypasses admission; restore the shipped check.
         self.patches[2].stop()

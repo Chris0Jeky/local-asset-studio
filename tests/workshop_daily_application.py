@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 
 from playwright.sync_api import sync_playwright
 import studio_browser_smoke as fixture
@@ -19,7 +19,7 @@ def main():
     output = parser.parse_args().output
     output.mkdir(parents=True, exist_ok=True)
     fixture.POSTS.clear()
-    server = ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
+    server = browser_server(fixture.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     origin = f'http://127.0.0.1:{server.server_port}'

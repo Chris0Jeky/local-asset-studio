@@ -209,7 +209,7 @@ async def exercise_source_choices(page, check):
 
 async def main(args):
     fixture.POSTS.clear()
-    server=fixture.ThreadingHTTPServer(('127.0.0.1',0),fixture.Handler)
+    server=fixture.browser_server(fixture.Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     checks=[];errors=[]
     def check(name, passed):

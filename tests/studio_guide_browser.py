@@ -18,7 +18,7 @@ sys.path.insert(0,str(ROOT))
 import studio_browser_smoke as fixture
 from studio_workflow.guides import guides
 from studio_workflow.core import catalog, new_document, compile_document
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 
 INFO={'Sink':{'input':{'required':{'text':['STRING',{}],'seed':['INT',{'min':0,'max':2**64-1}]}},'output':[],'output_node':True}}
 SCHEMA=catalog(INFO,'primary')
@@ -62,7 +62,7 @@ def run(out):
     from playwright.sync_api import sync_playwright
     out.mkdir(parents=True,exist_ok=True); checks=[]; errors=[]; history_checks=[]
     fixture.ASSETS[0]['job_id']='fixture-job'; fixture.ASSETS[0]['review']='unreviewed'
-    server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+    server=browser_server(Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     origin='http://127.0.0.1:'+str(server.server_port)
     def check(condition,label):

@@ -88,6 +88,26 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                         self.assertTrue(self.page.locator('#planComparison').is_visible())
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
+    def test_dock_padding_does_not_click_a_covered_page_control(self):
+        """#1241: opaque dock padding must catch clicks above covered page controls."""
+        self.load_workshop()
+        for width, height in ((1440, 900), (390, 844)):
+            self.page.set_viewport_size({'width': width, 'height': height})
+            self.page.evaluate('document.activeElement?.blur()')
+            for typing in (False, True):
+                with self.subTest(width=width, typing=typing):
+                    if typing: self.page.focus('#positive')
+                    self.page.wait_for_timeout(120)
+                    point = self.page.evaluate("""()=>{const d=document.querySelector('.wk-run-dock'),r=d.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+4;
+                      window.coveredClicks=0;const b=document.createElement('button');b.id='coveredProbe';b.type='button';b.textContent='Covered';
+                      b.style.cssText='position:fixed;z-index:1;margin:0;left:'+(x-12)+'px;top:'+(y-12)+'px;width:24px;height:24px';
+                      b.onclick=()=>coveredClicks++;document.getElementById('createView').append(b);return {x,y}}""")
+                    self.assertTrue(self.page.evaluate("""({x,y})=>{const d=document.querySelector('.wk-run-dock');return d.contains(document.elementFromPoint(x,y))}""", point), 'panel padding catches the hit')
+                    self.page.mouse.click(point['x'], point['y'])
+                    self.assertEqual(self.page.evaluate('coveredClicks'), 0, 'the covered control receives no click')
+                    self.page.locator('#coveredProbe').evaluate('(n)=>n.remove()')
+            self.assertEqual(self.page.evaluate('submitted'), 0)
+
     def test_a_press_that_leaves_a_text_field_lands_on_its_control(self):
         """#1229: leaving the prompt grows the compact dock; mid-press, that moved a dock control under the pointer and ate the click."""
         self.load_workshop()

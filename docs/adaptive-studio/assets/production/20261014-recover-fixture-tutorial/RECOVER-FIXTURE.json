@@ -1,0 +1,140 @@
+{
+  "classification": "CONTROLLED PUBLIC FIXTURE; never a real request/output",
+  "job_id": "controlled-recover-tutorial-20261014",
+  "seeded_state": {
+    "id": "controlled-recover-tutorial-20261014",
+    "status": "uncertain",
+    "preset_id": "anima-portrait",
+    "preset_name": "CONTROLLED FIXTURE - simulated unknown request",
+    "created_at": 1791937500.3980324,
+    "controls": {
+      "positive": "CONTROLLED FIXTURE: no request was sent. An original brass lantern on a quiet workshop desk.",
+      "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+      "seed": 2026101401,
+      "steps": 30,
+      "cfg": 4,
+      "width": 768,
+      "height": 1152
+    },
+    "batch_count": 1,
+    "graph_path": "workflows/api/anima-portrait-api.json",
+    "prompt_ids": [],
+    "submissions": [],
+    "outputs": [],
+    "references": [],
+    "parent_assets": [],
+    "message": "Public simulated uncertainty. No request was sent.",
+    "pending_submission": {
+      "index": 0,
+      "fixture": true,
+      "note": "Deliberately seeded marker; no actual remote POST or lost response."
+    }
+  },
+  "graph_template": "workflows/api/anima-portrait-api.json",
+  "graph_template_sha256": "238443447998eb644420d7f1a19ce9285c8df598d41e3713e81ec4ebb2fba438",
+  "graph": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "anima-aesthetic-v1.1.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_3_06b_base.safetensors",
+        "type": "stable_diffusion",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "qwen_image_vae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "CONTROLLED FIXTURE: no request was sent. An original brass lantern on a quiet workshop desk."
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark"
+      }
+    },
+    "6": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 768,
+        "height": 1152,
+        "batch_size": 1
+      }
+    },
+    "7": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "4",
+          0
+        ],
+        "negative": [
+          "5",
+          0
+        ],
+        "latent_image": [
+          "6",
+          0
+        ],
+        "seed": 2026101401,
+        "steps": 30,
+        "cfg": 4,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "7",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "8",
+          0
+        ],
+        "filename_prefix": "Studio/anima-portrait"
+      }
+    }
+  },
+  "config_before_sha256": "84d982527df6ad44d41b6f4303723c44a57c15ce9cda74f6606901fd5d7761dc",
+  "config_after_sha256": "e89b62673f7b53bcfcc6b1f666a70ffaeaa0e17bb6ec2ac46f9733b23620b42e",
+  "expected": "Actual server loads retained unknown-state marker; actual UI has no observation/replay button and Recipe is read-only. Stop without mutation.",
+  "backend": "Unused loopback port 18188; no installed or started backend"
+}

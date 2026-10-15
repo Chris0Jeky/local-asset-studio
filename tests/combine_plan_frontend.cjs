@@ -86,6 +86,11 @@ await test('a stored answer for this character fills the extra field; an empty o
   scene.type('outfit','a navy coat');
   assert.equal(JSON.parse(scene.storage.get('studio-fills:source-asset'))['@outfit'],'old scene outfit','typing outfit does not change @outfit');
   scene.tick(COPY);assert.match(scene.q('#uxPlanFills').innerHTML,/data-ux-plan-fill="outfit"[\s\S]*?value="a navy coat"/);
+  scene.context.referenceRecords=[{role:'pose',file:'other-scene.png',sha256:'c'.repeat(64)}];scene.run('syncCombinePlan()');scene.tick(REPLACE);
+  assert.equal(scene.context.continuationState.source_asset_id,'source-asset','the character stays the same when the scene changes');
+  assert.match(scene.q('#uxPlanFills').innerHTML,/data-ux-plan-fill="outfit"[^>]*value=""/,'another scene starts with no outfit');
+  await scene.q('#uxPlanPrepare').onclick();
+  assert.equal('outfit' in scene.posts.at(-1).body.combine_plan.answers,false,'neither the prior pair nor source memory supplies the new scene outfit');
   const fresh=page();fresh.tick(REPLACE);fresh.type('outfit','a navy coat');
   assert.equal('@outfit' in JSON.parse(fresh.storage.get('studio-fills:source-asset')),false,'typing outfit does not create @outfit');
   const clothes=page();clothes.tick(COPY);clothes.type('clothes','a black robe');
@@ -113,6 +118,10 @@ await test('no extra field when the open recipe asks it, or the ticked recipe ha
   assert.equal(p.q('#uxPlanFills').hidden,true,'Copy Pose already asks the clothes');
   const q=page();q.run(`combineWording.set(pairKey()+'|${COPY}','Edited Copy Pose wording')`);q.tick(COPY);
   assert.equal(q.q('#uxPlanFills').hidden,true,'edited wording reads no answers');
+  const replace=page({saved:{'@clothes':'an older robe'}});replace.context.selected=replace.preset(REPLACE);replace.context.continuationState.preset_id=REPLACE;replace.run('syncCombinePlan()');replace.tick(FOUR);
+  assert.match(replace.q('#uxPlanFills').innerHTML,/data-ux-plan-fill="clothes"/,'replace open with Klein 4B ticked exposes the clothes folded into who');
+  replace.type('clothes','a visible blue coat');await replace.q('#uxPlanPrepare').onclick();
+  assert.equal(replace.posts.at(-1).body.combine_plan.answers.clothes,'a visible blue coat','Prepare uses the visible answer for Klein 4B');
 });
 await test('the form belongs to one pair: an engine switch keeps it, another pair starts from its own recipe and seed (#1198)',async()=>{
   const p=page();p.tick(COPY);p.seeds('11, 12');

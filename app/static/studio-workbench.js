@@ -371,7 +371,7 @@
   }
   q('#uxPlanEngines').onchange=e=>{const box=e.target.closest('[data-ux-plan-engine]');if(!box)return;if(box.checked)planChoice.add(box.dataset.uxPlanEngine);else planChoice.delete(box.dataset.uxPlanEngine);syncCombinePlan();};
   q('#uxPlanSeeds').oninput=()=>syncCombinePlan();
-  // An extra answer is this character's, like the fields above the wording: kept for the next recipe and the next visit.
+  // Outfit stays with this pair; other answers are saved by meaning for engine switches, not the fresh recipe's placeholder fields.
   q('#uxPlanFills').oninput=e=>{
     const meaning=e.target?.dataset?.uxPlanFill;if(!meaning)return;planFills[meaning]=e.target.value;
     if(meaning!=='outfit'){const key=fillsKey();if(key)try{localStorage.setItem(key,JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value}));}catch(error){}}
@@ -963,7 +963,7 @@
   function refreshCarriedVary(){syncGalleryVary();syncOpenAssetVary();}
   globalThis.refreshCarriedVary=refreshCarriedVary;
   // Make (make.js) draws the same Vary buttons on its own results; the document click handler below prepares them.
-  window.StudioWorkbench={varyMarkup:(presetId,jobId,assetId)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image'),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
+  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image'),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
   after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
   after('openAsset',syncOpenAssetVary);
   async function prepareVary(button){

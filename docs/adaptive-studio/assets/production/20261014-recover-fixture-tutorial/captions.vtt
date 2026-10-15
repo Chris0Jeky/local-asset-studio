@@ -1,0 +1,26 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:06.058
+CONTROLLED FIXTURE: no remote request was sent. This is a simulated retained unknown-request record.
+
+2
+00:00:06.058 --> 00:00:11.134
+Read the uncertain status. The real app preserves uncertainty and says it was not resubmitted.
+
+3
+00:00:11.134 --> 00:00:17.470
+No prompt ID is known, so Resume observation is absent. Leave Abandon and its acknowledgement untouched.
+
+4
+00:00:17.470 --> 00:00:21.629
+Click Recipe to download the retained recipe. This is a read-only request, not a replay.
+
+5
+00:00:21.629 --> 00:00:33.476
+Inspect the downloaded JSON: the public fixture label, original controls and workflow are retained.
+
+6
+00:00:33.476 --> 00:00:38.500
+Return to the unchanged uncertain record. Stop here: no Resume, Abandon, replay or generation.
+
