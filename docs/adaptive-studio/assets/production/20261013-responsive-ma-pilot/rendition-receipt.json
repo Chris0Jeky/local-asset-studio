@@ -1,0 +1,56 @@
+{
+  "created_utc": "2026-10-13T00:51:01.904259+00:00",
+  "scope": "One authorized source-only optimized derivative. No runtime activation or regeneration.",
+  "source": {
+    "path": "Exact inspection bytes from Library libfile_11b36cd483f881918e0dc2eb8b83cfa3; metadata persistence failed separately",
+    "sha256_before": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+    "sha256_after": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+    "bytes": 2736794,
+    "dimensions": [
+      3840,
+      2160
+    ],
+    "mode": "RGB"
+  },
+  "output": {
+    "file": "night-shift-ma-responsive-1024.webp",
+    "sha256": "156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192",
+    "bytes": 26460,
+    "dimensions": [
+      1024,
+      576
+    ],
+    "mode": "RGB",
+    "whole_frame": true,
+    "crop": null,
+    "nominal_rgba_decode_bytes": 2359296,
+    "budget_bytes": 307200
+  },
+  "recipe": {
+    "resize": "Pillow Image.resize((1024,576), Image.Resampling.LANCZOS)",
+    "format": "WEBP",
+    "quality": 85,
+    "method": 6,
+    "lossless": false,
+    "icc_profile_copied": false,
+    "exif_copied": false,
+    "xattr_changed": false
+  },
+  "encoder": {
+    "pillow": "12.2.0",
+    "libwebp": "1.6.0"
+  },
+  "source_styles": {
+    "app\\static\\workshop.css": "e58ee20615190f16e228c90a2468ae9b74158ceb4e810a3966d6dde920d5e841",
+    "app\\static\\workshop-immersive.css": "81b9833bfcb17eae1f976025928a8c8044efd11e46166b5aa041901183206e4f",
+    "app\\static\\workshop-ambience.css": "ff03cf02fbbb22f36a0c97a28e11f79a8ac2dc1009e0dcd4aa977b172a38bf84",
+    "app\\static\\workshop-immersive-core.css": "ae0e9593b43347c6378f51952a4fa057cfe141cf2685e8b62b52928c3305f554"
+  },
+  "markup_provenance": {
+    "path": "app/static/workshop.js",
+    "sha256": "b67edd790d5d5fef94fa2d61d4c90483a387a6c9d028aa38922a947e3808884b",
+    "lines": "106\u2013113 hero section/copy/art construction; review adds accessible title id and review-only status"
+  },
+  "review_html_sha256": "88231b4854d3948a9b540ab3acca7e42f7b540e32226bedfc3651023ecd49c65",
+  "metadata_note": "Original Library metadata/xattr failure is a separate historical record. This derivative does not repair it or claim RGBA source; input and decoded derivative are RGB."
+}

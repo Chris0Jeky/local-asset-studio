@@ -1,0 +1,82 @@
+{
+  "ffprobe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1280,
+        "height": 720,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "1627"
+      }
+    ],
+    "format": {
+      "duration": "67.791667",
+      "size": "1571511"
+    }
+  },
+  "sha256": "fbc5a308bbc3a6ec565f3e9a58ac264f0adfdd3697dcfa1d09437687aab53435",
+  "caption_cues": 8,
+  "decoded_frames": [
+    {
+      "seconds": 0.7,
+      "file": "decoded-01.png"
+    },
+    {
+      "seconds": 6.017,
+      "file": "decoded-02.png"
+    },
+    {
+      "seconds": 11.401,
+      "file": "decoded-03.png"
+    },
+    {
+      "seconds": 16.534,
+      "file": "decoded-04.png"
+    },
+    {
+      "seconds": 27.962,
+      "file": "decoded-05.png"
+    },
+    {
+      "seconds": 34.351000000000006,
+      "file": "decoded-06.png"
+    },
+    {
+      "seconds": 55.524,
+      "file": "decoded-07.png"
+    },
+    {
+      "seconds": 62.394000000000005,
+      "file": "decoded-08.png"
+    }
+  ],
+  "encode_command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-ss",
+    "5.311",
+    "-i",
+    "<owned-capture-folder>\\raw\\page@91419a5c366bbd5c8dd23250370935d7.webm",
+    "-t",
+    "67.777",
+    "-an",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "medium",
+    "-crf",
+    "22",
+    "-r",
+    "24",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    "<owned-capture-folder>\\tutorial-export.mp4"
+  ],
+  "encode_attempts": 1
+}

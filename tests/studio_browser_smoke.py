@@ -13,7 +13,8 @@ import mimetypes
 import sys
 import threading
 import time
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -121,7 +122,7 @@ class Handler(BaseHTTPRequestHandler):
 def run(screenshots):
     global FAIL_WORKSPACE, ONLINE, WORKSPACE_DELAY
     from playwright.sync_api import sync_playwright
-    server=ThreadingHTTPServer(('127.0.0.1',int(os.environ.get('STUDIO_UX_TEST_PORT','0'))),Handler); threading.Thread(target=server.serve_forever,daemon=True).start()
+    server=browser_server(Handler, port=int(os.environ.get('STUDIO_UX_TEST_PORT', '0'))); threading.Thread(target=server.serve_forever,daemon=True).start()
     origin=f'http://127.0.0.1:{server.server_port}'
     checks=[]
     def check(condition, label):

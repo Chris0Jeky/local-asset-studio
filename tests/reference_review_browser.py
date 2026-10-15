@@ -11,7 +11,7 @@ import shutil
 import sys
 import tempfile
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -54,7 +54,7 @@ def run(output):
         for i, source in enumerate(fixture.images):
             file = folder / f'renamed-{i}.png'; file.write_bytes(base64.b64decode(source['media_base64'])); originals.append(str(file))
         wrong = folder / 'wrong.png'; wrong.write_bytes(base64.b64decode(fixture.images[0]['media_base64']) + b'replaced')
-        server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        server = browser_server(Handler)
         thread = threading.Thread(target=server.serve_forever); thread.start()
         try:
             with sync_playwright() as p:

@@ -93,6 +93,7 @@
   // Folded by default: Create's first screen keeps the wording and Generate in view (workshop height budget).
   const block=document.createElement('details');block.id='lookBlock';block.className='ux-looks';
   block.innerHTML='<summary>Use a saved look <small>type only the scene</small></summary><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div><div id="lookOptions" class="ux-looks-row" role="group" aria-label="Optional lines of this look" hidden></div>'
+    +'<details id="lookPreview" class="look-visual-reference" hidden><summary>Preview Night Shift reference</summary><figure><img id="lookPreviewImage" width="1024" height="576" decoding="async" hidden alt=""><figcaption><strong id="lookPreviewTitle"></strong><p id="lookPreviewCopy">A local visual reference for the Night Shift mood. Your scene is prepared from the saved wording.</p><p id="lookPreviewFallback" hidden>Picture unavailable. Imagine a quiet graphite workshop with a rainy window, warm desk lamp and cyan CRT. You can still prepare this Look.</p></figcaption></figure></details>'
     +'<p id="lookSummary" class="muted"></p><div class="ux-looks-row"><button type="button" id="lookPrepare" aria-describedby="lookReason">Prepare with this look</button><button type="button" id="lookTrash" aria-describedby="lookReason">Put away</button></div><p class="disabledReason"><small id="lookReason"></small></p>'
     +'<details id="lookSave"><summary>Save this wording as a look</summary><p class="muted">Write '+L.SLOT+' in the wording where a new scene goes. The recipe and its settings are saved with it.</p><label>Look name<input id="lookName" maxlength="120" autocomplete="off" aria-describedby="lookSaveReason"></label><p id="lookAnchor" class="muted"></p><button type="button" id="lookSaveButton" aria-describedby="lookSaveReason">Save look</button><p class="disabledReason"><small id="lookSaveReason"></small></p></details>'
     +'<p id="lookStatus" role="status" aria-live="polite"></p><button type="button" id="lookReset" hidden>Reset recipe without the look</button>';
@@ -100,6 +101,30 @@
   const current=()=>looks.find(l=>l.id===q('#lookSelect').value)||null;
   const status=(text,error=false)=>{q('#lookStatus').textContent=text;q('#lookStatus').classList.toggle('error',error);};
   const anchorAsset=()=>typeof parentAssets!=='undefined'&&parentAssets.length===1?parentAssets[0]:null;
+  const preview=q('#lookPreview'),previewImage=q('#lookPreviewImage');
+  let previewKey=null;
+  function visualReference(){
+    const look=current(),ref=look?.visual_reference;
+    return look?.usable&&ref?.src==='/static/look-previews/night-shift-ma-responsive-1024.webp'?ref:null;
+  }
+  function syncPreview(){
+    const ref=visualReference(),look=current(),key=ref?look.id+':'+look.revision:null;
+    if(key===previewKey)return;
+    previewKey=key;preview.open=false;preview.hidden=!ref;
+    previewImage.hidden=true;previewImage.removeAttribute('src');
+    q('#lookPreviewFallback').hidden=true;
+    q('#lookPreviewTitle').textContent=ref?.title||'';previewImage.alt=ref?.alt||'';
+  }
+  // Only a deliberate open loads the optional picture. It has no animation or recipe state.
+  preview.addEventListener('toggle',()=>{
+    const ref=visualReference();
+    if(!preview.open||preview.hidden||!block.open||!ref||document.visibilityState==='hidden')return;
+    if(globalThis.matchMedia?.('(forced-colors: active)').matches){q('#lookPreviewFallback').hidden=false;return;}
+    if(previewImage.getAttribute('src')===ref.src)return;
+    previewImage.onload=()=>{if(visualReference()?.src===ref.src&&!preview.hidden)previewImage.hidden=false;};
+    previewImage.onerror=()=>{if(visualReference()?.src!==ref.src||preview.hidden)return;previewImage.hidden=true;q('#lookPreviewFallback').hidden=false;};
+    previewImage.src=ref.src;
+  });
   // Rebuilt only when the chosen look changes, so a ticked line survives typing the scene.
   let linesFor=null;
   function renderLines(){
@@ -109,6 +134,7 @@
   }
   const checkedLines=()=>Object.fromEntries([...document.querySelectorAll('#lookOptions [data-look-option]')].map(i=>[i.dataset.lookOption,i.checked]));
   function sync(){
+    syncPreview();
     renderLines();
     q('#lookReset').hidden=!L.applicationBlocker(typeof selected!=='undefined'?selected?.id:null);q('#lookReset').disabled=busy;
     const look=current(),reason=L.prepareBlocker({look,scene:q('#lookScene').value,busy});

@@ -39,7 +39,7 @@ async def run(args):
     args.out.mkdir(parents=True,exist_ok=True)
     state=detail.State();state.receipt_reads=[];Handler.state=state
     fixture.ASSETS[:]=copy.deepcopy(detail.BASE_ASSETS);fixture.POSTS.clear()
-    server=fixture.ThreadingHTTPServer(('127.0.0.1',0),Handler)
+    server=fixture.browser_server(Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     checks=[];errors=[];browser=None
     async def check(case,expectation,passed):

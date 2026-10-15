@@ -1,0 +1,30 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:04.320
+Choose the original teaching character in Asset library. It is an imported diagram, not a generated output.
+
+2
+00:00:04.320 --> 00:00:08.453
+Choose Combine and the picture-compatible Copy Pose recipe. No skeleton or depth-map route is used.
+
+3
+00:00:08.453 --> 00:00:13.803
+Read the actual roles: keep the character as image 1; the pose-board picture becomes image 2.
+
+4
+00:00:13.803 --> 00:00:18.992
+Attach the original pose diagram to the pose board. The character stays in Picture to keep.
+
+5
+00:00:18.992 --> 00:00:24.045
+Describe who to keep, their clothes and colours, and the target pose. These fields write an editable instruction.
+
+6
+00:00:24.045 --> 00:00:28.169
+Review the board count and Picture to keep. These inputs only prepare a pair; no pose-transfer quality is proved.
+
+7
+00:00:28.169 --> 00:00:32.267
+Read the actual readiness warning. Stop without Generate; the backend remains unavailable.
+

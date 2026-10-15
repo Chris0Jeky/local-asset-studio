@@ -12,7 +12,8 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 import copy
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from browser_ports import browser_server
 import json
 import hashlib
 from pathlib import Path
@@ -120,7 +121,7 @@ def run():
             page.set_content(markup)
             return page
 
-        http=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+        http=browser_server(Handler)
         thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
         try:
             with sync_playwright() as pw:

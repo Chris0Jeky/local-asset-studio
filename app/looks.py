@@ -30,6 +30,13 @@ NOT_CONTROLS = {"positive", "negative", "reference", "last_reference", "mode"}
 PICTURE_KEYS = ("reference", "last_reference", "reference_slots")
 LINEAGE_ROLES = ("anchor", "evidence", "canon")
 SEEDS = "presets/looks.json"
+# Display-only MA study, never the saved Look's Z2 anchor or a recipe input.
+NIGHT_SHIFT_PREVIEW_DIGEST = "4efd82ed42acaea321891906f9e2b87ccd66577189b493086f5ab3beabd6f853"
+NIGHT_SHIFT_PREVIEW = {
+    "src": "/static/look-previews/night-shift-ma-responsive-1024.webp",
+    "title": "Night Shift visual reference",
+    "alt": "Empty late-night workshop: quiet graphite wall, rainy window, desk lamp and glowing CRT.",
+}
 # Exact server control vocabulary minus wording and references. A parity test guards drift.
 CONTROL_KEYS = frozenset(("width", "height", "seed", "steps", "cfg", "denoise", "lora", "frames", "fps",
                           "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name",
@@ -202,6 +209,10 @@ def listing(studio):
         result.append(dict(card, preset_name=(preset or {}).get("name"), usable=reason is None and not card["trashed_at"],
                            unusable_reason=reason or ("This look is put away. Restore it to use it." if card["trashed_at"] else None),
                            anchor_asset_id=found["id"] if found else None))
+        if (result[-1]['usable'] and card['origin'] == 'seed'
+                and card['id'] == 'look-night-shift-retro-anime'
+                and studio.assets.card_digest(card) == NIGHT_SHIFT_PREVIEW_DIGEST):
+            result[-1]['visual_reference'] = dict(NIGHT_SHIFT_PREVIEW)
     return {"looks": result, "seed_errors": errors, "generation_submitted": False}
 
 

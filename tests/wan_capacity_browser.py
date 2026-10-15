@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 
 import studio_browser_smoke as fixture
@@ -14,7 +14,7 @@ def run(output):
     from playwright.sync_api import sync_playwright
     output.mkdir(parents=True, exist_ok=True)
     fixture.POSTS.clear()
-    http = ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
+    http = browser_server(fixture.Handler)
     worker = threading.Thread(target=http.serve_forever, daemon=True)
     worker.start()
     cases = []

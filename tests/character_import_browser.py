@@ -3,7 +3,7 @@
 No live Studio, ComfyUI or generation worker is used. Run explicitly, not on every unit-test discovery.
 """
 import argparse
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 import json
 import os
 from pathlib import Path
@@ -43,7 +43,7 @@ def run(out):
                 if self.path in ('/api/upload','/api/production'):return server.Handler.do_POST(self)
                 return Stub.do_POST(self)
         fixture.patches[0].stop()  # Studio's inert worker stays unstarted; start our HTTP listener only.
-        http=ThreadingHTTPServer(('127.0.0.1',0),Handler);worker=threading.Thread(target=http.serve_forever,daemon=True);worker.start()
+        http=browser_server(Handler);worker=threading.Thread(target=http.serve_forever,daemon=True);worker.start()
         origin=f'http://127.0.0.1:{http.server_port}'
         with sync_playwright() as playwright:
             browser=playwright.chromium.launch(headless=True,executable_path=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or None,args=['--disable-gpu'])

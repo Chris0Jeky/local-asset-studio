@@ -4,7 +4,7 @@ import copy
 import json
 import tempfile
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
 from unittest.mock import patch
@@ -81,7 +81,7 @@ def exercise(out, browser_executable=None):
     with tempfile.TemporaryDirectory() as tmp:
         studio, ids = build_family_studio(tmp); posts = []
         controls = {'hold': False, 'entered': threading.Event(), 'release': threading.Event()}
-        http = ThreadingHTTPServer(('127.0.0.1', 0), build_handler(studio, posts, controls))
+        http = browser_server(build_handler(studio, posts, controls))
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         origin = 'http://127.0.0.1:'+str(http.server_port)
         before = studio.assets.snapshot(); errors = []; checks = []

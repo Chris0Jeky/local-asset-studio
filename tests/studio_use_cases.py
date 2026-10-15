@@ -33,7 +33,7 @@ import shutil
 import sys
 import threading
 import time
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -1779,7 +1779,7 @@ def main(argv=None):
         fixture = None
     else:
         Handler, fixture = build_handler()
-        server = ThreadingHTTPServer(('127.0.0.1', int(os.environ.get('STUDIO_UX_TEST_PORT', '0'))), Handler)
+        server = browser_server(Handler, port=int(os.environ.get('STUDIO_UX_TEST_PORT', '0')))
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         origin = 'http://127.0.0.1:' + str(server.server_port)
 

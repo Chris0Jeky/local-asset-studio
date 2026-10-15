@@ -59,7 +59,7 @@ async def run(args):
     temporary = tempfile.TemporaryDirectory()
     Handler.store = AssetWorkspace(temporary.name)
     Handler.fail_check = True; Handler.checks = 0; fixture.POSTS.clear()
-    server = fixture.ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server = fixture.browser_server(Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     checks = []; errors = []
     def check(identifier, expectation, actual):
