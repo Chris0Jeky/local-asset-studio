@@ -34,6 +34,16 @@ The Studio keeps three states apart on purpose:
 
 Agents can plan, compare and inspect work through the same surfaces. They cannot download, install, generate, publish or accept output on their own.
 
+## Start here: Make
+
+Make is the first screen: pick what you want, not a model. (Shipped once PR #1400 merges; until then Create is the first screen.)
+
+1. **Goal.** Choose an outcome, for example a character, a background or an edit of an existing picture.
+2. **Look.** Pick a look by its example picture. Each shows a plain name, speed, whether it has run on this PC, and any blockers.
+3. **One sentence.** Type what you want, or use the example.
+4. **Generate.** This is the only press that submits; nothing runs on load. It prepares the request and queues one job labelled `Make · <look>`.
+5. **Next steps.** Results appear in place with Vary subtle or strong, Fix details or upscale, and Review and keep. *More* has change one thing, restyle, new pose and animate. *Open in the full editor instead* loads the same request into Create (the Full editor) without running it.
+
 ## Features
 
 Everything below exists in the code. Where a feature is only partly proven, the Status section says so.
@@ -70,7 +80,7 @@ Everything below exists in the code. Where a feature is only partly proven, the 
 - Krita OpenRaster round trip through a fixed, non-interactive adapter (`scripts/krita_roundtrip.py`).
 - Godot packages: sprite atlases and GLBs, verified by an explicitly selected Godot (`scripts/godot_asset_adapter.py`). The package step does not execute user code.
 - A Blender-authored articulated chest study through a fixed Blender script (`scripts/articulated_prop.py`).
-- 3D drafts from TRELLIS.2 and Hunyuan3D 2.1 produce GLB meshes. These are geometry only. UVs, materials, cleanup and rigging are finishing work.
+- 3D drafts as GLB. `hunyuan-draft` (Hunyuan3D 2.1) is geometry only: UVs, materials, cleanup and rigging are finishing work. `trellis-rgba` (TRELLIS.2) takes a transparent-background image and produces a 512 shape draft with 1024 PBR textures and an interactive GLB preview; its Radeon compatibility is experimental.
 - Versioned AV projects with CPU rendering through ffmpeg (`studio_av/`, `scripts/studio_av.py`).
 - Spoken Briefs: one Markdown handoff becomes a narration WAV over the pinned Kokoro CPU baseline (`scripts/spoken_brief.py`). See Status for what has and has not been proven.
 
@@ -279,4 +289,7 @@ Open work is tracked in [GitHub issues](https://github.com/Chris0Jeky/local-asse
 
 - [Start here: first image walkthrough](docs/START-HERE.md)
 - [Product direction](docs/PRODUCT_DIRECTION.md) and [strategy bundle](docs/strategy/README.md)
-- [Status by goal](docs/STATUS.md) and [current state](CURRENT_STATE.[+1070 bytes at .content[1].resource.text]
+- [Status by goal](docs/STATUS.md) and [current state](CURRENT_STATE.md)
+- [Owner choices and open actions](HUMAN_TODO.md)
+- [Workspace](docs/WORKSPACE.md), [Reference Atelier](docs/REFERENCE-ATELIER.md), [Experiments and native finishing](docs/EXPERIMENTS.md), [Workflow Lab](docs/WORKFLOW-LAB.md) and [Native exports](docs/NATIVE-EXPORTS.md)
+- [Operations](docs/OPERATIONS.md) and the full [documentation index](docs/README.md)
