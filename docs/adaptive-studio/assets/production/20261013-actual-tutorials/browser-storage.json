@@ -1,0 +1,38 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://127.0.0.1:8191",
+      "localStorage": [
+        {
+          "name": "asset-studio-setups-migrated:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-tutorials",
+          "value": "1"
+        },
+        {
+          "name": "studio.assets.scope",
+          "value": "all"
+        },
+        {
+          "name": "studio.assets.type",
+          "value": "all"
+        },
+        {
+          "name": "studio.assets.sort",
+          "value": "newest"
+        },
+        {
+          "name": "studio-draft-v1:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-tutorials:anima-portrait",
+          "value": "{\"version\":1,\"updatedAt\":1791860399437,\"recipe\":{\"preset\":\"anima-portrait\",\"controls\":{\"positive\":\"An original brass lantern on a quiet workshop desk.\",\"negative\":\"worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark\",\"seed\":\"2026091103\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"768\",\"height\":\"1152\"},\"batch\":1,\"parent_assets\":[],\"references\":[]},\"pendingInputs\":[],\"templateHash\":null}"
+        },
+        {
+          "name": "studio-draft-v1:C:\\Users\\Cristian3\\Documents\\Codex\\2026-10-12\\task\\las-tutorials:yumeflux-ilv1-baseline",
+          "value": "{\"version\":1,\"updatedAt\":1791860423267,\"recipe\":{\"preset\":\"yumeflux-ilv1-baseline\",\"controls\":{\"positive\":\"1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality\",\"negative\":\"bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark\",\"seed\":\"2026091301\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"832\",\"height\":\"1216\",\"denoise\":\"1\",\"lora\":\"0\",\"lora2\":\"0\",\"lora_name\":\"nsfw_girls.safetensors\",\"lora2_name\":\"noirpopwave.safetensors\",\"sampler\":\"euler_ancestral\",\"scheduler\":\"karras\"},\"batch\":1,\"parent_assets\":[],\"references\":[]},\"pendingInputs\":[],\"templateHash\":null}"
+        },
+        {
+          "name": "studio.workshop.presentation.v2",
+          "value": "{\"layout\":\"focus\",\"skin\":\"atelier\",\"ambience\":\"none\"}"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,554 @@
+{
+  "application_revision": "fe13f61f4853cebf7c06fcfa7de362e9e9ae0c2c",
+  "runtime": "owned isolated full application; not installed product",
+  "generation_executed": false,
+  "art_accepted": false,
+  "models_available": false,
+  "health_limitation": "Python 3.13 lacks psutil; /api/health closes response; UI says Readiness unavailable",
+  "recipe_id": "yumeflux-ilv1-base",
+  "initial": {
+    "preset": "anima-portrait",
+    "controls": {
+      "positive": "An original brass lantern on a quiet workshop desk.",
+      "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+      "seed": "2026091103",
+      "steps": "30",
+      "cfg": "4",
+      "width": "768",
+      "height": "1152"
+    },
+    "batch": "1",
+    "references": [],
+    "parents": []
+  },
+  "after_cancel": {
+    "preset": "anima-portrait",
+    "controls": {
+      "positive": "An original brass lantern on a quiet workshop desk.",
+      "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+      "seed": "2026091103",
+      "steps": "30",
+      "cfg": "4",
+      "width": "768",
+      "height": "1152"
+    },
+    "batch": "1",
+    "references": [],
+    "parents": []
+  },
+  "after_apply": {
+    "preset": "yumeflux-ilv1-baseline",
+    "controls": {
+      "positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality",
+      "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+      "seed": "2026091301",
+      "steps": "30",
+      "cfg": "4",
+      "width": "832",
+      "height": "1216",
+      "denoise": "1",
+      "lora": "0",
+      "lora2": "0",
+      "lora_name": "nsfw_girls.safetensors",
+      "lora2_name": "noirpopwave.safetensors",
+      "sampler": "euler_ancestral",
+      "scheduler": "karras"
+    },
+    "batch": "1",
+    "references": [],
+    "parents": []
+  },
+  "jobs_after": [],
+  "identity_app": "local-asset-studio",
+  "browser_errors": [],
+  "http_requests": [
+    {
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "path": "/static/style.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/production-clarity.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-review.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/continuation-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/review-checks.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/pose-editor-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.css"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/anima.png"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/lineani.png"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/krea.png"
+    },
+    {
+      "method": "GET",
+      "path": "/static/vendor/model-viewer/model-viewer.min.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/read-poller.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/app.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-grid.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workspace.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/output-review.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-session.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-ui.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-lifecycle.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-editor.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/reference-model.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/references.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/production.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/character-import.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/backends.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-shell.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-workbench.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/looks.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/run-outcome.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family-adapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backends"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-navigation.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/presentation-context.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/parallax-stage-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/production"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/looks"
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience-policy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-apply.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-tuning.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance-client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive-core.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.css"
+    },
+    {
+      "method": "GET",
+      "path": "/api/options"
+    },
+    {
+      "method": "GET",
+      "path": "/api/knowledge"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recipes"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/anima-portrait"
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups"
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/library"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/production"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-showcase.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/recipe-thumbs-20260927/cstati-v3-base.jpg"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/recipe-thumbs-20260927/yumeflux-ilv1-base.jpg"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/recipe-thumbs-20260927/anifox-v2-base.jpg"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/recipe-thumbs-20260927/anima-v1-base.jpg"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/recipe-thumbs-20260927/janima-v1-base.jpg"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/recipe-thumbs-20260927/oneobsession-anima-v20-base.jpg"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/recipe-thumbs-20260927/pearly-anima-mix-v10-base.jpg"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-workflow.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workflow-project-state.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-workflow-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/yumeflux-ilv1-baseline"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-workflow.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/workflow-studio/guidance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/production"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/yumeflux-ilv1-baseline"
+    },
+    {
+      "method": "POST",
+      "path": "/api/workflow-studio/guidance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/yumeflux-ilv1-baseline"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    }
+  ],
+  "events": [
+    {
+      "seconds": 0.0,
+      "action": "Initial editable draft; readiness unavailable; no generation"
+    },
+    {
+      "seconds": 5.863,
+      "action": "Review authored replacement and workbench differences"
+    },
+    {
+      "seconds": 11.061,
+      "action": "Cancel preserves the complete active draft"
+    },
+    {
+      "seconds": 16.838,
+      "action": "Reopen the same replacement for a fresh review"
+    },
+    {
+      "seconds": 21.038,
+      "action": "Explicit replacement consent; Apply focused"
+    },
+    {
+      "seconds": 24.145,
+      "action": "Replacement applied as editable setup; Generate remains separate"
+    }
+  ],
+  "screenshots": [
+    "01-initial.png",
+    "02-review.png",
+    "03-cancel-preserved.png",
+    "04-review-again.png",
+    "05-consent.png",
+    "06-applied.png",
+    "phone-real-create.png"
+  ],
+  "raw_video": "raw/page@fbc09a2118f30039d8e3472a609e96c2.webm",
+  "trim_start_seconds": 5.438,
+  "duration_seconds": 29.212,
+  "catalog_sha256": "70e9835e900334ad0c1b960879784c09e1c6dfb9083323b162b513077830a845",
+  "recipes_sha256": "9181916544253aab59a9bb45343b38cf4c1f15c25ad072afef20a03ae6645a38"
+}

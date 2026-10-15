@@ -1,0 +1,138 @@
+{
+  "01-context.png": {
+    "bytes": 78385,
+    "sha256": "6382ee132c1943cba5d508371f76b9af01144738e095aac1c3b2b8da4f7e00f0"
+  },
+  "02-stack.png": {
+    "bytes": 124427,
+    "sha256": "14801716316732c34418d725ea1d1d263db29e0f24e53804e2036b32cc6af4e8"
+  },
+  "03-notes.png": {
+    "bytes": 130664,
+    "sha256": "fbefaed6d84065e7786f469d82b130253280e95c7ca04af0c1208a03af5cf542"
+  },
+  "04-before.png": {
+    "bytes": 66222,
+    "sha256": "b0d778900d3682aa0719071904cf62a05031a003bcf1144b7000d578d1a72c1d"
+  },
+  "05-edited.png": {
+    "bytes": 68034,
+    "sha256": "cd72a77251ec30ea5b55dafc4fd46001054bd814aaac735fd2bb224d39b8fd1c"
+  },
+  "06-slot-two.png": {
+    "bytes": 68361,
+    "sha256": "a63f54fe8d9372aec80804366e708f538fe6b95dbf76dcf611e3d005bce2e3bd"
+  },
+  "07-no-run.png": {
+    "bytes": 77216,
+    "sha256": "bedb00a475f5827a7744e3d173065c8399023b6784a0383ccd68dda6ec10ffc9"
+  },
+  "browser-storage.json": {
+    "bytes": 1902,
+    "sha256": "4b98189cb4ac4aef3700ea52ed6e9929456c7d049df7449a315f823cbdef30d1"
+  },
+  "captions.vtt": {
+    "bytes": 793,
+    "sha256": "817b58cd3a23959adeb8fc2b4e9521171382a384f1764e2986e4058f0bdfbaf7"
+  },
+  "decoded-01.png": {
+    "bytes": 272852,
+    "sha256": "8fec1dc0b1a5d6f1e43af9ec5b09c71546d88ed18c6b313f7dffcd3b2ec36b01"
+  },
+  "decoded-06.png": {
+    "bytes": 292931,
+    "sha256": "8ab882680777dc7f5b51060d75e939371180aff8be4f19b331cd927ef3dc2d73"
+  },
+  "decoded-10.png": {
+    "bytes": 317351,
+    "sha256": "182460733d414260461f4c788bf9cb01a6c6e470efa09d8b091f92a1c7e2282a"
+  },
+  "decoded-14.png": {
+    "bytes": 230843,
+    "sha256": "e02259cd7f81dc8a67b08f46ea8cf6e59ac7f166e485dcb57ca30777927fc256"
+  },
+  "decoded-18.png": {
+    "bytes": 237554,
+    "sha256": "95d72a158056cd8515ff683a79128a62329bbd283117e92ca8c6318163a94fa1"
+  },
+  "decoded-22.png": {
+    "bytes": 239774,
+    "sha256": "c094d752174325427b2afba486c93e9160f8362b09d6807d838edc9549f49cca"
+  },
+  "decoded-26.png": {
+    "bytes": 260322,
+    "sha256": "dc91f15b71f7d182416e6326b16bca47fafc5bb7bfb87234150a6db651c1471e"
+  },
+  "finalize_adapter_tutorial.py": {
+    "bytes": 5951,
+    "sha256": "5218146f5ce8326c2ed8a65e32a6f113597fcac4208dc5ee71f05f6db9d3fd7e"
+  },
+  "index.html": {
+    "bytes": 2651,
+    "sha256": "5b905a1172f18b02f16f096727d3417e90c410b643919460376457bc89a68a25"
+  },
+  "INVENTORY.json": {
+    "bytes": 1524,
+    "sha256": "39d2cd0f41da461ae11ca4ef8bd85ec5c32e6e6567b037f30c15a1eef495747c"
+  },
+  "media-receipt.json": {
+    "bytes": 1441,
+    "sha256": "e9f74d7a073360baa5017dcad72a1e6fbb96e6df9606d5b6c5edba789666a1bb"
+  },
+  "phone-authored-stack.png": {
+    "bytes": 36190,
+    "sha256": "d49fc228ad3284212443ea800ad8b24d0b997f805ae408fffd30fe9ccda6deb3"
+  },
+  "phone-before.png": {
+    "bytes": 39292,
+    "sha256": "251c6bc5462fabfdeee111b5eeb243e54b6e85adef2c25653e519ac22f417d8b"
+  },
+  "phone-edited.png": {
+    "bytes": 40923,
+    "sha256": "f578c3ac1fc659850c616be04951131c3ccf1dbf4e2fb5243a301638a391615c"
+  },
+  "player-1280.png": {
+    "bytes": 216270,
+    "sha256": "f37ee45c7b1c7dd9b99e8952bb3e816ff327d430925ef91fde6601eee2eb026c"
+  },
+  "player-390.png": {
+    "bytes": 69317,
+    "sha256": "5038385f00eee7bd2d976b214e4066375c70917d7284714c61b29e56e12b2df4"
+  },
+  "player-and-phone-receipt.json": {
+    "bytes": 13323,
+    "sha256": "460757f562276c75439d37a5be0231a05e5f89fdd67e10be18da2c9c29ef77cd"
+  },
+  "poster.png": {
+    "bytes": 68034,
+    "sha256": "cd72a77251ec30ea5b55dafc4fd46001054bd814aaac735fd2bb224d39b8fd1c"
+  },
+  "README.md": {
+    "bytes": 5145,
+    "sha256": "6b48d5c69663a4c1c170ff307df459c2bfe605012486f59bbbe8efd23a2f6484"
+  },
+  "recording-receipt.json": {
+    "bytes": 17073,
+    "sha256": "f180236f8fecdb39344924c0842a5672546a104089daae71a2fec043404e68a5"
+  },
+  "record_adapter_strength.py": {
+    "bytes": 7397,
+    "sha256": "96ef0d6e2e3c6a707784db52e63e1102493347e20935d46fcaf758e243ec3fdf"
+  },
+  "transcript.txt": {
+    "bytes": 624,
+    "sha256": "2408af9b5fe253c499848ed4051020378786916a9f2691d0502005e944cbf787"
+  },
+  "tutorial-adapters.mp4": {
+    "bytes": 652945,
+    "sha256": "900f06de443569043165b903c72bde357512660b205a5261af9b2349a930ea75"
+  },
+  "verify_adapter_tutorial.py": {
+    "bytes": 6322,
+    "sha256": "d4462735279ed38e6d84bee42d8ecdcfb3b2d16fd4c7ca9b7e6f82f861552914"
+  },
+  "raw/page@eeea14f762b6d1495dc173ace2e9bbc1.webm": {
+    "bytes": 2024147,
+    "sha256": "36475f2ba219b6d1bcb8720684a5976d3b1cd95e149ea490d40100b284cdf442"
+  }
+}

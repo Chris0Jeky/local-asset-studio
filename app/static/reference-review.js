@@ -13,6 +13,8 @@
   const urls=new Set();
   const n=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   const message=text=>{el('rr-status').textContent=text;};
+  const markInput=(input,invalid)=>{input.setAttribute('aria-invalid',invalid?'true':'false');input.setAttribute('aria-describedby','rr-status');};
+  for(const id of ['rr-source-status','rr-change-summary']){const node=el(id);node.setAttribute('role','status');node.setAttribute('aria-live','polite');}
   function releaseUrls(){for(const url of urls)URL.revokeObjectURL(url);urls.clear();}
   function controls(){
     const loading=loadingEpoch!==null;
@@ -42,7 +44,7 @@
       card.append(n('h3','Picture '+(index+1)));
       if(originals){const preview=n('img');const url=URL.createObjectURL(originals[index]);urls.add(url);preview.src=url;preview.alt='Original picture '+(index+1);preview.className='rr-picture';card.append(preview);}
       card.append(n('p',image.description));
-      const label=n('label','Use this picture for');const role=n('select');role.setAttribute('aria-label','Picture '+(index+1)+' role');
+      const label=n('label','Use this picture for');const role=n('select');role.setAttribute('aria-label','Use this picture for Picture '+(index+1)+' role');
       for(const key of Object.keys(roles)){const option=n('option',key);option.value=key;role.append(option);}role.value=choice.role;
       role.addEventListener('change',()=>{
         choice.role=role.value;const permitted=roles[choice.role];
@@ -51,7 +53,7 @@
         changed();renderCards();el('rr-cards').querySelector('[data-reference="'+ref.id+'"] select').focus();
         message('Role changed. Choose the traits to transfer, then preview again.');
       });label.append(role);card.append(label);
-      const traits=n('details');traits.open=true;traits.append(n('summary','Traits to transfer'));
+      const traits=n('details');traits.open=true;const traitFields=n('fieldset');traitFields.append(n('legend','Traits to transfer'));traits.append(n('summary','Traits to transfer'),traitFields);
       for(const facet of roles[choice.role]){
         if(!(facet in image.facets))continue;
         const box=n('div');box.className='rr-trait';box.dataset.facet=facet;
@@ -67,11 +69,11 @@
           if(!choice.facets.includes(facet)){choice.facets.push(facet);box.querySelector('input').checked=true;}
           if(text.value===image.facets[facet])delete choice.overrides[facet];else choice.overrides[facet]=text.value;
           changed();
-        });box.append(text);traits.append(box);
+        });box.append(text);traitFields.append(box);
       }
       card.append(traits);
-      const extra=n('details');extra.append(n('summary','Suggested tags and unknowns'));
-      for(const tag of [...new Set(image.tags)])extra.append(checkLabel(tag,choice.tags.includes(tag),checked=>{
+      const extra=n('details');const tagFields=n('fieldset');tagFields.append(n('legend','Suggested tags and unknowns'));extra.append(n('summary','Suggested tags and unknowns'),tagFields);
+      for(const tag of [...new Set(image.tags)])tagFields.append(checkLabel(tag,choice.tags.includes(tag),checked=>{
         choice.tags=checked?[...choice.tags,tag]:choice.tags.filter(k=>k!==tag);changed();
       }));
       for(const unknown of image.unknowns)extra.append(n('p','Unknown: '+unknown));
@@ -136,9 +138,9 @@
       if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
       applied=null;receipt=null;
       report=result.analysis;review=result.review;originals=null;releaseUrls();el('rr-cards').replaceChildren();
-      el('rr-originals').value='';el('rr-adopt').checked=false;controls();
+      el('rr-originals').value='';el('rr-adopt').checked=false;controls();markInput(el('rr-analysis'),false);
       el('rr-source-status').textContent='Choose '+report.request.references.length+' exact originals; order and filenames do not matter.';showReport();
-    }catch(error){if(current===epoch)message(error.message);}
+    }catch(error){if(current===epoch){markInput(el('rr-analysis'),true);message(error.message);}}
   });
   el('rr-originals').addEventListener('change',async event=>{
     changed();const current=epoch;originals=null;controls();renderCards();
@@ -153,9 +155,9 @@
         hashes.set(sha,file);
       }
       if(expected.some(r=>!hashes.has(r.sha256)))throw Error('An exact original is missing. Choose all pictures from this analysis.');
-      originals=expected.map(r=>hashes.get(r.sha256));renderCards();controls();
+      originals=expected.map(r=>hashes.get(r.sha256));renderCards();controls();markInput(el('rr-originals'),false);
       el('rr-source-status').textContent=expected.length+' originals matched by SHA-256.';message('Choose the traits to keep or edit their descriptions, then preview.');
-    }catch(error){if(current===epoch){el('rr-source-status').textContent='Originals are not ready.';message(error.message);}}
+    }catch(error){if(current===epoch){markInput(el('rr-originals'),true);el('rr-source-status').textContent='Originals are not ready.';message(error.message);}}
   });
   el('rr-adopt').addEventListener('change',()=>{changed();message('Instruction choice changed. Preview before applying.');});
   async function encoded(file){

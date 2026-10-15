@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-13",
+  "application_revision": "fe13f61f4853cebf7c06fcfa7de362e9e9ae0c2c",
+  "source_ledger_head": "988e7c9636052e024073e1931f75268db916c9c9",
+  "total_ids": 154,
+  "legacy_source_counts_unchanged": {
+    "source-candidate-or-prior-source-record": 97,
+    "owner-deferred": 44,
+    "actual-execution-evidence-pending": 12,
+    "dependency-deferred": 1
+  },
+  "accepted_art_decisions_unchanged": {
+    "selected_asset_ids": 23,
+    "workflow_ids": 16,
+    "reference_ids": 7,
+    "direct_owner_acceptances_preserved": 2,
+    "delegated_art_acceptances": 21,
+    "unselected_candidates_preserved": 11,
+    "total_candidates_preserved": 34
+  },
+  "catalog_ids_sha256": "00d385387e7ecfbd759c10640b41e8128adc6c7d859506dd53f80796abf05dca",
+  "tutorial_evidence_axes": [
+    {
+      "id": "tutorial-first-run",
+      "brief": "First intentional creation from a qualified recipe",
+      "recorded_execution": "not recorded in this slice",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "No ComfyUI/model runtime in this executor; no intentional creation executed."
+    },
+    {
+      "id": "tutorial-reference",
+      "brief": "Attach a source and inspect its role/staging state",
+      "recorded_execution": "historical 4.73-second capture, merged PR1272; unchanged",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "Preserve existing capture and its evidence."
+    },
+    {
+      "id": "tutorial-pose",
+      "brief": "Prepare an actual character-plus-pose workflow",
+      "recorded_execution": "not recorded in this slice",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "No qualified character-plus-pose execution/session recorded here."
+    },
+    {
+      "id": "tutorial-recipe-change",
+      "brief": "Cancel then accept a reviewed recipe replacement",
+      "recorded_execution": "actual isolated application editing captured",
+      "editable_delivery": [
+        "record_recipe_change.py",
+        "captions.vtt",
+        "transcript.txt",
+        "browser-storage.json",
+        "recording-receipt.json"
+      ],
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "decoded frames and 1280x720/390x844 real pixels inspected; phone not a complete workflow qualification",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "Installed-runtime and owner tutorial acceptance remain separate."
+    },
+    {
+      "id": "tutorial-adapters",
+      "brief": "Inspect the authored adapter stack and one deliberate adjustment",
+      "recorded_execution": "not recorded in this slice",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "Brief inspected; not selected in this one-recording slice. No adapter-effect or model claim."
+    },
+    {
+      "id": "tutorial-compare",
+      "brief": "Plan a bounded settings comparison and inspect its budget",
+      "recorded_execution": "not recorded in this slice",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "Brief inspected; not selected. No actual bounded comparison plan/budget capture."
+    },
+    {
+      "id": "tutorial-continue",
+      "brief": "Open an output as a copy without losing the active draft",
+      "recorded_execution": "not recorded in this slice",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "No executed output created here; imported public media would not meet output semantics."
+    },
+    {
+      "id": "tutorial-recover",
+      "brief": "Inspect a deliberately simulated uncertain request without replay",
+      "recorded_execution": "not recorded in this slice",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "No deliberately uncertain real request was induced; no fixture presented as installed execution."
+    },
+    {
+      "id": "tutorial-workflow",
+      "brief": "Inspect a real invalid graph connection and its remedy",
+      "recorded_execution": "not recorded in this slice",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "No actual invalid connection and remedy recorded in this slice."
+    },
+    {
+      "id": "tutorial-export",
+      "brief": "Preview an actual export destination and collision handling",
+      "recorded_execution": "not recorded in this slice",
+      "editable_delivery": "unchanged",
+      "model_execution": false,
+      "installed_product_qualification": false,
+      "visual_review": "no new verdict",
+      "runtime_delivery": "source-only; not registered or precached",
+      "owner_acceptance": "no new acceptance inferred",
+      "remaining": "Current export UI packages selected assets; no actual destination/collision preview found. Generic download would not satisfy this brief."
+    }
+  ],
+  "repair_pair": "Still requires an executed failed/result pair; none fabricated.",
+  "night_shift_loop": "Unchanged; no new loop acceptance.",
+  "owner_deferred_assets": 44,
+  "dependent_motion_parallax": "Unchanged dependency deferral."
+}
