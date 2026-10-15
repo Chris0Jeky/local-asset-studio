@@ -24,15 +24,19 @@
   ];
   const SHAPES={design:'As designed',portrait:'Portrait',landscape:'Landscape',square:'Square'};
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,runs:[],pictures:null,lookRevision:{}};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,runs:[],pictures:null,picking:false,review:{}};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look}));}catch{}};
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:state.runs.slice(0,6).map(({job,look,lookId,goal,scene})=>({id:job.id,look,lookId,goal,scene}))}));}catch{}};
+  let savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
   const recipeOf=look=>{for(const l of look?.lineage||[]){const m=/^presets\/recipes\.json · (\S+)/.exec(l.evidence||'');if(m)return m[1];}return null;};
   const thumbOf=look=>{const r=recipeOf(look);return r&&state.examples[r]?.url||(look.anchor_asset_id?'/api/assets/'+encodeURIComponent(look.anchor_asset_id)+'/thumb':null);};
   const tried=look=>{const r=recipeOf(look),list=typeof atelierRecipes!=='undefined'?atelierRecipes:[];return list.find(x=>x.id===r)?.status==='executed';};
   const goal=()=>GOALS.find(g=>g.id===state.goal);
+  const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];
+  // The look's active adapters: a strength above zero with a file. Style strength scales exactly these and nothing else.
+  const adapters=look=>{const c=look?.body?.controls||{};return SLOTS.filter(k=>Number(c[k])>0&&typeof c[k+'_name']==='string'&&c[k+'_name']).map(k=>({key:k,name:c[k+'_name'],strength:Number(c[k])}));};
   const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.map(id=>state.looks.find(l=>l.id===id)).filter(l=>l&&!l.trashed_at);};
   const current=()=>state.looks?.find(l=>l.id===state.look&&!l.trashed_at)||null;
   // A family is named for what it means to the user: speed and the kind of picture, not the checkpoint.
@@ -41,13 +45,15 @@
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
-    +'<div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeRuns" class="make-run-list"></div></section>'
+    +'<div id="makeSplit" class="make-split"><div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeRuns" class="make-run-list"></div></section></div>'
     +'<p class="make-advanced">Need every setting? <a href="/#create">Open the full editor</a> · <a href="/prompt-lab.html">Prompt Lab</a> · <a href="/#production">Compare settings side by side</a></p>';
 
   function renderGoals(){
     q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<span class="make-goal-break">From a picture you have</span>':'')+'<button type="button" role="radio" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('');
   }
-  function render(){renderGoals();const g=goal();if(g.intent)renderPictures(g);else renderLooks();renderRuns();}
+  // Once a look is chosen the gallery folds to one line and the results sit beside the words, so Generate and its pictures share a screen.
+  function layout(){const focused=!goal().intent&&!!current()&&!state.picking;q('#makeSplit').classList.toggle('make-has-look',focused);view.classList.toggle('make-focused',focused);}
+  function render(){renderGoals();const g=goal();if(g.intent)renderPictures(g);else renderLooks();renderRuns();layout();}
   function renderLooks(){
     const body=q('#makeBody');
     if(state.error){body.innerHTML='<p class="make-error" role="alert">'+escape(state.error)+' <button type="button" data-make-retry>Try again</button></p>';return;}
@@ -56,8 +62,11 @@
     const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<button type="button" class="make-look'+(l.id===state.look?' active':'')+'" data-make-look="'+escape(l.id)+'" aria-pressed="'+(l.id===state.look)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
       +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+(why?'<small class="make-warn">'+escape(why)+'</small>':'')+'</span></button>';}).join('');
-    body.innerHTML='<div class="make-step"><span>1</span><h2>Choose a look</h2></div><div class="make-looks">'+cards+'</div><div id="makeComposer"></div>';
-    renderComposer();
+    const chosen=current();
+    if(chosen&&!state.picking){const p=presetFor(chosen),thumb=thumbOf(chosen);
+      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b><small class="make-pace '+speed(p)[0]+'">'+escape(speed(p)[1])+'</small></div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
+    else body.innerHTML='<div class="make-step"><span>1</span><h2>Choose a look</h2>'+(chosen?'<button type="button" class="make-link" data-make-keep-look>Keep '+escape(chosen.name)+'</button>':'')+'</div><div class="make-looks">'+cards+'</div><div id="makeComposer"></div>';
+    renderComposer();layout();
   }
   function shapeSize(preset,look,shape){
     const w=Number(look.body.controls.width||preset?.defaults?.width||1024),h=Number(look.body.controls.height||preset?.defaults?.height||1024),grid=preset?.dimension_multiple||64,round=v=>Math.max(grid,Math.round(v/grid)*grid);
@@ -72,34 +81,38 @@
     const p=presetFor(look),why=blocker(look),example=look.body.scene_example||'',options=look.body.options||[];
     box.innerHTML='<div class="make-step"><span>2</span><h2>Describe your picture</h2></div><div class="make-composer"><div class="make-compose-main">'
       +'<label for="makeScene">'+escape(state.goal==='scene'?'Where is it, and what is there?':state.goal==='game'?'What is the item?':'Who or what, doing what, where?')+'</label>'
-      +'<textarea id="makeScene" rows="4" maxlength="1000" placeholder="'+escape(example)+'"></textarea>'
+      +'<textarea id="makeScene" rows="3" maxlength="1000" placeholder="'+escape(example)+'"></textarea>'
       +'<div class="make-row">'+(example?'<button type="button" id="makeUseExample">Use the example</button>':'')+'<small>Plain words are fine. The look adds its own style and quality words.</small></div>'
       +options.map(o=>'<label class="make-check"><input type="checkbox" data-make-option="'+escape(o.id)+'"'+(o.default?' checked':'')+'> '+escape(o.label)+'</label>').join('')
       +'</div><div class="make-compose-side">'
-      +'<label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'">'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
-      +'<label>How many<select id="makeCount"><option value="1">1 picture</option><option value="2">2 pictures</option><option value="4" selected>4 to choose from</option></select></label>'
+      +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'">'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
+      +'<label>How many<select id="makeCount"><option value="1">1 picture</option><option value="2">2 pictures</option><option value="4" selected>4 to choose from</option></select></label></div>'
+      +(adapters(look).length?'<label>Style strength <output id="makeStrengthOut">100%</output><input type="range" id="makeStrength" min="0" max="150" step="10" value="100" aria-describedby="makeStrengthHint"><small id="makeStrengthHint" class="muted">How strongly the look\u2019s '+adapters(look).length+' style adapter'+(adapters(look).length>1?'s apply':' applies')+'. 100% is the look as made.</small></label>':'')
       +'<label class="make-check"><input type="checkbox" id="makeNewSeed" checked> Different pictures each time</label>'
       +'<p id="makeEstimate" class="muted" aria-live="polite"></p>'
       +'<button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>Generate</button>'
       +(why?'<p id="makeWhy" class="make-warn">'+escape(why)+'</p>':'')
       +'<button type="button" id="makeEditor" class="make-link">Open in the full editor instead</button>'
-      +'<details class="make-about"><summary>What this look uses</summary><p>'+escape(p?.name||look.body.preset_id)+'</p><p class="muted">'+escape(look.body.notes||'')+'</p></details>'
+      +'<details class="make-about"><summary>What this look uses</summary><p>'+escape(p?.name||look.body.preset_id)+'</p>'+(adapters(look).length?'<p>Adapters: '+adapters(look).map(a=>escape(a.name.replace(/\.safetensors$/,''))+' at '+escape(a.strength)).join(', ')+'</p>':'<p>No style adapters: the model and the wording carry this look.</p>')+'<p class="muted">'+escape(look.body.notes||'')+'</p></details>'
       +'</div></div><p id="makeStatus" class="make-status" role="status"></p>';
-    const scene=q('#makeScene');try{scene.value=sessionStorage.getItem('studio.make.scene.'+look.id)||'';}catch{}
-    scene.oninput=()=>{try{sessionStorage.setItem('studio.make.scene.'+look.id,scene.value);}catch{}};
+    const scene=q('#makeScene');try{scene.value=sessionStorage.getItem('studio.make.scene.'+state.goal)||'';}catch{}
+    scene.oninput=()=>{try{sessionStorage.setItem('studio.make.scene.'+state.goal,scene.value);}catch{}};
     if(q('#makeUseExample'))q('#makeUseExample').onclick=()=>{scene.value=example;scene.oninput();scene.focus();};
     q('#makeShape').onchange=q('#makeCount').onchange=()=>estimate();estimate();
+    const strength=q('#makeStrength');if(strength)strength.oninput=()=>{q('#makeStrengthOut').textContent=strength.value+'%';};
   }
   async function prepared(look){
     // Every form value is read before the first await: a click on another look mid-request must not change this one.
     const scene=q('#makeScene').value.trim();if(!scene)throw Error('Describe your picture first, or press Use the example.');
     const options=Object.fromEntries([...view.querySelectorAll('[data-make-option]')].map(i=>[i.dataset.makeOption,i.checked]));
-    const p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),reseed=q('#makeNewSeed').checked,batch_count=Number(q('#makeCount').value);
+    const p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),reseed=q('#makeNewSeed').checked,batch_count=Number(q('#makeCount').value),scale=Number(q('#makeStrength')?.value??100)/100;
     const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options}:{}),expected_revision:look.revision});
     const controls={...result.controls};
     if('width' in controls||p?.width)Object.assign(controls,{width:w,height:h});
     if(reseed&&(p?.seed||p?.bindings_extra?.seed))controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
-    return{preset_id:result.preset_id,controls,batch_count};
+    // Two decimals, inside the server's 0-2 adapter range.
+    if(scale!==1)for(const a of adapters(look))controls[a.key]=Math.min(2,Math.round(a.strength*scale*100)/100);
+    return{preset_id:result.preset_id,controls,batch_count,scene};
   }
   let estimateEpoch=0;
   async function estimate(retry=false){
@@ -115,8 +128,8 @@
     state.busy=true;q('#makeGenerate').disabled=true;status.textContent='Preparing…';
     try{
       const request=await prepared(look);status.textContent='Sending to ComfyUI…';
-      const job=await json('/api/jobs',{...request,label:'Make · '+look.name});
-      state.runs.unshift({job,look:look.name});status.textContent='Started. Your pictures appear below as they finish; you can leave this page.';
+      const {scene,...submit}=request;const job=await json('/api/jobs',{...submit,label:'Make · '+look.name});
+      state.runs.unshift({job,look:look.name,lookId:look.id,goal:state.goal,scene});remember();status.textContent='Started. Your pictures appear below as they finish; you can leave this page.';
       renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){status.textContent=error.message;status.classList.add('make-warn');setTimeout(()=>status.classList.remove('make-warn'),4000);}
@@ -124,8 +137,15 @@
   }
   async function openInEditor(){
     const look=current(),status=q('#makeStatus');if(!look)return;
-    try{const request=await prepared(look);applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');}
+    try{const request=await prepared(look);delete request.scene;applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');}
     catch(error){status.textContent=error.message;}
+  }
+  // Keep / Not this: the library's own review field, one press, pressing again clears it.
+  async function review(button){
+    const id=button.dataset.asset,value=state.review[id]===button.dataset.makeReview?'unreviewed':button.dataset.makeReview,status=q('#makeStatus');button.disabled=true;
+    try{await refreshAssets(true);await mutateAssets({action:'edit',ids:[id],review:value});state.review[id]=value;renderRuns();
+      if(status)status.textContent=value==='selected'?'Kept. Your keepers are in the library under Keepers.':value==='rejected'?'Marked: not this one.':'Decision cleared.';}
+    catch(error){button.disabled=false;if(status)status.textContent='Could not save that: '+error.message;}
   }
   const timers=new Map();
   const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'');
@@ -141,15 +161,17 @@
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
     const vary=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a)||'';
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>';
-    return '<div class="make-actions">'+vary+hand('repair','Fix details or upscale')+'<button type="button" data-ux-open-asset="'+escape(a)+'">Review and keep</button>'
-      +'<details class="make-more"><summary>More</summary>'+hand('edit','Change one thing')+hand('restyle','Restyle')+hand('combine','Put in a new pose')+hand('animate','Animate')+'</details></div>';
+    const review=state.review[a],mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+label+'</button>';
+    return '<div class="make-actions">'+mark('selected','\u2605 Keep')+mark('rejected','Not this')+vary+hand('repair','Fix details or upscale')
+      +'<details class="make-more"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('edit','Change one thing')+hand('restyle','Restyle')+hand('combine','Put in a new pose')+hand('animate','Animate')+'</details></div>';
   }
   function renderRuns(){
     const box=q('#makeRuns');if(!box)return;
     const mine=state.runs,others=(typeof jobs!=='undefined'?jobs:[]).filter(j=>!mine.some(r=>r.job.id===j.id)&&j.outputs?.length&&!j.put_away).slice(0,mine.length?0:3).map(job=>({job,look:job.label||job.preset_name}));
     const list=[...mine,...others].slice(0,6);
     if(!list.length){box.innerHTML='<p class="muted">Pictures you make here show up in this space, with one-press next steps.</p>';return;}
-    box.innerHTML=list.map(({job,look})=>'<article class="make-run"><header><b>'+escape(look)+'</b><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
+    box.innerHTML=list.map(({job,look,scene})=>'<article class="make-run"><header><div><b>'+escape(look)+'</b>'+(scene?'<small>'+escape(scene)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
+      +(scene?'<div class="make-run-tools"><button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>(o.media_type&&o.media_type!=='image')?'':'<figure>'+(o.asset_id?'<button type="button" class="make-open" data-ux-open-asset="'+escape(o.asset_id)+'" aria-label="Open picture '+(i+1)+' full size">':'')+'<img src="/api/image/'+encodeURIComponent(job.id)+'/'+i+'" alt="Picture '+(i+1)+' from '+escape(look)+'" loading="lazy">'+(o.asset_id?'</button>':'')+actions(job,o)+'</figure>').join('')
       +(FINAL.includes(job.status)?'':Array.from({length:Math.max(0,(job.batch_count||1)-(job.outputs||[]).length)},()=>'<figure class="make-pending" aria-hidden="true"><span></span></figure>').join(''))+'</div></article>').join('');
@@ -171,10 +193,21 @@
       state.looks=(listing.looks||listing.cards||[]).filter(l=>l.kind==='look'||l.body);
     }catch(error){state.error='Could not read the looks: '+error.message;}
     render();
+    // Earlier Make runs come back from their job records; one that is gone is dropped, one still running is followed again.
+    const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id))};}catch{return null;}}));
+    state.runs=[...state.runs,...restored.filter(r=>r&&!state.runs.some(x=>x.job.id===r.id)).map(({id,...r})=>r)];
+    for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id);
+    renderRuns();
   }
   view.addEventListener('click',e=>{
     const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;remember();render();return;}
-    const l=e.target.closest('[data-make-look]');if(l){state.look=l.dataset.makeLook;remember();renderLooks();q('#makeScene')?.focus();return;}
+    const l=e.target.closest('[data-make-look]');if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();q('#makeScene')?.focus();return;}
+    if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active')?.focus();return;}
+    if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();q('#makeScene')?.focus();return;}
+    const again=e.target.closest('[data-make-rerun],[data-make-another]');if(again){const run=state.runs.find(r=>r.job.id===(again.dataset.makeRerun||again.dataset.makeAnother));if(!run)return;
+      state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
+      const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active')?.focus();return;}
+    const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     if(e.target.closest('#makeGenerate'))void generate();
     if(e.target.closest('#makeEditor'))void openInEditor();
     if(e.target.closest('[data-make-retry]'))void load();
