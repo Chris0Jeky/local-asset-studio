@@ -91,13 +91,15 @@
     q('#makeShape').onchange=q('#makeCount').onchange=()=>estimate();estimate();
   }
   async function prepared(look){
+    // Every form value is read before the first await: a click on another look mid-request must not change this one.
     const scene=q('#makeScene').value.trim();if(!scene)throw Error('Describe your picture first, or press Use the example.');
     const options=Object.fromEntries([...view.querySelectorAll('[data-make-option]')].map(i=>[i.dataset.makeOption,i.checked]));
+    const p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),reseed=q('#makeNewSeed').checked,batch_count=Number(q('#makeCount').value);
     const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options}:{}),expected_revision:look.revision});
-    const p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),controls={...result.controls};
+    const controls={...result.controls};
     if('width' in controls||p?.width)Object.assign(controls,{width:w,height:h});
-    if(q('#makeNewSeed').checked&&(p?.seed||p?.bindings_extra?.seed))controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
-    return{preset_id:result.preset_id,controls,batch_count:Number(q('#makeCount').value)};
+    if(reseed&&(p?.seed||p?.bindings_extra?.seed))controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
+    return{preset_id:result.preset_id,controls,batch_count};
   }
   let estimateEpoch=0;
   async function estimate(retry=false){
@@ -108,7 +110,9 @@
   }
   const duration=s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min';
   async function generate(){
-    const look=current(),status=q('#makeStatus');if(!look||state.busy)return;state.busy=true;q('#makeGenerate').disabled=true;status.textContent='Preparing…';
+    const look=current(),status=q('#makeStatus');if(!look||state.busy)return;
+    const why=blocker(look);if(why){status.textContent=why;return;}
+    state.busy=true;q('#makeGenerate').disabled=true;status.textContent='Preparing…';
     try{
       const request=await prepared(look);status.textContent='Sending to ComfyUI…';
       const job=await json('/api/jobs',{...request,label:'Make · '+look.name});
@@ -124,7 +128,14 @@
     catch(error){status.textContent=error.message;}
   }
   const timers=new Map();
-  function poll(id){clearTimeout(timers.get(id));timers.set(id,setTimeout(async()=>{try{const job=await json('/api/jobs/'+encodeURIComponent(id));const run=state.runs.find(r=>r.job.id===id);if(run)run.job=job;renderRuns();if(!FINAL.includes(job.status))poll(id);else timers.delete(id);}catch{poll(id);}},2500));}
+  const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'');
+  function poll(id,misses=0){clearTimeout(timers.get(id));timers.set(id,setTimeout(async()=>{
+    const run=state.runs.find(r=>r.job.id===id);if(!run){timers.delete(id);return;}
+    try{const job=await json('/api/jobs/'+encodeURIComponent(id));const changed=stamp(job)!==stamp(run.job);run.job=job;
+      // Redraw only when something changed, so a poll never resets an open menu or steals keyboard focus.
+      if(changed){renderRuns();if(job.outputs?.length)state.pictures=null;}
+      if(!FINAL.includes(job.status))poll(id);else timers.delete(id);}
+    catch{if(misses<5)poll(id,misses+1);else timers.delete(id);}},2500));}
   function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: check Runs & review',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
   function actions(job,output){
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
@@ -168,7 +179,7 @@
     if(e.target.closest('#makeEditor'))void openInEditor();
     if(e.target.closest('[data-make-retry]'))void load();
   });
-  view.addEventListener('keydown',e=>{if(e.target.id==='makeScene'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();void generate();}});
+  view.addEventListener('keydown',e=>{if(e.target.id==='makeScene'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void generate();}});
   let loaded=false;
   window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();
