@@ -145,4 +145,4 @@ function assetShelfInspect(record){
   catch(error){assetShelfStatus('Device preference is unavailable. The session journal remains separate.',true);}
 })();
 // The library launch sits behind a Recovery disclosure, closed unless something waits to be recovered.
-const baseRenderLibraryRecovery=renderLibraryRecovery;renderLibraryRecovery=function(){baseRenderLibraryRecovery();const panel=document.getElementById('assetRecoveryDisclosure');if(panel)panel.open=!!(assetLibraryPending||assetRetainedDetail||assetRecoveryError)||assetShelfRecords.length>0;};
+const baseRenderLibraryRecovery=renderLibraryRecovery;renderLibraryRecovery=function(){baseRenderLibraryRecovery();const panel=document.getElementById('assetRecoveryDisclosure');if(panel&&!panel.open)panel.open=!!(assetLibraryPending||assetRetainedDetail||assetRecoveryError)||assetShelfRecords.length>0;};

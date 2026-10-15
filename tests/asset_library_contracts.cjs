@@ -99,7 +99,7 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
   });
   await test('Default titles carry the prompt excerpt; renamed titles and markup do not leak',()=>{
     const s=sourced();s.run("chooseAssetSource('all')");let html=s.el('#assetGrid').innerHTML;
-    assert.match(html,/class="asset-card-prompt"[^>]*>prompt of m0</);assert.match(html,/class="asset-run-label"[^>]*>lab p71 · G16</);
+    assert.match(html,/class="asset-card-title"[^>]*>prompt of m0</);assert.doesNotMatch(html,/class="asset-card-prompt"[^>]*>prompt of m0</,'the excerpt is not shown twice');assert.match(html,/class="asset-run-label"[^>]*>lab p71 · G16</);
     s.run("assetState.assets[0].title='My knight';assetState.assets[1].prompt_excerpt='<b>x</b>';assetState.assets[2].run_label='<i>';renderAssets()");html=s.el('#assetGrid').innerHTML;
     assert.doesNotMatch(html,/prompt of m0/);assert.match(html,/&lt;b&gt;x&lt;\/b&gt;/);assert.doesNotMatch(html,/<b>x|<i>/);
   });

@@ -31,7 +31,8 @@ function assetRunLabelChoice(){
 }
 // A title still equal to the registered default ("<recipe> · N") says nothing; the prompt excerpt does.
 function assetDefaultTitle(asset){return asset.title===(asset.preset_name||'Untitled')+' · '+(Number(asset.output_index)+1);}
-function assetSubtitle(asset){return typeof asset.prompt_excerpt==='string' && asset.prompt_excerpt && assetDefaultTitle(asset)?asset.prompt_excerpt:'';}
+// The prompt excerpt is shown once: as the subtitle only when the card title is something else (#1414 review).
+function assetSubtitle(asset){return typeof asset.prompt_excerpt==='string' && asset.prompt_excerpt && assetDefaultTitle(asset) && assetCardTitle(asset)!==asset.prompt_excerpt?asset.prompt_excerpt:'';}
 // Card titles lead with something distinguishing: a user-kept title stays, else the run label when it is not the
 // recipe name (Make files labels as 'Make · <look>'), else the first words of the submitted prompt; the recipe name
 // stays on the small second line in the card meta.
