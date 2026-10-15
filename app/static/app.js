@@ -518,7 +518,7 @@ function recentWaiting(keys){
   return parts.length?parts.join(' · ')+', shown when the clip stops':'';
 }
 // Stateless on purpose (journeys load renderJobs alone): the line's own text is the record, so equal text is never rewritten.
-function showRecentHeld(text){const line=$('#recentHeld');if(line&&line.textContent!==text)line.textContent=text;}
+function showRecentHeld(text){const line=$('#recentHeld');if(line&&line.textContent!==text){line.textContent=text;line.title=text;}}
 // #940: newest open problems first; put-away ones stay one toggle away and are never deleted.
 const PROBLEMS_SHOWN=5;let problemsShowAll=false,problemsShowPutAway=false;
 function renderProblems(problems,open){
