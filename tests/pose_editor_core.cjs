@@ -178,7 +178,9 @@ test('the workbench sends the drawing to the guide endpoint and to no generation
   assert.match(workbench,/if\(poseLoading\)return 'The attached pose guide’s drawing is loading into the editor\.';/,'Use this pose waits for an in-flight read');
   assert.match(workbench,/const edited=!StudioPoseEditor\.holds\(posePoints,poseCanvas,before\)/,'an edit made during the read wins over the late stored drawing');
   assert.match(workbench,/combineSwitchReason\(selected,target,referenceRecords\)/,'ordinary engine switches retain their representation guard');
-  assert.doesNotMatch(workbench,/post\('\/api\/jobs'/,'the workbench submits no generation of its own');
+  // S3: the one generation the workbench sends is Make's explicit one-press Polish (tests/make_polish_browser.py); the pose path sends none.
+  assert.deepEqual(workbench.match(/post\('\/api\/jobs'/g),["post('/api/jobs'"],'the workbench submits no generation of its own beyond Polish');
+  assert.match(workbench,/return await post\('\/api\/jobs',\{preset_id:preset\.id,continuation:prepared\.claim,/,'that one is the Polish runner');
   const html=fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');
   assert.ok(html.indexOf('/static/pose-editor-core.js')>=0,'the page loads the geometry module');
   assert.ok(html.indexOf('/static/pose-editor-core.js')<html.indexOf('/static/studio-workbench.js'),'the geometry module loads before the workbench reads it');
