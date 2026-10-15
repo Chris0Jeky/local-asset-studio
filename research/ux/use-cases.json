@@ -960,6 +960,10 @@
         {
           "intent": "open the prepared request in the full editor",
           "expect": "each adapter is at half its strength; the wording is the new look's with the same sentence"
+        },
+        {
+          "intent": "check a look that has no adapters",
+          "expect": "no Style strength control is offered there"
         }
       ]
     }
