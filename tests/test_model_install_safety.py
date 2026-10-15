@@ -91,6 +91,16 @@ class InstallSafetyTests(unittest.TestCase):
         # Unverified bytes never stay at the model's name: they go back to the staging name; the original is untouched.
         self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),replacement);self.assertEqual(saved.read_bytes(),self.body)
 
+    def test_rename_rejects_a_write_during_the_digest(self):
+        # A writer that changes the published file while it is being hashed must not leave a verified receipt behind.
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part);real=contracts.sha256
+        def hash_then_write(path):
+            digest=real(path);path.write_bytes(b'y'*len(self.body));return digest
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts,'sha256',side_effect=hash_then_write):
+            with self.assertRaisesRegex(ValueError,'^Published file does not match the verified digest; files preserved for inspection$'):
+                contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
+        self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),b'y'*len(self.body))
+
     def test_rename_requires_digest_before_moving_stage(self):
         self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
         with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')):

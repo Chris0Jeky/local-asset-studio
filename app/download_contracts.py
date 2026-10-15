@@ -195,7 +195,8 @@ def publish_verified(source,target,identity,expected_sha256=None):
     after=file_identity(target)
     # Publication may change ctime; Windows rename need only retain size and mtime.
     changed=any(after[key]!=identity[key] for key in (('size','mtime_ns') if renamed else ('device','inode','size','mtime_ns')))
-    try:mismatch=not changed and renamed and sha256(target)!=expected_sha256
+    # The hash of a multi-GB file takes a while: the identity read just before it must still hold just after it (#1416 review).
+    try:mismatch=not changed and renamed and (sha256(target)!=expected_sha256 or file_identity(target)!=after)
     except OSError:mismatch=True
     if renamed and (changed or mismatch):
         # Never leave unverified bytes at the model's published name: move them back to the staging name (no-clobber).
