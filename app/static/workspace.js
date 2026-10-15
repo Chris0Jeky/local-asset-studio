@@ -32,6 +32,24 @@ function assetRunLabelChoice(){
 // A title still equal to the registered default ("<recipe> · N") says nothing; the prompt excerpt does.
 function assetDefaultTitle(asset){return asset.title===(asset.preset_name||'Untitled')+' · '+(Number(asset.output_index)+1);}
 function assetSubtitle(asset){return typeof asset.prompt_excerpt==='string' && asset.prompt_excerpt && assetDefaultTitle(asset)?asset.prompt_excerpt:'';}
+// Card titles lead with something distinguishing: a user-kept title stays, else the run label when it is not the
+// recipe name (Make files labels as 'Make · <look>'), else the first words of the submitted prompt; the recipe name
+// stays on the small second line in the card meta.
+function assetCardTitle(asset){if(!assetDefaultTitle(asset))return asset.title||'Untitled';if(assetIsAgentRun(asset)&&asset.run_label!==asset.preset_name)return asset.run_label;return typeof asset.prompt_excerpt==='string'&&asset.prompt_excerpt?asset.prompt_excerpt:asset.title;}
+// Scope chips count what the current source, search and media filters actually show, per scope.
+function assetScopedCount(scope){
+  const query=$('#assetSearch').value.trim().toLowerCase(),type=$('#assetType').value;
+  const list=assetSourceFilter(assetState.assets.filter(a=>{
+    if(scope==='trash')return !!a.trashed_at;
+    if(a.trashed_at)return false;
+    if(scope==='favorite'&&!a.favorite)return false;
+    if(['selected','needs_work','unreviewed'].includes(scope)&&(a.review||'unreviewed')!==scope)return false;
+    if(scope.startsWith('collection:'))return a.collections.includes(scope.slice(11));
+    return true;
+  }));
+  return list.filter(a=>(type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,a.run_label||'',a.prompt_excerpt||'',...a.tags].join(' ').toLowerCase().includes(query)).length;
+}
+function renderAssetScopeCounts(){document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>{if(!b.dataset.scopeLabel)b.dataset.scopeLabel=b.textContent.trim();b.innerHTML='<span>'+esc(b.dataset.scopeLabel)+'</span><small>'+assetScopedCount(b.dataset.scope).toLocaleString('en-US')+'</small>';});}
 const assetReviewLabels = {unreviewed:'Unreviewed',selected:'Keeper',needs_work:'Needs work',rejected:'Rejected'};
 const assetReviewShortcuts = {k:'selected',w:'needs_work',x:'rejected'};
 const assetReasonTags = ['hands','face','style off','composition','anatomy','artifacts','crop'];
@@ -476,12 +494,13 @@ function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=nu
 function assetThumbUrl(asset) {return '/api/assets/'+encodeURIComponent(asset.id)+'/thumb?v='+ASSET_THUMB_VERSION+'-'+encodeURIComponent(String(asset.sha256||'').slice(0,16));}
 function assetPreview(asset, detail=false) {
   const url=asset.url, alt=esc(asset.title);
+  if(!url)return '<span class="asset-type-placeholder">▨<small>'+(detail?'File unavailable':'No preview · file missing')+'</small></span>';
   if(asset.media_type==='image')return detail?'<img loading="lazy" decoding="async" src="'+url+'" alt="'+alt+'">':'<img loading="lazy" decoding="async" src="'+esc(assetThumbUrl(asset))+'" data-full-src="'+esc(url)+'" alt="'+alt+'">';
   if(asset.media_type==='video')return '<video '+(detail?'controls':'muted')+' preload="metadata" src="'+url+'" aria-label="'+alt+'"></video>';
   if(asset.media_type==='audio')return detail?'<audio controls src="'+url+'"></audio>':'<span class="asset-type-placeholder">♫<small>Audio</small></span>';
   return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder">◇<small>3D model</small></span>';
 }
-function assetCardHTML(a) {return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
+function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
   observeAssetWorkspaceIdentity();
   // A remembered collection that no longer exists opens All assets rather than an unavailable view.
@@ -489,7 +508,7 @@ function renderAssets() {
   rememberAssetView();
   const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope), source=assetSource();
   const inScope=assetScopeAssets(), sourced=assetSourceFilter(inScope,source), sourceHidden=inScope.length-sourced.length;
-  $('#assetTotal').textContent=assetState.assets.filter(a=>!a.trashed_at).length;
+  $('#assetTotal').textContent=assets.length;
   $('#assetSource').hidden=!assetState.assets.some(assetIsAgentRun);$('#assetSource').value=source;
   $('#assetVisibleCount').textContent=(assetFiltersActive()?assets.length+' of '+sourced.length+' assets':assets.length+' assets')+(sourceHidden?' · '+sourceHidden+(source==='mine'?' agent runs hidden':' of yours hidden'):'');
   $('#clearAssetFilters').hidden=!assetFiltersActive();
@@ -498,7 +517,7 @@ function renderAssets() {
   $('#assetScopeTitle').textContent=col?.name||({all:'All assets',unreviewed:'Awaiting review',favorite:'Favorites',selected:'Keepers',needs_work:'Needs work',trash:'Trash'}[assetScope]||'Collection');
   $('#collectionActions').hidden=!col;
   $('#assetCollections').innerHTML=assetState.collections.map(c=>'<button data-scope="collection:'+c.id+'" class="'+(col?.id===c.id?'active':'')+'"><span>▱ '+esc(c.name)+'</span><small>'+c.count+'</small></button>').join('')||'<p class="muted">Collect a character, a project, or an idea.</p>';
-  document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope===assetScope));
+  document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope===assetScope));renderAssetScopeCounts();
   const destination=$('#bulkCollection').value;
   $('#bulkCollection').innerHTML='<option value="">Choose collection…</option>'+assetState.collections.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
   if(assetState.collections.some(c=>c.id===destination))$('#bulkCollection').value=destination;
@@ -507,7 +526,7 @@ function renderAssets() {
   $('#reviewNext').disabled=!pending.length;
   const groups=assetGroups(assets,assetGroupMode),grouped=!!groups[0]?.key;
   $('#assetGrid').classList.toggle('is-grouped',grouped && !!assets.length);
-  StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,groupActionsHTML:assetGroupActionsHTML,groupSourceHTML:assetGroupSourceHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
+  StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,cardTitle:assetCardTitle,groupActionsHTML:assetGroupActionsHTML,groupSourceHTML:assetGroupSourceHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
   renderAssetSelection();assetBulkReviewControls();
 }
 // Reconcile the saved record without fetching; retain cached nodes and current group membership.
@@ -1061,8 +1080,9 @@ document.addEventListener('click',async e=>{
     }
   }catch(err){assetMessage(err.message,true);message(err.message,true);}
 });
-// A thumbnail the server cannot produce (unreadable image, older server) falls back once to the original file.
-document.addEventListener('error',e=>{const image=e.target;if(image?.tagName!=='IMG'||!image.dataset?.fullSrc||!image.isConnected||!image.getAttribute('src'))return;const full=image.dataset.fullSrc;delete image.dataset.fullSrc;image.src=full;},true);
+// A thumbnail the server cannot produce (unreadable image, older server) falls back once to the original file;
+// a card image neither source can supply becomes a labelled reason, never an empty box.
+document.addEventListener('error',e=>{const image=e.target;if(image?.tagName!=='IMG'||!image.isConnected||!image.getAttribute('src'))return;if(image.dataset?.fullSrc){const full=image.dataset.fullSrc;delete image.dataset.fullSrc;image.src=full;return;}const open=image.closest?.('[data-asset-card] .asset-open');if(open)open.innerHTML='<span class="asset-type-placeholder">▨<small>No preview · file missing</small></span>';},true);
 // A checkbox click precedes its change event; remember only whether Shift was held for that click.
 document.addEventListener('click',e=>{if(e.target?.dataset?.assetCheck!==undefined)assetCheckShift=!!e.shiftKey;},true);
 document.addEventListener('change',e=>{if(e.target?.dataset?.assetCheck)toggleAssetCheck(e.target);});
