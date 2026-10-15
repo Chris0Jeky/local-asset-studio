@@ -30,14 +30,18 @@
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
   const recipeOf=look=>{for(const l of look?.lineage||[]){const m=/^presets\/recipes\.json · (\S+)/.exec(l.evidence||'');if(m)return m[1];}return null;};
-  const thumbOf=look=>{const r=recipeOf(look);return r&&state.examples[r]?.url||(look.anchor_asset_id?'/api/assets/'+encodeURIComponent(look.anchor_asset_id)+'/thumb':null);};
+  // Preset-derived looks have no recipe example; their pictures are the 15 Oct 2026 proof renders (examples/make-looks-20261015).
+  const PROOF_THUMBS=['look-preset-stylized-prop','look-preset-pixel-lora','look-preset-realvis','look-preset-zimage-fast'];
+  const thumbOf=look=>{const r=recipeOf(look);return r&&state.examples[r]?.url||(look.anchor_asset_id?'/api/assets/'+encodeURIComponent(look.anchor_asset_id)+'/thumb':PROOF_THUMBS.includes(look.id)?'/api/examples/make-looks-20261015/'+look.id+'.jpg':null);};
   const tried=look=>{const r=recipeOf(look),list=typeof atelierRecipes!=='undefined'?atelierRecipes:[];return list.find(x=>x.id===r)?.status==='executed';};
   const goal=()=>GOALS.find(g=>g.id===state.goal);
   const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.map(id=>state.looks.find(l=>l.id===id)).filter(l=>l&&!l.trashed_at);};
   const current=()=>state.looks?.find(l=>l.id===state.look&&!l.trashed_at)||null;
   // A family is named for what it means to the user: speed and the kind of picture, not the checkpoint.
   function speed(preset){const id=preset?.id||'';if(/krea/.test(id))return['slow','Slow · finest painting (several minutes)'];if(/zimage-fast|pixel|stylized|realvis/.test(id))return['fast','Fast'];return['fast','Fast · about half a minute'];}
-  function blocker(look){if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';const p=presetFor(look);if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
+  // The same runtime facts the full editor gates on (app.js globals); unknown (null) health does not block.
+  function runtimeBlocker(){if(typeof backendSwitching!=='undefined'&&backendSwitching)return'A model environment switch is running. Wait for it to finish.';if(typeof workerAlive!=='undefined'&&workerAlive===false)return'The Studio worker has stopped. Restart the Studio before generating.';if(typeof online!=='undefined'&&online===false)return'ComfyUI is not reachable. Start it, then try again.';if(typeof online!=='undefined'&&online===true&&typeof schemaAvailable!=='undefined'&&!schemaAvailable)return'ComfyUI is still starting up. Try again in a moment.';return'';}
+  function blocker(look){const runtime=runtimeBlocker();if(runtime)return runtime;if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';const p=presetFor(look);if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
@@ -173,7 +177,7 @@
     render();
   }
   view.addEventListener('click',e=>{
-    const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;remember();render();return;}
+    const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();return;}
     const l=e.target.closest('[data-make-look]');if(l){state.look=l.dataset.makeLook;remember();renderLooks();q('#makeScene')?.focus();return;}
     if(e.target.closest('#makeGenerate'))void generate();
     if(e.target.closest('#makeEditor'))void openInEditor();
