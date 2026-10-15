@@ -78,14 +78,18 @@ class InstallSafetyTests(unittest.TestCase):
     def test_rename_rejects_same_size_same_mtime_replacement(self):
         self.part.write_bytes(self.body);identity=contracts.file_identity(self.part);rename=os.rename
         saved=self.part.with_name('original-stage');replacement=b'x'*len(self.body)
+        calls=[]
         def swap(source,target):
+            calls.append((source,target))
+            if len(calls)>1:return rename(source,target)
             rename(source,saved);source.write_bytes(replacement)
             os.utime(source,ns=(identity['mtime_ns'],identity['mtime_ns']))
             return rename(source,target)
         with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename',side_effect=swap):
             with self.assertRaisesRegex(ValueError,'^Published file does not match the verified digest; files preserved for inspection$'):
                 contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
-        self.assertEqual(self.target.read_bytes(),replacement);self.assertEqual(saved.read_bytes(),self.body)
+        # Unverified bytes never stay at the model's name: they go back to the staging name; the original is untouched.
+        self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),replacement);self.assertEqual(saved.read_bytes(),self.body)
 
     def test_rename_requires_digest_before_moving_stage(self):
         self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
