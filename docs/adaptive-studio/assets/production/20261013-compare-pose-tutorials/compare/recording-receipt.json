@@ -1,0 +1,555 @@
+{
+  "application_revision": "3fe5cd36ed1a356bee7cb0270bd2a29c26df5bc4",
+  "served_source_hashes": [
+    {
+      "path": "/app.js",
+      "sha256": "979fd527c6bffb506febc04542dd903cbcfe8d28b287a4d6c54ea2c0dcac3bf4"
+    },
+    {
+      "path": "/production.js",
+      "sha256": "43aac97453437d72c9e9bf0be660fd0b5504093970d85c4fd4c750cf07d4e90d"
+    },
+    {
+      "path": "/studio-workbench.js",
+      "sha256": "9f7adac96e354af6572e90cf9ca308745b3e1de6fe66e06258f2f3a7ca3d2d0b"
+    },
+    {
+      "path": "/continuation-core.js",
+      "sha256": "e28ef0b2ef0166457ec38db1844f1a45b12fc3b3b0346e2fd3925c8987e191e0"
+    }
+  ],
+  "server_launch_receipt": "LAS-SERVER-LAUNCH.json",
+  "recipe_id": "anima-portrait",
+  "before": {
+    "preset": "anima-portrait",
+    "controls": {
+      "positive": "An original fully clothed adult cartographer in a warm ivory coat, holding a folded map in a quiet workshop. Calm daylight, clean composition.",
+      "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+      "seed": "2026091103",
+      "steps": "30",
+      "cfg": "4",
+      "width": "768",
+      "height": "1152"
+    },
+    "batch": "1",
+    "refs": [],
+    "parents": [],
+    "files": [
+      {
+        "id": "characterPlanFile",
+        "count": 0
+      },
+      {
+        "id": "characterHandoffFile",
+        "count": 0
+      },
+      {
+        "id": "importAssets",
+        "count": 0
+      },
+      {
+        "id": "uxImportDraft",
+        "count": 0
+      },
+      {
+        "id": "reference",
+        "count": 0
+      },
+      {
+        "id": "lastReference",
+        "count": 0
+      },
+      {
+        "id": "importRecipe",
+        "count": 0
+      },
+      {
+        "id": "importWorkflow",
+        "count": 0
+      },
+      {
+        "id": "assetShelfImport",
+        "count": 0
+      }
+    ]
+  },
+  "after": {
+    "preset": "anima-portrait",
+    "controls": {
+      "positive": "An original fully clothed adult cartographer in a warm ivory coat, holding a folded map in a quiet workshop. Calm daylight, clean composition.",
+      "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+      "seed": "2026091103",
+      "steps": "30",
+      "cfg": "4",
+      "width": "768",
+      "height": "1152"
+    },
+    "batch": "1",
+    "refs": [],
+    "parents": [],
+    "files": [
+      {
+        "id": "characterPlanFile",
+        "count": 0
+      },
+      {
+        "id": "characterHandoffFile",
+        "count": 0
+      },
+      {
+        "id": "importAssets",
+        "count": 0
+      },
+      {
+        "id": "uxImportDraft",
+        "count": 0
+      },
+      {
+        "id": "reference",
+        "count": 0
+      },
+      {
+        "id": "lastReference",
+        "count": 0
+      },
+      {
+        "id": "importRecipe",
+        "count": 0
+      },
+      {
+        "id": "importWorkflow",
+        "count": 0
+      },
+      {
+        "id": "assetShelfImport",
+        "count": 0
+      }
+    ]
+  },
+  "axis_options": [
+    {
+      "value": "seed",
+      "text": "Seed"
+    },
+    {
+      "value": "cfg",
+      "text": "Guidance"
+    },
+    {
+      "value": "steps",
+      "text": "Steps"
+    }
+  ],
+  "summary": "Compare cfg = 3, 4, 5 on Anima Aesthetic 1.1 - Portrait \u2192 3 graph runs, about 3 min at roughly 1.0 min per run measured in Create.",
+  "arithmetic": "3 values \u00d7 1 seed = 3 runs; 3 reserved. At least 3 must be reserved to prepare this study.",
+  "status": "Preparing a plan validates the live graph and fingerprints its model files. It does not generate.",
+  "events": [
+    {
+      "seconds": 0.09,
+      "caption": "Start with one text-only recipe and one question. No references are attached.",
+      "screenshot": "01-recipe.png"
+    },
+    {
+      "seconds": 4.223,
+      "caption": "Open Plan comparison and choose Guidance. Compare one setting at a time.",
+      "screenshot": "02-axis.png"
+    },
+    {
+      "seconds": 9.329,
+      "caption": "Enter three values. Allow three graph runs and a ten-minute between-stage limit.",
+      "screenshot": "03-limits.png"
+    },
+    {
+      "seconds": 15.472,
+      "caption": "Read the displayed estimate and run arithmetic before preparing. This is not a completed comparison.",
+      "screenshot": "04-summary.png"
+    },
+    {
+      "seconds": 19.588,
+      "caption": "Three values times one seed means three graph runs. The allowance is three; nothing is reserved yet.",
+      "screenshot": "05-arithmetic.png"
+    },
+    {
+      "seconds": 23.716,
+      "caption": "Cancel before Prepare plan. The Create draft remains unchanged; nothing was prepared or submitted.",
+      "screenshot": "06-cancel.png"
+    }
+  ],
+  "duration_seconds": 28.751,
+  "trim_start_seconds": 5.358,
+  "raw_video": "raw/page@326e10c0b3ae1de591d9f33c97d338ed.webm",
+  "jobs_after": [],
+  "production_after": [],
+  "http_requests": [
+    {
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "path": "/static/style.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/production-clarity.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-review.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/continuation-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/review-checks.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/pose-editor-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.css"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/anima.png"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/lineani.png"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/krea.png"
+    },
+    {
+      "method": "GET",
+      "path": "/static/vendor/model-viewer/model-viewer.min.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/read-poller.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/app.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-grid.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workspace.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/output-review.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-session.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-ui.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-lifecycle.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-editor.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/reference-model.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/references.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/production.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/character-import.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/backends.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-shell.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-workbench.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/looks.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/run-outcome.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family-adapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backends"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-navigation.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/presentation-context.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/parallax-stage-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/production"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/looks"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience-policy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-apply.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-tuning.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance-client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive-core.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.css"
+    },
+    {
+      "method": "GET",
+      "path": "/api/options"
+    },
+    {
+      "method": "GET",
+      "path": "/api/knowledge"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recipes"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/anima-portrait"
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups"
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/library"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    }
+  ],
+  "forbidden_requests": [],
+  "browser_errors": [],
+  "expected_failed_requests": [
+    {
+      "path": "/api/health",
+      "failure": "net::ERR_EMPTY_RESPONSE"
+    },
+    {
+      "path": "/api/jobs",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "path": "/api/health",
+      "failure": "net::ERR_EMPTY_RESPONSE"
+    },
+    {
+      "path": "/api/jobs",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "prepare_plan_clicked": false,
+  "generation_submitted": false
+}

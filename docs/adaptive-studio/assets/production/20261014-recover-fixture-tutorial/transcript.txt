@@ -1,0 +1,6 @@
+00:00:00.000 CONTROLLED FIXTURE: no remote request was sent. This is a simulated retained unknown-request record.
+00:00:06.058 Read the uncertain status. The real app preserves uncertainty and says it was not resubmitted.
+00:00:11.134 No prompt ID is known, so Resume observation is absent. Leave Abandon and its acknowledgement untouched.
+00:00:17.470 Click Recipe to download the retained recipe. This is a read-only request, not a replay.
+00:00:21.629 Inspect the downloaded JSON: the public fixture label, original controls and workflow are retained.
+00:00:33.476 Return to the unchanged uncertain record. Stop here: no Resume, Abandon, replay or generation.

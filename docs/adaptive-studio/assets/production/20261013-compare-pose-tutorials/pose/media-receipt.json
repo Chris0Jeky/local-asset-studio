@@ -1,0 +1,79 @@
+{
+  "ffprobe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1280,
+        "height": 720,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "775"
+      }
+    ],
+    "format": {
+      "duration": "32.291667",
+      "size": "942376"
+    }
+  },
+  "sha256": "a968911fb639e438ec8f49ad240cb756895120dbfeba6db8c7e51c7a32539487",
+  "caption_cues": 7,
+  "decoded_frames": [
+    {
+      "seconds": 0.7,
+      "file": "decoded-01.png"
+    },
+    {
+      "seconds": 5.0200000000000005,
+      "file": "decoded-02.png"
+    },
+    {
+      "seconds": 9.152999999999999,
+      "file": "decoded-03.png"
+    },
+    {
+      "seconds": 14.503,
+      "file": "decoded-04.png"
+    },
+    {
+      "seconds": 19.692,
+      "file": "decoded-05.png"
+    },
+    {
+      "seconds": 24.745,
+      "file": "decoded-06.png"
+    },
+    {
+      "seconds": 28.869,
+      "file": "decoded-07.png"
+    }
+  ],
+  "encode_command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-ss",
+    "5.303",
+    "-i",
+    "<capture>\\raw\\page@2a4784fa00a6cec44e9568e64436fb63.webm",
+    "-t",
+    "32.267",
+    "-an",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "medium",
+    "-crf",
+    "22",
+    "-r",
+    "24",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    "<capture>\\tutorial-pose.mp4"
+  ],
+  "encode_attempts": 1,
+  "curation": "Host capture paths replaced with <capture>; full original operational receipt remains in private delivery."
+}

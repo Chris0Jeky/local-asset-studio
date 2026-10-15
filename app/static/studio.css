@@ -114,3 +114,8 @@
 .look-visual-reference figcaption p{color:#b8c0cc;line-height:1.5}
 .look-visual-reference summary{min-height:24px;cursor:pointer}
 @media(forced-colors:active){.look-visual-reference img{display:none}.look-visual-reference figure,.look-visual-reference figcaption{background:Canvas;color:CanvasText;border-color:CanvasText}.look-visual-reference figcaption p{color:CanvasText}}
+
+
+/* #1260 follow-up: the API-down "Open Asset library →" link and the footer "ComfyUI ↗"
+   rendered 17px tall; give stand-alone links a 24px hit area (WCAG 2.5.8). */
+.ux-empty > a, footer > a { display: inline-flex; align-items: center; min-height: 24px; }
