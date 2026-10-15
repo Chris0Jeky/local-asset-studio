@@ -111,8 +111,8 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .imageCard {border-color:var(--line);background:var(--panel);border-radius:14px;overflow:hidden;max-width:100%}
 .workshop .imageCard img {max-width:100%;object-fit:contain}
 .workshop .imageCard button {font-size:11px}
-.workshop .wk-run-dock {position:fixed;z-index:55;bottom:16px;left:calc(var(--sidebar,224px) + 28px);right:28px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;padding:15px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:var(--wk-shadow);max-width:1350px;margin:0 auto;min-width:0;pointer-events:none}
-.workshop .wk-run-dock :is(button,select,input,a,label) {pointer-events:auto}
+/* Catch hits on the opaque panel (#1241); --workshop-dock-space keeps page controls reachable without #565's click-through. */
+.workshop .wk-run-dock {position:fixed;z-index:55;bottom:16px;left:calc(var(--sidebar,224px) + 28px);right:28px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;padding:15px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:var(--wk-shadow);max-width:1350px;margin:0 auto;min-width:0;pointer-events:auto}
 .wk-dock-info {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 12px;min-width:0}
 .wk-dock-info>strong {font-size:12px;line-height:1.55;font-weight:500;max-height:3.1em;overflow:auto;overflow-wrap:anywhere;color:var(--text)}
 .wk-dock-info>span {font-size:11px;color:var(--muted);grid-column:1}
