@@ -134,7 +134,7 @@ async def exercise_preparation_ownership(page, check, out):
 async def run(args):
     args.out.mkdir(parents=True, exist_ok=True)
     fixture.POSTS.clear()
-    server = fixture.ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
+    server = fixture.browser_server(fixture.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     checks, errors, completed = [], [], False

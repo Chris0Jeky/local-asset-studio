@@ -6,7 +6,7 @@ import argparse
 import copy
 import os
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from urllib.parse import urlsplit
 
 import studio_browser_smoke as fixture
@@ -43,7 +43,7 @@ def main():
     preset['sampler'] = ['fixture-node', 'sampler_name']
     preset['defaults']['sampler'] = 'euler'
     errors = []
-    with ThreadingHTTPServer(('127.0.0.1', 0), Handler) as server:
+    with browser_server(Handler) as server:
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:

@@ -8,7 +8,8 @@ bytes as a data module (plus a delay); this does not test real-origin delivery.
 Requires already installed Playwright and Chromium. No automatic installation.
 The parent delivery unittest separately covers the actual Studio Handler.
 """
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from browser_ports import browser_server
 from pathlib import Path
 import argparse
 import base64
@@ -92,7 +93,7 @@ def run():
     args = parser.parse_args()
     out = args.screenshots
     if out: out.mkdir(parents=True, exist_ok=True)
-    http = ThreadingHTTPServer(('127.0.0.1', 0), FixtureHandler)
+    http = browser_server(FixtureHandler)
     thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
     try:
         with sync_playwright() as pw:
