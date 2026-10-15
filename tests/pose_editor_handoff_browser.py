@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from urllib.parse import urlsplit
 
 import studio_use_cases as ux
@@ -460,7 +460,7 @@ def main(argv=None):
     args.out = args.out.resolve(); args.out.mkdir(parents=True, exist_ok=True)
     from playwright.sync_api import sync_playwright
     Handler, fixture = ux.build_handler()
-    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server = browser_server(Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
     origin = 'http://127.0.0.1:' + str(server.server_port)
     records, errors, posts, drawings = [], [], [], []

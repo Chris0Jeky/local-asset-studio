@@ -1,0 +1,154 @@
+{
+  "base": "312dff631fff0a4b964f482442253f2736a83c29",
+  "head": "8b6846a17b0014391a85d48a45c5fea3dea28839",
+  "source": {
+    "src/presentation.js": {
+      "base": 28935,
+      "head": 29884,
+      "delta": 949
+    },
+    "src/app.js": {
+      "base": 205581,
+      "head": 205587,
+      "delta": 6
+    }
+  },
+  "changed": [
+    {
+      "key": "home",
+      "baseFragmentBytes": 42,
+      "headFragmentBytes": 69,
+      "delta": 27
+    },
+    {
+      "key": "library",
+      "baseFragmentBytes": 192,
+      "headFragmentBytes": 114,
+      "delta": -78
+    },
+    {
+      "key": "scene",
+      "baseFragmentBytes": 150,
+      "headFragmentBytes": 102,
+      "delta": -48
+    },
+    {
+      "key": "dossier",
+      "baseFragmentBytes": 87,
+      "headFragmentBytes": 89,
+      "delta": 2
+    },
+    {
+      "key": "witness",
+      "baseFragmentBytes": 84,
+      "headFragmentBytes": 125,
+      "delta": 41
+    },
+    {
+      "key": "sudoku",
+      "baseFragmentBytes": 91,
+      "headFragmentBytes": 116,
+      "delta": 25
+    },
+    {
+      "key": "nonogram",
+      "baseFragmentBytes": 118,
+      "headFragmentBytes": 142,
+      "delta": 24
+    },
+    {
+      "key": "binary",
+      "baseFragmentBytes": 76,
+      "headFragmentBytes": 158,
+      "delta": 82
+    },
+    {
+      "key": "futoshiki",
+      "baseFragmentBytes": 52,
+      "headFragmentBytes": 252,
+      "delta": 200
+    },
+    {
+      "key": "lightup",
+      "baseFragmentBytes": 53,
+      "headFragmentBytes": 118,
+      "delta": 65
+    },
+    {
+      "key": "tents",
+      "baseFragmentBytes": 58,
+      "headFragmentBytes": 66,
+      "delta": 8
+    },
+    {
+      "key": "aquarium",
+      "baseFragmentBytes": 81,
+      "headFragmentBytes": 103,
+      "delta": 22
+    },
+    {
+      "key": "network",
+      "baseFragmentBytes": 157,
+      "headFragmentBytes": 174,
+      "delta": 17
+    },
+    {
+      "key": "trail",
+      "baseFragmentBytes": 88,
+      "headFragmentBytes": 124,
+      "delta": 36
+    },
+    {
+      "key": "book",
+      "baseFragmentBytes": 77,
+      "headFragmentBytes": 114,
+      "delta": 37
+    },
+    {
+      "key": "workshop",
+      "baseFragmentBytes": 77,
+      "headFragmentBytes": 69,
+      "delta": -8
+    },
+    {
+      "key": "journal",
+      "baseFragmentBytes": 76,
+      "headFragmentBytes": 109,
+      "delta": 33
+    },
+    {
+      "key": "plant",
+      "baseFragmentBytes": 94,
+      "headFragmentBytes": 100,
+      "delta": 6
+    },
+    {
+      "key": "table",
+      "baseFragmentBytes": 88,
+      "headFragmentBytes": 105,
+      "delta": 17
+    },
+    {
+      "key": "bridges",
+      "baseFragmentBytes": 0,
+      "headFragmentBytes": 187,
+      "delta": 187
+    },
+    {
+      "key": "quiet",
+      "baseFragmentBytes": 0,
+      "headFragmentBytes": 84,
+      "delta": 84
+    },
+    {
+      "key": "castle",
+      "baseFragmentBytes": 0,
+      "headFragmentBytes": 80,
+      "delta": 80
+    }
+  ],
+  "exactDuplicateRuntimeFragments": [],
+  "emittedShellDeltaFromExistingCleanReceipt": 895,
+  "requiredSaving": 697,
+  "scope": "read-only; no candidates implemented, builds or codec probes"
+}

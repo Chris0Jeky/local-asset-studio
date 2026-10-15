@@ -1,0 +1,1873 @@
+{
+  "application_revision": "f5b1a6afa6e67cfdb58cb728035f1a7337ab6cee",
+  "application_source_unpatched": true,
+  "fixture_classification": "CONTROLLED PUBLIC IMPORT AND DESTINATION-COLLISION FIXTURE; no generated output or actual prior failed export",
+  "input_provenance": [
+    {
+      "original": "lantern-duel-320.webp",
+      "imported_filename": "imported-public-lantern-duel-320.webp",
+      "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+      "bytes": 27208,
+      "dimensions": [
+        320,
+        292
+      ],
+      "source_repository": "Chris0Jeky/Alibi",
+      "source_revision": "59f47e90b102d44eac35b5ce3f009f278437a6e5",
+      "provenance": "Existing public painting derivative, imported as a fixture; no output generated in LAS."
+    },
+    {
+      "original": "pocket-borough-320.webp",
+      "imported_filename": "imported-public-pocket-borough-320.webp",
+      "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+      "bytes": 31824,
+      "dimensions": [
+        320,
+        292
+      ],
+      "source_repository": "Chris0Jeky/Alibi",
+      "source_revision": "59f47e90b102d44eac35b5ce3f009f278437a6e5",
+      "provenance": "Existing public painting derivative, imported as a fixture; no output generated in LAS."
+    }
+  ],
+  "before_jobs": [],
+  "imported_jobs": [
+    {
+      "id": "00a54bfa-b00c-4cee-b557-3bc006ad871a",
+      "status": "completed",
+      "created_at": 1791942647.408458,
+      "preset_id": "imported-image",
+      "preset_name": "imported-public-pocket-borough-320.webp",
+      "controls": {},
+      "batch_count": 1,
+      "prompt_ids": [],
+      "submissions": [],
+      "outputs": [
+        {
+          "filename": "imported-public-pocket-borough-320.webp",
+          "uploaded_file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+          "type": "output",
+          "media_type": "image",
+          "asset_id": "b832c02a876d546885f81bdcd51f043d"
+        }
+      ],
+      "message": "Imported original image. No generation submitted.",
+      "failure": null,
+      "parent_assets": [],
+      "references": [
+        {
+          "file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+          "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+          "bytes": 31824,
+          "width": 320,
+          "height": 292,
+          "original_name": "imported-public-pocket-borough-320.webp"
+        }
+      ],
+      "project_id": null,
+      "started_at": null,
+      "finished_at": null,
+      "elapsed_seconds": null,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": null,
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": null,
+      "tile": null,
+      "tile_finish": null,
+      "parallax": null,
+      "parallax_finish": null,
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": false,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": false,
+      "abandon_requires_acknowledgement": false,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "This job has already finished",
+      "cancel_needs_confirm": false
+    },
+    {
+      "id": "86356e84-082c-4310-9739-e3ccc064cf90",
+      "status": "completed",
+      "created_at": 1791942647.3416562,
+      "preset_id": "imported-image",
+      "preset_name": "imported-public-lantern-duel-320.webp",
+      "controls": {},
+      "batch_count": 1,
+      "prompt_ids": [],
+      "submissions": [],
+      "outputs": [
+        {
+          "filename": "imported-public-lantern-duel-320.webp",
+          "uploaded_file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+          "type": "output",
+          "media_type": "image",
+          "asset_id": "3e676fa2604554049140628a9a7ba474"
+        }
+      ],
+      "message": "Imported original image. No generation submitted.",
+      "failure": null,
+      "parent_assets": [],
+      "references": [
+        {
+          "file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+          "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+          "bytes": 27208,
+          "width": 320,
+          "height": 292,
+          "original_name": "imported-public-lantern-duel-320.webp"
+        }
+      ],
+      "project_id": null,
+      "started_at": null,
+      "finished_at": null,
+      "elapsed_seconds": null,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": null,
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": null,
+      "tile": null,
+      "tile_finish": null,
+      "parallax": null,
+      "parallax_finish": null,
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": false,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": false,
+      "abandon_requires_acknowledgement": false,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "This job has already finished",
+      "cancel_needs_confirm": false
+    }
+  ],
+  "after_jobs": [
+    {
+      "id": "00a54bfa-b00c-4cee-b557-3bc006ad871a",
+      "status": "completed",
+      "created_at": 1791942647.408458,
+      "preset_id": "imported-image",
+      "preset_name": "imported-public-pocket-borough-320.webp",
+      "controls": {},
+      "batch_count": 1,
+      "prompt_ids": [],
+      "submissions": [],
+      "outputs": [
+        {
+          "filename": "imported-public-pocket-borough-320.webp",
+          "uploaded_file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+          "type": "output",
+          "media_type": "image",
+          "asset_id": "b832c02a876d546885f81bdcd51f043d"
+        }
+      ],
+      "message": "Imported original image. No generation submitted.",
+      "failure": null,
+      "parent_assets": [],
+      "references": [
+        {
+          "file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+          "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+          "bytes": 31824,
+          "width": 320,
+          "height": 292,
+          "original_name": "imported-public-pocket-borough-320.webp"
+        }
+      ],
+      "project_id": null,
+      "started_at": null,
+      "finished_at": null,
+      "elapsed_seconds": null,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": null,
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": null,
+      "tile": null,
+      "tile_finish": null,
+      "parallax": null,
+      "parallax_finish": null,
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": false,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": false,
+      "abandon_requires_acknowledgement": false,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "This job has already finished",
+      "cancel_needs_confirm": false
+    },
+    {
+      "id": "86356e84-082c-4310-9739-e3ccc064cf90",
+      "status": "completed",
+      "created_at": 1791942647.3416562,
+      "preset_id": "imported-image",
+      "preset_name": "imported-public-lantern-duel-320.webp",
+      "controls": {},
+      "batch_count": 1,
+      "prompt_ids": [],
+      "submissions": [],
+      "outputs": [
+        {
+          "filename": "imported-public-lantern-duel-320.webp",
+          "uploaded_file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+          "type": "output",
+          "media_type": "image",
+          "asset_id": "3e676fa2604554049140628a9a7ba474"
+        }
+      ],
+      "message": "Imported original image. No generation submitted.",
+      "failure": null,
+      "parent_assets": [],
+      "references": [
+        {
+          "file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+          "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+          "bytes": 27208,
+          "width": 320,
+          "height": 292,
+          "original_name": "imported-public-lantern-duel-320.webp"
+        }
+      ],
+      "project_id": null,
+      "started_at": null,
+      "finished_at": null,
+      "elapsed_seconds": null,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": null,
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": null,
+      "tile": null,
+      "tile_finish": null,
+      "parallax": null,
+      "parallax_finish": null,
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": false,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": false,
+      "abandon_requires_acknowledgement": false,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "This job has already finished",
+      "cancel_needs_confirm": false
+    }
+  ],
+  "before_plans": [],
+  "blocked_plan": {
+    "id": "8774ac7a7ad84e8c83b7c8bba2ba2bb7",
+    "root_id": "8774ac7a7ad84e8c83b7c8bba2ba2bb7",
+    "created_at": 1791942652.7461977,
+    "name": "controlled-public-collision-fixture \u00b7 atlas",
+    "kind": "native",
+    "parent_project": null,
+    "plan_sha256": "b4b6f557e85ddd86992216c698a22efe3bedd94aab5ead76676679a1ab487bfa",
+    "budget": {
+      "allowance": 0,
+      "reserved": 0
+    },
+    "stages": [],
+    "state": {
+      "status": "interrupted",
+      "message": "An earlier export left files. They are preserved; create a new export to retry.",
+      "attempts": {},
+      "artifacts": [],
+      "stop_requested": false,
+      "review": {
+        "status": "unreviewed"
+      },
+      "reserved": 0,
+      "started_at": 1791942669.3654556
+    },
+    "recipe": null,
+    "axis": null,
+    "values": null,
+    "variants": null,
+    "knowledge_sha256": null,
+    "combine": null,
+    "can_reconcile_tracking": false,
+    "can_reconcile_batch": false,
+    "put_away": false,
+    "put_away_at": null,
+    "can_put_away": true,
+    "can_bring_back": false,
+    "plan": {
+      "version": 1,
+      "kind": "native",
+      "name": "controlled-public-collision-fixture \u00b7 atlas",
+      "export_kind": "atlas",
+      "assets": [
+        {
+          "id": "asset-3e676fa2604554049140628a9a7ba474",
+          "path": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2.webp",
+          "filename": "imported-public-lantern-duel-320.webp",
+          "media_type": "image/webp",
+          "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+          "metadata": {
+            "id": "3e676fa2604554049140628a9a7ba474",
+            "job_id": "86356e84-082c-4310-9739-e3ccc064cf90",
+            "output_index": 0,
+            "title": "imported-public-lantern-duel-320.webp \u00b7 1",
+            "media_type": "image",
+            "path": "media\\44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2.webp",
+            "filename": "imported-public-lantern-duel-320.webp",
+            "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+            "bytes": 27208,
+            "created_at": 1791942647.3416562,
+            "preset_id": "imported-image",
+            "preset_name": "imported-public-lantern-duel-320.webp",
+            "source": {
+              "filename": "imported-public-lantern-duel-320.webp",
+              "uploaded_file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+              "type": "output",
+              "media_type": "image"
+            },
+            "lineage": [],
+            "tags": [],
+            "favorite": false,
+            "review": "unreviewed",
+            "notes": "",
+            "trashed_at": null,
+            "metadata_revision": 0,
+            "run_label": null,
+            "prompt_excerpt": null,
+            "url": "/api/assets/3e676fa2604554049140628a9a7ba474/file"
+          },
+          "recipe": {
+            "version": 2,
+            "preset_id": "imported-image",
+            "controls": {},
+            "batch_count": 1,
+            "created_at": 1791942647.3416562,
+            "workflow": {},
+            "submissions": [],
+            "outputs": [
+              {
+                "filename": "imported-public-lantern-duel-320.webp",
+                "uploaded_file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+                "type": "output",
+                "media_type": "image",
+                "asset_id": "3e676fa2604554049140628a9a7ba474"
+              }
+            ],
+            "parent_assets": [],
+            "references": [
+              {
+                "file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+                "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+                "bytes": 27208,
+                "width": 320,
+                "height": 292,
+                "original_name": "imported-public-lantern-duel-320.webp"
+              }
+            ],
+            "preparation": null,
+            "native_recipe": null,
+            "continuation": null,
+            "tile": null,
+            "tile_receipt": null,
+            "parallax": null,
+            "parallax_receipt": null
+          }
+        },
+        {
+          "id": "asset-b832c02a876d546885f81bdcd51f043d",
+          "path": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073.webp",
+          "filename": "imported-public-pocket-borough-320.webp",
+          "media_type": "image/webp",
+          "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+          "metadata": {
+            "id": "b832c02a876d546885f81bdcd51f043d",
+            "job_id": "00a54bfa-b00c-4cee-b557-3bc006ad871a",
+            "output_index": 0,
+            "title": "imported-public-pocket-borough-320.webp \u00b7 1",
+            "media_type": "image",
+            "path": "media\\f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073.webp",
+            "filename": "imported-public-pocket-borough-320.webp",
+            "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+            "bytes": 31824,
+            "created_at": 1791942647.408458,
+            "preset_id": "imported-image",
+            "preset_name": "imported-public-pocket-borough-320.webp",
+            "source": {
+              "filename": "imported-public-pocket-borough-320.webp",
+              "uploaded_file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+              "type": "output",
+              "media_type": "image"
+            },
+            "lineage": [],
+            "tags": [],
+            "favorite": false,
+            "review": "unreviewed",
+            "notes": "",
+            "trashed_at": null,
+            "metadata_revision": 0,
+            "run_label": null,
+            "prompt_excerpt": null,
+            "url": "/api/assets/b832c02a876d546885f81bdcd51f043d/file"
+          },
+          "recipe": {
+            "version": 2,
+            "preset_id": "imported-image",
+            "controls": {},
+            "batch_count": 1,
+            "created_at": 1791942647.408458,
+            "workflow": {},
+            "submissions": [],
+            "outputs": [
+              {
+                "filename": "imported-public-pocket-borough-320.webp",
+                "uploaded_file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+                "type": "output",
+                "media_type": "image",
+                "asset_id": "b832c02a876d546885f81bdcd51f043d"
+              }
+            ],
+            "parent_assets": [],
+            "references": [
+              {
+                "file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+                "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+                "bytes": 31824,
+                "width": 320,
+                "height": 292,
+                "original_name": "imported-public-pocket-borough-320.webp"
+              }
+            ],
+            "preparation": null,
+            "native_recipe": null,
+            "continuation": null,
+            "tile": null,
+            "tile_receipt": null,
+            "parallax": null,
+            "parallax_receipt": null
+          }
+        }
+      ],
+      "source_assets": [
+        "3e676fa2604554049140628a9a7ba474",
+        "b832c02a876d546885f81bdcd51f043d"
+      ],
+      "options": {
+        "clip": "controlled-public-collision-fixture",
+        "duration_ms": [
+          100,
+          100
+        ],
+        "anchor": [
+          160,
+          292
+        ],
+        "loop": true,
+        "filter": "nearest",
+        "columns": 2,
+        "layer_names": [
+          "imported-public-lantern-duel-320.webp \u00b7 1",
+          "imported-public-pocket-borough-320.webp \u00b7 1"
+        ]
+      },
+      "verify_engine": false,
+      "godot": null,
+      "verify_krita": false,
+      "krita": null,
+      "stages": [],
+      "created_at": 1791942652.7226152,
+      "sha256": "b4b6f557e85ddd86992216c698a22efe3bedd94aab5ead76676679a1ab487bfa"
+    }
+  },
+  "completed_plan": {
+    "id": "c85d5f1d8bd947efb2255996d47f0270",
+    "root_id": "c85d5f1d8bd947efb2255996d47f0270",
+    "created_at": 1791942675.7143016,
+    "name": "controlled-public-fresh-export \u00b7 atlas",
+    "kind": "native",
+    "parent_project": null,
+    "plan_sha256": "a7920cc8451235a7bf2e8fdf73f3c88f57b2310f0a89db45127a93e7ac2296ea",
+    "budget": {
+      "allowance": 0,
+      "reserved": 0
+    },
+    "stages": [],
+    "state": {
+      "status": "completed",
+      "message": "Native export complete. Review it in your editor.",
+      "attempts": {
+        "0": {
+          "operation": "media.atlas.v1",
+          "started_at": 1791942681.923487,
+          "status": "completed",
+          "finished_at": 1791942682.1625562
+        }
+      },
+      "artifacts": [
+        {
+          "path": "export.zip",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/export.zip",
+          "sha256": "3f53de91cd96027f4b0c64489d34870bf42f66e6cc537185dca716216d05ba1c",
+          "bytes": 628263,
+          "role": "native-source"
+        },
+        {
+          "path": "native/frames.json",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/frames.json",
+          "sha256": "1ff8fbf816c1452974974f22d09edb9f511d43f99507a2a668238506c0a81e04",
+          "bytes": 690,
+          "role": "native-source"
+        },
+        {
+          "path": "native/metadata.json",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/metadata.json",
+          "sha256": "cf0847878ffce92f2e1c0807216503564dbbfcdb8df2b3aeedfa25f158e15f6e",
+          "bytes": 6322,
+          "role": "native-source"
+        },
+        {
+          "path": "native/native-sources.zip",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/native-sources.zip",
+          "sha256": "df2fb56b68967676c77e2cd5902f318eb8cebdebd6a28b7e035c2d59c166f662",
+          "bytes": 626933,
+          "role": "native-source"
+        },
+        {
+          "path": "native/recipe.json",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/recipe.json",
+          "sha256": "644a391f07edfd796674a8cd09d39782eb35622265c55647d6da21f800d42581",
+          "bytes": 512,
+          "role": "native-source"
+        },
+        {
+          "path": "native/atlas/atlas.png",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/atlas/atlas.png",
+          "sha256": "6ab407200da00c77cee1c8039566cda9dfc397893c46b61c4d4f3614d5fbf4cc",
+          "bytes": 282580,
+          "role": "native-source"
+        },
+        {
+          "path": "native/atlas/manifest.json",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/atlas/manifest.json",
+          "sha256": "4a1dee66fcf45f7cf95a4f6d3ca8eaeab47464a5a5cdec0c3875c077b990db95",
+          "bytes": 1903,
+          "role": "native-source"
+        },
+        {
+          "path": "native/interchange/frame-00-asset-b832c02a876d546885f81bdcd51f043d.png",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/interchange/frame-00-asset-b832c02a876d546885f81bdcd51f043d.png",
+          "sha256": "0bebf0cb75f420bcc016b4c33d8d268d94af7cc5e5a5f884c5fee199a784dfbe",
+          "bytes": 148098,
+          "role": "native-source"
+        },
+        {
+          "path": "native/interchange/frame-01-asset-3e676fa2604554049140628a9a7ba474.png",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/interchange/frame-01-asset-3e676fa2604554049140628a9a7ba474.png",
+          "sha256": "94c8e6267252a6e4015ee6cf70fdc243c876f35dae8ff4ef01096ec8dce0578e",
+          "bytes": 133238,
+          "role": "native-source"
+        },
+        {
+          "path": "native/sources/00-asset-b832c02a876d546885f81bdcd51f043d.webp",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/sources/00-asset-b832c02a876d546885f81bdcd51f043d.webp",
+          "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+          "bytes": 31824,
+          "role": "native-source"
+        },
+        {
+          "path": "native/sources/01-asset-3e676fa2604554049140628a9a7ba474.webp",
+          "url": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/sources/01-asset-3e676fa2604554049140628a9a7ba474.webp",
+          "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+          "bytes": 27208,
+          "role": "native-source"
+        }
+      ],
+      "stop_requested": false,
+      "review": {
+        "status": "unreviewed"
+      },
+      "reserved": 0,
+      "started_at": 1791942681.9135356,
+      "finished_at": 1791942682.168487,
+      "measurements": {
+        "canvas": [
+          320,
+          292
+        ],
+        "image_count": 2,
+        "total_source_pixels": 186880,
+        "anchor": [
+          160,
+          292
+        ],
+        "durations_ms": [
+          100,
+          100
+        ],
+        "loop": true,
+        "filter": "nearest"
+      },
+      "limitations": [
+        "No generation was submitted.",
+        "No art acceptance or licensing decision is made.",
+        "Still images were converted to RGBA sRGB PNG without resizing or individual trimming."
+      ],
+      "engine": null,
+      "krita": null
+    },
+    "recipe": null,
+    "axis": null,
+    "values": null,
+    "variants": null,
+    "knowledge_sha256": null,
+    "combine": null,
+    "can_reconcile_tracking": false,
+    "can_reconcile_batch": false,
+    "put_away": false,
+    "put_away_at": null,
+    "can_put_away": true,
+    "can_bring_back": false,
+    "plan": {
+      "version": 1,
+      "kind": "native",
+      "name": "controlled-public-fresh-export \u00b7 atlas",
+      "export_kind": "atlas",
+      "assets": [
+        {
+          "id": "asset-b832c02a876d546885f81bdcd51f043d",
+          "path": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073.webp",
+          "filename": "imported-public-pocket-borough-320.webp",
+          "media_type": "image/webp",
+          "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+          "metadata": {
+            "id": "b832c02a876d546885f81bdcd51f043d",
+            "job_id": "00a54bfa-b00c-4cee-b557-3bc006ad871a",
+            "output_index": 0,
+            "title": "imported-public-pocket-borough-320.webp \u00b7 1",
+            "media_type": "image",
+            "path": "media\\f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073.webp",
+            "filename": "imported-public-pocket-borough-320.webp",
+            "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+            "bytes": 31824,
+            "created_at": 1791942647.408458,
+            "preset_id": "imported-image",
+            "preset_name": "imported-public-pocket-borough-320.webp",
+            "source": {
+              "filename": "imported-public-pocket-borough-320.webp",
+              "uploaded_file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+              "type": "output",
+              "media_type": "image"
+            },
+            "lineage": [],
+            "tags": [],
+            "favorite": false,
+            "review": "unreviewed",
+            "notes": "",
+            "trashed_at": null,
+            "metadata_revision": 0,
+            "run_label": null,
+            "prompt_excerpt": null,
+            "url": "/api/assets/b832c02a876d546885f81bdcd51f043d/file"
+          },
+          "recipe": {
+            "version": 2,
+            "preset_id": "imported-image",
+            "controls": {},
+            "batch_count": 1,
+            "created_at": 1791942647.408458,
+            "workflow": {},
+            "submissions": [],
+            "outputs": [
+              {
+                "filename": "imported-public-pocket-borough-320.webp",
+                "uploaded_file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+                "type": "output",
+                "media_type": "image",
+                "asset_id": "b832c02a876d546885f81bdcd51f043d"
+              }
+            ],
+            "parent_assets": [],
+            "references": [
+              {
+                "file": "3bbeb21df9cb4251aa7e92d5209ee32d_imported-public-pocket-borough-320.webp.webp",
+                "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+                "bytes": 31824,
+                "width": 320,
+                "height": 292,
+                "original_name": "imported-public-pocket-borough-320.webp"
+              }
+            ],
+            "preparation": null,
+            "native_recipe": null,
+            "continuation": null,
+            "tile": null,
+            "tile_receipt": null,
+            "parallax": null,
+            "parallax_receipt": null
+          }
+        },
+        {
+          "id": "asset-3e676fa2604554049140628a9a7ba474",
+          "path": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2.webp",
+          "filename": "imported-public-lantern-duel-320.webp",
+          "media_type": "image/webp",
+          "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+          "metadata": {
+            "id": "3e676fa2604554049140628a9a7ba474",
+            "job_id": "86356e84-082c-4310-9739-e3ccc064cf90",
+            "output_index": 0,
+            "title": "imported-public-lantern-duel-320.webp \u00b7 1",
+            "media_type": "image",
+            "path": "media\\44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2.webp",
+            "filename": "imported-public-lantern-duel-320.webp",
+            "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+            "bytes": 27208,
+            "created_at": 1791942647.3416562,
+            "preset_id": "imported-image",
+            "preset_name": "imported-public-lantern-duel-320.webp",
+            "source": {
+              "filename": "imported-public-lantern-duel-320.webp",
+              "uploaded_file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+              "type": "output",
+              "media_type": "image"
+            },
+            "lineage": [],
+            "tags": [],
+            "favorite": false,
+            "review": "unreviewed",
+            "notes": "",
+            "trashed_at": null,
+            "metadata_revision": 0,
+            "run_label": null,
+            "prompt_excerpt": null,
+            "url": "/api/assets/3e676fa2604554049140628a9a7ba474/file"
+          },
+          "recipe": {
+            "version": 2,
+            "preset_id": "imported-image",
+            "controls": {},
+            "batch_count": 1,
+            "created_at": 1791942647.3416562,
+            "workflow": {},
+            "submissions": [],
+            "outputs": [
+              {
+                "filename": "imported-public-lantern-duel-320.webp",
+                "uploaded_file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+                "type": "output",
+                "media_type": "image",
+                "asset_id": "3e676fa2604554049140628a9a7ba474"
+              }
+            ],
+            "parent_assets": [],
+            "references": [
+              {
+                "file": "91e645586b594b76a4e92853a866ae51_imported-public-lantern-duel-320.webp.webp",
+                "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+                "bytes": 27208,
+                "width": 320,
+                "height": 292,
+                "original_name": "imported-public-lantern-duel-320.webp"
+              }
+            ],
+            "preparation": null,
+            "native_recipe": null,
+            "continuation": null,
+            "tile": null,
+            "tile_receipt": null,
+            "parallax": null,
+            "parallax_receipt": null
+          }
+        }
+      ],
+      "source_assets": [
+        "b832c02a876d546885f81bdcd51f043d",
+        "3e676fa2604554049140628a9a7ba474"
+      ],
+      "options": {
+        "clip": "controlled-public-fresh-export",
+        "duration_ms": [
+          100,
+          100
+        ],
+        "anchor": [
+          160,
+          292
+        ],
+        "loop": true,
+        "filter": "nearest",
+        "columns": 2,
+        "layer_names": [
+          "imported-public-pocket-borough-320.webp \u00b7 1",
+          "imported-public-lantern-duel-320.webp \u00b7 1"
+        ]
+      },
+      "verify_engine": false,
+      "godot": null,
+      "verify_krita": false,
+      "krita": null,
+      "stages": [],
+      "created_at": 1791942675.695255,
+      "sha256": "a7920cc8451235a7bf2e8fdf73f3c88f57b2310f0a89db45127a93e7ac2296ea"
+    }
+  },
+  "collision_destination": "<owned-isolated-worktree>\\.runtime\\export-capture05\\experiments\\projects\\8774ac7a7ad84e8c83b7c8bba2ba2bb7\\native",
+  "fresh_destination": "<owned-isolated-worktree>\\.runtime\\export-capture05\\experiments\\projects\\c85d5f1d8bd947efb2255996d47f0270\\native",
+  "collision_sentinel_sha256": "a693600132d6026ae26d53105a520769ce8f337fe133871fd9b65527c1860ff2",
+  "collision_sentinel_unchanged": true,
+  "downloaded_pack_sha256": "3f53de91cd96027f4b0c64489d34870bf42f66e6cc537185dca716216d05ba1c",
+  "downloaded_pack_bytes": 628263,
+  "downloaded_pack_members": [
+    "atlas/atlas.png",
+    "atlas/manifest.json",
+    "frames.json",
+    "interchange/frame-00-asset-b832c02a876d546885f81bdcd51f043d.png",
+    "interchange/frame-01-asset-3e676fa2604554049140628a9a7ba474.png",
+    "metadata.json",
+    "recipe.json",
+    "sources/00-asset-b832c02a876d546885f81bdcd51f043d.webp",
+    "sources/01-asset-3e676fa2604554049140628a9a7ba474.webp",
+    "studio-plan.json"
+  ],
+  "events": [
+    {
+      "seconds": 0.0,
+      "caption": "CONTROLLED PUBLIC FIXTURE: import existing Alibi paintings. No image generation or native-editor launch.",
+      "screenshot": "01-public-inputs.png"
+    },
+    {
+      "seconds": 5.317,
+      "caption": "Two public originals are genuinely imported and selected. Their hashes match the existing source derivatives.",
+      "screenshot": "02-imported.png"
+    },
+    {
+      "seconds": 10.701,
+      "caption": "Prepare a sprite-atlas export. Start is separate, and the plan pins these imported source files.",
+      "screenshot": "03-prepare.png"
+    },
+    {
+      "seconds": 15.834,
+      "caption": "Preview the actual file already in this run-owned export destination. It is a deliberately seeded collision fixture.",
+      "screenshot": "04-owned-destination.png"
+    },
+    {
+      "seconds": 27.262,
+      "caption": "Start refuses the existing destination and preserves its bytes. This is the real app response to the controlled fixture.",
+      "screenshot": "05-collision-preserved.png"
+    },
+    {
+      "seconds": 33.651,
+      "caption": "Keep the blocked plan intact. Prepare a fresh export in a new run-owned directory; no cleanup or overwrite is needed.",
+      "screenshot": "06-fresh-plan.png"
+    },
+    {
+      "seconds": 54.824,
+      "caption": "The fresh native export completes: two 320 \u00d7 292 originals are packed without resizing or generation.",
+      "screenshot": "07-completed.png"
+    },
+    {
+      "seconds": 61.694,
+      "caption": "Download and inspect the real pack and its file paths. Original hashes and the collision sentinel remain unchanged.",
+      "screenshot": "08-download.png"
+    }
+  ],
+  "duration_seconds": 67.777,
+  "trim_start_seconds": 5.311,
+  "raw_video": "raw/page@91419a5c366bbd5c8dd23250370935d7.webm",
+  "http_requests": [
+    {
+      "method": "GET",
+      "path": "/",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/style.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/production-clarity.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-review.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/continuation-core.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/review-checks.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/pose-editor-core.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/anima.png",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/lineani.png",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/vendor/model-viewer/model-viewer.min.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/krea.png",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/read-poller.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-core.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/app.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-grid.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workspace.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/output-review.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-session.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-ui.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-lifecycle.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-recovery.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-editor.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/reference-model.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/references.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/production.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/character-import.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/backends.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-shell.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-workbench.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/looks.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/run-outcome.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family-adapter.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/catalog",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/backends",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-navigation.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/presentation-context.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/parallax-stage-recovery.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-core.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/looks",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience-policy.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-apply.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-tuning.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance-client.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive-core.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/options",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/knowledge",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/recipes",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/anima-portrait",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate",
+      "body": "{\"preset_id\":\"anima-portrait\",\"controls\":{\"positive\":\"masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face\",\"negative\":\"worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark\",\"seed\":\"2026091103\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"768\",\"height\":\"1152\"},\"batch_count\":1,\"reference_count\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/library",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate",
+      "body": "{\"preset_id\":\"anima-portrait\",\"controls\":{\"positive\":\"masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face\",\"negative\":\"worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark\",\"seed\":\"2026091103\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"768\",\"height\":\"1152\"},\"batch_count\":1,\"reference_count\":0}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/assets/import",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/assets/import",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/b832c02a876d546885f81bdcd51f043d/thumb?v=1-f2570de8d7f598a2",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/3e676fa2604554049140628a9a7ba474/thumb?v=1-44fced51a9537b49",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/production-export",
+      "body": "{\"kind\":\"atlas\",\"ids\":[\"3e676fa2604554049140628a9a7ba474\",\"b832c02a876d546885f81bdcd51f043d\"],\"options\":{\"clip\":\"controlled-public-collision-fixture\",\"duration_ms\":[100,100],\"layer_names\":[\"imported-public-lantern-duel-320.webp \u00b7 1\",\"imported-public-pocket-borough-320.webp \u00b7 1\"],\"loop\":true,\"filter\":\"nearest\"},\"verify_engine\":false,\"verify_krita\":false}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate",
+      "body": "{\"preset_id\":\"anima-portrait\",\"controls\":{\"positive\":\"masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face\",\"negative\":\"worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark\",\"seed\":\"2026091103\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"768\",\"height\":\"1152\"},\"batch_count\":1,\"reference_count\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "file:///<owned-export-destination>/CONTROLLED-PREEXISTING-FILE.txt",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/style.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/production-clarity.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-review.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/continuation-core.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/review-checks.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/pose-editor-core.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/anima.png",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/lineani.png",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/vendor/model-viewer/model-viewer.min.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/krea.png",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/read-poller.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-core.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/app.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-grid.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workspace.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/output-review.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-session.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-ui.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-lifecycle.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-recovery.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-editor.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/reference-model.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/references.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/production.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/character-import.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/backends.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-shell.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-workbench.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/looks.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/run-outcome.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family-adapter.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/catalog",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/backends",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-navigation.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/presentation-context.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/parallax-stage-recovery.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-core.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/looks",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience-policy.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-apply.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-tuning.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance-client.js",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive-core.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.css",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/options",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/knowledge",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/recipes",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/anima-portrait",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate",
+      "body": "{\"preset_id\":\"anima-portrait\",\"controls\":{\"positive\":\"masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face\",\"negative\":\"worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark\",\"seed\":\"2026091103\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"768\",\"height\":\"1152\"},\"batch_count\":1,\"reference_count\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/library",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate",
+      "body": "{\"preset_id\":\"anima-portrait\",\"controls\":{\"positive\":\"masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face\",\"negative\":\"worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark\",\"seed\":\"2026091103\",\"steps\":\"30\",\"cfg\":\"4\",\"width\":\"768\",\"height\":\"1152\"},\"batch_count\":1,\"reference_count\":0}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/production/8774ac7a7ad84e8c83b7c8bba2ba2bb7/start",
+      "body": "{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/b832c02a876d546885f81bdcd51f043d/thumb?v=1-f2570de8d7f598a2",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/3e676fa2604554049140628a9a7ba474/thumb?v=1-44fced51a9537b49",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/production-export",
+      "body": "{\"kind\":\"atlas\",\"ids\":[\"b832c02a876d546885f81bdcd51f043d\",\"3e676fa2604554049140628a9a7ba474\"],\"options\":{\"clip\":\"controlled-public-fresh-export\",\"duration_ms\":[100,100],\"layer_names\":[\"imported-public-pocket-borough-320.webp \u00b7 1\",\"imported-public-lantern-duel-320.webp \u00b7 1\"],\"loop\":true,\"filter\":\"nearest\"},\"verify_engine\":false,\"verify_krita\":false}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/production/c85d5f1d8bd947efb2255996d47f0270/start",
+      "body": "{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/production",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/production/c85d5f1d8bd947efb2255996d47f0270/files/native/atlas/atlas.png",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "body": null
+    }
+  ],
+  "forbidden_requests": [],
+  "browser_errors": [],
+  "generation_submitted": false,
+  "native_editor_launched": false,
+  "accepted_art_unchanged": true
+}

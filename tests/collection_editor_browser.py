@@ -13,7 +13,7 @@ import socket
 import tempfile
 import threading
 import uuid
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -67,7 +67,7 @@ async def exercise(args):
                 if self.path=='/api/collections' and status==200 and flags['lose']:
                     flags['lose']=False;self.close_connection=True;self.connection.shutdown(socket.SHUT_RDWR);return
                 return super()._json(status,data)
-        http=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+        http=browser_server(Handler)
         threading.Thread(target=http.serve_forever,daemon=True).start();fixture.POSTS.clear()
         try:
             async with async_playwright() as pw:

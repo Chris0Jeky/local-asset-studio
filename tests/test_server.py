@@ -158,6 +158,17 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(clamped.idle_release_minutes,0.0)
         self.assertEqual(clamped.config_warnings,[])
 
+    def test_bad_config_numbers_warn_once_per_key_and_keep_defaults(self):
+        for raw in ('nope', None, True, 'NaN', 'Infinity', '1e10000'):
+            with self.subTest(raw=raw):
+                (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),
+                    'commit_gate_release_seconds':raw,'idle_cache_release_minutes':raw}))
+                with patch('sys.stderr', new_callable=io.StringIO) as stderr: studio=self.studio()
+                self.assertEqual((studio.commit_release_seconds,studio.idle_release_minutes),(0.0,10.0))
+                for key in ('commit_gate_release_seconds','idle_cache_release_minutes'):
+                    self.assertEqual(stderr.getvalue().count(key),1)
+                self.assertEqual(len(studio.config_warnings),2)
+
     def test_commit_release_frees_the_backend_and_admits_only_on_a_fresh_passing_reading(self):
         minimum=32*1024**3;low,high=self._commit_reading(26*1024**3),self._commit_reading(minimum)
         studio=self._heavy_studio([self.IDLE,self.IDLE,None,self.IDLE,{'prompt_id':'after-free'},{'after-free':{'status':{'status_str':'success'},'outputs':{}}}],release=5)

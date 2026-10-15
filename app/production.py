@@ -926,7 +926,6 @@ class Production:
             else:
                 if not self._comparison_may_start(identifier,charge):return
                 # Write the deterministic ID before creating a job, so a crash between stores is reconcilable.
-                self.studio.check_production_bundle(plan['bundle'])
                 prepared=self.studio.prepare(stage['request'])
                 if fingerprint(prepared[1])!=stage['graph_sha256']:raise ValueError('The resolved recipe changed; create an explicit branch')
                 if not self._tracking_continuation_allowed(identifier):return
@@ -941,6 +940,8 @@ class Production:
                     return
                 self._attempt(identifier,index,started_at=time.time())
                 project_storage.require(self.root,identifier,plan)
+                # The last safe boundary (#1309): pinned bytes are hashed once per stage, right before dispatch, also on resume.
+                if submission_evidence.never_submitted(job):self.studio.check_production_bundle(plan['bundle'])
                 try:self.studio._run(job)
                 except Exception as exc:
                     self.studio.record_job_failure(job,exc)

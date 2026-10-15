@@ -278,6 +278,7 @@ class ModelLibrary:
                     if target.exists() or target.is_symlink():raise ValueError('Destination appeared during installation; original preserved')
                     if shutil.disk_usage(target.parent).free<expected_size+RESERVE_BYTES:raise ValueError('More disk space is needed to preserve 20 GiB of working headroom')
                     part=self.partial_path(target)
+                    if part.exists():part=part.with_name(part.name+'.'+uuid.uuid4().hex+'.tmp')
                     with part.open('xb') as output,local.open('rb') as source:
                         while chunk:=source.read(4*1024**2):
                             if output.tell()+len(chunk)>expected_size:raise ValueError('Browser file grew during copy; partial preserved')

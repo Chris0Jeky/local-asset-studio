@@ -1,0 +1,33 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:05.317
+CONTROLLED PUBLIC FIXTURE: import existing Alibi paintings. No image generation or native-editor launch.
+
+2
+00:00:05.317 --> 00:00:10.701
+Two public originals are genuinely imported and selected. Their hashes match the existing source derivatives.
+
+3
+00:00:10.701 --> 00:00:15.834
+Prepare a sprite-atlas export. Start is separate, and the plan pins these imported source files.
+
+4
+00:00:15.834 --> 00:00:27.262
+Preview the actual file already in this run-owned export destination. It is a deliberately seeded collision fixture.
+
+5
+00:00:27.262 --> 00:00:33.651
+Start refuses the existing destination and preserves its bytes. This is the real app response to the controlled fixture.
+
+6
+00:00:33.651 --> 00:00:54.824
+Keep the blocked plan intact. Prepare a fresh export in a new run-owned directory; no cleanup or overwrite is needed.
+
+7
+00:00:54.824 --> 00:01:01.694
+The fresh native export completes: two 320 × 292 originals are packed without resizing or generation.
+
+8
+00:01:01.694 --> 00:01:07.777
+Download and inspect the real pack and its file paths. Original hashes and the collision sentinel remain unchanged.

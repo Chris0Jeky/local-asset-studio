@@ -9,7 +9,7 @@ Studio or ComfyUI ports and is intentionally excluded from unittest discovery.
 import argparse
 import copy
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 import hashlib
 import json
 import os
@@ -105,7 +105,7 @@ def run(out, chromium=None):
         # CollectionTests patches Thread.start to keep its worker stopped.  Stop
         # only that first owned patch before starting the HTTP listener.
         fixture.patches[0].stop()
-        http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        http = browser_server(Handler)
         worker = threading.Thread(target=http.serve_forever, daemon=True)
         worker.start()
         origin = "http://127.0.0.1:" + str(http.server_port)

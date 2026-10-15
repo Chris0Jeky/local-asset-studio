@@ -1,0 +1,502 @@
+{
+  "scope": "Isolated static review pilot with real shipped hero markup/styles plus explicit responsive CSS. No installed app, backend or runtime activation.",
+  "source_sha256_before": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+  "derivative_sha256": "156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192",
+  "encoded_bytes": 26460,
+  "html_bytes": 62435,
+  "checks": [
+    "encoded derivative fits unchanged 300 KiB poster budget",
+    "whole review HTML plus derivative fits proposed 350 KiB first-screen transfer budget",
+    "review page contains no executable script",
+    "320: browser decoded natural 1024x576 dimensions",
+    "320: hero is visible",
+    "320: title is independent accessible HTML",
+    "320: section has accessible heading association",
+    "320: decoration is excluded from accessibility tree",
+    "320: copy can be selected independently of image pixels",
+    "320: no horizontal overflow",
+    "320: hero fits native viewport",
+    "320: phone text backing is opaque #11171f",
+    "320: phone artwork uses whole-frame contain",
+    "320: artwork has reserved original 16:9 aspect ratio",
+    "320: text follows artwork and cannot overlap CRT",
+    "320: SPAN entire text box contrast >= 4.5:1 (11.114:1)",
+    "320: H2 entire text box contrast >= 3:1 (15.702:1)",
+    "320: P entire text box contrast >= 4.5:1 (8.535:1)",
+    "320: P entire text box contrast >= 4.5:1 (9.222:1)",
+    "320: reduced motion has no animation",
+    "320: reduced motion has no transition",
+    "320: reduced motion preserves static poster",
+    "320: no motion media or execution scripts",
+    "320: forced colors suppresses decoration",
+    "320: forced colors preserves independent copy",
+    "320: forced colors uses system copy color",
+    "390: browser decoded natural 1024x576 dimensions",
+    "390: hero is visible",
+    "390: title is independent accessible HTML",
+    "390: section has accessible heading association",
+    "390: decoration is excluded from accessibility tree",
+    "390: copy can be selected independently of image pixels",
+    "390: no horizontal overflow",
+    "390: hero fits native viewport",
+    "390: phone text backing is opaque #11171f",
+    "390: phone artwork uses whole-frame contain",
+    "390: artwork has reserved original 16:9 aspect ratio",
+    "390: text follows artwork and cannot overlap CRT",
+    "390: SPAN entire text box contrast >= 4.5:1 (11.114:1)",
+    "390: H2 entire text box contrast >= 3:1 (15.702:1)",
+    "390: P entire text box contrast >= 4.5:1 (8.535:1)",
+    "390: P entire text box contrast >= 4.5:1 (9.222:1)",
+    "390: reduced motion has no animation",
+    "390: reduced motion has no transition",
+    "390: reduced motion preserves static poster",
+    "390: no motion media or execution scripts",
+    "390: forced colors suppresses decoration",
+    "390: forced colors preserves independent copy",
+    "390: forced colors uses system copy color",
+    "430: browser decoded natural 1024x576 dimensions",
+    "430: hero is visible",
+    "430: title is independent accessible HTML",
+    "430: section has accessible heading association",
+    "430: decoration is excluded from accessibility tree",
+    "430: copy can be selected independently of image pixels",
+    "430: no horizontal overflow",
+    "430: hero fits native viewport",
+    "430: phone text backing is opaque #11171f",
+    "430: phone artwork uses whole-frame contain",
+    "430: artwork has reserved original 16:9 aspect ratio",
+    "430: text follows artwork and cannot overlap CRT",
+    "430: SPAN entire text box contrast >= 4.5:1 (11.114:1)",
+    "430: H2 entire text box contrast >= 3:1 (15.702:1)",
+    "430: P entire text box contrast >= 4.5:1 (8.535:1)",
+    "430: P entire text box contrast >= 4.5:1 (9.222:1)",
+    "430: reduced motion has no animation",
+    "430: reduced motion has no transition",
+    "430: reduced motion preserves static poster",
+    "430: no motion media or execution scripts",
+    "430: forced colors suppresses decoration",
+    "430: forced colors preserves independent copy",
+    "430: forced colors uses system copy color",
+    "1536: browser decoded natural 1024x576 dimensions",
+    "1536: hero is visible",
+    "1536: title is independent accessible HTML",
+    "1536: section has accessible heading association",
+    "1536: decoration is excluded from accessibility tree",
+    "1536: copy can be selected independently of image pixels",
+    "1536: no horizontal overflow",
+    "1536: hero fits native viewport",
+    "1536: SPAN entire text box contrast >= 4.5:1 (11.946:1)",
+    "1536: H2 entire text box contrast >= 3:1 (14.634:1)",
+    "1536: P entire text box contrast >= 4.5:1 (8.159:1)",
+    "1536: P entire text box contrast >= 4.5:1 (8.833:1)",
+    "1536: reduced motion has no animation",
+    "1536: reduced motion has no transition",
+    "1536: reduced motion preserves static poster",
+    "1536: no motion media or execution scripts",
+    "1536: forced colors suppresses decoration",
+    "1536: forced colors preserves independent copy",
+    "1536: forced colors uses system copy color",
+    "zero browser page errors",
+    "zero network requests to other origins",
+    "zero POST or automatic commands",
+    "exactly one encoded derivative delivery per fresh native viewport context",
+    "recorded delivered bytes equal actual encoded artifact"
+  ],
+  "deliveries": [
+    {
+      "path": "/review.html",
+      "bytes": 62435,
+      "sha256": "88231b4854d3948a9b540ab3acca7e42f7b540e32226bedfc3651023ecd49c65"
+    },
+    {
+      "path": "/night-shift-ma-responsive-1024.webp",
+      "bytes": 26460,
+      "sha256": "156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192"
+    },
+    {
+      "path": "/review.html",
+      "bytes": 62435,
+      "sha256": "88231b4854d3948a9b540ab3acca7e42f7b540e32226bedfc3651023ecd49c65"
+    },
+    {
+      "path": "/night-shift-ma-responsive-1024.webp",
+      "bytes": 26460,
+      "sha256": "156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192"
+    },
+    {
+      "path": "/review.html",
+      "bytes": 62435,
+      "sha256": "88231b4854d3948a9b540ab3acca7e42f7b540e32226bedfc3651023ecd49c65"
+    },
+    {
+      "path": "/night-shift-ma-responsive-1024.webp",
+      "bytes": 26460,
+      "sha256": "156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192"
+    },
+    {
+      "path": "/review.html",
+      "bytes": 62435,
+      "sha256": "88231b4854d3948a9b540ab3acca7e42f7b540e32226bedfc3651023ecd49c65"
+    },
+    {
+      "path": "/night-shift-ma-responsive-1024.webp",
+      "bytes": 26460,
+      "sha256": "156df8bb9178be20691f5a6d0686a32d9be67daad61f84252119a15ccd489192"
+    }
+  ],
+  "posts": [],
+  "outside_loopback_requests": [],
+  "page_errors": [],
+  "viewports": [
+    {
+      "viewport": [
+        320,
+        900
+      ],
+      "documentWidth": 320,
+      "hero": {
+        "x": 16,
+        "y": 344.96875,
+        "width": 288,
+        "height": 372.125
+      },
+      "copy": {
+        "x": 1,
+        "y": 161.875,
+        "width": 286,
+        "height": 209.25,
+        "background": "rgb(17, 23, 31)"
+      },
+      "art": {
+        "width": 286,
+        "height": 160.875,
+        "position": "relative",
+        "backgroundSize": "contain",
+        "backgroundPosition": "50% 50%",
+        "image": "url(\"http://127.0.0.1:55495/night-shift-ma-responsive-1024.webp\")"
+      },
+      "text": [
+        {
+          "tag": "SPAN",
+          "text": "LOCAL / PRIVATE / YOURS",
+          "color": "rgb(229, 197, 178)",
+          "fontSize": "10px",
+          "rect": [
+            21,
+            186.875,
+            185.421875,
+            200.875
+          ],
+          "conservative_min_contrast": 11.114,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "H2",
+          "text": "Turn your ideas into something real.",
+          "color": "rgb(243, 239, 231)",
+          "fontSize": "25px",
+          "rect": [
+            21,
+            209.5625,
+            267,
+            263.5625
+          ],
+          "conservative_min_contrast": 15.702,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "P",
+          "text": "A calm visual environment around the same working draft.",
+          "color": "rgb(182, 178, 172)",
+          "fontSize": "13px",
+          "rect": [
+            21,
+            270.5625,
+            267,
+            310.84375
+          ],
+          "conservative_min_contrast": 8.535,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "P",
+          "text": "Local static poster \u00b7 review-only optimized rendition.",
+          "color": "color(srgb 0.742431 0.726745 0.702275)",
+          "fontSize": "13px",
+          "rect": [
+            21,
+            310.84375,
+            267,
+            351.125
+          ],
+          "conservative_min_contrast": 9.222,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        }
+      ]
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "hero": {
+        "x": 16,
+        "y": 273,
+        "width": 358,
+        "height": 391.359375
+      },
+      "copy": {
+        "x": 1,
+        "y": 201.25,
+        "width": 356,
+        "height": 189.109375,
+        "background": "rgb(17, 23, 31)"
+      },
+      "art": {
+        "width": 356,
+        "height": 200.25,
+        "position": "relative",
+        "backgroundSize": "contain",
+        "backgroundPosition": "50% 50%",
+        "image": "url(\"http://127.0.0.1:55495/night-shift-ma-responsive-1024.webp\")"
+      },
+      "text": [
+        {
+          "tag": "SPAN",
+          "text": "LOCAL / PRIVATE / YOURS",
+          "color": "rgb(229, 197, 178)",
+          "fontSize": "10px",
+          "rect": [
+            21,
+            226.25,
+            185.421875,
+            240.25
+          ],
+          "conservative_min_contrast": 11.114,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "H2",
+          "text": "Turn your ideas into something real.",
+          "color": "rgb(243, 239, 231)",
+          "fontSize": "25px",
+          "rect": [
+            21,
+            248.9375,
+            337,
+            302.9375
+          ],
+          "conservative_min_contrast": 15.702,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "P",
+          "text": "A calm visual environment around the same working draft.",
+          "color": "rgb(182, 178, 172)",
+          "fontSize": "13px",
+          "rect": [
+            21,
+            309.9375,
+            337,
+            350.21875
+          ],
+          "conservative_min_contrast": 8.535,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "P",
+          "text": "Local static poster \u00b7 review-only optimized rendition.",
+          "color": "color(srgb 0.742431 0.726745 0.702275)",
+          "fontSize": "13px",
+          "rect": [
+            21,
+            350.21875,
+            337,
+            370.359375
+          ],
+          "conservative_min_contrast": 9.222,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        }
+      ]
+    },
+    {
+      "viewport": [
+        430,
+        932
+      ],
+      "documentWidth": 430,
+      "hero": {
+        "x": 16,
+        "y": 273,
+        "width": 398,
+        "height": 393.71875
+      },
+      "copy": {
+        "x": 1,
+        "y": 223.75,
+        "width": 396,
+        "height": 168.96875,
+        "background": "rgb(17, 23, 31)"
+      },
+      "art": {
+        "width": 396,
+        "height": 222.75,
+        "position": "relative",
+        "backgroundSize": "contain",
+        "backgroundPosition": "50% 50%",
+        "image": "url(\"http://127.0.0.1:55495/night-shift-ma-responsive-1024.webp\")"
+      },
+      "text": [
+        {
+          "tag": "SPAN",
+          "text": "LOCAL / PRIVATE / YOURS",
+          "color": "rgb(229, 197, 178)",
+          "fontSize": "10px",
+          "rect": [
+            21,
+            248.75,
+            185.421875,
+            262.75
+          ],
+          "conservative_min_contrast": 11.114,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "H2",
+          "text": "Turn your ideas into something real.",
+          "color": "rgb(243, 239, 231)",
+          "fontSize": "25px",
+          "rect": [
+            21,
+            271.4375,
+            377,
+            325.4375
+          ],
+          "conservative_min_contrast": 15.702,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "P",
+          "text": "A calm visual environment around the same working draft.",
+          "color": "rgb(182, 178, 172)",
+          "fontSize": "13px",
+          "rect": [
+            21,
+            332.4375,
+            377,
+            352.578125
+          ],
+          "conservative_min_contrast": 8.535,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "P",
+          "text": "Local static poster \u00b7 review-only optimized rendition.",
+          "color": "color(srgb 0.742431 0.726745 0.702275)",
+          "fontSize": "13px",
+          "rect": [
+            21,
+            352.578125,
+            377,
+            372.71875
+          ],
+          "conservative_min_contrast": 9.222,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        }
+      ]
+    },
+    {
+      "viewport": [
+        1536,
+        1060
+      ],
+      "documentWidth": 1536,
+      "hero": {
+        "x": 148,
+        "y": 189.9375,
+        "width": 1240,
+        "height": 221.1875
+      },
+      "copy": {
+        "x": 35,
+        "y": 31,
+        "width": 590,
+        "height": 159.1875,
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "art": {
+        "width": 1238,
+        "height": 219.188,
+        "position": "absolute",
+        "backgroundSize": "cover, cover",
+        "backgroundPosition": "50% 50%, 50% 50%",
+        "image": "linear-gradient(90deg, rgba(5, 7, 21, 0.94) 0%, rgba(5, 7, 21, 0.76) 39%, rgba(5, 7, 21, 0.1) 72%), url(\"http://127.0.0.1:55495/night-shift-ma-responsive-1024.webp\")"
+      },
+      "text": [
+        {
+          "tag": "SPAN",
+          "text": "LOCAL / PRIVATE / YOURS",
+          "color": "rgb(229, 197, 178)",
+          "fontSize": "10px",
+          "rect": [
+            35,
+            36,
+            199.421875,
+            50
+          ],
+          "conservative_min_contrast": 11.946,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "H2",
+          "text": "Turn your ideas into something real.",
+          "color": "rgb(243, 239, 231)",
+          "fontSize": "39px",
+          "rect": [
+            35,
+            58.6875,
+            595,
+            142.90625
+          ],
+          "conservative_min_contrast": 14.634,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "P",
+          "text": "A calm visual environment around the same working draft.",
+          "color": "rgb(182, 178, 172)",
+          "fontSize": "13px",
+          "rect": [
+            35,
+            149.90625,
+            575,
+            170.046875
+          ],
+          "conservative_min_contrast": 8.159,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        },
+        {
+          "tag": "P",
+          "text": "Local static poster \u00b7 review-only optimized rendition.",
+          "color": "color(srgb 0.742431 0.726745 0.702275)",
+          "fontSize": "13px",
+          "rect": [
+            35,
+            170.046875,
+            575,
+            190.1875
+          ],
+          "conservative_min_contrast": 8.833,
+          "method": "Computed foreground vs minimum over full underlying text box from hidden-child screenshot. Phone backing remains opaque; not a whole-page accessibility audit."
+        }
+      ]
+    }
+  ],
+  "owned_port": 55495,
+  "browser_version": "151.0.7922.34",
+  "server_thread_joined": true,
+  "source_sha256_after": "a8faacc8d7d643eb68a6916571af6d35f78533d0c7d97f9379ec1b43276fd414",
+  "source_unchanged": true,
+  "ended_utc": "2026-10-13T00:52:55.772961+00:00"
+}

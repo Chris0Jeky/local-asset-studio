@@ -1744,7 +1744,7 @@ class Studio:
     def model_fingerprints(self):
         # Read-only view of production preflight's digest cache; readiness never hashes.
         try: cache = read_json(self.root/'.runtime/model-fingerprints.json', {})
-        except UnicodeError: cache = {}
+        except ValueError: cache = {}
         return cache if isinstance(cache, dict) else {}
 
     def inspect_preset(self, preset_id, graph=None):
@@ -1952,20 +1952,14 @@ class Studio:
 
     def _config_number(self, key, raw, *, default, maximum=None):
         """A config number, including a numeric string. A bad value keeps the fail-safe default and is named on /api/health. Zero and below stay the documented off switch; above maximum clamps with no warning."""
-        parsed = self._parse_config_number(raw)
-        if parsed is None:
-            self.config_warnings.append("%s must be a finite number; keeping %s" % (key, default))
+        try: parsed = number(raw, key, -sys.float_info.max, sys.float_info.max)
+        except StudioError as error:
+            warning = f"{error}; keeping {default}"
+            self.config_warnings.append(warning); print(warning, file=sys.stderr)
             return float(default)
         if parsed <= 0: return 0.0
         if maximum is not None and parsed > maximum: return float(maximum)
         return float(parsed)
-
-    @staticmethod
-    def _parse_config_number(raw):
-        if isinstance(raw, bool): return None
-        try: number = Decimal(str(raw))
-        except (InvalidOperation, ValueError, TypeError): return None
-        return number if number.is_finite() else None
 
     @staticmethod
     def _finite_number(value):
@@ -2659,8 +2653,12 @@ class Handler(BaseHTTPRequestHandler):
             # App-owned code must not inherit host MIME overrides, including the Windows registry.
             # Preserve the static allowlist without changing host settings.
             static_types = {".html": "text/html", ".js": "text/javascript", ".css": "text/css"}
-            if not file.is_file() or file.suffix not in static_types: return self._json(404, {"error":"Not found"})
-            data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", static_types[file.suffix]); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
+            static_type = static_types.get(file.suffix)
+            # One app-owned optional reference; no general media-directory admission.
+            if file == (Path(__file__).parent / "static/look-previews/night-shift-ma-responsive-1024.webp").resolve():
+                static_type = "image/webp"
+            if not file.is_file() or static_type is None: return self._json(404, {"error":"Not found"})
+            data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", static_type); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
         except (GpuLeaseError, WorkspaceError, UploadStorageError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return
