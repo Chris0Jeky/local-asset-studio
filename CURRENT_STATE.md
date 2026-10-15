@@ -112,6 +112,38 @@ The dedicated Muse lane is drained after six bounded lenses and two file-only wo
 
 Nonblocking follow-ups are tracked as noticed #1349 (additional stage-card context) and #1350 (overview badge wording for unavailable hash). Immediate automatic stage-transition draft persistence remains the final acceptance in #1308. #1175 keeps its explicit Chris-review hold; author-owned #1342/#1343/#1344 remain untouched. HUMAN_TODO.md retains the ChatGPT asset wishlist, seamless/floor and Look judgments, own-scene parallax masks, WAI Vary and other creative/licensing choices. The retained c92fc worker's 3,692 deletion-only edits remain intact. Ignored source-worker logs and remote checkpoints were preserved before plain worktree removal.
 
+## Night Shift quality study 02 - 13 October 2026
+
+Continuation: the source alternatives stay experimental; no further near-identical
+variants are being made. Exact accepted 3840x2160 MA bytes now hash-match the original
+receipt and were decoded/inspected after the supported Library helper's Windows
+metadata failure. Metadata was not persisted. The guide count repair already merged
+through concurrent #1345; this branch reuses only that isolated one-line commit,
+with all 16 unchanged brief contracts passing. The durable per-ID inventory is in
+docs/adaptive-studio/assets/production/20261013-qualification/INVENTORY.json.
+
+Version 1 remains unchanged as an early study below the owner's quality bar.
+Separate quality-02 workshop and 384x216 pixel SVGs add material modelling,
+light hierarchy and deliberate pixel clusters. Individual PNGs and an unchanged
+accepted-evidence comparison are reviewable at phone/desktop widths. All 36
+combined comparison/lifecycle checks pass; artistic acceptance and comparison
+with the full-resolution MA master remain open. No runtime or selection changes.
+The guide-count CI mismatch (46 documented versus 50 actual lanes) reproduces
+on the unchanged baseline guide blob and is outside this source-only art branch.
+
+## Native-vector Night Shift source pilot — 12 October 2026
+
+Two editable alternatives remain separate from runtime: the detailed workshop and
+320×180 pixel interpretation in docs/adaptive-studio/assets/production/20261012-vector-pilot/.
+Actual Chromium pixels at phone and desktop widths were inspected; a covered
+window layer and hard light edge were corrected. The source SVGs are static and
+contain no raster embedding; their review page offers explicit restrained motion.
+Tracked-payload validation passes (92 graphs, 176 pins, 3,844 paths before this note).
+Full-resolution MA Library materialization is blocked by the supplied Windows
+xattr helper; its preserved accepted comparison sheet was inspected instead.
+Original selections and 44 deferrals remain unchanged. No acceptance flag, app
+activation, merge or deployment. Other foundation/motion application QA remains open.
+
 ## Actual isolated adapter-edit recording — 13 October 2026
 
 Source-only tutorial evidence at application revision `04c0091d89bb0248174d4050d60384607882c28e`
