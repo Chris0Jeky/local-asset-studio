@@ -24,14 +24,16 @@ function planDisplayName(p){
 // with the full stored name kept in the second line and the title attribute.
 // Anything the owner actually named keeps its display name untouched.
 function planKindNoun(p){return p?.kind==='comparison'?'Comparison':p?.kind==='av'?'Scene':p?.kind==='voice'?'Voice take':p?.kind==='native'||p?.kind==='articulated'?'Export':String(p?.kind||'Plan');}
-function planIsMachineName(name){const s=String(name||'');return /engine\s*=|seed\s+\d{5,}|\//.test(s)||s.length>90;}
+// Provenance, not wording: Combine builds its plan name from engines and seeds (the plan carries its combine record); every
+// other plan keeps the name it was given, whatever characters it contains (#1415 review).
+function planIsMachineName(name,p){return !!(p&&p.combine&&typeof p.combine==='object');}
 function planHumanTitle(p){
   const stored=String(p?.name||'').trim();
-  if(stored&&!planIsMachineName(stored))return planDisplayName(p);
+  if(stored&&!planIsMachineName(stored,p))return planDisplayName(p);
   const count=p?.kind==='comparison'?((p.stages||[]).length+' candidate'+((p.stages||[]).length===1?'':'s')):'',date=planDate(p?.created_at);
   return [planKindNoun(p),count,date].filter(Boolean).join(' · ')||'Untitled plan';
 }
-function planMachineDetail(p){const stored=String(p?.name||'').trim();return stored&&planIsMachineName(stored)?stored:'';}
+function planMachineDetail(p){const stored=String(p?.name||'').trim();return stored&&planIsMachineName(stored,p)?stored:'';}
 const productionMessage=(text,error=false)=>{$('#productionMessage').textContent=text;$('#productionMessage').classList.toggle('error',error);};
 async function refreshProduction(force=false){
   if(productionRefreshing)return;productionRefreshing=true;
