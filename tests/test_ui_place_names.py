@@ -23,7 +23,7 @@ class PlaceNames(unittest.TestCase):
             self.assertIn(label, shell)
         index = (STATIC / 'index.html').read_text(encoding='utf-8')
         library = index[index.index('id="assetsView"'):index.index('id="assetScopes"')]
-        self.assertIn('<h3>Asset library</h3>', library)
+        self.assertIn('<h3>Library</h3>', library)
         runs = index[index.index('id="productionView"'):]
         self.assertRegex(runs[:400], r'class="eyebrow">RUNS &(amp;)? REVIEW<')
         self.assertIn('Runs & review', (STATIC / 'review.js').read_text(encoding='utf-8'))
