@@ -99,7 +99,7 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith('/api/examples/'):path='/examples/'+path.removeprefix('/api/examples/')
         file=ROOT/'app/static/index.html' if path=='/' else ROOT/path.lstrip('/') if path.startswith('/examples/') else ROOT/'app/static'/path.removeprefix('/static/').lstrip('/')
         if not file.is_file():return self.json({'error':'Fixture route not found: '+path},404)
-        raw=file.read_bytes(); self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(file)[0] or 'application/octet-stream');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+        raw=file.read_bytes(); self.send_response(200);self.send_header('Content-Type','text/javascript' if file.suffix=='.js' else mimetypes.guess_type(file)[0] or 'application/octet-stream');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
 
     def do_POST(self):
         raw=self.rfile.read(int(self.headers.get('Content-Length','0')))
@@ -139,6 +139,21 @@ def run(screenshots):
             page=context.new_page(); errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
             page.goto(origin);page.wait_for_selector('#makeGoals [data-make-goal]')
             check(page.locator('#makeView').is_visible() and not page.locator('#homeView').is_visible(),'Make is the default view')
+            check(page.locator('#studioSidebar nav > a').all_text_contents()==['✦Make','03Library','◇Models & setup'],'Workspace has exactly the three primary destinations')
+            check(page.locator('#studioSidebar [data-studio-route="home"]').count()==0,'Overview is absent from the sidebar')
+            for section in ['Advanced','More tools']:
+                group=page.locator(f'[data-nav-group="{section}"]');summary=group.locator('summary')
+                check(not group.evaluate('(el)=>el.open'),section+' starts collapsed')
+                summary.focus();page.keyboard.press('Enter');page.wait_for_function('(section)=>localStorage.getItem("studio.nav."+section)==="true"',arg=section)
+                page.reload();page.wait_for_selector('#makeGoals [data-make-goal]');check(group.evaluate('(el)=>el.open'),section+' remembers keyboard expansion across reload')
+                summary.focus();page.keyboard.press('Space');page.wait_for_function('(section)=>localStorage.getItem("studio.nav."+section)==="false"',arg=section)
+                page.reload();page.wait_for_selector('#makeGoals [data-make-goal]');check(not group.evaluate('(el)=>el.open'),section+' remembers keyboard collapse across reload')
+            for route,section in [('create','Advanced'),('learn','More tools')]:
+                page.goto(origin+'/#'+route);page.wait_for_selector(f'[data-studio-route="{route}"][aria-current="page"]')
+                check(page.locator(f'[data-nav-group="{section}"]').evaluate('(el)=>el.open'),section+' opens for its bookmarked route')
+                page.evaluate("showView('make')");page.locator(f'[data-nav-group="{section}"] summary').click()
+            page.keyboard.press('Control+k');page.fill('#studioCommandSearch','Overview');page.click('#studioCommandResults a');page.wait_for_selector('#homeView',state='visible')
+            check(page.url.endswith('#home'),'Overview remains reachable through the command palette')
             page.evaluate("showView('home')");page.wait_for_selector('#uxRecent .ux-recent-card');page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(500)
             check(not [post for post in POSTS if post['path']=='/api/jobs'],'startup has zero generation mutations')
             check(not errors,'no browser boot exceptions: '+str(errors))
@@ -197,7 +212,8 @@ def run(screenshots):
                 page.goto(origin+'/'+tool);page.wait_for_selector('.studio-sidebar');check(page.locator('#studioJump').is_visible(),tool+' has shared navigation')
             page.goto(origin+'/#home');page.wait_for_selector('#uxRecent .ux-recent-card');page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(150);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile overview has no horizontal overflow')
             if screenshots:page.screenshot(path=str(screenshots/'overview-mobile.png'),full_page=True)
-            page.click('#studioNavToggle');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='true','mobile navigation is expandable');page.click('[data-studio-route="create"]');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='false','navigation closes after route change');check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile create has no horizontal overflow')
+            page.locator('[data-nav-group="Advanced"]').evaluate('(el)=>el.open=false')
+            page.click('#studioNavToggle');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='true','mobile navigation is expandable');page.click('[data-nav-group="Advanced"] summary');page.click('[data-studio-route="create"]');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='false','navigation closes after route change');check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile create has no horizontal overflow')
             if screenshots:page.screenshot(path=str(screenshots/'create-mobile.png'),full_page=True)
             for route in ['assets','production','models','learn']:
                 page.evaluate(f"showView('{route}')");page.wait_for_timeout(100);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),f'mobile {route} has no horizontal overflow')

@@ -19,7 +19,7 @@ class PlaceNames(unittest.TestCase):
 
     def test_page_labels_match_the_sidebar(self):
         shell = (STATIC / 'studio-shell.js').read_text(encoding='utf-8')
-        for label in ('Asset library', 'Runs &amp; review' if 'Runs &amp; review' in shell else 'Runs & review'):
+        for label in ('Library', 'Runs &amp; review' if 'Runs &amp; review' in shell else 'Runs & review'):
             self.assertIn(label, shell)
         index = (STATIC / 'index.html').read_text(encoding='utf-8')
         library = index[index.index('id="assetsView"'):index.index('id="assetScopes"')]
