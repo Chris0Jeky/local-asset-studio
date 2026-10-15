@@ -57,7 +57,7 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
   };
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener(name, handler) {if (name === 'click') clickHandler = handler;}},
-    URL, Blob, StudioContinuation, StudioAssetRecovery, StudioUX,
+    URL, URLSearchParams, Blob, StudioContinuation, StudioAssetRecovery, StudioUX,
     sessionStorage: (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map()),
     window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {

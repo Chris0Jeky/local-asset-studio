@@ -99,7 +99,7 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith('/api/examples/'):path='/examples/'+path.removeprefix('/api/examples/')
         file=ROOT/'app/static/index.html' if path=='/' else ROOT/path.lstrip('/') if path.startswith('/examples/') else ROOT/'app/static'/path.removeprefix('/static/').lstrip('/')
         if not file.is_file():return self.json({'error':'Fixture route not found: '+path},404)
-        raw=file.read_bytes(); self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(file)[0] or 'application/octet-stream');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+        raw=file.read_bytes(); self.send_response(200);self.send_header('Content-Type','text/javascript' if file.suffix=='.js' else mimetypes.guess_type(file)[0] or 'application/octet-stream');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
 
     def do_POST(self):
         raw=self.rfile.read(int(self.headers.get('Content-Length','0')))
@@ -191,6 +191,38 @@ def run(screenshots):
             if screenshots:page.locator('#uxContinuation').screenshot(path=str(screenshots/'handoff-prepared-desktop.png'))
             page.evaluate("showView('assets')");page.check('[data-asset-check="asset-5"]');check(page.locator('#createScene').get_attribute('aria-disabled')=='true','JPEG scene selection blocked');page.click('#createScene',force=True);check(page.url.endswith('#assets'),'blocked scene handoff does not navigate');page.click('#clearAssetSelection');page.check('[data-asset-check="asset-0"]');check(page.locator('#createScene').get_attribute('aria-disabled')=='false','PNG scene selection allowed')
             page.evaluate("showView('models')");check(page.locator('.environment-panel .runtime-bar').is_visible(),'environment controls live in Models');page.go_back();page.wait_for_timeout(150);check(page.locator('#assetsView').is_visible(),'browser Back restores previous view')
+            # S5: real routing and cards over synthetic model state; no setup or generation presses.
+            models=context.new_page();models.on('pageerror',lambda error:errors.append(str(error)))
+            rows=[dict(id=key,name=name,family=family,file='checkpoints/'+key+'.safetensors',bytes=8,present=present,verified=verified,installable=True,source='https://example.com/model',license='Fixture',download={}) for key,name,family,present,verified in [('required','Required model','Anime',False,False),('other','Other model','Photo',False,False),('pending','Pending model','Anime',True,False),('mismatch','Mismatch model','Photo',True,False),('installed','Installed model','Anime',True,True)]]
+            rows[3]['verification']='mismatch'
+            model_library=dict(storage=dict(free_bytes=100,total_bytes=200,reserve_bytes=20),model_root='C:/models',assets=rows,folders=[],inventory=[],collections=[])
+            models.route('**/api/library',lambda route:route.fulfill(json=model_library))
+            models.route('**/api/health',lambda route:route.fulfill(json=dict(online=True,schema_available=True,missing_models={'wai':['checkpoints/required.safetensors','checkpoints/installed.safetensors']})))
+            looks=json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))
+            models.route('**/api/looks',lambda route:route.fulfill(json=looks))
+            models.goto(origin+'/#models?need=wai');models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible() and models.url.endswith('#models?need=wai'),'need deep link preserves Models route and parameter')
+            check(models.locator('#curatedModelTitle').inner_text()=='Files needed for '+next(p['name'] for p in CATALOG['presets'] if p['id']=='wai'),'need filter names the preset')
+            check(models.locator('#modelCards .model-card h3').all_text_contents()==['Required model'],'need filter shows only missing required files')
+            models.locator('[data-models-all]').click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===5')
+            check(models.locator('#modelCards h3').all_text_contents().count('Missing (2)')==1 and 'Needs a check (2)' in models.locator('#modelCards').inner_text(),'curated models group missing and pending or mismatched files with counts')
+            check(models.locator('#modelCards details summary').inner_text()=='Installed (1)' and not models.locator('#modelCards details').evaluate('(el)=>el.open'),'installed group has a count and starts collapsed')
+            for query,expected in [('required',['Required model']),('photo',['Other model','Mismatch model']),('pending.safetensors',['Pending model'])]:
+                models.fill('#curatedModelSearch',query);check(models.locator('#modelCards .model-card h3').all_text_contents()==expected,'curated search filters '+query)
+            models.fill('#curatedModelSearch','');models.evaluate("location.hash='models?need=wai'");models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible(),'same-view need hash change redraws Models')
+            models.reload();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible(),'need filter survives reload')
+            models.goto(origin+'/?need=wai#models');models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible(),'query need parameter also filters Models')
+            models.goto(origin+'/#make');models.wait_for_selector('[data-make-look="look-wai-fantasy-portrait"]');models.locator('[data-make-look="look-wai-fantasy-portrait"]').click()
+            check(models.locator('#makeWhy a').get_attribute('href')=='/#models?need=wai','composer blocker links to the preset files')
+            card_link=models.locator('.make-look').filter(has=models.locator('[data-make-look="look-wai-fantasy-portrait"]')).locator('a')
+            check(card_link.get_attribute('href')=='/#models?need=wai' and card_link.locator('xpath=ancestor::button').count()==0,'look blocker is a real link outside its select button')
+            card_link.click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible(),'Make blocker opens only the needed file')
+            check(all(x['path'] not in ['/api/jobs','/api/models/install'] for x in POSTS),'model navigation and filtering never submit or install')
+            models.close()
             FAIL_WORKSPACE=True;page.evaluate("showView('home')");page.wait_for_function('document.querySelector("#uxHomeHealth").textContent.includes("unavailable")');check('—' in page.locator('#uxStats').inner_text(),'unavailable workspace is not reported as zero');FAIL_WORKSPACE=False
             page.goto(origin+'/prompt-lab.html');page.wait_for_selector('#profile option',state='attached');page.click('#compile');page.wait_for_selector('#studioSendPrompt:not([disabled])');page.click('#studioSendPrompt');page.wait_for_selector('#uxTransfer:not([hidden])');check('lantern' in page.locator('#uxTransferPreview').inner_text(),'Prompt Lab transfers explicit text draft');page.wait_for_function('!!selected');page.click('#uxApplyPrompt');check('lantern' in page.locator('#positive').input_value(),'text is applied only after explicit click');check(all(x['path']!='/api/jobs' for x in POSTS),'prompt transfer never generates')
             for tool in ['av.html','voice.html','review.html']:

@@ -38,6 +38,7 @@
   // A family is named for what it means to the user: speed and the kind of picture, not the checkpoint.
   function speed(preset){const id=preset?.id||'';if(/krea/.test(id))return['slow','Slow · finest painting (several minutes)'];if(/zimage-fast|pixel|stylized|realvis/.test(id))return['fast','Fast'];return['fast','Fast · about half a minute'];}
   function blocker(look){if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';const p=presetFor(look);if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
+  const blockerMarkup=(look,text)=>escape(text).replace('Models &amp; setup','<a href="/#models?need='+escape(encodeURIComponent(look.body.preset_id))+'">Models &amp; setup</a>');
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
@@ -53,9 +54,9 @@
     if(state.error){body.innerHTML='<p class="make-error" role="alert">'+escape(state.error)+' <button type="button" data-make-retry>Try again</button></p>';return;}
     if(!state.looks){body.innerHTML='<p class="muted">Loading looks…</p>';return;}
     const list=lookList();if(!list.some(l=>l.id===state.look))state.look=null;
-    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<button type="button" class="make-look'+(l.id===state.look?' active':'')+'" data-make-look="'+escape(l.id)+'" aria-pressed="'+(l.id===state.look)+'">'
+    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<article class="make-look'+(l.id===state.look?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" aria-pressed="'+(l.id===state.look)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+(why?'<small class="make-warn">'+escape(why)+'</small>':'')+'</span></button>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     body.innerHTML='<div class="make-step"><span>1</span><h2>Choose a look</h2></div><div class="make-looks">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();
   }
@@ -81,7 +82,7 @@
       +'<label class="make-check"><input type="checkbox" id="makeNewSeed" checked> Different pictures each time</label>'
       +'<p id="makeEstimate" class="muted" aria-live="polite"></p>'
       +'<button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>Generate</button>'
-      +(why?'<p id="makeWhy" class="make-warn">'+escape(why)+'</p>':'')
+      +(why?'<p id="makeWhy" class="make-warn">'+blockerMarkup(look,why)+'</p>':'')
       +'<button type="button" id="makeEditor" class="make-link">Open in the full editor instead</button>'
       +'<details class="make-about"><summary>What this look uses</summary><p>'+escape(p?.name||look.body.preset_id)+'</p><p class="muted">'+escape(look.body.notes||'')+'</p></details>'
       +'</div></div><p id="makeStatus" class="make-status" role="status"></p>';
