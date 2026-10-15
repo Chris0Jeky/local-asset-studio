@@ -129,7 +129,7 @@ class GalleryHandoffTests(unittest.TestCase):
             capture_output=True, text=True, timeout=15,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('7 Combine plan form checks passed', result.stdout, result.stdout + result.stderr)
+        self.assertIn('8 Combine plan form checks passed', result.stdout, result.stdout + result.stderr)
 
 
 class ProductionClockFrontendTests(unittest.TestCase):

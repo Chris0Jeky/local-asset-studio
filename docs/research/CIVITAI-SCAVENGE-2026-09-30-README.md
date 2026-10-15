@@ -20,9 +20,9 @@ Week-delta since packs:
 | EXPLICIT_QUEUE.md | Adults 18+ craft/utility quarantine |
 | COMPRESSED.md | One-screen TLDR |
 | SOURCES.md | API queries · HF · timestamps |
-| ISSUES.md | Issue comments · draft PR |
-| raw/ | Civitai list JSON cache |
-| github-docs/ | Docs copies for draft PR |
+| ISSUES.md | Unavailable. This repository has no `ISSUES.md` for this pack. |
+| raw/ | Unavailable historical handoff. This repository has no `raw/` cache: `_prior_ids.txt`, `_curated_new.json`, `hf_pruna_README.md` and the list snapshots are absent. |
+| github-docs/ | Unavailable. This repository has no `github-docs/` for this pack. |
 
 ## Tracking
 - Prefer comment: https://github.com/Chris0Jeky/local-asset-studio/issues/1176 (Krea2 park)

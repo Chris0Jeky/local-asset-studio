@@ -115,3 +115,101 @@ test('success shows the current sibling context after the response, not stale da
   assert.match(f.notes[0],/uncertain/);
   assert.match(f.notes[0],/Inspect the original job/);
 });
+test('success refreshes sibling status after the checked stage response and keeps a failed refresh as the pre-request observation',async()=>{
+  const f=fixture(),plate=f.job,running=Object.freeze(sibling('running'));
+  let list=Object.freeze([plate,running]);
+  const seen={refresh:0,submitted:false,words:false};
+  const arm=()=>{seen.submitted=false;seen.words=false;};
+  f.controller=api.create({
+    stamp:()=>f.stamp,busy:()=>f.busy,available:()=>f.available,
+    job:id=>list.find(entry=>entry.id===id)||null,jobs:()=>list,
+    confirm:words=>{f.confirmations.push(words);return f.accepted;},
+    request:async body=>{
+      const mark=seen.refresh;seen.submitted=false;seen.words=false;f.requests.push(body);
+      const result=f.transport?await f.transport():f.result();
+      assert.equal(seen.refresh,mark);
+      return result&&typeof result==='object'?new Proxy(result,{get(target,prop,receiver){
+        if(prop==='generation_submitted')seen.submitted=true;if(prop==='words')seen.words=true;
+        return Reflect.get(target,prop,receiver);
+      }}):result;
+    },
+    refresh:async()=>{
+      assert.ok(seen.submitted&&seen.words,'refresh runs only after the stage response passed checkResponse');
+      assert.equal(f.applied.length,0);assert.equal(f.requests.length,1);
+      assert.equal(list[1].status,'running');assert.ok(Object.isFrozen(list)&&Object.isFrozen(list[1]));
+      seen.refresh++;list=Object.freeze([plate,Object.freeze(sibling('uncertain'))]);
+      if(f.refreshError)throw f.refreshError;
+    },
+    apply:(result,note)=>{f.applied.push(result);f.notes.push(note||'');}
+  });
+  arm();assert.equal(await f.controller.load('plate-job','plate'),true);
+  assert.equal(seen.refresh,1);assert.deepEqual(f.requests,[{job_id:'plate-job',stage:'plate'}]);
+  assert.equal(f.applied.length,1);assert.equal(f.applied[0].generation_submitted,false);
+  assert.match(f.confirmations[0],/running/);assert.match(f.confirmations[0],/Wait for the original job/);
+  assert.doesNotMatch(f.confirmations[0],/uncertain/);
+  assert.match(f.notes[0],/uncertain/);assert.match(f.notes[0],/Inspect the original job/);
+  assert.doesNotMatch(f.notes[0],/Wait for the original job/);assert.doesNotMatch(f.notes[0],/\brunning\b/);
+  list=Object.freeze([plate,running]);seen.refresh=0;f.refreshError=Error('jobs unread');
+  f.notes.length=0;f.applied.length=0;f.requests.length=0;f.confirmations.length=0;arm();
+  assert.equal(await f.controller.load('plate-job','plate'),true);
+  assert.equal(seen.refresh,1);assert.deepEqual(f.requests,[{job_id:'plate-job',stage:'plate'}]);
+  assert.equal(f.applied.length,1);assert.equal(f.applied[0].generation_submitted,false);
+  assert.equal(list[1].status,'uncertain');
+  assert.match(f.notes[0],/retained observation/i);assert.match(f.notes[0],/from before the request/);
+  assert.match(f.notes[0],/running/);assert.match(f.notes[0],/Wait for the original job/);
+  assert.doesNotMatch(f.notes[0],/uncertain/);assert.doesNotMatch(f.notes[0],/current/);
+  f.refreshError=null;
+  const quiet=async(run,pattern,requestDelta)=>{
+    const refreshBefore=seen.refresh,appliedBefore=f.applied.length,requestsBefore=f.requests.length;
+    arm();
+    if(pattern)await assert.rejects(run(),pattern);else assert.equal(await run(),false);
+    assert.equal(seen.refresh,refreshBefore);assert.equal(f.applied.length,appliedBefore);
+    assert.equal(f.requests.length,requestsBefore+(requestDelta||0));
+  };
+  f.accepted=false;await quiet(()=>f.controller.load('plate-job','plate'));f.accepted=true;
+  f.busy=true;await quiet(()=>f.controller.load('plate-job','plate'),/current Create/);f.busy=false;
+  f.available=false;await quiet(()=>f.controller.load('plate-job','plate'),/recipe|backend/);f.available=true;
+  f.transport=()=>{const result=f.result();result.claim.plan_id='d'.repeat(64);return result;};
+  await quiet(()=>f.controller.load('plate-job','plate'),/response/,1);f.transport=null;
+  f.transport=()=>{throw Error('transport refused');};
+  await quiet(()=>f.controller.load('plate-job','plate'),/transport refused/,1);f.transport=null;
+  const valid=f.result();let release;f.transport=()=>new Promise(resolve=>{release=resolve;});
+  const refreshBefore=seen.refresh,appliedBefore=f.applied.length,requestsBefore=f.requests.length;
+  arm();const pending=f.controller.load('plate-job','plate');
+  await new Promise(resolve=>setImmediate(resolve));
+  const saved=plate.parallax.plan_id;plate.parallax.plan_id='e'.repeat(64);release(valid);
+  await assert.rejects(pending,/changed/);plate.parallax.plan_id=saved;
+  assert.equal(seen.refresh,refreshBefore);assert.equal(f.applied.length,appliedBefore);
+  assert.equal(f.requests.length,requestsBefore+1);
+});
+test('a refreshed source keeps the pre-request plan when the replacement record changes identity',async()=>{
+  const f=fixture(),plate=f.job;
+  let list=[plate,sibling('running')];
+  f.controller=api.create({
+    stamp:()=>f.stamp,busy:()=>f.busy,available:()=>f.available,
+    job:id=>list.find(entry=>entry.id===id)||null,jobs:()=>list,
+    confirm:words=>{f.confirmations.push(words);return true;},
+    request:async body=>{f.requests.push(body);return f.result();},
+    refresh:async()=>{const replaced=structuredClone(plate);replaced.parallax.plan_id='f'.repeat(64);list=[replaced,sibling('uncertain')];},
+    apply:(result,note)=>{f.applied.push(result);f.notes.push(note||'');}
+  });
+  assert.equal(await f.controller.load('plate-job','plate'),true);
+  assert.equal(f.applied.length,1);assert.equal(f.applied[0].generation_submitted,false);
+  assert.equal(list[0].parallax.plan_id,'f'.repeat(64));
+  assert.match(f.notes[0],/uncertain/);assert.match(f.notes[0],/Inspect the original job/);
+  assert.doesNotMatch(f.notes[0],/retained observation/i);assert.doesNotMatch(f.notes[0],/Wait for the original job/);
+});
+test('readJobList keeps a 304, accepts a job array, and refuses a failed or non-array body',async()=>{
+  const etag='"jobs"',headers={get:name=>name==='ETag'?etag:null};
+  assert.deepEqual(await api.readJobList(async()=>({status:304,ok:false,headers})),{unchanged:true});
+  const jobs=[{id:'plate-job'}];
+  assert.deepEqual(await api.readJobList(async()=>({status:200,ok:true,json:async()=>jobs,headers})),{unchanged:false,jobs,etag});
+  await assert.rejects(api.readJobList(async()=>({status:500,ok:false,headers})),/could not be refreshed/);
+  await assert.rejects(api.readJobList(async()=>({status:200,ok:true,json:async()=>({error:'no'}),headers})),/could not be refreshed/);
+});
+test('mount refreshes through readJobList, redraws a changed list, and does not poll or estimate',()=>{
+  const body=fs.readFileSync(path,'utf8');
+  const refresh=body.slice(body.indexOf('refresh:'),body.indexOf('available:'));
+  assert.match(refresh,/readJobList/);assert.match(refresh,/\/api\/jobs/);assert.match(refresh,/renderJobs\(signature\)/);
+  assert.doesNotMatch(refresh,/refreshJobs|scheduleTimeEstimate/);
+});
