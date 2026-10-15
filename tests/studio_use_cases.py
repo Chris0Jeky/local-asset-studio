@@ -1503,8 +1503,13 @@ def _make_tune(c):
     c.act('[data-make-change]', supplementary=True, note='open the gallery') if c.page.query_selector('[data-make-change]') else None
     c.act('[data-make-look="look-wai-fantasy-portrait"]', note='choose the WAI look')
     plain = c.page.evaluate("!document.querySelector('#makeStrength')")
-    ok = kept == MAKE_SCENE and halved and positive == wording and plain
-    return ok, 'sentence kept across looks %s; adapters %s halved %s; wording from the new look %s; no slider on a look without adapters %s' % (kept == MAKE_SCENE, active, halved, positive == wording, plain)
+    # An adapter whose file is fixed in the graph (pixel-lora binds only its strength) still counts (#1409 Codex review).
+    c.act('[data-make-goal="game"]', supplementary=True, note='a look whose adapter file is fixed in its graph')
+    c.act('[data-make-change]', supplementary=True, note='open the gallery') if c.page.query_selector('[data-make-change]') else None
+    c.act('[data-make-look="look-preset-pixel-lora"]', supplementary=True, note='choose the pixel-art look')
+    fixed = c.page.evaluate("!!document.querySelector('#makeStrength')")
+    ok = kept == MAKE_SCENE and halved and positive == wording and plain and fixed
+    return ok, 'sentence kept across looks %s; adapters %s halved %s; wording from the new look %s; no slider on a look without adapters %s; slider for a graph-fixed adapter %s' % (kept == MAKE_SCENE, active, halved, positive == wording, plain, fixed)
 
 
 @driver('new-scene-in-an-accepted-look')
