@@ -1,0 +1,14 @@
+{
+  "width": 390,
+  "actual_unpatched_app": true,
+  "clearly_labelled_fixture": true,
+  "recipe_download_exact": true,
+  "jobs_unchanged": true,
+  "production_empty": true,
+  "no_resume_or_tracking_controls": true,
+  "generate_disabled": true,
+  "no_overflow": true,
+  "page_errors": [],
+  "forbidden_requests": [],
+  "physical_phone": false
+}

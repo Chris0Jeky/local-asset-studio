@@ -1,0 +1,30 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://127.0.0.1:8191",
+      "localStorage": [
+        {
+          "name": "asset-studio-setups-migrated:<owned-isolated-worktree>",
+          "value": "1"
+        },
+        {
+          "name": "studio.assets.scope",
+          "value": "all"
+        },
+        {
+          "name": "studio.assets.type",
+          "value": "all"
+        },
+        {
+          "name": "studio.assets.sort",
+          "value": "newest"
+        },
+        {
+          "name": "studio.workshop.presentation.v2",
+          "value": "{\"layout\":\"focus\",\"skin\":\"atelier\",\"ambience\":\"none\"}"
+        }
+      ]
+    }
+  ]
+}

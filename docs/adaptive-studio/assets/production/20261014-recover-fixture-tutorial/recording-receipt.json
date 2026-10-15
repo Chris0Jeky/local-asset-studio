@@ -1,0 +1,854 @@
+{
+  "application_revision": "759201057da694d826e7471cf8cfc8fc18cafb2d",
+  "application_source_unpatched": true,
+  "served_source_hashes": [
+    {
+      "path": "/app.js",
+      "sha256": "979fd527c6bffb506febc04542dd903cbcfe8d28b287a4d6c54ea2c0dcac3bf4"
+    },
+    {
+      "path": "/production.js",
+      "sha256": "43aac97453437d72c9e9bf0be660fd0b5504093970d85c4fd4c750cf07d4e90d"
+    },
+    {
+      "path": "/studio-workbench.js",
+      "sha256": "9f7adac96e354af6572e90cf9ca308745b3e1de6fe66e06258f2f3a7ca3d2d0b"
+    },
+    {
+      "path": "/continuation-core.js",
+      "sha256": "e28ef0b2ef0166457ec38db1844f1a45b12fc3b3b0346e2fd3925c8987e191e0"
+    }
+  ],
+  "server_launch_receipt": "RECOVER-SERVER-LAUNCH.json",
+  "fixture_classification": "CONTROLLED PUBLIC RETAINED-STATE FIXTURE; no real request/lost response/output",
+  "fixture_job_id": "controlled-recover-tutorial-20261014",
+  "before": [
+    {
+      "id": "controlled-recover-tutorial-20261014",
+      "status": "uncertain",
+      "created_at": 1791937500.3980324,
+      "preset_id": "anima-portrait",
+      "preset_name": "CONTROLLED FIXTURE - simulated unknown request",
+      "controls": {
+        "positive": "CONTROLLED FIXTURE: no request was sent. An original brass lantern on a quiet workshop desk.",
+        "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+        "seed": 2026101401,
+        "steps": 30,
+        "cfg": 4,
+        "width": 768,
+        "height": 1152
+      },
+      "batch_count": 1,
+      "prompt_ids": [],
+      "submissions": [],
+      "outputs": [],
+      "message": "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted.",
+      "failure": null,
+      "parent_assets": [],
+      "references": [],
+      "project_id": null,
+      "started_at": null,
+      "finished_at": null,
+      "elapsed_seconds": null,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": null,
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": null,
+      "tile": null,
+      "tile_finish": null,
+      "parallax": null,
+      "parallax_finish": null,
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": true,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": true,
+      "abandon_requires_acknowledgement": true,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "The Studio is not watching this job and its outcome is unknown; use Stop tracking instead",
+      "cancel_needs_confirm": false
+    }
+  ],
+  "after": [
+    {
+      "id": "controlled-recover-tutorial-20261014",
+      "status": "uncertain",
+      "created_at": 1791937500.3980324,
+      "preset_id": "anima-portrait",
+      "preset_name": "CONTROLLED FIXTURE - simulated unknown request",
+      "controls": {
+        "positive": "CONTROLLED FIXTURE: no request was sent. An original brass lantern on a quiet workshop desk.",
+        "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+        "seed": 2026101401,
+        "steps": 30,
+        "cfg": 4,
+        "width": 768,
+        "height": 1152
+      },
+      "batch_count": 1,
+      "prompt_ids": [],
+      "submissions": [],
+      "outputs": [],
+      "message": "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted.",
+      "failure": null,
+      "parent_assets": [],
+      "references": [],
+      "project_id": null,
+      "started_at": null,
+      "finished_at": null,
+      "elapsed_seconds": null,
+      "tracking_disposition": null,
+      "preparation": null,
+      "continuation": null,
+      "abandonment": null,
+      "label": null,
+      "cancellation": null,
+      "commit_releases": null,
+      "host_commit_windows": null,
+      "tile": null,
+      "tile_finish": null,
+      "parallax": null,
+      "parallax_finish": null,
+      "can_stop_tracking": false,
+      "can_resume_tracking": false,
+      "has_pending_submission": true,
+      "never_submitted": false,
+      "mixed_batch": null,
+      "can_abandon": true,
+      "abandon_requires_acknowledgement": true,
+      "put_away_at": null,
+      "put_away": false,
+      "put_away_basis": null,
+      "can_put_away": false,
+      "can_bring_back": false,
+      "can_cancel": false,
+      "cancel_blocked_reason": "The Studio is not watching this job and its outcome is unknown; use Stop tracking instead",
+      "cancel_needs_confirm": false
+    }
+  ],
+  "production_after": [],
+  "events": [
+    {
+      "seconds": 0.0,
+      "caption": "CONTROLLED FIXTURE: no remote request was sent. This is a simulated retained unknown-request record.",
+      "screenshot": "01-fixture.png"
+    },
+    {
+      "seconds": 6.058,
+      "caption": "Read the uncertain status. The real app preserves uncertainty and says it was not resubmitted.",
+      "screenshot": "02-uncertain.png"
+    },
+    {
+      "seconds": 11.134,
+      "caption": "No prompt ID is known, so Resume observation is absent. Leave Abandon and its acknowledgement untouched.",
+      "screenshot": "03-no-replay.png"
+    },
+    {
+      "seconds": 17.47,
+      "caption": "Click Recipe to download the retained recipe. This is a read-only request, not a replay.",
+      "screenshot": "04-recipe-download.png"
+    },
+    {
+      "seconds": 21.629,
+      "caption": "Inspect the downloaded JSON: the public fixture label, original controls and workflow are retained.",
+      "screenshot": "05-inspect-json.png"
+    },
+    {
+      "seconds": 33.476,
+      "caption": "Return to the unchanged uncertain record. Stop here: no Resume, Abandon, replay or generation.",
+      "screenshot": "06-preserve.png"
+    }
+  ],
+  "duration_seconds": 38.516,
+  "trim_start_seconds": 5.979,
+  "raw_video": "raw/page@ac0883e0ead208e6d29bb0235e4dd8c4.webm",
+  "downloaded_recipe_file": "asset-studio-recipe.json",
+  "downloaded_recipe_sha256": "a933721b524bf3f5d9c024c66da9bd5463a67fa16cdc7ab254d410b44ba0e9a9",
+  "recipe_download_is_read_only": true,
+  "no_observation_replay_or_abandon_clicked": true,
+  "http_requests": [
+    {
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "path": "/static/style.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/production-clarity.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-review.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/continuation-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/review-checks.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/pose-editor-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.css"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/anima.png"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/lineani.png"
+    },
+    {
+      "method": "GET",
+      "path": "/static/vendor/model-viewer/model-viewer.min.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/krea.png"
+    },
+    {
+      "method": "GET",
+      "path": "/static/read-poller.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/app.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-grid.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workspace.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/output-review.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-session.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-ui.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-lifecycle.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-editor.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/reference-model.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/references.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/production.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/character-import.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/backends.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-shell.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-workbench.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/looks.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/run-outcome.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family-adapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backends"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-navigation.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/presentation-context.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/parallax-stage-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/looks"
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience-policy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-apply.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-tuning.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance-client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive-core.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.css"
+    },
+    {
+      "method": "GET",
+      "path": "/api/options"
+    },
+    {
+      "method": "GET",
+      "path": "/api/knowledge"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recipes"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/anima-portrait"
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups"
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/library"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/controlled-recover-tutorial-20261014/recipe"
+    },
+    {
+      "method": "GET",
+      "path": "file:///<owned-capture-folder>/asset-studio-recipe.json"
+    },
+    {
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "path": "/static/style.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/production-clarity.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-review.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/continuation-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/review-checks.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/pose-editor-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.css"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/anima.png"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/lineani.png"
+    },
+    {
+      "method": "GET",
+      "path": "/static/vendor/model-viewer/model-viewer.min.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/examples/workflow-lab/krea.png"
+    },
+    {
+      "method": "GET",
+      "path": "/static/read-poller.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/app.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-grid.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workspace.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/output-review.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-session.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-shelf-ui.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-recovery-lifecycle.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/collection-editor.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/reference-model.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/references.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/production.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/character-import.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/backends.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-shell.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-workbench.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/looks.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/run-outcome.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/asset-family-adapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backends"
+    },
+    {
+      "method": "GET",
+      "path": "/static/studio-navigation.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/presentation-context.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/create-progressive-disclosure.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/parallax-stage-recovery.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-proposal.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/recipe-shortlist.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/looks"
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience-policy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/setup-apply.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-explorer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/addressable-figures.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-tuning.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/bundle-guidance-client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-immersive-core.css"
+    },
+    {
+      "method": "GET",
+      "path": "/static/workshop-ambience.css"
+    },
+    {
+      "method": "GET",
+      "path": "/api/options"
+    },
+    {
+      "method": "GET",
+      "path": "/api/knowledge"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recipes"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inspect/anima-portrait"
+    },
+    {
+      "method": "GET",
+      "path": "/api/setups"
+    },
+    {
+      "method": "GET",
+      "path": "/api/identity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/library"
+    },
+    {
+      "method": "POST",
+      "path": "/api/estimate"
+    }
+  ],
+  "forbidden_requests": [],
+  "browser_errors": [],
+  "expected_failed_requests": [
+    {
+      "path": "/api/health",
+      "failure": "net::ERR_EMPTY_RESPONSE"
+    },
+    {
+      "path": "/api/jobs",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "path": "/api/health",
+      "failure": "net::ERR_EMPTY_RESPONSE"
+    },
+    {
+      "path": "/api/health",
+      "failure": "net::ERR_EMPTY_RESPONSE"
+    }
+  ],
+  "generation_submitted": false
+}

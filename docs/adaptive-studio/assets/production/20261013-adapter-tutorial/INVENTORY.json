@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-13",
+  "total_ids": 154,
+  "catalogue_unchanged": true,
+  "catalog_ids_sha256": "00d385387e7ecfbd759c10640b41e8128adc6c7d859506dd53f80796abf05dca",
+  "new_source_evidence": {
+    "id": "tutorial-adapters",
+    "status": "actual isolated application edit captured; acceptance pending",
+    "application_revision": "04c0091d89bb0248174d4050d60384607882c28e",
+    "recipe_id": "yumeflux-ilv1-adapter-audition",
+    "single_changed_control": "lora",
+    "before": "1",
+    "after": "0.8",
+    "slot2_unchanged": "0",
+    "source_delivery": "manual-load27.76-second video, captions, transcript, recording source, browser draft and receipts",
+    "runtime_registration": false,
+    "model_effect_verified": false,
+    "owner_acceptance": false
+  },
+  "preserved": [
+    "23 prior selections, including2 direct-owner acceptances and21 delegated selections",
+    "44 specifically deferred assets",
+    "motion-parallax dependency deferral",
+    "accepted Night Shift MA",
+    "historical reference clip and recipe-change capture, captions, source and receipts"
+  ],
+  "other_actual_tutorial_gaps": [
+    "tutorial-first-run",
+    "tutorial-pose",
+    "tutorial-compare",
+    "tutorial-continue",
+    "tutorial-recover",
+    "tutorial-workflow",
+    "tutorial-export"
+  ],
+  "separate_gaps": [
+    "executed repair pair",
+    "Night Shift loop"
+  ],
+  "legacy97of154_source_ledger_counts": "unchanged; new evidence is additive, not a rewrite of that historical ledger"
+}
