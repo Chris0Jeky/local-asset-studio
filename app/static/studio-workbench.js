@@ -963,7 +963,7 @@
   function refreshCarriedVary(){syncGalleryVary();syncOpenAssetVary();}
   globalThis.refreshCarriedVary=refreshCarriedVary;
   // Make (make.js) draws the same Vary buttons on its own results; the document click handler below prepares them.
-  window.StudioWorkbench={varyMarkup:(presetId,jobId,assetId)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image'),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
+  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image'),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
   after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
   after('openAsset',syncOpenAssetVary);
   async function prepareVary(button){
