@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil
 import sys
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -47,7 +47,7 @@ class SpokenBrowserTests(unittest.TestCase):
             def do_GET(inner): traffic.append(('GET', inner.path)); return super().do_GET()
             def do_POST(inner): traffic.append(('POST', inner.path)); return super().do_POST()
         Handler.studio = SimpleNamespace(config={'spoken_briefs': {'archive_root': str(self.f.source.parent)}})
-        self.server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        self.server = browser_server(Handler)
         self.thread = threading.Thread(target=self.server.serve_forever, kwargs={'poll_interval': .01}); self.thread.start()
         self.addCleanup(self.stop_server)
         self.context = self.browser.new_context(viewport={'width': 1280, 'height': 900})

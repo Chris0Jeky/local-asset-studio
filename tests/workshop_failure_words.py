@@ -5,7 +5,7 @@ import os
 import shutil
 import threading
 import unittest
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 
 import studio_browser_smoke as smoke
 from playwright.sync_api import sync_playwright
@@ -16,7 +16,7 @@ REFUSAL = 'Host commit headroom 20.0 GiB is below the required 32 GiB for this Q
 class FailureWords(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.server = ThreadingHTTPServer(('127.0.0.1', 0), smoke.Handler)
+        cls.server = browser_server(smoke.Handler)
         threading.Thread(target=cls.server.serve_forever, daemon=True).start()
         cls.origin = f'http://127.0.0.1:{cls.server.server_port}'
         cls.playwright = sync_playwright().start()

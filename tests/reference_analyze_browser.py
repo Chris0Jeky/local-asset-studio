@@ -13,7 +13,7 @@ import socket
 import sys
 import tempfile
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
@@ -56,7 +56,7 @@ def run(output):
             if LOSE_MODEL.is_set():raise OSError('fixture: model accepted; reply lost')
         return original(*args,**kwargs)
     Handler.studio=fixture.studio_instance
-    server=ThreadingHTTPServer(('127.0.0.1',0),Handler);http_thread=threading.Thread(target=server.serve_forever)
+    server=browser_server(Handler);http_thread=threading.Thread(target=server.serve_forever)
     original_get=fixture.studio_instance.queue.get
     class EndWorker(BaseException):pass
     def get(timeout=None):
