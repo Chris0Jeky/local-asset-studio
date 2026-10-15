@@ -216,6 +216,8 @@ def run(screenshots):
             check(models.locator('#modelsView').is_visible(),'need filter survives reload')
             models.goto(origin+'/?need=wai#models');models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
             check(models.locator('#modelsView').is_visible(),'query need parameter also filters Models')
+            models.locator('[data-models-all]').click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length>1 && !location.search.includes("need")')
+            check(models.locator('#modelsView').is_visible(),'Show everything clears a query need filter too')
             models.goto(origin+'/#make');models.wait_for_selector('[data-make-look="look-wai-fantasy-portrait"]');models.locator('[data-make-look="look-wai-fantasy-portrait"]').click()
             check(models.locator('#makeWhy a').get_attribute('href')=='/#models?need=wai','composer blocker links to the preset files')
             card_link=models.locator('.make-look').filter(has=models.locator('[data-make-look="look-wai-fantasy-portrait"]')).locator('a')

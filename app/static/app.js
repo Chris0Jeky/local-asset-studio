@@ -614,7 +614,8 @@ function renderCuratedModels(){
   $('#modelCards').innerHTML=(need?'<p><a href="/#models" data-models-all>Show everything</a></p>':'')+group('Missing',shownCards.filter(a=>!a.present&&!a.verified))+group('Needs a check',shownCards.filter(a=>a.present&&!a.verified))+group('Installed',shownCards.filter(a=>a.verified),true)+(!shownCards.length?'<p class="muted">'+(need?'No missing curated files for this preset match.':'No matching curated models.')+'</p>':'')+(!need&&hiddenCards?'<p class="muted model-filter-note">'+hiddenCards+' curated model'+(hiddenCards===1?' is':'s are')+' hidden by the active filters. <button type="button" data-model-status-all>Show everything</button></p>':'');
   const reset=()=>{$('#curatedModelSearch').value='';$('#modelStatus').value='all';writeStoredModelStatus('all');renderCuratedModels();renderInventory();};
   $('#modelCards').querySelector('[data-model-status-all]')?.addEventListener('click',reset);
-  $('#modelCards').querySelector('[data-models-all]')?.addEventListener('click',reset);
+  // A need given as a page query (?need=) is cleared too; the shell routes the /#models link in place and keeps location.search.
+  $('#modelCards').querySelector('[data-models-all]')?.addEventListener('click',()=>{const url=new URL(location.href);if(url.searchParams.has('need')){url.searchParams.delete('need');history.replaceState(history.state,'',url.pathname+url.search+url.hash);}reset();});
 }
 async function refreshLibrary(){
   try{
