@@ -170,18 +170,23 @@ def open_download(request,timeout=60,resolver=socket.getaddrinfo,transport_handl
 def publish_verified(source,target,identity):
     """Atomically create a destination without overwriting any competing directory entry.
 
-    Source and target must be on the same hard-link-capable filesystem. There is
-    deliberately no POSIX rename fallback: rename would overwrite a racing file.
+    Prefer hard links; Windows rename is an atomic no-clobber fallback on the same
+    filesystem. There is no POSIX rename fallback: it would overwrite a racing file.
     """
     if file_identity(source)!=identity:raise ValueError('Verified source changed before publication; all files preserved')
+    renamed=False
     try:os.link(source,target)
     except FileExistsError as exc:raise ValueError('Destination appeared during publication; both files preserved') from exc
-    except OSError as exc:raise ValueError('Atomic no-clobber publication is unavailable; verified source preserved for explicit recovery') from exc
+    except OSError as exc:
+        if os.name!='nt':raise ValueError('Atomic no-clobber publication is unavailable; verified source preserved for explicit recovery') from exc
+        try:os.rename(source,target)
+        except FileExistsError as exc:raise ValueError('Destination appeared during publication; both files preserved') from exc
+        renamed=True
     after=file_identity(target)
-    # Adding a hard link changes ctime, but not the underlying data identity.
-    if any(after[key]!=identity[key] for key in ('device','inode','size','mtime_ns')):
+    # Publication may change ctime; Windows rename need only retain size and mtime.
+    if any(after[key]!=identity[key] for key in (('size','mtime_ns') if renamed else ('device','inode','size','mtime_ns'))):
         raise ValueError('Source changed during publication; files preserved for inspection, not verified')
-    source.unlink()
+    if not renamed:source.unlink()
     return file_identity(target)
 
 
