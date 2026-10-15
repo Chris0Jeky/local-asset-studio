@@ -222,8 +222,9 @@ class IntakePublicationTests(unittest.TestCase):
         self.assertTrue(Path(self.journal()['partial_path']).exists()); self.assertTrue((self.state/'install.lock').exists())
         with self.assertRaisesRegex(ValueError, 'installer lock'):self.run_intake()
 
-    def test_no_hardlink_support_has_no_rename_or_copy_overwrite_fallback(self):
-        with patch('download_contracts.os.link', side_effect=OSError(errno.EPERM, 'unsupported')):
+    def test_posix_no_hardlink_support_has_no_rename_or_copy_overwrite_fallback(self):
+        with patch('download_contracts.os', wraps=os) as platform:
+            platform.name='posix';platform.link.side_effect=OSError(errno.EPERM, 'unsupported')
             with self.assertRaisesRegex(ValueError, 'no-clobber'):self.run_intake()
         self.assert_source(); self.assertFalse(self.target.exists())
         self.assertEqual(Path(self.journal()['partial_path']).read_bytes(), self.body)
