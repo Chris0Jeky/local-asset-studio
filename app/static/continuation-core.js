@@ -297,6 +297,14 @@
       if(!need.has(meaning)){const label=fill.label.replace(/^image \d+['’]s\s+/i,'');need.set(meaning,{meaning,label:label.charAt(0).toUpperCase()+label.slice(1),example:fill.example,recipes:[]});}
       need.get(meaning).recipes.push(combineEngineLabel(preset));
     }
+    // #1233: Klein 4B has no clothes fill, so a remembered clothes answer is folded into who. Show it when the open recipe does not ask.
+    if(!have.has('clothes'))for(const preset of engines||[]){
+      const meanings=placeholders(preset).map(fillMeaning);
+      if(!meanings.includes('who')||meanings.some(meaning=>meaning==='clothes'||meaning==='outfit'))continue;
+      const label=combineEngineLabel(preset),row=need.get('clothes');
+      if(!row)need.set('clothes',{meaning:'clothes',label:'Clothes and colours',example:'',recipes:[label]});
+      else if(!row.recipes.includes(label))row.recipes.push(label);
+    }
     return[...need.values()];
   }
   // #1202 Vary subtle / Vary strong. A route is catalog data (`vary` on an img2img recipe: its sources and per-strength

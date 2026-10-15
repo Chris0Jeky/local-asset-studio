@@ -6,6 +6,96 @@ An isolated main-based draft adds a folded display-only MA reference to the unch
 
 At implementation 7e970293, the actual frontend with production static serving/Look listing/prepare and disposable SQLite passed 65 browser checks at 320/390/430/1536. HTTP delivery bytes/hash/MIME and native PNG pixels were inspected. Independent review exposed the initial production WebP 404, proved by a causal regression; the narrow exact-file route repair passed and was rereviewed without a remaining blocker. Eight Python contracts (including real existing peer media/wrong Host rejection), 15 frontend handoffs, five static-island contracts, 25 Node Look checks, both existing Look browser suites and all 20 use cases passed. Natural-entry/max-scroll/keyboard checks confirm existing clearance: caption can initially extend under the fixed dock on 320/390, but keyboard focus/settled Arrow keys and Tab expose text/controls without a layout-specific screenshot fix. The local full lifetime gate at 3aa41f21 timed out after 600.05 s while progressing through existing parallax tests; no assertion failure was reported before timeout. Final hosted full qualification remains required; budgets are unchanged. Details: docs/adaptive-studio/assets/production/20261013-look-preview/README.md. Physical/native/runtime performance and existing HUMAN_TODO licensing/art decisions remain open. No merge or deployment.
 
+## Evening maintenance record — 13 October 2026, 22:16+01
+
+PR #1361 merged as `265f097c517dcbe5d7a8e469c329d8a7412945d8` at 21:16:05Z. The 30 September Civitai notes now say `raw/_prior_ids.txt`, `raw/_curated_new.json`, `raw/hf_pruna_README.md`, the list snapshots, `ISSUES.md`, and `github-docs/` are not in this repository. The 382 / 304 / ~165 figures stay historical handoff claims. No cache was reconstructed. Issue #1321 closed completed at 21:16:07Z. The 23 and 24 September notes were not part of that change.
+
+PR #1362 merged as `708ea45272af15cb85c712ad90eea5ac188535f8` at 21:16:53Z. `studio_av/project.py` `number()` now says when a value is not finite, and a finite value past the bounds still says outside. Focused local tests passed before the PR, and the hosted Check studio and Studio AV lanes succeeded on head `3c427776`. No GitHub issue was attached.
+
+Neither merge is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job. `HUMAN_TODO.md` still holds the owner's asset, look, parallax, and WAI Vary choices.
+
+## Later evening merges — 13 October 2026, 22:53+01
+
+PR #1365 merged as `952be1b1348f8b3e84fc1bce5255a959d3a6f0c4` at 21:34:54Z. The reference-role control's accessible name is `Use this picture for Picture N role`. No GitHub issue was attached. A browser accessibility tree was not recorded.
+
+PR #1363 merged as `8bb1f16dd13588bcead2b9665cecd83d2aac0758` at 21:44:41Z. After a parallax stage recall, a changed job list is drawn again. An unchanged 304 response does not redraw and does not call the estimate endpoint. Issue #1358 stays open because the held Playwright stage was not run.
+
+PR #1368 merged as `acb80d865fc916439efcd0b8a6fa2ebf5199774d` at 21:49:07Z. A test now rejects an out-of-range studio_av edit and checks that the original project digest is unchanged. Issue #1367 stays open.
+
+PR #1369 merged as `56bb0a891e71af8b748e9864679954cd2b565d86` at 21:51:30Z. A test now rejects an image asset whose path ends in `.jpg`. Issue #1367 stays open. The zero-byte asset pin and the still-image `source_in` pin were not merged with it.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 22:53 note — 13 October 2026, 23:58+01
+
+The 22:53 note above was true when it was written. The zero-byte pin and the still-image `source_in` pin were not merged with #1369.
+
+PR #1370 merged as `5b80242c39ea8b04bbcc8145252aecd18976bc78` at 22:02:22Z. A test rejects a zero-byte PNG. Issue #1367 stayed open.
+
+PR #1371 merged as `ffcf9a3eaed489cadb52ad7d8c23167160ae86cc` at 22:06:50Z. A test rejects a still image whose `source_in` is not zero. Issue #1367 was closed completed at 22:07:28Z after the four named pins were on main. That close was an issue update.
+
+PR #1373 merged as `dbb1171fa0de1130eb390dd74af810e298136c5f` at 22:19:43Z. The trait group and the suggested-tag group each have a legend. Issue #1366 stayed open. A browser accessibility tree was not recorded.
+
+PR #1374 merged as `1a4c354d0ad790796bb59243c9e6d502209c9e65` at 22:36:29Z. A rejected analysis file or originals file is marked invalid and points at the status line. Issue #1366 stayed open.
+
+PR #1375 merged as `8e72cc992bcff61b8d1991e3206f6669e3882675` at 22:50:50Z. While a clip holds Recent runs, new kept outputs on a problem job are counted. Issue #1215 stayed open.
+
+PR #1376 merged as `c2404791294b60242002a767e994a4ed1171db2f` at 22:55:29Z. The reference source line and the change-count line are polite live regions. Issue #1366 stayed open. The 24px trait target was not measured and was not changed.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 23:58 note — 14 October 2026, 00:24+01
+
+The 23:58 note above was true when it was written. #1377 and #1378 were not merged then.
+
+PR #1378 merged as `3fe5cd36ed1a356bee7cb0270bd2a29c26df5bc4` at 23:14:29Z. It records the merges from #1370 through #1376. Issues #1358, #1366, and #1215 stayed open.
+
+PR #1377 merged as `4504bb51455ee5160cf6ed4765eb65dec2e4a80c` at 23:23:37Z. While a clip holds Recent runs, a gallery card that leaves and later returns to its shown key is counted. A journey that loads `renderJobs` alone can render the empty gallery. Issue #1215 stayed open. The empty held line, the narrow column, and the trash path while held were not changed.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 00:24 note — 14 October 2026, 00:41+01
+
+The 00:24 note above was true when it was written. #1379 and #1380 were not merged then.
+
+PR #1379 merged as `b2471363d4eb8ed93ca00e14f686b1cfeb215dd7` at 23:33:04Z. An adapter total or an own counter past the card plus sampling headroom is unknown for admission. Issue #983 stayed open. The installed guard still returns the subtraction.
+
+PR #1380 merged as `bb3ebb3d3419fbc1e9c66518e380c3a1c37d9287` at 23:38:55Z. It records the #1377 and #1378 merges. Issues #1358, #1366, and #1215 stayed open.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 00:41 note — 14 October 2026, 00:57+01
+
+The 00:41 note above was true when it was written. #1381 and #1382 were not merged then.
+
+PR #1381 merged as `e32728a6b9968397c2e95e4adf3db72377737740` at 23:53:55Z. When Klein 4B is ticked from replace, the plan shows the remembered clothes answer. Issue #1233 stayed open. Items 1, 3, 4, and 5 were not part of this merge.
+
+PR #1382 merged as `89f829563dd806e8f585ba4a68bba4ff0870f4c5` at 23:56:10Z. It records the #1379 and #1380 merges. Issues #983, #1358, #1366, and #1215 stayed open.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 00:57 note — 14 October 2026, 01:25+01
+
+The 00:57 note above was true when it was written. #1385 and #1383 were not merged then.
+
+PR #1385 merged as `280c8356a3a16d43a2ebe8cde3fe591c8da7533e` at 00:24:44Z. It is the 00:57 note above. Issues #1233, #983, #1358, #1366, and #1215 stayed open.
+
+PR #1383 merged as `1de6f6be6350dae89eaf2a0ebd4c64a86b4140f4` at 00:24:54Z. A failed Start plan keeps its error on the status line when the form changes during the request. Issue #1233 stayed open. Item 5 of that issue is this merge. Items 1, 3, and 4 remain.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Renewed maintenance qualification — 13 October 2026
+
+The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
+
+Causal regressions fail against the original sources and pass after correction. Native HTTP/Chromium checks pass at 1440 and 390 px for the model warnings, immediate stage save/reload, exact restoration without replay, sibling activity and newer-edit preservation. The final combined parallax fixture passes all 14 checks on each hosted Windows/Linux platform (run38374264993), with no page errors or generation. Its recorded checkout tree `f42c7645` exactly matches qualified head `7a974853`. Current full PR gate run38374265045 passes 5,496 tests / 60 skips / 789.413s and validator; branch run38374259409 passes 5,496 / 60 / 797.747s. Both report clean resource-lifetime shutdown. Independently reviewed source and the combined-fixture conflict resolution have no confirmed HIGH/CRITICAL blocker.
+
+The admitted local Windows lifetime gate on badge-plus-persistence head `d52e2210` passes 5,496 tests / 115 skips / 1291.927s, exit0, with no retained non-daemon thread or child process. It does not include the sibling-context addition. The local combined browser rerun was deferred before launch; the current-head hosted native packet supplies that proof. An earlier gallery fixture read too soon and one old-label test assertion genuinely failed; both bounded corrections and the earlier failed/deferred receipts remain separate from green results.
+
+Connector MEDIUM feedback about a server-only running-to-uncertain change is tracked in #1358. The sibling note uses the latest observed browser jobs snapshot and can lag authoritative server state; the original job remains inspectable and no replay is authorized. LOW malformed-record and oracle suggestions were declined once against existing stage/controller coverage. The six renewed Muse lenses were triaged, its file-only worker was independently reproduced, and the owned lane is drained with no pending worker or live supervisor. Runtime qualification failures reported for newer Muse source were left outside this batch; the installed qualified runtime was retained.
+
+No real GPU/model/native-export execution, installed-runtime activation, art verdict or licensing acceptance was performed in this renewed batch. Foreign Studio/ComfyUI services, five uncertain/one partial historical Studio jobs and foreign dirty worktrees remain intact; an empty physical queue does not resolve them. Primary remains clean at `11149eb7`. Finished published worktrees are removed only after merged-ancestry, ignored-survivor, reparse-point and process checks; raw reviews, logs, reports and screenshots remain outside Git in `C:/Users/jekyt/Documents/Codex/2026-10-13/ca/outputs/heavy-20261013-round2/local-asset-studio/`. HUMAN_TODO.md retains the owner’s asset wishlist, seamless/floor and Look judgments, own-scene parallax masks and separate Generate choices, WAI Vary and creative/licensing decisions.
+
 ## Overnight qualification — 13 October 2026
 
 Eight maintenance PRs have merged through EstateGate with their original commits preserved: guide lane count #1345 (`fe1f3a1f`), early oversized-reference guard #1332 (`de2a3040`, closed #1341), reference-provenance regressions #1346 (`2083c3f3`), retained JPEG EXIF orientation #1288 (`d1a8a348`), retained parallax stage-card recovery #1289 (`bd93b0d9`), hash-time mutation warning #1348 (`fe13f61f`, closed #1317), prepared-draft recovery #1285 (`c1828f4b`, no issue closure), and failed-switch inventory #1352 (`e5c709b3`, closed #1336). The hash repair invalidates its old digest after a detected file change, keeps readiness reads passive and records an unavailable digest rather than certifying changed bytes. Its qualified-head hosted full suite passes 5,493 tests with 60 skips in 781.925s, clean shutdown. Focused causal regressions, validators and independent reviews are retained in the campaign.

@@ -80,6 +80,14 @@ const respondHealth = async payload => {
   pending = vm.runInContext('health()', context); await Promise.resolve();
   await respondHealth({online:true,worker_alive:true,schema_available:true,missing_models:{},worker_failure:null}); await pending;
   assert.equal(element('#workerFailure').hidden, true);
+  vm.runInContext("catalog={presets:[{id:'ready',name:'Ready',description:'Fixture',family:'Fixture',category:'Fixture'}]};mode='all';$('#categorySelect').value='All';",context);
+  for(const file of ['loras/definite-mismatch.safetensors','loras/unavailable-digest.safetensors']){
+    pending=vm.runInContext('health()',context);await Promise.resolve();
+    await respondHealth({online:true,schema_available:true,missing_models:{},pin_mismatch:{ready:[file]}});await pending;
+    assert.match(element('#presetList').innerHTML,/Model verification needs attention/,'filename-only health warnings do not certify a checksum mismatch');
+    assert.doesNotMatch(element('#presetList').innerHTML,/Checksum differs/);
+    assert.ok(element('#presetList').innerHTML.includes(file),'affected filename remains inspectable');
+  }
   assert.equal(requests.length, 0, 'health and warning rendering do not mutate jobs');
   console.log('Readiness status distinguishes pending, offline, unavailable, and ready states without job submission.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
