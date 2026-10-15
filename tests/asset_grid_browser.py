@@ -11,7 +11,7 @@ import shutil
 import tempfile
 import threading
 import uuid
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -56,7 +56,7 @@ async def exercise(args):
             def do_POST(self):
                 # Not a mutation harness. All page writes are recorded inert fixture calls.
                 return fixture.Handler.do_POST(self)
-        http = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        http = browser_server(Handler)
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
         try:

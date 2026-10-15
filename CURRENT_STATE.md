@@ -38,6 +38,10 @@ No Studio/ComfyUI process, application file, catalogue, dependency, precache or
 budget changed. Exact-head hosted qualification belongs to the draft PR; owner
 choices in HUMAN_TODO.md remain separate.
 
+## 14 October 2026: public import and Export collision tutorial
+
+Actual unpatched app f5b1a6af imports two pinned public Alibi derivatives, previews a run-owned pre-existing file explicitly labelled controlled collision, refuses the existing native destination without an attempt/overwrite, then completes a fresh native atlas export and exact ZIP download. The67.79s720p/24fps source recording has eight offline captions, complete normal-speed playback and actual390/1440px UI receipts. Sources: docs/adaptive-studio/assets/production/20261014-export-fixture-tutorial/README.md. No generation or editor/backend launch. Workflow remains blocked by a genuine unavailable installed-node schema (actualHTTP400); first-run/Continue prerequisites, repair/original-loop/44deferrals/parallax and HUMAN_TODO decisions are preserved. Accepted art/motion unchanged; no merge/deploy/runtime activation.
+
 ## 14 October 2026: controlled Recover inspection tutorial
 
 The catalogue-approved simulated uncertain-request brief is now recorded in the actual unpatched app using a visibly labelled public retained-state fixture, not a real failure/output. Actual read-only Recipe download and native JSON inspection return to the exact unchanged uncertain job; no mutation/replay/Resume/Abandon/Generate occurs. The38.5s720p/24fps clip has six editable offline captions, complete normal-speed playback and actual390px inspection receipts. Sources and curated public receipts: docs/adaptive-studio/assets/production/20261014-recover-fixture-tutorial/README.md. First-run/Continue prerequisites remain blocked; Workflow/Export, separate repair/loop gaps,44 deferrals, parallax recall path and existing HUMAN_TODO decisions remain untouched. Accepted R2 art/motion unchanged; no merge/deploy/generation.
@@ -149,6 +153,38 @@ Full-resolution output remains at `C:/AI/ComfyUI_windows_portable/ComfyUI/output
 The dedicated Muse lane is drained after six bounded lenses and two file-only worker drafts; their initial claims were independently triaged and reproduced by the lead. The hash worker's initial Windows verification failure remains visible alongside the corrected atomic-replacement regression. Foreign Studio/ComfyUI services and five uncertain/one partial historical Studio jobs were preserved. No installed runtime, model, package or driver was changed. Primary checkout stays clean at its existing `11149eb7`; qualification does not activate that owner-managed runtime.
 
 Nonblocking follow-ups are tracked as noticed #1349 (additional stage-card context) and #1350 (overview badge wording for unavailable hash). Immediate automatic stage-transition draft persistence remains the final acceptance in #1308. #1175 keeps its explicit Chris-review hold; author-owned #1342/#1343/#1344 remain untouched. HUMAN_TODO.md retains the ChatGPT asset wishlist, seamless/floor and Look judgments, own-scene parallax masks, WAI Vary and other creative/licensing choices. The retained c92fc worker's 3,692 deletion-only edits remain intact. Ignored source-worker logs and remote checkpoints were preserved before plain worktree removal.
+
+## Night Shift quality study 02 - 13 October 2026
+
+Continuation: the source alternatives stay experimental; no further near-identical
+variants are being made. Exact accepted 3840x2160 MA bytes now hash-match the original
+receipt and were decoded/inspected after the supported Library helper's Windows
+metadata failure. Metadata was not persisted. The guide count repair already merged
+through concurrent #1345; this branch reuses only that isolated one-line commit,
+with all 16 unchanged brief contracts passing. The durable per-ID inventory is in
+docs/adaptive-studio/assets/production/20261013-qualification/INVENTORY.json.
+
+Version 1 remains unchanged as an early study below the owner's quality bar.
+Separate quality-02 workshop and 384x216 pixel SVGs add material modelling,
+light hierarchy and deliberate pixel clusters. Individual PNGs and an unchanged
+accepted-evidence comparison are reviewable at phone/desktop widths. All 36
+combined comparison/lifecycle checks pass; artistic acceptance and comparison
+with the full-resolution MA master remain open. No runtime or selection changes.
+The guide-count CI mismatch (46 documented versus 50 actual lanes) reproduces
+on the unchanged baseline guide blob and is outside this source-only art branch.
+
+## Native-vector Night Shift source pilot — 12 October 2026
+
+Two editable alternatives remain separate from runtime: the detailed workshop and
+320×180 pixel interpretation in docs/adaptive-studio/assets/production/20261012-vector-pilot/.
+Actual Chromium pixels at phone and desktop widths were inspected; a covered
+window layer and hard light edge were corrected. The source SVGs are static and
+contain no raster embedding; their review page offers explicit restrained motion.
+Tracked-payload validation passes (92 graphs, 176 pins, 3,844 paths before this note).
+Full-resolution MA Library materialization is blocked by the supplied Windows
+xattr helper; its preserved accepted comparison sheet was inspected instead.
+Original selections and 44 deferrals remain unchanged. No acceptance flag, app
+activation, merge or deployment. Other foundation/motion application QA remains open.
 
 ## Actual isolated adapter-edit recording — 13 October 2026
 

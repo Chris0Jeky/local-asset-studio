@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from urllib.parse import urlsplit
 
 import studio_browser_smoke as fixture
@@ -42,7 +42,7 @@ class Handler(fixture.Handler):
 def run(output):
     from playwright.sync_api import sync_playwright
     output.mkdir(parents=True, exist_ok=True)
-    http = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    http = browser_server(Handler)
     worker = threading.Thread(target=http.serve_forever, daemon=True); worker.start()
     cases = []
     try:

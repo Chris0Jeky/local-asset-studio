@@ -10,7 +10,7 @@ import socket
 import sys
 import tempfile
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from types import SimpleNamespace
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'app'))
 from workspace import AssetWorkspace
@@ -42,7 +42,7 @@ def run(output):
     with tempfile.TemporaryDirectory() as tmp:
         ws=AssetWorkspace(tmp);service=PromptProjects(ws);scope=service.capabilities()['workspace_id']
         Handler.studio=SimpleNamespace(prompt_projects=service)
-        server=ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=server.serve_forever);thread.start()
+        server=browser_server(Handler);thread=threading.Thread(target=server.serve_forever);thread.start()
         reference=reference_fixture.ReferenceReviewTests();reference.setUp()
         report=Path(tmp)/'analysis.json';report.write_text(json.dumps(reference.report),encoding='utf-8')
         try:

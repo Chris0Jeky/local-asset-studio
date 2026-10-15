@@ -13,7 +13,7 @@ import os
 import shutil
 import sys
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -40,7 +40,7 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     from playwright.sync_api import sync_playwright
-    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server = browser_server(Handler)
     server.handle_error = lambda *_: None  # a closed browser context aborting an in-flight fixture response is not a finding
     threading.Thread(target=server.serve_forever, daemon=True).start()
     origin = f'http://127.0.0.1:{server.server_port}'
