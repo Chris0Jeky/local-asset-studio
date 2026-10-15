@@ -1473,6 +1473,40 @@ def _make(c):
     return ok, 'look pictures %d; Generate ready %s; prepared %s; wording from the look %s' % (pictures, ready, {k: state[k] for k in ('preset', 'width')}, state['positive'] == wording)
 
 
+@driver('make-tune-a-look')
+def _make_tune(c):
+    """S1/S2 of the 15 Oct 2026 UX plan: the sentence belongs to the goal, not the look, and Style strength scales exactly the
+    look's active adapters. Proven through the full editor so nothing is generated."""
+    import looks
+    c.boot('#make')
+    c.need_recipe('krea-style-lab')
+    c.act('[data-make-goal="painting"]', note='choose painted illustration')
+    first, second = '[data-make-look="look-krea-oil-fantasy"]', '[data-make-look="look-krea-style-emerald-tarot"]'
+    c.act(first, note='choose a first look')
+    c.act('#makeScene', 'fill', typed=MAKE_SCENE, note='type the sentence once')
+    c.act('[data-make-change]', note='change look')
+    c.act(second, note='choose another look')
+    kept = c.page.evaluate("document.querySelector('#makeScene').value")
+    c.act('#makeStrength', 'read', note='Style strength is offered for a look with adapters')
+    c.page.evaluate("(() => { const r = document.querySelector('#makeStrength'); r.value = '50'; r.dispatchEvent(new Event('input')); })()")
+    c.act('#makeEditor', note='open the prepared request in the full editor')
+    c.page.wait_for_function("location.hash === '#create' && selected?.id === 'krea-style-lab'", timeout=5000)
+    shipped = next(entry for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks'] if entry['id'] == 'look-krea-style-emerald-tarot')
+    controls = shipped['body']['controls']
+    active = [k for k in ('lora', 'lora2', 'lora3', 'lora4', 'lora5', 'lora6') if float(controls.get(k) or 0) > 0 and controls.get(k + '_name')]
+    got = c.page.evaluate("keys => Object.fromEntries(keys.map(k => [k, Number(getControl(k)?.value)]))", active)
+    halved = bool(active) and all(abs(got[k] - round(float(controls[k]) * 0.5, 2)) < 1e-9 for k in active)
+    wording = looks.compose(shipped['body']['template'], MAKE_SCENE, shipped['body'].get('options', []))
+    positive = c.page.evaluate("document.querySelector('#positive').value")
+    c.boot('#make')
+    c.act('[data-make-goal="character"]', note='a look without adapters')
+    c.act('[data-make-change]', supplementary=True, note='open the gallery') if c.page.query_selector('[data-make-change]') else None
+    c.act('[data-make-look="look-wai-fantasy-portrait"]', note='choose the WAI look')
+    plain = c.page.evaluate("!document.querySelector('#makeStrength')")
+    ok = kept == MAKE_SCENE and halved and positive == wording and plain
+    return ok, 'sentence kept across looks %s; adapters %s halved %s; wording from the new look %s; no slider on a look without adapters %s' % (kept == MAKE_SCENE, active, halved, positive == wording, plain)
+
+
 @driver('new-scene-in-an-accepted-look')
 def _look(c):
     """#1221: pick a saved look while another recipe is open, type only the scene; the Studio writes the wording and loads the
