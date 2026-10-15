@@ -10,7 +10,7 @@ import shutil
 import threading
 import time
 from collections import Counter
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -43,7 +43,7 @@ def run(output):
     global JOBS_DELAY, JOBS_PEAK
     from playwright.sync_api import sync_playwright
     output.mkdir(parents=True, exist_ok=True)
-    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server = browser_server(Handler)
     worker = threading.Thread(target=server.serve_forever, daemon=True); worker.start()
     evidence = {'fixture': 'real frontend; inert APIs; simulated visibility; shortened intervals', 'cases': []}
     try:

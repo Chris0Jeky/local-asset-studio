@@ -39,7 +39,7 @@ async def run(args):
     from playwright.async_api import async_playwright
     args.out.mkdir(parents=True,exist_ok=True)
     state=State();Handler.state=state;fixture.POSTS.clear()
-    server=fixture.ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    server=fixture.browser_server(Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     checks=[];errors=[];failure=None
     def check(id,expected,value):
         checks.append({'id':id,'expectation':expected,'passed':bool(value)});print(id,bool(value),expected,flush=True)

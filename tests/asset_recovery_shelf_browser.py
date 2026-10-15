@@ -13,7 +13,7 @@ import shutil
 import socket
 import tempfile
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -73,7 +73,7 @@ async def exercise(args):
                     return
                 return super()._json(status, data)
 
-        http = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        http = browser_server(Handler)
         port = http.server_port
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()

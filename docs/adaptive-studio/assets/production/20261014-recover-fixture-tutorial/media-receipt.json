@@ -1,0 +1,74 @@
+{
+  "ffprobe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1280,
+        "height": 720,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "924"
+      }
+    ],
+    "format": {
+      "duration": "38.500000",
+      "size": "853446"
+    }
+  },
+  "sha256": "123f809e76db923310b928efe51c8e96a0adfe2dd35df8a7955fa2023bf26077",
+  "caption_cues": 6,
+  "decoded_frames": [
+    {
+      "seconds": 0.7,
+      "file": "decoded-01.png"
+    },
+    {
+      "seconds": 6.758,
+      "file": "decoded-02.png"
+    },
+    {
+      "seconds": 11.834,
+      "file": "decoded-03.png"
+    },
+    {
+      "seconds": 18.169999999999998,
+      "file": "decoded-04.png"
+    },
+    {
+      "seconds": 22.329,
+      "file": "decoded-05.png"
+    },
+    {
+      "seconds": 34.176,
+      "file": "decoded-06.png"
+    }
+  ],
+  "encode_command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-ss",
+    "5.979",
+    "-i",
+    "<owned-capture-folder>\\raw\\page@ac0883e0ead208e6d29bb0235e4dd8c4.webm",
+    "-t",
+    "38.516",
+    "-an",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "medium",
+    "-crf",
+    "22",
+    "-r",
+    "24",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    "<owned-capture-folder>\\tutorial-recover.mp4"
+  ],
+  "encode_attempts": 1
+}

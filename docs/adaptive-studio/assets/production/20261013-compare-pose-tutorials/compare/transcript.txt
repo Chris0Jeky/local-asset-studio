@@ -1,0 +1,6 @@
+00:00:00.090 Start with one text-only recipe and one question. No references are attached.
+00:00:04.223 Open Plan comparison and choose Guidance. Compare one setting at a time.
+00:00:09.329 Enter three values. Allow three graph runs and a ten-minute between-stage limit.
+00:00:15.472 Read the displayed estimate and run arithmetic before preparing. This is not a completed comparison.
+00:00:19.588 Three values times one seed means three graph runs. The allowance is three; nothing is reserved yet.
+00:00:23.716 Cancel before Prepare plan. The Create draft remains unchanged; nothing was prepared or submitted.

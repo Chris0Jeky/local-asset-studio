@@ -1,0 +1,28 @@
+[
+  {
+    "original": "lantern-duel-320.webp",
+    "imported_filename": "imported-public-lantern-duel-320.webp",
+    "sha256": "44fced51a9537b498bcf56d79141ca0c9eaeb81899df329d638676c6e2550fc2",
+    "bytes": 27208,
+    "dimensions": [
+      320,
+      292
+    ],
+    "source_repository": "Chris0Jeky/Alibi",
+    "source_revision": "59f47e90b102d44eac35b5ce3f009f278437a6e5",
+    "provenance": "Existing public painting derivative, imported as a fixture; no output generated in LAS."
+  },
+  {
+    "original": "pocket-borough-320.webp",
+    "imported_filename": "imported-public-pocket-borough-320.webp",
+    "sha256": "f2570de8d7f598a2d85665700efa9b7d629c9baaa74345c5a027b4b734565073",
+    "bytes": 31824,
+    "dimensions": [
+      320,
+      292
+    ],
+    "source_repository": "Chris0Jeky/Alibi",
+    "source_revision": "59f47e90b102d44eac35b5ce3f009f278437a6e5",
+    "provenance": "Existing public painting derivative, imported as a fixture; no output generated in LAS."
+  }
+]

@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from urllib.parse import urlsplit
 
 import studio_browser_smoke as ui
@@ -42,7 +42,7 @@ def run(output):
                     return self.json(value)
                 except ValueError as exc:return self.json({'error':str(exc)},400)
             return super().do_POST()
-    target=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+    target=browser_server(Handler)
     thread=threading.Thread(target=target.serve_forever,daemon=True);thread.start()
     result={'passed':False,'fixture':'Shipped UI, real recovery command/Production/files; inert catalog and synthetic Comfy; shared queue consumed deterministically'}
     try:
