@@ -123,6 +123,8 @@ async def exercise(args):
                     await page.close()
 
                 async def shelf(page, details=False):
+                    # S6: the library launcher sits in the Recovery disclosure; open it the way a person would.
+                    if not details and not await page.evaluate("document.getElementById('assetRecoveryDisclosure')?.open ?? true"): await page.click('#assetRecoveryDisclosure > summary')
                     await page.click('#openAssetRecoveryShelfDetails' if details else '#openAssetRecoveryShelf')
                     await page.wait_for_function('!assetShelfReading')
 
