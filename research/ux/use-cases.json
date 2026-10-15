@@ -937,6 +937,35 @@
           "expect": "the look's recipe, adapters and wording are loaded with the sentence in place; nothing runs"
         }
       ]
+    },
+    {
+      "id": "make-tune-a-look",
+      "goal": "Try the same sentence in another look and turn a look's style down, without retyping or knowing which adapters it uses.",
+      "starting_view": "make",
+      "success_condition": "After a sentence is typed, Change look keeps it while another look is chosen; a look with adapters shows Style strength and a look without them does not; at 50% the prepared request carries exactly half of each active adapter's strength and nothing else changes; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "type a sentence in one look",
+          "expect": "the sentence box keeps it"
+        },
+        {
+          "intent": "change to another look",
+          "expect": "the sentence is still there"
+        },
+        {
+          "intent": "turn the style down to half",
+          "expect": "a Style strength control names the look's adapters"
+        },
+        {
+          "intent": "open the prepared request in the full editor",
+          "expect": "each adapter is at half its strength; the wording is the new look's with the same sentence"
+        },
+        {
+          "intent": "check a look that has no adapters",
+          "expect": "no Style strength control is offered there"
+        }
+      ]
     }
   ]
 }

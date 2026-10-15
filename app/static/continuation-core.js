@@ -21,7 +21,7 @@
   function destinations(intent,presets,source){
     const family=presets.find(p=>p.id===source?.preset_id)?.family;
     // Edit leads with the 20-second Klein edit; the 11-minute Qwen edit stays available but no longer greets the user.
-    const prefer={edit:['flux-edit','qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],combine:['combine-klein-9b-copypose','combine-klein-9b-skeleton','combine-klein-9b-depth','combine-klein-9b-replace','combine-klein-9b','combine-klein'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
+    const prefer={edit:['flux-edit','qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan'],restyle:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],combine:['combine-klein-9b-copypose','combine-klein-9b-skeleton','combine-klein-9b-depth','combine-klein-9b-replace','combine-klein-9b','combine-klein'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
     // For Restyle, a recipe that keeps the picture (img2img) outranks the source's own Style + Pose family.
     const rank=p=>prefer.includes(p.id)?prefer.indexOf(p.id):100;
     // Combine's declared 9B leads follow a strong pose (Copy Pose first, then the drawn skeleton: owner decision q-28, 23 September 2026) and must outrank a 4B source-family match; hard runtime/mask blockers still win.
@@ -36,9 +36,13 @@
     if(cap.requires_mask)throw Error('Prepare an RGBA repair mask first. A plain source copy is not a repair mask.');
     const claim=normalize({version:1,intent,preset_id:preset.id,reference_file:file,source_asset_id:source.asset_id,source_sha256:source.sha256,template_sha256:cap.template_sha256});
     if(!claim)throw Error('The source attachment could not be verified. Reopen the handoff.');
-    const copy=cap.prompt_role==='description'&&source.prompt_role==='description'&&source.prompt_origin==='submitted-output';
+    return{claim,...wording(preset,source)};
+  }
+  // The wording a continuation starts from: the recipe's own continuation prompt, else the source's exact submitted description.
+  function wording(preset,source){
+    const copy=preset?.continuation_capability?.prompt_role==='description'&&source?.prompt_role==='description'&&source?.prompt_origin==='submitted-output';
     const prepared=promptFor(preset,source);
-    return{claim,positive:prepared!=null?prepared:copy&&typeof source.positive==='string'?source.positive:'',negative:copy&&typeof source.negative==='string'?source.negative:''};
+    return{positive:prepared!=null?prepared:copy&&typeof source.positive==='string'?source.positive:'',negative:copy&&typeof source.negative==='string'?source.negative:''};
   }
   // A recipe may author the wording of a continuation: its `continuation_prompt` is used verbatim, with `{source}`
   // standing for the source's own submitted description (or nothing when no exact description is retained).
@@ -343,6 +347,34 @@
     // fallbacks stay beside the values. prepareVary copies every key of carry into the job, so a marker inside values would be submitted.
     return absent.length?'Vary uses '+route.name+'. Missing here: '+absent.join(', ')+'. Open Models & setup.':{values,fallbacks};
   }
+  // #S3 one-press Polish from Make: each kind is one repair route; the face pass follows the source's checkpoint family.
+  // Face and detail passes repaint with an anime SDXL model, so they are offered only for pictures from anime families.
+  const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale'};
+  const POLISH_ANIME=/Illustrious|WAI|Animagine|Pony|NoobAI|AniFox|CSTati|YumeFlux|Anima/i;
+  function polishRoute(kind,presets,source,missing){
+    const none=reason=>({ok:false,preset:null,reason});
+    if(!POLISH[kind])return none('Unknown polish: '+kind+'.');
+    if(!source||source.version!==1)return none('This picture’s record could not be read. Refresh and try again.');
+    const made=(presets||[]).find(p=>p.id===source.preset_id),family=made?.family||'';
+    // A face or detail repaint is anime work whatever its route's family says. An upscale is not: it accepts any picture,
+    // so an upscaled photo must not become eligible for an anime repaint (#1409 review).
+    const anime=POLISH_ANIME.test(family)||['anime-face','animagine-face','anime-detail-fix'].includes(made?.id);
+    let id='anime-esrgan';
+    if(kind!=='upscale'){
+      if(!made)return none(POLISH[kind]+' needs a picture made by a Studio recipe; this one has none recorded. Use Continue with this.');
+      if(!anime)return none(POLISH[kind]+' repaints with an anime model, which does not match '+(family||made.name)+'. Use Continue with this.');
+      id=kind==='details'?'anime-detail-fix':/Animagine/i.test(family)||made.id==='animagine-face'?'animagine-face':/Illustrious|WAI/i.test(family)||made.id==='anime-face'?'anime-face':'anime-detail-fix';
+    }
+    const preset=destinations('repair',presets||[],source).find(p=>p.id===id);
+    if(!preset)return none(POLISH[kind]+' needs the '+id+' recipe, which cannot read a source picture here.');
+    const cap=preset.continuation_capability;
+    if(cap.requires_mask||sourceInput(cap)!=='reference'||preset.reference_slots?.length)return none(preset.name+' needs more than this picture (a mask or a second input). Use Continue with this.');
+    const blocked=varyBlocked(preset,missing);if(blocked)return none(preset.name+': '+blocked);
+    const words=wording(preset,source).positive;
+    if(preset.positive&&!words.trim())return none('No description was kept for this picture, and '+preset.name+' needs one. Use Continue with this and describe it.');
+    const left=unfilled(preset,words);if(left.length)return none(preset.name+' needs wording filled in. Use Continue with this.');
+    return{ok:true,preset,reason:''};
+  }
   function varyAdapters(carry){
     return Object.keys(carry||{}).filter(key=>/^lora\d*$/.test(key)&&Number(carry[key])!==0).map(key=>carry[key+'_name']+' at '+carry[key]);
   }
@@ -382,5 +414,5 @@
     if(plan.kind==='reseed')return 'Starts afresh from the same words · '+round;
     return 'On '+plan.route.name+(plan.carry?' · keeps its adapters':'')+' · '+round+' · denoise '+plan.strengths.subtle.controls.denoise+' / '+plan.strengths.strong.controls.denoise+(plan.starting?' (starting values)':'');
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime,combinePlanFills,varyRoute,varyRound,varyPlan,varyStatus,varyHint};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime,combinePlanFills,varyRoute,varyRound,varyPlan,varyStatus,varyHint,wording,polishRoute,POLISH};
 });
