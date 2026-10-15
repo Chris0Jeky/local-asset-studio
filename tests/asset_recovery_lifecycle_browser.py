@@ -105,7 +105,7 @@ async def exercise(args):
                           assetRetainedDetail=assetRecovery.read('detail');assetLibraryPending={...data.library.operation,selection:data.library.selection};renderLibraryRecovery();
                         }''',{'detail':local,'library':library})
                     async def shelf(page):
-                        await page.click('#openAssetRecoveryShelf');await page.wait_for_function('!assetShelfReading')
+                        await page.evaluate("(()=>{const d=document.getElementById('assetRecoveryDisclosure');if(d&&!d.open)d.querySelector('summary').click();})()");await page.click('#openAssetRecoveryShelf');await page.wait_for_function('!assetShelfReading')
                     async def inspect(page,slot):
                         await page.locator('[data-recovery-observe-slot="'+slot+'"]').focus()
                         await page.keyboard.press('Enter')
