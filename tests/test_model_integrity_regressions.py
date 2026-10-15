@@ -63,6 +63,25 @@ class FingerprintAndPinTests(unittest.TestCase):
         with patch.object(readiness.server, 'digest_file', side_effect=AssertionError('unexpected rehash')):
             self.assertEqual(self.preflight(studio)['models'][0]['sha256'], pin['sha256'])
 
+    def test_unpinned_invalid_or_missing_digest_is_rehashed(self):
+        pin, path = self.pinned_file(); self.manifest.clear(); studio = self.studio()
+        for digest in (None, '', 'G'*64, 'a'*63, ['x']):
+            with self.subTest(digest=digest):
+                self.cache(path, digest)
+                self.assertEqual(self.preflight(studio)['models'][0]['sha256'], pin['sha256'])
+        record = self.cache(path, None); del record['sha256']
+        (self.root/'.runtime/model-fingerprints.json').write_text(json.dumps({str(path.resolve()): record}))
+        self.assertEqual(self.preflight(studio)['models'][0]['sha256'], pin['sha256'])
+
+    def test_cache_value_error_keeps_health_online(self):
+        studio = self.studio(); read_json = readiness.server.read_json
+        def read(path, *args):
+            if path.name == 'model-fingerprints.json': raise ValueError('damaged cache')
+            return read_json(path, *args)
+        with patch.object(readiness.server, 'read_json', side_effect=read):
+            self.assertEqual(studio.model_fingerprints(), {})
+            self.assertTrue(self.health(studio)['online'])
+
     def test_duplicate_pin_conflict_blocks_production_even_when_bytes_match(self):
         pin, path = self.pinned_file(); self.manifest.append(dict(pin, id='duplicate'))
         studio = self.studio()
@@ -105,6 +124,9 @@ class FingerprintAndPinTests(unittest.TestCase):
         rows = requirements(studio.library, self.preset, self.graph, other, fingerprints={str(other_path):
                             {'bytes': info.st_size, 'mtime_ns': info.st_mtime_ns, 'sha256': 'b'*64}})
         self.assertIsNone(rows[0]['pin_mismatch']); self.assertFalse(rows[0]['installable'])
+        primary = requirements(studio.library, self.preset, self.graph, studio.library.models,
+                               fingerprints={str(path.resolve()): self.cache(path, 'b'*64)})
+        self.assertIsNotNone(primary[0]['pin_mismatch'])
 
 
 class BackendAffinityTests(unittest.TestCase):

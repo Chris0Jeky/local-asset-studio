@@ -1744,7 +1744,7 @@ class Studio:
     def model_fingerprints(self):
         # Read-only view of production preflight's digest cache; readiness never hashes.
         try: cache = read_json(self.root/'.runtime/model-fingerprints.json', {})
-        except UnicodeError: cache = {}
+        except ValueError: cache = {}
         return cache if isinstance(cache, dict) else {}
 
     def inspect_preset(self, preset_id, graph=None):
@@ -1952,20 +1952,14 @@ class Studio:
 
     def _config_number(self, key, raw, *, default, maximum=None):
         """A config number, including a numeric string. A bad value keeps the fail-safe default and is named on /api/health. Zero and below stay the documented off switch; above maximum clamps with no warning."""
-        parsed = self._parse_config_number(raw)
-        if parsed is None:
-            self.config_warnings.append("%s must be a finite number; keeping %s" % (key, default))
+        try: parsed = number(raw, key, -sys.float_info.max, sys.float_info.max)
+        except StudioError as error:
+            warning = f"{error}; keeping {default}"
+            self.config_warnings.append(warning); print(warning, file=sys.stderr)
             return float(default)
         if parsed <= 0: return 0.0
         if maximum is not None and parsed > maximum: return float(maximum)
         return float(parsed)
-
-    @staticmethod
-    def _parse_config_number(raw):
-        if isinstance(raw, bool): return None
-        try: number = Decimal(str(raw))
-        except (InvalidOperation, ValueError, TypeError): return None
-        return number if number.is_finite() else None
 
     @staticmethod
     def _finite_number(value):

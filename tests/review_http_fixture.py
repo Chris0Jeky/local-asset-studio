@@ -1,6 +1,7 @@
 """Explicit CPU-only browser fixture, not the production Handler or a model service."""
 from contextlib import contextmanager
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from browser_ports import browser_server
 import json
 import mimetypes
 from pathlib import Path
@@ -40,6 +41,6 @@ def serve_fixture(studio):
                 payload=json.loads(self.rfile.read(size));commands.append(payload)
                 self.send(200,studio.production.review(self.path.split('/')[3],payload))
             except (ValueError,OSError,KeyError) as exc:self.send(400,{'error':str(exc)})
-    server=ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    server=browser_server(Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:yield f'http://127.0.0.1:{server.server_port}',commands
     finally:server.shutdown();server.server_close();thread.join(2)

@@ -5,7 +5,7 @@ synthetic Comfy schema. This is NOT the configured Windows/GPU runtime.
 Requires separately available playwright + Chromium; not a runtime dependency.
 """
 import argparse
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 import json
 import mimetypes
 import re
@@ -135,7 +135,7 @@ def main():
         class TrackingHandler(Wrapped):
             def do_POST(self): requests.append(self.path); return super().do_POST()
         TrackingHandler.studio = studio
-        server = ThreadingHTTPServer(('127.0.0.1', 0), TrackingHandler)
+        server = browser_server(TrackingHandler)
         server.expected_host = '127.0.0.1:' + str(server.server_port)
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         origin = 'http://' + server.expected_host

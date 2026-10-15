@@ -50,9 +50,36 @@ class InstallSafetyTests(unittest.TestCase):
         self.assertEqual(self.receipt()['status'],'failed');self.assert_released()
 
     def test_unsupported_atomic_publication_preserves_complete_stage(self):
-        with patch.object(models,'urlopen',return_value=Reply(self.body)),patch.object(contracts.os,'link',side_effect=OSError(errno.ENOTSUP,'no links')):
+        with patch.object(models,'urlopen',return_value=Reply(self.body)),patch.object(contracts,'os',wraps=os) as platform:
+            platform.name='posix';platform.link.side_effect=OSError(errno.ENOTSUP,'no links')
             with self.assertRaisesRegex(ValueError,'explicit recovery'):self.lib.install('demo')
         self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),self.body);self.assert_released()
+
+    @unittest.skipUnless(os.name=='nt','Requires Windows no-clobber rename')
+    def test_publish_verified_link_failure_on_nt_uses_rename(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')):
+            published=contracts.publish_verified(self.part,self.target,identity)
+        self.assertEqual(self.target.read_bytes(),self.body);self.assertFalse(self.part.exists())
+        self.assertEqual(published,contracts.file_identity(self.target))
+        self.assertEqual(published['size'],identity['size']);self.assertEqual(published['mtime_ns'],identity['mtime_ns'])
+
+    @unittest.skipUnless(os.name=='nt','Requires Windows no-clobber rename')
+    def test_publish_verified_rename_race_preserves_both_files(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
+        rename=os.rename
+        def race(source,target):
+            self.target.write_bytes(b'another writer');return rename(source,target)
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename',side_effect=race):
+            with self.assertRaisesRegex(ValueError,'Destination appeared during publication; both files preserved'):
+                contracts.publish_verified(self.part,self.target,identity)
+        self.assertEqual(self.part.read_bytes(),self.body);self.assertEqual(self.target.read_bytes(),b'another writer')
+
+    def test_publish_verified_link_failure_on_posix_refuses(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
+        with patch.object(contracts.os,'name','posix'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename') as rename:
+            with self.assertRaisesRegex(ValueError,'explicit recovery'):contracts.publish_verified(self.part,self.target,identity)
+        rename.assert_not_called();self.assertEqual(self.part.read_bytes(),self.body);self.assertFalse(self.target.exists())
 
     def test_every_resume_header_mismatch_preserves_original_partial(self):
         n=len(self.body);self.part.write_bytes(self.body[:5])
@@ -161,6 +188,18 @@ class InstallSafetyTests(unittest.TestCase):
         with patch.object(models.os,'link',side_effect=cross_device):
             with self.assertRaisesRegex(ValueError,'both files preserved'):self.lib.install('demo')
         self.assertEqual(local.read_bytes(),self.body);self.assertEqual(self.part.read_bytes(),self.body);self.assertEqual(self.target.read_bytes(),b'another writer')
+
+    @unittest.skipUnless(os.name=='nt','Requires Windows no-clobber rename')
+    def test_browser_copy_with_stale_part_uses_temp_and_preserves_partial(self):
+        local=self.root/'home/Downloads/demo.safetensors';local.write_bytes(self.body)
+        self.part.write_bytes(b'stale partial');before=contracts.file_identity(self.part)
+        with patch.object(models.os,'link',side_effect=OSError('no links')),patch.object(models,'urlopen') as request:
+            receipt=self.lib.install('demo')
+        request.assert_not_called();self.assertEqual(receipt['status'],'installed')
+        self.assertEqual(local.read_bytes(),self.body);self.assertEqual(self.target.read_bytes(),self.body)
+        self.assertEqual(self.part.read_bytes(),b'stale partial');self.assertEqual(contracts.file_identity(self.part),before)
+        self.assertEqual(set(self.target.parent.iterdir()),{self.target,self.part})
+        self.assertTrue(self.lib.snapshot()['assets'][0]['verified']);self.assert_released()
 
     def test_change_while_hashing_is_not_verified(self):
         self.target.write_bytes(self.body)
