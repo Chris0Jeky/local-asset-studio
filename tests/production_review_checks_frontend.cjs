@@ -57,5 +57,27 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   await press();
   assert.equal(updates.length,refused+2,'a refused save releases the busy flag so a later press works');
   assert.match($('#productionMessage').textContent,/Saved for this candidate: clean /);
+  // #1211: key 2 presses candidate B's anatomy chip. The $() stub has no querySelectorAll, so the event carries the candidate.
+  const saved=updates.length;
+  assetState.assets.find(a=>a.id==='asset-b').tags=[];
+  const checks=['style','anatomy','composition','clean'].map(name=>({disabled:false,dataset:{candidateCheck:name,asset:'asset-b'},click(){return $('#productionDetail').onclick({target:{closest:s=>s==='[data-candidate-check]'?this:null}});}}));
+  const candidate={querySelectorAll:s=>s==='[data-candidate-check]'?checks:[]};
+  const key=target=>({key:'2',preventDefault(){this.defaultPrevented=true;},target});
+  const listen=$('#productionDetail').onkeydown;
+  // The save re-renders the detail: focus returns to the same chip so the next key still lands (#1386 Codex P2).
+  let refocused=null;const rerendered=['style','anatomy'].map(name=>({dataset:{candidateCheck:name,asset:'asset-b'},focus(){refocused=name;}}));
+  $('#productionDetail').querySelectorAll=s=>s==='[data-candidate-check]'?rerendered:[];
+  if(typeof listen==='function')await listen(key({tagName:'BUTTON',closest:s=>s==='article.candidate'||s==='.candidate'?candidate:null}));
+  assert.deepEqual(updates[saved],{ids:['asset-b'],action:'edit',tags:['check:anatomy=yes']},'key 2 on candidate B reaches the anatomy chip and saves the same guarded tags update as a click');
+  assert.equal(updates.length,saved+1,'one key press saves one answer');
+  assert.equal(refocused,'anatomy','focus returns to the re-rendered chip that was pressed');
+  delete $('#productionDetail').querySelectorAll;
+  // A refused save on the key path is shown like a click's, not dropped as an unhandled rejection.
+  mutateError=Error('key save refused');$('#productionMessage').textContent='';
+  if(typeof listen==='function')await listen(key({tagName:'BUTTON',closest:s=>s==='article.candidate'||s==='.candidate'?candidate:null}));
+  assert.equal($('#productionMessage').textContent,'key save refused','a refused key save shows its error');
+  const typed=updates.length;
+  if(typeof listen==='function')await listen(key({tagName:'TEXTAREA',id:'productionNotes',closest:s=>s==='article.candidate'||s==='.candidate'?candidate:null}));
+  assert.equal(updates.length,typed,'a key typed in a notes/input target does not save');
   console.log('Comparison quick checks save one owner answer per press and count them per candidate.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

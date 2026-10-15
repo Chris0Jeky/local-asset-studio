@@ -87,6 +87,7 @@
   q('#uxIntent').onchange=()=>{intentId=q('#uxIntent').value;renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===intentId)?.hint||'Every installed and planned recipe. Readiness is checked separately.';};
   after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();dismissSecondPicture();syncCreate();renderDraftNotice();});
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
+  after('beginParallax',()=>{draftDirty=true;saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
   // #1100: loading a recipe still loads its wording, but wording you wrote gets one explicit way back until you type, dismiss
   // or put it back (reversible choice; nothing is carried over silently, nothing is sent). "Yours" means different from the
@@ -364,9 +365,9 @@
     // Start runs exactly what was prepared: any later change to the pair, recipes, seeds or wording withdraws it.
     const fresh=!!planPrepared&&!planPrepared.started&&planPrepared.stamp===planStamp();
     q('#uxPlanStart').hidden=!fresh;q('#uxPlanStart').disabled=busy;
-    if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Runs & review, not started.');}
+    if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;if(!planPrepared.failure)planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Runs & review, not started.');}
     // Undoing the change brings Start back with its Prepared line; the next change is announced again (#1198).
-    else if(fresh&&planPrepared.stale){planPrepared.stale=false;planStatus(planPrepared.message);}
+    else if(fresh&&planPrepared.stale){planPrepared.stale=false;delete planPrepared.failure;planStatus(planPrepared.message);}
   }
   q('#uxPlanEngines').onchange=e=>{const box=e.target.closest('[data-ux-plan-engine]');if(!box)return;if(box.checked)planChoice.add(box.dataset.uxPlanEngine);else planChoice.delete(box.dataset.uxPlanEngine);syncCombinePlan();};
   q('#uxPlanSeeds').oninput=()=>syncCombinePlan();
@@ -402,7 +403,7 @@
       const project=await post('/api/production/'+encodeURIComponent(prepared.project.id)+'/start',{});begun=true;
       planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Runs & review.');
       await refresh();
-    }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;planStatus(error.message);announce(error.message,true);}}
+    }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;prepared.failure=error.message;planStatus(error.message);announce(error.message,true);}}
     finally{planBusy=false;syncCombinePlan();}
   };
   // #1203: this PC's owner answers for every picture the recipe made, e.g. "pose 3/4 · face 1/4"; none reads as such (K14).
@@ -1223,7 +1224,7 @@
       else{q('#uxSourceSlot').innerHTML=sourceSlotOptions();q('#uxSourceSlot').value=String(remaining);q('#uxPickerStatus').textContent='Attached. Picture '+(remaining+1)+' of '+referenceRecords.length+' is still empty; pick its image or close this picker.';announce('Saved source attached. No generation submitted.');}}catch(err){q('#uxPickerStatus').textContent=err.message;}finally{pickerBusy=false;button.disabled=false;syncReady();}};
   picker.addEventListener('cancel',e=>{if(pickerBusy)e.preventDefault();});picker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if(!pickerBusy)picker.close();}});
   // Drafts are data only, scoped to the server's workspace identity. No File bytes.
-  function snapshot(){if(!selected)return null;return U.normalizeDraft({version:1,updatedAt:Date.now(),recipe:{preset:selected.id,...continuationPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch:q('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()},pendingInputs:['reference','lastReference'].filter(id=>pendingInputs.has(id)||(q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded))),templateHash:recipeTemplateHash});}
+  function snapshot(){if(!selected)return null;return U.normalizeDraft({version:1,updatedAt:Date.now(),recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch:q('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()},pendingInputs:['reference','lastReference'].filter(id=>pendingInputs.has(id)||(q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded))),templateHash:recipeTemplateHash});}
   // This remains the sole owner of Create mutation; commands persist before adoption.
   function setupStamp(){return JSON.stringify([workbenchStamp(),referenceEpoch,referencePending,selectionEpoch,recipeTemplateHash,parentByInput,typeof backendActive==='undefined'?null:backendActive]);}
   function setupBusy(){return !!referencePending||!!pickerBusy||!!restoring||!!submitting||!!handoffBusy||typeof backendSwitching!=='undefined'&&!!backendSwitching;}
@@ -1231,6 +1232,7 @@
     if(setupBusy()||expectedStamp!==setupStamp())throw Error('Create changed before loading the shared revision. Current inputs were preserved.');
     const draft=U.normalizeDraft(JSON.parse(JSON.stringify(value))),target=catalog?.presets.find(p=>p.id===draft?.recipe.preset);
     if(!draft||draft.pendingInputs.length||!target)throw Error('The shared revision cannot be represented by this editor. Export and inspect it first.');
+    if(draft.recipe.tile&&!target.tile_route||draft.recipe.parallax&&!target.parallax_route)throw Error('The prepared plan does not belong to this recipe. No settings were changed.');
     if(typeof backendActive==='undefined'||backendId!==backendActive)throw Error('The active backend changed before loading this revision.');
     const controls=draft.recipe.controls,slots=target.reference_slots||[];
     if(draft.templateHash&&target.continuation_capability?.template_sha256!==draft.templateHash)throw Error('The browser catalog has a different graph. Refresh and review before loading.');
@@ -1250,6 +1252,8 @@
       if(slots.length&&draft.recipe.references.length)referenceRecords=draft.recipe.references.map(r=>({...r}));
       parentAssets=[...draft.recipe.parent_assets];parentByInput={...(draft.recipe.parent_by_input||{})};
       continuationState=draft.recipe.continuation?StudioContinuation.normalize(draft.recipe.continuation):null;continuationSource=null;sourceReadError='';
+      tileState=draft.recipe.tile||null;parallaxState=draft.recipe.parallax||null;
+      if(typeof StudioLooks!=='undefined')StudioLooks.restoreApplication(draft.recipe.look_application,target.id);
       recipeTemplateHash=draft.templateHash;pendingInputs.clear();q('#batch').value=String(draft.recipe.batch);
       renderReferenceSlots();updateLoraHints();syncCreate();
       const actual=values();for(const key of Object.keys(controls))if(String(actual[key]??'')!==String(controls[key]))throw Error('The editor could not retain control '+key+'. Inspect the Workspace revision and browser backup.');

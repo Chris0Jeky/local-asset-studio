@@ -1,7 +1,7 @@
 # FINDINGS — LAS Create / SFW stack week-delta 2026-09-30
 
 Research only. No weights. Scrape window ~23:44–23:47 BST (Europe/London, UTC+1).  
-Prior exclusion: 382 ids from 09-21 / 09-23 / 09-24 / 09-27 packs → `raw/_prior_ids.txt`.  
+Prior exclusion: 382 ids from 09-21 / 09-23 / 09-24 / 09-27 packs → `raw/_prior_ids.txt`. That file is not in this repository; the 382 / 304 / ~165 figures are historical handoff claims, not a cache a reader can open.  
 Unique models seen this run: **304** · NEW (not in prior): **~165** (noisy; curated below).
 
 Stack match targets: WAI v170 / Illustrious · NoobAI · Pony V6 · Animagine · RealVis V5 · Klein FP8 · Z-Image · Qwen Edit-2511 / QI-2.1 · Pixel Art XL · Xinsir ControlNets.

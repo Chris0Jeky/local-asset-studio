@@ -1,5 +1,7 @@
 # SOURCES — Civitai week-delta 2026-09-30 (BST)
 
+**Availability:** `raw/_prior_ids.txt`, `raw/_curated_new.json`, `raw/hf_pruna_README.md` and the `raw/*.json` list snapshots are not in this repository. The 382-id count is a historical handoff claim. GitHub and Hugging Face links below are sources a reader can open. This note does not reconstruct the missing cache.
+
 ## Rules
 - Public Civitai API only: `https://civitai.com/api/v1/models`
 - User-Agent: `Mozilla/5.0 (compatible; LAS-scavenge/2026-09-30)`

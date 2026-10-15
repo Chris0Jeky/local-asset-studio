@@ -50,6 +50,10 @@ class AVTests(unittest.TestCase):
     def test_nonfinite(self):
         self.doc['master_gain_db']=float('nan')
         with self.assertRaises(ValueError):p.validate(self.doc)
+    def test_nonfinite_number_says_why(self):
+        with self.assertRaisesRegex(ValueError,'master gain: not a finite number'):p.number(float('nan'),-60,6,'master gain')
+        with self.assertRaisesRegex(ValueError,'master gain: not a finite number'):p.number(float('inf'),-60,6,'master gain')
+        with self.assertRaisesRegex(ValueError,r'master gain: outside -60\.\.6'):p.number(7,-60,6,'master gain')
     def test_bool_number(self):
         self.doc['shots'][0]['frames']=True
         with self.assertRaises(ValueError):p.validate(self.doc)
@@ -65,6 +69,9 @@ class AVTests(unittest.TestCase):
     def test_first_transition(self):
         self.doc['shots'][0]['transition_frames']=1
         with self.assertRaises(ValueError):p.validate(self.doc)
+    def test_image_source_in_must_be_zero(self):
+        self.doc['shots'][0]['source_in']=1
+        with self.assertRaisesRegex(ValueError,'Still image source_in must be zero'):p.validate(self.doc)
     def test_transition_consumes_shot(self):
         self.doc['shots'][1]['transition_frames']=60
         with self.assertRaises(ValueError):p.validate(self.doc)
@@ -89,9 +96,16 @@ class AVTests(unittest.TestCase):
         try:link.symlink_to(path)
         except OSError:self.skipTest('Symlinks not supported')
         with self.assertRaises(ValueError):p.safe_path(self.root,'escaped')
+    def test_empty_asset_rejected(self):
+        path=self.root/'media'/'empty.png';path.write_bytes(b'')
+        self.doc['assets']['shot0']['path']='media/empty.png'
+        with self.assertRaisesRegex(ValueError,'Empty/oversize input'):p.validate(self.doc,self.root)
     def test_hash_mismatch(self):
         self.doc['assets']['music']['sha256']='0'*64
         with self.assertRaises(ValueError):p.validate(self.doc,self.root)
+    def test_suffix_kind_mismatch_rejected(self):
+        self.doc['assets']['shot0']['path']='media/shot-0.jpg'
+        with self.assertRaisesRegex(ValueError,'Use PNG, MP4 or WAV interchange'):p.validate(self.doc)
     def test_edit_is_immutable(self):
         before=p.digest(self.doc);r=p.edit(self.doc,before,'audio','music-clip','gain_db',-24)
         self.assertEqual(p.digest(self.doc),before);self.assertNotEqual(r['revision'],before)
@@ -100,6 +114,10 @@ class AVTests(unittest.TestCase):
         with self.assertRaises(ValueError):p.edit(self.doc,'wrong','audio','music-clip','gain_db',-24)
     def test_unsupported_edit(self):
         with self.assertRaises(ValueError):p.edit(self.doc,p.digest(self.doc),'audio','music-clip','asset','fx')
+    def test_edit_rejects_out_of_range_value(self):
+        before=p.digest(self.doc)
+        with self.assertRaisesRegex(ValueError,'clip gain: outside -60..6'):p.edit(self.doc,before,'audio','music-clip','gain_db',999)
+        self.assertEqual(p.digest(self.doc),before)
     def test_no_overwrite(self):
         path=self.root/'unique.json';p.write_new(path,{})
         with self.assertRaises(FileExistsError):p.write_new(path,{})

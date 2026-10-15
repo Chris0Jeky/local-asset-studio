@@ -56,6 +56,7 @@
     const context=document.createElement('script');context.src='/static/presentation-context.js';context.onload=()=>{const ambience=document.createElement('script');ambience.src='/static/workshop-ambience-policy.js';ambience.onload=loadWorkshop;ambience.onerror=loadWorkshop;document.body.append(ambience);};document.body.append(context);
     const disclosureStyle=document.createElement('link');disclosureStyle.rel='stylesheet';disclosureStyle.href='/static/create-progressive-disclosure.css';document.head.append(disclosureStyle);
     const disclosure=document.createElement('script');disclosure.src='/static/create-progressive-disclosure.js';document.body.append(disclosure);
+    const parallaxRecovery=document.createElement('script');parallaxRecovery.src='/static/parallax-stage-recovery.js';document.body.append(parallaxRecovery);
     const proposalStyle=document.createElement('link');proposalStyle.rel='stylesheet';proposalStyle.href='/static/setup-proposal.css';document.head.append(proposalStyle);
     const proposal=document.createElement('script');proposal.src='/static/setup-proposal.js';proposal.onload=()=>{const apply=document.createElement('script');apply.src='/static/setup-apply.js';apply.onload=()=>{window.StudioSetupApply.mount(window);window.StudioSetupProposal.mount(window);};document.body.append(apply);};document.body.append(proposal);
     const css=document.createElement('link');css.rel='stylesheet';css.href='/static/bundle-explorer.css';document.head.append(css);

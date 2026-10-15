@@ -125,7 +125,7 @@ function renderPresets() {
   const focused = document.activeElement?.closest?.('#presetList [data-id]')?.dataset.id;
   $('#presetList').innerHTML = list.map(p => {
     const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [];
-    const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Checksum differs</em>' : '';
+    const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Model verification needs attention</em>' : '';
     return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '"><b>' + esc(p.name) + '</b><span>' + esc(p.description) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span><em class="badge ' + (p.verified ? 'tested' : '') + '">' + (p.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</em>' + pinBadge + '</div></button>';
   }).join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
   if (focused) ([...$('#presetList').querySelectorAll('[data-id]')].find(button => button.dataset.id === focused) || $('#presetSearch'))?.focus({preventScroll:true});
@@ -452,15 +452,17 @@ async function mixedBatchAction(button) {
 // While held, #recentHeld (outside #gallery, height always reserved, so no card moves) counts what the release will
 // show against the last full render: "1 run finished · 1 new run · 2 other changes, shown when the clip stops".
 // A run counts as finished once completed; new means a new non-problem run; any other status, cancel or kept-output
-// difference is a change. Problems-only changes never raise it (Problems is live); running messages are not counted.
+// difference is a change. A problem job counts only new kept outputs; its status does not (Problems is live). A gallery card
+// removed during the hold and later returned to its shown key counts as a change. Running messages are not counted.
 // The release and every forced render clear it; unchanged text is never rewritten (owner decision, 27 Sep 2026).
-const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer',RECENT_PROBLEM=['failed','partial','uncertain','abandoned'];let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='',recentShownKeys=new Map();
+const RECENT_STEP=10,JOB_FOCUSABLE='button,a,input,select,textarea,summary,video,audio,model-viewer',RECENT_PROBLEM=['failed','partial','uncertain','abandoned'];let recentShown=RECENT_STEP,jobsRenderWait=null,problemsShown='',recentShownKeys=new Map(),recentHeldRemoved=new Set();
 function jobControlKey(el){
   if(!el?.dataset||!el.tagName)return null;const owner=el.closest?.('[data-output],[data-problem]');
   return [owner?.dataset.output??(owner?'problem:'+owner.dataset.problem:''),el.tagName,String(el.className||'').split(/\s+/)[0],...Object.keys(el.dataset).filter(k=>k!=='job'&&k!=='index').sort().map(k=>k+'='+el.dataset[k])].join('|');
 }
 function renderJobs(signature=JSON.stringify(jobs),force=false) {
-  if(signature===jobsSignature){showRecentHeld('');return;}
+  if(typeof recentHeldRemoved==='undefined')recentHeldRemoved=new Set(); // journeys load renderJobs alone
+  if(signature===jobsSignature&&!recentHeldRemoved.size){showRecentHeld('');return;}
   const gallery=$('#gallery'),host=document.getElementById?.('jobProblemsHost')||null,playing=force?null:[...(gallery.querySelectorAll?.('video,audio')||[])].find(m=>!m.paused&&!m.ended&&!m.loop&&!m.error);
   const focusHosts=[gallery,host].filter(Boolean),active=document.activeElement,focusKey=focusHosts.some(h=>h.contains?.(active))?jobControlKey(active):null,focusInGallery=gallery.contains?.(active);
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
@@ -493,9 +495,9 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   if(playing){
     if(jobsRenderWait!==playing){jobsRenderWait=playing;const resume=()=>{playing.removeEventListener('pause',resume);playing.removeEventListener('ended',resume);playing.removeEventListener('error',resume);playing.removeEventListener('emptied',resume);if(jobsRenderWait===playing){jobsRenderWait=null;renderJobs();}};playing.addEventListener('pause',resume);playing.addEventListener('ended',resume);playing.addEventListener('error',resume);playing.addEventListener('emptied',resume);}
     showRecentHeld(recentWaiting(keys));
-    if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host){host.innerHTML=problemMarkup;gallery.querySelector?.('#jobProblems')?.remove();}else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}for(const p of problems)for(const el of gallery.querySelectorAll?.('[data-problem]')||[])if(el.dataset?.problem===p.job.id&&!el.closest?.('#jobProblems'))el.remove();}
+    if(problemMarkup!==problemsShown){problemsShown=problemMarkup;if(host){host.innerHTML=problemMarkup;gallery.querySelector?.('#jobProblems')?.remove();}else{const old=gallery.querySelector?.('#jobProblems');if(old){if(problemMarkup)old.outerHTML=problemMarkup;else old.remove();}else if(problemMarkup)gallery.insertAdjacentHTML('beforeend',problemMarkup);}for(const p of problems)for(const el of gallery.querySelectorAll?.('[data-problem]')||[])if(el.dataset?.problem===p.job.id&&!el.closest?.('#jobProblems')){recentHeldRemoved.add(p.job.id);el.remove();}}
   } else {
-  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;recentShownKeys=keys;showRecentHeld('');
+  jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;recentShownKeys=keys;recentHeldRemoved.clear();showRecentHeld('');
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
   gallery.className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
   gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
@@ -509,10 +511,10 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   if(typeof renderRunCancel==='function')renderRunCancel();   // journeys load renderJobs alone
 }
 function recentWaiting(keys){
-  const status=key=>String(key||'').split('|')[0],problem=key=>RECENT_PROBLEM.includes(status(key));let finished=0,started=0,other=0;
-  for(const [id,key] of keys){if(problem(key))continue;const prev=recentShownKeys.get(id);if(status(key)==='completed'&&status(prev)!=='completed')finished++;else if(!prev)started++;else if(prev!==key)other++;}
+  const status=key=>String(key||'').split('|')[0],kept=key=>(String(key||'').split('|')[2]||'').split(',').filter(Boolean),problem=key=>RECENT_PROBLEM.includes(status(key));let finished=0,started=0,outputs=0,other=0;
+  for(const [id,key] of keys){const prev=recentShownKeys.get(id);if(problem(key)){const before=new Set(kept(prev));outputs+=kept(key).filter(item=>!before.has(item)).length;continue;}if(status(key)==='completed'&&status(prev)!=='completed')finished++;else if(!prev)started++;else if(prev!==key||recentHeldRemoved.has(id))other++;}
   for(const [id,key] of recentShownKeys)if(!keys.has(id)&&!problem(key))other++;
-  const parts=[];if(finished)parts.push(finished+(finished===1?' run finished':' runs finished'));if(started)parts.push(started+(started===1?' new run':' new runs'));if(other)parts.push(other+(parts.length?' other':'')+(other===1?' change':' changes'));
+  const parts=[];if(finished)parts.push(finished+(finished===1?' run finished':' runs finished'));if(started)parts.push(started+(started===1?' new run':' new runs'));if(outputs)parts.push(outputs+(outputs===1?' new output':' new outputs'));if(other)parts.push(other+(parts.length?' other':'')+(other===1?' change':' changes'));
   return parts.length?parts.join(' · ')+', shown when the clip stops':'';
 }
 // Stateless on purpose (journeys load renderJobs alone): the line's own text is the record, so equal text is never rewritten.
@@ -637,7 +639,12 @@ function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
   if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
+  const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(s):(s.tile!=null||s.parallax!=null?null:{});
+  const target=catalog.presets.find(p=>p.id===s.preset);
+  if(!prepared||prepared.tile&&!target.tile_route||prepared.parallax&&!target.parallax_route)throw Error('Invalid saved prepared plan for this recipe. Prepare it again from the Asset library.');
   selectPreset(s.preset);
+  tileState=prepared.tile||null;parallaxState=prepared.parallax||null;
+
   if(typeof StudioLooks!=='undefined')StudioLooks.restoreApplication(s.look_application,s.preset);
   if(s.continuation!=null){continuationState=StudioContinuation.normalize(s.continuation);continuationSource=null;}
   parentAssets=Array.isArray(s.parent_assets)?s.parent_assets.filter(id=>typeof id==='string'):[];
@@ -712,6 +719,7 @@ function continuationBlockerItems(){
   // Source-free text recipes need wording too; image-only recipes have no binding.
   if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Asset library.'}];
   if(selected?.parallax_route&&!parallaxState)return [{code:'parallax',message:'Start from Make parallax layers on a picture in the Asset library.'}];
+  if(tileState||parallaxState){const problem=StudioUX.preparedBlocker({preset:selected.id,...tilePayload(),...parallaxPayload(),controls:values(),parent_assets:parentAssets,batch:$('#batch').value});if(problem)return [{code:tileState?'tile':'parallax',message:problem}];}
   if(!continuationState)return selected?.positive&&!String($('#positive')?.value||'').trim()?[{code:'wording',message:'Add a prompt to generate.'}]:[];
   const controls=values();
   if(selected?.last_reference&&!controls.last_reference&&$('#lastReference').files?.length)controls.last_reference='pending-local-upload';
@@ -860,9 +868,9 @@ function checkedSetupControls() {
 }
 function setupMessage(text,error=false){message(text,error);$('#setupStatus').textContent=text;$('#setupStatus').classList.toggle('error',error);}
 let savingSetup=false; // A double click stored two setups: each save without an id gets a fresh one.
-$('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
+$('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load],{guessLegacyParent:true});if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
-$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
+$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,tile:recipe.tile,parallax:recipe.parallax,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
 function configureReadPolling(){
   if(!window.ReadPoller||readPoller)return;

@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const StudioContinuation = require('../app/static/continuation-core.js');
 const StudioAssetRecovery = require('../app/static/asset-recovery.js');
+const StudioUX = require('../app/static/studio-core.js');
 
 const templateSha = 'b'.repeat(64);
 const operation = id => id === 'plain' ? 'new-image'
@@ -56,7 +57,7 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
   };
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener(name, handler) {if (name === 'click') clickHandler = handler;}},
-    URL, Blob, StudioContinuation, StudioAssetRecovery,
+    URL, Blob, StudioContinuation, StudioAssetRecovery, StudioUX,
     sessionStorage: (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map()),
     window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
@@ -1287,6 +1288,66 @@ async function recentRunsHeldLineCountsAFinishedRun() {
   assert.equal(line.textContent, '3 runs finished, shown when the clip stops', 'A run that appears already finished counts as finished');
 }
 
+// #1215: a partial or uncertain job's new kept outputs wait with the clip. Its status stays off the line.
+async function recentRunsHeldLineCountsPartialOutputs() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  const outputs = (prefix, count) => Array.from({length: count}, (_, i) => ({asset_id: prefix + '-' + i, filename: prefix + '-' + i + '.png', media_type: 'image'}));
+  const batch = count => ({id: 'batch', preset_name: 'Recipe batch', status: 'partial', message: 'Partial', outputs: outputs('batch', count), prompt_ids: ['p-batch'], controls: {positive: 'prompt batch'}, created_at: 4});
+  await s.poll([batch(3), recentJob('clip', 1, 'video')]);
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([batch(4), recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(line.textContent, '1 new output, shown when the clip stops', 'One new kept output on a partial job is waiting');
+  await s.poll([batch(3), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '', 'The same kept outputs leave nothing waiting');
+  const seeded = {...runningJob('seeded'), controls: {positive: 'prompt seeded'}};
+  await s.poll([seeded, batch(3), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '1 new run, shown when the clip stops', 'A running job with no outputs is a new run');
+  await s.poll([{...seeded, status: 'uncertain', message: 'Three kept', outputs: outputs('seed', 3)}, batch(3), recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '3 new outputs, shown when the clip stops', 'An uncertain job counts each new kept output and not a finished run');
+  await s.poll([{...seeded, status: 'uncertain', message: 'Three kept', outputs: outputs('seed', 3)}, batch(3), {id: 'bad', preset_name: 'Bad', status: 'failed', message: 'OOM', outputs: [], prompt_ids: [], created_at: 3, can_put_away: true, put_away: false}, recentJob('clip', 1, 'video')]);
+  assert.equal(line.textContent, '3 new outputs, shown when the clip stops', 'A failure with no outputs stays off the line');
+  assert.ok(s.nodes().includes(video) && !video.paused, 'The playing clip is untouched');
+}
+
+// #1215: a running card removed while held, then restored to the same key, is still missing until the clip stops.
+async function recentRunsHeldLineCountsAReturnedRun() {
+  const s = recentRunsSandbox(), line = heldLine(s);
+  const running = runningJob('back');
+  await s.poll([running, recentJob('clip', 1, 'video')]);
+  const card = s.nodes().find(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'back');
+  assert.ok(card, 'The running job has a gallery card');
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = false;
+  const writes = s.writes;
+  await s.poll([{...running, status: 'failed', message: 'OOM', can_put_away: true, put_away: false}, recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The gallery still waits for the clip');
+  assert.equal(s.nodes().includes(card), false, 'The gallery card leaves while the job is a problem');
+  assert.equal(line.textContent, '', 'A failure with no outputs stays off the line');
+  await s.poll([running, recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The returned run still waits for the clip');
+  assert.equal(line.textContent, '1 change, shown when the clip stops', 'A run that comes back is counted');
+  video.paused = true; video.listeners.pause[0]();
+  assert.equal(line.textContent, '', 'The release render clears the line');
+  assert.ok(s.nodes().some(node => node.tagName === 'ARTICLE' && node.dataset.problem === 'back'), 'The returned run is on screen again');
+}
+
+// Journeys paste renderJobs alone. The held-run set has to exist there or the empty gallery never renders.
+function renderJobsSliceRendersTheEmptyGallery() {
+  const source = fs.readFileSync(path.join(__dirname, '../app/static/app.js'), 'utf8');
+  const start = source.indexOf('function renderJobs(');
+  const render = source.slice(start, source.indexOf('\nasync function refreshJobs', start));
+  const gallery = { className: '', html: '', set innerHTML(value) { this.html = value; }, get innerHTML() { return this.html; }, querySelector() { return null; }, querySelectorAll() { return []; }, contains() { return false; } };
+  const document = { activeElement: null, getElementById(id) { return id === 'gallery' ? gallery : null; }, querySelector(sel) { return sel === '#gallery' ? gallery : null; }, querySelectorAll() { return []; } };
+  const context = vm.createContext({ document });
+  vm.runInContext('const $=s=>document.querySelector(s);let jobs=[],jobsSignature=null;function renderCompare(){}' + render + ';renderJobs();', context);
+  assert.match(gallery.html, /Generate/);
+  assert.match(gallery.html, /import/);
+  assert.match(gallery.html, /Continue with this/);
+}
+
 async function recentRunsHeldLineClearsOnRelease() {
   const s = recentRunsSandbox(), line = heldLine(s);
   await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
@@ -1496,8 +1557,8 @@ async function parallaxLateRepliesKeepCreateEdits() {
     const {element, requests, run, context} = sandbox(null, null);
     installSetupStamp(run);
     run("var backendActive='primary';catalog.presets.push({id:'parallax-route',name:'Parallax layers',modality:'image',parallax_route:true,reference:['14','image'],positive:['4','text'],seed:['10','seed'],width:['10','width'],height:['10','height'],defaults:{}})");
-    const plan = {plan_id:'old-plan',preset_id:'parallax-route',source_asset_id:'source-asset'};
-    const stage = {plan,claim:{...plan,stage:'plate'},stage:'plate',words:'plate words',file:'source.png',width:1344,height:768,preset_id:'parallax-route',flag:'fixture'};
+    const plan = {version:1,plan_id:'a'.repeat(64),preset_id:'parallax-route',source_asset_id:'source-asset',source_sha256:'b'.repeat(64),source_file:'c'.repeat(32)+'_source.png',width:1344,height:768,objects:'the desk',view_polygons:[]};
+    const stage = {plan,claim:{...plan,stage:'plate'},stage:'plate',words:'plate words',file:plan.source_file,width:1344,height:768,preset_id:'parallax-route',flag:'fixture'};
     run('beginParallax(' + JSON.stringify(stage) + ')');
     const original = JSON.parse(run('JSON.stringify(values())'));
     let release;
@@ -1544,6 +1605,9 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await recentRunsHeldProblemsReplaceTheGalleryProblems();
   await recentRunsHostHeldProblemsDropTheStaleGalleryProblems();
   await recentRunsHeldLineCountsAFinishedRun();
+  await recentRunsHeldLineCountsPartialOutputs();
+  await recentRunsHeldLineCountsAReturnedRun();
+  renderJobsSliceRendersTheEmptyGallery();
   await recentRunsHeldLineClearsOnRelease();
   await recentRunsHeldLineClearsOnEveryRelease();
   await recentRunsHeldLineSurvivesAnAssetRefresh();
