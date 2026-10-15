@@ -53,8 +53,10 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         assets = AssetWorkspace(Path(tmp) / 'assets')
         studio = SimpleNamespace(root=ROOT, assets=assets, catalog=lambda: fixture.CATALOG)
-        before = looks.listing(studio)['looks'][0]
-        seed = json.loads((ROOT / 'presets/looks.json').read_text(encoding='utf-8'))['looks'][0]
+        # Several looks ship (#1400); listing() sorts by name, so pick Night Shift by id.
+        night = 'look-night-shift-retro-anime'
+        before = next(look for look in looks.listing(studio)['looks'] if look['id'] == night)
+        seed = next(look for look in json.loads((ROOT / 'presets/looks.json').read_text(encoding='utf-8'))['looks'] if look['id'] == night)
         check(before['lineage'] == seed['lineage'] and before['body'] == seed['body'], 'Actual SQLite seed preserves original recipe and Z2 lineage')
         class Handler(fixture.Handler):
             # Production remains pinned to 8191; this disposable test owns a random loopback port.

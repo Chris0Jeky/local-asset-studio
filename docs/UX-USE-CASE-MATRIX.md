@@ -1,5 +1,28 @@
 # UX use-case matrix
 
+## Make: a goal-first way in — 15 October 2026
+
+Owner ask (15 October 2026): the Studio was too clunky; someone who wants, say, a high-end anime picture should get there
+without knowing models, adapters or quality tags. **Make** is now the first screen (`#make`; the sidebar's first entry, and
+Overview stays one press away).
+
+- **Goals by outcome**: Anime character, Scene or background, Painted illustration, Photo, Game item or icon; and, from a
+  picture you have: Change a picture, Fix or upscale, Restyle, Character in a new pose, Animate, Picture to 3D.
+- **Looks by picture**: each goal lists curated looks (`presets/looks.json`, 23 shipped) as their example pictures, with a plain
+  name, how fast they are and whether they have run on this PC. A look carries the recipe, its adapters, sampler settings and
+  the model's own quality wording around a `{scene}` slot.
+- **One sentence, one press**: the user types the scene (or borrows the look's example), picks a shape and how many, and presses
+  **Generate** (the only press that submits: `/api/looks/prepare`, then `/api/jobs`). *Open in the full editor instead* loads the
+  same prepared request into Create without running it.
+- **Next steps on each result**: Vary subtle / strong, Fix details or upscale, Review and keep, and under *More*: change one
+  thing, restyle, put in a new pose, animate. All reuse the existing Vary and continuation handoffs.
+- Picture goals list your newest pictures; choosing one opens the existing handoff on that task.
+
+`python tests/studio_use_cases.py` passed **21/21** journeys with **zero generation submissions and zero page errors**. The new
+`make-an-anime-character` journey takes 3 clicks: goal, look, *Open in the full editor instead*, and asserts that the WAI look's
+recipe, size and exact wording (template + sentence) are prepared. A live run on this PC (15 October 2026, WAI look, 4 pictures,
+job `0e926110`) finished in about 2 minutes; agent-inspected only, not art acceptance.
+
 ## Seam band choice and a looser Night Shift — 27 September 2026
 
 Refs #1220 and #1221 (owner answers, 27 September 2026, after the live renders).

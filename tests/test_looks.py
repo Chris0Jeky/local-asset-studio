@@ -241,10 +241,48 @@ class LookTests(unittest.TestCase):
             self.assertIn(first.assets.card_digest(first.assets.card(NIGHT)), night["supersedes"], "the update names the version #1224 seeded")
             if case == "edited": looks.command(first, {"action": "edit", "id": NIGHT, "expected_revision": 0, "name": "My Night Shift"})
             (root / "presets/looks.json").write_text(json.dumps(shipped), encoding="utf-8")
-            outcomes[case] = looks.listing(server.Studio(root))["looks"][0]
-            self.assertEqual(looks.listing(server.Studio(root))["looks"][0]["revision"], outcomes[case]["revision"], "a later start changes nothing")
+            pick = lambda studio: next(entry for entry in looks.listing(studio)["looks"] if entry["id"] == NIGHT)
+            outcomes[case] = pick(server.Studio(root))
+            self.assertEqual(pick(server.Studio(root))["revision"], outcomes[case]["revision"], "a later start changes nothing")
         self.assertEqual((outcomes["untouched"]["revision"], outcomes["untouched"]["body"], outcomes["untouched"]["lineage"]), (1, night["body"], night["lineage"]))
         self.assertEqual((outcomes["edited"]["name"], outcomes["edited"]["revision"], "{quiet_wall}" in outcomes["edited"]["body"]["template"]), ("My Night Shift", 1, False))
+
+    def test_every_shipped_look_is_valid_against_the_real_catalog_and_its_source(self):
+        """Curated looks (goal-first Make screen): each validates on its real recipe, has one {scene} slot, and records where it came from."""
+        shipped = json.loads((ROOT / "presets/looks.json").read_text(encoding="utf-8"))["looks"]
+        catalog = {p["id"]: p for p in json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))["presets"]}
+        recipes = {r["id"]: r for r in json.loads((ROOT / "presets/recipes.json").read_text(encoding="utf-8"))["recipes"]}
+        ids = [entry["id"] for entry in shipped]
+        self.assertEqual(len(ids), len(set(ids))); self.assertGreaterEqual(len(ids), 23)
+        for entry in shipped:
+            with self.subTest(look=entry["id"]):
+                body = looks.validate_body(entry["body"], catalog[entry["body"]["preset_id"]]); looks.validate_lineage(entry["lineage"])
+                self.assertEqual(body["template"].count(looks.SLOT), 1)
+                self.assertTrue(body["scene_example"] and body["source_prompt"] and body["notes"])
+                self.assertIn(body["scene_example"].rstrip("."), looks.compose(body["template"], body["scene_example"], body.get("options", ())))
+                recipe = recipes.get(entry["id"].removeprefix("look-"))
+                if recipe:   # a recipe look carries the recipe's own preset, controls, negative and wording verbatim
+                    controls = {k: v for k, v in recipe["controls"].items() if k not in ("positive", "negative")}
+                    self.assertEqual((body["preset_id"], body["controls"], body["negative"], body["source_prompt"]),
+                                     (recipe["preset_id"], controls, recipe["controls"].get("negative", ""), recipe["controls"]["positive"]))
+                    self.assertIn({"role": "evidence", "evidence": "presets/recipes.json · " + recipe["id"]}, entry["lineage"])
+                    self.assertNotIn(recipe["name"], entry["name"])
+        self.assertTrue({"look-preset-stylized-prop", "look-preset-pixel-lora", "look-preset-realvis", "look-preset-zimage-fast"} <= set(ids))
+
+    def test_a_shipped_look_prepares_through_the_route_on_the_real_catalog(self):
+        root = Path(tempfile.mkdtemp(dir=self.tmp.name))
+        for folder in ("presets", "config"): (root / folder).mkdir()
+        for name in ("catalog.json", "looks.json"): (root / "presets" / name).write_bytes((ROOT / "presets" / name).read_bytes())
+        (root / "config/local.json").write_bytes((self.root / "config/local.json").read_bytes())
+        self.studio = server.Studio(root); self.studio._request = lambda *a, **k: self.requests.append(a) or {}
+        status, listed = self.route("GET", "/api/looks")
+        self.assertEqual((status, listed["seed_errors"]), (200, []))
+        self.assertTrue(all(entry["usable"] for entry in listed["looks"]), [e["unusable_reason"] for e in listed["looks"] if not e["usable"]])
+        status, ready = self.route("POST", "/api/looks/prepare", {"id": "look-wai-fantasy-portrait", "scene": "a knight with a lantern"})
+        self.assertEqual((status, ready["preset_id"], ready["generation_submitted"]), (200, "wai", False))
+        self.assertEqual(ready["controls"]["positive"], "original character, a knight with a lantern, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality")
+        self.assertEqual((ready["controls"]["negative"], ready["controls"]["seed"]), ("bad quality, worst quality, worst detail, sketch, censor", 20260931))
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
 
 
 if __name__ == "__main__":

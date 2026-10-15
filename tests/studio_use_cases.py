@@ -1440,11 +1440,37 @@ def _parallax(c):
         {k: state[k] for k in ('preset', 'stage', 'source', 'parents', 'view')}, why or 'no control', waiting or 'no control', drawn or 'none', len(submitted))
 
 
+MAKE_SCENE = 'an adult elf archer with long white hair, standing on a cliff at sunset'
 LOOK_SCENE = ('a small rooftop garden at night; at the right edge a rusty water tank and a warm amber lamp over a door, '
               'and beyond the railing a distant elevated train')
 LOOK_STATE = """() => ({preset: selected?.id, positive: document.querySelector('#positive').value,
   seed: getControl('seed')?.value, width: getControl('width')?.value, height: getControl('height')?.value,
   status: document.querySelector('#lookStatus').textContent, notice: document.querySelector('#status').textContent})"""
+
+
+@driver('make-an-anime-character')
+def _make(c):
+    """Owner ask, 15 Oct 2026: a goal-first way in. Goal, look by picture, one sentence; the look carries model, adapters and
+    quality wording. Generate is the one press that runs, so the journey proves the prepared request through the full editor."""
+    import looks
+    c.boot('#make')
+    c.need_recipe('wai')
+    c.act('[data-make-goal="character"]', note='say this is an anime character')
+    card = '[data-make-look="look-wai-fantasy-portrait"]'
+    c.act(card, 'read', note=c.page.evaluate("document.querySelector('%s')?.innerText || ''" % card)[:160])
+    pictures = c.page.evaluate("document.querySelectorAll('#makeView .make-look img').length")
+    c.act(card, note='choose the look by its picture')
+    c.act('#makeScene', 'fill', typed=MAKE_SCENE, note='describe the picture in plain words')
+    c.act('#makeGenerate', 'read', note='Generate is the one press that runs; never pressed here')
+    ready = c.page.evaluate("!document.querySelector('#makeGenerate').disabled")
+    c.act('#makeEditor', note='open the prepared picture in the full editor')
+    c.page.wait_for_function("location.hash === '#create' && selected?.id === 'wai'", timeout=5000)
+    state = c.page.evaluate("({preset: selected.id, positive: document.querySelector('#positive').value, seed: getControl('seed')?.value, width: getControl('width')?.value})")
+    c.act('#positive', 'read', note=state['positive'][:200])
+    shipped = next(entry for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks'] if entry['id'] == 'look-wai-fantasy-portrait')
+    wording = looks.compose(shipped['body']['template'], MAKE_SCENE, shipped['body'].get('options', []))
+    ok = state['preset'] == 'wai' and state['positive'] == wording and ready and pictures > 0 and state['width'] == str(shipped['body']['controls'].get('width'))
+    return ok, 'look pictures %d; Generate ready %s; prepared %s; wording from the look %s' % (pictures, ready, {k: state[k] for k in ('preset', 'width')}, state['positive'] == wording)
 
 
 @driver('new-scene-in-an-accepted-look')

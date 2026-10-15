@@ -47,6 +47,762 @@
           "evidence": "Owner asked to loosen the look after a live render where 'a rain-soaked arcade entrance' came out as a shutter. The quiet-wall sentence became an optional line, off by default; the template before this change is tests/fixtures/looks-v1-2026-09-27.json (card digest in supersedes)."
         }
       ]
+    },
+    {
+      "id": "look-krea-atelier-target-stack",
+      "kind": "look",
+      "name": "Golden-hour storybook painting, emerald and gold",
+      "body": {
+        "preset_id": "krea-anime-atelier",
+        "template": "@NJSW33T, cowboy shot, {scene}, emerald and gold palette, thick painterly brushwork, anime illustration",
+        "negative": "",
+        "controls": {
+          "steps": 15,
+          "cfg": 1,
+          "sampler": "euler_ancestral",
+          "scheduler": "simple",
+          "width": 832,
+          "height": 1248,
+          "seed": 20260912,
+          "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+          "lora": 1.0,
+          "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+          "lora2": 1.0,
+          "lora3": 1.0,
+          "lora4": 0,
+          "lora3_name": "krea2_koukouya_style_c1-st3000.safetensors"
+        },
+        "scene_example": "a young witch with long indigo hair and a patched green travelling cloak, leaning on a wooden staff at the edge of an overgrown meadow at golden hour, a small black cat at her boots",
+        "source_prompt": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration",
+        "notes": "From recipe krea-atelier-target-stack (source_prompt verbatim). The template keeps the @NJSW33T trigger at the start, the framing and the palette, brushwork and style tail; the witch and the meadow are the scene. Evidence: recipe status executed (Studio job 7d589f47-7172-44fb-9541-4ab0602eafce, prompt a63ca7e1-c87a-4288-bcd9-959ff93d1827, 827.6 s at 832x1248 on 2026-09-12). The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-atelier-target-stack"
+        }
+      ]
+    },
+    {
+      "id": "look-krea-witch-nijisis",
+      "kind": "look",
+      "name": "Thick oil-paint storybook, rich colour",
+      "body": {
+        "preset_id": "krea-anime-atelier",
+        "template": "The painting style is highly textured, with thick, brush-like strokes and a rough, gritty quality. oil painting (medium). {scene}. Everything is rendered with rich, painterly texture, bursting with electric shades of emerald green, glowing orange, vivid purple, and tiny yellow stars scattered like fireflies.",
+        "negative": "",
+        "controls": {
+          "steps": 15,
+          "cfg": 1,
+          "sampler": "euler_ancestral",
+          "scheduler": "simple",
+          "width": 768,
+          "height": 1152,
+          "seed": 281715418,
+          "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+          "lora": 0,
+          "lora2_name": "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+          "lora2": 1.0,
+          "lora3": 0,
+          "lora4": 0
+        },
+        "scene_example": "a young witch in a frilly black outfit and a big witch hat, eyes closed with a light smile, sitting in a magical meadow with a small black cat in her lap",
+        "source_prompt": "The painting style is highly textured, with thick, brush-like strokes and a rough, gritty quality. oil painting (medium). Nestled in a dense, magical meadow overflowing with vibrant flora, a young witch sits peacefully surrounded by playful cats. She wears a fashionable frilly black witch outfit and a real big witch hat. Her wavy, indigo gradient hair cascades around her shoulders, and her eyes are gently closed in a serene, restful expression with a light smile on her face. In her lap, she holds a small, sleek black cat that leans up against her hands. Nearby, a curious tabby cat sits on a cluster of yellow flowers. The garden is rendered with rich, painterly texture, bursting with electric shades of emerald green leaves, glowing orange blossoms, vivid purple petals, and tiny yellow stars scattered like fireflies through the dark undergrowth.",
+        "notes": "From recipe krea-witch-nijisis (source_prompt verbatim). The first two style sentences are verbatim; the closing colour sentence is the recipe's garden sentence with the garden-specific nouns removed, so it fits any scene. No trigger word, as in the recipe. Evidence: recipe status executed, 986.6 s recorded. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-witch-nijisis"
+        }
+      ]
+    },
+    {
+      "id": "look-anima-painterly-artist-tags",
+      "kind": "look",
+      "name": "Loose painterly brushwork, film grain",
+      "body": {
+        "preset_id": "anima-artist-stack",
+        "template": "@synswt, @koukouya, @kyano \\(kyanora3141\\), {scene}, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame",
+        "controls": {
+          "lora": 0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0,
+          "lora5": 0,
+          "lora6": 0,
+          "cfg": 3,
+          "sampler": "dpmpp_2m_sde_gpu",
+          "scheduler": "simple",
+          "steps": 30,
+          "width": 832,
+          "height": 1216,
+          "seed": 975436216244440
+        },
+        "scene_example": "a young traveller in a straw hat and a patched linen dress in tall grass under a lone tree, holding her hat against the wind, birds taking flight",
+        "source_prompt": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+        "notes": "From recipe anima-painterly-artist-tags (source_prompt verbatim). The artist tags stay at the start and the painterly/lighting tag tail is verbatim; 1girl, solo, the traveller, cowboy shot and outdoors are the scene. Evidence: recipe status executed (Studio job 8eb5bc19-782c-42d0-87d1-2f7cedd73187 (Artist tags, no adapters variant, identical controls), 20.1 s on 2026-09-12); recipe-thumbs render 40.5 s on 27 Sep 2026. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · anima-painterly-artist-tags"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/anima-painterly-artist-tags.json",
+          "prompt_id": "b53109bc-5ac7-4640-b1d7-5d35a8c39dc7",
+          "sha256": "972e23fae129102ad608a3fb57eca9e1e9cd1fea9ca78e079290c0c3e863d447"
+        }
+      ]
+    },
+    {
+      "id": "look-anima-fantasy-portrait",
+      "kind": "look",
+      "name": "Modern anime portrait, bronze and moss green",
+      "body": {
+        "preset_id": "anima-portrait",
+        "template": "{scene}, bronze and moss green palette, modern anime illustration, detailed background",
+        "negative": "lowres, blurry, bad anatomy, bad hands, text, watermark, signature",
+        "controls": {
+          "steps": 30,
+          "cfg": 4,
+          "width": 768,
+          "height": 1152,
+          "seed": 20260941
+        },
+        "scene_example": "a young sky-ferry pilot with goggles pushed up into short teal hair, resting against the rail of a floating island, waterfalls falling into cloud, late afternoon sun",
+        "source_prompt": "A young sky-ferry pilot resting against the rail of a floating island with waterfalls falling into cloud, late afternoon sun, goggles pushed up into short teal hair, patched flight jacket, quiet confident expression, bronze and moss green palette, modern anime illustration, detailed background",
+        "notes": "From recipe anima-fantasy-portrait (source_prompt verbatim). Anima reads prose first and tags after, so the scene leads and the palette and style tail are verbatim. Evidence: recipe status unverified; recipe-thumbs render 39.8 s on 27 Sep 2026. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · anima-fantasy-portrait"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/anima-fantasy-portrait.json",
+          "prompt_id": "886151c5-ff6c-4838-aeaf-a5fafa0145e4",
+          "sha256": "71b9a4adbf722b3b4c913a7a8b568ac8a9fc3bea6314eca5c49377f98e29fb41"
+        }
+      ]
+    },
+    {
+      "id": "look-wai-fantasy-portrait",
+      "kind": "look",
+      "name": "Glowing fantasy anime, light rays",
+      "body": {
+        "preset_id": "wai",
+        "template": "original character, {scene}, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor",
+        "controls": {
+          "steps": 26,
+          "cfg": 6,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "width": 832,
+          "height": 1216,
+          "seed": 20260931,
+          "denoise": 1.0
+        },
+        "scene_example": "a girl with long silver hair in a braided crown, green eyes, a travelling cloak and leather bracers, holding a lantern in an ancient forest",
+        "source_prompt": "1girl, solo, original character, long silver hair, braided crown, green eyes, travelling cloak, leather bracers, holding a lantern, standing in an ancient forest, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+        "notes": "From recipe wai-fantasy-portrait (source_prompt verbatim). WAI wants its quality words at the end, so the lighting, framing and quality tail are verbatim after the scene; 1girl, solo and the character tags are the scene. Evidence: recipe status unverified; recipe-thumbs render 36.2 s on 27 Sep 2026. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · wai-fantasy-portrait"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/wai-fantasy-portrait.json",
+          "prompt_id": "aa433fd7-edfd-4545-a29d-ac0806c1fe6a",
+          "sha256": "7d30506e091baecdd34816a82beea6659d3f054a40d73d739913ac63c1fe752e"
+        }
+      ]
+    },
+    {
+      "id": "look-animagine-fantasy-portrait",
+      "kind": "look",
+      "name": "Clean anime portrait, rim light",
+      "body": {
+        "preset_id": "anime",
+        "template": "original character, safe, {scene}, rim lighting, dutch angle, upper body, fantasy, masterpiece, high score, great score, absurdres",
+        "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+        "controls": {
+          "steps": 28,
+          "cfg": 5,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "width": 832,
+          "height": 1216,
+          "seed": 20260933,
+          "denoise": 1.0
+        },
+        "scene_example": "a girl with dark red hair, a white fox mask pushed to one side and an embroidered haori, holding a paper lantern in a lantern-lit night market",
+        "source_prompt": "1girl, original character, safe, white fox mask pushed to one side, dark red hair, embroidered haori, holding a paper lantern, lantern-lit night market, rim lighting, dutch angle, upper body, fantasy, masterpiece, high score, great score, absurdres",
+        "notes": "From recipe animagine-fantasy-portrait (source_prompt verbatim). Animagine's order is kept as far as a typed scene allows: original character and the safe rating first, the scene, then the lighting, angle, framing and quality tail verbatim. Evidence: recipe status unverified; recipe-thumbs render 39.1 s on 27 Sep 2026. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · animagine-fantasy-portrait"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/animagine-fantasy-portrait.json",
+          "prompt_id": "17c317ec-6ce3-4286-aceb-0b5d94803aa9",
+          "sha256": "88ff5d08f21b0ef793431b1d241269ae7dee7ec1619b26ae0d3c00a874f92afb"
+        }
+      ]
+    },
+    {
+      "id": "look-pearly-anima-mix-v10-showcase",
+      "kind": "look",
+      "name": "Glossy showcase anime, sparkling colour",
+      "body": {
+        "preset_id": "pearly-anima-mix-v10-baseline",
+        "template": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, adult original character, {scene}, dynamic pose, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "controls": {
+          "width": 832,
+          "height": 1216,
+          "seed": 2026092113,
+          "steps": 25,
+          "cfg": 5,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "lora": 0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0,
+          "lora5": 0,
+          "lora6": 0
+        },
+        "scene_example": "a cute magical girl in a pink fluorescent dress with gradient sparkling pink hair, long gloves and stockings",
+        "source_prompt": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, 1girl, adult original character, cute, magical girl, pink fluorescent dress, gradient pink hair, sparkling hair, stockings, long gloves, dynamic pose, looking at viewer",
+        "notes": "From recipe pearly-anima-mix-v10-showcase (source_prompt verbatim). The quality-tag prefix, 'adult original character' and the pose tail are verbatim; 1girl and the magical-girl tags are the scene. The negative keeps child, loli, shota. Evidence: recipe status executed, 26.2 s recorded. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · pearly-anima-mix-v10-showcase"
+        }
+      ]
+    },
+    {
+      "id": "look-oneobsession-anima-v20-showcase",
+      "kind": "look",
+      "name": "Magazine-cover anime, soft focus",
+      "body": {
+        "preset_id": "oneobsession-anima-v20-baseline",
+        "template": "masterpiece, best quality, score_8, score_7, very aesthetic, absurdres, highres, magazine cover, adult original character, {scene}, detailed illustration, detailed background, drop shadow, numerous fine eyelashes, blurry background, blurry foreground, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "controls": {
+          "width": 832,
+          "height": 1216,
+          "seed": 2026092112,
+          "steps": 30,
+          "cfg": 4,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "lora": 0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0,
+          "lora5": 0,
+          "lora6": 0
+        },
+        "scene_example": "a beautiful woman in traditional travelling hanfu holding a blossoming plum branch, night lantern light",
+        "source_prompt": "masterpiece, best quality, score_8, score_7, very aesthetic, absurdres, highres, magazine cover, a beautiful adult original character wearing traditional travelling hanfu, holding a blossoming plum branch, night lantern light, detailed illustration, detailed background, drop shadow, numerous fine eyelashes, blurry background, blurry foreground, looking at viewer",
+        "notes": "From recipe oneobsession-anima-v20-showcase (source_prompt verbatim). The quality prefix, magazine-cover register, 'adult original character' and the detail/focus tail are verbatim; the hanfu, plum branch and lantern light are the scene. Evidence: recipe status executed, 40.4 s recorded. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · oneobsession-anima-v20-showcase"
+        }
+      ]
+    },
+    {
+      "id": "look-anima-pearly-petiflow",
+      "kind": "look",
+      "name": "Flat pastel close-up",
+      "body": {
+        "preset_id": "anima-v1-baseline",
+        "template": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, {scene}, face focus, upper body, close up, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "controls": {
+          "width": 832,
+          "height": 1216,
+          "seed": 20260921,
+          "steps": 25,
+          "cfg": 5,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "lora_name": "pearly_petiflow2.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0,
+          "lora5": 0,
+          "lora6": 0
+        },
+        "scene_example": "a woman with flowing pastel green hair, light green eyes and a cute frilled dress",
+        "source_prompt": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, green pastel flowing hair, light green eyes, cute frilled dress, face focus, upper body, close up, looking at viewer",
+        "notes": "From recipe anima-pearly-petiflow (source_prompt verbatim). The pearlypetif trigger, quality tags, (flat colors:1.4), 'adult original character' and the close-up framing are verbatim; hair, eyes and dress are the scene. The LoRA strength is the recipe's control (1.0), not the 0.8 its notes mention. Evidence: recipe status executed, 18.2 s recorded. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · anima-pearly-petiflow"
+        }
+      ]
+    },
+    {
+      "id": "look-anifox-ringeko",
+      "kind": "look",
+      "name": "Crisp artist-style anime, cinematic light",
+      "body": {
+        "preset_id": "anifox-v2-baseline",
+        "template": "r1ng3k0, masterpiece, best quality, amazing quality, very aesthetic, adult original character, {scene}, looking at viewer, cowboy shot, cinematic lighting",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "controls": {
+          "width": 832,
+          "height": 1216,
+          "seed": 20260921,
+          "steps": 30,
+          "cfg": 5,
+          "sampler": "euler_ancestral",
+          "scheduler": "karras",
+          "denoise": 1.0,
+          "lora_name": "Ringeko.safetensors",
+          "lora": 0.8,
+          "lora2": 0
+        },
+        "scene_example": "a woman with long white hair, a hime cut with blunt bangs and red eyes, in a fantasy cloak, holding a black cat outdoors",
+        "source_prompt": "r1ng3k0, masterpiece, best quality, amazing quality, very aesthetic, 1girl, solo, adult original character, long white hair, hime cut, blunt bangs, red eyes, looking at viewer, cowboy shot, fantasy cloak, holding a black cat, outdoors, cinematic lighting",
+        "notes": "From recipe anifox-ringeko (source_prompt verbatim). The r1ng3k0 trigger, quality tags, 'adult original character', framing and lighting are verbatim; 1girl, solo, the character tags and outdoors are the scene. The recorded render had extra fingers on the cat-holding hands. Evidence: recipe status executed, 22.2 s recorded. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · anifox-ringeko"
+        }
+      ]
+    },
+    {
+      "id": "look-noob-fantasy-scene",
+      "kind": "look",
+      "name": "Wide fantasy scenery, glowing light",
+      "body": {
+        "preset_id": "noob",
+        "template": "masterpiece, best quality, newest, absurdres, highres, safe, {scene}, volumetric lighting, floating particles, scenery, wide shot, fantasy",
+        "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+        "controls": {
+          "steps": 28,
+          "cfg": 5.5,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "width": 832,
+          "height": 1216,
+          "seed": 20260932,
+          "denoise": 1.0
+        },
+        "scene_example": "a scholar with round glasses reading on a stone step in a glowing mushroom grove, bioluminescent glow",
+        "source_prompt": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, original character, short black hair, round glasses, scholar robes, sitting on a stone step, reading a book, glowing mushroom grove, bioluminescent glow, volumetric lighting, floating particles, scenery, wide shot, fantasy",
+        "notes": "From recipe noob-fantasy-scene (source_prompt verbatim). NoobAI wants the quality, year and rating tags as a prefix, kept verbatim; the scholar and the grove are the scene, and the lighting, scenery and wide-shot tail stays. Evidence: recipe status unverified; recipe-thumbs render 44.6 s on 27 Sep 2026. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · noob-fantasy-scene"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/noob-fantasy-scene.json",
+          "prompt_id": "2fa1ee7e-1e08-453b-b43e-6b53fd709c9a",
+          "sha256": "92714fb0ef6c3499f98e9dac2815c8c8b5779b30d49ffb2d6a43726265c16705"
+        }
+      ]
+    },
+    {
+      "id": "look-krea-watercolor-anime",
+      "kind": "look",
+      "name": "Airy watercolour, sea green and sand",
+      "body": {
+        "preset_id": "krea-anime-atelier",
+        "template": "{scene}, soft diffused light, pale sand and sea green palette, airy anime watercolor style",
+        "negative": "",
+        "controls": {
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 768,
+          "height": 1152,
+          "seed": 20260914,
+          "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors",
+          "lora4": 1.0
+        },
+        "scene_example": "a herbalist in a greenhouse of impossible plants, morning mist",
+        "source_prompt": "A herbalist in a greenhouse of impossible plants, morning mist and soft diffused light, pale sand and sea green palette, upper body, airy anime watercolor style",
+        "notes": "From recipe krea-watercolor-anime (source_prompt verbatim). fal style adapters want a short prompt with the trigger phrase last, so the light, palette and 'airy anime watercolor style' trigger are verbatim after the scene; 'upper body' was dropped so the look fits places. Evidence: recipe status unverified; recipe-thumbs render 252.3 s on 27 Sep 2026 through krea-anime-atelier-gguf. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-watercolor-anime"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/krea-watercolor-anime.json",
+          "prompt_id": "e8e2aa02-d3b6-4c5e-bf30-005d940e2d63",
+          "sha256": "c92d1232290afaca16dd810bcb36bc5ae301ebd5e28faded06749b27ea6be25c"
+        }
+      ]
+    },
+    {
+      "id": "look-krea-oil-fantasy",
+      "kind": "look",
+      "name": "Dark baroque oil painting, crimson and black",
+      "body": {
+        "preset_id": "krea-anime-atelier",
+        "template": "{scene}, deep crimson and ink black palette, baroque dreamscape oil style",
+        "negative": "",
+        "controls": {
+          "steps": 12,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 832,
+          "height": 1248,
+          "seed": 20260913,
+          "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors",
+          "lora4": 1.0
+        },
+        "scene_example": "a lone scholar crossing a moss-covered stone bridge at dusk, lantern light on wet stone, fog rolling below the arches",
+        "source_prompt": "A lone scholar crossing a moss-covered stone bridge at dusk, lantern light on wet stone, rolling fog below the arches, deep crimson and ink black palette, baroque dreamscape oil style",
+        "notes": "From recipe krea-oil-fantasy (source_prompt verbatim). The palette and the 'baroque dreamscape oil style' trigger stay last, verbatim, as fal adapters want; the scholar and bridge are the scene. Evidence: recipe status unverified; recipe-thumbs render 279.6 s on 27 Sep 2026 through krea-anime-atelier-gguf. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-oil-fantasy"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/krea-oil-fantasy.json",
+          "prompt_id": "1f7d1dbc-ec2c-4c4f-9b1e-eca8df964eba",
+          "sha256": "842ee19153ad3193a5562fc490903ca513c434932e9dc269abf5144a977e5589"
+        }
+      ]
+    },
+    {
+      "id": "look-krea-style-emerald-tarot",
+      "kind": "look",
+      "name": "Fantasy paperback cover, tarot card feel",
+      "body": {
+        "preset_id": "krea-style-lab",
+        "template": "{scene}, volumetric lighting, emerald and gold palette, vintage tarot style, emerald fantasy paperback style",
+        "negative": "",
+        "controls": {
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 1024,
+          "height": 1024,
+          "seed": 20260923,
+          "lora_name": "fal-krea2-emerald-fantasy-paperback.safetensors",
+          "lora": 1.0,
+          "lora2_name": "krea2_vintagetarot.safetensors",
+          "lora2": 0.6,
+          "lora3": 0
+        },
+        "scene_example": "a knight-errant and a white fox with two tails before an ancient forest with roots like archways",
+        "source_prompt": "A knight-errant and a white fox with two tails before an ancient forest with roots like archways, volumetric lighting, emerald and gold palette, vintage tarot style, emerald fantasy paperback style",
+        "notes": "From recipe krea-style-emerald-tarot (source_prompt verbatim). Lighting, palette and both style triggers are verbatim at the end; the knight, fox and forest are the scene. The tarot adapter adds a border and symmetry. Evidence: recipe status unverified; recipe-thumbs render 240.9 s on 27 Sep 2026 through krea-anime-atelier-gguf. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-style-emerald-tarot"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/krea-style-emerald-tarot.json",
+          "prompt_id": "c362d8e5-202d-4507-b664-9d6bee781b57",
+          "sha256": "b047403898e4fc9da9497d33125450e48ace8088bac57aa1e5c6029f476523ed"
+        }
+      ]
+    },
+    {
+      "id": "look-krea-style-inkwork-darkbrush",
+      "kind": "look",
+      "name": "Black-ink manga, brush and wash",
+      "body": {
+        "preset_id": "krea-style-lab",
+        "template": "{scene}, monochrome ink, monochrome ink wash style, detailed manga inkwork style",
+        "negative": "",
+        "controls": {
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 1024,
+          "height": 1024,
+          "seed": 20260922,
+          "lora_name": "fal-krea2-detailed-manga-inkwork.safetensors",
+          "lora": 1.0,
+          "lora2_name": "krea2_darkbrush.safetensors",
+          "lora2": 0.6,
+          "lora3": 0
+        },
+        "scene_example": "a ruined chapel reclaimed by ivy, light rays through a broken roof",
+        "source_prompt": "A ruined chapel reclaimed by ivy, light rays through a broken roof, monochrome ink, monochrome ink wash style, detailed manga inkwork style",
+        "notes": "From recipe krea-style-inkwork-darkbrush (source_prompt verbatim). Both style triggers and 'monochrome ink' are verbatim at the end; the chapel is the scene. Both adapters suppress colour, so a colour word in the scene fights them. Evidence: recipe status unverified; recipe-thumbs render 377.5 s on 27 Sep 2026 through krea-anime-atelier-gguf. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-style-inkwork-darkbrush"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/krea-style-inkwork-darkbrush.json",
+          "prompt_id": "21ab8b19-00cb-4030-acce-164a59c758a8",
+          "sha256": "8b5a4c5d51571d5919c2e8dc428c84466414544af055976ee3e63b0af28d2843"
+        }
+      ]
+    },
+    {
+      "id": "look-krea-style-airy-softwatercolor",
+      "kind": "look",
+      "name": "Soft watercolour, rose and cream",
+      "body": {
+        "preset_id": "krea-style-lab",
+        "template": "{scene}, soft rose and cream, art deco watercolor style, airy anime watercolor style",
+        "negative": "",
+        "controls": {
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 1024,
+          "height": 1024,
+          "seed": 20260921,
+          "lora_name": "fal-krea2-airy-anime-watercolor.safetensors",
+          "lora": 1.0,
+          "lora2_name": "krea2_softwatercolor.safetensors",
+          "lora2": 0.7,
+          "lora3": 0
+        },
+        "scene_example": "a quiet apothecary crowded with jars, dappled sunlight",
+        "source_prompt": "A quiet apothecary crowded with jars, dappled sunlight, soft rose and cream, art deco watercolor style, airy anime watercolor style",
+        "notes": "From recipe krea-style-airy-softwatercolor (source_prompt verbatim). Palette and both style triggers are verbatim at the end; the apothecary and its light are the scene. Evidence: recipe status unverified; recipe-thumbs render 245.1 s on 27 Sep 2026 through krea-anime-atelier-gguf. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-style-airy-softwatercolor"
+        },
+        {
+          "role": "evidence",
+          "evidence": "experiments/curated/recipe-thumbs-20260927/receipts/krea-style-airy-softwatercolor.json",
+          "prompt_id": "8b78c779-0bf5-47b5-9e3a-363b9eb1134c",
+          "sha256": "59303c0c5f15ef66a30e0969054e2d89498c42327cb68b5e04903e11fa822434"
+        }
+      ]
+    },
+    {
+      "id": "look-krea-realistic-snapshot",
+      "kind": "look",
+      "name": "Casual phone snapshot, soft motion blur",
+      "body": {
+        "preset_id": "krea-anime-atelier",
+        "template": "Casual smartphone photo of {scene}, natural skin, visible pores, depth of field, slight motion blur",
+        "negative": "",
+        "controls": {
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 768,
+          "height": 1152,
+          "seed": 20260921,
+          "lora_name": "RealisticSnapshotKrea2.safetensors",
+          "lora": 0.8,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0
+        },
+        "scene_example": "an adult woman in a travelling coat on a city street at golden hour",
+        "source_prompt": "Casual smartphone photo of an adult woman on a city street at golden hour, travelling coat, natural skin, visible pores, depth of field, slight motion blur",
+        "notes": "From recipe krea-realistic-snapshot (source_prompt verbatim). The photo-type opening and the skin, depth and blur tail are verbatim; the woman and street are the scene. Evidence: recipe status executed, 586.8 s recorded. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-realistic-snapshot"
+        }
+      ]
+    },
+    {
+      "id": "look-krea-lenovo-ultrareal",
+      "kind": "look",
+      "name": "Amateur phone photo, raw and noisy",
+      "body": {
+        "preset_id": "krea-anime-atelier",
+        "template": "Amateur smartphone photo, candid raw photo of {scene}, natural skin texture, slight digital noise",
+        "negative": "",
+        "controls": {
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 768,
+          "height": 1152,
+          "seed": 2026092115,
+          "lora_name": "lenovo_krea2.safetensors",
+          "lora": 0.85,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0
+        },
+        "scene_example": "a mirror selfie from a slightly high angle of an adult woman with dark curly hair in a messy updo, round glasses and a grey cropped jumper, in a cluttered bedroom with warm tungsten light",
+        "source_prompt": "Amateur smartphone photo, candid raw mirror selfie from a slightly high angle. An adult woman with pale skin and dark curly hair in a messy loose updo, round glasses, grey cropped jumper, standing in a cluttered bedroom with warm tungsten light, visible phone in the mirror, natural skin texture, slight digital noise",
+        "notes": "From recipe krea-lenovo-ultrareal (source_prompt verbatim). The amateur-smartphone opening and the skin-texture and noise tail are verbatim; 'mirror selfie from a slightly high angle' moved into the scene example, so the look fits any candid shot. Evidence: recipe status executed, 598.6 s recorded. The template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/recipes.json · krea-lenovo-ultrareal"
+        }
+      ]
+    },
+    {
+      "id": "look-preset-stylized-prop",
+      "kind": "look",
+      "name": "Hand-painted game item icon",
+      "body": {
+        "preset_id": "stylized-prop",
+        "template": "A single stylized hand painted {scene}, three quarter view, bold clear silhouette, soft cel shading, centred isolated on plain white, polished game inventory illustration, no lettering",
+        "negative": "blurry, low quality, distorted, watermark, text, duplicated objects, cropped",
+        "controls": {
+          "width": 1024,
+          "height": 1024,
+          "seed": 2026091103,
+          "steps": 30,
+          "cfg": 6,
+          "denoise": 1.0
+        },
+        "scene_example": "fantasy potion bottle with round teal glass, a brass stopper and a tiny leaf charm",
+        "source_prompt": "A single stylized hand painted fantasy potion bottle, round teal glass, brass stopper, tiny leaf charm, three quarter view, bold clear silhouette, soft cel shading, centred isolated on plain white, polished game inventory illustration, no lettering",
+        "notes": "From the stylized-prop preset's authored defaults (source_prompt verbatim, as Studio.catalog() reads the graph). The view, silhouette, shading, white isolation and inventory-illustration words are verbatim; the potion bottle is the scene. Evidence: the preset's execution_note in presets/catalog.json; the template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/catalog.json · stylized-prop (authored defaults)"
+        }
+      ]
+    },
+    {
+      "id": "look-preset-pixel-lora",
+      "kind": "look",
+      "name": "Pixel-art game item icon",
+      "body": {
+        "preset_id": "pixel-lora",
+        "template": "pixel art, a single small {scene}, three quarter view, chunky carefully placed pixel clusters, limited 16 colour palette, strong silhouette, simple flat white background, retro game inventory icon, no text, one object",
+        "negative": "blurry, low quality, distorted, watermark, text, duplicated objects, cropped",
+        "controls": {
+          "width": 1024,
+          "height": 1024,
+          "seed": 2026091103,
+          "steps": 30,
+          "cfg": 6,
+          "denoise": 1.0,
+          "lora": 1.0
+        },
+        "scene_example": "fantasy treasure chest",
+        "source_prompt": "pixel art, a single small fantasy treasure chest, three quarter view, chunky carefully placed pixel clusters, limited 16 colour palette, strong silhouette, simple flat white background, retro game inventory icon, no text, one object",
+        "notes": "From the pixel-lora preset's authored defaults (source_prompt verbatim, as Studio.catalog() reads the graph). Everything but the treasure chest is verbatim; the object is the scene. The pixel LoRA file is fixed in the graph, so only its strength is a control. Evidence: the preset's execution_note in presets/catalog.json; the template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/catalog.json · pixel-lora (authored defaults)"
+        }
+      ]
+    },
+    {
+      "id": "look-preset-realvis",
+      "kind": "look",
+      "name": "Studio product photo, dark green backdrop",
+      "body": {
+        "preset_id": "realvis",
+        "template": "Professional studio photograph of one {scene}, charcoal stone plinth, seamless dark green background, softbox lighting, realistic reflections, product catalogue photography",
+        "negative": "blurry, low quality, distorted, watermark, text, duplicated objects, cropped",
+        "controls": {
+          "width": 1024,
+          "height": 1024,
+          "seed": 2026091103,
+          "steps": 32,
+          "cfg": 5,
+          "denoise": 1.0
+        },
+        "scene_example": "teal enamel camping lantern with a brass frame and amber light",
+        "source_prompt": "Professional studio photograph of one teal enamel camping lantern with brass frame and amber light, charcoal stone plinth, seamless dark green background, softbox lighting, realistic reflections, product catalogue photography",
+        "notes": "From the realvis preset's authored defaults (source_prompt verbatim, as Studio.catalog() reads the graph). The plinth, backdrop, lighting and catalogue-photography words are verbatim, so every product sits in the same set; the lantern is the scene. Evidence: the preset's execution_note in presets/catalog.json; the template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/catalog.json · realvis (authored defaults)"
+        }
+      ]
+    },
+    {
+      "id": "look-preset-zimage-fast",
+      "kind": "look",
+      "name": "Fast general picture, you describe it all",
+      "body": {
+        "preset_id": "zimage-fast",
+        "template": "{scene}",
+        "negative": "",
+        "controls": {
+          "width": 1024,
+          "height": 1024,
+          "seed": 2026091101,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "scene_example": "a professional product photograph of a teal enamel camping lantern on a charcoal stone pedestal, dark forest green background, soft studio light",
+        "source_prompt": "Professional product photograph of a single compact teal enamel camping lantern with brass frame and warm amber light, on a charcoal stone pedestal, dark forest green seamless background, soft studio light, clean silhouette, realistic metal and enamel.",
+        "notes": "From the zimage-fast preset's authored defaults (source_prompt verbatim, as Studio.catalog() reads the graph). A general look: the authored wording is a product photograph, so none of it is forced on other scenes; the scene carries the style words (photo or illustration). The authored defaults' size, seed, steps and cfg are kept. Z-Image Turbo takes no negative prompt. Evidence: the preset's execution_note in presets/catalog.json; the template wording itself has not been rendered; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "presets/catalog.json · zimage-fast (authored defaults)"
+        }
+      ]
     }
   ]
 }
