@@ -61,3 +61,4 @@
 .make-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}.make-pair label{display:flex;flex-direction:column;gap:5px;font-size:12px}
 .make-focused .make-heading p{display:none}.make-focused .make-heading h1{font-size:30px;margin:6px 0 12px}.make-focused .make-goals{margin-bottom:16px}.make-focused .make-goals button small{display:none}.make-split.make-has-look .make-composer{padding:16px;gap:12px}.make-split.make-has-look .make-compose-main textarea{min-height:84px}
 .make-split.make-has-look .make-step{margin:4px 0 10px}
+.make-desk{font-size:12px;color:var(--muted);margin:-6px 0 12px}.make-desk:empty{display:none}.make-desk .make-link{display:inline;font-size:12px;padding:0!important;min-height:0}

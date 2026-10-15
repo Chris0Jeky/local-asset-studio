@@ -46,7 +46,7 @@
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
-    +'<div id="makeSplit" class="make-split"><div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeRuns" class="make-run-list"></div></section></div>'
+    +'<div id="makeSplit" class="make-split"><div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeDesk" class="make-desk" role="status"></div><div id="makeRuns" class="make-run-list"></div></section></div>'
     +'<p class="make-advanced">Need every setting? <a href="/#create">Open the full editor</a> · <a href="/prompt-lab.html">Prompt Lab</a> · <a href="/#production">Compare settings side by side</a></p>';
 
   function renderGoals(){
@@ -186,7 +186,15 @@
     catch(error){if(status)status.textContent=error.message;}
     finally{state.polishing.delete(key);renderRuns();}
   }
-  function renderRuns(){
+  function renderDesk(){
+    const box=q('#makeDesk');if(!box)return;const all=typeof jobs!=='undefined'?jobs:[],attention=window.StudioUX?.ATTENTION||['failed','partial','uncertain','interrupted','stopped'];
+    const since=Date.now()/1000-86400,problems=all.filter(j=>attention.includes(j.status)&&!j.put_away&&(j.created_at||0)>since).sort((a,b)=>(b.created_at||0)-(a.created_at||0));
+    const running=all.filter(j=>['queued','waiting','submitting','running'].includes(j.status)).length;
+    const parts=[];if(running)parts.push(running+' running or waiting');
+    if(problems.length)parts.push('<button type="button" class="make-link" data-ux-inspect-job="'+escape(problems[0].id)+'">'+problems.length+' need'+(problems.length===1?'s':'')+' a look: '+escape(problems[0].label||problems[0].preset_name||'a run')+' '+escape(problems[0].status)+'</button>'+(problems.length>1?' <a href="/#home">see all</a>':''));
+    const html=parts.length?'<span>On your desk: </span>'+parts.join(' · '):'';if(box.dataset.html!==html){box.dataset.html=html;box.innerHTML=html;}
+  }
+  function renderRuns(){renderDesk();
     const box=q('#makeRuns');if(!box)return;
     const mine=state.runs,others=(typeof jobs!=='undefined'?jobs:[]).filter(j=>!mine.some(r=>r.job.id===j.id)&&j.outputs?.length&&!j.put_away).slice(0,mine.length?0:3).map(job=>({job,look:job.label||job.preset_name}));
     const list=[...mine,...others].slice(0,6);planPolish(list);
@@ -239,6 +247,7 @@
   });
   view.addEventListener('keydown',e=>{if(e.target.id==='makeScene'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void generate();}});
   let loaded=false;
+  setInterval(()=>{if(!view.hidden&&!state.runs.some(r=>!FINAL.includes(r.job.status)))renderDesk();},5000);
   window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();
 })();
