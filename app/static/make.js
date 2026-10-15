@@ -24,7 +24,8 @@
   ];
   const SHAPES={design:'As designed',portrait:'Portrait',landscape:'Landscape',square:'Square'};
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,runs:[],pictures:null,picking:false,review:{}};
+  const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set()};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
   const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:state.runs.slice(0,6).map(({job,look,lookId,goal,scene})=>({id:job.id,look,lookId,goal,scene}))}));}catch{}};
   let savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
@@ -162,13 +163,32 @@
     const vary=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a)||'';
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>';
     const review=state.review[a],mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+label+'</button>';
-    return '<div class="make-actions">'+mark('selected','\u2605 Keep')+mark('rejected','Not this')+vary+hand('repair','Fix details or upscale')
-      +'<details class="make-more"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('edit','Change one thing')+hand('restyle','Restyle')+hand('combine','Put in a new pose')+hand('animate','Animate')+'</details></div>';
+    const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?plan.reason:'',busy=state.polishing.has(a+':'+kind);
+      return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(why||busy?' disabled':'')+(why?' title="'+escape(why)+'"':'')+'>'+POLISH[kind]+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
+    return '<div class="make-actions">'+mark('selected','\u2605 Keep')+mark('rejected','Not this')+vary+polish('face')+polish('details')+polish('upscale')
+      +'<details class="make-more"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+hand('edit','Change one thing')+hand('restyle','Restyle')+hand('combine','Put in a new pose')+hand('animate','Animate')+'</details></div>';
+  }
+  // Polish plans only read (studio-workbench.js polishPlan); each picture is asked once per kind.
+  const planning=new Set();
+  function planPolish(list){
+    const api=window.StudioWorkbench;if(!api?.polishPlan)return;
+    for(const {job} of list)for(const o of job.outputs||[])if(o.asset_id&&(!o.media_type||o.media_type==='image'))for(const kind of Object.keys(POLISH)){
+      const key=o.asset_id+':'+kind;if(planning.has(key))continue;planning.add(key);
+      api.polishPlan(o.asset_id,kind).then(plan=>{state.polish[key]=plan;scheduleRuns();},error=>{state.polish[key]={ok:false,reason:error.message};scheduleRuns();});}
+  }
+  let runsFrame=0;const scheduleRuns=()=>{if(!runsFrame)runsFrame=requestAnimationFrame(()=>{runsFrame=0;renderRuns();});};
+  async function polishPicture(button){
+    const id=button.dataset.asset,kind=button.dataset.makePolish,key=id+':'+kind,status=q('#makeStatus');if(state.polishing.has(key))return;
+    const source=state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===id));state.polishing.add(key);renderRuns();
+    try{const job=await window.StudioWorkbench.polish(id,kind);state.runs.unshift({job,look:POLISH[kind]+(source?' \u00b7 '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
+      if(status)status.textContent=POLISH[kind]+' started. The result appears at the top of your pictures.';}
+    catch(error){if(status)status.textContent=error.message;}
+    finally{state.polishing.delete(key);renderRuns();}
   }
   function renderRuns(){
     const box=q('#makeRuns');if(!box)return;
     const mine=state.runs,others=(typeof jobs!=='undefined'?jobs:[]).filter(j=>!mine.some(r=>r.job.id===j.id)&&j.outputs?.length&&!j.put_away).slice(0,mine.length?0:3).map(job=>({job,look:job.label||job.preset_name}));
-    const list=[...mine,...others].slice(0,6);
+    const list=[...mine,...others].slice(0,6);planPolish(list);
     if(!list.length){box.innerHTML='<p class="muted">Pictures you make here show up in this space, with one-press next steps.</p>';return;}
     box.innerHTML=list.map(({job,look,scene})=>'<article class="make-run"><header><div><b>'+escape(look)+'</b>'+(scene?'<small>'+escape(scene)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools"><button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
@@ -197,6 +217,8 @@
     const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id))};}catch{return null;}}));
     state.runs=[...state.runs,...restored.filter(r=>r&&!state.runs.some(x=>x.job.id===r.id)).map(({id,...r})=>r)];
     for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id);
+    // With no Make runs yet, recent pictures come from the job list app.js loads; wait for it briefly.
+    for(let i=0;i<40&&!state.runs.length&&!(typeof jobs!=='undefined'&&jobs.length);i++)await new Promise(r=>setTimeout(r,250));
     renderRuns();
   }
   view.addEventListener('click',e=>{
@@ -208,6 +230,7 @@
       state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active')?.focus();return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
+    const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
     if(e.target.closest('#makeGenerate'))void generate();
     if(e.target.closest('#makeEditor'))void openInEditor();
     if(e.target.closest('[data-make-retry]'))void load();
