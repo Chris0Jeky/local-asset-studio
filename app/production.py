@@ -941,6 +941,7 @@ class Production:
                     return
                 self._attempt(identifier,index,started_at=time.time())
                 project_storage.require(self.root,identifier,plan)
+                if submission_evidence.never_submitted(job):self.studio.check_production_bundle(plan['bundle'])
                 try:self.studio._run(job)
                 except Exception as exc:
                     self.studio.record_job_failure(job,exc)
