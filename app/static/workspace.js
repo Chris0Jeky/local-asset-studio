@@ -17,7 +17,8 @@ const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.a
 // Until the operator chooses, the library shows Mine once any labelled asset exists; with none, every source is shown.
 const assetSourceModes = ['mine','agent','all'], assetSourceStorageKey = 'studio.assets.source';
 let assetSourceMode = null;
-function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='';}
+// "Make · …" labels name the person's own Make runs (make.js; Fix and Upscale in studio-workbench.js), not agent runs.
+function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='' && !asset.run_label.startsWith('Make · ');}
 function assetSource(){return !assetState.assets.some(assetIsAgentRun)?'all':assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
 function assetSourceFilter(list, source=assetSource()){return source==='all'?list:list.filter(a=>assetIsAgentRun(a)===(source==='agent'));}
 // Existing lab outputs carry no label, so the operator marks them (#939): a label makes an agent run, clearing it makes it
@@ -27,6 +28,7 @@ const assetDefaultRunLabel='Agent lab';
 function assetRunLabelChoice(){
   const text=String($('#bulkRunLabel').value??'').trim()||assetDefaultRunLabel;
   if([...text].length>80 || [...text].some(c=>c!==' ' && /[\p{C}\p{Z}]/u.test(c)))throw Error('Use a run label of 1 to 80 printable characters, without tabs or line breaks. Nothing was changed.');
+  if(text.startsWith('Make · '))throw Error('Run labels starting "Make · " are kept for pictures made in Make. Choose another label. Nothing was changed.');
   return text;
 }
 // A title still equal to the registered default ("<recipe> · N") says nothing; the prompt excerpt does.
@@ -124,15 +126,17 @@ function validateAssetReceipt(result, command) {
   if(result?.status!=='applied' || result.request_id!==command.request_id || result.action!==command.action ||
      JSON.stringify(result.updated)!==JSON.stringify(command.ids) ||
      JSON.stringify(Object.keys(result.revisions||{}).sort())!==JSON.stringify([...command.ids].sort()) ||
-     command.ids.some(id=>result.revisions[id]!==command.expected_revisions[id]+1))throw Error('The server did not return a matching save receipt.');
+     (result.unchanged!==undefined&&(!Array.isArray(result.unchanged)||!['trash','restore'].includes(command.action)||result.unchanged.some(id=>!command.ids.includes(id))))||
+     command.ids.some(id=>result.revisions[id]!==command.expected_revisions[id]+(result.unchanged?.includes(id)?0:1)))throw Error('The server did not return a matching save receipt.');
+  const noop=result.unchanged?.length===command.ids.length&&JSON.stringify(result.applied)==='{}';   // every target was already in that state (#1405)
   const applied=result.applied, keys=command.action==='edit'?['title','notes','tags','favorite','review','run_label'].filter(k=>Object.hasOwn(command,k)):
     ['trash','restore'].includes(command.action)?['trashed_at']:['collection_id'];
-  if(!applied || JSON.stringify(Object.keys(applied).sort())!==JSON.stringify(keys.sort()) || keys.some(k=>{
+  if(!noop && (!applied || JSON.stringify(Object.keys(applied).sort())!==JSON.stringify(keys.sort()) || keys.some(k=>{
     if(k==='trashed_at')return command.action==='restore'?applied[k]!==null:typeof applied[k]!=='number' || !Number.isFinite(applied[k]);
     if(k==='tags')return !Array.isArray(applied[k]) || applied[k].some(t=>typeof t!=='string');
     if(k==='run_label')return command[k]===null?applied[k]!==null:applied[k]!==command[k].trim();
     return typeof applied[k]!==typeof command[k];
-  }))throw Error('The save receipt contains invalid applied metadata.');
+  })))throw Error('The save receipt contains invalid applied metadata.');
   if(!Array.isArray(result.current) || result.current.length>10 ||
      result.current.some(m=>!validAssetMetadata(m) || m.workspace_id!==command.workspace_id || !command.ids.includes(m.id)) ||
      new Set(result.current.map(m=>m.id)).size!==result.current.length)throw Error('The receipt observation is invalid; the exact save remains retained.');
@@ -261,7 +265,7 @@ async function performAssetSave(operation, observe=false) {
 function syncAssetAfterSave(operation,result) {
   const record=assetState.assets.find(a=>a.id===operation.id),revision=result.revisions[operation.id];
   if(!record || record.workspace_id!==operation.command.workspace_id || record.metadata_revision!==operation.command.expected_revisions[operation.id])return void refreshAssets(true);
-  Object.assign(record,result.applied,{metadata_revision:revision});
+  Object.assign(record,result.unchanged?.includes(operation.id)?{}:result.applied,{metadata_revision:revision});
   if(operation.kind==='trash')renderAssets();else updateAssetCard(record.id);
 }
 function applyAssetSaveReceipt(operation,result) {
@@ -629,7 +633,7 @@ async function postAssetCommand(command) {
 function applyAssetReviewReceipt(command,result) {
   for(const id of command.ids){
     const record=assetState.assets.find(a=>a.id===id);
-    if(record && (!record.workspace_id || record.workspace_id===command.workspace_id) && record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.applied,{metadata_revision:result.revisions[id]});
+    if(record && (!record.workspace_id || record.workspace_id===command.workspace_id) && record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.unchanged?.includes(id)?{}:result.applied,{metadata_revision:result.revisions[id]});
   }
 }
 // Replacing a saved decision is not the same as reviewing a new asset: name what changes before any write.
@@ -836,7 +840,7 @@ async function performLibraryCommand(operation,observe=false) {
       const asset=assetState.assets.find(a=>a.id===id);
       if(asset && asset.workspace_id===command.workspace_id && asset.metadata_revision===command.expected_revisions[id]){
         asset.metadata_revision=result.revisions[id];
-        if(['edit','trash','restore'].includes(command.action))Object.assign(asset,result.applied);
+        if(['edit','trash','restore'].includes(command.action)&&!result.unchanged?.includes(id))Object.assign(asset,result.applied);
       }
     }
     void refreshAssets(true);assetMessage('Library update confirmed.');return result;

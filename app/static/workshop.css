@@ -2,7 +2,7 @@
 body.workshop-active {
   --bg:#131416; --panel:#1c1d21; --panel2:#25262b; --line:#3b3b40;
   --text:#f3efe7; --muted:#b6b2ac; --accent:#ffb18b; --purple:#e5c5b2; --danger:#ffbaa9;
-  --wk-input:#16171a; --wk-soft:#2d2725; --wk-on-accent:#28190f; --wk-radius:16px;
+  --wk-input:#16171a; --wk-field-line:#7e7e85; --wk-soft:#2d2725; --wk-on-accent:#28190f; --wk-radius:16px;
   --wk-shadow:0 20px 65px #0005; --workshop-dock-space:180px;
   background:var(--bg); color:var(--text); accent-color:var(--accent);
 }
@@ -16,7 +16,7 @@ body.workshop-active .studio-jump {background:var(--panel)!important}
 body.workshop-active main {padding:30px 36px calc(var(--workshop-dock-space) + 28px);max-width:1600px}
 body.workshop-active > footer {display:none}
 body.workshop-active :focus-visible {outline:3px solid var(--accent);outline-offset:4px}
-body.workshop-active :is(input,select,textarea) {background:var(--wk-input);color:var(--text);border-color:var(--line);border-radius:10px}
+body.workshop-active :is(input,select,textarea) {background:var(--wk-input);color:var(--text);border-color:var(--wk-field-line);border-radius:10px}
 body.workshop-active button {background:var(--panel2);border-color:var(--line);color:var(--text);border-radius:9px;min-height:42px}
 body.workshop-active button:hover:not(:disabled) {background:var(--wk-soft);border-color:var(--muted);color:var(--text)}
 body.workshop-active :is(a,.eyebrow) {color:var(--purple)}
@@ -57,7 +57,7 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .ux-section-heading h3 {font-size:14px;font-weight:600;letter-spacing:0;margin:0}
 .workshop .ux-section-heading :is(a,button) {font-size:11px;min-height:36px;max-width:50%}
 .workshop #positiveWrap {font-size:0;margin:0;display:block}
-.workshop #positive {font-size:16px;line-height:1.75;padding:21px 22px;min-height:170px;max-height:55vh;resize:vertical;letter-spacing:.005em;border-color:var(--line);border-radius:12px;background:var(--wk-input);margin:0}
+.workshop #positive {font-size:16px;line-height:1.75;padding:21px 22px;min-height:170px;max-height:55vh;resize:vertical;letter-spacing:.005em;border-color:var(--wk-field-line);border-radius:12px;background:var(--wk-input);margin:0}
 .workshop #positive:focus {border-color:var(--accent)}
 .wk-prompt-hint {display:block;font-size:11px;line-height:1.6;margin:10px 0 18px}
 .ux-wording-undo {display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-8px 0 16px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--wk-soft);font-size:12px;line-height:1.45}
@@ -226,12 +226,12 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
 body.workshop-active[data-workshop-skin="arcade"] {
   --bg:#101321;--panel:#181d30;--panel2:#242b42;--line:#3d4863;
   --text:#edf4fc;--muted:#afbed5;--accent:#73e9d1;--purple:#b8adff;--danger:#ffb6b6;
-  --wk-input:#111627;--wk-soft:#23333d;--wk-on-accent:#0b292b;--wk-radius:12px;
+  --wk-input:#111627;--wk-field-line:#8b98b8;--wk-soft:#23333d;--wk-on-accent:#0b292b;--wk-radius:12px;
 }
 body.workshop-active[data-workshop-skin="sakura"] {
   --bg:#19141d;--panel:#241c2a;--panel2:#322839;--line:#57445d;
   --text:#fbecf5;--muted:#c8b1c7;--accent:#f2a8c9;--purple:#e8bddc;--danger:#ffc2ae;
-  --wk-input:#1c1622;--wk-soft:#3c2938;--wk-on-accent:#371a2b;--wk-radius:18px;
+  --wk-input:#1c1622;--wk-field-line:#9a8298;--wk-soft:#3c2938;--wk-on-accent:#371a2b;--wk-radius:18px;
 }
 body.workshop-active[data-workshop-skin="arcade"] .ux-create-heading {
   background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0ODAiIGhlaWdodD0iMTYwIiB2aWV3Qm94PSIwIDAgNDgwIDE2MCI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNzNlOWQxIiBzdHJva2Utb3BhY2l0eT0iLjE4Ij48cGF0aCBkPSJNMCAxMjVINDgwTTAgMTQzSDQ4ME0yNCAxNjBMMTY1IDk1TTExNSAxNjBMMTk4IDk1TTI0MCAxNjBWOTVNMzY1IDE2MEwyODIgOTVNNDU2IDE2MEwzMTUgOTUiLz48cGF0aCBkPSJNMCA5NWgzNlY2OWgxNFY1MmgxOXYxN2gyMHYyNmgzMFY3OWgxOFY2MmgyN3YzM2g2M1Y3NWgzNHYyMGgzNVY1NmgyNVYzNWgxNnYyMWgyNXYzOWg0NlY2M2gzMHYzMmg0MiIvPjwvZz48Y2lyY2xlIGN4PSIyNDAiIGN5PSI0NiIgcj0iMjgiIGZpbGw9IiNhNzhiZmEiIGZpbGwtb3BhY2l0eT0iLjEyIi8+PHBhdGggZD0iTTIzIDIwaDZtLTMtM3Y2bTM3NSAwaDZtLTMtM3Y2bS00OSA3aDRtLTItMnY0IiBzdHJva2U9IiM3M2U5ZDEiIHN0cm9rZS1vcGFjaXR5PSIuNSIvPjwvc3ZnPg==') right center / auto 130px no-repeat;

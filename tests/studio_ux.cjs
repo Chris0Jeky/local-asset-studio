@@ -224,4 +224,14 @@ test('Make seamless offers the server seam bands, keeps a too-wide band listed w
   assert.deepEqual(U.tileBands(null),{options:[],note:''});
   assert.equal(U.tileBandPx('160'),160);assert.equal(U.tileBandPx(''),null);assert.equal(U.tileBandPx(undefined),null);assert.equal(U.tileBandPx('wide'),null);
 });
+test('pose canvas is exposed as an operable application, not a static image (#1402)', () => {
+  const code = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
+  const match = code.match(/<canvas id="uxPoseCanvas"[^>]*>/);
+  assert.ok(match, 'pose canvas markup must be present');
+  const tag = match[0];
+  assert.match(tag, /role="application"/, 'keyboard-operable pose canvas must not expose role=img (WCAG 4.1.2)');
+  assert.match(tag, /aria-roledescription="pose editor"/, 'pose canvas must name its roledescription');
+  assert.match(tag, /aria-label="[^"]*Pose skeleton[^"]*"/, 'pose canvas keeps its accessible label');
+  assert.match(tag, /aria-label="[^"]*joint[^"]*arrow keys[^"]*Shift[^"]*"/, 'pose canvas label must describe joint selection, arrow keys and Shift+arrow');
+});
 console.log(count+' Studio UX policy checks passed.');
