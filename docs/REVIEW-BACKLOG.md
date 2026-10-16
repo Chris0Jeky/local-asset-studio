@@ -45,4 +45,8 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   `confirm()` in `asset-family.js` recall.
 - [ ] **Models shows looks first and folds the file table** (#1426): "What you can make" (ready vs needs a download), a
   "Used by" line per file, a quiet Verify per card, and no bulk "Verify all" (the install lock would make it mostly fail).
+- [ ] **Ctrl+Enter in a look's scene box prepares first** (#1226): the first press prepares the look, a second press
+  generates, so it never runs with the Full editor's old words. Reverse: make Ctrl+Enter generate straight away.
+- [ ] **The Full editor opens with an empty prompt** (#1433), and adult-content notes appear only on adult recipes.
+  Ctrl+K and the mobile header now lead to Make. Reverse: restore the authored default prompt on first open.
 
