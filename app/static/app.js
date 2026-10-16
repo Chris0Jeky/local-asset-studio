@@ -225,8 +225,11 @@ function addTrigger(key, auto) {
 // Only the exact fragment added for this slot is removed; text the user edited around it stays as typed.
 function dropAutoTrigger(key) {
   const fragment = autoTriggers[key], field = $('#positive'); delete autoTriggers[key];
-  if (!fragment || !field || !field.value.includes(fragment)) return '';
-  field.value = field.value.replace(fragment, ''); field.dispatchEvent(new Event('input', {bubbles: true}));
+  if (!fragment || !field) return '';
+  // Still a whole token where it was put: a leading fragment at the very start, a trailing one before a comma or the end.
+  const literal = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), token = fragment.endsWith(', ') ? RegExp('^' + literal) : RegExp(literal + '(?=\\s*(,|$))');
+  if (!token.test(field.value)) return '';
+  field.value = field.value.replace(token, ''); field.dispatchEvent(new Event('input', {bubbles: true}));
   return 'Removed the trigger ' + fragment.replace(/^, |, $/g, '') + ' added for the previous adapter.';
 }
 function chooseLora(key) {
