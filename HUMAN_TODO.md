@@ -1,5 +1,7 @@
 # Creative choices
 
+Retroactive review queue (16 Oct 2026 overnight session): [docs/REVIEW-BACKLOG.md](docs/REVIEW-BACKLOG.md) lists every judgement agents made instead of waiting for you, each with how to reverse it. Start with its "Review these first" list. Those are agent judgements; nothing below was ticked on your behalf.
+
 Recorded limited owner answer, 13 October 2026: after the displayed v2 workshop
 and Alibi v2 lantern PNGs and the responsive LAS card, Chris said “Yeah, I guess
 these are good enough for being SVGs.” Those displayed examples are provisionally
