@@ -452,7 +452,7 @@ class AssetWorkspace:
                 raise WorkspaceError("Selected asset metadata changed or no longer exists; nothing changed in this batch",
                                      status=409, code="asset_revision_conflict", request_id=request_id,
                                      conflict_ids=conflicts, missing_ids=missing, current=current, workspace_id=identity)
-            changed_ids = [i for i in ids if (rows[i]["trashed_at"] is None) == (action == "trash")] if action in ("trash", "restore") else ids
+            changed_ids = [i for i in ids if (not rows[i]["trashed_at"]) == (action == "trash")] if action in ("trash", "restore") else ids
             if any(rows[i]["metadata_revision"] >= MAX_REVISION for i in changed_ids):
                 raise WorkspaceError("Asset revision limit reached; nothing changed")
             applied = {}
@@ -642,7 +642,7 @@ class AssetWorkspace:
             if row is None: raise WorkspaceError("Card not found", status=404, code="card_not_found")
             if row["revision"] != expected:
                 raise WorkspaceError("This card changed since you read it; nothing changed. Reload it and try again.", status=409, code="card_revision_conflict", current=self._card(row))
-            if action in ("trash", "restore") and (row["trashed_at"] is None) != (action == "trash"): return self._card(row)
+            if action in ("trash", "restore") and (not row["trashed_at"]) != (action == "trash"): return self._card(row)
             db.execute(f"UPDATE cards SET {','.join(k + '=?' for k in fields)},revision=revision+1,updated_at=? WHERE id=?", [*fields.values(), now, row["id"]])
             return self._card(db.execute("SELECT * FROM cards WHERE id=?", (row["id"],)).fetchone())
 

@@ -75,6 +75,14 @@ class WorkspaceTests(unittest.TestCase):
                 self.assertEqual((cm.exception.status, cm.exception.code), (409, 'asset_revision_conflict'))
                 self.assertEqual(self.store.get(self.asset), before)
 
+    def test_legacy_zero_trashed_at_counts_as_active_and_can_be_trashed(self):
+        with self.store.connection() as db: db.execute("UPDATE assets SET trashed_at=0 WHERE id=?", (self.asset,))
+        before = self.store.get(self.asset)
+        result = self.write(self.store, {'ids':[self.asset], 'action':'trash'})
+        after = self.store.get(self.asset)
+        self.assertNotIn('unchanged', result); self.assertGreater(after['trashed_at'], 0)
+        self.assertEqual(after['metadata_revision'], before['metadata_revision']+1)
+
     def test_trash_restore_mixed_batch_changes_only_assets_needing_transition(self):
         other = self.store.register(dict(self.job, id='job-2'), 0, self.source)
         self.write(self.store, {'ids':[self.asset], 'action':'trash'})
