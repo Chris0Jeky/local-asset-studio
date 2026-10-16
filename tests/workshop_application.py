@@ -97,6 +97,8 @@ def main():
             checks.append({'name':'Prompt Lab handoff panel stays in the first viewport and costs nothing when hidden','cases':transfer})
             # #853: the same app owner must reject empty wording in every presentation.
             # Keep the fixture's original valid prompt for subsequent generation/lineage checks.
+            # The Full editor opens with an empty prompt (#1433); write one so Generate has something to run.
+            if not page.locator('#positive').input_value().strip(): page.fill('#positive', 'A quiet lantern-lit study')
             original_prompt = page.locator('#positive').input_value()
             prompt_cases = []
             for width, height in [(1440, 900), (390, 844)]:
