@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 
 from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
@@ -19,6 +19,7 @@ from workshop_browser_core import immersive_css
 from workshop_wildcards import WILDCARDS, exercise_wildcards
 from workshop_continuation_help import exercise_continuation_help
 from workshop_backend_refresh import exercise_backend_refresh
+from workshop_parallax_handoff import exercise_parallax_handoff
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,7 +30,7 @@ async def run(args):
     previous_wildcards = fixture.CATALOG.get("wildcards")
     if args.case in ("all", "wildcards"):
         fixture.CATALOG["wildcards"] = WILDCARDS
-    server = ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
+    server = browser_server(fixture.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     checks, errors = [], []
@@ -51,6 +52,9 @@ async def run(args):
             await page.wait_for_function('!!selected && !!document.querySelector("#workshopRecipeChange") && !!document.querySelector("#bundleLauncher")')
             await page.evaluate("showView('create')")
             await page.wait_for_timeout(150)
+            if args.case in ('all', 'parallax'):
+                await exercise_parallax_handoff(page, checks)
+                await page.set_viewport_size({'width':1440, 'height':900})
             if args.case in ('all', 'backends'):
                 await exercise_backend_refresh(page, checks, fixture.POSTS)
                 await page.set_viewport_size({'width':1440, 'height':900})
@@ -132,5 +136,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', type=Path, default=ROOT/'.runtime/workshop-handoffs')
     parser.add_argument('--inert', action='store_true')
-    parser.add_argument('--case', choices=('all','bundle','disclosure','wildcards','continuation','backends'), default='all')
+    parser.add_argument('--case', choices=('all','bundle','disclosure','wildcards','continuation','backends','parallax'), default='all')
     asyncio.run(run(parser.parse_args()))

@@ -9,12 +9,14 @@ import io
 import json
 import math
 import mimetypes
+import os
 import random
 import re
 import shutil
 import socket
 import sqlite3
 import sys
+import tempfile
 import threading
 import time
 import uuid
@@ -55,6 +57,7 @@ import pose_guide
 import tiles
 import parallax
 import looks
+import characters
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -70,6 +73,7 @@ HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the 
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
+TERMINAL_RECEIPTS = ("completed", "failed", "cancelled")  # receipt statuses Resume reconciles from the record, never re-reads
 HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
 HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
@@ -91,9 +95,11 @@ COMMIT_RELEASE_FLOOR_BYTES = COMMIT_RELEASE_TRANSIENT_BYTES + COMMIT_RELEASE_MAR
 COMMIT_RELEASE_FLOOR_NOTE = f'a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely'
 
 def commit_release_blocked(available):
-    """The one floor rule for every /free the Studio sends on its own (the gate release and the idle release, #1167); an unknown reading blocks."""
+    """The one floor rule for every /free the Studio sends on its own (gate, idle and pre-submit release); an unknown reading blocks."""
     return not isinstance(available, int) or isinstance(available, bool) or available <= COMMIT_RELEASE_FLOOR_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
+# Plain numeric controls and their accepted range; app/looks.py keeps the same table for saved looks (parity test).
+NUMBER_RANGES = (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True))
 
 class StudioError(ValueError):
     code = None
@@ -110,6 +116,9 @@ class StudioError(ValueError):
             body["code"] = self.code
             body.update(self.details)
         return body
+
+class UploadStorageError(StudioError):
+    status = 503
 
 class QueueWaitUnavailable(StudioError): pass
 
@@ -174,8 +183,9 @@ class Studio:
         self.cancel_requests = {}   # job id -> open owner cancel request; the worker that owns the job resolves it (app/job_cancel.py)
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
         # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
+        self.config_warnings = []
         raw_minutes = self.config.get("idle_cache_release_minutes", 10)
-        self.idle_release_minutes = max(0.0, float(raw_minutes)) if self._finite_number(raw_minutes) else 10.0   # 0 or a negative value switches it off
+        self.idle_release_minutes = self._config_number("idle_cache_release_minutes", raw_minutes, default=10.0)   # 0 or a negative value switches it off
         self._last_activity = time.monotonic(); self._released_since_activity = False; self.cache_release = {"count": 0, "last_at": None, "last_error": None}
         # ComfyUI keeps part of the previous checkpoint on the GPU when the next one loads, because its free-VRAM figure ignores what the
         # desktop holds; three SDXL checkpoints in one process spilled 0, 3.7 and 6.0 GB into shared memory (23 Sep 2026). Unload first.
@@ -185,7 +195,7 @@ class Studio:
         # own idle backend and re-measure for up to this many seconds; only a fresh reading that passes the unchanged gate admits.
         raw_release = self.config.get("commit_gate_release_seconds", 0)
         self.history_read_backoff_seconds = HISTORY_READ_BACKOFF_SECONDS   # per instance so a scripted ComfyUI double need not wait
-        self.commit_release_seconds = min(float(COMMIT_RELEASE_MAX_SECONDS), float(raw_release)) if self._finite_number(raw_release) and raw_release > 0 else 0.0
+        self.commit_release_seconds = self._config_number("commit_gate_release_seconds", raw_release, default=0.0, maximum=float(COMMIT_RELEASE_MAX_SECONDS))
         self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
@@ -228,7 +238,7 @@ class Studio:
                 for key in CONTROL_KEYS:
                     binding = preset.get(key)
                     if binding: defaults[key] = graph[str(binding[0])]["inputs"].get(str(binding[1]), "")
-                preset["defaults"] = defaults
+                preset["defaults"] = defaults; preset["model"] = looks.model_of(graph)
                 capacity = wan_capacity.projection(preset, graph)
                 if capacity is not None: preset["wan_decode_capacity"] = capacity
                 preset["continuation_capability"] = dict(continuation.capability(preset, graph), template_sha256=hashlib.sha256(template_path.read_bytes()).hexdigest())
@@ -436,6 +446,15 @@ class Studio:
             preparation["warning"] = "Wan22ImageToVideoLatent will center-crop the source before bilinear resampling; no letterbox is used."
         preset["_prepared_source"] = preparation
 
+    def _lora_file(self, key, name):
+        """An adapter filename from a request: a bare .safetensors name, and an installed one while the inventory is known."""
+        if not isinstance(name, str) or not name or len(name) > 200 or name != Path(name).name or "/" in name or "\\" in name or ".." in name or not name.endswith(".safetensors"):
+            raise StudioError(f"{key} must be an installed .safetensors filename")
+        # ComfyUI rejects an uninstalled combo value with HTTP 400 even at strength 0, so refuse it here while the inventory is known.
+        installed = self.options().get("loras")
+        if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
+        return name
+
     def prepare(self, payload, *, _defer_host_commit_preflight=False):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
         self.require_worker()
@@ -472,21 +491,12 @@ class Studio:
             binding = preset.get(key) or ((preset.get("bindings_extra") or {}).get(key) or [None])[0]
             try: existing = graph[str(binding[0])]["inputs"].get(str(binding[1]))
             except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
-            # `lora` stays polymorphic: older presets bind it to a filename input.
-            value = number(controls[key], key, 0, 2) if isinstance(existing, (int, float)) and not isinstance(existing, bool) else controls[key]
-            if isinstance(value, bool) or not isinstance(value, (int, float, str)) or (isinstance(value, str) and len(value) > 8000): raise StudioError(f"{key} must be a number or short text")
-            self._bind_control(graph, preset, key, value)
-        installed = self.options().get("loras") if any(key in controls for key in LORA_NAME_KEYS) else None
+            # `lora` stays polymorphic: older presets bind it to a filename input, which takes the filename checks below;
+            # every other binding (a strength, or an input the graph leaves unset) is a 0-2 number, never raw text.
+            self._bind_control(graph, preset, key, self._lora_file(key, controls[key]) if isinstance(existing, str) else number(controls[key], key, 0, 2))
         for key in LORA_NAME_KEYS:
-            if key not in controls: continue
-            name = controls[key]
-            if not isinstance(name, str) or not name or len(name) > 200 or name != Path(name).name or "/" in name or "\\" in name or ".." in name or not name.endswith(".safetensors"):
-                raise StudioError(f"{key} must be an installed .safetensors filename")
-            # ComfyUI rejects an uninstalled combo value with HTTP 400 even at
-            # strength 0, so refuse it here while the inventory is known.
-            if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
-            self._bind_control(graph, preset, key, name)
-        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True)):
+            if key in controls: self._bind_control(graph, preset, key, self._lora_file(key, controls[key]))
+        for key, lo, hi, integer in NUMBER_RANGES:
             if key in controls: self._bind_control(graph, preset, key, number(controls[key], key, lo, hi, integer))
         for key, lo, hi in (("frames", 5, 365), ("fps", 1, 60)):
             if key in controls:
@@ -526,10 +536,12 @@ class Studio:
             label = preset.get(source_key + "_label") or ("Picture to keep (image 1)" if source_key == "last_reference" else "the picture")
             raise StudioError((preset.get("name") or preset.get("id") or "This recipe") + " needs your picture on " + label + "; the authored example picture cannot be queued")
         if preset.get("max_pixels"):
-            actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
+            try: actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
+            except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
             if actual["width"] * actual["height"] > preset["max_pixels"]: raise StudioError("Resolution exceeds this workflow's pixel budget")
         if preset.get('resolution_choices'):
-            actual = [graph[str(preset[k][0])]['inputs'][str(preset[k][1])] for k in ('width', 'height')]
+            try: actual = [graph[str(preset[k][0])]['inputs'][str(preset[k][1])] for k in ('width', 'height')]
+            except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
             if actual not in preset['resolution_choices']: raise StudioError('Choose an authored resolution pair from this recipe')
         if preset.get("reference_slots"):
             preset["_prepared_references"] = compile_references(preset, graph, payload.get("references"), self.experiments / "uploads")
@@ -688,7 +700,10 @@ class Studio:
             if not isinstance(queue, dict) or queue.get("queue_running") or queue.get("queue_pending"): record['outcome'] = 'skipped: ComfyUI queue busy'
             elif (before := torch_reserved()) is not None and before <= 1024 ** 3:
                 record['torch_reserved_before'] = before; record['outcome'] = 'nothing resident'
+            elif commit_release_blocked((commit := self.host_commit_reading(refresh=True)).get('available_bytes')):
+                record['before_available_bytes'] = commit.get('available_bytes'); record['outcome'] = 'skipped: ' + COMMIT_RELEASE_FLOOR_NOTE
             else:
+                record['before_available_bytes'] = commit.get('available_bytes')
                 record['torch_reserved_before'] = before
                 self._request("/free", method="POST", data={"unload_models": True}, timeout=30, allow_empty=True)
                 # The flag is read between prompts: a prompt posted before the worker wakes would run with the old models still loaded.
@@ -903,6 +918,7 @@ class Studio:
     def public(self, job):
         allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish", "parallax", "parallax_finish")
         result = {k: job.get(k) for k in allowed}
+        if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
         result["can_stop_tracking"] = Studio._stop_tracking_error(self, job) is None
@@ -959,8 +975,10 @@ class Studio:
         graph, _ = self.graph_for(preset)
         controls = controls if isinstance(controls, dict) else {}
         numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "depth_cut", *LORA_SLOTS}
-        integer = {"seed", "steps", "width", "height", "frames", "fps", "depth_cut"}
         extras = preset.get("bindings_extra") or {}
+        limits = {"seed": (0, 2**63 - 1, True), "steps": (1, 150, True), "cfg": (0, 30, False), "denoise": (0, 1, False),
+                  "style_weight": (0, 2, False), "pose_strength": (0, 2, False), "depth_cut": (0, 100, True),
+                  "frames": (5, 365, True), "fps": (1, 60, True)}
         for key, raw in controls.items():
             if key not in CONTROL_KEYS or not (preset.get(key) or extras.get(key)): continue
             value = raw
@@ -968,11 +986,21 @@ class Studio:
             try: existing = graph[str(binding[0])]["inputs"].get(str(binding[1]))
             except (KeyError, TypeError, IndexError): existing = None
             if key in numeric and (key not in LORA_SLOTS or isinstance(existing, (int, float)) and not isinstance(existing, bool)):
-                parsed = self._estimate_float(raw, None)
-                if parsed is None: continue
-                value = int(parsed) if key in integer else parsed
+                try:
+                    if key in ("width", "height"):
+                        bounds = preset.get("dimension_limits", [64, 1536])
+                        lo, hi = (bounds[0], bounds[1]) if isinstance(bounds, (list, tuple)) and len(bounds) == 2 else (64, 1536)
+                        value = number(raw, key, lo, hi, True)
+                    elif key in limits:
+                        lo, hi, integer = limits[key]
+                        value = number(raw, key, lo, hi, integer)
+                    else:
+                        value = number(raw, key, 0, 2)
+                except StudioError as exc:
+                    raise StudioError(str(exc), code="invalid_control", control=key) from None
             try: self._bind_control(graph, preset, key, value)
-            except StudioError: continue
+            except StudioError as exc:
+                raise StudioError(f"{key}: {exc}", code="invalid_control", control=key) from None
         try: self.prune_disabled_loras(graph)
         except (StudioError, KeyError, TypeError): pass
         return graph
@@ -1030,8 +1058,15 @@ class Studio:
             presets = self.catalog().get("presets", [])
             preset = next(p for p in presets if p.get("id") == payload.get("preset_id"))
             controls = payload.get("controls") if isinstance(payload.get("controls"), dict) else {}
-            graph = self._estimate_graph(preset, controls)
         except (StopIteration, StudioError, KeyError, TypeError, OSError):
+            return {"available": False, "reason": "Choose a supported recipe before estimating."}
+        try:
+            graph = self._estimate_graph(preset, controls)
+        except StudioError as exc:
+            if exc.code == "invalid_control":
+                return {"available": False, "reason": str(exc) or "Invalid estimate control."}
+            return {"available": False, "reason": "Choose a supported recipe before estimating."}
+        except (KeyError, TypeError, OSError):
             return {"available": False, "reason": "Choose a supported recipe before estimating."}
         references = payload.get("reference_count", 0)
         target = self._estimate_features(preset, graph, controls, payload.get("batch_count", 1), references)
@@ -1093,6 +1128,7 @@ class Studio:
                              "node_count": target["node_count"], "references": target["references"], "modality": target["modality"]}}
 
     def export_recipe(self, job):
+        if "record_error" in job: raise StudioError("An unreadable run record has no recipe to export; inspect its folder first")
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
@@ -1125,6 +1161,7 @@ class Studio:
             return inside(base,base/output['run_file'])
         if (job or {}).get('operation')=='asset.import':
             return inside((self.experiments/'uploads').resolve(),self.experiments/'uploads'/output['uploaded_file'])
+        if (job or {}).get('operation'): raise StudioError('Unsupported local output operation')
         root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
         kind = output.get("type", "output")
         if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
@@ -1142,8 +1179,9 @@ class Studio:
     def asset_reference(self, asset_id):
         asset = self.assets.get(asset_id)
         if asset["media_type"] != "image": raise StudioError("Choose an image as the reference")
-        context = continuation.source_context(self, asset_id)
         source = self.assets.file(asset_id)
+        if source.stat().st_size > 20 * 1024 * 1024: raise StudioError("Source exceeds the 20 MiB reference limit.")
+        context = continuation.source_context(self, asset_id)
         raw = source.read_bytes()
         if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise StudioError("Source changed during attachment; reopen the handoff.")
         result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", raw)
@@ -1242,23 +1280,33 @@ class Studio:
         self.validate_graph(graph)
         if shutil.disk_usage(self.experiments).free<2*1024**3:raise StudioError('At least 2 GiB free workspace storage is required')
         inspection=self.inspect_preset(preset['id'],graph)
-        from model_requirements import pin_mismatch
+        from model_requirements import path_key, pin_mismatch, valid_fingerprint
         pins={a['id']:a for a in self.library.manifest().get('assets',[]) if isinstance(a,dict) and isinstance(a.get('id'),str)}
         cache_path=self.root/'.runtime/model-fingerprints.json';models=[];mismatches=[]
         with self._fingerprint_lock:
-            cache=read_json(cache_path,{}) or {}
+            cache=self.model_fingerprints()
             for requirement in inspection['requirements']:
+                if requirement.get('pin_conflict'): raise StudioError(requirement['file'] + ': ' + requirement['note'])
                 if requirement.get('path') is None:
                     raise StudioError('Cannot resolve required model: ' + requirement['file'] + ' — ' + requirement.get('note', 'Inspect the declared location'))
                 if requirement.get('present') is not True: raise StudioError('Required model is unavailable: ' + requirement['file'])
                 path=Path(requirement['path']).resolve()
                 if not path.is_relative_to(self.library.models) or not path.is_file():raise StudioError('Required model is unavailable: '+requirement['file'])
                 stat=path.stat();key=str(path);record=cache.get(key,{})
-                if record.get('bytes')!=stat.st_size or record.get('mtime_ns')!=stat.st_mtime_ns:
-                    record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest_file(path)};cache[key]=record
+                pin=pins.get(requirement.get('asset_id'))
+                if pin and path_key(pin.get('file', ''))!=path_key(requirement['file']): pin=None
+                # Stat caches are a performance hint, not content evidence for pinned production inputs.
+                if pin or not valid_fingerprint(record, stat.st_size, stat.st_mtime_ns):
+                    digest=digest_file(path);after=path.stat()
+                    identity=lambda info:(info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns)
+                    if identity(stat)!=identity(after):
+                        cache[key]={'path':key,'bytes':after.st_size,'mtime_ns':after.st_mtime_ns,'digest_unavailable':True}
+                        cache_path.parent.mkdir(exist_ok=True);self._write_json_atomic(cache_path,cache)
+                        raise StudioError('Required model changed while hashing: '+requirement['file'])
+                    record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest};cache[key]=record
                 models.append(dict(record,file=requirement['file']))
                 # #1112: an exact-path pin binds production; an unpinned file stays allowed.
-                pin=pins.get(requirement.get('asset_id'));mismatch=pin and pin.get('file')==requirement['file'] and pin_mismatch(pin,record['bytes'],record['sha256'])
+                mismatch=pin and pin_mismatch(pin,record['bytes'],record['sha256'])
                 if mismatch:mismatches.append('Required model does not match its library pin: '+requirement['file']+' — '+mismatch['note'])
             cache_path.parent.mkdir(exist_ok=True);self._write_json_atomic(cache_path,cache)
         # The digests are cached first, so readiness can show the same mismatch without rehashing.
@@ -1276,7 +1324,7 @@ class Studio:
         return {'comfy_root':str(self.comfy_root),'comfy_url':self.comfy_url,'models':models,'inputs':inputs,
                 'schema_sha256':fingerprint(schema),'node_classes':classes,'system':stats.get('system',{}),
                 'devices':stats.get('devices',[]),'measured_at':time.time(),'terms_note':preset.get('commercial_note'),
-                'verification':'Model content hashes cached only while size and modification time match; inputs rehashed before each stage. Schema hash excludes changing file-choice inventories.'}
+                'verification':'Pinned model bytes freshly hashed when preparing the plan; recorded model and input hashes checked afresh at execution admission. Schema hash excludes changing file-choice inventories.'}
 
     def node_contract(self, classes):
         schema={name:copy.deepcopy(self.node_info().get(name)) for name in classes}
@@ -1295,8 +1343,17 @@ class Studio:
         if fingerprint(schema)!=bundle['schema_sha256']:raise StudioError('The runtime node schema changed; create a new experiment branch')
         for record in bundle['models']:
             path=Path(record['path'])
-            if not path.is_file() or path.stat().st_size!=record['bytes'] or path.stat().st_mtime_ns!=record['mtime_ns']:
+            try:
+                before=path.stat()
+                if not path.is_file() or before.st_size!=record['bytes'] or before.st_mtime_ns!=record['mtime_ns']:
+                    raise StudioError('A pinned model changed; prepare a new branch before executing')
+                digest=digest_file(path);after=path.stat()
+            except OSError as exc:
+                raise StudioError('A pinned model changed or became unavailable; prepare a new branch before executing') from exc
+            identity=lambda info:(info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns)
+            if digest!=record['sha256'] or identity(before)!=identity(after):
                 raise StudioError('A pinned model changed; prepare a new branch before executing')
+        # shortcut: admission does not freeze engine-open bytes; snapshot if the runtime requires atomic identity.
         for record in bundle['inputs']:
             path=Path(record['path'])
             if not path.is_file() or digest_file(path)!=record['sha256']:raise StudioError('A pinned input changed; original plan preserved')
@@ -1311,7 +1368,16 @@ class Studio:
     def _write_observation_state(self, path, value):
         return observation_state.publish(path, value, self._sync_parent_directory)
 
-    def _save(self, job):
+    @staticmethod
+    def _finite_state(value):
+        """Non-finite floats become null in a durable copy: ComfyUI JSON may carry NaN into optional readings (#1459)."""
+        if isinstance(value, float) and not math.isfinite(value): return None
+        if isinstance(value, dict): return {k: Studio._finite_state(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)): return [Studio._finite_state(v) for v in value]
+        return value
+
+    def _save(self, job, durable=False):
+        if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
         directory = self.runs / job["id"]
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
@@ -1319,8 +1385,10 @@ class Studio:
         if job.get("tile") is not None: recipe["tile"] = job["tile"]
         if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]
         self._write_json_atomic(directory / "recipe.json", recipe)
-        self._write_json_atomic(directory / "workflow.json", job["graph"])
-        state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
+        state = {k:v for k,v in job.items() if k != "graph"}
+        if durable:   # #1459: restart (_load_jobs) reads workflow.json and state.json; both must survive an OS crash at the marker and receipt
+            self._write_observation_state(directory / "workflow.json", job["graph"]); self._write_observation_state(directory / "state.json", self._finite_state(state)); return
+        self._write_json_atomic(directory / "workflow.json", job["graph"]); self._write_json_atomic(directory / "state.json", state)
 
     @staticmethod
     def _tracking_stopped(job):
@@ -1597,8 +1665,22 @@ class Studio:
 
     def _load_jobs(self):
         for state_path in self.runs.glob("*/state.json"):
-            data = read_json(state_path)
-            graph = read_json(state_path.parent / "workflow.json")
+            try:
+                for path in (state_path, state_path.parent / "workflow.json"):
+                    record = json.loads(path.read_text(encoding="utf-8"))
+                    if not isinstance(record, dict): raise ValueError("Expected a JSON object")
+                    if path == state_path:
+                        if not record.get("id"): raise ValueError("Missing job ID")
+                        data = record
+                    else: graph = record
+            except (OSError, ValueError) as exc:
+                reason = f"{path.name}: {exc}"; known = data.get("prompt_ids") if path != state_path else None   # state.json parsed first, so data is this run's
+                ids = [i for i in known if isinstance(i, str)] if isinstance(known, list) else []
+                # Missing evidence collections cannot prove non-submission or authorize a disposition.
+                self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
+                    "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
+                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
+                continue
             if isinstance(data, dict) and isinstance(graph, dict) and data.get("id"):
                 data["graph"] = graph
                 data.setdefault('comfy_root', str(self.comfy_root))
@@ -1671,7 +1753,7 @@ class Studio:
                     graph, _ = self.graph_for(preset)
                     for requirement in self.preset_requirements(preset, graph, assets=assets, observations=observations, fingerprints=fingerprints):
                         if requirement.get('pin_mismatch'): pin_warnings.setdefault(preset.get('id'), []).append(requirement['file'])
-                        if requirement['present'] is not True:
+                        if requirement['present'] is not True or requirement.get('pin_conflict'):
                             label = requirement['file'] if requirement['present'] is False else 'Unresolved dependency: ' + requirement['file'] + ' — ' + requirement['note']
                             missing.setdefault(preset.get('id'), []).append(label)
                     # One endpoint's schema cannot speak for another backend family.
@@ -1690,12 +1772,13 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
 
     def model_fingerprints(self):
         # Read-only view of production preflight's digest cache; readiness never hashes.
-        cache = read_json(self.root/'.runtime/model-fingerprints.json', {})
+        try: cache = read_json(self.root/'.runtime/model-fingerprints.json', {})
+        except ValueError: cache = {}
         return cache if isinstance(cache, dict) else {}
 
     def inspect_preset(self, preset_id, graph=None):
@@ -1901,6 +1984,17 @@ class Studio:
                 if not prompting.has_wildcards(text): continue
                 graph[node]["inputs"][field] = prompting.expand(text, rng, self.root)
 
+    def _config_number(self, key, raw, *, default, maximum=None):
+        """A config number, including a numeric string. A bad value keeps the fail-safe default and is named on /api/health. Zero and below stay the documented off switch; above maximum clamps with no warning."""
+        try: parsed = number(raw, key, -sys.float_info.max, sys.float_info.max)
+        except StudioError as error:
+            warning = f"{error}; keeping {default}"
+            self.config_warnings.append(warning); print(warning, file=sys.stderr)
+            return float(default)
+        if parsed <= 0: return 0.0
+        if maximum is not None and parsed > maximum: return float(maximum)
+        return float(parsed)
+
     @staticmethod
     def _finite_number(value):
         return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
@@ -2039,7 +2133,13 @@ class Studio:
             with self.lock:
                 # Last point before the POST: a cancel that arrived during the wait or the eviction sends nothing.
                 if self._cancel_checkpoint(job): return
-                job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+                job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}
+                try: self._save(job, durable=True)
+                except (OSError, ValueError) as exc:
+                    # Fail safe (#1459): without a durable marker the POST is never sent.
+                    job.pop("pending_submission", None); job["status"] = "partial" if job.get("prompt_ids") else "failed"
+                    job["message"] = "The submission marker could not be saved durably (" + (str(exc) or type(exc).__name__)[:200] + "). No prompt was submitted for output " + str(i + 1) + "."
+                    self._stamp_finished(job); self._save(job); return
             self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
@@ -2064,7 +2164,14 @@ class Studio:
                 job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
             self._resource_observation_event('accepted', job, index=i, prompt_id=prompt_id)
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
-            job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
+            job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"
+            try: self._save(job, durable=True)
+            except (OSError, ValueError) as exc:
+                # The prompt is queued: keep its receipt in memory, never treat the job as unsubmitted, never send another member (#1459).
+                job["status"] = "uncertain"; job["message"] = "Prompt " + prompt_id[:80] + " was accepted, but its receipt could not be saved durably (" + (str(exc) or type(exc).__name__)[:200] + "). It will not be resubmitted; use Resume observation."
+                try: self._save(job)
+                except (OSError, ValueError): pass   # the durable marker on disk still restarts as uncertain, never not_submitted
+                return
             if not self._wait_history(job, submission): return
         job["status"] = "completed"; job["message"] = "Complete"
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
@@ -2210,7 +2317,7 @@ class Studio:
             self.require_worker()
             raise StudioError(error)
         if self._tracking_stopped(job): return self._resume_tracking(job)
-        pending = [s for s in job["submissions"] if s.get("status") != "completed"]
+        pending = [s for s in job["submissions"] if s.get("status") not in TERMINAL_RECEIPTS]
         prospective = dict(job)
         if not pending:
             prospective["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}
@@ -2245,12 +2352,16 @@ class Studio:
                 raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
             prior = job.pop("reconciliation", None) or {}
             prior_status, prior_message = prior.get("status", job.get("status")), prior.get("message", job.get("message"))
-            unresolved = any(s.get("status") != "completed" for s in job.get("submissions", []))
+            unresolved = any(s.get("status") not in TERMINAL_RECEIPTS for s in job.get("submissions", []))
             job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
         for submission in job.get("submissions", []):
-            if submission.get("status") not in ("completed", "cancelled") and not self._wait_history(job, submission): return
+            if submission.get("status") not in TERMINAL_RECEIPTS and not self._wait_history(job, submission): return
         observed = len(job.get("submissions", []))
-        if observed < job["batch_count"]:
+        # A failed receipt is ComfyUI's own verdict: re-reading it after a restart would only find no history and call it uncertain.
+        if any(s.get("status") == "failed" for s in job.get("submissions", [])):
+            status = "partial" if any(s.get("status") == "completed" for s in job["submissions"]) else "failed"
+            message = "ComfyUI reported a failure for a submitted prompt; it was not resubmitted."
+        elif observed < job["batch_count"]:
             status = "partial"; message = f"Observed {observed} of {job['batch_count']} requested images. Remaining images were not submitted; start a new job for those."
         else:
             status = "completed"; message = "Complete"
@@ -2281,17 +2392,79 @@ class Studio:
         safe = re.sub(r"[^A-Za-z0-9._-]", "_", Path(filename or "reference").name)[:100]
         if not safe or safe in (".", ".."): raise StudioError("Invalid upload filename")
         # ComfyUI only receives this generated basename; client paths are never used.
-        uploads = self.experiments / "uploads"; uploads.mkdir(parents=True, exist_ok=True)
-        name = f"{uuid.uuid4().hex}_{safe}{IMAGE_TYPES[mime]}"
-        path = uploads / name; path.write_bytes(body)
         comfy_input = self.comfy_root / "input"
         if not comfy_input.is_dir():
-            path.unlink(missing_ok=True)
             raise StudioError("Configured ComfyUI input folder is unavailable")
-        shutil.copyfile(path, comfy_input / name)
+        uploads = self.experiments / "uploads"; uploads.mkdir(parents=True, exist_ok=True)
+        name = f"{uuid.uuid4().hex}_{safe}{IMAGE_TYPES[mime]}"
         metadata = {"file": name, "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body), "width": width, "height": height, "original_name": safe}
-        self._write_json_atomic(uploads / (name + ".json"), metadata)
-        return metadata
+        payloads = ((uploads / name, body), (comfy_input / name, body),
+                    (uploads / (name + ".json"), json.dumps(metadata, indent=2).encode("utf-8")))
+        owned = {}
+        stages = []
+        def stamp(info):
+            return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+        def unchanged(path):
+            expected, digest = owned[path]
+            before = path.lstat()
+            return (stamp(before) == expected and digest_file(path) == digest
+                    and stamp(path.lstat()) == expected)
+        try:
+            for target, raw in payloads:
+                descriptor, filename = tempfile.mkstemp(prefix=".upload-", suffix=".tmp", dir=target.parent)
+                stage = Path(filename)
+                digest = hashlib.sha256()
+                owned[stage] = (stamp(os.fstat(descriptor)), digest.hexdigest())
+                stages.append((stage, target))
+                offset = 0
+                try:
+                    while offset < len(raw):
+                        count = os.write(descriptor, memoryview(raw)[offset:])
+                        if count <= 0: raise OSError("Upload staging write made no progress")
+                        digest.update(memoryview(raw)[offset:offset + count]); offset += count
+                        owned[stage] = (stamp(os.fstat(descriptor)), digest.hexdigest())
+                finally:
+                    os.close(descriptor)
+                    # Windows can finalize mtime on close; never adopt unknown failed-write bytes.
+                    try:
+                        info = stage.lstat()
+                        previous, expected_digest = owned[stage]
+                        if stamp(info)[:3] == previous[:3] and digest_file(stage) == expected_digest:
+                            owned[stage] = (stamp(info), expected_digest)
+                    except OSError:
+                        pass
+            for stage, target in stages:
+                if not unchanged(stage): raise OSError("Upload stage changed before publication")
+                owned[target] = owned[stage]  # Also covers a link that became visible before raising.
+                try:
+                    os.link(stage, target)  # Same-directory, complete bytes, atomic refusal to overwrite.
+                except FileExistsError:
+                    owned.pop(target)  # A definite collision never belongs to this request.
+                    raise
+                if not unchanged(target) or not unchanged(stage):
+                    raise OSError("Upload changed during publication")
+                stage.unlink(); owned.pop(stage)
+            if not all(unchanged(target) for _, target in stages):
+                raise OSError("Upload changed before completion")
+            return metadata  # The sidecar is last; subsequent indexing failure must retain this upload.
+        except BaseException as exc:
+            retained = []
+            for path in reversed(owned):
+                try:
+                    # shortcut: no cross-process stat/unlink CAS; add writer coordination if needed.
+                    if unchanged(path): path.unlink()
+                    else: retained.append(str(path))
+                except FileNotFoundError:
+                    pass
+                except OSError:
+                    retained.append(str(path))
+            if isinstance(exc, OSError):
+                detail = " Retained paths: " + ", ".join(retained) if retained else ""
+                raise UploadStorageError("Reference upload failed: " + str(exc) + detail,
+                                         code="upload_storage_unconfirmed" if retained else "upload_failed",
+                                         retained_paths=retained) from exc
+            if retained: exc.add_note("Upload retained paths: " + ", ".join(retained))
+            raise
 
 class Handler(BaseHTTPRequestHandler):
     def end_headers(self):
@@ -2436,6 +2609,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == "/api/looks": return self._json(200, looks.listing(self.studio))
+            if path == "/api/characters": return self._json(200, characters.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
                 return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
@@ -2518,13 +2692,26 @@ class Handler(BaseHTTPRequestHandler):
                 _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); index = int(index); outputs = job.get("outputs", []) if job else []; image = outputs[index] if 0 <= index < len(outputs) else None
                 if not image: return self._json(404, {"error":"Unknown image"})
                 if image.get("asset_id"): return self._local_file(self.studio.assets.file(image["asset_id"]))
+                # Local operations never produced a ComfyUI /view output. A failed snapshot must
+                # retain the original file identity, not borrow an unrelated matching filename (#1228).
+                if job.get("operation"):
+                    try: file = self.studio.output_path(image, job)
+                    except (StudioError, KeyError, TypeError): return self._json(404, {"error":"Unknown image"})
+                    return self._local_file(file) if file.is_file() else self._json(404, {"error":"Unknown image"})
                 return self._media(image, job)
             if path == "/": path = "/index.html"
             if path.startswith("/static/"): path = path[7:]
             file = inside(Path(__file__).parent / "static", Path(__file__).parent / "static" / path.lstrip("/"))
-            if not file.is_file() or file.suffix not in (".html", ".js", ".css"): return self._json(404, {"error":"Not found"})
-            data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
-        except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
+            # App-owned code must not inherit host MIME overrides, including the Windows registry.
+            # Preserve the static allowlist without changing host settings.
+            static_types = {".html": "text/html", ".js": "text/javascript", ".css": "text/css"}
+            static_type = static_types.get(file.suffix)
+            # One app-owned optional reference; no general media-directory admission.
+            if file == (Path(__file__).parent / "static/look-previews/night-shift-ma-responsive-1024.webp").resolve():
+                static_type = "image/webp"
+            if not file.is_file() or static_type is None: return self._json(404, {"error":"Not found"})
+            data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", static_type); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
+        except (GpuLeaseError, WorkspaceError, UploadStorageError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return
         except (URLError, HTTPError): self._json(502, {"error": "ComfyUI did not return this image. Check that ComfyUI is running (Models & setup shows its state), then reload."})
@@ -2594,6 +2781,8 @@ class Handler(BaseHTTPRequestHandler):
             # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
             if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
             if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
+            # Characters (#1205): save/edit/put away a character card from a keeper. Never creates a job.
+            if self.path == "/api/characters": return self._json(200, characters.command(self.studio, self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
@@ -2601,7 +2790,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_object().get("id")))
             if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/resume"):
-                self._body_json(); return self._json(202, self.studio.resume_job(self.path.split("/")[3]))
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown resume route')
+                self._body_json(); return self._json(202, self.studio.resume_job(parts[3]))
             if self.path.startswith("/api/jobs/") and self.path.endswith(("/observe-known", "/dispose-mixed")):
                 parts = self.path.split('/')
                 if len(parts) != 5: raise StudioError('Unknown mixed batch route')
@@ -2620,7 +2811,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(self._body_json(), dict): raise StudioError('Cancel command must be an object')
                 return self._json(202, self.studio.cancel_job(parts[3]))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
-                return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_object().get("reason")))
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown stop-tracking route')
+                return self._json(200, self.studio.stop_tracking(parts[3], self._body_object().get("reason")))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/put-away"):
                 parts = self.path.split('/')
                 if len(parts) != 5: raise StudioError('Unknown put-away route')
@@ -2642,7 +2835,7 @@ class Handler(BaseHTTPRequestHandler):
                 body = self._body_object(); job = parallax.finish(self.studio, body.get("job_id"), body.get("other_job_id")); return self._json(200, {"job": self.studio.public(job)})
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             self._drain_refused_body(); return self._json(404, {"error":"Not found"})
-        except (GpuLeaseError, WorkspaceError) as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError, UploadStorageError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc:
             if isinstance(exc, StudioError) and getattr(exc, "code", None): self._json(400, exc.response())
             else: self._json(400, {"error": str(exc)})

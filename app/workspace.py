@@ -48,8 +48,8 @@ RUN_LABEL_MAX = 80
 REVIEW_CHECKS = ("pose", "face", "outfit", "style", "clean", "anatomy", "composition")
 CHECK_TAG = re.compile(r"check:(%s)=(yes|no)" % "|".join(REVIEW_CHECKS))
 # Cards (#1221, #1205): named, revisioned Workspace records that are not pictures. `body` is the kind's JSON (a look's wording
-# template and recipe, app/looks.py), `lineage` the pictures it came from. A character card is a new kind here, not a migration.
-CARD_KINDS = ("look",)
+# template and recipe, app/looks.py; a character's words, app/characters.py), `lineage` the pictures it came from.
+CARD_KINDS = ("look", "character")
 CARD_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{2,127}")
 CARD_BODY_MAX = 64 * 1024
 CARD_LINEAGE_MAX = 20
@@ -231,11 +231,13 @@ class AssetWorkspace:
                 return asset_id
         if not Path(source).is_file():
             return None
+        try: output = job["outputs"][index]
+        except (IndexError, KeyError, TypeError): output = None
+        if not isinstance(output, dict): raise WorkspaceError("That job output index is invalid; nothing was registered")
         path, digest, size = self.snapshot_file(source)
-        output = job["outputs"][index]
         label = job.get("label") if isinstance(job.get("label"), str) and job.get("label") else None
         with self.connection() as db:
-            db.execute("""INSERT OR IGNORE INTO assets
+            inserted = db.execute("""INSERT OR IGNORE INTO assets
                 (id,job_id,output_index,title,media_type,path,filename,sha256,bytes,
                  created_at,preset_id,preset_name,source,lineage,run_label,prompt_excerpt)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
@@ -244,6 +246,13 @@ class AssetWorkspace:
                 digest, size, job.get("created_at", time.time()), job.get("preset_id"),
                 job.get("preset_name"), json.dumps(output), json.dumps(job.get("parent_assets", [])),
                 label[:80] if label else None, prompt_excerpt(job)))
+            if inserted.rowcount == 0:
+                stored = db.execute("SELECT id FROM assets WHERE job_id=? AND output_index=?",
+                                    (job["id"], index)).fetchone()
+                if stored is None:
+                    raise WorkspaceError("That job output is already registered; nothing changed",
+                                         status=409, code="asset_register_conflict")
+                return stored["id"]
         return asset_id
 
     @staticmethod
@@ -445,7 +454,8 @@ class AssetWorkspace:
                 raise WorkspaceError("Selected asset metadata changed or no longer exists; nothing changed in this batch",
                                      status=409, code="asset_revision_conflict", request_id=request_id,
                                      conflict_ids=conflicts, missing_ids=missing, current=current, workspace_id=identity)
-            if any(rows[i]["metadata_revision"] >= MAX_REVISION for i in ids):
+            changed_ids = [i for i in ids if (not rows[i]["trashed_at"]) == (action == "trash")] if action in ("trash", "restore") else ids
+            if any(rows[i]["metadata_revision"] >= MAX_REVISION for i in changed_ids):
                 raise WorkspaceError("Asset revision limit reached; nothing changed")
             applied = {}
             if action in ("add_collection", "remove_collection"):
@@ -454,12 +464,17 @@ class AssetWorkspace:
                     raise WorkspaceError("Choose an existing collection")
                 if not db.execute("SELECT id FROM collections WHERE id=?", (collection_id,)).fetchone():
                     raise WorkspaceError("Choose an existing collection")
+                members = {r["asset_id"] for r in db.execute(f"SELECT asset_id FROM collection_assets WHERE collection_id=? AND asset_id IN ({placeholders})", [collection_id, *ids])}
+                # Only rows whose membership flips are changes: a repeat add or a remove of a non-member burns no revision (#1405 pattern).
+                changed_ids = [i for i in ids if (i not in members) == (action == "add_collection")]
                 if action == "add_collection":
                     db.executemany("INSERT OR IGNORE INTO collection_assets VALUES (?,?)", [(collection_id, i) for i in ids])
                 else:
                     db.executemany("DELETE FROM collection_assets WHERE collection_id=? AND asset_id=?", [(collection_id, i) for i in ids])
                 applied = {"collection_id": collection_id}
-                db.execute(f"UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN ({placeholders})", ids)
+                if changed_ids:
+                    changed_placeholders = ",".join("?" for _ in changed_ids)
+                    db.execute(f"UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN ({changed_placeholders})", changed_ids)
             else:
                 changes = {}
                 if action in ("trash", "restore"):
@@ -482,9 +497,11 @@ class AssetWorkspace:
                             raise WorkspaceError("Use up to 30 tags")
                         valid_tags = []
                         for tag in tags:
-                            if isinstance(tag, str) and not tag:
-                                continue
+                            if isinstance(tag, str) and not tag.strip():
+                                continue   # blank or whitespace-only entries are dropped, never stored as ''
                             valid_tags.append(self.text(tag, "Tag", 60))
+                        if tags and not valid_tags:
+                            raise WorkspaceError("Enter at least one non-blank tag, or send an empty list to clear the tags; nothing changed")
                         valid_tags = list(dict.fromkeys(valid_tags))
                         answered = [CHECK_TAG.fullmatch(t) for t in valid_tags if t[:6].lower() == "check:"]
                         if not all(answered) or len({m[1] for m in answered}) != len(answered):
@@ -499,12 +516,15 @@ class AssetWorkspace:
                 if not changes:
                     raise WorkspaceError("No changes supplied")
                 fields = ",".join(key + "=?" for key in changes)
-                db.execute(f"UPDATE assets SET {fields},metadata_revision=metadata_revision+1 WHERE id IN ({placeholders})", [*changes.values(), *ids])
-                applied = dict(changes)
+                if changed_ids:
+                    changed_placeholders = ",".join("?" for _ in changed_ids)
+                    db.execute(f"UPDATE assets SET {fields},metadata_revision=metadata_revision+1 WHERE id IN ({changed_placeholders})", [*changes.values(), *changed_ids])
+                applied = dict(changes) if changed_ids else {}
                 if "tags" in applied: applied["tags"] = json.loads(applied["tags"])
                 if "favorite" in applied: applied["favorite"] = bool(applied["favorite"])
             result = {"status": "applied", "request_id": request_id, "updated": ids, "action": action,
-                      "revisions": {i: expected[i] + 1 for i in ids}, "applied": applied}
+                      "revisions": {i: expected[i] + (i in changed_ids) for i in ids}, "applied": applied}
+            if len(changed_ids) < len(ids): result["unchanged"] = [i for i in ids if i not in changed_ids]   # a repeat trash/restore keeps these as they were (#1405)
             if scope is not None:
                 result["workspace_id"] = identity
             # Compact receipts retain changed fields and revisions, never N copies of media/notes.
@@ -549,6 +569,9 @@ class AssetWorkspace:
                 inserted = db.execute("INSERT OR IGNORE INTO setups VALUES (?,?,?,?)", (identifier, name, raw, time.time()))
                 if inserted.rowcount == 0:
                     winner = db.execute("SELECT name,recipe FROM setups WHERE id=?", (identifier,)).fetchone()
+                    if winner is None:  # deleted between the ignored insert and this read: a conflict, not a TypeError
+                        raise WorkspaceError("That setup changed while it was being saved; nothing was stored. Save again with a new ID.",
+                                             status=409, code="setup_conflict")
                     if winner["name"] != name or json.loads(winner["recipe"]) != recipe:
                         raise WorkspaceError("That setup ID already exists; the original was preserved. Save with a new ID.")
         return {"id": identifier, "name": name}
@@ -631,6 +654,7 @@ class AssetWorkspace:
             if row is None: raise WorkspaceError("Card not found", status=404, code="card_not_found")
             if row["revision"] != expected:
                 raise WorkspaceError("This card changed since you read it; nothing changed. Reload it and try again.", status=409, code="card_revision_conflict", current=self._card(row))
+            if action in ("trash", "restore") and (not row["trashed_at"]) != (action == "trash"): return self._card(row)
             db.execute(f"UPDATE cards SET {','.join(k + '=?' for k in fields)},revision=revision+1,updated_at=? WHERE id=?", [*fields.values(), now, row["id"]])
             return self._card(db.execute("SELECT * FROM cards WHERE id=?", (row["id"],)).fetchone())
 

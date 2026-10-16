@@ -259,6 +259,13 @@ def _others_bytes(reading, pid):
 CAPACITY_REASON = "GPU process memory counters exceed the card's capacity"
 
 
+def _over_card(value, capacity):
+    """True when a source counter is past the card plus small sampling headroom."""
+    if capacity is None or isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value): return False
+    # 128 MiB covers the 80 MiB gap from ComfyUI's 16,304 MiB to a full 16 GiB card, plus 48 MiB sampling slack.
+    return value > capacity + 128 * 1024 ** 2
+
+
 def others_for_admission(reading, pid, capacity_bytes=None):
     """Credible measured external bytes for admission as `(bytes_or_None, reason_or_None)`.
 
@@ -268,15 +275,16 @@ def others_for_admission(reading, pid, capacity_bytes=None):
     yet is not a measurement, so admission gets `(None, reason)` instead of a precise byte
     value. A matching sample stays measured; a missing/unmatched adapter stays unknown.
     Readings without an `adapter_totals` field keep the older `others_bytes` contract. Any
-    result above `capacity_bytes` is unknown.
+    result above `capacity_bytes` is unknown, as is a selected adapter total or own counter
+    past that capacity plus sampling headroom: their difference can still fit the card.
     """
-    others, reason = _others_for_admission(reading, pid)
     capacity = _capacity(capacity_bytes)
+    others, reason = _others_for_admission(reading, pid, capacity)
     if others is not None and capacity is not None and others > capacity: return None, CAPACITY_REASON
     return others, reason
 
 
-def _others_for_admission(reading, pid):
+def _others_for_admission(reading, pid, capacity=None):
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
     if not adapters:
         reason = None
@@ -299,6 +307,7 @@ def _others_for_admission(reading, pid):
         if others is None:
             reason = reading.get('unknown_reason') if isinstance(reading, dict) else None
             return None, reason or 'no GPU adapter reading'
+        if _over_card(adapters[adapter].get(pid, {}).get('dedicated_bytes'), capacity): return None, CAPACITY_REASON
         return others, None
     total = _adapter_total(reading, adapter)
     if total is None:
@@ -308,6 +317,7 @@ def _others_for_admission(reading, pid):
     excluded, others, capped = _reconcile(values, total, own_pid=pid)
     if others is None or excluded or capped:
         return None, 'GPU adapter and process counters disagree'
+    if _over_card(total, capacity) or _over_card(values.get(pid), capacity): return None, CAPACITY_REASON
     return others, None
 
 

@@ -161,6 +161,9 @@ async def scenario_late_response_binding(browser):
 async def scenario_pointer_threshold(browser):
     page, errors = await page_for(browser)
     await page.click("[data-figure-split-open]")
+    # The stage is pointer-only; keyboard users use the per-row fields. A focusable
+    # stage would be a dead tab stop, so it must sit outside the tab order (tabIndex -1).
+    assert await page.locator("#figureSplitStage").evaluate("el => el.tabIndex") == -1, "stage is a dead tab stop"
     stage = await page.locator("#figureSplitStage").bounding_box()
     assert stage, "figure stage unavailable"
     x, y = stage["x"] + stage["width"] / 2, stage["y"] + stage["height"] / 2
@@ -212,6 +215,25 @@ async def scenario_refresh_failure(browser):
     await page.close()
     return {"receipt_remains_confirmed": True, "pending_cleared": True}
 
+async def scenario_row_names_and_motion(browser):
+    page, errors = await page_for(browser)
+    await page.evaluate("(()=>{window.__scrollBehaviors=[];const scrollOriginal=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(options){__scrollBehaviors.push(options&&options.behavior);return scrollOriginal.call(this,options);};})()")
+    await add_default(page, second=True)
+    names = await page.evaluate("[...document.querySelectorAll('#figureSplitList input')].map(input=>input.getAttribute('aria-label'))")
+    assert len(names) == 8 and len(set(names)) == 8, names
+    assert "Figure 2 x" in names and "Figure 1 width" in names, names
+    assert await page.evaluate("__scrollBehaviors.at(-1)") == "smooth", await page.evaluate("__scrollBehaviors")
+    assert not errors, errors
+    await page.close()
+    reduced, errors = await page_for(browser)
+    await reduced.emulate_media(reduced_motion="reduce")
+    await reduced.evaluate("(()=>{window.__scrollBehaviors=[];const scrollOriginal=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(options){__scrollBehaviors.push(options&&options.behavior);return scrollOriginal.call(this,options);};})()")
+    await reduced.click("[data-figure-split-open]")
+    assert await reduced.evaluate("__scrollBehaviors.at(-1)") == "auto", await reduced.evaluate("__scrollBehaviors")
+    assert not errors, errors
+    await reduced.close()
+    return {"row_inputs_named_per_figure": True, "reduced_motion_scroll": "auto"}
+
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True)
@@ -233,6 +255,7 @@ async def main():
                 "pointer_threshold": await scenario_pointer_threshold(browser),
                 "coalesced_refresh": await scenario_coalesced_refresh(browser),
                 "refresh_failure": await scenario_refresh_failure(browser),
+                "row_names_and_motion": await scenario_row_names_and_motion(browser),
             }
         finally:
             await browser.close()

@@ -50,9 +50,106 @@ class InstallSafetyTests(unittest.TestCase):
         self.assertEqual(self.receipt()['status'],'failed');self.assert_released()
 
     def test_unsupported_atomic_publication_preserves_complete_stage(self):
-        with patch.object(models,'urlopen',return_value=Reply(self.body)),patch.object(contracts.os,'link',side_effect=OSError(errno.ENOTSUP,'no links')):
+        with patch.object(models,'urlopen',return_value=Reply(self.body)),patch.object(contracts,'os',wraps=os) as platform:
+            platform.name='posix';platform.link.side_effect=OSError(errno.ENOTSUP,'no links')
             with self.assertRaisesRegex(ValueError,'explicit recovery'):self.lib.install('demo')
         self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),self.body);self.assert_released()
+
+    @unittest.skipUnless(os.name=='nt','Requires Windows no-clobber rename')
+    def test_publish_verified_link_failure_on_nt_uses_rename(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')):
+            published=contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
+        self.assertEqual(self.target.read_bytes(),self.body);self.assertFalse(self.part.exists())
+        self.assertEqual(published,contracts.file_identity(self.target))
+        self.assertEqual(published['size'],identity['size']);self.assertEqual(published['mtime_ns'],identity['mtime_ns'])
+
+    @unittest.skipUnless(os.name=='nt','Requires Windows no-clobber rename')
+    def test_publish_verified_rename_race_preserves_both_files(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
+        rename=os.rename
+        def race(source,target):
+            self.target.write_bytes(b'another writer');return rename(source,target)
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename',side_effect=race):
+            with self.assertRaisesRegex(ValueError,'Destination appeared during publication; both files preserved'):
+                contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
+        self.assertEqual(self.part.read_bytes(),self.body);self.assertEqual(self.target.read_bytes(),b'another writer')
+
+    def test_rename_rejects_same_size_same_mtime_replacement(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part);rename=os.rename
+        saved=self.part.with_name('original-stage');replacement=b'x'*len(self.body)
+        calls=[]
+        def swap(source,target):
+            calls.append((source,target))
+            if len(calls)>1:return rename(source,target)
+            rename(source,saved);source.write_bytes(replacement)
+            os.utime(source,ns=(identity['mtime_ns'],identity['mtime_ns']))
+            return rename(source,target)
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename',side_effect=swap):
+            with self.assertRaisesRegex(ValueError,'^Published file does not match the verified digest; files preserved for inspection$'):
+                contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
+        # Unverified bytes never stay at the model's name: they go back to the staging name; the original is untouched.
+        self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),replacement);self.assertEqual(saved.read_bytes(),self.body)
+
+    def test_rename_rejects_a_write_during_the_digest(self):
+        # A writer that changes the published file while it is being hashed must not leave a verified receipt behind.
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part);real=contracts.sha256
+        def hash_then_write(path):
+            digest=real(path);path.write_bytes(b'y'*len(self.body));return digest
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts,'sha256',side_effect=hash_then_write):
+            with self.assertRaisesRegex(ValueError,'^Published file does not match the verified digest; files preserved for inspection$'):
+                contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
+        self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),b'y'*len(self.body))
+
+    def test_rename_requires_digest_before_moving_stage(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')):
+            with self.assertRaisesRegex(ValueError,'digest'):
+                contracts.publish_verified(self.part,self.target,identity)
+        self.assertEqual(self.part.read_bytes(),self.body);self.assertFalse(self.target.exists())
+
+    def test_browser_copy_failure_records_temp_and_retry_does_not_accumulate(self):
+        local=self.root/'home/Downloads/demo.safetensors';local.write_bytes(self.body)
+        self.part.write_bytes(b'stale partial');before=contracts.file_identity(self.part)
+        for failure in ('copy','verification','publication'):
+            with self.subTest(failure=failure):
+                for attempt in range(2):
+                    free=Mock(side_effect=[SimpleNamespace(free=10**9),SimpleNamespace(free=0)]) if failure=='copy' else Mock(return_value=SimpleNamespace(free=10**9))
+                    verify=self.lib._verify
+                    def check(path,asset):
+                        if path!=local and failure=='verification':raise ValueError('verification failed')
+                        return verify(path,asset)
+                    with patch.object(models.os,'link',side_effect=OSError('no links')),patch.object(models.shutil,'disk_usage',free),patch.object(self.lib,'_verify',side_effect=check),patch.object(models,'publish_verified',side_effect=ValueError('publication failed')):
+                        with self.assertRaises(ValueError):self.lib.install('demo')
+                    temps=list(self.target.parent.glob(self.part.name+'.*.tmp'))
+                    self.assertEqual(len(temps),1)
+                    receipt=self.receipt();self.assertEqual(receipt['partial_path'],str(temps[0]))
+                    self.assertEqual(receipt['bytes_done'],temps[0].stat().st_size);self.assertEqual(receipt['status'],'failed')
+                    self.assertEqual(contracts.file_identity(self.part),before);self.assert_released()
+        link=os.link
+        def cross_device(source,target):
+            if source==local:raise OSError(errno.EXDEV,'cross device')
+            return link(source,target)
+        with patch.object(models.os,'link',side_effect=cross_device):
+            self.assertEqual(self.lib.install('demo')['status'],'installed')
+        self.assertEqual(self.target.read_bytes(),self.body);self.assertEqual(self.part.read_bytes(),b'stale partial')
+        self.assertEqual(list(self.target.parent.glob(self.part.name+'.*.tmp')),[])
+
+    def test_retry_preserves_unrelated_temps_and_refuses_shared_temp(self):
+        local=self.root/'home/Downloads/demo.safetensors';local.write_bytes(self.body);self.part.write_bytes(b'stale')
+        unrelated=self.part.with_name(self.part.name+'.notes.tmp');unrelated.write_bytes(b'user notes')
+        other=self.root/'other';other.write_bytes(b'user data')
+        shared=self.part.with_name(self.part.name+'.'+'a'*32+'.tmp');os.link(other,shared)
+        with patch.object(models.os,'link',side_effect=OSError('no links')):
+            with self.assertRaisesRegex(ValueError,'unshared regular file'):self.lib.install('demo')
+        self.assertEqual(shared.read_bytes(),b'user data');self.assertEqual(unrelated.read_bytes(),b'user notes')
+        self.assertEqual(self.part.read_bytes(),b'stale');self.assertFalse(self.target.exists());self.assert_released()
+
+    def test_publish_verified_link_failure_on_posix_refuses(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
+        with patch.object(contracts.os,'name','posix'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename') as rename:
+            with self.assertRaisesRegex(ValueError,'explicit recovery'):contracts.publish_verified(self.part,self.target,identity)
+        rename.assert_not_called();self.assertEqual(self.part.read_bytes(),self.body);self.assertFalse(self.target.exists())
 
     def test_every_resume_header_mismatch_preserves_original_partial(self):
         n=len(self.body);self.part.write_bytes(self.body[:5])
@@ -161,6 +258,18 @@ class InstallSafetyTests(unittest.TestCase):
         with patch.object(models.os,'link',side_effect=cross_device):
             with self.assertRaisesRegex(ValueError,'both files preserved'):self.lib.install('demo')
         self.assertEqual(local.read_bytes(),self.body);self.assertEqual(self.part.read_bytes(),self.body);self.assertEqual(self.target.read_bytes(),b'another writer')
+
+    @unittest.skipUnless(os.name=='nt','Requires Windows no-clobber rename')
+    def test_browser_copy_with_stale_part_uses_temp_and_preserves_partial(self):
+        local=self.root/'home/Downloads/demo.safetensors';local.write_bytes(self.body)
+        self.part.write_bytes(b'stale partial');before=contracts.file_identity(self.part)
+        with patch.object(models.os,'link',side_effect=OSError('no links')),patch.object(models,'urlopen') as request:
+            receipt=self.lib.install('demo')
+        request.assert_not_called();self.assertEqual(receipt['status'],'installed')
+        self.assertEqual(local.read_bytes(),self.body);self.assertEqual(self.target.read_bytes(),self.body)
+        self.assertEqual(self.part.read_bytes(),b'stale partial');self.assertEqual(contracts.file_identity(self.part),before)
+        self.assertEqual(set(self.target.parent.iterdir()),{self.target,self.part})
+        self.assertTrue(self.lib.snapshot()['assets'][0]['verified']);self.assert_released()
 
     def test_change_while_hashing_is_not_verified(self):
         self.target.write_bytes(self.body)

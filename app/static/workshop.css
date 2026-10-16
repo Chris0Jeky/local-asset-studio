@@ -2,7 +2,7 @@
 body.workshop-active {
   --bg:#131416; --panel:#1c1d21; --panel2:#25262b; --line:#3b3b40;
   --text:#f3efe7; --muted:#b6b2ac; --accent:#ffb18b; --purple:#e5c5b2; --danger:#ffbaa9;
-  --wk-input:#16171a; --wk-soft:#2d2725; --wk-on-accent:#28190f; --wk-radius:16px;
+  --wk-input:#16171a; --wk-field-line:#7e7e85; --wk-soft:#2d2725; --wk-on-accent:#28190f; --wk-radius:16px;
   --wk-shadow:0 20px 65px #0005; --workshop-dock-space:180px;
   background:var(--bg); color:var(--text); accent-color:var(--accent);
 }
@@ -16,7 +16,7 @@ body.workshop-active .studio-jump {background:var(--panel)!important}
 body.workshop-active main {padding:30px 36px calc(var(--workshop-dock-space) + 28px);max-width:1600px}
 body.workshop-active > footer {display:none}
 body.workshop-active :focus-visible {outline:3px solid var(--accent);outline-offset:4px}
-body.workshop-active :is(input,select,textarea) {background:var(--wk-input);color:var(--text);border-color:var(--line);border-radius:10px}
+body.workshop-active :is(input,select,textarea) {background:var(--wk-input);color:var(--text);border-color:var(--wk-field-line);border-radius:10px}
 body.workshop-active button {background:var(--panel2);border-color:var(--line);color:var(--text);border-radius:9px;min-height:42px}
 body.workshop-active button:hover:not(:disabled) {background:var(--wk-soft);border-color:var(--muted);color:var(--text)}
 body.workshop-active :is(a,.eyebrow) {color:var(--purple)}
@@ -57,7 +57,7 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .ux-section-heading h3 {font-size:14px;font-weight:600;letter-spacing:0;margin:0}
 .workshop .ux-section-heading :is(a,button) {font-size:11px;min-height:36px;max-width:50%}
 .workshop #positiveWrap {font-size:0;margin:0;display:block}
-.workshop #positive {font-size:16px;line-height:1.75;padding:21px 22px;min-height:170px;max-height:55vh;resize:vertical;letter-spacing:.005em;border-color:var(--line);border-radius:12px;background:var(--wk-input);margin:0}
+.workshop #positive {font-size:16px;line-height:1.75;padding:21px 22px;min-height:170px;max-height:55vh;resize:vertical;letter-spacing:.005em;border-color:var(--wk-field-line);border-radius:12px;background:var(--wk-input);margin:0}
 .workshop #positive:focus {border-color:var(--accent)}
 .wk-prompt-hint {display:block;font-size:11px;line-height:1.6;margin:10px 0 18px}
 .ux-wording-undo {display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-8px 0 16px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--wk-soft);font-size:12px;line-height:1.45}
@@ -71,6 +71,7 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop input[type=file] {display:block;max-width:100%;margin-top:10px;font-size:11px}
 .workshop input[type=file]::file-selector-button {background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:9px 12px;margin-right:8px;border-radius:7px;font:inherit;cursor:pointer}
 .workshop :is(.reference-card,.lora-slot) {background:var(--wk-input);border-color:var(--line);color:var(--text)}
+.workshop .lora-hint button {padding:3px 10px;min-height:0;font-size:11px;margin:4px 6px 0 0}
 .workshop .ux-parameters,.workshop .wk-disclosure {border:0;border-top:1px solid var(--line);border-radius:0;padding:14px 0;margin:0;background:transparent;min-width:0}
 .workshop :is(.ux-parameters,.wk-disclosure)>summary {color:var(--text);font-size:12px;font-weight:550;padding:8px 0;min-height:36px;cursor:pointer;overflow-wrap:anywhere}
 .workshop .ux-parameters>summary small {display:block;color:var(--muted);font-size:11px;font-weight:400;margin:7px 0 0 16px;line-height:1.6}
@@ -111,8 +112,8 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .imageCard {border-color:var(--line);background:var(--panel);border-radius:14px;overflow:hidden;max-width:100%}
 .workshop .imageCard img {max-width:100%;object-fit:contain}
 .workshop .imageCard button {font-size:11px}
-.workshop .wk-run-dock {position:fixed;z-index:55;bottom:16px;left:calc(var(--sidebar,224px) + 28px);right:28px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;padding:15px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:var(--wk-shadow);max-width:1350px;margin:0 auto;min-width:0;pointer-events:none}
-.workshop .wk-run-dock :is(button,select,input,a,label) {pointer-events:auto}
+/* Catch hits on the opaque panel (#1241); --workshop-dock-space keeps page controls reachable without #565's click-through. */
+.workshop .wk-run-dock {position:fixed;z-index:55;bottom:16px;left:calc(var(--sidebar,224px) + 28px);right:28px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;padding:15px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:var(--wk-shadow);max-width:1350px;margin:0 auto;min-width:0;pointer-events:auto}
 .wk-dock-info {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 12px;min-width:0}
 .wk-dock-info>strong {font-size:12px;line-height:1.55;font-weight:500;max-height:3.1em;overflow:auto;overflow-wrap:anywhere;color:var(--text)}
 .wk-dock-info>span {font-size:11px;color:var(--muted);grid-column:1}
@@ -150,12 +151,29 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
 #workshopRecipeDialog input[type=search] {min-height:48px;width:100%;font-size:14px;padding:13px 16px;margin-top:6px}
 #workshopRecipeDialog #modalities {display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 #workshopRecipeDialog #modalities button {font-size:12px}
-#workshopRecipeDialog #presetList {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-height:48vh;overflow:auto;scrollbar-gutter:stable;align-content:start;padding:3px}
-#workshopRecipeDialog .preset {padding:18px;min-height:112px;border-radius:12px;background:var(--wk-input);border-color:var(--line);min-width:0;white-space:normal;text-align:left}
+#workshopRecipeDialog #presetList {display:block;max-height:max(320px,calc(100dvh - 360px));overflow:auto;scrollbar-gutter:stable;padding:3px}
+#workshopRecipeDialog .preset-group+.preset-group {margin-top:18px}
+#workshopRecipeDialog .preset-group:not(:has(.preset:not([hidden]))) {display:none}
+#workshopRecipeDialog .preset-group h3 {font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+#workshopRecipeDialog .preset-group-items {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-content:start}
+#workshopRecipeDialog .wk-picker-filters {display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 12px;margin:0 0 14px}
+#workshopRecipeDialog .wk-picker-filters :is(.ux-intent-tools,.category-label) {margin:0;flex:1 1 180px;font-size:12px}
+#workshopRecipeDialog .wk-picker-filters #modalities {margin:0;flex:0 1 auto}
+#workshopRecipeDialog #uxIntentHint {display:none}
+#workshopRecipeDialog .search-label {margin-top:0}
+#workshopRecipeDialog #recipeShortlist,#workshopRecipeDialog #bundleLauncher {margin-top:16px}
+#workshopRecipeDialog .preset {padding:14px;min-height:0;border-radius:12px;background:var(--wk-input);border-color:var(--line);min-width:0;white-space:normal;text-align:left}
 #workshopRecipeDialog .preset:is(.active,.chosen) {border-color:var(--accent);background:var(--wk-soft)}
 #workshopRecipeDialog .preset b {font-size:13px;line-height:1.45;font-weight:600;display:block;overflow-wrap:anywhere}
 #workshopRecipeDialog .preset>span {font-size:12px;color:var(--muted);line-height:1.5;display:block;margin-top:8px}
 #workshopRecipeDialog .preset .recipe-meta {display:flex;flex-wrap:wrap;gap:5px;font-size:10px}
+#workshopRecipeDialog .preset>span {display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:4px}
+#workshopRecipeDialog .preset:has(.preset-thumb) {display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:12px;align-content:start}
+#workshopRecipeDialog .preset:has(.preset-thumb)>:not(.preset-thumb) {grid-column:2}
+#workshopRecipeDialog .preset[hidden] {display:none}
+#workshopRecipeDialog .preset-thumb {grid-row:1/span 3;width:56px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+#workshopRecipeDialog .badge.pace.fast {color:var(--accent);border-color:#465b38}
+#workshopRecipeDialog .badge.pace.slow,#workshopRecipeDialog .badge.need {color:var(--danger);border-color:#6b4a3c}
 #workshopRecipeDialog .shortlist-panel {border-color:var(--line);background:var(--wk-input);color:var(--text)}
 @media(max-width:1100px) {
   body.workshop-active main {padding:24px 24px calc(var(--workshop-dock-space) + 24px)}
@@ -195,7 +213,7 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
   .workshop .wk-run-dock #status {font-size:10px;max-height:3em}
   body.workshop-active #workshopRecipeDialog {width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 16px);max-height:none;padding:20px 16px;border-radius:16px}
   .wk-dialog-heading {gap:12px}.wk-dialog-heading h2 {font-size:25px}
-  #workshopRecipeDialog #presetList {grid-template-columns:1fr;max-height:48dvh}
+  #workshopRecipeDialog .preset-group-items {grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce) {
   .workshop * {scroll-behavior:auto!important;animation:none!important;transition:none!important}
@@ -226,12 +244,12 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
 body.workshop-active[data-workshop-skin="arcade"] {
   --bg:#101321;--panel:#181d30;--panel2:#242b42;--line:#3d4863;
   --text:#edf4fc;--muted:#afbed5;--accent:#73e9d1;--purple:#b8adff;--danger:#ffb6b6;
-  --wk-input:#111627;--wk-soft:#23333d;--wk-on-accent:#0b292b;--wk-radius:12px;
+  --wk-input:#111627;--wk-field-line:#8b98b8;--wk-soft:#23333d;--wk-on-accent:#0b292b;--wk-radius:12px;
 }
 body.workshop-active[data-workshop-skin="sakura"] {
   --bg:#19141d;--panel:#241c2a;--panel2:#322839;--line:#57445d;
   --text:#fbecf5;--muted:#c8b1c7;--accent:#f2a8c9;--purple:#e8bddc;--danger:#ffc2ae;
-  --wk-input:#1c1622;--wk-soft:#3c2938;--wk-on-accent:#371a2b;--wk-radius:18px;
+  --wk-input:#1c1622;--wk-field-line:#9a8298;--wk-soft:#3c2938;--wk-on-accent:#371a2b;--wk-radius:18px;
 }
 body.workshop-active[data-workshop-skin="arcade"] .ux-create-heading {
   background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0ODAiIGhlaWdodD0iMTYwIiB2aWV3Qm94PSIwIDAgNDgwIDE2MCI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNzNlOWQxIiBzdHJva2Utb3BhY2l0eT0iLjE4Ij48cGF0aCBkPSJNMCAxMjVINDgwTTAgMTQzSDQ4ME0yNCAxNjBMMTY1IDk1TTExNSAxNjBMMTk4IDk1TTI0MCAxNjBWOTVNMzY1IDE2MEwyODIgOTVNNDU2IDE2MEwzMTUgOTUiLz48cGF0aCBkPSJNMCA5NWgzNlY2OWgxNFY1MmgxOXYxN2gyMHYyNmgzMFY3OWgxOFY2MmgyN3YzM2g2M1Y3NWgzNHYyMGgzNVY1NmgyNVYzNWgxNnYyMWgyNXYzOWg0NlY2M2gzMHYzMmg0MiIvPjwvZz48Y2lyY2xlIGN4PSIyNDAiIGN5PSI0NiIgcj0iMjgiIGZpbGw9IiNhNzhiZmEiIGZpbGwtb3BhY2l0eT0iLjEyIi8+PHBhdGggZD0iTTIzIDIwaDZtLTMtM3Y2bTM3NSAwaDZtLTMtM3Y2bS00OSA3aDRtLTItMnY0IiBzdHJva2U9IiM3M2U5ZDEiIHN0cm9rZS1vcGFjaXR5PSIuNSIvPjwvc3ZnPg==') right center / auto 130px no-repeat;
@@ -256,11 +274,14 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   .workshop .wk-run-dock .actions {grid-column:3;grid-row:1}
   .workshop .wk-run-tools {grid-column:2;grid-row:1;border-top:0;border-left:1px solid var(--line);padding:0 0 0 12px;max-width:300px}
 }
-/* The settled run's one next step sits under its status line (run-outcome.js). */
+/* Settled summaries own their text so polling and new runs cannot erase them (run-outcome.js). */
 .run-outcome {grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .run-outcome[hidden] {display:none}
+.run-outcome-summary {flex-basis:100%;margin:0;font-size:11px;line-height:1.5;overflow-wrap:anywhere;color:var(--muted)}
+.run-outcome-summary.error {color:var(--danger)}
+#runOutcomeWaiting {flex-basis:100%;font-size:11px;color:var(--muted)}
 .run-cancel {grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted)}
 .run-cancel[hidden] {display:none}
 .run-cancel button {font-size:11px;padding:6px 10px}
 .run-outcome button {font-size:11px;padding:6px 10px}
-.run-outcome button:first-child {border-color:var(--accent);color:var(--accent)}
+.run-outcome [data-run-outcome="show"] {border-color:var(--accent);color:var(--accent)}

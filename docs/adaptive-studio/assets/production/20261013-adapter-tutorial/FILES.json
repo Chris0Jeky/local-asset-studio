@@ -1,0 +1,46 @@
+{
+  "browser-storage.json": {
+    "bytes": 1869,
+    "sha256": "197085e933c53c3bf2082b359536ee77e4d16033c38e3cb6b55ba76c83f48a12"
+  },
+  "captions.vtt": {
+    "bytes": 764,
+    "sha256": "287134296bf0c434881e0b7364f0cdd2147168510efb7cd1dab833de23f1ec8c"
+  },
+  "finalize_adapter_tutorial.py": {
+    "bytes": 5951,
+    "sha256": "5218146f5ce8326c2ed8a65e32a6f113597fcac4208dc5ee71f05f6db9d3fd7e"
+  },
+  "INVENTORY.json": {
+    "bytes": 1483,
+    "sha256": "023a2e60d609746512900831cc5d29e8c6b8238f4d89b90f9280a8c6dffc31f2"
+  },
+  "media-receipt.json": {
+    "bytes": 1377,
+    "sha256": "fd3f84d282334808d2c153da0c32e3def9d136648c8168425cfe5bd7e54ff673"
+  },
+  "player-and-phone-receipt.json": {
+    "bytes": 12805,
+    "sha256": "ac43c51aa3eab09b60f7b1a7f44981c15f17f0f85f38e896b3029cc9d7f5e5b4"
+  },
+  "README.md": {
+    "bytes": 5546,
+    "sha256": "6859e91a05765b315082de46459f00f01f9429614db7af7c2050eb4a4bf24432"
+  },
+  "recording-receipt.json": {
+    "bytes": 16443,
+    "sha256": "e1ec9a21ecdc563598120beedeb7b80f93f3eb3e0c77423db0a6ed79e9bf041b"
+  },
+  "record_adapter_strength.py": {
+    "bytes": 8037,
+    "sha256": "1f74cf0c6918d1f2f0046c085129b9f585dd4b2f88d6793c935b2eff3d661003"
+  },
+  "transcript.txt": {
+    "bytes": 617,
+    "sha256": "704204ce24268f7b3433607bcb028367bed51d9f4279d20f96e3c7a1192850eb"
+  },
+  "verify_adapter_tutorial.py": {
+    "bytes": 6322,
+    "sha256": "d4462735279ed38e6d84bee42d8ecdcfb3b2d16fd4c7ca9b7e6f82f861552914"
+  }
+}

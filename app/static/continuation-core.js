@@ -21,7 +21,7 @@
   function destinations(intent,presets,source){
     const family=presets.find(p=>p.id===source?.preset_id)?.family;
     // Edit leads with the 20-second Klein edit; the 11-minute Qwen edit stays available but no longer greets the user.
-    const prefer={edit:['flux-edit','qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],combine:['combine-klein-9b-copypose','combine-klein-9b-skeleton','combine-klein-9b-depth','combine-klein-9b-replace','combine-klein-9b','combine-klein'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
+    const prefer={edit:['flux-edit','qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan'],restyle:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],combine:['combine-klein-9b-copypose','combine-klein-9b-skeleton','combine-klein-9b-depth','combine-klein-9b-replace','combine-klein-9b','combine-klein'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
     // For Restyle, a recipe that keeps the picture (img2img) outranks the source's own Style + Pose family.
     const rank=p=>prefer.includes(p.id)?prefer.indexOf(p.id):100;
     // Combine's declared 9B leads follow a strong pose (Copy Pose first, then the drawn skeleton: owner decision q-28, 23 September 2026) and must outrank a 4B source-family match; hard runtime/mask blockers still win.
@@ -36,9 +36,13 @@
     if(cap.requires_mask)throw Error('Prepare an RGBA repair mask first. A plain source copy is not a repair mask.');
     const claim=normalize({version:1,intent,preset_id:preset.id,reference_file:file,source_asset_id:source.asset_id,source_sha256:source.sha256,template_sha256:cap.template_sha256});
     if(!claim)throw Error('The source attachment could not be verified. Reopen the handoff.');
-    const copy=cap.prompt_role==='description'&&source.prompt_role==='description'&&source.prompt_origin==='submitted-output';
+    return{claim,...wording(preset,source)};
+  }
+  // The wording a continuation starts from: the recipe's own continuation prompt, else the source's exact submitted description.
+  function wording(preset,source){
+    const copy=preset?.continuation_capability?.prompt_role==='description'&&source?.prompt_role==='description'&&source?.prompt_origin==='submitted-output';
     const prepared=promptFor(preset,source);
-    return{claim,positive:prepared!=null?prepared:copy&&typeof source.positive==='string'?source.positive:'',negative:copy&&typeof source.negative==='string'?source.negative:''};
+    return{positive:prepared!=null?prepared:copy&&typeof source.positive==='string'?source.positive:'',negative:copy&&typeof source.negative==='string'?source.negative:''};
   }
   // A recipe may author the wording of a continuation: its `continuation_prompt` is used verbatim, with `{source}`
   // standing for the source's own submitted description (or nothing when no exact description is retained).
@@ -297,6 +301,14 @@
       if(!need.has(meaning)){const label=fill.label.replace(/^image \d+['’]s\s+/i,'');need.set(meaning,{meaning,label:label.charAt(0).toUpperCase()+label.slice(1),example:fill.example,recipes:[]});}
       need.get(meaning).recipes.push(combineEngineLabel(preset));
     }
+    // #1233: Klein 4B has no clothes fill, so a remembered clothes answer is folded into who. Show it when the open recipe does not ask.
+    if(!have.has('clothes'))for(const preset of engines||[]){
+      const meanings=placeholders(preset).map(fillMeaning);
+      if(!meanings.includes('who')||meanings.some(meaning=>meaning==='clothes'||meaning==='outfit'))continue;
+      const label=combineEngineLabel(preset),row=need.get('clothes');
+      if(!row)need.set('clothes',{meaning:'clothes',label:'Clothes and colours',example:'',recipes:[label]});
+      else if(!row.recipes.includes(label))row.recipes.push(label);
+    }
     return[...need.values()];
   }
   // #1202 Vary subtle / Vary strong. A route is catalog data (`vary` on an img2img recipe: its sources and per-strength
@@ -322,15 +334,46 @@
     const job=item.job_id?(jobs||[]).find(j=>j.id===item.job_id):null;
     if(!job)return 'No run is recorded for this picture, so '+route.name+' cannot keep its adapters. Use Continue with this.';
     if(job.preset_id!==source.id)return 'This picture\'s run no longer records '+source.name+', so its adapters cannot be kept. Use Continue with this.';
-    const values={};
+    const values={},fallbacks=[];
     for(const key of route.vary.carry){
-      const recorded=job.controls?.[key],value=recorded!==undefined&&recorded!==null&&recorded!==''?recorded:source.defaults?.[key];
+      const recorded=job.controls?.[key],fromRun=recorded!==undefined&&recorded!==null&&recorded!=='';
+      const value=fromRun?recorded:source.defaults?.[key];
       if(value===undefined||value===null||value==='')return 'Setting '+key+' is not recorded for this picture\'s run, so its adapters cannot be kept. Use Continue with this.';
+      if(!fromRun)fallbacks.push(key);
       values[key]=value;
     }
     const known=Array.isArray(installed)&&installed.length?installed:null;
     const absent=known?[...new Set(Object.keys(values).filter(key=>/^lora\d*_name$/.test(key)).map(key=>values[key]).filter(name=>!known.includes(name)))]:[];
-    return absent.length?'Vary uses '+route.name+'. Missing here: '+absent.join(', ')+'. Open Models & setup.':values;
+    // fallbacks stay beside the values. prepareVary copies every key of carry into the job, so a marker inside values would be submitted.
+    return absent.length?'Vary uses '+route.name+'. Missing here: '+absent.join(', ')+'. Open Models & setup.':{values,fallbacks};
+  }
+  // #S3 one-press Polish from Make: each kind is one repair route; the face pass follows the source's checkpoint family.
+  // Face and detail passes repaint with an anime SDXL model, so they are offered only for pictures from anime families.
+  const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale'};
+  const POLISH_ANIME=/Illustrious|WAI|Animagine|Pony|NoobAI|AniFox|CSTati|YumeFlux|Anima/i;
+  function polishRoute(kind,presets,source,missing){
+    const none=reason=>({ok:false,preset:null,reason});
+    if(!POLISH[kind])return none('Unknown polish: '+kind+'.');
+    if(!source||source.version!==1)return none('This picture’s record could not be read. Refresh and try again.');
+    const made=(presets||[]).find(p=>p.id===source.preset_id),family=made?.family||'';
+    // A face or detail repaint is anime work whatever its route's family says. An upscale is not: it accepts any picture,
+    // so an upscaled photo must not become eligible for an anime repaint (#1409 review).
+    const anime=POLISH_ANIME.test(family)||['anime-face','animagine-face','anime-detail-fix'].includes(made?.id);
+    let id='anime-esrgan';
+    if(kind!=='upscale'){
+      if(!made)return none(POLISH[kind]+' needs a picture made by a Studio recipe; this one has none recorded. Use Continue with this.');
+      if(!anime)return none(POLISH[kind]+' repaints with an anime model, which does not match '+(family||made.name)+'. Use Continue with this.');
+      id=kind==='details'?'anime-detail-fix':/Animagine/i.test(family)||made.id==='animagine-face'?'animagine-face':/Illustrious|WAI/i.test(family)||made.id==='anime-face'?'anime-face':'anime-detail-fix';
+    }
+    const preset=destinations('repair',presets||[],source).find(p=>p.id===id);
+    if(!preset)return none(POLISH[kind]+' needs the '+id+' recipe, which cannot read a source picture here.');
+    const cap=preset.continuation_capability;
+    if(cap.requires_mask||sourceInput(cap)!=='reference'||preset.reference_slots?.length)return none(preset.name+' needs more than this picture (a mask or a second input). Use Continue with this.');
+    const blocked=varyBlocked(preset,missing);if(blocked)return none(preset.name+': '+blocked);
+    const words=wording(preset,source).positive;
+    if(preset.positive&&!words.trim())return none('No description was kept for this picture, and '+preset.name+' needs one. Use Continue with this and describe it.');
+    const left=unfilled(preset,words);if(left.length)return none(preset.name+' needs wording filled in. Use Continue with this.');
+    return{ok:true,preset,reason:''};
   }
   function varyAdapters(carry){
     return Object.keys(carry||{}).filter(key=>/^lora\d*$/.test(key)&&Number(carry[key])!==0).map(key=>carry[key+'_name']+' at '+carry[key]);
@@ -343,8 +386,8 @@
     if(!source)return none('No Studio recipe is recorded for this picture, so there is nothing to vary from. Use Continue with this.');
     const route=varyRoute(source.id,presets);
     if(route){const blocked=varyBlocked(route,missing);if(blocked)return none('Vary uses '+route.name+'. '+blocked);
-      const carry=route.vary.carry?varyCarry(item,source,route,jobs,installed):null;if(typeof carry==='string')return none(carry);
-      return{kind:'img2img',source,route,carry,round:varyRound(jobs,route.id),strengths:{subtle:route.vary.subtle,strong:route.vary.strong},starting:route.vary.status!=='owner-approved'};}
+      const carried=route.vary.carry?varyCarry(item,source,route,jobs,installed):null;if(typeof carried==='string')return none(carried);
+      return{kind:'img2img',source,route,carry:carried?carried.values:null,carryFallback:carried?carried.fallbacks:[],round:varyRound(jobs,route.id),strengths:{subtle:route.vary.subtle,strong:route.vary.strong},starting:route.vary.status!=='owner-approved'};}
     // No route: the honest fallback is the same recipe with new seeds, only for a recipe that starts from words alone.
     if(source.continuation_capability?.operation!=='new-image')return none('No close-variation route is recorded for '+source.name+', which starts from other pictures. Use Prepare new seed on its run, or Continue with this.');
     if(!source.seed)return none(source.name+' has no seed to change, so a new round would repeat this picture.');
@@ -361,7 +404,9 @@
     const count=plan.round.count,seeds=count+' new seeds from '+seed;
     if(plan.kind==='reseed')return 'Vary prepared as new seeds, same recipe ('+plan.route.name+'): '+seeds+', '+varyTime(plan.round.timing)+'. No close-variation route is recorded for this recipe, so each picture starts afresh from the same words. Nothing was generated; press Generate to run the round.';
     const controls=plan.strengths[strength].controls;
-    const adapters=varyAdapters(plan.carry),kept=!plan.carry?'':adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':', same checkpoint as this picture, no adapters (it used none)';
+    const adapters=varyAdapters(plan.carry),fellBack=Array.isArray(plan.carryFallback)&&plan.carryFallback.length;
+    const defaults=fellBack?plan.carryFallback.map(key=>key+" not recorded; using the recipe's current default: "+plan.carry[key]).join('; '):'';
+    const kept=!plan.carry?'':fellBack?', same checkpoint, '+(adapters.length?'adapters prepared ('+adapters.join(', ')+'), ':'')+defaults:adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':', same checkpoint as this picture, no adapters (it used none)';
     return 'Vary '+strength+' prepared on '+plan.route.name+' from this picture'+kept+': denoise '+controls.denoise+(plan.starting?' (a starting value, not yet judged)':'')+', '+seeds+', '+varyTime(plan.round.timing)+'. Nothing was generated; press Generate to run the round.';
   }
   function varyHint(plan){
@@ -370,5 +415,5 @@
     if(plan.kind==='reseed')return 'Starts afresh from the same words · '+round;
     return 'On '+plan.route.name+(plan.carry?' · keeps its adapters':'')+' · '+round+' · denoise '+plan.strengths.subtle.controls.denoise+' / '+plan.strengths.strong.controls.denoise+(plan.starting?' (starting values)':'');
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime,combinePlanFills,varyRoute,varyRound,varyPlan,varyStatus,varyHint};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime,combinePlanFills,varyRoute,varyRound,varyPlan,varyStatus,varyHint,wording,polishRoute,POLISH};
 });

@@ -23,7 +23,7 @@
   main.prepend(home);home.before(notice);
   q('#uxJourneys').innerHTML=U.INTENTS.map((item,i)=>'<button class="ux-journey" data-ux-intent="'+item.id+'"><span class="ux-journey-number">0'+(i+1)+' <span aria-hidden="true">↗</span></span><b>'+item.name+'</b><span>'+item.description+'</span><small>'+item.hint+'</small></button>').join('');
   // Keep every existing control ID. The workbench adapter only changes grouping.
-  const createHeading=element('div','ux-create-heading','<div><span class="eyebrow">CREATE / PILOT THE NEXT PASS</span><h1>Follow the idea.</h1></div><div class="ux-stage-track" aria-label="Creative workflow"><span aria-current="step">1 · Prepare</span><span>2 · Run</span><a href="/#production">3 · Review</a><a href="/#assets">4 · Reuse</a></div>');q('#createView').prepend(createHeading);
+  const createHeading=element('div','ux-create-heading','<div><span class="eyebrow">FULL EDITOR</span><h1>Full editor — every setting for one recipe</h1></div><div class="ux-stage-track" aria-label="Creative workflow"><span aria-current="step">1 · Prepare</span><span>2 · Run</span><a href="/#production">3 · Review</a><a href="/#assets">4 · Reuse</a></div>');q('#createView').prepend(createHeading);
   const recipeTools=element('div','ux-intent-tools','<label for="uxIntent">Start with a task<select id="uxIntent"><option value="all">Every recipe</option>'+U.INTENTS.map(i=>'<option value="'+i.id+'">'+i.name+'</option>').join('')+'</select></label><p id="uxIntentHint" class="muted">Choose by outcome, then inspect the exact recipe.</p>');q('#presetSearch').closest('label').before(recipeTools);
   const setup=q('#createView .setup'),drawer=element('details','ux-recipe-drawer');drawer.open=window.innerWidth>850;drawer.innerHTML='<summary>Recipe library <small id="uxRecipeLabel">Choose a starting point</small></summary>';while(setup.firstChild)drawer.append(setup.firstChild);setup.append(drawer);
   const drafts=element('div','ux-draft-bar');drafts.id='uxDraftBar';drafts.innerHTML='<span id="uxDraftStatus">Your unsaved draft is kept in this browser. Save a setup to keep it in your workspace.</span><div><button id="uxRestoreDraft" hidden>Restore draft</button><button id="uxDiscardDraft" hidden>Discard saved draft</button><button id="uxExportDraft">Export draft</button><button id="uxImportDraftButton">Import draft</button><input id="uxImportDraft" type="file" accept="application/json,.json" hidden><button id="uxKeepDraft" hidden>Keep this tab</button></div>';editor.prepend(drafts);
@@ -80,13 +80,14 @@
   q('#assetScopes').insertAdjacentHTML('beforeend','<button data-scope="unreviewed">Awaiting review</button>');
   const originalVisibleAssets=visibleAssets;visibleAssets=function(){const assets=originalVisibleAssets();return assetScope==='unreviewed'?assets.filter(a=>!a.review||a.review==='unreviewed'):assets;};
   // The legacy app and its tools call showView; this is the single navigation seam.
-  showView=function(next){saveDraft();next=U.normalizeView(next);view=next;for(const name of U.VIEWS)q('#'+name+'View').hidden=name!==next;const hero=q('.hero');if(hero)hero.hidden=true;StudioShell.setView(next);if(location.hash!=='#'+next)location.hash=next;if(next==='home')refreshHome();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();if(next==='models'||next==='learn')refreshLibrary();};
-  document.addEventListener('studio:navigate',e=>{showView(e.detail);main.focus({preventScroll:true});window.scrollTo({top:0});});window.addEventListener('hashchange',()=>{const next=U.normalizeView(location.hash);if(next!==view)showView(next);});
+  showView=function(next){saveDraft();const route=String(next||'');next=U.normalizeView(next);view=next;for(const name of U.VIEWS)q('#'+name+'View').hidden=name!==next;const hero=q('.hero');if(hero)hero.hidden=true;StudioShell.setView(next);const hash=next==='models'&&route.replace(/^#/,'').startsWith('models?')?route.replace(/^#/,''):next;if(location.hash!=='#'+hash)location.hash=hash;if(next==='home')refreshHome();if(next==='make')window.StudioMake?.refresh();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();if(next==='models'||next==='learn')refreshLibrary();};
+  document.addEventListener('studio:navigate',e=>{showView(e.detail);main.focus({preventScroll:true});window.scrollTo({top:0});});window.addEventListener('hashchange',()=>{const next=U.normalizeView(location.hash);if(next!==view||next==='models'||location.hash!=='#'+next)showView(location.hash);});
   const originalRenderPresets=renderPresets;renderPresets=function(){originalRenderPresets();if(!catalog)return;const id=q('#uxIntent').value;if(id==='all')return;const allowed=new Set(U.recipesFor(id,catalog.presets).map(p=>p.id));let count=0;for(const button of q('#presetList').querySelectorAll('[data-id]')){button.hidden=!allowed.has(button.dataset.id);if(!button.hidden)count++;}q('#filteredCount').textContent=count;if(!count)q('#presetList').append(element('p','muted','No recipes match this task and the current filters. Clear search or choose Every recipe.'));};
   function chooseIntent(id){if(!catalog){announce('The recipe catalog is still loading.');return;}intentId=id;q('#uxIntent').value=id;q('#presetSearch').value='';q('#categorySelect').value='All';mode='all';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='all'));const recipes=U.recipesFor(id,catalog.presets);if(recipes.length)selectPreset(recipes[0].id);renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===id)?.hint||'Choose by outcome.';showView('create');}
   q('#uxIntent').onchange=()=>{intentId=q('#uxIntent').value;renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===intentId)?.hint||'Every installed and planned recipe. Readiness is checked separately.';};
   after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();dismissSecondPicture();syncCreate();renderDraftNotice();});
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
+  after('beginParallax',()=>{draftDirty=true;saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
   // #1100: loading a recipe still loads its wording, but wording you wrote gets one explicit way back until you type, dismiss
   // or put it back (reversible choice; nothing is carried over silently, nothing is sent). "Yours" means different from the
@@ -102,8 +103,8 @@
   const presetWording=p=>({positive:p?.defaults?.positive||'',negative:p?.defaults?.negative||''});
   const forgetWording=()=>{wordingKept=pictureKept=null;wordingUndo.hidden=true;};
   const pickedFiles=id=>[...(q('#'+id)?.files||[])],stagedPicture=()=>!!(pickedFiles('reference').length||pickedFiles('lastReference').length||uploaded||lastUploaded||referenceRecords.some(r=>r.file));
-  const pictureStamp=()=>JSON.stringify([selected?.id,wording(),q('#batch')?.value,uploaded,lastUploaded,parentAssets,parentByInput,referenceRecords,['reference','lastReference'].map(id=>pickedFiles(id).map(f=>[f.name,f.size,f.lastModified]))]);
-  const pictureSnapshot=()=>({id:selected.id,name:selected.name,controls:values(),batch:q('#batch')?.value,wording:wording(),uploaded,lastUploaded,parentAssets:[...parentAssets],parentByInput:{...parentByInput},records:referenceRecords.map(r=>({...r})),files:{reference:pickedFiles('reference'),lastReference:pickedFiles('lastReference')}});
+  const pictureStamp=()=>JSON.stringify([selected?.id,wording(),values(),recipeTemplateHash,q('#batch')?.value,uploaded,lastUploaded,parentAssets,parentByInput,referenceRecords,['reference','lastReference'].map(id=>pickedFiles(id).map(f=>[f.name,f.size,f.lastModified]))]);
+  const pictureSnapshot=()=>({id:selected.id,name:selected.name,templateHash:recipeTemplateHash,controls:values(),batch:q('#batch')?.value,wording:wording(),uploaded,lastUploaded,parentAssets:[...parentAssets],parentByInput:{...parentByInput},records:referenceRecords.map(r=>({...r})),files:{reference:pickedFiles('reference'),lastReference:pickedFiles('lastReference')}});
   function renderUndo(){const kept=wordingKept,pic=pictureKept;if(!pic&&!kept?.line){wordingUndo.hidden=true;return;}
     wordingRestore.hidden=!kept?.restorable;wordingBack.hidden=!pic;if(pic)wordingBack.textContent='Go back to '+pic.name+' with your picture';
     wordingDismiss.textContent=pic?'Keep '+selected.name:'Keep the recipe wording';
@@ -145,16 +146,16 @@
     if(kept.negative!==null&&selected.negative&&q('#negative')){q('#negative').value=kept.negative;q('#negative').dispatchEvent(new Event('input',{bubbles:true}));}
     field.focus();announce('Your wording is back. The recipe stays '+selected.name+'.');};
   // Going back is the switch undone: the earlier recipe with its own picture, lineage, wording and settings, nothing carried across.
-  wordingBack.onclick=()=>{const pic=pictureKept;forgetWording();if(!pic||!selected)return;
+  wordingBack.onclick=()=>{if(referencePending>0){announce('Wait for the picture upload to finish before going back. Nothing was replaced.',true);return;}const pic=pictureKept;forgetWording();if(!pic||!selected)return;
     if(pictureStamp()!==pic.loaded){announce('Something changed after the switch, so nothing was replaced.');return;}
     try{selectPreset(pic.id);}catch(e){announce(e.message,true);return;}
     const mode=q('#i2vMode');if(mode&&pic.controls.mode)mode.value=pic.controls.mode;
     for(const [key,value] of Object.entries(pic.controls)){if(['positive','negative','reference','last_reference','mode'].includes(key))continue;const input=getControl(key);if(input)input.value=value;}
     for(const key of ['positive','negative'])if(q('#'+key))q('#'+key).value=pic.wording[key];if(q('#batch'))q('#batch').value=pic.batch;
-    uploaded=pic.uploaded;lastUploaded=pic.lastUploaded;parentAssets=[...pic.parentAssets];parentByInput={...pic.parentByInput};referenceRecords=pic.records.map(r=>({...r}));
+    recipeTemplateHash=pic.templateHash;uploaded=pic.uploaded;lastUploaded=pic.lastUploaded;parentAssets=[...pic.parentAssets];parentByInput={...pic.parentByInput};referenceRecords=pic.records.map(r=>({...r}));
     // A picked file goes back into its own input without a change event (that handler would drop an uploaded copy).
     for(const id of ['reference','lastReference']){const input=q('#'+id),files=pic.files[id];if(!input||!files.length)continue;const t=new DataTransfer();files.forEach(f=>t.items.add(f));input.files=t.files;}
-    q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof renderReferenceSlots==='function')renderReferenceSlots();updateReady();recipeChanged();
+    updateLoraHints();q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof renderReferenceSlots==='function')renderReferenceSlots();updateReady();recipeChanged();
     draftDirty=true;saveDraft();q('#positive').focus();announce('Back to '+selected.name+' with your picture and wording.');};
   wordingDismiss.onclick=()=>{forgetWording();q('#positive')?.focus();};
   for(const id of ['positive','negative'])q('#'+id)?.addEventListener('input',()=>{const kept=wordingKept;if(kept?.loaded&&(wording().positive!==kept.loaded.positive||wording().negative!==kept.loaded.negative))forgetWording();});
@@ -178,7 +179,7 @@
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy||varyBusy||tileBusy||parallaxBusy,unfilled,sourceMissing});
     if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
     poseHeldShown=poseHeldArtifact();const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
@@ -282,7 +283,7 @@
   function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
   function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes','outfit'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
-  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty();}
+  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty()||varyBusy;}
   // Each engine's time per picture: this PC's own completed runs of it first; otherwise the read-only local estimate
   // (POST /api/estimate reads timing history and runs nothing), asked once per engine and canvas; otherwise say so (K13).
   const engineEstimates=new Map();let engineEstimateQueue=Promise.resolve();
@@ -329,7 +330,7 @@
   // for a field the page never showed. Each fill a ticked recipe reads and the open recipe lacks is shown here, starting from this
   // character's remembered answer; a recipe with its own edited wording reads no answers. The server still refuses any bracket left.
   function planNeeds(engines=planEngines()){const identity=pairKey();return StudioContinuation.combinePlanFills(selected,engines.filter(p=>p.id!==selected.id&&!combineWording.has(identity+'|'+p.id)));}
-  function planFill(meaning){const saved=rememberedFills();return String(('@'+meaning) in saved?saved['@'+meaning]||'':planFills[meaning]||'');}
+  function planFill(meaning){if(meaning==='outfit')return String(planFills.outfit||'');if(Object.prototype.hasOwnProperty.call(planFills,meaning))return String(planFills[meaning]||'');const saved=rememberedFills();return String(saved['@'+meaning]||'');}
   // What Prepare sends: the recipe Generate would run, the ticked recipes, the seeds, the answers and any wording edited per recipe.
   function planIntent(engines,seeds){
     const identity=pairKey(),wording={},answers=combineAnswers();for(const fill of planNeeds(engines))answers[fill.meaning]=planFill(fill.meaning);
@@ -364,16 +365,16 @@
     // Start runs exactly what was prepared: any later change to the pair, recipes, seeds or wording withdraws it.
     const fresh=!!planPrepared&&!planPrepared.started&&planPrepared.stamp===planStamp();
     q('#uxPlanStart').hidden=!fresh;q('#uxPlanStart').disabled=busy;
-    if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Runs & review, not started.');}
+    if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;if(!planPrepared.failure)planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Compare & review, not started.');}
     // Undoing the change brings Start back with its Prepared line; the next change is announced again (#1198).
-    else if(fresh&&planPrepared.stale){planPrepared.stale=false;planStatus(planPrepared.message);}
+    else if(fresh&&planPrepared.stale){planPrepared.stale=false;delete planPrepared.failure;planStatus(planPrepared.message);}
   }
   q('#uxPlanEngines').onchange=e=>{const box=e.target.closest('[data-ux-plan-engine]');if(!box)return;if(box.checked)planChoice.add(box.dataset.uxPlanEngine);else planChoice.delete(box.dataset.uxPlanEngine);syncCombinePlan();};
   q('#uxPlanSeeds').oninput=()=>syncCombinePlan();
-  // An extra answer is this character's, like the fields above the wording: kept for the next recipe and the next visit.
+  // Outfit stays with this pair; other answers are saved by meaning for engine switches, not the fresh recipe's placeholder fields.
   q('#uxPlanFills').oninput=e=>{
     const meaning=e.target?.dataset?.uxPlanFill;if(!meaning)return;planFills[meaning]=e.target.value;
-    const key=fillsKey();if(key)try{localStorage.setItem(key,JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value}));}catch(error){}
+    if(meaning!=='outfit'){const key=fillsKey();if(key)try{localStorage.setItem(key,JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value}));}catch(error){}}
     syncCombinePlan();
   };
   const planTime=seconds=>Number(seconds)>0?durationLabel(seconds):'unknown';
@@ -400,9 +401,9 @@
     let begun=false;
     try{
       const project=await post('/api/production/'+encodeURIComponent(prepared.project.id)+'/start',{});begun=true;
-      planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Runs & review.');
+      planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Compare & review.');
       await refresh();
-    }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;planStatus(error.message);announce(error.message,true);}}
+    }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;prepared.failure=error.message;planStatus(error.message);announce(error.message,true);}}
     finally{planBusy=false;syncCombinePlan();}
   };
   // #1203: this PC's owner answers for every picture the recipe made, e.g. "pose 3/4 · face 1/4"; none reads as such (K14).
@@ -441,7 +442,7 @@
   const posePanel=element('section','ux-pose-editor');posePanel.id='uxPoseEditor';posePanel.hidden=true;enginePanel.after(posePanel);
   // Folded on a picture route (the pose picture is the input there), open on a recipe that is drawn for (#422).
   posePanel.innerHTML='<details id="uxPoseDisclosure"><summary><h3>Draw the pose</h3><small id="uxPoseSummaryHint"></small></summary><p>Drag a joint, or pick one below and nudge it with the arrow keys (1 %, or 5 % with Shift). Use this pose puts the drawing on Picture 1; nothing runs until you press Generate.</p>'
-    +'<div class="ux-pose-layout"><canvas id="uxPoseCanvas" tabindex="0" role="img" aria-label="Pose skeleton. Drag a joint, or pick one in the joint list and use the arrow keys."></canvas>'
+    +'<div class="ux-pose-layout"><canvas id="uxPoseCanvas" tabindex="0" role="application" aria-roledescription="pose editor" aria-label="Pose skeleton. Drag a joint, or pick one in the joint list and use the arrow keys. Select a joint in the list, then arrow keys move it 1%, Shift+arrow moves 5%."></canvas>'
     +'<div class="ux-pose-side"><label for="uxPoseStart">Start from<select id="uxPoseStart"><option value="">Keep this drawing</option>'
     +StudioPoseEditor.PRESETS.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.label)+'</option>').join('')+'</select></label>'
     +'<div id="uxPoseJoints" class="ux-pose-joints" role="group" aria-label="Joints"></div>'
@@ -786,6 +787,8 @@
       if(result.sha256!==claim.source_sha256||result.parent_asset!==claim.source_asset_id||result.context?.sha256!==claim.source_sha256)throw Error('The library copy of the source changed. Reopen Continue with this asset.');
       // A fresh staged copy has a fresh name; the claim follows it, the identity (source hash) does not change.
       const renamed=StudioContinuation.normalize({...claim,reference_file:result.file});if(!renamed)throw Error('The staged copy could not be verified. Reopen Continue with this asset.');
+      // A Vary block on this continuation follows the renamed copy: putting the source back does not apply the carried stack.
+      if(varyUnapplied?.stamp===stamp)varyUnapplied={...varyUnapplied,stamp:JSON.stringify(renamed)};
       continuationState=renamed;continuationSource=result.context;secondPicture=null;secondPanel.hidden=true;
       attachContinuationSource(result,false);pendingInputs.delete(StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference'?'lastReference':'reference');
       draftDirty=true;saveDraft();syncCreate();announce(StudioContinuation.sourceLabel(selected)+' holds the source again. No generation submitted.');
@@ -919,7 +922,7 @@
   // Capture the old action before its old handler can perform an immediate transfer.
   async function openGalleryHandoff(id,preferred){const epoch=++handoffEpoch;if(!id){announce('This output has no saved asset identity. Refresh the workspace before attaching it.',true);return;}let asset=assetState.assets.find(a=>a.id===id);if(!asset)try{const data=await api('/api/workspace');if(epoch!==handoffEpoch)return;if(!data||!Array.isArray(data.assets))throw Error('Workspace assets are unavailable.');assetState=data;renderAssets();asset=assetState.assets.find(a=>a.id===id);}catch(err){if(epoch===handoffEpoch)announce('Could not refresh this output. '+err.message,true);return;}if(epoch!==handoffEpoch)return;openHandoff(id,preferred,epoch);}
   document.addEventListener('click',e=>{const button=e.target.closest('.reference-output,[data-handoff]');if(!button)return;e.preventDefault();e.stopImmediatePropagation();const output=button.dataset.job?jobs.find(j=>j.id===button.dataset.job)?.outputs?.[Number(button.dataset.index)]:null;if(button.classList.contains('reference-output')){void openGalleryHandoff(output?.asset_id,button.dataset.preset);return;}const id=activeAsset?.id;if(!id){announce('Choose an available image from the Asset library.',true);return;}openHandoff(id,button.dataset.preset||button.dataset.handoff);},true);
-  after('openAsset',()=>{q('#uxAssetUnsaved')?.remove();if(!activeAsset)return;const a=activeAsset;const eligibility=U.sceneEligibility([a]);q('#assetHandoffs').innerHTML=(!a.trashed_at&&a.media_type==='image'?'<button class="primary" data-ux-handoff="'+a.id+'">Continue with this →</button><button id="uxFindSourceRecipes">Find recipes for this image</button>':'')+(!a.trashed_at&&['image','video','audio'].includes(a.media_type)?'<a class="ux-scene-link" href="/av.html?asset_ids='+encodeURIComponent(a.id)+'">'+(eligibility.ok?'Use in a scene':'Open scene source picker')+' ↗</a>':'');q('#assetRecipe').disabled=!a.job_id;q('#assetRecipe').textContent=a.job_id?'Recipe':'No recipe recorded';q('#assetRecipe').title=a.job_id?'':'This asset was not made by a Studio job, so there is no recipe to export.';});
+  after('openAsset',()=>{q('#uxAssetUnsaved')?.remove();if(!activeAsset)return;const a=activeAsset;const eligibility=U.sceneEligibility([a]);const make=(intent,label,primary)=>'<button'+(primary?' class="primary"':'')+' data-make-open="'+intent+'" data-asset="'+esc(a.id)+'">'+label+'</button>';q('#assetHandoffs').innerHTML=(!a.trashed_at&&a.media_type==='image'?(window.StudioMake?'<div class="ux-route-row" role="group" aria-label="Open in Make"><span>In Make</span>'+make('edit','Change it',true)+make('repair','Fix or upscale')+make('restyle','Restyle')+make('combine','New pose')+'</div><div class="ux-route-row" role="group" aria-label="Full editor"><span>Full editor</span>':'')+'<button'+(window.StudioMake?'':' class="primary"')+' data-ux-handoff="'+a.id+'">Continue with this →</button><button id="uxFindSourceRecipes">Find recipes for this image</button>'+(window.StudioMake?'</div>':''):'')+(!a.trashed_at&&['image','video','audio'].includes(a.media_type)?'<a class="ux-scene-link" href="/av.html?asset_ids='+encodeURIComponent(a.id)+'">'+(eligibility.ok?'Use in a scene':'Open scene source picker')+' ↗</a>':'');q('#assetRecipe').disabled=!a.job_id;q('#assetRecipe').textContent=a.job_id?'Recipe':'No recipe recorded';q('#assetRecipe').title=a.job_id?'':'This asset was not made by a Studio job, so there is no recipe to export.';});
   // #1202 Vary subtle / Vary strong: one press from a picture to a prepared round of close variations. The img2img route
   // attaches a copy through the same continuation as Continue with this (lineage = this picture) and, when it carries the
   // source's stack (WAI), copies the picture's recorded LoRA slots and sampling settings; a recipe with no route
@@ -951,14 +954,20 @@
       placeVary(card,actions,varyMarkup(plan,'data-asset="'+escape(output.asset_id||'')+'" data-preset="'+escape(job.preset_id||'')+'" data-job="'+escape(job.id)+'"','uxVaryWhy-'+escape(job.id)+'-'+index));
     }
   }
-  after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
-  after('openAsset',()=>{
+  function syncOpenAssetVary(){
     const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
     // Vary is for pictures; a video, sound or model asset shows no Vary control at all.
     if(!a||a.media_type!=='image'){holder.querySelector(':scope > .ux-vary')?.remove();return;}
     const plan=varyPlanFor(a.preset_id,a.job_id,a.id,a.media_type);
     placeVary(holder,q('#assetHandoffs'),varyMarkup(plan,'data-asset="'+escape(a.id)+'" data-preset="'+escape(a.preset_id||'')+'" data-job="'+escape(a.job_id||'')+'"','uxVaryWhyAsset'));
-  });
+  }
+  // A backend switch reloads the LoRA inventory after these buttons were drawn. A 304 jobs poll does not redraw them.
+  function refreshCarriedVary(){syncGalleryVary();syncOpenAssetVary();}
+  globalThis.refreshCarriedVary=refreshCarriedVary;
+  // Make (make.js) draws the same Vary buttons on its own results; the document click handler below prepares them.
+  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image'),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
+  after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
+  after('openAsset',syncOpenAssetVary);
   async function prepareVary(button){
     const strength=button.dataset.uxVary,assetId=button.dataset.asset;
     if(varyBusy)return;
@@ -968,9 +977,13 @@
     const plan=varyPlanFor(button.dataset.preset,button.dataset.job,assetId);
     if(plan.kind==='none'){announce(plan.reason,true);return;}
     if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength)){announce('This Vary button is out of date. Nothing was prepared; press Vary again.',true);syncGalleryVary();return;}
-    varyBusy=true;syncReady();
-    const stamp=workbenchStamp();
+    // #1213: Vary replaces the Create setup, so ask first when it holds the owner's own wording or a staged picture (the pattern of Use this look and Start from this picture). Declining changes nothing.
+    const own=key=>{const typed=String(q('#'+key)?.value||'').trim();return!!typed&&typed!==String(selected?.defaults?.[key]||'').trim();},ownWords=own('positive')||own('negative'),staged=stagedPicture();
+    if((ownWords||staged)&&!window.confirm('Vary replaces the current Create setup'+(ownWords&&staged?' (your wording and the staged picture)':ownWords?' (your wording)':' (the staged picture)')+' with a prepared round of variations. Continue? Nothing will be generated.')){announce('Nothing changed. Vary was not prepared and your Create setup is kept.');return;}
+    varyBusy=true;
     try{
+      syncReady();
+      const stamp=workbenchStamp();
       const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
       if(plan.kind==='img2img'){
         const result=await post('/api/assets/reference',{id:assetId});
@@ -997,7 +1010,10 @@
         const recipe=await api('/api/jobs/'+encodeURIComponent(button.dataset.job)+'/recipe');
         if(stamp!==workbenchStamp())throw Error('The workbench changed while the recipe was being read. Nothing was applied; press Vary again.');
         if(recipe?.preset_id!==plan.route.id)throw Error('This run no longer records '+plan.route.name+'. Nothing was applied.');
+        const check=await post('/api/recipe-check',recipe);
+        if(stamp!==workbenchStamp())throw Error('The workbench changed while the recipe was being checked. Nothing was applied; press Vary again.');
         selectPreset(plan.route.id,true,true);applySaved({preset:plan.route.id,controls:{...(recipe.controls||{})},batch_count:1,parent_assets:[assetId]});
+        recipeTemplateHash=check.template_sha256;
       }
       const seedInput=getControl('seed');if(seedInput)seedInput.value=seed;
       q('#batch').value=String(plan.round.count);
@@ -1009,6 +1025,67 @@
     finally{varyBusy=false;syncReady();}
   }
   document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-vary]');if(!button||button.disabled)return;e.preventDefault();void prepareVary(button);});
+  // S3 one-press Polish (Fix face, Fix hands and details, Upscale) for Make: the same staged copy, claim and prepared wording as
+  // Continue with this, sent as one job without touching Create's form. polishPlan only reads; polish posts /api/jobs once.
+  const polishBusy=new Set();
+  async function polishRoute(assetId,kind){
+    if(!catalog)return{ok:false,reason:'Recipes are still loading.'};
+    let source;try{source=await readSource(assetId);}catch(error){return{ok:false,reason:'Could not read this picture. '+error.message};}
+    if(source?.asset_id!==assetId)return{ok:false,reason:'This picture’s record could not be verified. Refresh and try again.'};
+    return{...StudioContinuation.polishRoute(kind,catalog.presets,source,missingByPreset),source};
+  }
+  async function polishPlan(assetId,kind){
+    const route=await polishRoute(assetId,kind),timing=route.ok?StudioContinuation.combineTiming(jobs,route.preset.id):null;
+    return{ok:!!route.ok,preset_id:route.preset?.id||null,reason:route.reason||'',...(timing?{seconds:timing.seconds}:{})};
+  }
+  async function polish(assetId,kind,label){
+    const key=assetId+':'+kind;if(polishBusy.has(key))throw Error('This polish is already being sent. Wait for it.');
+    polishBusy.add(key);
+    try{
+      const route=await polishRoute(assetId,kind);if(!route.ok)throw Error(route.reason);
+      const {preset,source}=route,result=await post('/api/assets/reference',{id:assetId});
+      if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
+      const prepared=StudioContinuation.initial(result.context,preset,'repair',result.file),controls={reference:result.file};
+      if(preset.positive)controls.positive=prepared.positive;if(preset.negative)controls.negative=prepared.negative;
+      if(preset.seed)controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
+      return await post('/api/jobs',{preset_id:preset.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+(typeof label==='string'&&label?label:StudioContinuation.POLISH[kind])});   // Make passes the name it showed (e.g. a merged face-and-hands pass)
+    }finally{polishBusy.delete(key);}
+  }
+  // #1497 Vary from Make: the round prepareVary sets up (same plan, wording, carried stack, strength and round size), sent as
+  // one job without touching Create's form, so the #1213 overwrite question has nothing to protect. One press posts
+  // /api/jobs once; a failed or uncertain post is reported, never sent again.
+  const makeVaryBusy=new Set();
+  // No HTTP answer (a dropped connection, an unreadable reply) means the job may exist: flag it so Make holds this Vary.
+  const sendVary=body=>post('/api/jobs',body).catch(error=>{if(error.status===undefined)error.uncertain=true;throw error;});
+  async function vary(assetId,presetId,jobId,strength){
+    if(makeVaryBusy.has(assetId))throw Error('Vary is already being sent for this picture. Wait for it.');
+    makeVaryBusy.add(assetId);
+    try{
+      if(!catalog)throw Error('Recipes are still loading.');
+      const plan=varyPlanFor(presetId,jobId,assetId);if(plan.kind==='none')throw Error(plan.reason);
+      if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength))throw Error('This Vary button is out of date. Nothing was sent; press Vary again.');
+      const route=plan.route,seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,base={preset_id:route.id,batch_count:plan.round.count,parent_assets:[assetId],references:[],label:'Make · '+(strength==='reseed'?'Vary':'Vary '+strength)};
+      if(plan.kind==='reseed'){
+        const recipe=await api('/api/jobs/'+encodeURIComponent(jobId)+'/recipe');
+        if(recipe?.preset_id!==route.id)throw Error('This run no longer records '+route.name+'. Nothing was sent.');
+        const check=await post('/api/recipe-check',recipe);
+        return await sendVary({...base,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
+      }
+      if(StudioContinuation.sourceInput(route.continuation_capability)!=='reference')throw Error(route.name+' needs more than this picture. Use Continue with this.');
+      let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
+      if(source?.asset_id!==assetId)throw Error('This picture’s record could not be verified. Refresh and try again.');
+      const words=StudioContinuation.wording(route,source).positive;
+      if(route.positive&&!words.trim())throw Error('No description was kept for this picture, and '+route.name+' needs one. Use Continue with this and describe it.');
+      if(StudioContinuation.unfilled(route,words).length)throw Error(route.name+' needs wording filled in. Use Continue with this.');
+      const result=await post('/api/assets/reference',{id:assetId});
+      if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
+      const prepared=StudioContinuation.initial(result.context,route,'edit',result.file);
+      const controls={reference:result.file,...(StudioContinuation.canvasFor(result.context,route)||{}),...(plan.carry||{}),...plan.strengths[strength].controls};
+      if(route.positive)controls.positive=prepared.positive;if(route.negative)controls.negative=prepared.negative;if(route.seed)controls.seed=seed;
+      return await sendVary({...base,continuation:prepared.claim,controls});
+    }finally{makeVaryBusy.delete(assetId);}
+  }
+  Object.assign(globalThis.StudioWorkbench,{polish,polishPlan,vary});
   // #1220 Make seamless: square, flat textures only. The server says whether this picture qualifies and a disabled button
   // carries its reason. Prepare rolls the texture and attaches its seam cross to the tile recipe; Generate stays the owner's press.
   let tileBusy=false,tileRead=0;
@@ -1034,15 +1111,15 @@
   });
   async function prepareTile(button){
     const assetId=button.dataset.uxTile;if(tileBusy||!assetId)return;
-    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
+    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy||parallaxBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const bandPx=U.tileBandPx(button.parentElement?.querySelector('[data-ux-tile-band]')?.value);
     tileBusy=true;button.disabled=true;syncReady();
-    const stamp=workbenchStamp();
+    const stamp=workbenchStamp(),detailEpoch=assetDetailEpoch;
     try{
       const result=await post('/api/tiles/prepare',{asset_id:assetId,...(bandPx==null?{}:{band_px:bandPx})});
       if(bandPx!=null&&result?.plan?.band_px!==bandPx)throw Error('The seam band came back different from the one chosen. Nothing was applied; press Make seamless again.');
-      if(stamp!==workbenchStamp())throw Error('The workbench changed while the texture was being prepared. Nothing was applied; press Make seamless again.');
+      if(submitting||!assetDetailContextCurrent(assetId,detailEpoch)||stamp!==workbenchStamp())throw Error('The source picture or Create action changed while the texture was being prepared. Nothing was applied; press Make seamless again.');
       if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.rolled_file)throw Error('The prepared seam cross could not be verified. Nothing was applied.');
       beginTile(result);
       if(q('#assetDialog').open)q('#assetDialog').close();
@@ -1057,6 +1134,11 @@
   // qualifies; a disabled button carries its reason. Prepare attaches the picture unchanged and loads the clean-plate edit;
   // every Generate stays the owner's press.
   let parallaxBusy=false,parallaxRead=0,parallaxDrag=null;
+  const generateFromCreate=q('#generate').onclick;
+  q('#generate').onclick=function(...args){
+    if(tileBusy||parallaxBusy){announce('Wait for picture preparation to finish before pressing Generate. Nothing was submitted.',true);return;}
+    return generateFromCreate.apply(this,args);
+  };
   function parallaxBoxes(text){
     const boxes=String(text||'').split(';').map(part=>part.trim()).filter(Boolean).map(part=>part.split(/[\s,]+/).filter(Boolean).map(Number));
     return boxes.every(box=>box.length===4&&box.every(Number.isInteger))?boxes:null;
@@ -1118,10 +1200,10 @@
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const why=parallaxReason(group);if(why){announce(why,true);return;}
     parallaxBusy=true;button.disabled=true;syncReady();
-    const stamp=workbenchStamp(),boxes=parallaxBoxes(group.querySelector('#uxParallaxView').value);
+    const stamp=workbenchStamp(),detailEpoch=assetDetailEpoch,boxes=parallaxBoxes(group.querySelector('#uxParallaxView').value);
     try{
       const result=await post('/api/parallax/prepare',{asset_id:assetId,objects:group.querySelector('#uxParallaxObjects').value,...(boxes.length?{view:boxes}:{})});
-      if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being prepared. Nothing was applied; press Make parallax layers again.');
+      if(submitting||!assetDetailContextCurrent(assetId,detailEpoch)||stamp!==workbenchStamp())throw Error('The source picture or Create action changed while the picture was being prepared. Nothing was applied; press Make parallax layers again.');
       if(result?.plan?.source_asset_id!==assetId||result.file!==result.plan.source_file||result.stage!=='plate')throw Error('The prepared parallax plan could not be verified. Nothing was applied.');
       beginParallax(result);
       if(q('#assetDialog').open)q('#assetDialog').close();
@@ -1210,7 +1292,7 @@
       else{q('#uxSourceSlot').innerHTML=sourceSlotOptions();q('#uxSourceSlot').value=String(remaining);q('#uxPickerStatus').textContent='Attached. Picture '+(remaining+1)+' of '+referenceRecords.length+' is still empty; pick its image or close this picker.';announce('Saved source attached. No generation submitted.');}}catch(err){q('#uxPickerStatus').textContent=err.message;}finally{pickerBusy=false;button.disabled=false;syncReady();}};
   picker.addEventListener('cancel',e=>{if(pickerBusy)e.preventDefault();});picker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if(!pickerBusy)picker.close();}});
   // Drafts are data only, scoped to the server's workspace identity. No File bytes.
-  function snapshot(){if(!selected)return null;return U.normalizeDraft({version:1,updatedAt:Date.now(),recipe:{preset:selected.id,...continuationPayload(),controls:values(),batch:q('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()},pendingInputs:['reference','lastReference'].filter(id=>pendingInputs.has(id)||(q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded))),templateHash:recipeTemplateHash});}
+  function snapshot(){if(!selected)return null;return U.normalizeDraft({version:1,updatedAt:Date.now(),recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch:q('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()},pendingInputs:['reference','lastReference'].filter(id=>pendingInputs.has(id)||(q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded))),templateHash:recipeTemplateHash});}
   // This remains the sole owner of Create mutation; commands persist before adoption.
   function setupStamp(){return JSON.stringify([workbenchStamp(),referenceEpoch,referencePending,selectionEpoch,recipeTemplateHash,parentByInput,typeof backendActive==='undefined'?null:backendActive]);}
   function setupBusy(){return !!referencePending||!!pickerBusy||!!restoring||!!submitting||!!handoffBusy||typeof backendSwitching!=='undefined'&&!!backendSwitching;}
@@ -1218,6 +1300,7 @@
     if(setupBusy()||expectedStamp!==setupStamp())throw Error('Create changed before loading the shared revision. Current inputs were preserved.');
     const draft=U.normalizeDraft(JSON.parse(JSON.stringify(value))),target=catalog?.presets.find(p=>p.id===draft?.recipe.preset);
     if(!draft||draft.pendingInputs.length||!target)throw Error('The shared revision cannot be represented by this editor. Export and inspect it first.');
+    if(draft.recipe.tile&&!target.tile_route||draft.recipe.parallax&&!target.parallax_route)throw Error('The prepared plan does not belong to this recipe. No settings were changed.');
     if(typeof backendActive==='undefined'||backendId!==backendActive)throw Error('The active backend changed before loading this revision.');
     const controls=draft.recipe.controls,slots=target.reference_slots||[];
     if(draft.templateHash&&target.continuation_capability?.template_sha256!==draft.templateHash)throw Error('The browser catalog has a different graph. Refresh and review before loading.');
@@ -1237,6 +1320,8 @@
       if(slots.length&&draft.recipe.references.length)referenceRecords=draft.recipe.references.map(r=>({...r}));
       parentAssets=[...draft.recipe.parent_assets];parentByInput={...(draft.recipe.parent_by_input||{})};
       continuationState=draft.recipe.continuation?StudioContinuation.normalize(draft.recipe.continuation):null;continuationSource=null;sourceReadError='';
+      tileState=draft.recipe.tile||null;parallaxState=draft.recipe.parallax||null;
+      if(typeof StudioLooks!=='undefined')StudioLooks.restoreApplication(draft.recipe.look_application,target.id);
       recipeTemplateHash=draft.templateHash;pendingInputs.clear();q('#batch').value=String(draft.recipe.batch);
       renderReferenceSlots();updateLoraHints();syncCreate();
       const actual=values();for(const key of Object.keys(controls))if(String(actual[key]??'')!==String(controls[key]))throw Error('The editor could not retain control '+key+'. Inspect the Workspace revision and browser backup.');
@@ -1257,7 +1342,8 @@
   try{applySaved(draft.recipe);epoch=selectionEpoch;recipeTemplateHash=draft.templateHash;pendingInputs=new Set(draft.pendingInputs);syncReady();
     checkedInputs=[...(!selected.reference_slots?.length&&selected.reference&&uploaded?[['reference',uploaded]]:[]),...(selected.last_reference&&lastUploaded?[['lastReference',lastUploaded]]:[])];
     if(checkedInputs.length){const files=[...new Set(checkedInputs.map(([,file])=>file))],checks=await post('/api/references/check',{files});if(epoch!==selectionEpoch)return;for(const [name,file]of checkedInputs)if(!checks.some(c=>c.file===file&&c.available)){pendingInputs.add(name);if(name==='reference')uploaded=null;else lastUploaded=null;releaseInputParent(name);}}
-    syncCreate();announce('Draft restored. Reattach any missing local files, then review before running.');
+    if(typeof tileState!=='undefined'&&tileState&&((uploaded&&uploaded!==tileState.rolled_file)||!parentAssets.includes(tileState.source_asset_id)))tileState=null;
+    syncCreate();announce(draft.tileDropped||draft.recipe.tile&&typeof tileState!=='undefined'&&!tileState?'Seamless plan dropped because it no longer matches this draft. Use Make seamless again.':'Draft restored. Reattach any missing local files, then review before running.');
   }catch(err){if(epoch===selectionEpoch){for(const [name,file]of checkedInputs){if(!file)continue;pendingInputs.add(name);if(name==='reference')uploaded=null;else lastUploaded=null;}announce('Input availability could not be checked: '+err.message,true);}}
   finally{restoring=false;if(epoch===selectionEpoch)draftDirty=false;syncReady();}
 }
@@ -1270,7 +1356,7 @@
   window.addEventListener('storage',e=>{if(e.key===draftKey()){draftPaused=true;renderDraftNotice();}});
   window.addEventListener('pagehide',saveDraft);
   for(const event of ['input','change'])q('#createView').addEventListener(event,e=>{if(e.target.closest('.editor'))draftDirty=true;syncReady();clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,350);});
-  q('#createView').addEventListener('click',e=>{if(e.target.closest('[data-variant],#randomSeed,[data-ref-clear],[data-ref-up],[data-ref-down]')){draftDirty=true;syncReady();saveDraft();}});
+  q('#createView').addEventListener('click',e=>{if(e.target.closest('[data-variant],#randomSeed,[data-ref-clear],[data-ref-up],[data-ref-down]')){pictureKept=null;renderUndo();draftDirty=true;syncReady();saveDraft();}});
   const originalLoadSetups=loadSetups;loadSetups=async function(){try{localStorage.getItem('studio-storage-probe');}catch(_){serverSetups=await api('/api/setups');renderSaved();return;}return originalLoadSetups();};
   // Explicitly apply a reviewed Prompt Lab text handoff; never infer model bindings.
   const transfer=element('section','panel ux-transfer');transfer.id='uxTransfer';transfer.hidden=true;transfer.innerHTML='<h2>Text from Prompt Lab</h2><p id="uxTransferNotice"></p><pre id="uxTransferPreview"></pre><button id="uxApplyPrompt" class="primary">Apply text to the selected recipe</button><button id="uxDismissPrompt">Dismiss</button>';createHeading.after(transfer);
@@ -1300,7 +1386,7 @@
     finally{deskBusy=false;button.disabled=false;}
   }
   async function refreshHome(){if(homeBusy)return;homeBusy=true;q('#uxRefreshHome').disabled=true;try{const result=await Promise.allSettled(['/api/workspace','/api/production','/api/jobs'].map(path=>api(path)));homeErrors=result.map((r,i)=>r.status==='rejected'?['Asset library','Runs','Jobs'][i]+': '+r.reason.message:null).filter(Boolean);homeData={workspace:result[0].status==='fulfilled'?result[0].value:null,plans:result[1].status==='fulfilled'?result[1].value:null,jobs:result[2].status==='fulfilled'?result[2].value:null};homeUpdated=new Date();renderHome();}finally{homeBusy=false;q('#uxRefreshHome').disabled=false;}}
-  function renderHome(){if(!homeData)return;const {workspace,plans,jobs:runJobs}=homeData,assets=workspace?.assets||[],s=U.summarize(assets,plans||[],runJobs||[]);q('#uxHomeHealth').textContent=homeErrors.length?'Some data is unavailable. '+homeErrors.join(' · '):'Saved records refreshed '+homeUpdated.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' · execution, creative review and licensing remain separate.';q('#uxHomeHealth').classList.toggle('error',!!homeErrors.length);const signature=JSON.stringify(homeData);if(signature===homeSignature)return;homeSignature=signature;
+  function renderHome(){if(!homeData)return;const {workspace,plans,jobs:runJobs}=homeData,all=workspace?.assets||[],assets=all.filter(a=>typeof assetIsAgentRun!=='function'||!assetIsAgentRun(a)),hidden=all.filter(a=>!a.trashed_at).length-assets.filter(a=>!a.trashed_at).length,s=U.summarize(assets,plans||[],runJobs||[]);q('#uxHomeHealth').textContent=homeErrors.length?'Some data is unavailable. '+homeErrors.join(' · '):'Saved records refreshed '+homeUpdated.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+(hidden?' · counts are your pictures; '+hidden+' agent run'+(hidden===1?' is':'s are')+' not counted':'')+' · execution, creative review and licensing remain separate.';q('#uxHomeHealth').classList.toggle('error',!!homeErrors.length);const signature=JSON.stringify(homeData);if(signature===homeSignature)return;homeSignature=signature;
     q('#uxStats').innerHTML=[['Saved assets',workspace?s.assets:'—','all'],['Awaiting review',workspace?s.unreviewed:'—','unreviewed'],['Keepers',workspace?s.keepers:'—','selected'],['Needs another pass',workspace?s.needsWork:'—','needs_work']].map(([label,value,scope])=>'<button data-ux-scope="'+scope+'"><span>'+label+'</span><b>'+value+'</b><small>Open library →</small></button>').join('');
     // #940: a plan untouched for 7 days leaves the desk (Runs & review keeps it under Older). Live plans always stay;
     // a plan with no readable date cannot be shown to be old, so it stays too. planActivity is production.js's.
@@ -1311,12 +1397,12 @@
     const ordered=deskPlans.filter(p=>!stale(p)).slice(0,6),seenJobs=new Set((plans||[]).flatMap(p=>(p.stages||[]).map(stage=>stage.job?.id).filter(Boolean)));
     const records=ordered.map(p=>'<a class="ux-desk-row" href="'+(p.state.status==='awaiting_review'&&p.kind==='comparison'?'/review.html?project='+encodeURIComponent(p.id):p.kind==='av'?'/av.html?project='+encodeURIComponent(p.id):p.kind==='voice'?'/voice.html':'/#production')+'" data-ux-project="'+escape(p.id)+'"><span class="ux-state-dot '+escape(p.state.status)+'" aria-hidden="true"></span><span><b>'+escape(p.name)+'</b><small>'+escape(p.state.status.replaceAll('_',' '))+' · '+escape(p.kind)+'</small></span><span aria-hidden="true">↗</span></a>');
     for(const j of [...s.attentionJobs,...s.activeJobs].filter(j=>!seenJobs.has(j.id)).slice(0,3))records.push('<button type="button" class="ux-desk-row" data-ux-inspect-job="'+escape(j.id)+'"><span class="ux-state-dot '+escape(j.status)+'" aria-hidden="true"></span><span><b>'+escape(j.preset_name)+'</b><small>'+escape(deskJobHint(j))+'</small></span><span aria-hidden="true">↗</span></button>');
-    q('#uxAttention').innerHTML=(records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>'))+(olderPlans?'<p class="ux-desk-note"><small>'+olderPlans+' plan(s) untouched for 7 days. <a href="/#production">See them under Older in Runs &amp; review</a></small></p>':'')+(s.putAwayJobs.length?'<p class="ux-desk-note"><small>'+s.putAwayJobs.length+' run(s) put away or with tracking stopped. <a href="/#create">Show put away in Create → Problems</a></small></p>':'')+(putAwayPlans?'<p class="ux-desk-note"><small>'+putAwayPlans+' plan(s) put away. <a href="/#production">Set Status to All statuses in Runs &amp; review to see them</a></small></p>':'');
+    q('#uxAttention').innerHTML=(records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>'))+(olderPlans?'<p class="ux-desk-note"><small>'+olderPlans+' plan(s) untouched for 7 days. <a href="/#production">See them under Older in Compare &amp; review</a></small></p>':'')+(s.putAwayJobs.length?'<p class="ux-desk-note"><small>'+s.putAwayJobs.length+' run(s) put away or with tracking stopped. <a href="/#create">Show put away in Create → Problems</a></small></p>':'')+(putAwayPlans?'<p class="ux-desk-note"><small>'+putAwayPlans+' plan(s) put away. <a href="/#production">Set Status to All statuses in Compare &amp; review to see them</a></small></p>':'');
     const recent=assets.filter(a=>!a.trashed_at).sort((a,b)=>b.created_at-a.created_at).slice(0,6);q('#uxRecent').innerHTML=recent.map(a=>'<button class="ux-recent-card" data-ux-open-asset="'+escape(a.id)+'">'+assetPreview(a)+'<span><b>'+escape(a.title)+'</b><small>'+escape(a.media_type)+' · '+escape(a.review||'unreviewed')+'</small></span></button>').join('')||'<div class="ux-empty panel"><h3>'+(workspace?'Make room for your first asset.':'Asset library is unavailable.')+'</h3><p>Import an existing image or create from a recipe. Sources stay available for the next step.</p><a href="/#assets">Open Asset library →</a></div>';
   }
   function deskJobHint(j){return j.status==='uncertain'?'outcome unknown · inspect; do not run it again':U.ACTIVE.includes(j.status)?j.status+' · in progress':j.status+' · see why, then put it away';}
   q('#uxRefreshHome').onclick=()=>refreshHome();
-  document.addEventListener('click',async e=>{try{const inspect=e.target.closest('[data-ux-inspect-job]');if(inspect){inspectJob(inspect.dataset.uxInspectJob);return;}const putAway=e.target.closest('[data-ux-put-away]');if(putAway){await putAwayFromDesk(putAway);return;}const close=e.target.closest('[data-ux-close]');if(close){if((close.dataset.uxClose==='uxHandoff'&&handoffBusy)||(close.dataset.uxClose==='uxSourcePicker'&&pickerBusy))return;q('#'+close.dataset.uxClose).close();}const intent=e.target.closest('[data-ux-intent]');if(intent)chooseIntent(intent.dataset.uxIntent);const dest=e.target.closest('[data-ux-destination]');if(dest&&!handoffBusy){const next=dest.dataset.uxDestination;if(pendingStyle&&next!==handoffIntent){pendingStyle=null;announce('The extra picture was not attached because you changed the handoff task. Choose it again if the new task needs it.');}handoffIntent=next;handoffRecipes();}const hand=e.target.closest('[data-ux-handoff]');if(hand)openHandoff(hand.dataset.uxHandoff);const scope=e.target.closest('[data-ux-scope]');if(scope){assetScope=scope.dataset.uxScope;q('#assetSearch').value='';q('#assetType').value='all';assetSelection.clear();showView('assets');renderAssets();}const open=e.target.closest('[data-ux-open-asset]');if(open){await refreshAssets();openAsset(open.dataset.uxOpenAsset);}const project=e.target.closest('[data-ux-project]');if(project){productionId=project.dataset.uxProject;if(view==='production')renderProduction();}}catch(err){announce(err.message,true);}});
+  document.addEventListener('click',async e=>{try{const inspect=e.target.closest('[data-ux-inspect-job]');if(inspect){inspectJob(inspect.dataset.uxInspectJob);return;}const putAway=e.target.closest('[data-ux-put-away]');if(putAway){await putAwayFromDesk(putAway);return;}const close=e.target.closest('[data-ux-close]');if(close){if((close.dataset.uxClose==='uxHandoff'&&handoffBusy)||(close.dataset.uxClose==='uxSourcePicker'&&pickerBusy))return;q('#'+close.dataset.uxClose).close();}const intent=e.target.closest('[data-ux-intent]');if(intent)chooseIntent(intent.dataset.uxIntent);const dest=e.target.closest('[data-ux-destination]');if(dest&&!handoffBusy){const next=dest.dataset.uxDestination;if(pendingStyle&&next!==handoffIntent){pendingStyle=null;announce('The extra picture was not attached because you changed the handoff task. Choose it again if the new task needs it.');}handoffIntent=next;handoffRecipes();}const hand=e.target.closest('[data-ux-handoff]');if(hand){const id=hand.dataset.uxHandoff;if(!assetState.assets.some(a=>a.id===id))await refreshAssets();openHandoff(id,undefined,undefined,hand.dataset.uxHandoffIntent);}const scope=e.target.closest('[data-ux-scope]');if(scope){assetScope=scope.dataset.uxScope;if(typeof chooseAssetSource==='function')chooseAssetSource('mine');q('#assetSearch').value='';q('#assetType').value='all';assetSelection.clear();showView('assets');renderAssets();}const open=e.target.closest('[data-ux-open-asset]');if(open){await refreshAssets();openAsset(open.dataset.uxOpenAsset);}const project=e.target.closest('[data-ux-project]');if(project){productionId=project.dataset.uxProject;if(view==='production')renderProduction();}}catch(err){announce(err.message,true);}});
   // Native file input remains the accessible fallback for drag-and-drop imports.
   const drop=element('div','ux-import-drop','<b>Bring existing work into the studio</b><span>Drop up to 32 PNG, JPG or WebP images here, or use Import images.</span>');drop.id='uxImportDrop';q('#assetsView .asset-workspace').before(drop);drop.ondragover=e=>{if([...e.dataTransfer.types].includes('Files')){e.preventDefault();drop.classList.add('dragover');}};drop.ondragleave=()=>drop.classList.remove('dragover');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');const files=[...e.dataTransfer.files];if(files.length>32||files.some(f=>!['image/png','image/jpeg','image/webp'].includes(f.type))){assetMessage('Import up to 32 PNG, JPEG or WebP images. No files were submitted.',true);return;}const transfer=new DataTransfer();files.forEach(f=>transfer.items.add(f));q('#importAssets').files=transfer.files;q('#importAssets').dispatchEvent(new Event('change',{bubbles:true}));};
   q('#importAssets').closest('label').tabIndex=0;q('#importAssets').closest('label').setAttribute('role','button');q('#importAssets').closest('label').onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();q('#importAssets').click();}};
@@ -1328,5 +1414,5 @@
     refreshHome=(...args)=>window.StudioReadPoller.refresh('overview',...args);
   }
   window.addEventListener('studio-read-poller-ready',attachOverviewPolling);attachOverviewPolling();
-  showView(U.normalizeView(location.hash));initializeDrafts();
+  showView(location.hash);initializeDrafts();
 })();

@@ -1,0 +1,34 @@
+{
+  "browser-storage.json": {
+    "bytes": 2486,
+    "sha256": "375485964ca8e8d898694807ac43ceac41d07ecbc7e380056194fecaa5ce8886"
+  },
+  "captions.vtt": {
+    "bytes": 613,
+    "sha256": "401670d5e9b954689056e2c82d0572edb25e36808b9d3a913a35aa75e2c0f96e"
+  },
+  "media-receipt.json": {
+    "bytes": 937,
+    "sha256": "770a8cd32f81f3e5da98736d3962d587a374a8d369ed85613d25ba0b41e90bd1"
+  },
+  "player-receipt.json": {
+    "bytes": 445,
+    "sha256": "43ad67346abf61a3716e35f3198dd4c13b43efc4254f63bd762e613f09e2f35e"
+  },
+  "recording-receipt.json": {
+    "bytes": 12246,
+    "sha256": "6482a9357b9c7beba064c42dd9acd581184dda8e83b2b03bac0f76b78e5ea2ec"
+  },
+  "record_recipe_change.py": {
+    "bytes": 6096,
+    "sha256": "3282f82708908ccfdd1351a4d26bf90b4eaa857d6a427f78d59a15c8743da3ca"
+  },
+  "transcript.txt": {
+    "bytes": 486,
+    "sha256": "1f5b8772dea64ff7e6dfa88478ed5fb0421d9e4eed3c8635def24d51ccfe59c6"
+  },
+  "README.md": {
+    "bytes": 5249,
+    "sha256": "644db1363543f4ef97a226fc64b18c9b3b07df1cc3b0b96d9861291a6e486633"
+  }
+}

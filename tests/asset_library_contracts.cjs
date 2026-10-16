@@ -84,6 +84,11 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.match(s.el('#assetVisibleCount').textContent,/^2 assets · 2 agent runs hidden$/);assert.match(s.el('#reviewNext').textContent,/2 unreviewed/);
     s.run('startReviewQueue()');assert.equal(s.run('JSON.stringify(assetQueue.ids)'),'["m1","m0"]');
   });
+  await test('Pictures made in Make stay in Mine although their run carries a Make label',()=>{
+    const s=sourced();s.run("assetState.assets[0].run_label='Make \u00b7 Clean anime portrait';assetState.assets[1].run_label='Make \u00b7 Fix face';renderAssets()");
+    assert.deepEqual(shown(s),['m1','m0']);assert.match(s.el('#assetVisibleCount').textContent,/^2 assets · 2 agent runs hidden$/);
+    s.run("chooseAssetSource('agent')");assert.deepEqual(shown(s),['g1','g0']);
+  });
   await test('The source choice persists like grouping and survives a missing store',()=>{
     const store=memory();let s=sourced({localStorage:store});s.el('#assetSource').value='agent';s.el('#assetSource').onchange();
     assert.deepEqual(shown(s),['g1','g0']);assert.equal(store.values.get('studio.assets.source'),'agent');assert.match(s.el('#assetVisibleCount').textContent,/2 of yours hidden/);
@@ -99,7 +104,7 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
   });
   await test('Default titles carry the prompt excerpt; renamed titles and markup do not leak',()=>{
     const s=sourced();s.run("chooseAssetSource('all')");let html=s.el('#assetGrid').innerHTML;
-    assert.match(html,/class="asset-card-prompt"[^>]*>prompt of m0</);assert.match(html,/class="asset-run-label"[^>]*>lab p71 · G16</);
+    assert.match(html,/class="asset-card-title"[^>]*>prompt of m0</);assert.doesNotMatch(html,/class="asset-card-prompt"[^>]*>prompt of m0</,'the excerpt is not shown twice');assert.match(html,/class="asset-run-label"[^>]*>lab p71 · G16</);
     s.run("assetState.assets[0].title='My knight';assetState.assets[1].prompt_excerpt='<b>x</b>';assetState.assets[2].run_label='<i>';renderAssets()");html=s.el('#assetGrid').innerHTML;
     assert.doesNotMatch(html,/prompt of m0/);assert.match(html,/&lt;b&gt;x&lt;\/b&gt;/);assert.doesNotMatch(html,/<b>x|<i>/);
   });
@@ -176,6 +181,10 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.equal(s.run('assetSelection.size'),0);assert.equal(s.el('#assetSource').hidden,false);assert.deepEqual(shown(s),['a1']);
     assert.match(s.el('#assetMessage').textContent,/^Marked 2 as agent runs \(Agent lab\)\. The Mine view hides them.*Mark as mine reverses it/);
   });
+  await test('Mark as agent run refuses the Make label prefix, so the action cannot contradict its result',async()=>{
+    const s=library();s.run("assetSelection=new Set(['a0'])");s.el('#bulkRunLabel').value='Make · nightly';await bulkClick(s,'agent_run');
+    assert.equal(s.writes.length,0);assert.match(s.el('#assetMessage').textContent,/kept for pictures made in Make/);
+  });
   await test('Mark as mine clears the label; a typed label is trimmed and an unprintable one is never sent',async()=>{
     const s=library();s.run("assetState.assets.forEach(a=>{a.run_label='Agent lab';});chooseAssetSource('all');assetSelection=new Set(['a1'])");
     let p=bulkClick(s,'mine');assert.deepEqual(s.metadata(0),{ids:['a1'],action:'edit',run_label:null});s.accept(0);await p;
@@ -241,6 +250,21 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     s.writes[0].reject(trashedError(['a0']));await p;
     assert.equal(s.writes.length,1);assert.equal(s.confirmations(),1);assert.equal(s.run('assetSelection.size'),2);
     assert.match(s.el('#assetMessage').textContent,/Export cancelled/);
+  });
+  await test('Decorative placeholder glyphs are hidden and the detail audio player is named',()=>{
+    const s=library();
+    assert.equal(s.run(`assetPreview({url:'/take.wav',media_type:'audio',title:'Take <1>'},true)`),'<audio controls aria-label="Play Take &lt;1&gt;" src="/take.wav"></audio>');
+    assert.equal(s.run(`assetPreview({url:'/take.wav',media_type:'audio',title:'Take'})`),'<span class="asset-type-placeholder"><span aria-hidden="true">♫</span><small>Audio</small></span>');
+    assert.equal(s.run(`assetPreview({url:'/m.glb',media_type:'3d',title:'Mesh'})`),'<span class="asset-type-placeholder"><span aria-hidden="true">◇</span><small>3D model</small></span>');
+    assert.equal(s.run(`assetPreview({title:'Gone',media_type:'image'})`),'<span class="asset-type-placeholder"><span aria-hidden="true">▨</span><small>No preview · file missing</small></span>');
+  });
+  await test('Attaching a source scrolls to the recipe instantly when reduced motion is requested',async()=>{
+    const s=library();
+    s.run("post=async()=>({id:'a0',width:512,height:768});catalog={presets:[{id:'gentle-variation',name:'Gentle',modality:'image',reference:true}]};beginContinuation=()=>{};showView=()=>{};");
+    const scrolls=[];s.el('#selectedPreset').scrollIntoView=options=>scrolls.push(options);
+    s.run("globalThis.matchMedia=query=>({matches:true})");await s.run(`handoffAsset('a0','gentle-variation')`);
+    s.run("globalThis.matchMedia=query=>({matches:false})");await s.run(`handoffAsset('a0','gentle-variation')`);
+    assert.deepEqual(scrolls.map(options=>options.behavior),['auto','smooth']);assert.equal(scrolls[0].block,'start');
   });
   console.log(`Asset library contracts: ${passed} passed, ${failed} failed`);if(failed)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -2,6 +2,8 @@
 const ASSET_THUMB_VERSION = 1;
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
 let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0, assetObservedWorkspace;
+// Bumped when a confirmed receipt advances a loaded record in place: a library read that overlapped it is stale (#1436).
+let assetReceiptEpoch = 0;
 // The tab journal retains drafts and exact commands; Workspace owns saved metadata.
 let assetDetailEpoch = 0, assetDetailBaseline = null, assetDetailBusy = false, assetDetailDiscarding = false, assetDiagnosticRequest = 0;
 let assetDetailPending = null, assetDetailConflict = null, assetLibraryPending = null, assetLibraryBusy = false;
@@ -17,7 +19,8 @@ const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.a
 // Until the operator chooses, the library shows Mine once any labelled asset exists; with none, every source is shown.
 const assetSourceModes = ['mine','agent','all'], assetSourceStorageKey = 'studio.assets.source';
 let assetSourceMode = null;
-function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='';}
+// "Make · …" labels name the person's own Make runs (make.js; Fix and Upscale in studio-workbench.js), not agent runs.
+function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='' && !asset.run_label.startsWith('Make · ');}
 function assetSource(){return !assetState.assets.some(assetIsAgentRun)?'all':assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
 function assetSourceFilter(list, source=assetSource()){return source==='all'?list:list.filter(a=>assetIsAgentRun(a)===(source==='agent'));}
 // Existing lab outputs carry no label, so the operator marks them (#939): a label makes an agent run, clearing it makes it
@@ -27,11 +30,31 @@ const assetDefaultRunLabel='Agent lab';
 function assetRunLabelChoice(){
   const text=String($('#bulkRunLabel').value??'').trim()||assetDefaultRunLabel;
   if([...text].length>80 || [...text].some(c=>c!==' ' && /[\p{C}\p{Z}]/u.test(c)))throw Error('Use a run label of 1 to 80 printable characters, without tabs or line breaks. Nothing was changed.');
+  if(text.startsWith('Make · '))throw Error('Run labels starting "Make · " are kept for pictures made in Make. Choose another label. Nothing was changed.');
   return text;
 }
 // A title still equal to the registered default ("<recipe> · N") says nothing; the prompt excerpt does.
 function assetDefaultTitle(asset){return asset.title===(asset.preset_name||'Untitled')+' · '+(Number(asset.output_index)+1);}
-function assetSubtitle(asset){return typeof asset.prompt_excerpt==='string' && asset.prompt_excerpt && assetDefaultTitle(asset)?asset.prompt_excerpt:'';}
+// The prompt excerpt is shown once: as the subtitle only when the card title is something else (#1414 review).
+function assetSubtitle(asset){return typeof asset.prompt_excerpt==='string' && asset.prompt_excerpt && assetDefaultTitle(asset) && assetCardTitle(asset)!==asset.prompt_excerpt?asset.prompt_excerpt:'';}
+// Card titles lead with something distinguishing: a user-kept title stays, else the run label when it is not the
+// recipe name (Make files labels as 'Make · <look>'), else the first words of the submitted prompt; the recipe name
+// stays on the small second line in the card meta.
+function assetCardTitle(asset){if(!assetDefaultTitle(asset))return asset.title||'Untitled';if(assetIsAgentRun(asset)&&asset.run_label!==asset.preset_name)return asset.run_label;return typeof asset.prompt_excerpt==='string'&&asset.prompt_excerpt?asset.prompt_excerpt:asset.title;}
+// Scope chips count what the current source, search and media filters actually show, per scope.
+function assetScopedCount(scope){
+  const query=$('#assetSearch').value.trim().toLowerCase(),type=$('#assetType').value;
+  const list=assetSourceFilter(assetState.assets.filter(a=>{
+    if(scope==='trash')return !!a.trashed_at;
+    if(a.trashed_at)return false;
+    if(scope==='favorite'&&!a.favorite)return false;
+    if(['selected','needs_work','unreviewed'].includes(scope)&&(a.review||'unreviewed')!==scope)return false;
+    if(scope.startsWith('collection:'))return a.collections.includes(scope.slice(11));
+    return true;
+  }));
+  return list.filter(a=>(type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,a.run_label||'',a.prompt_excerpt||'',...a.tags].join(' ').toLowerCase().includes(query)).length;
+}
+function renderAssetScopeCounts(){document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>{if(!b.dataset.scopeLabel)b.dataset.scopeLabel=b.textContent.trim();b.innerHTML='<span>'+esc(b.dataset.scopeLabel)+'</span><small>'+assetScopedCount(b.dataset.scope).toLocaleString('en-US')+'</small>';});}
 const assetReviewLabels = {unreviewed:'Unreviewed',selected:'Keeper',needs_work:'Needs work',rejected:'Rejected'};
 const assetReviewShortcuts = {k:'selected',w:'needs_work',x:'rejected'};
 const assetReasonTags = ['hands','face','style off','composition','anatomy','artifacts','crop'];
@@ -105,15 +128,17 @@ function validateAssetReceipt(result, command) {
   if(result?.status!=='applied' || result.request_id!==command.request_id || result.action!==command.action ||
      JSON.stringify(result.updated)!==JSON.stringify(command.ids) ||
      JSON.stringify(Object.keys(result.revisions||{}).sort())!==JSON.stringify([...command.ids].sort()) ||
-     command.ids.some(id=>result.revisions[id]!==command.expected_revisions[id]+1))throw Error('The server did not return a matching save receipt.');
+     (result.unchanged!==undefined&&(!Array.isArray(result.unchanged)||!['trash','restore'].includes(command.action)||result.unchanged.some(id=>!command.ids.includes(id))))||
+     command.ids.some(id=>result.revisions[id]!==command.expected_revisions[id]+(result.unchanged?.includes(id)?0:1)))throw Error('The server did not return a matching save receipt.');
+  const noop=result.unchanged?.length===command.ids.length&&JSON.stringify(result.applied)==='{}';   // every target was already in that state (#1405)
   const applied=result.applied, keys=command.action==='edit'?['title','notes','tags','favorite','review','run_label'].filter(k=>Object.hasOwn(command,k)):
     ['trash','restore'].includes(command.action)?['trashed_at']:['collection_id'];
-  if(!applied || JSON.stringify(Object.keys(applied).sort())!==JSON.stringify(keys.sort()) || keys.some(k=>{
+  if(!noop && (!applied || JSON.stringify(Object.keys(applied).sort())!==JSON.stringify(keys.sort()) || keys.some(k=>{
     if(k==='trashed_at')return command.action==='restore'?applied[k]!==null:typeof applied[k]!=='number' || !Number.isFinite(applied[k]);
     if(k==='tags')return !Array.isArray(applied[k]) || applied[k].some(t=>typeof t!=='string');
     if(k==='run_label')return command[k]===null?applied[k]!==null:applied[k]!==command[k].trim();
     return typeof applied[k]!==typeof command[k];
-  }))throw Error('The save receipt contains invalid applied metadata.');
+  })))throw Error('The save receipt contains invalid applied metadata.');
   if(!Array.isArray(result.current) || result.current.length>10 ||
      result.current.some(m=>!validAssetMetadata(m) || m.workspace_id!==command.workspace_id || !command.ids.includes(m.id)) ||
      new Set(result.current.map(m=>m.id)).size!==result.current.length)throw Error('The receipt observation is invalid; the exact save remains retained.');
@@ -242,7 +267,7 @@ async function performAssetSave(operation, observe=false) {
 function syncAssetAfterSave(operation,result) {
   const record=assetState.assets.find(a=>a.id===operation.id),revision=result.revisions[operation.id];
   if(!record || record.workspace_id!==operation.command.workspace_id || record.metadata_revision!==operation.command.expected_revisions[operation.id])return void refreshAssets(true);
-  Object.assign(record,result.applied,{metadata_revision:revision});
+  Object.assign(record,result.unchanged?.includes(operation.id)?{}:result.applied,{metadata_revision:revision});assetReceiptEpoch++;
   if(operation.kind==='trash')renderAssets();else updateAssetCard(record.id);
 }
 function applyAssetSaveReceipt(operation,result) {
@@ -297,7 +322,7 @@ for(const id of ['assetTitle','assetTags','assetReview','assetNotes']) {
 }
 // Existing continuation/scene/recipe guards still own their handoffs. Do not leave during a write.
 document.addEventListener('click',e=>{
-  if((assetDetailBusy || assetDetailPending || assetDetailConflict) && $('#assetDialog').open && e.target.closest('[data-ux-handoff],[data-handoff],.ux-scene-link,#assetRecipe')){
+  if((assetDetailBusy || assetDetailPending || assetDetailConflict) && $('#assetDialog').open && e.target.closest('[data-ux-handoff],[data-handoff],[data-make-open],.ux-scene-link,#assetRecipe')){
     e.preventDefault();e.stopImmediatePropagation();assetDetailStatus('Finish the pending save before continuing with this asset.');
   }
 },true);
@@ -320,7 +345,10 @@ async function refreshAssets(force=false) {
   if(assetRefreshing)return false;
   assetRefreshing=true;
   try {
-    const data=await api('/api/workspace'), signature=JSON.stringify(data);
+    let data,epoch;
+    let reads=0;do{epoch=assetReceiptEpoch;data=await api('/api/workspace');}while(epoch!==assetReceiptEpoch&&++reads<5);   // re-read while saves land, at most five times
+    if(epoch!==assetReceiptEpoch)return false;   // still racing saves: keep the newer local records; the next poll reads again
+    const signature=JSON.stringify(data);
     const previousScope=assetState.workspace_id;
     assetState=data;
     if(previousScope && previousScope!==data.workspace_id){assetSelection.clear();if(assetLibraryPending?.command.workspace_id===data.workspace_id)assetRetainedSelection=assetLibraryPending.selection;}
@@ -476,12 +504,13 @@ function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=nu
 function assetThumbUrl(asset) {return '/api/assets/'+encodeURIComponent(asset.id)+'/thumb?v='+ASSET_THUMB_VERSION+'-'+encodeURIComponent(String(asset.sha256||'').slice(0,16));}
 function assetPreview(asset, detail=false) {
   const url=asset.url, alt=esc(asset.title);
+  if(!url)return '<span class="asset-type-placeholder"><span aria-hidden="true">▨</span><small>'+(detail?'File unavailable':'No preview · file missing')+'</small></span>';
   if(asset.media_type==='image')return detail?'<img loading="lazy" decoding="async" src="'+url+'" alt="'+alt+'">':'<img loading="lazy" decoding="async" src="'+esc(assetThumbUrl(asset))+'" data-full-src="'+esc(url)+'" alt="'+alt+'">';
   if(asset.media_type==='video')return '<video '+(detail?'controls':'muted')+' preload="metadata" src="'+url+'" aria-label="'+alt+'"></video>';
-  if(asset.media_type==='audio')return detail?'<audio controls src="'+url+'"></audio>':'<span class="asset-type-placeholder">♫<small>Audio</small></span>';
-  return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder">◇<small>3D model</small></span>';
+  if(asset.media_type==='audio')return detail?'<audio controls aria-label="Play '+alt+'" src="'+url+'"></audio>':'<span class="asset-type-placeholder"><span aria-hidden="true">♫</span><small>Audio</small></span>';
+  return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder"><span aria-hidden="true">◇</span><small>3D model</small></span>';
 }
-function assetCardHTML(a) {return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
+function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
   observeAssetWorkspaceIdentity();
   // A remembered collection that no longer exists opens All assets rather than an unavailable view.
@@ -489,7 +518,7 @@ function renderAssets() {
   rememberAssetView();
   const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope), source=assetSource();
   const inScope=assetScopeAssets(), sourced=assetSourceFilter(inScope,source), sourceHidden=inScope.length-sourced.length;
-  $('#assetTotal').textContent=assetState.assets.filter(a=>!a.trashed_at).length;
+  $('#assetTotal').textContent=assets.length;
   $('#assetSource').hidden=!assetState.assets.some(assetIsAgentRun);$('#assetSource').value=source;
   $('#assetVisibleCount').textContent=(assetFiltersActive()?assets.length+' of '+sourced.length+' assets':assets.length+' assets')+(sourceHidden?' · '+sourceHidden+(source==='mine'?' agent runs hidden':' of yours hidden'):'');
   $('#clearAssetFilters').hidden=!assetFiltersActive();
@@ -498,7 +527,7 @@ function renderAssets() {
   $('#assetScopeTitle').textContent=col?.name||({all:'All assets',unreviewed:'Awaiting review',favorite:'Favorites',selected:'Keepers',needs_work:'Needs work',trash:'Trash'}[assetScope]||'Collection');
   $('#collectionActions').hidden=!col;
   $('#assetCollections').innerHTML=assetState.collections.map(c=>'<button data-scope="collection:'+c.id+'" class="'+(col?.id===c.id?'active':'')+'"><span>▱ '+esc(c.name)+'</span><small>'+c.count+'</small></button>').join('')||'<p class="muted">Collect a character, a project, or an idea.</p>';
-  document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope===assetScope));
+  document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope===assetScope));renderAssetScopeCounts();
   const destination=$('#bulkCollection').value;
   $('#bulkCollection').innerHTML='<option value="">Choose collection…</option>'+assetState.collections.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
   if(assetState.collections.some(c=>c.id===destination))$('#bulkCollection').value=destination;
@@ -507,7 +536,7 @@ function renderAssets() {
   $('#reviewNext').disabled=!pending.length;
   const groups=assetGroups(assets,assetGroupMode),grouped=!!groups[0]?.key;
   $('#assetGrid').classList.toggle('is-grouped',grouped && !!assets.length);
-  StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,groupActionsHTML:assetGroupActionsHTML,groupSourceHTML:assetGroupSourceHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
+  StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,cardTitle:assetCardTitle,groupActionsHTML:assetGroupActionsHTML,groupSourceHTML:assetGroupSourceHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
   renderAssetSelection();assetBulkReviewControls();
 }
 // Reconcile the saved record without fetching; retain cached nodes and current group membership.
@@ -609,7 +638,7 @@ async function postAssetCommand(command) {
 function applyAssetReviewReceipt(command,result) {
   for(const id of command.ids){
     const record=assetState.assets.find(a=>a.id===id);
-    if(record && (!record.workspace_id || record.workspace_id===command.workspace_id) && record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.applied,{metadata_revision:result.revisions[id]});
+    if(record && (!record.workspace_id || record.workspace_id===command.workspace_id) && record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.unchanged?.includes(id)?{}:result.applied,{metadata_revision:result.revisions[id]}),assetReceiptEpoch++;
   }
 }
 // Replacing a saved decision is not the same as reviewing a new asset: name what changes before any write.
@@ -816,10 +845,10 @@ async function performLibraryCommand(operation,observe=false) {
       const asset=assetState.assets.find(a=>a.id===id);
       if(asset && asset.workspace_id===command.workspace_id && asset.metadata_revision===command.expected_revisions[id]){
         asset.metadata_revision=result.revisions[id];
-        if(['edit','trash','restore'].includes(command.action))Object.assign(asset,result.applied);
+        if(['edit','trash','restore'].includes(command.action)&&!result.unchanged?.includes(id))Object.assign(asset,result.applied);
       }
     }
-    void refreshAssets(true);assetMessage('Library update confirmed.');return result;
+    assetReceiptEpoch++;void refreshAssets(true);assetMessage('Library update confirmed.');return result;   // an overlapping read re-reads instead of restoring the pre-update snapshot
   } catch(error) {
     if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){throw Error('This attempt was refused. '+error.message+' The exact command and complete selection remain retained. Check its receipt or explicitly discard local recovery before a different update.');}
     throw Error('Library update not confirmed. '+error.message+' No automatic retry was sent.');
@@ -903,7 +932,7 @@ async function handoffAsset(id,presetId) {
   const intent=preset.modality==='video'?'animate':preset.modality==='3d'?'mesh':/fix|refine|upscale|esrgan/.test(preset.id)?'repair':'edit';
   beginContinuation(result,preset.id,intent);
   $('#referenceHint').textContent='Attached '+(assetState.assets.find(a=>a.id===id)?.title||'asset')+' · '+result.width+' × '+result.height;
-  $('#assetDialog').close();showView('create');$('#selectedPreset').scrollIntoView({block:'start',behavior:'smooth'});message('Source asset attached. Adjust your brief, then generate.');
+  $('#assetDialog').close();showView('create');$('#selectedPreset').scrollIntoView({block:'start',behavior:typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});message('Source asset attached. Adjust your brief, then generate.');
 }
 // An explicit refresh shows that it is running and is never swallowed by a background read already in flight: it waits
 // for that read (up to 15 s), then reads again.
@@ -1061,8 +1090,9 @@ document.addEventListener('click',async e=>{
     }
   }catch(err){assetMessage(err.message,true);message(err.message,true);}
 });
-// A thumbnail the server cannot produce (unreadable image, older server) falls back once to the original file.
-document.addEventListener('error',e=>{const image=e.target;if(image?.tagName!=='IMG'||!image.dataset?.fullSrc||!image.isConnected||!image.getAttribute('src'))return;const full=image.dataset.fullSrc;delete image.dataset.fullSrc;image.src=full;},true);
+// A thumbnail the server cannot produce (unreadable image, older server) falls back once to the original file;
+// a card image neither source can supply becomes a labelled reason, never an empty box.
+document.addEventListener('error',e=>{const image=e.target;if(image?.tagName!=='IMG'||!image.isConnected||!image.getAttribute('src'))return;if(image.dataset?.fullSrc){const full=image.dataset.fullSrc;delete image.dataset.fullSrc;image.src=full;return;}const open=image.closest?.('[data-asset-card] .asset-open');if(open)open.innerHTML='<span class="asset-type-placeholder"><span aria-hidden="true">▨</span><small>No preview · file missing</small></span>';},true);
 // A checkbox click precedes its change event; remember only whether Shift was held for that click.
 document.addEventListener('click',e=>{if(e.target?.dataset?.assetCheck!==undefined)assetCheckShift=!!e.shiftKey;},true);
 document.addEventListener('change',e=>{if(e.target?.dataset?.assetCheck)toggleAssetCheck(e.target);});

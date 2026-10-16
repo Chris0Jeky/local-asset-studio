@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 
 from playwright.sync_api import sync_playwright
 import studio_browser_smoke as fixture
@@ -19,7 +19,7 @@ def main():
     output = parser.parse_args().output
     output.mkdir(parents=True, exist_ok=True)
     fixture.POSTS.clear()
-    server = ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
+    server = browser_server(fixture.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     origin = f'http://127.0.0.1:{server.server_port}'
@@ -32,29 +32,31 @@ def main():
                 for width in (1440, 390):
                     page = browser.new_page(viewport={'width': width, 'height': 900})
                     page.on('pageerror', lambda error: errors.append(str(error)))
-                    page.goto(origin+'/#home')
+                    # The failed run's explanation moved from Overview's desk to the Full editor's Problems list (#18).
+                    page.goto(origin+'/#create')
                     page.wait_for_function('!!selected && schemaAvailable && !!window.StudioReadPoller')
-                    page.wait_for_selector('[data-ux-inspect-job="allocation-failure"]')
+                    page.locator('#jobProblems').evaluate('(n)=>n.open=true')
+                    page.wait_for_selector('#jobProblemsHost [data-problem="allocation-failure"]')
                     original = page.evaluate('JSON.stringify([selected.id,values(),parentAssets])')
-                    page.click('#bundleHomeLauncher')
+                    # The bundle launcher sits inside the recipe picker, so open that first (#18).
+                    page.click('#workshopRecipeChange')
+                    page.click('#bundleLauncher')
                     page.wait_for_selector('#bundleSearch')
                     page.fill('#bundleSearch', 'ink')
                     page.keyboard.press('Escape')
                     page.wait_for_function('!document.querySelector("#bundleExplorer").open')
-                    assert page.locator('#bundleHomeLauncher').evaluate('(n)=>n===document.activeElement')
-                    page.click('[data-ux-inspect-job="allocation-failure"]')
-                    content = page.locator('#uxJobInspector').inner_text()
+                    assert page.locator('#bundleLauncher').evaluate('(n)=>n===document.activeElement')
+                    page.evaluate("document.querySelector('#workshopRecipeDialog')?.close()")
+                    card = page.locator('#jobProblemsHost [data-problem="allocation-failure"]')
+                    content = card.inner_text()
                     failed_job = next(job for job in fixture.JOBS if job['id'] == 'allocation-failure')
-                    assert failed_job['id'] in content and failed_job['prompt_ids'][0] in content, content
+                    assert card.get_attribute('data-problem') == failed_job['id'] and failed_job['prompt_ids'][0] in content, content
                     assert failed_job['failure']['summary'] in content, content
                     assert failed_job['failure']['action'] in content, content
-                    page.screenshot(path=str(output/f'job-inspector-{width}.png'))
-                    page.keyboard.press('Escape')
-                    page.wait_for_function('!document.querySelector("#uxJobInspector").open')
+                    page.screenshot(path=str(output/f'problems-{width}.png'))
                     assert page.evaluate('JSON.stringify([selected.id,values(),parentAssets])') == original
-                    assert page.locator('[data-ux-inspect-job="allocation-failure"]').evaluate('(n)=>n===document.activeElement')
-                    page.screenshot(path=str(output/f'overview-{width}.png'), full_page=True)
-                    checks.append(f'Overview bundles and exact job inspection at {width}px preserve current work')
+                    page.screenshot(path=str(output/f'full-editor-{width}.png'), full_page=True)
+                    checks.append(f'Full editor bundles and failed-run explanation at {width}px preserve current work')
                     page.evaluate("showView('create');selectPreset('anima-portrait')")
                     page.wait_for_function('schemaAvailable')
                     assert page.locator('#uxPullAsset').is_disabled()

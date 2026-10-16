@@ -1,0 +1,4733 @@
+{
+  "round": 5,
+  "recorded_at": "2026-10-16T16:53:59.573300",
+  "transport": {
+    "base_url": "http://127.0.0.1:8191",
+    "origin": "http://127.0.0.1:8191",
+    "serial": true
+  },
+  "evidence_root": ".runtime/lab-20261016e/",
+  "sources": [
+    {
+      "name": "petiflow",
+      "job_id": "7970277a-c544-4641-9043-b4f4db412226",
+      "asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+      "image": ".runtime\\lab-20261016e\\petiflow-source.png",
+      "sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+      "dimensions": [
+        832,
+        1216
+      ]
+    },
+    {
+      "name": "oneobsession",
+      "job_id": "7858463c-2417-4b8a-b4f8-6e335eec5bc9",
+      "asset_id": "2847242877545599b04e0b7682899d6c",
+      "image": ".runtime\\lab-20261016e\\oneobsession-source.png",
+      "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+      "dimensions": [
+        832,
+        1216
+      ]
+    },
+    {
+      "name": "wai",
+      "job_id": "7cf3db2d-8aa4-4403-a29e-5b335ce4c4e3",
+      "asset_id": "26fb675eb78a5c7daa540b414a7b2929",
+      "image": ".runtime\\lab-20261016e\\wai-source.png",
+      "sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62",
+      "dimensions": [
+        832,
+        1216
+      ]
+    }
+  ],
+  "source_qualifications": {
+    "petiflow": {
+      "historical_verdict": "keep",
+      "historical_round": 1,
+      "job_id": "7970277a-c544-4641-9043-b4f4db412226"
+    },
+    "oneobsession": {
+      "historical_verdict": "keep",
+      "historical_round": 2,
+      "job_id": "7858463c-2417-4b8a-b4f8-6e335eec5bc9"
+    },
+    "wai": {
+      "historical_verdict": "keep",
+      "historical_round": 4,
+      "job_id": "7cf3db2d-8aa4-4403-a29e-5b335ce4c4e3"
+    }
+  },
+  "source_skips": [
+    {
+      "at": "2026-10-16T15:42:13.507581",
+      "round": 5,
+      "event": "source-skipped",
+      "source": "anifox",
+      "job_id": "fe587aba-2c7b-4261-b248-05b9493769b9",
+      "reason": "skipped: ambiguous youthful-looking anime source on initial screening; no crops, scores or reuse"
+    }
+  ],
+  "implementation_sha256": {
+    "app/static/make.js": "e226e60f59fffbbab0bfabc77326e66fbfdedd99598987d2f38fa627266478c3",
+    "app/static/studio-workbench.js": "1932234e9ee06f7610b6354f844c934a93666f5986dba80e16ab00de2a96a818",
+    "app/static/continuation-core.js": "63e3ae0f38cc5551791146bd68528395bf39ae1e39c4b20302674933a51d990f"
+  },
+  "jobs": [
+    {
+      "trial": "icon-backpack-202610160403",
+      "meta": {
+        "operation": "game-icon",
+        "look_id": "look-zimage-game-icon",
+        "object": "backpack",
+        "scene": "one brown leather backpack with a closed flap and two buckled straps",
+        "seed": 202610160403,
+        "route": "Z-Image quick; light alternative to Krea"
+      },
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160403,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "batch_count": 1,
+        "label": "Lab 1016e · icon-backpack-202610160403"
+      },
+      "job_id": "5ccc7759-d602-457b-a79a-897f0cc1c78f",
+      "prompt_ids": [
+        "91299618-3c32-4846-afae-9dc6761bd1bf"
+      ],
+      "status": "completed",
+      "created_at": 1792163186.8194296,
+      "started_at": 1792163186.8384333,
+      "finished_at": 1792163298.6813622,
+      "elapsed_seconds": 111.84292888641357,
+      "admission_ratio": 0.6931182366684451,
+      "peak_sampled_commit_ratio": 0.7281516704622963,
+      "recipe_sha256": "832bcb51afdc96326bccbdb6f13de3a2e870b524b8a072790c94e65d89ef2074",
+      "outputs": [
+        {
+          "filename": "Z-Image-Fast_00044_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 202610160403,
+          "prompt_id": "91299618-3c32-4846-afae-9dc6761bd1bf",
+          "media_type": "image",
+          "asset_id": "b5dbdfe9e0955095b2452db210ea7871",
+          "image": ".runtime\\lab-20261016e\\icon-backpack-202610160403-0.png",
+          "sha256": "b8ef43151c160597ee23fc472e8c668a5219ff11d541ce0e4a4ad91590c925f5",
+          "dimensions": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+          }
+        ],
+        "width": [
+          {
+            "node": "7",
+            "input": "width",
+            "value": 1024
+          }
+        ],
+        "height": [
+          {
+            "node": "7",
+            "input": "height",
+            "value": 1024
+          }
+        ],
+        "seed": [
+          {
+            "node": "8",
+            "input": "seed",
+            "value": 202610160403
+          }
+        ],
+        "steps": [
+          {
+            "node": "8",
+            "input": "steps",
+            "value": 8
+          }
+        ],
+        "cfg": [
+          {
+            "node": "8",
+            "input": "cfg",
+            "value": 1.0
+          }
+        ],
+        "denoise": [
+          {
+            "node": "8",
+            "input": "denoise",
+            "value": 1.0
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 219,
+          "unknown_samples": 0,
+          "first_at": 1792163187.0485177,
+          "last_at": 1792163298.6743634,
+          "peak_committed_bytes": 75618033664,
+          "peak_at": 1792163295.822559,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 27166056448,
+          "index": 0,
+          "prompt_id": "91299618-3c32-4846-afae-9dc6761bd1bf",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "91299618-3c32-4846-afae-9dc6761bd1bf",
+          "seed": 202610160403,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 82563072,
+            "peak_dedicated_bytes": 10771505152,
+            "samples": 228,
+            "spilled": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "icon-backpack-202610160403",
+        "job_id": "5ccc7759-d602-457b-a79a-897f0cc1c78f",
+        "prompt_ids": [
+          "91299618-3c32-4846-afae-9dc6761bd1bf"
+        ],
+        "image": ".runtime/lab-20261016e/icon-backpack-202610160403-0.png",
+        "sha256": "b8ef43151c160597ee23fc472e8c668a5219ff11d541ce0e4a4ad91590c925f5",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:09:52.288634",
+        "scores": {
+          "adherence": 5,
+          "anatomy": null,
+          "style": 5,
+          "technical": 5,
+          "composition": 4,
+          "control": null
+        },
+        "verdict": "keep",
+        "comparison": "not applicable",
+        "worst_defect": "No mandatory repair seen",
+        "note": "One complete brown leather backpack, closed flap and two front buckled straps, readable silhouette and stitched pockets; no other item, label, border or writing. Full frame and native flap/buckle crop inspected. White-looking opaque canvas; no alpha, exact RGB-white, small-icon or physical buckle-function claim.",
+        "crops": [
+          {
+            "kind": "native flap and buckle detail",
+            "box": [
+              250,
+              250,
+              850,
+              850
+            ],
+            "image": ".runtime/lab-20261016e/icon-backpack-202610160403-object-crop.png",
+            "sha256": "157edc51ff51af2857f97ca433916dd3960f819405f5b925f45e43aac55beb27"
+          }
+        ],
+        "object_count": 1,
+        "shape_held": true,
+        "background": "white-looking, opaque"
+      },
+      "peak_studio_commit_ratio": 0.7356978456646533
+    },
+    {
+      "trial": "icon-crystal-202610160403",
+      "meta": {
+        "operation": "game-icon",
+        "look_id": "look-zimage-game-icon",
+        "object": "crystal",
+        "scene": "one red mana crystal",
+        "seed": 202610160403,
+        "route": "Z-Image quick; light alternative to Krea"
+      },
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160403,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "batch_count": 1,
+        "label": "Lab 1016e · icon-crystal-202610160403"
+      },
+      "job_id": "816325cb-989d-465b-9095-9389aa82a347",
+      "prompt_ids": [
+        "9088f50a-2663-48f9-aa22-9cb947fa216e"
+      ],
+      "status": "completed",
+      "created_at": 1792163042.3613486,
+      "started_at": 1792163042.3708532,
+      "finished_at": 1792163156.1810749,
+      "elapsed_seconds": 113.8102216720581,
+      "admission_ratio": 0.7388565178642733,
+      "peak_sampled_commit_ratio": 0.7380483890584485,
+      "recipe_sha256": "9fb2505562d9ecfa77ce7589067d66ad37b054c2d8914ca4c3ca7d3edf55ffe1",
+      "outputs": [
+        {
+          "filename": "Z-Image-Fast_00042_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 202610160403,
+          "prompt_id": "9088f50a-2663-48f9-aa22-9cb947fa216e",
+          "media_type": "image",
+          "asset_id": "5fb09a62624c5eaebd2812dc7445adfa",
+          "image": ".runtime\\lab-20261016e\\icon-crystal-202610160403-0.png",
+          "sha256": "50c04e74ebb544ac17d0b35f66abba48b26cbe77080267544b322582f7d924d9",
+          "dimensions": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+          }
+        ],
+        "width": [
+          {
+            "node": "7",
+            "input": "width",
+            "value": 1024
+          }
+        ],
+        "height": [
+          {
+            "node": "7",
+            "input": "height",
+            "value": 1024
+          }
+        ],
+        "seed": [
+          {
+            "node": "8",
+            "input": "seed",
+            "value": 202610160403
+          }
+        ],
+        "steps": [
+          {
+            "node": "8",
+            "input": "steps",
+            "value": 8
+          }
+        ],
+        "cfg": [
+          {
+            "node": "8",
+            "input": "cfg",
+            "value": 1.0
+          }
+        ],
+        "denoise": [
+          {
+            "node": "8",
+            "input": "denoise",
+            "value": 1.0
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 222,
+          "unknown_samples": 0,
+          "first_at": 1792163042.575688,
+          "last_at": 1792163156.1760745,
+          "peak_committed_bytes": 77405720576,
+          "peak_at": 1792163051.3178387,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 25378369536,
+          "index": 0,
+          "prompt_id": "9088f50a-2663-48f9-aa22-9cb947fa216e",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "9088f50a-2663-48f9-aa22-9cb947fa216e",
+          "seed": 202610160403,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 82563072,
+            "peak_dedicated_bytes": 10771505152,
+            "samples": 233,
+            "spilled": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "icon-crystal-202610160403",
+        "job_id": "816325cb-989d-465b-9095-9389aa82a347",
+        "prompt_ids": [
+          "9088f50a-2663-48f9-aa22-9cb947fa216e"
+        ],
+        "image": ".runtime/lab-20261016e/icon-crystal-202610160403-0.png",
+        "sha256": "50c04e74ebb544ac17d0b35f66abba48b26cbe77080267544b322582f7d924d9",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:07:01.243260",
+        "scores": {
+          "adherence": 4,
+          "anatomy": null,
+          "style": 4,
+          "technical": 5,
+          "composition": 3,
+          "control": null
+        },
+        "verdict": "fixable",
+        "comparison": "not applicable",
+        "worst_defect": "Unrequested rounded-square frame surrounds the isolated crystal",
+        "note": "One red faceted mana crystal retained, complete and centred, no writing. Full frame and native facet crop inspected. Both seeds add a large unrequested dark rounded-square icon border around the crystal; this is not the isolated item promised by the look. No extra crystal; the border is reported separately from depicted-item count.",
+        "crops": [
+          {
+            "kind": "native crystal facets",
+            "box": [
+              330,
+              190,
+              750,
+              850
+            ],
+            "image": ".runtime/lab-20261016e/icon-crystal-202610160403-object-crop.png",
+            "sha256": "d63d0a6fb26a105eb094fa4b4bcc09fabe079a72c3b85d360b2cbfe4cbbd2fce"
+          }
+        ],
+        "object_count": 1,
+        "shape_held": true,
+        "background": "white-looking, opaque, with unrequested dark frame",
+        "fix": "Remove the border in an editor; no changed wording/configuration was run"
+      },
+      "peak_studio_commit_ratio": 0.753090487950556
+    },
+    {
+      "trial": "icon-crystal-202610160601",
+      "meta": {
+        "operation": "game-icon",
+        "look_id": "look-zimage-game-icon",
+        "object": "crystal",
+        "scene": "one red mana crystal",
+        "seed": 202610160601,
+        "route": "Z-Image quick; light alternative to Krea"
+      },
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160601,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "batch_count": 1,
+        "label": "Lab 1016e · icon-crystal-202610160601"
+      },
+      "job_id": "ffe71888-6ae8-41c4-8939-da85181bc70f",
+      "prompt_ids": [
+        "209a1092-6f75-4720-a187-70f45fcdc5a3"
+      ],
+      "status": "completed",
+      "created_at": 1792163171.5956063,
+      "started_at": 1792163171.6085522,
+      "finished_at": 1792163180.1646395,
+      "elapsed_seconds": 8.556087255477905,
+      "admission_ratio": 0.7045719152943607,
+      "peak_sampled_commit_ratio": 0.7049182960616682,
+      "recipe_sha256": "dfb3b0c2115207064c5b1a0c9629e1613772020936710118c67c49d4e1b1746f",
+      "outputs": [
+        {
+          "filename": "Z-Image-Fast_00043_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 202610160601,
+          "prompt_id": "209a1092-6f75-4720-a187-70f45fcdc5a3",
+          "media_type": "image",
+          "asset_id": "acbd7a323f215997ac27806fa3461437",
+          "image": ".runtime\\lab-20261016e\\icon-crystal-202610160601-0.png",
+          "sha256": "cbf9ea72456a59e2adb7069b422a280f888186c813155e9bd84f1c026b5f0109",
+          "dimensions": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+          }
+        ],
+        "width": [
+          {
+            "node": "7",
+            "input": "width",
+            "value": 1024
+          }
+        ],
+        "height": [
+          {
+            "node": "7",
+            "input": "height",
+            "value": 1024
+          }
+        ],
+        "seed": [
+          {
+            "node": "8",
+            "input": "seed",
+            "value": 202610160601
+          }
+        ],
+        "steps": [
+          {
+            "node": "8",
+            "input": "steps",
+            "value": 8
+          }
+        ],
+        "cfg": [
+          {
+            "node": "8",
+            "input": "cfg",
+            "value": 1.0
+          }
+        ],
+        "denoise": [
+          {
+            "node": "8",
+            "input": "denoise",
+            "value": 1.0
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 18,
+          "unknown_samples": 0,
+          "first_at": 1792163171.8122833,
+          "last_at": 1792163180.1605742,
+          "peak_committed_bytes": 72783376384,
+          "peak_at": 1792163178.9733348,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 30000713728,
+          "index": 0,
+          "prompt_id": "209a1092-6f75-4720-a187-70f45fcdc5a3",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "209a1092-6f75-4720-a187-70f45fcdc5a3",
+          "seed": 202610160601,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 82563072,
+            "peak_dedicated_bytes": 10771505152,
+            "samples": 18,
+            "spilled": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "icon-crystal-202610160601",
+        "job_id": "ffe71888-6ae8-41c4-8939-da85181bc70f",
+        "prompt_ids": [
+          "209a1092-6f75-4720-a187-70f45fcdc5a3"
+        ],
+        "image": ".runtime/lab-20261016e/icon-crystal-202610160601-0.png",
+        "sha256": "cbf9ea72456a59e2adb7069b422a280f888186c813155e9bd84f1c026b5f0109",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:07:01.245130",
+        "scores": {
+          "adherence": 4,
+          "anatomy": null,
+          "style": 4,
+          "technical": 5,
+          "composition": 3,
+          "control": null
+        },
+        "verdict": "fixable",
+        "comparison": "not applicable",
+        "worst_defect": "Unrequested rounded-square frame surrounds the isolated crystal",
+        "note": "One red faceted mana crystal retained, complete and centred, no writing. Full frame and native facet crop inspected. Both seeds add a large unrequested dark rounded-square icon border around the crystal; this is not the isolated item promised by the look. No extra crystal; the border is reported separately from depicted-item count.",
+        "crops": [
+          {
+            "kind": "native crystal facets",
+            "box": [
+              330,
+              190,
+              750,
+              850
+            ],
+            "image": ".runtime/lab-20261016e/icon-crystal-202610160601-object-crop.png",
+            "sha256": "18cad88b2f8586856b1759d0d31f468f270904e4d636cd24cedcb7188d263790"
+          }
+        ],
+        "object_count": 1,
+        "shape_held": true,
+        "background": "white-looking, opaque, with unrequested dark frame",
+        "fix": "Remove the border in an editor; no changed wording/configuration was run"
+      },
+      "peak_studio_commit_ratio": 0.7081190902667004
+    },
+    {
+      "trial": "icon-key-202610160403",
+      "meta": {
+        "operation": "game-icon",
+        "look_id": "look-zimage-game-icon",
+        "object": "key",
+        "scene": "one iron key with a simple round bow and three teeth",
+        "seed": 202610160403,
+        "route": "Z-Image quick; light alternative to Krea"
+      },
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160403,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "batch_count": 1,
+        "label": "Lab 1016e · icon-key-202610160403"
+      },
+      "job_id": "c48f5cbc-b2db-4be0-865a-ce9793bdc08b",
+      "prompt_ids": [
+        "42277345-8f3b-4caf-a908-402cd0ee90aa"
+      ],
+      "status": "completed",
+      "created_at": 1792163313.7258213,
+      "started_at": 1792163313.7351153,
+      "finished_at": 1792163459.4596682,
+      "elapsed_seconds": 145.72455286979675,
+      "admission_ratio": 0.5479450438937598,
+      "peak_sampled_commit_ratio": 0.7647240119978774,
+      "recipe_sha256": "720860707f530de99bf8f391ccb8f3e8fd899a0ccd8bea5f72f0ff06943a4612",
+      "outputs": [
+        {
+          "filename": "Z-Image-Fast_00045_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 202610160403,
+          "prompt_id": "42277345-8f3b-4caf-a908-402cd0ee90aa",
+          "media_type": "image",
+          "asset_id": "d3596a0a85805e1b96e2273f40043e97",
+          "image": ".runtime\\lab-20261016e\\icon-key-202610160403-0.png",
+          "sha256": "817e7e722777b20dcc83d5eb9bce9358874e1d493e55e6737c7586c4aca4ca00",
+          "dimensions": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+          }
+        ],
+        "width": [
+          {
+            "node": "7",
+            "input": "width",
+            "value": 1024
+          }
+        ],
+        "height": [
+          {
+            "node": "7",
+            "input": "height",
+            "value": 1024
+          }
+        ],
+        "seed": [
+          {
+            "node": "8",
+            "input": "seed",
+            "value": 202610160403
+          }
+        ],
+        "steps": [
+          {
+            "node": "8",
+            "input": "steps",
+            "value": 8
+          }
+        ],
+        "cfg": [
+          {
+            "node": "8",
+            "input": "cfg",
+            "value": 1.0
+          }
+        ],
+        "denoise": [
+          {
+            "node": "8",
+            "input": "denoise",
+            "value": 1.0
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 286,
+          "unknown_samples": 0,
+          "first_at": 1792163313.9187095,
+          "last_at": 1792163459.4566681,
+          "peak_committed_bytes": 78680707072,
+          "peak_at": 1792163447.6539423,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 24103383040,
+          "index": 0,
+          "prompt_id": "42277345-8f3b-4caf-a908-402cd0ee90aa",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "42277345-8f3b-4caf-a908-402cd0ee90aa",
+          "seed": 202610160403,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 82563072,
+            "peak_dedicated_bytes": 10575937536,
+            "samples": 298,
+            "spilled": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "icon-key-202610160403",
+        "job_id": "c48f5cbc-b2db-4be0-865a-ce9793bdc08b",
+        "prompt_ids": [
+          "42277345-8f3b-4caf-a908-402cd0ee90aa"
+        ],
+        "image": ".runtime/lab-20261016e/icon-key-202610160403-0.png",
+        "sha256": "817e7e722777b20dcc83d5eb9bce9358874e1d493e55e6737c7586c4aca4ca00",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:12:48.904582",
+        "scores": {
+          "adherence": 3,
+          "anatomy": null,
+          "style": 4,
+          "technical": 5,
+          "composition": 3,
+          "control": null
+        },
+        "verdict": "fixable",
+        "comparison": "not applicable",
+        "worst_defect": "Only two teeth instead of three, plus an unrequested rounded-square border",
+        "note": "One complete grey iron key with round bow; full frame and native bow/shaft/bit crop inspected. The prompt requests three teeth, while the bit shows two protruding teeth with one notch. It also adds an unrequested thick rounded-square border. Count is one, but specific bit construction and isolated-item framing fail.",
+        "crops": [
+          {
+            "kind": "native bow, shaft and teeth",
+            "box": [
+              210,
+              220,
+              850,
+              840
+            ],
+            "image": ".runtime/lab-20261016e/icon-key-202610160403-object-crop.png",
+            "sha256": "03e3648bf93bc629adc3fec0deec18c29c61a37ca8ae733a43c0b234f8e8ca02"
+          }
+        ],
+        "object_count": 1,
+        "shape_held": false,
+        "background": "white-looking opaque canvas with dark frame",
+        "fix": "Edit the teeth and remove border; no changed prompt or repair was run"
+      },
+      "peak_studio_commit_ratio": 0.7654950001139725
+    },
+    {
+      "trial": "icon-shield-202610160403",
+      "meta": {
+        "operation": "game-icon",
+        "look_id": "look-zimage-game-icon",
+        "object": "shield",
+        "scene": "one round wooden shield with an iron rim and a central iron boss",
+        "seed": 202610160403,
+        "route": "Z-Image quick; light alternative to Krea"
+      },
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160403,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "batch_count": 1,
+        "label": "Lab 1016e · icon-shield-202610160403"
+      },
+      "job_id": "2a3e7af3-8752-430a-8588-994d5293bc70",
+      "prompt_ids": [
+        "b44fd99b-4469-4d05-9bdb-ee19f0d19490"
+      ],
+      "status": "completed",
+      "created_at": 1792162810.6830788,
+      "started_at": 1792162810.692083,
+      "finished_at": 1792163011.882507,
+      "elapsed_seconds": 201.19042420387268,
+      "admission_ratio": 0.6183611614866031,
+      "peak_sampled_commit_ratio": 0.805874142795272,
+      "recipe_sha256": "fef3d902aefa7bf2d9a22be3ac78a526b127cce88959a4f29931cf28ac6e95c9",
+      "outputs": [
+        {
+          "filename": "Z-Image-Fast_00040_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 202610160403,
+          "prompt_id": "b44fd99b-4469-4d05-9bdb-ee19f0d19490",
+          "media_type": "image",
+          "asset_id": "1c419e9de76950feb837f3f71758a82d",
+          "image": ".runtime\\lab-20261016e\\icon-shield-202610160403-0.png",
+          "sha256": "c7715e1c986ed717b610d071533aeaea43a2614334a22ad1adbec3d3ed90ad3d",
+          "dimensions": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+          }
+        ],
+        "width": [
+          {
+            "node": "7",
+            "input": "width",
+            "value": 1024
+          }
+        ],
+        "height": [
+          {
+            "node": "7",
+            "input": "height",
+            "value": 1024
+          }
+        ],
+        "seed": [
+          {
+            "node": "8",
+            "input": "seed",
+            "value": 202610160403
+          }
+        ],
+        "steps": [
+          {
+            "node": "8",
+            "input": "steps",
+            "value": 8
+          }
+        ],
+        "cfg": [
+          {
+            "node": "8",
+            "input": "cfg",
+            "value": 1.0
+          }
+        ],
+        "denoise": [
+          {
+            "node": "8",
+            "input": "denoise",
+            "value": 1.0
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 388,
+          "unknown_samples": 0,
+          "first_at": 1792162813.4954755,
+          "last_at": 1792163011.8775067,
+          "peak_committed_bytes": 83706511360,
+          "peak_at": 1792162987.9693758,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 19077578752,
+          "index": 0,
+          "prompt_id": "b44fd99b-4469-4d05-9bdb-ee19f0d19490",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "b44fd99b-4469-4d05-9bdb-ee19f0d19490",
+          "seed": 202610160403,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 82563072,
+            "peak_dedicated_bytes": 10679230464,
+            "samples": 406,
+            "spilled": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "icon-shield-202610160403",
+        "job_id": "2a3e7af3-8752-430a-8588-994d5293bc70",
+        "prompt_ids": [
+          "b44fd99b-4469-4d05-9bdb-ee19f0d19490"
+        ],
+        "image": ".runtime/lab-20261016e/icon-shield-202610160403-0.png",
+        "sha256": "c7715e1c986ed717b610d071533aeaea43a2614334a22ad1adbec3d3ed90ad3d",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:05:19.861322",
+        "scores": {
+          "adherence": 3,
+          "anatomy": null,
+          "style": 5,
+          "technical": 5,
+          "composition": 4,
+          "control": null
+        },
+        "verdict": "fixable",
+        "comparison": "not applicable",
+        "worst_defect": "Requested round outline became a pointed heraldic shield",
+        "note": "One complete wooden shield, iron rim and central iron boss, no extra object or writing. Full frame and native boss/wood/rivet crop inspected. The exact scene asked for a round shield, but the outline is a heraldic/kite-like shield with a pointed bottom, in both seeds. Object count passes; strict brief fidelity does not. White-looking opaque canvas, no alpha or exact-white claim.",
+        "crops": [
+          {
+            "kind": "native object detail",
+            "box": [
+              250,
+              220,
+              800,
+              810
+            ],
+            "image": ".runtime/lab-20261016e/icon-shield-202610160403-object-crop.png",
+            "sha256": "db66beafdfa6113f30a4b366b7a0e0c2ab80fce3cb8eb22a40a38591858b3233"
+          }
+        ],
+        "object_count": 1,
+        "shape_held": false,
+        "background": "white-looking, opaque",
+        "fix": "Use the result only for a heraldic-shield brief; a circular-shield wording change is untested"
+      },
+      "peak_studio_commit_ratio": 0.8143917144062678
+    },
+    {
+      "trial": "icon-shield-202610160601",
+      "meta": {
+        "operation": "game-icon",
+        "look_id": "look-zimage-game-icon",
+        "object": "shield",
+        "scene": "one round wooden shield with an iron rim and a central iron boss",
+        "seed": 202610160601,
+        "route": "Z-Image quick; light alternative to Krea"
+      },
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160601,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "batch_count": 1,
+        "label": "Lab 1016e · icon-shield-202610160601"
+      },
+      "job_id": "f8921814-f6b8-4f27-8707-4be5c13bd2c5",
+      "prompt_ids": [
+        "028fdaff-ba9d-4f1b-a4e3-52963fd213f3"
+      ],
+      "status": "completed",
+      "created_at": 1792163025.5336926,
+      "started_at": 1792163025.544692,
+      "finished_at": 1792163035.0354612,
+      "elapsed_seconds": 9.490769147872925,
+      "admission_ratio": 0.7496476018033479,
+      "peak_sampled_commit_ratio": 0.762797916550768,
+      "recipe_sha256": "ab704061aefba3cda0d6dab04454adf72b4f1dc44e2f58dde756cbebd54830c2",
+      "outputs": [
+        {
+          "filename": "Z-Image-Fast_00041_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 202610160601,
+          "prompt_id": "028fdaff-ba9d-4f1b-a4e3-52963fd213f3",
+          "media_type": "image",
+          "asset_id": "c85360e327d95412856f9336af792108",
+          "image": ".runtime\\lab-20261016e\\icon-shield-202610160601-0.png",
+          "sha256": "f4284eff9bd757af73a2feefcddad5d456c9a5b79413d5d6f20cb86b2e175e10",
+          "dimensions": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+          }
+        ],
+        "width": [
+          {
+            "node": "7",
+            "input": "width",
+            "value": 1024
+          }
+        ],
+        "height": [
+          {
+            "node": "7",
+            "input": "height",
+            "value": 1024
+          }
+        ],
+        "seed": [
+          {
+            "node": "8",
+            "input": "seed",
+            "value": 202610160601
+          }
+        ],
+        "steps": [
+          {
+            "node": "8",
+            "input": "steps",
+            "value": 8
+          }
+        ],
+        "cfg": [
+          {
+            "node": "8",
+            "input": "cfg",
+            "value": 1.0
+          }
+        ],
+        "denoise": [
+          {
+            "node": "8",
+            "input": "denoise",
+            "value": 1.0
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 18,
+          "unknown_samples": 0,
+          "first_at": 1792163026.7063756,
+          "last_at": 1792163035.0314624,
+          "peak_committed_bytes": 78598287360,
+          "peak_at": 1792163028.7513275,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 24185802752,
+          "index": 0,
+          "prompt_id": "028fdaff-ba9d-4f1b-a4e3-52963fd213f3",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "028fdaff-ba9d-4f1b-a4e3-52963fd213f3",
+          "seed": 202610160601,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 82563072,
+            "peak_dedicated_bytes": 10771505152,
+            "samples": 18,
+            "spilled": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "icon-shield-202610160601",
+        "job_id": "f8921814-f6b8-4f27-8707-4be5c13bd2c5",
+        "prompt_ids": [
+          "028fdaff-ba9d-4f1b-a4e3-52963fd213f3"
+        ],
+        "image": ".runtime/lab-20261016e/icon-shield-202610160601-0.png",
+        "sha256": "f4284eff9bd757af73a2feefcddad5d456c9a5b79413d5d6f20cb86b2e175e10",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:05:19.863623",
+        "scores": {
+          "adherence": 3,
+          "anatomy": null,
+          "style": 5,
+          "technical": 5,
+          "composition": 4,
+          "control": null
+        },
+        "verdict": "fixable",
+        "comparison": "not applicable",
+        "worst_defect": "Requested round outline became a pointed heraldic shield",
+        "note": "One complete wooden shield, iron rim and central iron boss, no extra object or writing. Full frame and native boss/wood/rivet crop inspected. The exact scene asked for a round shield, but the outline is a heraldic/kite-like shield with a pointed bottom, in both seeds. Object count passes; strict brief fidelity does not. White-looking opaque canvas, no alpha or exact-white claim.",
+        "crops": [
+          {
+            "kind": "native object detail",
+            "box": [
+              250,
+              220,
+              800,
+              810
+            ],
+            "image": ".runtime/lab-20261016e/icon-shield-202610160601-object-crop.png",
+            "sha256": "7ef9d43184053ebdacf45b35bbe8ede39c38c8b6216cd6214bd369ac45012f4f"
+          }
+        ],
+        "object_count": 1,
+        "shape_held": false,
+        "background": "white-looking, opaque",
+        "fix": "Use the result only for a heraldic-shield brief; a circular-shield wording change is untested"
+      },
+      "peak_studio_commit_ratio": 0.764693127840645
+    },
+    {
+      "trial": "oneobsession-chain-upscale",
+      "meta": {
+        "operation": "upscale",
+        "source_asset": "6a04d5f23a975886b08f207f10ca19b6",
+        "source_sha256": "e0cdbc924f5593a4f077eba3151bc85a72ab5217b0190b47e2ab49848671e395"
+      },
+      "request": {
+        "preset_id": "anime-esrgan",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-esrgan",
+          "reference_file": "105ce906e7af4c42bc2eca854a475150_anime-detail-fix_00006_.png.png",
+          "source_asset_id": "6a04d5f23a975886b08f207f10ca19b6",
+          "source_sha256": "e0cdbc924f5593a4f077eba3151bc85a72ab5217b0190b47e2ab49848671e395",
+          "template_sha256": "e11cb7176ffb45c04ba6b8bd2eaec65b7ab6d829b4ae4f5e68c86b52feafc245",
+          "version": 1
+        },
+        "controls": {
+          "reference": "105ce906e7af4c42bc2eca854a475150_anime-detail-fix_00006_.png.png"
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "6a04d5f23a975886b08f207f10ca19b6"
+        ],
+        "references": [],
+        "label": "Lab 1016e · oneobsession-chain-upscale"
+      },
+      "job_id": "4c7ccdb2-f399-4192-b535-eb9e3d741259",
+      "prompt_ids": [
+        "728702fd-8fb8-4a70-8048-15aa9a86dbe2"
+      ],
+      "status": "completed",
+      "created_at": 1792163917.5934145,
+      "started_at": 1792163917.6027167,
+      "finished_at": 1792164224.8705833,
+      "elapsed_seconds": 307.2678666114807,
+      "admission_ratio": 0.4967146429799394,
+      "peak_sampled_commit_ratio": 0.6928796914230352,
+      "recipe_sha256": "b39662f2b15136bc3ea4e8c76547adb217cf36d61d5e509c0e23ec74c06ca04c",
+      "outputs": [
+        {
+          "filename": "Anime-ESRGAN-2x_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": null,
+          "prompt_id": "728702fd-8fb8-4a70-8048-15aa9a86dbe2",
+          "media_type": "image",
+          "asset_id": "eb0175675f8950caabd0ca7621dd4960",
+          "image": ".runtime\\lab-20261016e\\oneobsession-chain-upscale-0.png",
+          "sha256": "75009fcb520bd259726e1b5ee4f90ec9a5ca294bc01206365110f2d7db3bc885",
+          "dimensions": [
+            1664,
+            2432
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "1",
+            "input": "image",
+            "value": "105ce906e7af4c42bc2eca854a475150_anime-detail-fix_00006_.png.png"
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 601,
+          "unknown_samples": 0,
+          "first_at": 1792163918.0829523,
+          "last_at": 1792164224.8655813,
+          "peak_committed_bytes": 71857504256,
+          "peak_at": 1792164076.3002799,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 30926585856,
+          "index": 0,
+          "prompt_id": "728702fd-8fb8-4a70-8048-15aa9a86dbe2",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "728702fd-8fb8-4a70-8048-15aa9a86dbe2",
+          "seed": null,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 5786816512,
+            "peak_dedicated_bytes": 14020820992,
+            "samples": 623,
+            "spilled": true,
+            "settled_shared_bytes": 1894502400,
+            "lingering": true
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "oneobsession-chain-upscale",
+        "job_id": "4c7ccdb2-f399-4192-b535-eb9e3d741259",
+        "prompt_ids": [
+          "728702fd-8fb8-4a70-8048-15aa9a86dbe2"
+        ],
+        "image": ".runtime/lab-20261016e/oneobsession-chain-upscale-0.png",
+        "sha256": "75009fcb520bd259726e1b5ee4f90ec9a5ca294bc01206365110f2d7db3bc885",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:25:00.640269",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 4,
+          "composition": 5,
+          "control": 5
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Fine eye/cloth texture smoothed; face-pass colour drift remains",
+        "note": "Against its immediate Face-fix input: native face, both flute grips and sleeve folds inspected. Doubles canvas to 1664x2432, keeps the slightly cooler repainted eyes, expression, grip and gloss highlights. Smoother contours and simpler fine eye/cloth texture; no new mandatory repair, prop loss, seam or material colour shift. No objective benefit from doing the preceding repaint on this clean source.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/oneobsession-face-0.png",
+            "input_box": [
+              350,
+              230,
+              610,
+              435
+            ],
+            "output_box": [
+              700,
+              460,
+              1220,
+              870
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-chain-upscale-face-pair.png",
+            "sha256": "0e7965c02a11da4b4df15a03d123a529e5721c785413fcc1ee58e45d4263aa32"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/oneobsession-face-0.png",
+            "input_box": [
+              90,
+              425,
+              315,
+              740
+            ],
+            "output_box": [
+              180,
+              850,
+              630,
+              1480
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-chain-upscale-hands-pair.png",
+            "sha256": "4e200be5b7099e4e65d2ad0d8b154e152b26f33b77c1f1f259f539031486c9f1"
+          },
+          {
+            "kind": "cloth",
+            "input_image": ".runtime/lab-20261016e/oneobsession-face-0.png",
+            "input_box": [
+              420,
+              650,
+              710,
+              920
+            ],
+            "output_box": [
+              840,
+              1300,
+              1420,
+              1840
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-chain-upscale-cloth-pair.png",
+            "sha256": "2c13cdec90eb051e078c4a931931479c330855e6944758c012ace8a518533686"
+          }
+        ],
+        "face_detail": "face-pass expression/eye colour kept; fine texture smoothed",
+        "hands": "repainted grips and highlights held",
+        "line_quality": "smoother enlarged contours",
+        "artifacts": "no new visible seam/ringing",
+        "colour_shift": "no additional material shift",
+        "pipeline_vs_original": "neutral; no demonstrated need for the face pass",
+        "input_trial": "oneobsession-face"
+      },
+      "peak_studio_commit_ratio": 0.6991111579399064
+    },
+    {
+      "trial": "oneobsession-details",
+      "meta": {
+        "operation": "details",
+        "source_asset": "2847242877545599b04e0b7682899d6c",
+        "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10"
+      },
+      "request": {
+        "preset_id": "anime-detail-fix",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-detail-fix",
+          "reference_file": "39f4c8eb9e294bf4952376d6a5df7a52_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "source_asset_id": "2847242877545599b04e0b7682899d6c",
+          "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "template_sha256": "7b7b7e1d3108661aba9314519af5cb3a0a43ebde96a930015352f016151dc150",
+          "version": 1
+        },
+        "controls": {
+          "reference": "39f4c8eb9e294bf4952376d6a5df7a52_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "positive": "masterpiece, best quality, score_8, score_7, very aesthetic, absurdres, highres, magazine cover, adult original character, 1woman, adult musician aged forty, black hair in a bun, long teal hanfu, holding one bamboo flute horizontally with both hands, stone moon gate behind her, medium shot, detailed illustration, detailed background, drop shadow, numerous fine eyelashes, blurry background, blurry foreground, looking at viewer",
+          "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+          "seed": 161012
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "references": [],
+        "label": "Lab 1016e · oneobsession-details"
+      },
+      "job_id": "c08ac682-2294-4986-b7aa-b492cf3fa2e0",
+      "prompt_ids": [
+        "eebd3720-4af7-4ce0-ae32-8401c1788f34"
+      ],
+      "status": "completed",
+      "created_at": 1792162568.1050801,
+      "started_at": 1792162568.1200802,
+      "finished_at": 1792162604.8596885,
+      "elapsed_seconds": 36.73960828781128,
+      "admission_ratio": 0.6112184330040139,
+      "peak_sampled_commit_ratio": 0.6138517557264807,
+      "recipe_sha256": "575a50d009fdba11abc57dc928c6bd4d142c93862febef47bc9382e99f2ce8bd",
+      "outputs": [
+        {
+          "filename": "anime-detail-fix_00007_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 161012,
+          "prompt_id": "eebd3720-4af7-4ce0-ae32-8401c1788f34",
+          "media_type": "image",
+          "asset_id": "a3cabd30a3bc5dfca5011f7e8ebb772b",
+          "image": ".runtime\\lab-20261016e\\oneobsession-details-0.png",
+          "sha256": "887b9112597dbdfbab00fb18b2a00adce0238b864b002ff1eab40e03764b1c60",
+          "dimensions": [
+            832,
+            1216
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "4",
+            "input": "image",
+            "value": "39f4c8eb9e294bf4952376d6a5df7a52_OneObsession-Anima-v20-Baseline_00007_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "2",
+            "input": "text",
+            "value": "masterpiece, best quality, score_8, score_7, very aesthetic, absurdres, highres, magazine cover, adult original character, 1woman, adult musician aged forty, black hair in a bun, long teal hanfu, holding one bamboo flute horizontally with both hands, stone moon gate behind her, medium shot, detailed illustration, detailed background, drop shadow, numerous fine eyelashes, blurry background, blurry foreground, looking at viewer"
+          }
+        ],
+        "negative": [
+          {
+            "node": "3",
+            "input": "text",
+            "value": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota"
+          }
+        ],
+        "seed": [
+          {
+            "node": "12",
+            "input": "seed",
+            "value": 161012
+          },
+          {
+            "node": "13",
+            "input": "seed",
+            "value": 161012
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 24,
+        "cfg": 5.0,
+        "denoise": 0.4,
+        "sampler": "dpmpp_2m",
+        "scheduler": "karras"
+      },
+      "host_commit_windows": [
+        {
+          "samples": 72,
+          "unknown_samples": 0,
+          "first_at": 1792162568.5659044,
+          "last_at": 1792162604.8535044,
+          "peak_committed_bytes": 71159656448,
+          "peak_at": 1792162587.961185,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 31624433664,
+          "index": 0,
+          "prompt_id": "eebd3720-4af7-4ce0-ae32-8401c1788f34",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "eebd3720-4af7-4ce0-ae32-8401c1788f34",
+          "seed": 161012,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 2422984704,
+            "peak_dedicated_bytes": 13777887232,
+            "samples": 75,
+            "spilled": true,
+            "top_holders": [
+              {
+                "pid": 2412,
+                "name": "dwm.exe",
+                "dedicated_bytes": 3223236608,
+                "plausible": true
+              },
+              {
+                "pid": 29452,
+                "name": "steamwebhelper.exe",
+                "dedicated_bytes": 342536192,
+                "plausible": true
+              },
+              {
+                "pid": 5164,
+                "name": "ProtonVPN.Client.exe",
+                "dedicated_bytes": 329506816,
+                "plausible": true
+              }
+            ],
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "oneobsession-details",
+        "job_id": "c08ac682-2294-4986-b7aa-b492cf3fa2e0",
+        "prompt_ids": [
+          "eebd3720-4af7-4ce0-ae32-8401c1788f34"
+        ],
+        "image": ".runtime/lab-20261016e/oneobsession-details-0.png",
+        "sha256": "887b9112597dbdfbab00fb18b2a00adce0238b864b002ff1eab40e03764b1c60",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T15:57:34.059210",
+        "scores": {
+          "adherence": 4,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 5,
+          "composition": 5,
+          "control": 4
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Minor iris-colour and glossy-hand highlight drift",
+        "note": "Native face and both flute grips compared with the input; same picture, pose, head ornament, flute, teal/gold wardrobe and moon gate retained. Eyes become cooler grey-blue, lashes/lips slightly sharper. Hands gain stronger shiny creases; no visible anatomy repair of the already-clean source. Same route as Face fix for this Anima family, with another seed.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_box": [
+              350,
+              230,
+              610,
+              435
+            ],
+            "output_box": [
+              350,
+              230,
+              610,
+              435
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-details-face-pair.png",
+            "sha256": "8d8929184a861a21dd9218645589ff594ed734a526631ac05f8a02a560ff09f6"
+          },
+          {
+            "kind": "hands",
+            "input_box": [
+              90,
+              425,
+              315,
+              740
+            ],
+            "output_box": [
+              90,
+              425,
+              315,
+              740
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-details-hands-pair.png",
+            "sha256": "a4a46e4de4b68435727d5cc0b5751d84872f9710738cfaa19712923ce5956ca8"
+          },
+          {
+            "kind": "cloth",
+            "input_box": [
+              420,
+              650,
+              710,
+              920
+            ],
+            "output_box": [
+              420,
+              650,
+              710,
+              920
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-details-cloth-pair.png",
+            "sha256": "5dbd1fc008f93c80e1c939ffbcb3311f036a006c49d60f342536dc43bb237b77"
+          }
+        ],
+        "face_detail": "slight sharper lashes/lips",
+        "hands": "grips retained; stronger shiny crease lines",
+        "line_quality": "slight local sharpening",
+        "artifacts": "small additional flute highlight flecks; no mandatory repair",
+        "colour_shift": "cooler eyes; palette held",
+        "repair_efficacy": "not established: no named source defect"
+      },
+      "peak_studio_commit_ratio": 0.6923217043655294
+    },
+    {
+      "trial": "oneobsession-face",
+      "meta": {
+        "operation": "face",
+        "source_asset": "2847242877545599b04e0b7682899d6c",
+        "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10"
+      },
+      "request": {
+        "preset_id": "anime-detail-fix",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-detail-fix",
+          "reference_file": "c6f02203ab0240d684ccec9a880d957a_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "source_asset_id": "2847242877545599b04e0b7682899d6c",
+          "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "template_sha256": "7b7b7e1d3108661aba9314519af5cb3a0a43ebde96a930015352f016151dc150",
+          "version": 1
+        },
+        "controls": {
+          "reference": "c6f02203ab0240d684ccec9a880d957a_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "positive": "masterpiece, best quality, score_8, score_7, very aesthetic, absurdres, highres, magazine cover, adult original character, 1woman, adult musician aged forty, black hair in a bun, long teal hanfu, holding one bamboo flute horizontally with both hands, stone moon gate behind her, medium shot, detailed illustration, detailed background, drop shadow, numerous fine eyelashes, blurry background, blurry foreground, looking at viewer",
+          "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+          "seed": 161011
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "references": [],
+        "label": "Lab 1016e · oneobsession-face"
+      },
+      "job_id": "1c1b79ee-06e2-4a7b-b1fb-7d3ae855c44a",
+      "prompt_ids": [
+        "296bb3b8-27df-46b5-8f1d-4e5d149931fa"
+      ],
+      "status": "completed",
+      "created_at": 1792162486.107761,
+      "started_at": 1792162486.1262808,
+      "finished_at": 1792162552.9761176,
+      "elapsed_seconds": 66.84983682632446,
+      "admission_ratio": 0.5491027016584036,
+      "peak_sampled_commit_ratio": 0.6628137850300067,
+      "recipe_sha256": "46f6a1f29f000c35424cda2e7f1a0be005d4a64cca1c86f7ece282143d71d622",
+      "outputs": [
+        {
+          "filename": "anime-detail-fix_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 161011,
+          "prompt_id": "296bb3b8-27df-46b5-8f1d-4e5d149931fa",
+          "media_type": "image",
+          "asset_id": "6a04d5f23a975886b08f207f10ca19b6",
+          "image": ".runtime\\lab-20261016e\\oneobsession-face-0.png",
+          "sha256": "e0cdbc924f5593a4f077eba3151bc85a72ab5217b0190b47e2ab49848671e395",
+          "dimensions": [
+            832,
+            1216
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "4",
+            "input": "image",
+            "value": "c6f02203ab0240d684ccec9a880d957a_OneObsession-Anima-v20-Baseline_00007_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "2",
+            "input": "text",
+            "value": "masterpiece, best quality, score_8, score_7, very aesthetic, absurdres, highres, magazine cover, adult original character, 1woman, adult musician aged forty, black hair in a bun, long teal hanfu, holding one bamboo flute horizontally with both hands, stone moon gate behind her, medium shot, detailed illustration, detailed background, drop shadow, numerous fine eyelashes, blurry background, blurry foreground, looking at viewer"
+          }
+        ],
+        "negative": [
+          {
+            "node": "3",
+            "input": "text",
+            "value": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota"
+          }
+        ],
+        "seed": [
+          {
+            "node": "12",
+            "input": "seed",
+            "value": 161011
+          },
+          {
+            "node": "13",
+            "input": "seed",
+            "value": 161011
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 24,
+        "cfg": 5.0,
+        "denoise": 0.4,
+        "sampler": "dpmpp_2m",
+        "scheduler": "karras"
+      },
+      "host_commit_windows": [
+        {
+          "samples": 131,
+          "unknown_samples": 0,
+          "first_at": 1792162486.4655733,
+          "last_at": 1792162552.9701142,
+          "peak_committed_bytes": 71413800960,
+          "peak_at": 1792162536.142646,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 31370289152,
+          "index": 0,
+          "prompt_id": "296bb3b8-27df-46b5-8f1d-4e5d149931fa",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "296bb3b8-27df-46b5-8f1d-4e5d149931fa",
+          "seed": 161011,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 1944834048,
+            "peak_dedicated_bytes": 13021315072,
+            "samples": 137,
+            "spilled": true,
+            "top_holders": [
+              {
+                "pid": 2412,
+                "name": "dwm.exe",
+                "dedicated_bytes": 3241783296,
+                "plausible": true
+              },
+              {
+                "pid": 29452,
+                "name": "steamwebhelper.exe",
+                "dedicated_bytes": 342536192,
+                "plausible": true
+              },
+              {
+                "pid": 5164,
+                "name": "ProtonVPN.Client.exe",
+                "dedicated_bytes": 329506816,
+                "plausible": true
+              }
+            ],
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "oneobsession-face",
+        "job_id": "1c1b79ee-06e2-4a7b-b1fb-7d3ae855c44a",
+        "prompt_ids": [
+          "296bb3b8-27df-46b5-8f1d-4e5d149931fa"
+        ],
+        "image": ".runtime/lab-20261016e/oneobsession-face-0.png",
+        "sha256": "e0cdbc924f5593a4f077eba3151bc85a72ab5217b0190b47e2ab49848671e395",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T15:56:49.986694",
+        "scores": {
+          "adherence": 4,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 5,
+          "composition": 5,
+          "control": 4
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Minor iris-colour and hand-shading drift",
+        "note": "Native face, both flute grips and embroidered sleeve compared. Face/pose/costume/ornament/one flute stay; irises shift slightly cooler, lashes/lips and hand highlights are repainted. The already-readable grip acquires stronger tendon/crease highlights; no demonstrated repair or net quality gain. Glossy anime finish remains close, unlike the Petiflow softness drift.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_box": [
+              350,
+              230,
+              610,
+              435
+            ],
+            "output_box": [
+              350,
+              230,
+              610,
+              435
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-face-face-pair.png",
+            "sha256": "82dd6db93ceb760c94d4e196b20b90b848634771cf7ae082271584d4596bce39"
+          },
+          {
+            "kind": "hands",
+            "input_box": [
+              90,
+              425,
+              315,
+              740
+            ],
+            "output_box": [
+              90,
+              425,
+              315,
+              740
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-face-hands-pair.png",
+            "sha256": "843a2f79efe1d576b4e5b1387ee5b1422a2ebe32ead624926c8c5c2641da28d1"
+          },
+          {
+            "kind": "cloth",
+            "input_box": [
+              420,
+              650,
+              710,
+              920
+            ],
+            "output_box": [
+              420,
+              650,
+              710,
+              920
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-face-cloth-pair.png",
+            "sha256": "5dbd1fc008f93c80e1c939ffbcb3311f036a006c49d60f342536dc43bb237b77"
+          }
+        ],
+        "face_detail": "lashes/lips sharper; eyes slightly cooler",
+        "hands": "both grips held; shinier crease/tendon detail",
+        "line_quality": "local repaint only; sleeve embroidery held",
+        "artifacts": "no visible new seam",
+        "colour_shift": "eyes cooler; teal/gold palette kept",
+        "repair_efficacy": "not established: no named source defect"
+      },
+      "peak_studio_commit_ratio": 0.6947943099188117
+    },
+    {
+      "trial": "oneobsession-restyle-ink",
+      "meta": {
+        "source_asset": "2847242877545599b04e0b7682899d6c",
+        "target_look": "look-krea-style-inkwork-darkbrush",
+        "board": {
+          "url": "/api/examples/recipe-thumbs-20260927/krea-style-inkwork-darkbrush.jpg",
+          "sha256": "f0af93a4f544a32d7b69c4cb905b1d0a00ee7a833e26553b8f4adb7e8e7240ae"
+        },
+        "operation": "restyle",
+        "memory_choice": "Klein 4B; no Krea inference"
+      },
+      "request": {
+        "preset_id": "restyle-klein-picture",
+        "continuation": {
+          "intent": "restyle",
+          "preset_id": "restyle-klein-picture",
+          "reference_file": "ddc73682805a4d8eb6aa8f265fdf04cc_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "source_asset_id": "2847242877545599b04e0b7682899d6c",
+          "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "template_sha256": "6222f0b2ad3df313d4aedb0bd1eb1739db8f94e4b77b72d57bc5c13c8b015d49",
+          "version": 1
+        },
+        "controls": {
+          "last_reference": "ddc73682805a4d8eb6aa8f265fdf04cc_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "positive": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: black hair, teal hanfu with gold embroidery, green bamboo flute.",
+          "seed": 161111,
+          "width": 1040,
+          "height": 1520
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "references": [
+          {
+            "role": "style",
+            "contribution": "",
+            "avoid": "",
+            "file": "f575a84439d14430a75cfb572e311d46_look-krea-style-inkwork-darkbrush.jpg.jpg",
+            "sha256": "f0af93a4f544a32d7b69c4cb905b1d0a00ee7a833e26553b8f4adb7e8e7240ae",
+            "bytes": 140015,
+            "width": 704,
+            "height": 704
+          },
+          {
+            "role": "style",
+            "contribution": "",
+            "avoid": "",
+            "file": null
+          }
+        ],
+        "label": "Lab 1016e · oneobsession-restyle-ink"
+      },
+      "job_id": "bfa33294-03f6-48ac-85b3-ab237b9845d1",
+      "prompt_ids": [
+        "dae86db5-adf1-4f5a-bb46-89d1a942e1a4"
+      ],
+      "status": "completed",
+      "created_at": 1792165074.4559488,
+      "started_at": 1792165074.4658766,
+      "finished_at": 1792165144.6987066,
+      "elapsed_seconds": 70.23283004760742,
+      "admission_ratio": 0.5489185125297226,
+      "peak_sampled_commit_ratio": 0.8532374487183513,
+      "recipe_sha256": "8cd57a21138eead5eb581265370d0d895b86e5dc499fefd9e7f631f0b6e9d078",
+      "outputs": [
+        {
+          "filename": "Klein-look_00004_.png",
+          "subfolder": "Restyle",
+          "type": "output",
+          "seed": 161111,
+          "prompt_id": "dae86db5-adf1-4f5a-bb46-89d1a942e1a4",
+          "media_type": "image",
+          "asset_id": "f5b545a93125572aab87c48cc178a0e2",
+          "image": ".runtime\\lab-20261016e\\oneobsession-restyle-ink-0.png",
+          "sha256": "d3fcb3e7dc937b1a3a704d6d9216c0baf65e4479a7b689f6be004297b9bc060f",
+          "dimensions": [
+            1040,
+            1520
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "last_reference": [
+          {
+            "node": "14",
+            "input": "image",
+            "value": "ddc73682805a4d8eb6aa8f265fdf04cc_OneObsession-Anima-v20-Baseline_00007_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: black hair, teal hanfu with gold embroidery, green bamboo flute."
+          }
+        ],
+        "seed": [
+          {
+            "node": "7",
+            "input": "noise_seed",
+            "value": 161111
+          }
+        ],
+        "width": [
+          {
+            "node": "10",
+            "input": "width",
+            "value": 1040
+          },
+          {
+            "node": "9",
+            "input": "width",
+            "value": 1040
+          }
+        ],
+        "height": [
+          {
+            "node": "10",
+            "input": "height",
+            "value": 1520
+          },
+          {
+            "node": "9",
+            "input": "height",
+            "value": 1520
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 6,
+        "cfg": 1.0
+      },
+      "host_commit_windows": [
+        {
+          "samples": 138,
+          "unknown_samples": 0,
+          "first_at": 1792165074.7563245,
+          "last_at": 1792165144.6916978,
+          "peak_committed_bytes": 87876395008,
+          "peak_at": 1792165136.0934155,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 14907695104,
+          "index": 0,
+          "prompt_id": "dae86db5-adf1-4f5a-bb46-89d1a942e1a4",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "dae86db5-adf1-4f5a-bb46-89d1a942e1a4",
+          "seed": 161111,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 5048619008,
+            "peak_dedicated_bytes": 13753417728,
+            "samples": 142,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "oneobsession-restyle-ink",
+        "job_id": "bfa33294-03f6-48ac-85b3-ab237b9845d1",
+        "prompt_ids": [
+          "dae86db5-adf1-4f5a-bb46-89d1a942e1a4"
+        ],
+        "image": ".runtime/lab-20261016e/oneobsession-restyle-ink-0.png",
+        "sha256": "d3fcb3e7dc937b1a3a704d6d9216c0baf65e4479a7b689f6be004297b9bc060f",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:47:30.356960",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 3,
+          "technical": 5,
+          "composition": 5,
+          "control": 4
+        },
+        "verdict": "fixable",
+        "comparison": "intentional style change",
+        "worst_defect": "Only partial bold dark-brush transfer; face and grip contours drift",
+        "note": "Native face, both flute grips and embroidered sleeve compared. Recognisable black bun, head ornament, single green flute, teal/gold hanfu and moon-gate arrangement remain. Face becomes narrower/more angular with larger cooler blue-grey eyes; fingers and embroidery redraw. Darker muted wash, hatching, pen outlines and paper grain replace the glossy finish, but the target bold dark-brush wash is only partial. Colour retention was explicitly requested; lack of full monochrome is not charged separately. No chapel objects or writing copied.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              350,
+              230,
+              610,
+              435
+            ],
+            "output_box": [
+              438,
+              288,
+              762,
+              544
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-restyle-ink-face-pair.png",
+            "sha256": "cf1b1fbdf22410cca349c86031af734fce6b32bdbe78b60b0f4fdda3afff5fc5"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              90,
+              425,
+              315,
+              740
+            ],
+            "output_box": [
+              112,
+              531,
+              394,
+              925
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-restyle-ink-hands-pair.png",
+            "sha256": "223d68a59b864faf7048303b7cdb76d7b47716676419da6ff052d99b9d257cef"
+          },
+          {
+            "kind": "cloth",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              420,
+              650,
+              710,
+              920
+            ],
+            "output_box": [
+              525,
+              812,
+              888,
+              1150
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-restyle-ink-cloth-pair.png",
+            "sha256": "f6bd353e3a5ec1f23b6ba32f47839358ec389ffb47366a018d725e05456e53e3"
+          }
+        ],
+        "retention": "Recognisable (identity 4/5); flute pose 4/5 with minor grip drift; larger cooler eyes",
+        "style_change": "Dark muted pen/hatching + paper wash; partial bold dark-brush finish",
+        "identity_score": 4,
+        "pose_score": 4,
+        "palette": "Black/teal/gold/green retained approximately; muted darker wash",
+        "target_content_leakage": "No chapel objects or writing seen",
+        "fix": "A different finish description or fewer colour constraints is an untested configuration"
+      },
+      "peak_studio_commit_ratio": 0.854961063645593
+    },
+    {
+      "trial": "oneobsession-restyle-watercolour",
+      "meta": {
+        "source_asset": "2847242877545599b04e0b7682899d6c",
+        "target_look": "look-krea-style-airy-softwatercolor",
+        "board": {
+          "url": "/api/examples/recipe-thumbs-20260927/krea-style-airy-softwatercolor.jpg",
+          "sha256": "f45030bc619a895bcd25c43981b087c5c3ea0a03de2d4a4f5ff56bb4dd9d0345"
+        },
+        "operation": "restyle",
+        "memory_choice": "Klein 4B; no Krea inference"
+      },
+      "request": {
+        "preset_id": "restyle-klein-picture",
+        "continuation": {
+          "intent": "restyle",
+          "preset_id": "restyle-klein-picture",
+          "reference_file": "db8b5a597b1d4f6ba54c55d10fa5ac66_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "source_asset_id": "2847242877545599b04e0b7682899d6c",
+          "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "template_sha256": "6222f0b2ad3df313d4aedb0bd1eb1739db8f94e4b77b72d57bc5c13c8b015d49",
+          "version": 1
+        },
+        "controls": {
+          "last_reference": "db8b5a597b1d4f6ba54c55d10fa5ac66_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "positive": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: black hair, teal hanfu with gold embroidery, green bamboo flute.",
+          "seed": 161112,
+          "width": 1040,
+          "height": 1520
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "references": [
+          {
+            "role": "style",
+            "contribution": "",
+            "avoid": "",
+            "file": "160eca44a51441de891ca63512a174b2_look-krea-style-airy-softwatercolor.jpg.jpg",
+            "sha256": "f45030bc619a895bcd25c43981b087c5c3ea0a03de2d4a4f5ff56bb4dd9d0345",
+            "bytes": 128682,
+            "width": 704,
+            "height": 704
+          },
+          {
+            "role": "style",
+            "contribution": "",
+            "avoid": "",
+            "file": null
+          }
+        ],
+        "label": "Lab 1016e · oneobsession-restyle-watercolour"
+      },
+      "job_id": "e6d6ae47-56fd-4d14-a432-700d26bf451f",
+      "prompt_ids": [
+        "22ee5cc2-5c35-498c-9133-112313f2fdde"
+      ],
+      "status": "completed",
+      "created_at": 1792165276.7632494,
+      "started_at": 1792165276.7733042,
+      "finished_at": 1792165348.7675486,
+      "elapsed_seconds": 71.99424433708191,
+      "admission_ratio": 0.5317768488531736,
+      "peak_sampled_commit_ratio": 0.8749168518786256,
+      "recipe_sha256": "1f9fbc2b1d7f4522cbb91fbfa9551415f28c1e3195a93e33249a83cf8b06940b",
+      "outputs": [
+        {
+          "filename": "Klein-look_00005_.png",
+          "subfolder": "Restyle",
+          "type": "output",
+          "seed": 161112,
+          "prompt_id": "22ee5cc2-5c35-498c-9133-112313f2fdde",
+          "media_type": "image",
+          "asset_id": "baaa93348304551d86d09d8f3741cac1",
+          "image": ".runtime\\lab-20261016e\\oneobsession-restyle-watercolour-0.png",
+          "sha256": "f412de50eda60508231e9b326ce12dc2174f3fccd5957098b94cf30f72020cb6",
+          "dimensions": [
+            1040,
+            1520
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "last_reference": [
+          {
+            "node": "14",
+            "input": "image",
+            "value": "db8b5a597b1d4f6ba54c55d10fa5ac66_OneObsession-Anima-v20-Baseline_00007_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: black hair, teal hanfu with gold embroidery, green bamboo flute."
+          }
+        ],
+        "seed": [
+          {
+            "node": "7",
+            "input": "noise_seed",
+            "value": 161112
+          }
+        ],
+        "width": [
+          {
+            "node": "10",
+            "input": "width",
+            "value": 1040
+          },
+          {
+            "node": "9",
+            "input": "width",
+            "value": 1040
+          }
+        ],
+        "height": [
+          {
+            "node": "10",
+            "input": "height",
+            "value": 1520
+          },
+          {
+            "node": "9",
+            "input": "height",
+            "value": 1520
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 6,
+        "cfg": 1.0
+      },
+      "host_commit_windows": [
+        {
+          "samples": 142,
+          "unknown_samples": 0,
+          "first_at": 1792165277.0542183,
+          "last_at": 1792165348.7595484,
+          "peak_committed_bytes": 90099908608,
+          "peak_at": 1792165343.5241864,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 12684181504,
+          "index": 0,
+          "prompt_id": "22ee5cc2-5c35-498c-9133-112313f2fdde",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "22ee5cc2-5c35-498c-9133-112313f2fdde",
+          "seed": 161112,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 5048619008,
+            "peak_dedicated_bytes": 13753950208,
+            "samples": 146,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "oneobsession-restyle-watercolour",
+        "job_id": "e6d6ae47-56fd-4d14-a432-700d26bf451f",
+        "prompt_ids": [
+          "22ee5cc2-5c35-498c-9133-112313f2fdde"
+        ],
+        "image": ".runtime/lab-20261016e/oneobsession-restyle-watercolour-0.png",
+        "sha256": "f412de50eda60508231e9b326ce12dc2174f3fccd5957098b94cf30f72020cb6",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:47:30.360331",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 5,
+          "composition": 5,
+          "control": 4
+        },
+        "verdict": "keep",
+        "comparison": "intentional style change",
+        "worst_defect": "Minor face/grip and embroidery drift; warmer palette",
+        "note": "Native face, both flute grips and embroidered sleeve compared. Recognisable bun, gold ornament, teal/gold hanfu, single green flute and moon-gate layout stay. Eyes larger and rounder, facial proportions and fingertips drift mildly. Pale warm paper, thin ink contours and grainy wash replace the original glossy colour/shadows. Flute shifts olive green and background lattice warms brown within approximately retained named palette; no apothecary jars or writing copied. Embroidery is redrawn rather than pixel-preserved.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              350,
+              230,
+              610,
+              435
+            ],
+            "output_box": [
+              438,
+              288,
+              762,
+              544
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-restyle-watercolour-face-pair.png",
+            "sha256": "bcde244b208653a0e7c8fc84bf1d405b14c0dcb91bfa584de6e4504d799267f7"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              90,
+              425,
+              315,
+              740
+            ],
+            "output_box": [
+              112,
+              531,
+              394,
+              925
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-restyle-watercolour-hands-pair.png",
+            "sha256": "1ff284c2e260887e9d413f521e5cd68464f68a5bd632e87fd75b2d2d45c556b0"
+          },
+          {
+            "kind": "cloth",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              420,
+              650,
+              710,
+              920
+            ],
+            "output_box": [
+              525,
+              812,
+              888,
+              1150
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-restyle-watercolour-cloth-pair.png",
+            "sha256": "56841bfc6040b20351775881c46e0e61a48c1bf88b6663b7e107243317002ff2"
+          }
+        ],
+        "retention": "Recognisable (identity 4/5); flute pose 4/5 with minor fingertip drift",
+        "style_change": "Pale warm lined-watercolour paper; gloss replaced by wash/grain",
+        "identity_score": 4,
+        "pose_score": 4,
+        "palette": "Teal/gold/black retained; flute olive green, background warmer brown",
+        "target_content_leakage": "No jars or writing seen"
+      },
+      "peak_studio_commit_ratio": 0.8765939213921287
+    },
+    {
+      "trial": "oneobsession-upscale",
+      "meta": {
+        "operation": "upscale",
+        "source_asset": "2847242877545599b04e0b7682899d6c",
+        "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10"
+      },
+      "request": {
+        "preset_id": "anime-esrgan",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-esrgan",
+          "reference_file": "a9a74f6f6db34127a71316265bac97c3_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "source_asset_id": "2847242877545599b04e0b7682899d6c",
+          "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "template_sha256": "e11cb7176ffb45c04ba6b8bd2eaec65b7ab6d829b4ae4f5e68c86b52feafc245",
+          "version": 1
+        },
+        "controls": {
+          "reference": "a9a74f6f6db34127a71316265bac97c3_OneObsession-Anima-v20-Baseline_00007_.png.png"
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "references": [],
+        "label": "Lab 1016e · oneobsession-upscale"
+      },
+      "job_id": "446eba94-42f5-4434-b301-e026c50878e7",
+      "prompt_ids": [
+        "36b04dbb-d59b-466c-a2e4-5cff629dd6ca"
+      ],
+      "status": "completed",
+      "created_at": 1792163847.277564,
+      "started_at": 1792163847.286569,
+      "finished_at": 1792163905.760063,
+      "elapsed_seconds": 58.473493814468384,
+      "admission_ratio": 0.489702584370337,
+      "peak_sampled_commit_ratio": 0.6617228370449847,
+      "recipe_sha256": "3a9620eed21c5bfdec826bdfe0cb2c3b2481fe3013b4d14e65850f0e6b878052",
+      "outputs": [
+        {
+          "filename": "Anime-ESRGAN-2x_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": null,
+          "prompt_id": "36b04dbb-d59b-466c-a2e4-5cff629dd6ca",
+          "media_type": "image",
+          "asset_id": "df11ef4b4f365bbcb7cd283dfba4dd2c",
+          "image": ".runtime\\lab-20261016e\\oneobsession-upscale-0.png",
+          "sha256": "1ab5d7f61157176a6ae8f36cba3814df31c7e4272cb11aebef033bf683344b0a",
+          "dimensions": [
+            1664,
+            2432
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "1",
+            "input": "image",
+            "value": "a9a74f6f6db34127a71316265bac97c3_OneObsession-Anima-v20-Baseline_00007_.png.png"
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 116,
+          "unknown_samples": 0,
+          "first_at": 1792163847.490707,
+          "last_at": 1792163905.750376,
+          "peak_committed_bytes": 68311859200,
+          "peak_at": 1792163904.1926005,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 34472230912,
+          "index": 0,
+          "prompt_id": "36b04dbb-d59b-466c-a2e4-5cff629dd6ca",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "36b04dbb-d59b-466c-a2e4-5cff629dd6ca",
+          "seed": null,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 5719707648,
+            "peak_dedicated_bytes": 14087929856,
+            "samples": 120,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "oneobsession-upscale",
+        "job_id": "446eba94-42f5-4434-b301-e026c50878e7",
+        "prompt_ids": [
+          "36b04dbb-d59b-466c-a2e4-5cff629dd6ca"
+        ],
+        "image": ".runtime/lab-20261016e/oneobsession-upscale-0.png",
+        "sha256": "1ab5d7f61157176a6ae8f36cba3814df31c7e4272cb11aebef033bf683344b0a",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:19:26.374376",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 4,
+          "composition": 5,
+          "control": 5
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Fine iris/cloth tonal texture smoothed",
+        "note": "Native face, both flute grips and embroidered/folded sleeve compared with the original. 1664x2432 output preserves pose, face, hair ornament, single flute and teal/gold colours. Eyelash/hair/finger contours become crisp and smooth, while fine iris texture and some tiny cloth tonal variation are flattened. No new anatomy, prop, seam or colour failure seen; no repair proved.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              350,
+              230,
+              610,
+              435
+            ],
+            "output_box": [
+              700,
+              460,
+              1220,
+              870
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-upscale-face-pair.png",
+            "sha256": "0aa1ad514cc4ec7607872a7ce9072794da7113cca4000f73267b2bb14d59e696"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              90,
+              425,
+              315,
+              740
+            ],
+            "output_box": [
+              180,
+              850,
+              630,
+              1480
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-upscale-hands-pair.png",
+            "sha256": "da7b8a775178da730920d12d2a1d7485f09ecc5ed6b0949b2fbce0d4a1a32b0f"
+          },
+          {
+            "kind": "cloth",
+            "input_image": ".runtime/lab-20261016e/oneobsession-source.png",
+            "input_box": [
+              420,
+              650,
+              710,
+              920
+            ],
+            "output_box": [
+              840,
+              1300,
+              1420,
+              1840
+            ],
+            "image": ".runtime/lab-20261016e/oneobsession-upscale-cloth-pair.png",
+            "sha256": "2c13cdec90eb051e078c4a931931479c330855e6944758c012ace8a518533686"
+          }
+        ],
+        "face_detail": "same expression; smoother iris texture",
+        "hands": "same two grips; cleaner contours",
+        "line_quality": "crisp enlarged edges",
+        "artifacts": "no new visible seam/ringing",
+        "colour_shift": "no material shift"
+      },
+      "peak_studio_commit_ratio": 0.6646151084818974
+    },
+    {
+      "trial": "petiflow-chain-upscale",
+      "meta": {
+        "operation": "upscale",
+        "source_asset": "b919ba541dd954babbff2939e449fa15",
+        "source_sha256": "1168ec163fc440ece1c0b277c2466538e72e9933e6ec05dded1d620b157052e8"
+      },
+      "request": {
+        "preset_id": "anime-esrgan",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-esrgan",
+          "reference_file": "e41b4056e2544625b355ff2edca450f9_anime-detail-fix_00004_.png.png",
+          "source_asset_id": "b919ba541dd954babbff2939e449fa15",
+          "source_sha256": "1168ec163fc440ece1c0b277c2466538e72e9933e6ec05dded1d620b157052e8",
+          "template_sha256": "e11cb7176ffb45c04ba6b8bd2eaec65b7ab6d829b4ae4f5e68c86b52feafc245",
+          "version": 1
+        },
+        "controls": {
+          "reference": "e41b4056e2544625b355ff2edca450f9_anime-detail-fix_00004_.png.png"
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "b919ba541dd954babbff2939e449fa15"
+        ],
+        "references": [],
+        "label": "Lab 1016e · petiflow-chain-upscale"
+      },
+      "job_id": "e2342b16-1d4f-4884-9843-21db9da3c2b9",
+      "prompt_ids": [
+        "3eb325cd-81ba-4a8b-9d3c-1b0a563a2a0e"
+      ],
+      "status": "completed",
+      "created_at": 1792163562.1569057,
+      "started_at": 1792163562.1654193,
+      "finished_at": 1792163840.1861627,
+      "elapsed_seconds": 278.02074337005615,
+      "admission_ratio": 0.5367038881201279,
+      "peak_sampled_commit_ratio": 0.7184980002209314,
+      "recipe_sha256": "8a1e51f301cdf54ad62515fae2b7abb67f7e81d0cf1b74a5d7019c535ad298ef",
+      "outputs": [
+        {
+          "filename": "Anime-ESRGAN-2x_00004_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": null,
+          "prompt_id": "3eb325cd-81ba-4a8b-9d3c-1b0a563a2a0e",
+          "media_type": "image",
+          "asset_id": "12f34d220805561e8df55f1177c68180",
+          "image": ".runtime\\lab-20261016e\\petiflow-chain-upscale-0.png",
+          "sha256": "4d53967da051e6cd8d9865edfbf8020ea0256e8a28e1e468d02f57340c71c371",
+          "dimensions": [
+            1664,
+            2432
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "1",
+            "input": "image",
+            "value": "e41b4056e2544625b355ff2edca450f9_anime-detail-fix_00004_.png.png"
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 545,
+          "unknown_samples": 0,
+          "first_at": 1792163562.434641,
+          "last_at": 1792163840.1811628,
+          "peak_committed_bytes": 73990889472,
+          "peak_at": 1792163576.2268991,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 28793200640,
+          "index": 0,
+          "prompt_id": "3eb325cd-81ba-4a8b-9d3c-1b0a563a2a0e",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "3eb325cd-81ba-4a8b-9d3c-1b0a563a2a0e",
+          "seed": null,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 7128993792,
+            "peak_dedicated_bytes": 14016126976,
+            "samples": 565,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "petiflow-chain-upscale",
+        "job_id": "e2342b16-1d4f-4884-9843-21db9da3c2b9",
+        "prompt_ids": [
+          "3eb325cd-81ba-4a8b-9d3c-1b0a563a2a0e"
+        ],
+        "image": ".runtime/lab-20261016e/petiflow-chain-upscale-0.png",
+        "sha256": "4d53967da051e6cd8d9865edfbf8020ea0256e8a28e1e468d02f57340c71c371",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:18:13.652904",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 4,
+          "composition": 5,
+          "control": 5
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Fine texture smoothed; earlier WAI facial drift remains",
+        "note": "Compared with the immediate Face-fix output, not the original. Native face, pot-supporting hands and plant crops inspected. 1664x2432 output preserves the angular WAI-repainted eyes/nose, warmer irises, grip and fern; line edges become smoother, fine skin/leaf texture is simplified. It does not undo the earlier loss of Petiflow softness. Optional chain remains harmful versus the original overall, even though this upscale step is neutral.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/petiflow-face-0.png",
+            "input_box": [
+              265,
+              260,
+              565,
+              520
+            ],
+            "output_box": [
+              530,
+              520,
+              1130,
+              1040
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-chain-upscale-face-pair.png",
+            "sha256": "60468c0c40630ce95a27989639a6102d29ccc7b8b9f2289dc143afc07cec200a"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/petiflow-face-0.png",
+            "input_box": [
+              225,
+              1010,
+              590,
+              1175
+            ],
+            "output_box": [
+              450,
+              2020,
+              1180,
+              2350
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-chain-upscale-hands-pair.png",
+            "sha256": "478b2536ed405446508b871dbc26c99dbe10ebdd061d5e3e187e01f6ef38bcdf"
+          },
+          {
+            "kind": "plant",
+            "input_image": ".runtime/lab-20261016e/petiflow-face-0.png",
+            "input_box": [
+              265,
+              700,
+              565,
+              970
+            ],
+            "output_box": [
+              530,
+              1400,
+              1130,
+              1940
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-chain-upscale-plant-pair.png",
+            "sha256": "9c9ad3d4228ac49978552f6674f9cde8721ee0601124002b64393ce9d32a574c"
+          }
+        ],
+        "face_detail": "earlier WAI face retained; fine texture smoothed",
+        "hands": "repainted hand shape and crease lines retained",
+        "line_quality": "smoother enlarged contours",
+        "artifacts": "no new visible seam/ringing",
+        "colour_shift": "no material additional shift",
+        "pipeline_vs_original": "harms: earlier face repaint remains",
+        "input_trial": "petiflow-face"
+      },
+      "peak_studio_commit_ratio": 0.7198671447241969
+    },
+    {
+      "trial": "petiflow-details",
+      "meta": {
+        "operation": "details",
+        "source_asset": "a14af12cbbfe5c50b170c71875f7a114",
+        "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5"
+      },
+      "request": {
+        "preset_id": "anime-detail-fix",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-detail-fix",
+          "reference_file": "00573d92758f42339aaa49b326596109_Anima-v1-Baseline_00047_.png.png",
+          "source_asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+          "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "template_sha256": "7b7b7e1d3108661aba9314519af5cb3a0a43ebde96a930015352f016151dc150",
+          "version": 1
+        },
+        "controls": {
+          "reference": "00573d92758f42339aaa49b326596109_Anima-v1-Baseline_00047_.png.png",
+          "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, an adult woman botanical illustrator with copper curls, a full length cream dress and green apron, holding a small potted fern in a sunlit greenhouse, face focus, upper body, close up, looking at viewer",
+          "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+          "seed": 161002
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "a14af12cbbfe5c50b170c71875f7a114"
+        ],
+        "references": [],
+        "label": "Lab 1016e Â· petiflow-details"
+      },
+      "job_id": "8d60ced6-d198-43db-95c8-8476722fe7ec",
+      "prompt_ids": [
+        "ee8f7341-aa62-4c80-a662-404918fa915b"
+      ],
+      "status": "completed",
+      "created_at": 1792161897.1773498,
+      "started_at": 1792161897.1940274,
+      "finished_at": 1792161962.0589197,
+      "elapsed_seconds": 64.86489224433899,
+      "admission_ratio": 0.6444358783526047,
+      "peak_sampled_commit_ratio": 0.6870403540767008,
+      "recipe_sha256": "eb83b4d7dc7093a55c5c1124b02403ce10438ce5cda244220550ef4de51de4f5",
+      "outputs": [
+        {
+          "filename": "anime-detail-fix_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 161002,
+          "prompt_id": "ee8f7341-aa62-4c80-a662-404918fa915b",
+          "media_type": "image",
+          "asset_id": "37e4710b2071558c915568feb0db1622",
+          "image": ".runtime\\lab-20261016e\\petiflow-details-0.png",
+          "sha256": "43d951696f96b485cc5f05917dfb53c324a072957882f84cd211d89e553cd225",
+          "dimensions": [
+            832,
+            1216
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "4",
+            "input": "image",
+            "value": "00573d92758f42339aaa49b326596109_Anima-v1-Baseline_00047_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "2",
+            "input": "text",
+            "value": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, an adult woman botanical illustrator with copper curls, a full length cream dress and green apron, holding a small potted fern in a sunlit greenhouse, face focus, upper body, close up, looking at viewer"
+          }
+        ],
+        "negative": [
+          {
+            "node": "3",
+            "input": "text",
+            "value": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark"
+          }
+        ],
+        "seed": [
+          {
+            "node": "12",
+            "input": "seed",
+            "value": 161002
+          },
+          {
+            "node": "13",
+            "input": "seed",
+            "value": 161002
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 24,
+        "cfg": 5.0,
+        "denoise": 0.4,
+        "sampler": "dpmpp_2m",
+        "scheduler": "karras"
+      },
+      "host_commit_windows": [
+        {
+          "samples": 128,
+          "unknown_samples": 0,
+          "first_at": 1792161897.5565095,
+          "last_at": 1792161962.0519214,
+          "peak_committed_bytes": 76850724864,
+          "peak_at": 1792161914.4245532,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 25933365248,
+          "index": 0,
+          "prompt_id": "ee8f7341-aa62-4c80-a662-404918fa915b",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "ee8f7341-aa62-4c80-a662-404918fa915b",
+          "seed": 161002,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 2271989760,
+            "peak_dedicated_bytes": 13540376576,
+            "samples": 133,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "petiflow-details",
+        "job_id": "8d60ced6-d198-43db-95c8-8476722fe7ec",
+        "prompt_ids": [
+          "ee8f7341-aa62-4c80-a662-404918fa915b"
+        ],
+        "image": ".runtime/lab-20261016e/petiflow-details-0.png",
+        "sha256": "43d951696f96b485cc5f05917dfb53c324a072957882f84cd211d89e553cd225",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T15:49:09.832688",
+        "scores": {
+          "adherence": 4,
+          "anatomy": 4,
+          "style": 3,
+          "technical": 5,
+          "composition": 5,
+          "control": 3
+        },
+        "verdict": "fixable",
+        "comparison": "harms",
+        "worst_defect": "Soft Petiflow facial finish and eye colour drift in a WAI repaint",
+        "note": "Native face and both supporting hands compared with the original KEEP. Face changes from soft rounded cheeks/lips and grey-green eyes to more angular WAI eyes/nose, amber irises and flatter lip shading. Hands keep the pot but gain hard wrinkle/vein-like lines and stronger highlights. Fern, pose, main palette and greenhouse stay. No source defect required repair; these are optional finishing trials, not proof that a named anatomical defect was fixed.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_box": [
+              265,
+              260,
+              565,
+              520
+            ],
+            "output_box": [
+              265,
+              260,
+              565,
+              520
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-details-face-pair.png",
+            "sha256": "03c4076bad83f6c1120bd15220efbfd1757fa2008c64a70fc6a982828e2b4b17"
+          },
+          {
+            "kind": "hands",
+            "input_box": [
+              225,
+              1010,
+              590,
+              1175
+            ],
+            "output_box": [
+              225,
+              1010,
+              590,
+              1175
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-details-hands-pair.png",
+            "sha256": "0c4b205c27c5e53ea3c52391ce5fbbba2e953ad34307b9daa9656803f53813a1"
+          },
+          {
+            "kind": "plant",
+            "input_box": [
+              265,
+              700,
+              565,
+              970
+            ],
+            "output_box": [
+              265,
+              700,
+              565,
+              970
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-details-plant-pair.png",
+            "sha256": "18f1ec9e7d7fd32f440dea796cab8acde0b4347f7ab502cffe0490922aec973b"
+          }
+        ],
+        "face_detail": "more explicit highlights; original softness lost",
+        "hands": "grip retained; heavier invented crease lines",
+        "line_quality": "harder local contours",
+        "artifacts": "no clear new seam",
+        "colour_shift": "eyes warmer; palette otherwise retained",
+        "repair_efficacy": "not established: no named source defect"
+      },
+      "peak_studio_commit_ratio": 0.747690861302159
+    },
+    {
+      "trial": "petiflow-face",
+      "meta": {
+        "operation": "face",
+        "source_asset": "a14af12cbbfe5c50b170c71875f7a114",
+        "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5"
+      },
+      "request": {
+        "preset_id": "anime-detail-fix",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-detail-fix",
+          "reference_file": "c3c52dfc18ee49d0ac230ac768ce4dbf_Anima-v1-Baseline_00047_.png.png",
+          "source_asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+          "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "template_sha256": "7b7b7e1d3108661aba9314519af5cb3a0a43ebde96a930015352f016151dc150",
+          "version": 1
+        },
+        "controls": {
+          "reference": "c3c52dfc18ee49d0ac230ac768ce4dbf_Anima-v1-Baseline_00047_.png.png",
+          "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, an adult woman botanical illustrator with copper curls, a full length cream dress and green apron, holding a small potted fern in a sunlit greenhouse, face focus, upper body, close up, looking at viewer",
+          "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+          "seed": 161001
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "a14af12cbbfe5c50b170c71875f7a114"
+        ],
+        "references": [],
+        "label": "Lab 1016e Â· petiflow-face"
+      },
+      "job_id": "3933513f-bcc9-4875-9a7f-7e602941b7c5",
+      "prompt_id": null,
+      "status": "completed",
+      "created_at": 1792161724.6383293,
+      "started_at": 1792161724.651116,
+      "completed_at": null,
+      "elapsed_seconds": 147.6447343826294,
+      "admission_ratio": 0.5536692132215117,
+      "peak_sampled_commit_ratio": 0.7177050544653072,
+      "recipe_sha256": "91df37e4c1d5d072755c63afde80d29fffabb3530ee16fcd8544527d69e98baf",
+      "outputs": [
+        {
+          "filename": "anime-detail-fix_00004_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 161001,
+          "prompt_id": "170b830a-0fcc-4706-8a82-9964d35c3764",
+          "media_type": "image",
+          "asset_id": "b919ba541dd954babbff2939e449fa15",
+          "image": ".runtime\\lab-20261016e\\petiflow-face-0.png",
+          "sha256": "1168ec163fc440ece1c0b277c2466538e72e9933e6ec05dded1d620b157052e8",
+          "dimensions": [
+            832,
+            1216
+          ]
+        }
+      ],
+      "prompt_ids": [
+        "170b830a-0fcc-4706-8a82-9964d35c3764"
+      ],
+      "finished_at": 1792161872.2958503,
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "4",
+            "input": "image",
+            "value": "c3c52dfc18ee49d0ac230ac768ce4dbf_Anima-v1-Baseline_00047_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "2",
+            "input": "text",
+            "value": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, an adult woman botanical illustrator with copper curls, a full length cream dress and green apron, holding a small potted fern in a sunlit greenhouse, face focus, upper body, close up, looking at viewer"
+          }
+        ],
+        "negative": [
+          {
+            "node": "3",
+            "input": "text",
+            "value": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark"
+          }
+        ],
+        "seed": [
+          {
+            "node": "12",
+            "input": "seed",
+            "value": 161001
+          },
+          {
+            "node": "13",
+            "input": "seed",
+            "value": 161001
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 24,
+        "cfg": 5.0,
+        "denoise": 0.4,
+        "sampler": "dpmpp_2m",
+        "scheduler": "karras"
+      },
+      "host_commit_windows": [
+        {
+          "samples": 289,
+          "unknown_samples": 0,
+          "first_at": 1792161724.8779488,
+          "last_at": 1792161872.2893376,
+          "peak_committed_bytes": 73843691520,
+          "peak_at": 1792161847.7650778,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 28940398592,
+          "index": 0,
+          "prompt_id": "170b830a-0fcc-4706-8a82-9964d35c3764",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "170b830a-0fcc-4706-8a82-9964d35c3764",
+          "seed": 161001,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 2271989760,
+            "peak_dedicated_bytes": 13636845568,
+            "samples": 303,
+            "spilled": true,
+            "settled_shared_bytes": 216780800,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "petiflow-face",
+        "job_id": "3933513f-bcc9-4875-9a7f-7e602941b7c5",
+        "prompt_ids": [
+          "170b830a-0fcc-4706-8a82-9964d35c3764"
+        ],
+        "image": ".runtime/lab-20261016e/petiflow-face-0.png",
+        "sha256": "1168ec163fc440ece1c0b277c2466538e72e9933e6ec05dded1d620b157052e8",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T15:49:09.764120",
+        "scores": {
+          "adherence": 4,
+          "anatomy": 4,
+          "style": 3,
+          "technical": 5,
+          "composition": 5,
+          "control": 3
+        },
+        "verdict": "fixable",
+        "comparison": "harms",
+        "worst_defect": "Soft Petiflow facial finish and eye colour drift in a WAI repaint",
+        "note": "Native face and both supporting hands compared with the original KEEP. Face changes from soft rounded cheeks/lips and grey-green eyes to more angular WAI eyes/nose, amber irises and flatter lip shading. Hands keep the pot but gain hard wrinkle/vein-like lines and stronger highlights. Fern, pose, main palette and greenhouse stay. No source defect required repair; these are optional finishing trials, not proof that a named anatomical defect was fixed.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_box": [
+              265,
+              260,
+              565,
+              520
+            ],
+            "output_box": [
+              265,
+              260,
+              565,
+              520
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-face-face-pair.png",
+            "sha256": "98e9e0e551ce5856e6be251868ca4ca0bd75d5f7bc30a686a5de7acd52cc7186"
+          },
+          {
+            "kind": "hands",
+            "input_box": [
+              225,
+              1010,
+              590,
+              1175
+            ],
+            "output_box": [
+              225,
+              1010,
+              590,
+              1175
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-face-hands-pair.png",
+            "sha256": "cd0d0f45ee85fe0bb04444b41733530fb96eed63454a1dbfeaaff1cabb30eb18"
+          },
+          {
+            "kind": "plant",
+            "input_box": [
+              265,
+              700,
+              565,
+              970
+            ],
+            "output_box": [
+              265,
+              700,
+              565,
+              970
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-face-plant-pair.png",
+            "sha256": "e0c318e47d6ff6783200f8046968fa72561e2ed54c259798cc5a15745740f63a"
+          }
+        ],
+        "face_detail": "more explicit highlights; original softness lost",
+        "hands": "grip retained; heavier invented crease lines",
+        "line_quality": "harder local contours",
+        "artifacts": "no clear new seam",
+        "colour_shift": "eyes warmer; palette otherwise retained",
+        "repair_efficacy": "not established: no named source defect"
+      },
+      "peak_studio_commit_ratio": 0.7184350363907028
+    },
+    {
+      "trial": "petiflow-restyle-ink",
+      "meta": {
+        "source_asset": "a14af12cbbfe5c50b170c71875f7a114",
+        "target_look": "look-krea-style-inkwork-darkbrush",
+        "board": {
+          "url": "/api/examples/recipe-thumbs-20260927/krea-style-inkwork-darkbrush.jpg",
+          "sha256": "f0af93a4f544a32d7b69c4cb905b1d0a00ee7a833e26553b8f4adb7e8e7240ae"
+        },
+        "operation": "restyle",
+        "memory_choice": "Klein 4B; no Krea inference"
+      },
+      "request": {
+        "preset_id": "restyle-klein-picture",
+        "continuation": {
+          "intent": "restyle",
+          "preset_id": "restyle-klein-picture",
+          "reference_file": "4934872263594b129049611135550399_Anima-v1-Baseline_00047_.png.png",
+          "source_asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+          "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "template_sha256": "6222f0b2ad3df313d4aedb0bd1eb1739db8f94e4b77b72d57bc5c13c8b015d49",
+          "version": 1
+        },
+        "controls": {
+          "last_reference": "4934872263594b129049611135550399_Anima-v1-Baseline_00047_.png.png",
+          "positive": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: copper hair, cream blouse, dark green apron, terracotta pot and green fern.",
+          "seed": 161101,
+          "width": 1040,
+          "height": 1520
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "a14af12cbbfe5c50b170c71875f7a114"
+        ],
+        "references": [
+          {
+            "role": "style",
+            "contribution": "",
+            "avoid": "",
+            "file": "bc75a065897b4f31b123484fbe64b320_look-krea-style-inkwork-darkbrush.jpg.jpg",
+            "sha256": "f0af93a4f544a32d7b69c4cb905b1d0a00ee7a833e26553b8f4adb7e8e7240ae",
+            "bytes": 140015,
+            "width": 704,
+            "height": 704
+          },
+          {
+            "role": "style",
+            "contribution": "",
+            "avoid": "",
+            "file": null
+          }
+        ],
+        "label": "Lab 1016e · petiflow-restyle-ink"
+      },
+      "job_id": "c4a77d49-c87b-4215-9dcd-1a1bb38f690e",
+      "prompt_ids": [
+        "d8adeb7f-331e-40ea-8d75-8c8712fb5dc0"
+      ],
+      "status": "completed",
+      "created_at": 1792164664.4843009,
+      "started_at": 1792164664.4948683,
+      "finished_at": 1792164743.9984858,
+      "elapsed_seconds": 79.50361752510071,
+      "admission_ratio": 0.5100607433589498,
+      "peak_sampled_commit_ratio": 0.8356039100060365,
+      "recipe_sha256": "63bf292f639c84af2a1911939fab729369631e400fb3d04175a9cb03f4854c3f",
+      "outputs": [
+        {
+          "filename": "Klein-look_00002_.png",
+          "subfolder": "Restyle",
+          "type": "output",
+          "seed": 161101,
+          "prompt_id": "d8adeb7f-331e-40ea-8d75-8c8712fb5dc0",
+          "media_type": "image",
+          "asset_id": "60652415e6d15ca28c0eb42d058311ec",
+          "image": ".runtime\\lab-20261016e\\petiflow-restyle-ink-0.png",
+          "sha256": "4df37d54c95ff5d6f100f2914a670957ba807733b8c9e32bffed522ba7593810",
+          "dimensions": [
+            1040,
+            1520
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "last_reference": [
+          {
+            "node": "14",
+            "input": "image",
+            "value": "4934872263594b129049611135550399_Anima-v1-Baseline_00047_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: copper hair, cream blouse, dark green apron, terracotta pot and green fern."
+          }
+        ],
+        "seed": [
+          {
+            "node": "7",
+            "input": "noise_seed",
+            "value": 161101
+          }
+        ],
+        "width": [
+          {
+            "node": "10",
+            "input": "width",
+            "value": 1040
+          },
+          {
+            "node": "9",
+            "input": "width",
+            "value": 1040
+          }
+        ],
+        "height": [
+          {
+            "node": "10",
+            "input": "height",
+            "value": 1520
+          },
+          {
+            "node": "9",
+            "input": "height",
+            "value": 1520
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 6,
+        "cfg": 1.0
+      },
+      "host_commit_windows": [
+        {
+          "samples": 156,
+          "unknown_samples": 0,
+          "first_at": 1792164664.8770614,
+          "last_at": 1792164743.9914877,
+          "peak_committed_bytes": 86062202880,
+          "peak_at": 1792164739.6205165,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 16721887232,
+          "index": 0,
+          "prompt_id": "d8adeb7f-331e-40ea-8d75-8c8712fb5dc0",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "d8adeb7f-331e-40ea-8d75-8c8712fb5dc0",
+          "seed": 161101,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 5048619008,
+            "peak_dedicated_bytes": 13753950208,
+            "samples": 161,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "petiflow-restyle-ink",
+        "job_id": "c4a77d49-c87b-4215-9dcd-1a1bb38f690e",
+        "prompt_ids": [
+          "d8adeb7f-331e-40ea-8d75-8c8712fb5dc0"
+        ],
+        "image": ".runtime/lab-20261016e/petiflow-restyle-ink-0.png",
+        "sha256": "4df37d54c95ff5d6f100f2914a670957ba807733b8c9e32bffed522ba7593810",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:34:45.907588",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 3,
+          "technical": 5,
+          "composition": 5,
+          "control": 4
+        },
+        "verdict": "fixable",
+        "comparison": "intentional style change",
+        "worst_defect": "Target dark-brush/ink-wash finish only partly transferred; face proportions drift",
+        "note": "Native face, both pot-supporting grips and fern compared. Recognisable copper curls, green eyes, cream blouse, green apron, terracotta pot, fern and greenhouse framing retained. Eyes are larger/rounder, face narrower and fingers slightly recontoured. Rendering becomes warm paper-grain and fine pen outlines; bold dark-brush/ink-wash of the target is only partly followed. Colours were explicitly kept, so missing monochrome is a stated constraint/trade-off, not charged twice. No chapel or target-scene objects copied.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/petiflow-source.png",
+            "input_box": [
+              265,
+              260,
+              565,
+              520
+            ],
+            "output_box": [
+              331,
+              325,
+              706,
+              650
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-restyle-ink-face-pair.png",
+            "sha256": "16bfd72882fb1f49d8ccbf06e5623d04bc3c40b091d39787b8c9cb0bf697a9c4"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/petiflow-source.png",
+            "input_box": [
+              225,
+              1010,
+              590,
+              1175
+            ],
+            "output_box": [
+              281,
+              1262,
+              738,
+              1469
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-restyle-ink-hands-pair.png",
+            "sha256": "2bb3344286a83e0a829f9ac06ab85693c6c883654e63a48a20911461f04145dc"
+          },
+          {
+            "kind": "plant",
+            "input_image": ".runtime/lab-20261016e/petiflow-source.png",
+            "input_box": [
+              265,
+              700,
+              565,
+              970
+            ],
+            "output_box": [
+              331,
+              875,
+              706,
+              1212
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-restyle-ink-plant-pair.png",
+            "sha256": "3a37ab0e28d8343aac30180ab70dcabd97787732c0f207fdf6bc9280215f0bf3"
+          }
+        ],
+        "retention": "Recognisable (identity 4/5); pot-holding pose 5/5; larger eyes/narrower face",
+        "style_change": "Warm grainy paper + pen contours; partial bold ink/wash transfer",
+        "identity_score": 4,
+        "pose_score": 5,
+        "palette": "Source colours held approximately; scene warmer/sepia",
+        "target_content_leakage": "No chapel objects seen",
+        "fix": "Try the word-led restyle for a precisely named finish or omit colour constraints; neither change was run"
+      },
+      "peak_studio_commit_ratio": 0.8373105486094319
+    },
+    {
+      "trial": "petiflow-restyle-watercolour",
+      "meta": {
+        "source_asset": "a14af12cbbfe5c50b170c71875f7a114",
+        "target_look": "look-krea-style-airy-softwatercolor",
+        "board": {
+          "url": "/api/examples/recipe-thumbs-20260927/krea-style-airy-softwatercolor.jpg",
+          "sha256": "f45030bc619a895bcd25c43981b087c5c3ea0a03de2d4a4f5ff56bb4dd9d0345"
+        },
+        "operation": "restyle",
+        "memory_choice": "Klein 4B; no Krea inference"
+      },
+      "request": {
+        "preset_id": "restyle-klein-picture",
+        "continuation": {
+          "intent": "restyle",
+          "preset_id": "restyle-klein-picture",
+          "reference_file": "dfe0a768132d4865974f09187017560b_Anima-v1-Baseline_00047_.png.png",
+          "source_asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+          "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "template_sha256": "6222f0b2ad3df313d4aedb0bd1eb1739db8f94e4b77b72d57bc5c13c8b015d49",
+          "version": 1
+        },
+        "controls": {
+          "last_reference": "dfe0a768132d4865974f09187017560b_Anima-v1-Baseline_00047_.png.png",
+          "positive": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: copper hair, cream blouse, dark green apron, terracotta pot and green fern.",
+          "seed": 161102,
+          "width": 1040,
+          "height": 1520
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "a14af12cbbfe5c50b170c71875f7a114"
+        ],
+        "references": [
+          {
+            "role": "style",
+            "contribution": "",
+            "avoid": "",
+            "file": "78806004c21e40cb8ba069111438e152_look-krea-style-airy-softwatercolor.jpg.jpg",
+            "sha256": "f45030bc619a895bcd25c43981b087c5c3ea0a03de2d4a4f5ff56bb4dd9d0345",
+            "bytes": 128682,
+            "width": 704,
+            "height": 704
+          },
+          {
+            "role": "style",
+            "contribution": "",
+            "avoid": "",
+            "file": null
+          }
+        ],
+        "label": "Lab 1016e · petiflow-restyle-watercolour"
+      },
+      "job_id": "d94d5ba1-b7e3-4b44-ba64-ce6c1bee89a4",
+      "prompt_ids": [
+        "391431f6-1454-46d8-ab79-566cbaacc166"
+      ],
+      "status": "completed",
+      "created_at": 1792164875.3773594,
+      "started_at": 1792164875.3879035,
+      "finished_at": 1792164937.3045702,
+      "elapsed_seconds": 61.916666746139526,
+      "admission_ratio": 0.5232591178400761,
+      "peak_sampled_commit_ratio": 0.8407307996581781,
+      "recipe_sha256": "9b2110d26d2a3f281bee7a7feaf2aa4173642fad5cbe42198a3951d978bb726f",
+      "outputs": [
+        {
+          "filename": "Klein-look_00003_.png",
+          "subfolder": "Restyle",
+          "type": "output",
+          "seed": 161102,
+          "prompt_id": "391431f6-1454-46d8-ab79-566cbaacc166",
+          "media_type": "image",
+          "asset_id": "da4c76c8520d5d54a11d4d10be73162d",
+          "image": ".runtime\\lab-20261016e\\petiflow-restyle-watercolour-0.png",
+          "sha256": "dff7e488815ac9fb1e7a4f8696ae1bee92752ccd1d5508c5d8a7fb8bd8c444ac",
+          "dimensions": [
+            1040,
+            1520
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "last_reference": [
+          {
+            "node": "14",
+            "input": "image",
+            "value": "dfe0a768132d4865974f09187017560b_Anima-v1-Baseline_00047_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "4",
+            "input": "text",
+            "value": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: copper hair, cream blouse, dark green apron, terracotta pot and green fern."
+          }
+        ],
+        "seed": [
+          {
+            "node": "7",
+            "input": "noise_seed",
+            "value": 161102
+          }
+        ],
+        "width": [
+          {
+            "node": "10",
+            "input": "width",
+            "value": 1040
+          },
+          {
+            "node": "9",
+            "input": "width",
+            "value": 1040
+          }
+        ],
+        "height": [
+          {
+            "node": "10",
+            "input": "height",
+            "value": 1520
+          },
+          {
+            "node": "9",
+            "input": "height",
+            "value": 1520
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 6,
+        "cfg": 1.0
+      },
+      "host_commit_windows": [
+        {
+          "samples": 122,
+          "unknown_samples": 0,
+          "first_at": 1792164875.70481,
+          "last_at": 1792164937.2995672,
+          "peak_committed_bytes": 86618165248,
+          "peak_at": 1792164927.4101179,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 16165924864,
+          "index": 0,
+          "prompt_id": "391431f6-1454-46d8-ab79-566cbaacc166",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "391431f6-1454-46d8-ab79-566cbaacc166",
+          "seed": 161102,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 5048619008,
+            "peak_dedicated_bytes": 13752885248,
+            "samples": 125,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "petiflow-restyle-watercolour",
+        "job_id": "d94d5ba1-b7e3-4b44-ba64-ce6c1bee89a4",
+        "prompt_ids": [
+          "391431f6-1454-46d8-ab79-566cbaacc166"
+        ],
+        "image": ".runtime/lab-20261016e/petiflow-restyle-watercolour-0.png",
+        "sha256": "dff7e488815ac9fb1e7a4f8696ae1bee92752ccd1d5508c5d8a7fb8bd8c444ac",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:37:37.619310",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 5,
+          "composition": 5,
+          "control": 4
+        },
+        "verdict": "keep",
+        "comparison": "intentional style change",
+        "worst_defect": "Minor eye/face-proportion drift; target distinction is modest",
+        "note": "Native face, pot-supporting hands and fern compared. Character is recognisable via copper curls, green eyes, cream/green wardrobe and the same pot/greenhouse composition. Eyes enlarge, nose/cheeks narrow slightly, grip contours change mildly. Thin ink contours, mottled paper and pale wash replace the glossy/flat Petiflow surface; this is a credible lined-watercolour finish. Both target trials converge on similar warm lined paper on this source; not proof of strong target separation. Source colours were explicitly preserved; no apothecary jars or writing copied.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/petiflow-source.png",
+            "input_box": [
+              265,
+              260,
+              565,
+              520
+            ],
+            "output_box": [
+              331,
+              325,
+              706,
+              650
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-restyle-watercolour-face-pair.png",
+            "sha256": "8f87e4acc1391a34d5cc623ca46c0adbc96df3439835b5c2e7ecafa8268eecad"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/petiflow-source.png",
+            "input_box": [
+              225,
+              1010,
+              590,
+              1175
+            ],
+            "output_box": [
+              281,
+              1262,
+              738,
+              1469
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-restyle-watercolour-hands-pair.png",
+            "sha256": "f67ed3b6c4d7fc5007d8add7390ede335f4f34b4f678976eb91705aaf673c406"
+          },
+          {
+            "kind": "plant",
+            "input_image": ".runtime/lab-20261016e/petiflow-source.png",
+            "input_box": [
+              265,
+              700,
+              565,
+              970
+            ],
+            "output_box": [
+              331,
+              875,
+              706,
+              1212
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-restyle-watercolour-plant-pair.png",
+            "sha256": "ad3452095041c1f7b2b0027035cc100e7b90d8b5bd9bc8f21ff90aff99f4c887"
+          }
+        ],
+        "retention": "Recognisable (identity 4/5); pot-holding pose 5/5; larger eyes and mild grip drift",
+        "style_change": "Pale wash, fine ink contours and paper grain; similar to the ink trial",
+        "identity_score": 4,
+        "pose_score": 5,
+        "palette": "Copper/cream/green retained approximately; warmer paper wash",
+        "target_content_leakage": "No jars or writing seen"
+      },
+      "peak_studio_commit_ratio": 0.8427195799818378
+    },
+    {
+      "trial": "petiflow-upscale",
+      "meta": {
+        "operation": "upscale",
+        "source_asset": "a14af12cbbfe5c50b170c71875f7a114",
+        "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5"
+      },
+      "request": {
+        "preset_id": "anime-esrgan",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-esrgan",
+          "reference_file": "ea3e02c4191e49a2bdd61b48a8af53a6_Anima-v1-Baseline_00047_.png.png",
+          "source_asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+          "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "template_sha256": "e11cb7176ffb45c04ba6b8bd2eaec65b7ab6d829b4ae4f5e68c86b52feafc245",
+          "version": 1
+        },
+        "controls": {
+          "reference": "ea3e02c4191e49a2bdd61b48a8af53a6_Anima-v1-Baseline_00047_.png.png"
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "a14af12cbbfe5c50b170c71875f7a114"
+        ],
+        "references": [],
+        "label": "Lab 1016e · petiflow-upscale"
+      },
+      "job_id": "f68a120c-ee37-4694-ac6f-718b61cac371",
+      "prompt_ids": [
+        "d5cf05ae-607f-4adc-9983-990502cf9466"
+      ],
+      "status": "completed",
+      "created_at": 1792161968.798538,
+      "started_at": 1792161968.9663308,
+      "finished_at": 1792162468.2649481,
+      "elapsed_seconds": 499.2986173629761,
+      "admission_ratio": 0.6478378380101645,
+      "peak_sampled_commit_ratio": 0.8193480039589106,
+      "recipe_sha256": "194700124234369b6f5e36f917cdd3d3df127306f29628bcf8ba546d9ec6746b",
+      "outputs": [
+        {
+          "filename": "Anime-ESRGAN-2x_00003_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": null,
+          "prompt_id": "d5cf05ae-607f-4adc-9983-990502cf9466",
+          "media_type": "image",
+          "asset_id": "2c1116ce7c845ad587aa8f928e02fce5",
+          "image": ".runtime\\lab-20261016e\\petiflow-upscale-0.png",
+          "sha256": "fa3135087e1a513615d8a47973e3cf010161ff033c8849e23b2811b8e233ad8f",
+          "dimensions": [
+            1664,
+            2432
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "1",
+            "input": "image",
+            "value": "ea3e02c4191e49a2bdd61b48a8af53a6_Anima-v1-Baseline_00047_.png.png"
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 969,
+          "unknown_samples": 0,
+          "first_at": 1792161972.783842,
+          "last_at": 1792162468.2553296,
+          "peak_committed_bytes": 88900030464,
+          "peak_at": 1792162369.8039784,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 13884059648,
+          "index": 0,
+          "prompt_id": "d5cf05ae-607f-4adc-9983-990502cf9466",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "d5cf05ae-607f-4adc-9983-990502cf9466",
+          "seed": null,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 9814966272,
+            "peak_dedicated_bytes": 11638054912,
+            "samples": 1007,
+            "spilled": true,
+            "settled_shared_bytes": 1894502400,
+            "lingering": true
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "petiflow-upscale",
+        "job_id": "f68a120c-ee37-4694-ac6f-718b61cac371",
+        "prompt_ids": [
+          "d5cf05ae-607f-4adc-9983-990502cf9466"
+        ],
+        "image": ".runtime/lab-20261016e/petiflow-upscale-0.png",
+        "sha256": "fa3135087e1a513615d8a47973e3cf010161ff033c8849e23b2811b8e233ad8f",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T15:56:01.561119",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 4,
+          "composition": 5,
+          "control": 5
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Fine iris/skin/leaf texture is smoothed",
+        "note": "Native 1:1 input and 2x-output crops inspected: complete face, both supporting grips and fern retained. Contours become smooth and sharp on the 1664x2432 canvas; small iris/skin texture and fine leaf veins are simplified. No new anatomical repair or colour/pose change. Useful when a larger canvas is required, not a proved detail invention or quality upgrade.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_box": [
+              265,
+              260,
+              565,
+              520
+            ],
+            "output_box": [
+              530,
+              520,
+              1130,
+              1040
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-upscale-face-pair.png",
+            "sha256": "16f739bb83c6058d1bc1c244073f80cddaa364470fd790eb23bb8226b0fbbf96"
+          },
+          {
+            "kind": "hands",
+            "input_box": [
+              225,
+              1010,
+              590,
+              1175
+            ],
+            "output_box": [
+              450,
+              2020,
+              1180,
+              2350
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-upscale-hands-pair.png",
+            "sha256": "3d82bb1e98ae80d9e73ddfe66f876ad6ce3f3547e90e9b229035a24b8a8ebbca"
+          },
+          {
+            "kind": "plant",
+            "input_box": [
+              265,
+              700,
+              565,
+              970
+            ],
+            "output_box": [
+              530,
+              1400,
+              1130,
+              1940
+            ],
+            "image": ".runtime/lab-20261016e/petiflow-upscale-plant-pair.png",
+            "sha256": "beb4ee3b4b344c32beb64f3d658b27c15dff6f3a8fbc0b64c14caeb588067a4d"
+          }
+        ],
+        "face_detail": "simplified fine iris/skin texture",
+        "hands": "same grip; smoother contours",
+        "line_quality": "cleaner larger edges",
+        "artifacts": "no visible new seam/ringing in inspected crops",
+        "colour_shift": "no material shift"
+      },
+      "peak_studio_commit_ratio": 0.8649201483140916
+    },
+    {
+      "trial": "wai-chain-upscale",
+      "meta": {
+        "operation": "upscale",
+        "source_asset": "5a445b3e4b945fbd8e9d3ce81919aeb1",
+        "source_sha256": "a2093df1c5be48e7dc4daf540c3319608f45e2245222677490aa3c05a2a75dcf"
+      },
+      "request": {
+        "preset_id": "anime-esrgan",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-esrgan",
+          "reference_file": "9835d6420ebb40a1ab5b855356694339_Anime-Face_00002_.png.png",
+          "source_asset_id": "5a445b3e4b945fbd8e9d3ce81919aeb1",
+          "source_sha256": "a2093df1c5be48e7dc4daf540c3319608f45e2245222677490aa3c05a2a75dcf",
+          "template_sha256": "e11cb7176ffb45c04ba6b8bd2eaec65b7ab6d829b4ae4f5e68c86b52feafc245",
+          "version": 1
+        },
+        "controls": {
+          "reference": "9835d6420ebb40a1ab5b855356694339_Anime-Face_00002_.png.png"
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "5a445b3e4b945fbd8e9d3ce81919aeb1"
+        ],
+        "references": [],
+        "label": "Lab 1016e · wai-chain-upscale"
+      },
+      "job_id": "0e03612e-55f1-4d59-805c-875b60ff43d9",
+      "prompt_ids": [
+        "74acfad2-3d95-4e97-942f-fed78e27b79c"
+      ],
+      "status": "completed",
+      "created_at": 1792164321.9348772,
+      "started_at": 1792164321.942869,
+      "finished_at": 1792164650.8146856,
+      "elapsed_seconds": 328.87181663513184,
+      "admission_ratio": 0.516922645188615,
+      "peak_sampled_commit_ratio": 0.7088083848056004,
+      "recipe_sha256": "94aa27d92c6bed530f4835b6659b3803833beee9df6afe7e232a917008c78484",
+      "outputs": [
+        {
+          "filename": "Anime-ESRGAN-2x_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": null,
+          "prompt_id": "74acfad2-3d95-4e97-942f-fed78e27b79c",
+          "media_type": "image",
+          "asset_id": "dc434f2162e55139884e5b3d113ee754",
+          "image": ".runtime\\lab-20261016e\\wai-chain-upscale-0.png",
+          "sha256": "80856f2756f96efbf5e18a1272fb4c7f52c6d251ee7dd47986f57d54b4683a1b",
+          "dimensions": [
+            1664,
+            2432
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "1",
+            "input": "image",
+            "value": "9835d6420ebb40a1ab5b855356694339_Anime-Face_00002_.png.png"
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 644,
+          "unknown_samples": 0,
+          "first_at": 1792164322.1596153,
+          "last_at": 1792164650.8089201,
+          "peak_committed_bytes": 73135140864,
+          "peak_at": 1792164377.8873997,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 29648949248,
+          "index": 0,
+          "prompt_id": "74acfad2-3d95-4e97-942f-fed78e27b79c",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "74acfad2-3d95-4e97-942f-fed78e27b79c",
+          "seed": null,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 5921034240,
+            "peak_dedicated_bytes": 13886603264,
+            "samples": 668,
+            "spilled": true,
+            "settled_shared_bytes": 1894502400,
+            "lingering": true
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "wai-chain-upscale",
+        "job_id": "0e03612e-55f1-4d59-805c-875b60ff43d9",
+        "prompt_ids": [
+          "74acfad2-3d95-4e97-942f-fed78e27b79c"
+        ],
+        "image": ".runtime/lab-20261016e/wai-chain-upscale-0.png",
+        "sha256": "80856f2756f96efbf5e18a1272fb4c7f52c6d251ee7dd47986f57d54b4683a1b",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:31:56.002143",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 4,
+          "composition": 5,
+          "control": 5
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Fine beard/cloth texture simplified; no additional repair",
+        "note": "Against the immediate WAI Face-fix output: native closed-eye face/beard, both clasped hands and coat/shirt crop inspected. 1664x2432 output retains expression, identity cues, hand positions and tan/cream palette; beard and cloth contours become smoother/more graphic while fine texture is simplified. No new named defect or gain from the prior face pass demonstrated.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/wai-face-0.png",
+            "input_box": [
+              280,
+              150,
+              570,
+              430
+            ],
+            "output_box": [
+              560,
+              300,
+              1140,
+              860
+            ],
+            "image": ".runtime/lab-20261016e/wai-chain-upscale-face-pair.png",
+            "sha256": "1b24fda139ad68d2e853b49adc22aa8832032ee78f4b27c74cc43da6053ac9a9"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/wai-face-0.png",
+            "input_box": [
+              230,
+              870,
+              570,
+              1060
+            ],
+            "output_box": [
+              460,
+              1740,
+              1140,
+              2120
+            ],
+            "image": ".runtime/lab-20261016e/wai-chain-upscale-hands-pair.png",
+            "sha256": "6eaa90b14bef9248289d3e0c4e981c26304e8e6432aecb43d87fdfb6307c41f9"
+          },
+          {
+            "kind": "cloth",
+            "input_image": ".runtime/lab-20261016e/wai-face-0.png",
+            "input_box": [
+              150,
+              440,
+              440,
+              690
+            ],
+            "output_box": [
+              300,
+              880,
+              880,
+              1380
+            ],
+            "image": ".runtime/lab-20261016e/wai-chain-upscale-cloth-pair.png",
+            "sha256": "d26bc264d1c9f4b1ead5207bf9ca027652814fdd70f821097da6226b120a1ccc"
+          }
+        ],
+        "face_detail": "same closed-eye smile and face-pass beard",
+        "hands": "same clasp and fingers",
+        "line_quality": "smoother enlarged contours",
+        "artifacts": "no new visible seam/ringing",
+        "colour_shift": "no material additional shift",
+        "pipeline_vs_original": "neutral; no demonstrated need for preceding Face fix",
+        "input_trial": "wai-face"
+      },
+      "peak_studio_commit_ratio": 0.7115414533932961
+    },
+    {
+      "trial": "wai-details",
+      "meta": {
+        "operation": "details",
+        "source_asset": "26fb675eb78a5c7daa540b414a7b2929",
+        "source_sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62"
+      },
+      "request": {
+        "preset_id": "anime-detail-fix",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-detail-fix",
+          "reference_file": "84abf1627ab0464f874d8df00d32e4bb_WAI-Illustration_00060_.png.png",
+          "source_asset_id": "26fb675eb78a5c7daa540b414a7b2929",
+          "source_sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62",
+          "template_sha256": "7b7b7e1d3108661aba9314519af5cb3a0a43ebde96a930015352f016151dc150",
+          "version": 1
+        },
+        "controls": {
+          "reference": "84abf1627ab0464f874d8df00d32e4bb_WAI-Illustration_00060_.png.png",
+          "positive": "original character, one clearly older adult man aged fifty-five, short salt-and-pepper hair, a neat full grey beard, weathered mature face with smile lines, wearing a long brown travelling coat over a high-collared cream shirt and grey trousers, both empty hands resting together at waist, standing in a quiet walled garden, no writing, fully clothed, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+          "negative": "bad quality, worst quality, worst detail, sketch, censor",
+          "seed": 161022
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "26fb675eb78a5c7daa540b414a7b2929"
+        ],
+        "references": [],
+        "label": "Lab 1016e · wai-details"
+      },
+      "job_id": "df9e8bb4-3f2d-4947-9851-6aea896debf9",
+      "prompt_ids": [
+        "31ea593f-ca8d-40bb-9907-7905338c805d"
+      ],
+      "status": "completed",
+      "created_at": 1792162699.7634108,
+      "started_at": 1792162699.7744644,
+      "finished_at": 1792162767.0331678,
+      "elapsed_seconds": 67.2587034702301,
+      "admission_ratio": 0.5883869511526605,
+      "peak_sampled_commit_ratio": 0.664620169498631,
+      "recipe_sha256": "f1477d3352423f514b5a3f109f42a7ff260be23a23d4ba703d3327cb59e22d44",
+      "outputs": [
+        {
+          "filename": "anime-detail-fix_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 161022,
+          "prompt_id": "31ea593f-ca8d-40bb-9907-7905338c805d",
+          "media_type": "image",
+          "asset_id": "0682d1be36b955e785fb6b0a3fa47cc8",
+          "image": ".runtime\\lab-20261016e\\wai-details-0.png",
+          "sha256": "cd90d4db343f82df63f89191e62f46f0f8c516d6f3ea9dd4acb08f7b518d1935",
+          "dimensions": [
+            832,
+            1216
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "4",
+            "input": "image",
+            "value": "84abf1627ab0464f874d8df00d32e4bb_WAI-Illustration_00060_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "2",
+            "input": "text",
+            "value": "original character, one clearly older adult man aged fifty-five, short salt-and-pepper hair, a neat full grey beard, weathered mature face with smile lines, wearing a long brown travelling coat over a high-collared cream shirt and grey trousers, both empty hands resting together at waist, standing in a quiet walled garden, no writing, fully clothed, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality"
+          }
+        ],
+        "negative": [
+          {
+            "node": "3",
+            "input": "text",
+            "value": "bad quality, worst quality, worst detail, sketch, censor"
+          }
+        ],
+        "seed": [
+          {
+            "node": "12",
+            "input": "seed",
+            "value": 161022
+          },
+          {
+            "node": "13",
+            "input": "seed",
+            "value": 161022
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 24,
+        "cfg": 5.0,
+        "denoise": 0.4,
+        "sampler": "dpmpp_2m",
+        "scheduler": "karras"
+      },
+      "host_commit_windows": [
+        {
+          "samples": 126,
+          "unknown_samples": 0,
+          "first_at": 1792162703.4172668,
+          "last_at": 1792162767.0231512,
+          "peak_committed_bytes": 69036044288,
+          "peak_at": 1792162761.234717,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 33748045824,
+          "index": 0,
+          "prompt_id": "31ea593f-ca8d-40bb-9907-7905338c805d",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "31ea593f-ca8d-40bb-9907-7905338c805d",
+          "seed": 161022,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 4065054720,
+            "peak_dedicated_bytes": 12716761088,
+            "samples": 126,
+            "spilled": true,
+            "top_holders": [
+              {
+                "pid": 2412,
+                "name": "dwm.exe",
+                "dedicated_bytes": 3223236608,
+                "plausible": true
+              },
+              {
+                "pid": 29452,
+                "name": "steamwebhelper.exe",
+                "dedicated_bytes": 342536192,
+                "plausible": true
+              },
+              {
+                "pid": 5164,
+                "name": "ProtonVPN.Client.exe",
+                "dedicated_bytes": 329506816,
+                "plausible": true
+              }
+            ],
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "wai-details",
+        "job_id": "df9e8bb4-3f2d-4947-9851-6aea896debf9",
+        "prompt_ids": [
+          "31ea593f-ca8d-40bb-9907-7905338c805d"
+        ],
+        "image": ".runtime/lab-20261016e/wai-details-0.png",
+        "sha256": "cd90d4db343f82df63f89191e62f46f0f8c516d6f3ea9dd4acb08f7b518d1935",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:00:39.526381",
+        "scores": {
+          "adherence": 4,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 5,
+          "composition": 5,
+          "control": 4
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Heavier hand shading and small fingertip drift; no demonstrated repair",
+        "note": "Native closed-eye face and both clasped hands compared. Face, smile, beard, coat and pose held. Hand pass makes dorsal tendon/skin highlights stronger and slightly shifts fingertip contours, without a demonstrated correction to the already-readable hands. No lost digit/hand/subject or new seam seen.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_box": [
+              280,
+              150,
+              570,
+              430
+            ],
+            "output_box": [
+              280,
+              150,
+              570,
+              430
+            ],
+            "image": ".runtime/lab-20261016e/wai-details-face-pair.png",
+            "sha256": "94541bbb4a9ac851a5b363289ddf3f33110ee00db0fb409dca391a0db195ad0e"
+          },
+          {
+            "kind": "hands",
+            "input_box": [
+              230,
+              870,
+              570,
+              1060
+            ],
+            "output_box": [
+              230,
+              870,
+              570,
+              1060
+            ],
+            "image": ".runtime/lab-20261016e/wai-details-hands-pair.png",
+            "sha256": "b41a9070746b8ee4fc206ea1f820c764f799e094fd164ac0747c72b40f819308"
+          },
+          {
+            "kind": "cloth",
+            "input_box": [
+              150,
+              440,
+              440,
+              690
+            ],
+            "output_box": [
+              150,
+              440,
+              440,
+              690
+            ],
+            "image": ".runtime/lab-20261016e/wai-details-cloth-pair.png",
+            "sha256": "b69547c59832c053674e9cf36abbfa176e8351b5df6e2912a503b1cf75396436"
+          }
+        ],
+        "face_detail": "slight beard/skin smoothing",
+        "hands": "same clasp; stronger skin/tendon highlights",
+        "line_quality": "slightly heavier local contours",
+        "artifacts": "no new visible seam",
+        "colour_shift": "no material shift",
+        "repair_efficacy": "not established: no named source defect"
+      },
+      "peak_studio_commit_ratio": 0.6716608009349889
+    },
+    {
+      "trial": "wai-face",
+      "meta": {
+        "operation": "face",
+        "source_asset": "26fb675eb78a5c7daa540b414a7b2929",
+        "source_sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62"
+      },
+      "request": {
+        "preset_id": "anime-face",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-face",
+          "reference_file": "6fefbf624fd3430e9d7d5580aec1802a_WAI-Illustration_00060_.png.png",
+          "source_asset_id": "26fb675eb78a5c7daa540b414a7b2929",
+          "source_sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62",
+          "template_sha256": "a8af4524a2b4e35acdae332fc3b6d9c7b7625ef93b641dda192229c65f1b215a",
+          "version": 1
+        },
+        "controls": {
+          "reference": "6fefbf624fd3430e9d7d5580aec1802a_WAI-Illustration_00060_.png.png",
+          "positive": "original character, one clearly older adult man aged fifty-five, short salt-and-pepper hair, a neat full grey beard, weathered mature face with smile lines, wearing a long brown travelling coat over a high-collared cream shirt and grey trousers, both empty hands resting together at waist, standing in a quiet walled garden, no writing, fully clothed, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+          "negative": "bad quality, worst quality, worst detail, sketch, censor",
+          "seed": 161021
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "26fb675eb78a5c7daa540b414a7b2929"
+        ],
+        "references": [],
+        "label": "Lab 1016e · wai-face"
+      },
+      "job_id": "b293e741-b0ab-42a5-8181-a2c2fd21fa89",
+      "prompt_ids": [
+        "17549c7f-1e06-4e67-8084-9e8794daff3f"
+      ],
+      "status": "completed",
+      "created_at": 1792162629.5208805,
+      "started_at": 1792162629.5379903,
+      "finished_at": 1792162689.7617366,
+      "elapsed_seconds": 60.22374629974365,
+      "admission_ratio": 0.6065081407450422,
+      "peak_sampled_commit_ratio": 0.6248915467949577,
+      "recipe_sha256": "a4ab455a4d32d6e8001c4a20078c1028e56fd12cdeb0791cc6969cda95cb0350",
+      "outputs": [
+        {
+          "filename": "Anime-Face_00002_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 161021,
+          "prompt_id": "17549c7f-1e06-4e67-8084-9e8794daff3f",
+          "media_type": "image",
+          "asset_id": "5a445b3e4b945fbd8e9d3ce81919aeb1",
+          "image": ".runtime\\lab-20261016e\\wai-face-0.png",
+          "sha256": "a2093df1c5be48e7dc4daf540c3319608f45e2245222677490aa3c05a2a75dcf",
+          "dimensions": [
+            832,
+            1216
+          ]
+        },
+        {
+          "filename": "Anime-Face-Mask_00002_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": 161021,
+          "prompt_id": "17549c7f-1e06-4e67-8084-9e8794daff3f",
+          "media_type": "image",
+          "asset_id": "06c7a07aa80557139d1c904ac1e696e5",
+          "image": ".runtime\\lab-20261016e\\wai-face-1.png",
+          "sha256": "8349a90e4448c5b3508dfc008290fb8d975ba004eac63e6bbfc9ce9c0eed93e6",
+          "dimensions": [
+            832,
+            1216
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "4",
+            "input": "image",
+            "value": "6fefbf624fd3430e9d7d5580aec1802a_WAI-Illustration_00060_.png.png"
+          }
+        ],
+        "positive": [
+          {
+            "node": "2",
+            "input": "text",
+            "value": "original character, one clearly older adult man aged fifty-five, short salt-and-pepper hair, a neat full grey beard, weathered mature face with smile lines, wearing a long brown travelling coat over a high-collared cream shirt and grey trousers, both empty hands resting together at waist, standing in a quiet walled garden, no writing, fully clothed, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality"
+          }
+        ],
+        "negative": [
+          {
+            "node": "3",
+            "input": "text",
+            "value": "bad quality, worst quality, worst detail, sketch, censor"
+          }
+        ],
+        "seed": [
+          {
+            "node": "5",
+            "input": "seed",
+            "value": 161021
+          }
+        ]
+      },
+      "resolved_authored_defaults": {
+        "steps": 24,
+        "cfg": 5.0,
+        "denoise": 0.28
+      },
+      "host_commit_windows": [
+        {
+          "samples": 111,
+          "unknown_samples": 0,
+          "first_at": 1792162633.5498116,
+          "last_at": 1792162689.7557387,
+          "peak_committed_bytes": 68513660928,
+          "peak_at": 1792162687.302339,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 34270429184,
+          "index": 0,
+          "prompt_id": "17549c7f-1e06-4e67-8084-9e8794daff3f",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "17549c7f-1e06-4e67-8084-9e8794daff3f",
+          "seed": 161021,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 1932251136,
+            "peak_dedicated_bytes": 12864094208,
+            "samples": 112,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "wai-face",
+        "job_id": "b293e741-b0ab-42a5-8181-a2c2fd21fa89",
+        "prompt_ids": [
+          "17549c7f-1e06-4e67-8084-9e8794daff3f"
+        ],
+        "image": ".runtime/lab-20261016e/wai-face-0.png",
+        "sha256": "a2093df1c5be48e7dc4daf540c3319608f45e2245222677490aa3c05a2a75dcf",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T15:59:05.650083",
+        "scores": {
+          "adherence": 4,
+          "anatomy": 4,
+          "style": 5,
+          "technical": 5,
+          "composition": 5,
+          "control": 5
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "No mandatory repair seen; no demonstrated quality gain",
+        "note": "Native face and clasped hands compared. Closed-eye smile, grey hair/beard, coat and background remain. Very slight beard/skin smoothing; no visible facial defect repaired and hands are unchanged. Face detection mask also opened: one rectangular face region, no hand region.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_box": [
+              280,
+              150,
+              570,
+              430
+            ],
+            "output_box": [
+              280,
+              150,
+              570,
+              430
+            ],
+            "image": ".runtime/lab-20261016e/wai-face-face-pair.png",
+            "sha256": "49bf57af7e79b18d0632081df89021b80de52150c6165f45379c79ca66ca4e4e"
+          },
+          {
+            "kind": "hands",
+            "input_box": [
+              230,
+              870,
+              570,
+              1060
+            ],
+            "output_box": [
+              230,
+              870,
+              570,
+              1060
+            ],
+            "image": ".runtime/lab-20261016e/wai-face-hands-pair.png",
+            "sha256": "0769629e01771e4ff89ace792139178b493220bbb7724dbe6dbcd64e260af1a6"
+          },
+          {
+            "kind": "cloth",
+            "input_box": [
+              150,
+              440,
+              440,
+              690
+            ],
+            "output_box": [
+              150,
+              440,
+              440,
+              690
+            ],
+            "image": ".runtime/lab-20261016e/wai-face-cloth-pair.png",
+            "sha256": "b69547c59832c053674e9cf36abbfa176e8351b5df6e2912a503b1cf75396436"
+          }
+        ],
+        "face_detail": "very slight smoothing",
+        "hands": "unchanged",
+        "line_quality": "source contours retained",
+        "artifacts": "no new visible artifact",
+        "colour_shift": "none material",
+        "repair_efficacy": "not established: no named source defect",
+        "auxiliary_outputs": [
+          {
+            "index": 1,
+            "kind": "face detection mask",
+            "inspected": true
+          }
+        ]
+      },
+      "peak_studio_commit_ratio": 0.6665784641703129
+    },
+    {
+      "trial": "wai-upscale",
+      "meta": {
+        "operation": "upscale",
+        "source_asset": "26fb675eb78a5c7daa540b414a7b2929",
+        "source_sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62"
+      },
+      "request": {
+        "preset_id": "anime-esrgan",
+        "continuation": {
+          "intent": "repair",
+          "preset_id": "anime-esrgan",
+          "reference_file": "3c19c8a0d68041c38468d5a8673dce9c_WAI-Illustration_00060_.png.png",
+          "source_asset_id": "26fb675eb78a5c7daa540b414a7b2929",
+          "source_sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62",
+          "template_sha256": "e11cb7176ffb45c04ba6b8bd2eaec65b7ab6d829b4ae4f5e68c86b52feafc245",
+          "version": 1
+        },
+        "controls": {
+          "reference": "3c19c8a0d68041c38468d5a8673dce9c_WAI-Illustration_00060_.png.png"
+        },
+        "batch_count": 1,
+        "parent_assets": [
+          "26fb675eb78a5c7daa540b414a7b2929"
+        ],
+        "references": [],
+        "label": "Lab 1016e · wai-upscale"
+      },
+      "job_id": "30176d9e-2005-48cc-8d91-83280de541be",
+      "prompt_ids": [
+        "cdfe00d7-e1eb-47a6-8c80-20652ab3397d"
+      ],
+      "status": "completed",
+      "created_at": 1792164239.6636486,
+      "started_at": 1792164239.670739,
+      "finished_at": 1792164312.126666,
+      "elapsed_seconds": 72.45592713356018,
+      "admission_ratio": 0.5103507356327299,
+      "peak_sampled_commit_ratio": 0.6829487412255121,
+      "recipe_sha256": "370507fd9111faf82edcd6a738ad96951937712ea2e81ff059f6e486dbbd3273",
+      "outputs": [
+        {
+          "filename": "Anime-ESRGAN-2x_00007_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "seed": null,
+          "prompt_id": "cdfe00d7-e1eb-47a6-8c80-20652ab3397d",
+          "media_type": "image",
+          "asset_id": "75298b6967435e059b33a8aaeda487d1",
+          "image": ".runtime\\lab-20261016e\\wai-upscale-0.png",
+          "sha256": "93b3867b0029f711e8e8d2f3a141c465e6c67c1eb78ebc81360bbc71cff3dd1c",
+          "dimensions": [
+            1664,
+            2432
+          ]
+        }
+      ],
+      "resolved_controls": {
+        "reference": [
+          {
+            "node": "1",
+            "input": "image",
+            "value": "3c19c8a0d68041c38468d5a8673dce9c_WAI-Illustration_00060_.png.png"
+          }
+        ]
+      },
+      "resolved_authored_defaults": {},
+      "host_commit_windows": [
+        {
+          "samples": 143,
+          "unknown_samples": 0,
+          "first_at": 1792164239.8172212,
+          "last_at": 1792164312.1206625,
+          "peak_committed_bytes": 70776184832,
+          "peak_at": 1792164306.770758,
+          "limit_bytes": 102784090112,
+          "min_available_bytes": 32007905280,
+          "index": 0,
+          "prompt_id": "cdfe00d7-e1eb-47a6-8c80-20652ab3397d",
+          "interval_seconds": 0.5
+        }
+      ],
+      "submissions": [
+        {
+          "index": 0,
+          "prompt_id": "cdfe00d7-e1eb-47a6-8c80-20652ab3397d",
+          "seed": null,
+          "status": "completed",
+          "gpu_memory": {
+            "peak_shared_bytes": 5719707648,
+            "peak_dedicated_bytes": 14087929856,
+            "samples": 149,
+            "spilled": true,
+            "settled_shared_bytes": 82563072,
+            "lingering": false
+          }
+        }
+      ],
+      "judgement": {
+        "trial": "wai-upscale",
+        "job_id": "30176d9e-2005-48cc-8d91-83280de541be",
+        "prompt_ids": [
+          "cdfe00d7-e1eb-47a6-8c80-20652ab3397d"
+        ],
+        "image": ".runtime/lab-20261016e/wai-upscale-0.png",
+        "sha256": "93b3867b0029f711e8e8d2f3a141c465e6c67c1eb78ebc81360bbc71cff3dd1c",
+        "judge": "lab",
+        "blind": false,
+        "judged_at": "2026-10-16T16:26:34.969368",
+        "scores": {
+          "adherence": 5,
+          "anatomy": 4,
+          "style": 4,
+          "technical": 4,
+          "composition": 5,
+          "control": 5
+        },
+        "verdict": "keep",
+        "comparison": "neutral",
+        "worst_defect": "Fine beard/skin/cloth texture simplified",
+        "note": "Native closed-eye face/beard, both clasped hands and coat/shirt crop compared with the original. 1664x2432 output preserves smile, hand positions, grey hair/beard, tan/cream palette and background. Beard/crease edges become cleaner and more graphic; fine skin and cloth texture smooths away. No new anatomical failure, changed expression, seam or material colour shift seen.",
+        "crops": [
+          {
+            "kind": "face",
+            "input_image": ".runtime/lab-20261016e/wai-source.png",
+            "input_box": [
+              280,
+              150,
+              570,
+              430
+            ],
+            "output_box": [
+              560,
+              300,
+              1140,
+              860
+            ],
+            "image": ".runtime/lab-20261016e/wai-upscale-face-pair.png",
+            "sha256": "797f933ac58ebe186971b3d3e11e8368817d4dfbbe76faff65b9b9cb1ed45099"
+          },
+          {
+            "kind": "hands",
+            "input_image": ".runtime/lab-20261016e/wai-source.png",
+            "input_box": [
+              230,
+              870,
+              570,
+              1060
+            ],
+            "output_box": [
+              460,
+              1740,
+              1140,
+              2120
+            ],
+            "image": ".runtime/lab-20261016e/wai-upscale-hands-pair.png",
+            "sha256": "6eaa90b14bef9248289d3e0c4e981c26304e8e6432aecb43d87fdfb6307c41f9"
+          },
+          {
+            "kind": "cloth",
+            "input_image": ".runtime/lab-20261016e/wai-source.png",
+            "input_box": [
+              150,
+              440,
+              440,
+              690
+            ],
+            "output_box": [
+              300,
+              880,
+              880,
+              1380
+            ],
+            "image": ".runtime/lab-20261016e/wai-upscale-cloth-pair.png",
+            "sha256": "9f2ad5abbf8bebe0c19cb11f8dd233862d9f99c8e3ec282902a328462971187b"
+          }
+        ],
+        "face_detail": "same closed-eye smile; cleaner graphic beard edges",
+        "hands": "same clasp and fingers",
+        "line_quality": "smoother/stronger contours",
+        "artifacts": "no new visible seam/ringing",
+        "colour_shift": "no material shift"
+      },
+      "peak_studio_commit_ratio": 0.6885908583213397
+    }
+  ],
+  "counts": {
+    "jobs": 22,
+    "outputs": 23,
+    "verdicts": {
+      "keep": 13,
+      "fixable": 9
+    }
+  },
+  "verification": {
+    "look_tests": {
+      "command": "python -m unittest discover -s tests -p \"test_looks*.py\"",
+      "result": "61 tests passed in 55.150 s"
+    },
+    "validator_pre_docs": {
+      "command": "python scripts/validate-repo.py",
+      "exit_code": 0,
+      "result": "92 preset graphs/bindings; 176 pinned assets; 4037 tracked paths; 158 LoRA names; 728 local-only manifest entries, 102 references"
+    },
+    "human_todo_sha256_start": "c79466ab6a295eb65e7f6e09fe2b359dcd38f7ff60b5f9cbd2d10da58f563c97",
+    "validator_final": {
+      "at": "2026-10-16T16:51:33.920667",
+      "command": "python scripts/validate-repo.py",
+      "exit_code": 0,
+      "result": "PASS: 92 preset graphs/bindings; 176 pinned assets; 4037 tracked paths; 158 LoRA names; 728 local-only manifest entries and 102 references checked",
+      "git_configuration": "process-only safe.directory; no global config change"
+    },
+    "diff_check": {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    "receipt_audit": "22 completed jobs; exact request/export controls and authored defaults, all prompt IDs, image/crop hashes and native pixel crops, source hashes, dimensions, nonoverlapping intervals, seed-only pairs, nine post-reclassification heavy admissions below 60%, unchanged HUMAN_TODO",
+    "head_sha": "531d14bd01d027f88883e3cd75065137d535efaa",
+    "branch": "lab/round5-finishing-20261016"
+  },
+  "serial_intervals": true,
+  "hashes_and_bound_controls_match": true,
+  "human_todo_unchanged": true,
+  "heavy_admission_exception": {
+    "trial": "petiflow-upscale",
+    "admission_ratio": 0.6478378380101645,
+    "reason": "ESRGAN initially classified light; observed high memory prompted below-60% gate on all remaining upscales. No runtime changed or job repeated."
+  },
+  "label_deviations": [
+    {
+      "trial": "petiflow-details",
+      "actual_label": "Lab 1016e Â· petiflow-details",
+      "reason": "Windows decoded Node UTF-8 output as cp1252; corrected subsequent requests, no re-render"
+    },
+    {
+      "trial": "petiflow-face",
+      "actual_label": "Lab 1016e Â· petiflow-face",
+      "reason": "Windows decoded Node UTF-8 output as cp1252; corrected subsequent requests, no re-render"
+    }
+  ],
+  "generation_not_acceptance_or_licensing": true,
+  "final_summary": {
+    "at": "2026-10-16T16:52:54.127993",
+    "jobs": 22,
+    "completed": 22,
+    "outputs": 23,
+    "judgements": {
+      "keep": 13,
+      "fixable": 9
+    },
+    "native_crop_records": 54,
+    "serial_intervals": true,
+    "exact_requests_controls_defaults_hashes": "pass",
+    "heavy_admissions": {
+      "passed": 9,
+      "min_ratio": 0.489702584370337,
+      "max_ratio": 0.5489185125297226,
+      "first_esrgan_exception": 0.6478378380101645
+    },
+    "peak_studio_commit_ratio": 0.8765939213921287,
+    "active_jobs": [],
+    "historical_uncertain_untouched": 5,
+    "human_todo_unchanged": true,
+    "runtime_changes": "none; Studio/ComfyUI left running",
+    "commits_pushes": "none",
+    "evidence_bytes": 76766195
+  }
+}

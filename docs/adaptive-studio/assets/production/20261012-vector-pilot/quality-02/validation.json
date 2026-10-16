@@ -1,0 +1,72 @@
+{
+  "sources": [
+    {
+      "file": "night-shift-pixel-v2.svg",
+      "bytes": 36173,
+      "sha256": "c3ea49f009b7fe3506a8124ee0c66531634f57fb2d2d8d09a12ec6d38f47c069",
+      "layers": 13,
+      "nativeFilters": []
+    },
+    {
+      "file": "night-shift-workshop-v2.svg",
+      "bytes": 161595,
+      "sha256": "224e57e879e9d0de30d943bd4a8becf3347b12682fe8b82fa7d1299c3ac0bf54",
+      "layers": 21,
+      "nativeFilters": [
+        "feGaussianBlur",
+        "feGaussianBlur",
+        "feGaussianBlur"
+      ]
+    },
+    {
+      "file": "lantern-counter-vignette-v2.svg",
+      "bytes": 34750,
+      "sha256": "1af0dd98e94878a19437b640ae4f20104f92444bd01f29fa47260f73461344e3",
+      "layers": 12,
+      "nativeFilters": [
+        "feGaussianBlur"
+      ],
+      "preserved": false,
+      "verification": "Source was not preserved in the repository and was not found in git log --all -- *lantern-counter-vignette-v2.svg. Historical bytes, sha256, layers and nativeFilters cannot be re-derived from the missing source."
+    }
+  ],
+  "checks": [
+    "comparison fits 390 20261012-vector-pilot",
+    "unchanged reference decodes 390",
+    "embedded SVG IDs are unique 390",
+    "reduced motion retains static artwork 390",
+    "explicit restrained motion runs 390",
+    "actual offscreen observation pauses 390",
+    "simulated hidden event pauses 390",
+    "user pause remains static 390",
+    "no script errors 390",
+    "comparison fits 390 vector-pilot",
+    "unchanged reference decodes 390",
+    "embedded SVG IDs are unique 390",
+    "reduced motion retains static artwork 390",
+    "explicit restrained motion runs 390",
+    "actual offscreen observation pauses 390",
+    "simulated hidden event pauses 390",
+    "user pause remains static 390",
+    "no script errors 390",
+    "comparison fits 1440 20261012-vector-pilot",
+    "unchanged reference decodes 1440",
+    "embedded SVG IDs are unique 1440",
+    "reduced motion retains static artwork 1440",
+    "explicit restrained motion runs 1440",
+    "actual offscreen observation pauses 1440",
+    "simulated hidden event pauses 1440",
+    "user pause remains static 1440",
+    "no script errors 1440",
+    "comparison fits 1440 vector-pilot",
+    "unchanged reference decodes 1440",
+    "embedded SVG IDs are unique 1440",
+    "reduced motion retains static artwork 1440",
+    "explicit restrained motion runs 1440",
+    "actual offscreen observation pauses 1440",
+    "simulated hidden event pauses 1440",
+    "user pause remains static 1440",
+    "no script errors 1440"
+  ],
+  "scope": "Native SVG safety and actual browser rendering/lifecycle, not art acceptance or full-resolution MA qualification"
+}

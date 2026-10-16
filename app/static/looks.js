@@ -1,4 +1,4 @@
-/* Looks (#1221): pick a saved look in Create, type only the scene, and the Studio writes the wording and the look's recipe
+/* Looks (#1221): pick a look in Create, type only the scene, and the Studio writes the wording and the look's recipe
    settings. A look is Workspace data (/api/looks, app/looks.py), not browser storage. Preparing never generates (K8). */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioLooks=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
@@ -34,7 +34,7 @@
   function summary(look){
     if(!look)return '';
     const anchor=(look.lineage||[]).find(e=>e.role==='anchor');
-    return [look.preset_name||look.body?.preset_id,anchor?'anchor '+(anchor.key||String(anchor.sha256||'').slice(0,12))+(look.anchor_asset_id?' (in your Workspace)':' (not in this Workspace)'):'no anchor picture',look.origin==='seed'?'shipped look':'your look'].filter(Boolean).join(' · ');
+    return [look.preset_name||look.body?.preset_id,anchor?'anchor '+(anchor.key||String(anchor.sha256||'').slice(0,12))+(look.anchor_asset_id?' (in your Workspace)':' (not in this Workspace)'):'no anchor picture',look.origin==='seed'?(look.revision>0?'edited shipped look':'shipped look'):'your look'].filter(Boolean).join(' · ');
   }
   // Optional lines (owner, 27 Sep 2026): layout sentences a look offers but does not force, e.g. Night Shift's quiet wall for UI
   // backgrounds. One checkbox per line, set to the line's default; every line's choice is sent so the server never guesses.
@@ -46,24 +46,89 @@
     const on=lines(look).filter(o=>result.look?.options?.[o.id]).map(o=>o.label),withLines=on.length?', with: '+on.join('; '):'';
     return result.look.name+' prepared on '+(result.preset_name||result.preset_id)+(switched?' (recipe switched)':'')+seed+size+withLines+'. Your scene is in the wording. Nothing was generated; press Generate when it reads right.';
   }
-  return{SLOT,slotCount,recipeProblem,groups,optionLabel,prepareBlocker,saveBlocker,saveControls,summary,optionRows,optionsPayload,readyMessage};
+  // Probe detached controls first: an unsupported select value becomes empty, and numeric
+  // controls can reject a value. Never publish only the settings that happened to stick.
+  function applyControls(controls,resolve){
+    const writes=[],problems=[];
+    const accepts=(input,value)=>input.checkValidity()&&(input.type==='number'?input.value!==''&&Number.isFinite(Number(value))&&Number(input.value)===Number(value):String(input.value)===String(value));
+    for(const [key,value] of Object.entries(controls||{})){
+      const input=resolve(key);
+      if(!input){problems.push(key);continue;}
+      const probe=input.cloneNode(true);probe.value=value;
+      if(!accepts(probe,value)){problems.push(key);continue;}
+      writes.push([input,value,input.value,key]);
+    }
+    if(!problems.length){
+      for(const [input,value] of writes)input.value=value;
+      for(const [input,value,,key] of writes)if(!accepts(input,value))problems.push(key);
+      if(problems.length)for(const [input,,previous] of writes)input.value=previous;
+    }
+    return problems;
+  }
+  let application=null,preparation=null;
+  // Admission is global while preparing, even if the owner changes the selected recipe.
+  // Tokens prevent an obsolete completion from releasing a newer request's hold.
+  function beginPreparation(){return preparation={};}
+  function finishPreparation(token){if(preparation!==token)return false;preparation=null;return true;}
+  function normalizeApplication(value,presetId){
+    if(!value||value.version!==1||value.preset_id!==presetId||!Array.isArray(value.controls)||!value.controls.length||value.controls.length>32||value.controls.some(k=>typeof k!=='string'||!/^[a-z][a-z0-9_]{0,63}$/.test(k)))return null;
+    return {version:1,preset_id:presetId,controls:[...new Set(value.controls)]};
+  }
+  function clearApplication(){application=null;}
+  function restoreApplication(value,presetId){
+    application=value==null?null:normalizeApplication(value,presetId);
+    if(value!=null&&!application)throw Error('Invalid look application state.');
+  }
+  function applicationPayload(presetId){return application?.preset_id===presetId?{look_application:normalizeApplication(application,presetId)}:{};}
+  function applicationBlocker(presetId){if(preparation)return 'A Look is being prepared. Wait for it to finish before generating or saving a setup.';return application?.preset_id===presetId?'This Look could not be applied: '+application.controls.join(', ')+'. Recipe defaults are shown; no Look settings were applied. Reprepare with supported settings or reset the recipe without the look. Nothing was generated.':'';}
+  return{SLOT,slotCount,recipeProblem,groups,optionLabel,prepareBlocker,saveBlocker,saveControls,summary,optionRows,optionsPayload,readyMessage,applyControls,normalizeApplication,clearApplication,restoreApplication,applicationPayload,applicationBlocker,beginPreparation,finishPreparation};
 });
 
 (function(){
   'use strict';
   if(typeof document==='undefined'||!document.querySelector('#createView')||typeof module==='object')return;
   const L=StudioLooks,q=s=>document.querySelector(s);
-  let looks=[],busy=false,composed=null;
+  let looks=[],busy=false,composed=null,preparationEpoch=0,preparedShortcut=null;
+  // Events catch edit-then-undo; the stamp also catches changes made without input events.
+  for(const type of ['input','change'])document.addEventListener(type,event=>{
+    if(event.target?.closest?.('#createView'))preparationEpoch++;
+  },true);
+  document.addEventListener('studio:recipe',()=>{preparationEpoch++;});
   // Folded by default: Create's first screen keeps the wording and Generate in view (workshop height budget).
   const block=document.createElement('details');block.id='lookBlock';block.className='ux-looks';
-  block.innerHTML='<summary>Use a saved look <small>type only the scene</small></summary><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div><div id="lookOptions" class="ux-looks-row" role="group" aria-label="Optional lines of this look" hidden></div>'
+  block.innerHTML='<summary>Use a look <small>type only the scene</small></summary><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div><div id="lookOptions" class="ux-looks-row" role="group" aria-label="Optional lines of this look" hidden></div>'
+    +'<details id="lookPreview" class="look-visual-reference" hidden><summary>Preview Night Shift reference</summary><figure><img id="lookPreviewImage" width="1024" height="576" decoding="async" hidden alt=""><figcaption><strong id="lookPreviewTitle"></strong><p id="lookPreviewCopy">A local visual reference for the Night Shift mood. Your scene is prepared from the saved wording.</p><p id="lookPreviewFallback" hidden>Picture unavailable. Imagine a quiet graphite workshop with a rainy window, warm desk lamp and cyan CRT. You can still prepare this Look.</p></figcaption></figure></details>'
     +'<p id="lookSummary" class="muted"></p><div class="ux-looks-row"><button type="button" id="lookPrepare" aria-describedby="lookReason">Prepare with this look</button><button type="button" id="lookTrash" aria-describedby="lookReason">Put away</button></div><p class="disabledReason"><small id="lookReason"></small></p>'
     +'<details id="lookSave"><summary>Save this wording as a look</summary><p class="muted">Write '+L.SLOT+' in the wording where a new scene goes. The recipe and its settings are saved with it.</p><label>Look name<input id="lookName" maxlength="120" autocomplete="off" aria-describedby="lookSaveReason"></label><p id="lookAnchor" class="muted"></p><button type="button" id="lookSaveButton" aria-describedby="lookSaveReason">Save look</button><p class="disabledReason"><small id="lookSaveReason"></small></p></details>'
-    +'<p id="lookStatus" role="status" aria-live="polite"></p>';
+    +'<p id="lookStatus" role="status" aria-live="polite"></p><button type="button" id="lookReset" hidden>Reset recipe without the look</button>';
   (q('#uxFills')||q('#positiveWrap')).before(block);
   const current=()=>looks.find(l=>l.id===q('#lookSelect').value)||null;
   const status=(text,error=false)=>{q('#lookStatus').textContent=text;q('#lookStatus').classList.toggle('error',error);};
   const anchorAsset=()=>typeof parentAssets!=='undefined'&&parentAssets.length===1?parentAssets[0]:null;
+  const preview=q('#lookPreview'),previewImage=q('#lookPreviewImage');
+  let previewKey=null;
+  function visualReference(){
+    const look=current(),ref=look?.visual_reference;
+    return look?.usable&&ref?.src==='/static/look-previews/night-shift-ma-responsive-1024.webp'?ref:null;
+  }
+  function syncPreview(){
+    const ref=visualReference(),look=current(),key=ref?look.id+':'+look.revision:null;
+    if(key===previewKey)return;
+    previewKey=key;preview.open=false;preview.hidden=!ref;
+    previewImage.hidden=true;previewImage.removeAttribute('src');
+    q('#lookPreviewFallback').hidden=true;
+    q('#lookPreviewTitle').textContent=ref?.title||'';previewImage.alt=ref?.alt||'';
+  }
+  // Only a deliberate open loads the optional picture. It has no animation or recipe state.
+  preview.addEventListener('toggle',()=>{
+    const ref=visualReference();
+    if(!preview.open||preview.hidden||!block.open||!ref||document.visibilityState==='hidden')return;
+    if(globalThis.matchMedia?.('(forced-colors: active)').matches){q('#lookPreviewFallback').hidden=false;return;}
+    if(previewImage.getAttribute('src')===ref.src)return;
+    previewImage.onload=()=>{if(visualReference()?.src===ref.src&&!preview.hidden)previewImage.hidden=false;};
+    previewImage.onerror=()=>{if(visualReference()?.src!==ref.src||preview.hidden)return;previewImage.hidden=true;q('#lookPreviewFallback').hidden=false;};
+    previewImage.src=ref.src;
+  });
   // Rebuilt only when the chosen look changes, so a ticked line survives typing the scene.
   let linesFor=null;
   function renderLines(){
@@ -73,7 +138,9 @@
   }
   const checkedLines=()=>Object.fromEntries([...document.querySelectorAll('#lookOptions [data-look-option]')].map(i=>[i.dataset.lookOption,i.checked]));
   function sync(){
+    syncPreview();
     renderLines();
+    q('#lookReset').hidden=!L.applicationBlocker(typeof selected!=='undefined'?selected?.id:null);q('#lookReset').disabled=busy;
     const look=current(),reason=L.prepareBlocker({look,scene:q('#lookScene').value,busy});
     q('#lookPrepare').disabled=!!reason;q('#lookReason').textContent=reason;
     q('#lookTrash').hidden=!look;q('#lookTrash').disabled=busy;q('#lookTrash').textContent=look?.trashed_at?'Restore':'Put away';
@@ -85,7 +152,7 @@
   }
   function render(keep){
     const presetId=typeof selected!=='undefined'?selected?.id:null,{active,away}=L.groups(looks),opt=l=>'<option value="'+esc(l.id)+'">'+esc(L.optionLabel(l,presetId))+'</option>';
-    q('#lookSelect').innerHTML='<option value="">'+(looks.length?'Choose a look…':'No saved looks yet')+'</option>'+active.map(opt).join('')+(away.length?'<optgroup label="Put away">'+away.map(opt).join('')+'</optgroup>':'');
+    q('#lookSelect').innerHTML='<option value="">'+(looks.length?'Choose a look…':'No looks yet')+'</option>'+active.map(opt).join('')+(away.length?'<optgroup label="Put away">'+away.map(opt).join('')+'</optgroup>':'');
     q('#lookSelect').value=looks.some(l=>l.id===keep)?keep:'';sync();
   }
   async function load(keep){
@@ -97,22 +164,63 @@
     const typed=q('#positive').value.trim(),switched=selected?.id!==result.preset_id;
     if(typed&&typed!==String(selected?.defaults?.positive||'').trim()&&typed!==composed&&!confirm('This look replaces the wording in Create. Continue?')){status('Nothing changed.');return;}
     // Reload the recipe even when it is open: a setting the look does not store, or a parent picture, must not linger.
-    const batch=q('#batch').value;selectPreset(result.preset_id);q('#batch').value=batch;
-    for(const [key,value] of Object.entries(result.controls)){const input=key==='positive'?q('#positive'):key==='negative'?q('#negative'):getControl(key);if(input)input.value=value;}
+    const previous=StudioSetupDraft.capture(),files=['reference','lastReference'].map(id=>[id,[...(q('#'+id)?.files||[])]]),batch=q('#batch').value;
+    // values() drops empty controls, so keep every control's exact value (an intentionally cleared one included) for a rollback.
+    const exact=typeof document==='undefined'?[]:[...document.querySelectorAll('[data-key]')].map(el=>[el.dataset.key,el.value]),previousPreset=selected?.id;
+    if(!previous)throw Error('Create could not be saved for recovery. Prepare stopped; current inputs are unchanged.');
+    selectPreset(result.preset_id);q('#batch').value=batch;
+    const problems=L.applyControls(result.controls,key=>key==='positive'?q('#positive'):key==='negative'?q('#negative'):getControl(key));
+    if(problems.length){
+      applySaved(previous.recipe);recipeTemplateHash=previous.templateHash;
+      for(const [id,list] of files)if(list.length){const transfer=new DataTransfer();for(const file of list)transfer.items.add(file);q('#'+id).files=transfer.files;}
+      if(selected?.id===previousPreset)for(const [key,value] of exact){const el=getControl(key);if(el)el.value=value;}
+      for(const refresh of [typeof updateLoraHints==='function'&&updateLoraHints,typeof updateReady==='function'&&updateReady,typeof scheduleTimeEstimate==='function'&&scheduleTimeEstimate])if(refresh)refresh();   // restored files and cleared values fire no input events
+      const details=problems.map(key=>/^lora\d*_name$/.test(key)?"LoRA '"+result.controls[key]+"' is not installed":(key==='scheduler'?'schedule':key.replaceAll('_',' '))+" '"+result.controls[key]+"' could not be applied").join('; ');
+      const text="This look's "+details+'. Prepare stopped. '+(problems.some(key=>/^lora\d*_name$/.test(key))?'Install missing LoRAs in Models & setup or pick another look.':'Pick another look, or choose a recipe that offers these settings.')+' Create is unchanged.';message(text,true);status(text,true);return false;
+    }
     composed=result.controls.positive;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));
     updateLoraHints();updateReady();scheduleTimeEstimate();recipeChanged();
     const text=L.readyMessage(result,switched,looks.find(l=>l.id===result.look.id));message(text);status(text);
+    preparedShortcut={stamp:preparationStamp(),epoch:preparationEpoch};return true;
   }
   q('#lookSelect').addEventListener('change',sync);q('#lookScene').addEventListener('input',sync);q('#lookName').addEventListener('input',sync);
   q('#positive').addEventListener('input',sync);document.addEventListener('studio:recipe',()=>render(q('#lookSelect').value));
-  q('#lookScene').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();if(!q('#lookPrepare').disabled)q('#lookPrepare').click();}});
-  q('#lookPrepare').onclick=()=>act(async()=>{const look=current(),options=L.optionsPayload(look,checkedLines());
-    apply(await post('/api/looks/prepare',{id:look.id,scene:q('#lookScene').value,expected_revision:look.revision,...(options?{options}:{})}));});
+  q('#lookScene').addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||e.altKey||e.shiftKey||e.isComposing)return;
+    e.preventDefault();if(e.repeat||busy)return;
+    if((e.ctrlKey||e.metaKey)&&preparedShortcut?.epoch===preparationEpoch&&preparedShortcut.stamp===preparationStamp()){
+      generateShortcut({...e,key:'Enter',ctrlKey:!!e.ctrlKey,metaKey:!!e.metaKey,target:e.target,defaultPrevented:false,preventDefault(){}});return;
+    }
+    if(!q('#lookPrepare').disabled)q('#lookPrepare').click();
+  });
+  function preparationStamp(){
+    const look=current();
+    return JSON.stringify([look?.id,look?.revision,q('#lookScene').value,checkedLines(),
+      typeof StudioSetupDraft!=='undefined'?StudioSetupDraft.stamp():[selected?.id,values(),q('#batch').value]]);
+  }
+  q('#lookPrepare').onclick=()=>act(async()=>{
+    preparedShortcut=null;
+    const look=current(),scene=q('#lookScene').value,reason=L.prepareBlocker({look,scene});
+    if(reason)throw Error(reason);
+    const options=L.optionsPayload(look,checkedLines()),stamp=preparationStamp(),epoch=preparationEpoch;
+    const token=L.beginPreparation();
+    const currentRequest=()=>{try{return epoch===preparationEpoch&&stamp===preparationStamp();}catch{return false;}};
+    const stale=()=>status('Create or the selected Look changed while preparing. The result was not applied. Review the current inputs and prepare again.');
+    try{
+      updateReady();let result;
+      try{result=await post('/api/looks/prepare',{id:look.id,scene,expected_revision:look.revision,...(options?{options}:{})});}
+      catch(error){if(!currentRequest()){stale();return;}throw error;}
+      if(!currentRequest()){stale();return;}
+      // Application is synchronous; release before it renders an actual recovery hold.
+      L.finishPreparation(token);if(apply(result))status(q('#lookStatus').textContent+' Prepared. Press Ctrl+Enter again (or Generate) to run it.'+(result.notices||[]).map(n=>' '+n).join(''));
+    }finally{L.finishPreparation(token);updateReady();}
+  });
+  q('#lookReset').onclick=()=>{if(busy)return;selectPreset(selected.id);status('Recipe reset without the look. Review its defaults before generating.');};
   q('#lookTrash').onclick=()=>act(async()=>{const look=current();const saved=await post('/api/looks',{action:look.trashed_at?'restore':'trash',id:look.id,expected_revision:look.revision});await load(saved.id);status(saved.name+(saved.trashed_at?' put away. Restore brings it back.':' restored.'));});
   q('#lookSaveButton').onclick=()=>act(async()=>{
     const body={preset_id:selected.id,template:q('#positive').value,controls:L.saveControls(values())};if(selected.negative)body.negative=q('#negative').value;
     const anchor=anchorAsset(),saved=await post('/api/looks',{action:'create',kind:'look',name:q('#lookName').value.trim(),body,...(anchor?{anchor_asset_id:anchor}:{})});
-    q('#lookName').value='';await load(saved.id);status(saved.name+' saved in your Workspace. Type a scene and prepare to use it.');
+    q('#lookName').value='';await load(saved.id);status(saved.name+' saved in your Workspace. Type a scene and prepare to use it.'+(saved.notices||[]).map(n=>' '+n).join(''));
   });
   load();
 })();

@@ -63,3 +63,74 @@ test('a look with optional lines offers one checkbox per line, set to its defaul
   assert.equal(text,'Night Shift (retro anime) prepared on Z-Image Turbo fast, seed 1, 1344x768, with: Keep the quiet wall for UI backgrounds. Your scene is in the wording. Nothing was generated; press Generate when it reads right.');
 });
 console.log(count+' checks. Look contracts passed');
+
+// Execute the shipped application path with select-like readback semantics.
+const fs=require('node:fs'),vm=require('node:vm');
+const source=fs.readFileSync(require.resolve('../app/static/looks.js'),'utf8');
+const applySource=source.slice(source.indexOf('  function apply(result){'),source.indexOf("  q('#lookSelect').addEventListener"));
+function selectControl(options, initial){let value=initial;return {type:'select-one',get value(){return value;},set value(v){value=options.includes(String(v))?String(v):'';},cloneNode(){return selectControl(options,value);},checkValidity(){return true;}};}
+function textControl(initial,type='text'){return {type,value:String(initial),cloneNode(){return textControl(this.value,type);},checkValidity(){return true;},dispatchEvent(){}};}
+function applyFixture(controls){
+  const inputs={'#positive':textControl('my words'),'#negative':textControl('my avoid'),'#batch':textControl(3),seed:textControl(99,'number'),sampler:selectControl(['euler'],'euler'),scheduler:selectControl(['normal'],'normal'),lora_name:selectControl(['installed.safetensors'],'installed.safetensors')};
+  let status='',message='';const sandbox={recipeTemplateHash:null,L,looks:[],busy:false,composed:null,selected:{id:'demo',defaults:{positive:'default words'}},q:key=>inputs[key],getControl:key=>inputs[key],
+    StudioSetupDraft:{capture:()=>({recipe:Object.fromEntries(Object.entries(inputs).map(([key,input])=>[key,input.value]))})},
+    applySaved(recipe){for(const [key,value] of Object.entries(recipe))inputs[key].value=value;},preparationStamp:()=>'',preparationEpoch:0,
+    selectPreset(){L.clearApplication?.();inputs.seed.value='13';inputs.sampler.value='euler';inputs['#positive'].value='default words';},confirm:()=>true,
+    status(text){status=text;},message(text){message=text;},updateLoraHints(){},updateReady(){},scheduleTimeEstimate(){},recipeChanged(){},Event:class{}};
+  vm.runInNewContext('let preparedShortcut;'+applySource+';apply(result)',{...sandbox,result:{preset_id:'demo',look:{id:'test',name:'Test'},controls}});
+  return {inputs,status,message};
+}
+test('a stale select choice cannot become a prepared success or partially apply the other controls',()=>{
+  const result=applyFixture({positive:'new words',seed:37,sampler:'removed'});
+  assert.match(result.status,/could not be applied/);assert.doesNotMatch(result.status,/press Generate/);
+  assert.equal(result.inputs.seed.value,'99');assert.equal(result.inputs.sampler.value,'euler');
+  assert.equal(result.inputs['#positive'].value,'my words');assert.equal(result.inputs['#negative'].value,'my avoid');assert.equal(result.inputs['#batch'].value,'3');
+  assert.equal(L.applicationBlocker('demo'),'');
+});
+
+test('every unavailable select is named in plain words and Create retains its previous values',()=>{
+  const result=applyFixture({positive:'new words',seed:37,lora_name:'gone.safetensors',sampler:'retired',scheduler:'retired'});
+  assert.match(result.status,/LoRA 'gone.safetensors' is not installed/);assert.match(result.status,/sampler 'retired'/);assert.match(result.status,/schedule 'retired'/);
+  assert.match(result.status,/Models & setup/);assert.match(result.status,/Prepare stopped/);
+  assert.equal(result.inputs.seed.value,'99');assert.equal(result.inputs.lora_name.value,'installed.safetensors');
+});
+test('a missing control is reported and does not silently fall through to graph defaults',()=>{
+  const result=applyFixture({positive:'new words',seed:37,fps:24});
+  assert.match(result.status,/fps/);assert.equal(L.applicationBlocker('demo'),'');
+});
+test('a valid application is all-or-nothing and clears an earlier hold',()=>{
+  const result=applyFixture({positive:'new words',seed:37,sampler:'euler'});
+  assert.match(result.status,/Nothing was generated; press Generate/);assert.equal(result.inputs.seed.value,37);
+  assert.equal(L.applicationBlocker('demo'),'');
+});
+test('an edited shipped seed is no longer presented as the original shipped look',()=>{
+  assert.match(L.summary({...night,revision:2}),/edited shipped look/);
+});
+test('draft normalization preserves the hold and cannot silently drop malformed hold state',()=>{
+  const U=require('../app/static/studio-core.js');global.StudioLooks=L;
+  const hold={version:1,preset_id:'demo',controls:['sampler','sampler']};
+  const draft={version:1,updatedAt:1,recipe:{preset:'demo',controls:{seed:13},look_application:hold}};
+  try{
+    const normalized=U.normalizeDraft(draft);assert.deepEqual(normalized.recipe.look_application,{version:1,preset_id:'demo',controls:['sampler']});
+    L.clearApplication();L.restoreApplication(normalized.recipe.look_application,'demo');assert.match(L.applicationBlocker('demo'),/sampler/);
+    for(const bad of [{...hold,version:2},{...hold,preset_id:'other'},{...hold,controls:[]},{...hold,controls:[{}]},{...hold,controls:['<script>']},false]){
+      assert.equal(U.normalizeDraft({...draft,recipe:{...draft.recipe,look_application:bad}}),null);
+    }
+    assert.deepEqual(L.applicationPayload('other'),{});
+  }finally{L.clearApplication();delete global.StudioLooks;}
+  assert.equal(U.normalizeDraft(draft),null,'a host without Looks must refuse the held draft, not lose its state');
+});
+test('out-of-range and fractional numeric settings refuse the entire application',()=>{
+  for(const invalid of [0,101,2.5]){
+    const number=textControl(10,'number');number.cloneNode=()=>({...textControl(10,'number'),checkValidity(){return Number(this.value)>=1&&Number(this.value)<=100&&Number.isInteger(Number(this.value));}});
+    const prompt=textControl('unchanged');const problems=L.applyControls({positive:'new',steps:invalid},key=>key==='steps'?number:prompt);
+    assert.deepEqual(problems,['steps']);assert.equal(prompt.value,'unchanged');assert.equal(number.value,'10');
+  }
+});
+test('actual controls are read back too and every write is restored when a live control rejects it',()=>{
+  const prompt=textControl('old'),sampler=selectControl(['euler'],'euler');
+  sampler.cloneNode=()=>textControl('euler');
+  assert.deepEqual(L.applyControls({positive:'new',sampler:'gone'},key=>key==='positive'?prompt:sampler),['sampler']);
+  assert.equal(prompt.value,'old');assert.equal(sampler.value,'euler');
+});
+console.log(count+' total Look checks passed');

@@ -107,12 +107,36 @@ test('a carrying route refuses, with its reason, when the recorded stack cannot 
 test('the status and hint say the checkpoint and adapters are kept',()=>{
   const plan=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob(recorded)],{},[]);
   const status=C.varyStatus(plan,'strong',3);
-  assert.match(status,/Vary strong prepared on WAI vary/);assert.match(status,/same checkpoint and adapters as this picture \(noirpopwave\.safetensors at 1\)/);
+  assert.match(status,/Vary strong prepared on WAI vary/);assert.match(status,/noirpopwave\.safetensors at 1/);
+  assert.match(status,/lora2_name not recorded; using the recipe's current default: manga-ink-screentone\.safetensors/);
+  assert.doesNotMatch(status,/same checkpoint and adapters as this picture/);
   assert.match(status,/denoise 0\.7/);assert.match(status,/Nothing was generated/);
   const bare=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({seed:5})],{},[]);
-  assert.match(C.varyStatus(bare,'subtle',3),/same checkpoint as this picture, no adapters \(it used none\)/);
+  assert.match(C.varyStatus(bare,'subtle',3),/recipe's current default/);
   assert.equal(C.varyHint(plan),'On WAI vary · keeps its adapters · 2 pictures · denoise 0.5 / 0.7 (starting values)');
 });
+test('a value filled from the recipe default is named as a recipe default',()=>{
+  const bare=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({seed:5})],{},[]);
+  const status=C.varyStatus(bare,'subtle',3);
+  assert.match(status,/lora not recorded; using the recipe's current default: 0/);
+  assert.doesNotMatch(status,/it used none/);
+  const recordedOff={seed:5,lora:0,lora_name:'cinematic lighting.safetensors',lora2:0,lora2_name:'manga-ink-screentone.safetensors',sampler:'euler',steps:24};
+  const off=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob(recordedOff)],{},['cinematic lighting.safetensors','manga-ink-screentone.safetensors']);
+  assert.match(C.varyStatus(off,'subtle',3),/it used none/);
+  const on=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({...recordedOff,lora:1})],{},[]);
+  assert.match(C.varyStatus(on,'subtle',3),/same checkpoint and adapters as this picture/);
+  assert.doesNotMatch(C.varyStatus(on,'subtle',3),/not recorded/);
+});
+test('enabled defaults and mixed recorded/default values never claim the original adapter stack',()=>{
+  const shelf=[{...wai,defaults:{...wai.defaults,lora:0.8}},waiVary];
+  for(const controls of [{seed:5},{...recorded,lora:undefined}]){
+    const plan=C.varyPlan(picture('wai',{job_id:'wai-job'}),shelf,[waiJob(controls)],{},[]);
+    const status=C.varyStatus(plan,'subtle',3);
+    assert.match(status,/lora not recorded; using the recipe's current default: 0\.8/);
+    assert.doesNotMatch(status,/same checkpoint and adapters as this picture|it used none/);
+  }
+});
+
 test('the shipped catalog routes Krea, plain SDXL and WAI pictures and nothing else',()=>{
   const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8')).presets;
   const routed=Object.fromEntries(catalog.filter(p=>p.vary).map(p=>[p.id,p.vary.sources]));

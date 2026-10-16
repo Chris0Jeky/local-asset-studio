@@ -130,6 +130,90 @@ class SceneTests(unittest.TestCase):
         path.write_bytes(b'changed')
         with self.assertRaisesRegex(ValueError,'artifact changed'):self.change(doc,'export')
 
+    def test_concurrent_exports_publish_only_one_revision_archive(self):
+        doc=self.create();first_open=threading.Event();second_attempt=threading.Event();release=threading.Event()
+        results=[];errors=[];original_zip=zipfile.ZipFile;original_lock=self.studio.production.lock
+        class ObservedLock:
+            def __enter__(inner):
+                if threading.current_thread().name=='export-second':second_attempt.set()
+                return original_lock.__enter__()
+            def __exit__(inner,*args):return original_lock.__exit__(*args)
+        def open_zip(path,mode='r',*args,**kwargs):
+            if mode=='x':
+                if threading.current_thread().name=='export-first':
+                    first_open.set()
+                    if not release.wait(5):raise AssertionError('First export was not released')
+                else:second_attempt.set()
+            return original_zip(path,mode,*args,**kwargs)
+        def export():
+            try:results.append(self.change(doc,'export'))
+            except Exception as exc:errors.append(exc)
+        first=threading.Thread(target=export,name='export-first');second=threading.Thread(target=export,name='export-second')
+        with patch.object(self.studio.production,'lock',ObservedLock()),patch.object(zipfile,'ZipFile',open_zip):
+            first.start()
+            try:
+                self.assertTrue(first_open.wait(5));second.start();self.assertTrue(second_attempt.wait(5))
+            finally:
+                release.set();first.join(5)
+                if second.ident is not None:second.join(5)
+        self.assertFalse(first.is_alive());self.assertFalse(second.is_alive());self.assertEqual(errors,[])
+        self.assertEqual(len(results),2);self.assertEqual(results[0]['export_url'],results[1]['export_url'])
+        archives=list((self.scenes.directory(doc['id'])/'exports').glob('*.zip'))
+        self.assertEqual(len(archives),1)
+        with self.studio.production.connect() as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM av_exports WHERE project_id=?',(doc['id'],)).fetchone()[0],1)
+        relative=results[0]['export_url'].split('/files/')[1].split('?')[0]
+        self.assertEqual(self.scenes.file(doc['id'],relative),archives[0])
+
+    def test_stale_export_writes_no_archive(self):
+        doc=self.create();self.change(doc,section='shots',clip_id='shot0',changes={'frames':48})
+        with self.assertRaisesRegex(ValueError,'Scene conflict'):self.change(doc,'export')
+        self.assertEqual(list(self.scenes.directory(doc['id']).glob('exports/*.zip')),[])
+        with self.studio.production.connect() as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM av_exports').fetchone()[0],0)
+
+    def test_export_reserves_database_writer_before_creating_pack(self):
+        import sqlite3
+        doc=self.create();original_zip=zipfile.ZipFile;observed=[]
+        def open_zip(path,mode='r',*args,**kwargs):
+            if mode=='x':
+                with self.studio.production.connect() as db:
+                    db.execute('PRAGMA busy_timeout=0')
+                    with self.assertRaisesRegex(sqlite3.OperationalError,'locked'):
+                        db.execute('BEGIN IMMEDIATE')
+                observed.append(path)
+            return original_zip(path,mode,*args,**kwargs)
+        with patch.object(zipfile,'ZipFile',open_zip):self.change(doc,'export')
+        self.assertEqual(len(observed),1)
+
+    def test_export_barrier_after_missing_receipts_builds_one_pack(self):
+        from concurrent.futures import ThreadPoolExecutor
+        doc=self.create();barrier=threading.Barrier(2)
+        def export():
+            with self.studio.production.connect() as db:
+                self.assertIsNone(db.execute('SELECT artifact FROM av_exports WHERE project_id=? AND revision=?',(doc['id'],doc['revision'])).fetchone())
+            barrier.wait(5)
+            return self.change(doc,'export')['export_url']
+        with ThreadPoolExecutor(2) as pool:urls=list(pool.map(lambda _:export(),range(2)))
+        self.assertEqual(urls[0],urls[1])
+        archives=list(self.scenes.directory(doc['id']).glob('exports/*.zip'));self.assertEqual(len(archives),1)
+        with self.studio.production.connect() as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM av_exports WHERE project_id=? AND revision=?',(doc['id'],doc['revision'])).fetchone()[0],1)
+        with zipfile.ZipFile(archives[0]) as pack:
+            import hashlib
+            for asset in doc['project']['assets'].values():self.assertEqual(hashlib.sha256(pack.read(asset['path'])).hexdigest(),asset['sha256'])
+
+    def test_failed_export_removes_own_pack_without_publishing_and_allows_retry(self):
+        doc=self.create();directory=self.scenes.directory(doc['id']);exports=directory/'exports';exports.mkdir()
+        existing=exports/'owner.zip';existing.write_bytes(b'owner archive')
+        with patch.object(zipfile.ZipFile,'write',side_effect=OSError('disk full')):
+            with self.assertRaisesRegex(OSError,'disk full'):self.change(doc,'export')
+        self.assertEqual(list(exports.glob('*.zip')),[existing]);self.assertEqual(existing.read_bytes(),b'owner archive')
+        with self.studio.production.connect() as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM av_exports').fetchone()[0],0)
+        result=self.change(doc,'export');relative=result['export_url'].split('/files/')[1].split('?')[0]
+        self.assertTrue(self.scenes.file(doc['id'],relative).is_file());self.assertEqual(len(list(exports.glob('*.zip'))),2)
+
     def test_source_change_prevents_edit_render_and_download(self):
         doc=self.create();self.scenes.source(doc['id'],'source0').write_bytes(b'changed')
         for operation in (lambda:self.change(doc,section='shots',clip_id='shot0',changes={'frames':48}),

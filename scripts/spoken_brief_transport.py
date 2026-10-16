@@ -258,16 +258,17 @@ class StudioClient:
             with self.opener.open(request, timeout=self.timeout) as response:
                 raw = _read_limited(response, MAX_JSON_BYTES, 'Studio JSON')
         except HTTPError as exc:
-            raw = exc.read(MAX_ERROR_BYTES + 1)
-            if len(raw) > MAX_ERROR_BYTES:
-                raw = b''
-            try:
-                decoded = json.loads(raw.decode('utf-8'))
-                message = decoded.get('error') if isinstance(decoded, dict) else None
-            except Exception:
-                message = None
-            error = StudioRejected if 400 <= exc.code < 500 else SpokenBriefError
-            raise error(message or f'Studio returned HTTP {exc.code} for {path}') from exc
+            with exc:
+                raw = exc.read(MAX_ERROR_BYTES + 1)
+                if len(raw) > MAX_ERROR_BYTES:
+                    raw = b''
+                try:
+                    decoded = json.loads(raw.decode('utf-8'))
+                    message = decoded.get('error') if isinstance(decoded, dict) else None
+                except Exception:
+                    message = None
+                error = StudioRejected if 400 <= exc.code < 500 else SpokenBriefError
+                raise error(message or f'Studio returned HTTP {exc.code} for {path}') from exc
         except (URLError, TimeoutError, OSError) as exc:
             raise SpokenBriefError(f'Studio request did not complete for {path}: {exc}') from exc
         try:
@@ -291,7 +292,10 @@ class StudioClient:
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
                 return _read_limited(response, MAX_AUDIO_BYTES, 'Voice artifact')
-        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+        except HTTPError as exc:
+            with exc:
+                raise SpokenBriefError(f'Cannot download retained voice artifact {path}: {exc}') from exc
+        except (URLError, TimeoutError, OSError) as exc:
             raise SpokenBriefError(f'Cannot download retained voice artifact {path}: {exc}') from exc
 
 

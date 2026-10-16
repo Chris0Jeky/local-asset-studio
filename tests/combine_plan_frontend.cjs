@@ -11,7 +11,7 @@ for(const preset of catalog.presets)if(preset.continuation_operation==='combine'
 const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
 const start=code.indexOf('  // #1163: the same pair on several recipes'),end=code.indexOf("  // #1203: this PC's owner answers");
 assert.ok(start>=0&&end>start,'the plan section is where this contract expects it');
-const FOUR='combine-klein',COPY='combine-klein-9b-copypose',DEPTH='combine-klein-9b-depth';
+const FOUR='combine-klein',COPY='combine-klein-9b-copypose',DEPTH='combine-klein-9b-depth',REPLACE='combine-klein-9b-replace';
 
 function page({saved={},refresh=async()=>{}}={}){
   const elements={},storage=new Map([['studio-fills:source-asset',JSON.stringify(saved)]]),posts=[],announced=[];
@@ -76,12 +76,52 @@ await test('a stored answer for this character fills the extra field; an empty o
   await p.q('#uxPlanPrepare').onclick();assert.equal(p.posts.at(-1).body.combine_plan.answers.clothes,'a stored robe');
   const empty=page();empty.tick(COPY);assert.equal(empty.q('#uxPlanPrepare').disabled,false,'the page does not second-guess the server');
   await empty.q('#uxPlanPrepare').onclick();assert.equal('clothes' in empty.posts.at(-1).body.combine_plan.answers,false,'an empty answer is not sent');
+  // #1233: outfit is the scene picture's clothes. Klein 4B has no outfit fill, so ticking replace shows it, and a remembered @outfit is neither shown nor sent.
+  const scene=page({saved:{'@outfit':'old scene outfit'}});scene.tick(REPLACE);
+  const box=scene.q('#uxPlanFills');
+  assert.equal(box.hidden,false);assert.match(box.innerHTML,/data-ux-plan-fill="outfit"/);
+  assert.match(box.innerHTML,/value=""/);assert.equal(box.innerHTML.includes('old scene outfit'),false);
+  await scene.q('#uxPlanPrepare').onclick();
+  assert.equal('outfit' in scene.posts.at(-1).body.combine_plan.answers,false,'Prepare sends no outfit taken from memory');
+  scene.type('outfit','a navy coat');
+  assert.equal(JSON.parse(scene.storage.get('studio-fills:source-asset'))['@outfit'],'old scene outfit','typing outfit does not change @outfit');
+  scene.tick(COPY);assert.match(scene.q('#uxPlanFills').innerHTML,/data-ux-plan-fill="outfit"[\s\S]*?value="a navy coat"/);
+  scene.context.referenceRecords=[{role:'pose',file:'other-scene.png',sha256:'c'.repeat(64)}];scene.run('syncCombinePlan()');scene.tick(REPLACE);
+  assert.equal(scene.context.continuationState.source_asset_id,'source-asset','the character stays the same when the scene changes');
+  assert.match(scene.q('#uxPlanFills').innerHTML,/data-ux-plan-fill="outfit"[^>]*value=""/,'another scene starts with no outfit');
+  await scene.q('#uxPlanPrepare').onclick();
+  assert.equal('outfit' in scene.posts.at(-1).body.combine_plan.answers,false,'neither the prior pair nor source memory supplies the new scene outfit');
+  const fresh=page();fresh.tick(REPLACE);fresh.type('outfit','a navy coat');
+  assert.equal('@outfit' in JSON.parse(fresh.storage.get('studio-fills:source-asset')),false,'typing outfit does not create @outfit');
+  const clothes=page();clothes.tick(COPY);clothes.type('clothes','a black robe');
+  assert.equal(JSON.parse(clothes.storage.get('studio-fills:source-asset'))['@clothes'],'a black robe');
+  // A typed value wins when setItem throws, and clearing the field stays empty instead of falling back to the older stored text.
+  const refused=page({saved:{'@clothes':'older robe'}});
+  refused.context.localStorage.setItem=()=>{throw Error('full');};
+  refused.tick(COPY);assert.match(refused.q('#uxPlanFills').innerHTML,/value="older robe"/);
+  refused.type('clothes','typed value');refused.tick(DEPTH);
+  assert.match(refused.q('#uxPlanFills').innerHTML,/value="typed value"/);
+  assert.equal(refused.q('#uxPlanFills').innerHTML.includes('older robe'),false);
+  await refused.q('#uxPlanPrepare').onclick();
+  assert.equal(refused.posts.at(-1).body.combine_plan.answers.clothes,'typed value');
+  assert.equal(JSON.parse(refused.storage.get('studio-fills:source-asset'))['@clothes'],'older robe');
+  const cleared=page({saved:{'@clothes':'older robe'}});
+  cleared.context.localStorage.setItem=()=>{throw Error('full');};
+  cleared.tick(COPY);cleared.type('clothes','');cleared.tick(DEPTH);
+  assert.match(cleared.q('#uxPlanFills').innerHTML,/value=""/);
+  assert.equal(cleared.q('#uxPlanFills').innerHTML.includes('older robe'),false);
+  await cleared.q('#uxPlanPrepare').onclick();
+  assert.equal('clothes' in cleared.posts.at(-1).body.combine_plan.answers,false);
 });
 await test('no extra field when the open recipe asks it, or the ticked recipe has its own edited wording',async()=>{
   const p=page();p.context.selected=p.preset(COPY);p.context.continuationState.preset_id=COPY;p.run('syncCombinePlan()');p.tick(FOUR);
   assert.equal(p.q('#uxPlanFills').hidden,true,'Copy Pose already asks the clothes');
   const q=page();q.run(`combineWording.set(pairKey()+'|${COPY}','Edited Copy Pose wording')`);q.tick(COPY);
   assert.equal(q.q('#uxPlanFills').hidden,true,'edited wording reads no answers');
+  const replace=page({saved:{'@clothes':'an older robe'}});replace.context.selected=replace.preset(REPLACE);replace.context.continuationState.preset_id=REPLACE;replace.run('syncCombinePlan()');replace.tick(FOUR);
+  assert.match(replace.q('#uxPlanFills').innerHTML,/data-ux-plan-fill="clothes"/,'replace open with Klein 4B ticked exposes the clothes folded into who');
+  replace.type('clothes','a visible blue coat');await replace.q('#uxPlanPrepare').onclick();
+  assert.equal(replace.posts.at(-1).body.combine_plan.answers.clothes,'a visible blue coat','Prepare uses the visible answer for Klein 4B');
 });
 await test('the form belongs to one pair: an engine switch keeps it, another pair starts from its own recipe and seed (#1198)',async()=>{
   const p=page();p.tick(COPY);p.seeds('11, 12');
@@ -109,6 +149,22 @@ await test('Start stays withdrawn and reads Started when the refresh after it fa
   assert.ok(p.announced.some(a=>/started.*offline/i.test(a.text)),JSON.stringify(p.announced));
   assert.equal(p.posts.filter(r=>r.url.endsWith('/start')).length,1);
   await p.q('#uxPlanStart').onclick();assert.equal(p.posts.filter(r=>r.url.endsWith('/start')).length,1,'no second Start');
+});
+await test('a failed Start keeps its error when the plan changed during the request (#1233)',async()=>{
+  const p=page();await p.q('#uxPlanPrepare').onclick();
+  p.context.post=async(url,body)=>{
+    p.posts.push({url,body});
+    if(String(url).endsWith('/start')){p.seeds('9');throw Error('the backend refused the plan');}
+    return{id:'plan-1',stages:[],combine:{estimate:{total_seconds:60,confidence:'medium'}}};
+  };
+  await p.q('#uxPlanStart').onclick();
+  assert.match(p.q('#uxPlanStatus').textContent,/the backend refused the plan/);
+  assert.equal(/Prepare again/.test(p.q('#uxPlanStatus').textContent),false,'the stale notice must not replace the Start error');
+  assert.ok(p.announced.some(a=>/the backend refused the plan/.test(a.text)));
+  assert.equal(p.q('#uxPlanStart').hidden,true);
+  p.seeds('7');
+  assert.match(p.q('#uxPlanStatus').textContent,/^Prepared /,'undoing the change brings the Prepared line back');
+  assert.equal(p.q('#uxPlanStart').hidden,false);
 });
 console.log(count+' Combine plan form checks passed.');
 })().catch(error=>{console.error(error);process.exit(1);});

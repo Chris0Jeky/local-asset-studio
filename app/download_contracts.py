@@ -1,5 +1,6 @@
 """Pinned-transfer, receipt-freshness and no-clobber publication contracts."""
 from __future__ import annotations
+import hashlib
 import ipaddress
 import json
 import os
@@ -167,21 +168,43 @@ def open_download(request,timeout=60,resolver=socket.getaddrinfo,transport_handl
     return client.open(request,timeout=timeout)
 
 
-def publish_verified(source,target,identity):
+def sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(8 * 1024**2), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def publish_verified(source,target,identity,expected_sha256=None):
     """Atomically create a destination without overwriting any competing directory entry.
 
-    Source and target must be on the same hard-link-capable filesystem. There is
-    deliberately no POSIX rename fallback: rename would overwrite a racing file.
+    Prefer hard links; Windows rename is an atomic no-clobber fallback on the same
+    filesystem. There is no POSIX rename fallback: it would overwrite a racing file.
     """
     if file_identity(source)!=identity:raise ValueError('Verified source changed before publication; all files preserved')
+    renamed=False
     try:os.link(source,target)
     except FileExistsError as exc:raise ValueError('Destination appeared during publication; both files preserved') from exc
-    except OSError as exc:raise ValueError('Atomic no-clobber publication is unavailable; verified source preserved for explicit recovery') from exc
+    except OSError as exc:
+        if os.name!='nt':raise ValueError('Atomic no-clobber publication is unavailable; verified source preserved for explicit recovery') from exc
+        if expected_sha256 is None:raise ValueError('Windows publication requires the verified digest; source preserved')
+        try:os.rename(source,target)
+        except FileExistsError as exc:raise ValueError('Destination appeared during publication; both files preserved') from exc
+        renamed=True
     after=file_identity(target)
-    # Adding a hard link changes ctime, but not the underlying data identity.
-    if any(after[key]!=identity[key] for key in ('device','inode','size','mtime_ns')):
-        raise ValueError('Source changed during publication; files preserved for inspection, not verified')
-    source.unlink()
+    # Publication may change ctime; Windows rename need only retain size and mtime.
+    changed=any(after[key]!=identity[key] for key in (('size','mtime_ns') if renamed else ('device','inode','size','mtime_ns')))
+    # The hash of a multi-GB file takes a while: the identity read just before it must still hold just after it (#1416 review).
+    try:mismatch=not changed and renamed and (sha256(target)!=expected_sha256 or file_identity(target)!=after)
+    except OSError:mismatch=True
+    if renamed and (changed or mismatch):
+        # Never leave unverified bytes at the model's published name: move them back to the staging name (no-clobber).
+        try:os.rename(target,source)
+        except OSError:pass
+    if changed:raise ValueError('Source changed during publication; files preserved for inspection, not verified')
+    if mismatch:raise ValueError('Published file does not match the verified digest; files preserved for inspection')
+    if not renamed:source.unlink()
     return file_identity(target)
 
 

@@ -10,7 +10,7 @@ import shutil
 import threading
 import time
 from collections import Counter
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -43,7 +43,7 @@ def run(output):
     global JOBS_DELAY, JOBS_PEAK
     from playwright.sync_api import sync_playwright
     output.mkdir(parents=True, exist_ok=True)
-    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server = browser_server(Handler)
     worker = threading.Thread(target=server.serve_forever, daemon=True); worker.start()
     evidence = {'fixture': 'real frontend; inert APIs; simulated visibility; shortened intervals', 'cases': []}
     try:
@@ -68,10 +68,10 @@ def run(output):
                 assert COUNTS['/api/jobs'] > before['/api/jobs']
                 evidence['cases'].append({'hidden_automatic_gets': 0, 'visible_resume_reads': True})
 
-                page.locator('[data-studio-route="create"]').click(); page.wait_for_timeout(750)
+                page.locator('[data-nav-group="Advanced"] summary').click(); page.locator('[data-studio-route="create"]').click(); page.wait_for_timeout(750)
                 production_before = COUNTS['/api/production']; page.wait_for_timeout(400)
                 assert COUNTS['/api/production'] == production_before
-                page.locator('[data-studio-route="home"]').click(); page.wait_for_timeout(800)
+                page.keyboard.press('Control+k'); page.locator('#studioCommandSearch').fill('Overview'); page.locator('#studioCommandResults a').click(); page.wait_for_timeout(800)
                 assert COUNTS['/api/production'] >= production_before + 2
                 evidence['cases'].append({'overview_resumes_after_inactive_interval': True})
 

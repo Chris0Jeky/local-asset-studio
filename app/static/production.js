@@ -5,7 +5,7 @@ let plannerWithheld=[], plannerNotice='', plannerRequestId=0;
 // Stored plan names are identity: the plan file, its fingerprint and every
 // receipt keep the name a study was created with.  These helpers only make the
 // list and the detail header readable, and never write a name back.
-const PRODUCTION_EMPTY='<div class="production-empty"><p><b>Nothing here yet.</b> Compare one change at a time across a few candidates, start explicitly, review blind, keep a winner.</p><p class="muted">You get here by planning a comparison from a recipe in Create, by branching a finished study, or by preparing an export, scene or voice job.</p><button class="primary" data-production-plan>Plan a comparison</button></div>';
+const PRODUCTION_EMPTY='<div class="production-empty"><p><b>Nothing here yet.</b> Compare one change at a time across a few candidates, start explicitly, review blind, keep a winner.</p><p class="muted">You get here by planning a comparison from a recipe in Full editor, by branching a finished study, or by preparing an export, scene or voice job.</p><button class="primary" data-production-plan>Plan a comparison</button></div>';
 function planDate(value){
   const seconds=Number(value);if(!Number.isFinite(seconds)||seconds<=0)return '';
   try{return new Date(seconds*1000).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}catch(e){return '';}
@@ -18,6 +18,22 @@ function planDisplayName(p){
   const change=p.axis==='variants'?(values.length?values.length+' planned variants':''):p.axis&&values.length?p.axis+' = '+values.join(', '):'';
   return [readable,change,planDate(p.created_at)].filter(Boolean).join(' · ');
 }
+// S7: machine-built study names (Combine and character imports bake the engine,
+// the axes and the seeds into the stored name) read as noise in the list. The stored
+// name is never rewritten: a machine-like name gets a short human title up front,
+// with the full stored name kept in the second line and the title attribute.
+// Anything the owner actually named keeps its display name untouched.
+function planKindNoun(p){return p?.kind==='comparison'?'Comparison':p?.kind==='av'?'Scene':p?.kind==='voice'?'Voice take':p?.kind==='native'||p?.kind==='articulated'?'Export':String(p?.kind||'Plan');}
+// Provenance, not wording: Combine builds its plan name from engines and seeds (the plan carries its combine record); every
+// other plan keeps the name it was given, whatever characters it contains (#1415 review).
+function planIsMachineName(name,p){return !!(p&&p.combine&&typeof p.combine==='object');}
+function planHumanTitle(p){
+  const stored=String(p?.name||'').trim();
+  if(stored&&!planIsMachineName(stored,p))return planDisplayName(p);
+  const count=p?.kind==='comparison'?((p.stages||[]).length+' candidate'+((p.stages||[]).length===1?'':'s')):'',date=planDate(p?.created_at);
+  return [planKindNoun(p),count,date].filter(Boolean).join(' · ')||'Untitled plan';
+}
+function planMachineDetail(p){const stored=String(p?.name||'').trim();return stored&&planIsMachineName(stored,p)?stored:'';}
 const productionMessage=(text,error=false)=>{$('#productionMessage').textContent=text;$('#productionMessage').classList.toggle('error',error);};
 async function refreshProduction(force=false){
   if(productionRefreshing)return;productionRefreshing=true;
@@ -56,7 +72,10 @@ function setPlanFilter(next,focus=false){planFilter=cleanPlanFilter({...planFilt
   // Show all lives inside the list it re-renders; hand keyboard focus to the Status select instead of losing it.
   if(focus)$('#planStatus')?.focus?.();}
 function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStorage.getItem(PLAN_FILTER_KEY)||'{}'));}catch(err){}syncPlanFilter();}
-function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+(p.put_away?' · put away':'')+'</small></button>';}
+// An awaiting-review plan carries its existing review desk entry point with it:
+// the same /review.html link the detail view offers, so Review now opens it.
+function planReviewNow(p){return p?.state?.status==='awaiting_review'?'<a class="primary artifact-download plan-review-now" href="/review.html?project='+p.id+'">Review now</a>':'';}
+function planButton(p){const machine=planMachineDetail(p);return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planHumanTitle(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+(p.put_away?' · put away':'')+'</small>'+(machine?'<small class="plan-machine">'+esc(machine)+'</small>':'')+'</button>'+planReviewNow(p);}
 // #940: the owner can put a settled plan away. Only its put_away marker changes (server-side Production.put_away);
 // nothing is started, stopped, retried or deleted, and a later status change brings it back on its own.
 function planPutAway(p){
@@ -64,7 +83,18 @@ function planPutAway(p){
   if(p.can_put_away)return '<p class="plan-put-away"><button data-plan-put-away="true">Put away</button> <small>Takes it off your desk and the in-progress list. Nothing is started, stopped or deleted; Show all still lists it.</small></p>';
   return '';
 }
+const PLAN_RUNNING=['queued','submitting','running','waiting','observing','rendering'];
+// One terse line above the plans: what needs the owner first. Counts follow the
+// type filter; older folds the same Older group the list shows. Never submits.
+function renderPlanSummary(){
+  const el=$('#planSummary');if(!el)return;
+  const kinds=PLAN_TYPES[planFilter.type],typed=productionPlans.filter(p=>!kinds||kinds.includes(p.kind)),desk=typed.filter(p=>p.put_away!==true);
+  const review=desk.filter(p=>p?.state?.status==='awaiting_review').length,running=desk.filter(p=>PLAN_RUNNING.includes(p?.state?.status)).length,older=planGroups(productionPlans).older.length;
+  const parts=[];if(review)parts.push(review+' waiting for your review');if(running)parts.push(running+' running');if(older)parts.push(older+' older');
+  el.textContent=parts.length?parts.join(' · '):(typed.length?typed.length+' '+PLAN_TYPE_NOUNS[planFilter.type]+' · nothing waiting':'');
+}
 function renderPlanList(){
+  renderPlanSummary();
   const list=$('#productionList');if(!productionPlans.length){list.innerHTML=PRODUCTION_EMPTY;return;}
   const groups=planGroups(productionPlans),shown=groups.recent.length+groups.older.length,showAll='<button data-plan-show-all>Show all</button>';
   const olderOpen=list.querySelector?.('.plan-older')?.open||groups.older.some(p=>p.id===productionId);
@@ -98,12 +128,12 @@ function renderProduction(){
   renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   if(p.kind==='av'){
-    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>'+planPutAway(p));
+    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>'+planPutAway(p));
     return;
   }
   const terminalReconciliation=p.can_reconcile_tracking===true||p.can_reconcile_batch===true,active=['queued','running','observing'].includes(p.state.status),trackingRecoveryPending=!terminalReconciliation&&(p.stages||[]).some(s=>{const d=s.job?.tracking_disposition;return (d?.status==='stopped'||d?.history?.some(event=>event.status==='stopped'))&&s.job?.status!=='completed';}),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
   const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending?'disabled':'')+'>'+(terminalReconciliation?'Reconcile outcome only':p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
-  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
+  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+(p.kind==='comparison'&&blindComparison?'<small class="muted">Full plan hidden while comparing blind. Reveal settings to download it.</small>':'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a>')+'</div>';
   if(p.kind==='comparison'){
     const clock=p.state.time_budget;
     if(clock&&!p.state.time_budget_error){
@@ -116,7 +146,7 @@ function renderProduction(){
     for(const s of p.stages){const j=s.job,images=(j?.outputs||[]).filter(o=>o.asset_id);
       const index=p.stages.indexOf(s),variant=(p.variants||[])[index],checked=images.map(o=>candidateCheckAsset(o.asset_id)).filter(Boolean),counted=checked.length?StudioReviewChecks.summary(checked,candidateCheckNames(j)):'';
       html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(variant?variant.label:p.axis+' '+p.values[index])+'</small>'+(variant?.rationale?'<p class="muted">'+esc(variant.rationale)+'</p>':'')+(variant?.sources||[]).map(u=>'<a href="'+safeUrl(u)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' '))+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>'+(counted?'<p class="muted candidate-check-count">'+esc(counted)+'</p>':'');
-      for(const o of images){const url='/api/assets/'+o.asset_id+'/file';html+=o.media_type==='image'?'<button class="candidate-image" data-candidate-open="'+o.asset_id+'"><img src="'+url+'" alt="Candidate '+esc(s.label)+'"></button>':o.media_type==='video'?'<video src="'+url+'" controls preload="metadata"></video>':'<a href="'+url+'" download>Download '+esc(o.media_type)+'</a>';
+      for(const o of images){const url='/api/assets/'+o.asset_id+'/file';html+=o.media_type==='image'?'<button class="candidate-image" data-candidate-open="'+o.asset_id+'"><img src="'+url+'" alt="Candidate '+esc(s.label)+'"></button>':o.media_type==='video'?'<video src="'+url+'" controls preload="metadata" aria-label="Candidate '+esc(s.label)+'"></video>':'<a href="'+url+'" download>Download '+esc(o.media_type)+'</a>';
         if(['awaiting_review','reviewed'].includes(p.state.status)&&!p.state.review?.desk_url)html+='<button data-choose-candidate="'+o.asset_id+'">Choose '+esc(s.label)+'</button>';
         // Workspace review of one image, through the same guarded update the asset
         // dialog uses.  Blind mode hides settings, never the pictures, so marking a
@@ -126,7 +156,8 @@ function renderProduction(){
         const checkNames=o.media_type==='image'?candidateCheckNames(j):[];
         if(checkNames.length)html+='<div class="candidate-checks" role="group" aria-label="Quick checks for candidate '+esc(s.label)+'">'+StudioReviewChecks.chipsHTML({tags:candidateCheckAsset(o.asset_id)?.tags||[],names:checkNames,attr:'data-candidate-check',asset:o.asset_id,escape:esc})+'</div>';
       }
-      if(j)html+='<details><summary>Execution record</summary><small>'+esc(j.message)+'</small><p>'+esc((j.prompt_ids||[]).join(', '))+'</p>'+(j.tracking_disposition?.status==='stopped'?'<p><b>Tracking stopped</b>: '+esc(j.tracking_disposition.reason)+'</p>':'')+'<button data-job-recipe="'+j.id+'">Recipe</button></details>';
+      // The recipe carries the exact settings, so it stays hidden while blind, like the labels, until Reveal.
+      if(j)html+='<details><summary>Execution record</summary><small>'+esc(j.message)+'</small><p>'+esc((j.prompt_ids||[]).join(', '))+'</p>'+(j.tracking_disposition?.status==='stopped'?'<p><b>Tracking stopped</b>: '+esc(j.tracking_disposition.reason)+'</p>':'')+(blindComparison?'<small class="muted">Recipe hidden while comparing blind. Reveal settings to see the recipe.</small>':'<button data-job-recipe="'+j.id+'">Recipe</button>')+'</details>';
       html+='</article>';
     }
     html+='</div>';
@@ -222,7 +253,7 @@ function renderPlannerSummary(){
   const reserved=Number($('#experimentBudget').value)||0,per=measuredRunSeconds();
   const what=planned.length?planned.length+' planned variants from the settings library':axis&&values.length?'Compare '+axis+' = '+values.join(', '):'Choose one setting and the values to compare';
   const pending=estimatePending(),batch=Math.max(1,Number($('#batch')?.value)||1);
-  const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at roughly '+(per/60).toFixed(1)+' min per run'+(batch>1?' (Create’s estimate for '+batch+' outputs, shared out)':' measured in Create'):pending?', timing still being measured':', no measured time for this recipe yet';
+  const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at roughly '+(per/60).toFixed(1)+' min per run'+(batch>1?' (Create’s estimate for '+batch+' outputs, shared out)':' measured in Full editor'):pending?', timing still being measured':', no measured time for this recipe yet';
   summary.textContent=candidates?what+' on '+recipe+' → '+candidates+' graph run'+(candidates===1?'':'s')+time+'.':what+' on '+recipe+'.';
   // The estimator debounces and fetches; a summary opened mid-flight re-reads once it settles.
   if(typeof setTimeout==='function'){clearTimeout(plannerSummaryRetry);if(pending&&$('#experimentDialog')?.open!==false)plannerSummaryRetry=setTimeout(renderPlannerSummary,600);}
@@ -275,14 +306,15 @@ $('#experimentForm').onsubmit=async e=>{e.preventDefault();$('#prepareExperiment
 function planFromEmptyState(){
   try{document.dispatchEvent(new CustomEvent('studio:navigate',{detail:'create'}));}catch(err){showView('create');}
   if(typeof selected!=='undefined'&&selected)$('#planComparison')?.click?.();
-  else productionMessage('Choose a recipe in Create first, then press Plan comparison.');
+  else productionMessage('Choose a recipe in Full editor first, then press Plan comparison.');
 }
-// Remembering the orientation block is a per-browser convenience; a storage that
-// refuses to answer must never stop the view from rendering.
+// The orientation block stays closed so the plans show first; remembering the
+// choice is a per-browser convenience, and a storage that refuses to answer must
+// never stop the view from rendering.
 const PRODUCTION_INTRO_KEY='studio.production.intro';
 function restoreProductionIntro(){
   const intro=$('#productionIntro');if(!intro)return;
-  try{intro.open=localStorage.getItem(PRODUCTION_INTRO_KEY)!=='closed';}catch(err){}
+  try{intro.open=localStorage.getItem(PRODUCTION_INTRO_KEY)==='open';}catch(err){}
   intro.ontoggle=()=>{try{localStorage.setItem(PRODUCTION_INTRO_KEY,intro.open?'open':'closed');}catch(err){}};
 }
 restoreProductionIntro();restorePlanFilter();
@@ -294,31 +326,42 @@ $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindCom
 // Workspace review of a single candidate image: the same revision-guarded
 // /api/assets/update command the asset dialog sends, never a new endpoint. It
 // records a creative preference only; the comparison's own outcome is untouched.
+const candidateReviewBusy=new Set();
 async function reviewCandidateAsset(id,review){
   if(!id||!['selected','needs_work'].includes(review))return;
-  await refreshAssets(true);
-  await mutateAssets({ids:[id],action:'edit',review});
-  productionMessage((review==='selected'?'Marked as a keeper':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
+  // A second press on the same candidate while its save is in flight would queue a second library update and report it as a failure.
+  if(candidateReviewBusy.has(id)){productionMessage('Still saving the last mark for this candidate. Press again in a moment. Nothing was changed.');return;}
+  candidateReviewBusy.add(id);
+  try{
+    await refreshAssets(true);
+    await mutateAssets({ids:[id],action:'edit',review});
+    productionMessage((review==='selected'?'Marked as a keeper':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
+  }finally{candidateReviewBusy.delete(id);}
 }
 // #1203: quick yes/no checks on a candidate picture, saved one press at a time through the same guarded update.
 // Counts per candidate come only from those owner answers; the comparison's own outcome is untouched.
 function candidateCheckAsset(id){return globalThis.StudioReviewChecks&&typeof assetState!=='undefined'?assetState.assets.find(a=>a.id===id)||null:null;}
 function candidateCheckNames(job){return globalThis.StudioReviewChecks&&job?StudioReviewChecks.forPreset((typeof catalog==='undefined'?[]:catalog?.presets||[]).find(p=>p.id===job.preset_id)):[];}
+let candidateCheckBusy=false;
 async function checkCandidateAsset(id,name){
+  if(candidateCheckBusy){productionMessage('Still saving the last answer. Press again in a moment. Nothing was changed.');return;}
   if(!id||!globalThis.StudioReviewChecks)return;
-  await refreshAssets(true);const asset=assetState.assets.find(a=>a.id===id);
-  if(!asset)throw Error('This candidate is no longer in the library. Nothing was saved.');
-  const tags=StudioReviewChecks.cycle(asset.tags,name),now=StudioReviewChecks.answer(tags,name);
-  await mutateAssets({ids:[id],action:'edit',tags});renderProduction();
-  productionMessage('Saved for this candidate: '+name+' '+(now===null?'not checked':now?'yes':'no')+'. The comparison outcome is unchanged.');
+  candidateCheckBusy=true;
+  try{
+    await refreshAssets(true);const asset=assetState.assets.find(a=>a.id===id);
+    if(!asset)throw Error('This candidate is no longer in the library. Nothing was saved.');
+    const tags=StudioReviewChecks.cycle(asset.tags,name),now=StudioReviewChecks.answer(tags,name);
+    await mutateAssets({ids:[id],action:'edit',tags});renderProduction();
+    productionMessage('Saved for this candidate: '+name+' '+(now===null?'not checked':now?'yes':'no')+'. The comparison outcome is unchanged.');
+  }finally{candidateCheckBusy=false;}
 }
 $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
-  if(coordinatorAction&&productionActionPending)return;
+  if(coordinatorAction&&productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
   try{
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   const putAway=e.target.closest('[data-plan-put-away]');
-  if(putAway){if(productionActionPending)return;productionActionPending=true;putAway.disabled=true;const away=putAway.dataset.planPutAway==='true';
+  if(putAway){if(productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}productionActionPending=true;putAway.disabled=true;const away=putAway.dataset.planPutAway==='true';
     try{await post('/api/production/'+p.id+'/put-away',{put_away:away});productionMessage(away?'Put away. Status: All statuses in Your plans still lists it; Bring back returns it to your desk.':'Back on your desk and in the in-progress list.');await refreshProduction(true);}
     finally{productionActionPending=false;putAway.disabled=false;}return;}
   const choice=e.target.closest('[data-choose-candidate]')?.dataset.chooseCandidate;
@@ -339,10 +382,11 @@ $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[d
   else if(['start','stop','resume'].includes(action)){await post('/api/production/'+p.id+'/'+action,{});dropProductionDrafts();}
   if(action||choice)await refreshProduction(true);
 }catch(err){productionMessage(err.message,true);}finally{if(coordinatorAction){productionActionPending=false;actionButton.disabled=false;}}};
+$('#productionDetail').onkeydown=async e=>{const index=globalThis.StudioReviewChecks?.keyIndex(e)??-1;if(index<0||index>4)return;const tag=(e.target?.tagName||'').toUpperCase();if(['INPUT','TEXTAREA','SELECT'].includes(tag))return;const candidate=e.target?.closest?.('article.candidate')||e.target?.closest?.('.candidate');if(!candidate)return;const chip=[...(candidate.querySelectorAll?.('[data-candidate-check]')||[])][index];if(!chip||chip.disabled)return;e.preventDefault();const {asset,candidateCheck:name}=chip.dataset;try{await checkCandidateAsset(asset,name);}catch(err){productionMessage(err.message,true);return;}const again=[...($('#productionDetail').querySelectorAll?.('[data-candidate-check]')||[])].find(c=>c.dataset?.asset===asset&&c.dataset?.candidateCheck===name);again?.focus?.({preventScroll:true});};
 function renderNativeAssets(){
   $('#nativeAssetList').innerHTML=nativeAssets.map((a,i)=>'<div class="native-source"><span>'+esc(a.title)+'</span><button type="button" data-native-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move source '+(i+1)+' earlier">↑</button><button type="button" data-native-down="'+i+'" '+(i===nativeAssets.length-1?'disabled':'')+' aria-label="Move source '+(i+1)+' later">↓</button>'+(a.media_type==='image'?'<label>Duration ms<input type="number" min="1" max="60000" data-native-duration="'+a.id+'" value="'+a.duration+'"></label><label>Layer name<input data-native-layer="'+a.id+'" value="'+esc(a.layerName)+'"></label>':'<small>Optional GLB</small>')+'</div>').join('');
 }
-$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Runs & review.';renderNativeAssets();$('#nativeDialog').showModal();};
+$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Compare & review.';renderNativeAssets();$('#nativeDialog').showModal();};
 $('#cancelNative').onclick=()=>$('#nativeDialog').close();$('#nativeKind').onchange=()=>{$('#nativeEngineWrap').hidden=$('#nativeKind').value!=='godot';$('#nativeKritaWrap').hidden=$('#nativeKind').value!=='ora';};
 function readNativeInputs(){
   for(const input of $('#nativeAssetList').querySelectorAll('input')){

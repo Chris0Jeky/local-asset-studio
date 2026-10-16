@@ -115,15 +115,15 @@ class JobResourceIntegrationTests(unittest.TestCase):
         recorder = Recorder(studio); studio.resource_observations = recorder
         job = studio.jobs[studio.create_job({'preset_id': 'demo'}, enqueue=False)['id']]
         original = studio._save
-        def save(value):
-            if value['status'] == 'running': raise OSError('synthetic core state write failure')
-            return original(value)
-        with patch.object(studio, '_save', side_effect=save):
-            with self.assertRaises(OSError): studio._run(job)
+        def save(value, **kwargs):
+            if value['prompt_ids']: raise OSError('synthetic core state write failure')
+            return original(value, **kwargs)
+        # #1459: a receipt save failure is handled in place (uncertain, prompt ID kept in memory), never raised into a replay path.
+        with patch.object(studio, '_save', side_effect=save): studio._run(job)
         saved = json.loads((studio.runs / job['id'] / 'state.json').read_text())
         self.assertIn('pending_submission', saved); self.assertEqual(saved['prompt_ids'], [])
         self.assertEqual(recorder.events[1][1]['prompt_id'], 'known-before-save')
-        self.assertEqual(recorder.events[-1][1]['coordinator_exit_status'], 'running')
+        self.assertEqual(recorder.events[-1][1]['coordinator_exit_status'], 'uncertain')
         studio.record_job_failure(job, OSError('synthetic core state write failure'))
         self.assertEqual(job['status'], 'uncertain'); self.assertEqual(job['prompt_ids'], ['known-before-save'])
         before = copy.deepcopy(recorder.events)
@@ -136,11 +136,11 @@ class JobResourceIntegrationTests(unittest.TestCase):
         recorder = Recorder(studio); studio.resource_observations = recorder
         job = studio.jobs[studio.create_job({'preset_id': 'demo'}, enqueue=False)['id']]
         original = studio._save
-        def save(value):
+        def save(value, **kwargs):
             if value.get('pending_submission'): raise OSError('synthetic pending write failure')
-            return original(value)
-        with patch.object(studio, '_save', side_effect=save):
-            with self.assertRaises(OSError): studio._run(job)
+            return original(value, **kwargs)
+        with patch.object(studio, '_save', side_effect=save): studio._run(job)
+        self.assertEqual(job['status'], 'failed'); self.assertNotIn('pending_submission', job)   # #1459: fail safe, nothing sent
         self.assertEqual([kind for kind, _ in recorder.events], ['finish'])
         self.assertEqual([args[0] for args, _ in studio.requests], ['/queue'])
 

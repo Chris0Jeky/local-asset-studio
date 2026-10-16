@@ -133,7 +133,7 @@ def import_candidate(root, comfy_root, source, folder, name, expected_identity, 
         copied = library._verify(staged, {'bytes': expected_identity['size'], 'sha256': digest})
         _save(journal, record, 'prepared', sha256=digest, staged_identity=copied)
         _same_source(source, expected_identity); plain_path(staged); plain_path(target)
-        identity = publish_verified(staged, target, copied)
+        identity = publish_verified(staged, target, copied, digest)
         # Publication unlinks only the temporary copy, never the browser source.
         _same_source(source, expected_identity); plain_path(target)
         if file_identity(target) != identity:raise ValueError('Destination changed before receipt; inspect retained files')

@@ -1933,7 +1933,8 @@
       "licence": "civitai listing for model 2683021 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "reference image 139608451 used it at 0.7 inside a six-adapter stack",
-        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing",
+        "lab round 3 (PR #1481, docs/looks/LOOK-LAB-2026-10-16.md): added to Petiflow 1.0 on one fern scene and seed, 0.35 kept the prop; 0.7 changed it to broad leaves. A challenge to the default for this pairing only, not a measured range"
       ]
     },
     "anima-koukouya_v2_step2500.safetensors": {
@@ -2016,7 +2017,8 @@
       "licence": "civitai listing for model 2830377 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "reference image 139608451 used it at 1.0 (listed there as V1-390a); civitai file name was an opaque id, renamed on intake",
-        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing",
+        "lab round 3 (PR #1481): added to Petiflow 1.0 on the round-3 fern scene and seed, 0.5 kept the brief; 1.0 changed plant and face proportions. This pairing only"
       ]
     },
     "anima-ke-ta_style_v1.safetensors": {
@@ -2037,7 +2039,8 @@
       "licence": "civitai listing for model 2852885 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit, Rent; derivatives NOT allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "reference image 139608451 used it at 0.7",
-        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing",
+        "lab round 3 (PR #1481): added to Petiflow 1.0 on the round-3 fern scene and seed, 0.35 and 0.7 were both neutral (kept, no gain); 0.35 + Xilmo 0.35 also neutral"
       ]
     },
     "anima-kieed_v9_step6000.safetensors": {
@@ -2059,7 +2062,8 @@
       "notes": [
         "a LoCon (LyCORIS) file; ComfyUI's LoraLoaderModelOnly loads LoCon/LoHa/LoKr natively, no extra node",
         "reference image 139608451 used it at 0.5",
-        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing",
+        "lab round 3 (PR #1481): added to Petiflow 1.0 on the round-3 fern scene and seed, 0.25 and 0.5 both reduced facial and plant fidelity"
       ]
     },
     "nsfw_girls.safetensors": {

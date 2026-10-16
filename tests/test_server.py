@@ -125,9 +125,72 @@ class ServerTests(unittest.TestCase):
                 studio=self._heavy_studio(release=release);self.assertEqual(studio.commit_release_seconds,0)
                 with self.assertRaisesRegex(server.StudioError,'below the required 32 GiB'):studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)
                 self.assertFalse(studio.jobs);self.assertEqual(studio.requests,[])
-        for raw in ('45',True,float('nan'),-5):
+        for raw in (True,float('nan'),-5):
             with self.subTest(raw=raw):self.assertEqual(self._heavy_studio(release=raw).commit_release_seconds,0)
+        self.assertEqual(self._heavy_studio(release='45').commit_release_seconds,45)
+        self.assertEqual(self._heavy_studio(release='10000').commit_release_seconds,300)
         self.assertEqual(self._heavy_studio(release=10000).commit_release_seconds,300)
+
+    def test_config_numeric_strings_count_and_bad_values_warn_on_health(self):
+        """A quoted number in config/local.json is that number. A bad value keeps today's fail-safe and is named on /api/health."""
+        def write(payload):
+            (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),**payload}))
+        write({'commit_gate_release_seconds':'45','idle_cache_release_minutes':'30'})
+        studio=self.studio()
+        self.assertEqual(studio.commit_release_seconds,45.0)
+        self.assertEqual(studio.idle_release_minutes,30.0)
+        self.assertEqual(studio.config_warnings,[])
+        write({'commit_gate_release_seconds':'nope','idle_cache_release_minutes':True})
+        offline=FakeStudio(self.root,[URLError('offline')])
+        self.assertEqual(offline.commit_release_seconds,0.0)
+        self.assertEqual(offline.idle_release_minutes,10.0)
+        offline_health=offline.health()
+        self.assertFalse(offline_health['online'])
+        self.assertTrue(any('commit_gate_release_seconds' in item for item in offline_health['config_warnings']))
+        self.assertTrue(any('idle_cache_release_minutes' in item for item in offline_health['config_warnings']))
+        live=FakeStudio(self.root,[{},{}]).health()
+        self.assertTrue(live['online'])
+        self.assertTrue(any('commit_gate_release_seconds' in item for item in live['config_warnings']))
+        self.assertTrue(any('idle_cache_release_minutes' in item for item in live['config_warnings']))
+        write({'commit_gate_release_seconds':'10000','idle_cache_release_minutes':'-5'})
+        clamped=self.studio()
+        self.assertEqual(clamped.commit_release_seconds,300.0)
+        self.assertEqual(clamped.idle_release_minutes,0.0)
+        self.assertEqual(clamped.config_warnings,[])
+
+    def test_config_decimal_strings_preserve_fractional_release_intervals(self):
+        for raw in ('45.25', ' 45.25 ', '4.525e1', 45.25):
+            with self.subTest(raw=raw):
+                (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),
+                    'commit_gate_release_seconds':raw,'idle_cache_release_minutes':raw}))
+                studio=self.studio()
+                self.assertEqual((studio.commit_release_seconds,studio.idle_release_minutes),(45.25,45.25))
+                self.assertEqual(studio.config_warnings,[])
+
+    def test_health_route_exposes_invalid_config_warnings_online_and_offline(self):
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),
+            'commit_gate_release_seconds':'NaN','idle_cache_release_minutes':False}))
+        for online, replies in ((False,[URLError('offline')]), (True,[{},{}])):
+            with self.subTest(online=online), patch('sys.stderr', new_callable=io.StringIO):
+                handler=server.Handler.__new__(server.Handler);handler.studio=FakeStudio(self.root,replies)
+                handler.headers={'Host':'127.0.0.1:8191'};handler.path='/api/health';sent=[]
+                handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_GET()
+                self.assertEqual(sent[0][0],200);self.assertEqual(sent[0][1]['online'],online)
+                warnings=sent[0][1]['config_warnings'];self.assertEqual(len(warnings),2)
+                for key, default in (('commit_gate_release_seconds','0.0'), ('idle_cache_release_minutes','10.0')):
+                    self.assertTrue(any(key in warning and 'keeping ' + default in warning for warning in warnings))
+
+    def test_bad_config_numbers_warn_once_per_key_and_keep_defaults(self):
+        for raw in ('nope', None, True, 'NaN', 'Infinity', '1e10000'):
+            with self.subTest(raw=raw):
+                (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),
+                    'commit_gate_release_seconds':raw,'idle_cache_release_minutes':raw}))
+                with patch('sys.stderr', new_callable=io.StringIO) as stderr: studio=self.studio()
+                self.assertEqual((studio.commit_release_seconds,studio.idle_release_minutes),(0.0,10.0))
+                for key in ('commit_gate_release_seconds','idle_cache_release_minutes'):
+                    self.assertEqual(stderr.getvalue().count(key),1)
+                self.assertEqual(len(studio.config_warnings),2)
 
     def test_commit_release_frees_the_backend_and_admits_only_on_a_fresh_passing_reading(self):
         minimum=32*1024**3;low,high=self._commit_reading(26*1024**3),self._commit_reading(minimum)
@@ -323,6 +386,56 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(job['submissions'][0]['prompt_id'],'  prompt-1  ')
         self.assertNotIn('pending_submission',job)
 
+    # #1459: the marker before POST /prompt and the receipt after it go through the fsyncing observation_state.publish barrier.
+    DONE=staticmethod(lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}})
+
+    def test_submission_marker_and_receipt_are_published_durably_around_the_post(self):
+        s=FakeStudio(self.root,[self.IDLE,{'prompt_id':'p1'},self.DONE('p1')]);job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        real=server.observation_state.publish;calls=[]
+        def spy(path,value,*args):
+            calls.append((path.name,len(s.requests),'pending_submission' in value,list(value.get('prompt_ids') or [])));return real(path,value,*args)
+        with patch.object(server.observation_state,'publish',side_effect=spy):s._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual([args[0] for args,_ in s.requests if args],['/queue','/prompt','/history/p1'])
+        # Marker: workflow.json + state.json synced after /queue, before /prompt. Receipt: both synced right after /prompt.
+        self.assertEqual(calls,[('workflow.json',1,False,[]),('state.json',1,True,[]),('workflow.json',2,False,[]),('state.json',2,False,['p1'])])
+
+    def test_marker_publish_failure_sends_no_prompt_and_leaves_a_clear_not_sent_state(self):
+        for error in (OSError('disk full'),ValueError('Out of range float values are not JSON compliant')):
+            with self.subTest(error=type(error).__name__):
+                s=FakeStudio(self.root,[self.IDLE,{'prompt_id':'never'}]);job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+                with patch.object(server.observation_state,'publish',side_effect=error):s._run(job)
+                self.assertEqual([args[0] for args,_ in s.requests if args],['/queue'])
+                self.assertEqual(job['status'],'failed');self.assertNotIn('pending_submission',job);self.assertEqual(job['prompt_ids'],[])
+                self.assertIn('could not be saved durably',job['message']);self.assertIn('No prompt was submitted for output 1',job['message'])
+                restored=self.studio().jobs[job['id']];self.assertEqual(restored['status'],'failed');self.assertNotIn('pending_submission',restored)
+
+    def test_receipt_publish_failure_never_resubmits_and_keeps_the_prompt_id_uncertain(self):
+        for fallback_fails in (False,True):
+            with self.subTest(fallback_fails=fallback_fails):
+                s=FakeStudio(self.root,[self.IDLE,{'prompt_id':'first'},self.DONE('first'),{'prompt_id':'second'},self.DONE('second')])
+                job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2},enqueue=False)['id']]
+                real=server.observation_state.publish
+                def publish(path,value,*args):
+                    if path.name=='state.json' and value.get('prompt_ids'):raise OSError('disk full')
+                    return real(path,value,*args)
+                atomic=server.Studio._write_json_atomic
+                def plain(self_,path,value):
+                    if fallback_fails and path.name=='state.json' and value.get('prompt_ids'):raise OSError('disk full')
+                    return atomic(self_,path,value)
+                with patch.object(server.observation_state,'publish',side_effect=publish),patch.object(server.Studio,'_write_json_atomic',plain):s._run(job)
+                self.assertEqual([args[0] for args,_ in s.requests if args],['/queue','/prompt'])
+                self.assertEqual(job['status'],'uncertain');self.assertEqual(job['prompt_ids'],['first']);self.assertEqual(job['submissions'][0]['prompt_id'],'first')
+                self.assertIn('will not be resubmitted',job['message']);self.assertNotIn('pending_submission',job)
+                self.assertIsNone(s._observation_error(job))   # Resume observation is offered for the retained prompt ID
+                restored=self.studio().jobs[job['id']];self.assertEqual(restored['status'],'uncertain')
+                self.assertFalse(server.submission_evidence.never_submitted(restored))
+
+    def test_durable_save_writes_non_finite_readings_as_null(self):
+        s=self.studio();job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        job['gpu_spill']={'shared_bytes':float('nan'),'ratio':[float('inf'),1.5]};s._save(job,durable=True)
+        state=json.loads((s.runs/job['id']/'state.json').read_text(encoding='utf-8'),parse_constant=lambda c:self.fail(c))
+        self.assertEqual(state['gpu_spill'],{'shared_bytes':None,'ratio':[None,1.5]});self.assertTrue(job['gpu_spill']['shared_bytes']!=job['gpu_spill']['shared_bytes'])
+
     def test_a_failed_history_read_is_read_again_and_the_batch_continues(self):
         """#1113: one unreadable /history poll is retried after a backoff; the prompt is never resubmitted and the next member is sent."""
         done=lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}}
@@ -418,6 +531,16 @@ class ServerTests(unittest.TestCase):
         self.assertEqual((832,1248),(graph["2"]["inputs"]["width"],graph["2"]["inputs"]["height"]))
         with self.assertRaisesRegex(server.StudioError,"multiple of 16"): s.prepare({"preset_id":"demo","controls":{"width":840,"height":1248}})
         with self.assertRaisesRegex(server.StudioError,"pixel budget"): s.prepare({"preset_id":"demo","controls":{"width":1536,"height":1536}})
+    def test_stale_max_pixels_binding_raises_studio_error(self):
+        (self.root/"presets/catalog.json").write_text(json.dumps({"presets":[dict(PRESET,width=["999","width"],max_pixels=1024*1024)]}))
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,"invalid workflow binding"):
+            s.prepare({"preset_id":"demo","controls":{}})
+    def test_stale_resolution_choices_binding_raises_studio_error(self):
+        (self.root/"presets/catalog.json").write_text(json.dumps({"presets":[dict(PRESET,height=["1","missing_key"],resolution_choices=[[512,512]])]}))
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,"invalid workflow binding"):
+            s.prepare({"preset_id":"demo","controls":{}})
     def test_path_traversal_and_upload_magic(self):
         with self.assertRaises(server.StudioError): server.inside(self.root, self.root/"../outside")
         s=self.studio()
@@ -685,6 +808,53 @@ class ServerTests(unittest.TestCase):
         recovered=self.studio().jobs[job["id"]]
         self.assertEqual(recovered["status"],"uncertain"); self.assertIn("not resubmitted",recovered["message"])
 
+    def unreadable_run_record(self, filename, corrupt=b'{broken'):
+        studio,bad=self.uncertain_known_job(FakeStudio(self.root,[]))
+        good=studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)
+        directory=studio.runs/bad['id'];(directory/filename).write_bytes(corrupt)
+        before={p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()}
+        restored=FakeStudio(self.root,[])
+        self.assertIn(bad['id'],restored.jobs)
+        job=restored.jobs[bad['id']];public=restored.public(job)
+        self.assertEqual(public['status'],'uncertain');self.assertNotIn('graph',job)
+        self.assertFalse(public['prompt_ids']);self.assertEqual(public['submissions'],[])
+        self.assertEqual(public['run_path'],str(directory))
+        self.assertIn('The run record could not be read ('+filename+': ',public['message'])
+        self.assertIn('Nothing was resubmitted.',public['message']);self.assertIn('Inspect experiments/runs/'+bad['id']+'/ before deleting it.',public['message'])
+        # A readable state.json still tells the owner which ComfyUI prompts are known; a broken one cannot.
+        self.assertEqual('Known ComfyUI prompt IDs: '+', '.join(bad['prompt_ids']) in public['message'],filename=='workflow.json')
+        for key in ('never_submitted','can_stop_tracking','can_resume_tracking','can_abandon','can_put_away','can_cancel'):
+            self.assertFalse(public[key],key)
+        self.assertFalse(server.submission_evidence.never_submitted(job))
+        self.assertEqual(restored.jobs[good['id']]['graph'],GRAPH)
+        self.assertEqual(restored.jobs[good['id']]['status'],'not_submitted')
+        self.assertEqual({p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()},before)
+        for command in (lambda:restored.resume_job(bad['id']),lambda:restored.stop_tracking(bad['id'],'Keep the evidence'),
+                        lambda:restored.abandon_job(bad['id'],'Missing evidence',True),lambda:restored.put_away_job(bad['id'],True),
+                        lambda:restored.cancel_job(bad['id']),lambda:restored._save(job),lambda:restored.export_recipe(job)):
+            with self.assertRaises(server.StudioError):command()
+            self.assertEqual({p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()},before)
+            self.assertEqual(restored.queue.qsize(),0);self.assertEqual(restored.requests,[])
+            self.assertEqual(job['status'],'uncertain')
+        self.assertIn(bad['id'],FakeStudio(self.root,[]).jobs)
+
+    def test_unreadable_state_stays_visible_without_recovery_or_writes(self):
+        self.unreadable_run_record('state.json')
+
+    def test_unreadable_workflow_stays_visible_without_recovery_or_writes(self):
+        self.unreadable_run_record('workflow.json')
+
+    def test_unreadable_workflow_with_odd_prompt_ids_does_not_break_loading(self):
+        studio,bad=self.uncertain_known_job(FakeStudio(self.root,[]));directory=studio.runs/bad['id']
+        state=json.loads((directory/'state.json').read_text(encoding='utf-8'));state['prompt_ids']=5
+        (directory/'state.json').write_text(json.dumps(state),encoding='utf-8');(directory/'workflow.json').write_bytes(b'{broken')
+        job=FakeStudio(self.root,[]).jobs[bad['id']];self.assertIn('workflow.json',job['record_error']);self.assertNotIn('Known ComfyUI prompt IDs',job['message'])
+
+    def test_unreadable_run_encoding_and_non_object_records_stay_visible(self):
+        for filename in ('state.json','workflow.json'):
+            for corrupt in (b'\xff',b'[]'):
+                with self.subTest(filename=filename,corrupt=corrupt):self.unreadable_run_record(filename,corrupt)
+
     def uncertain_known_job(self, studio=None):
         studio=studio or self.studio()
         job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}})['id']]
@@ -693,6 +863,21 @@ class ServerTests(unittest.TestCase):
                    started_at=10.0,outputs=[{'filename':'retained.png','subfolder':'Studio','type':'output','prompt_id':'known-prompt'}])
         studio._save(job)
         return studio,job
+
+    def test_resume_and_stop_tracking_reject_extra_path_segments(self):
+        for action,method,status in (('resume','resume_job',202),('stop-tracking','stop_tracking',200)):
+            with self.subTest(action=action):
+                studio,job=self.uncertain_known_job();before=json.dumps(job,sort_keys=True);queued=studio.queue.qsize()
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a:{'reason':'Stop observing this prompt'}
+                sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+                with patch.object(studio,method,wraps=getattr(studio,method)) as command:
+                    for extra in ('/x','/x/y','/'):
+                        handler.path='/api/jobs/'+job['id']+extra+'/'+action;sent.clear();handler.do_POST()
+                        self.assertEqual(sent[0][0],400,sent);command.assert_not_called()
+                        self.assertEqual(json.dumps(job,sort_keys=True),before);self.assertEqual(studio.queue.qsize(),queued)
+                    handler.path='/api/jobs/'+job['id']+'/'+action;sent.clear();handler.do_POST()
+                    self.assertEqual(sent[0][0],status,sent);command.assert_called_once()
 
     def test_stop_tracking_persists_only_disposition_and_is_idempotent(self):
         studio,job=self.uncertain_known_job();directory=studio.runs/job['id']
@@ -927,8 +1112,50 @@ class ServerTests(unittest.TestCase):
         with patch.object(server,'urlopen',return_value=self._http_response(b'')):
             self.assertIsNone(s._request('/free',method='POST',data={},allow_empty=True))
 
+    def test_eviction_skips_at_or_below_commit_floor_and_unknown_headroom(self):
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES; graph={"4":{"inputs":{"ckpt_name":"next.safetensors"}}}
+        idle={"queue_running":[],"queue_pending":[]}; stats={"devices":[{"torch_vram_total":8*1024**3}]}
+        for reason in ('model change','spill'):
+            for available in (floor,floor-1,12*1024**3,None,True,False,float('nan'),float('inf'),'45'):
+                with self.subTest(reason=reason,available=available):
+                    s=FakeStudio(self.root,[idle,stats,None,{"devices":[{"torch_vram_total":0}]}]); job={}
+                    s._resident={'url':s.comfy_url,'pid':42,'models':frozenset({'old.safetensors'})} if reason=='model change' else None
+                    reading={'pid':42,'shared_bytes':4*1024**3 if reason=='spill' else 0,'spilled':reason=='spill'}
+                    s._host_commit=self._commit_reading(floor+1);s._host_commit_at=server.time.monotonic()
+                    with patch.object(s,'gpu_memory_reading',return_value=reading), patch.object(server.host_memory,'read',return_value=self._commit_reading(available)) as read, patch.object(server.time,'sleep'):
+                        record=s._evict_before_submit(job,graph,3)
+                    self.assertNotIn('/free',[r[0][0] for r in s.requests])
+                    read.assert_called_once_with()
+                    self.assertEqual((record['reason'],record['index']),(reason,3))
+                    self.assertEqual(record['outcome'],'skipped: ' + server.COMMIT_RELEASE_FLOOR_NOTE)
+                    self.assertIn('before_available_bytes',record)
+                    self.assertEqual(job['model_evictions'],[record]); self.assertIsNone(s._spill_unload_ineffective)
+
+    def test_eviction_rechecks_commit_headroom_and_releases_above_floor(self):
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES; graph={"4":{"inputs":{"ckpt_name":"next.safetensors"}}}
+        idle={"queue_running":[],"queue_pending":[]}; stats={"devices":[{"torch_vram_total":8*1024**3}]}
+        s=FakeStudio(self.root,[idle,stats,idle,stats,None,{"devices":[{"torch_vram_total":0}]}]); job={}
+        reading={'pid':42,'shared_bytes':4*1024**3,'spilled':True}
+        with patch.object(s,'gpu_memory_reading',return_value=reading), patch.object(server.host_memory,'read',side_effect=[self._commit_reading(floor),self._commit_reading(floor+1)]) as read, patch.object(server.time,'sleep'):
+            self.assertTrue(s._evict_before_submit(job,graph,0)['outcome'].startswith('skipped: '))
+            self.assertIsNone(s._spill_unload_ineffective)
+            record=s._evict_before_submit(job,graph,1)
+        self.assertEqual(record['outcome'],'unloaded'); self.assertEqual(record['before_available_bytes'],floor+1)
+        self.assertEqual(read.call_count,2)
+        self.assertEqual([r[0][0] for r in s.requests].count('/free'),1)
+        self.assertEqual(len(job['model_evictions']),2)
+
+    def test_eviction_commit_probe_failure_skips_free_and_records_failure(self):
+        s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"devices":[{"torch_vram_total":8*1024**3}]},None,{"devices":[{"torch_vram_total":0}]}]); job={}
+        with patch.object(s,'gpu_memory_reading',return_value={'pid':42,'spilled':True}), patch.object(server.host_memory,'read',side_effect=OSError('commit probe failed')), patch.object(server.time,'sleep'):
+            record=s._evict_before_submit(job,{"4":{"inputs":{"ckpt_name":"next.safetensors"}}},0)
+        self.assertNotIn('/free',[r[0][0] for r in s.requests])
+        self.assertEqual(record['outcome'],'failed: commit probe failed')
+        self.assertEqual(job['model_evictions'],[record]); self.assertIsNone(s._spill_unload_ineffective)
+
     def test_checkpoint_change_unloads_resident_models_and_waits_for_the_release(self):
         """A graph that drops a model the previous graph loaded is preceded by /free {unload_models} and a wait until torch's reservation falls."""
+        self._ample_commit_for_idle_release()
         sdxl_a={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"sdxl\\cstati.safetensors"}},"5":{"inputs":{"samples":["4",0]}}}
         sdxl_b={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"sdxl/wai.safetensors"}},"9":{"inputs":{"lora_name":"detail.safetensors","strength":0.5}}}
         self.assertEqual(server.Studio.graph_model_files(sdxl_a),frozenset({"sdxl/cstati.safetensors"}))
@@ -951,6 +1178,7 @@ class ServerTests(unittest.TestCase):
 
     def test_spilling_idle_process_is_unloaded_and_failures_never_block_submission(self):
         """An idle ComfyUI already spilling is unloaded even for the same model; busy queue, unreadable stats, errors and the off switch are recorded."""
+        self._ample_commit_for_idle_release()
         idle={"queue_running":[],"queue_pending":[]}; graph={"4":{"inputs":{"ckpt_name":"a.safetensors"}}}
         spilling={'pid':7,'shared_bytes':4*1024**3,'dedicated_bytes':12*1024**3,'spilled':True}
         s=FakeStudio(self.root,[idle,{"devices":[{"torch_vram_total":8*1024**3}]},None,{"devices":[{}]}]); job={}
@@ -973,6 +1201,7 @@ class ServerTests(unittest.TestCase):
 
     def test_eviction_follow_ups_lora_change_nothing_resident_malformed_stats_and_outside_spill(self):
         """#901: a LoRA change needs no unload, an empty GPU is recorded as such, bad stats never escape, a spill an unload cannot clear is not chased."""
+        self._ample_commit_for_idle_release()
         idle={"queue_running":[],"queue_pending":[]}; quiet={'pid':42,'shared_bytes':0,'dedicated_bytes':9*1024**3,'spilled':False}
         base={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"wai.safetensors"}}}
         with_lora=dict(base,**{"9":{"class_type":"LoraLoader","inputs":{"lora_name":"detail.safetensors","strength_model":0.5}}})
@@ -1379,9 +1608,21 @@ class ServerTests(unittest.TestCase):
         graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
         (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
         for bad in (True,False):
-            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'number or short text'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'safetensors filename'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
         _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'other.safetensors'}})
         self.assertEqual(bound['1']['inputs']['lora'],'other.safetensors')
+
+    def test_lora_slot_values_are_checked_whatever_the_bound_input_holds(self):
+        # A filename-bound slot takes only a bare .safetensors name, never a number or a path; any other binding, including an
+        # input the graph leaves unset, is a 0-2 strength. Raw text or 99 once reached the workflow and failed late in ComfyUI.
+        graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in (99,0.5,'../escape.safetensors','x'*9000,'style.ckpt'):
+            with self.subTest(filename=bad),self.assertRaisesRegex(server.StudioError,'safetensors filename'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        del graph['1']['inputs']['lora'];(self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in ('abc','style.safetensors',5,-1,float('nan')):
+            with self.subTest(unset=bad),self.assertRaisesRegex(server.StudioError,'lora must be'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'1.5'}});self.assertEqual(bound['1']['inputs']['lora'],1.5)
 
     def test_disabled_slots_leave_the_graph_and_rewire_model_edges(self):
         self.lora_stack(); s=self.studio()
@@ -1561,6 +1802,18 @@ class ServerTests(unittest.TestCase):
         job.update(status='partial',message=reason,prompt_ids=['p0'],submissions=[{'index':0,'prompt_id':'p0','seed':1,'graph':job['graph'],'status':'completed'}])
         studio.resume_job(job['id']);studio.queue.get();studio._resume(job)
         self.assertEqual(job['status'],'partial');self.assertEqual(job['message'],reason);self.assertEqual([args[0] for args,_ in studio.requests if args],[])
+
+    def test_resuming_a_failed_receipt_keeps_comfyuis_verdict_without_rereading_history(self):
+        # A ComfyUI restart clears /history: re-reading a failed receipt would end as "uncertain" (Muse bug hunt, 16 Oct).
+        for receipts,expected in ((['failed'],'failed'),(['completed','failed'],'partial')):
+            with self.subTest(receipts=receipts):
+                studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True
+                job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':len(receipts)},enqueue=False)['id']]
+                reason='ComfyUI reported an execution error: KSampler: boom'
+                job.update(status=expected,message=reason,prompt_ids=['p%d'%i for i in range(len(receipts))],submissions=[{'index':i,'prompt_id':'p%d'%i,'seed':1,'graph':job['graph'],'status':r} for i,r in enumerate(receipts)])
+                studio.resume_job(job['id']);studio.queue.get();studio._resume(job)
+                self.assertEqual(job['status'],expected);self.assertEqual(job['message'],reason)
+                self.assertEqual([args[0] for args,_ in studio.requests if args],[])
 
     def test_an_unrecognized_queue_entry_shape_counts_as_listed(self):
         replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'}]
@@ -1874,6 +2127,11 @@ class ServerTests(unittest.TestCase):
                 created = set(s.runs.iterdir()) - runs_before
                 self.assertEqual(created, {s.runs / job['id']})
                 self.assertTrue((s.runs / job['id'] / 'state.json').is_file())
+                # Upload ownership ended successfully before indexing failed.
+                reference = job['references'][0]
+                for root in (s.experiments / 'uploads', s.comfy_root / 'input'):
+                    self.assertEqual((root / reference['file']).read_bytes(), body)
+                self.assertEqual(json.loads((s.experiments / 'uploads' / (reference['file'] + '.json')).read_text()), reference)
                 self.assertTrue(s.public(job)['can_put_away'])
                 s.put_away_job(job['id'], True)
                 restored = self.studio()
@@ -1882,6 +2140,34 @@ class ServerTests(unittest.TestCase):
 
 class RefusalTransportTests(unittest.TestCase):
     """Real loopback sockets: ServerTests patches Thread.start, so the serving thread lives here (#1029)."""
+    def test_stale_dimensions_refuse_job_without_publication(self):
+        fixture=ServerTests();fixture.setUp();fixture.start.stop()
+        self.addCleanup(fixture.doCleanups)
+        for preset in (dict(PRESET,width=["999","width"],max_pixels=1024*1024),
+                       dict(PRESET,height=["1","missing_key"],resolution_choices=[[512,512]])):
+            with self.subTest(preset=preset):
+                (fixture.root/"presets/catalog.json").write_text(json.dumps({"presets":[preset]}))
+                with patch.object(threading.Thread,"start",lambda *_:None):
+                    studio=FakeStudio(fixture.root,[])
+                with patch.object(server.Handler,"studio",studio,create=True),patch.object(socket,"getfqdn",return_value="127.0.0.1"):
+                    httpd=ThreadingHTTPServer(("127.0.0.1",0),server.Handler)
+                    thread=threading.Thread(target=httpd.serve_forever,kwargs={"poll_interval":.01},daemon=True);thread.start()
+                    conn=HTTPConnection("127.0.0.1",httpd.server_port,timeout=5)
+                    try:
+                        conn.request("POST","/api/jobs",body=json.dumps({"preset_id":"demo","controls":{}}),
+                                     headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191","Content-Type":"application/json"})
+                        response=conn.getresponse()
+                        self.assertEqual(response.status,400)
+                        self.assertEqual(response.getheader("Content-Type"),"application/json")
+                        self.assertEqual(json.loads(response.read()),{"error":"Preset has an invalid workflow binding"})
+                        self.assertEqual(studio.jobs,{})
+                        self.assertTrue(studio.queue.empty())
+                        self.assertEqual(list(studio.runs.iterdir()),[])
+                        self.assertEqual(studio.requests,[])
+                    finally:
+                        conn.close();httpd.shutdown();httpd.server_close();thread.join(3)
+                    self.assertFalse(thread.is_alive())
+
     def test_unknown_route_with_large_body_serves_404_without_reset(self):
         with patch.object(socket,"getfqdn",return_value="127.0.0.1"):
             httpd=ThreadingHTTPServer(("127.0.0.1",0),server.Handler)

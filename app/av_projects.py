@@ -350,31 +350,35 @@ class AVProjects:
         path=av.safe_path(directory,relative);av.need(av.file_hash(path)==artifact['sha256'],'Scene artifact changed');return path
 
     def export(self, identifier, payload):
-        directory=self.directory(identifier)
-        with self.production.connect() as db:
-            document=self._read(db,identifier);self._expected(document,payload)
-            row=db.execute('SELECT artifact FROM av_exports WHERE project_id=? AND revision=?',(identifier,document['revision'])).fetchone()
-            history=[json.loads(r['event']) for r in db.execute('SELECT event FROM av_events WHERE project_id=? ORDER BY revision',(identifier,))]
-        if row:
-            artifact=json.loads(row['artifact']);self.file(identifier,artifact['path']);return {**self.inspect(identifier),'export_url':artifact['url']}
-        av.validate(document['project'],directory)
-        sources=[av.safe_path(directory,a['path']) for a in document['project']['assets'].values()]
-        av.need(shutil.disk_usage(directory).free>=sum(p.stat().st_size for p in sources)+2*1024**3,'Scene export needs source space plus 2 GiB free')
-        relative=f'exports/revision-{document["revision"]}-{uuid.uuid4().hex}.zip';target=directory/relative;target.parent.mkdir(exist_ok=True)
-        with zipfile.ZipFile(target,'x',compression=zipfile.ZIP_STORED) as pack:
-            pack.writestr('project.json',json.dumps(document['project'],indent=2));pack.writestr('sources.json',json.dumps(document['sources'],indent=2));pack.writestr('history.json',json.dumps(history,indent=2))
-            for asset in document['project']['assets'].values():
-                path=av.safe_path(directory,asset['path']);av.need(av.file_hash(path)==asset['sha256'],'Source changed during export');pack.write(path,asset['path'])
-        import hashlib
-        with zipfile.ZipFile(target) as pack:
-            for asset in document['project']['assets'].values():
-                hashed=hashlib.sha256()
-                with pack.open(asset['path']) as stream:
-                    for chunk in iter(lambda:stream.read(1024**2),b''):hashed.update(chunk)
-                av.need(hashed.hexdigest()==asset['sha256'],'Source changed while the scene pack was written; incomplete pack retained')
-        artifact={'path':relative,'url':f'/api/production/{identifier}/files/{relative}?download','sha256':av.file_hash(target),'bytes':target.stat().st_size,'role':'scene-source-pack'}
-        with self.production.connect() as db:
-            db.execute('BEGIN IMMEDIATE');self._expected(self._read(db,identifier),payload)
-            db.execute('INSERT OR IGNORE INTO av_exports VALUES (?,?,?)',(identifier,document['revision'],json.dumps(artifact)))
-            artifact=json.loads(db.execute('SELECT artifact FROM av_exports WHERE project_id=? AND revision=?',(identifier,document['revision'])).fetchone()['artifact'])
+        directory=self.directory(identifier);owned=None
+        try:
+            with self.production.lock,self.production.connect() as db:
+                db.execute('BEGIN IMMEDIATE')
+                document=self._read(db,identifier);self._expected(document,payload)
+                row=db.execute('SELECT artifact FROM av_exports WHERE project_id=? AND revision=?',(identifier,document['revision'])).fetchone()
+                history=[json.loads(r['event']) for r in db.execute('SELECT event FROM av_events WHERE project_id=? ORDER BY revision',(identifier,))]
+                if row:
+                    artifact=json.loads(row['artifact']);self.file(identifier,artifact['path']);return {**self.inspect(identifier),'export_url':artifact['url']}
+                av.validate(document['project'],directory)
+                sources=[av.safe_path(directory,a['path']) for a in document['project']['assets'].values()]
+                av.need(shutil.disk_usage(directory).free>=sum(p.stat().st_size for p in sources)+2*1024**3,'Scene export needs source space plus 2 GiB free')
+                relative=f'exports/revision-{document["revision"]}-{uuid.uuid4().hex}.zip';target=directory/relative;target.parent.mkdir(exist_ok=True)
+                stream=target.open('xb');owned=target
+                with stream,zipfile.ZipFile(stream,'x',compression=zipfile.ZIP_STORED) as pack:
+                    pack.writestr('project.json',json.dumps(document['project'],indent=2));pack.writestr('sources.json',json.dumps(document['sources'],indent=2));pack.writestr('history.json',json.dumps(history,indent=2))
+                    for asset in document['project']['assets'].values():
+                        path=av.safe_path(directory,asset['path']);av.need(av.file_hash(path)==asset['sha256'],'Source changed during export');pack.write(path,asset['path'])
+                import hashlib
+                with zipfile.ZipFile(target) as pack:
+                    for asset in document['project']['assets'].values():
+                        hashed=hashlib.sha256()
+                        with pack.open(asset['path']) as stream:
+                            for chunk in iter(lambda:stream.read(1024**2),b''):hashed.update(chunk)
+                        av.need(hashed.hexdigest()==asset['sha256'],'Source changed while the scene pack was written')
+                artifact={'path':relative,'url':f'/api/production/{identifier}/files/{relative}?download','sha256':av.file_hash(target),'bytes':target.stat().st_size,'role':'scene-source-pack'}
+                self._expected(self._read(db,identifier),payload)
+                db.execute('INSERT INTO av_exports VALUES (?,?,?)',(identifier,document['revision'],json.dumps(artifact)))
+        except Exception:
+            if owned is not None:owned.unlink(missing_ok=True)
+            raise
         return {**self.inspect(identifier),'export_url':artifact['url']}

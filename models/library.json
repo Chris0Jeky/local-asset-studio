@@ -2369,6 +2369,7 @@
     },
     {
       "id": "qwen-image-21-diffusion",
+      "backend": "qwen21",
       "name": "Qwen-Image 2.1 / 7B diffusion (int8 ConvRot)",
       "file": "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
       "repo": "Comfy-Org/Qwen-Image-2.1",
@@ -2384,6 +2385,7 @@
     },
     {
       "id": "qwen-image-21-text-encoder",
+      "backend": "qwen21",
       "name": "Qwen-Image 2.1 / Qwen3-VL 8B text encoder (int8 ConvRot)",
       "file": "text_encoders/qwen3vl_8b_int8_convrot.safetensors",
       "repo": "Comfy-Org/Qwen-Image-2.1",
@@ -2399,6 +2401,7 @@
     },
     {
       "id": "qwen-image-21-vae",
+      "backend": "qwen21",
       "name": "Qwen-Image 2.1 / RGBA decoder",
       "file": "vae/qwen_image_2.1_vae_bf16.safetensors",
       "repo": "Comfy-Org/Qwen-Image-2.1",
@@ -2414,6 +2417,7 @@
     },
     {
       "id": "qwen-image-21-text-encoder-w4a8",
+      "backend": "qwen21",
       "name": "Qwen-Image 2.1 / Qwen3-VL 8B text encoder (w4a8, smaller)",
       "file": "text_encoders/qwen3vl_8b_w4a8.safetensors",
       "repo": "Comfy-Org/Qwen-Image-2.1",
@@ -2429,6 +2433,7 @@
     },
     {
       "id": "qwen-image-21-q4km-gguf-unsloth",
+      "backend": "qwen21",
       "name": "Qwen-Image 2.1 Q4_K_M / GGUF (unsloth)",
       "file": "diffusion_models/qwen-image-2.1-Q4_K_M.gguf",
       "repo": "unsloth/Qwen-Image-2.1-GGUF",
@@ -2444,6 +2449,7 @@
     },
     {
       "id": "qwen-image-21-q4-gguf-realrebelai",
+      "backend": "qwen21",
       "name": "Qwen-Image 2.1 Q4 / GGUF (realrebelai)",
       "file": "diffusion_models/Qwen-Image-2.1-Q4-realrebelai.gguf",
       "repo": "realrebelai/Qwen-Image-2.1_GGUFs",

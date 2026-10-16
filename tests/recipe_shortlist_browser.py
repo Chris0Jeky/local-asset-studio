@@ -15,7 +15,7 @@ import sys
 import tempfile
 import threading
 import time
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from urllib.parse import urlsplit
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -94,7 +94,7 @@ async def run(out,inert):
             fixture.ASSETS.append({**first,'id':key,'title':name,'sha256':record['sha256'],'url':url})
             ordered_ids.append(key)
         Handler.studio=studio
-        http=ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
+        http=browser_server(Handler);thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
         origin='http://127.0.0.1:'+str(http.server_port)
         try:
             async with async_playwright() as p:

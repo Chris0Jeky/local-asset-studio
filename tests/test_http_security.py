@@ -71,6 +71,18 @@ class ResponseSecurityTests(unittest.TestCase):
         self.secured(self.request('/missing-security-fixture.html'),404)
         self.secured(self.request('/static/workshop-assets/arcade-horizon.svg'),404)
         self.secured(self.request('/static/workshop-assets/sakura-branch.svg'),404)
+    def test_static_mime_ignores_host_registry_and_keeps_nosniff(self):
+        static_paths=(('/', 'text/html'),('/review.html', 'text/html'),
+                      ('/app.js', 'text/javascript'),('/static/app.js', 'text/javascript'),
+                      ('/style.css', 'text/css'),('/static/style.css', 'text/css'))
+        for guessed in ('text/plain',None):
+            with unittest.mock.patch.object(server.mimetypes,'guess_type',return_value=(guessed,None)):
+                for path,content_type in static_paths:
+                    with self.subTest(guessed=guessed,path=path):
+                        body,headers=self.secured(self.request(path),200)
+                        self.assertTrue(body);self.assertEqual(headers['content-type'],content_type)
+                self.secured(self.request('/static/workshop-assets/arcade-horizon.svg'),404)
+        self.assertEqual(self.studio.requests,[]);self.assertTrue(self.studio.queue.empty())
     def test_json_and_composed_prompt_routes_share_headers(self):
         for path in ('/api/identity','/api/jobs','/api/prompt/profiles'):
             with self.subTest(path=path):

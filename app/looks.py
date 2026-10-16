@@ -13,9 +13,10 @@ through a reference route leaks content. Preparing composes Create's fields and 
 import json
 import math
 import re
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from workspace import WorkspaceError
+from workspace import CARD_ID, WorkspaceError
 
 KIND = "look"
 SLOT = "{scene}"
@@ -30,6 +31,63 @@ NOT_CONTROLS = {"positive", "negative", "reference", "last_reference", "mode"}
 PICTURE_KEYS = ("reference", "last_reference", "reference_slots")
 LINEAGE_ROLES = ("anchor", "evidence", "canon")
 SEEDS = "presets/looks.json"
+# Display-only MA study, never the saved Look's Z2 anchor or a recipe input.
+NIGHT_SHIFT_PREVIEW_DIGEST = "4efd82ed42acaea321891906f9e2b87ccd66577189b493086f5ab3beabd6f853"
+NIGHT_SHIFT_PREVIEW = {
+    "src": "/static/look-previews/night-shift-ma-responsive-1024.webp",
+    "title": "Night Shift visual reference",
+    "alt": "Empty late-night workshop: quiet graphite wall, rainy window, desk lamp and glowing CRT.",
+}
+# Exact server control vocabulary minus wording and references. A parity test guards drift.
+CONTROL_KEYS = frozenset(("width", "height", "seed", "steps", "cfg", "denoise", "lora", "frames", "fps",
+                          "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name",
+                          "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name",
+                          "lora5", "lora5_name", "lora6", "lora6_name"))
+LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+
+
+# server.py NUMBER_RANGES plus its LoRA strength, frames and fps ranges (a parity test guards drift): a saved control outside
+# them would only fail later, when /api/jobs binds it, after Prepare had already handed it to the page.
+NUMBER_RANGES = {"seed": (0, 2**63-1, True), "steps": (1, 150, True), "cfg": (0, 30, False), "denoise": (0, 1, False),
+                 "style_weight": (0, 2, False), "pose_strength": (0, 2, False), "depth_cut": (0, 100, True),
+                 "frames": (5, 365, True), "fps": (1, 60, True), **{k: (0, 2, False) for k in LORA_SLOTS}}
+
+
+def _number(value, lo, hi, integer):
+    if isinstance(value, bool): return False
+    try: raw = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError): return False
+    return raw.is_finite() and lo <= raw <= hi and (not integer or raw == raw.to_integral_value())
+
+
+def _adapter_file(value):
+    return isinstance(value, str) and 0 < len(value) <= 200 and value == Path(value).name and not re.search(r"[\\/]|\.\.", value) and value.endswith(".safetensors")
+
+
+def control_problem(preset, key, value):
+    """Why a saved control value would be refused at /api/jobs, or None. Installed files and live choices are checked there."""
+    # Older presets bind `lora` to a filename input: a filename is a slot value only where the authored input holds one.
+    if key in LORA_SLOTS and isinstance((preset.get("defaults") or {}).get(key), str):
+        return None if _adapter_file(value) else f"{key} must be a .safetensors adapter filename"
+    if key in NUMBER_RANGES:
+        lo, hi, integer = NUMBER_RANGES[key]
+        return None if _number(value, lo, hi, integer) else f"{key} must be a{'n integer' if integer else ' number'} from {lo} to {hi}"
+    if key.endswith("_name"): return None if _adapter_file(value) else f"{key} must be a .safetensors adapter filename"
+    if key in ("width", "height"):
+        (lo, hi), multiple = preset.get("dimension_limits", [64, 1536]), preset.get("dimension_multiple", 8)
+        return None if _number(value, lo, hi, True) and int(Decimal(str(value))) % multiple == 0 else f"{key} must be a multiple of {multiple} from {lo} to {hi}"
+    if key in ("sampler", "scheduler"):
+        choices = (preset.get("choices") or {}).get(key)
+        return None if choices and value in choices else f"{key} {value} is not offered by {preset.get('name') or preset.get('id')}"
+    return None
+
+
+def _offered_default(preset, key, value):
+    """(default, notice) when a saved sampler/scheduler is no longer offered and the recipe's authored default is (owner, 16 Oct 2026:
+    swap it and say so), else None: a recipe with no offered default keeps the plain refusal from control_problem."""
+    default, choices = (preset.get("defaults") or {}).get(key), (preset.get("choices") or {}).get(key)
+    if key not in ("sampler", "scheduler") or control_problem(preset, key, value) is None or not isinstance(default, str) or not choices or default not in choices: return None
+    return default, f"This look's {key} {value} is no longer offered by {preset.get('name') or preset.get('id')}; using the recipe's default {default}."
 
 
 def _text(value, name, maximum, required=False):
@@ -41,7 +99,24 @@ def _text(value, name, maximum, required=False):
 
 
 def _bound(preset, key):
-    return bool(preset.get(key)) or bool((preset.get("bindings_extra") or {}).get(key))
+    if key not in CONTROL_KEYS: return False
+    extras = preset.get("bindings_extra")
+    binding = preset.get(key) or (extras.get(key) if isinstance(extras, dict) else None)
+    return (isinstance(binding, (list, tuple)) and len(binding) == 2
+            and all(isinstance(part, str) and bool(part.strip()) for part in binding))
+
+
+MODEL_LOADERS = {"CheckpointLoaderSimple": "ckpt_name", "UNETLoader": "unet_name", "UnetLoaderGGUF": "unet_name"}
+
+
+def model_of(graph):
+    """A recipe's base model for Make's Tune this look: its file, loader node and text encoders, or None when the graph has
+    not exactly one model loader. Two recipes with the same loader and encoders take the same wording and adapters."""
+    nodes = [n for n in graph.values() if isinstance(n, dict) and isinstance(n.get("inputs"), dict)]
+    found = [(n["class_type"], n["inputs"].get(MODEL_LOADERS[n["class_type"]])) for n in nodes if n.get("class_type") in MODEL_LOADERS]
+    if len(found) != 1 or not isinstance(found[0][1], str): return None
+    encoders = sorted(v for n in nodes if "CLIPLoader" in str(n.get("class_type")) for k, v in n["inputs"].items() if k.startswith("clip_name") and isinstance(v, str))
+    return {"file": found[0][1], "loader": found[0][0], "encoders": encoders}
 
 
 def recipe_problem(preset):
@@ -82,8 +157,9 @@ def _options(value, template):
     return result
 
 
-def validate_body(body, preset):
-    """The look body, normalized, for this catalog preset; WorkspaceError with a plain reason otherwise."""
+def validate_body(body, preset, notices=None):
+    """The look body, normalized, for this catalog preset; WorkspaceError with a plain reason otherwise. An unoffered sampler or
+    scheduler becomes the recipe's default and, when `notices` is a list, its plain notice is appended."""
     if not isinstance(body, dict): raise WorkspaceError("A look must be an object")
     if set(body) - BODY_FIELDS: raise WorkspaceError("Unknown look fields: " + ", ".join(sorted(set(body) - BODY_FIELDS)))
     if body.get("preset_id") != preset.get("id"): raise WorkspaceError("A look names the recipe it was made on")
@@ -104,6 +180,12 @@ def validate_body(body, preset):
         if isinstance(value, bool) or not isinstance(value, (int, float, str)) or (isinstance(value, float) and not math.isfinite(value)):
             raise WorkspaceError(f"{key} must be a finite number or text")
         if isinstance(value, str) and len(value) > 300: raise WorkspaceError(f"{key} must be up to 300 characters")
+        swapped = _offered_default(preset, key, value)
+        if swapped:
+            value = swapped[0]
+            if notices is not None: notices.append(swapped[1])
+        problem = control_problem(preset, key, value)
+        if problem: raise WorkspaceError(problem)
         clean[key] = value
     result["controls"] = clean
     return result
@@ -155,38 +237,55 @@ def ensure_seeds(studio):
     errors, valid, path = [], [], Path(studio.root) / SEEDS
     try: entries = json.loads(path.read_text(encoding="utf-8")).get("looks", []) if path.is_file() else []
     except (OSError, ValueError, AttributeError) as error: entries, errors = [], [f"{SEEDS} is unreadable: {error}"]
+    if not isinstance(entries, list):
+        errors.append(f"{SEEDS} looks must be a list")
+        entries = []
     presets = _presets(studio)
-    for entry in entries if isinstance(entries, list) else []:
+    for entry in entries:
         try:
             if not isinstance(entry, dict) or entry.get("kind") != KIND: raise WorkspaceError("not a look")
-            preset = presets.get((entry.get("body") or {}).get("preset_id"))
+            if not isinstance(entry.get("id"), str) or not CARD_ID.fullmatch(entry["id"]): raise WorkspaceError("Invalid seed card id")
+            name = _text(entry.get("name"), "Look name", 120, True)
+            if not isinstance(entry.get("body"), dict): raise WorkspaceError("A look must be an object")
+            preset = presets.get(entry["body"].get("preset_id"))
             if preset is None: raise WorkspaceError("its recipe is not in the recipe library")
             supersedes = entry.get("supersedes", [])
             if not isinstance(supersedes, list) or len(supersedes) > 20 or not all(isinstance(d, str) and re.fullmatch(r"[0-9a-f]{64}", d) for d in supersedes):
                 raise WorkspaceError("supersedes is a list of up to 20 sha256 digests of earlier shipped versions")
-            valid.append(dict(entry, body=validate_body(entry["body"], preset), lineage=validate_lineage(entry.get("lineage", []))))
-        except (WorkspaceError, KeyError, TypeError) as error: errors.append(f"{entry.get('id') if isinstance(entry, dict) else entry}: {error}")
+            candidate = dict(entry, name=name, body=validate_body(entry["body"], preset), lineage=validate_lineage(entry.get("lineage", [])))
+            # Reuse the Workspace size/JSON checks before its atomic batch, so a bad peer cannot roll back valid seeds.
+            studio.assets._card_fields(candidate, True)
+            valid.append(candidate)
+        except (WorkspaceError, KeyError, TypeError, AttributeError) as error: errors.append(f"{entry.get('id') if isinstance(entry, dict) else entry}: {error}")
     studio.assets.seed_cards(valid)
     studio._look_seed_errors = errors
     return errors
 
 
 def listing(studio):
+    # A swapped sampler/scheduler is a notice for Prepare, not a reason to list the look as unusable.
     errors = ensure_seeds(studio); presets = _presets(studio); result = []
     for card in studio.assets.cards(KIND):
         preset = presets.get(card["body"].get("preset_id"))
-        reason = "Its recipe (" + str(card["body"].get("preset_id")) + ") is not in the recipe library." if preset is None else recipe_problem(preset)
+        reason = "Its recipe (" + str(card["body"].get("preset_id")) + ") is not in the recipe library." if preset is None else None
+        if preset is not None:
+            try: validate_body(card["body"], preset)
+            except WorkspaceError as error: reason = str(error)
         anchor = next((entry for entry in card["lineage"] if entry.get("role") == "anchor"), None)
         found = studio.assets.asset_by_sha256(anchor.get("sha256")) if anchor else None
         result.append(dict(card, preset_name=(preset or {}).get("name"), usable=reason is None and not card["trashed_at"],
                            unusable_reason=reason or ("This look is put away. Restore it to use it." if card["trashed_at"] else None),
                            anchor_asset_id=found["id"] if found else None))
+        if (result[-1]['usable'] and card['origin'] == 'seed'
+                and card['id'] == 'look-night-shift-retro-anime'
+                and studio.assets.card_digest(card) == NIGHT_SHIFT_PREVIEW_DIGEST):
+            result[-1]['visual_reference'] = dict(NIGHT_SHIFT_PREVIEW)
     return {"looks": result, "seed_errors": errors, "generation_submitted": False}
 
 
 def command(studio, payload):
     """Create, edit, put away or restore a look. Bodies are checked against the recipe they name; the anchor comes from the Workspace."""
-    ensure_seeds(studio)
+    ensure_seeds(studio); notices = []
     if not isinstance(payload, dict): raise WorkspaceError("Look command must be an object")
     payload, action = dict(payload), payload.get("action")
     if action == "create" and payload.get("kind") != KIND: raise WorkspaceError("This route saves looks; the card kind must be " + KIND)
@@ -194,7 +293,7 @@ def command(studio, payload):
     if "body" in payload:
         preset = _presets(studio).get((payload["body"] or {}).get("preset_id") if isinstance(payload["body"], dict) else None)
         if preset is None: raise WorkspaceError("A look names a recipe from the recipe library")
-        payload["body"] = validate_body(payload["body"], preset)
+        payload["body"] = validate_body(payload["body"], preset, notices)
     anchor_id = payload.pop("anchor_asset_id", None)
     if anchor_id is not None:
         if action != "create": raise WorkspaceError("The anchor picture is recorded when the look is saved")
@@ -202,7 +301,8 @@ def command(studio, payload):
         payload["lineage"] = [{"role": "anchor", "asset_id": asset["id"], "sha256": asset["sha256"], "job_id": asset["job_id"],
                                **({"preset_id": asset["preset_id"]} if asset.get("preset_id") else {})}, *(payload.get("lineage") or [])]
     if "lineage" in payload: validate_lineage(payload["lineage"])
-    return studio.assets.card_command(payload)
+    card = studio.assets.card_command(payload)
+    return dict(card, notices=notices) if notices else card
 
 
 def prepare(studio, payload):
@@ -217,8 +317,9 @@ def prepare(studio, payload):
     if card["trashed_at"]: raise WorkspaceError("This look is put away. Restore it to use it.")
     preset = _presets(studio).get(card["body"].get("preset_id"))
     if preset is None: raise WorkspaceError("This look's recipe is not in the recipe library")
-    body = validate_body(card["body"], preset)
+    notices = []; body = validate_body(card["body"], preset, notices)
     options = body.get("options", []); on = chosen_options(options, payload.get("options"))
     controls = {"positive": compose(body["template"], payload.get("scene"), options, on), **({"negative": body["negative"]} if preset.get("negative") else {}), **body["controls"]}
     return {"preset_id": preset["id"], "preset_name": preset.get("name"), "controls": controls,
-            "look": {"id": card["id"], "name": card["name"], "revision": card["revision"], **({"options": on} if options else {})}, "generation_submitted": False}
+            "look": {"id": card["id"], "name": card["name"], "revision": card["revision"], **({"options": on} if options else {})},
+            **({"notices": notices} if notices else {}), "generation_submitted": False}

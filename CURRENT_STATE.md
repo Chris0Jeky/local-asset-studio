@@ -1,4 +1,305 @@
-# Current state — 27 September 2026
+# Current state — 13 October 2026
+
+## GPU Look lab Round 5 - 16 October 2026
+
+22 serial jobs / 23 files (one mask): 13 KEEP, 9 FIXABLE; Anima face buttons use the same WAI repaint, Petiflow loses softness, upscales are neutral, restyles retain pose with drift, new icon strict KEEP 1/6 (one item 6/6). [Report](docs/looks/LOOK-LAB-2026-10-16.md#round-5-finishing-chains-restyle-tweaks-and-game-icon-reliability).
+
+61 Look tests passed; final validator/audit results are in the report. Preserve ignored .runtime/lab-20261016e/; receipts/journal in docs/looks. HUMAN_TODO.md unchanged; first upscale admission 64.8%, round peak recorded in receipts. No commit/push or runtime change; coordinator owns integration.
+
+## GPU Look lab Round 4 - 16 October 2026
+
+21 serial jobs: 15 KEEP, 4 FIXABLE, 1 REJECT, 1 skipped; Anima Copy Pose 3/3 per pair, Z-Image/Krea both-item candidates, Petiflow medium 2/2 and full body 1/2 KEEP. [Report and exact controls](docs/looks/LOOK-LAB-2026-10-16.md#round-4-pose-reliability-other-source-families-items-and-framing).
+
+Receipts/journal are in docs/looks; preserve/copy ignored .runtime/lab-20261016d/ before removal. 61 Look tests and validator pass; HUMAN_TODO.md remains open/unchanged. No commit/push or runtime change; coordinator owns integration.
+
+## GPU Look lab Round 2 - 16 October 2026
+
+Round 3: 36 jobs / 42 outputs; Copy Pose and face replacement kept both Anima sources; see [the report](docs/looks/LOOK-LAB-2026-10-16.md#round-3-poses-lora-pairings-game-items).
+Receipts: [round 3](docs/looks/lab-2026-10-16c.receipts.json); Petiflow adapter additions neutral or harmful on one seed; neither item recipe qualified on both objects.
+Evidence: worktree `.runtime/lab-20261016c/`; copy to the primary runtime directory remains sandbox-denied; coordinator owns preservation/commit; `HUMAN_TODO.md` unchanged.
+
+Executed 28 further serial Studio jobs: all nine deferred Krea looks twice (18 jobs), then two fixed-new-scene seeds for each of five round-1 leaders (10 jobs). All completed; no failed, uncertain or repeated submission. Round 2 agent judgements: 17 KEEP, 8 fixable, 1 reject, 2 youthful defaults skipped. Combined lab: 81 jobs / 91 image files; 36 KEEP, 28 fixable, 14 reject, 3 skipped. Studio host_commit admission, explicitly authorized by the owner, was below 60% before all Krea submissions; actual Krea elapsed times ranged 341-2,205 seconds. No CIM probe, runtime restart/stop/reconfiguration, model download, commit or push.
+
+New-scene KEEP rates (two seeds each): Petiflow 2/2, Night Shift 1/2, One Obsession 1/2, AniFox/Ringeko 0/2 (book lettering), Pearly 0/2 (separate instruments instead of one shared astrolabe). All 23 Make thumbnail sources served images; zero missing-source JPEGs were required, with inventory documented in examples/make-looks-20261016/README.md. [The report](docs/looks/LOOK-LAB-2026-10-16.md), appended journal and 81-job receipt manifest contain timings, rubric judgements, recipes/output hashes and ranked goal guidance. Both queues were empty at handoff. The coordinator owns integration; preserve ignored .runtime/lab-20261016/ and .runtime/lab-20261016b/. HUMAN_TODO.md creative/licensing choices stay open and unchanged. Focused Look tests and repository validation pass; full app/native/browser acceptance and licence clearance were not run.
+
+## GPU Look lab - 16 October 2026
+
+Executed 53 serial Studio jobs, all completed, producing 63 image files: 28 baseline jobs across 14/23 shipped looks, 18 single-variable improvement jobs, four additional anime-stack auditions and three OpenPose jobs. Agent judgements: 19 keep, 20 fixable, 13 reject, one youthful-looking output skipped. Nine Krea looks remain unsubmitted because the required CIM memory-admission probe is denied in this sandbox; no alternate-probe clarification was received. No failed/uncertain lab submission, download, installation, runtime change, commit or push.
+
+No Look met the two-scene promotion rule; presets/looks.json is unchanged and no new Look or thumbnail was added. The five-configuration AniFox/Ringeko stack test tied within 0.3. A WAI OpenPose wording change to closed fists fixed the named glove defect at seed 2026101690 while retaining arm/stance control (job 9939e137-1213-4ef2-81c2-9f8bc3285851, prompt 79216f82-23a4-45cc-a217-dc2a4d9a97af, 64.52 seconds); this is one-seed body-pose evidence, not identity transfer or human acceptance. Full methods, all-look table, exact requests, scores, 63 output hashes and resume point: [Look lab report](docs/looks/LOOK-LAB-2026-10-16.md), journal and receipt manifest alongside it. Focused Look tests passed (38); repository validation passed with a process-local Git safe.directory setting. HUMAN_TODO.md is unchanged; art and licensing choices remain open. Existing uncertain/partial jobs are untouched; both services remain running by owner instruction.
+
+## Motion perceptual repair R2 — 13 October 2026
+
+Chris reported the delivered LAS clip looked entirely still. R1 timing tests
+were green but visual delivery failed: the export kept train_enabled=false and
+the tiny rain/reflection changes were below useful card-size visibility. The
+retained live/decoded diagnosis confirms clocks ran and reduced motion was off;
+this was insufficient amplitude and a missing enabled effect, not a frozen export.
+
+The separate `20261013-v2-motion-readable-r2` sibling preserves every R1 file and
+the accepted v2 static SVG bytes. It adds visibly falling native preview strokes
+and enables an8-second one-way train passage in the demo. The discrete train
+reset is fully outside the unchanged window clip; joinery remains stationary.
+Complete normal-speed live/MP4 playback at320px is retained, with immutable object
+geometry, readable-region tests and genuine all-still rejection. Final illustrative
+exports are24fps/192frames/8seconds with enabled effects explicitly recorded.
+Controls, reduced-motion still and hidden/offscreen pause remain tested. These
+checks do not record human acceptance of R2 motion. No runtime/catalogue/precache,
+dependency, budget, merge or deployment change; owner choices stay separate.
+
+## Provisionally accepted v2 source and optional motion draft — 13 October 2026
+
+The owner provisionally accepted the immediately displayed v2 LAS workshop and
+Alibi lantern renders, plus the responsive LAS card: “Yeah, I guess these are good
+enough for being SVGs.” This limited answer does not accept the later failed coarse
+studies, pixel variant, licensing, runtime deployment or a merge. The proposed
+vector-conversion pivot is stopped. Existing source files and archives are unchanged.
+
+`docs/adaptive-studio/assets/production/20261013-v2-motion-preview/index.html`
+is a separate source-only comparison: the exact v2 SVG remains script-free; an
+inline copy receives restrained rain/reflection motion and an optional train
+inside a stationary window clip. Initial pixels match the unmodified master in
+the same inline browser context. Play/Pause, reduced motion, real offscreen
+observation and 16-second loop endpoints pass 26 browser checks at 390/1440 px.
+Hidden-document behavior is a DOM-contract probe, not physical-device proof.
+No Studio/ComfyUI process, application file, catalogue, dependency, precache or
+budget changed. Exact-head hosted qualification belongs to the draft PR; owner
+choices in HUMAN_TODO.md remain separate.
+
+## Optional Look reference pilot - 13 October 2026
+
+An isolated main-based draft adds a folded display-only MA reference to the unchanged shipped Night Shift Look. Its 26,460-byte whole-frame WebP loads only on explicit preview opening; opaque copy, static rendering and missing-picture/forced-color text fallback keep preparation usable. Saved wording, Z2 lineage, recipe controls and revisions stay unchanged; edited/custom or put-away Looks get no automatic reference. No generation, activation, cap change, dependency, art reacceptance or deferral change.
+
+At implementation 7e970293, the actual frontend with production static serving/Look listing/prepare and disposable SQLite passed 65 browser checks at 320/390/430/1536. HTTP delivery bytes/hash/MIME and native PNG pixels were inspected. Independent review exposed the initial production WebP 404, proved by a causal regression; the narrow exact-file route repair passed and was rereviewed without a remaining blocker. Eight Python contracts (including real existing peer media/wrong Host rejection), 15 frontend handoffs, five static-island contracts, 25 Node Look checks, both existing Look browser suites and all 20 use cases passed. Natural-entry/max-scroll/keyboard checks confirm existing clearance: caption can initially extend under the fixed dock on 320/390, but keyboard focus/settled Arrow keys and Tab expose text/controls without a layout-specific screenshot fix. The local full lifetime gate at 3aa41f21 timed out after 600.05 s while progressing through existing parallax tests; no assertion failure was reported before timeout. Final hosted full qualification remains required; budgets are unchanged. Details: docs/adaptive-studio/assets/production/20261013-look-preview/README.md. Physical/native/runtime performance and existing HUMAN_TODO licensing/art decisions remain open. No merge or deployment.
+
+## 14 October 2026: public import and Export collision tutorial
+
+Actual unpatched app f5b1a6af imports two pinned public Alibi derivatives, previews a run-owned pre-existing file explicitly labelled controlled collision, refuses the existing native destination without an attempt/overwrite, then completes a fresh native atlas export and exact ZIP download. The67.79s720p/24fps source recording has eight offline captions, complete normal-speed playback and actual390/1440px UI receipts. Sources: docs/adaptive-studio/assets/production/20261014-export-fixture-tutorial/README.md. No generation or editor/backend launch. Workflow remains blocked by a genuine unavailable installed-node schema (actualHTTP400); first-run/Continue prerequisites, repair/original-loop/44deferrals/parallax and HUMAN_TODO decisions are preserved. Accepted art/motion unchanged; no merge/deploy/runtime activation.
+
+## 14 October 2026: controlled Recover inspection tutorial
+
+The catalogue-approved simulated uncertain-request brief is now recorded in the actual unpatched app using a visibly labelled public retained-state fixture, not a real failure/output. Actual read-only Recipe download and native JSON inspection return to the exact unchanged uncertain job; no mutation/replay/Resume/Abandon/Generate occurs. The38.5s720p/24fps clip has six editable offline captions, complete normal-speed playback and actual390px inspection receipts. Sources and curated public receipts: docs/adaptive-studio/assets/production/20261014-recover-fixture-tutorial/README.md. First-run/Continue prerequisites remain blocked; Workflow/Export, separate repair/loop gaps,44 deferrals, parallax recall path and existing HUMAN_TODO decisions remain untouched. Accepted R2 art/motion unchanged; no merge/deploy/generation.
+
+## Asset continuation batch — 13 October 2026
+
+Two actual source-only Compare/Pose preparation recordings were completed, with six/seven native offline captions, unchanged-draft/no-generation receipts, public original input diagrams, actual phone UI and complete normal-speed playback. Continue remains blocked by a genuine public historical output. See docs/adaptive-studio/assets/production/20261013-compare-pose-tutorials/README.md. The owner accepted R2 art/motion at 16:27 UTC; accepted bytes, 44 deferrals and existing HUMAN_TODO choices remain unchanged.
+
+## Evening maintenance record — 13 October 2026, 22:16+01
+
+PR #1361 merged as `265f097c517dcbe5d7a8e469c329d8a7412945d8` at 21:16:05Z. The 30 September Civitai notes now say `raw/_prior_ids.txt`, `raw/_curated_new.json`, `raw/hf_pruna_README.md`, the list snapshots, `ISSUES.md`, and `github-docs/` are not in this repository. The 382 / 304 / ~165 figures stay historical handoff claims. No cache was reconstructed. Issue #1321 closed completed at 21:16:07Z. The 23 and 24 September notes were not part of that change.
+
+PR #1362 merged as `708ea45272af15cb85c712ad90eea5ac188535f8` at 21:16:53Z. `studio_av/project.py` `number()` now says when a value is not finite, and a finite value past the bounds still says outside. Focused local tests passed before the PR, and the hosted Check studio and Studio AV lanes succeeded on head `3c427776`. No GitHub issue was attached.
+
+Neither merge is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job. `HUMAN_TODO.md` still holds the owner's asset, look, parallax, and WAI Vary choices.
+
+## Later evening merges — 13 October 2026, 22:53+01
+
+PR #1365 merged as `952be1b1348f8b3e84fc1bce5255a959d3a6f0c4` at 21:34:54Z. The reference-role control's accessible name is `Use this picture for Picture N role`. No GitHub issue was attached. A browser accessibility tree was not recorded.
+
+PR #1363 merged as `8bb1f16dd13588bcead2b9665cecd83d2aac0758` at 21:44:41Z. After a parallax stage recall, a changed job list is drawn again. An unchanged 304 response does not redraw and does not call the estimate endpoint. Issue #1358 stays open because the held Playwright stage was not run.
+
+PR #1368 merged as `acb80d865fc916439efcd0b8a6fa2ebf5199774d` at 21:49:07Z. A test now rejects an out-of-range studio_av edit and checks that the original project digest is unchanged. Issue #1367 stays open.
+
+PR #1369 merged as `56bb0a891e71af8b748e9864679954cd2b565d86` at 21:51:30Z. A test now rejects an image asset whose path ends in `.jpg`. Issue #1367 stays open. The zero-byte asset pin and the still-image `source_in` pin were not merged with it.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 22:53 note — 13 October 2026, 23:58+01
+
+The 22:53 note above was true when it was written. The zero-byte pin and the still-image `source_in` pin were not merged with #1369.
+
+PR #1370 merged as `5b80242c39ea8b04bbcc8145252aecd18976bc78` at 22:02:22Z. A test rejects a zero-byte PNG. Issue #1367 stayed open.
+
+PR #1371 merged as `ffcf9a3eaed489cadb52ad7d8c23167160ae86cc` at 22:06:50Z. A test rejects a still image whose `source_in` is not zero. Issue #1367 was closed completed at 22:07:28Z after the four named pins were on main. That close was an issue update.
+
+PR #1373 merged as `dbb1171fa0de1130eb390dd74af810e298136c5f` at 22:19:43Z. The trait group and the suggested-tag group each have a legend. Issue #1366 stayed open. A browser accessibility tree was not recorded.
+
+PR #1374 merged as `1a4c354d0ad790796bb59243c9e6d502209c9e65` at 22:36:29Z. A rejected analysis file or originals file is marked invalid and points at the status line. Issue #1366 stayed open.
+
+PR #1375 merged as `8e72cc992bcff61b8d1991e3206f6669e3882675` at 22:50:50Z. While a clip holds Recent runs, new kept outputs on a problem job are counted. Issue #1215 stayed open.
+
+PR #1376 merged as `c2404791294b60242002a767e994a4ed1171db2f` at 22:55:29Z. The reference source line and the change-count line are polite live regions. Issue #1366 stayed open. The 24px trait target was not measured and was not changed.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 23:58 note — 14 October 2026, 00:24+01
+
+The 23:58 note above was true when it was written. #1377 and #1378 were not merged then.
+
+PR #1378 merged as `3fe5cd36ed1a356bee7cb0270bd2a29c26df5bc4` at 23:14:29Z. It records the merges from #1370 through #1376. Issues #1358, #1366, and #1215 stayed open.
+
+PR #1377 merged as `4504bb51455ee5160cf6ed4765eb65dec2e4a80c` at 23:23:37Z. While a clip holds Recent runs, a gallery card that leaves and later returns to its shown key is counted. A journey that loads `renderJobs` alone can render the empty gallery. Issue #1215 stayed open. The empty held line, the narrow column, and the trash path while held were not changed.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 00:24 note — 14 October 2026, 00:41+01
+
+The 00:24 note above was true when it was written. #1379 and #1380 were not merged then.
+
+PR #1379 merged as `b2471363d4eb8ed93ca00e14f686b1cfeb215dd7` at 23:33:04Z. An adapter total or an own counter past the card plus sampling headroom is unknown for admission. Issue #983 stayed open. The installed guard still returns the subtraction.
+
+PR #1380 merged as `bb3ebb3d3419fbc1e9c66518e380c3a1c37d9287` at 23:38:55Z. It records the #1377 and #1378 merges. Issues #1358, #1366, and #1215 stayed open.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 00:41 note — 14 October 2026, 00:57+01
+
+The 00:41 note above was true when it was written. #1381 and #1382 were not merged then.
+
+PR #1381 merged as `e32728a6b9968397c2e95e4adf3db72377737740` at 23:53:55Z. When Klein 4B is ticked from replace, the plan shows the remembered clothes answer. Issue #1233 stayed open. Items 1, 3, 4, and 5 were not part of this merge.
+
+PR #1382 merged as `89f829563dd806e8f585ba4a68bba4ff0870f4c5` at 23:56:10Z. It records the #1379 and #1380 merges. Issues #983, #1358, #1366, and #1215 stayed open.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Merges after the 00:57 note — 14 October 2026, 01:25+01
+
+The 00:57 note above was true when it was written. #1385 and #1383 were not merged then.
+
+PR #1385 merged as `280c8356a3a16d43a2ebe8cde3fe591c8da7533e` at 00:24:44Z. It is the 00:57 note above. Issues #1233, #983, #1358, #1366, and #1215 stayed open.
+
+PR #1383 merged as `1de6f6be6350dae89eaf2a0ebd4c64a86b4140f4` at 00:24:54Z. A failed Start plan keeps its error on the status line when the form changes during the request. Issue #1233 stayed open. Item 5 of that issue is this merge. Items 1, 3, and 4 remain.
+
+None of these merges is a generation, an art acceptance, or a licence decision. This session did not start ComfyUI or submit a job.
+
+## Renewed maintenance qualification — 13 October 2026
+
+The finite second batch has merged through EstateGate, preserving all commits. Model-warning wording #1355 landed as `04c0091d`, closing #1350: filename-only health warnings say “Model verification needs attention”, while affected filenames and detailed mismatch/unavailable notes remain available. Immediate parallax draft persistence #1356 landed as `c15706f4`, closing #1308: the shared accepted-stage adapter saves the exact prepared recipe before further input or pagehide. Retained sibling activity context #1357 landed as `f58deaf9`, closing #1349; its confirmation and Create status retain wait/inspect-original guidance without submitting another job. Each closure was verified after merge.
+
+Causal regressions fail against the original sources and pass after correction. Native HTTP/Chromium checks pass at 1440 and 390 px for the model warnings, immediate stage save/reload, exact restoration without replay, sibling activity and newer-edit preservation. The final combined parallax fixture passes all 14 checks on each hosted Windows/Linux platform (run38374264993), with no page errors or generation. Its recorded checkout tree `f42c7645` exactly matches qualified head `7a974853`. Current full PR gate run38374265045 passes 5,496 tests / 60 skips / 789.413s and validator; branch run38374259409 passes 5,496 / 60 / 797.747s. Both report clean resource-lifetime shutdown. Independently reviewed source and the combined-fixture conflict resolution have no confirmed HIGH/CRITICAL blocker.
+
+The admitted local Windows lifetime gate on badge-plus-persistence head `d52e2210` passes 5,496 tests / 115 skips / 1291.927s, exit0, with no retained non-daemon thread or child process. It does not include the sibling-context addition. The local combined browser rerun was deferred before launch; the current-head hosted native packet supplies that proof. An earlier gallery fixture read too soon and one old-label test assertion genuinely failed; both bounded corrections and the earlier failed/deferred receipts remain separate from green results.
+
+Connector MEDIUM feedback about a server-only running-to-uncertain change is tracked in #1358. The sibling note uses the latest observed browser jobs snapshot and can lag authoritative server state; the original job remains inspectable and no replay is authorized. LOW malformed-record and oracle suggestions were declined once against existing stage/controller coverage. The six renewed Muse lenses were triaged, its file-only worker was independently reproduced, and the owned lane is drained with no pending worker or live supervisor. Runtime qualification failures reported for newer Muse source were left outside this batch; the installed qualified runtime was retained.
+
+No real GPU/model/native-export execution, installed-runtime activation, art verdict or licensing acceptance was performed in this renewed batch. Foreign Studio/ComfyUI services, five uncertain/one partial historical Studio jobs and foreign dirty worktrees remain intact; an empty physical queue does not resolve them. Primary remains clean at `11149eb7`. Finished published worktrees are removed only after merged-ancestry, ignored-survivor, reparse-point and process checks; raw reviews, logs, reports and screenshots remain outside Git in `C:/Users/jekyt/Documents/Codex/2026-10-13/ca/outputs/heavy-20261013-round2/local-asset-studio/`. HUMAN_TODO.md retains the owner’s asset wishlist, seamless/floor and Look judgments, own-scene parallax masks and separate Generate choices, WAI Vary and creative/licensing decisions.
+
+## Overnight qualification — 13 October 2026
+
+Eight maintenance PRs have merged through EstateGate with their original commits preserved: guide lane count #1345 (`fe1f3a1f`), early oversized-reference guard #1332 (`de2a3040`, closed #1341), reference-provenance regressions #1346 (`2083c3f3`), retained JPEG EXIF orientation #1288 (`d1a8a348`), retained parallax stage-card recovery #1289 (`bd93b0d9`), hash-time mutation warning #1348 (`fe13f61f`, closed #1317), prepared-draft recovery #1285 (`c1828f4b`, no issue closure), and failed-switch inventory #1352 (`e5c709b3`, closed #1336). The hash repair invalidates its old digest after a detected file change, keeps readiness reads passive and records an unavailable digest rather than certifying changed bytes. Its qualified-head hosted full suite passes 5,493 tests with 60 skips in 781.925s, clean shutdown. Focused causal regressions, validators and independent reviews are retained in the campaign.
+
+Prepared-draft recovery passes 5,496 tests with 60 skips in 784.937s, clean shutdown, plus its native desktop/mobile recovery workflow and 33 native HTTP Workshop handoff checks. Independent Opus protected and Sol source/fix reviews pass; source-archive blobs match the final head. Failed-switch inventory passes both combined-base full jobs (run38339461955:5,496 tests/60 skips/811.568s, clean shutdown) and35 native HTTP handoff checks. Its eight admitted Windows backend checks passed before the base refresh; unchanged production/fixture blobs and combined-base archive checks preserve that evidence. Independent Sonnet production review passes. An earlier prepared full suite genuinely failed its page load-order contract; the native handoff fixture also carried an invalid placeholder claim. One bounded fix moves the pure core before its caller and supplies a complete fixture claim without relaxing assertions. The backend fixture now uses the shipped API seam and navigates the visible environment controls. Earlier failed, interrupted and deferred runs are preserved separately from green proof; no failed run is presented as a pass.
+
+One deliberately submitted synthetic JPEG diagnostic completed through native ComfyUI 0.35.0 on the AMD RX 9070 XT host: prompt `ba8127bb-a015-41b0-be6b-2cad3099f459`, a two-node LoadImage → SaveImage graph with no model. Engine history reports 0.213s between execution_start and execution_success. Raw 640×512 EXIF6 JPEG bytes (`b991e1f1be3d8ce8f65c7a89422865c5158da100c37e65254bef5c168754973b`) remain unchanged; native output is 512×640 (`6f0df50aee77378f7fcdaf03a1854477b3de4e3fbb9f0309cab4c3ad046e7e5b`). The first Pillow pixel prediction failed at JPEG boundaries and remains recorded. Installed LoadImage uses PyAV first; a separate offline PyAV decode plus explicit ROTATE_270 matches every native pixel. Both images were opened for inspection. The prompt was never repeated.
+
+Full-resolution output remains at `C:/AI/ComfyUI_windows_portable/ComfyUI/output/Studio/QA-exif-20261013/f439f5f819354a0f82c060775c40ea86/oriented_00001_.png`. Raw graph, history, queues, hashes, output and failed prediction stay outside Git in `C:/Users/jekyt/Documents/Codex/2026-10-13/ca/outputs/overnight-20261013/local-asset-studio/native-exif/`. This proves one native orientation/decoder case, not GPU inference, seven other native EXIF tags, the complete Studio submission chain, native export, artwork or model terms.
+
+The dedicated Muse lane is drained after six bounded lenses and two file-only worker drafts; their initial claims were independently triaged and reproduced by the lead. The hash worker's initial Windows verification failure remains visible alongside the corrected atomic-replacement regression. Foreign Studio/ComfyUI services and five uncertain/one partial historical Studio jobs were preserved. No installed runtime, model, package or driver was changed. Primary checkout stays clean at its existing `11149eb7`; qualification does not activate that owner-managed runtime.
+
+Nonblocking follow-ups are tracked as noticed #1349 (additional stage-card context) and #1350 (overview badge wording for unavailable hash). Immediate automatic stage-transition draft persistence remains the final acceptance in #1308. #1175 keeps its explicit Chris-review hold; author-owned #1342/#1343/#1344 remain untouched. HUMAN_TODO.md retains the ChatGPT asset wishlist, seamless/floor and Look judgments, own-scene parallax masks, WAI Vary and other creative/licensing choices. The retained c92fc worker's 3,692 deletion-only edits remain intact. Ignored source-worker logs and remote checkpoints were preserved before plain worktree removal.
+
+## Night Shift quality study 02 - 13 October 2026
+
+Continuation: the source alternatives stay experimental; no further near-identical
+variants are being made. Exact accepted 3840x2160 MA bytes now hash-match the original
+receipt and were decoded/inspected after the supported Library helper's Windows
+metadata failure. Metadata was not persisted. The guide count repair already merged
+through concurrent #1345; this branch reuses only that isolated one-line commit,
+with all 16 unchanged brief contracts passing. The durable per-ID inventory is in
+docs/adaptive-studio/assets/production/20261013-qualification/INVENTORY.json.
+
+Version 1 remains unchanged as an early study below the owner's quality bar.
+Separate quality-02 workshop and 384x216 pixel SVGs add material modelling,
+light hierarchy and deliberate pixel clusters. Individual PNGs and an unchanged
+accepted-evidence comparison are reviewable at phone/desktop widths. All 36
+combined comparison/lifecycle checks pass; artistic acceptance and comparison
+with the full-resolution MA master remain open. No runtime or selection changes.
+The guide-count CI mismatch (46 documented versus 50 actual lanes) reproduces
+on the unchanged baseline guide blob and is outside this source-only art branch.
+
+## Native-vector Night Shift source pilot — 12 October 2026
+
+Two editable alternatives remain separate from runtime: the detailed workshop and
+320×180 pixel interpretation in docs/adaptive-studio/assets/production/20261012-vector-pilot/.
+Actual Chromium pixels at phone and desktop widths were inspected; a covered
+window layer and hard light edge were corrected. The source SVGs are static and
+contain no raster embedding; their review page offers explicit restrained motion.
+Tracked-payload validation passes (92 graphs, 176 pins, 3,844 paths before this note).
+Full-resolution MA Library materialization is blocked by the supplied Windows
+xattr helper; its preserved accepted comparison sheet was inspected instead.
+Original selections and 44 deferrals remain unchanged. No acceptance flag, app
+activation, merge or deployment. Other foundation/motion application QA remains open.
+
+## Actual isolated adapter-edit recording — 13 October 2026
+
+Source-only tutorial evidence at application revision `04c0091d89bb0248174d4050d60384607882c28e`
+records the authored YumeFlux ILv1 adapter stack and a single real UI strength edit
+1.0→0.8, with slot2 at0 and every other workbench value unchanged. Silent27.76s
+H264 is652945bytes; raw capture, editable captions/source and exact state/audit
+receipts are preserved in the additive deliverable. No generation, model launch,
+dependency install, catalogue/precache or acceptance flag change. Actual phone UI
+and manual-player checks at390/1280 pass; decoded pixels inspected. Readiness is
+unavailable (`psutil` absent); this is not installed-product or adapter-effect proof.
+Prior tutorial/source/art bytes and all decisions/deferrals remain intact. See
+[source evidence](docs/adaptive-studio/assets/production/20261013-adapter-tutorial/README.md).
+`HUMAN_TODO.md`, installed/native/performance and physical-device gates stay open.
+The accompanying read-only Alibi diagnosis identifies no simple697-byte recovery;
+its shell budget remains blocked, caps unchanged. Attribution correction names
+the coordinating assistant's steering, without inventing an owner decision.
+
+## Native AMD Animagine execution — 12 October 2026
+
+Exactly one deliberately submitted `anime-animagine-quality` job completed on the installed native AMD RX 9070 XT runtime: job `dd0c1838-8b91-4a03-ac1d-57b0688ebed8`, prompt `144091d1-db6e-4db3-af34-3511b64616d8`, authored graph SHA256 `6230dc971484ec8e45fa83e1ec1d69f51678167d7343ac3d14197110eac795a0`. Fresh hashing matched the installed 6,938,350,040-byte checkpoint pin in 12.295s, with stable before/after file identity. ComfyUI 0.35.0, embedded Python 3.12.10 and Torch 2.9.1+rocm7.2.1 reported the AMD device under the runtime's `cuda:0` namespace. No model, package or driver was installed or upgraded.
+
+One 832x1216 RGB portrait used seed 2026101201, 28 Euler ancestral steps, normal schedule and CFG 5; both optional LoRAs were disabled. Engine time was 17.42s, Studio time 18.478s and the complete activation/hash/job/shutdown packet 95.049s. The output was opened and inspected: silver-haired elf, embroidered blue robe, downcast side profile and a soft bright background; no hands visible, no obvious text/watermark observed. PNG SHA256 `d9dc8968f1ac3c796dc6e1b595929c9e40cbfca435612f73632d0f9caa520bc3`. The catalog's execution badge and stale unrendered wording now refer to this exact graph. Complete recipe, seven-node compiled graph and measurement limits are in [curated evidence](experiments/curated/amd-animagine-20261012/README.md); raw outputs and operational logs stay outside Git.
+
+Five backend samples reported at most 6.777GiB VRAM used; 38 process-counter samples reached 11,352,096,768 dedicated bytes and 180,449,280 shared bytes, with spilled=false. Counter bases differ and sampled peaks are not exhaustive. Free RAM reached a sampled minimum 3.646GiB during cold loading from 9.957GiB admission, then recovered to 12.741GiB after shutdown; future cold packets of this shape require 12GiB free RAM at admission. The completed queue was empty before exact owned Studio/ComfyUI processes were stopped and joined. No uncertain submission was repeated, and no second GPU job is queued. Enabled adapters, other variants, owner art acceptance and licence acceptance remain unverified; `HUMAN_TODO.md` remains authoritative.
+
+The metadata at `d6288a30` passed the complete lifetime gate: 5,472 tests, 87 skips, 808.216s worker / 811.826s guardian, clean shutdown, plus validator (92 graphs, 176 pins, 3,834 tracked paths). Independent Sol medium evidence review passed. Main then contributed only one validation-test module from PR #1335; the production and curated metadata files are unchanged by that base refresh. The automatic parallax ownership PR #1337 has actually landed as `72ad485c8dc55aa0773ab48476d06af6c1c1c934` at 03:24:46 UTC, preserving its commits; #1308 remains open for the separate persistence acceptance.
+
+## Automatic parallax handoff ownership — 12 October 2026
+
+After a clean-plate Generate press, the automatic isolate reply now adopts its settings only if the captured full Create stamp, recipe, plan and stage remain current. Edits made while either the job submission or stage reply is pending survive; the original queued job stays recorded once and the existing Load isolate action remains available. An unchanged editor still loads the isolate for the owner's next Generate press. Capture is limited to parallax submissions, preserving ordinary Generate's existing dependencies.
+
+Original source overwrote newer wording in a deferred job-response fixture. Corrected source `2326a0da` passes 30 deferred parallax schedules, all 10 ordinary Generate prompt contracts and the complete 33-check native HTTP/Chromium workshop run, including desktop/phone parallax controls and unchanged positive cases. Final independent Sol medium source review passed. The full lifetime gate passed 5,472 tests with 87 skips in 812.236 seconds, clean shutdown; guardian/packet time was 815.761 seconds. Validator passed 92 preset graphs/bindings, 176 pinned assets and 3,831 tracked paths.
+
+The initial full packet was interrupted by queue-order guidance after admission and is retained as nongreen scheduling evidence. The first complete gate at `d99fa828` failed one frontend contract because two ordinary Generate fixtures lacked a browser global; the conditional capture above corrected it. Failed and interrupted logs remain separate from the passing retry. Issue #1308 remains open for immediate applied-stage browser-draft persistence; explicit card loading is the separate held #1289 path. No model execution, owner art verdict or licensing decision was used for this repair. `HUMAN_TODO.md` remains authoritative.
+
+The earlier inventory repair PR #1334 is actually merged as `fe244f9cc02eeb3464e8745ca6cee8f4548df0d6` (12 October, 02:01:23 UTC), closing #1307. Its connector P2 failed-switch inventory finding was reproduced, replied to and tracked in #1336; the original review thread is resolved. No further fix cascade was added to that PR.
+
+## Backend inventory ownership and HTTP fixture lifetime — 12 October 2026
+
+Issue #1307's overlapping backend refreshes now collect LoRA options, knowledge and recipes locally and commit them together only while both the inventory read and backend observation remain current. A same-backend successor takes over unfinished inventory work. Six deferred-response schedules failed against the original source while 23 existing checks passed; the corrected 31 Node checks pass. Native HTTP Chromium checks pass at 1440 and 390 px, preserving wording, blank settings, focus, File identity and reference lineage without submitting a generation. Independent Sol Medium source review passed after the same-backend edge was corrected.
+
+The first full run passed 5,471 assertions with 87 skips but failed its resource-lifetime guard on eight unclosed HTTP-error response warnings. The unchanged workflow-module HTTP fixture reproduced all eight warnings in four tests. A closure regression failed for both successful error-body parsing and parse failure; closing the response wrapper made all five fixture tests pass without warnings. At source `03cc00591c87f956b6a735f8fbea7054085b9817`, the complete lifetime run passed 5,472 tests with 87 skips in 824.750 seconds, with clean shutdown and no resource warnings; repository validation passed. The first failure remains preserved in the external campaign's `gate-attempt1/` receipt.
+
+Evidence is outside Git at `C:/Users/jekyt/Documents/Codex/2026-10-12/c/outputs/maintenance-20261012/local-asset-studio/`. The primary checkout and shared worker trees were preserved. A separate AMD recipe proof remains queued; generation, artistic acceptance and model terms are distinct. `HUMAN_TODO.md` retains the owner's creative and licensing choices.
+
+## Overnight reconciliation — 11 October 2026
+
+Execution bundle integrity #1315 now freshly hashes every recorded model at the existing shared admission boundaries, comparing prepared content and before/after file identity while preserving backend, schema and input guards. Five disposable-model tests against unchanged `489a79a2` produced six assertion failures in 0.500s, with no setup errors; the real Production caller reached the job-creation sentinel after a same-size rewrite with restored modification time. Corrected source passed all 63 tests across four model/admission/Production modules (one existing skip) plus validator (3,827 tracked paths), under observed exclusive leases. Same-stat replacement, cache independence, unreadable files and mutation during hashing are covered. Independent fresh Sol source review found no direct blocker; an isolated same-size mid-hash fixture expansion was declined as LOW. Complete current-head qualification remains pending. Real-model timing and changes after admission but before the engine opens a file remain unverified; no engine, art or licence acceptance was inferred.
+
+Dialog preparation ownership PR #1327 is merged through EstateGate as `13f5e204` (11 October 2026, 03:55 UTC), preserving its commits and closing #1310 after acceptance. At head `cb508b84`, complete full runs `38109059493` and `38109062396` each passed 5,457 tests with 60 skips and clean shutdown (566.663s and 801.107s); all 22 checks passed. The retained Restyle run `38109062332` independently parses 104/104 native-HTTP checks on both Windows and Ubuntu, completed without errors or model execution. The causal seventeen-case baseline produced thirteen failing outcomes and four controls; corrected local proof also passed 74 Node tests, complete frontend handoffs and validator. Fresh Sol source review passed. Its qualification tree was removed after remote equality, no matching live process and three ignored-cache directories. No native application, generation, art or licence acceptance was inferred.
+
+Upload rollback PR #1326 is merged through EstateGate as `489a79a2` (11 October 2026, 03:33 UTC), preserving its commits and closing #1311 after acceptance. At head `f7aba4b7`, full runs `38107792062` and `38107769709` each passed 5,457 tests with 60 skips and clean shutdown (792.800s and 691.252s); all 34 checks passed. Eleven synthetic baseline tests produced thirteen assertions without setup errors; corrected source passed 227 upload/server/preparation caller tests plus validator. Independent Sol and distinct Muse source reviews were triaged once: the cross-volume concern does not apply to per-destination staging, and the different-user permissions and fixture expansion suggestions were declined as non-blocking. Publication remains sidecar-last and no-clobber; cleanup retains changed or undeletable files with exact paths. Crash atomicity and cross-process compare-and-delete remain unverified. No engine submission, art or licence acceptance was inferred.
+
+Native export orientation PR #1325 is merged through EstateGate as `43f83cb6` (11 October 2026, 03:12 UTC), preserving its commits and closing #1312 after acceptance. At head `cccbdb21`, full runs `38106774558` and `38106772103` each passed 5,446 tests with 60 skips and clean shutdown (803.445s and 794.353s); Windows fault-contracts also passed. Independent Sol review and 63 native/production adapter tests proved normalized derived pixels, displayed canvases, pre-decode bounds, ICC cleanup and immutable source provenance. The causal baseline had twelve orientation assertions and one mixed-canvas error; an additional absent-method fixture error was not defect evidence. Its clean qualification tree was removed after remote equality and ignored-cache inspection. No installed native application, generation, art acceptance or licence approval was exercised.
+
+The estimate-control correction preserves Muse draft `e34b27aa` and rejects invalid bound numeric inputs instead of silently estimating the authored value. Seven coordinator tests on unchanged main produced twelve invalid-input assertion failures while four positive cases passed (0.516s). Corrected source passed all seven in 0.410s and both existing estimate tests in 0.120s, plus validator, under an observed exclusive lease. Valid numeric/filename LoRA, companion bindings, copied graph and job/queue immutability remain covered. Independent Muse review found no direct blocker; broader duplicate numeric-table tests were declined as LOW. Complete current-head qualification remains pending; recipe-specific generation validation and model/art acceptance were not inferred.
+
+Coroutine lifetime PR #1290 is merged through EstateGate as `7f912040` (11 October 2026, 02:18 UTC), preserving the original commits. At head `a62e8184`, both complete full runs `38103363966` and `38103366187` passed 5,432 tests with 60 skips and clean shutdown; all Windows shards and isolated contracts passed. The parent warning guard and worker diagnostics passed causal focused proof and two independent source lenses. Historical signal-11 cause remains unresolved in #1270; fixture descendant cleanup is tracked in #1322. Its qualification tree was removed after ignored-cache inspection.
+
+Lifetime self-test isolation PR #1143 is merged through EstateGate as `5bb587f4` (11 October 2026, 01:53 UTC), preserving its commits and closing #1141 after all stated acceptance passed. Two new causal regressions produced five failures on the original source; corrected focused proof passed 31 tests with one skip and validator. At head `cdbaf25e`, full runs `38102416241` and `38102418385` each passed 5,425 tests with 60 skips and clean shutdown. The older PowerShell fixture timeout's underlying cause remains unproven. Its qualification tree was removed after ignored-cache inspection.
+
+Civitai research PR #1259 is merged through EstateGate as `d096c6e9` (11 October 2026, 01:31 UTC), preserving its original commits. At head `a93d9b50`, both full lifetime runs `38101111266` and `38101108712` passed 5,423 tests with 60 skips and clean shutdown, alongside Markdown references, validator and an independent operational review. Issues #1176, #934 and #1174 remain open. The historical scan's missing raw cache is tracked in #1321; no current licence, quality or artistic acceptance was inferred. Its qualification tree was removed after ignored-cache inspection.
+
+PRs #1291 and #1292 are merged, verified live as `d4107a3` and `7343f52`; their stale human-action entry is completed against the existing owner answer and Agent HQ's canonical acted record in merged PR #356 (`02bb2e9`). No creative or licensing acceptance was inferred.
+
+The preserved Muse registration draft (`fd9367a`, worker `c5de39c7-0`) is merged through EstateGate in PR #1314 as `d69b90b4` (10 October 2026, 23:36 UTC). An ignored SQLite insert now returns the durable stored asset ID, not an ID that does not resolve. The causal baseline failure, 38 focused tests (two skips), validator and independent Sol review passed. Both hosted full lifetime jobs passed at head `5d605124`: 5,410 tests, 56 skips each, clean resource shutdown (runs `38094700881` and `38094670778`). The local full run reached its 600-second budget while progressing and is not claimed green; complete hosted proof qualified the gate without a redundant local retry.
+
+Pin-preflight PR #1282 is merged through EstateGate as `5fec2c75` (10 October 2026, 23:55 UTC), preserving its commits. All 34 checks passed at head `8a1de515`; full lifetime runs `38095697927` and `38095695629` each passed 5,414 tests with 56 skips and clean shutdown. Four causal freshness regressions, 47 focused tests (one skip), validator and independent Sol/Muse reviews passed. One read-only project digest over the installed 2.53 GB CLIP vision pin took 4.517 seconds with matching SHA-256 and stable file identity; OS cache was uncontrolled, so this is not end-to-end preflight latency. Its qualification tree was removed after ignored-cache inspection. The broader #1182 remains open; pre-existing execution pin admission and stale readiness evidence are tracked separately as #1315 and #1317.
+
+Frontier research PR #1261 is merged through EstateGate as `d835fc78` (11 October 2026, 00:13 UTC). The direct-generation instruction and broken index were corrected, with independent Sol/Muse reviews and Markdown/validator proof. Full lifetime runs `38096820514` and `38096818765` each passed 5,414 tests with 56 skips and clean shutdown at head `e64e5626`. Provider availability, prices and quality rankings remain dated research; no execution or acceptance was inferred. Its qualification tree was removed after ignored-cache inspection.
+
+Source-export PR #1316 is merged through EstateGate as `18cf4c5d` (11 October 2026, 00:31 UTC). Current-head full runs `38097774913` and `38097771407` each passed 5,418 tests with 60 skips and clean shutdown at `cedc225c`; the local configured-FFmpeg run passed all 21 scene tests without skips plus four fresh-pin regressions and validator. The export race and separate-connection writer-admission regressions fail against the original function and pass with the existing lock/transaction correction. Independent Sol/Muse reviews remain applicable after base-only refreshes. Failed source packs remain deliberately retained (Refs #1313); interruption reconciliation and large-pack timing are unverified. The qualification tree was removed after ignored-cache inspection. No generation, model/runtime changes, art acceptance or licensing approval were inferred.
+
+Three completed Muse trees were removed after preserving their runtime and test receipts outside Git at `C:/Users/jekyt/Documents/Codex/2026-10-10/ar/outputs/overnight/local-asset-studio/preserved-muse/`. Original registration commit `fd9367a` is also preserved on `codex/preserved-las-registration-worker`; its qualification checkout was removed after merge with only disposable caches ignored. The deletion-only `c92fc40f-0` tree is preserved for investigation.
+
+Two workspace refusal drafts are merged through EstateGate in PR #1320 as `1525089e` (11 October 2026, 01:12 UTC). All 28 workspace tests and validator passed after export and binding base refreshes; in-memory removal of each guard makes its new regression fail while restored source passes. Independent Sol review passed. Full lifetime runs `38100033432` and `38100031071` each passed 5,423 tests with 60 skips and clean shutdown at `570f37d2`. Original drafts are preserved remotely as `eef3c04f` on `codex/preserved-las-workspace-revision-worker` and `7d03798c` on `codex/preserved-las-workspace-scope-worker`, with binary patches/terminal receipts outside Git. Their two source trees and the qualification tree were removed plainly after ignored-cache inspection. The one-asset case does not prove ten-row truncation; no browser, generation, art or licence acceptance is inferred.
+
+The third draft's invalid-dimension-binding correction is merged through EstateGate in PR #1319 as `82f1e6b2` (11 October 2026, 00:50 UTC). It reproduced two prepare failures and two dropped loopback HTTP responses against the baseline; its three new tests and validator pass, with independent Sol/Muse reviews. Full lifetime runs `38098783593` and `38098781535` each passed 5,421 tests with 60 skips and clean shutdown at head `a91785fa`. The original worker draft is preserved as `818b30cd` on `codex/preserved-las-bindings-worker`; its patch was unchanged, terminal receipt green and no foreign process identified before takeover. Its source and qualification trees were removed plainly after ignored-cache inspection. The broader local server module and complete local full suite are not claimed run.
+
+Coroutine-lifetime PR #1290 is refreshed onto `1525089e` and ready for current-head hosted qualification. The old guard at `82f1e6b2` fails five of the seven causal subprocess contracts; the corrected integrated source passes all seven plus 23 existing guard/lifetime/shard/atexit tests and validator on Windows Python 3.14. Both independent Sol and Muse source lenses passed; fixture timeout cleanup is a non-blocking follow-up in #1322. The focused run does not qualify the complete suite or explain the historical #1270 signal-11 crash. That issue remains open; no runtime or artistic acceptance is implied.
 
 ## Wrap-up proofs: the wide seam band, the loosened Night Shift look, WAI Vary — 27 September 2026 (23:05-23:22 local)
 

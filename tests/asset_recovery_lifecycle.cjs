@@ -46,6 +46,11 @@ test('restoration is inferred only from a retained Trash state and a newer activ
   const unrelated=record();assert.equal(project(unrelated,o,receipt(unrelated)).targets[0].restored_since_retained,false);
   o.targets[0].metadata_revision=0;assert.equal(project(r,o,receipt(r)).targets[0].restored_since_retained,false);
 });
+test('a repeat trash receipt keeps the unchanged target at its expected revision (#1405)',()=>{
+  const r=record(2,'trash'),o=observation(r),rc=receipt(r);rc.revisions.asset0=0;rc.unchanged=['asset0'];
+  assert.equal(project(r,o,rc).targets.length,2);
+  delete rc.unchanged;assert.throws(()=>project(r,o,rc),/does not match every retained target/);
+});
 test('deleted collection is an observation and never recreates historical membership',()=>{
   const r=record(2,'add_collection'),p=project(r,observation(r),receipt(r));
   assert.equal(p.collection.exists,false);assert.ok(p.targets.every(t=>t.in_collection===false));

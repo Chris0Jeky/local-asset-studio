@@ -2,12 +2,12 @@
 const assert=require('node:assert/strict'), fs=require('node:fs'), path=require('node:path'), vm=require('node:vm');
 const elements=new Map(), handlers={}, requests=[];
 const element=key=>{
-  if(!elements.has(key))elements.set(key,{value:'',files:[],textContent:'',innerHTML:'',className:'',disabled:false,hidden:false,classList:{toggle(){}},addEventListener(){}});
+  if(!elements.has(key))elements.set(key,{value:'',files:[],textContent:'',innerHTML:'',className:'',disabled:false,hidden:false,classList:{toggle(){}},querySelector(){return null;},addEventListener(){}});
   return elements.get(key);
 };
 let inspection={requirements:[],nodes:[],graph:{}}, healthReply={online:true,schema_available:true,missing_models:{}}, libraryReply={assets:[],storage:{},inventory:[],folders:[]};
 const context=vm.createContext({document:{querySelector:element,querySelectorAll:()=>[],addEventListener:(name,fn)=>handlers[name]=fn},
-  URL,Blob,location:{hash:''},setInterval(){},setTimeout(){},clearTimeout(){},console,
+  URL,URLSearchParams,StudioUX:require('../app/static/studio-core.js'),Blob,location:{hash:''},setInterval(){},setTimeout(){},clearTimeout(){},console,
   fetch:(url,options={})=>{
     requests.push({url,options});
     if(url==='/api/catalog')return new Promise(()=>{});

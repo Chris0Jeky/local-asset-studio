@@ -156,7 +156,7 @@ class NativeExports:
 
     def _images(self, records):
         try:
-            from PIL import Image, ImageCms
+            from PIL import Image, ImageCms, ImageOps
         except ImportError as exc:
             raise NativeExportError("Pillow is required for native image exports") from exc
         from studio_workflow.image_limits import open_bounded
@@ -165,20 +165,26 @@ class NativeExports:
         total_pixels = 0
         with ExitStack() as cleanup:
             for record in records:
-                with open_bounded(record["source"]) as source:
+                with open_bounded(record["source"]) as source, ExitStack() as inputs:
                     require(source.format == IMAGE_TYPES[record["media_type"]],
                             f"Asset media_type does not match bytes: {record['id']}")
                     require(1 <= source.width <= 8192 and 1 <= source.height <= 8192,
                             "Image dimensions exceed native export limits")
                     total_pixels += source.width * source.height
                     require(total_pixels <= MAX_PIXELS, "Total image pixels exceed native export limit")
-                    current = (source.width, source.height)
+                    require(getattr(source, "n_frames", 1) == 1,
+                            "Native exports accept still images; extract animation frames explicitly")
+                    # Read header EXIF without PNG's getexif override decoding pixels first.
+                    orientation = Image.Image.getexif(source).get(274, 1)
+                    current = ((source.height, source.width) if orientation in (5, 6, 7, 8)
+                               else (source.width, source.height))
                     require(dimensions is None or current == dimensions,
                             "All images must share one canvas; no individual trimming or resizing occurs")
                     dimensions = current
-                    require(getattr(source, "n_frames", 1) == 1,
-                            "Native exports accept still images; extract animation frames explicitly")
                     source.load()
+                    if orientation in (2, 3, 4, 5, 6, 7, 8):
+                        source = ImageOps.exif_transpose(source)
+                        inputs.callback(source.close)
                     profile = source.info.get("icc_profile")
                     if profile:
                         try:
@@ -190,6 +196,8 @@ class NativeExports:
                     else:
                         image = source.convert("RGBA")
                     cleanup.callback(image.close)
+                    image.info.pop("exif", None)
+                    image.info.pop("Raw profile type exif", None)
                     converted.append((record, image))
             cleanup.pop_all()  # Transfer ownership to the caller only after all images pass.
             return dimensions, total_pixels, converted

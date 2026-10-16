@@ -8,7 +8,8 @@ Run: python tests/collection_command_browser.py [--inert]
 import copy
 import hashlib
 import io
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from browser_ports import browser_server
 import json
 from pathlib import Path
 import shutil
@@ -115,7 +116,7 @@ class CollectionEditorProtocolTests(unittest.TestCase):
                     bodies.append(raw); self.rfile = io.BytesIO(raw)
                 return super().do_POST()
         handler = Handler; handler.studio = studio
-        self.server = ThreadingHTTPServer(('127.0.0.1', 0), handler)
+        self.server = browser_server(handler)
         self.thread = threading.Thread(target=self.server.serve_forever, kwargs={'poll_interval': 0.01}, daemon=True)
         self.thread.start(); self.addCleanup(self.close_server)
         self.context = self.browser.new_context(viewport={'width': 390, 'height': 844})

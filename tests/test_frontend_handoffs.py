@@ -6,6 +6,22 @@ from pathlib import Path
 
 class GalleryHandoffTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_make_target_seed_and_restored_run_retries(self):
+        result = subprocess.run(
+            [shutil.which('node'), '--test', str(Path(__file__).with_name('make_followups.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_settled_run_notices_survive_same_poll_completions_and_poll_errors(self):
+        result = subprocess.run(
+            [shutil.which('node'), '--test', str(Path(__file__).with_name('run_outcome_frontend.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_typed_reasons_and_one_shot_requests_survive_polls_and_double_clicks(self):
         result = subprocess.run(
             [shutil.which('node'), str(Path(__file__).with_name('create_input_drafts.cjs'))],
@@ -121,7 +137,7 @@ class GalleryHandoffTests(unittest.TestCase):
             capture_output=True, text=True, timeout=15,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('7 Combine plan form checks passed', result.stdout, result.stdout + result.stderr)
+        self.assertIn('8 Combine plan form checks passed', result.stdout, result.stdout + result.stderr)
 
 
 class ProductionClockFrontendTests(unittest.TestCase):

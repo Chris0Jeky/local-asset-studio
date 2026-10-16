@@ -5,15 +5,82 @@ const fs = require('node:fs');
 const path = require('node:path');
 const U = require('../app/static/studio-core.js');
 const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/catalog.json'))).presets;
+const vm = require('node:vm');
 let count = 0;
 function test(name, fn) { fn(); count++; console.log('PASS: ' + name); }
+test('finder goal names, hints and look membership match Make',()=>{
+  const goals=(file,name)=>vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8').match(new RegExp('const '+name+'=(\\[[\\s\\S]*?\\n  \\]);'))[1]);
+  assert.equal(JSON.stringify(goals('studio-shell.js','makeGoals')),JSON.stringify(goals('make.js','GOALS')));
+});
+test('finder indexes preset model and family metadata and offers Tune without generation',()=>{
+  const shell=fs.readFileSync(path.join(__dirname,'../app/static/studio-shell.js'),'utf8');
+  const commands=shell.slice(shell.indexOf('  function commands(){'),shell.indexOf('  async function loadLooks()'));
+  const input={value:'wai'},results={};
+  const context={$:s=>s==='#studioCommandSearch'?input:results,makeGoals:[{id:'character',looks:['look-test']}],synonyms:{},keywords:{},looks:[{id:'look-test',name:'Fantasy portrait',body:{preset_id:'test'}}],presets:[{id:'test',name:'Portrait recipe',family:'WAI',model:{file:'base-model.safetensors'}},{id:'flux',name:'FLUX',family:'FLUX'}],links:[['models','Models & setup','Install models','/#models']],escape:s=>s};
+  vm.runInNewContext(commands+';commands();',context);
+  assert.match(results.innerHTML,/data-make-look="look-test"/);
+  for(const query of ['base-model','portrait recipe']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/data-make-look="look-test"/);}
+  for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Tune this look under the composer/);}
+  input.value='flux';vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#models"/);
+});
+test('finder reaches installed adapters and model files that no look uses (#23), and no longer offers Overview (#18)',()=>{
+  const shell=fs.readFileSync(path.join(__dirname,'../app/static/studio-shell.js'),'utf8');
+  const commands=shell.slice(shell.indexOf('  function commands(){'),shell.indexOf('  async function loadLooks()'));
+  const input={value:''},results={};
+  const context={$:s=>s==='#studioCommandSearch'?input:results,makeGoals:[{id:'character',looks:['look-test']}],synonyms:{},keywords:{},looks:[{id:'look-test',name:'Fantasy portrait',body:{preset_id:'test'}}],
+    presets:[{id:'test',name:'Portrait recipe',family:'WAI',model:{file:'wai-base.safetensors'},choices:{lora_name:['xilmo-style.safetensors','pearly-line.safetensors'],sampler:['euler']}},{id:'flux',name:'FLUX',family:'FLUX',model:{file:'flux-checkpoint.safetensors'},choices:{lora2_name:['pearly-line.safetensors']}}],
+    links:[['models','Models & setup','Install models','/#models'],['home','Overview','Attention, recent work and next steps','/#home','01','Workspace',true]],escape:s=>s};
+  vm.runInNewContext(commands+';commands();',context);
+  // The empty finder keeps its shape: no adapter rows until something is typed.
+  assert.doesNotMatch(results.innerHTML,/Use xilmo/);
+  input.value='xilmo';vm.runInNewContext('commands()',context);
+  assert.match(results.innerHTML,/<b>Use xilmo-style\.safetensors in Tune<\/b>/);assert.match(results.innerHTML,/Adapter - add it under Tune this look in Make/);
+  input.value='pearly';vm.runInNewContext('commands()',context);
+  assert.match(results.innerHTML,/<b>Use pearly-line\.safetensors in Tune<\/b>/);
+  // A checkpoint file with no look reaches Models & setup through that row's own file index, once.
+  input.value='flux-checkpoint';vm.runInNewContext('commands()',context);
+  assert.match(results.innerHTML,/<b>Models & setup<\/b>/);assert.equal((results.innerHTML.match(/href="\/#models"/g)||[]).length,1);
+  // A file a look already uses is found through that look.
+  input.value='wai-base';vm.runInNewContext('commands()',context);
+  assert.match(results.innerHTML,/data-make-look="look-test"/);
+  // Samplers are not adapters.
+  input.value='euler';vm.runInNewContext('commands()',context);assert.doesNotMatch(results.innerHTML,/Use euler/);
+  input.value='overview';vm.runInNewContext('commands()',context);assert.doesNotMatch(results.innerHTML,/href="\/#home"|Overview/);
+});
+test('Make orders each goal by lab evidence, files painting styles under Painted illustration and keeps Krea last',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
+  const goals=grab(/const GOALS=(\[[\s\S]*?\n  \]);/),looks=id=>goals.find(g=>g.id===id).looks,ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
+  // Lab rounds 1-2 (docs/looks/LOOK-LAB-2026-10-16.md): measured high scorers first, rejects after them, unmeasured slow Krea last.
+  assert.deepEqual(looks('character'),['look-anima-pearly-petiflow','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-pearly-anima-mix-v10-showcase','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
+  assert.deepEqual(looks('scene'),['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']);
+  assert.deepEqual(looks('painting').slice(0,2),['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot']);
+  assert.ok(['look-krea-atelier-target-stack','look-krea-witch-nijisis'].every(id=>looks('painting').includes(id)&&!looks('character').includes(id)),'oil-paint and Nijisis looks are paintings');
+  assert.deepEqual(looks('photo').slice(0,2),['look-preset-zimage-fast','look-preset-realvis']);assert.deepEqual(looks('game'),['look-zimage-game-icon','look-preset-stylized-prop','look-preset-pixel-lora']);
+  for(const g of goals.filter(g=>g.looks)){const first=g.looks.findIndex(id=>/krea/.test(id));assert.ok(first<0||g.looks.slice(first).every(id=>/krea/.test(id)),g.id+' keeps Krea last');for(const id of g.looks)assert.ok(ids.has(id),id);}
+  const tested=grab(/const TESTED=(\{[^}]*\});/),shapes=grab(/const SHAPE_FOR=(\{[^}]*\});/);
+  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime']);
+  assert.ok(!('look-zimage-game-icon' in tested),'game icon kept 3 of 8 (round 5), below the badge rule');assert.match(grab(/const BEST_FOR=(\{[^}]*\});/)['look-zimage-game-icon'],/check shape details/);
+  assert.deepEqual(shapes,{character:'portrait',scene:'landscape',game:'square'});
+});
+test('Make speed and Best for come from the look lab doc',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
+  const doc=fs.readFileSync(path.join(__dirname,'../docs/looks/LOOK-LAB-2026-10-16.md'),'utf8'),rows={};
+  for(const m of doc.matchAll(/^\| (look-[\w-]+) \|[^|]*\|[^|]*\| ([\d.]+) \|/gm))rows[m[1]]=Number(m[2]);
+  const lab=grab(/const LAB_SECONDS=(\{[^}]*\});/),best=grab(/const BEST_FOR=(\{[^}]*\});/),ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
+  assert.ok(Object.keys(rows).length>=20,'the R1 table parses');assert.deepEqual(lab,rows,'LAB_SECONDS is the doc R1 "Median s/image" column');
+  for(const id of Object.keys(best)){assert.ok(ids.has(id)&&(id in rows||id==='look-zimage-game-icon'),id);/* round 4 (PR #1488) look: its evidence is its receipts, not an R1 row */assert.ok(best[id].length<=80,id);}
+  assert.ok(lab['look-night-shift-retro-anime']>=45,'Night Shift is not Fast (#1448)');
+});
 const image = {media_type:'image',filename:'source.png'};
 const audio = {media_type:'audio',filename:'voice.wav'};
 const draft = () => ({version:1,updatedAt:123,recipe:{preset:'qwen-1ref',controls:{positive:'A study',seed:42},batch:1,parent_assets:['source'],references:[]}});
 const ready = overrides => U.readiness({preset:{id:'example'},online:true,schemaAvailable:true,...overrides});
-test('invalid routes normalize to overview', () => {
-  for (const route of [null,undefined,'#unknown','#../../models']) assert.equal(U.normalizeView(route),'home');
-  for (const route of U.VIEWS) assert.equal(U.normalizeView('#'+route),route);
+test('invalid routes and the retired Overview route normalize to Make', () => {
+  for (const route of [null,undefined,'#unknown','#../../models']) assert.equal(U.normalizeView(route),'make');
+  assert.equal(U.normalizeView('#models?need=wai'),'models');
+  // #18: #home and #overview left the navigation; both land on Make, the default view.
+  for (const route of ['#home','#overview','#home?x=1']) assert.equal(U.normalizeView(route),'make',route);
+  for (const route of U.VIEWS.filter(route => route !== 'home')) assert.equal(U.normalizeView('#'+route),route);
 });
 test('intent selection never mutates catalog order', () => {
   const before=JSON.stringify(catalog);U.recipesFor('edit',catalog);assert.equal(JSON.stringify(catalog),before);
@@ -217,5 +284,15 @@ test('Make seamless offers the server seam bands, keeps a too-wide band listed w
   assert.deepEqual(U.tileBands({eligible:false,band_choices:status.band_choices}),{options:[],note:''},'no choice on a picture that cannot tile');
   assert.deepEqual(U.tileBands(null),{options:[],note:''});
   assert.equal(U.tileBandPx('160'),160);assert.equal(U.tileBandPx(''),null);assert.equal(U.tileBandPx(undefined),null);assert.equal(U.tileBandPx('wide'),null);
+});
+test('pose canvas is exposed as an operable application, not a static image (#1402)', () => {
+  const code = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
+  const match = code.match(/<canvas id="uxPoseCanvas"[^>]*>/);
+  assert.ok(match, 'pose canvas markup must be present');
+  const tag = match[0];
+  assert.match(tag, /role="application"/, 'keyboard-operable pose canvas must not expose role=img (WCAG 4.1.2)');
+  assert.match(tag, /aria-roledescription="pose editor"/, 'pose canvas must name its roledescription');
+  assert.match(tag, /aria-label="[^"]*Pose skeleton[^"]*"/, 'pose canvas keeps its accessible label');
+  assert.match(tag, /aria-label="[^"]*joint[^"]*arrow keys[^"]*Shift[^"]*"/, 'pose canvas label must describe joint selection, arrow keys and Shift+arrow');
 });
 console.log(count+' Studio UX policy checks passed.');

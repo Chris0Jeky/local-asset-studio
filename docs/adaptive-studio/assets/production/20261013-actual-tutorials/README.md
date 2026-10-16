@@ -1,0 +1,27 @@
+# Actual recipe replacement recording — 13 October 2026
+
+One real application recording satisfies the editing action in `tutorial-recipe-change`: cancel a reviewed replacement, preserve the complete draft, then review and accept the same replacement. This is **source-only**, awaiting tutorial acceptance and installed-runtime qualification. No runtime catalogue registration, precache, asset acceptance or budget ceiling changed.
+
+The full, unpatched `app/server.py` application ran from an owned isolated worktree at **fe13f61f4853cebf7c06fcfa7de362e9e9ae0c2c**. Production handlers, catalogues and fresh SQLite storage were used; no fixture server, mocked API responses or patched UI. The original checkouts and other services were preserved. This is not footage of the owner's installed product. This executor has no ComfyUI, and Python 3.13 lacks the existing `psutil` runtime prerequisite: `/api/health` closes its response and the real UI says **Readiness unavailable**. No dependency was installed or model/runtime launched.
+
+The initial public synthetic prompt is “An original brass lantern on a quiet workshop desk.” The authored replacement is `yumeflux-ilv1-base`, with both adapter strengths zero. Its rendered historic example is labelled by the application; it is not an output from this session. The capture source records the exact preset/control/batch/reference/parent state before cancellation, after cancellation and after acceptance, plus catalogue/recipe SHA-256, HTTP audit and empty resulting job list. Ordinary POSTs were only estimation and guidance reads. No generation, backend switch, download or execution submission occurred. The editable result is preserved in `browser-storage.json`, a browser draft rather than a saved workspace setup.
+
+## Deliverables and verification
+
+- `record_recipe_change.py`: reproducible actual-click recording source. Requires an already owned real loopback server; never starts services or submits generation.
+- `recording-receipt.json`: exact application revision, timed actions, unchanged cancelled state and resulting accepted state.
+- `captions.vtt`, `transcript.txt`: editable WebVTT and plain text/static steps.
+- `media-receipt.json`, `FILES.json`: codec/budget verification and hashes for the portable deliverables. **29.240 seconds**, silent H.264, **1280×720**, **781,514 bytes**, under the existing 8 MiB ceiling. Target/prompt changed; batch one was verified and stayed one.
+- Portable evidence archive: original WebM, MP4, six representative screenshots, seven decoded MP4 frames, phone screenshot, poster, manual-load native player with captions, hidden/offscreen pause and text alternative. No autoplay or looping. Serve that folder over local HTTP for captions; do not infer caption support from `file:` loading.
+
+Desktop source pixels and decoded frames were inspected. Replacement consent and the changed prompt are visible, and the focused prompt has the actual application focus ring. The 390×844 screenshot records a real focused Create draft; its inherited header/scroll layout has a large blank region and is **not** a full phone-flow acceptance. Half-size fine control text is small; captions and static text explain the action. These limitations remain visible rather than being repaired through fake UI overlays.
+
+`INVENTORY.json` is an evidence-axis overlay over #1344's preserved qualification inventory, not a new phase-count claim. All **154 IDs**, historical **97 source / 44 deferred / 12 execution pending / 1 dependency** counts and **23 art decisions** remain unchanged. The existing 4.73-second `tutorial-reference` clip from merged #1272 stays intact. Eight other tutorial briefs remain unrecorded in this slice. In particular, the current export packaging UI exposes no actual destination/collision preview; generic export footage would not satisfy that brief. No unexecuted output is offered as a repair pair.
+
+Validation is documentary/media verification plus the real action receipts and repository validator; the app and catalogue are unchanged, so a local full application suite was not rerun. Hosted gates for this new draft remain pending. Existing #1351 head `2ac1cf638fdddfdabf881a0ffc68e097cee29072` has completed successful hosted workflows, including Check studio `38336426787`; the coordinating assistant verified all 44 check runs passing at the recorded head. This automated technical verification implies no new owner acceptance. The four earlier drafts had no new inline threads or comments at this continuation's review.
+
+Existing `HUMAN_TODO.md` creative/licensing choices, installed-runtime/native-media/performance and physical Android/TalkBack qualification remain. Accepted MA, artwork candidates, 44 specific deferrals and the blocked combined Alibi startup budget are unchanged. No merge or deployment.
+
+## Repository manifest correction
+
+`FILES.json` records sizes and SHA-256 for normalized committed repository bytes. Media absent from Git is listed separately in `ARCHIVE-FILES.json` as unverified historical archive measurements; its bytes could not be re-derived for this correction. Earlier archive-preservation claims above are historical and have not been reverified. The historical recording was not rerun.

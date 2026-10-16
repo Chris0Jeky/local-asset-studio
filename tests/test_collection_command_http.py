@@ -71,7 +71,8 @@ class CollectionHTTPTests(unittest.TestCase):
         request = Request(self.origin + PREFIX + suffix, data=body, headers=headers)
         try:
             with urlopen(request, timeout=5) as response: return response.status, json.load(response)
-        except HTTPError as error: return error.code, json.loads(error.read())
+        except HTTPError as error:
+            with error: return error.code, json.loads(error.read())
 
     def status(self, request='http-create-0001', scope=None):
         return self.call('/commands/' + request + '?' + urlencode({'workspace_id': scope or self.scope}))

@@ -1,6 +1,6 @@
 """Actual metadata HTTP + SQLite beneath the real Studio UI; synthetic non-generation APIs.
 
-Runs its own disposable server on 8191, refusing an occupied port. It never connects
+Runs its own disposable server on a free loopback port (--port fixes one), refusing an occupied port. It never connects
 this fixture to a running Studio. --inert substitutes only browser storage/transport
 for environments that prohibit navigation; default mode uses native HTTP.
 """
@@ -21,6 +21,7 @@ from PIL import Image
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 import server as production
+from browser_ports import BoundPortGuard
 
 
 async def exercise(args):
@@ -31,7 +32,7 @@ async def exercise(args):
         source=root/'source.png';Image.new('RGB',(48,64),(100,110,120)).save(source)
         ids=[store.register({'id':f'qa-{i}','preset_name':f'Metadata QA {i}','created_at':100-i,
                              'outputs':[{'filename':'source.png','media_type':'image'}]},0,source) for i in range(2)]
-        class Handler(production.Handler):
+        class Handler(BoundPortGuard, production.Handler):
             studio=SimpleNamespace(assets=store)
             json=fixture.Handler.json
             def do_GET(self):
@@ -51,8 +52,8 @@ async def exercise(args):
                     self.connection.shutdown(socket.SHUT_RDWR)
                     return
                 return super()._json(status,data)
-        # Fixed port deliberately exercises the unchanged production Host/Origin contract.
-        http=production.StudioHTTPServer(('127.0.0.1',8191),Handler)
+        # Production Host/Origin checks stay as shipped; BoundPortGuard only accepts this server's bound port.
+        http=production.StudioHTTPServer(('127.0.0.1', args.port),Handler)
         thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start();fixture.POSTS.clear()
         def record(name,condition):
             checks.append({'id':name,'passed':bool(condition)});print(name,bool(condition),flush=True)
@@ -73,8 +74,8 @@ async def exercise(args):
                 pages=[await context.new_page(),await context.new_page()]
                 for page in pages:
                     page.set_default_timeout(6000);page.on('pageerror',lambda e:errors.append(str(e)))
-                    if args.inert:await inert_page(page,8191)
-                    else:await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
+                    if args.inert:await inert_page(page, http.server_port)
+                    else:await page.goto(f'http://127.0.0.1:{http.server_port}/#assets', timeout=20000)
                     await page.wait_for_function('!!catalog && !!selected')
                     await page.evaluate("showView('assets')")
                     await open_asset(page)
@@ -144,5 +145,5 @@ async def exercise(args):
     if len(checks)!=21:raise AssertionError('Scenario run did not complete')
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--inert',action='store_true')
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--inert',action='store_true');parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
     asyncio.run(exercise(parser.parse_args()))

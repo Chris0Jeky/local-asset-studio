@@ -13,6 +13,13 @@
   const urls=new Set();
   const n=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   const message=text=>{el('rr-status').textContent=text;};
+  const inputErrors={};
+  for(const id of ['rr-analysis','rr-originals']){const error=n('small');error.id=id+'-error';error.className='rr-error';error.hidden=true;el(id).after(error);inputErrors[id]=error;}
+  const markInput=(id,text='')=>{const input=el(id),error=inputErrors[id];error.textContent=text;error.hidden=!text;
+    if(text){input.setAttribute('aria-invalid','true');input.setAttribute('aria-describedby',error.id);}
+    else{input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');}};
+  const announce=(id,text)=>{const node=el(id);if(node.textContent!==text)node.textContent=text;};
+  for(const id of ['rr-source-status','rr-change-summary']){const node=el(id);node.setAttribute('role','status');node.setAttribute('aria-live','polite');}
   function releaseUrls(){for(const url of urls)URL.revokeObjectURL(url);urls.clear();}
   function controls(){
     const loading=loadingEpoch!==null;
@@ -22,7 +29,7 @@
     el('rr-undo').disabled=loading||!applied;
     el('rr-export').disabled=loading||!receipt;
   }
-  function changed(){epoch++;loadingEpoch=null;prepared=null;pending=null;el('rr-diff').replaceChildren();el('rr-change-summary').textContent='';controls();}
+  function changed(clearSummary=true){epoch++;loadingEpoch=null;prepared=null;pending=null;el('rr-diff').replaceChildren();if(clearSummary)announce('rr-change-summary','');controls();}
   async function post(path,body){
     const response=await fetch('/api/prompt/reference-review/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const value=await response.json();
@@ -42,7 +49,7 @@
       card.append(n('h3','Picture '+(index+1)));
       if(originals){const preview=n('img');const url=URL.createObjectURL(originals[index]);urls.add(url);preview.src=url;preview.alt='Original picture '+(index+1);preview.className='rr-picture';card.append(preview);}
       card.append(n('p',image.description));
-      const label=n('label','Use this picture for');const role=n('select');role.setAttribute('aria-label','Picture '+(index+1)+' role');
+      const label=n('label','Use this picture for');const role=n('select');role.setAttribute('aria-label','Use this picture for Picture '+(index+1)+' role');
       for(const key of Object.keys(roles)){const option=n('option',key);option.value=key;role.append(option);}role.value=choice.role;
       role.addEventListener('change',()=>{
         choice.role=role.value;const permitted=roles[choice.role];
@@ -51,7 +58,7 @@
         changed();renderCards();el('rr-cards').querySelector('[data-reference="'+ref.id+'"] select').focus();
         message('Role changed. Choose the traits to transfer, then preview again.');
       });label.append(role);card.append(label);
-      const traits=n('details');traits.open=true;traits.append(n('summary','Traits to transfer'));
+      const traits=n('details');traits.open=true;const traitFields=n('fieldset');traitFields.append(n('legend','Traits to transfer'));traits.append(n('summary','Traits to transfer'),traitFields);
       for(const facet of roles[choice.role]){
         if(!(facet in image.facets))continue;
         const box=n('div');box.className='rr-trait';box.dataset.facet=facet;
@@ -67,11 +74,11 @@
           if(!choice.facets.includes(facet)){choice.facets.push(facet);box.querySelector('input').checked=true;}
           if(text.value===image.facets[facet])delete choice.overrides[facet];else choice.overrides[facet]=text.value;
           changed();
-        });box.append(text);traits.append(box);
+        });box.append(text);traitFields.append(box);
       }
       card.append(traits);
-      const extra=n('details');extra.append(n('summary','Suggested tags and unknowns'));
-      for(const tag of [...new Set(image.tags)])extra.append(checkLabel(tag,choice.tags.includes(tag),checked=>{
+      const extra=n('details');const tagFields=n('fieldset');tagFields.append(n('legend','Suggested tags and unknowns'));extra.append(n('summary','Suggested tags and unknowns'),tagFields);
+      for(const tag of [...new Set(image.tags)])tagFields.append(checkLabel(tag,choice.tags.includes(tag),checked=>{
         choice.tags=checked?[...choice.tags,tag]:choice.tags.filter(k=>k!==tag);changed();
       }));
       for(const unknown of image.unknowns)extra.append(n('p','Unknown: '+unknown));
@@ -94,9 +101,10 @@
       changed();report=context?clone(context.analysis):null;review=context?clone(context.review):null;
       originals=null;applied=null;receipt=null;releaseUrls();el('rr-cards').replaceChildren();
       el('rr-originals').value='';el('rr-analysis').value='';el('rr-adopt').checked=false;
+      markInput('rr-analysis');markInput('rr-originals');
       el('rr-review').hidden=!report;
       if(report)showReport();
-      el('rr-source-status').textContent='Reselect the exact originals before previewing another reference transfer.';
+      announce('rr-source-status','Reselect the exact originals before previewing another reference transfer.');
       message(report?'Saved descriptions restored; original pictures must be reselected.':'No reference review stored with this brief.');controls();
     },load:async(analysis,files=[])=>{
     if(previewInFlight)throw Error('A reference preview is still in flight; finish observing it first.');
@@ -118,7 +126,8 @@
       const refs=report.request.references;
       if(refs.every(ref=>selected.has(ref.sha256))&&selected.size===files.length&&selected.size===new Set(refs.map(ref=>ref.sha256)).size)originals=refs.map(ref=>selected.get(ref.sha256));
       el('rr-originals').value='';
-      el('rr-source-status').textContent=originals?refs.length+' originals matched by SHA-256.':'Reselect the exact analyzed originals to preview changes.';
+      markInput('rr-analysis');markInput('rr-originals');
+      announce('rr-source-status',originals?refs.length+' originals matched by SHA-256.':'Reselect the exact analyzed originals to preview changes.');
       showReport();if(originals)message('Analysis and originals are ready. Review descriptions, then preview their changes.');
       document.dispatchEvent(new CustomEvent('studio-prompt-state'));
       return report.report_sha256;
@@ -136,9 +145,9 @@
       if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
       applied=null;receipt=null;
       report=result.analysis;review=result.review;originals=null;releaseUrls();el('rr-cards').replaceChildren();
-      el('rr-originals').value='';el('rr-adopt').checked=false;controls();
-      el('rr-source-status').textContent='Choose '+report.request.references.length+' exact originals; order and filenames do not matter.';showReport();
-    }catch(error){if(current===epoch)message(error.message);}
+      el('rr-originals').value='';el('rr-adopt').checked=false;controls();markInput('rr-analysis');markInput('rr-originals');
+      announce('rr-source-status','Choose '+report.request.references.length+' exact originals; order and filenames do not matter.');showReport();
+    }catch(error){if(current===epoch){markInput('rr-analysis',error.message);message(error.message);}}
   });
   el('rr-originals').addEventListener('change',async event=>{
     changed();const current=epoch;originals=null;controls();renderCards();
@@ -153,9 +162,9 @@
         hashes.set(sha,file);
       }
       if(expected.some(r=>!hashes.has(r.sha256)))throw Error('An exact original is missing. Choose all pictures from this analysis.');
-      originals=expected.map(r=>hashes.get(r.sha256));renderCards();controls();
-      el('rr-source-status').textContent=expected.length+' originals matched by SHA-256.';message('Choose the traits to keep or edit their descriptions, then preview.');
-    }catch(error){if(current===epoch){el('rr-source-status').textContent='Originals are not ready.';message(error.message);}}
+      originals=expected.map(r=>hashes.get(r.sha256));renderCards();controls();markInput('rr-originals');
+      announce('rr-source-status',expected.length+' originals matched by SHA-256.');message('Choose the traits to keep or edit their descriptions, then preview.');
+    }catch(error){if(current===epoch){markInput('rr-originals',error.message);announce('rr-source-status','Originals are not ready.');message(error.message);}}
   });
   el('rr-adopt').addEventListener('change',()=>{changed();message('Instruction choice changed. Preview before applying.');});
   async function encoded(file){
@@ -164,7 +173,7 @@
   }
   el('rr-preview').addEventListener('click',async()=>{
     if(!report||!originals||previewInFlight)return;
-    changed();const current=epoch, snapshot=owner.capture(), selection=clone(review), analysis=report, files=[...originals];
+    changed(false);const current=epoch, snapshot=owner.capture(), selection=clone(review), analysis=report, files=[...originals];
     previewInFlight=true;pending=snapshot;controls();message('Checking original images and preparing a change preview…');
     try{
       const images=[];for(let i=0;i<files.length;i++){
@@ -177,9 +186,9 @@
       if(result.format!=='studio.reference-transfer-preview/v1'||JSON.stringify(result.base_intent)!==snapshot.json||result.reference_draft?.source_report_sha256!==analysis.report_sha256||JSON.stringify(result.reference_draft.review)!==JSON.stringify(selection))throw Error('The preview does not match the reviewed references and brief.');
       pending=null;prepared={snapshot,result,epoch:current};el('rr-diff').replaceChildren();
       for(const change of result.changes){const item=n('details');item.append(n('summary',change.field),n('pre','Before\n'+JSON.stringify(change.before,null,2)+'\n\nAfter\n'+JSON.stringify(change.after,null,2)));el('rr-diff').append(item);}
-      el('rr-change-summary').textContent=result.intent.references.length+' reference records will replace the current set; '+result.changes.length+' fields change. Nothing is applied yet.';
+      announce('rr-change-summary',result.intent.references.length+' reference records will replace the current set; '+result.changes.length+' fields change. Nothing is applied yet.');
       message('Preview ready. Existing locks and unrelated fields are preserved. No model was called.');controls();
-    }catch(error){if(current===epoch){pending=null;prepared=null;message(error.message);}}
+    }catch(error){if(current===epoch){pending=null;prepared=null;announce('rr-change-summary','');message(error.message);}}
     finally{previewInFlight=false;controls();}
   });
   el('rr-apply').addEventListener('click',()=>{
@@ -193,7 +202,7 @@
       const application=owner.apply(chosen.snapshot,chosen.result);
       applied=application;receipt={format:'studio.reference-review-receipt/v1',analysis:clone(report),preview:chosen.result,application};
       const fields=chosen.result.changes.length;
-      el('rr-change-summary').textContent=chosen.result.intent.references.length+' reference records applied; '+fields+' field'+(fields===1?'':'s')+' changed. The reviewed diff is retained below.';
+      announce('rr-change-summary',chosen.result.intent.references.length+' reference records applied; '+fields+' field'+(fields===1?'':'s')+' changed. The reviewed diff is retained below.');
       controls();message('Applied to this brief. Reference files are not bound to a generator; export the receipt to retain the review.');
     }catch(error){changed();message(error.message);}
   });

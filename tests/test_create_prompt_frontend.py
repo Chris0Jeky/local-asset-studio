@@ -34,7 +34,7 @@ class CreatePromptTests(unittest.TestCase):
                                 cwd=ROOT, capture_output=True, text=True, timeout=20)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
-    def test_hero_sentences_have_a_text_boundary_without_relying_on_visual_line_breaks(self):
+    def test_full_editor_heading_names_its_purpose(self):
         heading = HeadingText()
         heading.feed((ROOT / 'app/static/index.html').read_text(encoding='utf-8'))
-        self.assertIn('Follow the idea. Make something yours.', ' '.join(heading.text.split()))
+        self.assertIn('Full editor — every setting for one recipe', ' '.join(heading.text.split()))

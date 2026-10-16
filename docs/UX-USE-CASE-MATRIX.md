@@ -1,5 +1,154 @@
 # UX use-case matrix
 
+## Make wave 7: your pictures first, partial adapter names, Make from the Library — 16 October 2026
+
+Third live audit (PR #1484, `docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v3.md`), N1-N6 and N8, plus the wave 6 pose-route ask.
+
+- **Pickers show your pictures** (N1): Make's picture and pose grids leave out agent runs the way the Library's Mine does
+  (`assetIsAgentRun`; Make runs count as yours). *Show all pictures (N more from agent runs)* brings them back, search
+  included; a search that only matches agent pictures says how many do.
+- **Add an adapter by part of its name** (N2): any case, file name or label. One match is added; several are offered as
+  buttons; Enter in the field presses Add. `make-anime-look-chosen-model-and-lora` now types `koukouya` and presses Enter:
+  **8 → 7 clicks**, the same 12 steps.
+- **Library dialog opens Make first** (N3): *In Make: Change it / Fix or upscale / Restyle / New pose* open that goal with
+  the picture chosen; *Full editor: Continue with this / Find recipes* stay as the second row. The dialog's unsaved-changes
+  question still applies. *Same recipe, new seed* is unchanged.
+- **Compare looks** (N4): from the second chosen look the scene box scrolls into view (instant with reduced motion) and
+  takes the keyboard. Clicks unchanged.
+- **Picture cards** (N5): a second line with the look or recipe, how long ago and the seed; the full prompt is the tooltip.
+- **Your pictures on a new browser** (N6): an empty list starts from the library's six newest `Make · ` runs (Keep, fixes and
+  More work; *Edit and re-run* needs the words, which the library does not keep).
+- **Edit and re-run on picture goals** (wave 6): a goal run keeps its picture, answers, pose and route (Copy Pose or Replace);
+  the button puts them back without sending.
+- **Models & setup** (N8): the looks panel holds its place while files are checked (a placeholder, then a *Checking* row per
+  look); missing files a look needs lead, and missing files nothing uses fold under *Optional*.
+- Not done: Compare cannot vary model, adapter strength or steps (N7, a larger feature).
+
+## Make: picture goals stay in Make, and Compare looks — 16 October 2026
+
+Owner ask (16 October 2026): "the user should be able to do it without much confusion". Live journey audit items #5, #6,
+#7 and #16. Refs #278.
+
+- **Picture goals no longer leave Make.** Before, a goal tile led to a picture grid, then the *Where should it go next?*
+  dialog asked the task again, then *Prepare in Create* opened the full editor, with other words, the prompt below the
+  fold and Generate renamed. Now each goal goes: pick the picture (a search box over your newest 60 pictures; masks stay
+  hidden), fill a short composer for that goal, then press Make's own **Generate**.
+  - **Restyle**: choose the new look by its picture from Make's looks; that picture becomes the look board
+    (`restyle-klein-picture`). *Describe the look in words instead* switches to `restyle-klein`, with the finish sentence
+    ready to edit.
+  - **Character in a new pose**: two labelled slots. **Character picture** is the one you picked. **Pose** is either a
+    picture from your library or a drawn figure, Standing or Bent forward, with a mirror option
+    (`combine-klein-9b-skeleton`, drawn by `/api/pose/render`; a hint says hands and gaze follow the words weakly). A
+    picture offers two choices, each saying what it keeps (lab round 3, PR #1481): **Keep my character as it is**
+    (`combine-klein-9b-copypose`, the default) or **Put my character into this picture's scene**
+    (`combine-klein-9b-replace`). Make never picks depth or plain 9B; with Copy Pose not ready it uses the next picture
+    route and says why. The recipe's bracketed fills are plain named fields (Who is in the character picture / What they
+    wear, with colours / The pose, in a few words, with the lab's tested wording as placeholder). No bracket and no recipe
+    example that names a person reaches the page.
+  - **Change one thing** (`flux-edit`): one field. **Fix or upscale**: Fix face, Fix hands and details or Upscale 2×. These
+    are the existing one-press polish routes (Anima pictures send Fix face and Fix hands to the same repaint, so they show as one **Fix face and hands** button with a keep-the-original warning; round 5, #1492), and a route that does not fit the picture gives its reason. **Animate**
+    (`wan22-i2v`): a motion field and a length (Short, 17 frames, about 0.7 s; Longer, 33 frames, about 1.4 s; held modes are
+    not offered). **Picture to 3D** (`trellis-auto-cutout`): nothing to fill in.
+  - Every goal keeps *Open in the full editor instead*, which opens the old dialog. A result's *More* menu (Change one
+    thing, Restyle, Put in a new pose, Animate, Make it 3D) now opens that goal in Make with the picture already chosen.
+- **The same submission rules.** Generate is the only press that submits. It sends the request the dialog would have
+  prepared: the source is copied through `/api/assets/reference` and checked against its `/context`, the claim comes from
+  `StudioContinuation.initial`, a look picture is staged through `/api/assets/reference` (or `/api/upload` for an example
+  image), and the server re-checks the claim, graph hash, files and fills. No server route or input was added.
+- **Compare looks** (#16): a toggle on the look gallery. Choose two or three looks and type one scene; before Generate the
+  page shows the count and the total estimate. One press sends one picture per look, as made, at its own shape, all with
+  the same seed where the recipe takes one. The results sit side by side in one card, with Keep / Not this on each picture.
+
+Clicks to Generate, Generate included (fixture mode; the journeys read Generate and never press it):
+
+| Journey | Before | After | Measured by |
+| --- | --- | --- | --- |
+| Restyle with a look (`restyle-recent-output-with-a-look`) | 4 clicks + Generate, 2 view switches, 566 words read, look in words only (Create: recent output, dialog, Restyle, Prepare). With a look *picture*, about 7 clicks: change the destination, Prepare, picker, slot, picture, fill the colour bracket. | 3 clicks + Generate, 0 switches, 135 words; the look is chosen by its picture | use-case journey |
+| Character in a new pose (`combine-character-with-another-pose`) | 6 clicks + 3 bracket fills + Generate, 4 switches, 584 words | 3 clicks + 3 plain fields + Generate, 0 switches, 134 words | use-case journey |
+| Compare looks (`make-compare-looks`, new) | not possible in Make (a Runs & review comparison varies one setting of one recipe) | 5 clicks + 1 scene + Generate (goal, Compare looks, 3 looks) | use-case journey |
+| Animate a picture | 3 clicks (tile, picture, Prepare in Create) + motion typed in Create + Generate | 2 clicks + motion + Generate | `tests/make_goals_browser.py` |
+| Picture to 3D | 3 clicks + Generate | 2 clicks + Generate | `tests/make_goals_browser.py` |
+| Change one thing | 3 clicks + fill the bracket in the prompt + Generate | 2 clicks + one field + Generate | `tests/make_goals_browser.py` |
+| Fix or upscale | 3 clicks + Generate in Create (or the result card's one-press buttons) | 3 clicks (tile, picture, fix) + Generate | `tests/make_goals_browser.py` |
+
+The use-case suite holds its cap of 24. Restyle and Combine were rewritten to the Make flow, and `make-compare-looks` is
+the 24th case. Animate, 3D, edit and repair are measured by `tests/make_goals_browser.py`, which presses Generate against
+a fixture `/api/jobs`. For every goal it asserts the exact recipe, continuation claim, source input, board reference,
+parent assets and wording. It also asserts that the handoff dialog never opens, and it saves 1440×900 and 390×844
+screenshots to `.runtime/make-goals/`.
+
+## Make: Tune this look, and tweak a result in place — 16 October 2026
+
+Owner ask (16 October 2026): a high-end anime picture needs specific models and adapters, then tweaking, without confusion.
+Refs #278.
+
+- **Tune this look** sits folded under the description box; a newcomer never needs it. Opened, it shows:
+  - **Model** in plain words, with a switch to another model of the same type. Same type means the same loader node and text
+    encoders on the same backend; the candidate must also bind every setting and adapter slot the look uses. The catalog now
+    names each recipe's base model (`model`: loader, file, encoders). A model that needs a download says so and links to
+    Models & setup.
+  - **Adapters (LoRAs)** as rows: on/off, strength 0–2, the trigger word, and Remove. **Add an installed adapter** searches only
+    installed files that the settings knowledge base places in the same model type. An added adapter's trigger word is written
+    into the wording, at the start or end as its card says.
+  - **Quality and speed**: steps as made, draft or finer, and the sampler when the recipe binds it. **Leave out**: the negative
+    prompt. **Seed**: locked when *Different pictures each time* is off.
+- Tuning only changes the controls Generate sends; the server still checks every value against the recipe's allow-list. A switched
+  model gets an explicit 0 on every slot the tune does not use, so it never keeps an authored adapter of its own.
+- Each run card names what was tuned in one line. **Edit and re-run** brings back the run's own settings: tune, shape, count,
+  style strength, optional lines and the seed it used, now locked. Change one thing and press Generate.
+- Generate and its estimate sit in a sticky bar. The goal tiles fold to one scrolling row once a look is chosen. Slow looks
+  start at one picture, and an estimate over ten minutes is shown in the warning colour.
+- *What this look uses* shows the model, the adapters with their strengths and trigger words, and the example. The evidence
+  notes sit behind *Details for maintainers*.
+
+The new `make-anime-look-chosen-model-and-lora` journey picks the Anima Pearly Petiflow look, switches to Pearly Anima Mix, adds
+koukouya, asks for finer steps, locks seed 4242 and opens the full editor. There it asserts the chosen recipe, the added adapter
+in slot 2, its trigger in the words, more than 25 steps and the seed. `tests/make_tune_browser.py` presses Generate against a
+fixture `/api/jobs`. It asserts the exact controls sent, the run card summary and the restore on Edit and re-run, including the
+seed lock after a run with new seeds.
+
+## Full editor adapters and a scannable recipe picker — 16 October 2026
+
+Refs #278 (16 October 2026 live journey audit, J1 and item 24).
+
+- **Adapter slots** (Fine-tune the recipe): the hint reads the trigger's placement in plain words (*put it anywhere in the
+  prompt*; it said *place it at the anywhere of the prompt*). Choosing an adapter file sets its recorded recommended strength
+  (settings-kb `default`; a recorded 0 falls back to the slot's authored strength, else 1.0), shows the recorded range beside
+  Strength, and adds its trigger to the prompt once, saying so in the status line. Changing the file, or turning the slot to 0,
+  removes only the exact trigger the page added. *Add trigger to prompt* and *Use 0.8* cover the manual path.
+- **Change recipe**: search and results come first (the list starts at y≈360 of 900, was ≈680), with the task, kind and
+  collection filters on one row. Cards are grouped by what they make, show one plain sentence, a committed recipe-default
+  picture where one exists, a speed badge (fastest recorded run, else the recipe's own stated timing) and *Needs download*.
+  The bundle launcher now uses the dark theme.
+
+`python tests/studio_use_cases.py` passed **23/23** journeys with **zero generation submissions and zero page errors**. The new
+`specific-lora-in-full-editor` journey finds WAI in the picker, chooses the manga ink adapter and asserts strength 0.8, range
+0.6–1, the trigger added once and removed again when the slot switches to an adapter without a trigger.
+
+## Make: a goal-first way in — 15 October 2026
+
+Owner ask (15 October 2026): the Studio was too clunky; someone who wants, say, a high-end anime picture should get there
+without knowing models, adapters or quality tags. **Make** is now the first screen (`#make`; the sidebar's first entry).
+Overview has left the navigation: `#home` and `#overview` open Make (#18).
+
+- **Goals by outcome**: Anime character, Scene or background, Painted illustration, Photo, Game item or icon; and, from a
+  picture you have: Change a picture, Fix or upscale, Restyle, Character in a new pose, Animate, Picture to 3D.
+- **Looks by picture**: each goal lists curated looks (`presets/looks.json`, 23 shipped) as their example pictures, with a plain
+  name, how fast they are and whether they have run on this PC. A look carries the recipe, its adapters, sampler settings and
+  the model's own quality wording around a `{scene}` slot.
+- **One sentence, one press**: the user types the scene (or borrows the look's example), picks a shape and how many, and presses
+  **Generate** (the only press that submits: `/api/looks/prepare`, then `/api/jobs`). *Open in the full editor instead* loads the
+  same prepared request into Create without running it.
+- **Next steps on each result**: Vary subtle / strong, Fix details or upscale, Review and keep, and under *More*: change one
+  thing, restyle, put in a new pose, animate. All reuse the existing Vary and continuation handoffs. Since #1497 (16 Oct 2026)
+  Vary on a Make card runs like Fix and Upscale: one press sends the round Vary prepares (one `/api/jobs`), without the full editor.
+- Picture goals list your newest pictures; choosing one opens the existing handoff on that task.
+
+`python tests/studio_use_cases.py` passed **21/21** journeys with **zero generation submissions and zero page errors**. The new
+`make-an-anime-character` journey takes 3 clicks: goal, look, *Open in the full editor instead*, and asserts that the WAI look's
+recipe, size and exact wording (template + sentence) are prepared. A live run on this PC (15 October 2026, WAI look, 4 pictures,
+job `0e926110`) finished in about 2 minutes; agent-inspected only, not art acceptance.
+
 ## Seam band choice and a looser Night Shift — 27 September 2026
 
 Refs #1220 and #1221 (owner answers, 27 September 2026, after the live renders).
@@ -204,6 +353,14 @@ stay blocked with the reason, not half-applied, until Vary is pressed again or t
 `python tests/studio_use_cases.py` passed **20/20** with zero generation submissions and zero page errors (9 intents,
 4 clicks for this journey). These are fixture screens; no model ran.
 
+### Vary asks before replacing Create — 16 October 2026
+
+Refs #1213 (item 2). Vary replaces the Create setup, as Use this look and Start from this picture do, so it now asks first when Create
+holds your own wording (different from the recipe default) or a staged picture, and otherwise prepares at once with no extra step.
+Declining says "Nothing changed" and touches nothing. The journey `vary-a-keeper` agrees to the question on its later presses;
+its click count is unchanged (9 intents, 4 clicks). Reverse it by deleting the `window.confirm` guard in `prepareVary`.
+Items 3 to 5 of #1213 were already fixed on main (`6d60d6b8`, `ac2efb9f`, `tests/vary_prepare_latch.cjs`).
+
 ## Combine runs beside their pictures — 27 September 2026
 
 Refs #422, design handoff J4/D7. Before this change, at 1440×900 the pair sat at y≈854 and the result strip at y≈3499, with
@@ -353,6 +510,7 @@ PASS means the journey completed in the interface — not that the result would 
 ### Per-case notes against the success condition
 
 - **`first-image-from-brief`** — recipe chosen, brief typed, run control enabled, nothing submitted.
+  Starts on Make (`#make`). Before 16 Oct 2026 its driver began on Overview (`#home`), which is retired (#18).
   One dead end: the "what to avoid" field could not be typed into (below).
 - **`reference-edit-one-source`** — the deliberate wrong turn happened first: a text-only recipe was
   chosen, and the attempt to bring in a source found nothing to press. Recovery worked: search,

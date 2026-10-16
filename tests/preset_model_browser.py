@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from urllib.parse import urlsplit
 
 import studio_browser_smoke as fixture
@@ -21,6 +21,10 @@ ROWS = [
      'asset_id': 'curated', 'installable': True},
     {'file': 'unknown.safetensors', 'path': None, 'present': None, 'asset_id': None, 'installable': False,
      'note': 'Model folder unknown; declare model_files.', 'install_note': 'Review the exact source and destination.'},
+    {'file': 'loras/unavailable.safetensors', 'present': True, 'installable': False,
+     'note': 'Content verification unavailable for library pin fixture: file changed while hashing so its digest is unavailable.'},
+    {'file': 'loras/different.safetensors', 'present': True, 'installable': False,
+     'note': 'Content differs from library pin fixture: pinned sha256 a, observed sha256 b.'},
 ]
 
 
@@ -30,14 +34,15 @@ class Handler(fixture.Handler):
         if path.startswith('/api/inspect/'):
             return self.json({'requirements': ROWS, 'nodes': [], 'graph': {}})
         if path == '/api/health':
-            return self.json({'online': True, 'schema_available': True, 'missing_models': {'anima-portrait': ['inpaint/fix.patch']}, 'devices': []})
+            return self.json({'online': True, 'schema_available': True, 'missing_models': {'anima-portrait': ['inpaint/fix.patch']},
+                              'pin_mismatch': {'anima-portrait': ['loras/unavailable.safetensors', 'loras/different.safetensors']}, 'devices': []})
         return super().do_GET()
 
 
 def run(output):
     from playwright.sync_api import sync_playwright
     output.mkdir(parents=True, exist_ok=True)
-    http = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    http = browser_server(Handler)
     worker = threading.Thread(target=http.serve_forever, daemon=True); worker.start()
     cases = []
     try:
@@ -67,6 +72,12 @@ def run(output):
                     unknown = panel.locator('.dependency').filter(has_text='unknown.safetensors')
                     assert unknown.locator('[data-copy]').count() == 0
                     assert 'Model folder unknown' in unknown.text_content()
+                    badge = page.locator('#presetList [data-id="anima-portrait"] .badge').filter(has_text='Model verification needs attention')
+                    assert badge.count() == 1
+                    assert 'loras/unavailable.safetensors' in badge.get_attribute('title')
+                    assert 'loras/different.safetensors' in badge.get_attribute('title')
+                    assert 'Content verification unavailable' in panel.text_content()
+                    assert 'Content differs from library pin' in panel.text_content()
                     page.evaluate('health()'); page.wait_for_function("document.querySelector('#health').textContent==='Recipe needs models'")
                     assert page.locator('#generate').is_disabled()
                     # Open the real dependency disclosure, then keyboard-focus its only valid install.
@@ -78,6 +89,7 @@ def run(output):
                     writes = [post for post in fixture.POSTS if post['path'] not in ('/api/estimate', '/api/references/check')]
                     assert not writes, writes
                     cases.append({'width': width, 'unsupported_install_hidden': True, 'unknown_path_not_copyable': True,
+                                  'pin_warning_honest': True, 'detailed_pin_notes_preserved': True,
                                   'readiness_blocks_generate': True, 'keyboard_focus': True, 'model_mutations': 0, 'page_errors': []})
                     context.close()
             finally: browser.close()

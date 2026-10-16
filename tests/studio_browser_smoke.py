@@ -13,13 +13,15 @@ import mimetypes
 import sys
 import threading
 import time
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'app')); sys.path.insert(0, str(ROOT))  # app/ modules import studio_workflow from the repo root
 import continuation
+import looks
 import wan_capacity
 POSTS = []
 FAIL_WORKSPACE = False
@@ -33,6 +35,7 @@ for preset in CATALOG['presets']:
     preset['defaults'] = {k: graph[str(v[0])]['inputs'].get(str(v[1]), '') for k, v in preset.items()
                           if isinstance(v, list) and len(v) == 2 and str(v[0]) in graph and isinstance(v[1], str)}
     preset['choices'] = {'sampler': ['euler', 'dpmpp_2m'], 'scheduler': ['normal', 'karras']}
+    preset['model'] = looks.model_of(graph)
     preset['continuation_capability'] = continuation.capability(preset, graph)
     preset['continuation_capability']['template_sha256'] = hashlib.sha256((ROOT / preset['graph']).read_bytes()).hexdigest()
 ASSETS = []
@@ -76,7 +79,7 @@ class Handler(BaseHTTPRequestHandler):
             if FAIL_WORKSPACE:return self.json({'error':'Fixture workspace unavailable'},503)
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
-            '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/looks':{'looks':[],'seed_errors':[],'generation_submitted':False}, '/api/jobs':JOBS,
+            '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/looks':{'looks':[],'seed_errors':[],'generation_submitted':False}, '/api/characters':{'characters':[],'generation_submitted':False}, '/api/jobs':JOBS,
             '/api/workspace':{'workspace_id':'1'*32,'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
             '/api/health':{'online':ONLINE,'schema_available':ONLINE,'missing_models':{},'devices':[]},
             '/api/backends':{'active':'primary','busy':False,'operation':None,'profiles':[{'id':'primary','name':'Main library','active':True,'online':ONLINE,'installed':True}]},
@@ -99,7 +102,7 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith('/api/examples/'):path='/examples/'+path.removeprefix('/api/examples/')
         file=ROOT/'app/static/index.html' if path=='/' else ROOT/path.lstrip('/') if path.startswith('/examples/') else ROOT/'app/static'/path.removeprefix('/static/').lstrip('/')
         if not file.is_file():return self.json({'error':'Fixture route not found: '+path},404)
-        raw=file.read_bytes(); self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(file)[0] or 'application/octet-stream');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+        raw=file.read_bytes(); self.send_response(200);self.send_header('Content-Type','text/javascript' if file.suffix=='.js' else mimetypes.guess_type(file)[0] or 'application/octet-stream');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
 
     def do_POST(self):
         raw=self.rfile.read(int(self.headers.get('Content-Length','0')))
@@ -121,7 +124,7 @@ class Handler(BaseHTTPRequestHandler):
 def run(screenshots):
     global FAIL_WORKSPACE, ONLINE, WORKSPACE_DELAY
     from playwright.sync_api import sync_playwright
-    server=ThreadingHTTPServer(('127.0.0.1',int(os.environ.get('STUDIO_UX_TEST_PORT','0'))),Handler); threading.Thread(target=server.serve_forever,daemon=True).start()
+    server=browser_server(Handler, port=int(os.environ.get('STUDIO_UX_TEST_PORT', '0'))); threading.Thread(target=server.serve_forever,daemon=True).start()
     origin=f'http://127.0.0.1:{server.server_port}'
     checks=[]
     def check(condition, label):
@@ -137,8 +140,70 @@ def run(screenshots):
             browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or None,headless=True,args=['--no-sandbox'])
             context=browser.new_context(viewport={'width':1536,'height':1060},device_scale_factor=1)
             page=context.new_page(); errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
-            page.goto(origin);page.wait_for_selector('#uxRecent .ux-recent-card');page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(500)
-            check(page.locator('#homeView').is_visible(),'overview is default')
+            page.goto(origin);page.wait_for_selector('#makeGoals [data-make-goal]')
+            check(page.locator('#makeView').is_visible() and not page.locator('#homeView').is_visible(),'Make is the default view')
+            check(page.locator('#studioSidebar nav > a').all_text_contents()==['✦Make','03Library','◇Models & setup'],'Workspace has exactly the three primary destinations')
+            check(page.locator('#studioSidebar [data-studio-route="home"]').count()==0,'Overview is absent from the sidebar')
+            for section in ['Advanced','More tools']:
+                group=page.locator(f'[data-nav-group="{section}"]');summary=group.locator('summary')
+                check(not group.evaluate('(el)=>el.open'),section+' starts collapsed')
+                summary.focus();page.keyboard.press('Enter');page.wait_for_function('(section)=>localStorage.getItem("studio.nav."+section)==="true"',arg=section)
+                page.reload();page.wait_for_selector('#makeGoals [data-make-goal]');check(group.evaluate('(el)=>el.open'),section+' remembers keyboard expansion across reload')
+                summary.focus();page.keyboard.press('Space');page.wait_for_function('(section)=>localStorage.getItem("studio.nav."+section)==="false"',arg=section)
+                page.reload();page.wait_for_selector('#makeGoals [data-make-goal]');check(not group.evaluate('(el)=>el.open'),section+' remembers keyboard collapse across reload')
+            for route,section in [('create','Advanced'),('learn','More tools')]:
+                page.goto(origin+'/#'+route);page.wait_for_selector(f'[data-studio-route="{route}"][aria-current="page"]')
+                check(page.locator(f'[data-nav-group="{section}"]').evaluate('(el)=>el.open'),section+' opens for its bookmarked route')
+                page.evaluate("showView('make')");page.locator(f'[data-nav-group="{section}"] summary').click()
+            page.wait_for_function('!!selected && schemaAvailable')
+            check(page.locator('#createView h1').inner_text()=='Full editor — every setting for one recipe','Full editor heading explains its purpose')
+            check(page.locator('#positive').input_value()=='','Full editor starts with an empty prompt')
+            check(page.locator('#positive').get_attribute('placeholder')=='Describe the picture','Full editor has a neutral prompt placeholder')
+            for query,label,href,goal in [('anime','Anime character','/#make','character'),('upscale','Fix or upscale','/#make','repair'),('download','Models & setup','/#models',None),('pose','Character in a new pose','/#make','combine')]:
+                page.keyboard.press('Control+k');page.fill('#studioCommandSearch',query)
+                result=page.locator('#studioCommandResults a').filter(has=page.locator('b',has_text=label)).first
+                check(result.get_attribute('href')==href,'finder: '+query+' has the right destination')
+                if goal:
+                    check(result.get_attribute('data-make-goal')==goal,'finder: '+query+' selects the right Make goal')
+                    result.focus();page.keyboard.press('Enter');page.wait_for_selector('#makeGoals [data-make-goal="'+goal+'"][aria-checked="true"]')
+                    check(page.evaluate('JSON.parse(localStorage.getItem("studio.make")).goal')==goal,'finder: '+query+' survives the Make reload')
+                else:
+                    page.fill('#studioCommandSearch',query);page.keyboard.press('ArrowDown');page.keyboard.press('Enter');page.wait_for_selector('#modelsView',state='visible')
+            page.keyboard.press('Control+k');page.fill('#studioCommandSearch','no-such-place')
+            check('Try anime, upscale, pose' in page.locator('#studioCommandResults').inner_text(),'empty finder suggests real queries');page.keyboard.press('Escape')
+            finder=browser.new_page();finder.route('**/api/looks',lambda route:route.fulfill(json=json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))))
+            finder.goto(origin+'/#make');finder.wait_for_selector('#makeGoals [data-make-goal]')
+            for query,goal in [('fix face','repair'),('fix hands','repair'),('3d','mesh'),('video','animate'),('style','restyle')]:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                check(finder.locator('#studioCommandResults a').first.get_attribute('data-make-goal')==goal,'finder synonym: '+query);finder.keyboard.press('Escape')
+            for query,href in [('pictures','/#assets'),('keepers','/#assets'),('compare','/#production'),('seed','/#create')]:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                check(finder.locator('#studioCommandResults a').first.get_attribute('href')==href,'finder keyword: '+query);finder.keyboard.press('Escape')
+            for query in ['wai','krea','noob','anima']:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                finder.wait_for_selector('#studioCommandResults [data-make-look]')
+                check(finder.locator('#studioCommandResults [data-make-look]').count()>0,'model search lists a Make look: '+query)
+                if query=='wai':check(finder.locator('#studioCommandResults [data-make-look="look-wai-fantasy-portrait"]').count()==1,'wai lists the WAI portrait look')
+                finder.keyboard.press('Escape')
+            for query in ['pony','flux','qwen']:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                check(finder.locator('#studioCommandResults a[href="/#models"]').count()==1,'model without an authored look leads to Models & setup: '+query)
+                finder.keyboard.press('Escape')
+            for query in ['lora','adapter','tune']:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                result=finder.locator('#studioCommandResults a').first
+                check(result.get_attribute('href')=='/#make' and 'Open Tune this look under the composer' in result.inner_text(),'Tune hint leads to Make: '+query)
+                finder.keyboard.press('Escape')
+            finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch','pixel');finder.wait_for_selector('#studioCommandResults [data-make-look="look-preset-pixel-lora"]')
+            check(finder.locator('#studioCommandResults a').first.get_attribute('data-make-look')=='look-preset-pixel-lora','pixel search leads to the pixel-art look')
+            finder.keyboard.press('ArrowDown');finder.keyboard.press('ArrowDown');finder.keyboard.press('ArrowUp');finder.keyboard.press('Enter')
+            finder.wait_for_selector('.make-chosen');check(finder.evaluate('JSON.parse(localStorage.getItem("studio.make")).look')=='look-preset-pixel-lora','look selection reloads Make with the chosen pixel look')
+            finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',next(l['name'] for l in json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))['looks'] if l['id']=='look-wai-fantasy-portrait'));finder.wait_for_selector('#studioCommandResults [data-make-look="look-wai-fantasy-portrait"]')
+            check(finder.locator('#studioCommandResults [data-make-look="look-wai-fantasy-portrait"]').get_attribute('data-make-goal')=='character','look names resolve to their Make goal');finder.close()
+            page.evaluate("localStorage.removeItem('studio.make')");page.reload();page.wait_for_selector('#makeGoals [data-make-goal]')
+            page.keyboard.press('Control+k');page.fill('#studioCommandSearch','Overview');check(page.locator('#studioCommandResults a').count()==0,'Overview is no longer offered in the command palette (#18)');page.keyboard.press('Escape')
+            page.goto(origin+'/#home');page.wait_for_selector('#makeView',state='visible');check(page.url.endswith('#make') and page.locator('#homeView').is_hidden(),'#home lands on Make, not the retired Overview (#18)')
+            page.evaluate("showView('make')");page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(500)
             check(not [post for post in POSTS if post['path']=='/api/jobs'],'startup has zero generation mutations')
             check(not errors,'no browser boot exceptions: '+str(errors))
             page.evaluate("showView('create')")
@@ -164,12 +229,16 @@ def run(screenshots):
             check('uncertain' in stopped.inner_text() and 'Original uncertain outcome is retained.' in stopped.inner_text(),'stopped tracking keeps the original uncertain status and message')
             check('Tracking stopped' in stopped.inner_text() and stopped.locator('img').count()==0,'stopped reason is escaped rather than rendered as markup')
             check('Resume observation of retained prompt' in stopped.locator('.resume').inner_text() and stopped.locator('.recipe').count()==1,'stopped Problems record retains Recipe and offers observation-only recovery')
+            page.evaluate("""jobs.push({id:'unreadable-job',preset_name:'Unreadable run record',status:'uncertain',message:'The run record could not be read (state.json: x). Nothing was resubmitted.',controls:{},outputs:[],record_error:'state.json: x',run_path:'x'});renderJobs()""")
+            check(page.locator('[data-problem="unreadable-job"]').count()==1 and page.locator('[data-problem="unreadable-job"] .recipe').count()==0,'an unreadable run record stays visible but offers no Recipe export (it has no recipe)')
+            page.evaluate("jobs=jobs.filter(j=>j.id!=='unreadable-job');renderJobs()")
             page.evaluate("""productionPlans.push({id:'tracking-project',name:'Retained stopped stage',kind:'comparison',state:{status:'uncertain',message:'Original project uncertainty retained.'},stages:[{label:'A',operation:'generate',attempt:{job_id:'stopped-job'},job:jobs.find(j=>j.id==='stopped-job')}],budget:{allowance:2,reserved:2},axis:'seed',values:[]});productionId='tracking-project';renderProduction()""")
             check(page.locator('[data-project-action="resume"]').is_disabled() and 'Resume is unavailable' in page.locator('#productionDetail').inner_text(),'production view disables direct resume for a stopped retained stage')
             page.evaluate("showView('home')")
             if screenshots:page.screenshot(path=str(screenshots/'overview-desktop.png'),full_page=True)
             page.keyboard.press('Control+k');check(page.locator('#studioCommandDialog').is_visible(),'Ctrl+K opens finder');page.fill('#studioCommandSearch','voice');check(page.locator('#studioCommandResults a').count()==1,'finder filters tools');page.keyboard.press('Escape');check(not page.locator('#studioCommandDialog').is_visible(),'Escape closes finder')
-            page.click('[data-ux-intent="edit"]');page.wait_for_selector('#createView:not([hidden])');check(page.evaluate('selected.continuation_capability.consumes_source'),'intent chooses compatible recipe')
+            # #18: the Overview intent picker left the navigation with the Overview; Full editor opens by its own route and the later steps pick recipes explicitly.
+            page.evaluate("showView('create')");page.wait_for_selector('#createView:not([hidden])');page.wait_for_function('!!selected');check(page.locator('#homeView').is_hidden(),'Full editor opens without the retired Overview view')
             page.evaluate("selectPreset('qwen-1ref')");check(page.locator('#generate').is_disabled(),'empty required slots block generation')
             page.click('#uxPullAsset');page.wait_for_selector('[data-ux-pull="asset-0"]');page.click('[data-ux-pull="asset-0"]');page.wait_for_function('uploaded === "'+('a'*32)+'_fixture.png"');check(page.evaluate('parentAssets[0]')=='asset-0','picker preserves lineage');check(page.locator('#generate').is_enabled(),'filled required slot becomes ready');check(page.locator('#gallery .reference-output').count()==1,'output actions consolidate to one handoff');check(all(x['path']!='/api/jobs' for x in POSTS),'source picker does not generate')
             page.fill('#positive','A saved workflow draft');page.wait_for_timeout(500);check(page.evaluate('Object.keys(localStorage).some(k=>k.includes("qwen-1ref"))'),'edited draft is persisted')
@@ -189,14 +258,71 @@ def run(screenshots):
             page.click('#uxPrepareHandoff');page.wait_for_function('selected.id === "wan22-i2v"');check(page.evaluate('parentAssets[0]')=='asset-0','handoff preserves source in new recipe');check(page.locator('#uxContinuation').is_visible(),'prepared handoff keeps an explicit source-bound context panel');check(page.locator('#positive').input_value()=='','image description is not copied into a motion brief');check(page.locator('#generate').is_disabled(),'motion continuation waits for explicit motion wording');check(all(x['path']!='/api/jobs' for x in POSTS),'handoff has zero generation mutations')
             if screenshots:page.locator('#uxContinuation').screenshot(path=str(screenshots/'handoff-prepared-desktop.png'))
             page.evaluate("showView('assets')");page.check('[data-asset-check="asset-5"]');check(page.locator('#createScene').get_attribute('aria-disabled')=='true','JPEG scene selection blocked');page.click('#createScene',force=True);check(page.url.endswith('#assets'),'blocked scene handoff does not navigate');page.click('#clearAssetSelection');page.check('[data-asset-check="asset-0"]');check(page.locator('#createScene').get_attribute('aria-disabled')=='false','PNG scene selection allowed')
-            page.evaluate("showView('models')");check(page.locator('.environment-panel .runtime-bar').is_visible(),'environment controls live in Models');page.go_back();page.wait_for_timeout(150);check(page.locator('#assetsView').is_visible(),'browser Back restores previous view')
-            FAIL_WORKSPACE=True;page.evaluate("showView('home')");page.wait_for_function('document.querySelector("#uxHomeHealth").textContent.includes("unavailable")');check('—' in page.locator('#uxStats').inner_text(),'unavailable workspace is not reported as zero');FAIL_WORKSPACE=False
+            page.evaluate("showView('models')");check(not page.locator('.environment-panel .runtime-bar').is_visible() and not page.evaluate("document.querySelector('.environment-panel').open"),'environment switcher is folded when Models opens');page.locator('.environment-panel > summary').click();check(page.locator('.environment-panel .runtime-bar').is_visible(),'environment controls live in Models behind a disclosure');page.go_back();page.wait_for_timeout(150);check(page.locator('#assetsView').is_visible(),'browser Back restores previous view')
+            # S5: real routing and cards over synthetic model state; no setup or generation presses.
+            models=context.new_page();models.on('pageerror',lambda error:errors.append(str(error)))
+            rows=[dict(id=key,name=name,family=family,file='checkpoints/'+key+'.safetensors',path='C:/models/checkpoints/'+key+'.safetensors',bytes=8,present=present,verified=verified,installable=True,source='https://example.com/model',license='Fixture',download={}) for key,name,family,present,verified in [('required','Required model','Anime',False,False),('other','Other model','Photo',False,False),('pending','Pending model','Anime',True,False),('mismatch','Mismatch model','Photo',True,False),('installed','Installed model','Anime',True,True)]]
+            rows[3]['verification']='mismatch'
+            model_library=dict(storage=dict(free_bytes=100,total_bytes=200,reserve_bytes=20),model_root='C:/models',assets=rows,folders=[],inventory=[],collections=[])
+            models.route('**/api/library',lambda route:route.fulfill(json=model_library))
+            models.route('**/api/health',lambda route:route.fulfill(json=dict(online=True,schema_available=True,missing_models={'wai':['checkpoints/required.safetensors','checkpoints/installed.safetensors']})))
+            looks=json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))
+            models.route('**/api/looks',lambda route:route.fulfill(json=looks))
+            wai_look=next(l['name'] for l in looks['looks'] if l['id']=='look-wai-fantasy-portrait')
+            models.route('**/api/inspect/wai',lambda route:route.fulfill(json=dict(requirements=[dict(file='checkpoints/required.safetensors',asset_id='required',present=False),dict(file='checkpoints/installed.safetensors',asset_id='installed',present=True)],nodes=[],graph={})))
+            models.route('**/api/inspect/*',lambda route:route.fulfill(json=dict(requirements=[],nodes=[],graph={})) if not route.request.url.endswith('/wai') else route.fallback())
+            models.goto(origin+'/#models?need=wai');models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible() and models.url.endswith('#models?need=wai'),'need deep link preserves Models route and parameter')
+            check(models.locator('#curatedModelTitle').inner_text()=='Files needed for '+next(p['name'] for p in CATALOG['presets'] if p['id']=='wai'),'need filter names the preset')
+            check(models.locator('#modelCards .model-card h3').all_text_contents()==['Required model'],'need filter shows only missing required files')
+            models.locator('[data-models-all]').click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===5')
+            # A missing file no look or recipe uses folds under Optional once every inspection has answered (audit v3 N8).
+            models.wait_for_function('document.querySelector("#modelCards .model-group > summary")?.textContent.startsWith("Optional")')
+            check(models.locator('#modelCards h3').all_text_contents().count('Missing (1)')==1 and 'Needs a check (2)' in models.locator('#modelCards').inner_text(),'curated models group missing and pending or mismatched files with counts')
+            check(models.locator('#modelCards .model-group > summary').all_inner_texts()==['Optional · not used by any look or recipe (1)','Needs a check (2)','Installed (1)'] and not any(models.locator('#modelCards .model-group').evaluate_all('(els)=>els.map(el=>el.open)')),'checked and unchecked groups have counts and start collapsed')
+            # Shop structure: looks ready or needing a file, per-file acquisition block, install only where eligible, search at the top that filters everything.
+            models.wait_for_function('document.querySelector("#modelLooks .model-look")')
+            check(models.locator('#modelLooks').is_visible() and 'needs a download' in models.locator('#modelLooks').inner_text().lower() and models.locator('#modelLooks .model-look.needs').inner_text().startswith(wai_look),'looks list names which look needs a download')
+            check(models.locator('#modelLooks .model-look.needs a').get_attribute('href')=='/#models?need=wai' and models.locator('#modelLooks .model-look.ready').count()>=1,'blocked look links to its files; other looks are ready')
+            required=models.locator('#modelCards .model-card').filter(has_text='Required model')
+            check(('Used by: '+wai_look) in required.inner_text(),'card says which look uses the file')
+            check(required.locator('.model-get a').get_attribute('href')=='https://example.com/model' and 'C:/models/checkpoints' in required.locator('.model-get code').inner_text() and required.locator('[data-copy]').count()==2,'missing file shows its source, its folder and a copy button')
+            check(required.locator('[data-install]').is_enabled() and required.locator('[data-install]').inner_text().startswith('Install'),'installable missing file offers its install action')
+            check(models.locator('#modelCards .model-card').filter(has_text='Pending model').locator('.model-get').count()==0 and models.locator('#modelCards .model-card').filter(has_text='Pending model').locator('[data-install]').text_content()=='Verify','a present file has no acquisition block and a quiet Verify')
+            check(models.locator('.models-toolbar').evaluate('(el)=>getComputedStyle(el).position')=='sticky','the search stays at the top while scrolling')
+            models.fill('#curatedModelSearch','glowing fantasy');check(models.locator('#modelCards .model-card h3').all_text_contents()==['Required model','Installed model'] and models.locator('#modelLooks .model-look').count()==1,'top search filters looks and the files they use')
+            models.fill('#curatedModelSearch','');models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===5')
+            for query,expected in [('required',['Required model']),('photo',['Other model','Mismatch model']),('pending.safetensors',['Pending model'])]:
+                models.fill('#curatedModelSearch',query);check(models.locator('#modelCards .model-card h3').all_text_contents()==expected,'curated search filters '+query)
+            models.fill('#curatedModelSearch','');models.evaluate("location.hash='models?need=wai'");models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible(),'same-view need hash change redraws Models')
+            models.reload();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible(),'need filter survives reload')
+            models.goto(origin+'/?need=wai#models');models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible(),'query need parameter also filters Models')
+            models.locator('[data-models-all]').click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length>1 && !location.search.includes("need")')
+            check(models.locator('#modelsView').is_visible(),'Show everything clears a query need filter too')
+            models.goto(origin+'/#make');models.wait_for_selector('[data-make-look="look-wai-fantasy-portrait"]');models.locator('[data-make-look="look-wai-fantasy-portrait"]').click()
+            check(models.locator('#makeWhy a').get_attribute('href')=='/#models?need=wai','composer blocker links to the preset files')
+            models.locator('[data-make-change]').click()  # choosing a look folds the gallery (S1); open it again to see the cards
+            card_link=models.locator('.make-look').filter(has=models.locator('[data-make-look="look-wai-fantasy-portrait"]')).locator('a')
+            check(card_link.get_attribute('href')=='/#models?need=wai' and card_link.locator('xpath=ancestor::button').count()==0,'look blocker is a real link outside its select button')
+            card_link.click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')
+            check(models.locator('#modelsView').is_visible(),'Make blocker opens only the needed file')
+            check(all(x['path'] not in ['/api/jobs','/api/models/install'] for x in POSTS),'model navigation and filtering never submit or install')
+            models.close()
+            # #18: the Overview stats left the navigation with the Overview itself, so the unavailable-workspace check no longer has a surface here.
             page.goto(origin+'/prompt-lab.html');page.wait_for_selector('#profile option',state='attached');page.click('#compile');page.wait_for_selector('#studioSendPrompt:not([disabled])');page.click('#studioSendPrompt');page.wait_for_selector('#uxTransfer:not([hidden])');check('lantern' in page.locator('#uxTransferPreview').inner_text(),'Prompt Lab transfers explicit text draft');page.wait_for_function('!!selected');page.click('#uxApplyPrompt');check('lantern' in page.locator('#positive').input_value(),'text is applied only after explicit click');check(all(x['path']!='/api/jobs' for x in POSTS),'prompt transfer never generates')
             for tool in ['av.html','voice.html','review.html']:
                 page.goto(origin+'/'+tool);page.wait_for_selector('.studio-sidebar');check(page.locator('#studioJump').is_visible(),tool+' has shared navigation')
-            page.goto(origin+'/#home');page.wait_for_selector('#uxRecent .ux-recent-card');page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(150);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile overview has no horizontal overflow')
+            page.goto(origin+'/#home');page.wait_for_selector('#makeView',state='visible');page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(150);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile landing (#home resolves to Make) has no horizontal overflow')
+            check(page.locator('#studioQuickCreate').get_attribute('href')=='/#make' and page.locator('#studioQuickCreate').inner_text()=='Make','mobile header points at Make')
+            check(page.locator('#studioQuickCreate').get_attribute('aria-current')=='page','mobile Make is the landing view')
+            page.click('#studioQuickCreate');page.wait_for_selector('#makeView',state='visible')
+            check(page.locator('#studioQuickCreate').get_attribute('aria-current')=='page','mobile Make is highlighted only on Make');page.evaluate("showView('home')")
             if screenshots:page.screenshot(path=str(screenshots/'overview-mobile.png'),full_page=True)
-            page.click('#studioNavToggle');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='true','mobile navigation is expandable');page.click('[data-studio-route="create"]');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='false','navigation closes after route change');check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile create has no horizontal overflow')
+            page.locator('[data-nav-group="Advanced"]').evaluate('(el)=>el.open=false')
+            page.click('#studioNavToggle');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='true','mobile navigation is expandable');page.click('[data-nav-group="Advanced"] summary');page.click('[data-studio-route="create"]');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='false','navigation closes after route change');check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile create has no horizontal overflow')
             if screenshots:page.screenshot(path=str(screenshots/'create-mobile.png'),full_page=True)
             for route in ['assets','production','models','learn']:
                 page.evaluate(f"showView('{route}')");page.wait_for_timeout(100);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),f'mobile {route} has no horizontal overflow')
@@ -214,8 +340,14 @@ def run(screenshots):
             check(not errors,'no browser exceptions through all journeys: '+str(errors))
             # Handoff 03: dialog actions sat below the fold (Plan comparison at 1440x900, asset details at 900 px tall).
             reachable="([s,d])=>{const r=document.querySelector(s).getBoundingClientRect(),b=document.querySelector(d).getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;return r.height>0&&r.top>=Math.max(0,b.top)&&r.bottom<=Math.min(innerHeight,b.bottom)&&document.querySelector(s).contains(document.elementFromPoint(x,y))}"
+            hit="sel=>[...document.querySelectorAll(sel)].filter(el=>el.getClientRects().length).map(el=>{const r=el.getBoundingClientRect();return {name:(el.innerText||'').replace(/[^ -~]/g,'').replace(/\\s+/g,' ').trim(),w:r.width,h:r.height}})"
             for width,height in ((1440,900),(390,844)):
-                v=browser.new_page(viewport={'width':width,'height':height});v.goto(origin+'/#create');v.wait_for_function('!!selected && schemaAvailable');v.click('#planComparison');v.wait_for_selector('#experimentDialog[open]')
+                v=browser.new_page(viewport={'width':width,'height':height});v.goto(origin+'/#home');v.wait_for_selector('#makeView',state='visible')
+                v.goto(origin+'/#create');v.wait_for_function('!!selected && schemaAvailable')
+                looks=v.evaluate(hit,'details.ux-looks > summary')
+                if not looks:print(f'NOTE: details.ux-looks > summary is not in the DOM at {width}x{height}',flush=True)
+                for box in looks:check(box['w']>=24 and box['h']>=24,f"{box['name']} pointer target is {box['w']:.1f}x{box['h']:.1f} at {width}x{height}")
+                v.click('#planComparison');v.wait_for_selector('#experimentDialog[open]')
                 for control in ('#prepareExperiment','#cancelExperiment'):check(v.evaluate(reachable,[control,'#experimentDialog']),f'{control} is on screen when Plan a comparison opens at {width}x{height}')
                 v.keyboard.press('Escape');v.evaluate("showView('assets');openAsset('asset-1')");v.wait_for_selector('#assetDialog[open]');v.wait_for_timeout(200)
                 for control in ('#saveAssetDetails','#assetTrash'):check(v.evaluate(reachable,[control,'#assetDialog']),f'{control} is on screen when asset details open at {width}x{height}')

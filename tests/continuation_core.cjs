@@ -270,6 +270,31 @@ test('a plan names each fill a ticked recipe reads that the open recipe lacks, o
   assert.deepEqual(C.combinePlanFills(copy,[four,depth]),[],'Copy Pose already asks every fill the others read');
   assert.deepEqual(C.combinePlanFills(four,[replace]).map(f=>[f.meaning,f.label]),[['outfit','Outfit and its colours']],'the scene outfit is its own field, never the clothes');
   assert.deepEqual(C.combinePlanFills(replace,[copy]).map(f=>f.meaning),['clothes']);
+  assert.deepEqual(C.combinePlanFills(replace,[four]).map(f=>[f.meaning,f.label,f.recipes]),[['clothes','Clothes and colours',['Klein 4B']]],'Klein 4B folds a remembered clothes answer into who');
   assert.deepEqual(C.combinePlanFills(four,[]),[]);assert.deepEqual(C.combinePlanFills(null,[copy]).map(f=>f.meaning),['who','clothes','pose']);
+});
+test('one-press Polish picks the face pass by source family and refuses with a reason where no route fits (S3)',()=>{
+  // Operations as app/continuation.py computes them for the live graphs (FaceDetailer → localized-detail; no prompt → upscale).
+  const ops={'anime-face':['localized-detail','description'],'animagine-face':['localized-detail','description'],'anime-detail-fix':['localized-detail','description'],'anime-esrgan':['upscale','none'],'krea-refine':['image-to-image','description']};
+  const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8')).presets.map(p=>ops[p.id]?{...p,continuation_capability:{...cap,operation:ops[p.id][0],prompt_role:ops[p.id][1]}}:p);
+  const pick=(kind,from,extra={})=>C.polishRoute(kind,catalog,{...source,preset_id:from,...extra},{});
+  const id=(kind,from)=>{const r=pick(kind,from);assert.ok(r.ok,kind+' from '+from+': '+r.reason);return r.preset.id;};
+  assert.equal(id('face','wai'),'anime-face');assert.equal(id('face','style-pose-nova'),'anime-face','Illustrious family');
+  assert.equal(id('face','anime'),'animagine-face');assert.equal(id('face','noob'),'anime-detail-fix');assert.equal(id('face','anima-portrait'),'anime-detail-fix');
+  assert.equal(id('face','animagine-face'),'animagine-face','a polished picture can be polished again');
+  for(const from of ['wai','anime','noob'])assert.equal(id('details',from),'anime-detail-fix');
+  for(const from of ['wai','krea-portrait','zimage'])assert.equal(id('upscale',from),'anime-esrgan');
+  assert.equal(id('upscale','anime-esrgan'),'anime-esrgan');
+  assert.equal(pick('face','anime-esrgan').ok,false,'an upscaled picture (any source) is not anime by route');
+  for(const from of ['krea-portrait','zimage','qwen21-t2i']){const r=pick('face',from);assert.equal(r.ok,false);assert.match(r.reason,/anime model.*Continue with this/);}
+  assert.match(pick('details','not-a-recipe').reason,/no[a-z ]*recorded/i);
+  assert.match(pick('face','wai',{prompt_origin:'unavailable',positive:null}).reason,/No description was kept/);
+  assert.equal(pick('upscale','wai',{prompt_origin:'unavailable',positive:null}).ok,true,'an upscale takes no words');
+  assert.match(C.polishRoute('face',catalog,{...source,preset_id:'wai'},{'anime-face':['wai.safetensors']}).reason,/Missing here: wai\.safetensors/);
+  const masked=catalog.map(p=>p.id==='anime-detail-fix'?{...p,continuation_capability:{...p.continuation_capability,requires_mask:true}}:p);
+  assert.match(C.polishRoute('details',masked,{...source,preset_id:'wai'},{}).reason,/mask/);
+  assert.match(C.polishRoute('details',catalog.filter(p=>p.id!=='anime-detail-fix'),{...source,preset_id:'wai'},{}).reason,/cannot read a source/);
+  assert.equal(pick('sharpen','wai').ok,false);assert.equal(C.polishRoute('face',catalog,null,{}).ok,false);
+  const order=C.destinations('repair',catalog,{...source,preset_id:'zimage'}).map(p=>p.id);assert.ok(order.indexOf('anime-esrgan')<order.indexOf('anime-face'),'the repair prefer list names the real upscale id');
 });
 console.log(count+' continuation client policy checks passed.');

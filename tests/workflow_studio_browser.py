@@ -5,7 +5,7 @@ synthetic Comfy schema. This is NOT the configured Windows/GPU runtime.
 Requires separately available playwright + Chromium; not a runtime dependency.
 """
 import argparse
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 import json
 import mimetypes
 import re
@@ -135,7 +135,7 @@ def main():
         class TrackingHandler(Wrapped):
             def do_POST(self): requests.append(self.path); return super().do_POST()
         TrackingHandler.studio = studio
-        server = ThreadingHTTPServer(('127.0.0.1', 0), TrackingHandler)
+        server = browser_server(TrackingHandler)
         server.expected_host = '127.0.0.1:' + str(server.server_port)
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         origin = 'http://' + server.expected_host
@@ -156,7 +156,7 @@ def main():
                         except ValueError as exc: return {'ok': False, 'value': {'error': str(exc)}}
                     page.expose_function('fixtureRequest', fixture)
                     raw = (ROOT / 'app/static/workflow-studio.html').read_text(encoding='utf-8')
-                    raw = raw.replace('<head>', '<head><base href="http://127.0.0.1:8191/">')
+                    raw = raw.replace('<head>', f'<head><base href="{origin}/">')
                     raw = re.sub(r'<link rel="stylesheet" href="/static/([^"\n]+)">', lambda m: '<style>' + (ROOT / 'app/static' / m[1]).read_text(encoding='utf-8') + '</style>', raw)
                     raw = re.sub(r'<script src="/static/([^"\n]+)"></script>', lambda m: '<script>' + (ROOT / 'app/static' / m[1]).read_text(encoding='utf-8') + '</script>', raw)
                     stub = "<script>window.fetch=async(path,options={})=>{const r=await window.fixtureRequest(path,options.body?JSON.parse(options.body):null);return{ok:r.ok,json:async()=>r.value};};</script>"

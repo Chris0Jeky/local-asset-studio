@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import shutil
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 
 from playwright.sync_api import sync_playwright
 import studio_browser_smoke as fixture
@@ -23,7 +23,7 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     fixture.POSTS.clear()
-    server = ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
+    server = browser_server(fixture.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     origin = f'http://127.0.0.1:{server.server_port}'
@@ -97,6 +97,8 @@ def main():
             checks.append({'name':'Prompt Lab handoff panel stays in the first viewport and costs nothing when hidden','cases':transfer})
             # #853: the same app owner must reject empty wording in every presentation.
             # Keep the fixture's original valid prompt for subsequent generation/lineage checks.
+            # The Full editor opens with an empty prompt (#1433); write one so Generate has something to run.
+            if not page.locator('#positive').input_value().strip(): page.fill('#positive', 'A quiet lantern-lit study')
             original_prompt = page.locator('#positive').input_value()
             prompt_cases = []
             for width, height in [(1440, 900), (390, 844)]:

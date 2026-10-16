@@ -1,0 +1,9 @@
+{
+  "title": "Local Asset Studio",
+  "empty_library": "YOUR CREATIVE LIBRARY\nA library, not a dead end.\n\nCollect, compare and develop your images, shots and 3D assets.\n\nImport images\nRefresh assets\nBring existing work into the studio\nDrop up to 32 PNG, JPG or WebP images here, or use Import images.\nAsset library\n0\nAll assets\n\u2605 Favorites\nKeepers\nNeeds work\nTrash\nAwaiting review\nCollections\n\uff0b\nRecover collection draft\u2026\n\nCollect a character, a project, or an idea.\n\nAn asset can belong to several collections. Deleting a collection keeps its assets.\n\nAll media\nImages\nVideo\n3D\nAudio\nNewest first\nOldest first\nTitle\nNo grouping\nGroup by recipe\nGroup by day\nGroup by run\nReview next (0 unreviewed)\nAll assets\n0 assets\nSelect visible\n\nLocal recovery shelf\nDevice persistence is optional. The existing tab journal remains active.\nYour asset library is empty\n\nImport an existing image to organize or continue working on it. Importing does not generate a new image.\n\nImport images",
+  "schema_http_status": 400,
+  "schema_response": "{\"error\": \"<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>\", \"generation_submitted\": false}",
+  "errors": [],
+  "import_control": 1,
+  "native_control": 1
+}

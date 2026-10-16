@@ -5,7 +5,8 @@ import json
 import os
 import shutil
 import threading
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -50,11 +51,11 @@ class Handler(fixture.Handler,studio_server.Handler):
 def run(output):
     from playwright.sync_api import sync_playwright
     output.mkdir(parents=True,exist_ok=True);fixture.PLANS[:]=[copy.deepcopy(PROJECT)];fixture.POSTS.clear()
-    target=ThreadingHTTPServer(('127.0.0.1',0),Handler);origin=f'http://127.0.0.1:{target.server_port}'
+    target=browser_server(Handler);origin=f'http://127.0.0.1:{target.server_port}'
     class Parent(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
         def do_GET(self):Handler.frame_page(self,origin)
-    parent=ThreadingHTTPServer(('127.0.0.1',0),Parent)
+    parent=browser_server(Parent)
     threads=[]
     for http in (target,parent):
         thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start();threads.append(thread)

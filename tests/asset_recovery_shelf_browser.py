@@ -13,7 +13,7 @@ import shutil
 import socket
 import tempfile
 import threading
-from http.server import ThreadingHTTPServer
+from browser_ports import browser_server
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -73,7 +73,7 @@ async def exercise(args):
                     return
                 return super()._json(status, data)
 
-        http = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        http = browser_server(Handler)
         port = http.server_port
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
@@ -123,6 +123,8 @@ async def exercise(args):
                     await page.close()
 
                 async def shelf(page, details=False):
+                    # S6: the library launcher sits in the Recovery disclosure; open it the way a person would.
+                    if not details and not await page.evaluate("document.getElementById('assetRecoveryDisclosure')?.open ?? true"): await page.click('#assetRecoveryDisclosure > summary')
                     await page.click('#openAssetRecoveryShelfDetails' if details else '#openAssetRecoveryShelf')
                     await page.wait_for_function('!assetShelfReading')
 

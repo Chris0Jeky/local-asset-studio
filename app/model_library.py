@@ -1,16 +1,16 @@
 """Local model inventory and checksum-pinned, explicit asset installation."""
 from __future__ import annotations
 
-import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import threading
 import time
 import uuid
 from urllib.request import Request
-from download_contracts import InstallLease, asset_id as checked_id, download_source_provider, file_identity, open_download as urlopen, publish_verified, relative_model_path, validate_pins, validate_response
+from download_contracts import InstallLease, asset_id as checked_id, download_source_provider, file_identity, open_download as urlopen, publish_verified, sha256, relative_model_path, validate_pins, validate_response
 
 from studio_workflow.model_contracts import FOLDERS, SUFFIXES
 INSTALL_SUFFIX = ".safetensors"
@@ -24,14 +24,6 @@ def load(path, default=None):
         return default
 
 
-def sha256(path):
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(8 * 1024**2), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 LINKED_ROW_NOTE = ("This file's folder is a link (symlink or junction). The Studio does not install or verify through links, "
                    "so the original is preserved; copy the file into the real model folder to manage it here.")
 
@@ -40,8 +32,16 @@ class LinkedPathError(ValueError):
     """A pinned path crosses a symlink or junction: the no-link install policy refuses that row, never the library (#1127)."""
 
 
+def backend_affinity(asset):
+    value = asset.get('backend', 'all')
+    if not isinstance(value, str) or not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', value):
+        raise ValueError('Model backend must be all or a configured backend ID')
+    return value
+
+
 class ModelLibrary:
-    def __init__(self, root, comfy_root):
+    def __init__(self, root, comfy_root, *, backend_id='primary'):
+        self.backend_id = backend_affinity({'backend': backend_id})
         self.root = Path(root).resolve()
         self.comfy = Path(comfy_root).resolve()
         self.models = (self.comfy / "models").resolve()
@@ -56,6 +56,7 @@ class ModelLibrary:
         # A wrong shape must not read as an empty library (hiding every pin) or crash a caller with AttributeError.
         if not isinstance(data, dict) or not isinstance(data.get("assets", []), list) or not all(isinstance(a, dict) for a in data.get("assets", []))                 or not isinstance(data.get("collections", []), list):
             raise ValueError("models/library.json must be an object with an assets list and a collections list")
+        for asset in data.get("assets", []): backend_affinity(asset)
         return data
 
     def asset(self, asset_id):
@@ -89,6 +90,9 @@ class ModelLibrary:
         queued receipt exists; refuse it here instead. An already-installed copy still
         verifies, which is the whole point of pinning a file of unrecorded provenance.
         """
+        backend = backend_affinity(asset)
+        if backend not in ('all', self.backend_id):
+            return f'Select the {backend} backend explicitly before installing or verifying this model (active: {self.backend_id}).'
         try:target=self.destination(asset)
         except ValueError as exc:return str(exc)
         if present is None:present=target.is_file()
@@ -122,10 +126,10 @@ class ModelLibrary:
         except ValueError as exc: return {"id": key, "label": label, "path": str(self.models / key), "unavailable": str(exc)}
 
     def open_folder(self, key):
+        if os.name != "nt":
+            raise ValueError("Open folder is available on Windows; copy the path instead")   # refuse before any folder is created
         path = self.folder(key)
         path.mkdir(parents=True, exist_ok=True)
-        if os.name != "nt":
-            raise ValueError("Open folder is available on Windows; copy the path instead")
         os.startfile(str(path))
         return {"path": str(path)}
 
@@ -141,47 +145,57 @@ class ModelLibrary:
         finally:temp.unlink(missing_ok=True)
         return state
 
+    def _snapshot_row(self, asset):
+        validate_pins(asset)   # a malformed pin (bad file, missing bytes or sha256) is refused on its own row
+        item = dict(asset)
+        try: path = self.locate(asset)
+        except LinkedPathError:
+            # #1127: refuse the linked row and keep every other row. The file may exist through the link (ComfyUI
+            # follows it), so presence is reported; it is never verified or installed through the link.
+            checked_id(asset['id'])
+            receipt = load(self.state / (asset["id"] + ".json"), {})
+            shown = self.models / relative_model_path(asset["file"])
+            item.update(path=str(shown), present=shown.is_file(), size_matches=False, verified=False, verification='linked-path-refused',
+                        installable=False, install_note=LINKED_ROW_NOTE, download=receipt if isinstance(receipt, dict) else {})
+            return item
+        present = path.is_file()
+        blocked = self.install_block(asset, present)
+        checked_id(asset['id'])
+        receipt = load(self.state / (asset["id"] + ".json"), {})
+        if not isinstance(receipt,dict):receipt={}
+        identity = file_identity(path) if present else None
+        matches = present and identity['size'] == asset["bytes"]
+        verified = bool(backend_affinity(asset) in ('all', self.backend_id) and matches and receipt.get('version')==2 and receipt.get("status")=="installed"
+                        and receipt.get("sha256")==asset["sha256"] and receipt.get('path')==str(path)
+                        and receipt.get('file_identity')==identity)
+        reason = ('stat-fresh-sha256-receipt' if verified else 'missing' if not present
+                  else 'pin-only-manual-verification' if blocked else 'explicit-reverification-required')
+        item.update(path=str(path), present=present, size_matches=matches, verified=verified,
+                    verification=reason, installable=blocked is None, install_note=blocked, download=receipt)
+        return item
+
     def snapshot(self):
         manifest = self.manifest()
         assets = []
         for asset in manifest.get("assets", []):
-            item = dict(asset)
-            try: path = self.locate(asset)
-            except LinkedPathError:
-                # #1127: refuse the linked row and keep every other row. The file may exist through the link (ComfyUI
-                # follows it), so presence is reported; it is never verified or installed through the link.
-                checked_id(asset['id'])
-                receipt = load(self.state / (asset["id"] + ".json"), {})
-                shown = self.models / relative_model_path(asset["file"])
-                item.update(path=str(shown), present=shown.is_file(), size_matches=False, verified=False, verification='linked-path-refused',
-                            installable=False, install_note=LINKED_ROW_NOTE, download=receipt if isinstance(receipt, dict) else {})
-                assets.append(item); continue
-            present = path.is_file()
-            blocked = self.install_block(asset, present)
-            checked_id(asset['id'])
-            receipt = load(self.state / (asset["id"] + ".json"), {})
-            if not isinstance(receipt,dict):receipt={}
-            identity = file_identity(path) if present else None
-            matches = present and identity['size'] == asset["bytes"]
-            verified = bool(matches and receipt.get('version')==2 and receipt.get("status")=="installed"
-                            and receipt.get("sha256")==asset["sha256"] and receipt.get('path')==str(path)
-                            and receipt.get('file_identity')==identity)
-            reason = ('stat-fresh-sha256-receipt' if verified else 'missing' if not present
-                      else 'pin-only-manual-verification' if blocked else 'explicit-reverification-required')
-            item.update(path=str(path), present=present, size_matches=matches, verified=verified,
-                        verification=reason, installable=blocked is None, install_note=blocked, download=receipt)
-            assets.append(item)
+            try: assets.append(self._snapshot_row(asset))
+            except (KeyError, TypeError, ValueError) as exc:
+                assets.append(dict(asset, status="invalid_pin", path="", present=False, size_matches=False, verified=False,
+                                   verification="invalid-pin", installable=False, download={},
+                                   install_note="This pin is malformed and was not checked: " + str(exc)[:200]))
         folders = [self._folder_row(key, label) for key, label in FOLDERS.items()]
         folders += [{"id": key, "label": label, "path": str(self.folder(key))} for key, label in [("input", "Reference inputs"), ("output", "Generated outputs"), ("workflows", "Editable workflows"), ("downloads", "Browser downloads")]]
         inventory = []
         if self.models.is_dir():
             for path in self.models.rglob("*"):
                 if path.is_file() and path.suffix.lower() in SUFFIXES and path.resolve().is_relative_to(self.models):
-                    inventory.append({"file": path.relative_to(self.models).as_posix(), "bytes": path.stat().st_size, "folder": path.relative_to(self.models).parts[0]})
+                    try:size=path.stat().st_size
+                    except FileNotFoundError:continue   # deleted between the scan and the stat; any other error stays loud
+                    inventory.append({"file": path.relative_to(self.models).as_posix(), "bytes": size, "folder": path.relative_to(self.models).parts[0]})
         disk = shutil.disk_usage(self.models if self.models.exists() else self.root)
         return {"assets": assets, "collections": manifest.get("collections", []), "folders": folders,
                 "inventory": inventory, "storage": {"free_bytes": disk.free, "total_bytes": disk.total, "reserve_bytes": RESERVE_BYTES},
-                "model_root": str(self.models)}
+                "model_root": str(self.models), "backend_id": self.backend_id}
 
     def _validated_asset(self, asset_id):
         asset=self.asset(asset_id);self.destination(asset)
@@ -227,7 +241,7 @@ class ModelLibrary:
         # Reporting a disk/path failure must not mask it or strand the worker gate.
         done=None;partial=None
         try:
-            part=self.partial_path(self.destination(asset));partial=str(part)
+            part=getattr(exc,'partial_path',None) or self.partial_path(self.destination(asset));partial=str(part)
             done=part.stat().st_size if part.is_file() else 0
         except (OSError,ValueError):pass
         try:self._record(asset['id'],status='failed',bytes_done=done,bytes_total=asset['bytes'],
@@ -263,15 +277,26 @@ class ModelLibrary:
                 try:os.link(local,target)
                 except OSError:
                     if target.exists() or target.is_symlink():raise ValueError('Destination appeared during installation; original preserved')
-                    if shutil.disk_usage(target.parent).free<expected_size+RESERVE_BYTES:raise ValueError('More disk space is needed to preserve 20 GiB of working headroom')
                     part=self.partial_path(target)
-                    with part.open('xb') as output,local.open('rb') as source:
-                        while chunk:=source.read(4*1024**2):
-                            if output.tell()+len(chunk)>expected_size:raise ValueError('Browser file grew during copy; partial preserved')
-                            if shutil.disk_usage(target.parent).free<len(chunk)+RESERVE_BYTES:raise ValueError('Insufficient disk space during copy; partial preserved')
-                            output.write(chunk)
-                        output.flush();os.fsync(output.fileno())
-                    identity=publish_verified(part,target,self._verify(part,asset))
+                    if part.exists():
+                        for previous in part.parent.iterdir():
+                            if not re.fullmatch(re.escape(part.name)+r'\.[0-9a-f]{32}\.tmp',previous.name):continue
+                            self._check_path(previous)
+                            if not previous.is_file() or previous.stat().st_nlink!=1:raise ValueError('Temporary copy must be an unshared regular file; original preserved')
+                            previous.unlink()
+                        part=part.with_name(part.name+'.'+uuid.uuid4().hex+'.tmp')
+                    if shutil.disk_usage(target.parent).free<expected_size+RESERVE_BYTES:raise ValueError('More disk space is needed to preserve 20 GiB of working headroom')
+                    try:
+                        with part.open('xb') as output,local.open('rb') as source:
+                            while chunk:=source.read(4*1024**2):
+                                if output.tell()+len(chunk)>expected_size:raise ValueError('Browser file grew during copy; partial preserved')
+                                if shutil.disk_usage(target.parent).free<len(chunk)+RESERVE_BYTES:raise ValueError('Insufficient disk space during copy; partial preserved')
+                                output.write(chunk)
+                            output.flush();os.fsync(output.fileno())
+                        identity=publish_verified(part,target,self._verify(part,asset),expected_hash)
+                    except Exception as exc:
+                        exc.partial_path=part
+                        raise
                 else:
                     identity=file_identity(target)
                     if any(identity[k]!=verified[k] for k in ('device','inode','size','mtime_ns')):
@@ -324,4 +349,4 @@ class ModelLibrary:
         self._record(asset["id"], status="verifying", bytes_done=offset, bytes_total=size, message="Checking SHA-256 before installation")
         identity=self._verify(part,asset)
         self._check_path(target)
-        return publish_verified(part,target,identity)
+        return publish_verified(part,target,identity,asset["sha256"])

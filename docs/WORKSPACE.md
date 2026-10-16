@@ -73,6 +73,12 @@ reason without typing; they save with the asset, not on their own. **Same run**
 lists the other outputs of the same job so you can compare them without leaving
 the dialog.
 
+**Make seamless** and **Make parallax layers** prepare a source for Create.
+Generate stays unavailable while either preparation is pending. Closing the
+asset dialog, reopening it or changing the Create intent discards the late
+response; it cannot replace the current editor or close a newer dialog. A
+successful preparation still needs your separate **Generate** press.
+
 **Review next (n unreviewed)** opens the newest unreviewed asset in the current
 view as a queue. The dialog then shows *k of n* and accepts <kbd>K</kbd> keeper,
 <kbd>W</kbd> needs work, <kbd>X</kbd> rejected, <kbd>S</kbd> skip and the arrow
@@ -118,10 +124,20 @@ Back up the whole experiments directory, including uploads and runs, to retain
 recipes and their input references. Models and the ComfyUI installation remain
 separate dependencies. Existing outputs are indexed without executing workflows.
 
+Reference uploads stage complete bytes beside each destination, publish without
+overwriting an existing name, and publish their metadata last. A failed transfer
+removes only files whose identity and contents still match this request. Changed
+or undeletable files remain in place; a 503 response lists their exact
+`retained_paths` with code `upload_storage_unconfirmed`. Inspect those paths
+before removing anything. Successful uploads survive a later indexing failure.
+Publication requires filesystem hard links and safely refuses when unsupported.
+This bounds handled transfer failures; it does not promise crash atomicity or
+cross-process compare-and-delete protection.
+
 Saved setups now live in the same workspace database. Existing browser setups
 are migrated on first load. Deleting a saved setup requires its id and does not
 delete the setup's past outputs.
 
 The launcher uses a cheap Studio identity check, so opening it again reuses the
-server. Model/node discovery is cached for two minutes. **Models & folders →
+server. Model/node discovery is cached for two minutes. **Models & setup →
 Refresh inventory** also refreshes the node schema after manual model or node changes.

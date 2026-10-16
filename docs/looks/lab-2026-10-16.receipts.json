@@ -1,0 +1,2685 @@
+{
+  "version": 1,
+  "captured_at": "2026-10-16T08:18:21.360064",
+  "studio": "http://127.0.0.1:8191",
+  "jobs": 81,
+  "outputs": 91,
+  "licence_scope": "Inventory terms recorded as-is, not re-read or cleared tonight. No model download or installation. File pins are existing inventory, not a new independent hash audit.",
+  "model_inventory": [
+    {
+      "id": "cinematic-lighting",
+      "name": "Cinematic lighting / SDXL slider",
+      "file": "loras/cinematic lighting.safetensors",
+      "repo": "ntc-ai/SDXL-LoRA-slider.cinematic-lighting",
+      "revision": "53161a1fef0bd14bf3dfd696a3455bcb611b9802",
+      "source": "https://huggingface.co/ntc-ai/SDXL-LoRA-slider.cinematic-lighting",
+      "url": "https://huggingface.co/ntc-ai/SDXL-LoRA-slider.cinematic-lighting/resolve/53161a1fef0bd14bf3dfd696a3455bcb611b9802/cinematic%20lighting.safetensors",
+      "bytes": 8789076,
+      "sha256": "529daf6ffd2d73bf54a1a923cac66b6c2a3e4e80998d05498d48208266bfda6c",
+      "license": "MIT",
+      "family": "SDXL 1.0",
+      "trigger": "cinematic lighting"
+    },
+    {
+      "id": "anima-aesthetic",
+      "name": "Anima Aesthetic 1.1 / anime flagship",
+      "file": "diffusion_models/anima-aesthetic-v1.1.safetensors",
+      "repo": "circlestone-labs/Anima",
+      "revision": "f973fc41ec7545364ac9776c2440285f43ff2a30",
+      "url": "https://huggingface.co/circlestone-labs/Anima/resolve/f973fc41ec7545364ac9776c2440285f43ff2a30/split_files/diffusion_models/anima-aesthetic-v1.1.safetensors",
+      "source": "https://huggingface.co/circlestone-labs/Anima",
+      "bytes": 4182230656,
+      "sha256": "3c1868387a3a1ff504bbb87c33678321965ead381fcf87afbd0264daa600c082",
+      "family": "Anima",
+      "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "trigger": ""
+    },
+    {
+      "id": "anima-text",
+      "name": "Anima / compact prompt encoder",
+      "file": "text_encoders/qwen_3_06b_base.safetensors",
+      "repo": "circlestone-labs/Anima",
+      "revision": "f973fc41ec7545364ac9776c2440285f43ff2a30",
+      "url": "https://huggingface.co/circlestone-labs/Anima/resolve/f973fc41ec7545364ac9776c2440285f43ff2a30/split_files/text_encoders/qwen_3_06b_base.safetensors",
+      "source": "https://huggingface.co/circlestone-labs/Anima",
+      "bytes": 1192135096,
+      "sha256": "cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba",
+      "family": "Anima",
+      "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "trigger": ""
+    },
+    {
+      "id": "anima-base-v1-0",
+      "name": "Anima / base-v1.0",
+      "file": "diffusion_models/anima-base-v1.0.safetensors",
+      "source": "https://civitai.com/models/2458426?modelVersionId=2945208",
+      "url": "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/diffusion_models/anima-base-v1.0.safetensors",
+      "bytes": 4182218328,
+      "sha256": "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e",
+      "family": "Anima",
+      "license": "",
+      "terms": "civitai listing for model 2458426 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit; derivatives allowed; different licence NOT allowed; credit not required. Read the model page before any commercial use.",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "repo": "circlestone-labs/Anima"
+    },
+    {
+      "id": "sdxl-noobai-v11",
+      "name": "NoobAI-XL v1.1 / anime checkpoint",
+      "file": "checkpoints/NoobAI-XL-v1.1.safetensors",
+      "repo": "Laxhar/noobai-XL-1.1",
+      "revision": "814a274af2b8097c0828819d561ec74c7d0c6cea",
+      "source": "https://huggingface.co/Laxhar/noobai-XL-1.1",
+      "url": "https://huggingface.co/Laxhar/noobai-XL-1.1/resolve/814a274af2b8097c0828819d561ec74c7d0c6cea/NoobAI-XL-v1.1.safetensors",
+      "bytes": 7105349958,
+      "sha256": "6681e8e4b134c81f16533acedb0d406d7e5e366e1624b4105178c64d00b05d51",
+      "license": "other",
+      "family": "Illustrious XL",
+      "terms": "Licence \"other\" declared in the Laxhar/noobai-XL-1.1 repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for NoobAI-XL-v1.1.safetensors at revision 814a274af2b8 (checked 2026-09-12); a hash match proves the bytes, not the creator. The author's card states Fair-AI Public License 1.0-SD: commercial use of generated products is excluded. Hobby and research only.",
+      "trigger": ""
+    },
+    {
+      "id": "sdxl-realvisxl-v50-fp16",
+      "name": "RealVisXL V5.0 FP16 / photoreal checkpoint",
+      "file": "checkpoints/RealVisXL_V5.0_fp16.safetensors",
+      "repo": "SG161222/RealVisXL_V5.0",
+      "revision": "ac93e0dda1f6d448cae19bbfab8c5e720a5e48bc",
+      "source": "https://huggingface.co/SG161222/RealVisXL_V5.0",
+      "url": "https://huggingface.co/SG161222/RealVisXL_V5.0/resolve/ac93e0dda1f6d448cae19bbfab8c5e720a5e48bc/RealVisXL_V5.0_fp16.safetensors",
+      "bytes": 6938065488,
+      "sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "license": "openrail++",
+      "family": "SDXL 1.0",
+      "terms": "Licence \"openrail++\" declared in the SG161222/RealVisXL_V5.0 repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for RealVisXL_V5.0_fp16.safetensors at revision ac93e0dda1f6 (checked 2026-09-12); a hash match proves the bytes, not the creator.",
+      "trigger": ""
+    },
+    {
+      "id": "sdxl-animagine-40-opt",
+      "name": "Animagine XL 4.0 Opt / anime checkpoint",
+      "file": "checkpoints/animagine-xl-4.0-opt.safetensors",
+      "repo": "cagliostrolab/animagine-xl-4.0",
+      "revision": "2b7c1b397761bf5bd3cc42e5b39ec99314a75a96",
+      "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
+      "url": "https://huggingface.co/cagliostrolab/animagine-xl-4.0/resolve/2b7c1b397761bf5bd3cc42e5b39ec99314a75a96/animagine-xl-4.0-opt.safetensors",
+      "bytes": 6938350040,
+      "sha256": "6327eca98bfb6538dd7a4edce22484a1bbc57a8cff6b11d075d40da1afb847ac",
+      "license": "openrail++",
+      "family": "SDXL 1.0",
+      "terms": "Licence \"openrail++\" declared in the cagliostrolab/animagine-xl-4.0 repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for animagine-xl-4.0-opt.safetensors at revision 2b7c1b397761 (checked 2026-09-12); a hash match proves the bytes, not the creator.",
+      "trigger": ""
+    },
+    {
+      "id": "sdxl-base-10",
+      "name": "SDXL base 1.0 / reference checkpoint",
+      "file": "checkpoints/sd_xl_base_1.0.safetensors",
+      "repo": "stabilityai/stable-diffusion-xl-base-1.0",
+      "revision": "462165984030d82259a11f4367a4eed129e94a7b",
+      "source": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0",
+      "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/462165984030d82259a11f4367a4eed129e94a7b/sd_xl_base_1.0.safetensors",
+      "bytes": 6938078334,
+      "sha256": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b",
+      "license": "openrail++",
+      "family": "SDXL 1.0",
+      "terms": "Licence \"openrail++\" declared in the stabilityai/stable-diffusion-xl-base-1.0 repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for sd_xl_base_1.0.safetensors at revision 462165984030 (checked 2026-09-12); a hash match proves the bytes, not the creator.",
+      "trigger": ""
+    },
+    {
+      "id": "sdxl-wai-v170",
+      "name": "WAI Illustrious SDXL v17.0 / anime checkpoint",
+      "file": "checkpoints/waiIllustriousSDXL_v170.safetensors",
+      "repo": "frankjoshua/waiIllustriousSDXL_v170",
+      "revision": "9303ce49345822823717889e3677b6ffd43fc6a9",
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "url": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170/resolve/9303ce49345822823717889e3677b6ffd43fc6a9/waiIllustriousSDXL_v170.safetensors",
+      "bytes": 6938040682,
+      "sha256": "f116b0c78ff441467b0cdc8f1936e1ed18ea31e9997c7b132b1b8db533f0bd04",
+      "license": "",
+      "family": "Illustrious XL",
+      "terms": "The Civitai image metadata for 134076830 names Civitai model 827184/version 2883731; its primary file hash matches this installed Hugging Face mirror. Civitai model metadata read 2026-09-12 says allowCommercialUse Image, RentCivit; derivatives allowed; different licence allowed. The mirror card itself declares no licence. Hash agreement proves the bytes, not creator identity or rights; read the original listing before commercial use. See models/wai-provenance.json.",
+      "trigger": ""
+    },
+    {
+      "id": "controlnet-xinsir-openpose-sdxl",
+      "name": "Xinsir OpenPose SDXL / pose control",
+      "file": "controlnet/xinsir-openpose-sdxl.safetensors",
+      "repo": "xinsir/controlnet-openpose-sdxl-1.0",
+      "revision": "23f966cd5cfdd3f7729c903e243d87152162d2b7",
+      "source": "https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0",
+      "url": "https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0/resolve/23f966cd5cfdd3f7729c903e243d87152162d2b7/diffusion_pytorch_model.safetensors",
+      "bytes": 2502139104,
+      "sha256": "b8524e557a7df60d081f5d4a0eb109967d107df217943bf88c2d99b9ebcc06c5",
+      "license": "apache-2.0",
+      "family": "SDXL 1.0",
+      "terms": "Licence \"apache-2.0\" declared in the xinsir/controlnet-openpose-sdxl-1.0 repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for diffusion_pytorch_model.safetensors at revision 23f966cd5cfd (checked 2026-09-12); a hash match proves the bytes, not the creator. Installed under a shortened filename; the repository file is diffusion_pytorch_model.safetensors.",
+      "trigger": ""
+    },
+    {
+      "id": "z-image-turbo-fp8-kj",
+      "name": "Z-Image Turbo / fp8 scaled e4m3fn (KJ)",
+      "file": "diffusion_models/z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "source": "https://civitai.com/models/2169712?modelVersionId=2445746",
+      "url": "https://civitai.com/api/download/models/2445746",
+      "bytes": 6158115074,
+      "sha256": "59610861d46ae8d5d1d371ab7b2532ce64c0835052b395551a8550fa0e3eb3cf",
+      "family": "Z-Image Turbo",
+      "license": "apache-2.0 (base model); third-party quantization",
+      "terms": "civitai model 2169712 \"Z-Image Turbo - Quantized for low VRAM\" by SupernovaTech, version 2445746 (fp8_scaled_e4m3fn_KJ): allowCommercialUse Image, RentCivit, Rent, Sell, SellMerge; derivatives allowed; no credit required (civitai API, read 2026-09-23). The installed file was already present on this PC; its SHA-256 matches the listing (checked 2026-09-23). A hash match proves the bytes, not the creator. The base Z-Image Turbo is apache-2.0 per the Comfy-Org card.",
+      "trigger": ""
+    },
+    {
+      "id": "pixel-art-xl",
+      "name": "Pixel Art XL / style adapter",
+      "file": "loras/pixel-art-xl.safetensors",
+      "repo": "nerijs/pixel-art-xl",
+      "revision": "8bf4a4d9ea283e00a51fafda8e0539f8248ea037",
+      "source": "https://huggingface.co/nerijs/pixel-art-xl",
+      "url": "https://huggingface.co/nerijs/pixel-art-xl/resolve/8bf4a4d9ea283e00a51fafda8e0539f8248ea037/pixel-art-xl.safetensors",
+      "bytes": 170543052,
+      "sha256": "4234637cb80c998f41e348e6a6cb6bc20d8d038b2b0f256b6129b3b5e353eef7",
+      "license": "creativeml-openrail-m",
+      "family": "SDXL 1.0",
+      "terms": "Licence \"creativeml-openrail-m\" declared in the nerijs/pixel-art-xl repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for pixel-art-xl.safetensors at revision 8bf4a4d9ea28 (checked 2026-09-12); a hash match proves the bytes, not the creator. A style aid, not automatic production pixel cleanup.",
+      "trigger": "pixel art",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "qwen3-4b-encoder",
+      "name": "Qwen 3 4B / Z-Image prompt encoder",
+      "file": "text_encoders/qwen_3_4b.safetensors",
+      "repo": "Comfy-Org/z_image_turbo",
+      "revision": "08d04455279082882deaabc8d0d09fc914c071e1",
+      "source": "https://huggingface.co/Comfy-Org/z_image_turbo",
+      "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/08d04455279082882deaabc8d0d09fc914c071e1/split_files/text_encoders/qwen_3_4b.safetensors",
+      "bytes": 8044982048,
+      "sha256": "6c671498573ac2f7a5501502ccce8d2b08ea6ca2f661c458e708f36b36edfc5a",
+      "license": "apache-2.0",
+      "family": "Z-Image Turbo",
+      "terms": "Licence \"apache-2.0\" declared in the Comfy-Org/z_image_turbo repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for split_files/text_encoders/qwen_3_4b.safetensors at revision 08d044552790 (checked 2026-09-12); a hash match proves the bytes, not the creator.",
+      "trigger": ""
+    },
+    {
+      "id": "vae-z-image-ae",
+      "name": "Z-Image autoencoder / image decoder",
+      "file": "vae/ae.safetensors",
+      "repo": "Comfy-Org/z_image_turbo",
+      "revision": "08d04455279082882deaabc8d0d09fc914c071e1",
+      "source": "https://huggingface.co/Comfy-Org/z_image_turbo",
+      "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/08d04455279082882deaabc8d0d09fc914c071e1/split_files/vae/ae.safetensors",
+      "bytes": 335304388,
+      "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+      "license": "apache-2.0",
+      "family": "Z-Image Turbo",
+      "terms": "Licence \"apache-2.0\" declared in the Comfy-Org/z_image_turbo repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for split_files/vae/ae.safetensors at revision 08d044552790 (checked 2026-09-12); a hash match proves the bytes, not the creator.",
+      "trigger": ""
+    },
+    {
+      "id": "vae-qwen-image",
+      "name": "Qwen Image VAE / image decoder",
+      "file": "vae/qwen_image_vae.safetensors",
+      "repo": "Comfy-Org/Qwen-Image_ComfyUI",
+      "revision": "7beb7b647f04469fbe64ba8adc2bb0d7e5e9f73f",
+      "source": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI",
+      "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/7beb7b647f04469fbe64ba8adc2bb0d7e5e9f73f/split_files/vae/qwen_image_vae.safetensors",
+      "bytes": 253806246,
+      "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+      "license": "apache-2.0",
+      "family": "Qwen Image Edit 2511",
+      "terms": "Licence \"apache-2.0\" declared in the Comfy-Org/Qwen-Image_ComfyUI repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for split_files/vae/qwen_image_vae.safetensors at revision 7beb7b647f04 (checked 2026-09-12); a hash match proves the bytes, not the creator.",
+      "trigger": ""
+    },
+    {
+      "id": "anifoxxlv20-anifoxv2",
+      "name": "anifoxXLV20_anifoxV2.safetensors",
+      "file": "checkpoints/anifoxXLV20_anifoxV2.safetensors",
+      "source": "https://civitai.red/models/2389212?modelVersionId=3081757",
+      "url": "https://civitai.com/api/download/models/3081757?fileId=2961145",
+      "bytes": 6938040706,
+      "sha256": "c07eadce03076d02e6ffc38f51a078684f888df599fb84abe3821a048ae43d72",
+      "license": "",
+      "terms": "civitai version 3081757 of model 2389212: the version payload carries no permission flags; read https://civitai.com/models/2389212 (or /api/v1/models/2389212) before any commercial use. Base model 'Illustrious'. The 2026-09-21 local copy was obtained from civitai.red and SHA-256 still matches. civitai.red flags read 2026-09-21: allowCommercialUse RentCivit, Rent, Image, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model Illustrious. nsfw=true on the listing. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Illustrious",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "detail-enhancer-il-v2",
+      "name": "Detail_enhancer_IL_v2.safetensors",
+      "file": "loras/Detail_enhancer_IL_v2.safetensors",
+      "source": "https://civitai.com/models/1450571?modelVersionId=1983243",
+      "url": "https://civitai.com/api/download/models/1983243",
+      "bytes": 228492876,
+      "sha256": "54a203f0a909fdc9b1d74f29fd5a16e33387a824d7d2161322f4db3ea250455e",
+      "license": "",
+      "terms": "civitai model 1450571 flags read 2026-09-14: allowCommercialUse RentCivit/Image/Rent (no Sell), derivatives yes, differentLicense yes, noCredit yes. Style-neutral detail booster; stack under a style LoRA. civitai version 1983243 of model 1450571: the version payload carries no permission flags; read https://civitai.com/models/1450571 (or /api/v1/models/1450571) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious XL",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "pearly-petiflow2",
+      "name": "Pearly Flow style / PetiFlow Anima",
+      "file": "loras/pearly_petiflow2.safetensors",
+      "source": "https://civitai.red/models/2794834?modelVersionId=3151811",
+      "url": "",
+      "bytes": 91863712,
+      "sha256": "1e5b64e9d23d58fd9266e802b1e33505e216626b6e73a44ae7515d7bcea266d5",
+      "license": "Anima / CircleStone Labs",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2794834 / version 3151811 Pearly Flow style PetiFlow: allowCommercialUse RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model Anima. Listing trigger pearlypetif. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red. Automatic download endpoint is not pinned; manual copy only.",
+      "family": "Anima",
+      "trigger": "pearlypetif",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "ringeko",
+      "name": "Ringeko / UTdT69 artist style",
+      "file": "loras/Ringeko.safetensors",
+      "source": "https://civitai.red/models/2387976?modelVersionId=2685156",
+      "url": "",
+      "bytes": 228486116,
+      "sha256": "b7edfa16d5c173ed0a0ba1d740006069e13984a99a91fa9b2ec29cbc80ef49af",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2387976 / version 2685156 Ringeko | by UTdT69 v1.0: allowCommercialUse Image, RentCivit; allowNoCredit true; derivatives NOT allowed; different licence NOT allowed. Artist-style LoRA (not a character grant). Training concept r1ng3k0. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red. Automatic download endpoint is not pinned; manual copy only.",
+      "family": "Illustrious",
+      "trigger": "r1ng3k0",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "oneobsessionanima-v20",
+      "name": "One Obsession Anima / v2.0",
+      "file": "diffusion_models/oneObsessionAnima_v20.safetensors",
+      "source": "https://civitai.red/models/2695493?modelVersionId=3090670",
+      "url": "",
+      "bytes": 4182229969,
+      "sha256": "d1d4fa3de4757bc419bd5dd42ade14024e4886a51e9a0784411ba13375a99255",
+      "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2695493 / version 3090670 One obsession_Anima v2.0 file oneObsessionAnima_v20.safetensors: allowCommercialUse RentCivit; allowNoCredit false; derivatives NOT allowed; different licence allowed. Base model Anima. CircleStone Labs non-commercial base terms also apply. UNET goes in diffusion_models with the existing Anima encoder and Qwen VAE. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red. Automatic download endpoint is not pinned; manual copy only.",
+      "family": "Anima",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "pearlyanimamix-v10",
+      "name": "Pearly Anima mix / v1.0",
+      "file": "diffusion_models/pearlyAnimaMix_v10.safetensors",
+      "source": "https://civitai.red/models/2631350?modelVersionId=2954375",
+      "url": "",
+      "bytes": 4436052094,
+      "sha256": "52de310e0eeae07a7f5386801e0ddfa9d538feba0ac3ac9b50acc90038397bd7",
+      "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2631350 / version 2954375 Pearly Anima mix v1.0: allowCommercialUse RentCivit, Rent, Image; allowNoCredit true; derivatives allowed; different licence allowed. Base model Anima. CircleStone Labs non-commercial base terms also apply. File also embeds first_stage_model VAE tensors; Studio still loads qwen_image_vae separately. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red. Automatic download endpoint is not pinned; manual copy only.",
+      "family": "Anima",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "detailed-hand-focus-style-illustriousxl-v1-1",
+      "name": "Hands XL + SD 1.5 + F1D + Pony + Illustrious + zit + ZIB / Hands Illu v1.1",
+      "file": "loras/detailed_hand_focus_style_illustriousXL_v1.1.safetensors",
+      "source": "https://civitai.com/models/200255?modelVersionId=2212079",
+      "url": "https://civitai.com/api/download/models/2212079",
+      "bytes": 456485084,
+      "sha256": "66e5a79120e47a9625dca3fb9db0607e1a267a0de9bb5aa0b0633637c5098730",
+      "license": "",
+      "terms": "civitai model 200255 / version 2212079 (Hands Illu v1.1), flags read from /api/v1/models/200255 on 2026-09-23: allowCommercialUse RentCivit; allowNoCredit false; derivatives NOT allowed; different licence allowed. Base model 'Illustrious'. Downloaded 2026-09-23 with scripts/civitai-fetch.py for the LoRA smoke (#757-#759); SHA-256 matches the listing. Hands Illu v1.1. Hand-focus utility, no trigger. A hash match is not creator authentication; a civitai flag is not licence clearance. Read the model page before any commercial use.",
+      "family": "Illustrious",
+      "trigger": "",
+      "strength": [
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "krea-turbo",
+      "name": "Krea 2 Turbo / FP8 flagship",
+      "file": "diffusion_models/krea2_turbo_fp8_scaled.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "e5ea8b4dd7f38f348b138eb0fe29f92c0e367e96",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/e5ea8b4dd7f38f348b138eb0fe29f92c0e367e96/diffusion_models/krea2_turbo_fp8_scaled.safetensors",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "bytes": 13141730784,
+      "sha256": "eb4dd8c612cfd10f64f25b057e6e6bbcb5737c94a7372177e456dbf7579502f1",
+      "family": "Krea 2",
+      "license": "Krea 2 Community",
+      "trigger": ""
+    },
+    {
+      "id": "krea-text",
+      "name": "Krea 2 / prompt encoder",
+      "file": "text_encoders/qwen3vl_4b_fp8_scaled.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "e5ea8b4dd7f38f348b138eb0fe29f92c0e367e96",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/e5ea8b4dd7f38f348b138eb0fe29f92c0e367e96/text_encoders/qwen3vl_4b_fp8_scaled.safetensors",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "bytes": 5242467968,
+      "sha256": "54bd5144df0bbc25dd6ccadfcb826b521445a1b06ae5a42570bdd2974ca87094",
+      "family": "Krea 2",
+      "license": "Krea 2 Community",
+      "trigger": ""
+    },
+    {
+      "id": "krea2-textfusion",
+      "name": "Krea 2 / TextFusion refusal reduction",
+      "file": "loras/Krea2_TextFusion_Refusal_Reduction.safetensors",
+      "source": "https://civitai.com/models/2775340?modelVersionId=3125118",
+      "url": "https://civitai.com/api/download/models/3125118",
+      "bytes": 27665664,
+      "sha256": "84ec722ddab93f6489c5315bca25de5dd1a7b7ec5045a3c4ce2f97f62e54e8e6",
+      "license": "Krea 2 Community (civitai listing)",
+      "terms": "civitai listing: allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence not allowed; listed as krea-2-community-license. Owner downloaded 2026-09-12; SHA-256 verified. Edits the txtfusion blocks: stacking with other txtfusion LoRAs is unmeasured.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-niji-sweet-spot",
+      "name": "Krea 2 / Niji Sweet Spot v2A",
+      "file": "loras/Niji_Sweet_Spot_Krea2_v2A.safetensors",
+      "source": "https://civitai.com/models/2554999?modelVersionId=3210573",
+      "url": "https://civitai.com/api/download/models/3210573",
+      "bytes": 228588904,
+      "sha256": "1aa1e5a2bd6222759ab59b77318a4e2a93b78ab12d795c82e4d237a2037c2c32",
+      "license": "Krea 2 Community (civitai listing)",
+      "terms": "civitai listing: allowCommercialUse Image, RentCivit, Rent (no Sell); derivatives NOT allowed. Owner downloaded 2026-09-12; SHA-256 verified. Trigger goes at the start of the prompt.",
+      "family": "Krea 2",
+      "trigger": "@NJSW33T",
+      "strength": [
+        0.8,
+        1.5
+      ]
+    },
+    {
+      "id": "krea2-koukouya-style-c1-st3000",
+      "name": "画风 こうこうや koukouya style 【krea2】 / v1.0",
+      "file": "loras/krea2_koukouya_style_c1-st3000.safetensors",
+      "source": "https://civitai.com/models/2844656?modelVersionId=3211621",
+      "url": "https://civitai.com/api/download/models/3211621",
+      "bytes": 234680576,
+      "sha256": "8cf2068c654ffc8f1e0478d251faa8c6b9f7fa1ad192f00063524202e61ba343",
+      "family": "Krea 2 Turbo",
+      "license": "",
+      "terms": "civitai listing for model 2844656 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-nijisis",
+      "name": "Krea 2 / NIJISIS NijiJourney-V7 look",
+      "file": "loras/NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+      "source": "https://civitai.com/models/2863875?modelVersionId=3302337",
+      "url": "https://civitai.com/api/download/models/3302337",
+      "bytes": 457113176,
+      "sha256": "7266ba9f6be571054d61ed04bb9414a1396366a6af19df0c84e12b86ec266a7e",
+      "license": "Krea 2 Community (civitai listing)",
+      "terms": "civitai listing: allowCommercialUse Image, RentCivit, Rent (no Sell); derivatives allowed. Owner downloaded 2026-09-12 (Buzz spent by the owner); SHA-256 verified against the installed file. dim 64 / alpha 32; trigger goes at the start of the prompt.",
+      "family": "Krea 2",
+      "trigger": "@NIJISIS",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "fal-krea2-airy-anime-watercolor",
+      "name": "Krea 2 / fal airy anime watercolor",
+      "file": "loras/fal-krea2-airy-anime-watercolor.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/airy-anime-watercolor.safetensors",
+      "bytes": 234676792,
+      "sha256": "070d1dcaac9ccac17435c157a844fff1a4d51be1c754ff4b183023113e02dd2b",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "airy anime watercolor style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-baroque-dreamscape-oil",
+      "name": "Krea 2 / fal baroque dreamscape oil",
+      "file": "loras/fal-krea2-baroque-dreamscape-oil.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/baroque-dreamscape-oil.safetensors",
+      "bytes": 469287984,
+      "sha256": "678f1505d1b2a384bb0b08e6749b2d170827f3769f5678936c1108a7f3f59327",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "baroque dreamscape oil style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "krea2-vintagetarot",
+      "name": "Krea 2 / official vintage tarot",
+      "file": "loras/krea2_vintagetarot.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_vintagetarot.safetensors",
+      "bytes": 469291992,
+      "sha256": "8cca96c56658fb3ac5269f9ef2245bd07cbf1b7a189f517c8763470bb1385f9f",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "vintage tarot style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "fal-krea2-emerald-fantasy-paperback",
+      "name": "Krea 2 / fal emerald fantasy paperback",
+      "file": "loras/fal-krea2-emerald-fantasy-paperback.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/emerald-fantasy-paperback.safetensors",
+      "bytes": 469287984,
+      "sha256": "b7e3b650de59f1bd0ec1919db13d84c9d4dde6471612663ba0a8d65f6218b712",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "emerald fantasy paperback style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "krea2-darkbrush",
+      "name": "Krea 2 / official dark brush",
+      "file": "loras/krea2_darkbrush.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_darkbrush.safetensors",
+      "bytes": 469291992,
+      "sha256": "f47c4316dd93af66e0518c93b582f459571d4925b519133770c73a52cd5db7c6",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "monochrome ink wash style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "fal-krea2-detailed-manga-inkwork",
+      "name": "Krea 2 / fal detailed manga inkwork",
+      "file": "loras/fal-krea2-detailed-manga-inkwork.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/detailed-manga-inkwork.safetensors",
+      "bytes": 469287984,
+      "sha256": "3b0c5fef5a26a4589b3b10e26703ee7b987be01b45493c1a0f59eb3a707baee5",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "detailed manga inkwork style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "krea2-softwatercolor",
+      "name": "Krea 2 / official soft watercolour",
+      "file": "loras/krea2_softwatercolor.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_softwatercolor.safetensors",
+      "bytes": 469291992,
+      "sha256": "3805e8655f19fbcac116542685e3f78f3a642e8fbfb857b5352bb32a4b3d445a",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "art deco watercolor style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "realisticsnapshotkrea2",
+      "name": "Realistic Snapshot / Krea 2 v0.5",
+      "file": "loras/RealisticSnapshotKrea2.safetensors",
+      "source": "https://civitai.red/models/2268008?modelVersionId=3084537",
+      "url": "",
+      "bytes": 228587720,
+      "sha256": "dfd67eb881bec4caeb9409e5b7c127adcb9fb724e6007e1e77165af51e6f908d",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2268008 / version 3084537 Realistic Snapshot Krea2 v0.5: allowCommercialUse Image, RentCivit, Rent, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model Krea 2. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red. Automatic download endpoint is not pinned; manual copy only.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "lenovo-krea2",
+      "name": "Lenovo UltraReal / Krea 2 v1.0",
+      "file": "loras/lenovo_krea2.safetensors",
+      "source": "https://civitai.red/models/1662740?modelVersionId=3075606",
+      "url": "",
+      "bytes": 114324736,
+      "sha256": "6967840059e54d0ca6771ae00acdc5979266f761175a8c9380f23f1a3723e9a2",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 1662740 / version 3075606 Lenovo UltraReal v1.0 Krea2: allowCommercialUse RentCivit, Rent, Sell, Image, SellMerge; allowNoCredit false; derivatives NOT allowed; different licence NOT allowed. Base model Krea 2. Training metadata names krea2_raw_lora_v1. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red. Automatic download endpoint is not pinned; manual copy only.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "job_id": "f31c4898-9aac-4582-b163-62ecec782d62",
+      "prompt_id": "15e5fb7d-240b-44f3-98f3-9196ac955881",
+      "look": "look-preset-stylized-prop",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 54.06211304664612,
+      "recipe_sha256": "a36e40f82aa5c328897e9fd52c9a97bdb3b701b5359e7752a2ebd881a5d9359e",
+      "workflow_sha256": "28b56df466af3651190eb17676ec86105fbd5fedccbe4d1f9dd30b55595c2701",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "stylized-prop_00003_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/f31c4898-9aac-4582-b163-62ecec782d62/0",
+          "sha256": "df56cfe530402c074014b6eaf19aa367dadd1048a09a6542fcf205c9167fa03d",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1432191,
+          "unique_rgb_colours": 351108
+        }
+      ]
+    },
+    {
+      "job_id": "11d4904c-af81-4797-9e19-d04f0df4c0ae",
+      "prompt_id": "975ded16-2aeb-43f5-9d2e-d21618037617",
+      "look": "look-preset-stylized-prop",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 32.4688560962677,
+      "recipe_sha256": "11799b0f6a6b7bb2558540ab1fb969fe2ff4e5a8a6246bff7197997325221f7a",
+      "workflow_sha256": "fd295b5032d345c487049f39c7f1f045d56c4f545ab6bbadf0496e207275093e",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "stylized-prop_00004_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/11d4904c-af81-4797-9e19-d04f0df4c0ae/0",
+          "sha256": "a31865e68e1fe91a0bcc703788fe12c5ba2a840387a2c05a775ffd16490f1386",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1726664,
+          "unique_rgb_colours": 435335
+        }
+      ]
+    },
+    {
+      "job_id": "ee02fc25-98dc-4eb1-9c94-92b9fe7166df",
+      "prompt_id": "d8347535-fe66-41f7-be13-fcc4c61ddfec",
+      "look": "look-preset-pixel-lora",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 49.429768800735474,
+      "recipe_sha256": "e82f7aba224899c550a361ebd40f6924b28c7d492f32329f68ac0c57560b64d1",
+      "workflow_sha256": "e12b79a3d3193d74fbef5d587476b73e48db23bf268c65cd3236113057ede994",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/ee02fc25-98dc-4eb1-9c94-92b9fe7166df/0",
+          "sha256": "82b62f1016e6be6df5166555c5977eceb8534e3d850427f4a82618264531ae37",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 817238,
+          "unique_rgb_colours": 165025
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00002_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/ee02fc25-98dc-4eb1-9c94-92b9fe7166df/1",
+          "sha256": "87fc90af619c276a44fd8b355f2809e52cb0170f84dd165660ada6497916de25",
+          "width": 128,
+          "height": 128,
+          "bytes": 22253,
+          "unique_rgb_colours": 5327
+        }
+      ]
+    },
+    {
+      "job_id": "a8f0db36-8729-4c01-8fab-319629147730",
+      "prompt_id": "d64d9971-a794-4d3e-8d11-4d1ca84bacc8",
+      "look": "look-preset-pixel-lora",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 46.41231870651245,
+      "recipe_sha256": "da3c75755e77ace9eb67416cefe187ed1476e0ecc7ee41121078067daa09551a",
+      "workflow_sha256": "a45704b30103e96d1633c9d2e1668314cea62d98b6ef213c22daf4d8cb6f8341",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/a8f0db36-8729-4c01-8fab-319629147730/0",
+          "sha256": "6707b7662b15cf72349110faafdfab6a3a3fcbce303c6ffccd72e08041cfad72",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 947490,
+          "unique_rgb_colours": 195669
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00003_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/a8f0db36-8729-4c01-8fab-319629147730/1",
+          "sha256": "e8450c4f4dc9b9b3ac3a13a743343eb77c1ce1c781af2b7ebc9b65c90a5b8bc6",
+          "width": 128,
+          "height": 128,
+          "bytes": 24495,
+          "unique_rgb_colours": 4334
+        }
+      ]
+    },
+    {
+      "job_id": "67a429ed-7874-4dcc-a260-0241ced35645",
+      "prompt_id": "f0ee34b0-342d-42f1-95ae-6b182a6c818a",
+      "look": "look-preset-realvis",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 66.67482686042786,
+      "recipe_sha256": "33443bfb9f4306278bcba786908b2bceae96345e8e244535ecf06da6f28c268a",
+      "workflow_sha256": "774d92d88b723309a21471c09d4ae91fa56601a5759e56920b59a47c945549d6",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "realvis_00003_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/67a429ed-7874-4dcc-a260-0241ced35645/0",
+          "sha256": "83f3d7faa268cbbe752c6d0b906cc881e190b9d7ef44a31af4ce4d6a6ee46510",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1180837,
+          "unique_rgb_colours": 163466
+        }
+      ]
+    },
+    {
+      "job_id": "f0e18999-3253-4ae3-b815-98b9a4756ee9",
+      "prompt_id": "239a8ef2-7dc7-4383-9600-88e7aa2c6e24",
+      "look": "look-preset-realvis",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 106.81082010269165,
+      "recipe_sha256": "10f13010583601c89d62822d866c455ed52fadb1be50732ed7ea691e1ed4c4b0",
+      "workflow_sha256": "5d134a4e97f64d35308ef1abfee5263ed4acde30abbafc20776bcd42f94823da",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "realvis_00004_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/f0e18999-3253-4ae3-b815-98b9a4756ee9/0",
+          "sha256": "218cdcb48d5b94d68033ae8a2a65af32514cb80d3f43ee10df40955b929c88f2",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1234427,
+          "unique_rgb_colours": 132661
+        }
+      ]
+    },
+    {
+      "job_id": "47c98bf3-13d1-420b-b679-e7cf5ed48fa3",
+      "prompt_id": "c81acc23-9041-4aaa-b907-03c2c683d502",
+      "look": "look-wai-fantasy-portrait",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 40.54781365394592,
+      "recipe_sha256": "f595390e40d784699285581b830b2325eab88bd0d5d5b84533bad9f31c6b9aed",
+      "workflow_sha256": "3f17b11efd08db28219f1189f00da8d85d0d1a024b975d13405bf179663d36d9",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "WAI-Illustration_00057_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/47c98bf3-13d1-420b-b679-e7cf5ed48fa3/0",
+          "sha256": "12b95233462610204c3067efaecb368d40863d755594211a4ba40219bbc49fe7",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1398482,
+          "unique_rgb_colours": 303394
+        }
+      ]
+    },
+    {
+      "job_id": "e7785b66-7597-4648-9e43-dd00c29c07db",
+      "prompt_id": "60d856f8-1b9a-41e1-ba1a-f4123f3f83a7",
+      "look": "look-wai-fantasy-portrait",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 10.26422381401062,
+      "recipe_sha256": "4a7053e55b3c82c4c9eb3aeca0364740d8fa59ea9dc21b87543a0189fc8be2cb",
+      "workflow_sha256": "e775b7166d52f6b143ac73a9e0061f3a23625e6c299e7bdc6353cedf49bec531",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "WAI-Illustration_00058_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/e7785b66-7597-4648-9e43-dd00c29c07db/0",
+          "sha256": "556d184f004fa632728f2dd60eaf0086c492167968f671ef8e5b97068e263003",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1369897,
+          "unique_rgb_colours": 227619
+        }
+      ]
+    },
+    {
+      "job_id": "b2149703-dffe-4ee5-a7fc-f1e5127b0534",
+      "prompt_id": "b075a08e-620d-4e25-9ffd-ca37aef32647",
+      "look": "look-animagine-fantasy-portrait",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 72.70298981666565,
+      "recipe_sha256": "95abfa47fdc8d43622db794691d04a5ebb45178dfe7e4e60e0a3bdd7e636646b",
+      "workflow_sha256": "38fe368642482559cca0cc9f39b0ebd962ffe74b89ef9a39088d8793badd34b5",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Animagine_00010_.png",
+          "subfolder": "Expansion",
+          "type": "output",
+          "url": "/api/image/b2149703-dffe-4ee5-a7fc-f1e5127b0534/0",
+          "sha256": "50f75f63e0fd3b51f7e4c2504cd0dddffb81b0d25a824002f8218fcdf525ae75",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1412438,
+          "unique_rgb_colours": 296785
+        }
+      ]
+    },
+    {
+      "job_id": "92e7c399-7cc8-4f15-a899-5ef0f25025c6",
+      "prompt_id": "d8b9346f-119d-429a-9501-9fee49e508b4",
+      "look": "look-animagine-fantasy-portrait",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 10.240216493606567,
+      "recipe_sha256": "aa83d0ca9d44602bcddb5357ca272b14ce6792c7d8a977e4b9009d0cb0ae186a",
+      "workflow_sha256": "d2fda8f8122c28a2515205d96e6ba8903584d116ef609f5f958077fad35b8809",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Animagine_00011_.png",
+          "subfolder": "Expansion",
+          "type": "output",
+          "url": "/api/image/92e7c399-7cc8-4f15-a899-5ef0f25025c6/0",
+          "sha256": "d8de62c6940e6e8bdc3818d5df3b54afbe4758c9406d564e9cb6f8ff9a6d3c4e",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1474829,
+          "unique_rgb_colours": 234856
+        }
+      ]
+    },
+    {
+      "job_id": "7736f616-faf6-44cb-8bde-b86b2b0c9b2b",
+      "prompt_id": "6dfd8e02-b0ef-48c9-8529-0065e02dd368",
+      "look": "look-noob-fantasy-scene",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 63.13020849227905,
+      "recipe_sha256": "9815e8e9fc360d5a6689d399a7357839b1efc644b849f1c8347412b3ea97ed97",
+      "workflow_sha256": "99f1d7a90a7144ca2388180e7d14834f155f4650e4135bfae8d80a36d9e8b9d8",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "noob_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/7736f616-faf6-44cb-8bde-b86b2b0c9b2b/0",
+          "sha256": "32f045df869af6eaa89e9434361a3e8b7867cd0a61b9b5a2fb3b23450d945756",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1117749,
+          "unique_rgb_colours": 218249
+        }
+      ]
+    },
+    {
+      "job_id": "9b8cd6cc-3cc4-4c68-9333-bc8218fb159c",
+      "prompt_id": "01df6112-929f-4d1d-8758-576a68c4761e",
+      "look": "look-noob-fantasy-scene",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 10.312808990478516,
+      "recipe_sha256": "1c20051dd0488e036cc7e845ca81a8cf866b297d9ea34eb9ddb4b465954e4a23",
+      "workflow_sha256": "3745a677da5a2659525ea94aba8ffc14b94cc3358f92a0fa8bd9267ba14185fd",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "noob_00009_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/9b8cd6cc-3cc4-4c68-9333-bc8218fb159c/0",
+          "sha256": "298a344545c2647b6ded7f54512aa5564220cc67b1e42cd8c5e190df7eaa3d99",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1555708,
+          "unique_rgb_colours": 204971
+        }
+      ]
+    },
+    {
+      "job_id": "caa8a8d4-5911-4903-a98e-3fbd497e03af",
+      "prompt_id": "3ff0d13b-5fa2-44bc-a8fc-d9336fea6475",
+      "look": "look-anifox-ringeko",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 59.247613191604614,
+      "recipe_sha256": "d811ba078596b1e0705d2515ca8a3767fa173dcd9e73bafeda49ec2f9bf1a325",
+      "workflow_sha256": "9f8aa589bceb65c1ca128e6a77f42b1b7e4e392f5a364df12ac5bf7871e88dcb",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "AniFox-v2-Baseline_00013_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/caa8a8d4-5911-4903-a98e-3fbd497e03af/0",
+          "sha256": "937ac68b0afb06c27ac39be9557a3aac7ef7f0bb529e5fa4a943826e888162e9",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1178962,
+          "unique_rgb_colours": 140545
+        }
+      ]
+    },
+    {
+      "job_id": "fe587aba-2c7b-4261-b248-05b9493769b9",
+      "prompt_id": "30b36bbe-aeb8-4ace-9ba1-2aa9dc005008",
+      "look": "look-anifox-ringeko",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 30.467331409454346,
+      "recipe_sha256": "f9de739c50b3ad7855f2f4c761a7a0f57d72ce411dd59069094b1a611281181d",
+      "workflow_sha256": "a477c394c8cc8a09166106974795d47ffaa1d8d25f80e31642a0b2d1eb9df94f",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "AniFox-v2-Baseline_00014_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/fe587aba-2c7b-4261-b248-05b9493769b9/0",
+          "sha256": "817c5ab4575eed0cbf2ef363c444a1b3eec5c45405cbc7a77ebad238bdc55305",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1359448,
+          "unique_rgb_colours": 210277
+        }
+      ]
+    },
+    {
+      "job_id": "54998dfa-810c-4334-b491-ec31b306342a",
+      "prompt_id": "754e3ae3-25b9-4ed4-b9e6-793b33b50ca1",
+      "look": "look-night-shift-retro-anime",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 193.09863305091858,
+      "recipe_sha256": "9571fe8e74198e48b9792d0b731594370c5a4bd254d760180f65e1b67e926262",
+      "workflow_sha256": "96fd580def3056386905e4c00cd8a1bc4822364f39e2da230ccadc1c66f61fd5",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Z-Image-Fast_00031_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/54998dfa-810c-4334-b491-ec31b306342a/0",
+          "sha256": "12b506b033e79271b79d4144ce6c2a61e506f9d5b8b1e469fd8393ba421cd1d1",
+          "width": 1344,
+          "height": 768,
+          "bytes": 1108371,
+          "unique_rgb_colours": 138598
+        }
+      ]
+    },
+    {
+      "job_id": "31a3c497-75ae-4211-8ecf-ebec7c717d9c",
+      "prompt_id": "fe36e473-342d-4077-8fa8-10f9b9f67e52",
+      "look": "look-night-shift-retro-anime",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 133.26312565803528,
+      "recipe_sha256": "a79dc4e22930e0846d9713a3fe413cedfa7b2373da1d7882afd43deaa1deac3d",
+      "workflow_sha256": "e0c5eac8e270e7e412e0c729c1afd2562c1323cd38f3f20f0e938ba66b71f8af",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Z-Image-Fast_00032_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/31a3c497-75ae-4211-8ecf-ebec7c717d9c/0",
+          "sha256": "b5fd8cf29842e6369bed24b0e200125a84909871917faaedd6366876ed50808c",
+          "width": 1344,
+          "height": 768,
+          "bytes": 1021583,
+          "unique_rgb_colours": 99543
+        }
+      ]
+    },
+    {
+      "job_id": "d6dc3ce4-9f64-4d65-a755-78321953564b",
+      "prompt_id": "f53ce9db-06f5-42d2-89fe-b77a3230839e",
+      "look": "look-preset-zimage-fast",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 93.78436422348022,
+      "recipe_sha256": "5967e1d4c195fd4bf1429cac898a6d9f538b7a298110c60376f4fe72b8e4bcc2",
+      "workflow_sha256": "1836d1a75f3c5815e33a61ea1d0bf997771656c4838116b58a687b0664823ea2",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Z-Image-Fast_00033_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/d6dc3ce4-9f64-4d65-a755-78321953564b/0",
+          "sha256": "daa6c0fbf25ab5b386383f5ecae339d7ce62a933a533fc30456244f91a241e37",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1199158,
+          "unique_rgb_colours": 161605
+        }
+      ]
+    },
+    {
+      "job_id": "b1c61ba9-026e-4f48-b181-0ee1915997cd",
+      "prompt_id": "f43a796f-a304-40f9-9e51-7ddc265a07a3",
+      "look": "look-preset-zimage-fast",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 111.01408195495605,
+      "recipe_sha256": "6210cfe145bf02fc3191cac54cf198921777dd0c2bfca53bd3e3bd07e792fae0",
+      "workflow_sha256": "4251a8bf7a12981e1f304dcac0c11d53543d10f95ab95c93f6a4fd7d1ea3aa92",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Z-Image-Fast_00034_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/b1c61ba9-026e-4f48-b181-0ee1915997cd/0",
+          "sha256": "1d282fa6785b1d24e0168884d37befbdaa2253a77ee5b514a13158bae447ecf3",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1269313,
+          "unique_rgb_colours": 135233
+        }
+      ]
+    },
+    {
+      "job_id": "f6aedb68-a935-4614-9ec1-4e5a953a709c",
+      "prompt_id": "277c7776-e639-4136-8063-ab4aebca7400",
+      "look": "look-anima-fantasy-portrait",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 55.88468050956726,
+      "recipe_sha256": "6d5758853ed784ef8bdf839e18fd5579a663dd781022eee01d72935df2730c4e",
+      "workflow_sha256": "1bd078007f11c2d0322f9126636dae4c3a60370d969f2e9092e7746016e75b41",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "anima-portrait_00007_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/f6aedb68-a935-4614-9ec1-4e5a953a709c/0",
+          "sha256": "db4f791dc5c36c623a4b80616fd029519b1433513b0de0b0276dcb90ce659746",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1445185,
+          "unique_rgb_colours": 316800
+        }
+      ]
+    },
+    {
+      "job_id": "dfb9dbeb-cb0d-40c9-9c9b-4e032a9320f1",
+      "prompt_id": "f03004c7-bf57-4209-9f4c-82de90039540",
+      "look": "look-anima-fantasy-portrait",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 18.341503858566284,
+      "recipe_sha256": "3ad61c0a0a0455caf2acdff0f3f27dfc1d519518ba2d03f2812a99226b6412e5",
+      "workflow_sha256": "88f9578971e5708489344fba6e2cb59d3b1947fb9614c81a4ec8c895969387d5",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "anima-portrait_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/dfb9dbeb-cb0d-40c9-9c9b-4e032a9320f1/0",
+          "sha256": "88c8419e2a048ce1b7bc128cdb1b5ee2836b0ccfde85c5add8f6dea2da381890",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1379589,
+          "unique_rgb_colours": 153232
+        }
+      ]
+    },
+    {
+      "job_id": "fce9a79d-6edb-4076-b4c6-f20132ae41e5",
+      "prompt_id": "483e5689-4e58-4853-bd13-8626ad5f42ad",
+      "look": "look-anima-painterly-artist-tags",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 42.988444566726685,
+      "recipe_sha256": "0da0105c014467f28b8427dbf42a08a1928e90ccb8e3fdd069fe34748201a0e8",
+      "workflow_sha256": "1428b7292d86b5d939da8637e3744d221c57f3e16853ee2d1fe76225eacfb031",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "anima-artist-stack_00010_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/fce9a79d-6edb-4076-b4c6-f20132ae41e5/0",
+          "sha256": "1b53c4fc61e411e06e1140058e26bd09b5d5e13c0b19feba46132bd31b9b5e2a",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1464199,
+          "unique_rgb_colours": 209760
+        }
+      ]
+    },
+    {
+      "job_id": "791366b2-c8c1-48f6-8be9-2c8c4a5e366c",
+      "prompt_id": "5db448a9-a2bb-46aa-a5c3-8b5b86eb2c2e",
+      "look": "look-anima-painterly-artist-tags",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 20.486945867538452,
+      "recipe_sha256": "05f2d77e0d4c9dae5504518ceddb08f8d157607ad01db74c98f5027609556c8b",
+      "workflow_sha256": "8a4e73c4d9477bac55f76d67590aab41f3981589d0a90062d6e5ad2e9ec5864a",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "anima-artist-stack_00011_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/791366b2-c8c1-48f6-8be9-2c8c4a5e366c/0",
+          "sha256": "3bb1e831862654b3ea4afe2605f440ffb6237d47a27b2599a586802d38bdcd40",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1500368,
+          "unique_rgb_colours": 317215
+        }
+      ]
+    },
+    {
+      "job_id": "c54faba1-67c5-48fb-924c-6c1142d519e6",
+      "prompt_id": "bc648c9c-552f-472e-aade-c6f857101a98",
+      "look": "look-pearly-anima-mix-v10-showcase",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 43.291393518447876,
+      "recipe_sha256": "bafc516878693f6687f368cedf1778a4dc91695c94b546df3ef33364d65a053c",
+      "workflow_sha256": "6416de686bfbfefe381f6aae4f45899c1190564d9dec99ed3ef736c490e160df",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pearly-Anima-Mix-v10-Baseline_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/c54faba1-67c5-48fb-924c-6c1142d519e6/0",
+          "sha256": "9e31f800a4d6318ef7de5cb380e24c95985b274f63b0f98eaf6b495926818ed1",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1319995,
+          "unique_rgb_colours": 228477
+        }
+      ]
+    },
+    {
+      "job_id": "da72dab9-c202-4861-ae5c-a98178bf86f2",
+      "prompt_id": "341ae438-59b1-4443-80b7-88879f79fdc2",
+      "look": "look-pearly-anima-mix-v10-showcase",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 16.35597562789917,
+      "recipe_sha256": "b43bec37f5ea20e619946c092e411dc505efb442d306b82e587bb5db79f150cd",
+      "workflow_sha256": "d2cfcdb80950fad6f7db9bda259c675ae7dc2ade22a308787642ec8f9d3b30a3",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pearly-Anima-Mix-v10-Baseline_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/da72dab9-c202-4861-ae5c-a98178bf86f2/0",
+          "sha256": "4d0aa81fd778065a015bf2aedad26a1b1aad196faaf0d0fc4d62879290605d11",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1352387,
+          "unique_rgb_colours": 220280
+        }
+      ]
+    },
+    {
+      "job_id": "f2aa1619-df80-4f00-b820-02cf37cba472",
+      "prompt_id": "bd2bba50-716e-4560-9aa5-f4160a300140",
+      "look": "look-oneobsession-anima-v20-showcase",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 39.35670304298401,
+      "recipe_sha256": "e71c37fa73b46c9cb83e944525ce4c51348d52593e455594403b8e72e0db5d9e",
+      "workflow_sha256": "0de5989f491f25825674b67fc489ba5f8e7a25458e0278bff3eb672de78e7d83",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "OneObsession-Anima-v20-Baseline_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/f2aa1619-df80-4f00-b820-02cf37cba472/0",
+          "sha256": "55fce31e1d4792b2336b19b68704381b9f57c3e5fe7edb80f9afd146d5afec9f",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1558058,
+          "unique_rgb_colours": 262175
+        }
+      ]
+    },
+    {
+      "job_id": "fd82410d-cbda-400c-8e6d-079be4b6296c",
+      "prompt_id": "9c261d3e-480f-40c5-ad52-5b6898fd5ce3",
+      "look": "look-oneobsession-anima-v20-showcase",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 22.342127084732056,
+      "recipe_sha256": "6aa4e6afd278f5665777deef850444b121d4fcaa80715e49988d1d090285a4cb",
+      "workflow_sha256": "140a62dcadd7368d902dae013d67b5136189d1d5cca011e45acabc010bd7e54e",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "OneObsession-Anima-v20-Baseline_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/fd82410d-cbda-400c-8e6d-079be4b6296c/0",
+          "sha256": "d180157902446e64c8507b570d389a5679d4e5767132daecf3c3edc77f72e3b9",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1656567,
+          "unique_rgb_colours": 301072
+        }
+      ]
+    },
+    {
+      "job_id": "88ccf949-9fa2-4284-bc89-b1e43bb06b24",
+      "prompt_id": "7fd6c0ae-4bb6-4521-89d6-0e13aea70f4a",
+      "look": "look-anima-pearly-petiflow",
+      "variant": "baseline",
+      "status": "completed",
+      "seconds": 44.97743034362793,
+      "recipe_sha256": "e7bc2939aea2d71d5a562ea4bb20d491fc9fd051f8568df1370f78f366c55bfe",
+      "workflow_sha256": "185be14587dca721ee129ac605bc1ec64937cddde01e5341d478081be133d7ea",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Anima-v1-Baseline_00046_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/88ccf949-9fa2-4284-bc89-b1e43bb06b24/0",
+          "sha256": "d6875f3976022daffc29b5b5cdf92270d1d112ca50269726ae0f99878bd9d856",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1063062,
+          "unique_rgb_colours": 65111
+        }
+      ]
+    },
+    {
+      "job_id": "7970277a-c544-4641-9043-b4f4db412226",
+      "prompt_id": "a6750bc6-27e8-414c-b569-178896e962a1",
+      "look": "look-anima-pearly-petiflow",
+      "variant": "scene-b",
+      "status": "completed",
+      "seconds": 16.29502272605896,
+      "recipe_sha256": "6859297ebd6c13725f25394b8882b76f8ccb6e08fdb98f0948fd553b65b1b6a0",
+      "workflow_sha256": "bbef6cbf709efaacbeab012c58057057b737a0d22e12492d4d95edde10357730",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Anima-v1-Baseline_00047_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/7970277a-c544-4641-9043-b4f4db412226/0",
+          "sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1313178,
+          "unique_rgb_colours": 185691
+        }
+      ]
+    },
+    {
+      "job_id": "49dde9e0-cd43-4a10-908b-07c914bbeef7",
+      "prompt_id": "922fc6d8-eb1a-4131-a481-80284099b139",
+      "look": "look-preset-stylized-prop",
+      "variant": "r2-A-scene-a",
+      "status": "completed",
+      "seconds": 32.36371374130249,
+      "recipe_sha256": "9555104b11fab191fedd087f1da127b5f02c1808ae51920db6d5b4b58cb11e8f",
+      "workflow_sha256": "5991e46eabaadef91a016f6813a4d7ee738daf0790edcfe560e9fe22cae633ba",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "stylized-prop_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/49dde9e0-cd43-4a10-908b-07c914bbeef7/0",
+          "sha256": "d580b0182a0d9c004fa666652e03f0f3df61ce3077ed6f4f4dcd39f4f1ba5be9",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1402473,
+          "unique_rgb_colours": 374047
+        }
+      ]
+    },
+    {
+      "job_id": "2ff4651f-4cf2-4abc-a3a4-1d57e00ce312",
+      "prompt_id": "08bfdcf7-a960-4370-82fb-20f60792b27f",
+      "look": "look-preset-stylized-prop",
+      "variant": "r2-A-scene-b",
+      "status": "completed",
+      "seconds": 22.271848678588867,
+      "recipe_sha256": "2afc436df930243946ba6cd56d11c2a7f9bbc09c4f6b4c80f211d794775e27be",
+      "workflow_sha256": "b9eab938733aa8eeefb19dfcd1f624e57f9dc0087c6b9b7cb9d642e2c58c1369",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "stylized-prop_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/2ff4651f-4cf2-4abc-a3a4-1d57e00ce312/0",
+          "sha256": "07577947b71dc10910bfe9520e265f29299dae3f3ebb6889121da814da4dca1c",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1732225,
+          "unique_rgb_colours": 431258
+        }
+      ]
+    },
+    {
+      "job_id": "fa9f49bf-dbfd-477b-beef-46abee8dd420",
+      "prompt_id": "3885b2f8-548f-4258-a0a1-da26781dfb79",
+      "look": "look-preset-pixel-lora",
+      "variant": "r2-A-scene-a",
+      "status": "completed",
+      "seconds": 22.336966276168823,
+      "recipe_sha256": "a417bfe13defd5937f1716e882522871c631719879cf5e7d3e7a5c0b1cea0b03",
+      "workflow_sha256": "08fe9caf4ad344591d50ded671ef3124a7f4f660a012e983e80224aa9f7120dc",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00007_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/fa9f49bf-dbfd-477b-beef-46abee8dd420/0",
+          "sha256": "e68b90a84e594741f33baa194e1433e0ffad34643e677c83de7b7cf43bf886b6",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 983680,
+          "unique_rgb_colours": 204262
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00004_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/fa9f49bf-dbfd-477b-beef-46abee8dd420/1",
+          "sha256": "a9f4c86f1f237e5b76afe3ef2be992df4c1730798604f6f2aa25f8e6d1195d80",
+          "width": 128,
+          "height": 128,
+          "bytes": 25976,
+          "unique_rgb_colours": 6997
+        }
+      ]
+    },
+    {
+      "job_id": "627d3d1a-be56-43c7-9f9c-7736015b440b",
+      "prompt_id": "6ab1ad20-c0ce-4803-92ec-d139e89132df",
+      "look": "look-preset-pixel-lora",
+      "variant": "r2-A-scene-b",
+      "status": "completed",
+      "seconds": 20.284136056900024,
+      "recipe_sha256": "9924cf9290eabab24dfe4d1d9a71e913e05055012c686c1e18ac8a9a9da81c54",
+      "workflow_sha256": "56cf4dcf3009590d57cc14d4c0b2332780783809457551182dcfb7577cc48a6a",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/627d3d1a-be56-43c7-9f9c-7736015b440b/0",
+          "sha256": "eb203d3e57a129dbe15ab7aea5f213cc85fba5e4d45e31eaaa514ccab23c7dad",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 854882,
+          "unique_rgb_colours": 216877
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/627d3d1a-be56-43c7-9f9c-7736015b440b/1",
+          "sha256": "9d6de490751d7d7aaf7062cec5ad69b1f96bb3e59ddf692baab3d87b8639cd8c",
+          "width": 128,
+          "height": 128,
+          "bytes": 23250,
+          "unique_rgb_colours": 5085
+        }
+      ]
+    },
+    {
+      "job_id": "afeba10b-2cea-441d-b088-3f92b5423aa3",
+      "prompt_id": "26e6fd9e-fd00-4403-bd7f-ad35391adf2a",
+      "look": "look-preset-pixel-lora",
+      "variant": "r2-B-scene-a",
+      "status": "completed",
+      "seconds": 20.306878805160522,
+      "recipe_sha256": "f4dfb910a60b494aa598690de02bb815cd1fe182cd23285b08476183ce6c163c",
+      "workflow_sha256": "16dc2d3e76c4a55d872c785eea5e606ec53622c41c8bc0e40469191172bf0649",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00009_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/afeba10b-2cea-441d-b088-3f92b5423aa3/0",
+          "sha256": "6950549d6e5467fc6739c230326049612b7eca08be3699b7da192db7575907b5",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 840369,
+          "unique_rgb_colours": 158813
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/afeba10b-2cea-441d-b088-3f92b5423aa3/1",
+          "sha256": "7455e0d8bb7fc07f3e7c1c6cbf83cecccd22270acaf09e20307dfd4f277a7a35",
+          "width": 128,
+          "height": 128,
+          "bytes": 23166,
+          "unique_rgb_colours": 5203
+        }
+      ]
+    },
+    {
+      "job_id": "c484207d-ebb6-4c41-8602-8db44246a63b",
+      "prompt_id": "864b67dc-9e3f-428a-886b-952e41722a7f",
+      "look": "look-preset-pixel-lora",
+      "variant": "r2-B-scene-b",
+      "status": "completed",
+      "seconds": 20.22947859764099,
+      "recipe_sha256": "67ce349b93467b73e1e71496c5f0dbb799998680fcd8b42c6269df60a2ebe85d",
+      "workflow_sha256": "9ed6e68dbf08cea6f01d9121c1208b29caa1406fbcf104bea3f2034be47cdce5",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00010_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/c484207d-ebb6-4c41-8602-8db44246a63b/0",
+          "sha256": "725c52a01df88b9b2d944a184322cdb897c611f43399c99f0cc797b333216a56",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 953565,
+          "unique_rgb_colours": 211138
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00007_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/c484207d-ebb6-4c41-8602-8db44246a63b/1",
+          "sha256": "7a544c6d96aedaeb53db0d1b7beb9adee39f3fad2b52a7e2481b5047aac58fdd",
+          "width": 128,
+          "height": 128,
+          "bytes": 25664,
+          "unique_rgb_colours": 4973
+        }
+      ]
+    },
+    {
+      "job_id": "7ceefc34-bae2-470f-99a6-4ad14d5dcedb",
+      "prompt_id": "34dd7a36-95ce-4bd0-9dac-d4fbe3819848",
+      "look": "look-preset-realvis",
+      "variant": "r2-A-scene-a",
+      "status": "completed",
+      "seconds": 48.343677043914795,
+      "recipe_sha256": "73f29fa16245d4baa537bc81a2c3ef639806d2ddf87fe2949fd85f5802d4685f",
+      "workflow_sha256": "8226d22c81bdefdfbbb9dd0d1b52cc1ecb1de7e2a62c0c6303083a2703be6bb6",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "realvis_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/7ceefc34-bae2-470f-99a6-4ad14d5dcedb/0",
+          "sha256": "1e4de986277cca2b67a263c6b1f3e5c8634f853cf312148d76496e5dfbefe4a5",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1187613,
+          "unique_rgb_colours": 152804
+        }
+      ]
+    },
+    {
+      "job_id": "384ff5a4-cdb5-4af2-8d02-297cd950a068",
+      "prompt_id": "6c97c513-7bdf-4810-9ada-717750e17e27",
+      "look": "look-preset-realvis",
+      "variant": "r2-A-scene-b",
+      "status": "completed",
+      "seconds": 32.294182777404785,
+      "recipe_sha256": "1f26f5ce95630755d8dff57f21361ab763e6cf84ad4ab8aa7ca8e58b88111183",
+      "workflow_sha256": "5a2f106ee75011c2d7084a33bd94ad591f045a25149a71543d14036f9f454644",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "realvis_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/384ff5a4-cdb5-4af2-8d02-297cd950a068/0",
+          "sha256": "f0ee366c48a21817fe58751d80d2fb456d102bbb461f865af9839d3d42cb0e97",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1192747,
+          "unique_rgb_colours": 125085
+        }
+      ]
+    },
+    {
+      "job_id": "1fc489c1-23db-4622-8ea5-868a055affee",
+      "prompt_id": "42f10a00-4ea9-4f7e-8483-a959552dbfa7",
+      "look": "look-animagine-fantasy-portrait",
+      "variant": "r2-A-scene-a",
+      "status": "completed",
+      "seconds": 31.49092125892639,
+      "recipe_sha256": "4481e3c847a567c36b677e76c107bdd1dcef8067e8deccbf40973405944793da",
+      "workflow_sha256": "92e7e7e4d415fc399f1ee86b70f383dc5d330ed09d4fdfd22649a25b0a708004",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Animagine_00012_.png",
+          "subfolder": "Expansion",
+          "type": "output",
+          "url": "/api/image/1fc489c1-23db-4622-8ea5-868a055affee/0",
+          "sha256": "be3acee34d5d5e18eb1f2c1a81adb10d89e453b08a867d9497ac5061537107b4",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1578565,
+          "unique_rgb_colours": 308900
+        }
+      ]
+    },
+    {
+      "job_id": "3d2e1ef8-41f2-4bd5-ada2-7199b2fc1a2c",
+      "prompt_id": "efe20a2f-d839-4d5a-bd2a-78a7e25b0827",
+      "look": "look-animagine-fantasy-portrait",
+      "variant": "r2-A-scene-b",
+      "status": "completed",
+      "seconds": 10.19778561592102,
+      "recipe_sha256": "16e705eca093fcc976f778f4f557a857be84e800c9198b9019b3b5ed92e7d225",
+      "workflow_sha256": "0f5b52a40fd6523f0ff36ab691a3d0948131f326927ebb302c84ae393e1ad729",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Animagine_00013_.png",
+          "subfolder": "Expansion",
+          "type": "output",
+          "url": "/api/image/3d2e1ef8-41f2-4bd5-ada2-7199b2fc1a2c/0",
+          "sha256": "20527918f0b2efec71746d585139330456fdfd2634b828b85aa04454687441d9",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1469644,
+          "unique_rgb_colours": 207050
+        }
+      ]
+    },
+    {
+      "job_id": "756eef35-c239-4ae3-9bc6-0e1158d427a7",
+      "prompt_id": "68f2bd1f-1ba4-457d-9ad9-86b60b2d05df",
+      "look": "look-noob-fantasy-scene",
+      "variant": "r2-A-scene-a",
+      "status": "completed",
+      "seconds": 35.21640872955322,
+      "recipe_sha256": "15ff58e0be15ccc292bae965bc7e2d334e305726decd64826c96097b806c6d55",
+      "workflow_sha256": "363894cbd9f842c4b8d3ea178246a67975ed7d1ee935890a59da406034f3132a",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "noob_00010_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/756eef35-c239-4ae3-9bc6-0e1158d427a7/0",
+          "sha256": "e733138a41cc17c7381011c4dc5e6fcf12614597c74bb94da14a73c5d9f7be15",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1063830,
+          "unique_rgb_colours": 199424
+        }
+      ]
+    },
+    {
+      "job_id": "39caca30-0961-4f35-b76e-b855a5b24d09",
+      "prompt_id": "b6f4fe77-aca5-4883-a3a4-79ccf8d7681c",
+      "look": "look-noob-fantasy-scene",
+      "variant": "r2-A-scene-b",
+      "status": "completed",
+      "seconds": 10.228030443191528,
+      "recipe_sha256": "b4ab8f9daf5408bd1cc924b5e33ffeee67dbb214173b7d74838c9ffde984494c",
+      "workflow_sha256": "05e24c8bb7b8a5d02e22d009380c7c6af306aa3243c728fa5bb8cf79950d3805",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "noob_00011_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/39caca30-0961-4f35-b76e-b855a5b24d09/0",
+          "sha256": "c962f976350213ea4871077a41fd342fd1b23d7d4141e0233f99c7966dca0c2b",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1432602,
+          "unique_rgb_colours": 185846
+        }
+      ]
+    },
+    {
+      "job_id": "d01ca113-f074-4150-aa04-d518b63c7353",
+      "prompt_id": "63ffd65f-f35e-4658-aac1-df4448ef8730",
+      "look": "look-anima-fantasy-portrait",
+      "variant": "r2-A-scene-a",
+      "status": "completed",
+      "seconds": 35.15114068984985,
+      "recipe_sha256": "161ae9510c285c9527f99583523c37b665a6e1ebaa7e9561463f48530288a23a",
+      "workflow_sha256": "0906137f89854d9a46974f3857e56ed31d7e85760c7dbcac8219ec32b147ba48",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "anima-portrait_00009_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/d01ca113-f074-4150-aa04-d518b63c7353/0",
+          "sha256": "96926d37594ec3fd7a6347d127058ae3f3a6218621c4f5575116723d48c293c5",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1459656,
+          "unique_rgb_colours": 326785
+        }
+      ]
+    },
+    {
+      "job_id": "da1a1c9f-ffeb-489f-afd0-c9c693431ef2",
+      "prompt_id": "ed3f26a9-1810-4622-beaa-51a20de2161c",
+      "look": "look-anima-fantasy-portrait",
+      "variant": "r2-A-scene-b",
+      "status": "completed",
+      "seconds": 16.72547197341919,
+      "recipe_sha256": "af7b0d71fe31bc3b1635795d800c1197fbd6fd9d450da3f2f9fe05f90d8b42d9",
+      "workflow_sha256": "3032c4765530250c8ffef51cc7c1bbad369df0450acb6cc6e9b64b1780d1e667",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "anima-portrait_00010_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/da1a1c9f-ffeb-489f-afd0-c9c693431ef2/0",
+          "sha256": "d25aeab85de1ab22652f76fc146ad39f43efb90c16b432be1cda3d897bbffc35",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1266465,
+          "unique_rgb_colours": 139024
+        }
+      ]
+    },
+    {
+      "job_id": "c6b6f113-d820-4b30-9bd1-c982057989a7",
+      "prompt_id": "be430597-60d5-49e4-b49b-672876d21aa1",
+      "look": "look-anifox-ringeko",
+      "variant": "r3-A",
+      "status": "completed",
+      "seconds": 173.0258104801178,
+      "recipe_sha256": "5410a851f5e853d63ed55ccc2f21cd19f73f9d81d863e857e74d7ad1ab7a95b6",
+      "workflow_sha256": "a65bd719a1757a02f138c1399c12a53c9c3f560ed7dc77d47711ee59bb173f16",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "AniFox-v2-Baseline_00015_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/c6b6f113-d820-4b30-9bd1-c982057989a7/0",
+          "sha256": "28b21054f00db4caf4353930a983177699419970e61d7b51512e46403525984b",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1216846,
+          "unique_rgb_colours": 132753
+        }
+      ]
+    },
+    {
+      "job_id": "91a5e0ec-d702-4db0-877e-28fde865a553",
+      "prompt_id": "97c10445-e45f-4316-8256-12571d80e530",
+      "look": "look-anifox-ringeko",
+      "variant": "r3-B",
+      "status": "completed",
+      "seconds": 22.280808448791504,
+      "recipe_sha256": "2490aa1d471bd963b92ca0eb1df41aa0bd5d396ce23b05d1a0fa31460b6728d0",
+      "workflow_sha256": "2ac1bf761404ea419aecd88942879bfcb10c51f534a54a30563da39bd96715a8",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "AniFox-v2-Baseline_00016_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/91a5e0ec-d702-4db0-877e-28fde865a553/0",
+          "sha256": "6f804a543162507ac15960e298f9652c5a2ded8cc316ef47035a81e648e0337d",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1188365,
+          "unique_rgb_colours": 120436
+        }
+      ]
+    },
+    {
+      "job_id": "89ca1e1b-dc24-447f-aaab-4d06c5c61dd2",
+      "prompt_id": "e24981a3-b64d-4a59-a8ec-400363b134ce",
+      "look": "look-anifox-ringeko",
+      "variant": "r3-C",
+      "status": "completed",
+      "seconds": 28.357982635498047,
+      "recipe_sha256": "97c6dd40ebf8a83c186c3dddff3bf3d712d9a1d69670d7596fe37583d28a8bc0",
+      "workflow_sha256": "f0f9de06d2cd1fffe46f08e8ff4e99f40fbb6ad079b293bcec119de523994989",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "AniFox-v2-Baseline_00017_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/89ca1e1b-dc24-447f-aaab-4d06c5c61dd2/0",
+          "sha256": "3f39da635d9a44d98c20abc2343ec8dd54d51cd28e3f8722a6fdfeb88d331b1c",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1417715,
+          "unique_rgb_colours": 230290
+        }
+      ]
+    },
+    {
+      "job_id": "7fc2e0cd-03c9-4d88-8c30-6e9e08b88cf5",
+      "prompt_id": "9f669174-9820-4451-9263-1908db513508",
+      "look": "look-anifox-ringeko",
+      "variant": "r3-D",
+      "status": "completed",
+      "seconds": 24.293960094451904,
+      "recipe_sha256": "ad8ba6607f1cd6c08a1202cf1cf50356fb62432d8cc6cb2ef31b138fad51d6f7",
+      "workflow_sha256": "aaf3398a691db855127243cd33918d96c5730de08e4b12bb28abeb7b08fc5cc1",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "AniFox-v2-Baseline_00018_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/7fc2e0cd-03c9-4d88-8c30-6e9e08b88cf5/0",
+          "sha256": "41368d6c2578ff16a7193f1cd98c3426bb8402504b2d253031cbdc94a20b55b4",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1321371,
+          "unique_rgb_colours": 197418
+        }
+      ]
+    },
+    {
+      "job_id": "c0828172-cc0f-41e2-9f5c-5492e962ab0b",
+      "prompt_id": "c5fcb4ff-c380-4ec4-a6bc-884aa478b424",
+      "look": "pose-wai-pose",
+      "variant": "r3-pose",
+      "status": "completed",
+      "seconds": 76.26185369491577,
+      "recipe_sha256": "ab3b4e80b747df8b309ead25b24a2435b46802b55a894b7d7bb1b3a6acc9df3a",
+      "workflow_sha256": "38e2d5e307edd27df35ba56c123e055da4ca471077d9e4d8519c3f85dd815919",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "WAI-Pose_00002_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/c0828172-cc0f-41e2-9f5c-5492e962ab0b/0",
+          "sha256": "3485dab8e83aeea0668ce64aec1f0380e4cade82a167ffad17beebd857e0eb27",
+          "width": 832,
+          "height": 1152,
+          "bytes": 419652,
+          "unique_rgb_colours": 68137
+        }
+      ]
+    },
+    {
+      "job_id": "5024dd79-b523-47de-b86a-5a2494f30d9c",
+      "prompt_id": "5c6711cd-6fae-4ea9-a43b-1015785571de",
+      "look": "pose-pose",
+      "variant": "r3-pose",
+      "status": "completed",
+      "seconds": 87.45940446853638,
+      "recipe_sha256": "ca79cf8dc0d544fe2a25593eff1afb8f93efaa4df73116148eb3019d7becb296",
+      "workflow_sha256": "503aa323a77761cfb6e38ac25a82e27a1b2b82f0451ddc875244c8466c526c13",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Animagine-Pose_00002_.png",
+          "subfolder": "Character-Study",
+          "type": "output",
+          "url": "/api/image/5024dd79-b523-47de-b86a-5a2494f30d9c/0",
+          "sha256": "997b47c4e7dda38e3929d57b00f5c27a607fa2f604520de6a25da08e73f5234e",
+          "width": 832,
+          "height": 1152,
+          "bytes": 1256390,
+          "unique_rgb_colours": 112998
+        }
+      ]
+    },
+    {
+      "job_id": "56e95bd7-040d-4b65-9a32-7270e3f81078",
+      "prompt_id": "1f6e7f8e-f340-4723-8693-c46b1f65de6f",
+      "look": "look-preset-pixel-lora",
+      "variant": "r2-C-scene-a",
+      "status": "completed",
+      "seconds": 104.76182746887207,
+      "recipe_sha256": "967d9da7c9f890ed6e6bb0484063134a85b5199553e898bb3f3563f2e9a418b0",
+      "workflow_sha256": "69d63ccb159c54c8aad3273598dfc07c60bef7e77e4b22958cc5f99d80f7825e",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00011_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/56e95bd7-040d-4b65-9a32-7270e3f81078/0",
+          "sha256": "54d91911dafede113eea8fcad18cf64193b8980caa18b3cf781cc6ae9d5a997d",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1021915,
+          "unique_rgb_colours": 243078
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/56e95bd7-040d-4b65-9a32-7270e3f81078/1",
+          "sha256": "feba25f2c990d7c569fd89ba0edc6ea48c03568ae7a2e0c8470cc91777c13a4a",
+          "width": 128,
+          "height": 128,
+          "bytes": 27085,
+          "unique_rgb_colours": 7359
+        }
+      ]
+    },
+    {
+      "job_id": "d35c10fb-032a-428e-9a2b-34f2aa5f89e3",
+      "prompt_id": "822680ae-02e7-4e42-8ebc-ceef4234cf2d",
+      "look": "look-preset-pixel-lora",
+      "variant": "r2-C-scene-b",
+      "status": "completed",
+      "seconds": 20.638355255126953,
+      "recipe_sha256": "e639aee7daab5369fb65612b303de27cf2f9d7a5195c2d6a1189ca7158fea3e0",
+      "workflow_sha256": "10a6f26d7af20e16794b9f2516a08da9e23c332aa38f54e1f285aa49aa5fa489",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00012_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/d35c10fb-032a-428e-9a2b-34f2aa5f89e3/0",
+          "sha256": "7b6b86261ea607ec3ce7894143fb133b48ec5cdd36f33b56e7a4dd1bee430b4f",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1058897,
+          "unique_rgb_colours": 240084
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00009_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/d35c10fb-032a-428e-9a2b-34f2aa5f89e3/1",
+          "sha256": "58598922ed6b9de7aab1fd1869ac5b9f377afa6c65868ecb0b09e5513ca1ec5d",
+          "width": 128,
+          "height": 128,
+          "bytes": 26721,
+          "unique_rgb_colours": 5820
+        }
+      ]
+    },
+    {
+      "job_id": "87854619-cbab-4ecd-916e-7b8b65b27b43",
+      "prompt_id": "4c06f32f-6546-4d6a-9450-9bd7ca99532a",
+      "look": "look-preset-pixel-lora",
+      "variant": "r2-D-scene-a",
+      "status": "completed",
+      "seconds": 20.762964248657227,
+      "recipe_sha256": "56e94375743c3d46994c0abf0ebcf0a59b1e457c1b34f929bfadd09407a93de0",
+      "workflow_sha256": "e84dec5e1a0dcc4890ee99b4c10e96b95c94bf21904d4a4a8481b34bd73aaa87",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00013_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/87854619-cbab-4ecd-916e-7b8b65b27b43/0",
+          "sha256": "ddd406d0225228d67a4e27f210db77988c536cf6882c24d3d72f96f7c2996e29",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 867641,
+          "unique_rgb_colours": 168884
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00010_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/87854619-cbab-4ecd-916e-7b8b65b27b43/1",
+          "sha256": "7ab49293557396d9456eafc6797f9badda488b212f861ef812273e2ebe5aafb6",
+          "width": 128,
+          "height": 128,
+          "bytes": 23077,
+          "unique_rgb_colours": 5680
+        }
+      ]
+    },
+    {
+      "job_id": "6febe2c0-c6f6-4fd0-874a-d211756fa0ae",
+      "prompt_id": "51d12e0f-2cf6-41da-a269-c2762436c598",
+      "look": "look-preset-pixel-lora",
+      "variant": "r2-D-scene-b",
+      "status": "completed",
+      "seconds": 20.623039960861206,
+      "recipe_sha256": "6148d6f85f9a3e2342c7389185384b2c56420974fa70bb47f0932e6e72bd6170",
+      "workflow_sha256": "5a646ee992e067eb5d50dba16235ea0496beb9194fad866a98cfabce08993a5d",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "Pixel-LoRA-Raw_00014_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/6febe2c0-c6f6-4fd0-874a-d211756fa0ae/0",
+          "sha256": "65c093d8854c90e0084c2abf6ff69bda5f3dc2aca7a7689d9730bc442f4945c6",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 996497,
+          "unique_rgb_colours": 210696
+        },
+        {
+          "index": 1,
+          "filename": "Pixel-LoRA-Export_00011_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/6febe2c0-c6f6-4fd0-874a-d211756fa0ae/1",
+          "sha256": "a100ef8ecd71b30aa75ffbbb9e3d29e2918830c381516d945985c6fab25a6220",
+          "width": 128,
+          "height": 128,
+          "bytes": 25582,
+          "unique_rgb_colours": 4792
+        }
+      ]
+    },
+    {
+      "job_id": "9939e137-1213-4ef2-81c2-9f8bc3285851",
+      "prompt_id": "79216f82-23a4-45cc-a217-dc2a4d9a97af",
+      "look": "pose-wai-pose",
+      "variant": "r3-pose-closed-fists",
+      "status": "completed",
+      "seconds": 64.52077412605286,
+      "recipe_sha256": "1c227da136acb532d3066fbf7f0208531f03157c57ba2051a63ef195e5603b19",
+      "workflow_sha256": "860edfed42690568a3a17e293496d6ee7f5601d9a939cb433ab1e30ad6f2e8c6",
+      "outputs": [
+        {
+          "index": 0,
+          "filename": "WAI-Pose_00003_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "url": "/api/image/9939e137-1213-4ef2-81c2-9f8bc3285851/0",
+          "sha256": "a67a958832a0cf3f3709c84c75e71c56fd4c5bfcb7ab49376347c99cd4cbd8f2",
+          "width": 832,
+          "height": 1152,
+          "bytes": 423909,
+          "unique_rgb_colours": 70760
+        }
+      ]
+    },
+    {
+      "job_id": "5bd7371b-aaf1-457c-82b6-f31fb5bd5bcb",
+      "prompt_id": "ac53bae4-9d3c-41c5-b752-fa320b26716c",
+      "look": "look-krea-atelier-target-stack",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 1309.2665526866913,
+      "recipe_sha256": "4684f616f3a40ba153fd280133c8d21f5c04055e8725732cf29f0b056a3999ed",
+      "workflow_sha256": "339381198b7ca1eaca12a16399c027fa618ba79fdb39d7653e7bb2debcf63363",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00027_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/5bd7371b-aaf1-457c-82b6-f31fb5bd5bcb/0",
+          "sha256": "e6c8abb3bf26cfbe05ae3ee510c4bdffe30466d2e6abfa8317ab3fca4ea628be",
+          "width": 832,
+          "height": 1248,
+          "bytes": 1327958,
+          "unique_rgb_colours": 222893
+        }
+      ]
+    },
+    {
+      "job_id": "10247ea0-af8a-4b0b-b59c-7682f7c340f2",
+      "prompt_id": "c27c97a7-8b0d-4fd7-8536-397f9dea594f",
+      "look": "look-krea-atelier-target-stack",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 2204.7690501213074,
+      "recipe_sha256": "74cf49e34880c21d48f4b301011c92e2a38feb715017734a01e14149bd402ec3",
+      "workflow_sha256": "40e2aa521542eaeee3ef7e58e7de8f47de11ae335ddc4c082a1b49b1a7210cd8",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00028_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/10247ea0-af8a-4b0b-b59c-7682f7c340f2/0",
+          "sha256": "1b27c77ab9af3eb41d7f97cff079bcc0dadf43f3225265c6587a12370b2745d8",
+          "width": 832,
+          "height": 1248,
+          "bytes": 1562364,
+          "unique_rgb_colours": 318612
+        }
+      ]
+    },
+    {
+      "job_id": "06710829-6b2e-4f90-9920-102feeb711ae",
+      "prompt_id": "8bf39dfe-d036-466a-adbc-e9b5d5279de3",
+      "look": "look-krea-witch-nijisis",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 839.2027049064636,
+      "recipe_sha256": "165dc15309bd1d922a045c9d59abcbfccada5c6e7278b84726834179bec0fba1",
+      "workflow_sha256": "a5ff711793d60a0816fb6e07032cd6667a23ec4c95acfefb32184c22e88a98a0",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00029_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/06710829-6b2e-4f90-9920-102feeb711ae/0",
+          "sha256": "ee21ae219f75e901b943dcbfd58f2625daa1a2913e8892bfab73e5c039f245f9",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1762240,
+          "unique_rgb_colours": 475955
+        }
+      ]
+    },
+    {
+      "job_id": "6b3d659c-21af-4684-a2cd-3d4c59c21bba",
+      "prompt_id": "faba662a-3ab7-4ef7-a2e3-5267d9104b9c",
+      "look": "look-krea-witch-nijisis",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 785.13924908638,
+      "recipe_sha256": "2b4582b0a93f73bef0fbe2157862cc7c121d4ab127b32bdf7e10779ffd8931d6",
+      "workflow_sha256": "360b5c59ee00bfc4c2b12b59d945465e5b392a18884c6d54fb3b398d6814ae84",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00030_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/6b3d659c-21af-4684-a2cd-3d4c59c21bba/0",
+          "sha256": "7f710f7b2b8869beb84db5f78a102249ef8574505fa5b47c68b60e59cfc2d02b",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1726812,
+          "unique_rgb_colours": 418112
+        }
+      ]
+    },
+    {
+      "job_id": "173f6c00-8238-4e4a-90d3-9893d8c243c8",
+      "prompt_id": "1d017c76-7bc6-4e30-bbe5-587cc5c5f488",
+      "look": "look-krea-watercolor-anime",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 392.69247698783875,
+      "recipe_sha256": "9d89d68192783f388474b3cb10d8ce52798ed678c64e6f20403e3eee208fdb88",
+      "workflow_sha256": "ac635f13e5fd3efd52e53d9f90a306232ead9624fce2d8e1d922b2098135ec25",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00031_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/173f6c00-8238-4e4a-90d3-9893d8c243c8/0",
+          "sha256": "10ce3e9a000bf5b4719a957087fe3fc52f7f26e4ddedc0f0eaefe255fc8e918e",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1341756,
+          "unique_rgb_colours": 246492
+        }
+      ]
+    },
+    {
+      "job_id": "1e32d10d-e407-4a1c-9fb5-6c68728ccf77",
+      "prompt_id": "ae83c03d-0350-4c9b-b39a-0d3b3f0b444a",
+      "look": "look-krea-watercolor-anime",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 357.36526823043823,
+      "recipe_sha256": "7135d45610f6a3232250203b5ee90dcac7f0b8fedf93bd205317fe873e6a77f3",
+      "workflow_sha256": "e7acb99dc4854c9e94ad6ece73bff96f6899ba70f3c6362de650f9ef4db2d173",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00032_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/1e32d10d-e407-4a1c-9fb5-6c68728ccf77/0",
+          "sha256": "585577ef4fe371cc18a8c8c03b186fddd22dd81e525f7f3a2455c74ae3f50c39",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1190162,
+          "unique_rgb_colours": 178182
+        }
+      ]
+    },
+    {
+      "job_id": "154145d2-9b59-4f83-99d5-380aee72d73d",
+      "prompt_id": "6785f1dc-18fd-4432-96e0-895cc19876f2",
+      "look": "look-krea-oil-fantasy",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 661.333651304245,
+      "recipe_sha256": "0ce5868616459babee0f14350e095c9d0c25c53f88cac694de79db505426c058",
+      "workflow_sha256": "be1b4b8b60c934d9b3f060394db2e4f0e82c457404d0aa275fe2c186cd94a4d7",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00033_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/154145d2-9b59-4f83-99d5-380aee72d73d/0",
+          "sha256": "a320b606bce6c5d1e366bcaf24c69ad2ae0b5535a06c6f0b909d09540566b3a8",
+          "width": 832,
+          "height": 1248,
+          "bytes": 1170912,
+          "unique_rgb_colours": 80766
+        }
+      ]
+    },
+    {
+      "job_id": "54346bf4-f672-4826-bf53-97888bcea9b5",
+      "prompt_id": "e5827625-f81b-452d-9f71-b4aae1830a4b",
+      "look": "look-krea-oil-fantasy",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 624.8621482849121,
+      "recipe_sha256": "5dc5db37b1e1ba62815fb3219c264eabbc95df9570120ac378fa07be9a3746fa",
+      "workflow_sha256": "9e23f18d9c01aa759972b9f139619c44a624c427d677e162f487c903c3ba1433",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00034_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/54346bf4-f672-4826-bf53-97888bcea9b5/0",
+          "sha256": "dd09f6e034487c6930e4b52ed1f50c8ddcc28a844d76b7f10417ca8bcbd5805d",
+          "width": 832,
+          "height": 1248,
+          "bytes": 1049740,
+          "unique_rgb_colours": 68493
+        }
+      ]
+    },
+    {
+      "job_id": "34551de9-bb58-4a6c-a7a4-a75edf1343df",
+      "prompt_id": "35953080-3346-45df-a4cb-33f25fc9c05a",
+      "look": "look-krea-style-emerald-tarot",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 453.57304096221924,
+      "recipe_sha256": "18fcbb9ff398127f5a35f5afcd36ff947b1895fda22b411cb67c71d8c8538a23",
+      "workflow_sha256": "c1f467fb022961fccdb731092091d06779ff18489e4456798687a9415cf7bbcb",
+      "outputs": [
+        {
+          "filename": "krea-style-lab_00005_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/34551de9-bb58-4a6c-a7a4-a75edf1343df/0",
+          "sha256": "23e99780fb1c8392035e00f549f3b6e0891cf02de6791eaad1dfebff7bfd4aef",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 2087720,
+          "unique_rgb_colours": 286688
+        }
+      ]
+    },
+    {
+      "job_id": "b3058837-444c-492a-b30c-7db711d4cec3",
+      "prompt_id": "448ee9f1-336e-40e0-9e69-8bae203d661f",
+      "look": "look-krea-style-emerald-tarot",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 479.9841103553772,
+      "recipe_sha256": "76122d3c41307dc394ade2327b3d274675117b5b62b055af65d490b7e2c75c29",
+      "workflow_sha256": "12897ad6c03a2fd347b15764f92239c44a69717f2407ce277f44059d0878e4dd",
+      "outputs": [
+        {
+          "filename": "krea-style-lab_00006_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/b3058837-444c-492a-b30c-7db711d4cec3/0",
+          "sha256": "ac4ce1cccaadf6cf8e19d780c1b58d576b4877dd12ed1b5b68d629d5cf9bf0a7",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 2044834,
+          "unique_rgb_colours": 278308
+        }
+      ]
+    },
+    {
+      "job_id": "d4f127c4-6553-42ea-b95b-eba49ad16c70",
+      "prompt_id": "e1c0067b-3146-4a6e-a7df-0e6e17429ceb",
+      "look": "look-krea-style-inkwork-darkbrush",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 440.81647515296936,
+      "recipe_sha256": "5a82645ca85e1b7f287ba75759a5715aabd67c454c10e66cf2c15fbcc2bf6362",
+      "workflow_sha256": "dde911d0ba5c1bf6aabaead3f2ca418fde2b2274fbfc7ec7ff0b6ca7404642cd",
+      "outputs": [
+        {
+          "filename": "krea-style-lab_00007_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/d4f127c4-6553-42ea-b95b-eba49ad16c70/0",
+          "sha256": "480eaa8ff6c9236ac30c98e188ab2d97a45dbb2054be635eb12636391e85f75b",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 2034321,
+          "unique_rgb_colours": 52795
+        }
+      ]
+    },
+    {
+      "job_id": "62293170-defd-467c-87e3-9809cefe215d",
+      "prompt_id": "5c7b9dae-acfc-485f-9be2-3b53e0c59b23",
+      "look": "look-krea-style-inkwork-darkbrush",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 427.1001193523407,
+      "recipe_sha256": "8964e5dea06ff39e187c6ca4cdf5ffdac81aa19a1ace40bb675f0f64a6939642",
+      "workflow_sha256": "54f77415c06926c829cbd67fabdf8ed923c2784234d003825d3b6910010d4a94",
+      "outputs": [
+        {
+          "filename": "krea-style-lab_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/62293170-defd-467c-87e3-9809cefe215d/0",
+          "sha256": "958ad39a6402691ae555bd3bbef8ffb3736bbd5bae95126936cb5c36747b6d85",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1847745,
+          "unique_rgb_colours": 51311
+        }
+      ]
+    },
+    {
+      "job_id": "8f23e5df-ead0-4a7d-8a48-e5a469bb64a8",
+      "prompt_id": "eec673ea-337f-4843-b1f7-9a3e1400b5a8",
+      "look": "look-krea-style-airy-softwatercolor",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 426.9166748523712,
+      "recipe_sha256": "de398b2d7aabd7b8f569cbeea87a59ad866f9ed0892dc7a7b08ac7659908611a",
+      "workflow_sha256": "d38bb28440f0966b2e9248afaa78b0be72f47e06bd9f94b804b875c3316ff50b",
+      "outputs": [
+        {
+          "filename": "krea-style-lab_00009_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/8f23e5df-ead0-4a7d-8a48-e5a469bb64a8/0",
+          "sha256": "11b8ad1d6f2e41fa6816e195027c6407c22a241f74db29a549997e31e01855c1",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1869527,
+          "unique_rgb_colours": 382305
+        }
+      ]
+    },
+    {
+      "job_id": "678acdad-03d8-4c79-95df-b5996226f66a",
+      "prompt_id": "2e06b768-2ce8-4379-be1c-4981660b5f23",
+      "look": "look-krea-style-airy-softwatercolor",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 433.09413838386536,
+      "recipe_sha256": "f2e3a067488fb69bf9446feac2cc03ecc9b6605b72bbc5a576c945a95fe94a9c",
+      "workflow_sha256": "c5d06783b874b17393cfab7dcf95a570334d42ba8d7d63f1cebc1c2a2ae3b763",
+      "outputs": [
+        {
+          "filename": "krea-style-lab_00010_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/678acdad-03d8-4c79-95df-b5996226f66a/0",
+          "sha256": "104f2166602ea9be4dafe449483cce76dd85086eb7ed31c17e253b967031d9d2",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1864953,
+          "unique_rgb_colours": 407418
+        }
+      ]
+    },
+    {
+      "job_id": "cf8cdcd8-815c-4ba6-9fd2-63728dd8f9a5",
+      "prompt_id": "47d0ecf3-69f3-433a-bdd2-6df1d7d31e54",
+      "look": "look-krea-realistic-snapshot",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 344.4027190208435,
+      "recipe_sha256": "2321632e25254a6c24d016eb1ab304eb8423388d67ce404e297e46d930d92eee",
+      "workflow_sha256": "eb8823c86354538a2d398b98bfe356bcb76579a46d92d2874fe2781d952db9be",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00035_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/cf8cdcd8-815c-4ba6-9fd2-63728dd8f9a5/0",
+          "sha256": "3778fd9673eb268187dfe318f62bbcc9f5a4acc5c2582dd054875408266fed9b",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1002575,
+          "unique_rgb_colours": 135934
+        }
+      ]
+    },
+    {
+      "job_id": "da7707be-2083-49d3-ac71-6b0fe4339662",
+      "prompt_id": "cbe33286-e4bf-40c2-b2a9-68965b3f2b2e",
+      "look": "look-krea-realistic-snapshot",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 341.05149602890015,
+      "recipe_sha256": "16c697835b2cf67edcd2d10cdb71a52c05e101acf5015aa2df8b84dbd535323b",
+      "workflow_sha256": "68268c9caabb20ac5995dc41a38c4316d28179e33a8653e55a058f894f36d883",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00036_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/da7707be-2083-49d3-ac71-6b0fe4339662/0",
+          "sha256": "605ec6b831d7a00179687a0bd63cfd703b7e9bad586eeaab83b823e02d5cbc30",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1154371,
+          "unique_rgb_colours": 235944
+        }
+      ]
+    },
+    {
+      "job_id": "a7cec8ed-3a5e-42fc-8ff3-c6ccfbfced3b",
+      "prompt_id": "d9146ac7-325a-4959-ae23-5d916894cf42",
+      "look": "look-krea-lenovo-ultrareal",
+      "variant": "r1-default",
+      "status": "completed",
+      "seconds": 356.0608220100403,
+      "recipe_sha256": "8faa50ad287a4842b26e04494f1da24a3c5bd6a8e1da0f045f7eb41744f0c187",
+      "workflow_sha256": "9d2ba891122abb80a9467abcc9fca49566e9bb2d43872df13b8ffb06da7eabe4",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00037_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/a7cec8ed-3a5e-42fc-8ff3-c6ccfbfced3b/0",
+          "sha256": "f8ea7e2f13b4e86790f68328d6b0b59f5565817d0bbee6a728595daafa89a2b5",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1158469,
+          "unique_rgb_colours": 125744
+        }
+      ]
+    },
+    {
+      "job_id": "d1b286b2-ab3b-4070-b656-610f7b570e1c",
+      "prompt_id": "efccc66f-ee95-43c7-9468-7c212d964d74",
+      "look": "look-krea-lenovo-ultrareal",
+      "variant": "r1-new",
+      "status": "completed",
+      "seconds": 358.38891768455505,
+      "recipe_sha256": "fae2a22b04198addb19d055a7cbf00186a1f09f2a972027e27d5f3d7901a9743",
+      "workflow_sha256": "426d5be9437885e123700a67f40107e9f1f638b319f4d89184d47f0233655d79",
+      "outputs": [
+        {
+          "filename": "krea-anime-atelier_00038_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/d1b286b2-ab3b-4070-b656-610f7b570e1c/0",
+          "sha256": "2243eb901b48170b0dee39249bf9396a2cd0ffbd54c8a914bf8135265140f555",
+          "width": 768,
+          "height": 1152,
+          "bytes": 1173849,
+          "unique_rgb_colours": 198391
+        }
+      ]
+    },
+    {
+      "job_id": "eab4cb64-eda6-4b45-b1ba-10d529af44be",
+      "prompt_id": "9d5ab7ba-1ea9-4b61-9a0b-a55321a3f70b",
+      "look": "look-anifox-ringeko",
+      "variant": "reliability-1",
+      "status": "completed",
+      "seconds": 38.79784870147705,
+      "recipe_sha256": "424ad72fef1886aff623e3c623e3622bb9b911c673c738eaaf6ff9ee467ee362",
+      "workflow_sha256": "139b03a57b148bdecedace2a39f8de82606e2abb7bb234b4d3f49f8f85337421",
+      "outputs": [
+        {
+          "filename": "AniFox-v2-Baseline_00019_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/eab4cb64-eda6-4b45-b1ba-10d529af44be/0",
+          "sha256": "0192a205d8f01ae873137b9b6fe9fb3fb9dc242749b27d4cbd45ef65331f3455",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1176611,
+          "unique_rgb_colours": 149380
+        }
+      ]
+    },
+    {
+      "job_id": "09ccb590-11bc-4a44-ab10-5dfd502f0b9e",
+      "prompt_id": "dff3f699-f69a-416f-a3ce-42e17de0bde5",
+      "look": "look-anifox-ringeko",
+      "variant": "reliability-2",
+      "status": "completed",
+      "seconds": 16.231189250946045,
+      "recipe_sha256": "60be5466405fda9248af5a2d5f1eb2e8dbb2a870a50b8b244630b1f3d0b23b16",
+      "workflow_sha256": "210f79ea6188e27c74dc54e69116ce1040eacecf23c148fda6e885b7c88d980e",
+      "outputs": [
+        {
+          "filename": "AniFox-v2-Baseline_00020_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/09ccb590-11bc-4a44-ab10-5dfd502f0b9e/0",
+          "sha256": "b9b661c8c4badc91b3af30fab0e642aa37b2cde1b8cec37185121c797ea40503",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1176758,
+          "unique_rgb_colours": 148509
+        }
+      ]
+    },
+    {
+      "job_id": "595bf57d-e0e6-4693-b5e8-c436b018fed4",
+      "prompt_id": "630dfe11-1a74-4857-8e4d-cf33d49293d7",
+      "look": "look-pearly-anima-mix-v10-showcase",
+      "variant": "reliability-1",
+      "status": "completed",
+      "seconds": 31.57543110847473,
+      "recipe_sha256": "66822eea2d13f8e406bf0ac1b350b4d3b9b82ccf9bb8ca4b3e3dc54a19e361f4",
+      "workflow_sha256": "f06b0ac83b6544439730f16630e2179c9e325f2ce0f7570e5821fa0d11280d5c",
+      "outputs": [
+        {
+          "filename": "Pearly-Anima-Mix-v10-Baseline_00007_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/595bf57d-e0e6-4693-b5e8-c436b018fed4/0",
+          "sha256": "933fe4b98e5e82770b12fbd7768f500a11f70b24f6e2509c2242065dd1784555",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1230857,
+          "unique_rgb_colours": 168290
+        }
+      ]
+    },
+    {
+      "job_id": "4ae84c87-d028-4cfd-98c1-a9d9128abf52",
+      "prompt_id": "98be281e-7b46-46b9-b76e-a2a0cdb21fc1",
+      "look": "look-pearly-anima-mix-v10-showcase",
+      "variant": "reliability-2",
+      "status": "completed",
+      "seconds": 16.22641372680664,
+      "recipe_sha256": "951aa2278c30790c6e2fb9cff51ac0a934318fe9442c7f81a511077aff8cb940",
+      "workflow_sha256": "a07c70e41761e21d8999684a41d38ec15a6692a2b3b54fd1cdd380ec1ec90bc8",
+      "outputs": [
+        {
+          "filename": "Pearly-Anima-Mix-v10-Baseline_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/4ae84c87-d028-4cfd-98c1-a9d9128abf52/0",
+          "sha256": "e08da086f8fe07362d7fb7fb48d6634f19cc81507735fc726cd8256ed19cb99f",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1233094,
+          "unique_rgb_colours": 165911
+        }
+      ]
+    },
+    {
+      "job_id": "79f0c436-4ad2-4f9a-ae67-dbd41d0af25a",
+      "prompt_id": "8093bf68-48b6-4ca7-a8ec-85d4e852317d",
+      "look": "look-night-shift-retro-anime",
+      "variant": "reliability-1",
+      "status": "completed",
+      "seconds": 117.17009043693542,
+      "recipe_sha256": "bd0927b0739ea46a4a485d4d4d0aa253bbda041a628c5824e0c0799770da108d",
+      "workflow_sha256": "ff32e7aad6ea83bb294c448036aedb387f16d96830c0fe0ddf34658d7d7fb2d3",
+      "outputs": [
+        {
+          "filename": "Z-Image-Fast_00035_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/79f0c436-4ad2-4f9a-ae67-dbd41d0af25a/0",
+          "sha256": "dcadef723100cb583f9bae47e42d6ca11b7d560c4e8235936872451a0adbcdd9",
+          "width": 1344,
+          "height": 768,
+          "bytes": 978172,
+          "unique_rgb_colours": 104616
+        }
+      ]
+    },
+    {
+      "job_id": "f266df6f-a426-423c-a9d5-0ea5a10160e9",
+      "prompt_id": "071a7730-c729-44b6-a53a-99635ba264f9",
+      "look": "look-night-shift-retro-anime",
+      "variant": "reliability-2",
+      "status": "completed",
+      "seconds": 8.164530038833618,
+      "recipe_sha256": "8cbd27736d84b59e06a78e04a13f6db1bd725cc4e0d80d096d805991ab722d20",
+      "workflow_sha256": "38102acd13b6add95b0403c8cdd013fd6ae21ced103c9459f3d8de3b7c4c4312",
+      "outputs": [
+        {
+          "filename": "Z-Image-Fast_00036_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/f266df6f-a426-423c-a9d5-0ea5a10160e9/0",
+          "sha256": "799c55c8ac7e7e81b264f1a491670b119650fde6566b637d38b316ddc6fa61d2",
+          "width": 1344,
+          "height": 768,
+          "bytes": 1023874,
+          "unique_rgb_colours": 117092
+        }
+      ]
+    },
+    {
+      "job_id": "f30f5cd1-2f1d-48d0-b87e-37e44a7acc13",
+      "prompt_id": "d42017e4-0618-4f41-a95e-5f89580e55a5",
+      "look": "look-anima-pearly-petiflow",
+      "variant": "reliability-1",
+      "status": "completed",
+      "seconds": 32.7240936756134,
+      "recipe_sha256": "4cefc43a1113d6a0a7ce0f301dede65fab1cf685f5fd136ee0f532834a54069e",
+      "workflow_sha256": "114f950cf07b90a6f062f1ac0865dc8f24e3a443803f2b614dd5f0ada97d9d24",
+      "outputs": [
+        {
+          "filename": "Anima-v1-Baseline_00048_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/f30f5cd1-2f1d-48d0-b87e-37e44a7acc13/0",
+          "sha256": "8f03b50a228b648f5e70f701b190f730394ac01982be7dff0b172cc0d5320469",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1286234,
+          "unique_rgb_colours": 149109
+        }
+      ]
+    },
+    {
+      "job_id": "686109d1-699c-42a8-97ec-bd94304f60ef",
+      "prompt_id": "5b4b50de-3ba7-49d8-b7a0-690d961e97f5",
+      "look": "look-anima-pearly-petiflow",
+      "variant": "reliability-2",
+      "status": "completed",
+      "seconds": 16.175634622573853,
+      "recipe_sha256": "12d7d4c0e574aaab580f8bfaa3dea154c7a267ee6a493d7fbd42ce3cec921670",
+      "workflow_sha256": "75963b8932f8de34e017a6f0c46d266c1deaa8ebd76396c3bdd7b979a9c47b07",
+      "outputs": [
+        {
+          "filename": "Anima-v1-Baseline_00049_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/686109d1-699c-42a8-97ec-bd94304f60ef/0",
+          "sha256": "4623da9cba5d835702919fa9e2c996b8e22ff66facee044e799139744feba4dd",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1293847,
+          "unique_rgb_colours": 146478
+        }
+      ]
+    },
+    {
+      "job_id": "7858463c-2417-4b8a-b4f8-6e335eec5bc9",
+      "prompt_id": "327b206e-f3cc-41c5-9dc8-f0b9ae112d46",
+      "look": "look-oneobsession-anima-v20-showcase",
+      "variant": "reliability-1",
+      "status": "completed",
+      "seconds": 32.4593710899353,
+      "recipe_sha256": "327b7cb961af2f628656af8dbb39c3a3886b63e19f18bbbbd8c0943a2c3fca1f",
+      "workflow_sha256": "eeb6e3e32a885add35d7790e26068cde3c0c12bc0b6b2555fc918360bfa4e0aa",
+      "outputs": [
+        {
+          "filename": "OneObsession-Anima-v20-Baseline_00007_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/7858463c-2417-4b8a-b4f8-6e335eec5bc9/0",
+          "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1422801,
+          "unique_rgb_colours": 210322
+        }
+      ]
+    },
+    {
+      "job_id": "e5aab6d0-8275-41bc-a0a3-c989ebb70af3",
+      "prompt_id": "16abbcef-3e36-4e9a-a4c9-66d40469f48d",
+      "look": "look-oneobsession-anima-v20-showcase",
+      "variant": "reliability-2",
+      "status": "completed",
+      "seconds": 20.312185764312744,
+      "recipe_sha256": "caa02d53784a8644bd07d090a013375a0ed27825f78752d74fdf406c3c19e36c",
+      "workflow_sha256": "a9de50ca61aa75bf9af371ecab4a771cb55a99bdea8faeec317522c1fe45c942",
+      "outputs": [
+        {
+          "filename": "OneObsession-Anima-v20-Baseline_00008_.png",
+          "subfolder": "Studio",
+          "type": "output",
+          "index": 0,
+          "url": "/api/image/e5aab6d0-8275-41bc-a0a3-c989ebb70af3/0",
+          "sha256": "049cdd9dcdcbbbf1e6dc203994741cfcdbb1ef22a0d7db1f40c0766cba862fdb",
+          "width": 832,
+          "height": 1216,
+          "bytes": 1333848,
+          "unique_rgb_colours": 146853
+        }
+      ]
+    }
+  ]
+}

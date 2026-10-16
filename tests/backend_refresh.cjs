@@ -21,6 +21,63 @@ test('late catalogue preserves latest wording, cleared settings and focused nume
  f.pending[1].resolve({presets:[f.a,f.b]});await work;
  assert.equal(f.node('#positive').value,'latest typing');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.node('[data-key="steps"]').value,'11');assert.equal(f.context.document.activeElement,f.node('[data-key="steps"]'));assert.equal(f.writes.length,0);
 });
+
+test('a same-backend refresh takes over the still-uncommitted inventory read',async()=>{
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+ f.context.atelierReadEpoch=0;f.context.installedLoras=['previous.safetensors'];f.context.knowledge={backend:'previous'};f.context.atelierRecipes=[{id:'previous'}];
+ vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ const older=f.run();f.pending.at(-1).resolve(f.backend('A'));await f.tick();f.pending.at(-1).resolve({presets:[f.a,f.b]});await f.tick();
+ const held=f.pending.at(-1),newer=f.run();f.pending.at(-1).resolve(f.backend('A'));await f.tick();
+ f.pending.at(-1).resolve({loras:['current-A.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'current-A'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'current-A'}]});await newer;
+ held.resolve({loras:['A.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'A'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'A'}]});await older;
+ assert.deepEqual(Array.from(f.context.installedLoras),['current-A.safetensors']);assert.equal(f.context.knowledge.backend,'current-A');assert.equal(f.context.atelierRecipes[0].id,'current-A');
+});
+
+for(const observed of ['A','B'])test('failed switch reconciles '+observed+' and retries pending inventory once',async()=>{
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+ f.context.atelierReadEpoch=0;f.context.installedLoras=['previous.safetensors'];f.context.knowledge={backend:'previous'};f.context.atelierRecipes=[{id:'previous'}];
+ vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ const older=f.run();f.pending.at(-1).resolve(f.backend('A'));await f.tick();f.pending.at(-1).resolve({presets:[f.a,f.b]});await f.tick();
+ const held=f.pending.at(-1),command=deferred();f.context.post=(...args)=>{f.writes.push(args);return command.promise;};
+ f.node('#positive').value='Latest authored wording';f.node('[data-key="seed"]').value='';f.node('[data-key="steps"]').value='19';f.node('[data-key="steps"]').focus();
+ const switchWork=f.node('#switchBackend').onclick();command.reject(Error('Switch reply lost'));await f.tick();
+ assert.equal(f.pending.at(-1).url,'/api/backends','failure must observe actual backend without replaying POST');
+ f.pending.at(-1).resolve(f.backend(observed));await f.tick();
+ if(observed==='B'){assert.equal(f.pending.at(-1).url,'/api/catalog');f.pending.at(-1).resolve({presets:[f.a,f.b]});await f.tick();}
+ assert.equal(f.pending.at(-1).url,'/api/options?refresh');f.pending.at(-1).resolve({loras:['current-'+observed+'.safetensors']});await f.tick();
+ f.pending.at(-1).resolve({backend:'current-'+observed});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'current-'+observed}]});await switchWork;
+ held.resolve({loras:['stale.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'stale'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'stale'}]});await older;
+ assert.deepEqual(Array.from(f.context.installedLoras),['current-'+observed+'.safetensors']);assert.equal(f.context.knowledge.backend,'current-'+observed);
+ assert.equal(vm.runInContext('backendInventoryPending',f.context),false);assert.equal(f.writes.length,1);
+ assert.equal(f.node('#positive').value,'Latest authored wording');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.node('[data-key="steps"]').value,'19');assert.equal(f.context.document.activeElement,f.node('[data-key="steps"]'));
+});
+
+test('an obsolete switch failure cannot clear a newer successful switch or its pending read',async()=>{
+ const f=fixture(),commands=[];f.context.post=(...args)=>{f.writes.push(args);const d=deferred();commands.push(d);return d.promise;};
+ const older=f.node('#switchBackend').onclick(),newer=f.node('#switchBackend').onclick();commands[1].resolve({});await f.tick();
+ commands[0].reject(Error('obsolete failure'));await older;
+ assert.equal(vm.runInContext('backendSwitching',f.context),true);assert.equal(f.node('#switchBackend').disabled,true);assert.notEqual(f.node('#backendStatus').textContent,'obsolete failure');
+ assert.equal(f.pending.length,1,'older failure must not launch a competing read');f.pending[0].resolve(f.backend('old'));await newer;
+ assert.equal(vm.runInContext('backendSwitching',f.context),false);assert.equal(f.writes.length,2);
+});
+
+test('failed current switch remains visible after actual-backend reconciliation',async()=>{
+ const f=fixture();f.context.post=async()=>{throw Error('Requested backend is unavailable');};
+ const work=f.node('#switchBackend').onclick();await f.tick();f.pending[0].resolve(f.backend('old'));await work;
+ assert.match(f.node('#backendStatus').textContent,/Requested backend is unavailable/);
+ assert.equal(vm.runInContext('backendSwitching',f.context),false);assert.equal(f.node('#switchBackend').disabled,false);
+});
+
+test('startup atelier reads yield to a newer inventory and current failures keep the existing empty fallback',async()=>{
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');f.context.atelierReadEpoch=0;
+ vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ const older=f.context.loadAtelier(),held=f.pending.at(-1),newer=f.context.loadAtelier();
+ f.pending.at(-1).resolve({loras:['B.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'B'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'B'}]});await newer;
+ held.resolve({loras:['A.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'A'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'A'}]});await older;
+ assert.deepEqual(Array.from(f.context.installedLoras),['B.safetensors']);assert.equal(f.context.knowledge.backend,'B');assert.equal(f.context.atelierRecipes[0].id,'B');
+ const failed=f.context.loadAtelier();for(let i=0;i<3;i++){f.pending.at(-1).reject(Error('unavailable'));await f.tick();}await failed;
+ assert.deepEqual(Array.from(f.context.installedLoras),[]);assert.equal(f.context.knowledge,null);assert.deepEqual(Array.from(f.context.atelierRecipes),[]);
+});
 test('recipe chosen during catalogue read remains the selected recipe',async()=>{
  const f=fixture();const {work}=await begin(f);f.context.selected=f.b;f.node('#positive').value='B wording';f.pending[1].resolve({presets:[f.a,f.b]});await work;assert.equal(f.context.selected.id,'b');assert.equal(f.node('#positive').value,'B wording');
 });
@@ -95,9 +152,141 @@ for(const operation of [{status:'running',message:'Switching'},{status:'running'
  assert.ok(f.node('#backendStatus').textContent.includes('incomplete'));
  assert.equal(f.node('#positive').value,'draft');
 });
+// Slot options and Vary buttons are what the page draws. Counting loadAtelier stays green while both stay stale.
+function cut(text,start,end){const i=text.indexOf(start),j=text.indexOf(end,i+start.length);assert.ok(i>=0&&j>i,start);return text.slice(i,j);}
+function classNames(node){return String(node.className||'').split(/\s+/).filter(Boolean);}
+function matches(node,sel){return sel.startsWith('.')&&classNames(node).includes(sel.slice(1));}
+function queryAll(node,sel){
+  if(sel===':scope > .ux-vary')return node.childNodes.filter(child=>matches(child,'.ux-vary'));
+  const out=[];
+  for(const child of node.childNodes){if(matches(child,sel))out.push(child);out.push(...queryAll(child,sel));}
+  return out;
+}
+function domNode(tag){
+  const node={tagName:String(tag).toUpperCase(),className:'',id:'',dataset:{},childNodes:[],parentNode:null,_html:'',
+    setAttribute(){},querySelector(sel){return this.querySelectorAll(sel)[0]||null;},querySelectorAll(sel){return queryAll(this,sel);},
+    after(next){const parent=this.parentNode;if(!parent)return;parent.childNodes.splice(parent.childNodes.indexOf(this)+1,0,next);next.parentNode=parent;},
+    replaceWith(next){const parent=this.parentNode;if(!parent)return;parent.childNodes.splice(parent.childNodes.indexOf(this),1,next);next.parentNode=parent;this.parentNode=null;},
+    remove(){if(this.parentNode)this.parentNode.childNodes=this.parentNode.childNodes.filter(child=>child!==this);this.parentNode=null;},
+    append(child){this.childNodes.push(child);child.parentNode=this;}};
+  Object.defineProperty(node,'parentElement',{get(){return this.parentNode;}});
+  Object.defineProperty(node,'innerHTML',{get(){return this._html;},set(html){this._html=String(html);}});
+  return node;
+}
+function slotSelects(html){
+  const out=[],re=/<select data-key="([^"]*)">([\s\S]*?)<\/select>/g;let match;
+  while((match=re.exec(html))){
+    const options=[...match[2].matchAll(/<option([^>]*)>([^<]*)<\/option>/g)].map(option=>({selected:/\bselected\b/.test(option[1]),text:option[2],value:option[1].match(/value="([^"]*)"/)?.[1]??option[2]}));
+    const chosen=options.find(option=>option.selected)||options[0];
+    out.push({dataset:{key:match[1]},value:chosen?chosen.value:''});
+  }
+  return out;
+}
+test('a backend switch rebuilds adapter slots and enables Vary for adapters the new backend has',async()=>{
+  const f=fixture();
+  const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8'));
+  const wai=catalog.presets.find(preset=>preset.id==='wai'),vary=catalog.presets.find(preset=>preset.id==='wai-vary');
+  vary.continuation_capability={version:1,consumes_source:true,operation:'image-to-image',prompt_role:'description',requires_mask:false};
+  f.a.lora_name=['8','lora_name'];f.a.lora2_name=['9','lora_name'];
+  const gallery=domNode('div'),card=domNode('article'),anchor=domNode('a'),actions=domNode('div'),handoffs=domNode('div'),holder=domNode('div');
+  gallery.id='gallery';card.className='imageCard';anchor.className='reference-output';anchor.dataset.job='job-1';anchor.dataset.index='0';actions.className='card-actions';
+  card.append(anchor);card.append(actions);gallery.append(card);handoffs.id='assetHandoffs';holder.append(handoffs);
+  f.context.document.querySelector=sel=>sel==='#gallery'?gallery:sel==='#assetHandoffs'?handoffs:null;
+  f.context.document.createElement=tag=>domNode(tag);
+  f.context.q=sel=>f.context.document.querySelector(sel);
+  f.context.escape=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  f.context.StudioContinuation=require('../app/static/continuation-core.js');
+  f.context.installedLoras=['qwen-only.safetensors'];f.context.atelierReadEpoch=0;
+  f.context.jobs=[{id:'job-1',preset_id:'wai',status:'completed',outputs:[{asset_id:'asset-1',media_type:'image'}],controls:{lora:'1',lora_name:'primary-only.safetensors',lora2:'0',lora2_name:'primary-two.safetensors',sampler:'euler_ancestral',scheduler:'normal',cfg:'5',steps:'20'}}];
+  f.context.assetState={assets:[{id:'asset-1',media_type:'image',preset_id:'wai',job_id:'job-1'}]};
+  f.context.activeAsset=f.context.assetState.assets[0];
+  f.context.missingByPreset={};
+  f.context.catalog={presets:[f.a,f.b,wai,vary]};
+  const app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+  const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const box=f.node('#loraSlots');
+  box.querySelectorAll=function(sel){return sel==='select[data-key]'?slotSelects(this.innerHTML):[];};
+  vm.runInContext(cut(app,'const loraSlotKeys = ','const controlKeys = ')+cut(app,'const activeLoraSlots = () =>','function updateLoraHints')+cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY')+cut(workbench,'  function element(tag,className,html)','  function announce')+cut(workbench,'  function varyMarkup','  after(\'renderJobs\',syncGalleryVary)'),f.context);
+  f.context.renderLoraSlots();f.context.refreshCarriedVary();
+  const staleSlots=box.innerHTML,staleGallery=card.querySelector('.ux-vary').innerHTML,staleAsset=holder.querySelector('.ux-vary').innerHTML;
+  assert.match(staleSlots,/qwen-only\.safetensors/);assert.doesNotMatch(staleSlots,/primary-only\.safetensors/);
+  assert.match(staleGallery,/\bdisabled\b/);assert.match(staleGallery,/Missing here/);assert.match(staleGallery,/primary-only\.safetensors/);
+  assert.match(staleAsset,/\bdisabled\b/);assert.doesNotMatch(staleAsset,/data-ux-vary="subtle"/);
+  box.innerHTML='<select data-key="lora_name"><option selected>shared.safetensors</option></select>';
+  const {work}=await begin(f);
+  f.pending[1].resolve({presets:[f.a,f.b,wai,vary]});await f.tick();
+  assert.equal(f.pending[2].url,'/api/options?refresh');
+  f.pending[2].resolve({loras:['primary-only.safetensors','primary-two.safetensors','shared.safetensors']});await f.tick();
+  assert.equal(f.pending[3].url,'/api/knowledge');f.pending[3].resolve({});await f.tick();
+  assert.equal(f.pending[4].url,'/api/recipes');f.pending[4].resolve({recipes:[]});
+  await work;
+  assert.match(box.innerHTML,/primary-only\.safetensors/);assert.match(box.innerHTML,/primary-two\.safetensors/);
+  assert.equal(slotSelects(box.innerHTML)[0].value,'shared.safetensors','switch completion keeps a choice still installed on the new backend');
+  const galleryNow=card.querySelector('.ux-vary').innerHTML,assetNow=holder.querySelector('.ux-vary').innerHTML;
+  assert.match(galleryNow,/data-ux-vary="subtle"/);assert.match(galleryNow,/data-ux-vary="strong"/);assert.doesNotMatch(galleryNow,/\bdisabled\b/);assert.doesNotMatch(galleryNow,/Missing here/);
+  assert.match(assetNow,/data-ux-vary="subtle"/);assert.doesNotMatch(assetNow,/\bdisabled\b/);
+  const settledSlots=box.innerHTML,options=f.pending.filter(item=>item.url==='/api/options?refresh').length;
+  const again=f.run();f.pending.at(-1).resolve(f.backend('new'));await again;
+  assert.equal(f.pending.filter(item=>item.url==='/api/options?refresh').length,options,'an unchanged backend does not reload the inventory');
+  assert.equal(box.innerHTML,settledSlots);assert.equal(card.querySelector('.ux-vary').innerHTML,galleryNow);assert.equal(holder.querySelector('.ux-vary').innerHTML,assetNow);
+});
 test('missing backend status reports incomplete without losing the draft',async()=>{
  const f=fixture();f.node('#positive').value='draft';
  const work=f.run();f.pending[0].resolve(null);await work;
  assert.ok(f.node('#backendStatus').textContent.includes('incomplete'));
  assert.equal(f.node('#positive').value,'draft');
+});
+
+for(const stage of ['options','knowledge','recipes'])for(const failed of [false,true])test('superseded atelier '+stage+' '+(failed?'failure':'success')+' keeps the newer inventory',async()=>{
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+ f.context.atelierReadEpoch=0;
+ vm.runInContext(cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ const settle=async(request,value)=>{request.resolve(value);await f.tick();};
+ const inventory=id=>({options:{loras:[id+'.safetensors']},knowledge:{backend:id},recipes:{recipes:[{id}]}});
+ const a=inventory('A'),b=inventory('B');
+ const older=f.run();await settle(f.pending.at(-1),f.backend('A'));await settle(f.pending.at(-1),{presets:[f.a,f.b]});
+ for(const prior of ['options','knowledge','recipes']){if(prior===stage)break;await settle(f.pending.at(-1),a[prior]);}
+ const held=f.pending.at(-1),newer=f.run();await settle(f.pending.at(-1),f.backend('B'));await settle(f.pending.at(-1),{presets:[f.a,f.b]});
+ for(const part of ['options','knowledge','recipes'])await settle(f.pending.at(-1),b[part]);
+ await newer;
+ f.node('#positive').value='new B wording';f.node('[data-key="seed"]').value='';
+ if(failed)held.reject(Error('old inventory failed'));else held.resolve(a[stage]);await f.tick();
+ for(const part of ['options','knowledge','recipes'].slice(['options','knowledge','recipes'].indexOf(stage)+1))await settle(f.pending.at(-1),a[part]);
+ await older;
+ assert.deepEqual(Array.from(f.context.installedLoras),['B.safetensors']);assert.equal(f.context.knowledge?.backend,'B');assert.equal(f.context.atelierRecipes[0]?.id,'B');
+ assert.equal(f.node('#activeBackend').textContent,'B');assert.equal(f.node('#positive').value,'new B wording');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.writes.length,0);
+});
+
+function loraFixture(){
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8'),box=f.node('#loraSlots');
+ let html='';Object.defineProperty(box,'innerHTML',{get(){return html;},set(value){html=String(value);f.node('[data-key="lora"]').value='';}});
+ f.a.lora_name=['8','lora_name'];f.a.defaults.lora_name='authored.safetensors';f.a.choices={lora_name:['stale.safetensors']};
+ f.context.installedLoras=['authored.safetensors'];f.context.atelierReadEpoch=0;
+ box.querySelectorAll=sel=>sel==='select[data-key]'?slotSelects(box.innerHTML):[];
+ vm.runInContext(cut(app,'const loraSlotKeys = ','const controlKeys = ')+cut(app,'const activeLoraSlots = () =>','function updateLoraHints')+cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ return {...f,box,app};
+}
+test('rebuilding slots keeps a recorded unlisted file with an explicit label and its exact value',()=>{
+ const f=loraFixture();
+ f.box.innerHTML='<select data-key="lora_name"><option selected>recorded.safetensors</option></select>';
+ f.context.renderLoraSlots();
+ assert.match(f.box.innerHTML,/recorded\.safetensors \(recorded, not in the list\)/);
+ assert.equal(slotSelects(f.box.innerHTML)[0].value,'recorded.safetensors');
+ f.context.renderLoraSlots();assert.equal(slotSelects(f.box.innerHTML)[0].value,'recorded.safetensors','the label never becomes the submitted filename');
+ f.context.installedLoras=[];f.context.renderLoraSlots();assert.doesNotMatch(f.box.innerHTML,/stale\.safetensors/,'an empty refreshed inventory must not resurrect old catalogue choices');
+});
+test('Models refresh reloads options, redraws slots and Vary, and retains the installed choice and zero strength',async()=>{
+ const f=loraFixture();
+ f.box.innerHTML='<select data-key="lora_name"><option selected>keep.safetensors</option></select>';
+ f.node('[data-key="lora"]').value='0';f.context.updateLoraHints=()=>{};
+ let vary=0;f.context.refreshCarriedVary=()=>{vary++;};
+ vm.runInContext(cut(f.app,"$('#refreshModels').onclick=",";$('#modelSearch')")+';',f.context);
+ const work=f.node('#refreshModels').onclick();
+ assert.equal(f.pending.at(-1).url,'/api/health?refresh');f.pending.at(-1).resolve({});await f.tick();
+ assert.equal(f.pending.at(-1).url,'/api/options?refresh');f.pending.at(-1).resolve({loras:['keep.safetensors','new.safetensors']});await f.tick();
+ f.pending.at(-1).resolve({});await f.tick();f.pending.at(-1).resolve({recipes:[]});await work;
+ assert.deepEqual(Array.from(f.context.installedLoras),['keep.safetensors','new.safetensors']);
+ assert.match(f.box.innerHTML,/new\.safetensors/);assert.doesNotMatch(f.box.innerHTML,/stale\.safetensors/);
+ assert.equal(slotSelects(f.box.innerHTML)[0].value,'keep.safetensors');assert.doesNotMatch(f.box.innerHTML,/keep\.safetensors \(recorded/);
+ assert.equal(f.node('[data-key="lora"]').value,'0');assert.equal(vary,1);assert.equal(f.writes.length,0);
 });

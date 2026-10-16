@@ -1,7 +1,7 @@
 # Workflow Lab
 
 Open **Asset Studio** on the desktop, or visit **http://127.0.0.1:8191**.
-The five in-page views are **Create**, **Workspace**, **Experiments**, **Models & folders** and **Workflow lab**;
+The five in-page views are **Create**, **Workspace**, **Experiments**, **Models & setup** and **Workflow lab**;
 the header also links the separately served **Scene editor**, **Voice baseline**, **Prompt Lab**, **Review desk** and
 **Workflow Studio** pages. The catalog has 66 presets across 14 categories (13 September 2026), including the 20
 Workflow Lab additions for manga, modern anime, video, geometry and textured 3D; each addition has an editable native
@@ -56,7 +56,7 @@ for the control-case contract and the current forensic record.
 ## What goes in which folder?
 
 The configured model root is `C:\AI\ComfyUI_windows_portable\ComfyUI\models`.
-Use **Models & folders** to copy an exact path, open Explorer, inspect installed
+Use **Models & setup** to copy an exact path, open Explorer, inspect installed
 weights, or install a pinned curated asset. Downloads verify size and SHA-256 before
 the final filename becomes visible to ComfyUI. They preserve 20 GiB of working headroom.
 
@@ -78,8 +78,8 @@ the final filename becomes visible to ComfyUI. They preserve 20 GiB of working h
 
 Whether a pinned file installs automatically depends on its **suffix, not its folder**. Only
 `.safetensors` is fetched and published by the installer; `.gguf`, `.pth`, `.pt` and `.onnx` pins are
-**pin only**. `library.json` records their size, SHA-256 and terms so **Models & folders** reports
-presence, but the installer refuses them and the card shows a disabled *Copy in by hand* button.
+**pin only**. `library.json` records their size, SHA-256 and terms so **Models & setup** reports
+presence, but the installer refuses them: a missing pin's card shows its source link, the folder it goes in and *Copy folder* / *Copy file path* buttons, with a muted *Manual install only* label instead of an install button.
 Today that is the detectors in `ultralytics`, the Fooocus head in `inpaint`, the two upscaler `.pth`
 files, and the three GGUF backbones — which live in `diffusion_models` and `text_encoders`, not in the
 four folders above. `ipadapter` and `vae_approx` currently hold only `.safetensors`. A pin with no

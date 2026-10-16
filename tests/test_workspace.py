@@ -1,5 +1,6 @@
 import importlib.util
 import json
+from contextlib import contextmanager
 import tempfile
 import time
 import unittest
@@ -47,6 +48,21 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self.store.snapshot()['assets'][0]['collections'],[b['id']])
         self.assertTrue(self.source.exists()); self.assertTrue(self.store.file(self.asset).exists())
 
+    def test_collection_commands_bump_only_rows_whose_membership_changed(self):
+        col=self.store.collection({'name':'Look'}); other=self.store.collection({'name':'Other'})
+        self.write(self.store, {'ids':[self.asset],'action':'add_collection','collection_id':col['id']})
+        rev=self.store.get(self.asset)['metadata_revision']
+        receipt=self.write(self.store, {'ids':[self.asset],'action':'add_collection','collection_id':col['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        self.assertEqual(receipt['unchanged'], [self.asset]); self.assertEqual(receipt['revisions'][self.asset], rev)
+        self.write(self.store, {'ids':[self.asset],'action':'remove_collection','collection_id':other['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        second=self.store.register(dict(self.job, id='job-2'), 0, self.source)
+        receipt=self.write(self.store, {'ids':[self.asset,second],'action':'add_collection','collection_id':col['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        self.assertEqual(self.store.get(second)['metadata_revision'], 1)
+        self.assertEqual(receipt['unchanged'], [self.asset])
+
     def test_edit_trash_restore_and_restart_preserve_metadata(self):
         self.write(self.store, {'ids':[self.asset],'action':'edit','title':'My ink study','tags':['ink','ink','pose'],'review':'needs_work','notes':'Fix the hand','favorite':True})
         self.write(self.store, {'ids':[self.asset],'action':'trash'})
@@ -56,6 +72,58 @@ class WorkspaceTests(unittest.TestCase):
         result=recovered.get(self.asset)
         self.assertEqual(result['tags'],['ink','pose']); self.assertEqual(result['notes'],'Fix the hand')
         self.assertEqual(result['review'],'needs_work'); self.assertTrue(result['favorite']); self.assertIsNone(result['trashed_at'])
+
+    def test_trash_restore_repeats_preserve_asset_state_and_receipts(self):
+        for action in ('restore', 'trash', 'restore'):
+            self.write(self.store, {'ids':[self.asset], 'action':action})
+            before = self.store.get(self.asset)
+            command = {'ids':[self.asset], 'action':action, 'request_id':uuid.uuid4().hex,
+                       'expected_revisions':{self.asset:before['metadata_revision']}}
+            result = self.store.update(command)
+            self.assertEqual(self.store.get(self.asset), before)
+            self.assertEqual(result['revisions'], {self.asset:before['metadata_revision']})
+            self.assertEqual(result['unchanged'], [self.asset])
+            self.assertEqual(self.store.update(command), result)
+            self.assertEqual(self.store.command_status(command['request_id']), result)
+            if before['metadata_revision']:
+                command = dict(command, request_id=uuid.uuid4().hex, expected_revisions={self.asset:before['metadata_revision']-1})
+                with self.assertRaises(workspace.WorkspaceError) as cm: self.store.update(command)
+                self.assertEqual((cm.exception.status, cm.exception.code), (409, 'asset_revision_conflict'))
+                self.assertEqual(self.store.get(self.asset), before)
+
+    def test_legacy_zero_trashed_at_counts_as_active_and_can_be_trashed(self):
+        with self.store.connection() as db: db.execute("UPDATE assets SET trashed_at=0 WHERE id=?", (self.asset,))
+        before = self.store.get(self.asset)
+        result = self.write(self.store, {'ids':[self.asset], 'action':'trash'})
+        after = self.store.get(self.asset)
+        self.assertNotIn('unchanged', result); self.assertGreater(after['trashed_at'], 0)
+        self.assertEqual(after['metadata_revision'], before['metadata_revision']+1)
+
+    def test_trash_restore_mixed_batch_changes_only_assets_needing_transition(self):
+        other = self.store.register(dict(self.job, id='job-2'), 0, self.source)
+        self.write(self.store, {'ids':[self.asset], 'action':'trash'})
+        for action, unchanged in (('trash', self.asset), ('restore', other)):
+            if action == 'restore': self.write(self.store, {'ids':[other], 'action':'restore'})
+            before = {i:self.store.get(i) for i in (self.asset, other)}
+            result = self.write(self.store, {'ids':[self.asset, other], 'action':action})
+            self.assertEqual(self.store.get(unchanged), before[unchanged])
+            changed = other if unchanged == self.asset else self.asset
+            self.assertEqual(self.store.get(changed)['metadata_revision'], before[changed]['metadata_revision']+1)
+            self.assertEqual(result['revisions'], {i:self.store.get(i)['metadata_revision'] for i in before})
+            self.assertEqual(result['unchanged'], [unchanged])
+
+    def test_card_trash_restore_repeats_preserve_state_and_stale_conflicts(self):
+        card = self.store.card_command({'action':'create', 'kind':'look', 'name':'Test', 'body':{}})
+        for action in ('restore', 'trash', 'restore'):
+            card = self.store.card_command({'action':action, 'id':card['id'], 'expected_revision':card['revision']})
+            command = {'action':action, 'id':card['id'], 'expected_revision':card['revision']}
+            self.assertEqual(self.store.card_command(command), card)
+            self.assertEqual(self.store.card(card['id']), card)
+            if card['revision']:
+                with self.assertRaises(workspace.WorkspaceError) as cm:
+                    self.store.card_command(dict(command, expected_revision=card['revision']-1))
+                self.assertEqual((cm.exception.status, cm.exception.code), (409, 'card_revision_conflict'))
+                self.assertEqual(self.store.card(card['id']), card)
 
     def test_bulk_edit_rejects_missing_asset_atomically(self):
         with self.assertRaises(workspace.WorkspaceError):
@@ -88,6 +156,27 @@ class WorkspaceTests(unittest.TestCase):
             self.store.save_setup({'action': 'delete'})
         self.assertEqual(self.store.setups(), before)
         self.assertEqual([s['id'] for s in self.store.setups()], [kept['id']])
+
+    def test_save_setup_conflicts_when_the_winning_row_vanishes_mid_save(self):
+        # The ignored INSERT sees a live row, but both reads of it miss: the winner was deleted in between.
+        recipe = {'preset': 'test'}
+        self.store.save_setup({'id': 'raced-setup', 'name': 'Raced', 'recipe': recipe})
+        real_connection = self.store.connection
+        class Empty:
+            rowcount = 0
+            def fetchone(self): return None
+        class HiddenReads:
+            def __init__(self, db): self.db = db
+            def __getattr__(self, name): return getattr(self.db, name)
+            def execute(self, sql, params=()):
+                return Empty() if sql.startswith('SELECT name,recipe FROM setups') else self.db.execute(sql, params)
+        @contextmanager
+        def connection():
+            with real_connection() as db: yield HiddenReads(db)
+        with patch.object(self.store, 'connection', connection):
+            with self.assertRaisesRegex(workspace.WorkspaceError, 'changed while it was being saved'):
+                self.store.save_setup({'id': 'raced-setup', 'name': 'Raced', 'recipe': recipe})
+        self.assertEqual([s['name'] for s in self.store.setups()], ['Raced'])
 
     def test_save_setup_validation_rejects_invalid_without_storing(self):
         self.assertEqual(self.store.setups(),[])
@@ -306,3 +395,148 @@ class WorkspaceTests(unittest.TestCase):
                     self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': [bad]})
                 self.assertEqual(self.store.get(self.asset), before)
                 self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_drops_blank_tags_and_refuses_an_all_blank_list(self):
+        with self.subTest(case='blank entries among real tags'):
+            self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': ['  ink  ', ' ', '\t']})
+            self.assertEqual(self.store.get(self.asset)['tags'], ['ink'])
+        with self.subTest(case='every entry blank'):
+            before = self.store.get(self.asset); receipts = self._receipt_count()
+            with self.assertRaisesRegex(workspace.WorkspaceError, 'non-blank tag'):
+                self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': ['   ', '']})
+            self.assertEqual(self.store.get(self.asset), before)
+            self.assertEqual(self._receipt_count(), receipts)
+        with self.subTest(case='empty list still clears'):
+            self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': []})
+            self.assertEqual(self.store.get(self.asset)['tags'], [])
+
+    def test_update_request_reuse(self):
+        rev = self.store.get(self.asset)['metadata_revision']
+        request_id = uuid.uuid4().hex
+        payload = {'ids': [self.asset], 'action': 'edit', 'title': 'Reuse title',
+                   'request_id': request_id, 'expected_revisions': {self.asset: rev}}
+        first = self.store.update(payload)
+        self.assertEqual(first['status'], 'applied')
+        self.assertEqual(first['request_id'], request_id)
+        self.assertEqual(self._receipt_count(), 1)
+        self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
+        # Identical retry returns the stored receipt without a second row,
+        # even though expected_revisions is now stale.
+        second = self.store.update(dict(payload))
+        self.assertEqual(second, first)
+        self.assertEqual(self._receipt_count(), 1)
+        self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
+        # Same request_id with a different fingerprint is a 409 reuse.
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update(dict(payload, title='Different title'))
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_request_reused')
+        self.assertEqual(cm.exception.details.get('request_id'), request_id)
+        self.assertEqual(self._receipt_count(), 1)
+        self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
+
+    def test_register_with_a_bad_output_index_raises_without_snapshotting(self):
+        other=self.root/'other.png';other.write_bytes(b'unregistered bytes')
+        before=set(p.name for p in self.store.media.iterdir())
+        with self.assertRaisesRegex(workspace.WorkspaceError,'job output'):self.store.register(self.job,7,other)
+        self.assertEqual(set(p.name for p in self.store.media.iterdir()),before)
+
+    def test_register_returns_stored_id_on_conflict(self):
+        # Normal path: a fresh (job_id, output_index) registers under its uuid5 id.
+        fresh_source = self.root / 'fresh.png'
+        fresh_source.write_bytes(b'fresh rendered bytes')
+        fresh_job = {'id': 'fresh-job', 'preset_name': 'Study',
+                     'outputs': [{'filename': 'fresh.png', 'media_type': 'image'}]}
+        fresh_id = self.store.register(fresh_job, 0, fresh_source)
+        self.assertEqual(fresh_id, uuid.uuid5(uuid.NAMESPACE_URL, 'asset-studio:fresh-job:0').hex)
+        self.assertEqual(self.store.get(fresh_id)['job_id'], 'fresh-job')
+        # Conflict path: a stored row already owns (job_id, output_index) under another id.
+        stored_id = '0' * 32
+        with self.store.connection() as db:
+            db.execute(
+                "INSERT INTO assets (id,job_id,output_index,title,media_type,path,filename,"
+                "sha256,bytes,created_at,source,lineage) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (stored_id, 'abc', 0, 'Seeded', 'image', 'media/seed.png', 'x.png',
+                 '0' * 64, 1, time.time(), '{}', '[]'))
+        conflict_source = self.root / 'x.png'
+        conflict_source.write_bytes(b'conflicting rendered bytes')
+        conflict_job = {'id': 'abc', 'preset_name': 'Study',
+                        'outputs': [{'filename': 'x.png', 'media_type': 'image'}]}
+        computed_id = uuid.uuid5(uuid.NAMESPACE_URL, 'asset-studio:abc:0').hex
+        self.assertNotEqual(computed_id, stored_id)
+        returned = self.store.register(conflict_job, 0, conflict_source)
+        self.assertEqual(returned, stored_id)
+        self.assertNotEqual(returned, computed_id)
+        # The returned id resolves; no orphan id is handed out.
+        self.assertEqual(self.store.get(returned)['job_id'], 'abc')
+        with self.assertRaisesRegex(workspace.WorkspaceError, 'Asset not found'):
+            self.store.get(computed_id)
+
+    def test_update_stale_revision_conflicts(self):
+        r = self.store.get(self.asset)['metadata_revision']
+        self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'title': 'First write'})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], r + 1)
+        after_first = self.store.get(self.asset)
+        receipts = self._receipt_count()
+        self.assertEqual(after_first['title'], 'First write')
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update({'ids': [self.asset], 'action': 'edit', 'title': 'Stale write',
+                               'request_id': uuid.uuid4().hex, 'expected_revisions': {self.asset: r}})
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_revision_conflict')
+        details = cm.exception.details
+        self.assertEqual(details['conflict_ids'], [self.asset])
+        self.assertEqual(details['workspace_id'], self.store.snapshot()['workspace_id'])
+        self.assertEqual(len(details['current']), 1)
+        self.assertEqual(details['current'][0]['id'], self.asset)
+        self.assertEqual(details['current'][0]['metadata_revision'], r + 1)
+        self.assertEqual(details['current'][0]['workspace_id'], details['workspace_id'])
+        self.assertEqual(self.store.get(self.asset), after_first)
+        self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_wrong_workspace_conflicts(self):
+        workspace_id = self.store.snapshot()['workspace_id']
+        wrong = workspace_id[:-1] + ('0' if workspace_id[-1] != '0' else '1')
+        before = self.store.get(self.asset)
+        receipts = self._receipt_count()
+        revision = before['metadata_revision']
+
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.update({'ids': [self.asset], 'action': 'edit', 'title': 'Elsewhere',
+                               'request_id': uuid.uuid4().hex,
+                               'expected_revisions': {self.asset: revision},
+                               'workspace_id': wrong})
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_workspace_conflict')
+        self.assertEqual(cm.exception.details.get('workspace_id'), workspace_id)
+        self.assertEqual(self.store.get(self.asset), before)
+        self.assertEqual(self._receipt_count(), receipts)
+
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.metadata(self.asset, wrong)
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_workspace_conflict')
+        self.assertEqual(cm.exception.details.get('workspace_id'), workspace_id)
+        self.assertEqual(self.store.get(self.asset), before)
+        self.assertEqual(self._receipt_count(), receipts)
+
+        with self.assertRaises(workspace.WorkspaceError) as cm:
+            self.store.command_status(uuid.uuid4().hex, wrong)
+        self.assertEqual(cm.exception.status, 409)
+        self.assertEqual(cm.exception.code, 'asset_workspace_conflict')
+        self.assertEqual(cm.exception.details.get('workspace_id'), workspace_id)
+        self.assertEqual(self.store.get(self.asset), before)
+        self.assertEqual(self._receipt_count(), receipts)
+
+        scoped = self.store.update({'ids': [self.asset], 'action': 'edit', 'title': 'Scoped title',
+                                    'request_id': uuid.uuid4().hex,
+                                    'expected_revisions': {self.asset: revision},
+                                    'workspace_id': workspace_id})
+        self.assertEqual(scoped.get('workspace_id'), workspace_id)
+        observed = self.store.command_status(scoped['request_id'], workspace_id)
+        self.assertEqual(observed.get('workspace_id'), workspace_id)
+        described = self.store.metadata(self.asset, workspace_id)
+        self.assertEqual(described.get('workspace_id'), workspace_id)

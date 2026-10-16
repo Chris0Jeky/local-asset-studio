@@ -18,6 +18,8 @@ class FlowMixin:
             journal = self._load()
             existing = next((item for item in journal["records"]
                              if item.get("request_id") == request["request_id"]), None)
+            if existing is None and request["request_id"] in journal.get("spent", []):
+                raise PreparationError("This request_id already ran a lifecycle action and its receipt has rotated out; use a new request_id")
             if existing is not None:
                 if existing.get("request_sha256") != request_sha256:
                     raise PreparationError("request_id was already used for different content")

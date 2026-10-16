@@ -1,195 +1,296 @@
 # Local Asset Studio
 
-**A local-first creative workflow studio for generative images, video, 3D, references, model research, and reproducible experiments.**
+<p align="center"><img src="docs/assets/local-asset-studio-loop.svg" alt="local-asset-studio workflow, animated" width="100%"></p>
 
-Local Asset Studio sits above ComfyUI and a set of isolated model environments. It is designed to make powerful local creative pipelines understandable without hiding what they do: choose a creative goal, add references, inspect the planned route, generate deliberately, review the evidence, and keep the result together with the settings that produced it.
+**A local-first studio on top of ComfyUI that keeps each generated asset tied to the recipe, references and evidence that produced it.**
 
-On the configured Windows PC, double-click the **Asset Studio** desktop shortcut. Pick a recipe or preset, describe the result, add references when needed, and press **Generate**. Advanced ComfyUI remains available for node-level work, but learning its graph editor is not a prerequisite for the guided Studio paths.
+[![Check studio](https://github.com/Chris0Jeky/local-asset-studio/actions/workflows/check.yml/badge.svg)](https://github.com/Chris0Jeky/local-asset-studio/actions/workflows/check.yml)
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
+![Node 24 for UI islands](https://img.shields.io/badge/node-24%20(maintainers)-339933?logo=nodedotjs&logoColor=white)
 
 ![Three Lanternkeeper skins](examples/lanternkeeper/contact-sheet.png)
 
 [Start here](docs/START-HERE.md) ·
 [Product direction](docs/PRODUCT_DIRECTION.md) ·
-[Status by goal](docs/STATUS.md) ·
-[Workflow Lab](docs/WORKFLOW-LAB.md) ·
-[Anime & fantasy atelier](docs/ANIME-FANTASY-ATELIER.md) ·
+[Status](docs/STATUS.md) ·
+[Operations](docs/OPERATIONS.md) ·
 [Documentation index](docs/README.md)
 
-## What the Studio is becoming
+## What it is
 
-The repository began as a friendly launcher and preset catalogue. It is now developing into a governed local creative operating layer with five connected surfaces:
+Local Asset Studio is a Python web app that runs on one Windows PC next to a local ComfyUI install. It puts goal-led routes (pick a result, add references, see the planned route, generate) in front of ComfyUI's node graph, and it keeps the graph underneath visible. Each job stores the exact graph it submitted, the settings and reference roles, output hashes, and a record of what the run did and did not prove.
 
-1. **Create and continue** — goal-led recipes for images, animation, edits, 3D drafts, refinement, and native finishing.
-2. **Reference Atelier** — assign identity, pose, style, outfit, composition, or source roles to one or more images and inspect how a route will use them.
-3. **Workflow Studio** — build, compare, and eventually pilot ComfyUI workflows from a clearer interface while keeping the underlying graph and controls visible.
-4. **Experiments and qualification** — run bounded comparisons, record source/model/node compatibility, retain uncertain outcomes, and promote routes only when their evidence supports the claim.
-5. **Workspace and export** — collect, tag, compare, restore, refine, and hand accepted assets to Krita, Godot, Blender, or another explicit destination.
+It is a personal tool. The server binds to `127.0.0.1:8191` only, it has no accounts, and it is not a hosted generation service. Models, ComfyUI, and generated outputs live outside Git.
 
-The long-term goal is not a black-box “make art” button. It is a studio in which a person or an authorized agent can understand the inputs, route, environment, model/LoRA terms, resource cost, output identity, and evidence state of every consequential operation.
+## Why it exists
 
-## What works today
+ComfyUI is flexible, and that flexibility makes results easy to lose. A graph that made a good picture last week is hard to rebuild from memory, and a run that finished says nothing about whether the hand is right or whether the LoRA's licence allows the use.
+
+The Studio keeps three states apart on purpose:
+
+- **Generated:** the job completed and its outputs were recorded.
+- **Inspected or accepted:** a person judged the result. An agent's judgement is not acceptance.
+- **Licensed:** the model and LoRA terms allow the use. Matching hashes do not prove that.
+
+Agents can plan, compare and inspect work through the same surfaces. They cannot download, install, generate, publish or accept output on their own.
+
+## Start here: Make
+
+Make is the first screen. Pick what you want, not a model. The full walkthrough is [Start here](docs/START-HERE.md).
+
+1. **Goal.** Choose an outcome. Five goals start from words: anime character, scene or background, painted illustration, photo, and game item or icon. Six start from a picture you already have: change a picture, fix or upscale, restyle, character in a new pose, animate, and picture to 3D.
+2. **Look.** Pick a look by its example picture. Each card shows a plain name and a speed such as "Fast" or "Medium" with a measured time, and where they apply Tested well, Best for, Non-commercial and Run on this PC before. A look that cannot run yet shows what it needs.
+3. **One sentence.** Type what you want, or use the example. **Tune this look**, folded shut by default, shows and changes the look's model, adapters, steps, words to leave out and seed.
+4. **Generate.** This is the only press that submits; nothing runs on load. It prepares the request and queues one job labelled `Make · <look>`.
+5. **Your pictures.** Results appear in place. Each picture has Keep and Not this (the library's review marks), Vary where offered, Fix face, Fix hands and details, Upscale 2×, and a *More* menu: open full size, other fixes, change one thing, restyle, put in a new pose, animate, make it 3D. Each run card has Edit and re-run and Same words, another look, and Make the final after a draft. A run whose outcome is unknown offers Resume observation and Stop tracking on its card and is never sent again. *Open in the full editor instead* loads the same request into the Full editor without running it.
+
+## Features
+
+Everything below exists in the code. Where a feature is only partly proven, the Status section says so.
 
 ### Guided creation
 
-- goal-led recipes and presets for pixel concepts, abstract art, realistic imagery, anime/fantasy characters, manga studies, refinement, reference edits, short animation, and 3D drafts;
-- a simpler local browser interface backed by a Python standard-library server;
-- prompt recipes, wildcard expansion, settings knowledge, LoRA slots, parameter controls, seed reuse, and saved output metadata;
-- explicit model-environment switching for isolated routes such as HiDream O1 and MiniMax H3;
-- local job submission, progress, output validation, bounded receipts, and an explicit local disposition for an uncertain job (which records the outcome as unknown and does not cancel remote work);
-- owner cancel for a Create job (`POST /api/jobs/<id>/cancel`, #1138): a queued job is removed before anything is sent, and a started one has only its own prompt deleted from ComfyUI's queue or interrupted, never resubmitted (details in `docs/OPERATIONS.md`).
+- **92 presets** in `presets/catalog.json` across pixel art, product and website art, game props, anime and fantasy characters, manga line art and screentone, FLUX.2 Klein, Qwen and Qwen-Image 2.1, Z-Image, Krea 2, Anima, WAI, Animagine, Pony, NoobAI, HiDream O1, MiniMax H3, Wan 2.2, TRELLIS.2 and Hunyuan3D 2.1.
+- Each preset carries a `verified` flag. `true` means a Studio job for that route completed and was inspected. It is not art acceptance.
+- Prompt wildcards, LoRA slots, seed reuse and saved output metadata.
+- Explicit switches between local environments: the primary ComfyUI on `8188` and three isolated ones on `8192` (HiDream O1), `8194` (MiniMax H3) and `8196` (Qwen-Image 2.1). Switches never upgrade packages.
+- Before a checkpoint change, the Studio unloads the previous model from ComfyUI's GPU memory. An idle model cache is released after a configurable number of minutes.
+- Owner cancel for a Full editor job (`POST /api/jobs/<id>/cancel`). A job that has not been sent is removed. A prompt waiting in ComfyUI's queue is deleted, and a running one is interrupted. Nothing is resubmitted.
+- An uncertain submission is recorded as uncertain and is not resubmitted automatically. See [Operations](docs/OPERATIONS.md).
 
-### Reference work
+### References and poses
 
-- single and multiple image references with declared roles;
-- identity, pose, style, composition, and editing routes where the underlying architecture supports them;
-- Qwen Atelier and Combine-style workbenches for separating reference intent instead of treating every image as an undifferentiated prompt;
-- pose skeleton and depth control routes with recorded execution evidence;
-- gentle variation, targeted edits, masked repair, and controlled continuation paths.
+- Reference roles (identity, pose, style, outfit, composition, source) with byte-level provenance in `app/references.py`.
+- Combine routes that put a character into another picture's pose, using a drawn pose skeleton, a depth map, or a Copy Pose stage (`combine-klein-9b-*`, `wai-skeleton`).
+- Qwen Atelier presets for one, two or three references (`qwen-1ref` to `qwen-3ref`).
+- A pose editor that renders a COCO-18 drawn pose into a stored guide picture (`app/pose_guide.py`). The module never calls ComfyUI.
+- Targeted edits (`flux-edit`), masked repair (`anime-masked-repair`), seam repair for seamless tiles (`zimage-seam-repair`), and parallax layers split from an accepted still (`parallax-edit`).
 
-Reference fidelity remains model- and route-dependent. A completed job proves execution, not that identity, anatomy, pose, costume, or artistic intent was accepted. Complex foreshortening, unusual contact poses, occlusion, multi-character interaction, and exact pose transfer remain active qualification areas rather than solved product promises.
+### Experiments and evidence
 
-### Experiment and evidence workflows
-
-- bounded settings grids and LoRA-weight comparisons;
-- curated run records and reusable scorecard templates;
-- route/model/source compatibility notes with `verified`, `unverified`, `blocked`, and uncertainty-aware states;
-- output hashes, prompt IDs, submitted chains, timings, and reviewer notes for selected qualified routes;
-- benchmark and profiling seams that preserve failed, partial, and inconclusive trials instead of reporting only winners.
+- Durable comparison plans with budgeted attempts (`app/production.py`), including a plan that runs one Combine pair across several engines with the same seeds (`app/combine_plan.py`).
+- Revisioned review of comparisons in Production's SQLite database (`app/review_desk.py`).
+- Settings sweeps built from the settings knowledge base, with each variant sourced (`app/settings_planner.py`).
+- Read-only resource observations and receipts (`app/resource_probe.py`, `app/resource_receipts.py`) that record VRAM and commit figures where the host can report them.
+- Failed, partial and inconclusive trials stay in the record. They are not filtered into a winners-only view.
 
 ### Workspace and native finishing
 
-- collect, tag, favorite, compare, restore, and continue from generated outputs;
-- create finishing plans rather than silently altering accepted assets;
-- export selected images to Krita and a tested Godot sprite-project path;
-- Blender-authored assets, textured GLBs, sprite packing, and playable Lanternkeeper examples;
-- local asset gallery and model samples for informed route selection.
+- An asset workspace in SQLite (`assets.sqlite3`) with a content-addressed file store, favourites, tags, notes, collections and reversible trash (`app/workspace.py`).
+- Krita OpenRaster round trip through a fixed, non-interactive adapter (`scripts/krita_roundtrip.py`).
+- Godot packages: sprite atlases and GLBs, verified by an explicitly selected Godot (`scripts/godot_asset_adapter.py`). The package step does not execute user code.
+- A Blender-authored articulated chest study through a fixed Blender script (`scripts/articulated_prop.py`).
+- 3D drafts as GLB. `hunyuan-draft` (Hunyuan3D 2.1) is geometry only: UVs, materials, cleanup and rigging are finishing work. `trellis-rgba` (TRELLIS.2) takes a transparent-background image and produces a 512 shape draft with 1024 PBR textures and an interactive GLB preview; its Radeon compatibility is experimental.
+- Versioned AV projects with CPU rendering through ffmpeg (`studio_av/`, `scripts/studio_av.py`).
+- Spoken Briefs: one Markdown handoff becomes a narration WAV over the pinned Kokoro CPU baseline (`scripts/spoken_brief.py`). See Status for what has and has not been proven.
 
-## Model and route portfolio
+### Models and runtime safety
 
-The Studio uses a role-based portfolio rather than pretending one model is best at everything.
+- A checksum-pinned model inventory in `models/library.json`, with SHA-256 pins and explicit installers (`app/model_library.py`).
+- `scripts/fetch-hf.py` and `scripts/civitai-fetch.py` check size and SHA-256 before publishing. They refuse a file with no advertised hash unless `--allow-unverified` is passed. `scripts/intake-downloads.py` reads safetensors headers and skips anything it does not recognise.
+- A GPU lease so another local tenant can ask for ComfyUI to stop for a bounded time (`app/gpu_lease.py`).
+- Opt-in runtime recovery for the selected ComfyUI backend (`app/runtime_recovery.py`). It is off unless `runtime_auto_recover` is set.
 
-| Creative goal | Current starting point | Typical next step |
-| --- | --- | --- |
-| Pixel item concepts | SDXL + Pixel Art XL LoRA | compare strength with the same seed |
-| Realistic promotional art | RealVisXL | evaluate FLUX Klein or Z-Image routes |
-| Abstract website art | SDXL abstract recipes | vary composition and colour vocabulary |
-| Anime/fantasy characters | WAI or Animagine | Pony, Krea 2, pose/depth controls, refinement |
-| Manga/anime studies | LineAni or Anima Aesthetic | screentone, cinematic lighting, style studies |
-| Multi-reference composition | Qwen Atelier / qualified Combine routes | separate identity, pose, style, outfit, and scene roles |
-| Scoped reference editing | FLUX Klein edit or Qwen edit | mask/repair, gentle variation, compare retained traits |
-| Native high-resolution concepts | isolated HiDream O1 | restyle, compare seeds, refine |
-| Short image animation | Wan 2.2 or isolated MiniMax H3 | audition motion before longer shots |
-| Textured 3D draft | TRELLIS | authored Blender parts, pivots, motion, and QA |
-| Exact repeated views/motion | Blender-authored pipeline | render, reduce palette, pack atlas |
+## Architecture
 
-Read [models/README.md](models/README.md) before using a checkpoint or LoRA commercially. Matching hashes help with reproducibility; they do not authenticate a publisher or create usage rights. NoobAI is retained for hobby experiments under its author terms. WAI mirror provenance and every stacked LoRA’s individual terms remain separate clearance questions.
+<p align="center"><img src="docs/assets/architecture.svg" alt="local-asset-studio architecture" width="100%"></p>
 
-Local graphs do not call hosted moderation services. Local execution, capability, content policy, and licence suitability are distinct questions.
+```mermaid
+flowchart LR
+    subgraph Browser["Browser at 127.0.0.1:8191"]
+        UI["app/static<br/>plain JS pages and Vue islands"]
+    end
 
-## Operating principles
+    subgraph Studio["Studio process: app/server.py"]
+        H["Handler<br/>/api/* routes, Host and Origin checks"]
+        S["Studio<br/>catalog, jobs, lease, health"]
+        W["asset-studio-worker<br/>single daemon thread"]
+        B["backends.py<br/>BackendManager"]
+        WS["workspace.py<br/>assets.sqlite3 and file store"]
+        P["production.py and review_desk.py<br/>plans, attempts, reviews"]
+        R["references.py<br/>roles and provenance"]
+        N["native_exports.py and articulated.py"]
+        M["model_library.py<br/>SHA-256 pins"]
+        G["gpu_lease.py and runtime_recovery.py"]
+    end
 
-### Local first, explicit authority
+    subgraph Repo["Tracked data"]
+        C["presets/catalog.json<br/>control to node input"]
+        A["workflows/api/*.json<br/>submitted graphs"]
+        L["models/library.json"]
+    end
 
-The Studio should never treat discovery as permission. Research can identify a model, node, workflow, or source; it cannot silently download, install, execute, generate, train, publish, or change an environment. Consequential actions need an explicit operator or reviewed agent capability.
+    subgraph Local["Local runtimes"]
+        PRI["Primary ComfyUI :8188"]
+        ISO["Isolated environments<br/>:8192 HiDream, :8194 H3, :8196 Qwen-Image 2.1"]
+    end
 
-### Evidence before promotion
+    RUNS["experiments/runs/job id/<br/>state.json and outputs, git-ignored"]
+    EXT["Krita, Godot, Blender<br/>paths from config/local.json"]
 
-A route moves from candidate to qualified only through the relevant checks: source/provenance, environment compatibility, graph validation, bounded execution, output integrity, visual review, resource behavior, and licence/terms notes. “Ran successfully” and “produced the desired art” are different states.
-
-### Reproducible, not frozen
-
-Jobs should retain enough information to repeat or explain them: route, environment, graph/input mapping, model and adapter identities, prompts/settings, references, seed, timing, output hashes, and review notes. The Studio can evolve without erasing how an earlier result was made.
-
-### Legible power
-
-Advanced controls should be available through progressive disclosure. A beginner starts from a goal and recipe; an experienced user can inspect or modify the node-level workflow, build reusable graphs, and run headlessly without maintaining a second undocumented system.
-
-## Direction
-
-### Now: reliable reference composition
-
-- consolidate identity/pose/style/outfit/composition roles into one inspectable reference plan;
-- make ambiguity visible and ask only the questions that materially affect the route;
-- qualify pose skeleton, depth, segmentation, dense correspondence, edit, and hybrid routes against difficult pose families;
-- keep character, costume, style, and scene consistency scored separately;
-- add repair/retry strategies that know whether a failure is geometry, identity, anatomy, conditioning conflict, or finishing quality.
-
-### Next: Workflow Studio and headless parity
-
-- represent workflows as versioned, inspectable Studio documents;
-- expose available ComfyUI nodes, ports, controls, validation, preview, and connections through the Studio interface;
-- preserve the original graph and generated API graph relationship;
-- make every safe UI workflow addressable through a bounded headless/agent contract;
-- keep install, environment mutation, model acquisition, and execution as separate capabilities.
-
-### Next: route and model intelligence
-
-- maintain immutable source snapshots and reviewed compatibility records;
-- compare exact model versions, prompt grammars, schedulers, resolutions, controls, adapters, and VRAM/runtime behavior;
-- build a small role-based qualified portfolio instead of an uncurated model warehouse;
-- retain failed and inconclusive trials so future agents do not repeat the same dead ends.
-
-### Later: a complete local asset pipeline
-
-- stronger character sheets and multi-view consistency;
-- deliberate two-character interaction and unusual-pose workflows;
-- scoped costume/anatomy editing with accepted-region protection;
-- animation continuation and in-between planning;
-- audio/voice and Blender automation under the same evidence model;
-- project-ready asset packs with provenance, QA, native-tool handoff, and reversible refinement histories.
-
-The detailed priorities, non-goals, and promotion gates live in [docs/PRODUCT_DIRECTION.md](docs/PRODUCT_DIRECTION.md) and the [strategy bundle](docs/strategy/README.md).
-
-## Run and develop
-
-On the configured Windows PC, use `Start Studio.cmd` or the desktop shortcut.
-
-- Studio: `http://127.0.0.1:8191`
-- Advanced ComfyUI: `http://127.0.0.1:8188`
-
-On another computer, copy `config/example.json` to `config/local.json`, point it to installed Python and ComfyUI runtimes, and install required nodes/models separately. The repository is **not** a complete fresh-machine installer.
-
-```console
-python app/server.py
-python -m unittest discover -s tests
-python scripts/validate-repo.py
+    UI -->|JSON over HTTP| H
+    H --> S
+    S --> W
+    W -->|/prompt, /queue, /history| PRI
+    B -->|explicit switch| PRI
+    B -->|explicit switch| ISO
+    S --> C
+    W --> A
+    W --> RUNS
+    S --> WS
+    S --> P
+    S --> R
+    S --> N
+    N --> EXT
+    S --> M
+    M --> L
+    S --> G
 ```
 
-Python 3.12+ is required. Pillow supports validation/finishing and psutil supports explicit environment switches. See [operations](docs/OPERATIONS.md) for backup, troubleshooting, environment setup, and adding presets.
+How the pieces fit:
 
-## Repository map
+- **`app/server.py`** holds the `Studio` state and the `Handler`. The handler serves `/api/*` and the static pages. It accepts only loopback `Host` headers, and POSTs need a loopback `Origin`. One daemon worker submits jobs to ComfyUI, polls `/history`, and writes each job's state and submitted graph under `experiments/runs/`.
+- **`presets/catalog.json` is the allow-list.** Each control (`positive`, `seed`, `width`, `lora`, `reference`, and so on) maps to a `[node_id, input_name]` pair in an API graph under `workflows/api/`. The server writes only inputs named there. `bindings_extra` fans one control out to several inputs.
+- **`workflows/comfyui/`** holds the matching visual graphs for inspection and deeper edits.
+- **`app/backends.py`** knows the four local environments and their ports, and switches between them explicitly.
+- **`frontend/`** holds the Vue islands. Maintainers build them into `app/static/ui-dist/`, which is committed. The runtime has no build step and never runs npm.
+- **`integrations/`** and the `native_exports` and `articulated` modules drive Krita, Godot and Blender only through paths in `config/local.json`.
 
-| Path | Purpose |
-| --- | --- |
-| `app/` | local Studio UI and Python server; local viewer bundle; no frontend build toolchain |
-| `presets/` | recipe catalogue, controls, settings knowledge, wildcards, and graph-input mappings |
-| `workflows/api/` | executable API graphs used by Studio routes |
-| `workflows/comfyui/` | matching visual graphs for inspection and deeper changes |
-| `scripts/` | launch, generate, validate, benchmark, profile, finish, and export tooling |
-| `experiments/curated/` | selected evidence, findings, and scorecards |
-| `experiments/runs/` | local recipes/results; intentionally ignored by Git |
-| `examples/` | Lanternkeeper, gallery, references, native exports, and learning artifacts |
-| `models/` | checksums, provenance, compatibility notes, and candidates; no weights |
-| `docs/` | product, workflow, model, operations, research, and strategy documentation |
+## Quickstart
 
-## Documentation paths
+### On the configured Windows PC
 
-- [First image walkthrough](docs/START-HERE.md)
-- [Workspace](docs/WORKSPACE.md)
-- [Reference Atelier](docs/REFERENCE-ATELIER.md)
-- [Experiments and native finishing](docs/EXPERIMENTS.md)
-- [Workflow Lab](docs/WORKFLOW-LAB.md)
-- [Anime & fantasy atelier](docs/ANIME-FANTASY-ATELIER.md)
-- [Anime quality and anatomy](docs/ANIME-QUALITY.md)
-- [Anime detailing](docs/ANIME-DETAILING.md)
-- [HiDream O1](docs/HIDREAM.md)
-- [MiniMax H3 on Windows](docs/H3-WINDOWS.md)
-- [Native exports](docs/NATIVE-EXPORTS.md)
-- [Current state](CURRENT_STATE.md)
-- [Owner choices](HUMAN_TODO.md)
+1. Install ComfyUI and its Python runtime. Set up the paths in `config/local.json`. On first run, `scripts/Start-Studio.ps1` copies `config/example.json` to `config/local.json` if it is missing. Then edit the paths for your machine.
+2. Double-click `Start Studio.cmd`. The launcher starts ComfyUI if it is not running, checks the GPU lease, starts the Studio, and opens `http://127.0.0.1:8191`.
 
-## Status and limitations
+The launcher is Windows-only. It is the path the project is run on.
 
-This is an actively developed personal/local studio, not a hosted generation service. The configured AMD Radeon workflow, installed nodes, isolated environments, model files, and measured timings are machine-specific evidence—not universal performance claims. Several routes are verified only for bounded executions; artistic acceptance and commercial clearance remain separate.
+### Anywhere else
 
-The project intentionally keeps uncertainty visible. Candidate research, planned Workflow Studio features, adult-illustration discovery contracts, source registries, pose experiments, and low-level optimisation work do not become shipped capability merely because an issue, document, or draft PR exists.
+This runs the Studio shell without ComfyUI, which is useful for UI work and the test suite.
+
+```console
+python -m pip install -r tests/requirements-runtime.txt -r research/game-assets/requirements-media.txt
+python app/server.py --repo-root .
+```
+
+Then open `http://127.0.0.1:8191`. `GET /api/identity` returns the app name and workspace path. `GET /api/health` reports `"online": false` until ComfyUI is reachable at `comfy_url`, which defaults to `http://127.0.0.1:8188`. Generation needs ComfyUI running. It is not a complete fresh-machine installer: install ComfyUI, the custom nodes and the model files separately.
+
+Python 3.12 or newer is required. CI uses 3.12. Pillow is used for validation and finishing, and psutil for the resource probe.
+
+### Checks
+
+```console
+python scripts/validate-repo.py
+python -m unittest tests.test_markdown_links
+python -m unittest discover -s tests
+```
+
+- `validate-repo.py` checks preset graphs and bindings, pinned model assets, LoRA names, and the Git payload rules. It takes about a second.
+- `tests.test_markdown_links` checks that every relative link in tracked Markdown resolves.
+- The full suite is offline and has about 5,500 tests. It took about seven minutes on a cloud Linux VM. Tests whose tools are missing on the host are skipped. CI runs the suite through `tests/check_full_suite_lifetime.py` with a 15-minute budget.
+
+Frontend work (maintainers only; `frontend/package.json` requires Node `>=24.13.1 <25`):
+
+```console
+cd frontend && npm ci && npm test && npm run build
+```
+
+On a clean checkout the build reproduces the committed `app/static/ui-dist/` exactly. If it does not, review the diff before committing.
+
+## Configuration
+
+`config/local.json` holds machine paths and is git-ignored. `config/example.json` is the template. Omitted keys fall back to the defaults in `app/server.py` and `app/backends.py`.
+
+The keys that matter most:
+
+- `comfy_url`, `comfy_root`, `python`, `comfy_launcher`: the primary ComfyUI and how to start it.
+- `experiments_root`: where `runs/`, uploads and curated evidence live. Back this up.
+- `blender`, `krita`, `kritarunner`, `godot`, `asset_python`, `ffmpeg`: native tools, each optional and used only by its own route.
+- `runtime_auto_recover`, `unload_models_on_change`, `idle_cache_release_minutes`: runtime behaviour. See [Operations](docs/OPERATIONS.md) for the rules and their evidence.
+
+Secrets are not read from this file. The Civitai token comes only from the `CIVITAI_API_TOKEN` environment variable.
+
+## Tech stack
+
+- **Server:** Python 3.12 standard library (`http.server`, `sqlite3`, `urllib`, `zipfile`), with no web framework.
+- **Libraries:** Pillow 12.3.0 for finishing and thumbnails, psutil 7.2.2 for resource probes. The optional workflow MCP server uses the `mcp` Python SDK, in its own environment (`integrations/workflow-mcp/requirements.txt`).
+- **Generation backends:** ComfyUI (primary and isolated environments), with pinned custom nodes and model files outside the repo.
+- **UI:** plain JavaScript and HTML in `app/static/`, a vendored model-viewer, and Vue 3 islands built with Vite 8 and TypeScript 6 in `frontend/`.
+- **Native tools:** Krita, Godot 4.7, Blender, ffmpeg. Each is optional and configured by path.
+- **Verification:** `unittest` for the Python suite, Vitest for the frontend islands, Playwright for browser flows, and GitHub Actions for CI.
+
+## Preset families
+
+These are examples from `presets/catalog.json`. The `verified` flag in the catalog is the source of truth, and many entries are still `verified: false`.
+
+| Goal | Example preset ids | Notes |
+| --- | --- | --- |
+| Pixel concepts | `pixel-concept`, `pixel-lora` | `pixel-lora` is not yet verified |
+| Product and website art | `realvis`, `photo-banner`, `abstract` | |
+| Game props | `stylized-prop` | |
+| Edits and restyles | `flux-edit`, `qwen`, `restyle-klein`, `restyle-wai` | |
+| Multi-reference composition | `qwen-2ref`, `qwen-3ref`, `combine-klein-9b` | `qwen-2ref` and `qwen-3ref` are not yet verified |
+| Pose and skeleton | `combine-klein-9b-skeleton`, `combine-klein-9b-depth`, `wai-skeleton` | |
+| Anime and fantasy illustration | `anime-animagine-quality`, `krea-portrait`, `anima-portrait`, `style-pose-wai` | |
+| Manga line art and screentone | `lineani-portrait`, `screentone-portrait` | `screentone-portrait` is not yet verified |
+| Native high-resolution and video | `hidream-o1-concept` (isolated), `qwen21-t2i` (isolated), `h3-preview` (isolated), `wan22-t2v` | Video is not working well yet, see Status |
+| 3D drafts | `trellis-rgba`, `hunyuan-draft` | |
+| Repair and finishing | `anime-masked-repair`, `anime-esrgan`, `zimage-seam-repair`, `parallax-edit` | |
+
+Adding a preset is described in [Operations](docs/OPERATIONS.md#add-another-preset). Load the page again after editing `presets/catalog.json`. The server rereads it on every request, so no restart is needed.
+
+## Status
+
+This is an active personal project. It is not a hosted service, and the numbers in its docs are machine-specific evidence, not universal performance claims.
+
+- **Working:** the guided Make and Full editor routes, reference and Combine routes, the Krita and Godot paths, the backend switches and the evidence records. The offline suite and `validate-repo.py` run in CI on every push and pull request. As of 12 October 2026, 51 of the 92 catalog entries are `verified: true`.
+- **Verified for bounded runs:** many routes have a completed, inspected Studio job. Those are execution records. They are not art acceptance, and they do not show that identity, pose or anatomy were accepted.
+- **Not working or not proven:** video (the inspected Wan 2.2 outputs failed inspection, per the 24 September status). Automatic hand repair (`anime-detail-fix` did not fix a hand in any recorded run). Edited Workflow Studio graphs cannot run yet (#122). Spoken Briefs passes CI, but no real workstation narration is recorded.
+- **Not yet built:** in-betweens, two-character interaction and unusual poses as product features.
+
+The dated snapshot is in [docs/STATUS.md](docs/STATUS.md), and the evidence ledger is [CURRENT_STATE.md](CURRENT_STATE.md). Owner decisions and open actions are in [HUMAN_TODO.md](HUMAN_TODO.md).
+
+## Roadmap
+
+The priorities are in [docs/PRODUCT_DIRECTION.md](docs/PRODUCT_DIRECTION.md). In short:
+
+1. **Reliable multi-reference composition.** One inspectable reference plan, route qualification against hard pose families, and scoring of character, costume, style and scene separately.
+2. **Workflow Studio and headless parity.** Versioned, inspectable Studio documents for workflows. Every safe UI action reachable through a bounded headless or agent contract. Install, environment mutation, model acquisition and execution stay separate capabilities.
+3. **Qualification and source intelligence.** Immutable source snapshots, reviewed compatibility records, and a small qualified portfolio of routes instead of an uncurated model list.
+4. **Performance and reliability as product features.** Stage-aware admission, measured resource behaviour and recovery.
+5. **Accepted asset lifecycle.** Lineage, revision history, reversible refinement, and project-ready packs with native-tool handoff.
+
+Open work is tracked in [GitHub issues](https://github.com/Chris0Jeky/local-asset-studio/issues). Area roadmaps live in [workflow-studio](docs/workflow-studio/ROADMAP.md), [character-consistency](docs/character-consistency/ROADMAP.md) and [performance](docs/performance/ROADMAP.md).
+
+## Model terms and local-only media
+
+- Model weights are not in Git. [models/README.md](models/README.md) records the source and terms of each pinned file.
+- A matching hash helps reproduction. It does not authenticate the publisher, and it does not grant usage rights.
+- NoobAI is kept for hobby experiments under its author's terms. The WAI mirror's provenance and every stacked LoRA's terms are separate clearance questions.
+- A completed render is neither art acceptance nor licence clearance.
+- Some example pictures are kept off Git on purpose. `.gitignore` lists the four folders affected. Their tracked record is each folder's `MANIFEST.json`, and `scripts/lab-media.py` verifies or restores the local copies.
+
+## Security boundary
+
+- The Studio binds to `127.0.0.1:8191` only. It requires a loopback `Host` header, and every POST needs a loopback `Origin`.
+- There is no authentication. Do not expose the port beyond the local machine, and do not put it behind a proxy.
+- Secrets come from environment variables, never from `config/local.json` or the command line.
+- There is no `SECURITY.md` and no private reporting channel. Report problems through a GitHub issue, and leave out secrets and private media.
+
+## Contributing
+
+- Issues use the templates in `.github/ISSUE_TEMPLATE/`. Pull requests use `.github/pull_request_template.md`.
+- Name the issues a PR affects. Use `Closes #N` or `Fixes #N` only when the whole issue is complete. Otherwise use `Refs #N` and say what remains.
+- Before a PR, run `python scripts/validate-repo.py` and the test suite that matches your change. [CLAUDE.md](CLAUDE.md) lists the narrowest command for each area.
+- Agent-authored work follows [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md).
+
+## Documentation
+
+- [Start here: your first picture in Make](docs/START-HERE.md)
+- [Make a high-end anime picture: Make, looks, tuning, finishing](docs/guides/MAKE-A-HIGH-END-ANIME-PICTURE.md)
+- [Product direction](docs/PRODUCT_DIRECTION.md) and [strategy bundle](docs/strategy/README.md)
+- [Status by goal](docs/STATUS.md) and [current state](CURRENT_STATE.md)
+- [Owner choices and open actions](HUMAN_TODO.md)
+- [Workspace](docs/WORKSPACE.md), [Reference Atelier](docs/REFERENCE-ATELIER.md), [Experiments and native finishing](docs/EXPERIMENTS.md), [Workflow Lab](docs/WORKFLOW-LAB.md) and [Native exports](docs/NATIVE-EXPORTS.md)
+- [Operations](docs/OPERATIONS.md) and the full [documentation index](docs/README.md)

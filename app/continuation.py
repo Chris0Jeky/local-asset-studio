@@ -127,7 +127,38 @@ VARY_FIXED = {"seed", "positive", "negative", "reference", "last_reference", "wi
 
 
 def _models(graph):
-    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items() if key in ("ckpt_name", "unet_name") and isinstance(value, str)}
+    # model_name also names auxiliary models; only the shipped base-model loader contributes it.
+    keys = ("ckpt_name", "unet_name", "checkpoint_name", "gguf_name")
+    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items()
+            if (key in keys or key == "model_name" and node.get("class_type") == "HiDreamO1ModelLoader") and isinstance(value, str)}
+
+
+# Single-input nodes that forward the same MODEL / CLIP and neither add nor drop an adapter (#1243). Each is shipped
+# between a LoRA and its consumer: ModelSampling* on Qwen, RescaleCFG on Trellis, CLIPSetLastLayer on Pony. Anything else
+# (a merge, a switch, a Reroute pack, an unseen patch) stays an unknown shape and is refused.
+PASS_THROUGH = {"model": {"ModelSamplingAuraFlow", "ModelSamplingSD3", "RescaleCFG"}, "clip": {"CLIPSetLastLayer"}}
+
+
+def _lora_feeds(graph, start, target, field):
+    """Trace a MODEL/CLIP input back through known LoRA outputs; None means an unknown graph shape."""
+    if graph.get(start, {}).get("class_type") != "LoraLoader": return None
+    seen, output = set(), 0 if field == "model" else 1
+    while target not in seen:
+        seen.add(target)
+        link = (graph.get(target, {}).get("inputs") or {}).get(field)
+        if not isinstance(link, list) or len(link) != 2 or type(link[1]) is not int: return None
+        target, port = str(link[0]), link[1]
+        if target == start: return port == output
+        node = graph.get(target)
+        if not isinstance(node, dict): return None
+        kind = node.get("class_type")
+        if kind in ("LoraLoader", "LoraLoaderModelOnly"):
+            if port != output or kind == "LoraLoaderModelOnly" and field == "clip": return False
+        elif kind in PASS_THROUGH[field]:
+            if port != 0: return None
+        elif kind in ("CheckpointLoaderSimple", "ImageOnlyCheckpointLoader", "UNETLoader", "UnetLoaderGGUF", "CLIPLoader", "HiDreamO1ModelLoader"): return False
+        else: return None
+    return False
 
 
 VARY_LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
@@ -156,7 +187,18 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
         elif key not in bound: problems.append("%s: vary carries %s, which the recipe does not bind" % (name, key))
     for slot in VARY_LORA_SLOTS:
         if (slot in carry) != (slot + "_name" in carry): problems.append("%s: vary carries %s without its file %s, or the file without its strength" % (name, slot, slot + "_name"))
+        elif slot in carry and preset.get(slot) and preset.get(slot + "_name") and str(preset[slot][0]) != str(preset[slot + "_name"][0]):
+            problems.append("%s: vary %s and %s_name bind different nodes" % (name, slot, slot))
     carried_nodes = {str(preset[slot][0]) for slot in VARY_LORA_SLOTS if slot in carry and preset.get(slot)}
+    samplers = {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("KSampler")}
+    encoders = {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("CLIPTextEncode")}
+    for node in sorted(carried_nodes):
+        model_paths = [_lora_feeds(graph, node, target, "model") for target in sorted(samplers)]
+        clip_paths = [_lora_feeds(graph, node, target, "clip") for target in sorted(encoders)]
+        if not samplers or not encoders or None in model_paths or None in clip_paths:
+            problems.append("%s: vary cannot determine whether adapter node %s feeds all sampler model and text encoder clip inputs (missing nodes, invalid links or unknown graph shape)" % (name, node))
+        elif not all(model_paths) or not all(clip_paths):
+            problems.append("%s: vary adapter node %s does not feed all samplers and text encoders through its MODEL/CLIP outputs" % (name, node))
     for node in sorted(_lora_nodes(graph) - carried_nodes):
         problems.append("%s: vary route has an adapter it does not take from the source (node %s); it would change the picture's LoRA stack" % (name, node))
     models = _models(graph)
@@ -170,6 +212,8 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
                 problems.append("%s: vary source %s has an adapter the route does not carry (node %s); varying it here would drop it" % (name, source_id, node))
         for key in carry:
             if not source.get(key): problems.append("%s: vary source %s does not bind carried %s, so its recorded value is unknown" % (name, source_id, key)); continue
+            if key in VARY_LORA_SLOTS and source.get(key + "_name") and str(source[key][0]) != str(source[key + "_name"][0]):
+                problems.append("%s: vary source %s %s and %s_name bind different nodes" % (name, source_id, key, key))
             if key in VARY_LORA_SLOTS and preset.get(key) and _slot_fields(source, key) != _slot_fields(preset, key):
                 problems.append("%s: vary carries %s, but its strength reaches %s here and %s on %s" % (name, key, _slot_fields(preset, key), _slot_fields(source, key), source_id))
             accepted = (preset.get("choices") or {}).get(key)
@@ -236,7 +280,7 @@ def vary_catalog_problems(presets, graph_of):
     for preset in presets:
         if preset.get("vary") is None: continue
         problems += vary_problems(preset, graph_of(preset), presets, graph_of)
-        sources = (preset["vary"] or {}).get("sources") if isinstance(preset["vary"], dict) else None
+        sources = (preset["vary"] or {}).get("sources") if isinstance(preset.get("vary"), dict) else None
         for source_id in [item for item in sources if isinstance(item, str)] if isinstance(sources, list) else []:
             if source_id in owner: problems.append("vary source %s is claimed by more than one route (%s, %s)" % (source_id, owner[source_id], preset["id"]))
             owner.setdefault(source_id, preset["id"])
@@ -281,7 +325,11 @@ def source_context(studio, asset_id):
     warning = "" if positive is not None else "No unambiguous submitted prompt is retained for this output. Describe the desired result; the recipe example will not be used."
     role = prompt_role(graph, True) if isinstance(graph, dict) else "unknown"
     from PIL import Image
-    with Image.open(path) as image: width, height = image.size
+    with Image.open(path) as image:
+        width, height = image.size
+        # Source coordinates follow the displayed/engine-oriented pixels. Read the
+        # header only here; the source digest still covers the untouched file.
+        if image.format == 'JPEG' and image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
     return {
         "version": 1,
         "asset_id": asset["id"],

@@ -5,7 +5,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'app'))
 sys.path.insert(0,str(root))
-from model_library import FOLDERS, SUFFIXES
+from model_library import FOLDERS, SUFFIXES, backend_affinity
 from studio_workflow.preset_adapter import SOURCE_KEYS, missing_source_key
 
 
@@ -142,7 +142,10 @@ if wildcard_dir.is_dir():
         assert re.fullmatch(r'[A-Za-z0-9_-]{1,64}', path.stem), 'wildcard filename must match the expander: '+path.name
 library=json.loads((root/'models/library.json').read_text(encoding='utf-8'))
 assert len({a['id'] for a in library['assets']})==len(library['assets'])
+assert len({a['file'].casefold() for a in library['assets']})==len(library['assets']), 'Duplicate case-insensitive library paths'
 for asset in library['assets']:
+    backend_affinity(asset)
+    if asset['id'].startswith('qwen-image-21-'): assert asset.get('backend')=='qwen21', (asset['id'], 'requires isolated qwen21 backend')
     assert re.fullmatch('[a-z0-9-]+',asset['id'])
     assert re.fullmatch('[a-f0-9]{64}',asset['sha256'])
     assert exact_int(asset['bytes']) and asset['bytes']>0, (asset['id'],'bytes',asset['bytes'],'must be a positive integer')

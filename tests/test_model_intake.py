@@ -58,6 +58,13 @@ class IntakePublicationTests(unittest.TestCase):
         self.assertEqual([e['status'] for e in record['events']], ['intent', 'copying', 'prepared', 'copied'])
         self.assertFalse(Path(record['partial_path']).exists()); self.assertFalse((self.state/'install.lock').exists())
 
+    @unittest.skipUnless(os.name=='nt','Requires Windows no-clobber rename')
+    def test_windows_rename_fallback_publishes_with_observed_digest(self):
+        with patch.object(intake.os,'name','nt'),patch.object(intake.os,'link',side_effect=OSError('no links')):
+            record=self.run_intake()
+        self.assert_source();self.assertEqual(self.target.read_bytes(),self.body)
+        self.assertEqual(record['status'],'copied');self.assertEqual(record['sha256'],hashlib.sha256(self.body).hexdigest())
+
     def test_browser_changes_after_success_cannot_mutate_installed_bytes(self):
         self.run_intake(); self.source.write_bytes(b'new browser content')
         self.assertEqual(self.target.read_bytes(), self.body)
@@ -70,8 +77,8 @@ class IntakePublicationTests(unittest.TestCase):
 
     def test_destination_appearing_at_publication_is_never_replaced(self):
         publish = intake.publish_verified
-        def race(source, target, identity):
-            target.write_bytes(b'other writer'); return publish(source, target, identity)
+        def race(source, target, identity, digest):
+            target.write_bytes(b'other writer'); return publish(source, target, identity, digest)
         with patch.object(intake, 'publish_verified', side_effect=race):
             with self.assertRaisesRegex(ValueError, 'appeared'):self.run_intake()
         self.assert_source(); self.assertEqual(self.target.read_bytes(), b'other writer')
@@ -91,8 +98,8 @@ class IntakePublicationTests(unittest.TestCase):
     def test_destination_drift_after_publication_refuses_before_receipt(self):
         publish = intake.publish_verified
 
-        def drift_after_publish(source, target, identity):
-            result = publish(source, target, identity)
+        def drift_after_publish(source, target, identity, digest):
+            result = publish(source, target, identity, digest)
             target.write_bytes(b'post-publication writer')
             return result
 
@@ -222,17 +229,18 @@ class IntakePublicationTests(unittest.TestCase):
         self.assertTrue(Path(self.journal()['partial_path']).exists()); self.assertTrue((self.state/'install.lock').exists())
         with self.assertRaisesRegex(ValueError, 'installer lock'):self.run_intake()
 
-    def test_no_hardlink_support_has_no_rename_or_copy_overwrite_fallback(self):
-        with patch('download_contracts.os.link', side_effect=OSError(errno.EPERM, 'unsupported')):
+    def test_posix_no_hardlink_support_has_no_rename_or_copy_overwrite_fallback(self):
+        with patch('download_contracts.os', wraps=os) as platform:
+            platform.name='posix';platform.link.side_effect=OSError(errno.EPERM, 'unsupported')
             with self.assertRaisesRegex(ValueError, 'no-clobber'):self.run_intake()
         self.assert_source(); self.assertFalse(self.target.exists())
         self.assertEqual(Path(self.journal()['partial_path']).read_bytes(), self.body)
 
     def test_publisher_links_only_same_directory_staging_not_browser_original(self):
         publish = intake.publish_verified
-        def inspect(source, target, identity):
+        def inspect(source, target, identity, digest):
             self.assertEqual(source.parent, target.parent); self.assertNotEqual(source, self.source)
-            self.assertFalse(os.path.samefile(source, self.source)); return publish(source, target, identity)
+            self.assertFalse(os.path.samefile(source, self.source)); return publish(source, target, identity, digest)
         with patch.object(intake, 'publish_verified', side_effect=inspect):self.run_intake()
         self.assert_source()
 

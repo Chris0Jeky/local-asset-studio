@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import types
 import unittest
 from unittest.mock import patch
 
@@ -100,6 +101,20 @@ class ModelLibraryTests(unittest.TestCase):
             request.assert_not_called()
         self.assertEqual(target.read_bytes(),b'someone else');self.assertEqual(local.read_bytes(),self.body)
 
+    def test_inventory_skips_a_file_deleted_before_stat(self):
+        target=self.lib.destination(self.asset);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(self.body)
+        extra=target.parent/'vanished.safetensors';extra.write_bytes(self.body)
+        real_is_file=Path.is_file
+        def raced(self,*args,**kwargs):
+            # The file is there when is_file() looks and gone before the size stat: a real deletion, on any Python version.
+            found=real_is_file(self,*args,**kwargs)
+            if found and self==extra:self.unlink()
+            return found
+        with patch.object(Path,'is_file',raced):
+            snapshot=self.lib.snapshot()
+        names={row['file'] for row in snapshot['inventory']}
+        self.assertIn('loras/demo.safetensors',names);self.assertNotIn('loras/vanished.safetensors',names)
+
     def test_a_manifest_of_the_wrong_shape_is_a_clear_error(self):
         for bad in ([],{'assets':{}},{'assets':[1]},{'assets':[],'collections':{}}):
             with self.subTest(manifest=bad):
@@ -111,6 +126,22 @@ class ModelLibraryTests(unittest.TestCase):
             with self.subTest(raw=raw):
                 (self.root/'models/library.json').write_bytes(raw)
                 with self.assertRaisesRegex(ValueError,'models/library.json'):self.lib.snapshot()
+
+
+    def test_one_malformed_pin_is_its_own_invalid_row_and_the_rest_still_render(self):
+        bad_file={'id':'bad-file','file':'../escape.safetensors','bytes':3,'sha256':'0'*64}
+        no_hash={'id':'no-hash','file':'loras/nohash.safetensors','bytes':3}
+        (self.root/'models/library.json').write_text(json.dumps({'assets':[bad_file,no_hash,self.asset]}))
+        rows={a['id']:a for a in self.lib.snapshot()['assets']}
+        self.assertEqual(rows['bad-file']['status'],'invalid_pin');self.assertIn('portable relative path',rows['bad-file']['install_note']);self.assertEqual(rows['bad-file']['path'],'');self.assertFalse(rows['bad-file']['installable'])
+        self.assertEqual(rows['no-hash']['status'],'invalid_pin');self.assertIn('SHA-256',rows['no-hash']['install_note'])
+        self.assertNotIn('status',rows['demo']);self.assertFalse(rows['demo']['verified']);self.assertEqual(rows['demo']['verification'],'missing')
+
+    def test_open_folder_refuses_on_non_windows_before_creating_the_folder(self):
+        target=self.lib.folder('input')
+        with patch.object(models,'os',types.SimpleNamespace(name='posix')):
+            with self.assertRaisesRegex(ValueError,'Open folder is available on Windows'):self.lib.open_folder('input')
+        self.assertFalse(target.exists())
 
 
 class PinOnlyFolderTests(unittest.TestCase):
