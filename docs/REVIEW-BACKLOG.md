@@ -140,3 +140,8 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   were checked and found not real (cross-tab autosave already pauses; the server refuses a stale graph; a failed
   availability check keeps lineage on purpose).
 - [ ] **Looks tests** (#1469) pin eight behaviours of app/looks.py; no product bug was found.
+- [ ] **Managing characters** (#1472): Edit and Put away under each character (no confirm on put away: it is
+  reversible; "Put away (n)" restores); a stale edit is dropped on a 409 and the card reloads. **Line-up** shows the
+  canon then up to 24 kept descendants, newest first (walks lineage through the loaded library; the family route
+  only returns direct children). A one-time, dismissible note offers old Combine answers as a character. Avoid words
+  join the negative only where the request already has one (no Make picture goal has one today, so no live effect yet).
