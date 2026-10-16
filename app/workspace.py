@@ -497,9 +497,11 @@ class AssetWorkspace:
                             raise WorkspaceError("Use up to 30 tags")
                         valid_tags = []
                         for tag in tags:
-                            if isinstance(tag, str) and not tag:
-                                continue
+                            if isinstance(tag, str) and not tag.strip():
+                                continue   # blank or whitespace-only entries are dropped, never stored as ''
                             valid_tags.append(self.text(tag, "Tag", 60))
+                        if tags and not valid_tags:
+                            raise WorkspaceError("Enter at least one non-blank tag, or send an empty list to clear the tags; nothing changed")
                         valid_tags = list(dict.fromkeys(valid_tags))
                         answered = [CHECK_TAG.fullmatch(t) for t in valid_tags if t[:6].lower() == "check:"]
                         if not all(answered) or len({m[1] for m in answered}) != len(answered):

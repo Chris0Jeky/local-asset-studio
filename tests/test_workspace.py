@@ -374,6 +374,20 @@ class WorkspaceTests(unittest.TestCase):
                 self.assertEqual(self.store.get(self.asset), before)
                 self.assertEqual(self._receipt_count(), receipts)
 
+    def test_update_drops_blank_tags_and_refuses_an_all_blank_list(self):
+        with self.subTest(case='blank entries among real tags'):
+            self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': ['  ink  ', ' ', '\t']})
+            self.assertEqual(self.store.get(self.asset)['tags'], ['ink'])
+        with self.subTest(case='every entry blank'):
+            before = self.store.get(self.asset); receipts = self._receipt_count()
+            with self.assertRaisesRegex(workspace.WorkspaceError, 'non-blank tag'):
+                self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': ['   ', '']})
+            self.assertEqual(self.store.get(self.asset), before)
+            self.assertEqual(self._receipt_count(), receipts)
+        with self.subTest(case='empty list still clears'):
+            self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': []})
+            self.assertEqual(self.store.get(self.asset)['tags'], [])
+
     def test_update_request_reuse(self):
         rev = self.store.get(self.asset)['metadata_revision']
         request_id = uuid.uuid4().hex
