@@ -21,6 +21,7 @@ from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 import server as production
+from browser_ports import BoundPortGuard
 
 
 async def exercise(args):
@@ -53,7 +54,7 @@ async def exercise(args):
         with store.connection() as db:db.execute('DELETE FROM assets WHERE id=?',(ids[0],))
         frozen=store.snapshot()
 
-        class Handler(production.extend_handler(production.Handler)):
+        class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
             studio=SimpleNamespace(assets=store)
             json=fixture.Handler.json
             def do_GET(self):
@@ -68,7 +69,7 @@ async def exercise(args):
                     metadata_posts.append(self.path)
                     return super().do_POST()
                 return fixture.Handler.do_POST(self)
-        http=production.StudioHTTPServer(('127.0.0.1',8191),Handler)
+        http=production.StudioHTTPServer(('127.0.0.1', args.port),Handler)
         thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start();fixture.POSTS.clear()
         failure=None
         def check(name,ok):
@@ -85,7 +86,7 @@ async def exercise(args):
                         async def accept(dialog):await dialog.accept()
                         page.on('dialog',accept)
                         if args.inert:
-                            await inert_page(page,8191)
+                            await inert_page(page, http.server_port)
                             await page.expose_function('__lifecycleHash',lambda data:list(hashlib.sha256(bytes(data)).digest()))
                             await page.evaluate('''()=>{
                               Object.defineProperty(window,'crypto',{value:{getRandomValues:crypto.getRandomValues.bind(crypto),subtle:{digest:async(n,data)=>new Uint8Array(await __lifecycleHash(Array.from(data))).buffer}}});
@@ -93,7 +94,7 @@ async def exercise(args):
                               assetShelfStore=StudioAssetRecoveryShelf.create({storage:()=>localStorage,locks:()=>navigator.locks,crypto});
                               assetShelfSession=StudioAssetRecoveryShelfSession.create({journal:assetRecovery,store:assetShelfStore,crypto,onStatus:assetShelfStatus});
                             }''')
-                        else:await page.goto('http://127.0.0.1:8191/#assets')
+                        else:await page.goto(f'http://127.0.0.1:{http.server_port}/#assets')
                         await page.wait_for_function('!!catalog && !!selected')
                         await page.evaluate("showView('assets')")
                         await page.wait_for_function('assetState.assets.length===11')
@@ -176,4 +177,5 @@ async def exercise(args):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--inert',action='store_true');parser.add_argument('--out',type=Path,default=Path('.runtime/asset-recovery-lifecycle'))
+    parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
     asyncio.run(exercise(parser.parse_args()))

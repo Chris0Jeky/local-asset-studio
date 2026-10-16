@@ -1,7 +1,7 @@
 """Actual Explorer/scripts, production Handler stack and evaluator, synthetic inputs.
 
 Run with existing Playwright/Chromium; no installations or models. Normal mode
-uses native browser HTTP on Studio's allowed port. --inert uses inserted assets,
+uses native browser HTTP on a free loopback port (--port fixes one). --inert uses inserted assets,
 data-module URLs and a Python HTTP bridge (not browser-origin/network evidence).
 Both modes exercise the real create_server Handler and read-only guidance route.
 """
@@ -22,6 +22,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from test_bundle_guidance import fixture, G
+from browser_ports import BoundPortGuard
 
 
 def serialized(value):
@@ -33,6 +34,7 @@ def main():
     parser.add_argument('--out', type=Path, default=ROOT/'.runtime/bundle-guidance-browser')
     parser.add_argument('--chromium')
     parser.add_argument('--inert', action='store_true')
+    parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
     args = parser.parse_args(); args.out.mkdir(parents=True, exist_ok=True)
     spec = importlib.util.spec_from_file_location('guidance_browser_server', ROOT/'app/server.py')
     server = importlib.util.module_from_spec(spec); spec.loader.exec_module(server)
@@ -64,7 +66,7 @@ async function api(path){const r=await fetch(path);const value=await r.json();if
             def inspect_preset(self, key): return {'graph':graph,'requirements':[],'nodes':[]}
             def __getattr__(self,key): raise AssertionError('Runtime/storage access forbidden: '+key)
         def factory(address, handler):
-            class ObservedHandler(handler):
+            class ObservedHandler(BoundPortGuard, handler):
                 def do_GET(self):
                     calls.append(('GET',self.path))
                     if self.path=='/':
@@ -81,14 +83,14 @@ async function api(path){const r=await fetch(path);const value=await r.json();if
                     try: return super()._json(status,value)
                     except (BrokenPipeError,ConnectionResetError): pass
             return server.StudioHTTPServer(address,ObservedHandler)
-        http=server.create_server(root,port=0 if args.inert else 8191,http_server=factory,studio_factory=ReadOnlyStudio)
+        http=server.create_server(root,port=args.port,http_server=factory,studio_factory=ReadOnlyStudio)
         thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
         def bridge(value):
             path=value['path']; method=value.get('method','GET')
             if path not in ('/api/inspect/fixture','/api/workflow-studio/guidance'): raise AssertionError(path)
             connection=HTTPConnection('127.0.0.1',http.server_port,timeout=5)
             try:
-                connection.request(method,path,value.get('body'),headers={'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json'})
+                connection.request(method,path,value.get('body'),headers={'Host':f'127.0.0.1:{http.server_port}','Origin':f'http://127.0.0.1:{http.server_port}','Content-Type':'application/json'})
                 reply=connection.getresponse();return {'status':reply.status,'body':reply.read().decode()}
             finally: connection.close()
         def inert():
@@ -116,7 +118,7 @@ async function api(path){const r=await fetch(path);const value=await r.json();if
                     page=browser.new_page(viewport={'width':width,'height':1000},reduced_motion='reduce')
                     page.set_default_timeout(10000); errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                     if args.inert:page.expose_function('fixtureHTTP',bridge);page.set_content(inert())
-                    else:page.goto('http://127.0.0.1:8191/')
+                    else:page.goto(f'http://127.0.0.1:{http.server_port}/')
                     print(f'BEGIN {width}px guidance browser',flush=True)
                     page.locator('#bundleLauncher').focus();page.keyboard.press('Enter')
                     page.locator('[data-bundle="fixture-study"]').click()
