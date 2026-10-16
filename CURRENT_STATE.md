@@ -1,5 +1,11 @@
 # Current state — 13 October 2026
 
+## GPU Look lab - 16 October 2026
+
+Executed 53 serial Studio jobs, all completed, producing 63 image files: 28 baseline jobs across 14/23 shipped looks, 18 single-variable improvement jobs, four additional anime-stack auditions and three OpenPose jobs. Agent judgements: 19 keep, 20 fixable, 13 reject, one youthful-looking output skipped. Nine Krea looks remain unsubmitted because the required CIM memory-admission probe is denied in this sandbox; no alternate-probe clarification was received. No failed/uncertain lab submission, download, installation, runtime change, commit or push.
+
+No Look met the two-scene promotion rule; presets/looks.json is unchanged and no new Look or thumbnail was added. The five-configuration AniFox/Ringeko stack test tied within 0.3. A WAI OpenPose wording change to closed fists fixed the named glove defect at seed 2026101690 while retaining arm/stance control (job 9939e137-1213-4ef2-81c2-9f8bc3285851, prompt 79216f82-23a4-45cc-a217-dc2a4d9a97af, 64.52 seconds); this is one-seed body-pose evidence, not identity transfer or human acceptance. Full methods, all-look table, exact requests, scores, 63 output hashes and resume point: [Look lab report](docs/looks/LOOK-LAB-2026-10-16.md), journal and receipt manifest alongside it. Focused Look tests passed (38); repository validation passed with a process-local Git safe.directory setting. HUMAN_TODO.md is unchanged; art and licensing choices remain open. Existing uncertain/partial jobs are untouched; both services remain running by owner instruction.
+
 ## Optional Look reference pilot - 13 October 2026
 
 An isolated main-based draft adds a folded display-only MA reference to the unchanged shipped Night Shift Look. Its 26,460-byte whole-frame WebP loads only on explicit preview opening; opaque copy, static rendering and missing-picture/forced-color text fallback keep preparation usable. Saved wording, Z2 lineage, recipe controls and revisions stay unchanged; edited/custom or put-away Looks get no automatic reference. No generation, activation, cap change, dependency, art reacceptance or deferral change.

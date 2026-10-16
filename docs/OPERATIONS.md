@@ -1,5 +1,7 @@
 # Operating the studio
 
+For measured look, model/LoRA and pose findings, see the [16 October look lab](looks/LOOK-LAB-2026-10-16.md).
+
 ## Local installation
 
 The launcher reuses the installed AMD ComfyUI runtime and weights. It checks whether ComfyUI is running and consults the retained Studio GPU lease before starting an offline backend. A held lease skips ComfyUI but still starts the studio for lease status/release; unreadable or malformed lease state stops the launcher for inspection. Without a live lease it starts ComfyUI if needed, starts the studio, and opens the page. Running it again should open the same service. The studio serves only `127.0.0.1:8191`; it is not a network deployment.
