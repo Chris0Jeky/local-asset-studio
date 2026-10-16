@@ -252,6 +252,12 @@ def merge_checks(browser, origin):
     page.wait_for_function('document.querySelectorAll("#makeComposer [data-make-fix]").length===3')
     assert HINT not in page.locator('#makeComposer').inner_text() and UP in page.locator('#makeComposer').inner_text()
     assert len(jobs()) == before, 'planning and drawing hints sends nothing'
+    # The merged pass is saved under the name Make showed, so the Library does not call a face-and-hands repaint face-only (Codex on #1494).
+    page.goto(origin+'/?merge2#make'); page.wait_for_selector('[data-make-polish=face][data-asset=asset-0]'); page.locator('[data-make-polish=face][data-asset=asset-0]').click()
+    for _ in range(50):
+        if len(jobs()) > before: break
+        page.wait_for_timeout(100)
+    assert jobs() and jobs()[-1].get('label') == 'Make · Fix face and hands', jobs()[-1:] 
     assert not errors, errors
     page.close()
 

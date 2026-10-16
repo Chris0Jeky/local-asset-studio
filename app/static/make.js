@@ -570,7 +570,7 @@
   async function polishPicture(button){
     const id=button.dataset.asset,kind=button.dataset.makePolish,key=id+':'+kind;if(state.polishing.has(key))return;
     const source=state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===id));state.polishing.add(key);renderRuns();
-    try{const job=await window.StudioWorkbench.polish(id,kind);state.runs.unshift({job,look:polishName(id,kind)+(source?' \u00b7 '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
+    try{const job=await window.StudioWorkbench.polish(id,kind,polishName(id,kind));state.runs.unshift({job,look:polishName(id,kind)+(source?' \u00b7 '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
       say(polishName(id,kind)+' started. The result appears at the top of your pictures.');}
     catch(error){say(error.message);}
     finally{state.polishing.delete(key);renderRuns();}
@@ -802,7 +802,7 @@
     state.busy=true;say('Preparing…');
     try{
       let job;
-      if(g.intent==='repair')job=await window.StudioWorkbench.polish(a.id,sel.fix);
+      if(g.intent==='repair')job=await window.StudioWorkbench.polish(a.id,sel.fix,polishName(a.id,sel.fix));
       else{
         const source=await json('/api/assets/'+encodeURIComponent(a.id)+'/context');if(source?.version!==1||source.asset_id!==a.id)throw Error('This picture’s record could not be verified. Refresh and try again.');
         const board=await goalBoard(g,p,sel),result=await json('/api/assets/reference',{id:a.id});
