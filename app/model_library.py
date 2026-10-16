@@ -145,36 +145,44 @@ class ModelLibrary:
         finally:temp.unlink(missing_ok=True)
         return state
 
+    def _snapshot_row(self, asset):
+        validate_pins(asset)   # a malformed pin (bad file, missing bytes or sha256) is refused on its own row
+        item = dict(asset)
+        try: path = self.locate(asset)
+        except LinkedPathError:
+            # #1127: refuse the linked row and keep every other row. The file may exist through the link (ComfyUI
+            # follows it), so presence is reported; it is never verified or installed through the link.
+            checked_id(asset['id'])
+            receipt = load(self.state / (asset["id"] + ".json"), {})
+            shown = self.models / relative_model_path(asset["file"])
+            item.update(path=str(shown), present=shown.is_file(), size_matches=False, verified=False, verification='linked-path-refused',
+                        installable=False, install_note=LINKED_ROW_NOTE, download=receipt if isinstance(receipt, dict) else {})
+            return item
+        present = path.is_file()
+        blocked = self.install_block(asset, present)
+        checked_id(asset['id'])
+        receipt = load(self.state / (asset["id"] + ".json"), {})
+        if not isinstance(receipt,dict):receipt={}
+        identity = file_identity(path) if present else None
+        matches = present and identity['size'] == asset["bytes"]
+        verified = bool(backend_affinity(asset) in ('all', self.backend_id) and matches and receipt.get('version')==2 and receipt.get("status")=="installed"
+                        and receipt.get("sha256")==asset["sha256"] and receipt.get('path')==str(path)
+                        and receipt.get('file_identity')==identity)
+        reason = ('stat-fresh-sha256-receipt' if verified else 'missing' if not present
+                  else 'pin-only-manual-verification' if blocked else 'explicit-reverification-required')
+        item.update(path=str(path), present=present, size_matches=matches, verified=verified,
+                    verification=reason, installable=blocked is None, install_note=blocked, download=receipt)
+        return item
+
     def snapshot(self):
         manifest = self.manifest()
         assets = []
         for asset in manifest.get("assets", []):
-            item = dict(asset)
-            try: path = self.locate(asset)
-            except LinkedPathError:
-                # #1127: refuse the linked row and keep every other row. The file may exist through the link (ComfyUI
-                # follows it), so presence is reported; it is never verified or installed through the link.
-                checked_id(asset['id'])
-                receipt = load(self.state / (asset["id"] + ".json"), {})
-                shown = self.models / relative_model_path(asset["file"])
-                item.update(path=str(shown), present=shown.is_file(), size_matches=False, verified=False, verification='linked-path-refused',
-                            installable=False, install_note=LINKED_ROW_NOTE, download=receipt if isinstance(receipt, dict) else {})
-                assets.append(item); continue
-            present = path.is_file()
-            blocked = self.install_block(asset, present)
-            checked_id(asset['id'])
-            receipt = load(self.state / (asset["id"] + ".json"), {})
-            if not isinstance(receipt,dict):receipt={}
-            identity = file_identity(path) if present else None
-            matches = present and identity['size'] == asset["bytes"]
-            verified = bool(backend_affinity(asset) in ('all', self.backend_id) and matches and receipt.get('version')==2 and receipt.get("status")=="installed"
-                            and receipt.get("sha256")==asset["sha256"] and receipt.get('path')==str(path)
-                            and receipt.get('file_identity')==identity)
-            reason = ('stat-fresh-sha256-receipt' if verified else 'missing' if not present
-                      else 'pin-only-manual-verification' if blocked else 'explicit-reverification-required')
-            item.update(path=str(path), present=present, size_matches=matches, verified=verified,
-                        verification=reason, installable=blocked is None, install_note=blocked, download=receipt)
-            assets.append(item)
+            try: assets.append(self._snapshot_row(asset))
+            except (KeyError, TypeError, ValueError) as exc:
+                assets.append(dict(asset, status="invalid_pin", path="", present=False, size_matches=False, verified=False,
+                                   verification="invalid-pin", installable=False, download={},
+                                   install_note="This pin is malformed and was not checked: " + str(exc)[:200]))
         folders = [self._folder_row(key, label) for key, label in FOLDERS.items()]
         folders += [{"id": key, "label": label, "path": str(self.folder(key))} for key, label in [("input", "Reference inputs"), ("output", "Generated outputs"), ("workflows", "Editable workflows"), ("downloads", "Browser downloads")]]
         inventory = []
