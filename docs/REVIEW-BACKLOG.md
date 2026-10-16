@@ -152,3 +152,13 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Issue hygiene**: a read-only sweep closed 5 open issues that were already done on main (#387, #401, #1202,
   #1206, #805) and closed #1358 (done by #1363); #1458 was a false positive. #639/#640/#1270/#825 are left for you
   (one unconfirmed bullet each, or "not reproduced").
+- [ ] **Submission marker and prompt receipt are now fsynced** (#1477, my call on #1459 option a): ~25-40 ms per
+  image; a failed durable marker sends nothing; a failed receipt save leaves the job uncertain and never resubmits.
+  Two independent reviews found no defect. Records written later in a run are still not durable (#1480).
+- [ ] **Lab round 3** (#1481): Copy Pose and Replace character each kept 2/2 on Anima sources; plain Klein 9B and the
+  depth route lost identity; Petiflow + extra style LoRAs was neutral at low strength and harmful at defaults; no
+  game-item recipe qualified. Make wave 6 (in progress) defaults "Character in a new pose" to Copy Pose and shows the
+  lab's LoRA notes in Tune. Lab round 4 queued: Copy Pose over 3 seeds, WAI/Z-Image sources, game items on other
+  models, Petiflow beyond close-ups.
+- [ ] **Live Studio restarted** at 13:52 on main d2973fa0 (no Studio work active) so tonight's Python changes load
+  (character routes, resume fix, durable saves, workspace/model-library hardening).
