@@ -176,7 +176,7 @@
       if(selected?.id===previousPreset)for(const [key,value] of exact){const el=getControl(key);if(el)el.value=value;}
       for(const refresh of [typeof updateLoraHints==='function'&&updateLoraHints,typeof updateReady==='function'&&updateReady,typeof scheduleTimeEstimate==='function'&&scheduleTimeEstimate])if(refresh)refresh();   // restored files and cleared values fire no input events
       const details=problems.map(key=>/^lora\d*_name$/.test(key)?"LoRA '"+result.controls[key]+"' is not installed":(key==='scheduler'?'schedule':key.replaceAll('_',' '))+" '"+result.controls[key]+"' could not be applied").join('; ');
-      const text="This look's "+details+'. Prepare stopped. Install missing LoRAs in Models & setup or pick another look. Create is unchanged.';message(text,true);status(text,true);return false;
+      const text="This look's "+details+'. Prepare stopped. '+(problems.some(key=>/^lora\d*_name$/.test(key))?'Install missing LoRAs in Models & setup or pick another look.':'Pick another look, or choose a recipe that offers these settings.')+' Create is unchanged.';message(text,true);status(text,true);return false;
     }
     composed=result.controls.positive;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));
     updateLoraHints();updateReady();scheduleTimeEstimate();recipeChanged();

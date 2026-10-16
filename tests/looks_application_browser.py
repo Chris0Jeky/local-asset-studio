@@ -67,6 +67,7 @@ def main():
                     status = page.locator('#lookStatus').inner_text()
                     assert 'could not be applied' in status and 'sampler' in status, status
                     assert 'Prepare stopped' in status and 'press Generate' not in status, status
+                    assert 'Install missing LoRAs' not in status, 'a sampler problem is not a LoRA install problem'
                     assert page.evaluate('StudioSetupDraft.capture()') == before, 'Failed Prepare must restore all Create values'
                     assert page.locator('[data-key=seed]').input_value() == '', 'a cleared control stays cleared after the rollback'
                     assert 'edited shipped look' in page.locator('#lookSummary').inner_text()
