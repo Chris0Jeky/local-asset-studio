@@ -44,7 +44,7 @@ for(const observed of ['A','B'])test('failed switch reconciles '+observed+' and 
  assert.equal(f.pending.at(-1).url,'/api/backends','failure must observe actual backend without replaying POST');
  f.pending.at(-1).resolve(f.backend(observed));await f.tick();
  if(observed==='B'){assert.equal(f.pending.at(-1).url,'/api/catalog');f.pending.at(-1).resolve({presets:[f.a,f.b]});await f.tick();}
- assert.equal(f.pending.at(-1).url,'/api/options');f.pending.at(-1).resolve({loras:['current-'+observed+'.safetensors']});await f.tick();
+ assert.equal(f.pending.at(-1).url,'/api/options?refresh');f.pending.at(-1).resolve({loras:['current-'+observed+'.safetensors']});await f.tick();
  f.pending.at(-1).resolve({backend:'current-'+observed});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'current-'+observed}]});await switchWork;
  held.resolve({loras:['stale.safetensors']});await f.tick();f.pending.at(-1).resolve({backend:'stale'});await f.tick();f.pending.at(-1).resolve({recipes:[{id:'stale'}]});await older;
  assert.deepEqual(Array.from(f.context.installedLoras),['current-'+observed+'.safetensors']);assert.equal(f.context.knowledge.backend,'current-'+observed);
@@ -215,7 +215,7 @@ test('a backend switch rebuilds adapter slots and enables Vary for adapters the 
   box.innerHTML='<select data-key="lora_name"><option selected>shared.safetensors</option></select>';
   const {work}=await begin(f);
   f.pending[1].resolve({presets:[f.a,f.b,wai,vary]});await f.tick();
-  assert.equal(f.pending[2].url,'/api/options');
+  assert.equal(f.pending[2].url,'/api/options?refresh');
   f.pending[2].resolve({loras:['primary-only.safetensors','primary-two.safetensors','shared.safetensors']});await f.tick();
   assert.equal(f.pending[3].url,'/api/knowledge');f.pending[3].resolve({});await f.tick();
   assert.equal(f.pending[4].url,'/api/recipes');f.pending[4].resolve({recipes:[]});
@@ -225,9 +225,9 @@ test('a backend switch rebuilds adapter slots and enables Vary for adapters the 
   const galleryNow=card.querySelector('.ux-vary').innerHTML,assetNow=holder.querySelector('.ux-vary').innerHTML;
   assert.match(galleryNow,/data-ux-vary="subtle"/);assert.match(galleryNow,/data-ux-vary="strong"/);assert.doesNotMatch(galleryNow,/\bdisabled\b/);assert.doesNotMatch(galleryNow,/Missing here/);
   assert.match(assetNow,/data-ux-vary="subtle"/);assert.doesNotMatch(assetNow,/\bdisabled\b/);
-  const settledSlots=box.innerHTML,options=f.pending.filter(item=>item.url==='/api/options').length;
+  const settledSlots=box.innerHTML,options=f.pending.filter(item=>item.url==='/api/options?refresh').length;
   const again=f.run();f.pending.at(-1).resolve(f.backend('new'));await again;
-  assert.equal(f.pending.filter(item=>item.url==='/api/options').length,options,'an unchanged backend does not reload the inventory');
+  assert.equal(f.pending.filter(item=>item.url==='/api/options?refresh').length,options,'an unchanged backend does not reload the inventory');
   assert.equal(box.innerHTML,settledSlots);assert.equal(card.querySelector('.ux-vary').innerHTML,galleryNow);assert.equal(holder.querySelector('.ux-vary').innerHTML,assetNow);
 });
 test('missing backend status reports incomplete without losing the draft',async()=>{
@@ -283,7 +283,7 @@ test('Models refresh reloads options, redraws slots and Vary, and retains the in
  vm.runInContext(cut(f.app,"$('#refreshModels').onclick=",";$('#modelSearch')")+';',f.context);
  const work=f.node('#refreshModels').onclick();
  assert.equal(f.pending.at(-1).url,'/api/health?refresh');f.pending.at(-1).resolve({});await f.tick();
- assert.equal(f.pending.at(-1).url,'/api/options');f.pending.at(-1).resolve({loras:['keep.safetensors','new.safetensors']});await f.tick();
+ assert.equal(f.pending.at(-1).url,'/api/options?refresh');f.pending.at(-1).resolve({loras:['keep.safetensors','new.safetensors']});await f.tick();
  f.pending.at(-1).resolve({});await f.tick();f.pending.at(-1).resolve({recipes:[]});await work;
  assert.deepEqual(Array.from(f.context.installedLoras),['keep.safetensors','new.safetensors']);
  assert.match(f.box.innerHTML,/new\.safetensors/);assert.doesNotMatch(f.box.innerHTML,/stale\.safetensors/);
