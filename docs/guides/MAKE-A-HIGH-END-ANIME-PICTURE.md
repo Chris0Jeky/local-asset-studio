@@ -242,5 +242,5 @@ For the path in this guide:
 
 - [Anime and fantasy atelier](../ANIME-FANTASY-ATELIER.md): every recipe and adapter with trigger words, terms and timings.
 - [Look lab, 16 October 2026](../looks/LOOK-LAB-2026-10-16.md): the evidence behind section 2, and its limits.
-- [Start here](../START-HERE.md): the older, recipe-first walkthrough in the Full editor.
+- [Start here](../START-HERE.md): the short first-picture walkthrough in Make.
 - [Operations](../OPERATIONS.md): installing models, uncertain submissions, troubleshooting.
