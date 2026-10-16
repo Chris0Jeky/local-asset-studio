@@ -517,7 +517,10 @@
   // generation. A parent that is put away or not a picture breaks the chain there. Direct children only would miss edits of edits.
   const LINEUP_MAX=24;
   function lineupMarkup(c){
-    const pics=state.pictures||[],canon=pics.find(a=>a.id===c.canon_asset_id)||{id:c.canon_asset_id},family=new Set([c.canon_asset_id]);
+    const pics=state.pictures||[],canon=pics.find(a=>a.id===c.canon_asset_id)||{id:c.canon_asset_id},family=new Set([c.canon_asset_id]),rec=(c.lineage||[]).find(l=>l?.role==='canon');
+    // Seeded from the recorded canon identity too: when the recorded asset is put away and a live copy of its bytes stands in (characters.py
+    // canon_asset), kept pictures still descend from the recorded asset or from any picture with the recorded sha256.
+    if(rec?.asset_id)family.add(rec.asset_id);if(rec?.sha256)for(const a of pics)if(a.sha256===rec.sha256)family.add(a.id);
     for(let grew=true;grew;){grew=false;for(const a of pics)if(!family.has(a.id)&&(a.lineage||[]).some(p=>family.has(p?.asset_id??p))){family.add(a.id);grew=true;}}
     const kept=pics.filter(a=>a.id!==c.canon_asset_id&&family.has(a.id)&&(state.review[a.id]??a.review)==='selected'),shown=kept.slice(0,LINEUP_MAX);
     const item=(a,canonTag)=>'<button type="button" class="make-lineup-item'+(canonTag?' make-lineup-canon':'')+'" data-ux-open-asset="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="'+escape(canonTag?'Canon picture of '+c.name:pictureLabel(a))+'" loading="lazy">'+(canonTag?'<small class="make-lineup-tag">Canon</small>':'')+'</button>';

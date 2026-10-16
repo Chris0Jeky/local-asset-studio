@@ -312,6 +312,10 @@ def run(shots):
         # Manage characters (#1205 v2): Edit, Put away / Restore (revision-checked: a 409 reloads and changes nothing), and a read-only
         # Line-up per character, canon pinned first, then kept pictures that descend from it. None of it submits.
         before_manage = len(jobs()); kept_state = [(a['review'], a['lineage']) for a in fixture.ASSETS]
+        # Real pictures differ in bytes; the fixture gives them one hash, which would make every picture a copy of the canon.
+        kept_shas = [a['sha256'] for a in fixture.ASSETS]
+        for i, a in enumerate(fixture.ASSETS): a['sha256'] = '%064x' % (i + 1)
+        fixture_card(0)['lineage'][0]['sha256'] = fixture.ASSETS[0]['sha256']
         fixture.ASSETS[4].update(review='selected', lineage=['asset-0'])   # a kept picture made from the canon
         fixture.ASSETS[3].update(review='selected', lineage=['asset-4'])   # a kept edit of that one: listed after it, so the chain needs a second pass
         fixture.ASSETS[2].update(lineage=['asset-0'])                      # made from the canon but needs work: not kept, not in the line-up
@@ -338,15 +342,31 @@ def run(shots):
         assert '4 older kept pictures not shown' in page.locator(sc).inner_text(), page.locator(sc).inner_text()
         del fixture.ASSETS[-26:]
         assert len(jobs()) == before_manage, 'the line-up submits nothing'
+        # The recorded canon put away, an identical live copy standing in (characters.py canon_asset): the line-up follows the copy and still
+        # finds the kept pictures made from the recorded asset (Codex review of #1472).
+        copy = dict(fixture.ASSETS[0], id='canon-copy', title='Canon copy', filename='copy.png', created_at=1789000500, review='unreviewed', lineage=[], tags=[])
+        was_away = fixture.ASSETS[0].get('trashed_at'); fixture.ASSETS[0]['trashed_at'] = 1; fixture.ASSETS.append(copy); fixture_card(0)['canon_asset_id'] = 'canon-copy'
+        def resync():   # a stale Put away answers 409, which reloads the character list without changing anything
+            page.locator('[data-make-character-away="character-0"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("changed somewhere else")')
+        fixture_card(0)['revision'] += 1; resync(); open_picker()
+        if not page.locator(sc).evaluate('e=>e.open'): page.locator(sc + ' summary').click()
+        page.wait_for_selector(sc + ' .make-lineup-item')
+        order = page.eval_on_selector_all(sc + ' .make-lineup-item', 'n=>n.map(e=>e.dataset.uxOpenAsset)')
+        assert order == ['canon-copy', 'asset-3', 'asset-4'], order
+        fixture.ASSETS.remove(copy); fixture.ASSETS[0]['trashed_at'] = was_away; fixture_card(0)['canon_asset_id'] = 'asset-0'
+        for a, sha in zip(fixture.ASSETS, kept_shas): a['sha256'] = sha
+        fixture_card(0)['lineage'][0]['sha256'] = 'a' * 64
+        fixture_card(0)['revision'] -= 1; resync(); open_picker()
+        character_posts = len(posted('/api/characters'))
         # Edit: the words and the avoid words; a stale revision (changed elsewhere) reloads the card and saves nothing.
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
         assert [form.locator('[data-make-char="%s"]' % k).input_value() for k in ('name', 'who', 'clothes', 'avoid')] == ['Mira', 'Mira, a lantern keeper with silver hair', 'a moss-green cloak with brass buttons', ''], 'Edit shows the stored words'
         form.locator('[data-make-char="avoid"]').fill('glasses, hat'); shot('character-edit', '.make-characters')
-        form.locator('[data-make-character-cancel]').click(); assert not page.locator('.make-character-form').count() and len(posted('/api/characters')) == 1, 'Cancel saves nothing'
+        form.locator('[data-make-character-cancel]').click(); assert not page.locator('.make-character-form').count() and len(posted('/api/characters')) == character_posts, 'Cancel saves nothing'
         assert page.evaluate('document.activeElement.dataset.makeCharacterEdit') == 'character-0'
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
         form.locator('[data-make-char="avoid"]').fill('glasses, hat'); fixture_card(0).update(name='Mira (renamed elsewhere)', revision=1)
-        form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("changed somewhere else")')
+        form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("Your edit was not saved")')
         assert posted('/api/characters')[-1]['expected_revision'] == 0 and fixture_card(0)['body'].get('avoid') is None, 'a stale edit changes nothing'
         assert not page.locator('.make-character-form').count() and 'Mira (renamed elsewhere)' in page.locator('[data-make-character="character-0"]').inner_text(), 'the card is reloaded'
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
