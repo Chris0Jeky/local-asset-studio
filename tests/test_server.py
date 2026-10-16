@@ -767,6 +767,21 @@ class ServerTests(unittest.TestCase):
         studio._save(job)
         return studio,job
 
+    def test_resume_and_stop_tracking_reject_extra_path_segments(self):
+        for action,method,status in (('resume','resume_job',202),('stop-tracking','stop_tracking',200)):
+            with self.subTest(action=action):
+                studio,job=self.uncertain_known_job();before=json.dumps(job,sort_keys=True);queued=studio.queue.qsize()
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a:{'reason':'Stop observing this prompt'}
+                sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+                with patch.object(studio,method,wraps=getattr(studio,method)) as command:
+                    for extra in ('/x','/x/y','/'):
+                        handler.path='/api/jobs/'+job['id']+extra+'/'+action;sent.clear();handler.do_POST()
+                        self.assertEqual(sent[0][0],400,sent);command.assert_not_called()
+                        self.assertEqual(json.dumps(job,sort_keys=True),before);self.assertEqual(studio.queue.qsize(),queued)
+                    handler.path='/api/jobs/'+job['id']+'/'+action;sent.clear();handler.do_POST()
+                    self.assertEqual(sent[0][0],status,sent);command.assert_called_once()
+
     def test_stop_tracking_persists_only_disposition_and_is_idempotent(self):
         studio,job=self.uncertain_known_job();directory=studio.runs/job['id']
         recipe=(directory/'recipe.json').read_bytes();workflow=(directory/'workflow.json').read_bytes();before=dict(job)
