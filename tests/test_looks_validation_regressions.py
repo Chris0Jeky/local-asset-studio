@@ -35,6 +35,28 @@ class LookValidationTests(unittest.TestCase):
     def test_allowed_controls_match_the_existing_server_contract(self):
         self.assertEqual(set(fixture.looks.CONTROL_KEYS), set(fixture.server.CONTROL_KEYS) - fixture.looks.NOT_CONTROLS)
 
+    def test_saved_controls_obey_the_ranges_and_choices_jobs_enforce(self):
+        # A look control /api/jobs would refuse is refused when the look is saved, and again when it is prepared.
+        preset = dict(fixture.TEXT, cfg=['1', 'steps'], sampler=['1', 'steps'], lora=['1', 'steps'], lora_name=['1', 'steps'],
+                      dimension_limits=[256, 1024], dimension_multiple=64, choices={'sampler': ['euler']})
+        for key, bad in (('steps', 0), ('steps', 151), ('steps', 2.5), ('steps', 'many'), ('seed', -1), ('seed', 2**63), ('cfg', 31),
+                         ('lora', 2.5), ('lora', -0.1), ('lora', 'style.ckpt'), ('lora_name', '../x.safetensors'), ('lora_name', 'x.ckpt'),
+                         ('width', 1344), ('width', 300), ('width', 128), ('sampler', 'dpmpp_9m')):
+            with self.subTest(key=key, bad=bad), self.assertRaisesRegex(fixture.WorkspaceError, key):
+                fixture.looks.validate_body(dict(fixture.BODY, controls={key: bad}), preset)
+        good = {'steps': '30', 'seed': 0, 'cfg': 7.5, 'lora': 1.2, 'lora_name': 'style.safetensors', 'width': 832 - 832 % 64, 'sampler': 'euler'}
+        self.assertEqual(fixture.looks.validate_body(dict(fixture.BODY, controls=good), preset)['controls'], good)
+        self.assertIsNone(fixture.looks.control_problem(dict(preset, choices={}), 'sampler', 'anything'), 'unknown choices are checked at /api/jobs')
+        card = self.create()
+        self.studio.catalog = lambda: {'presets': [dict(fixture.TEXT, dimension_limits=[256, 1024])]}
+        with self.assertRaisesRegex(fixture.WorkspaceError, 'width must be'):
+            fixture.looks.prepare(self.studio, {'id': card['id'], 'scene': 'a quiet room'})
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
+    def test_saved_control_ranges_match_the_job_route(self):
+        self.assertEqual({k: v for k, v in fixture.looks.NUMBER_RANGES.items() if k in dict((r[0], r) for r in fixture.server.NUMBER_RANGES)},
+                         {r[0]: r[1:] for r in fixture.server.NUMBER_RANGES})
+
     def test_each_bad_seed_is_reported_without_preventing_the_good_seed(self):
         good = {'id': 'look-good', 'kind': 'look', 'name': 'Good', 'body': copy.deepcopy(fixture.BODY)}
         bad = [dict(good, id='../bad'), dict(good, id=123), dict(good, name=''), dict(good, name=12),
