@@ -953,6 +953,13 @@
   if((e.target.id==='makeScene'||e.target.dataset.makeField)&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void submit();}});
   // Generate is one button for every mode: a look, a compare, or a picture goal.
   const submit=()=>goal().intent?goalGenerate():state.compare?generateCompare():generate();
+  // The Library's picture dialog opens Make's picture goals with that picture chosen (audit v3 N3); Continue with this stays beside
+  // them for the full editor. Leaving follows the dialog's own unsaved-changes rule; nothing is submitted.
+  document.addEventListener('click',e=>{const b=e.target.closest('#assetDialog [data-make-open]');if(!b)return;const next=GOALS.find(x=>x.intent===b.dataset.makeOpen);
+    if(!next||typeof assetDetailCanLeave==='function'&&!assetDetailCanLeave())return;
+    state.goal=next.id;state.compare=false;state.character=null;state.pictures=null;choosePicture(b.dataset.asset);remember();state.status=next.name+': your picture is chosen. Fill in what is asked, then press Generate.';state.missing='';
+    document.querySelector('#assetDialog')?.close();if(typeof showView==='function')showView('make');else window.StudioMake.refresh();
+    (q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();});
   let loaded=false;
   window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();

@@ -203,6 +203,30 @@ def make_checks(browser, origin):
     page.close()
 
 
+def library_checks(browser, origin):
+    # The Library's picture dialog opens Make first (audit v3 N3): Change it / Fix or upscale / Restyle / New pose open that picture goal
+    # with the picture chosen; Continue with this stays as the full editor route. Unsaved details keep the dialog open. Nothing is sent.
+    page = browser.new_page(viewport={'width': 1440, 'height': 900}); errors = []; page.on('pageerror', lambda e: errors.append(str(e)))
+    answers = []; page.on('dialog', lambda d: d.accept() if answers and answers.pop(0) else d.dismiss())
+    page.goto(origin+'/#assets'); page.wait_for_selector('#assetGrid [data-asset-open="asset-1"]'); before = len(jobs())
+    page.locator('#assetGrid .asset-open[data-asset-open="asset-1"]').click(); page.wait_for_selector('#assetHandoffs [data-make-open]')
+    rows = page.eval_on_selector_all('#assetHandoffs .ux-route-row', 'n=>n.map(e=>e.getAttribute("aria-label")+": "+[...e.querySelectorAll("button")].map(b=>b.textContent).join(" | "))')
+    assert rows == ['Open in Make: Change it | Fix or upscale | Restyle | New pose', 'Full editor: Continue with this → | Find recipes for this image'], rows
+    assert page.get_attribute('#assetHandoffs [data-make-open="edit"]', 'class') == 'primary' and page.get_attribute('#assetHandoffs [data-ux-handoff]', 'class') is None
+    page.fill('#assetNotes', 'unsaved note'); answers.append(False); page.click('#assetHandoffs [data-make-open="combine"]')
+    assert page.evaluate('document.querySelector("#assetDialog").open') and page.input_value('#assetNotes') == 'unsaved note', 'declining the discard keeps the dialog'
+    answers.append(True); page.click('#assetHandoffs [data-make-open="combine"]'); page.wait_for_selector('[aria-labelledby=makeSlotA] img', state='attached')
+    assert not page.evaluate('document.querySelector("#assetDialog").open') and page.evaluate('location.hash') == '#make' and not page.is_hidden('#makeView')
+    assert page.get_attribute('#makeGoals [aria-checked=true]', 'data-make-goal') == 'combine' and page.get_attribute('[aria-labelledby=makeSlotA] img', 'src') == '/api/assets/asset-1/thumb'
+    assert 'your picture is chosen' in page.inner_text('#makeStatus')
+    page.goto(origin+'/#assets'); page.wait_for_selector('#assetGrid [data-asset-open="asset-0"]')
+    page.locator('#assetGrid .asset-open[data-asset-open="asset-0"]').click(); page.click('#assetHandoffs [data-make-open="repair"]'); page.wait_for_selector('#makeComposer [data-make-fix]')
+    assert page.get_attribute('#makeGoals [aria-checked=true]', 'data-make-goal') == 'repair' and page.get_attribute('.make-picked img', 'src') == '/api/assets/asset-0/thumb'
+    assert len(jobs()) == before, 'opening Make from the Library sends nothing'
+    assert not errors, errors
+    page.close()
+
+
 def recovery_checks(browser, origin):
     # Restore (#1438): a run whose first read fails is kept and checked again; one the Studio says is gone (404) is dropped.
     # An uncertain run offers Resume observation and Stop tracking on its own card; neither sends a picture again.
@@ -268,6 +292,7 @@ def run():
             after = page.evaluate('()=>({preset:selected.id,positive:document.querySelector("#positive").value,parents:[...parentAssets],uploaded,claim:continuationState||null,view})')
             assert after == before, (before, after)
             make_checks(browser, origin)
+            library_checks(browser, origin)
             browser.close()
     finally:
         server.shutdown(); server.server_close()
