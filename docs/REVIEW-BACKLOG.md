@@ -9,6 +9,23 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 ## 2026-10-16 overnight session
 
+### Review these first (biggest effect on how the Studio feels)
+
+1. **Make is the home and does the whole anime flow** (waves 1-7, #1427-#1486): goal → look → describe → Tune →
+   Generate in 6 clicks + 2 typed, Generate always in view; the third audit found 17 of 27 original problems fixed and
+   10 partly, none regressed. Look at it in the browser before anything else.
+2. **Looks ordered and badged by the lab** (#1447, #1494): Petiflow first for anime characters; "Tested well" only where
+   the lab kept ≥3/4 or 2/2.
+3. **Character in a new pose defaults to Copy Pose** (#1482): measured 3/3 per Anima pair; depth and plain Klein 9B are
+   hidden from Make.
+4. **Character cards** (#1466, #1472): "Make this my character…", "Your characters", Line-up.
+5. **The old Overview is retired** (#1487): `#home` opens Make.
+6. **Lab pictures no longer flood your pickers** (#1486): agent-run pictures behind "Show all pictures".
+7. **Durable submission saves** (#1477): the marker and prompt receipt are fsynced (~25-40 ms per image).
+8. **A sampler/scheduler a recipe does not offer is refused at save** (#1456); stored ones show as unusable.
+9. **Fix face and Fix hands merge into one button** where they run the same WAI repaint (#1494), with a warning.
+10. **Petiflow Tune starting strengths from the lab** (#1482): Xilmo/Ke-ta 0.35, NEWANIMASTYLE 0.5.
+
 ### Plan and orchestration (session eb59d5)
 
 - Lanes: **UX** (journey audit by a Sonnet 5.5 high tester, then a rework wave implemented by Opus 5.5 medium and the
