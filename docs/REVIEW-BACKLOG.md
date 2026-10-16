@@ -145,3 +145,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   canon then up to 24 kept descendants, newest first (walks lineage through the loaded library; the family route
   only returns direct children). A one-time, dismissible note offers old Combine answers as a character. Avoid words
   join the negative only where the request already has one (no Make picture goal has one today, so no live effect yet).
+- [ ] **Blind comparisons hide recipes and the plan file until Reveal** (#1475): each candidate's Recipe download and
+  the "Full plan" link are hidden while blind (the plan file names which variant is which); the plan-level axis stays
+  visible on purpose. Double Keeper presses say "Still saving…"; overlapping plan actions say so. Reverse: drop the
+  `blindComparison` checks around the recipe/plan links in production.js.
+- [ ] **Issue hygiene**: a read-only sweep closed 5 open issues that were already done on main (#387, #401, #1202,
+  #1206, #805) and closed #1358 (done by #1363); #1458 was a false positive. #639/#640/#1270/#825 are left for you
+  (one unconfirmed bullet each, or "not reproduced").
