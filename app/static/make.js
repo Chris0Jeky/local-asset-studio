@@ -39,7 +39,7 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,charSave:null,charEdit:null,charMigrate:null,charForm:{},openers:new Set(),noteGone:false};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,charSave:null,charEdit:null,charMigrate:null,charForm:{},openers:new Set(),noteGone:false};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
   const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
@@ -127,6 +127,13 @@
     const kinds=new Set(presets().filter(r=>r.family&&kind(r)===k).map(r=>r.family));
     return files.filter(f=>entry(f)&&kinds.has(entry(f).family)).sort((a,b)=>fits(look,b)-fits(look,a)||short(a).localeCompare(short(b)));
   }
+  // Measured pairings (lab round 3, PR #1481, docs/looks/LOOK-LAB-2026-10-16.md "Petiflow Tune pairings"): Petiflow as made, one fern
+  // scene, one seed. [strength an added adapter starts at (null: the knowledge base's), what the lab saw]. A starting point, not a safe range.
+  const LAB={'look-anima-pearly-petiflow':{'anima-xilmo-000020.safetensors':[0.35,'Lab with Petiflow: at 0.35 kept the scene; at 0.7 changed the plant.'],
+    'anima-ke-ta_style_v1.safetensors':[0.35,'Lab with Petiflow: 0.35 and 0.7 both kept the scene, with no gain over Petiflow alone.'],
+    'anima-newanimastyle-v1.safetensors':[0.5,'Lab with Petiflow: at 0.5 kept the scene; at 1.0 changed the plant and the face.'],
+    'anima-kieed_v9_step6000.safetensors':[null,'Lab with Petiflow: at 0.25 and 0.5 it changed the plant and flattened the face.']}};
+  const labOf=(look,name)=>tunedPreset(look)===presetFor(look)&&LAB[look?.id]?.[name]||null;
   // Style strength multiplies every tuned adapter; what is sent is shown beside each strength (audit N3).
   const scaleOf=t=>t?.scale??100,eff=(r,t)=>r.on?Math.min(2,Math.round(r.strength*scaleOf(t))/100):0;
   const rowOut=(r,t)=>r.strength.toFixed(2)+(scaleOf(t)!==100&&r.on?' → '+eff(r,t).toFixed(2):'');
@@ -180,7 +187,7 @@
     const row=r=>{const e=entry(r.name),why=e?.trigger?'Trigger: '+e.trigger+(r.added?' (added to your words)':''):r.name?'No trigger word':'Fixed in this recipe';
       return '<div class="make-tune-row" data-slot="'+r.slot+'"><label class="make-check"><input type="checkbox" data-tune-on="'+r.slot+'"'+(r.on?' checked':'')+'> <b>'+escape(short(r.name))+'</b></label>'
         +'<span class="make-tune-strength"><input type="range" min="0" max="2" step="0.05" value="'+r.strength+'" data-tune-strength="'+r.slot+'" aria-label="Strength of '+escape(short(r.name))+'"><output>'+rowOut(r,t)+'</output></span>'
-        +(r.name?'<button type="button" class="make-link" data-tune-remove="'+r.slot+'">Remove</button>':'')+'<small>'+escape(why)+'</small></div>';};
+        +(r.name?'<button type="button" class="make-link" data-tune-remove="'+r.slot+'">Remove</button>':'')+'<small>'+escape(why)+'</small>'+(labOf(look,r.name)?'<small class="make-lab">'+escape(labOf(look,r.name)[1])+'</small>':'')+'</div>';};
     const all=[p,...list],made=files.filter(f=>fits(look,f)).length,other=files.length-made;
     box.innerHTML='<div class="make-tune-group"><h3>Model</h3>'
       +'<label>Base model<select id="makeModel" data-tune="model">'+option(p.id,'As made · '+modelLabel(p,all)+(nonCommercial(p)?' · non-commercial':'')+(missingFor(p).length?' · needs download':''),tp===p)+list.map(m=>option(m.id,modelLabel(m,all)+(nonCommercial(m)?' · non-commercial':'')+(missingFor(m).length?' · needs download':''),tp===m)).join('')+'</select></label>'
@@ -226,7 +233,7 @@
     if(target.closest('[data-tune-add]')){const t=tuneOf(look),input=q('#makeLoraSearch'),name=input?.value.trim(),slot=freeSlot(look,t);
       if(!compatible(look).includes(name)){say(name?'Choose an adapter from the list: '+name+' is not an installed adapter for this model type.':'Type part of an adapter name, then choose it from the list.');input?.focus();return true;}
       if(t.rows.some(r=>r.name===name)){say(short(name)+' is already added.');input?.focus();return true;}if(!slot)return true;
-      t.rows.push({slot,name,strength:clamp(entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
+      t.rows.push({slot,name,strength:clamp(labOf(look,name)?.[0]??entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
       say(fits(look,name)?'':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');return true;}
     if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];delete savedTunes[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
     return false;
@@ -584,7 +591,8 @@
   const PICK={edit:'Choose the picture to change.',repair:'Choose the picture to fix or enlarge.',restyle:'Choose the picture to redraw in another look.',combine:'Choose the character. The pose comes next.',animate:'Choose the still to bring to life.',mesh:'Choose a picture of one object or character, ideally on a plain background.'};
   const HEAD={edit:'What should change?',repair:'What should be fixed?',restyle:'Choose the new look',combine:'Choose the pose',animate:'How should it move?',mesh:'Make a 3D model'};
   // A recipe's bracketed fills become plain fields named by what they mean; a recipe example that names a person is never shown.
-  const FILL={who:['Who is in the character picture','a girl with short black hair'],clothes:['What they wear, with colours','a black jacket and a red scarf'],pose:['The pose, in a few words','arms crossed, looking over one shoulder'],outfit:['The clothes in the pose picture, with colours','a long blue coat and brown boots']};
+  // The pose example is the wording lab round 3 tested on Copy Pose (PR #1481): hands, prop and camera in a few words.
+  const FILL={who:['Who is in the character picture','a girl with short black hair'],clothes:['What they wear, with colours','a black jacket and a red scarf'],pose:['The pose, in a few words','holding one bamboo flute with both hands at chest height, front view, medium shot'],outfit:['The clothes in the pose picture, with colours','a long blue coat and brown boots']};
   const CLIP={'quick-diagnostic':'Short','balanced':'Longer'},CLIP_FPS=24;  // wan22-i2v writes MP4 at 24 fps (its stages)
   const ready=()=>typeof catalog!=='undefined'&&!!catalog&&!!SC();
   const runnable=p=>!!p&&!p.runtime_block&&!missingFor(p).length;
@@ -596,9 +604,16 @@
     const list=SC().destinations(g.intent,presets(),null).filter(p=>!p.continuation_capability.requires_mask),first=f=>{const fit=list.filter(f);return fit.find(runnable)||fit[0]||null;};
     if(g.intent==='edit')return first(p=>p.continuation_capability.operation==='instruction-edit'&&!p.reference_slots?.length);
     if(g.intent==='restyle'){const words=state.styleWords||!lookPictures().length;return first(p=>p.id===(words?'restyle-klein':'restyle-klein-picture'))||first(p=>!!p.reference_slots?.length!==words);}
-    if(g.intent==='combine')return first(p=>SC().combineKind(p)===(state.poseMode==='figure'?'skeleton':'picture'));
+    if(g.intent==='combine'){if(state.poseMode==='figure')return first(p=>SC().combineKind(p)==='skeleton');
+      const scene=state.poseRoute==='scene'&&list.find(p=>p.id===POSE_ROUTE.scene);if(scene)return scene;
+      const copy=list.find(p=>p.id===POSE_ROUTE.copy);return runnable(copy)?copy:list.find(p=>runnable(p)&&SC().combineKind(p)==='picture'&&!POSE_OFF.includes(p.id)&&p.id!==POSE_ROUTE.scene)||copy||null;}
     return first(()=>true);
   }
+  // Character in a new pose from a picture (lab round 3, PR #1481, docs/looks/LOOK-LAB-2026-10-16.md "Pose measurements"): Copy Pose
+  // kept pose, face and finish 2/2; Replace character put the face into the pose picture's scene 2/2 as designed. Depth and plain 9B
+  // lost the face (a reject each), so Make never picks them; the full editor still offers them. Copy Pose missing: the next picture route.
+  const POSE_ROUTE={copy:'combine-klein-9b-copypose',scene:'combine-klein-9b-replace'},POSE_OFF=['combine-klein-9b-depth','combine-klein-9b'];
+  const notReady=p=>!p?'is not in the recipe library':p.runtime_block?'cannot run here ('+p.runtime_block.replace(/[\s.]+$/,'')+')':'needs '+missingFor(p).length+' model file'+(missingFor(p).length>1?'s':'')+' first (open Models & setup)';
   function goalBlocker(g,p){
     const runtime=runtimeBlocker();if(runtime)return runtime;
     if(g.intent==='repair'){const plan=state.pick&&state.polish[state.pick.id+':'+state.fix];return plan&&!plan.ok?inMake(plan.reason):'';}
@@ -695,11 +710,16 @@
       else{if(f.look==null&&p)f.look=splitLook(SC().promptFor(p,null)||'')[0];main=field('look','Describe the new look','a soft watercolour illustration with loose ink lines',4,2000)+(lookPictures().length?'<button type="button" class="make-link" data-make-style-pictures>Pick a look by its picture instead</button>':'')+'<small class="muted">Your words carry the look. Your picture keeps its character, pose, clothes and layout.</small>';}}
     else if(g.intent==='combine'){
       const figure=state.poseMode==='figure',pose=state.pose,figures=(PE()?.PRESETS||[]).filter(x=>x.points),mode=(value,label)=>'<label class="make-check"><input type="radio" name="makePoseMode" id="makePoseMode-'+value+'" data-make-pose-mode="'+value+'"'+(state.poseMode===value?' checked':'')+'> '+label+'</label>';
+      // From a picture: Copy Pose by default, Replace character as the second choice, each with what it keeps; a fallback says why.
+      const all=ready()?SC().destinations('combine',presets(),null):[],copy=all.find(x=>x.id===POSE_ROUTE.copy),scene=p?.id===POSE_ROUTE.scene;
+      const opt=(v,label,says)=>'<label class="make-check"><input type="radio" name="makePoseRoute" id="makePoseRoute-'+v+'" data-make-pose-route="'+v+'"'+((scene?'scene':'copy')===v?' checked':'')+' aria-describedby="makePoseRouteHint-'+v+'"> '+label+'</label><small class="muted" id="makePoseRouteHint-'+v+'">'+says+'</small>';
+      const routes=(all.some(x=>x.id===POSE_ROUTE.scene)?'<fieldset class="make-options make-pose-routes"><legend>What to keep</legend>'+opt('copy','Keep my character as it is','Your character keeps its face, clothes, background and finish; only the body position comes from the pose picture.')+opt('scene','Put my character into this picture’s scene','The pose picture keeps its outfit, setting and finish; only your character’s face and hair go in.')+'</fieldset>':'')
+        +(!scene&&p&&p.id!==POSE_ROUTE.copy?'<small class="make-warn" id="makePoseFallback">'+goalWhy(copy||p,'Copy Pose '+notReady(copy)+', so this uses '+SC().combineEngineLabel(p)+' instead; it may keep the face less well.')+'</small>':'');
       main='<div class="make-slots"><section class="make-slot" aria-labelledby="makeSlotA"><h3 id="makeSlotA">Character picture</h3><img src="'+thumbUrl(a)+'" alt=""><small>'+escape(chosenCharacter()?'Your character '+chosenCharacter().name+' \u00b7 canon picture':pictureLabel(a))+'</small><button type="button" data-make-repick>Change picture</button></section>'
         +'<section class="make-slot" id="makePoseSlot" tabindex="-1" aria-labelledby="makeSlotB"><h3 id="makeSlotB">Pose</h3><div class="make-seg" role="group" aria-label="Where the pose comes from">'+mode('picture','A picture of the pose')+mode('figure','Draw the pose')+'</div>'
-        +(figure?'<div class="make-figures">'+figures.map(x=>'<label class="make-figure"><input type="radio" name="makeFigure" id="makeFigure-'+x.id+'" data-make-figure="'+x.id+'"'+(pose?.figure===x.id?' checked':'')+'>'+figureSvg(x.points,pose?.figure===x.id&&pose.mirror)+'<span>'+escape(x.label)+'</span></label>').join('')+'</div><label class="make-check"><input type="checkbox" id="makeMirror" data-make-mirror'+(pose?.mirror?' checked':'')+(pose?.figure?'':' disabled')+'> Mirror left and right</label><small class="muted">A stick figure carries the pose and nothing else. To move single joints, open the full editor.</small>'
-          :pose?.asset&&!state.posePicking?'<img src="'+thumbUrl(pose.asset)+'" alt=""><small>'+escape(pictureLabel(pose.asset))+'</small><button type="button" data-make-pose-change>Change pose picture</button><small class="muted">Only the body position is taken from it, not the person, clothes or colours.</small>'
-          :pictureFinder('makePosePictures','data-make-pose-pick'))+'</section></div>'+fields.map(fill).join('');}
+        +(figure?'<div class="make-figures">'+figures.map(x=>'<label class="make-figure"><input type="radio" name="makeFigure" id="makeFigure-'+x.id+'" data-make-figure="'+x.id+'"'+(pose?.figure===x.id?' checked':'')+'>'+figureSvg(x.points,pose?.figure===x.id&&pose.mirror)+'<span>'+escape(x.label)+'</span></label>').join('')+'</div><label class="make-check"><input type="checkbox" id="makeMirror" data-make-mirror'+(pose?.mirror?' checked':'')+(pose?.figure?'':' disabled')+'> Mirror left and right</label><small class="muted">A stick figure carries the pose and nothing else. To move single joints, open the full editor.</small><small class="muted" id="makeFigureHint">Hands and gaze follow the words only weakly. Describe the pose simply, and leave out words the figure contradicts, such as crossed legs on the bent figure.</small>'
+          :routes+(pose?.asset&&!state.posePicking?'<img src="'+thumbUrl(pose.asset)+'" alt=""><small>'+escape(pictureLabel(pose.asset))+'</small><button type="button" data-make-pose-change>Change pose picture</button><small class="muted">'+(scene?'Its pose, camera, clothes and background stay; only the person changes.':'Only the body position is taken from it, not the person, clothes or colours.')+'</small>'
+          :pictureFinder('makePosePictures','data-make-pose-pick')))+'</section></div>'+fields.map(fill).join('');}
     else if(g.intent==='animate'){main=field('motion','Motion and camera','she turns her head and smiles; the camera slowly moves closer',3)+'<small class="muted">Say what moves and how the camera moves. A description of the picture alone gives a still clip.</small>';
       const list=clips(p);if(list.length)side='<label>Length<select id="makeClip" data-make-field="clip">'+list.map(m=>'<option value="'+escape(m.id)+'"'+((f.clip||list[0].id)===m.id?' selected':'')+'>'+escape(CLIP[m.id]||m.name)+' · '+m.controls.frames+' frames, about '+(m.controls.frames/CLIP_FPS).toFixed(1)+' s</option>').join('')+'</select></label>';}
     else main='<p>One press: the background is cut away, then a textured 3D model (GLB) is built from this picture. Hidden sides are guessed, so check the model before you use it.</p>';
@@ -826,6 +846,7 @@
     if(t.id==='makeDraft'){const look=current();if(look){tuneOf(look).steps=t.checked?Number(t.dataset.steps):null;tuneChanged();q('#makeDraft')?.focus();}return;}
     if(t.dataset.makeFix){state.fix=t.dataset.makeFix;redraw('#makeFix-'+state.fix);return;}
     if(t.dataset.makeStyle){state.styleLook=t.dataset.makeStyle;for(const r of view.querySelectorAll('[data-make-style]')){r.removeAttribute('aria-invalid');r.removeAttribute('aria-describedby');}settleMissing();return;}
+    if(t.dataset.makePoseRoute){state.poseRoute=t.dataset.makePoseRoute;redraw('#makePoseRoute-'+state.poseRoute);return;}
     if(t.dataset.makePoseMode){state.poseMode=t.dataset.makePoseMode;state.posePicking=false;redraw('#makePoseMode-'+state.poseMode);return;}
     // A new figure is a new pose: its words replace the pose answer (Create clears it the same way, #492); edit them freely.
     if(t.dataset.makeFigure){const fig=PE().PRESETS.find(x=>x.id===t.dataset.makeFigure);state.pose={figure:fig.id,mirror:!!state.pose?.mirror};state.form.pose=fig.label.toLowerCase();redraw('#makeFigure-'+fig.id);return;}
