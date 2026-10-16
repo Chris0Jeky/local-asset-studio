@@ -137,6 +137,12 @@ class ModelLibraryTests(unittest.TestCase):
         self.assertEqual(rows['no-hash']['status'],'invalid_pin');self.assertIn('SHA-256',rows['no-hash']['install_note'])
         self.assertNotIn('status',rows['demo']);self.assertFalse(rows['demo']['verified']);self.assertEqual(rows['demo']['verification'],'missing')
 
+    def test_open_folder_refuses_on_non_windows_before_creating_the_folder(self):
+        target=self.lib.folder('input')
+        with patch.object(models,'os',types.SimpleNamespace(name='posix')):
+            with self.assertRaisesRegex(ValueError,'Open folder is available on Windows'):self.lib.open_folder('input')
+        self.assertFalse(target.exists())
+
 
 class PinOnlyFolderTests(unittest.TestCase):
     """Detectors, GGUF backbones and .pth heads are pinned for verification, never auto-installed."""

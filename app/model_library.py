@@ -126,10 +126,10 @@ class ModelLibrary:
         except ValueError as exc: return {"id": key, "label": label, "path": str(self.models / key), "unavailable": str(exc)}
 
     def open_folder(self, key):
+        if os.name != "nt":
+            raise ValueError("Open folder is available on Windows; copy the path instead")   # refuse before any folder is created
         path = self.folder(key)
         path.mkdir(parents=True, exist_ok=True)
-        if os.name != "nt":
-            raise ValueError("Open folder is available on Windows; copy the path instead")
         os.startfile(str(path))
         return {"path": str(path)}
 
