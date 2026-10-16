@@ -40,4 +40,9 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **#1407 legacy parallax click path deleted**; if the recovery controller fails to mount, the button is disabled
   with "reload the page". Reverse: restore the legacy branch in app.js.
 - [ ] **#1410** the pwsh launcher test timeout went from 20 s to 90 s, with one warm-up per class (it guards hangs, not speed).
+- [ ] **Asset dialog keeps its confirm before "Same recipe, new seed"** (#1429): the press replaces the Full editor's
+  setup, unsaved text included, so it still asks; declining now says so instead of doing nothing. Reverse: drop the
+  `confirm()` in `asset-family.js` recall.
+- [ ] **Models shows looks first and folds the file table** (#1426): "What you can make" (ready vs needs a download), a
+  "Used by" line per file, a quiet Verify per card, and no bulk "Verify all" (the install lock would make it mostly fail).
 
