@@ -23,7 +23,7 @@
   main.prepend(home);home.before(notice);
   q('#uxJourneys').innerHTML=U.INTENTS.map((item,i)=>'<button class="ux-journey" data-ux-intent="'+item.id+'"><span class="ux-journey-number">0'+(i+1)+' <span aria-hidden="true">↗</span></span><b>'+item.name+'</b><span>'+item.description+'</span><small>'+item.hint+'</small></button>').join('');
   // Keep every existing control ID. The workbench adapter only changes grouping.
-  const createHeading=element('div','ux-create-heading','<div><span class="eyebrow">CREATE / PILOT THE NEXT PASS</span><h1>Follow the idea.</h1></div><div class="ux-stage-track" aria-label="Creative workflow"><span aria-current="step">1 · Prepare</span><span>2 · Run</span><a href="/#production">3 · Review</a><a href="/#assets">4 · Reuse</a></div>');q('#createView').prepend(createHeading);
+  const createHeading=element('div','ux-create-heading','<div><span class="eyebrow">CREATE / PILOT THE NEXT PASS</span><h1>Full editor — every setting for one recipe</h1></div><div class="ux-stage-track" aria-label="Creative workflow"><span aria-current="step">1 · Prepare</span><span>2 · Run</span><a href="/#production">3 · Review</a><a href="/#assets">4 · Reuse</a></div>');q('#createView').prepend(createHeading);
   const recipeTools=element('div','ux-intent-tools','<label for="uxIntent">Start with a task<select id="uxIntent"><option value="all">Every recipe</option>'+U.INTENTS.map(i=>'<option value="'+i.id+'">'+i.name+'</option>').join('')+'</select></label><p id="uxIntentHint" class="muted">Choose by outcome, then inspect the exact recipe.</p>');q('#presetSearch').closest('label').before(recipeTools);
   const setup=q('#createView .setup'),drawer=element('details','ux-recipe-drawer');drawer.open=window.innerWidth>850;drawer.innerHTML='<summary>Recipe library <small id="uxRecipeLabel">Choose a starting point</small></summary>';while(setup.firstChild)drawer.append(setup.firstChild);setup.append(drawer);
   const drafts=element('div','ux-draft-bar');drafts.id='uxDraftBar';drafts.innerHTML='<span id="uxDraftStatus">Your unsaved draft is kept in this browser. Save a setup to keep it in your workspace.</span><div><button id="uxRestoreDraft" hidden>Restore draft</button><button id="uxDiscardDraft" hidden>Discard saved draft</button><button id="uxExportDraft">Export draft</button><button id="uxImportDraftButton">Import draft</button><input id="uxImportDraft" type="file" accept="application/json,.json" hidden><button id="uxKeepDraft" hidden>Keep this tab</button></div>';editor.prepend(drafts);
@@ -787,6 +787,8 @@
       if(result.sha256!==claim.source_sha256||result.parent_asset!==claim.source_asset_id||result.context?.sha256!==claim.source_sha256)throw Error('The library copy of the source changed. Reopen Continue with this asset.');
       // A fresh staged copy has a fresh name; the claim follows it, the identity (source hash) does not change.
       const renamed=StudioContinuation.normalize({...claim,reference_file:result.file});if(!renamed)throw Error('The staged copy could not be verified. Reopen Continue with this asset.');
+      // A Vary block on this continuation follows the renamed copy: putting the source back does not apply the carried stack.
+      if(varyUnapplied?.stamp===stamp)varyUnapplied={...varyUnapplied,stamp:JSON.stringify(renamed)};
       continuationState=renamed;continuationSource=result.context;secondPicture=null;secondPanel.hidden=true;
       attachContinuationSource(result,false);pendingInputs.delete(StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference'?'lastReference':'reference');
       draftDirty=true;saveDraft();syncCreate();announce(StudioContinuation.sourceLabel(selected)+' holds the source again. No generation submitted.');
@@ -975,6 +977,9 @@
     const plan=varyPlanFor(button.dataset.preset,button.dataset.job,assetId);
     if(plan.kind==='none'){announce(plan.reason,true);return;}
     if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength)){announce('This Vary button is out of date. Nothing was prepared; press Vary again.',true);syncGalleryVary();return;}
+    // #1213: Vary replaces the Create setup, so ask first when it holds the owner's own wording or a staged picture (the pattern of Use this look and Start from this picture). Declining changes nothing.
+    const own=key=>{const typed=String(q('#'+key)?.value||'').trim();return!!typed&&typed!==String(selected?.defaults?.[key]||'').trim();},ownWords=own('positive')||own('negative'),staged=stagedPicture();
+    if((ownWords||staged)&&!window.confirm('Vary replaces the current Create setup'+(ownWords&&staged?' (your wording and the staged picture)':ownWords?' (your wording)':' (the staged picture)')+' with a prepared round of variations. Continue? Nothing will be generated.')){announce('Nothing changed. Vary was not prepared and your Create setup is kept.');return;}
     varyBusy=true;
     try{
       syncReady();

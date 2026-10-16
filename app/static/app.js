@@ -207,31 +207,34 @@ const loraRange = entry => Array.isArray(entry?.strength) ? entry.strength.filte
 function recommendedStrength(key, entry) {
   if (Number(entry?.default) > 0) return Number(entry.default);
   const authored = Number(selected?.defaults?.[key]), top = Math.max(...loraRange(entry), 0);
-  return authored > 0 ? authored : top > 0 ? Math.min(1, top) : 1;
+  const value = authored > 0 ? authored : 1, range = loraRange(entry);
+  return range.length ? Math.max(Math.min(...range), Math.min(value, top)) : value;
 }
 let autoTriggers = {}; // slot key -> the exact fragment this page added to the prompt for that slot
-const promptHas = (text, trigger) => String(text).toLowerCase().includes(String(trigger).toLowerCase());
+const promptToken = trigger => '(?<![\\p{L}\\p{N}_])' + String(trigger).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}\\p{N}_])';
+const promptHas = (text, trigger) => RegExp(promptToken(trigger), 'iu').test(String(text));
 function addTrigger(key, auto) {
   const field = $('#positive'), entry = loraEntry(getControl(loraNameKey(key))?.value), trigger = entry?.trigger;
   if (!field || !selected?.positive || !trigger) return '';
   if (promptHas(field.value, trigger)) return 'The trigger ' + trigger + ' is already in the prompt.';
   const text = field.value.replace(/[\s,]+$/, ''), start = /^start/i.test(String(entry.trigger_position || '').trim());
   const fragment = start ? trigger + (text ? ', ' : '') : (!text ? '' : /[.!?;:]$/.test(text) ? ' ' : ', ') + trigger;
-  field.value = start ? fragment + field.value : text + fragment;
+  field.value = start ? fragment + text : text + fragment;
   if (auto) autoTriggers[key] = fragment;
   field.dispatchEvent(new Event('input', {bubbles: true}));
   return 'Added the trigger ' + trigger + ' to the ' + (start ? 'start' : 'end') + ' of the prompt.';
 }
 // Only the exact fragment added for this slot is removed; text the user edited around it stays as typed.
 function dropAutoTrigger(key) {
-  const fragment = autoTriggers[key], field = $('#positive'); delete autoTriggers[key];
+  const fragment = autoTriggers[key], field = $('#positive');
   if (!fragment || !field) return '';
   // Another enabled slot still needs the same trigger: hand the fragment over instead of removing it.
-  const trigger = fragment.replace(/^[, ]+|[, ]+$/g, ''), other = activeLoraSlots().find(k => k !== key && Number(getControl(k)?.value) > 0 && loraEntry(getControl(loraNameKey(k))?.value)?.trigger === trigger);
-  if (other) { autoTriggers[other] = fragment; return ''; }
+  const trigger = fragment.replace(/^[, ]+|[, ]+$/g, ''), other = activeLoraSlots().find(k => k !== key && Number(getControl(k)?.value) > 0 && String(loraEntry(getControl(loraNameKey(k))?.value)?.trigger || '').toLowerCase() === trigger.toLowerCase());
+  if (other) { autoTriggers[other] = fragment; delete autoTriggers[key]; return ''; }
   // Still a whole token where it was put: a leading fragment at the very start, a trailing one before a comma or the end.
-  const literal = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), token = fragment.endsWith(', ') ? RegExp('^' + literal) : RegExp(literal + '(?=\\s*(,|$))');
+  const literal = fragment.split(trigger).map(text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(promptToken(trigger)), token = fragment.endsWith(', ') ? RegExp('^' + literal, 'iu') : RegExp(literal + '(?=\\s*(,|$))', 'iu');
   if (!token.test(field.value)) return '';
+  delete autoTriggers[key];
   field.value = field.value.replace(token, ''); field.dispatchEvent(new Event('input', {bubbles: true}));
   return 'Removed the trigger ' + fragment.replace(/^[, ]+|[, ]+$/g, '') + ' added for the previous adapter.';
 }
@@ -694,15 +697,15 @@ function inventoryNeedsAction(m,assets,root){const windows=libraryRootIsWindows(
 function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase(),top=($('#curatedModelSearch')?.value||'').toLowerCase(),status=currentModelStatus(),assets=library.assets||[];const rows=library.inventory.filter(m=>m.file.toLowerCase().includes(q)&&m.file.toLowerCase().includes(top)&&(status==='all'||(status==='action'?inventoryNeedsAction(m,assets):!inventoryNeedsAction(m,assets))));$('#inventory').innerHTML=rows.map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';const count=$('#modelCount');if(count)count.textContent=rows.length+' of '+library.inventory.length+(status==='action'?' need action':status==='installed'?' installed':' shown');}
 // What each model file unlocks: looks (/api/looks) and recipes (/api/recipes), joined through the recipe's own file requirements
 // (/api/inspect/<recipe>, cached per page) and the adapter names in its controls. Read-only; until it loads the cards carry no "Used by" line.
-let modelLooks=null,modelReqs=new Map(),modelExamples={},modelUseBusy=false;
+let modelLooks=null,modelReqs=new Map(),modelReqRetry=new Map(),modelExamples={},modelUseBusy=false;
 async function loadModelUse(){
   if(modelUseBusy)return;modelUseBusy=true;
   try{
     // Looks are re-read on every visit (one GET): a look made, renamed or trashed since the last visit must show here.
-    const listing=await api('/api/looks');modelLooks=Array.isArray(listing?.looks)?listing.looks.filter(l=>l&&l.kind==='look'&&!l.trashed_at&&l.body?.preset_id):null;
+    try{const listing=await api('/api/looks');if(Array.isArray(listing?.looks))modelLooks=listing.looks.filter(l=>l&&l.kind==='look'&&!l.trashed_at&&l.body?.preset_id);}catch{}
     if(!Object.keys(modelExamples).length)try{modelExamples=(await import('/static/bundle-showcase.js')).default?.examples||{};}catch{}
-    const ids=[...new Set([...(modelLooks||[]).map(l=>l.body.preset_id),...(atelierRecipes||[]).map(r=>r?.preset_id)].filter(id=>typeof id==='string'&&id&&!modelReqs.has(id)))];   // a failed inspect stays null until the page reloads, not retried every poll
-    for(let i=0;i<ids.length;i+=4)await Promise.all(ids.slice(i,i+4).map(async id=>{try{const r=await api('/api/inspect/'+encodeURIComponent(id));modelReqs.set(id,Array.isArray(r?.requirements)?r.requirements:null);}catch{modelReqs.set(id,null);}}));
+    const ids=[...new Set([...(modelLooks||[]).map(l=>l.body.preset_id),...(atelierRecipes||[]).map(r=>r?.preset_id)].filter(id=>typeof id==='string'&&id&&(!modelReqs.has(id)||modelReqs.get(id)===null&&Date.now()>=(modelReqRetry.get(id)||0))))];   // retry failed inspections after two minutes, not every poll
+    for(let i=0;i<ids.length;i+=4)await Promise.all(ids.slice(i,i+4).map(async id=>{try{const r=await api('/api/inspect/'+encodeURIComponent(id));modelReqs.set(id,Array.isArray(r?.requirements)?r.requirements:null);}catch{modelReqs.set(id,null);}if(modelReqs.get(id)===null)modelReqRetry.set(id,Date.now()+120000);else modelReqRetry.delete(id);}));
     if(modelLooks||ids.length)renderCuratedModels();
   }catch{}finally{modelUseBusy=false;}
 }
@@ -711,10 +714,10 @@ function modelUsage(assets,windows){
   const byId=new Map(assets.map(a=>[a.id,a])),byFile=new Map(assets.map(a=>[canonicalModelRel(a.file,windows),a])),byBase=new Map(assets.map(a=>[modelBase(a.file),a])),use=new Map(),states=[];
   const add=(a,kind,item)=>{let u=use.get(a.id);if(!u)use.set(a.id,u={looks:[],recipes:[]});if(!u[kind].some(x=>x.id===item.id))u[kind].push(item);};
   const resolve=r=>byId.get(r.asset_id)||byFile.get(canonicalModelRel(r.file,windows))||null;
-  // An adapter the curated library does not list still counts when the inventory has the file; one found nowhere is missing
-  // (only when a disk inventory was reported at all).
+  // An adapter the curated library does not list still counts when the inventory has the file; one found nowhere is missing.
+  // Only once a disk inventory is reported: before that an unlisted adapter is unknown, not missing. An extension-less name counts too.
   const onDisk=new Set((library?.inventory||[]).map(m=>modelBase(m.file)));
-  const loras=c=>Object.entries(c||{}).filter(([k,v])=>/^lora\d*(_name)?$/.test(k)&&typeof v==='string'&&/\.(safetensors|ckpt|pt|bin|gguf)$/i.test(v)).map(([,v])=>byBase.get(modelBase(v))||(onDisk.has(modelBase(v))||!onDisk.size?null:{file:'loras/'+String(v).split(/[\\/]/).pop(),present:false,unlisted:true})).filter(Boolean);
+  const loras=c=>Object.entries(c||{}).filter(([k,v])=>/^lora\d*(_name)?$/.test(k)&&typeof v==='string'&&v.trim()&&(/_name$/.test(k)||!Number.isFinite(Number(v)))).map(([,v])=>byBase.get(modelBase(v))||(onDisk.has(modelBase(v))||!onDisk.size?null:{file:'loras/'+String(v).split(/[\\/]/).pop(),present:false,unlisted:true})).filter(Boolean);
   const join=(kind,item,presetId,controls)=>{const missing=[];for(const r of modelReqs.get(presetId)||[]){const a=resolve(r);if(a)add(a,kind,item);if(r.present!==true)missing.push(a||r);}for(const a of loras(controls)){if(!a.unlisted)add(a,kind,item);if(a.present===false)missing.push(a);}return missing;};
   for(const l of modelLooks||[]){const missing=join('looks',{id:l.id,name:l.name},l.body.preset_id,l.body.controls);states.push({look:l,known:!!modelReqs.get(l.body.preset_id),missing:[...new Map(missing.map(m=>[m.file,m])).values()]});}
   for(const r of atelierRecipes||[])if(r?.id)join('recipes',{id:r.id,name:r.name||r.id},r.preset_id,r.controls);
@@ -768,7 +771,7 @@ async function refreshLibrary(){
   }catch(e){$('#downloadStatus').textContent=e.message;}
 }
 const installing=new Set(); // Per model: a repeat click on the same model is dropped; another model still reaches the server's install lock.
-async function install(id){if(installing.has(id))return;installing.add(id);try{const data=await post('/api/models/install',{id});$('#downloadStatus').textContent=data.message;message('Model installation started. Progress is in Models & folders.');await refreshLibrary();}catch(e){$('#downloadStatus').textContent=e.message;message(e.message,true);}finally{installing.delete(id);}}
+async function install(id){if(installing.has(id))return;installing.add(id);try{const data=await post('/api/models/install',{id});$('#downloadStatus').textContent=data.message;message('Model installation started. Progress is in Models & setup.');await refreshLibrary();}catch(e){$('#downloadStatus').textContent=e.message;message(e.message,true);}finally{installing.delete(id);}}
 function saved(){return serverSetups.map(s=>({...s.recipe,name:s.name,id:s.id}));}
 async function loadSetups(){
   serverSetups=await api('/api/setups');
@@ -791,7 +794,7 @@ function staleTilePlan(s,target){return s.tile!=null&&(!target?.tile_route||type
 function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
-  if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
+  if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid look application state.');
   const target=catalog.presets.find(p=>p.id===s.preset);
   const droppedTile=s.tileDropped||staleTilePlan(s,target);
   const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(droppedTile?{...s,tile:null}:s):(s.tile!=null||s.parallax!=null?null:{});

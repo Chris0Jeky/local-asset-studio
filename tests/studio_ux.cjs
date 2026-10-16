@@ -12,6 +12,17 @@ test('finder goal names, hints and look membership match Make',()=>{
   const goals=(file,name)=>vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8').match(new RegExp('const '+name+'=(\\[[\\s\\S]*?\\n  \\]);'))[1]);
   assert.equal(JSON.stringify(goals('studio-shell.js','makeGoals')),JSON.stringify(goals('make.js','GOALS')));
 });
+test('finder indexes preset model and family metadata and offers Tune without generation',()=>{
+  const shell=fs.readFileSync(path.join(__dirname,'../app/static/studio-shell.js'),'utf8');
+  const commands=shell.slice(shell.indexOf('  function commands(){'),shell.indexOf('  async function loadLooks()'));
+  const input={value:'wai'},results={};
+  const context={$:s=>s==='#studioCommandSearch'?input:results,makeGoals:[{id:'character',looks:['look-test']}],synonyms:{},keywords:{},looks:[{id:'look-test',name:'Fantasy portrait',body:{preset_id:'test'}}],presets:[{id:'test',name:'Portrait recipe',family:'WAI',model:{file:'base-model.safetensors'}},{id:'flux',name:'FLUX',family:'FLUX'}],links:[['models','Models & setup','Install models','/#models']],escape:s=>s};
+  vm.runInNewContext(commands+';commands();',context);
+  assert.match(results.innerHTML,/data-make-look="look-test"/);
+  for(const query of ['base-model','portrait recipe']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/data-make-look="look-test"/);}
+  for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Tune this look under the composer/);}
+  input.value='flux';vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#models"/);
+});
 test('Make orders each goal by lab evidence, files painting styles under Painted illustration and keeps Krea last',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
   const goals=grab(/const GOALS=(\[[\s\S]*?\n  \]);/),looks=id=>goals.find(g=>g.id===id).looks,ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
@@ -25,6 +36,15 @@ test('Make orders each goal by lab evidence, files painting styles under Painted
   const tested=grab(/const TESTED=(\{[^}]*\});/),shapes=grab(/const SHAPE_FOR=(\{[^}]*\});/);
   assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime']);
   assert.deepEqual(shapes,{character:'portrait',scene:'landscape',game:'square'});
+});
+test('Make speed and Best for come from the look lab doc',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
+  const doc=fs.readFileSync(path.join(__dirname,'../docs/looks/LOOK-LAB-2026-10-16.md'),'utf8'),rows={};
+  for(const m of doc.matchAll(/^\| (look-[\w-]+) \|[^|]*\|[^|]*\| ([\d.]+) \|/gm))rows[m[1]]=Number(m[2]);
+  const lab=grab(/const LAB_SECONDS=(\{[^}]*\});/),best=grab(/const BEST_FOR=(\{[^}]*\});/),ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
+  assert.ok(Object.keys(rows).length>=20,'the R1 table parses');assert.deepEqual(lab,rows,'LAB_SECONDS is the doc R1 "Median s/image" column');
+  for(const id of Object.keys(best)){assert.ok(ids.has(id)&&id in rows,id);assert.ok(best[id].length<=80,id);}
+  assert.ok(lab['look-night-shift-retro-anime']>=45,'Night Shift is not Fast (#1448)');
 });
 const image = {media_type:'image',filename:'source.png'};
 const audio = {media_type:'audio',filename:'voice.wav'};

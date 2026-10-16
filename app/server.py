@@ -57,6 +57,7 @@ import pose_guide
 import tiles
 import parallax
 import looks
+import characters
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -72,6 +73,7 @@ HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the 
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
+TERMINAL_RECEIPTS = ("completed", "failed", "cancelled")  # receipt statuses Resume reconciles from the record, never re-reads
 HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
 HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
@@ -2272,7 +2274,7 @@ class Studio:
             self.require_worker()
             raise StudioError(error)
         if self._tracking_stopped(job): return self._resume_tracking(job)
-        pending = [s for s in job["submissions"] if s.get("status") != "completed"]
+        pending = [s for s in job["submissions"] if s.get("status") not in TERMINAL_RECEIPTS]
         prospective = dict(job)
         if not pending:
             prospective["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}
@@ -2307,12 +2309,16 @@ class Studio:
                 raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
             prior = job.pop("reconciliation", None) or {}
             prior_status, prior_message = prior.get("status", job.get("status")), prior.get("message", job.get("message"))
-            unresolved = any(s.get("status") != "completed" for s in job.get("submissions", []))
+            unresolved = any(s.get("status") not in TERMINAL_RECEIPTS for s in job.get("submissions", []))
             job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
         for submission in job.get("submissions", []):
-            if submission.get("status") not in ("completed", "cancelled") and not self._wait_history(job, submission): return
+            if submission.get("status") not in TERMINAL_RECEIPTS and not self._wait_history(job, submission): return
         observed = len(job.get("submissions", []))
-        if observed < job["batch_count"]:
+        # A failed receipt is ComfyUI's own verdict: re-reading it after a restart would only find no history and call it uncertain.
+        if any(s.get("status") == "failed" for s in job.get("submissions", [])):
+            status = "partial" if any(s.get("status") == "completed" for s in job["submissions"]) else "failed"
+            message = "ComfyUI reported a failure for a submitted prompt; it was not resubmitted."
+        elif observed < job["batch_count"]:
             status = "partial"; message = f"Observed {observed} of {job['batch_count']} requested images. Remaining images were not submitted; start a new job for those."
         else:
             status = "completed"; message = "Complete"
@@ -2560,6 +2566,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == "/api/looks": return self._json(200, looks.listing(self.studio))
+            if path == "/api/characters": return self._json(200, characters.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
                 return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
@@ -2731,6 +2738,8 @@ class Handler(BaseHTTPRequestHandler):
             # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
             if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
             if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
+            # Characters (#1205): save/edit/put away a character card from a keeper. Never creates a job.
+            if self.path == "/api/characters": return self._json(200, characters.command(self.studio, self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))

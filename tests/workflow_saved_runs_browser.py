@@ -1,6 +1,6 @@
 """Opt-in full-page Chromium + actual Studio HTTP/SQLite, synthetic Comfy nodes.
 
-Binds only an unused container loopback :8191. No worker thread, model execution,
+Binds only a free loopback port (--port fixes one). No worker thread, model execution,
 owner configuration or installed ComfyUI is used. Native browser storage enabled.
 """
 import argparse
@@ -14,6 +14,7 @@ from pathlib import Path
 import sys
 import tempfile
 import threading
+from browser_ports import BoundPortGuard, browser_server
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,10 +26,18 @@ from studio_workflow.document_http import store as documents
 from studio_workflow.run_http import store as runs
 
 
+def create_fixture(root, studio, port=0):
+    def factory(address, handler):
+        class Handler(BoundPortGuard, handler): pass
+        return browser_server(Handler, address[1])
+    return server.create_server(root, port=port, http_server=factory, studio_factory=lambda _: studio)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--inert', action='store_true', help='Use injected HTTP bridge/storage when browser navigation is blocked; not native-origin proof')
     parser.add_argument('--chromium', default='/usr/bin/chromium')
+    parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
     parser.add_argument('--out', type=Path, default=ROOT / '.runtime/saved-run-browser')
     args = parser.parse_args(); args.out.mkdir(parents=True, exist_ok=True)
     from playwright.sync_api import sync_playwright
@@ -56,8 +65,9 @@ def main():
             if path == '/system_stats': return {'system':{}, 'devices':[]}
             raise AssertionError('No Comfy request allowed: '+path)
         studio._request = no_model
-        # Actual handler, unchanged Host/origin checks and actual static files.
-        http = server.create_server(root, studio_factory=lambda _: studio)
+        # Actual handler/static files; only the test's Host/origin port is rebound.
+        http = create_fixture(root, studio, args.port)
+        origin = f'http://127.0.0.1:{http.server_port}'
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         try:
             with sync_playwright() as playwright:
@@ -70,15 +80,15 @@ def main():
                 browser_storage = {}
                 def load_page(target):
                     if not args.inert:
-                        target.goto('http://127.0.0.1:8191/workflow-studio.html', wait_until='networkidle'); return
+                        target.goto(origin+'/workflow-studio.html', wait_until='networkidle'); return
                     html = (ROOT/'app/static/workflow-studio.html').read_text(encoding='utf-8')
                     scripts = re.findall(r'<script src="([^"]+)"></script>', html)
                     styles = re.findall(r'<link rel="stylesheet" href="([^"]+)">', html)
                     html = re.sub(r'<script src="[^"]+"></script>|<link rel="stylesheet" href="[^"]+">', '', html)
                     target.set_content(html)
                     def call(route, body):
-                        req = Request('http://127.0.0.1:8191'+route, data=body.encode() if body is not None else None,
-                                      headers={'Origin':'http://127.0.0.1:8191','Content-Type':'application/json'})
+                        req = Request(origin+route, data=body.encode() if body is not None else None,
+                                      headers={'Origin':origin,'Content-Type':'application/json'})
                         try:
                             with urlopen(req,timeout=10) as response: return {'status':response.status,'raw':response.read().decode()}
                         except HTTPError as exc:

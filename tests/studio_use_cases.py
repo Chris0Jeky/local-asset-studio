@@ -1315,8 +1315,11 @@ def _vary(c):
                              elapsed_seconds=31, controls=dict(wai_controls, lora='not-a-number'),
                              outputs=[dict(filename='wai-broken.png', asset_id='asset-5', media_type='image', seed=12)]))
     fixture.JOBS[:0] = added
+    asked = []
+    def agree(dialog): asked.append(dialog.message); dialog.accept()
     try:
         c.boot('#create')
+        c.page.on('dialog', agree)  # #1213: Vary asks before replacing a staged picture or the owner's wording; the journey agrees
         c.page.wait_for_timeout(600)
         c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
         keeper = '#gallery [data-ux-vary="subtle"]' + ('' if c.live else '[data-job="vary-krea-keeper"]')
@@ -1359,10 +1362,12 @@ def _vary(c):
                and 'Nothing was generated' in third['notice'])
         wai = wai and blocked['generate'] and 'Vary could not keep lora = not-a-number' in blocked['blocker']
         disabled = 'No Studio recipe is recorded' in why
-        return img2img and reseed and wai and disabled, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s' % (
+        asks = bool(asked) and all('Vary replaces the current Create setup' in text and 'Nothing will be generated' in text for text in asked)
+        return img2img and reseed and wai and disabled and asks, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s; replace questions: %d' % (
             {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')},
-            dict({k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, unapplied=blocked), why or 'no disabled reason')
+            dict({k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, unapplied=blocked), why or 'no disabled reason', len(asked))
     finally:
+        c.page.remove_listener('dialog', agree)
         for job in added: fixture.JOBS.remove(job)
 
 
