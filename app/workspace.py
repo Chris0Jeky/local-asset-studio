@@ -515,6 +515,7 @@ class AssetWorkspace:
                 if "favorite" in applied: applied["favorite"] = bool(applied["favorite"])
             result = {"status": "applied", "request_id": request_id, "updated": ids, "action": action,
                       "revisions": {i: expected[i] + (i in changed_ids) for i in ids}, "applied": applied}
+            if len(changed_ids) < len(ids): result["unchanged"] = [i for i in ids if i not in changed_ids]   # a repeat trash/restore keeps these as they were (#1405)
             if scope is not None:
                 result["workspace_id"] = identity
             # Compact receipts retain changed fields and revisions, never N copies of media/notes.

@@ -66,6 +66,7 @@ class WorkspaceTests(unittest.TestCase):
             result = self.store.update(command)
             self.assertEqual(self.store.get(self.asset), before)
             self.assertEqual(result['revisions'], {self.asset:before['metadata_revision']})
+            self.assertEqual(result['unchanged'], [self.asset])
             self.assertEqual(self.store.update(command), result)
             self.assertEqual(self.store.command_status(command['request_id']), result)
             if before['metadata_revision']:
@@ -85,6 +86,7 @@ class WorkspaceTests(unittest.TestCase):
             changed = other if unchanged == self.asset else self.asset
             self.assertEqual(self.store.get(changed)['metadata_revision'], before[changed]['metadata_revision']+1)
             self.assertEqual(result['revisions'], {i:self.store.get(i)['metadata_revision'] for i in before})
+            self.assertEqual(result['unchanged'], [unchanged])
 
     def test_card_trash_restore_repeats_preserve_state_and_stale_conflicts(self):
         card = self.store.card_command({'action':'create', 'kind':'look', 'name':'Test', 'body':{}})

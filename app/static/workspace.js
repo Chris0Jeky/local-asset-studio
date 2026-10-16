@@ -124,7 +124,9 @@ function validateAssetReceipt(result, command) {
   if(result?.status!=='applied' || result.request_id!==command.request_id || result.action!==command.action ||
      JSON.stringify(result.updated)!==JSON.stringify(command.ids) ||
      JSON.stringify(Object.keys(result.revisions||{}).sort())!==JSON.stringify([...command.ids].sort()) ||
-     command.ids.some(id=>result.revisions[id]!==command.expected_revisions[id]+1))throw Error('The server did not return a matching save receipt.');
+     (result.unchanged!==undefined&&(!Array.isArray(result.unchanged)||!['trash','restore'].includes(command.action)||result.unchanged.some(id=>!command.ids.includes(id))))||
+     command.ids.some(id=>result.revisions[id]!==command.expected_revisions[id]+(result.unchanged?.includes(id)?0:1)))throw Error('The server did not return a matching save receipt.');
+  if(result.unchanged?.length===command.ids.length&&JSON.stringify(result.applied)==='{}'&&Array.isArray(result.current))return result;   // every target was already in that state (#1405)
   const applied=result.applied, keys=command.action==='edit'?['title','notes','tags','favorite','review','run_label'].filter(k=>Object.hasOwn(command,k)):
     ['trash','restore'].includes(command.action)?['trashed_at']:['collection_id'];
   if(!applied || JSON.stringify(Object.keys(applied).sort())!==JSON.stringify(keys.sort()) || keys.some(k=>{
