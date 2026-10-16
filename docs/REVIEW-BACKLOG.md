@@ -68,4 +68,6 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Picture goals stay in Make; Compare looks** (#1442): "Draw the pose" offers the editor's two built-in figures
   plus mirror (single-joint editing still needs the full editor). Compare runs each look as made (no Tune). Restyle's
   "Colours to keep" defaults to "keep them exactly as they are". The chosen picture stays chosen across picture goals.
+- [ ] **The UX use-case suite cap rose from 24 to 26** (#1437): tonight added Make tune, compare looks and the Full
+  editor adapter journeys. It runs in about a minute. Reverse: merge journeys and restore the cap.
 
