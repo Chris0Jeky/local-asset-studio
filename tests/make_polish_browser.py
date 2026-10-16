@@ -227,6 +227,35 @@ def library_checks(browser, origin):
     page.close()
 
 
+def merge_checks(browser, origin):
+    # Round 5 (#1492): where Fix face and Fix hands resolve to the same recipe (Anima pictures: anime-detail-fix) Make offers one
+    # "Fix face and hands" button and says what the WAI repaint can cost; a WAI picture keeps two buttons and no warning. Real plans, nothing sent.
+    HINT, UP = 'Repaints with a WAI model', 'Smooths fine texture; upscale the version you chose.'
+    MAKE_JOBS['make-merge'] = dict(id='make-merge', status='completed', created_at=1789228800, outputs=[dict(filename='anima.png', asset_id='asset-0', media_type='image'), dict(filename='wai.png', asset_id=WAI, media_type='image')])
+    saved = [dict(id='make-merge', look='First look', lookId=LOOKS[0]['id'], goal='character', scene='Merge')]
+    page = browser.new_page(viewport={'width': 1440, 'height': 900}); errors = []; page.on('pageerror', lambda e: errors.append(str(e))); before = len(jobs())
+    page.goto(origin+'/#make'); page.evaluate('(runs)=>localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))', saved)
+    page.goto(origin+'/?merge#make'); page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]'); page.wait_for_selector('[data-make-polish=upscale][data-asset=%s]' % WAI)
+    page.wait_for_function('document.querySelectorAll("#makeRuns .make-polish-hint").length===3')
+    kinds = lambda a: page.eval_on_selector_all('[data-make-polish][data-asset=%s]' % a, 'n=>n.map(e=>e.dataset.makePolish+":"+e.firstChild.textContent)')
+    assert kinds('asset-0') == ['face:Fix face and hands', 'upscale:Upscale 2×'], kinds('asset-0')
+    assert kinds(WAI) == ['face:Fix face', 'details:Fix hands and details', 'upscale:Upscale 2×'], kinds(WAI)
+    hints = page.eval_on_selector_all('#makeRuns .make-polish-hint', 'n=>n.map(e=>e.textContent)')
+    assert sum(h.startswith(HINT) for h in hints) == 1 and hints[0].startswith(HINT), hints
+    assert hints.count(UP) == 2 and len(hints) == 3, hints
+    # The goal composer merges the same way.
+    page.locator('[data-make-goal="repair"]').click(); page.wait_for_selector('#makePictures [data-make-pick="asset-0"]'); page.locator('#makePictures [data-make-pick="asset-0"]').click()
+    page.wait_for_function('document.querySelectorAll("#makeComposer [data-make-fix]").length===2')
+    assert page.eval_on_selector_all('#makeComposer [data-make-fix]', 'n=>n.map(e=>e.dataset.makeFix)') == ['face', 'upscale'] and 'Fix face and hands' in page.locator('label:has([data-make-fix=face])').inner_text()
+    assert page.is_checked('[data-make-fix=face]') and HINT in page.locator('#makeComposer').inner_text() and UP in page.locator('#makeComposer').inner_text()
+    page.locator('[data-make-repick]').first.click(); page.wait_for_selector('#makePictures [data-make-pick="%s"]' % WAI); page.locator('#makePictures [data-make-pick="%s"]' % WAI).click()
+    page.wait_for_function('document.querySelectorAll("#makeComposer [data-make-fix]").length===3')
+    assert HINT not in page.locator('#makeComposer').inner_text() and UP in page.locator('#makeComposer').inner_text()
+    assert len(jobs()) == before, 'planning and drawing hints sends nothing'
+    assert not errors, errors
+    page.close()
+
+
 def recovery_checks(browser, origin):
     # Restore (#1438): a run whose first read fails is kept and checked again; one the Studio says is gone (404) is dropped.
     # An uncertain run offers Resume observation and Stop tracking on its own card; neither sends a picture again.
@@ -304,6 +333,7 @@ def run():
             assert after == before, (before, after)
             make_checks(browser, origin)
             library_checks(browser, origin)
+            merge_checks(browser, origin)
             browser.close()
     finally:
         server.shutdown(); server.server_close()

@@ -28,11 +28,11 @@
   // Lab evidence (docs/looks/LOOK-LAB-2026-10-16.md on branch lab/look-qualification-20261016): looks whose two lab runs were both
   // judged keep, with the median score. Agent judgement on this PC, not art acceptance; update this map from the lab doc, not by hand.
   // Kept in at least 3 of 4 test pictures, or 2 of 2 where only two were made (docs/looks/LOOK-LAB-2026-10-16.md, rounds 1-2; the game icon is round 4, PR #1488: potion and sword, one seed each).
-  const TESTED={'look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2','look-zimage-game-icon':'2 of 2'};
+  const TESTED={'look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2'};
   const tested=l=>TESTED[l.id]?'<small class="make-tested" title="'+escape(TESTED[l.id]+' test pictures on this PC were kept (16 Oct 2026, judged by an agent, not art approval).')+'">Tested well</small>':'';
   // Best for (lab rounds 1-2, docs/looks/LOOK-LAB-2026-10-16.md "Ranked best look per goal" and R3): what each tested look carried.
   // Kept here, not in presets/looks.json, because a look body takes only the fields app/looks.py allows.
-  const BEST_FOR={'look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms','look-zimage-game-icon':'Single game items and icons on white'};
+  const BEST_FOR={'look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms','look-zimage-game-icon':'One item on white; check shape details'};
   const bestFor=l=>BEST_FOR[l.id]?'<small class="make-best">Best for: '+escape(BEST_FOR[l.id])+'</small>':'';
   // Recorded, never inferred: only a recipe whose own commercial_note names non-commercial terms (presets/catalog.json) is tagged.
   const nonCommercial=p=>/non-?commercial|prohibit commerciali/i.test(p?.commercial_note||'');
@@ -40,6 +40,11 @@
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
   const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
+  // Round 5 (#1492): Anima pictures send Fix face and Fix hands to one WAI face-then-hand repaint, so they are one button, and say what that costs.
+  const MERGED='Fix face and hands',FIX_HINT='Repaints with a WAI model and can change this look’s face finish — keep the original and compare.',UP_HINT='Smooths fine texture; upscale the version you chose.';
+  const merged=id=>{const f=state.polish[id+':face'],d=state.polish[id+':details'];return !!(f?.ok&&d?.ok&&f.preset_id&&f.preset_id===d.preset_id);};
+  const polishName=(id,kind)=>kind==='face'&&merged(id)?MERGED:POLISH[kind];
+  const polishKinds=id=>Object.keys(POLISH).filter(k=>!(k==='details'&&merged(id)));
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
   const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills,redo}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
@@ -449,8 +454,8 @@
     // A fix that cannot run stays on screen, disabled, with its reason beside it (one line per distinct reason), as the Fix or upscale goal does.
     const reasons=[...new Set(Object.keys(POLISH).map(k=>state.polish[a+':'+k]).filter(x=>x&&!x.ok).map(x=>inMake(x.reason)))],whyId=r=>'makePolishWhy-'+escape(a)+'-'+reasons.indexOf(r);
     const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?inMake(plan.reason):'',busy=state.polishing.has(a+':'+kind);
-      return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(busy||why?' disabled':'')+(why?' aria-describedby="'+whyId(why)+'"':'')+'>'+POLISH[kind]+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
-    return '<div class="make-actions">'+marks(a)+characterMarkup(job,a)+vary+polish('face')+polish('details')+polish('upscale')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')
+      return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(busy||why?' disabled':'')+(why?' aria-describedby="'+whyId(why)+'"':'')+'>'+polishName(a,kind)+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
+    return '<div class="make-actions">'+marks(a)+characterMarkup(job,a)+vary+polishKinds(a).map(polish).join('')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')+(merged(a)?'<small class="muted make-polish-hint">'+FIX_HINT+'</small>':'')+(state.polish[a+':upscale']?.ok?'<small class="muted make-polish-hint">'+UP_HINT+'</small>':'')
       +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('edit','Change one thing')+from('restyle','Restyle')+from('combine','Put in a new pose')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div>';
   }
   // My character (#1205): a kept picture becomes a character's canon, with its words. Saving writes one Workspace card and
@@ -565,8 +570,8 @@
   async function polishPicture(button){
     const id=button.dataset.asset,kind=button.dataset.makePolish,key=id+':'+kind;if(state.polishing.has(key))return;
     const source=state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===id));state.polishing.add(key);renderRuns();
-    try{const job=await window.StudioWorkbench.polish(id,kind);state.runs.unshift({job,look:POLISH[kind]+(source?' \u00b7 '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
-      say(POLISH[kind]+' started. The result appears at the top of your pictures.');}
+    try{const job=await window.StudioWorkbench.polish(id,kind);state.runs.unshift({job,look:polishName(id,kind)+(source?' \u00b7 '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
+      say(polishName(id,kind)+' started. The result appears at the top of your pictures.');}
     catch(error){say(error.message);}
     finally{state.polishing.delete(key);renderRuns();}
   }
@@ -730,8 +735,8 @@
     const fill=x=>field(x.key,x.label,x.hint);
     let main='',side='';
     if(g.intent==='edit')main=(fields.length?fields.map(fill).join(''):field('change','What should change?','replace her hat with a red Santa hat'))+'<small class="muted">Everything else stays as it is: the character, pose, clothes, background and style.</small>';
-    else if(g.intent==='repair'){planFixes(a.id);preselectFix(a.id);main='<fieldset class="make-options"><legend>Choose one</legend>'+Object.entries(POLISH).map(([kind,label])=>{const plan=state.polish[a.id+':'+kind],off=!!plan&&!plan.ok;
-      return '<label class="make-check"><input type="radio" name="makeFix" id="makeFix-'+kind+'" data-make-fix="'+kind+'"'+(state.fix===kind?' checked':'')+(off?' disabled aria-describedby="makeFixWhy-'+kind+'"':'')+'> '+label+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+'</label>'+(off?'<small class="make-warn make-option-why" id="makeFixWhy-'+kind+'">'+escape(inMake(plan.reason))+'</small>':'');}).join('')+'</fieldset>';}
+    else if(g.intent==='repair'){planFixes(a.id);preselectFix(a.id);main='<fieldset class="make-options"><legend>Choose one</legend>'+polishKinds(a.id).map(kind=>{const label=polishName(a.id,kind);const plan=state.polish[a.id+':'+kind],off=!!plan&&!plan.ok;
+      return '<label class="make-check"><input type="radio" name="makeFix" id="makeFix-'+kind+'" data-make-fix="'+kind+'"'+(state.fix===kind?' checked':'')+(off?' disabled aria-describedby="makeFixWhy-'+kind+'"':'')+'> '+label+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+'</label>'+(off?'<small class="make-warn make-option-why" id="makeFixWhy-'+kind+'">'+escape(inMake(plan.reason))+'</small>':'')+(kind==='face'&&merged(a.id)?'<small class="muted make-option-why">'+FIX_HINT+'</small>':'')+(kind==='upscale'&&plan?.ok?'<small class="muted make-option-why">'+UP_HINT+'</small>':'');}).join('')+'</fieldset>';}
     else if(g.intent==='restyle'){
       if(p?.reference_slots?.length)main='<fieldset class="make-style-looks" id="makeStyleLooks" tabindex="-1"><legend>Redraw it the way this look is drawn</legend>'+lookPictures().map(l=>'<label class="make-style"><input type="radio" name="makeStyle" id="makeStyle-'+escape(l.id)+'" data-make-style="'+escape(l.id)+'"'+(state.styleLook===l.id?' checked':'')+'><img src="'+escape(thumbOf(l))+'" alt="" loading="lazy"><span>'+escape(l.name)+'</span></label>').join('')+'</fieldset>'
         +'<button type="button" class="make-link" data-make-style-words>Describe the look in words instead</button>'+fields.map(fill).join('')+'<small class="muted">Only how the look picture is drawn is copied, not what it shows. Your picture keeps its character, pose, clothes and layout.</small>';
@@ -759,7 +764,7 @@
     syncOperation();settleMissing();goalEstimate(g,p);
   }
   // A fix that cannot run here is never the preselected one (audit N9); refusals name Make's own goals, not the full editor's dialog.
-  function preselectFix(id){const plan=k=>state.polish[id+':'+k];if(plan(state.fix)&&!plan(state.fix).ok){const first=Object.keys(POLISH).find(k=>plan(k)?.ok)||Object.keys(POLISH).find(k=>!plan(k));if(first)state.fix=first;}}
+  function preselectFix(id){const plan=k=>state.polish[id+':'+k];if(state.fix==='details'&&merged(id))state.fix='face';if(plan(state.fix)&&!plan(state.fix).ok){const first=Object.keys(POLISH).find(k=>plan(k)?.ok)||Object.keys(POLISH).find(k=>!plan(k));if(first)state.fix=first;}}
   const inMake=text=>String(text||'').replace(/ Use Continue with this( and describe it)?\.?$/,' Choose another fix, or use “Change a picture”.');
   function planFixes(id){
     for(const kind of Object.keys(POLISH))askPlan(id,kind,()=>{if(state.pick?.id===id&&goal().intent==='repair'&&!state.repicking)renderGoalComposer(goal());});
@@ -811,7 +816,7 @@
         say('Sending to ComfyUI…');
         job=await json('/api/jobs',{preset_id:p.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[...new Set([a.id,...board.map(r=>r.parent_asset).filter(Boolean)])],references:p.reference_slots?.length?SC().combineReferences(p,board):[],label:'Make · '+g.name});
       }
-      state.runs.unshift({job,look:g.intent==='repair'?POLISH[sel.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a),...(g.intent==='combine'?{fills:{who:String(form.who||'').trim(),clothes:String(form.clothes||'').trim()}}:{}),redo:redoOf(a,form,sel)});remember();
+      state.runs.unshift({job,look:g.intent==='repair'?polishName(a.id,sel.fix):g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a),...(g.intent==='combine'?{fills:{who:String(form.who||'').trim(),clothes:String(form.clothes||'').trim()}}:{}),redo:redoOf(a,form,sel)});remember();
       say('Started. The result appears in Your pictures as it finishes; you can leave this page.');renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){say(error.message);}
