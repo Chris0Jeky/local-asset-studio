@@ -39,7 +39,7 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],sweeps:{},characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
   // Round 5 (#1492): Anima pictures send Fix face and Fix hands to one WAI face-then-hand repaint, so they are one button, and say what that costs.
   const MERGED='Fix face and hands',FIX_HINT='Repaints with a WAI model and can change this look’s face finish — keep the original and compare.',UP_HINT='Smooths fine texture; upscale the version you chose.';
   const merged=id=>{const f=state.polish[id+':face'],d=state.polish[id+':details'];return !!(f?.ok&&d?.ok&&f.preset_id&&f.preset_id===d.preset_id);};
@@ -52,7 +52,7 @@
     if(!card){card={group:run.group||null,id:run.group||run.job.id,runs:[]};cards.push(card);if(run.group)groups.set(run.group,card);}card.runs.push(run);}
     // Unfinished cards stay past the six, but at most 20 of them, so a run stuck 'uncertain' cannot grow history without bound.
     let extra=0;return cards.filter((c,i)=>i<6||c.runs.some(observing)&&extra++<20);};
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:runCards(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,status,tracking_disposition,...r})=>({...r,job:{id,status,tracking_disposition}}))]).flatMap(c=>c.runs).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo,lost})=>({id:job.id,status:job.status,tracking_disposition:job.tracking_disposition,look,lookId,goal,scene,tune,tuned,group,title,fills,redo,lost}))}));}catch{}};
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:runCards(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,status,tracking_disposition,...r})=>({...r,job:{id,status,tracking_disposition}}))]).flatMap(c=>c.runs).map(({job,look,lookId,goal,scene,tune,tuned,group,axis,value,title,fills,redo,lost})=>({id:job.id,status:job.status,tracking_disposition:job.tracking_disposition,look,lookId,goal,scene,tune,tuned,group,axis,value,title,fills,redo,lost}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string');}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
@@ -219,8 +219,8 @@
   }
   // A tune change redraws only the summary, Generate's readiness and the estimate, so the scene being typed is never disturbed.
   function tuneChanged(redraw=true){
-    const look=current();if(!look)return;if(redraw){renderTune();return;}
-    keepTune(look);const sum=q('#makeTuneSum'),why=blocker(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
+    const look=current();if(!look)return;if(redraw){renderTune();renderSweep();return;}
+    keepTune(look);sweepPaint();const sum=q('#makeTuneSum'),why=lookWhy(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
     const draftBox=q('#makeDraftBox');if(draftBox)draftBox.innerHTML=draftMarkup(look);
     if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=why?blockerMarkup(look,why):'';said.dataset.why=why;}estimate();
   }
@@ -260,6 +260,58 @@
     if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];delete savedTunes[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
     return false;
   }
+
+  // Compare one setting (#1496): one look with its Tune, one setting varied over two or three values, the words and seed held.
+  // One press sends one job per value into one card, as Compare looks does: a light group in this browser, not a planned
+  // comparison (Blind until Reveal belongs to planned comparisons only, owner 27 Sep), so every picture is labelled with its value.
+  const sweepOf=look=>state.sweeps[look.id]??={open:false,axis:'',values:[]};
+  function sweepAxes(look){
+    const t=tuneOf(look),tp=tunedPreset(look);
+    return[{id:'steps',label:'Steps',why:bound(tp,'steps')?'':'this recipe takes no step count'},
+      ...(t.rows.length?t.rows.map(r=>({id:'adapter:'+r.slot,label:short(r.name)+' strength',slot:r.slot,why:''})):[{id:'adapter',label:'Adapter strength',why:'this look has no adapter; add one in Tune first'}]),
+      {id:'model',label:'Model',why:models(look).length?'':'no other model in the library takes this look'}];
+  }
+  function sweepDefaults(look,axis){const t=tuneOf(look),tp=tunedPreset(look),p=presetFor(look);
+    if(axis.id==='steps'){const n=t.steps??fullSteps(look,tp);return[String(n),String(halve(n))];}
+    if(axis.id==='model')return[tp.id,(tp===p?models(look)[0]:p).id];
+    const r=t.rows.find(x=>x.slot===axis.slot),now=r.on?r.strength:0;return[String(now),String(now?0:clamp(entry(r.name)?.default??1))];}
+  // The runs one press would send, or why it cannot: null while Compare one setting is folded shut.
+  function sweepPlan(look,base=tuneOf(look)){
+    const s=sweepOf(look);if(!s.open)return null;const fail=why=>({why:'Compare one setting: '+why.replace(/\.?$/,'.')});
+    const p=presetFor(look),axis=sweepAxes(look).find(a=>a.id===s.axis);if(!axis)return fail('choose the setting to vary');if(axis.why)return fail(axis.why);
+    const all=[p,...models(look)],runs=[];
+    for(const raw of s.values.map(v=>String(v??'').trim()).filter(Boolean)){const t=structuredClone(base);let label;
+      if(axis.id==='steps'){const n=Number(raw);if(!Number.isSafeInteger(n)||n<1||n>150)return fail('steps are whole numbers from 1 to 150');t.steps=n;label=n+' steps';}
+      else if(axis.id==='model'){const m=all.find(x=>x?.id===raw);if(!m)return fail('that model is not offered for this look');const why=blocker(look,m);if(why)return fail(family(m)+': '+why);
+        t.preset=m.id;if(t.sampler&&!m.choices?.sampler?.includes(t.sampler))t.sampler='';label=(m===p?'As made · ':'')+modelLabel(m,all);}
+      else{const n=Number(raw),r=t.rows.find(x=>x.slot===axis.slot);if(!Number.isFinite(n)||n<0||n>2)return fail('strengths go from 0 (off) to 2');r.on=n>0;if(r.on)r.strength=clamp(n);label=short(r.name)+(r.on?' '+rowOut(r,t):' off');}
+      if(runs.some(x=>x.label===label))return fail('give different values');runs.push({label,tune:t});}
+    return runs.length<2?fail('give two or three values'):{axis,runs,why:''};
+  }
+  const lookWhy=look=>blocker(look)||sweepPlan(look)?.why||'';
+  function renderSweep(){
+    const look=current(),box=q('#makeSweepBody');if(!look||!box)return;const s=sweepOf(look),axes=sweepAxes(look),axis=axes.find(a=>a.id===s.axis&&!a.why),p=presetFor(look),all=[p,...models(look)];
+    const option=(value,label,on,off)=>'<option value="'+escape(value)+'"'+(on?' selected':'')+(off?' disabled':'')+'>'+escape(label)+'</option>';
+    const field=i=>{const v=s.values[i]??'',name='Value '+(i+1)+(i===2?' (optional)':'');
+      if(axis.id==='model')return '<label>'+name+'<select data-sweep-value="'+i+'">'+(i===2?option('','None',!v):'')+all.map(m=>option(m.id,(m===p?'As made · ':'')+modelLabel(m,all)+(missingFor(m).length?' · needs download':''),v===m.id)).join('')+'</select></label>';
+      return '<label>'+name+'<input type="number" data-sweep-value="'+i+'" value="'+escape(v)+'" '+(axis.id==='steps'?'min="1" max="150" step="1"':'min="0" max="2" step="0.05"')+(i===2?' placeholder="optional"':'')+'></label>';};
+    box.innerHTML='<p class="make-hint">The same look, words and seed for every picture; only this setting changes. One picture per value, side by side on one card.</p>'
+      +'<label class="make-sweep-axis">Setting to vary<select id="makeSweepAxis" data-sweep="axis">'+option('','Choose a setting',!axis)+axes.map(a=>option(a.id,a.label+(a.why?' · unavailable: '+a.why:''),axis===a,!!a.why)).join('')+'</select></label>'
+      +(axis?'<div class="make-sweep-values">'+[0,1,2].map(field).join('')+'</div>'+(axis.slot?'<small class="muted">0 turns the adapter off.</small>':''):'')
+      +'<small id="makeSweepOne" class="muted">While this is open, How many is one picture per value. Fold it shut to make pictures as usual.</small>';
+    sweepPaint();
+  }
+  // Summary, How many and the Generate label follow the plan; readiness and the estimate are the caller's (tuneChanged, sweepInput).
+  function sweepPaint(){
+    const look=current();if(!look)return;const s=sweepOf(look),plan=sweepPlan(look),ok=plan&&!plan.why,sum=q('#makeSweepSum'),count=q('#makeCount'),button=q('#makeGenerate');
+    if(sum)sum.textContent=ok?plan.runs.map(r=>r.label).join(' vs '):'Same words and seed, one setting changed';
+    if(count){count.disabled=s.open;if(s.open)count.setAttribute('aria-describedby','makeSweepOne');else count.removeAttribute('aria-describedby');}
+    if(button)button.textContent=ok?'Generate '+plan.runs.length+' pictures':'Generate';
+  }
+  function sweepInput(target){const look=current();if(!look)return;const s=sweepOf(look);
+    if(target.dataset.sweep==='axis'){s.axis=target.value;const a=sweepAxes(look).find(x=>x.id===s.axis&&!x.why);s.values=a?sweepDefaults(look,a):[];renderSweep();q('#makeSweepAxis')?.focus();}
+    else if(target.dataset.sweepValue!=null)s.values[Number(target.dataset.sweepValue)]=target.value;
+    sweepPaint();syncOperation();estimate();}
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
@@ -314,6 +366,7 @@
       +'<div class="make-row">'+(example?'<button type="button" id="makeUseExample">Use the example</button>':'')+'<small>Plain words are fine. The look adds its own style and quality words.</small></div>'
       +options.map(o=>'<label class="make-check"><input type="checkbox" data-make-option="'+escape(o.id)+'"'+(o.default?' checked':'')+'> '+escape(o.label)+'</label>').join('')
       +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Tune this look <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
+      +'<details class="make-tune" id="makeSweep"'+(sweepOf(look).open?' open':'')+'><summary>Compare one setting <small id="makeSweepSum"></small></summary><div id="makeSweepBody"></div></details>'
       +'</div><div class="make-compose-side">'
       +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'"'+(k===shapeDefault(look)?' selected':'')+'>'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
       +'<label>How many<select id="makeCount"><option value="1"'+(slow?' selected':'')+'>1 picture</option><option value="2">2 pictures</option><option value="4"'+(slow?'':' selected')+'>4 to choose from</option></select></label></div>'
@@ -333,17 +386,18 @@
     q('#makeShape').onchange=q('#makeCount').onchange=()=>estimate();estimate();
     const strength=q('#makeStrength');if(strength)strength.oninput=()=>{const t=tuneOf(look);t.scale=Math.min(150,Math.max(0,Number(strength.value)||0));paintScale(t);tuneChanged(false);};
     q('#makeTune').ontoggle=e=>{state.tuneOpen=e.target.open;};
+    q('#makeSweep').ontoggle=e=>{if(sweepOf(look).open===e.target.open)return;sweepOf(look).open=e.target.open;sweepPaint();syncOperation();estimate();};
     const kept=state.tune[look.id]?.composer;if(kept){delete state.tune[look.id].composer;
       const set=(el,v)=>{if(el&&v!=null&&[...(el.options||[{value:String(v)}])].some(o=>o.value===String(v)))el.value=String(v);};set(q('#makeShape'),kept.shape);set(q('#makeCount'),kept.count);
       // A run saved before Style strength joined the tune kept it with the composer.
       if(state.tune[look.id].scale==null&&kept.strength!=null&&strength){strength.value=kept.strength;strength.oninput();}
       for(const box of view.querySelectorAll('[data-make-option]'))if(typeof kept.options?.[box.dataset.makeOption]==='boolean')box.checked=kept.options[box.dataset.makeOption];
       say('That run\u2019s settings are back'+(tuneOf(look).reseed?'':', with its seed locked')+'. Change the words or a setting, then press Generate.');estimate();}
-    renderTune();
+    renderTune();renderSweep();
   }
   const goBar=(why,label='Generate')=>'<div class="make-go"><button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>'+label+'</button><p id="makeEstimate" class="muted" aria-live="polite"></p><p id="makeWhy" class="make-warn" role="status">'+why+'</p></div>';
   const SCENE_FIRST='Describe your picture first, or press Use the example.';
-  async function prepared(look){
+  async function prepared(look,sweep=false){
     // Every form value is read before the first await: a click on another look mid-request must not change this one.
     const field=q('#makeScene'),scene=field.value.trim();if(!scene){field.setAttribute('aria-invalid','true');field.setAttribute('aria-describedby','makeStatus');field.focus();throw Error(SCENE_FIRST);}
     const options=Object.fromEntries([...view.querySelectorAll('[data-make-option]')].map(i=>[i.dataset.makeOption,i.checked]));
@@ -351,22 +405,26 @@
     // An adapter added in an earlier session may have been uninstalled since: leave it out and say so, never send an unknown file.
     const inv=typeof installedLoras!=='undefined'&&installedLoras.length?new Set(installedLoras):null,gone=inv?(tuneOf(look).rows||[]).filter(r=>r.added&&!inv.has(r.name)):[];
     if(gone.length){const live=tuneOf(look);live.rows=live.rows.filter(r=>!gone.includes(r));tuneChanged(false);say('Left out '+gone.map(r=>r.name.replace(/\.safetensors$/,'')).join(', ')+': no longer installed.');}
-    const t=structuredClone(tuneOf(look)),reseed=t.reseed,tp=byId(t.preset)||p;if(!reseed&&t.seed!=null&&!(Number.isSafeInteger(t.seed)&&t.seed>=0))throw Error('The seed must be a whole number, 0 or more.');
+    const t=structuredClone(tuneOf(look)),reseed=t.reseed;if(!reseed&&t.seed!=null&&!(Number.isSafeInteger(t.seed)&&t.seed>=0))throw Error('The seed must be a whole number, 0 or more.');
+    const plan=sweep?sweepPlan(look,t):null;if(plan?.why)throw Error(plan.why);
     const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options}:{}),expected_revision:look.revision});
-    const controls={...result.controls};
-    if('width' in controls||p?.width)Object.assign(controls,{width:w,height:h});
-    // The seed follows the recipe that runs: a switched model may bind one the look's own recipe does not (#1438).
-    if(reseed&&bound(tp,'seed'))controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
-    else if(t.seed!=null&&bound(tp,'seed'))controls.seed=t.seed;
-    // Style strength (t.scale) scales the tuned adapters; two decimals, inside the server's 0-2 adapter range.
-    const preset_id=applyTune(controls,look,t),tuned=tuneSummary(look,t);
+    const base={...result.controls};
+    if('width' in base||p?.width)Object.assign(base,{width:w,height:h});
+    // One seed for every run of this press. It follows the recipe that runs: a switched model may bind one the look's own recipe does not (#1438).
+    const seed=reseed?crypto.getRandomValues(new Uint32Array(1))[0]%2147483647:t.seed;
     // The run keeps its own settings, seed locked, so Edit and re-run changes only what you change next.
     const composer={shape,count:batch_count,options};
-    return{preset_id,controls,batch_count,scene,tuned,notice:(result.notices||[]).join(' '),tune:{...t,reseed:controls.seed==null&&t.reseed,seed:controls.seed??t.seed,composer}};
+    const build=v=>{const controls=structuredClone(base);if(seed!=null&&bound(byId(v.preset)||p,'seed'))controls.seed=seed;
+      // Style strength (v.scale) scales the tuned adapters; two decimals, inside the server's 0-2 adapter range.
+      const preset_id=applyTune(controls,look,v);return{preset_id,controls,tuned:tuneSummary(look,v),tune:{...v,reseed:controls.seed==null&&v.reseed,seed:controls.seed??v.seed,composer}};};
+    return{...build(t),batch_count,scene,notice:(result.notices||[]).join(' '),...(plan?{axis:plan.axis.label,variants:plan.runs.map(r=>({...build(r.tune),label:r.label}))}:{})};
   }
   let estimateEpoch=0;
   async function estimate(retry=false){
-    const look=current(),out=q('#makeEstimate');if(!look||!out)return;const epoch=++estimateEpoch,p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),t=state.tune[look.id];
+    const look=current(),out=q('#makeEstimate');if(!look||!out)return;const epoch=++estimateEpoch,p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),t=state.tune[look.id],plan=sweepPlan(look);
+    if(plan&&!plan.why){const each=await Promise.all(plan.runs.map(r=>json('/api/estimate',{preset_id:(byId(r.tune.preset)||p).id,controls:{...look.body.controls,width:w,height:h,...(r.tune.steps!=null?{steps:r.tune.steps}:{})},batch_count:1,reference_count:0}).then(e=>Number(e.estimate_seconds)||0,()=>0)));
+      if(epoch!==estimateEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
+      out.classList.toggle('make-warn',total>600);out.textContent=plan.runs.length+' pictures, one per value'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+', from earlier runs on this PC.':' · no timing yet for these settings on this PC.');return;}
     try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
       out.classList.toggle('make-warn',e.estimate_seconds>600);out.textContent=e.estimate_seconds?'About '+duration(e.estimate_seconds)+' in total, from earlier runs on this PC.':'No timing yet: this look has not run here at this size.';}
     catch{if(epoch===estimateEpoch&&!retry)setTimeout(()=>{if(epoch===estimateEpoch)estimate(true);},1500);}
@@ -374,7 +432,7 @@
   const duration=s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min';
   function syncOperation(){
     placeStatus();statusEl.textContent=state.status;
-    const g=goal(),why=g.intent?goalBlocker(g,goalRoute(g)):state.compare?compareBlocker():current()&&blocker(current());
+    const g=goal(),why=g.intent?goalBlocker(g,goalRoute(g)):state.compare?compareBlocker():current()&&lookWhy(current());
     const generate=q('#makeGenerate'),editor=q('#makeEditor');if(generate)generate.disabled=state.busy||!!why;if(editor)editor.disabled=state.busy;
     // The blocker line stays in the page as a status region; it is rewritten only when the reason changes, so it is announced once.
     if(generate){if(why)generate.setAttribute('aria-describedby','makeWhy');else generate.removeAttribute('aria-describedby');}
@@ -388,7 +446,7 @@
   const showRun=id=>q('[data-run="'+CSS.escape(id)+'"]')?.scrollIntoView({block:'nearest'});
   async function generate(){
     const look=current(),runGoal=state.goal;if(!look||state.busy)return;
-    const why=blocker(look);if(why){say(why);return;}
+    const why=lookWhy(look);if(why){say(why);return;}if(sweepPlan(look))return generateSweep(look);
     state.busy=true;say('Preparing\u2026');
     try{
       const request=await prepared(look);say('Sending to ComfyUI…');
@@ -611,9 +669,9 @@
     const pending=(job,n=job.batch_count||1)=>FINAL.includes(job.status)?'':Array.from({length:Math.max(0,n-(job.outputs||[]).length)},()=>'<figure class="make-pending" aria-hidden="true"><span></span></figure>').join('');
     const markup=list.map(({group,id,runs})=>{
       if(group){const done=runs.filter(r=>!observing(r)).length,first=runs[0];
-        return '<article class="make-run make-compare" data-run="'+escape(id)+'"><header><div><b>Compare looks · '+escape(pictureTitle(first.scene,first.job.created_at))+'</b><small>'+runs.length+' looks, one picture each'+(runs.every(r=>r.job.controls?.seed!=null&&r.job.controls.seed===first.job.controls?.seed)?', same seed':'')+'</small></div><span class="make-run-state '+(done===runs.length?'completed':'running')+'">'+(done===runs.length?'Done':done+' of '+runs.length+' done')+'</span></header><div class="make-compare-grid">'
-          +runs.map(({job,look,lost})=>'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
-            +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+characterMarkup(job,o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>').join('')+'</div></article>';}
+        return '<article class="make-run make-compare" data-run="'+escape(id)+'"><header><div><b>'+(first.axis?'Compare a setting · ':'Compare looks · ')+escape(pictureTitle(first.scene,first.job.created_at))+'</b><small>'+(first.axis?escape(first.look)+' · '+runs.length+' values of '+escape(first.axis)+', one picture each':runs.length+' looks, one picture each')+(runs.every(r=>r.job.controls?.seed!=null&&r.job.controls.seed===first.job.controls?.seed)?', same seed':'')+'</small></div><span class="make-run-state '+(done===runs.length?'completed':'running')+'">'+(done===runs.length?'Done':done+' of '+runs.length+' done')+'</span></header><div class="make-compare-grid">'
+          +runs.map(({job,look,value,lost})=>(look=value||look,'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
+            +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+characterMarkup(job,o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>')).join('')+'</div></article>';}
       const {job,look,scene,tuned,title,lost}=runs[0];
       return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':runs[0].redo?'<div class="make-run-tools"><button type="button" data-make-redo="'+escape(job.id)+'">Edit and re-run</button></div>':'')
@@ -863,14 +921,29 @@
     if(epoch!==compareEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
     out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+', from earlier runs on this PC.':' · no timing yet for these looks on this PC.');
   }
+  // A compare sends its jobs one by one; leaving Make (even briefly) stops the ones not yet sent (#1514).
+  function leaveWatch(){let left=false;const o=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
+    o.observe(view,{attributes:true,attributeFilter:['hidden'],attributeOldValue:true});return{stopped:()=>left||view.hidden||!view.isConnected,stop:()=>o.disconnect()};}
+  async function generateSweep(look){
+    const runGoal=state.goal,group='compare-'+Date.now().toString(36),watch=leaveWatch();let started=0,n=0;state.busy=true;say('Preparing\u2026');
+    try{
+      const request=await prepared(look,true),runs=request.variants;n=runs.length;
+      for(const v of runs){
+        if(watch.stopped())break;
+        say('Sending '+(started+1)+' of '+n+' to ComfyUI\u2026');
+        const job=await json('/api/jobs',{preset_id:v.preset_id,controls:v.controls,batch_count:1,label:'Make · Compare · '+look.name});
+        state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene:request.scene,tune:v.tune,tuned:v.tuned,group,axis:request.axis,value:v.label});remember();renderRuns();poll(job.id);
+      }
+      say((started<n?'Started '+started+' of '+n+'; the rest were not sent because you left Make.':'Started '+n+' pictures, one per value of '+request.axis+'. They appear side by side in Your pictures.')+(request.notice?' '+request.notice:''));
+      if(started)showRun(group);if(typeof refresh==='function')void refresh();
+    }catch(error){if(error.message===SCENE_FIRST)sayMissing(error.message);else say((started?'Started '+started+' of '+n+'; the rest were not sent. ':'')+error.message);}
+    finally{watch.stop();state.busy=false;syncOperation();}
+  }
   async function generateCompare(){
     if(state.busy)return;const list=compareList(),why=compareBlocker();if(why){say(why);return;}
     const field=q('#makeScene'),scene=field.value.trim();if(!scene){field.setAttribute('aria-invalid','true');field.setAttribute('aria-describedby','makeStatus');field.focus();sayMissing(SCENE_FIRST);return;}
     state.busy=true;say('Preparing…');
-    const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,group='compare-'+Date.now().toString(36),runGoal=state.goal;let started=0,left=false;const notes=[];
-    const observer=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
-    observer.observe(view,{attributes:true,attributeFilter:['hidden'],attributeOldValue:true});
-    const stopped=()=>left||view.hidden||!view.isConnected;
+    const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,group='compare-'+Date.now().toString(36),runGoal=state.goal,watch=leaveWatch(),stopped=watch.stopped;let started=0;const notes=[];
     try{
       for(const look of list){
         if(stopped())break;
@@ -887,7 +960,7 @@
       say((started<list.length?'Started '+started+' of '+list.length+'; the rest were not sent because you left Make.':'Started '+list.length+' pictures, one per look. They appear side by side in Your pictures.')+noted);
       if(typeof refresh==='function')void refresh();
     }catch(error){say((started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message+notes.map(n=>' '+n).join(''));}
-    finally{observer.disconnect();state.busy=false;syncOperation();}
+    finally{watch.stop();state.busy=false;syncOperation();}
   }
   // Your pictures lives in this browser; a new browser starts it from the library's Make pictures (audit v3 N6): the newest six
   // Make runs by their "Make · " label, read back from their job records. Their words are not stored, so Edit and re-run is not offered.
@@ -917,7 +990,7 @@
   }
   // The gallery folds away under the pointer: bring "Describe your picture" out from under the fixed bar (audit N8, make.css scroll-margin).
   function focusScene(){q('#makeComposer .make-step')?.scrollIntoView({block:'nearest'});q('#makeScene')?.focus({preventScroll:true});}
-  view.addEventListener('input',e=>{const t=e.target;if(t.closest('#makeTune')){tuneInput(t);return;}
+  view.addEventListener('input',e=>{const t=e.target;if(t.closest('#makeTune')){tuneInput(t);return;}if(t.closest('#makeSweep')){sweepInput(t);return;}
     if(t.dataset.makeField){state.form[t.dataset.makeField]=t.value;t.removeAttribute('aria-invalid');t.removeAttribute('aria-describedby');settleMissing();if(t.tagName==='SELECT')void goalEstimate(goal(),goalRoute(goal()));return;}
     if(t.dataset.makeChar){state.charForm[t.dataset.makeChar]=t.value;t.removeAttribute('aria-invalid');t.removeAttribute('aria-describedby');settleMissing();return;}
     if(t.dataset.makeSearch){state.queries[t.dataset.makeSearch]=t.value;renderGrid(t.dataset.makeSearch,t.dataset.makeAttr);}});
