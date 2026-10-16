@@ -700,12 +700,15 @@ async function loadSetups(){
   renderSaved();
 }
 function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<span class="saved-chip"><button data-load="'+i+'">'+esc(s.name)+'</button><button data-delete-setup="'+esc(s.id)+'" aria-label="Delete '+esc(s.name)+' setup">×</button></span>').join('')||'<small>Save a variation once it is worth coming back to.</small>';}
+// A saved, drafted or imported Make seamless plan is kept only while it still matches the recipe it rides with (#1230).
+function staleTilePlan(s,target){return s.tile!=null&&(!target?.tile_route||typeof StudioUX==='undefined'||!StudioUX.normalizePrepared({preset:s.preset,tile:s.tile})||(s.controls?.reference&&s.controls.reference!==s.tile.rolled_file)||!Array.isArray(s.parent_assets)||!s.parent_assets.includes(s.tile.source_asset_id));}
 function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
   if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
-  const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(s):(s.tile!=null||s.parallax!=null?null:{});
   const target=catalog.presets.find(p=>p.id===s.preset);
+  const droppedTile=s.tileDropped||staleTilePlan(s,target);
+  const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(droppedTile?{...s,tile:null}:s):(s.tile!=null||s.parallax!=null?null:{});
   if(!prepared||prepared.tile&&!target.tile_route||prepared.parallax&&!target.parallax_route)throw Error('Invalid saved prepared plan for this recipe. Prepare it again from the Library.');
   selectPreset(s.preset);
   tileState=prepared.tile||null;parallaxState=prepared.parallax||null;
@@ -738,7 +741,7 @@ function applySaved(s,{guessLegacyParent=false}={}){
   const slotOccupied=typeof referenceRecords!=='undefined'&&referenceRecords.some(r=>r&&(r.file||r.parent_asset));
   if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>(!selected.reference_slots?.length||input==='lastReference')&&parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
   else if(guessLegacyParent&&s.attribution_recorded!==true&&parentAssets.length===1&&filled.length===1&&!slotOccupied)parentByInput={[filled[0][0]]:parentAssets[0]};
-  $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
+  $('#batch').value=s.batch_count||s.batch||1;updateReady();message(droppedTile?'Seamless plan dropped because it no longer matches this setup. Use Make seamless again.':'Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
 function tilePayload(){return tileState&&selected?.id===tileState.preset_id?{tile:{...tileState}}:{};}
@@ -935,7 +938,7 @@ function setupMessage(text,error=false){message(text,error);$('#setupStatus').te
 let savingSetup=false; // A double click stored two setups: each save without an id gets a fresh one.
 $('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load],{guessLegacyParent:true});if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
-$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,tile:recipe.tile,parallax:recipe.parallax,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
+$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');let recipe=JSON.parse(await file.text());const tileDropped=staleTilePlan({preset:recipe.preset_id,tile:recipe.tile,controls:recipe.controls,parent_assets:recipe.parent_assets},catalog.presets.find(p=>p.id===recipe.preset_id));if(tileDropped)recipe={...recipe,tile:null};const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,tileDropped,continuation:recipe.continuation,tile:recipe.tile,parallax:recipe.parallax,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;if(!tileDropped&&(recipe.tile==null||tileState))message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;$('#curatedModelSearch').oninput=()=>{renderCuratedModels();renderInventory();};$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
 function configureReadPolling(){
   if(!window.ReadPoller||readPoller)return;
