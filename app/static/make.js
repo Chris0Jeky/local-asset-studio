@@ -87,7 +87,7 @@
   // The same runtime facts the full editor gates on (app.js globals); unknown (null) health does not block.
   function runtimeBlocker(){if(typeof backendSwitching!=='undefined'&&backendSwitching)return'A model environment switch is running. Wait for it to finish.';if(typeof workerAlive!=='undefined'&&workerAlive===false)return'The Studio worker has stopped. Restart the Studio before generating.';if(typeof online!=='undefined'&&online===false)return'ComfyUI is not reachable. Start it, then try again.';if(typeof online!=='undefined'&&online===true&&typeof schemaAvailable!=='undefined'&&!schemaAvailable)return'ComfyUI is still starting up. Try again in a moment.';return'';}
   function blocker(look,p=tunedPreset(look)){const runtime=runtimeBlocker();if(runtime)return runtime;if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
-  const blockerMarkup=(look,text)=>escape(text).replace('Models &amp; setup','<a href="/#models?need='+escape(encodeURIComponent(tunedPreset(look)?.id||look.body.preset_id))+'">Models &amp; setup</a>');
+  const blockerMarkup=(look,text,id=tunedPreset(look)?.id||look.body.preset_id)=>escape(text).replace('Models &amp; setup','<a href="/#models?need='+escape(encodeURIComponent(id))+'">Models &amp; setup</a>');
 
   // Tune this look (owner ask, 16 Oct 2026): see and change the look's model, adapters, steps, negative and seed without the
   // full editor. Folded shut by default. Tuning only changes the controls Generate sends: the server's allow-list, adapter
@@ -222,7 +222,7 @@
     const look=current();if(!look)return;if(redraw){renderTune();renderSweep();return;}
     keepTune(look);sweepPaint();const sum=q('#makeTuneSum'),why=lookWhy(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
     const draftBox=q('#makeDraftBox');if(draftBox)draftBox.innerHTML=draftMarkup(look);
-    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=why?blockerMarkup(look,why):'';said.dataset.why=why;}estimate();
+    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=why?blockerMarkup(look,why,whyPreset(look)):'';said.dataset.why=why;}estimate();
   }
   function tuneInput(target){
     const look=current();if(!look)return false;const t=tuneOf(look),row=s=>t.rows.find(r=>r.slot===s);
@@ -267,12 +267,12 @@
   const sweepOf=look=>state.sweeps[look.id]??={open:false,axis:'',values:[]};
   function sweepAxes(look){
     const t=tuneOf(look),tp=tunedPreset(look);
-    return[{id:'steps',label:'Steps',why:bound(tp,'steps')?'':'this recipe takes no step count'},
+    return[{id:'steps',label:'Steps',why:!bound(tp,'steps')?'this recipe takes no step count':fullSteps(look,tp)<1?'this look’s step count is not known here':''},
       ...(t.rows.length?t.rows.map(r=>({id:'adapter:'+r.slot,label:short(r.name)+' strength',slot:r.slot,why:''})):[{id:'adapter',label:'Adapter strength',why:'this look has no adapter; add one in Tune first'}]),
       {id:'model',label:'Model',why:models(look).length?'':'no other model in the library takes this look'}];
   }
   function sweepDefaults(look,axis){const t=tuneOf(look),tp=tunedPreset(look),p=presetFor(look);
-    if(axis.id==='steps'){const n=t.steps??fullSteps(look,tp);return[String(n),String(halve(n))];}
+    if(axis.id==='steps'){const n=t.steps??fullSteps(look,tp);return[String(n),String(n>1?halve(n):n+1)];}
     if(axis.id==='model')return[tp.id,(tp===p?models(look)[0]:p).id];
     const r=t.rows.find(x=>x.slot===axis.slot),now=r.on?r.strength:0;return[String(now),String(now?0:clamp(entry(r.name)?.default??1))];}
   // The runs one press would send, or why it cannot: null while Compare one setting is folded shut.
@@ -282,20 +282,27 @@
     const all=[p,...models(look)],runs=[];
     for(const raw of s.values.map(v=>String(v??'').trim()).filter(Boolean)){const t=structuredClone(base);let label;
       if(axis.id==='steps'){const n=Number(raw);if(!Number.isSafeInteger(n)||n<1||n>150)return fail('steps are whole numbers from 1 to 150');t.steps=n;label=n+' steps';}
-      else if(axis.id==='model'){const m=all.find(x=>x?.id===raw);if(!m)return fail('that model is not offered for this look');const why=blocker(look,m);if(why)return fail(family(m)+': '+why);
+      else if(axis.id==='model'){const m=all.find(x=>x?.id===raw);if(!m)return fail('that model is not offered for this look');const why=blocker(look,m);if(why)return{...fail(family(m)+': '+why),preset:m.id};
         t.preset=m.id;if(t.sampler&&!m.choices?.sampler?.includes(t.sampler))t.sampler='';label=(m===p?'As made · ':'')+modelLabel(m,all);}
-      else{const n=Number(raw),r=t.rows.find(x=>x.slot===axis.slot);if(!Number.isFinite(n)||n<0||n>2)return fail('strengths go from 0 (off) to 2');r.on=n>0;if(r.on)r.strength=clamp(n);label=short(r.name)+(r.on?' '+rowOut(r,t):' off');}
+      else{const n=Number(raw),r=t.rows.find(x=>x.slot===axis.slot);if(!Number.isFinite(n)||n<0||n>2)return fail('strengths go from 0 (off) to 2');r.on=clamp(n)>0;if(r.on)r.strength=clamp(n);label=short(r.name)+(r.on?' '+rowOut(r,t):' off');
+        // Told apart by what applyTune sends: 0.01 rounds to off, and All adapters at 0% sends 0 for every value.
+        if(runs.some(x=>eff(x.tune.rows.find(y=>y.slot===axis.slot),x.tune)===eff(r,t)))return fail('two values send the same strength'+(scaleOf(t)!==100?' (All adapters is at '+scaleOf(t)+'%)':''));}
       if(runs.some(x=>x.label===label))return fail('give different values');runs.push({label,tune:t});}
     return runs.length<2?fail('give two or three values'):{axis,runs,why:''};
   }
   const lookWhy=look=>blocker(look)||sweepPlan(look)?.why||'';
+  // The recipe a refusal's Models & setup link opens: a blocked compare value, else the tuned recipe.
+  const whyPreset=look=>!blocker(look)&&sweepPlan(look)?.preset||tunedPreset(look)?.id||look.body.preset_id;
+  // An added adapter's trigger word goes in only where it is on (applyTune), so sweeping it changes the words too.
+  function sweepHint(look,axis){const r=axis?.slot&&tuneOf(look).rows.find(x=>x.slot===axis.slot),trigger=r?.added&&entry(r.name)?.trigger;
+    return trigger?'The same look, seed and other settings for every picture; only this adapter’s strength changes, and its trigger word “'+trigger+'” is added only to the pictures where it is on.':'The same look, words and seed for every picture; only this setting changes. One picture per value, side by side on one card.';}
   function renderSweep(){
     const look=current(),box=q('#makeSweepBody');if(!look||!box)return;const s=sweepOf(look),axes=sweepAxes(look),axis=axes.find(a=>a.id===s.axis&&!a.why),p=presetFor(look),all=[p,...models(look)];
     const option=(value,label,on,off)=>'<option value="'+escape(value)+'"'+(on?' selected':'')+(off?' disabled':'')+'>'+escape(label)+'</option>';
     const field=i=>{const v=s.values[i]??'',name='Value '+(i+1)+(i===2?' (optional)':'');
       if(axis.id==='model')return '<label>'+name+'<select data-sweep-value="'+i+'">'+(i===2?option('','None',!v):'')+all.map(m=>option(m.id,(m===p?'As made · ':'')+modelLabel(m,all)+(missingFor(m).length?' · needs download':''),v===m.id)).join('')+'</select></label>';
       return '<label>'+name+'<input type="number" data-sweep-value="'+i+'" value="'+escape(v)+'" '+(axis.id==='steps'?'min="1" max="150" step="1"':'min="0" max="2" step="0.05"')+(i===2?' placeholder="optional"':'')+'></label>';};
-    box.innerHTML='<p class="make-hint">The same look, words and seed for every picture; only this setting changes. One picture per value, side by side on one card.</p>'
+    box.innerHTML='<p class="make-hint">'+escape(sweepHint(look,axis))+'</p>'
       +'<label class="make-sweep-axis">Setting to vary<select id="makeSweepAxis" data-sweep="axis">'+option('','Choose a setting',!axis)+axes.map(a=>option(a.id,a.label+(a.why?' · unavailable: '+a.why:''),axis===a,!!a.why)).join('')+'</select></label>'
       +(axis?'<div class="make-sweep-values">'+[0,1,2].map(field).join('')+'</div>'+(axis.slot?'<small class="muted">0 turns the adapter off.</small>':''):'')
       +'<small id="makeSweepOne" class="muted">While this is open, How many is one picture per value. Fold it shut to make pictures as usual.</small>';
@@ -436,7 +443,7 @@
     const generate=q('#makeGenerate'),editor=q('#makeEditor');if(generate)generate.disabled=state.busy||!!why;if(editor)editor.disabled=state.busy;
     // The blocker line stays in the page as a status region; it is rewritten only when the reason changes, so it is announced once.
     if(generate){if(why)generate.setAttribute('aria-describedby','makeWhy');else generate.removeAttribute('aria-describedby');}
-    const said=q('#makeWhy');if(said&&said.dataset.why!==(why||'')){said.dataset.why=why||'';said.innerHTML=!why?'':g.intent?goalWhy(goalRoute(g),why):state.compare?escape(why):blockerMarkup(current(),why);}
+    const said=q('#makeWhy');if(said&&said.dataset.why!==(why||'')){said.dataset.why=why||'';said.innerHTML=!why?'':g.intent?goalWhy(goalRoute(g),why):state.compare?escape(why):blockerMarkup(current(),why,whyPreset(current()));}
   }
   const say=text=>{state.status=text;state.missing='';syncOperation();};
   // A refusal that names a missing answer clears itself once the answer is given (audit N10: a stale "Choose the pose first").
@@ -1040,7 +1047,7 @@
     if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
     if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();focusScene();return;}
     const again=e.target.closest('[data-make-rerun],[data-make-another],[data-make-final]');if(again){const run=state.runs.find(r=>r.job.id===(again.dataset.makeRerun||again.dataset.makeAnother||again.dataset.makeFinal)),final=!!again.dataset.makeFinal;if(!run)return;
-      state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;state.compare=false;
+      state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;state.compare=false;for(const s of Object.values(state.sweeps))s.open=false;
       // Edit and re-run brings the run's tune back with its look; another look starts from that look as made.
       if(!again.dataset.makeAnother){if(Array.isArray(run.tune?.rows)&&Array.isArray(run.tune.cleared)){state.tune[run.lookId]=structuredClone(run.tune);state.tuneOpen=state.tuneOpen||(!!run.tuned&&!final);}else{delete state.tune[run.lookId];delete savedTunes[run.lookId];}}
       // Make the final is Edit and re-run with the draft's steps put back to the look's own: the same words and seed, staged, never sent.

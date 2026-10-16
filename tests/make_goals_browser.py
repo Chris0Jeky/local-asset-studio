@@ -573,6 +573,18 @@ def run(shots):
         clicks['compare-setting'] = 4  # look, Compare one setting, the setting, Generate (+ one scene; values prefilled)
         page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate"')
         assert page.locator('#makeGenerate').inner_text() == 'Generate' and page.locator('#makeCount').is_enabled(), 'folded shut, Make is as before'
+        before = len(jobs()); page.locator('#makeGenerate').click()
+        page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started. ")', timeout=8000); assert len(jobs()) == before + 1
+        # Edit and re-run (like Make the final and Same words, another look) folds the look's sweep shut: Generate then sends one job (#1518 review).
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate 2 pictures"')
+        page.locator('.make-run:not(.make-compare) [data-make-rerun]').first.click(); page.wait_for_selector('#makeScene')
+        assert not page.evaluate('document.querySelector("#makeSweep").open') and page.locator('#makeGenerate').inner_text() == 'Generate' and page.locator('#makeCount').is_enabled()
+        before = len(jobs()); page.locator('#makeGenerate').click()
+        page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started. ")', timeout=8000); page.wait_for_timeout(300); assert len(jobs()) == before + 1, jobs()[before:]
+        # Night Shift's recipe takes its step count from the graph (8): the served catalog's defaults carry it (Codex on #1518).
+        page.locator('[data-make-goal="scene"]').click(); pick_look('look-night-shift-retro-anime'); page.locator('#makeSweep > summary').click()
+        page.select_option('#makeSweepAxis', 'steps'); assert [page.input_value('[data-sweep-value="%d"]' % i) for i in range(2)] == ['8', '4']
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate"')
         # A picture goal whose copied reference does not match the verified source sends nothing.
         page.route('**/api/assets/reference', lambda route: route.fulfill(json={'file': 'x' * 32 + '_ref.png', 'sha256': '0' * 64, 'parent_asset': 'asset-1', 'context': {}}))
         goal('edit'); page.locator('#makeF-change').fill('give her a hat'); before = len(jobs())

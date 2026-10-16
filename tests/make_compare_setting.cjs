@@ -19,7 +19,7 @@ function harness({presets=[BASE,OTHER],missing={},look=LOOK}={}){
     q:s=>({value:s==='#makeScene'?'a knight by a fire':s==='#makeShape'?'design':'4'}),view:{querySelectorAll:()=>[]},
     json:async(url,body)=>{requests.push({url,body});return{controls:{positive:'pearlypetif, a knight by a fire',...look.body.controls}};}};
   const api=vm.runInNewContext(between('  const presets=()=>','  view.innerHTML=')+between('  function shapeSize(','  const shapeDefault=')+between('  const SCENE_FIRST=','  let estimateEpoch=')
-    +';({sweepPlan,sweepOf,sweepAxes,sweepDefaults,tuneOf,lookWhy,prepared})',context);
+    +';({sweepPlan,sweepOf,sweepAxes,sweepDefaults,tuneOf,lookWhy,prepared,whyPreset,sweepHint})',context);
   const open=(axis,values)=>{const s=api.sweepOf(look);s.open=true;s.axis=axis;s.values=values;return api.sweepPlan(look);};
   return{...api,look,state,requests,open};
 }
@@ -58,7 +58,7 @@ test('model: As made against a compatible model, with an unoffered tuned sampler
 test('every refusal says why, and only a valid plan is sendable',()=>{
   const cases=[['',['1','2'],'choose the setting to vary'],['steps',['25','25'],'give different values'],['steps',['25'],'give two or three values'],
     ['steps',['25','0'],'whole numbers from 1 to 150'],['steps',['25','12.5'],'whole numbers from 1 to 150'],['adapter:lora',['1','2.5'],'from 0 (off) to 2'],
-    ['adapter:lora',['0.35','0.36'],'give different values'],['model',['anima-a','anima-z'],'not offered for this look']];
+    ['adapter:lora',['0.35','0.36'],'send the same strength'],['model',['anima-a','anima-z'],'not offered for this look']];
   for(const [axis,values,why] of cases){const h=harness(),plan=h.open(axis,values);assert.match(plan.why,new RegExp('^Compare one setting: .*'+why.replace(/[()]/g,'\\$&')),axis+' '+values);assert.equal(h.lookWhy(h.look),plan.why);}
   const h=harness({missing:{'anima-b':['b.safetensors']}}),plan=h.open('model',['anima-a','anima-b']);
   assert.match(plan.why,/^Compare one setting: Pearly: Needs 1 model file first/);
@@ -97,4 +97,39 @@ test('Generate routes a valid plan to the grouped sender, with the same stop-on-
   const sweep=between('  async function generateSweep(','  async function generateCompare(');
   assert.match(sweep,/watch=leaveWatch\(\)/);assert.match(sweep,/if\(watch\.stopped\(\)\)break;/);assert.match(sweep,/batch_count:1,label:'Make · Compare · '\+look\.name/);
   assert.match(between('  async function generateCompare(','  // Your pictures lives'),/watch=leaveWatch\(\)/);
+});
+
+// PR #1518 review round.
+test('Steps reads the authored count from the served catalog defaults, and is unavailable with its reason when unknown (Codex 4299976349)',()=>{
+  const zimage={id:'zimage-fast',family:'Z-Image',model:model('z.safetensors'),positive:['1','text'],seed:['2','seed'],steps:['8','steps']};
+  const night={...LOOK,id:'look-night',body:{preset_id:'zimage-fast',controls:{seed:7,width:1344,height:768}}};
+  const served=harness({presets:[{...zimage,defaults:{steps:8}}],look:night});
+  assert.deepEqual(plain(served.sweepDefaults(night,{id:'steps'})),['8','4']);assert.equal(served.open('steps',['8','4']).why,'');
+  const bare=harness({presets:[zimage],look:night}),steps=plain(bare.sweepAxes(night))[0];
+  assert.equal(steps.id,'steps');assert.match(steps.why,/step count is not known/);
+  const one=harness({presets:[{...zimage,defaults:{steps:1}}],look:night});assert.deepEqual(plain(one.sweepDefaults(night,{id:'steps'})),['1','2'],'never two equal defaults');
+});
+
+test('adapter values are told apart by the strength sent, not the label (Codex 4299976354)',()=>{
+  const h=harness();h.tuneOf(h.look).scale=0;
+  assert.match(h.open('adapter:lora',['1','0']).why,/send the same strength.*All adapters is at 0%/);
+  const r=harness(),plan=r.open('adapter:lora',['0.01','0']);
+  assert.match(plan.why,/send the same strength/,'0.01 rounds to 0: off, the same as 0');
+  const ok=r.open('adapter:lora',['0.01','0.35']);assert.equal(ok.why,'');assert.equal(ok.runs[0].tune.rows[0].on,false);assert.match(ok.runs[0].label,/ off$/);
+});
+
+test('a blocked model value names that model for the Models & setup link (Codex 4299976362)',()=>{
+  const h=harness({missing:{'anima-b':['b.safetensors']}}),plan=h.open('model',['anima-a','anima-b']);
+  assert.equal(plan.preset,'anima-b');assert.equal(h.whyPreset(h.look),'anima-b');
+  assert.equal(harness().whyPreset(LOOK),'anima-a','otherwise the tuned recipe');
+});
+
+test('the hint says an added adapter brings its trigger word only where it is on',()=>{
+  const h=harness(),t=h.tuneOf(h.look);
+  assert.match(h.sweepHint(h.look,{id:'steps'}),/^The same look, words and seed for every picture/);
+  t.rows.push({slot:'lora2',name:'keta.safetensors',strength:0.35,on:true,added:true});
+  KB.loras['keta.safetensors'].trigger='keta style';
+  try{assert.match(h.sweepHint(h.look,{id:'adapter:lora2',slot:'lora2'}),/trigger word “keta style” is added only to the pictures where it is on/);
+    assert.match(h.sweepHint(h.look,{id:'adapter:lora',slot:'lora'}),/^The same look, words and seed/);}
+  finally{delete KB.loras['keta.safetensors'].trigger;}
 });
