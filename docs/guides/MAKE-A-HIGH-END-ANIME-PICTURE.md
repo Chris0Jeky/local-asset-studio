@@ -84,13 +84,13 @@ Open **Tune this look** under the words box. It is folded by default. The line n
 
 - Each row has a tick (on or off), the adapter name, a strength slider from 0 to 2, **Remove**, and a note: its trigger word, "No trigger word", or "Fixed in this recipe".
 - Strength 0 turns an adapter off. The Studio removes it from the picture's recipe.
-- **Add an installed adapter**: type part of a name, choose it from the list, press **Add**. Only adapters that are installed and known to fit this model type are listed. The strength starts at the adapter's usual value, or, for the Petiflow adapters the lab tested, at the lab's neutral value (see above).
+- **Add an installed adapter**: type part of a name, choose it from the list, press **Add**. Only adapters that are installed and known to fit this model type are listed. The strength starts at the adapter's knowledge-base recommended value, including the adapters tested with Petiflow.
 - If you add an adapter that has a trigger word, the Studio adds that word to your text for you (the row says "added to your words"). The look's own adapters already have theirs.
 - If all adapter slots are in use, **Add** is disabled and the page says "All adapter slots of this recipe are in use; remove one first."
 - **Style strength** (under **Shape** and **How many**; with **Tune this look** open, it sits above the adapters instead) scales all the look's adapters together. 100% is the look as made. It multiplies the per-adapter strengths above.
 - What the lab saw: PetiFlow at 1.0 and Ringeko at 0.6 and 0.8 worked. Adding a detail, lighting or hand adapter at 0.4 to 0.6 on top of Ringeko did not make a measurable difference on one clean scene. More tags and more adapters were not a proven fix for a missing prop. The lab never tried those extra adapters at 1.0.
 - **Adding style adapters to Flat pastel close-up.** On one fern scene (round 3, one seed), the lab added Anima style adapters to PetiFlow at 1.0. At low strength they were neutral: Ke-ta at 0.35 and 0.7, Xilmo at 0.35, NEWANIMASTYLE at 0.5. Ke-ta and Xilmo together, at 0.35 each, were neutral too. At their defaults they were not: Xilmo at 0.7 turned the fern into broad leaves, NEWANIMASTYLE at 1.0 changed the plant and the face, and Kieed at 0.5 (and at 0.25) flattened the face and changed the plant. Ke-ta at its default 0.7 was neutral.
-- Make starts the tested ones at the neutral strength and shows the lab note under the row. Kieed has no neutral value in the lab: both 0.5 (its usual start) and 0.25 harmed the face and plant, so leave it off unless you want to experiment.
+- Make starts every added adapter at its knowledge-base recommended strength and keeps the lab note under the row. Kieed has no neutral value in the lab: both 0.5 (its usual start) and 0.25 harmed the face and plant, so leave it off unless you want to experiment.
 - Neutral is not better. None of these adapters improved the picture in the lab. Prefer the untuned look unless you want a different flavour.
 
 **Quality and speed, Leave out, Seed**

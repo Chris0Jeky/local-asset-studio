@@ -46,8 +46,14 @@
   const polishName=(id,kind)=>kind==='face'&&merged(id)?MERGED:POLISH[kind];
   const polishKinds=id=>Object.keys(POLISH).filter(k=>!(k==='details'&&merged(id)));
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills,redo}))}));}catch{}};
-  let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
+  const observing=run=>run.lost||!FINAL.includes(run.job.status)||run.job.status==='uncertain'&&run.job.tracking_disposition?.status!=='stopped';
+  // Keep the newest six cards, plus every card still being observed; a Compare stays whole, including in storage.
+  const runCards=runs=>{const cards=[],groups=new Map();for(const run of runs){let card=run.group&&groups.get(run.group);
+    if(!card){card={group:run.group||null,id:run.group||run.job.id,runs:[]};cards.push(card);if(run.group)groups.set(run.group,card);}card.runs.push(run);}
+    // Unfinished cards stay past the six, but at most 20 of them, so a run stuck 'uncertain' cannot grow history without bound.
+    let extra=0;return cards.filter((c,i)=>i<6||c.runs.some(observing)&&extra++<20);};
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:runCards(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,status,tracking_disposition,...r})=>({...r,job:{id,status,tracking_disposition}}))]).flatMap(c=>c.runs).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo,lost})=>({id:job.id,status:job.status,tracking_disposition:job.tracking_disposition,look,lookId,goal,scene,tune,tuned,group,title,fills,redo,lost}))}));}catch{}};
+  let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string');}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
   const recipeOf=look=>{for(const l of look?.lineage||[]){const m=/^presets\/recipes\.json · (\S+)/.exec(l.evidence||'');if(m)return m[1];}return null;};
@@ -133,11 +139,11 @@
     return files.filter(f=>entry(f)&&kinds.has(entry(f).family)).sort((a,b)=>fits(look,b)-fits(look,a)||short(a).localeCompare(short(b)));
   }
   // Measured pairings (lab round 3, PR #1481, docs/looks/LOOK-LAB-2026-10-16.md "Petiflow Tune pairings"): Petiflow as made, one fern
-  // scene, one seed. [strength an added adapter starts at (null: the knowledge base's), what the lab saw]. A starting point, not a safe range.
-  const LAB={'look-anima-pearly-petiflow':{'anima-xilmo-000020.safetensors':[0.35,'Lab with Petiflow: at 0.35 kept the scene; at 0.7 changed the plant.'],
-    'anima-ke-ta_style_v1.safetensors':[0.35,'Lab with Petiflow: 0.35 and 0.7 both kept the scene, with no gain over Petiflow alone.'],
-    'anima-newanimastyle-v1.safetensors':[0.5,'Lab with Petiflow: at 0.5 kept the scene; at 1.0 changed the plant and the face.'],
-    'anima-kieed_v9_step6000.safetensors':[null,'Lab with Petiflow: at 0.25 and 0.5 it changed the plant and flattened the face.']}};
+  // scene, one seed. Notes only: added adapters start at their knowledge-base default (owner decision, 16 Oct 2026).
+  const LAB={'look-anima-pearly-petiflow':{'anima-xilmo-000020.safetensors':'Lab with Petiflow: at 0.35 kept the scene; at 0.7 changed the plant.',
+    'anima-ke-ta_style_v1.safetensors':'Lab with Petiflow: 0.35 and 0.7 both kept the scene, with no gain over Petiflow alone.',
+    'anima-newanimastyle-v1.safetensors':'Lab with Petiflow: at 0.5 kept the scene; at 1.0 changed the plant and the face.',
+    'anima-kieed_v9_step6000.safetensors':'Lab with Petiflow: at 0.25 and 0.5 it changed the plant and flattened the face.'}};
   const labOf=(look,name)=>tunedPreset(look)===presetFor(look)&&LAB[look?.id]?.[name]||null;
   // Style strength multiplies every tuned adapter; what is sent is shown beside each strength (audit N3).
   const scaleOf=t=>t?.scale??100,eff=(r,t)=>r.on?Math.min(2,Math.round(r.strength*scaleOf(t))/100):0;
@@ -192,7 +198,7 @@
     const row=r=>{const e=entry(r.name),why=e?.trigger?'Trigger: '+e.trigger+(r.added?' (added to your words)':''):r.name?'No trigger word':'Fixed in this recipe';
       return '<div class="make-tune-row" data-slot="'+r.slot+'"><label class="make-check"><input type="checkbox" data-tune-on="'+r.slot+'"'+(r.on?' checked':'')+'> <b>'+escape(short(r.name))+'</b></label>'
         +'<span class="make-tune-strength"><input type="range" min="0" max="2" step="0.05" value="'+r.strength+'" data-tune-strength="'+r.slot+'" aria-label="Strength of '+escape(short(r.name))+'"><output>'+rowOut(r,t)+'</output></span>'
-        +(r.name?'<button type="button" class="make-link" data-tune-remove="'+r.slot+'">Remove</button>':'')+'<small>'+escape(why)+'</small>'+(labOf(look,r.name)?'<small class="make-lab">'+escape(labOf(look,r.name)[1])+'</small>':'')+'</div>';};
+        +(r.name?'<button type="button" class="make-link" data-tune-remove="'+r.slot+'">Remove</button>':'')+'<small>'+escape(why)+'</small>'+(labOf(look,r.name)?'<small class="make-lab">'+escape(labOf(look,r.name))+'</small>':'')+'</div>';};
     const all=[p,...list],made=files.filter(f=>fits(look,f)).length,other=files.length-made;
     box.innerHTML='<div class="make-tune-group"><h3>Model</h3>'
       +'<label>Base model<select id="makeModel" data-tune="model">'+option(p.id,'As made · '+modelLabel(p,all)+(nonCommercial(p)?' · non-commercial':'')+(missingFor(p).length?' · needs download':''),tp===p)+list.map(m=>option(m.id,modelLabel(m,all)+(nonCommercial(m)?' · non-commercial':'')+(missingFor(m).length?' · needs download':''),tp===m)).join('')+'</select></label>'
@@ -236,7 +242,7 @@
   function adapterMatches(look,text){const s=text.toLowerCase(),files=compatible(look),names=f=>[f,f.replace(/\.safetensors$/i,''),short(f)].map(x=>x.toLowerCase());
     const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>{const hay=names(f).join(' ');return words.every(w=>hay.includes(w));});}
   function addAdapter(look,name){const t=tuneOf(look),slot=freeSlot(look,t);if(!slot||!compatible(look).includes(name)||t.rows.some(r=>r.name===name))return;
-    t.rows.push({slot,name,strength:clamp(labOf(look,name)?.[0]??entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
+    t.rows.push({slot,name,strength:clamp(entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
     say(fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');}
   function tuneClick(target){
     const look=current();if(!look)return false;
@@ -415,15 +421,15 @@
   }
   const reviewOf=id=>state.review[id]??(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id)?.review)??'unreviewed';
   const timers=new Map();
-  const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'');
+  const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'')+'|'+(job.tracking_disposition?.status||'');
   // A failed read is not the end of a run (#1438): it keeps checking, backing off to 30 s, and says so on its card.
   const POLL=2500,POLL_MAX=30000;
   function poll(id,misses=0){clearTimeout(timers.get(id));timers.set(id,setTimeout(async()=>{
     const run=state.runs.find(r=>r.job.id===id);if(!run){timers.delete(id);return;}
     try{const job=await json('/api/jobs/'+encodeURIComponent(id));const changed=stamp(job)!==stamp(run.job)||run.lost;run.job=job;run.lost=false;
       // Redraw only when something changed, so a poll never resets an open menu or steals keyboard focus.
-      if(changed){renderRuns();if(job.outputs?.some(o=>o.asset_id)){state.pictures=null;refreshPickers();}}
-      if(!FINAL.includes(job.status))poll(id);else timers.delete(id);}
+      if(changed){renderRuns();remember();if(job.outputs?.some(o=>o.asset_id)){state.pictures=null;refreshPickers();}}
+      if(observing(run))poll(id,run.job.status==='uncertain'?4:0);else timers.delete(id);}
     catch{if(!state.runs.includes(run)){timers.delete(id);return;}if(!run.lost){run.lost=true;renderRuns();}poll(id,misses+1);}},Math.min(POLL_MAX,POLL*2**Math.min(misses,4))));}
   // A finished run's pictures join an open picture grid at once, so the next goal can start from them.
   function refreshPickers(){const g=goal();if(!g.intent)return;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])if(q('#'+id))void fillPictures(g,id,attr);}
@@ -440,7 +446,7 @@
     const action=button.dataset.makeResume?'resume':'stop-tracking',id=button.dataset.makeResume||button.dataset.makeStop,run=state.runs.find(r=>r.job.id===id);if(!run)return;
     let body={};if(action==='stop-tracking'){const field=q('[data-make-stop-reason="'+CSS.escape(id)+'"]'),reason=field?.value.trim();if(!reason){field?.setAttribute('aria-invalid','true');field?.focus();say('Give a reason before stopping tracking.');return;}body={reason};}
     button.disabled=true;
-    try{const job=await json('/api/jobs/'+encodeURIComponent(id)+'/'+action,body);run.job={...run.job,...job};run.lost=false;renderRuns();if(!FINAL.includes(run.job.status))poll(id);
+    try{const job=await json('/api/jobs/'+encodeURIComponent(id)+'/'+action,body);run.job={...run.job,...job};run.lost=false;renderRuns();remember();if(observing(run))poll(id);else{clearTimeout(timers.get(id));timers.delete(id);}
       say(action==='resume'?'Checking ComfyUI again for this run. Nothing is sent again.':'Tracking stopped. Its record and any pictures stay in the library.');}
     catch(error){button.disabled=false;say(error.message);}
   }
@@ -595,10 +601,8 @@
   const pictureTitle=(scene,date)=>String(scene||'Picture').slice(0,100)+(date?' \u00b7 '+new Date(Number(date)*1000).toLocaleDateString():'');
   function renderRuns(){
     const box=q('#makeRuns');if(!box)return;
-    // A compare (#16) is one card: its runs share a group and sit next to each other in state.runs. Six cards at most.
-    const list=[];for(const run of state.runs){const last=list[list.length-1];if(run.group&&last?.group===run.group){last.runs.push(run);continue;}if(list.length===6)break;list.push({group:run.group||null,id:run.group||run.job.id,runs:[run]});}
-    // Only shown runs stay in memory and keep polling (#1438); the library keeps every picture.
-    const shown=new Set(list.flatMap(c=>c.runs));if(shown.size<state.runs.length){for(const r of state.runs)if(!shown.has(r)){clearTimeout(timers.get(r.job.id));timers.delete(r.job.id);}state.runs=state.runs.filter(r=>shown.has(r));}
+    const list=runCards(state.runs);
+    const shown=new Set(list.flatMap(c=>c.runs));if(shown.size<state.runs.length){for(const r of state.runs)if(!shown.has(r)){clearTimeout(timers.get(r.job.id));timers.delete(r.job.id);}state.runs=state.runs.filter(r=>shown.has(r));remember();}
     planPolish(list.flatMap(c=>c.runs));
     if(!list.length){box.innerHTML='<p class="muted">Pictures you make here show up in this space, with one-press next steps.</p>';return;}
     const img=(job,o,i,look)=>(o.asset_id?'<button type="button" class="make-open" data-ux-open-asset="'+escape(o.asset_id)+'" aria-label="Open picture '+(i+1)+' from '+escape(look)+' full size">':'')+'<img src="/api/image/'+encodeURIComponent(job.id)+'/'+i+'" alt="Picture '+(i+1)+' from '+escape(look)+'" loading="lazy">'+(o.asset_id?'</button>':'');
@@ -606,7 +610,7 @@
     const other=o=>o.asset_id&&o.media_type&&o.media_type!=='image'?'<figure class="make-media"><button type="button" data-ux-open-asset="'+escape(o.asset_id)+'">Open the '+(o.media_type==='video'?'clip':o.media_type==='audio'?'sound':'3D model')+'</button></figure>':'';
     const pending=(job,n=job.batch_count||1)=>FINAL.includes(job.status)?'':Array.from({length:Math.max(0,n-(job.outputs||[]).length)},()=>'<figure class="make-pending" aria-hidden="true"><span></span></figure>').join('');
     const markup=list.map(({group,id,runs})=>{
-      if(group){const done=runs.filter(r=>FINAL.includes(r.job.status)).length,first=runs[0];
+      if(group){const done=runs.filter(r=>!observing(r)).length,first=runs[0];
         return '<article class="make-run make-compare" data-run="'+escape(id)+'"><header><div><b>Compare looks · '+escape(pictureTitle(first.scene,first.job.created_at))+'</b><small>'+runs.length+' looks, one picture each'+(runs.every(r=>r.job.controls?.seed!=null&&r.job.controls.seed===first.job.controls?.seed)?', same seed':'')+'</small></div><span class="make-run-state '+(done===runs.length?'completed':'running')+'">'+(done===runs.length?'Done':done+' of '+runs.length+' done')+'</span></header><div class="make-compare-grid">'
           +runs.map(({job,look,lost})=>'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
             +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+characterMarkup(job,o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>').join('')+'</div></article>';}
@@ -863,21 +867,27 @@
     if(state.busy)return;const list=compareList(),why=compareBlocker();if(why){say(why);return;}
     const field=q('#makeScene'),scene=field.value.trim();if(!scene){field.setAttribute('aria-invalid','true');field.setAttribute('aria-describedby','makeStatus');field.focus();sayMissing(SCENE_FIRST);return;}
     state.busy=true;say('Preparing…');
-    const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,group='compare-'+Date.now().toString(36),runGoal=state.goal;let started=0;const notes=[];
+    const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,group='compare-'+Date.now().toString(36),runGoal=state.goal;let started=0,left=false;const notes=[];
+    const observer=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
+    observer.observe(view,{attributes:true,attributeFilter:['hidden'],attributeOldValue:true});
+    const stopped=()=>left||view.hidden||!view.isConnected;
     try{
       for(const look of list){
+        if(stopped())break;
         const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options:Object.fromEntries(look.body.options.map(o=>[o.id,!!o.default]))}:{}),expected_revision:look.revision});
-        notes.push(...(result.notices||[]));const p=presetFor(look),controls={...result.controls},[w,h]=shapeSize(p,look,'design');
+        const swaps=result.notices||[];const p=presetFor(look),controls={...result.controls},[w,h]=shapeSize(p,look,'design');
         if('width' in controls||p?.width)Object.assign(controls,{width:w,height:h});
         if(bound(p,'seed'))controls.seed=seed;
+        if(stopped())break;
         say('Sending '+(started+1)+' of '+list.length+' to ComfyUI…');
         const job=await json('/api/jobs',{preset_id:p?.id||look.body.preset_id,controls,batch_count:1,label:'Make · Compare · '+look.name});
-        state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene,group});remember();renderRuns();poll(job.id);
+        state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene,group});notes.push(...swaps);remember();renderRuns();poll(job.id);
       }
-      say('Started '+list.length+' pictures, one per look. They appear side by side in Your pictures.'+notes.map(n=>' '+n).join(''));
+      const noted=notes.map(n=>' '+n).join('');
+      say((started<list.length?'Started '+started+' of '+list.length+'; the rest were not sent because you left Make.':'Started '+list.length+' pictures, one per look. They appear side by side in Your pictures.')+noted);
       if(typeof refresh==='function')void refresh();
-    }catch(error){say((started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message);}
-    finally{state.busy=false;syncOperation();}
+    }catch(error){say((started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message+notes.map(n=>' '+n).join(''));}
+    finally{observer.disconnect();state.busy=false;syncOperation();}
   }
   // Your pictures lives in this browser; a new browser starts it from the library's Make pictures (audit v3 N6): the newest six
   // Make runs by their "Make · " label, read back from their job records. Their words are not stored, so Edit and re-run is not offered.
@@ -898,11 +908,11 @@
     render();
     // Earlier Make runs come back from their job records; one the Studio says is gone (404) is dropped, one still running is followed
     // again, and one whose read fails is kept and checked again with back-off (#1438), never taken for deleted.
-    const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id))};}catch(error){return error.status===404?null:{...r,job:{id:r.id,status:'',outputs:[]},lost:true};}}));
+    const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id)),lost:false};}catch(error){return error.status===404?null:{...r,job:{id:r.id,status:'',outputs:[]},lost:true};}}));
     state.runs=[...state.runs,...restored.filter(r=>r&&!state.runs.some(x=>x.job.id===r.id)).map(({id,...r})=>r)];
     if(!state.runs.length&&!savedRuns.length){const seeded=await seedRuns();if(!state.runs.length)state.runs=seeded;}
     restoredRuns=true;remember();
-    for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id,r.lost?1:0);
+    for(const r of state.runs)if(observing(r))poll(r.job.id,r.lost?1:0);
     renderRuns();
   }
   // The gallery folds away under the pointer: bring "Describe your picture" out from under the fixed bar (audit N8, make.css scroll-margin).
