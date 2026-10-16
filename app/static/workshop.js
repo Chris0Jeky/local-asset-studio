@@ -358,6 +358,24 @@
     const compare = q('#planComparison'), newSeed = q('#randomSeed');
     for (const tool of [newSeed, compare]) if (tool) runTools.append(tool);
     actions.after(runTools);
+    const phonePanel = el('div', 'wk-phone-panel'), phoneTools = disclosure('workshopRunTools', 'Run tools', [phonePanel]);
+    const batchLabel = q('#batch')?.closest('label'), phoneWidth = w.matchMedia('(max-width:600px)');
+    phoneTools.hidden = true; dock.append(phoneTools);
+    const phoneDock = () => {
+      // Move the original controls, preserving their handlers; wide screens keep the original grid.
+      if (phoneWidth.matches) {
+        dock.prepend(eta); phonePanel.append(dockInfo); if (batchLabel) phonePanel.append(batchLabel);
+        phonePanel.append(runTools); if (status) phonePanel.append(status);
+        for (const node of dock.querySelectorAll('.run-cancel,.run-outcome')) phonePanel.append(node);
+      } else {
+        dockInfo.insertBefore(eta, reviewButton); dock.prepend(dockInfo); if (batchLabel) actions.prepend(batchLabel);
+        actions.after(runTools); if (status) dock.append(status);
+        for (const node of phonePanel.querySelectorAll('.run-cancel,.run-outcome')) dock.append(node);
+        phoneTools.open = false;
+      }
+      phoneTools.hidden = !phoneWidth.matches;
+    };
+    phoneWidth.addEventListener('change', phoneDock); phoneDock();
     // Remove only the now-empty legacy caption, not controls injected by another feature.
     const caption = [...editor.children].find(n => n.classList.contains('section-title'));
     if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;

@@ -4,6 +4,55 @@ from workshop_entry_points import workshop_html, script
 
 
 class RunDecisions(entry.EntryPoints):
+    def test_phone_dock_is_compact_with_keyboard_reachable_tools(self):
+        self.load_workshop()
+        self.page.evaluate("document.querySelector('#estimateValue').textContent='~42s'")
+        tools = ('workshopReview', 'batch', 'randomSeed', 'planComparison')
+        desktop = self.page.locator('.wk-run-dock').bounding_box()
+        shots = entry.ROOT / '.runtime/phone-dock-1495'; shots.mkdir(parents=True, exist_ok=True)
+        for motion in ('no-preference', 'reduce'):
+            self.page.emulate_media(reduced_motion=motion)
+            self.page.set_viewport_size({'width': 390, 'height': 844})
+            for layout in ('focus', 'studio', 'immersive'):
+                with self.subTest(layout=layout, motion=motion):
+                    self.page.select_option('#workshopLayout', layout, force=True)
+                    self.page.evaluate('document.activeElement?.blur()')
+                    dock = self.page.locator('.wk-run-dock')
+                    height = dock.bounding_box()['height']
+                    print(f'Phone dock ({layout}, {motion}): {height:.2f}px', flush=True)
+                    self.assertLessEqual(height, 72)
+                    self.assertIn('~42s', self.page.locator('#workshopEta').inner_text())
+                    self.assertTrue(self.page.locator('#generate').evaluate('(n)=>n===runOriginals.generate'))
+                    if layout == 'focus' and motion == 'no-preference': self.page.screenshot(path=str(shots / 'closed.png'))
+                    toggle = self.page.locator('#workshopRunTools > summary')
+                    for identity in tools: self.assertFalse(self.page.locator('#'+identity).is_visible(), identity)
+                    toggle.focus(); self.page.keyboard.press('Enter')
+                    for identity in tools:
+                        control = self.page.locator('#'+identity)
+                        self.assertTrue(control.is_visible(), identity)
+                        self.page.keyboard.press('Tab')
+                        self.assertTrue(control.evaluate('(n)=>n===document.activeElement'), identity)
+                        self.assertTrue(control.evaluate('(n)=>n.labels?.length>0 || n.textContent.trim().length>0'), identity)
+                    self.page.select_option('#batch', '2')
+                    self.page.click('#randomSeed'); self.page.click('#planComparison')
+                    self.assertEqual(self.page.locator('[data-key=seed]').input_value(), '43')
+                    if layout == 'focus' and motion == 'no-preference': self.page.screenshot(path=str(shots / 'open.png'))
+                    for scroll in (0, 10000):
+                        self.page.evaluate('(y)=>scrollTo(0,y)', scroll)
+                        box = self.page.locator('#generate').bounding_box()
+                        self.assertGreaterEqual(box['y'], 0)
+                        self.assertLessEqual(box['y']+box['height'], 844)
+                    toggle.focus(); self.page.keyboard.press('Space')
+                    self.assertLessEqual(dock.bounding_box()['height'], 72)
+            self.page.set_viewport_size({'width': 1440, 'height': 900})
+            self.page.wait_for_function('document.querySelector("#workshopRunTools").hidden')
+            self.page.select_option('#workshopLayout', 'focus', force=True)
+            self.assertEqual(self.page.locator('.wk-run-dock').bounding_box(), desktop)
+            for identity in tools:
+                self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
+                self.assertTrue(self.page.locator('#'+identity).evaluate('(n)=>!n.closest("#workshopRunTools")'), identity)
+        self.assertEqual(self.page.evaluate('submitted'), 0)
+
     def load_workshop(self, touch=False):
         if touch:
             self.page.close()
@@ -42,6 +91,8 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.page.evaluate("document.querySelector('#uxBlockers p').textContent='A long readiness reason '.repeat(30);document.querySelector('#status').textContent='Details '.repeat(200);document.querySelector('#estimateValue').textContent='~42s'")
         for width, height in ((1440, 900), (1280, 720), (640, 360), (390, 844), (320, 568)):
             self.page.set_viewport_size({'width': width, 'height': height})
+            if width <= 600 and not self.page.locator('#workshopRunTools').evaluate('(n)=>n.open'):
+                self.page.locator('#workshopRunTools > summary').click()
             for layout in ('focus', 'studio', 'immersive'):
                 with self.subTest(width=width, height=height, layout=layout):
                     self.page.select_option('#workshopLayout', layout, force=True)
@@ -83,9 +134,12 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                         self.assertEqual(result['covered'], 0, result)
                         self.assertGreaterEqual(result['top'], 0, result)
                         self.assertTrue(self.page.locator('#generate').is_visible())
-                        if width <= 600 or height <= 700: self.assertLess(result['dock'], before, 'a narrow or short dock compacts while typing')
+                        if width <= 600: self.assertLessEqual(result['dock'], 72, 'the phone dock stays compact while typing')
+                        elif height <= 700: self.assertLess(result['dock'], before, 'a short dock compacts while typing')
                         self.page.evaluate("document.activeElement?.blur()")
+                        if width <= 600: self.page.locator('#workshopRunTools > summary').click()
                         self.assertTrue(self.page.locator('#planComparison').is_visible())
+                        if width <= 600: self.page.locator('#workshopRunTools > summary').click()
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
     def test_dock_padding_does_not_click_a_covered_page_control(self):
@@ -111,7 +165,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
     def test_a_press_that_leaves_a_text_field_lands_on_its_control(self):
         """#1229: leaving the prompt grows the compact dock; mid-press, that moved a dock control under the pointer and ate the click."""
         self.load_workshop()
-        self.page.set_viewport_size({'width': 390, 'height': 844})
+        self.page.set_viewport_size({'width': 640, 'height': 360})
         self.page.select_option('#workshopLayout', 'focus', force=True)
         self.page.evaluate("document.activeElement?.blur()")
         full = self.page.evaluate("""()=>[...document.querySelectorAll('.wk-run-dock :is(button,select,input)')].filter(n=>n.offsetParent)
@@ -147,7 +201,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
     def test_a_touch_tap_that_leaves_a_text_field_lands_on_its_control(self):
         """#1245: a touch pointerup precedes the compatibility click, so the compact dock must hold until that click."""
         self.load_workshop(touch=True)
-        self.page.set_viewport_size({'width': 390, 'height': 844})
+        self.page.set_viewport_size({'width': 640, 'height': 360})
         self.page.select_option('#workshopLayout', 'focus', force=True)
         self.page.evaluate("document.activeElement?.blur()")
         full = self.page.evaluate("""()=>[...document.querySelectorAll('.wk-run-dock :is(button,select,input)')].filter(n=>n.offsetParent)
@@ -205,7 +259,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         # Codex P2 on #1125: once one blocker is left, its repair stays in the strip (once, beside its summary).
         self.page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=\"ux-blocker\" data-readiness-code=\"parameters\"><p>Width must be a multiple of 8.</p><button type=\"button\" data-ux-resolve=\"parameters\">Review motion settings</button></div>'")
         self.page.wait_for_function("document.querySelectorAll('#workshopBlockerList li').length===1 && !document.getElementById('workshopBlockerList').hidden")
-        self.assertEqual(self.page.locator('#workshopReadiness').inner_text(), 'Width must be a multiple of 8.')
+        self.assertEqual(self.page.locator('#workshopReadiness').text_content(), 'Width must be a multiple of 8.')
         self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Width must be a multiple of 8.')
         self.assertEqual(self.page.locator('#workshopBlockerList li').inner_text(), 'Review motion settings', 'the message is not repeated')
         self.page.evaluate("document.activeElement?.blur()")
@@ -213,7 +267,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.assertTrue(self.page.locator('[data-key="width"]').evaluate('(n)=>n===document.activeElement'))
         self.page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=\"ux-blocker\"><p>Only this one.</p></div>'")
         self.page.wait_for_function("document.getElementById('workshopBlockerList').hidden")
-        self.assertEqual(self.page.locator('#workshopReadiness').inner_text(), 'Only this one.')
+        self.assertEqual(self.page.locator('#workshopReadiness').text_content(), 'Only this one.')
         self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Only this one.')
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
