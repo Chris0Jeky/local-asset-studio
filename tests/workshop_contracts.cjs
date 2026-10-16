@@ -237,3 +237,52 @@ test('effective token and suspended modes suppress only decorative poster art', 
   assert.match(css, /data-workshop-ambience-render="suspended"/);
   assert.match(css, /background-image\s*:\s*none/);
 });
+
+test('workshop field borders reach 3:1 against field fill and panel in every skin (#1403)', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const css = fs.readFileSync(path.join(__dirname, '../app/static/workshop.css'), 'utf8');
+  const immersive = fs.readFileSync(path.join(__dirname, '../app/static/workshop-immersive-core.css'), 'utf8');
+  const channel = v => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  const luminance = hex => {
+    const m = hex.match(/^#([0-9a-fA-F]{6})$/);
+    assert.ok(m, 'expected 6-digit hex, got ' + hex);
+    const n = parseInt(m[1], 16);
+    return 0.2126 * channel((n >> 16) & 255) + 0.7152 * channel((n >> 8) & 255) + 0.0722 * channel(n & 255);
+  };
+  const contrast = (a, b) => {
+    const la = luminance(a);
+    const lb = luminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  };
+  const tokensOf = body => {
+    const out = {};
+    for (const [, name, value] of body.matchAll(/(--[\w-]+)\s*:\s*(#[0-9a-fA-F]{6})/g)) out[name] = value.toLowerCase();
+    return out;
+  };
+  const base = tokensOf(css.slice(css.indexOf('body.workshop-active {'), css.indexOf('}', css.indexOf('body.workshop-active {'))));
+  const fieldRule = css.match(/body\.workshop-active\s*:is\(input,select,textarea\)\s*\{([^}]*)\}/);
+  assert.ok(fieldRule, 'workshop field rule is missing');
+  const fieldVar = (fieldRule[1].match(/border-color\s*:\s*var\((--[\w-]+)\)/) || [])[1];
+  assert.ok(fieldVar, 'workshop field rule names no border-color token');
+  const skins = {atelier: {...base}};
+  // Skin palettes live in both stylesheets (Retro Anime's is in workshop-immersive-core.css); later files win, as in the page.
+  for (const sheet of [css, immersive]) for (const [, skin, body] of sheet.matchAll(/body\.workshop-active\[data-workshop-skin="([^"]+)"\]\s*\{([^}]*)\}/g)) {
+    skins[skin] = {...(skins[skin] || base), ...tokensOf(body)};
+  }
+  assert.deepEqual(Object.keys(skins).filter(k => Object.hasOwn(W.SKINS, k)).sort(), Object.keys(W.SKINS).sort(), 'every registered skin needs its palette checked');
+  for (const [skin, tokens] of Object.entries(skins)) {
+    const border = tokens[fieldVar];
+    const fill = tokens['--wk-input'];
+    const panel = tokens['--panel'];
+    assert.ok(border && fill && panel, `skin '${skin}' is missing a field-border token (${fieldVar}=${border}, fill=${fill}, panel=${panel})`);
+    for (const [other, label] of [[fill, 'field fill'], [panel, 'panel']]) {
+      const ratio = contrast(border, other);
+      assert.ok(ratio >= 3, `workshop skin '${skin}' field border ${border} vs ${label} ${other} contrast ${ratio.toFixed(2)}:1 is below 3:1 (WCAG 1.4.11)`);
+    }
+  }
+  assert.equal(fieldVar, '--wk-field-line', 'workshop fields must use the dedicated field-border token');
+});

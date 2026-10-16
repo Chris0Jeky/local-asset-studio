@@ -50,15 +50,19 @@
   // controls can reject a value. Never publish only the settings that happened to stick.
   function applyControls(controls,resolve){
     const writes=[],problems=[];
+    const accepts=(input,value)=>input.checkValidity()&&(input.type==='number'?input.value!==''&&Number.isFinite(Number(value))&&Number(input.value)===Number(value):String(input.value)===String(value));
     for(const [key,value] of Object.entries(controls||{})){
       const input=resolve(key);
       if(!input){problems.push(key);continue;}
       const probe=input.cloneNode(true);probe.value=value;
-      const same=probe.type==='number' ? probe.value!==''&&Number.isFinite(Number(value))&&Number(probe.value)===Number(value) : String(probe.value)===String(value);
-      if(!same||!probe.checkValidity()){problems.push(key);continue;}
-      writes.push([input,value]);
+      if(!accepts(probe,value)){problems.push(key);continue;}
+      writes.push([input,value,input.value,key]);
     }
-    if(!problems.length)for(const [input,value] of writes)input.value=value;
+    if(!problems.length){
+      for(const [input,value] of writes)input.value=value;
+      for(const [input,value,,key] of writes)if(!accepts(input,value))problems.push(key);
+      if(problems.length)for(const [input,,previous] of writes)input.value=previous;
+    }
     return problems;
   }
   let application=null,preparation=null;
@@ -84,7 +88,7 @@
   'use strict';
   if(typeof document==='undefined'||!document.querySelector('#createView')||typeof module==='object')return;
   const L=StudioLooks,q=s=>document.querySelector(s);
-  let looks=[],busy=false,composed=null,preparationEpoch=0;
+  let looks=[],busy=false,composed=null,preparationEpoch=0,preparedShortcut=null;
   // Events catch edit-then-undo; the stamp also catches changes made without input events.
   for(const type of ['input','change'])document.addEventListener(type,event=>{
     if(event.target?.closest?.('#createView'))preparationEpoch++;
@@ -160,26 +164,42 @@
     const typed=q('#positive').value.trim(),switched=selected?.id!==result.preset_id;
     if(typed&&typed!==String(selected?.defaults?.positive||'').trim()&&typed!==composed&&!confirm('This look replaces the wording in Create. Continue?')){status('Nothing changed.');return;}
     // Reload the recipe even when it is open: a setting the look does not store, or a parent picture, must not linger.
-    const batch=q('#batch').value;selectPreset(result.preset_id);q('#batch').value=batch;
+    const previous=StudioSetupDraft.capture(),files=['reference','lastReference'].map(id=>[id,[...(q('#'+id)?.files||[])]]),batch=q('#batch').value;
+    // values() drops empty controls, so keep every control's exact value (an intentionally cleared one included) for a rollback.
+    const exact=typeof document==='undefined'?[]:[...document.querySelectorAll('[data-key]')].map(el=>[el.dataset.key,el.value]),previousPreset=selected?.id;
+    if(!previous)throw Error('Create could not be saved for recovery. Prepare stopped; current inputs are unchanged.');
+    selectPreset(result.preset_id);q('#batch').value=batch;
     const problems=L.applyControls(result.controls,key=>key==='positive'?q('#positive'):key==='negative'?q('#negative'):getControl(key));
     if(problems.length){
-      L.restoreApplication({version:1,preset_id:result.preset_id,controls:problems},result.preset_id);
-      q('#positive').dispatchEvent(new Event('input',{bubbles:true}));updateReady();recipeChanged();
-      const text=L.applicationBlocker(result.preset_id);message(text,true);status(text,true);return;
+      applySaved(previous.recipe);recipeTemplateHash=previous.templateHash;
+      for(const [id,list] of files)if(list.length){const transfer=new DataTransfer();for(const file of list)transfer.items.add(file);q('#'+id).files=transfer.files;}
+      if(selected?.id===previousPreset)for(const [key,value] of exact){const el=getControl(key);if(el)el.value=value;}
+      for(const refresh of [typeof updateLoraHints==='function'&&updateLoraHints,typeof updateReady==='function'&&updateReady,typeof scheduleTimeEstimate==='function'&&scheduleTimeEstimate])if(refresh)refresh();   // restored files and cleared values fire no input events
+      const details=problems.map(key=>/^lora\d*_name$/.test(key)?"LoRA '"+result.controls[key]+"' is not installed":(key==='scheduler'?'schedule':key.replaceAll('_',' '))+" '"+result.controls[key]+"' could not be applied").join('; ');
+      const text="This look's "+details+'. Prepare stopped. '+(problems.some(key=>/^lora\d*_name$/.test(key))?'Install missing LoRAs in Models & setup or pick another look.':'Pick another look, or choose a recipe that offers these settings.')+' Create is unchanged.';message(text,true);status(text,true);return false;
     }
     composed=result.controls.positive;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));
     updateLoraHints();updateReady();scheduleTimeEstimate();recipeChanged();
     const text=L.readyMessage(result,switched,looks.find(l=>l.id===result.look.id));message(text);status(text);
+    preparedShortcut={stamp:preparationStamp(),epoch:preparationEpoch};return true;
   }
   q('#lookSelect').addEventListener('change',sync);q('#lookScene').addEventListener('input',sync);q('#lookName').addEventListener('input',sync);
   q('#positive').addEventListener('input',sync);document.addEventListener('studio:recipe',()=>render(q('#lookSelect').value));
-  q('#lookScene').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();if(!q('#lookPrepare').disabled)q('#lookPrepare').click();}});
+  q('#lookScene').addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||e.altKey||e.shiftKey||e.isComposing)return;
+    e.preventDefault();if(e.repeat||busy)return;
+    if((e.ctrlKey||e.metaKey)&&preparedShortcut?.epoch===preparationEpoch&&preparedShortcut.stamp===preparationStamp()){
+      generateShortcut({...e,key:'Enter',ctrlKey:!!e.ctrlKey,metaKey:!!e.metaKey,target:e.target,defaultPrevented:false,preventDefault(){}});return;
+    }
+    if(!q('#lookPrepare').disabled)q('#lookPrepare').click();
+  });
   function preparationStamp(){
     const look=current();
     return JSON.stringify([look?.id,look?.revision,q('#lookScene').value,checkedLines(),
       typeof StudioSetupDraft!=='undefined'?StudioSetupDraft.stamp():[selected?.id,values(),q('#batch').value]]);
   }
   q('#lookPrepare').onclick=()=>act(async()=>{
+    preparedShortcut=null;
     const look=current(),scene=q('#lookScene').value,reason=L.prepareBlocker({look,scene});
     if(reason)throw Error(reason);
     const options=L.optionsPayload(look,checkedLines()),stamp=preparationStamp(),epoch=preparationEpoch;
@@ -192,7 +212,7 @@
       catch(error){if(!currentRequest()){stale();return;}throw error;}
       if(!currentRequest()){stale();return;}
       // Application is synchronous; release before it renders an actual recovery hold.
-      L.finishPreparation(token);apply(result);
+      L.finishPreparation(token);if(apply(result))status(q('#lookStatus').textContent+' Prepared. Press Ctrl+Enter again (or Generate) to run it.');
     }finally{L.finishPreparation(token);updateReady();}
   });
   q('#lookReset').onclick=()=>{if(busy)return;selectPreset(selected.id);status('Recipe reset without the look. Review its defaults before generating.');};

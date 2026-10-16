@@ -13,6 +13,7 @@ through a reference route leaks content. Preparing composes Create's fields and 
 import json
 import math
 import re
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from workspace import CARD_ID, WorkspaceError
@@ -42,6 +43,43 @@ CONTROL_KEYS = frozenset(("width", "height", "seed", "steps", "cfg", "denoise", 
                           "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name",
                           "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name",
                           "lora5", "lora5_name", "lora6", "lora6_name"))
+LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+
+
+# server.py NUMBER_RANGES plus its LoRA strength, frames and fps ranges (a parity test guards drift): a saved control outside
+# them would only fail later, when /api/jobs binds it, after Prepare had already handed it to the page.
+NUMBER_RANGES = {"seed": (0, 2**63-1, True), "steps": (1, 150, True), "cfg": (0, 30, False), "denoise": (0, 1, False),
+                 "style_weight": (0, 2, False), "pose_strength": (0, 2, False), "depth_cut": (0, 100, True),
+                 "frames": (5, 365, True), "fps": (1, 60, True), **{k: (0, 2, False) for k in LORA_SLOTS}}
+
+
+def _number(value, lo, hi, integer):
+    if isinstance(value, bool): return False
+    try: raw = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError): return False
+    return raw.is_finite() and lo <= raw <= hi and (not integer or raw == raw.to_integral_value())
+
+
+def _adapter_file(value):
+    return isinstance(value, str) and 0 < len(value) <= 200 and value == Path(value).name and not re.search(r"[\\/]|\.\.", value) and value.endswith(".safetensors")
+
+
+def control_problem(preset, key, value):
+    """Why a saved control value would be refused at /api/jobs, or None. Installed files and live choices are checked there."""
+    # Older presets bind `lora` to a filename input: a filename is a slot value only where the authored input holds one.
+    if key in LORA_SLOTS and isinstance((preset.get("defaults") or {}).get(key), str):
+        return None if _adapter_file(value) else f"{key} must be a .safetensors adapter filename"
+    if key in NUMBER_RANGES:
+        lo, hi, integer = NUMBER_RANGES[key]
+        return None if _number(value, lo, hi, integer) else f"{key} must be a{'n integer' if integer else ' number'} from {lo} to {hi}"
+    if key.endswith("_name"): return None if _adapter_file(value) else f"{key} must be a .safetensors adapter filename"
+    if key in ("width", "height"):
+        (lo, hi), multiple = preset.get("dimension_limits", [64, 1536]), preset.get("dimension_multiple", 8)
+        return None if _number(value, lo, hi, True) and int(Decimal(str(value))) % multiple == 0 else f"{key} must be a multiple of {multiple} from {lo} to {hi}"
+    if key in ("sampler", "scheduler"):
+        choices = (preset.get("choices") or {}).get(key)
+        return None if not choices or value in choices else f"{key} {value} is not offered by {preset.get('name') or preset.get('id')}"
+    return None
 
 
 def _text(value, name, maximum, required=False):
@@ -58,6 +96,19 @@ def _bound(preset, key):
     binding = preset.get(key) or (extras.get(key) if isinstance(extras, dict) else None)
     return (isinstance(binding, (list, tuple)) and len(binding) == 2
             and all(isinstance(part, str) and bool(part.strip()) for part in binding))
+
+
+MODEL_LOADERS = {"CheckpointLoaderSimple": "ckpt_name", "UNETLoader": "unet_name", "UnetLoaderGGUF": "unet_name"}
+
+
+def model_of(graph):
+    """A recipe's base model for Make's Tune this look: its file, loader node and text encoders, or None when the graph has
+    not exactly one model loader. Two recipes with the same loader and encoders take the same wording and adapters."""
+    nodes = [n for n in graph.values() if isinstance(n, dict) and isinstance(n.get("inputs"), dict)]
+    found = [(n["class_type"], n["inputs"].get(MODEL_LOADERS[n["class_type"]])) for n in nodes if n.get("class_type") in MODEL_LOADERS]
+    if len(found) != 1 or not isinstance(found[0][1], str): return None
+    encoders = sorted(v for n in nodes if "CLIPLoader" in str(n.get("class_type")) for k, v in n["inputs"].items() if k.startswith("clip_name") and isinstance(v, str))
+    return {"file": found[0][1], "loader": found[0][0], "encoders": encoders}
 
 
 def recipe_problem(preset):
@@ -120,6 +171,8 @@ def validate_body(body, preset):
         if isinstance(value, bool) or not isinstance(value, (int, float, str)) or (isinstance(value, float) and not math.isfinite(value)):
             raise WorkspaceError(f"{key} must be a finite number or text")
         if isinstance(value, str) and len(value) > 300: raise WorkspaceError(f"{key} must be up to 300 characters")
+        problem = control_problem(preset, key, value)
+        if problem: raise WorkspaceError(problem)
         clean[key] = value
     result["controls"] = clean
     return result

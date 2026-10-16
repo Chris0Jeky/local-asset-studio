@@ -1,5 +1,14 @@
 # Creative choices
 
+Recorded limited owner answer, 13 October 2026: after the displayed v2 workshop
+and Alibi v2 lantern PNGs and the responsive LAS card, Chris said “Yeah, I guess
+these are good enough for being SVGs.” Those displayed examples are provisionally
+visually accepted for now. Later failed coarse studies, the pixel alternative,
+runtime deployment, licensing and merge are not covered. The proposed conversion
+pivot is stopped. The separate optional-motion source preview is at
+[v2 motion draft](docs/adaptive-studio/assets/production/20261013-v2-motion-preview/README.md).
+No unrelated creative choice below is closed by this answer.
+
 Recorded owner answer, 13 October 2026 at 16:27 UTC: "Looks good enough" accepts R2 motion for both projects. Accepted art/motion bytes stay unchanged. This answer does not close licensing, runtime deployment, physical-device or other existing choices.
 
 Agents tick an item only on directly verified completion, or when the owner has answered every part it asks and its stated conditions hold; they record how and when. A line saying "Agents do not tick this" means an agent cannot decide the item, not that a recorded owner answer cannot close it.

@@ -101,6 +101,48 @@ async function refreshAssets(){reads++;if(!assetState.assets.length)assetState.a
 async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')throw Error('Resolve the earlier library update first.');if(window.slow)await new Promise(r=>gates.push(r));edits.push(payload);assetState.assets.find(a=>a.id===payload.ids[0]).review=payload.review;}
 </script><script>'''+source('output-review.js')+'''</script><script>'''+card+render+'''renderJobs();</script>''')
 
+    def test_recent_runs_focus_falls_back_when_tenth_card_polls_out(self):
+        self.load_output_review()
+        self.page.evaluate("jobs=Array.from({length:10},(_,i)=>({id:'r'+i,status:'completed',preset_name:'P',controls:{},outputs:[{media_type:'image'}]}));renderJobs()")
+        self.page.focus('[data-output="r9:0"] .pin')
+        self.page.evaluate("jobs.unshift({...jobs[0],id:'fresh'});renderJobs()")
+        self.assertTrue(self.page.locator('[data-recent-more]').evaluate('el=>el===document.activeElement'))
+        self.assertEqual(self.page.locator('[data-output="r9:0"]').count(), 0)
+
+    def hold_recent_clip(self):
+        self.page.evaluate("""jobs=[{id:'clip',status:'completed',preset_name:'Clip',controls:{},outputs:[{media_type:'video'}]},
+          {id:'pending',status:'not_submitted',preset_name:'Pending',controls:{},outputs:[],can_abandon:true}];renderJobs();
+          window.clip=document.querySelector('video');clip.removeAttribute('src');Object.defineProperty(clip,'paused',{value:false,configurable:true});""")
+
+    def test_recent_runs_removes_superseded_abandon_controls_during_playback(self):
+        self.load_output_review(); self.hold_recent_clip()
+        for status in ('abandoned', 'failed'):
+            self.page.evaluate("status=>{jobs[1]={...jobs[1],status,can_abandon:false};renderJobs()}", status)
+            self.assertTrue(self.page.evaluate('clip.isConnected'))
+            self.assertEqual(self.page.locator('#gallery [data-problem="pending"]').count(), 0)
+            self.assertEqual(self.page.locator('#jobProblemsHost [data-problem="pending"]').count(), 1)
+            self.assertEqual(self.page.locator('.abandonJob').count(), 0)
+
+    def test_recent_runs_media_errors_and_emptied_release_the_hold(self):
+        for event in ('error', 'emptied'):
+            self.load_output_review(); self.hold_recent_clip()
+            self.page.evaluate("jobs.unshift({id:'fresh',status:'completed',preset_name:'Fresh',controls:{},outputs:[{media_type:'image'}]});renderJobs()")
+            self.assertEqual(self.page.locator('[data-output="fresh:0"]').count(), 0)
+            self.page.evaluate("event=>{if(event==='error')Object.defineProperty(clip,'error',{value:{code:3}});else Object.defineProperty(clip,'paused',{value:true});clip.dispatchEvent(new Event(event));}", event)
+            self.assertEqual(self.page.locator('[data-output="fresh:0"]').count(), 1)
+            self.assertFalse(self.page.evaluate('clip.isConnected'))
+
+    def test_recent_runs_late_host_removes_unchanged_gallery_problems(self):
+        self.load_output_review()
+        self.page.evaluate("document.querySelector('#jobProblemsHost').remove()")
+        self.hold_recent_clip()
+        self.page.evaluate("jobs[1].status='failed';renderJobs()")
+        self.assertEqual(self.page.locator('#gallery #jobProblems').count(), 1)
+        self.page.evaluate("document.body.insertAdjacentHTML('beforeend','<div id=jobProblemsHost></div>');jobs[0].message='poll changed';renderJobs()")
+        self.assertEqual(self.page.locator('#gallery #jobProblems').count(), 0)
+        self.assertEqual(self.page.locator('#jobProblemsHost #jobProblems').count(), 1)
+        self.assertTrue(self.page.evaluate('clip.isConnected'))
+
     def test_create_output_is_reviewed_in_place_and_a_second_press_clears_it(self):
         self.load_output_review()
         self.assertEqual(self.page.locator('.output-review').count(), 1, 'an output with no asset has nothing to review')
@@ -419,7 +461,7 @@ window.state=()=>{syncContinuation();return [q('#uxRestoreSourcePrompt').disable
     def test_workspace_refresh_reports_success_failure_and_busy(self):
         refresh = region(source('workspace.js'), 'async function refreshAssets(', '// Scope, filters')
         self.page.set_content('''<script>
-let assetRefreshing=false,assetState={workspace_id:'old'},assetSignature='',jobsSignature='';
+let assetRefreshing=false,assetState={workspace_id:'old'},assetSignature='',jobsSignature='',assetReceiptEpoch=0;
 const assetSelection=new Set();let assetLibraryPending=null;
 function renderLibraryRecovery(){}function renderAssets(){}function renderJobs(){}function assetMessage(){};
 window.pending=[];function api(){return new Promise((resolve,reject)=>pending.push({resolve,reject}));}

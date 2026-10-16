@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const elements=new Map();
-class Element{constructor(tag='div'){Object.assign(this,{tag,value:'',children:[],listeners:{},dataset:{},hidden:false,disabled:false});}addEventListener(k,f){this.listeners[k]=f;}append(...c){this.children.push(...c);}replaceChildren(...c){this.children=c;}setAttribute(k,v){this[k]=v;}querySelectorAll(){return [];} }
+class Element{constructor(tag='div'){Object.assign(this,{tag,value:'',children:[],listeners:{},dataset:{},hidden:false,disabled:false});}addEventListener(k,f){this.listeners[k]=f;}append(...c){this.children.push(...c);}replaceChildren(...c){this.children=c;}setAttribute(k,v){this[k]=v;}after(node){this.error=node;}removeAttribute(name){delete this[name];}querySelectorAll(){return [];} }
 const el=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 const events={};const context=vm.createContext({document:{getElementById:el,createElement:t=>new Element(t),createTextNode:t=>new Element(),addEventListener:(k,f)=>events[k]=f,dispatchEvent:e=>events[e.type]?.()},
  window:{addEventListener(){}},CustomEvent:class{constructor(type){this.type=type;}},URL:{revokeObjectURL(){}},

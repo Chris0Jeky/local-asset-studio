@@ -2,7 +2,8 @@
 /* A locked control's reason sits beside it (#278); empty reasons take no space. */
 .disabledReason {margin:4px 0;color:var(--muted)}
 .disabledReason:has(small:empty) {display:none}
-.studio-quick-create {display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 10px;border:1px solid currentColor;border-radius:7px;font-size:12px;text-decoration:none;flex:none}
+.studio-quick-create {display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 10px;border:1px solid currentColor;border-radius:7px;font-size:12px;text-decoration:none;flex:none;color:var(--muted);background:transparent}
+.studio-quick-create.active {background:var(--accent);color:var(--bg)}
 .studio-quick-create[hidden] {display:none!important}
 @media(max-width:480px){.studio-globalbar .studio-breadcrumb{display:none}.studio-globalbar{gap:8px}}
 /* Overview record actions retain the row layout used by navigation links. */

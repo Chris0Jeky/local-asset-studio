@@ -112,11 +112,11 @@
     const heroArt = el('div', 'wk-hero-art'); heroArt.setAttribute('aria-hidden','true');
     hero.append(heroCopy, heroArt);
 
-    const modebar = el('nav', 'wk-modebar'); modebar.setAttribute('aria-label','Create workspace routes');
+    const modebar = el('nav', 'wk-modebar'); modebar.setAttribute('aria-label','Full editor workspace routes');
     const currentMode = el('button', 'active', 'Generate'); currentMode.type = 'button'; currentMode.setAttribute('aria-current','page');
     currentMode.addEventListener('click', () => q('#positive')?.focus({preventScroll:true}));
     const route = (label, href) => { const link = el('a', '', label); link.href = href; return link; };
-    modebar.append(currentMode, route('Guided workflows','/workflow-studio.html'), route('Prompt Lab','/prompt-lab.html'), route('Asset library','/#assets'), route('Runs & review','/#production'));
+    modebar.append(currentMode, route('Guided workflows','/workflow-studio.html'), route('Prompt Lab','/prompt-lab.html'), route('Asset library','/#assets'), route('Compare & review','/#production'));
 
     const toolbar = el('div', 'wk-toolbar');
     const preferenceNotice = el('p', 'wk-preference-notice'); preferenceNotice.setAttribute('role','status');
@@ -200,6 +200,15 @@
     const pickerStatus = el('p', 'wk-picker-status'); pickerStatus.setAttribute('role','status');
     recipeDialog.append(dialogHeading, pickerStatus, setup); create.append(recipeDialog);
     const drawer = setup.querySelector('.ux-recipe-drawer'); if (drawer) drawer.open = true;
+    // #278 audit item 24: search and results first, the task / kind / collection filters on one row, the shortlist and the
+    // bundle explorer after the results. Re-applied on open: those two mount after this picker.
+    const filters = el('div', 'wk-picker-filters');
+    function orderPicker() {
+      const host = drawer || setup, at = s => host.querySelector(s);
+      for (const s of ['.ux-intent-tools', '#modalities', '.category-label']) { const n = at(s); if (n && n.parentNode !== filters) filters.append(n); }
+      for (const n of [at('.search-label'), filters, at('#presetList'), at('#recipeShortlist'), at('#bundleLauncher')]) if (n) host.append(n);
+    }
+    orderPicker();
     function syncPicker() {
       const open = recipeDialog.open;
       change.setAttribute('aria-expanded', String(open));
@@ -214,7 +223,7 @@
       if (d.querySelector('dialog[open]')) return;
       opener = d.activeElement; pageScroll = {left:w.scrollX, top:w.scrollY};
       if (drawer) drawer.open = true;
-      pickerStatus.textContent = '';
+      orderPicker(); pickerStatus.textContent = '';
       if (drawer) { drawer.inert = false; drawer.removeAttribute('aria-hidden'); }
       recipeDialog.showModal(); syncPicker(); q('#presetSearch')?.focus({preventScroll:true});
     }

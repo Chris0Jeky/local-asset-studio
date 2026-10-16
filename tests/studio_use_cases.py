@@ -244,6 +244,8 @@ LOCAL_CONTROLS = {
     '#loadPreset': 'reads a registered recipe graph into the builder (GET)',
     '#compileWorkflow': 'checks connections: POST /api/workflow-studio/compile validates and stores nothing',
     '#assetDialog [data-ux-tile-band]': 'chooses the seam band for Make seamless in this page; nothing is sent',
+    '#workshopTune': 'opens Fine-tune the recipe in this page',
+    '#loraSlots select[data-key]': 'chooses an adapter file in this page; sets its strength and trigger wording, nothing is sent',
 }
 
 
@@ -333,6 +335,9 @@ def build_handler():
                     unusable_reason=None, anchor_asset_id=None, preset_name=names.get(entry['body']['preset_id']))
                for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks']]
 
+    knowledge = json.loads((ROOT / 'presets/settings-kb.json').read_text(encoding='utf-8'))
+    recipes = json.loads((ROOT / 'presets/recipes.json').read_text(encoding='utf-8'))
+
     class PromptFixtureBase(fixture.Handler):
         studio = None
         # Production's own length guard; its host/origin guards hard-code :8191 and this fixture
@@ -357,6 +362,11 @@ def build_handler():
             if path == '/api/workflow-studio/capabilities':
                 return self.json({'version': 1, 'run': {'available': False, 'reason': 'The use-case fixture never executes graphs.'}, 'generation_submitted': False})
             if path == '/api/workflow-studio/documents': return self.json({'documents': []})
+            # The real adapter knowledge, its file list as the inventory and the authored recipes: the Full editor's
+            # adapter slots and the recipe picker read these, exactly as /api/knowledge, /api/options and /api/recipes do.
+            if path == '/api/knowledge': return self.json(knowledge)
+            if path == '/api/options': return self.json({'loras': sorted(knowledge['loras'])})
+            if path == '/api/recipes': return self.json(recipes)
             if path == '/api/looks': return self.json({'looks': copy.deepcopy(shipped), 'seed_errors': [], 'generation_submitted': False})
             if path == '/api/workflow-studio/document-runs': return self.json({'runs': []})
             if path.startswith('/api/workflow-studio/presets/'):
@@ -936,44 +946,64 @@ def _reuse(c):
 
 @driver('restyle-recent-output-with-a-look')
 def _restyle(c):
-    """The owner's 14 Sep 2026 report: a liked output, a second picture with the wanted look, no idea which recipe."""
-    c.boot('#create')
-    c.page.wait_for_timeout(600)
-    c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
-    c.act(c.pick_output(), note='continue with a recent output')
-    c.act('#uxHandoffIntents [data-ux-destination="restyle"]', note='the route that borrows a look')
-    c.act('#uxHandoffDetails', 'read', note='what Restyle does with this picture')
-    try: c.page.click('#uxHandoff details:has(#uxHandoffPrompt) > summary', timeout=2000)
-    except Exception: pass
-    c.act('#uxHandoffPrompt', 'read', note='the wording prepared for this pass')
-    c.settle_handoff()
-    c.stop_before(c.act('#uxPrepareHandoff'), 'stopped before preparing: that attaches a copy of the output')
-    c.page.wait_for_timeout(800)
-    board = c.page.evaluate('typeof selected !== "undefined" && !!(selected.continuation_capability && selected.continuation_capability.board_min)')
-    if board:
-        c.act('#uxBlockers', 'read', note='what is still missing after preparing')
-        c.act('#uxPullAsset', note='add the picture whose look is wanted')
-        if c.page.locator('#uxSourcePicker[open]').count():
-            try: c.page.select_option('#uxSourceSlot', '0', timeout=3000)
-            except Exception: pass
-            c.act('[data-ux-pull="asset-4"]', note='live mode never pulls: it writes server state' if c.live else 'a saved picture for Picture 1')
-            if c.page.locator('#uxSourcePicker[open]').count():
-                try: c.page.click('[data-ux-close="uxSourcePicker"]', timeout=2000)
-                except Exception: pass
-        else: c.act('#referenceCards', 'read', note='the picker did not open; board state as found')
-    else:
-        c.act('#uxContinuation', 'read', note='the source panel: nothing missing, no board to fill')
-        c.act('#positive', 'read', note='the prepared wording: the finish, what to keep, the source description')
-    c.page.wait_for_timeout(400)
-    c.act('#generate', 'read', note='readiness only; never pressed')
-    attached = c.page.evaluate('typeof lastUploaded !== "undefined" && !!lastUploaded' if board else 'typeof uploaded !== "undefined" && !!uploaded')
-    filled = c.page.evaluate('typeof referenceRecords !== "undefined" ? referenceRecords.filter(r=>r.file).length : 0') if board else 0
-    words = c.page.evaluate('(document.querySelector("#positive").value || "").trim().split(/\\s+/).filter(Boolean).length')
-    done = c.ready() and attached and (filled >= 1 if board else words >= 20)
-    return done, 'source attached=%s, board recipe=%s, %d board picture(s), %d prepared words, run control enabled=%s' % (attached, board, filled, words, c.ready())
+    """The owner's 14 Sep 2026 report: a liked output, a wanted look, no idea which recipe. Since 16 Oct 2026 it stays in Make:
+    pick the picture, pick the look by its picture, and Make's own Generate sends the continuation (never pressed here)."""
+    c.boot('#make')
+    c.need_recipe('restyle-klein-picture')
+    c.act('[data-make-goal="restyle"]', note='say this is a restyle')
+    c.act('[data-make-search="makePictures"]', 'fill', typed='' if c.live else 'forest', note='search your pictures')
+    picture = c.pick('asset-1', '#makePictures [data-make-pick]', 'picture in the Make picker')
+    c.act('[data-make-pick="%s"]' % picture, note='the picture to restyle')
+    look = c.pick('look-preset-realvis', '#makeStyleLooks [data-make-style]', 'look with a picture')
+    c.act('label:has([data-make-style="%s"])' % look, note='the look, chosen by its picture')
+    c.act('#makeGenerate', 'read', note='readiness only; never pressed')
+    state = c.page.evaluate("""() => ({ready: !document.querySelector('#makeGenerate').disabled, look: document.querySelector('[data-make-style]:checked')?.dataset.makeStyle,
+      modal: !!document.querySelector('#uxHandoff')?.open, brackets: document.querySelector('#makeComposer').innerText.includes('['), estimate: document.querySelector('#makeEstimate').textContent,
+      picked: !!document.querySelector('#makeComposer [data-ux-handoff="%s"]')})""" % picture)
+    done = state['ready'] and state['look'] == look and state['picked'] and not state['modal'] and not state['brackets']
+    return done, 'picture chosen=%s, look=%s, handoff dialog opened=%s, brackets shown=%s, Generate ready=%s, estimate %r' % (state['picked'], state['look'], state['modal'], state['brackets'], state['ready'], state['estimate'])
 
 
 @driver('combine-character-with-another-pose')
+def _make_combine(c):
+    """The owner's 14 Sep 2026 attempt ('the pose of the second image' typed into a one-picture recipe). Since 16 Oct 2026 Make
+    shows two labelled slots and plain fields instead of a bracketed paragraph; Generate is never pressed here."""
+    c.boot('#make')
+    c.need_recipe('combine-klein-9b-copypose')
+    c.act('[data-make-goal="combine"]', note='say this is a character in a new pose')
+    picture = c.pick('asset-1', '#makePictures [data-make-pick]', 'picture in the Make picker')
+    c.act('[data-make-pick="%s"]' % picture, note='slot 1: the character picture')
+    pose = c.pick('asset-2', '#makePosePictures [data-make-pose-pick]', 'second picture for the pose', keep='id !== %s' % json.dumps(picture))
+    c.act('[data-make-pose-pick="%s"]' % pose, note='slot 2: the pose picture')
+    answers = {'who': 'the witch in the black and red robe', 'clothes': 'a black and red robe with gold trim, a wide-brimmed black hat', 'pose': 'leaning forward, one hand on her hip'}
+    fields = c.page.evaluate('[...document.querySelectorAll("#makeComposer [data-make-field]")].map(e => e.dataset.makeField)')
+    for key in fields: c.act('#makeF-' + key, 'fill', typed=answers.get(key, 'the witch'), note='plain field: ' + key)
+    c.act('#makeGenerate', 'read', note='readiness only; never pressed')
+    text = c.page.evaluate("document.querySelector('#makeComposer').innerText + [...document.querySelectorAll('#makeComposer [placeholder]')].map(e => e.placeholder).join(' ')")
+    ready = c.page.evaluate("!document.querySelector('#makeGenerate').disabled && !document.querySelector('#uxHandoff')?.open")
+    slots = 'character picture' in text.lower() and 'pose' in text.lower()
+    clean = '[' not in text and 'e.g.' not in text
+    return ready and slots and clean and len(fields) >= 2, 'two slots=%s, %d plain fields, placeholders hidden=%s, Generate ready without the dialog=%s' % (slots, len(fields), clean, ready)
+
+
+@driver('make-compare-looks')
+def _make_compare(c):
+    """#16: compare two or three looks on one scene with one press; the count and estimate show before Generate (never pressed)."""
+    c.boot('#make')
+    c.act('[data-make-goal="character"]', note='say this is an anime character')
+    c.act('[data-make-compare]', note='turn on Compare looks')
+    looks = c.page.eval_on_selector_all('[data-make-look]', 'n => n.map(e => e.dataset.makeLook)')[:3]
+    for index, look in enumerate(looks): c.act('[data-make-look="%s"]' % look, note='look %d of 3' % (index + 1))
+    c.act('#makeScene', 'fill', typed=MAKE_SCENE, note='one scene for every look')
+    try: c.page.wait_for_function("document.querySelector('#makeEstimate').textContent.includes('pictures')", timeout=4000)
+    except Exception: pass
+    c.act('#makeEstimate', 'read', note=c.page.evaluate("document.querySelector('#makeEstimate').textContent"))
+    c.act('#makeGenerate', 'read', note='readiness only; never pressed')
+    state = c.page.evaluate("({label: document.querySelector('#makeGenerate').innerText, ready: !document.querySelector('#makeGenerate').disabled, chosen: document.querySelectorAll('[data-make-look][aria-checked=true]').length, estimate: document.querySelector('#makeEstimate').textContent})")
+    ok = state['chosen'] == 3 and state['ready'] and state['label'] == 'Generate 3 pictures' and '3 pictures' in state['estimate']
+    return ok, '%d looks chosen; button %r; estimate %r' % (state['chosen'], state['label'], state['estimate'])
+
+
 def _combine(c, lead=None):
     """The owner's 14 Sep 2026 attempt: 'the pose of the second image' typed into a one-picture recipe gave the same picture."""
     c.boot('#create')
@@ -1511,6 +1541,75 @@ def _make_tune(c):
     fixed = c.page.evaluate("!!document.querySelector('#makeStrength')")
     ok = kept == MAKE_SCENE and halved and positive == wording and plain and fixed
     return ok, 'sentence kept across looks %s; adapters %s halved %s; wording from the new look %s; no slider on a look without adapters %s; slider for a graph-fixed adapter %s' % (kept == MAKE_SCENE, active, halved, positive == wording, plain, fixed)
+
+
+@driver('make-anime-look-chosen-model-and-lora')
+def _make_chosen(c):
+    """Owner ask, 16 Oct 2026: a high-end anime picture needs specific models and adapters, then tweaking, without the full
+    editor's 90 recipes. Tune this look shows the look's model and adapters in plain words, offers only same-type models and
+    installed adapters made for them, and carries steps and a locked seed. Proven through the full editor: nothing runs."""
+    look, base, switch, added = 'look-anima-pearly-petiflow', 'anima-v1-baseline', 'pearly-anima-mix-v10-baseline', 'anima-koukouya_v2_step2500.safetensors'
+    c.boot('#make')
+    c.need_recipe(switch)
+    if not c.live:  # synthetic adapter inventory: the knowledge base's own files, as an installed library would list them
+        c.page.wait_for_function("typeof knowledge !== 'undefined' && knowledge && typeof knowledge === 'object'", timeout=10000)
+        kb = json.loads((ROOT / 'presets/settings-kb.json').read_text(encoding='utf-8'))
+        c.page.evaluate('data => { knowledge = data; installedLoras = Object.keys(data.loras); }', kb)
+    trigger = c.page.evaluate('name => knowledge?.loras?.[name]?.trigger || ""', added)
+    c.act('[data-make-goal="character"]', note='say this is an anime character')
+    c.act('[data-make-change]', supplementary=True, note='open the gallery') if c.page.query_selector('[data-make-change]') else None
+    c.act('[data-make-look="%s"]' % look, note='choose an Anima look that uses an adapter')
+    c.act('#makeTune > summary', note='open Tune this look')
+    c.act('#makeModel', 'read', note=c.page.evaluate("[...document.querySelectorAll('#makeModel option')].map(o => o.textContent).join(' | ')")[:200])
+    offered = c.page.evaluate("[...document.querySelectorAll('#makeModel option')].map(o => o.value)")
+    c.act('#makeModel', 'select', typed=switch, note='switch to Pearly Anima Mix, same model type')
+    c.act('#makeLoraSearch', 'fill', typed=added, note='search the installed adapters for koukouya')
+    c.act('[data-tune-add]', note='add it')
+    row = c.page.evaluate("document.querySelector('[data-slot=lora2] small')?.textContent || ''")
+    c.act('[data-tune=steps]', 'select', typed=c.page.evaluate("document.querySelectorAll('[data-tune=steps] option')[2]?.value || ''"), note='ask for finer quality')
+    c.act('#makeNewSeed', note='turn off different pictures each time')
+    c.act('#makeSeed', 'fill', typed='4242', note='lock seed 4242')
+    summary = c.page.evaluate("document.querySelector('#makeTuneSum').textContent")
+    c.act('#makeScene', 'fill', typed=MAKE_SCENE, supplementary=True, note='describe the picture in plain words')
+    c.act('#makeEditor', note='open the prepared request in the full editor')
+    c.page.wait_for_function("location.hash === '#create' && selected?.id === '%s'" % switch, timeout=5000)
+    state = c.page.evaluate("""() => ({preset: selected.id, positive: document.querySelector('#positive').value, seed: getControl('seed')?.value, steps: getControl('steps')?.value,
+      lora: getControl('lora')?.value, lora2: getControl('lora2')?.value, lora2_name: getControl('lora2_name')?.value})""")
+    ok = (offered[:1] == [base] and switch in offered and 'wai' not in offered and trigger in row and state['preset'] == switch and state['lora2_name'] == added
+          and float(state['lora2'] or 0) > 0 and state['seed'] == '4242' and int(state['steps'] or 0) > 25 and state['positive'].startswith(trigger) and MAKE_SCENE in state['positive']
+          and 'model Pearly Anima Mix' in summary)
+    return ok, 'models offered %s; added row %r; tuned %r; prepared %s' % (offered, row, summary, {k: state[k] for k in ('preset', 'lora2_name', 'lora2', 'steps', 'seed')})
+
+@driver('specific-lora-in-full-editor')
+def _specific_lora(c):
+    """#278 J1 (16 Oct 2026 live audit): a specific adapter in the Full editor. The hint read "place it at the anywhere of the
+    prompt", a chosen adapter stayed at strength 0 and its trigger had to be typed by hand. Nothing is generated."""
+    c.boot('#create')
+    c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
+    c.act('#presetSearch', 'fill', typed='WAI v17')
+    card = c.page.evaluate("""(() => {const b = document.querySelector('#presetList [data-id="wai"]');
+      return {group: b?.closest('[data-group]')?.dataset.group || '', thumb: !!b?.querySelector('.preset-thumb'), pace: b?.querySelector('.pace')?.textContent || '',
+              chips: /review separate/i.test(document.querySelector('#presetList').innerText)};})()""")
+    c.act('#presetList [data-id="wai"]', note='WAI v17 illustration: %s' % card)
+    c.act('#positive', 'fill', typed=BRIEF)
+    c.act('#workshopTune', note='open Fine-tune the recipe', supplementary=True)
+    c.act('#loraSlots select[data-key="lora_name"]', 'select', typed='manga-ink-screentone.safetensors')
+    chosen = c.page.evaluate("""({strength: getControl('lora').value, positive: document.querySelector('#positive').value, status: document.querySelector('#status').textContent,
+      range: document.querySelector('[data-range="lora"]')?.textContent || ''})""")
+    triggers = chosen['positive'].count('m4ng41nk')
+    # The placement wording itself, read the way the hint builds it before the trigger is in the prompt.
+    place = c.page.evaluate("triggerPlace(knowledge.loras['manga-ink-screentone.safetensors'].trigger_position)")
+    hint = c.page.evaluate("document.querySelector('[data-hint=\"lora\"]').innerText")
+    hint_ok = 'at the anywhere' not in hint and 'Trigger: m4ng41nk' in hint and 'recommended 0.8' in hint and place == 'put it anywhere in the prompt'
+    c.observe('the adapter hint names the trigger, its placement and the recommended range', hint_ok and chosen['range'] == '· 0.6–1',
+              detail='hint %r; placement %r; range %r' % (hint, place, chosen['range']))
+    c.act('#loraSlots select[data-key="lora_name"]', 'select', typed='Detail_enhancer_IL_v2.safetensors')
+    after = c.page.evaluate("({strength: getControl('lora').value, positive: document.querySelector('#positive').value})")
+    ok = (card['group'] == 'character' and card['thumb'] and bool(card['pace']) and not card['chips'] and chosen['strength'] == '0.8'
+          and triggers == 1 and chosen['positive'] == BRIEF + ' m4ng41nk' and 'Added the trigger m4ng41nk' in chosen['status'] and hint_ok
+          and after['positive'] == BRIEF and after['strength'] == '0.7')
+    return ok, 'picker card %s; strength on choosing %s (range %s); trigger in prompt %dx; hint %r; after switching: strength %s, trigger removed %s' % (
+        card, chosen['strength'], chosen['range'], triggers, hint[:90], after['strength'], after['positive'] == BRIEF)
 
 
 @driver('new-scene-in-an-accepted-look')

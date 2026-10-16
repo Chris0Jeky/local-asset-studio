@@ -482,87 +482,67 @@
     },
     {
       "id": "restyle-recent-output-with-a-look",
-      "goal": "Take a recent output I like and paint it in another look, keeping the picture, without knowing which recipe does that.",
-      "starting_view": "create",
-      "success_condition": "The recent output is attached as the picture to restyle, the prepared wording (the finish, what to keep, the source description) is in the prompt, and the run control reports ready while zero generation requests have been sent.",
+      "goal": "Take a picture I like and paint it in another look, keeping the picture, without knowing which recipe does that.",
+      "starting_view": "make",
+      "success_condition": "Make keeps the task: the picture is chosen from a searchable grid, the new look is chosen by its picture, Generate is ready with a time estimate, the handoff dialog never opens, no recipe placeholder is shown, and zero generation requests have been sent.",
       "wrong_turn": false,
       "steps": [
         {
-          "intent": "continue with a recent output from the runs list",
-          "expect": "a dialog asks where the picture should go next"
+          "intent": "say this is a restyle",
+          "expect": "Restyle a picture is a goal tile in Make"
         },
         {
-          "intent": "choose the route that borrows a look",
-          "expect": "the Restyle route is selected and lists a recipe that keeps the picture first"
+          "intent": "search your pictures",
+          "expect": "the picture grid narrows to matching pictures; masks are never listed"
         },
         {
-          "intent": "read what the route will do with this picture",
-          "expect": "the dialog says the picture is kept and the wording carries the look"
+          "intent": "choose the picture to restyle",
+          "expect": "the picture is shown as chosen and the look gallery appears, still in Make"
         },
         {
-          "intent": "open the wording prepared for this pass",
-          "expect": "the finish, the keep clause and the source description are shown before preparing"
+          "intent": "choose the new look by its picture",
+          "expect": "the look's picture is marked as chosen; describing the look in words stays one press away"
         },
         {
-          "intent": "prepare it in Create",
-          "expect": "Create opens with the picture attached as the picture to restyle"
-        },
-        {
-          "intent": "read the source panel",
-          "expect": "the continuation names the source; nothing is missing (a board recipe would list its empty slot here)"
-        },
-        {
-          "intent": "read the prepared wording",
-          "expect": "the prompt holds the finish, the keep clause and the source description, ready to edit"
-        },
-        {
-          "intent": "read the run control",
-          "expect": "the run control is enabled and nothing has been submitted"
+          "intent": "read Generate",
+          "expect": "Generate is ready with an estimate and nothing has been submitted"
         }
       ]
     },
     {
       "id": "combine-character-with-another-pose",
       "goal": "Take a character I like and draw it in the pose of another picture from my library, without knowing which recipe does that (the owner's 14 September 2026 attempt typed 'the pose of the second image' into a one-picture recipe and got the same picture back).",
-      "starting_view": "create",
-      "success_condition": "The character is attached as the picture to keep (image 1), the pose picture sits on Picture 1 of the board, the prepared wording names the subject and the pose, and the run control reports ready while zero generation requests have been sent.",
+      "starting_view": "make",
+      "success_condition": "Make shows two labelled slots (Character picture, Pose), both are filled from the library, the recipe's bracketed fills appear only as plain named fields (no brackets, no named examples), Generate is ready without the handoff dialog, and zero generation requests have been sent.",
       "wrong_turn": false,
       "steps": [
         {
-          "intent": "continue with a recent output from the runs list",
-          "expect": "a dialog asks where the picture should go next"
+          "intent": "say this is a character in a new pose",
+          "expect": "Character in a new pose is a goal tile in Make"
         },
         {
-          "intent": "choose the route that combines two pictures",
-          "expect": "the Combine route is selected and lists the Klein board recipe"
+          "intent": "choose the character picture",
+          "expect": "slot 1, Character picture, holds it; slot 2, Pose, offers a picture or a drawn figure"
         },
         {
-          "intent": "read what the route will do with this picture",
-          "expect": "the dialog says the character is kept and the pose comes from the picture put on Picture 1"
+          "intent": "choose the pose picture",
+          "expect": "slot 2 holds the pose picture and says only the body position is taken"
         },
         {
-          "intent": "open the wording prepared for this pass",
-          "expect": "the wording names image 1 and image 2 and carries bracketed fills: who the character is, the pose, and (on the 9B recipe) the clothes and colours"
+          "intent": "say who the character is",
+          "expect": "a plain field, no bracket"
         },
         {
-          "intent": "prepare it in Create",
-          "expect": "Create opens with the picture attached as the picture to keep"
+          "intent": "say what the character wears",
+          "expect": "a plain field, no bracket"
         },
         {
-          "intent": "read what is still missing",
-          "expect": "the blockers name Picture 1 (the pose picture) and the bracketed fills, nothing else"
+          "intent": "say the pose in a few words",
+          "expect": "a plain field, no bracket"
         },
         {
-          "intent": "add the pose picture to Picture 1",
-          "expect": "a saved picture fills Picture 1"
-        },
-        {
-          "intent": "fill in the wording",
-          "expect": "replacing every bracketed fill clears the wording blocker"
-        },
-        {
-          "intent": "read the run control",
-          "expect": "the run control is enabled and nothing has been submitted"
+          "intent": "read Generate",
+          "expect": "Generate is ready and nothing has been submitted"
         }
       ]
     },
@@ -964,6 +944,100 @@
         {
           "intent": "check a look that has no adapters",
           "expect": "no Style strength control is offered there"
+        }
+      ]
+    },
+    {
+      "id": "specific-lora-in-full-editor",
+      "goal": "Use one specific style adapter in the full editor without knowing its trigger word or a sensible strength by heart.",
+      "starting_view": "create",
+      "success_condition": "Choosing the adapter in a slot sets its recommended strength (not 0), shows its recommended range, reads its trigger placement in plain words and adds the trigger to the prompt once, saying so; changing to an adapter without a trigger takes the added trigger out again; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "find the anime illustration recipe by name",
+          "expect": "the picker lists it under characters with its picture and speed"
+        },
+        {
+          "intent": "choose it",
+          "expect": "the recipe loads with its own wording"
+        },
+        {
+          "intent": "describe the picture",
+          "expect": "the prompt box keeps the words"
+        },
+        {
+          "intent": "choose the manga ink adapter in the first adapter slot",
+          "expect": "strength becomes its recommended value and its trigger is added to the prompt once"
+        },
+        {
+          "intent": "check the adapter hint",
+          "expect": "it names the trigger and its placement in plain words, and the recommended range sits beside Strength"
+        },
+        {
+          "intent": "switch the slot to an adapter with no trigger word",
+          "expect": "the trigger that was added is taken out again"
+        }
+      ]
+    },
+    {
+      "id": "make-anime-look-chosen-model-and-lora",
+      "goal": "Make a high-end anime picture on a model and adapter I choose, then tweak quality and the seed, without leaving Make or knowing the full editor's recipes.",
+      "starting_view": "make",
+      "success_condition": "Tune this look is folded shut until opened; it names the look's model and adapters in plain words, offers only models of the same type (not the look's own file again, not another model type), lists only installed adapters made for that model type, shows an added adapter's trigger word and writes it into the wording; steps and a locked seed carry into the prepared request; Open in the full editor loads the chosen model's recipe with the added adapter, finer steps and seed 4242; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "say this is an anime character", "expect": "looks are shown as example pictures"},
+        {"intent": "choose an Anima look that uses an adapter", "expect": "one description box and Generate, with Tune this look folded shut"},
+        {"intent": "open Tune this look", "expect": "the model and the look's adapters are named in plain words"},
+        {"intent": "see which models it can switch to", "expect": "only models of the same type; one that needs a download says so"},
+        {"intent": "switch to Pearly Anima Mix", "expect": "the summary says the model was tuned"},
+        {"intent": "search the installed adapters for koukouya", "expect": "the search lists only adapters made for this model type"},
+        {"intent": "add it", "expect": "a new adapter row with its strength and trigger word"},
+        {"intent": "ask for finer quality", "expect": "steps go up from the look's own count"},
+        {"intent": "turn off different pictures each time", "expect": "the seed field unlocks"},
+        {"intent": "lock seed 4242", "expect": "the summary says the seed is locked"},
+        {"intent": "open the prepared request in the full editor", "expect": "the chosen model's recipe with the added adapter, its trigger in the words, finer steps and seed 4242; nothing runs"}
+      ]
+    },
+    {
+      "id": "make-compare-looks",
+      "goal": "See the same scene in two or three looks side by side before choosing one, with one press.",
+      "starting_view": "make",
+      "success_condition": "Compare looks in Make takes two or three looks and one scene; the number of pictures and the total time estimate show before Generate, Generate names the count, and zero generation requests have been sent.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "say this is an anime character",
+          "expect": "goals are named by outcome"
+        },
+        {
+          "intent": "turn on Compare looks",
+          "expect": "the look gallery becomes checkboxes"
+        },
+        {
+          "intent": "choose the first look",
+          "expect": "it is ticked"
+        },
+        {
+          "intent": "choose the second look",
+          "expect": "it is ticked"
+        },
+        {
+          "intent": "choose the third look",
+          "expect": "it is ticked; a fourth would be refused"
+        },
+        {
+          "intent": "describe the scene once",
+          "expect": "one box for every look"
+        },
+        {
+          "intent": "read the count and the estimate",
+          "expect": "three pictures, one per look, with the total time from earlier runs"
+        },
+        {
+          "intent": "read Generate",
+          "expect": "Generate names three pictures and nothing has been submitted"
         }
       ]
     }

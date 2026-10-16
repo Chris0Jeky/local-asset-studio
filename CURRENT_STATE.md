@@ -12,6 +12,44 @@ Executed 53 serial Studio jobs, all completed, producing 63 image files: 28 base
 
 No Look met the two-scene promotion rule; presets/looks.json is unchanged and no new Look or thumbnail was added. The five-configuration AniFox/Ringeko stack test tied within 0.3. A WAI OpenPose wording change to closed fists fixed the named glove defect at seed 2026101690 while retaining arm/stance control (job 9939e137-1213-4ef2-81c2-9f8bc3285851, prompt 79216f82-23a4-45cc-a217-dc2a4d9a97af, 64.52 seconds); this is one-seed body-pose evidence, not identity transfer or human acceptance. Full methods, all-look table, exact requests, scores, 63 output hashes and resume point: [Look lab report](docs/looks/LOOK-LAB-2026-10-16.md), journal and receipt manifest alongside it. Focused Look tests passed (38); repository validation passed with a process-local Git safe.directory setting. HUMAN_TODO.md is unchanged; art and licensing choices remain open. Existing uncertain/partial jobs are untouched; both services remain running by owner instruction.
 
+## Motion perceptual repair R2 — 13 October 2026
+
+Chris reported the delivered LAS clip looked entirely still. R1 timing tests
+were green but visual delivery failed: the export kept train_enabled=false and
+the tiny rain/reflection changes were below useful card-size visibility. The
+retained live/decoded diagnosis confirms clocks ran and reduced motion was off;
+this was insufficient amplitude and a missing enabled effect, not a frozen export.
+
+The separate `20261013-v2-motion-readable-r2` sibling preserves every R1 file and
+the accepted v2 static SVG bytes. It adds visibly falling native preview strokes
+and enables an8-second one-way train passage in the demo. The discrete train
+reset is fully outside the unchanged window clip; joinery remains stationary.
+Complete normal-speed live/MP4 playback at320px is retained, with immutable object
+geometry, readable-region tests and genuine all-still rejection. Final illustrative
+exports are24fps/192frames/8seconds with enabled effects explicitly recorded.
+Controls, reduced-motion still and hidden/offscreen pause remain tested. These
+checks do not record human acceptance of R2 motion. No runtime/catalogue/precache,
+dependency, budget, merge or deployment change; owner choices stay separate.
+
+## Provisionally accepted v2 source and optional motion draft — 13 October 2026
+
+The owner provisionally accepted the immediately displayed v2 LAS workshop and
+Alibi lantern renders, plus the responsive LAS card: “Yeah, I guess these are good
+enough for being SVGs.” This limited answer does not accept the later failed coarse
+studies, pixel variant, licensing, runtime deployment or a merge. The proposed
+vector-conversion pivot is stopped. Existing source files and archives are unchanged.
+
+`docs/adaptive-studio/assets/production/20261013-v2-motion-preview/index.html`
+is a separate source-only comparison: the exact v2 SVG remains script-free; an
+inline copy receives restrained rain/reflection motion and an optional train
+inside a stationary window clip. Initial pixels match the unmodified master in
+the same inline browser context. Play/Pause, reduced motion, real offscreen
+observation and 16-second loop endpoints pass 26 browser checks at 390/1440 px.
+Hidden-document behavior is a DOM-contract probe, not physical-device proof.
+No Studio/ComfyUI process, application file, catalogue, dependency, precache or
+budget changed. Exact-head hosted qualification belongs to the draft PR; owner
+choices in HUMAN_TODO.md remain separate.
+
 ## Optional Look reference pilot - 13 October 2026
 
 An isolated main-based draft adds a folded display-only MA reference to the unchanged shipped Night Shift Look. Its 26,460-byte whole-frame WebP loads only on explicit preview opening; opaque copy, static rendering and missing-picture/forced-color text fallback keep preparation usable. Saved wording, Z2 lineage, recipe controls and revisions stay unchanged; edited/custom or put-away Looks get no automatic reference. No generation, activation, cap change, dependency, art reacceptance or deferral change.
