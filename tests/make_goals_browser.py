@@ -261,6 +261,20 @@ def run(shots):
         assert page.locator('#makePoseSlot [data-make-pose-change]').count() == 1 and len(jobs()) == before and 'answers are back' in page.locator('#makeStatus').inner_text()
         assert page.evaluate('(id)=>JSON.parse(localStorage.getItem("studio.make")).runs.find(r=>r.id===id).redo.poseRoute', replace_id) == 'scene', 'the route is stored with the run'
         page.locator('label:has(#makePoseRoute-copy)').click(); assert page.is_checked('#makePoseRoute-copy') and not page.locator('#makePoseFallback').count()
+        # Depth is the third, explicit choice; its lab warning differs from Copy Pose.
+        assert page.locator('[data-make-pose-route]').count() == 3 and not page.is_checked('#makePoseRoute-depth')
+        assert 'outline (depth)' in page.locator('label:has(#makePoseRoute-depth)').inner_text()
+        assert 'lab round 3' in page.locator('#makePoseRouteHint-depth').inner_text() and 'blank grey face' in page.locator('#makePoseRouteHint-depth').inner_text()
+        page.locator('label:has(#makePoseRoute-depth)').click()
+        assert page.is_checked('#makePoseRoute-depth') and not page.locator('#makePoseFallback').count()
+        assert 'clothing shapes can carry over' in page.locator('#makePoseSlot').inner_text()
+        job = generate()[0]; no_modal()
+        assert job['preset_id'] == 'combine-klein-9b-depth' and job['references'][0]['role'] == 'pose', job
+        assert set(job['parent_assets']) == {'asset-1', 'asset-2'} and '[' not in job['controls']['positive'], job
+        depth_id = list(JOBS)[-1]; page.wait_for_selector('[data-make-redo="%s"]' % depth_id); before = len(jobs())
+        page.locator('label:has(#makePoseRoute-copy)').click(); page.locator('[data-make-redo="%s"]' % depth_id).click()
+        assert page.is_checked('#makePoseRoute-depth') and len(jobs()) == before, 'depth is restored without submitting'
+        page.locator('label:has(#makePoseRoute-copy)').click()
         # Copy Pose's model missing: the next picture route Make offers (never depth or plain 9B), and the page says why.
         page.route('**/api/health', lambda route: route.fulfill(json=dict(online=True, schema_available=True, missing_models={'combine-klein-9b-copypose': ['diffusion_models/copy-pose.safetensors']}, devices=[])))
         page.evaluate('health()'); page.wait_for_function('!!missingByPreset["combine-klein-9b-copypose"]')
@@ -279,11 +293,11 @@ def run(shots):
         assert job['preset_id'] == 'combine-klein-9b-skeleton' and job['references'][0]['file'].endswith('_drawn-pose.png') and posted('/api/pose/render'), job
         assert job['parent_assets'] == ['asset-1'] and '[' not in job['controls']['positive'], job
 
-        # My character (#1205 v1): a kept picture becomes the canon of a saved character, its words prefilled from the pose run;
+        # My character (owner, 16 Oct): any finished picture becomes the canon, its words prefilled from the pose run;
         # saving makes no picture. Character in a new pose then lists it first, and choosing it sends the canon as it is with its words.
         pose_card = page.locator('[data-run="%s"]' % list(JOBS)[-1]); pose_card.locator('[data-make-review="selected"][data-asset="asset-0"]').wait_for(timeout=8000)
-        assert not page.locator('[data-make-character-save]').count(), 'only a kept picture offers it'
-        page.evaluate('()=>{assetState.assets.find(a=>a.id==="asset-0").review="selected";StudioMake.refresh();}')
+        page.evaluate('()=>{assetState.assets.find(a=>a.id==="asset-0").review="unreviewed";StudioMake.refresh();}')
+        assert pose_card.locator('[data-make-character-save="asset-0"]').count() == 1, 'an unreviewed picture offers it'
         before = len(jobs()); pose_card.locator('[data-make-character-save="asset-0"]').click()
         form = pose_card.locator('.make-character-form')
         prefill = (form.locator('[data-make-char="who"]').input_value(), form.locator('[data-make-char="clothes"]').input_value())
@@ -479,9 +493,9 @@ def run(shots):
         before = len(jobs()); page.locator('#makeGenerate').click()
         page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started 1 of 3")', timeout=8000); FAIL_LABEL.clear()
         assert len(jobs()) == before + 1 and 'the rest were not sent' in page.locator('#makeStatus').inner_text(), page.locator('#makeStatus').inner_text()
-        # A kept picture on a Compare card offers "Make this my character" like any other card (Codex review of #1466); an already-canon one names its character.
+        # An unreviewed picture on a Compare card offers "Make this my character" too; an already-canon one names its character.
         assert page.locator('.make-compare .make-canon').count() >= 3 and not page.locator('.make-compare [data-make-character-save]').count(), 'a canon picture is named, not offered again'
-        saved_characters = list(CHARACTERS); no_characters(); kept_review = fixture.ASSETS[0]['review']; fixture.ASSETS[0]['review'] = 'selected'
+        saved_characters = list(CHARACTERS); no_characters(); kept_review = fixture.ASSETS[0]['review']; fixture.ASSETS[0]['review'] = 'unreviewed'
         page.reload(); page.wait_for_selector('.make-compare figure img', timeout=8000); page.wait_for_function('!!assetState?.assets?.length'); page.evaluate('StudioMake.refresh()')
         page.wait_for_selector('.make-compare [data-make-character-save]', timeout=8000)
         before = len(jobs()); page.locator('.make-compare [data-make-character-save]').first.click()

@@ -16,6 +16,7 @@ v2 saw in its sandbox, plus the later waves: #1459 durable submission saves, #14
 - Simulated (browser-side only, never written): (a) one Make run card was restored by seeding this throwaway context's
   localStorage with the existing job 0e926110 so run-card actions could be read; its tune was set to the draft step count to
   show "Make the final"; (b) one asset was shown as Kept in the page's memory to reveal "Make this my character...".
+  Later owner decision, 16 Oct: every finished picture with an asset id now offers that action, regardless of review.
 - The workspace has no saved characters (`GET /api/characters` returns an empty list), so "Your characters" is not on screen
   and could only be read from code (make.js:486-493).
 
@@ -155,7 +156,7 @@ fails (N2); (2) "No trigger word" under a style LoRA gives no hint of what it do
 other dialects without a warning (N14); (4) after Generate the picture lands beside the form on desktop, but this was not run.
 
 Tweak paths after a picture exists (existing pictures only):
-- Keep / Not this: one press each on a run card; "Make this my character..." appears after Keep and opens a three-field form
+- Keep / Not this: one press each on a run card; "Make this my character..." appeared after Keep at audit time (now on any finished picture, owner decision 16 Oct) and opens a three-field form
   (prefilled "who" from the words). View only; not saved.
 - Draft first -> Make the final: checkbox in the composer, then "Make the final" on the draft card restores words and seed at the
   full step count and focuses Generate (simulated draft state; 1 click + Generate).

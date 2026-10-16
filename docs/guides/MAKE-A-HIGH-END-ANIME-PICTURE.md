@@ -136,6 +136,8 @@ The anime looks run in about 25 to 45 seconds a picture in the lab, so a draft e
 
 **Same words, another look.** On a finished card, press **Same words, another look**. The gallery opens with that scene ready.
 
+**Make this my character…** appears on every finished picture saved in the library, including Compare pictures, whether kept, unreviewed or marked **Not this**. Name the character and save: this picture becomes its canon without making another picture or changing its review. A canon picture says **Canon of** followed by the character's name. The character's **Line-up** keeps the canon first, then kept descendants.
+
 **Compare looks.** In the look gallery, press **Compare looks**. Choose two or three looks, type one scene, and press **Generate** (the button reads "Generate 3 pictures"). Each look runs once, as made, at its own shape, from one seed where its recipe takes a seed. The pictures share one card. If you already picked a look, press **Change look** first to get the gallery back, and **Back to one look** to leave. Compare ignores your Tune changes.
 
 **Vary.** The **Vary** buttons under a picture open the Full editor with new seeds or a nearby variation prepared. They do not run. Press **Generate** there.
@@ -179,11 +181,14 @@ Restyle uses its own restyle recipe, not the look's model. The page says only ho
 
 1. Press **Character in a new pose**, choose the character picture.
 2. Under **Pose**, choose **A picture of the pose** (pick a library picture) or **Draw the pose** (pick a stick figure, optionally tick **Mirror left and right**).
-3. When the pose is a picture, **What to keep** appears with two choices:
+3. When the pose is a picture, **What to keep** offers three choices when their recipes are available:
    - **Keep my character as it is** (Copy Pose, the default). Your character keeps its face, clothes, background and finish. Only the body position comes from the pose picture.
    - **Put my character into this picture’s scene** (Replace character). The pose picture keeps its outfit, setting and finish. Only your character’s face and hair go in.
+   - **Follow the pose picture’s outline (depth)** (optional). Follows the outline closely; in lab round 3 it simplified the face and curls, and one result had a blank grey face. Clothing shapes can carry over and your character may change. It is never the default or an automatic fallback; plain Klein 9B stays hidden.
 4. Fill the fields: who is in the picture, what they wear with colours, the pose in a few words.
 5. Press **Generate**.
+
+If Copy Pose is unavailable, Make keeps its existing fallback to the next available picture route and says why. A missing optional route uses the same default/fallback path.
 
 **What the lab measured for the picture route:**
 

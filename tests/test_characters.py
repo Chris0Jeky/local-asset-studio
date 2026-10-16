@@ -1,4 +1,4 @@
-"""Character cards (#1205 v1): "my character" is a Workspace card whose canon is one chosen keeper picture.
+"""Character cards (#1205 v1): "my character" is a Workspace card whose canon is one chosen picture.
 Saving, editing and listing never reach ComfyUI or create a job."""
 import importlib.util
 import json
@@ -76,6 +76,15 @@ class CharacterTests(unittest.TestCase):
         self.assertEqual(self.studio.assets.card(card["id"])["name"], "Mira")
         with self.assertRaises(WorkspaceError) as caught: characters.command(self.studio, {"action": "edit", "id": card["id"], "name": "No revision"})
         self.assertEqual(caught.exception.status, 428)
+
+    def test_create_route_accepts_any_picture_review_without_changing_it_or_submitting(self):
+        for review in ('unreviewed', 'selected', 'rejected', 'needs_work'):
+            with self.subTest(review=review):
+                self.set_row('assets', self.canon, review=review)
+                status, card = self.route('POST', '/api/characters', {'action': 'create', 'kind': 'character', 'name': review, 'body': BODY, 'canon_asset_id': self.canon})
+                self.assertEqual((status, card['lineage'][0]['asset_id']), (200, self.canon))
+                self.assertEqual(self.studio.assets.get(self.canon)['review'], review)
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
 
     def test_put_away_and_restore_are_reversible(self):
         card = self.create()

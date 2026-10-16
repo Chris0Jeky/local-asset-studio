@@ -1,6 +1,6 @@
-"""Character cards (#1205 v1): "my character", a Workspace card (kind "character") whose canon is ONE chosen keeper picture.
+"""Character cards (#1205 v1): "my character", a Workspace card (kind "character") whose canon is ONE chosen picture.
 
-Owner decision (27 Sep 2026): a character's canon starts as one chosen keeper portrait; a character LoRA comes once about 20
+Owner decision (16 Oct 2026): any picture can be the canon, regardless of review; a character LoRA comes once about 20
 keepers exist (#411, out of scope). Consistency is the point: every new picture goes back to the canon as it is, never to an
 edit of an edit. body: who, clothes (with colours), avoid (optional), look_id (optional preferred look card). lineage: the
 canon, named by asset id and sha256 like a look's anchor, set only from the Workspace. Saving or choosing a card never submits.
@@ -61,7 +61,7 @@ def listing(studio):
         asset, reason = canon_asset(studio, card), None
         try: validate_body(card["body"])
         except WorkspaceError as error: reason = str(error)
-        if asset is None: reason = reason or "Its canon picture is no longer in the library. Restore it, or make a new keeper the canon."
+        if asset is None: reason = reason or "Its canon picture is no longer in the library. Restore it, or make another picture the canon."
         elif (asset.get("media_type") or "image") != "image": reason = reason or "Its canon is not a picture."
         if card["trashed_at"]: reason = "This character is put away. Restore it to use it."
         result.append(dict(card, usable=reason is None, unusable_reason=reason, canon_asset_id=asset["id"] if asset else None))
@@ -83,7 +83,7 @@ def command(studio, payload):
             except WorkspaceError: found = None
             if not found or found["kind"] != "look": raise WorkspaceError("The preferred look is not a saved look")
     canon_id = payload.pop("canon_asset_id", None)
-    if action == "create" and canon_id is None: raise WorkspaceError("Choose the canon picture: a character starts from one keeper")
+    if action == "create" and canon_id is None: raise WorkspaceError("Choose the canon picture: a character starts from one picture")
     if canon_id is not None:
         if action not in ("create", "edit"): raise WorkspaceError("The canon picture is chosen when the character is saved or edited")
         asset = studio.assets.get(canon_id)

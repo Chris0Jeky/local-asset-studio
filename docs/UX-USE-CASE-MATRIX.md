@@ -18,7 +18,7 @@ Third live audit (PR #1484, `docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v3.md`), N1-N6 
 - **Picture cards** (N5): a second line with the look or recipe, how long ago and the seed; the full prompt is the tooltip.
 - **Your pictures on a new browser** (N6): an empty list starts from the library's six newest `Make · ` runs (Keep, fixes and
   More work; *Edit and re-run* needs the words, which the library does not keep).
-- **Edit and re-run on picture goals** (wave 6): a goal run keeps its picture, answers, pose and route (Copy Pose or Replace);
+- **Edit and re-run on picture goals** (wave 6): a goal run keeps its picture, answers, pose and route (Copy Pose, Replace or depth);
   the button puts them back without sending.
 - **Models & setup** (N8): the looks panel holds its place while files are checked (a placeholder, then a *Checking* row per
   look); missing files a look needs lead, and missing files nothing uses fold under *Optional*.
@@ -39,12 +39,18 @@ Owner ask (16 October 2026): "the user should be able to do it without much conf
   - **Character in a new pose**: two labelled slots. **Character picture** is the one you picked. **Pose** is either a
     picture from your library or a drawn figure, Standing or Bent forward, with a mirror option
     (`combine-klein-9b-skeleton`, drawn by `/api/pose/render`; a hint says hands and gaze follow the words weakly). A
-    picture offers two choices, each saying what it keeps (lab round 3, PR #1481): **Keep my character as it is**
+    picture offers three choices when their recipes are available (owner, 16 October 2026): **Keep my character as it is**
     (`combine-klein-9b-copypose`, the default) or **Put my character into this picture's scene**
-    (`combine-klein-9b-replace`). Make never picks depth or plain 9B; with Copy Pose not ready it uses the next picture
+    (`combine-klein-9b-replace`), or **Follow the pose picture’s outline (depth)** (`combine-klein-9b-depth`). Depth's note
+    reports round 3's simplified face/curls and blank grey face; its pose caption warns that clothing shapes can carry over.
+    Depth is explicit, never a default or automatic fallback; plain 9B stays hidden. Missing optional routes use the default/fallback
+    path; with Copy Pose not ready Make uses the next picture
     route and says why. The recipe's bracketed fills are plain named fields (Who is in the character picture / What they
     wear, with colours / The pose, in a few words, with the lab's tested wording as placeholder). No bracket and no recipe
     example that names a person reaches the page.
+  - **Make this my character…**: every finished picture with an asset id offers it regardless of review, including Compare
+    pictures. Saving changes no review and submits nothing. A canon still says **Canon of** its character; **Line-up** remains
+    canon first, then kept descendants.
   - **Change one thing** (`flux-edit`): one field. **Fix or upscale**: Fix face, Fix hands and details or Upscale 2×. These
     are the existing one-press polish routes (Anima pictures send Fix face and Fix hands to the same repaint, so they show as one **Fix face and hands** button with a keep-the-original warning; round 5, #1492), and a route that does not fit the picture gives its reason. **Animate**
     (`wan22-i2v`): a motion field and a length (Short, 17 frames, about 0.7 s; Longer, 33 frames, about 1.4 s; held modes are
