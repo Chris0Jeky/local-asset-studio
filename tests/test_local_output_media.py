@@ -55,6 +55,14 @@ class LocalOutputMediaTests(unittest.TestCase):
         self.assertIn('snapshot_error', output); self.assertNotIn('asset_id', output)
         return identifier, output, file
 
+    def test_a_missing_output_file_is_recorded_not_silently_skipped(self):
+        job = {'id': 'c' * 32, 'operation': 'asset.import', 'preset_name': 'Study', 'outputs': [{'filename': 'gone.png', 'media_type': 'image'}]}
+        with patch.object(self.studio, 'output_path', return_value=self.root / 'nowhere' / 'gone.png'):
+            self.studio.index_outputs(job)
+        output = job['outputs'][0]
+        self.assertNotIn('asset_id', output)
+        self.assertEqual(output.get('snapshot_error'), 'The output file is missing; nothing was registered')
+
     def test_failed_snapshots_serve_retained_local_bytes_for_every_local_operation(self):
         operations = ('asset.import', 'tile.finish.v1', 'parallax.finish.v1', 'native.articulated-prop.v1', 'native.av-preview.v1', 'native.voice-baseline.v1')
         for operation in operations:

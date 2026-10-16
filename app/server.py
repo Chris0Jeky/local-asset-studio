@@ -1165,6 +1165,7 @@ class Studio:
             try:
                 asset_id = self.assets.register(job, index, self.output_path(output, job))
                 if asset_id: output["asset_id"] = asset_id
+                else: output["snapshot_error"] = "The output file is missing; nothing was registered"   # a vanished file is a visible miss, never a silent gap
             except (OSError, ValueError, sqlite3.Error) as exc:
                 # A storage fault while indexing a known output never changes the remote outcome.
                 output["snapshot_error"] = str(exc)[:200]
