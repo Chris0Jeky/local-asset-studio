@@ -1312,19 +1312,18 @@ async function recentRunsHostHeldProblemsDropTheStaleGalleryProblems() {
   const mount = s.context.document.getElementById;
   s.context.document.getElementById = () => null;
   const failedA = {id: 'held-a', preset_name: 'Failure A', status: 'failed', message: 'Out of memory', outputs: [], prompt_ids: [], created_at: 5, can_put_away: true, put_away: false};
-  const failedB = {id: 'held-b', preset_name: 'Failure B', status: 'failed', message: 'Still failing', outputs: [], prompt_ids: [], created_at: 6, can_put_away: true, put_away: false};
   await s.poll([recentJob('clip', 1, 'video'), failedA]);
   assert.ok(s.nodes().some(node => node.tagName === 'DETAILS'), 'Problems lands inside the gallery before the host mounts');
   s.context.document.getElementById = mount;
   const video = s.nodes().find(node => node.tagName === 'VIDEO');
   video.paused = false;
   const writes = s.writes;
-  await s.poll([failedB, failedA, recentJob('clip', 1, 'video')]);
+  await s.poll([failedA, recentJob('clip', 1, 'video')]);
   assert.equal(s.writes, writes, 'The gallery still waits for the clip');
   assert.equal(s.nodes().some(node => node.tagName === 'DETAILS'), false, 'The stale in-gallery Problems is dropped');
   assert.equal(s.nodes().some(node => node.inProblems), false, 'No Problems-owned node stays in the gallery');
   assert.equal(s.host.nodes.filter(node => node.tagName === 'DETAILS').length, 1, 'Problems renders once in the host');
-  assert.deepEqual(s.host.nodes.filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem).sort(), ['held-a', 'held-b'], 'Both failures render in the host Problems');
+  assert.deepEqual(s.host.nodes.filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem), ['held-a'], 'Unchanged Problems move into the host');
   assert.ok(s.nodes().includes(video), 'The playing clip is untouched');
 }
 

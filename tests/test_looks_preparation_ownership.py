@@ -12,4 +12,4 @@ class LookPreparationOwnershipTests(unittest.TestCase):
         result = subprocess.run([shutil.which('node'), str(script)], capture_output=True,
                                 text=True, timeout=30, cwd=script.parent.parent)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('12 passed, 0 failed', result.stdout)
+        self.assertIn('13 passed, 0 failed', result.stdout)

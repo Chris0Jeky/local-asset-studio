@@ -59,24 +59,28 @@ def main():
                     page.locator('#lookBlock').evaluate('(el) => el.open = true')
                     page.locator('#lookSelect').select_option(LOOK['id'])
                     page.locator('#lookScene').fill('quiet room')
+                    page.locator('#positive').fill('My existing wording.')
+                    page.evaluate("getControl('seed').value='';document.querySelector('#batch').value='3'")   # an intentionally cleared seed
+                    before = page.evaluate('StudioSetupDraft.capture()')
                     page.locator('#lookPrepare').click()
                     page.wait_for_function("!document.querySelector('#lookPrepare').disabled")
                     status = page.locator('#lookStatus').inner_text()
-                    assert 'could not be applied' in status, status
-                    assert 'sampler' in status and 'press Generate' not in status, status
-                    assert page.locator('#generate').is_disabled(), 'A failed Look must hold Generate'
-                    assert page.locator('[data-key=sampler]').input_value() == 'euler', 'No partial control writes'
-                    assert page.locator('[data-key=seed]').input_value() != '37', 'No partial control writes'
+                    assert 'could not be applied' in status and 'sampler' in status, status
+                    assert 'Prepare stopped' in status and 'press Generate' not in status, status
+                    assert 'Install missing LoRAs' not in status, 'a sampler problem is not a LoRA install problem'
+                    assert page.evaluate('StudioSetupDraft.capture()') == before, 'Failed Prepare must restore all Create values'
+                    assert page.locator('[data-key=seed]').input_value() == '', 'a cleared control stays cleared after the rollback'
                     assert 'edited shipped look' in page.locator('#lookSummary').inner_text()
-                    # The hold survives browser-draft normalization and restoration.
-                    draft = page.evaluate('StudioSetupDraft.capture()')
-                    assert draft['recipe']['look_application']['controls'] == ['sampler'], draft
-                    page.evaluate('(d) => applySaved(d.recipe)', draft)
-                    assert page.locator('#generate').is_disabled(), 'Restoring a draft must retain the hold'
-                    # A named setup must not freeze an unapplied look as if it succeeded.
-                    reason = page.evaluate("(() => { try { checkedSetupControls(); return ''; } catch(e) { return e.message; } })()")
-                    assert 'Look' in reason and 'sampler' in reason, reason
-                    # Repreparing with a supported choice clears the hold and writes every setting.
+                    # Switching to another recipe must roll back its wording, source and local File too.
+                    page.evaluate("""selectPreset('restyle-klein');document.querySelector('#positive').value='Keep this source';
+                      uploaded='retained.png';parentAssets=['asset-0'];parentByInput={reference:'asset-0'};
+                      const transfer=new DataTransfer();transfer.items.add(new File(['fixture'],'local.png',{type:'image/png'}));document.querySelector('#reference').files=transfer.files;""")
+                    before = page.evaluate('StudioSetupDraft.capture()')
+                    page.locator('#lookPrepare').click()
+                    page.wait_for_function("!document.querySelector('#lookPrepare').disabled")
+                    assert page.evaluate('StudioSetupDraft.capture()') == before, 'A failed recipe switch restores the original recipe and source'
+                    assert page.evaluate("document.querySelector('#reference').files[0].name") == 'local.png'
+                    # Repreparing with a supported choice writes every setting.
                     CONTROLS['sampler'] = 'euler'
                     page.locator('#lookPrepare').click()
                     page.wait_for_function("document.querySelector('#lookStatus').textContent.includes('Nothing was generated; press Generate')")
@@ -84,18 +88,18 @@ def main():
                     assert page.locator('#positive').input_value() == CONTROLS['positive']
                     assert page.evaluate("StudioLooks.applicationBlocker(selected.id)") == ''
                     assert 'look_application' not in page.evaluate('StudioSetupDraft.capture()')['recipe']
-                    # A missing binding, not only an unknown select option, also holds the request.
+                    # A missing binding also restores the last prepared Create values.
+                    before = page.evaluate('StudioSetupDraft.capture()')
                     CONTROLS['fps'] = 24
                     page.locator('#lookPrepare').click()
                     page.wait_for_function("document.querySelector('#lookStatus').textContent.includes('could not be applied')")
                     assert 'fps' in page.locator('#lookStatus').inner_text()
-                    assert page.locator('#generate').is_disabled()
-                    page.locator('#lookReset').click()
+                    assert page.evaluate('StudioSetupDraft.capture()') == before
                     assert page.evaluate("StudioLooks.applicationBlocker(selected.id)") == ''
-                    assert 'without the look' in page.locator('#lookStatus').inner_text()
+                    assert page.locator('#lookReset').is_hidden(), 'Restored Create needs no reset'
                     assert all(r['path'] in ('/api/looks/prepare', '/api/estimate', '/api/references/check') for r in fixture.POSTS), fixture.POSTS
                     assert not errors, errors
-                    print('Look application: missing options/bindings held, atomic writes, draft recovery, explicit reset; zero generation and page errors')
+                    print('Look application: missing options/bindings refused, previous Create values restored; zero generation and page errors')
                 finally:
                     browser.close()
         finally:
