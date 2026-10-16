@@ -48,6 +48,7 @@
   // The same runtime facts the full editor gates on (app.js globals); unknown (null) health does not block.
   function runtimeBlocker(){if(typeof backendSwitching!=='undefined'&&backendSwitching)return'A model environment switch is running. Wait for it to finish.';if(typeof workerAlive!=='undefined'&&workerAlive===false)return'The Studio worker has stopped. Restart the Studio before generating.';if(typeof online!=='undefined'&&online===false)return'ComfyUI is not reachable. Start it, then try again.';if(typeof online!=='undefined'&&online===true&&typeof schemaAvailable!=='undefined'&&!schemaAvailable)return'ComfyUI is still starting up. Try again in a moment.';return'';}
   function blocker(look){const runtime=runtimeBlocker();if(runtime)return runtime;if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';const p=presetFor(look);if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
+  const blockerMarkup=(look,text)=>escape(text).replace('Models &amp; setup','<a href="/#models?need='+escape(encodeURIComponent(look.body.preset_id))+'">Models &amp; setup</a>');
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
@@ -65,9 +66,9 @@
     if(state.error){body.innerHTML='<p class="make-error" role="alert">'+escape(state.error)+' <button type="button" data-make-retry>Try again</button></p>';return;}
     if(!state.looks){body.innerHTML='<p class="muted">Loading looks…</p>';return;}
     const list=lookList();if(!list.some(l=>l.id===state.look))state.look=null;
-    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<button type="button" class="make-look'+(l.id===state.look?' active':'')+'" data-make-look="'+escape(l.id)+'" aria-pressed="'+(l.id===state.look)+'">'
+    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<article class="make-look'+(l.id===state.look?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" aria-pressed="'+(l.id===state.look)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+(why?'<small class="make-warn">'+escape(why)+'</small>':'')+'</span></button>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking){const p=presetFor(chosen),thumb=thumbOf(chosen);
       body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b><small class="make-pace '+speed(p)[0]+'">'+escape(speed(p)[1])+'</small></div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
@@ -97,7 +98,7 @@
       +'<label class="make-check"><input type="checkbox" id="makeNewSeed" checked> Different pictures each time</label>'
       +'<p id="makeEstimate" class="muted" aria-live="polite"></p>'
       +'<button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>Generate</button>'
-      +(why?'<p id="makeWhy" class="make-warn">'+escape(why)+'</p>':'')
+      +(why?'<p id="makeWhy" class="make-warn">'+blockerMarkup(look,why)+'</p>':'')
       +'<button type="button" id="makeEditor" class="make-link">Open in the full editor instead</button>'
       +'<details class="make-about"><summary>What this look uses</summary><p>'+escape(p?.name||look.body.preset_id)+'</p>'+(adapters(look).length?'<p>Adapters: '+adapters(look).map(a=>escape(a.name.replace(/\.safetensors$/,''))+' at '+escape(a.strength)).join(', ')+'</p>':'<p>No style adapters: the model and the wording carry this look.</p>')+'<p class="muted">'+escape(look.body.notes||'')+'</p></details>'
       +'</div></div><p id="makeStatus" class="make-status" role="status"></p>';
@@ -237,11 +238,11 @@
   view.addEventListener('click',e=>{
     const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();return;}
     const l=e.target.closest('[data-make-look]');if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();q('#makeScene')?.focus();return;}
-    if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active')?.focus();return;}
+    if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
     if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();q('#makeScene')?.focus();return;}
     const again=e.target.closest('[data-make-rerun],[data-make-another]');if(again){const run=state.runs.find(r=>r.job.id===(again.dataset.makeRerun||again.dataset.makeAnother));if(!run)return;
       state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
-      const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active')?.focus();return;}
+      const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
     if(e.target.closest('#makeGenerate'))void generate();

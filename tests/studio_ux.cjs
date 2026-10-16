@@ -13,6 +13,7 @@ const draft = () => ({version:1,updatedAt:123,recipe:{preset:'qwen-1ref',control
 const ready = overrides => U.readiness({preset:{id:'example'},online:true,schemaAvailable:true,...overrides});
 test('invalid routes normalize to overview', () => {
   for (const route of [null,undefined,'#unknown','#../../models']) assert.equal(U.normalizeView(route),'make');
+  assert.equal(U.normalizeView('#models?need=wai'),'models');
   for (const route of U.VIEWS) assert.equal(U.normalizeView('#'+route),route);
 });
 test('intent selection never mutates catalog order', () => {
