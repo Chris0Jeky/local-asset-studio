@@ -247,6 +247,14 @@ class LookTests(unittest.TestCase):
         self.assertEqual((outcomes["untouched"]["revision"], outcomes["untouched"]["body"], outcomes["untouched"]["lineage"]), (1, night["body"], night["lineage"]))
         self.assertEqual((outcomes["edited"]["name"], outcomes["edited"]["revision"], "{quiet_wall}" in outcomes["edited"]["body"]["template"]), ("My Night Shift", 1, False))
 
+    def test_the_plain_named_general_picture_look_keeps_its_id_and_supersedes_the_old_name(self):
+        """Audit #24: the Photo look read 'Fast general picture, you describe it all'. The id is stable and the old name's digest is listed, so a never-edited Workspace copy takes the new name."""
+        shipped = json.loads((ROOT / "presets/looks.json").read_text(encoding="utf-8"))["looks"]
+        entry = next(x for x in shipped if x["id"] == "look-preset-zimage-fast")
+        self.assertEqual(entry["name"], "Quick picture, any subject")
+        old = dict(entry, name="Fast general picture, you describe it all"); old.pop("supersedes")
+        self.assertIn(server.AssetWorkspace.card_digest(old), entry["supersedes"])
+
     def test_every_shipped_look_is_valid_against_the_real_catalog_and_its_source(self):
         """Curated looks (goal-first Make screen): each validates on its real recipe, has one {scene} slot, and records where it came from."""
         shipped = json.loads((ROOT / "presets/looks.json").read_text(encoding="utf-8"))["looks"]

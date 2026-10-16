@@ -5,14 +5,34 @@ const fs = require('node:fs');
 const path = require('node:path');
 const U = require('../app/static/studio-core.js');
 const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/catalog.json'))).presets;
+const vm = require('node:vm');
 let count = 0;
 function test(name, fn) { fn(); count++; console.log('PASS: ' + name); }
+test('finder goal names, hints and look membership match Make',()=>{
+  const goals=(file,name)=>vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8').match(new RegExp('const '+name+'=(\\[[\\s\\S]*?\\n  \\]);'))[1]);
+  assert.equal(JSON.stringify(goals('studio-shell.js','makeGoals')),JSON.stringify(goals('make.js','GOALS')));
+});
+test('Make orders each goal by lab evidence, files painting styles under Painted illustration and keeps Krea last',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
+  const goals=grab(/const GOALS=(\[[\s\S]*?\n  \]);/),looks=id=>goals.find(g=>g.id===id).looks,ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
+  // Lab rounds 1-2 (docs/looks/LOOK-LAB-2026-10-16.md): measured high scorers first, rejects after them, unmeasured slow Krea last.
+  assert.deepEqual(looks('character'),['look-anima-pearly-petiflow','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-pearly-anima-mix-v10-showcase','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
+  assert.deepEqual(looks('scene'),['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']);
+  assert.deepEqual(looks('painting').slice(0,2),['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot']);
+  assert.ok(['look-krea-atelier-target-stack','look-krea-witch-nijisis'].every(id=>looks('painting').includes(id)&&!looks('character').includes(id)),'oil-paint and Nijisis looks are paintings');
+  assert.deepEqual(looks('photo').slice(0,2),['look-preset-zimage-fast','look-preset-realvis']);assert.deepEqual(looks('game'),['look-preset-stylized-prop','look-preset-pixel-lora']);
+  for(const g of goals.filter(g=>g.looks)){const first=g.looks.findIndex(id=>/krea/.test(id));assert.ok(first<0||g.looks.slice(first).every(id=>/krea/.test(id)),g.id+' keeps Krea last');for(const id of g.looks)assert.ok(ids.has(id),id);}
+  const tested=grab(/const TESTED=(\{[^}]*\});/),shapes=grab(/const SHAPE_FOR=(\{[^}]*\});/);
+  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime']);
+  assert.deepEqual(shapes,{character:'portrait',scene:'landscape',game:'square'});
+});
 const image = {media_type:'image',filename:'source.png'};
 const audio = {media_type:'audio',filename:'voice.wav'};
 const draft = () => ({version:1,updatedAt:123,recipe:{preset:'qwen-1ref',controls:{positive:'A study',seed:42},batch:1,parent_assets:['source'],references:[]}});
 const ready = overrides => U.readiness({preset:{id:'example'},online:true,schemaAvailable:true,...overrides});
 test('invalid routes normalize to overview', () => {
   for (const route of [null,undefined,'#unknown','#../../models']) assert.equal(U.normalizeView(route),'make');
+  assert.equal(U.normalizeView('#models?need=wai'),'models');
   for (const route of U.VIEWS) assert.equal(U.normalizeView('#'+route),route);
 });
 test('intent selection never mutates catalog order', () => {
@@ -217,5 +237,15 @@ test('Make seamless offers the server seam bands, keeps a too-wide band listed w
   assert.deepEqual(U.tileBands({eligible:false,band_choices:status.band_choices}),{options:[],note:''},'no choice on a picture that cannot tile');
   assert.deepEqual(U.tileBands(null),{options:[],note:''});
   assert.equal(U.tileBandPx('160'),160);assert.equal(U.tileBandPx(''),null);assert.equal(U.tileBandPx(undefined),null);assert.equal(U.tileBandPx('wide'),null);
+});
+test('pose canvas is exposed as an operable application, not a static image (#1402)', () => {
+  const code = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
+  const match = code.match(/<canvas id="uxPoseCanvas"[^>]*>/);
+  assert.ok(match, 'pose canvas markup must be present');
+  const tag = match[0];
+  assert.match(tag, /role="application"/, 'keyboard-operable pose canvas must not expose role=img (WCAG 4.1.2)');
+  assert.match(tag, /aria-roledescription="pose editor"/, 'pose canvas must name its roledescription');
+  assert.match(tag, /aria-label="[^"]*Pose skeleton[^"]*"/, 'pose canvas keeps its accessible label');
+  assert.match(tag, /aria-label="[^"]*joint[^"]*arrow keys[^"]*Shift[^"]*"/, 'pose canvas label must describe joint selection, arrow keys and Shift+arrow');
 });
 console.log(count+' Studio UX policy checks passed.');

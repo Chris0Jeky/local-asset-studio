@@ -1,0 +1,19 @@
+*{box-sizing:border-box}body{margin:0;background:#f3eedf;color:#243c3b;font:17px/1.5 system-ui,Arial,sans-serif}main{max-width:1480px;padding:24px;margin:auto}h1{font-size:clamp(25px,4vw,40px);margin:0 0 8px}h2{font-size:20px;margin:0 0 10px}a{color:#164d4d;text-underline-offset:3px}.comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.art{background:#f3eedf;overflow:hidden}.art svg{display:block;width:100%;height:auto}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:16px 0}button{font:inherit;padding:8px 18px;min-height:44px;color:#f3eedf;background:#164d4d;border:2px solid #164d4d;border-radius:5px;cursor:pointer}button:disabled{background:#6d7a72;border-color:#6d7a72;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #a97635;outline-offset:3px}label{display:flex;align-items:center;gap:8px}input{width:20px;height:20px}output{display:block;min-height:27px}.notes{margin-top:25px;max-width:900px}.offscreen-space{height:1050px}footer{padding-top:10px;border-top:1px solid #cbbb9a}
+.motion-piece{animation-play-state:paused!important}[data-state="playing"] .motion-piece{animation-play-state:running!important}
+.preview-overlay{opacity:0}[data-motion-started="true"] .preview-overlay{opacity:1}
+[data-motion-started="true"] .falling-rain{animation:falling-rain 2s linear infinite;animation-delay:var(--phase)}
+[data-motion-started="true"] .reflection-light{animation:reflection-light 4s ease-in-out infinite}
+.train-piece{animation:none}[data-motion-started="true"][data-train="true"] .train-piece{animation:train-passage 8s linear infinite}
+[data-motion-started="true"] .flame-motion{animation:flame-motion 4s ease-in-out infinite;transform-box:view-box;transform-origin:319px 531px}
+[data-motion-started="true"] .flame-light{animation:flame-light 4s ease-in-out infinite}
+[data-motion-started="true"] .steam-rise{animation:steam-rise 4s linear infinite}
+[data-motion-started="true"] .steam-secondary{animation-delay:-2s}
+[data-motion-started="true"] .steam-rise path{stroke:#819481;stroke-width:3.75;opacity:.75}
+@keyframes falling-rain{from{transform:translate(0,0)}to{transform:translate(-12px,800px)}}
+@keyframes reflection-light{0%,100%{opacity:1}50%{opacity:.78}}
+@keyframes train-passage{0%,100%{transform:translate(0,0)}40%{transform:translate(560px,9.52px);animation-timing-function:steps(1,end)}60%{transform:translate(-560px,-9.52px)}}
+@keyframes flame-motion{0%,100%{transform:rotate(0deg);opacity:1}25%{transform:rotate(-7deg);opacity:.9}75%{transform:rotate(7deg);opacity:1}}
+@keyframes flame-light{0%,100%{opacity:1}50%{opacity:.58}}
+@keyframes steam-rise{0%{transform:translate(0,0);opacity:0}15%{opacity:.85}65%{opacity:.7}100%{transform:translate(10px,-110px);opacity:0}}
+@media(max-width:720px){main{padding:18px}.comparison{grid-template-columns:1fr;gap:24px}}
+@media(prefers-reduced-motion:reduce){.motion-piece{animation:none!important}.preview-overlay{opacity:0!important}}

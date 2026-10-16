@@ -71,22 +71,32 @@ const applySource=source.slice(source.indexOf('  function apply(result){'),sourc
 function selectControl(options, initial){let value=initial;return {type:'select-one',get value(){return value;},set value(v){value=options.includes(String(v))?String(v):'';},cloneNode(){return selectControl(options,value);},checkValidity(){return true;}};}
 function textControl(initial,type='text'){return {type,value:String(initial),cloneNode(){return textControl(this.value,type);},checkValidity(){return true;},dispatchEvent(){}};}
 function applyFixture(controls){
-  const inputs={'#positive':textControl('default words'),'#negative':textControl(''),'#batch':textControl(1),seed:textControl(13,'number'),sampler:selectControl(['euler'],'euler')};
-  let status='',message='';const sandbox={L,looks:[],busy:false,composed:null,selected:{id:'demo',defaults:{positive:'default words'}},q:key=>inputs[key],getControl:key=>inputs[key],
-    selectPreset(){L.clearApplication?.();inputs.seed.value='13';inputs.sampler.value='euler';},confirm:()=>true,
+  const inputs={'#positive':textControl('my words'),'#negative':textControl('my avoid'),'#batch':textControl(3),seed:textControl(99,'number'),sampler:selectControl(['euler'],'euler'),scheduler:selectControl(['normal'],'normal'),lora_name:selectControl(['installed.safetensors'],'installed.safetensors')};
+  let status='',message='';const sandbox={recipeTemplateHash:null,L,looks:[],busy:false,composed:null,selected:{id:'demo',defaults:{positive:'default words'}},q:key=>inputs[key],getControl:key=>inputs[key],
+    StudioSetupDraft:{capture:()=>({recipe:Object.fromEntries(Object.entries(inputs).map(([key,input])=>[key,input.value]))})},
+    applySaved(recipe){for(const [key,value] of Object.entries(recipe))inputs[key].value=value;},preparationStamp:()=>'',preparationEpoch:0,
+    selectPreset(){L.clearApplication?.();inputs.seed.value='13';inputs.sampler.value='euler';inputs['#positive'].value='default words';},confirm:()=>true,
     status(text){status=text;},message(text){message=text;},updateLoraHints(){},updateReady(){},scheduleTimeEstimate(){},recipeChanged(){},Event:class{}};
-  vm.runInNewContext(applySource+';apply(result)',{...sandbox,result:{preset_id:'demo',look:{id:'test',name:'Test'},controls}});
+  vm.runInNewContext('let preparedShortcut;'+applySource+';apply(result)',{...sandbox,result:{preset_id:'demo',look:{id:'test',name:'Test'},controls}});
   return {inputs,status,message};
 }
 test('a stale select choice cannot become a prepared success or partially apply the other controls',()=>{
   const result=applyFixture({positive:'new words',seed:37,sampler:'removed'});
   assert.match(result.status,/could not be applied/);assert.doesNotMatch(result.status,/press Generate/);
-  assert.equal(result.inputs.seed.value,'13');assert.equal(result.inputs.sampler.value,'euler');
-  assert.match(L.applicationBlocker('demo'),/sampler/);
+  assert.equal(result.inputs.seed.value,'99');assert.equal(result.inputs.sampler.value,'euler');
+  assert.equal(result.inputs['#positive'].value,'my words');assert.equal(result.inputs['#negative'].value,'my avoid');assert.equal(result.inputs['#batch'].value,'3');
+  assert.equal(L.applicationBlocker('demo'),'');
+});
+
+test('every unavailable select is named in plain words and Create retains its previous values',()=>{
+  const result=applyFixture({positive:'new words',seed:37,lora_name:'gone.safetensors',sampler:'retired',scheduler:'retired'});
+  assert.match(result.status,/LoRA 'gone.safetensors' is not installed/);assert.match(result.status,/sampler 'retired'/);assert.match(result.status,/schedule 'retired'/);
+  assert.match(result.status,/Models & setup/);assert.match(result.status,/Prepare stopped/);
+  assert.equal(result.inputs.seed.value,'99');assert.equal(result.inputs.lora_name.value,'installed.safetensors');
 });
 test('a missing control is reported and does not silently fall through to graph defaults',()=>{
   const result=applyFixture({positive:'new words',seed:37,fps:24});
-  assert.match(result.status,/fps/);assert.match(L.applicationBlocker('demo'),/fps/);
+  assert.match(result.status,/fps/);assert.equal(L.applicationBlocker('demo'),'');
 });
 test('a valid application is all-or-nothing and clears an earlier hold',()=>{
   const result=applyFixture({positive:'new words',seed:37,sampler:'euler'});
@@ -116,5 +126,11 @@ test('out-of-range and fractional numeric settings refuse the entire application
     const prompt=textControl('unchanged');const problems=L.applyControls({positive:'new',steps:invalid},key=>key==='steps'?number:prompt);
     assert.deepEqual(problems,['steps']);assert.equal(prompt.value,'unchanged');assert.equal(number.value,'10');
   }
+});
+test('actual controls are read back too and every write is restored when a live control rejects it',()=>{
+  const prompt=textControl('old'),sampler=selectControl(['euler'],'euler');
+  sampler.cloneNode=()=>textControl('euler');
+  assert.deepEqual(L.applyControls({positive:'new',sampler:'gone'},key=>key==='positive'?prompt:sampler),['sampler']);
+  assert.equal(prompt.value,'old');assert.equal(sampler.value,'euler');
 });
 console.log(count+' total Look checks passed');

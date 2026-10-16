@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 class Element{
  constructor(tag='div'){Object.assign(this,{tag,value:'',textContent:'',hidden:false,disabled:false,checked:false,children:[],listeners:{},dataset:{}});}
  addEventListener(k,f){this.listeners[k]=f;}append(...v){this.children.push(...v);}replaceChildren(...v){this.children=v;}
- get firstChild(){return this.children[0];}setAttribute(k,v){this[k]=v;}querySelectorAll(){return [];}fire(k){return this.listeners[k]?.({target:this});}
+ get firstChild(){return this.children[0];}setAttribute(k,v){this[k]=v;}after(node){this.error=node;}removeAttribute(name){delete this[name];}querySelectorAll(){return [];}fire(k){return this.listeners[k]?.({target:this});}
 }
 const scope='a'.repeat(32),id='b'.repeat(32),store=new Map();let rejectStorage=false,drop=false,held=null,release,posts=[],rows=[],readRow=null,lastCommand;
 const tick=()=>new Promise(resolve=>setImmediate(resolve));

@@ -96,6 +96,8 @@ def commit_release_blocked(available):
     """The one floor rule for every /free the Studio sends on its own (the gate release and the idle release, #1167); an unknown reading blocks."""
     return not isinstance(available, int) or isinstance(available, bool) or available <= COMMIT_RELEASE_FLOOR_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
+# Plain numeric controls and their accepted range; app/looks.py keeps the same table for saved looks (parity test).
+NUMBER_RANGES = (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True))
 
 class StudioError(ValueError):
     code = None
@@ -234,7 +236,7 @@ class Studio:
                 for key in CONTROL_KEYS:
                     binding = preset.get(key)
                     if binding: defaults[key] = graph[str(binding[0])]["inputs"].get(str(binding[1]), "")
-                preset["defaults"] = defaults
+                preset["defaults"] = defaults; preset["model"] = looks.model_of(graph)
                 capacity = wan_capacity.projection(preset, graph)
                 if capacity is not None: preset["wan_decode_capacity"] = capacity
                 preset["continuation_capability"] = dict(continuation.capability(preset, graph), template_sha256=hashlib.sha256(template_path.read_bytes()).hexdigest())
@@ -442,6 +444,15 @@ class Studio:
             preparation["warning"] = "Wan22ImageToVideoLatent will center-crop the source before bilinear resampling; no letterbox is used."
         preset["_prepared_source"] = preparation
 
+    def _lora_file(self, key, name):
+        """An adapter filename from a request: a bare .safetensors name, and an installed one while the inventory is known."""
+        if not isinstance(name, str) or not name or len(name) > 200 or name != Path(name).name or "/" in name or "\\" in name or ".." in name or not name.endswith(".safetensors"):
+            raise StudioError(f"{key} must be an installed .safetensors filename")
+        # ComfyUI rejects an uninstalled combo value with HTTP 400 even at strength 0, so refuse it here while the inventory is known.
+        installed = self.options().get("loras")
+        if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
+        return name
+
     def prepare(self, payload, *, _defer_host_commit_preflight=False):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
         self.require_worker()
@@ -478,21 +489,12 @@ class Studio:
             binding = preset.get(key) or ((preset.get("bindings_extra") or {}).get(key) or [None])[0]
             try: existing = graph[str(binding[0])]["inputs"].get(str(binding[1]))
             except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
-            # `lora` stays polymorphic: older presets bind it to a filename input.
-            value = number(controls[key], key, 0, 2) if isinstance(existing, (int, float)) and not isinstance(existing, bool) else controls[key]
-            if isinstance(value, bool) or not isinstance(value, (int, float, str)) or (isinstance(value, str) and len(value) > 8000): raise StudioError(f"{key} must be a number or short text")
-            self._bind_control(graph, preset, key, value)
-        installed = self.options().get("loras") if any(key in controls for key in LORA_NAME_KEYS) else None
+            # `lora` stays polymorphic: older presets bind it to a filename input, which takes the filename checks below;
+            # every other binding (a strength, or an input the graph leaves unset) is a 0-2 number, never raw text.
+            self._bind_control(graph, preset, key, self._lora_file(key, controls[key]) if isinstance(existing, str) else number(controls[key], key, 0, 2))
         for key in LORA_NAME_KEYS:
-            if key not in controls: continue
-            name = controls[key]
-            if not isinstance(name, str) or not name or len(name) > 200 or name != Path(name).name or "/" in name or "\\" in name or ".." in name or not name.endswith(".safetensors"):
-                raise StudioError(f"{key} must be an installed .safetensors filename")
-            # ComfyUI rejects an uninstalled combo value with HTTP 400 even at
-            # strength 0, so refuse it here while the inventory is known.
-            if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
-            self._bind_control(graph, preset, key, name)
-        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True)):
+            if key in controls: self._bind_control(graph, preset, key, self._lora_file(key, controls[key]))
+        for key, lo, hi, integer in NUMBER_RANGES:
             if key in controls: self._bind_control(graph, preset, key, number(controls[key], key, lo, hi, integer))
         for key, lo, hi in (("frames", 5, 365), ("fps", 1, 60)):
             if key in controls:
@@ -2736,7 +2738,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_object().get("id")))
             if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/resume"):
-                self._body_json(); return self._json(202, self.studio.resume_job(self.path.split("/")[3]))
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown resume route')
+                self._body_json(); return self._json(202, self.studio.resume_job(parts[3]))
             if self.path.startswith("/api/jobs/") and self.path.endswith(("/observe-known", "/dispose-mixed")):
                 parts = self.path.split('/')
                 if len(parts) != 5: raise StudioError('Unknown mixed batch route')
@@ -2755,7 +2759,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(self._body_json(), dict): raise StudioError('Cancel command must be an object')
                 return self._json(202, self.studio.cancel_job(parts[3]))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
-                return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_object().get("reason")))
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown stop-tracking route')
+                return self._json(200, self.studio.stop_tracking(parts[3], self._body_object().get("reason")))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/put-away"):
                 parts = self.path.split('/')
                 if len(parts) != 5: raise StudioError('Unknown put-away route')

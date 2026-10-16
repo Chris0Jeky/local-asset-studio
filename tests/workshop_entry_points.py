@@ -179,7 +179,7 @@ class EntryPoints(unittest.TestCase):
                 self.page.set_content(shell_html(workflow))
                 self.assertEqual(self.page.locator('#studioQuickCreate').count(), 1)
                 self.assertTrue(self.page.locator('#studioQuickCreate').is_visible())
-                self.assertEqual(self.page.locator('#studioQuickCreate').get_attribute('href'), '/#create')
+                self.assertEqual(self.page.locator('#studioQuickCreate').get_attribute('href'), '/#make')
                 self.assertTrue(self.page.locator('#studioSidebar').evaluate('(n)=>n.inert'))
                 self.page.click('#studioNavToggle')
                 self.assertTrue(self.page.evaluate("!!document.activeElement.closest('#studioSidebar')"))
@@ -191,6 +191,15 @@ class EntryPoints(unittest.TestCase):
                 self.page.wait_for_function("!document.querySelector('#studioSidebar').inert")
                 self.page.set_viewport_size({'width': 390, 'height': 844})
 
+
+    def test_compact_menu_focuses_the_active_link_inside_a_folded_group(self):
+        # #1412 review: the active page's group may have been folded by the user; opening the menu must still land on it.
+        self.page.set_viewport_size({'width': 390, 'height': 844})
+        self.page.set_content(shell_html(False))
+        self.page.evaluate("StudioShell.setView('create'); document.querySelector('[data-studio-route=\"create\"]').closest('details').open = false")
+        self.page.click('#studioNavToggle')
+        self.assertEqual(self.page.evaluate("document.activeElement.dataset.studioRoute"), 'create')
+        self.assertTrue(self.page.evaluate("document.querySelector('[data-studio-route=\"create\"]').closest('details').open"))
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

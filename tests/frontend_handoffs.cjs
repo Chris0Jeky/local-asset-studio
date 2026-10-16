@@ -57,7 +57,7 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
   };
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener(name, handler) {if (name === 'click') clickHandler = handler;}},
-    URL, Blob, StudioContinuation, StudioAssetRecovery, StudioUX,
+    URL, URLSearchParams, Blob, StudioContinuation, StudioAssetRecovery, StudioUX,
     sessionStorage: (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map()),
     window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
@@ -91,10 +91,13 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
 async function aFailedStartupStageDoesNotStopTheRest() {
   const reply = (ok, data) => async () => ({ok, status: ok ? 200 : 500, json: async () => data});
   const {element, reads} = sandbox(null, null, null, null, {
-    '/api/catalog': reply(true, {presets: [{id: 'plain', name: 'plain', modality: 'image', positive: ['1', 'text'], defaults: {}}]}),
+    '/api/catalog': reply(true, {presets: [{id: 'plain', name: 'plain', modality: 'image', positive: ['1', 'text'], seed:['2','seed'], defaults: {positive:'An unrelated example',negative:'example avoidance',seed:42}}]}),
     '/api/setups': reply(false, {error: 'Setup store unreadable'}),
   });
   for (let i = 0; i < 50 && !reads.includes('/api/health'); i++) await new Promise(resolve => setImmediate(resolve));
+  assert.equal(element('#positive').value,'','fresh startup clears authored prompt text');
+  assert.equal(element('#negative').value,'','fresh startup clears authored negative text');
+  assert.equal(element('[data-key="seed"]').value,42,'fresh startup keeps authored non-text controls');
   assert.ok(reads.includes('/api/health'), 'health still starts after saved setups fail: ' + reads.join(', '));
   assert.match(element('#status').textContent + ' ' + element('#status').innerHTML, /Setup store unreadable|Saved setups/, 'the failed stage is reported');
 }
@@ -575,7 +578,7 @@ async function unstagedLocalFilesCannotBeSaved() {
     assert.equal(s.element('#saveName').value,'Keep pending local selection');
     assert.equal(s.element('#'+input).files[0].name,'replacement.png');
     assert.deepEqual(s.parents(),parents,'Save must not recreate the released old source');
-    assert.match(s.element('#setupStatus').textContent,/not uploaded.*Asset library.*Pull from library/);
+    assert.match(s.element('#setupStatus').textContent,/not uploaded.*Library.*Pull from library/);
     assert.match(s.element('#setupStatus').textContent,input==='reference'?/first frame/:/Last frame/);
     // Clearing a browser-only selection permits the already supported source-free setup.
     s.element('#'+input).files=[];s.element('#'+input).onchange();
@@ -854,6 +857,70 @@ async function linkedModelFolderIsOneRow() {
   const folders = element('#folders').innerHTML;
   assert.match(folders, /Model folder points outside the model library<\/small><\/p><button data-folder="checkpoints" disabled>Open folder/);
   assert.match(folders, /<button data-folder="loras">Open folder/);
+}
+
+// Models as a shop: looks and recipes are joined to the files they need; a missing file says where it comes from and where it goes,
+// and the install button is live only where the library marks the file installable. Rendering never installs.
+async function modelShopCards() {
+  const {element, run} = sandbox({}, {});
+  const file = (id, folder, extra) => ({id, name: id + ' model', family: 'Fam ' + id, bytes: 8, file: folder + '/' + id + '.safetensors', path: 'C:\\models\\' + folder + '\\' + id + '.safetensors',
+    present: true, verified: false, installable: true, source: 'https://huggingface.co/org/' + id, license: 'x', download: {}, ...extra});
+  const assets = [file('base', 'checkpoints', {present: false}), file('enc', 'text_encoders', {present: false, installable: false, install_note: 'Copy it in by hand.', source: 'https://example.com/enc'}),
+    file('shared', 'vae'), file('style', 'loras'), file('lonely', 'loras')];
+  run(`library=${JSON.stringify({assets, inventory: [], storage: {}, folders: [], collections: [], model_root: 'C:/models'})};`
+    + `modelLooks=${JSON.stringify([{id: 'look-a', kind: 'look', name: 'Look A', preset_name: 'Preset 1', body: {preset_id: 'p1', controls: {lora_name: 'style.safetensors', lora: 1}}}, {id: 'look-b', kind: 'look', name: 'Look B', preset_name: 'Preset 2', body: {preset_id: 'p2'}}])};`
+    + `modelReqs=new Map([['p1',${JSON.stringify([{file: 'checkpoints/base.safetensors', asset_id: 'base', present: false}, {file: 'text_encoders/enc.safetensors', asset_id: 'enc', present: false}, {file: 'vae/shared.safetensors', asset_id: 'shared', present: true}])}],['p2',${JSON.stringify([{file: 'vae/shared.safetensors', asset_id: 'shared', present: true}])}]]);`
+    + `atelierRecipes=[{id:'r1',name:'Recipe One',preset_id:'p1',controls:{}}];`);
+  element('#modelCards').querySelector = () => null;
+  element('#curatedModelSearch').value = '';
+  run('renderCuratedModels()');
+  const card = id => element('#modelCards').innerHTML.split('<article').find(part => part.includes('<code>') && part.includes('/' + id + '.safetensors</code>')) || assert.fail('no card for ' + id);
+  // Used by: the looks that need the file, the recipes (by preset or adapter name) that use it; unused files say nothing.
+  assert.match(card('base'), /Used by: Look A · recipes Recipe One/);
+  assert.match(card('shared'), /Used by: Look A, Look B · recipes Recipe One/);
+  assert.match(card('style'), /Used by: Look A/, 'an adapter named in a look control is used by that look');
+  assert.doesNotMatch(card('lonely'), /Used by/);
+  // The missing, installable file: source host, folder, both copy buttons, a live install button.
+  const base = card('base');
+  assert.match(base, /Get it from <a href="https:\/\/huggingface\.co\/org\/base"[^>]*>huggingface\.co/);
+  assert.match(base, /Put it in <code>C:\\models\\checkpoints<\/code>/);
+  assert.match(base, /data-copy="C:\\models\\checkpoints">Copy folder/);
+  assert.match(base, /data-copy="C:\\models\\checkpoints\\base\.safetensors">Copy file path/);
+  assert.match(base, /<button data-install="base" +class="primary"/);
+  assert.doesNotMatch(base, /data-install="base" disabled/);
+  // The pin-only file has the same instructions but no live install button.
+  const enc = card('enc');
+  assert.match(enc, /example\.com/); assert.match(enc, /Copy it in by hand\./); assert.match(enc, /data-install="enc" disabled/);
+  assert.doesNotMatch(card('shared'), /model-get/, 'a present file needs no acquisition block');
+  // Looks: which can be used now and which need files, each missing file named.
+  const looks = element('#modelLooks').innerHTML;
+  assert.match(looks, /1 of 2 looks ready now · 1 needs a download/);
+  assert.match(looks, /Needs a download<\/h4>[\s\S]*Look A[\s\S]*Needs: base\.safetensors, enc\.safetensors[\s\S]*2 files to get[\s\S]*Ready now<\/h4>[\s\S]*Look B/);
+  assert.match(looks, /href="\/#models\?need=p1"/);
+  // The top search filters looks and cards, and also matches a file by the look that uses it.
+  element('#curatedModelSearch').value = 'look b';
+  run('renderCuratedModels()');
+  assert.match(element('#modelCards').innerHTML, /shared model/); assert.doesNotMatch(element('#modelCards').innerHTML, /base model|lonely model/);
+  assert.doesNotMatch(element('#modelLooks').innerHTML, /Look A/); assert.match(element('#modelLooks').innerHTML, /Look B/);
+  element('#curatedModelSearch').value = 'lonely';
+  run('renderCuratedModels()');
+  assert.match(element('#modelCards').innerHTML, /lonely model/); assert.doesNotMatch(element('#modelCards').innerHTML, /shared model/);
+  assert.match(element('#modelLooks').innerHTML, /No look matches this search/);
+  // The top search narrows the file table too.
+  run(`library.inventory=[{file:'loras/lonely.safetensors',bytes:8},{file:'vae/shared.safetensors',bytes:8}];renderInventory()`);
+  assert.match(element('#inventory').innerHTML, /lonely/); assert.doesNotMatch(element('#inventory').innerHTML, /shared/);
+  // Readiness follows the preset's own root (the inspect requirement), not the active library's copy of the asset:
+  // after an environment switch the library describes another backend.
+  element('#curatedModelSearch').value = '';
+  run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true}]);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
+  run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
+  // An adapter named in a look but listed nowhere (library or disk) is missing, not silently ignored; one on disk is fine.
+  run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared',present:true}]);modelLooks[1].body.controls={lora_name:'ghost.safetensors'};renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*ghost\.safetensors/);
+  run(`library.inventory=[{file:'loras/ghost.safetensors',bytes:8}];renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
 }
 
 async function modelStatusFilter() {
@@ -1248,19 +1315,18 @@ async function recentRunsHostHeldProblemsDropTheStaleGalleryProblems() {
   const mount = s.context.document.getElementById;
   s.context.document.getElementById = () => null;
   const failedA = {id: 'held-a', preset_name: 'Failure A', status: 'failed', message: 'Out of memory', outputs: [], prompt_ids: [], created_at: 5, can_put_away: true, put_away: false};
-  const failedB = {id: 'held-b', preset_name: 'Failure B', status: 'failed', message: 'Still failing', outputs: [], prompt_ids: [], created_at: 6, can_put_away: true, put_away: false};
   await s.poll([recentJob('clip', 1, 'video'), failedA]);
   assert.ok(s.nodes().some(node => node.tagName === 'DETAILS'), 'Problems lands inside the gallery before the host mounts');
   s.context.document.getElementById = mount;
   const video = s.nodes().find(node => node.tagName === 'VIDEO');
   video.paused = false;
   const writes = s.writes;
-  await s.poll([failedB, failedA, recentJob('clip', 1, 'video')]);
+  await s.poll([failedA, recentJob('clip', 1, 'video')]);
   assert.equal(s.writes, writes, 'The gallery still waits for the clip');
   assert.equal(s.nodes().some(node => node.tagName === 'DETAILS'), false, 'The stale in-gallery Problems is dropped');
   assert.equal(s.nodes().some(node => node.inProblems), false, 'No Problems-owned node stays in the gallery');
   assert.equal(s.host.nodes.filter(node => node.tagName === 'DETAILS').length, 1, 'Problems renders once in the host');
-  assert.deepEqual(s.host.nodes.filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem).sort(), ['held-a', 'held-b'], 'Both failures render in the host Problems');
+  assert.deepEqual(s.host.nodes.filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem), ['held-a'], 'Unchanged Problems move into the host');
   assert.ok(s.nodes().includes(video), 'The playing clip is untouched');
 }
 
@@ -1507,6 +1573,39 @@ async function seamlessTileSubmitsTheServerPlan() {
   assert.equal(requests.filter(r => r.url === '/api/jobs').length, 1, 'finishing never submits a generation');
 }
 
+// #1230: run the shipped save, draft and import entry points, including stale claims.
+async function seamlessPlanRecovery() {
+  const file='f'.repeat(32)+'_seam.png',plan={version:1,preset_id:'tile-route',source_asset_id:'source-asset',source_sha256:'a'.repeat(64),rolled_file:file,rolled_sha256:'d'.repeat(64),size:256,band_px:112,feather_px:12,flatten_sigma_px:24};
+  const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const snapshot=workbench.match(/  function snapshot\(\).*\r?\n/)[0];
+  const restore=workbench.slice(workbench.indexOf('  async function restoreDraft('),workbench.indexOf("  q('#uxRestoreDraft').onclick="));
+  const fixture=(missing=false)=>{const s=sandbox(null,null,missing?{}:{[file]:'d'.repeat(64)});s.run(`catalog.presets.push({id:'tile-route',name:'Seamless tile',modality:'image',tile_route:true,reference:['11','image'],positive:['4','text'],defaults:{}});selectPreset('plain');const U=StudioUX,q=$;let pendingInputs=new Set(),restoring=false,draftDirty=false,selectionEpoch=0;const syncReady=()=>{},syncCreate=()=>{},announce=message;`+snapshot+restore);return s;};
+  const saving=fixture();saving.run(`applySaved(${JSON.stringify({preset:'tile-route',tile:plan,controls:{reference:file,positive:'Texture'},parent_assets:['source-asset'],batch:1})});`);
+  saving.element('#saveName').value='Tile';await saving.element('#save').onclick();
+  const setup=saving.requests.find(r=>r.url==='/api/setups').data.recipe;
+  const captured=JSON.parse(saving.run('JSON.stringify(snapshot())'));
+  assert.deepEqual(setup.tile,plan);assert.deepEqual(captured.recipe.tile,plan);
+  for(const route of ['draft','setup','import']){
+    for(const change of [null,'reference','parent','preset','noref',...(route==='draft'?['missing']:[])]){
+      const s=fixture(change==='missing'),recipe=JSON.parse(JSON.stringify(setup));
+      if(change==='reference')recipe.controls.reference='other.png';
+      if(change==='parent')recipe.parent_assets=[];
+      if(change==='noref')delete recipe.controls.reference;
+      if(change==='preset')recipe.tile.preset_id='other';
+      if(route==='draft')await s.run(`restoreDraft(${JSON.stringify({...captured,recipe})})`);
+      if(route==='setup'){s.run(`serverSetups=[{id:'tile',name:'Tile',recipe:${JSON.stringify(recipe)}}];`);await s.element('#savedList').onclick({target:{dataset:{load:'0'}}});}
+      if(route==='import'){const exported={...recipe,preset_id:recipe.preset};await s.element('#importRecipe').onchange({target:{files:[{size:100,text:async()=>JSON.stringify(exported)}],value:'recipe.json'}});}
+      // A rolled file that is only missing locally is reattached later: the plan is kept (Muse review on #1441).
+      const dropped=!!change&&!['missing','noref'].includes(change);
+      assert.equal(s.run('JSON.stringify(tileState)'),dropped?'null':JSON.stringify(plan),route+': '+change);
+      assert.equal(s.element('#positive').value,'Texture',route+' keeps the other settings');
+      if(dropped)assert.match(s.element('#status').textContent,/Seamless plan dropped.*Make seamless/,route+' reports the dropped plan');
+      if(route==='import'&&dropped)assert.equal(s.requests.find(r=>r.url==='/api/recipe-check').data.tile,null,'a stale plan is stripped before the server recipe check, so the rest still imports');
+      assert.equal(s.requests.some(r=>r.url==='/api/jobs'),false,'Recovery never submits a generation');
+    }
+  }
+}
+
 // Parallax layers (#1219): the parallax recipe refuses to run without the server's plan; beginParallax attaches the unchanged
 // source at its own size with the source as parent; the first Generate sends the plate claim and then only LOADS the isolate
 // stage, so the second edit is a second press; any recipe change drops the plan; a stage card offers the one next step.
@@ -1553,9 +1652,34 @@ async function parallaxStagesAreTwoOwnerPresses() {
   run(`jobs=[]`);
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxFinish' ? {dataset: {job: 'plate-job'}} : null}});
   assert.deepEqual(requests.filter(r => r.url === '/api/parallax/finish').map(r => r.data), [{job_id: 'plate-job'}]);
+  assert.match(card(plate), /disabled[^>]*title="Parallax staging is still loading\."/, 'before the controller mounts the stage button waits and says so');
+  run(`window.StudioParallaxRecovery={mounted:false,failed:true}`);
+  assert.match(card(plate), /disabled[^>]*title="Parallax staging is unavailable: reload the page\."/, 'only a failed mount asks for a reload');
+  run(`delete window.StudioParallaxRecovery`);
+  assert.match(card(plate), /Parallax staging is still loading\./, 'without the controller the disabled reason is visible');
+  const stagePosts = requests.filter(r => r.url === '/api/parallax/stage').length;
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
-  assert.equal(run('selected.id'), 'parallax-route'); assert.equal(run('parallaxState.stage'), 'isolate');
+  assert.equal(requests.filter(r => r.url === '/api/parallax/stage').length, stagePosts, 'without the controller a stage click POSTs nothing');
   assert.equal(jobs().length, 2, 'splitting or loading a stage never submits a generation');
+}
+
+// #1407: without the recovery controller the legacy .parallaxStage path must be impossible:
+// the button renders disabled with a visible reason and a click POSTs nothing.
+async function parallaxStageWithoutControllerPostsNothing() {
+  const {element, requests, run} = sandbox(null, null);
+  installSetupStamp(run);
+  const file = 'f'.repeat(32) + '_room.png';
+  const plan = {version: 1, plan_id: 'b'.repeat(64), preset_id: 'parallax-route', source_asset_id: 'source-asset', source_sha256: 'a'.repeat(64), source_file: file, width: 1344, height: 768, objects: 'the desk', view_polygons: []};
+  run(`catalog.presets.push({id:'parallax-route',name:'Parallax layers',modality:'image',parallax_route:true,reference:['14','image'],positive:['4','text'],width:['10','width'],height:['10','height'],defaults:{}});selectPreset('parallax-route');`);
+  const plate = {id: 'plate-job', status: 'completed', controls: {}, preset_name: 'Parallax layers', parallax: {...plan, stage: 'plate'}};
+  run(`jobs=[]`);
+  const html = run(`mediaCard(${JSON.stringify(plate)},0,{media_type:'image',asset_id:'edit'})`);
+  assert.match(html, /class="parallaxStage"[^>]*disabled[^>]*title="Parallax staging is still loading\."/, 'without the controller the stage button is disabled with its reason in the title');
+  assert.match(html, /Parallax staging is still loading\./, 'without the controller the disabled reason is visible');
+  const before = requests.filter(r => r.url === '/api/parallax/stage').length;
+  await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
+  assert.equal(requests.filter(r => r.url === '/api/parallax/stage').length, before, 'clicking the disabled stage button POSTs nothing');
+  assert.equal(requests.filter(r => r.url === '/api/jobs').length, 0, 'a disabled stage click never submits generation');
 }
 
 function installSetupStamp(run) {
@@ -1680,11 +1804,16 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await avoidWordingIsVisibleWhenTheRecipeBindsIt();
   await aFailedStartupStageDoesNotStopTheRest();
   await linkedModelFolderIsOneRow();
+  await modelShopCards();
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
   await seamlessTileSubmitsTheServerPlan();
+  await seamlessPlanRecovery();
   await parallaxStagesAreTwoOwnerPresses();
+  await parallaxStageWithoutControllerPostsNothing();
   await parallaxLateRepliesKeepCreateEdits();
+  await fullEditorLoraSlotsUseTheKnowledgeBase();
+  recipePickerIsGroupedAndPlain();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
 
@@ -1730,3 +1859,118 @@ async function windowsInventoryStatusMatchesCaseAndSeparators() {
     'A POSIX backslash remains a literal filename character rather than a path separator'
   );
 }
+
+// #278 J1 (16 Oct 2026 audit): the adapter hint read "place it at the anywhere of the prompt", a newly chosen adapter
+// stayed at strength 0, and its trigger was never added. (Hoisted: available to the runner above.)
+async function fullEditorLoraSlotsUseTheKnowledgeBase() {
+  const {element, run} = sandbox({}, {});
+  run(`Event=class{constructor(type){this.type=type;}};
+    knowledge={loras:{'ink.safetensors':{trigger:'m4ng41nk',trigger_position:'anywhere',strength:[0.6,1.0],default:0.8},
+      'lead.safetensors':{trigger:'lead tag',trigger_position:'start of prompt',strength:[1,1.25],default:1},
+      'off.safetensors':{trigger:'',trigger_position:'none',strength:[0,1],default:0,label:'Disabled in recipes'}}};
+    catalog.presets.push({id:'lora-recipe',name:'lora-recipe',modality:'image',positive:['1','text'],lora:['8','strength_model'],lora_name:['8','lora_name'],
+      lora2:['9','strength_model'],lora2_name:['9','lora_name'],defaults:{positive:'a fox, ',lora:0,lora_name:'ink.safetensors',lora2:0.5,lora2_name:'lead.safetensors'}});
+    selectPreset('lora-recipe');`);
+  element('#positive').dispatchEvent = () => true;
+  const places = [['anywhere', 'put it anywhere in the prompt'], ['start', 'put it at the start of the prompt'], ['end', 'put it at the end of the prompt'],
+    ['start of prompt', 'put it at the start of the prompt'], ['none', ''], ['', ''], ['middle', 'placement: middle']];
+  for (const [position, words] of places) assert.equal(run(`triggerPlace(${JSON.stringify(position)})`), words, 'placement wording for ' + JSON.stringify(position));
+  run('updateLoraHints()');
+  const hint = element('[data-hint="lora"]').innerHTML;
+  assert.doesNotMatch(hint, /at the anywhere/, 'the broken template is gone');
+  assert.match(hint, /Trigger: m4ng41nk · put it anywhere in the prompt · recommended 0\.8/);
+  assert.match(hint, /data-lora-trigger="lora"[^>]*>Add trigger to prompt/, 'one-click trigger insertion is offered');
+  assert.match(hint, /data-lora-use="lora"[^>]*>Use 0\.8/, 'an off slot offers its recommended strength');
+  assert.equal(element('[data-range="lora"]').textContent, '· 0.6–1', 'the recorded range sits beside Strength');
+  const choose = (key, file) => { element('[data-key="' + key + '_name"]').value = file; run(`$('#loraSlots').onchange({target:{dataset:{key:'${key}_name'},value:'${file}'}})`); };
+  choose('lora', 'ink.safetensors');
+  assert.equal(element('[data-key="lora"]').value, '0.8', 'a newly chosen adapter starts at its recommended strength, not 0');
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk', 'the known trigger is appended once');
+  assert.match(element('#status').textContent, /Strength set to 0\.8 \(recommended\)\. Added the trigger m4ng41nk/);
+  choose('lora', 'ink.safetensors');
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk', 'choosing again never duplicates the trigger');
+  element('#positive').value = 'a fox';
+  run('autoTriggers={}'); choose('lora', 'off.safetensors');
+  assert.equal(element('[data-key="lora"]').value, '1', 'a recorded 0 is not a recommendation: 1.0 within the range');
+  assert.match(element('#status').textContent, /no recommended strength recorded/);
+  element('#positive').value = 'a fox'; run('autoTriggers={}');
+  choose('lora2', 'lead.safetensors');
+  assert.equal(element('#positive').value, 'lead tag, a fox', 'a start-placed trigger goes first');
+  choose('lora2', 'off.safetensors');
+  assert.equal(element('#positive').value, 'a fox', 'changing the adapter removes the exact trigger this page added');
+  assert.equal(element('[data-key="lora2"]').value, '0.5', 'no recommendation: the slot keeps its authored strength');
+  choose('lora', 'ink.safetensors');
+  element('#positive').value = element('#positive').value.replace('m4ng41nk', 'm4ng41nk style');
+  element('[data-key="lora"]').value = '0'; run(`$('#loraSlots').onchange({target:{dataset:{key:'lora'},value:'0'}})`);
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk style', 'turning the slot off removes the trigger only while it is exactly as added');
+  element('#positive').value = 'a fox, m4ng41nk'; run('autoTriggers={}');
+  assert.match(run(`addTrigger('lora',false)`), /already in the prompt/);
+  element('#positive').value = 'A fox at dusk.'; run('autoTriggers={}'); run(`addTrigger('lora',true)`);
+  assert.equal(element('#positive').value, 'A fox at dusk. m4ng41nk', 'after a full stop the trigger follows a space, not a comma');
+  assert.match(run(`dropAutoTrigger('lora')`), /Removed the trigger m4ng41nk added/);
+  assert.equal(element('#positive').value, 'A fox at dusk.');
+  element('#positive').value = 'a fox, m4ng41nk'; run('autoTriggers={}');
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk');
+  // Two enabled slots on the same adapter share its trigger: turning one off hands the trigger over instead of removing it.
+  element('#positive').value = 'a fox'; run('autoTriggers={}');
+  choose('lora', 'ink.safetensors'); choose('lora2', 'ink.safetensors');
+  element('[data-key="lora"]').value = '0'; run(`$('#loraSlots').onchange({target:{dataset:{key:'lora'},value:'0'}})`);
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk', 'the trigger stays while another enabled slot still needs it');
+  element('[data-key="lora2"]').value = '0'; run(`$('#loraSlots').onchange({target:{dataset:{key:'lora2'},value:'0'}})`);
+  assert.equal(element('#positive').value, 'a fox', 'the last slot to need it takes the trigger back out');
+  // The server binds strengths with number(value, key, 0, 2): every value the page can set stays in range.
+  for (const entry of Object.values(JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/settings-kb.json'), 'utf8')).loras)) {
+    const value = run(`recommendedStrength('lora',${JSON.stringify(entry)})`);
+    assert.ok(value > 0 && value <= 2 && Number.isFinite(Number(String(value))), 'recommended strength stays a valid 0-2 number: ' + value);
+  }
+}
+
+// #278 audit item 24: the picker groups by what a recipe makes, shows one plain line, a committed recipe-default
+// thumbnail (never an adult-tagged recipe's), a speed badge and Needs download; the "review separate" chips are gone.
+function recipePickerIsGroupedAndPlain() {
+  const {element, run} = sandbox({}, {});
+  element('#categorySelect').value = 'All'; element('#presetSearch').value = '';
+  run(`catalog={presets:[
+      {id:'wai',name:'WAI',modality:'image',category:'Characters',family:'WAI',verified:true,description:'Close variations of a WAI picture (#1202; owner decision 27 September 2026, "Yes"). Measured details follow here.'},
+      {id:'clip',name:'Clip',modality:'video',category:'Video',description:'Short motion study.'},
+      {id:'mesh',name:'Mesh',modality:'3d',category:'3D',description:'Draft mesh.'},
+      {id:'fix',name:'Fix',modality:'image',reference:['4','image'],category:'Image editing',description:'Change one thing in a picture, in about 20-35 seconds warm.'},
+      {id:'pixel-lora',name:'Pixel',modality:'image',category:'Pixel art',description:'Pixel sprite.'},
+      {id:'krea-environment',name:'Env',modality:'image',category:'Anime flagship',description:'Environment study.'},
+      {id:'realvis',name:'Real',modality:'image',category:'Products & websites',description:'Realistic product photography.'}]};
+    mode='all'; selected=null; missingByPreset={realvis:['checkpoints/real.safetensors']};
+    atelierRecipes=[{id:'wai-adult',preset_id:'wai',tags:['adult-illustration'],status:'executed',evidence:{seconds:20.1}},
+      {id:'wai-portrait',preset_id:'wai',tags:['portrait'],status:'executed',evidence:{seconds:45}},
+      {id:'krea-adult',preset_id:'krea-environment',tags:['hentai']},{id:'real-intake',preset_id:'realvis',tags:['realism']}];
+    showcaseExamples={'wai-adult':{url:'/api/examples/recipe-thumbs-20260927/adult.jpg'},'wai-portrait':{url:'/api/examples/recipe-thumbs-20260927/wai.jpg'},
+      'krea-adult':{url:'/api/examples/recipe-thumbs-20260927/x.jpg'},'real-intake':{url:'/api/examples/civitai-intake/real.jpg'}};
+    renderPresets();`);
+  const html = element('#presetList').innerHTML;
+  const order = [...html.matchAll(/data-group="([^"]+)"/g)].map(m => m[1]);
+  assert.deepEqual(order, ['character', 'scene', 'photo', 'game', 'edit', 'video', '3d'], 'groups follow what each recipe makes');
+  const groupOf = id => { const before = html.slice(0, html.indexOf('data-id="' + id + '"')); return [...before.matchAll(/data-group="([^"]+)"/g)].pop()?.[1]; };
+  assert.deepEqual(['wai', 'krea-environment', 'realvis', 'pixel-lora', 'fix', 'clip', 'mesh'].map(groupOf), order);
+  assert.match(html, /data-id="wai"><img class="preset-thumb" src="\/api\/examples\/recipe-thumbs-20260927\/wai\.jpg"/, 'the recipe-default thumbnail of a non-adult recipe');
+  assert.doesNotMatch(html, /adult\.jpg|x\.jpg|civitai-intake/, 'never an adult-tagged or intake picture');
+  assert.match(html, /<span>Close variations of a WAI picture\.<\/span>/, 'one plain sentence without the decision aside');
+  assert.doesNotMatch(html, /#1202|owner decision|review separate|Measured details/);
+  assert.match(html, /data-id="wai"[\s\S]*?badge pace fast[^>]*>about 20 s</, 'speed from the fastest recorded run');
+  assert.match(html, /data-id="fix"[\s\S]*?badge pace fast" title="Timing stated in the recipe description">about 20 s</, 'else the recipe wording');
+  assert.match(html, /data-id="realvis"[\s\S]*?title="checkpoints\/real\.safetensors">Needs download</);
+  assert.equal((html.match(/Needs download/g) || []).length, 1, 'only recipes with missing models say so');
+}
+
+function adultNotesFollowTheRecipe() {
+  const {element,run}=sandbox();
+  run("knowledge={nsfw_lab:{families:{Test:{undress:'Adult notes'}}}};catalog.presets.push({id:'notes-test',name:'Ordinary portrait',family:'Test',positive:['1','text'],defaults:{positive:'Authored example'}});selectPreset('notes-test');");
+  assert.equal(element('#nsfwIntel').hidden,true,'ordinary recipes hide adult notes even in a supported model family');
+  assert.equal(element('#positive').value,'Authored example','explicit recipe selection retains authored text');
+  run("applyRecipe({preset_id:'notes-test',name:'Explicit recipe',tags:['hentai'],controls:{positive:'Explicit saved wording'}})");
+  assert.equal(element('#nsfwIntel').hidden,false,'adult recipe exposes its relevant notes');
+  assert.equal(element('#positive').value,'Explicit saved wording','explicit recipe wording is retained');
+  run("applyRecipe({preset_id:'notes-test',name:'Neutral recipe',controls:{positive:'Neutral saved wording'}})");
+  assert.equal(element('#nsfwIntel').hidden,true,'switching back hides adult notes');
+  run("applySaved({preset:'notes-test',controls:{positive:'Restored words'},batch:1,parent_assets:[],references:[]})");
+  assert.equal(element('#nsfwIntel').hidden,false,'a restored saved setup keeps the family notes, since its recipe classification is not stored');
+}
+adultNotesFollowTheRecipe();

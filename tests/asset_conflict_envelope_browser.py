@@ -21,6 +21,7 @@ from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 import server as production
+from browser_ports import BoundPortGuard
 
 
 async def exercise(args):
@@ -37,7 +38,7 @@ async def exercise(args):
         identifier = store.register({'id':'conflict-envelope', 'outputs':[{'filename':image.name, 'media_type':'image'}]}, 0, image)
         scope = store.snapshot()['workspace_id']
 
-        class Handler(production.Handler):
+        class Handler(BoundPortGuard, production.Handler):
             studio = SimpleNamespace(assets=store)
             json = fixture.Handler.json
 
@@ -70,7 +71,7 @@ async def exercise(args):
                         conflict_ids=[identifier], missing_ids=[], current=[store.metadata(identifier, scope)])
                 return super()._json(status, data)
 
-        http = production.StudioHTTPServer(('127.0.0.1', 8191), Handler)
+        http = production.StudioHTTPServer(('127.0.0.1', args.port), Handler)
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
 
@@ -84,8 +85,8 @@ async def exercise(args):
                 try:
                     page = await browser.new_page(viewport={'width':1280, 'height':1000}, reduced_motion='reduce')
                     page.set_default_timeout(8000); page.on('pageerror', lambda error: errors.append(str(error)))
-                    if args.inert: await inert_page(page, 8191)
-                    else: await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
+                    if args.inert: await inert_page(page, http.server_port)
+                    else: await page.goto(f'http://127.0.0.1:{http.server_port}/#assets', timeout=20000)
                     await page.wait_for_function('!!catalog && !!selected')
                     await page.evaluate("showView('assets')"); await page.wait_for_function('assetState.assets.length===1')
                     check('CONFLICT-01 boot is read-only', not writes)
@@ -125,5 +126,6 @@ async def exercise(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--inert', action='store_true')
+    parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
     parser.add_argument('--out', type=Path, default=Path('.runtime/asset-conflict-envelope'))
     asyncio.run(exercise(parser.parse_args()))

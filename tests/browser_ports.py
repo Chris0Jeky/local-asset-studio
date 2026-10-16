@@ -1,5 +1,6 @@
 """Loopback HTTP fixtures whose ephemeral ports Chromium can open."""
 from http.server import ThreadingHTTPServer
+from urllib.parse import urlsplit
 
 # Chromium net/base/port_util.cc kRestrictedPorts.
 RESTRICTED_PORTS = frozenset((
@@ -18,3 +19,17 @@ def browser_server(handler, port=0):
         if port or server.server_port not in RESTRICTED_PORTS: return server
         server.server_close()
     raise RuntimeError('Could not bind a Chromium-safe port after 20 attempts')
+
+
+class BoundPortGuard:
+    """Test-only: production's Host/Origin guard hard-codes :8191, so a fixture on an ephemeral port would 403.
+    Subclass it ahead of the production Handler; it accepts only this server's bound port, and app/ stays unchanged."""
+    def _bound_hosts(self):
+        port = self.server.server_port
+        return (f'127.0.0.1:{port}', f'localhost:{port}')
+    def _safe_host(self):
+        return self.headers.get('Host', '') in self._bound_hosts()
+    def _safe_mutation(self):
+        if not self._safe_host(): return False
+        parsed = urlsplit(self.headers.get('Origin') or '')
+        return parsed.scheme == 'http' and parsed.netloc in self._bound_hosts() and not parsed.username and not parsed.password

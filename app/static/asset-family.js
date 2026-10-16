@@ -52,7 +52,9 @@
         const check=await options.check(result.recipe,own.signal);
         need(current(),'The asset or workbench changed. Your current work was kept');
         need(check?.matches===true&&typeof check.template_sha256==='string'&&HASH.test(check.template_sha256),'The retained recipe did not validate against the current preset');
-        if(!options.confirm('Replace the Create setup with this output’s recorded recipe, '+(mode==='new'?'a new seed':'its recorded seed and editable wording')+'? This prepares one output. Nothing will be generated.'))return false;
+        // A declined or auto-dismissed confirm is an answer, not a silent no-op: say what did not change.
+        if(!options.confirm('Replace the Create setup with this output’s recorded recipe, '+(mode==='new'?'a new seed':'its recorded seed and editable wording')+'? This prepares one output. Nothing will be generated.')){
+          options.say?.('Not prepared: the confirmation was declined. Create was not changed; nothing was generated.');return false;}
         need(current(),'The asset or workbench changed. Your current work was kept');
         const prepared={...result,controls:{...result.controls,seed:mode==='new'?newSeed(seed,options.random):seed}};
         options.apply(prepared,check,mode);return true;
@@ -65,15 +67,18 @@
     const panel=d.createElement('section');panel.id='assetFamily';panel.className='asset-family';q('#assetLineage').after(panel);
     let epoch=0,controller=null,currentId=null;
     const button=(label,attribute,value)=>{const b=d.createElement('button');b.type='button';b.textContent=label;b.dataset[attribute]=value;return b;};
-    const recall=createRecall({...options,context:id=>options.context(id)});
     function say(message,error=false){const line=q('#assetFamilyStatus');if(line){line.textContent=message;line.classList.toggle('error',error);}options.say(message,error);}
-    function clear(){epoch++;controller?.abort();controller=null;recall.cancel();currentId=null;panel.replaceChildren();q('#assetLineage').hidden=false;}
+    // The status line and next-step buttons sit above the form, where the picture's actions are; the family strip stays below.
+    const recall=createRecall({...options,context:id=>options.context(id),say});
+    function clear(){epoch++;controller?.abort();controller=null;recall.cancel();currentId=null;panel.replaceChildren();q('#assetLineage').hidden=false;
+      q('#assetFamilyActions')?.replaceChildren();const line=q('#assetFamilyStatus');if(line){line.textContent='';line.classList.remove('error');}}
     function actions(id){const box=d.createElement('div');box.className='asset-family-actions';box.append(button('Same recipe, new seed','familyRecall','new'),button('Same seed, edit words','familyRecall','words'),button('Use as reference','familyReference',id));return box;}
     async function opened(){
       const asset=options.asset();if(!dialog.open||!asset)return;
       clear();currentId=asset.id;const serial=epoch,scope=options.context(asset.id).workspace,own=new AbortController();controller=own;
-      panel.innerHTML='<h3>Family &amp; reuse</h3><p id="assetFamilyStatus" role="status" aria-live="polite">Reading the recorded family…</p><div id="assetFamilyTree"></div><div id="assetFamilyChildren"></div>';
-      panel.querySelector('h3').after(actions(asset.id));
+      panel.innerHTML='<h3>Family &amp; reuse</h3><div id="assetFamilyTree"></div><div id="assetFamilyChildren"></div>';
+      q('#assetFamilyActions')?.replaceChildren(actions(asset.id));
+      const status=q('#assetFamilyStatus');if(status)status.textContent='Reading the recorded family…';
       const children=button('Show children','familyChildren',asset.id);panel.querySelector('#assetFamilyChildren').before(children);
       const timer=setTimeout(()=>own.abort(),15000);
       try{
@@ -84,7 +89,8 @@
       }catch(e){if(serial===epoch&&dialog.open)say('Family unavailable: '+e.message,true);}
       finally{clearTimeout(timer);if(serial===epoch)controller=null;}
     }
-    panel.addEventListener('click',async event=>{
+    // The recall and reference buttons live above the form (#assetFamilyActions), outside the panel, so one handler serves both.
+    const onClick=async event=>{
       const b=event.target.closest('button');if(!b||b.disabled)return;const actionEpoch=epoch;
       try{
         if(b.dataset.familyOpen){options.open(b.dataset.familyOpen);return;}
@@ -101,7 +107,8 @@
           }finally{if(b.isConnected){b.disabled=false;b.removeAttribute('aria-busy');}}
         }
       }catch(e){if(actionEpoch===epoch&&dialog.open)say(e.message,true);}
-    });
+    };
+    panel.addEventListener('click',onClick);q('#assetFamilyActions')?.addEventListener('click',onClick);
     dialog.addEventListener('close',()=>{if(!dialog.open)clear();});
     function decorateResults(){
       for(const card of d.querySelectorAll('#gallery .imageCard')){

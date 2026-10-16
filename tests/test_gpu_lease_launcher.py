@@ -1,5 +1,6 @@
 """Read-only launcher lease admission; temporary files and inert PowerShell doubles."""
 import importlib.util
+import inspect
 import json
 from pathlib import Path
 import shutil
@@ -119,6 +120,16 @@ class LauncherLeaseGateTests(unittest.TestCase):
 
 @unittest.skipUnless(POWERSHELL, 'PowerShell executable required for inert launcher integration')
 class LauncherPowerShellTests(unittest.TestCase):
+    PWSH_TIMEOUT = 90
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        if not POWERSHELL:
+            raise unittest.SkipTest('PowerShell executable required for inert launcher integration')
+        subprocess.run([POWERSHELL, '-NoProfile', '-Command', 'exit'],
+                       capture_output=True, text=True, timeout=cls.PWSH_TIMEOUT)
+
     def test_actual_launcher_with_all_runtime_actions_replaced(self):
         for state, expected_comfy, expected_studio in (('held', 0, 1), ('unknown', 0, 0),
                 ('missing', 1, 1), ('expired', 1, 1), ('released', 1, 1), ('late', 0, 1),
@@ -182,7 +193,24 @@ catch { $global:LauncherProbe.failed = $true; Write-Host ($_ | Out-String) }
 $global:LauncherProbe | ConvertTo-Json -Compress
 ''', encoding='utf-8')
                 result = subprocess.run([POWERSHELL, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-                                         '-File', str(wrapper)], capture_output=True, text=True, timeout=20)
+                                         '-File', str(wrapper)], capture_output=True, text=True, timeout=self.PWSH_TIMEOUT)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 outcome = json.loads(result.stdout.strip().splitlines()[-1])
                 self.assertEqual(outcome, {'comfy': expected_comfy, 'studio': expected_studio, 'failed': state.endswith('unknown')}, result.stdout + result.stderr)
+
+
+class LauncherPowerShellTimeoutGuardTests(unittest.TestCase):
+    def test_pwsh_timeouts_guard_against_cold_start_hang(self):
+        source = inspect.getsource(LauncherPowerShellTests)
+        self.assertNotIn('timeout=20', source,
+                         'pwsh subprocess timeout guards against a hang, not performance: '
+                         '20 s was exceeded by pwsh cold start under load (issue #1410)')
+        self.assertEqual(LauncherPowerShellTests.PWSH_TIMEOUT, 90,
+                         'pwsh subprocess timeout guards against a hang, not performance (issue #1410)')
+        warm = inspect.getsource(LauncherPowerShellTests.setUpClass)
+        self.assertIn('-NoProfile', warm,
+                      'pwsh must be warmed once per class before the launcher tests (issue #1410)')
+        self.assertIn('exit', warm,
+                      'pwsh warm-up must run pwsh -NoProfile -Command exit (issue #1410)')
+        self.assertIn('PWSH_TIMEOUT', warm,
+                      'pwsh warm-up must reuse the shared subprocess timeout (issue #1410)')
