@@ -14,7 +14,7 @@
     {id:'scene',name:'Scene or background',hint:'A place, no main character',looks:['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']},
     {id:'painting',name:'Painted illustration',hint:'Oil, ink, watercolour, book cover',looks:['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot','look-krea-style-inkwork-darkbrush','look-krea-style-airy-softwatercolor','look-krea-oil-fantasy','look-krea-atelier-target-stack','look-krea-witch-nijisis']},
     {id:'photo',name:'Photo',hint:'Realistic people, places, products',looks:['look-preset-zimage-fast','look-preset-realvis','look-krea-realistic-snapshot','look-krea-lenovo-ultrareal']},
-    {id:'game',name:'Game item or icon',hint:'Props, pixel art',looks:['look-preset-stylized-prop','look-preset-pixel-lora']},
+    {id:'game',name:'Game item or icon',hint:'Props, pixel art',looks:['look-zimage-game-icon','look-preset-stylized-prop','look-preset-pixel-lora']},
     {id:'edit',name:'Change a picture',hint:'Keep it, change one thing',intent:'edit'},
     {id:'repair',name:'Fix or upscale',hint:'Faces, hands, resolution',intent:'repair'},
     {id:'restyle',name:'Restyle a picture',hint:'Same picture, another look',intent:'restyle'},
@@ -27,12 +27,12 @@
   const SHAPE_FOR={character:'portrait',scene:'landscape',game:'square'};
   // Lab evidence (docs/looks/LOOK-LAB-2026-10-16.md on branch lab/look-qualification-20261016): looks whose two lab runs were both
   // judged keep, with the median score. Agent judgement on this PC, not art acceptance; update this map from the lab doc, not by hand.
-  // Kept in at least 3 of 4 test pictures, or 2 of 2 where only two were made (docs/looks/LOOK-LAB-2026-10-16.md, rounds 1-2).
-  const TESTED={'look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2'};
+  // Kept in at least 3 of 4 test pictures, or 2 of 2 where only two were made (docs/looks/LOOK-LAB-2026-10-16.md, rounds 1-2; the game icon is round 4, PR #1488: potion and sword, one seed each).
+  const TESTED={'look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2','look-zimage-game-icon':'2 of 2'};
   const tested=l=>TESTED[l.id]?'<small class="make-tested" title="'+escape(TESTED[l.id]+' test pictures on this PC were kept (16 Oct 2026, judged by an agent, not art approval).')+'">Tested well</small>':'';
   // Best for (lab rounds 1-2, docs/looks/LOOK-LAB-2026-10-16.md "Ranked best look per goal" and R3): what each tested look carried.
   // Kept here, not in presets/looks.json, because a look body takes only the fields app/looks.py allows.
-  const BEST_FOR={'look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms'};
+  const BEST_FOR={'look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms','look-zimage-game-icon':'Single game items and icons on white'};
   const bestFor=l=>BEST_FOR[l.id]?'<small class="make-best">Best for: '+escape(BEST_FOR[l.id])+'</small>':'';
   // Recorded, never inferred: only a recipe whose own commercial_note names non-commercial terms (presets/catalog.json) is tagged.
   const nonCommercial=p=>/non-?commercial|prohibit commerciali/i.test(p?.commercial_note||'');

@@ -778,6 +778,41 @@
       ]
     },
     {
+      "id": "look-zimage-game-icon",
+      "kind": "look",
+      "name": "Painted game icon",
+      "body": {
+        "preset_id": "zimage-fast",
+        "template": "stylized hand painted game inventory icon, soft cel shading, {scene}, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+        "negative": "",
+        "controls": {
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160403,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "scene_example": "one round teal glass potion bottle with a brass stopper",
+        "source_prompt": "stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+        "notes": "From look lab round 4 (16 Oct 2026, PR #1488, docs/looks/LOOK-LAB-2026-10-16.md, Game items on other models): the first recipe to keep both test objects, a potion (job 8ab33602-3d7d-4b5a-8d69-88cb2f7688c4, 110.8 s) and a short sword (job 9006f8d7-1f84-4f3f-9d21-72041ed8c8cd, 91.9 s), both judged KEEP by an agent at this seed on zimage-fast. One seed per object; the canvas looks white but is not transparent and not guaranteed exact RGB white. Z-Image Turbo takes no negative prompt. The lab judgement is not art acceptance or licence clearance; nothing here is owner-accepted art."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "docs/looks/lab-2026-10-16d.receipts.json · game_item_candidate (potion, job 8ab33602-3d7d-4b5a-8d69-88cb2f7688c4)",
+          "prompt_id": "6a6846f9-30d5-4257-920a-eaa45628a690",
+          "sha256": "b442c3949632e90da0312a47f6ecde5d0fab6f1a9aa81c3aee8c363bd8f55187"
+        },
+        {
+          "role": "evidence",
+          "evidence": "docs/looks/lab-2026-10-16d.receipts.json · game_item_candidate (sword, job 9006f8d7-1f84-4f3f-9d21-72041ed8c8cd)",
+          "prompt_id": "62b1d7f1-d1f9-4eb4-be42-235bbfdfa650",
+          "sha256": "4e1487e46a6a559a709f7b3ba53a86a92cabc5ecd5f197efdc932aaf33dfc82c"
+        }
+      ]
+    },
+    {
       "id": "look-preset-zimage-fast",
       "kind": "look",
       "name": "Quick picture, any subject",
