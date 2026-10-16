@@ -1,6 +1,6 @@
 # Make a high-end anime picture
 
-This guide takes you from "I want a very good anime picture" to a picture you can keep, using Make. It uses the button names you see on screen. It was written from the Make page as built on 16 October 2026 (`app/static/make.js`, after Make wave 5) and from the [look lab of the same day](../looks/LOOK-LAB-2026-10-16.md). The lab's round 5 (finishing, restyle and game-icon checks) is in that report's branch, `lab/round5-finishing-20261016`, and is not on main yet.
+This guide takes you from "I want a very good anime picture" to a picture you can keep, using Make. It uses the button names you see on screen. It was written from the Make page as built on 16 October 2026 (`app/static/make.js`, after Make wave 5) and from the [look lab of the same day](../looks/LOOK-LAB-2026-10-16.md). Rounds 3 to 5 (poses, adapters, finishing, restyle and game icons) are in that report.
 
 **What this guide does not claim.**
 
@@ -90,7 +90,7 @@ Open **Tune this look** under the words box. It is folded by default. The line n
 - **Style strength** (under **Shape** and **How many**; with **Tune this look** open, it sits above the adapters instead) scales all the look's adapters together. 100% is the look as made. It multiplies the per-adapter strengths above.
 - What the lab saw: PetiFlow at 1.0 and Ringeko at 0.6 and 0.8 worked. Adding a detail, lighting or hand adapter at 0.4 to 0.6 on top of Ringeko did not make a measurable difference on one clean scene. More tags and more adapters were not a proven fix for a missing prop. The lab never tried those extra adapters at 1.0.
 - **Adding style adapters to Flat pastel close-up.** On one fern scene (round 3, one seed), the lab added Anima style adapters to PetiFlow at 1.0. At low strength they were neutral: Ke-ta at 0.35 and 0.7, Xilmo at 0.35, NEWANIMASTYLE at 0.5. Ke-ta and Xilmo together, at 0.35 each, were neutral too. At their defaults they were not: Xilmo at 0.7 turned the fern into broad leaves, NEWANIMASTYLE at 1.0 changed the plant and the face, and Kieed at 0.5 (and at 0.25) flattened the face and changed the plant. Ke-ta at its default 0.7 was neutral.
-- Make starts the tested ones at the neutral strength and shows the lab note under the row. Kieed has no neutral value in the lab, so it starts at its usual 0.5, which the lab found harmful. Lower it or leave it off.
+- Make starts the tested ones at the neutral strength and shows the lab note under the row. Kieed has no neutral value in the lab: both 0.5 (its usual start) and 0.25 harmed the face and plant, so leave it off unless you want to experiment.
 - Neutral is not better. None of these adapters improved the picture in the lab. Prefer the untuned look unless you want a different flavour.
 
 **Quality and speed, Leave out, Seed**
