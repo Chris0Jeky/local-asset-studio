@@ -338,6 +338,20 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertNotIn("rotate-00", ids)
         self.assertIn("rotate-01", ids)
 
+    def test_rotated_action_receipt_leaves_a_tombstone_that_refuses_a_retry(self):
+        from large_job_prep_common import MAX_RECORDS, PreparationError
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        retry = self.request(dry_run=True)
+        journal = self._fill_journal(controller, studio, ["completed"] * MAX_RECORDS)
+        journal["records"][0]["request_id"] = retry["request_id"]
+        journal["records"][0]["actions"] = [{"kind": "free", "state": "measured"}]
+        studio._write_json_atomic(controller.path, journal)
+        controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        self.assertEqual(controller._load()["spent"], [retry["request_id"]])
+        with self.assertRaisesRegex(PreparationError, "already ran a lifecycle action"):
+            controller.run(retry)
+
     def test_full_action_journal_rotates_for_new_request(self):
         from large_job_prep_common import MAX_RECORDS
         studio = Studio(self.root, [])
