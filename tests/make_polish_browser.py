@@ -14,6 +14,8 @@ import studio_browser_smoke as fixture
 LOOKS = [dict(id=id, name=name, kind='look', revision=0, body=dict(preset_id='zimage-fast', controls={}, scene_example='A quiet garden')) for id, name in [('look-wai-fantasy-portrait', 'First look'), ('look-anima-fantasy-portrait', 'Second look')]]
 MAKE_JOBS = {}
 RESTORE_DELAY = 0
+FAILING = set()  # job ids whose GET answers 500, as a Studio that stopped answering would
+READS = []  # every GET /api/jobs/make-* path, to see which runs are still polled
 
 WAI = 'asset-1'  # its context says it was made by the WAI recipe; asset-0 stays the fixture's Anima picture
 
@@ -28,6 +30,8 @@ class Handler(fixture.Handler):
         if self.path == '/api/looks': return self.json({'looks': LOOKS})
         if self.path.startswith('/api/jobs/make-'):
             if RESTORE_DELAY: time.sleep(RESTORE_DELAY)
+            READS.append(self.path.split('/')[-1])
+            if self.path.split('/')[-1] in FAILING: return self.json({'error': 'fixture outage'}, 500)
             return self.json(MAKE_JOBS[self.path.split('/')[-1]])
         if self.path.startswith('/api/assets/') and self.path.endswith('/context'): return self.json(context(self.path.split('/')[3]))
         return super().do_GET()
@@ -65,11 +69,12 @@ def make_checks(browser, origin):
     for shape, size in [('portrait', [832, 1280]), ('landscape', [1280, 832]), ('square', [1024, 1024])]:
         page.locator('#makeScene').fill('A quiet garden'); page.locator('#makeShape').select_option(shape)
         page.wait_for_timeout(100)
-        estimate = next(p['data'] for p in reversed(fixture.POSTS) if p['path'] == '/api/estimate')
+        estimate = next(p['data'] for p in reversed(fixture.POSTS) if p['path'] == '/api/estimate' and p['data'].get('preset_id') == 'zimage-fast')
         before = len(jobs())
         page.evaluate("()=>{document.querySelector('#makeGenerate').click();document.querySelector('#makeGenerate').click();document.querySelector('#makeEditor').click();}")
         page.wait_for_function("!document.querySelector('#makeGenerate').disabled")
         assert len(jobs()) == before+1, 'double press and editor share one latch'
+        assert page.evaluate('!!document.querySelector("#makeStatus").closest(".make-go")'), 'the status line sits in the Generate bar'
         sent = jobs()[-1]; assert sent['label'] == 'Make \u00b7 First look', sent
         assert [sent['controls'][k] for k in ('width', 'height')] == size, sent
         assert [estimate['controls'][k] for k in ('width', 'height')] == size, estimate
@@ -144,6 +149,16 @@ def make_checks(browser, origin):
     assert page.locator('#experimentDialog').get_attribute('aria-labelledby') == 'experimentTitle'
     assert page.locator('#newCollection').get_attribute('aria-label') == 'Create collection'
     assert page.locator('.hero-art').get_attribute('role') == 'group'
+    # A plan that cannot be read is asked once, then waits its cool-down, not once per redraw (#1438).
+    page.evaluate('()=>{window.planCalls=0;StudioWorkbench.polishPlan=()=>{planCalls++;return Promise.reject(Error("fixture refusal"));};}')
+    MAKE_JOBS[saved[3]['id']]['outputs'] = [dict(filename='cool.png', asset_id='asset-cool', media_type='image')]
+    page.wait_for_selector('[data-run="%s"] img' % saved[3]['id']); page.wait_for_timeout(1500)
+    assert page.evaluate('planCalls') == 3, page.evaluate('planCalls')  # one per finishing kind
+    # A run whose reads fail keeps being checked, says so on its card, and recovers by itself.
+    FAILING.add(saved[4]['id'])
+    page.wait_for_function('id=>document.querySelector(`[data-run="${id}"] .make-run-state`)?.textContent.startsWith("Lost contact")', arg=saved[4]['id'], timeout=6000)
+    FAILING.clear()
+    page.wait_for_function('id=>!document.querySelector(`[data-run="${id}"] .make-run-state`).textContent.startsWith("Lost contact")', arg=saved[4]['id'], timeout=12000)
     # A disabled finishing action has one visible reason; unavailable actions disappear once planned.
     page.evaluate('()=>{window.finishPolish=null;StudioWorkbench.polish=()=>new Promise(r=>finishPolish=r);StudioWorkbench.polishPlan=()=>Promise.resolve({ok:true});StudioWorkbench.varyMarkup=(p,j,a)=>\'<button type="button" data-ux-vary="subtle">Vary</button><small id="varyFixture\'+a+\'">Use Prepare new seed</small>\';}')
     MAKE_JOBS[saved[1]['id']]['outputs'] = [dict(filename='forest.png', asset_id='asset-0', media_type='image')]
@@ -155,12 +170,21 @@ def make_checks(browser, origin):
     assert page.locator('.make-action-reason').count() == 1 and page.locator('.make-action-reason').is_visible()
     assert 'Please wait' in page.locator('.make-action-reason').inner_text()
     page.evaluate('()=>finishPolish({id:"fixture-finish",status:"completed",outputs:[]})')
+    # Only shown runs are kept and polled (#1438): the polish run made a seventh card, so the oldest stops being read.
+    page.wait_for_function('document.querySelectorAll("#makeRuns .make-run").length===6'); page.wait_for_timeout(3000); READS.clear(); page.wait_for_timeout(3000)
+    shown = page.eval_on_selector_all('#makeRuns [data-run]', 'n=>n.map(e=>e.dataset.run)')
+    assert saved[5]['id'] not in shown and saved[5]['id'] not in READS and saved[4]['id'] in READS, (shown, READS)
     # Workspace masks carry the same filename in source; titles use prompt excerpt and date.
     assets = [dict(fixture.ASSETS[0], id='mask', filename='opaque.png', source={'filename':'Anime-Face-Mask_00001_.png'}), dict(fixture.ASSETS[1], prompt_excerpt='A moonlit garden')]
     page.route('**/api/workspace', lambda route: route.fulfill(json={'assets': assets}))
     page.locator('[data-make-goal="repair"]').click(); page.wait_for_selector('#makePictures button')
     assert page.locator('#makePictures button').count() == 1
     assert 'A moonlit garden' in page.locator('#makePictures').inner_text()
+    assert 'A moonlit garden' in page.locator('#makePictures img').get_attribute('alt'), 'each picture choice names its picture'
+    # A run that finishes in the background adds its picture to the open grid (#1438).
+    assets.append(dict(fixture.ASSETS[1], id='asset-fresh', prompt_excerpt='A fresh lantern', created_at=1789228900))
+    MAKE_JOBS[saved[4]['id']].update(status='completed', outputs=[dict(filename='fresh.png', asset_id='asset-fresh', media_type='image')])
+    page.wait_for_selector('#makePictures [data-make-pick="asset-fresh"]', timeout=6000)
     assert not errors, errors
     page.close()
 
