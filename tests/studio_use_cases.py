@@ -281,6 +281,8 @@ def live_allows(action, navigation, control_id='', label='', attributes=(), subm
     reason = deny_reason(control_id, label, attributes, submits, local)
     if reason: return reason
     if action in ('goto', 'fill', 'type'): return ''
+    # Enter in Tune's adapter search only adds an adapter row on the page; it never submits (make.js keydown handler).
+    if action == 'press' and selector == '#makeLoraSearch': return ''
     if action in CLICK_ACTIONS and (navigation or local): return ''
     return 'live mode is read-only: ' + action + ' is not navigation or typing'
 
