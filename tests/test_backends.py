@@ -25,6 +25,48 @@ class BackendTests(unittest.TestCase):
     def tearDown(self):
         self.threads.stop();self.tmp.cleanup()
 
+    def test_snapshot_locks_copies_but_not_endpoint_requests(self):
+        manager=self.studio.backends;deepcopy=backends.copy.deepcopy;copied=[]
+        manager.operation={'status':'running'};manager.last_launch_reserve={'reserve_gib':0.6}
+        def checked_copy(value):
+            self.assertTrue(self.studio.lock._is_owned());copied.append(value)
+            return deepcopy(value)
+        def request(*args):
+            self.assertFalse(self.studio.lock._is_owned())
+            return {}
+        with patch.object(manager,'request',side_effect=request),patch.object(backends.copy,'deepcopy',side_effect=checked_copy):
+            snapshot=manager.snapshot()
+        self.assertEqual(copied,[manager.operation,manager.last_launch_reserve])
+        self.assertIsNot(snapshot['operation'],manager.operation);self.assertIsNot(snapshot['last_launch_reserve'],manager.last_launch_reserve)
+
+    def test_switch_operation_mutations_hold_snapshot_lock(self):
+        manager=self.studio.backends;mutations=[];lock=self.studio.lock
+        class CheckedOperation(dict):
+            def __setitem__(self,key,value):
+                mutations.append((key,lock._is_owned()));super().__setitem__(key,value)
+            def update(self,*args,**kwargs):
+                mutations.append(('update',lock._is_owned()));super().update(*args,**kwargs)
+            def setdefault(self,*args):
+                mutations.append(('setdefault',lock._is_owned()));return super().setdefault(*args)
+        for outcome in ('completed','exited','timeout'):
+            with self.subTest(outcome=outcome):
+                mutations.clear();manager.operation=CheckedOperation(id='test',target='primary',status='running')
+                manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid')
+                stopped=MagicMock(pid=1111);stopped.create_time.return_value=1.0
+                launched=MagicMock(pid=4321);launched.poll.return_value=1 if outcome=='exited' else None
+                def process(profile):
+                    if profile['id']=='hidream':return stopped
+                    if profile['id']=='primary' and 'pid' in manager.operation:return launched
+                with patch.object(manager,'available',return_value=True),patch.object(manager,'_idle',return_value=True), \
+                     patch.object(manager,'process',side_effect=process),patch.object(manager,'_check_startup_processes',return_value={}), \
+                     patch.object(manager,'request',return_value={'system':{} if outcome=='timeout' else {'ready':True},'devices':[]}), \
+                     patch('backends.time.sleep'), \
+                     patch('backends.subprocess.Popen',return_value=launched):
+                    manager._switch('primary')
+                self.assertEqual(manager.operation['status'],'completed' if outcome=='completed' else 'failed')
+                if outcome=='timeout':self.assertEqual(manager.operation['preserved_pid'],launched.pid)
+                self.assertTrue(mutations);self.assertEqual([key for key,owned in mutations if not owned],[])
+
     def test_only_exact_entry_python_and_loopback_process_are_owned(self):
         profile=self.studio.backends.profiles['primary'];argv=[profile['python'],profile['entry'],'--listen','127.0.0.1','--port','8188']
         self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))

@@ -442,7 +442,7 @@
   const posePanel=element('section','ux-pose-editor');posePanel.id='uxPoseEditor';posePanel.hidden=true;enginePanel.after(posePanel);
   // Folded on a picture route (the pose picture is the input there), open on a recipe that is drawn for (#422).
   posePanel.innerHTML='<details id="uxPoseDisclosure"><summary><h3>Draw the pose</h3><small id="uxPoseSummaryHint"></small></summary><p>Drag a joint, or pick one below and nudge it with the arrow keys (1 %, or 5 % with Shift). Use this pose puts the drawing on Picture 1; nothing runs until you press Generate.</p>'
-    +'<div class="ux-pose-layout"><canvas id="uxPoseCanvas" tabindex="0" role="img" aria-label="Pose skeleton. Drag a joint, or pick one in the joint list and use the arrow keys."></canvas>'
+    +'<div class="ux-pose-layout"><canvas id="uxPoseCanvas" tabindex="0" role="application" aria-roledescription="pose editor" aria-label="Pose skeleton. Drag a joint, or pick one in the joint list and use the arrow keys. Select a joint in the list, then arrow keys move it 1%, Shift+arrow moves 5%."></canvas>'
     +'<div class="ux-pose-side"><label for="uxPoseStart">Start from<select id="uxPoseStart"><option value="">Keep this drawing</option>'
     +StudioPoseEditor.PRESETS.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.label)+'</option>').join('')+'</select></label>'
     +'<div id="uxPoseJoints" class="ux-pose-joints" role="group" aria-label="Joints"></div>'

@@ -2738,7 +2738,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_object().get("id")))
             if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/resume"):
-                self._body_json(); return self._json(202, self.studio.resume_job(self.path.split("/")[3]))
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown resume route')
+                self._body_json(); return self._json(202, self.studio.resume_job(parts[3]))
             if self.path.startswith("/api/jobs/") and self.path.endswith(("/observe-known", "/dispose-mixed")):
                 parts = self.path.split('/')
                 if len(parts) != 5: raise StudioError('Unknown mixed batch route')
@@ -2757,7 +2759,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(self._body_json(), dict): raise StudioError('Cancel command must be an object')
                 return self._json(202, self.studio.cancel_job(parts[3]))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
-                return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_object().get("reason")))
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown stop-tracking route')
+                return self._json(200, self.studio.stop_tracking(parts[3], self._body_object().get("reason")))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/put-away"):
                 parts = self.path.split('/')
                 if len(parts) != 5: raise StudioError('Unknown put-away route')
