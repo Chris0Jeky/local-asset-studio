@@ -1662,6 +1662,18 @@ class ServerTests(unittest.TestCase):
         studio.resume_job(job['id']);studio.queue.get();studio._resume(job)
         self.assertEqual(job['status'],'partial');self.assertEqual(job['message'],reason);self.assertEqual([args[0] for args,_ in studio.requests if args],[])
 
+    def test_resuming_a_failed_receipt_keeps_comfyuis_verdict_without_rereading_history(self):
+        # A ComfyUI restart clears /history: re-reading a failed receipt would end as "uncertain" (Muse bug hunt, 16 Oct).
+        for receipts,expected in ((['failed'],'failed'),(['completed','failed'],'partial')):
+            with self.subTest(receipts=receipts):
+                studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True
+                job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':len(receipts)},enqueue=False)['id']]
+                reason='ComfyUI reported an execution error: KSampler: boom'
+                job.update(status=expected,message=reason,prompt_ids=['p%d'%i for i in range(len(receipts))],submissions=[{'index':i,'prompt_id':'p%d'%i,'seed':1,'graph':job['graph'],'status':r} for i,r in enumerate(receipts)])
+                studio.resume_job(job['id']);studio.queue.get();studio._resume(job)
+                self.assertEqual(job['status'],expected);self.assertEqual(job['message'],reason)
+                self.assertEqual([args[0] for args,_ in studio.requests if args],[])
+
     def test_an_unrecognized_queue_entry_shape_counts_as_listed(self):
         replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'}]
         for _ in range(3): replies+=[{}]*server.HISTORY_QUEUE_CHECK_EVERY+[{'queue_running':[{'prompt_id':'p'}],'queue_pending':[]}]
