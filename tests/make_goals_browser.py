@@ -183,6 +183,18 @@ def run(shots):
         shot('compare-results', '.make-compare')
         clicks['compare'] = 6  # goal, Compare looks, 3 looks, Generate (+ one scene)
         assert all(p['path'] != '/api/jobs' or p['data'].get('label', '').startswith('Make') for p in fixture.POSTS)
+        # The whole library stays searchable: the grid shows the newest 60, and an older picture is found by searching (#1442 review).
+        many = [dict(fixture.ASSETS[0], id='old-%02d' % i, title='Picture %02d' % i, prompt_excerpt='scene %02d' % i, filename='p%02d.png' % i, created_at=1000 + i, media_type='image', trashed_at=None, tags=[]) for i in range(65)]
+        many[0]['prompt_excerpt'] = 'the oldest lighthouse'
+        page.route('**/api/workspace', lambda route: route.fulfill(json={'assets': many}))
+        page.goto(origin + '/#make'); page.wait_for_selector('[data-make-goal="edit"]'); page.click('[data-make-goal="edit"]')
+        if page.locator('[data-make-repick]').count(): page.click('[data-make-repick]')
+        page.locator('[data-make-search="makePictures"]').fill('')
+        page.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===60')
+        assert 'older picture' in page.locator('#makePictures').inner_text()
+        page.locator('[data-make-search="makePictures"]').fill('lighthouse')
+        page.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===1')
+        assert page.locator('#makePictures [data-make-pick="old-00"]').count() == 1
         assert not errors, errors
         browser.close()
     server.shutdown()

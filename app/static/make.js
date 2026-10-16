@@ -457,7 +457,7 @@
   }
   const pictureFinder=(id,attr)=>'<input type="search" class="make-search" data-make-search="'+id+'" data-make-attr="'+attr+'" placeholder="Search your pictures" aria-label="Search your pictures" aria-controls="'+id+'" value="'+escape(state.queries[id]||'')+'"><div id="'+id+'" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
   async function fillPictures(g,id,attr){
-    try{if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0)).slice(0,60);}
+    try{if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0));}   // the whole library is searchable; the grid shows the newest 60 matches
       if(goal()===g)renderGrid(id,attr);}
     catch(error){if(goal()===g&&q('#'+id))q('#'+id).innerHTML='<p class="make-error">'+escape(error.message)+'</p>';}
   }
@@ -465,7 +465,8 @@
   function renderGrid(id,attr){
     const box=q('#'+id);if(!box||!state.pictures)return;const terms=String(state.queries[id]||'').toLowerCase().split(/\s+/).filter(Boolean);
     const list=state.pictures.filter(a=>{const text=[pictureLabel(a),a.title,a.prompt_excerpt,a.filename,...(a.tags||[])].join(' ').toLowerCase();return terms.every(t=>text.includes(t));});
-    box.innerHTML=list.length?list.map(a=>'<button type="button" '+attr+'="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="" loading="lazy"><small>'+escape(pictureLabel(a))+'</small></button>').join(''):state.pictures.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
+    const shown=list.slice(0,60),more=list.length-shown.length;
+    box.innerHTML=list.length?shown.map(a=>'<button type="button" '+attr+'="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="" loading="lazy"><small>'+escape(pictureLabel(a))+'</small></button>').join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):state.pictures.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
   }
   function figureSvg(points,mirror){const P=PE(),at=i=>points[i]&&[Math.round((mirror?1-points[i][0]:points[i][0])*100),Math.round(points[i][1]*150)];
     return '<svg viewBox="0 0 100 150" aria-hidden="true">'+P.LIMBS.map(([a,b])=>{const s=at(a),e=at(b);return s&&e?'<line x1="'+s[0]+'" y1="'+s[1]+'" x2="'+e[0]+'" y2="'+e[1]+'" stroke="'+P.COLORS[b]+'"/>':'';}).join('')+'</svg>';}
