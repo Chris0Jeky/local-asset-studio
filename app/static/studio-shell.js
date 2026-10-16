@@ -22,7 +22,7 @@
   const synonyms={repair:'upscale fix face fix hands',combine:'pose',mesh:'3d',animate:'animate video',restyle:'restyle style'};
   const keywords={models:'download install',assets:'library pictures keepers',production:'compare',create:'full editor recipe seed'};
   const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let looks=[];
+  let looks=[],presets=[],catalogRequest=null;
   document.body.classList.add('studio-shell',isMain?'studio-main':'studio-tool');
   if(!main.id)main.id='studioMain';main.tabIndex=-1;
   const sidebar=document.createElement('aside');sidebar.id='studioSidebar';sidebar.className='studio-sidebar';
@@ -60,10 +60,10 @@
     const entry=links.find(x=>x[0]===id);$('#studioPageTitle').textContent=entry?.[1]||(id==='review'?'Review desk':'Overview');document.querySelectorAll('[data-studio-route]').forEach(a=>{const active=a.dataset.studioRoute===id;a.classList.toggle('active',active);if(active){a.setAttribute('aria-current','page');const group=a.closest('details');if(group)group.open=true;}else a.removeAttribute('aria-current');});closeNav();}
   function commands(){
     const q=$('#studioCommandSearch').value.trim().toLowerCase();
-    const entries=[...makeGoals.map(g=>({label:g.name,description:g.hint,href:'/#make',goal:g.id,search:synonyms[g.id]||''})),...looks.map(l=>{const g=makeGoals.find(g=>g.looks?.includes(l.id));return{label:l.name,description:g?'Look - Make':'Look - open Make to choose a look',href:'/#make',look:g?l.id:null,goal:g?.id,search:l.id==='look-preset-pixel-lora'?'pixel':''};}),...links.map(([id,label,description,href])=>({label,description,href,search:id+' '+(keywords[id]||'')}))];
+    const entries=[...makeGoals.map(g=>({label:g.name,description:g.hint,href:'/#make',goal:g.id,search:synonyms[g.id]||''})),{label:'Tune a look',description:'Open Tune this look under the composer',href:'/#make',search:'lora adapter tune'},...looks.map(l=>{const g=makeGoals.find(g=>g.looks?.includes(l.id)),p=presets.find(p=>p.id===l.body?.preset_id);return{label:l.name,description:g?'Look - Make':'Look - open Make to choose a look',href:'/#make',look:g?l.id:null,goal:g?.id,search:[p?.name,p?.family,p?.model?.file,l.id==='look-preset-pixel-lora'?'pixel':''].filter(Boolean).join(' ')};}),...links.map(([id,label,description,href])=>({label,description,href,search:id+' '+(keywords[id]||'')+(id==='models'?' '+presets.map(p=>[p.name,p.family,p.model?.file].filter(Boolean).join(' ')).join(' '):'')}))];
     $('#studioCommandResults').innerHTML=entries.filter(x=>(x.label+' '+x.description+' '+x.search).toLowerCase().includes(q)).sort((a,b)=>Number(!!q&&(' '+b.search+' ').includes(' '+q+' '))-Number(!!q&&(' '+a.search+' ').includes(' '+q+' '))).map(x=>'<a href="'+escape(x.href)+'"'+(x.goal?' data-make-goal="'+escape(x.goal)+'"':'')+(x.look?' data-make-look="'+escape(x.look)+'"':'')+'><b>'+escape(x.label)+'</b><small>'+escape(x.description)+'</small><span aria-hidden="true">&#8599;</span></a>').join('')||'<p>No match. Try anime, upscale, pose, pixel, compare or download.</p>';
   }
-  async function loadLooks(){try{const r=await fetch('/api/looks');if(!r.ok)return;const data=await r.json();looks=(data.looks||data.cards||[]).filter(l=>!l.trashed_at&&(l.kind==='look'||l.body)&&typeof l.id==='string'&&typeof l.name==='string');if(dialog.open&&!$('#studioCommandResults').contains(document.activeElement))commands();}catch{}}
+  async function loadLooks(){try{const [r,catalog]=await Promise.all([fetch('/api/looks'),catalogRequest||=fetch('/api/catalog').then(r=>r.ok?r.json():{}).catch(()=>({}))]);presets=catalog.presets||[];if(!r.ok)return;const data=await r.json();looks=(data.looks||data.cards||[]).filter(l=>!l.trashed_at&&(l.kind==='look'||l.body)&&typeof l.id==='string'&&typeof l.name==='string');if(dialog.open&&!$('#studioCommandResults').contains(document.activeElement))commands();}catch{}}
   function openCommands(){opener=document.activeElement;$('#studioCommandSearch').value='';commands();dialog.showModal();loadLooks();$('#studioCommandSearch').focus();}
   $('#studioJump').onclick=openCommands;$('#studioCommandSearch').oninput=commands;
   $('#studioCommandSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#studioCommandResults a')?.click();}};

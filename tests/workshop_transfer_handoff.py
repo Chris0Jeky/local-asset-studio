@@ -40,7 +40,7 @@ def _document():
 <body class="studio-shell studio-main workshop-active" data-workshop-skin="atelier" data-workshop-ambience="none">
 <main>
   <div id="createView" class="workspace view workshop" data-workshop-layout="focus" data-workshop-ambience="none">
-    <div class="ux-create-heading"><div><span class="eyebrow">CREATE</span><h1>Follow the idea.</h1></div><div class="ux-stage-track"><span>Prepare</span><span>Run</span></div></div>
+    <div class="ux-create-heading"><div><span class="eyebrow">CREATE</span><h1>Full editor — every setting for one recipe</h1></div><div class="ux-stage-track"><span>Prepare</span><span>Run</span></div></div>
     <section id="uxTransfer" class="panel ux-transfer"><h2>Text from Prompt Lab</h2><p id="uxTransferNotice">A reviewed Prompt Lab draft is ready.</p><pre id="uxTransferPreview">A lantern-lit city workshop.</pre><button id="uxApplyPrompt" class="primary">Apply text to the selected recipe</button><button>Dismiss</button></section>
     <section id="workshopAmbienceHero" class="wk-immersive-hero" hidden><div class="wk-hero-copy"><span class="eyebrow">LOCAL / PRIVATE / YOURS</span><h2>Turn your ideas into something real.</h2><p>The same working draft.</p></div><div class="wk-hero-art"></div></section>
     <nav class="wk-modebar"><button class="active">Generate</button><a href="#">Prompt Lab</a><a href="#">Runs & review</a></nav>

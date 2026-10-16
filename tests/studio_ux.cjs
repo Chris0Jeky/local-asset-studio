@@ -12,6 +12,17 @@ test('finder goal names, hints and look membership match Make',()=>{
   const goals=(file,name)=>vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8').match(new RegExp('const '+name+'=(\\[[\\s\\S]*?\\n  \\]);'))[1]);
   assert.equal(JSON.stringify(goals('studio-shell.js','makeGoals')),JSON.stringify(goals('make.js','GOALS')));
 });
+test('finder indexes preset model and family metadata and offers Tune without generation',()=>{
+  const shell=fs.readFileSync(path.join(__dirname,'../app/static/studio-shell.js'),'utf8');
+  const commands=shell.slice(shell.indexOf('  function commands(){'),shell.indexOf('  async function loadLooks()'));
+  const input={value:'wai'},results={};
+  const context={$:s=>s==='#studioCommandSearch'?input:results,makeGoals:[{id:'character',looks:['look-test']}],synonyms:{},keywords:{},looks:[{id:'look-test',name:'Fantasy portrait',body:{preset_id:'test'}}],presets:[{id:'test',name:'Portrait recipe',family:'WAI',model:{file:'base-model.safetensors'}},{id:'flux',name:'FLUX',family:'FLUX'}],links:[['models','Models & setup','Install models','/#models']],escape:s=>s};
+  vm.runInNewContext(commands+';commands();',context);
+  assert.match(results.innerHTML,/data-make-look="look-test"/);
+  for(const query of ['base-model','portrait recipe']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/data-make-look="look-test"/);}
+  for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Tune this look under the composer/);}
+  input.value='flux';vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#models"/);
+});
 const image = {media_type:'image',filename:'source.png'};
 const audio = {media_type:'audio',filename:'voice.wav'};
 const draft = () => ({version:1,updatedAt:123,recipe:{preset:'qwen-1ref',controls:{positive:'A study',seed:42},batch:1,parent_assets:['source'],references:[]}});
