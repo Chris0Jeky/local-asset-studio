@@ -464,12 +464,17 @@ class AssetWorkspace:
                     raise WorkspaceError("Choose an existing collection")
                 if not db.execute("SELECT id FROM collections WHERE id=?", (collection_id,)).fetchone():
                     raise WorkspaceError("Choose an existing collection")
+                members = {r["asset_id"] for r in db.execute(f"SELECT asset_id FROM collection_assets WHERE collection_id=? AND asset_id IN ({placeholders})", [collection_id, *ids])}
+                # Only rows whose membership flips are changes: a repeat add or a remove of a non-member burns no revision (#1405 pattern).
+                changed_ids = [i for i in ids if (i not in members) == (action == "add_collection")]
                 if action == "add_collection":
                     db.executemany("INSERT OR IGNORE INTO collection_assets VALUES (?,?)", [(collection_id, i) for i in ids])
                 else:
                     db.executemany("DELETE FROM collection_assets WHERE collection_id=? AND asset_id=?", [(collection_id, i) for i in ids])
                 applied = {"collection_id": collection_id}
-                db.execute(f"UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN ({placeholders})", ids)
+                if changed_ids:
+                    changed_placeholders = ",".join("?" for _ in changed_ids)
+                    db.execute(f"UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN ({changed_placeholders})", changed_ids)
             else:
                 changes = {}
                 if action in ("trash", "restore"):
@@ -492,9 +497,11 @@ class AssetWorkspace:
                             raise WorkspaceError("Use up to 30 tags")
                         valid_tags = []
                         for tag in tags:
-                            if isinstance(tag, str) and not tag:
-                                continue
+                            if isinstance(tag, str) and not tag.strip():
+                                continue   # blank or whitespace-only entries are dropped, never stored as ''
                             valid_tags.append(self.text(tag, "Tag", 60))
+                        if tags and not valid_tags:
+                            raise WorkspaceError("Enter at least one non-blank tag, or send an empty list to clear the tags; nothing changed")
                         valid_tags = list(dict.fromkeys(valid_tags))
                         answered = [CHECK_TAG.fullmatch(t) for t in valid_tags if t[:6].lower() == "check:"]
                         if not all(answered) or len({m[1] for m in answered}) != len(answered):
@@ -562,6 +569,9 @@ class AssetWorkspace:
                 inserted = db.execute("INSERT OR IGNORE INTO setups VALUES (?,?,?,?)", (identifier, name, raw, time.time()))
                 if inserted.rowcount == 0:
                     winner = db.execute("SELECT name,recipe FROM setups WHERE id=?", (identifier,)).fetchone()
+                    if winner is None:  # deleted between the ignored insert and this read: a conflict, not a TypeError
+                        raise WorkspaceError("That setup changed while it was being saved; nothing was stored. Save again with a new ID.",
+                                             status=409, code="setup_conflict")
                     if winner["name"] != name or json.loads(winner["recipe"]) != recipe:
                         raise WorkspaceError("That setup ID already exists; the original was preserved. Save with a new ID.")
         return {"id": identifier, "name": name}
