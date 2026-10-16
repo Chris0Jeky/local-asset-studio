@@ -63,4 +63,6 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   the "Untested" chip dropped as noise.
 - [ ] **Large-job preparation journal rotates** (#1435) with tombstones for action receipts, instead of locking up
   after 32 requests.
+- [ ] **A stale seamless plan no longer blocks loading a setup** (#1441): it is dropped with a message and the rest
+  loads. Before, the whole setup was refused.
 
