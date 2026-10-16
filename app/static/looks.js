@@ -1,4 +1,4 @@
-/* Looks (#1221): pick a saved look in Create, type only the scene, and the Studio writes the wording and the look's recipe
+/* Looks (#1221): pick a look in Create, type only the scene, and the Studio writes the wording and the look's recipe
    settings. A look is Workspace data (/api/looks, app/looks.py), not browser storage. Preparing never generates (K8). */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioLooks=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
@@ -77,7 +77,7 @@
   function clearApplication(){application=null;}
   function restoreApplication(value,presetId){
     application=value==null?null:normalizeApplication(value,presetId);
-    if(value!=null&&!application)throw Error('Invalid saved Look application state.');
+    if(value!=null&&!application)throw Error('Invalid look application state.');
   }
   function applicationPayload(presetId){return application?.preset_id===presetId?{look_application:normalizeApplication(application,presetId)}:{};}
   function applicationBlocker(presetId){if(preparation)return 'A Look is being prepared. Wait for it to finish before generating or saving a setup.';return application?.preset_id===presetId?'This Look could not be applied: '+application.controls.join(', ')+'. Recipe defaults are shown; no Look settings were applied. Reprepare with supported settings or reset the recipe without the look. Nothing was generated.':'';}
@@ -96,7 +96,7 @@
   document.addEventListener('studio:recipe',()=>{preparationEpoch++;});
   // Folded by default: Create's first screen keeps the wording and Generate in view (workshop height budget).
   const block=document.createElement('details');block.id='lookBlock';block.className='ux-looks';
-  block.innerHTML='<summary>Use a saved look <small>type only the scene</small></summary><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div><div id="lookOptions" class="ux-looks-row" role="group" aria-label="Optional lines of this look" hidden></div>'
+  block.innerHTML='<summary>Use a look <small>type only the scene</small></summary><div class="ux-looks-row"><label>Look<select id="lookSelect"></select></label><label>Scene<input id="lookScene" maxlength="1000" autocomplete="off" aria-describedby="lookReason"></label></div><div id="lookOptions" class="ux-looks-row" role="group" aria-label="Optional lines of this look" hidden></div>'
     +'<details id="lookPreview" class="look-visual-reference" hidden><summary>Preview Night Shift reference</summary><figure><img id="lookPreviewImage" width="1024" height="576" decoding="async" hidden alt=""><figcaption><strong id="lookPreviewTitle"></strong><p id="lookPreviewCopy">A local visual reference for the Night Shift mood. Your scene is prepared from the saved wording.</p><p id="lookPreviewFallback" hidden>Picture unavailable. Imagine a quiet graphite workshop with a rainy window, warm desk lamp and cyan CRT. You can still prepare this Look.</p></figcaption></figure></details>'
     +'<p id="lookSummary" class="muted"></p><div class="ux-looks-row"><button type="button" id="lookPrepare" aria-describedby="lookReason">Prepare with this look</button><button type="button" id="lookTrash" aria-describedby="lookReason">Put away</button></div><p class="disabledReason"><small id="lookReason"></small></p>'
     +'<details id="lookSave"><summary>Save this wording as a look</summary><p class="muted">Write '+L.SLOT+' in the wording where a new scene goes. The recipe and its settings are saved with it.</p><label>Look name<input id="lookName" maxlength="120" autocomplete="off" aria-describedby="lookSaveReason"></label><p id="lookAnchor" class="muted"></p><button type="button" id="lookSaveButton" aria-describedby="lookSaveReason">Save look</button><p class="disabledReason"><small id="lookSaveReason"></small></p></details>'
@@ -152,7 +152,7 @@
   }
   function render(keep){
     const presetId=typeof selected!=='undefined'?selected?.id:null,{active,away}=L.groups(looks),opt=l=>'<option value="'+esc(l.id)+'">'+esc(L.optionLabel(l,presetId))+'</option>';
-    q('#lookSelect').innerHTML='<option value="">'+(looks.length?'Choose a look…':'No saved looks yet')+'</option>'+active.map(opt).join('')+(away.length?'<optgroup label="Put away">'+away.map(opt).join('')+'</optgroup>':'');
+    q('#lookSelect').innerHTML='<option value="">'+(looks.length?'Choose a look…':'No looks yet')+'</option>'+active.map(opt).join('')+(away.length?'<optgroup label="Put away">'+away.map(opt).join('')+'</optgroup>':'');
     q('#lookSelect').value=looks.some(l=>l.id===keep)?keep:'';sync();
   }
   async function load(keep){

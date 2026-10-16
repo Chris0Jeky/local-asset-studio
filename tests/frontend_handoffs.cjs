@@ -1925,6 +1925,45 @@ async function fullEditorLoraSlotsUseTheKnowledgeBase() {
   }
 }
 
+// #1444: independent cases keep each regression visible against the old editor.
+for (const [name, check] of [
+  ['whole trigger words', ({run}) => {
+    assert.equal(run(`promptHas('pixel artwork', 'pixel art')`), false);
+    assert.equal(run(`promptHas('a PIXEL ART fox, ink', 'pixel art')`), true);
+    assert.equal(run(`promptHas('prepixel art', 'pixel art')`), false);
+    assert.equal(run(`promptHas('a fox, tag.v1+, ink', 'tag.v1+')`), true);
+    assert.equal(run(`promptHas('tagXv1+', 'tag.v1+')`), false);
+  }],
+  ['case insensitive trigger removal', ({run, element}) => {
+    run(`autoTriggers={lora:', pixel art'}`); element('#positive').value = 'a fox, PIXEL ART';
+    assert.match(run(`dropAutoTrigger('lora')`), /Removed the trigger/);
+    assert.equal(element('#positive').value, 'a fox');
+  }],
+  ['unmatched trigger ownership retained', ({run, element}) => {
+    run(`autoTriggers={lora:', pixel art'}`); element('#positive').value = 'a fox, pixel artwork';
+    assert.equal(run(`dropAutoTrigger('lora')`), '');
+    assert.equal(run(`autoTriggers.lora`), ', pixel art');
+    element('#positive').value = 'a fox, pixel art'; run(`dropAutoTrigger('lora')`);
+    assert.equal(element('#positive').value, 'a fox');
+    assert.equal(run(`autoTriggers.lora`), undefined);
+  }],
+  ['authored strength clamped to range', ({run}) => {
+    run(`selected={defaults:{lora:1.5}}`);
+    assert.equal(run(`recommendedStrength('lora',{default:0,strength:[0.6,1]})`), 1);
+    run(`selected.defaults.lora=0.2`);
+    assert.equal(run(`recommendedStrength('lora',{default:0,strength:[0.6,1]})`), 0.6);
+  }],
+  ['start insertion strips trailing separators', ({run, element}) => {
+    run(`selected={positive:['1','text'],lora:['2','strength'],lora_name:['2','name']};knowledge={loras:{'pixel.safetensors':{trigger:'pixel art',trigger_position:'start'}}}`);
+    element('[data-key="lora_name"]').value = 'pixel.safetensors'; element('#positive').value = 'a fox, ';
+    run(`addTrigger('lora',true)`);
+    assert.equal(element('#positive').value, 'pixel art, a fox');
+  }],
+]) require('node:test')('#1444 ' + name, () => {
+  const context = sandbox({}, {}); context.run(`Event=class{constructor(type){this.type=type;}}`);
+  context.element('#positive').dispatchEvent = () => true; check(context);
+});
+
 // #278 audit item 24: the picker groups by what a recipe makes, shows one plain line, a committed recipe-default
 // thumbnail (never an adult-tagged recipe's), a speed badge and Needs download; the "review separate" chips are gone.
 function recipePickerIsGroupedAndPlain() {

@@ -78,7 +78,7 @@ def control_problem(preset, key, value):
         return None if _number(value, lo, hi, True) and int(Decimal(str(value))) % multiple == 0 else f"{key} must be a multiple of {multiple} from {lo} to {hi}"
     if key in ("sampler", "scheduler"):
         choices = (preset.get("choices") or {}).get(key)
-        return None if not choices or value in choices else f"{key} {value} is not offered by {preset.get('name') or preset.get('id')}"
+        return None if choices and value in choices else f"{key} {value} is not offered by {preset.get('name') or preset.get('id')}"
     return None
 
 

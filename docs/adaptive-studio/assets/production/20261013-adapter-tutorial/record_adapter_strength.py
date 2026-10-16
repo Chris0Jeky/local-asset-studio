@@ -43,7 +43,7 @@ with sync_playwright() as pw:
     before=state();assert before['preset']=='yumeflux-ilv1-baseline'
     assert float(before['controls']['lora'])==1 and float(before['controls']['lora2'])==0,before
     assert str(before['batch'])=='1'
-    page.get_by_text('Follow the idea.',exact=True).scroll_into_view_if_needed()
+    page.get_by_text('Full editor — every setting for one recipe',exact=True).scroll_into_view_if_needed()
     assert page.get_by_text('Readiness unavailable',exact=True).is_visible()
     start=time.monotonic()
     def mark(action,shot,hold):
@@ -78,7 +78,7 @@ with sync_playwright() as pw:
     mark('Edit slot1 to0.8; slot2 and every other value remain unchanged','05-edited',4)
     page.locator('[data-key="lora2"]').focus()
     mark('Inspect slot2 at0; this is an editable draft, not effect evidence','06-slot-two',3)
-    page.get_by_text('Follow the idea.',exact=True).scroll_into_view_if_needed()
+    page.get_by_text('Full editor — every setting for one recipe',exact=True).scroll_into_view_if_needed()
     mark('Readiness remains unavailable; no generation submitted','07-no-run',3)
     duration=time.monotonic()-start
     jobs=context.request.get(base+'/api/jobs').json();assert jobs==[]
