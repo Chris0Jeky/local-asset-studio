@@ -85,12 +85,38 @@ def main():
                                     assert page.locator('#positive').input_value() == old
                                     assert 'not applied' in page.locator('#lookStatus').inner_text()
                                 assert page.evaluate("StudioLooks.applicationBlocker(selected.id)") == ''
+                            attempts = []
+                            def block_generation(route):
+                                attempts.append(route.request.post_data_json)
+                                route.fulfill(status=400, content_type='application/json', body='{"error":"Generation blocked by browser test"}')
+                            page.route('**/api/jobs', block_generation)
+                            page.locator('#lookScene').fill('new shortcut scene')
+                            count = len(fixture.POSTS)
+                            page.locator('#lookScene').press('Control+Enter')
+                            page.wait_for_function("document.querySelector('#lookStatus').textContent.includes('Prepared. Press Ctrl+Enter again (or Generate) to run it.') && !document.querySelector('#lookPrepare').disabled")
+                            assert any(row['path'] == '/api/looks/prepare' for row in fixture.POSTS[count:])
+                            assert attempts == [], 'First shortcut only prepares'
+                            page.locator('#lookScene').evaluate("el=>el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,repeat:true,bubbles:true,cancelable:true}))")
+                            assert attempts == [], 'Held keys never generate'
+                            page.locator('#lookScene').press('Control+Enter')
+                            page.wait_for_function("!submitting")
+                            assert len(attempts) == 1, 'Second unchanged shortcut uses Generate'
+                            assert attempts[0]['controls']['positive'] == CONTROLS['positive']
+                            for change in ('scene', 'wording', 'recipe'):
+                                if change == 'scene': page.locator('#lookScene').fill('another scene')
+                                elif change == 'wording': page.locator('#positive').fill('My new words')
+                                else: page.evaluate("selectPreset('zimage-fast')")
+                                count = sum(row['path'] == '/api/looks/prepare' for row in fixture.POSTS)
+                                page.locator('#lookScene').press('Control+Enter')
+                                page.wait_for_function("!document.querySelector('#lookPrepare').disabled && document.querySelector('#lookStatus').textContent.includes('Prepared. Press Ctrl+Enter again')")
+                                assert sum(row['path'] == '/api/looks/prepare' for row in fixture.POSTS) == count + 1, change
+                                assert len(attempts) == 1, 'Changed preparation cannot generate: ' + change
                         finally:
                             RELEASE.set()
                             page.close()
                     assert all(row['path'] in ('/api/looks/prepare', '/api/estimate', '/api/references/check') for row in fixture.POSTS), fixture.POSTS
                     assert not errors, errors
-                    print('Desktop/mobile: pending admission held, stale wording/scene/recipe refused, current response applied; zero generation and page errors')
+                    print('Desktop/mobile: pending admission held, stale wording/scene/recipe refused, current response applied, scene shortcut prepares then runs only unchanged wording; zero generation and page errors')
                 finally:
                     browser.close()
         finally:

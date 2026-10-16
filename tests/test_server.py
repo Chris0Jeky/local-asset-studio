@@ -158,6 +158,29 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(clamped.idle_release_minutes,0.0)
         self.assertEqual(clamped.config_warnings,[])
 
+    def test_config_decimal_strings_preserve_fractional_release_intervals(self):
+        for raw in ('45.25', ' 45.25 ', '4.525e1', 45.25):
+            with self.subTest(raw=raw):
+                (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),
+                    'commit_gate_release_seconds':raw,'idle_cache_release_minutes':raw}))
+                studio=self.studio()
+                self.assertEqual((studio.commit_release_seconds,studio.idle_release_minutes),(45.25,45.25))
+                self.assertEqual(studio.config_warnings,[])
+
+    def test_health_route_exposes_invalid_config_warnings_online_and_offline(self):
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),
+            'commit_gate_release_seconds':'NaN','idle_cache_release_minutes':False}))
+        for online, replies in ((False,[URLError('offline')]), (True,[{},{}])):
+            with self.subTest(online=online), patch('sys.stderr', new_callable=io.StringIO):
+                handler=server.Handler.__new__(server.Handler);handler.studio=FakeStudio(self.root,replies)
+                handler.headers={'Host':'127.0.0.1:8191'};handler.path='/api/health';sent=[]
+                handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_GET()
+                self.assertEqual(sent[0][0],200);self.assertEqual(sent[0][1]['online'],online)
+                warnings=sent[0][1]['config_warnings'];self.assertEqual(len(warnings),2)
+                for key, default in (('commit_gate_release_seconds','0.0'), ('idle_cache_release_minutes','10.0')):
+                    self.assertTrue(any(key in warning and 'keeping ' + default in warning for warning in warnings))
+
     def test_bad_config_numbers_warn_once_per_key_and_keep_defaults(self):
         for raw in ('nope', None, True, 'NaN', 'Infinity', '1e10000'):
             with self.subTest(raw=raw):
@@ -743,6 +766,21 @@ class ServerTests(unittest.TestCase):
                    started_at=10.0,outputs=[{'filename':'retained.png','subfolder':'Studio','type':'output','prompt_id':'known-prompt'}])
         studio._save(job)
         return studio,job
+
+    def test_resume_and_stop_tracking_reject_extra_path_segments(self):
+        for action,method,status in (('resume','resume_job',202),('stop-tracking','stop_tracking',200)):
+            with self.subTest(action=action):
+                studio,job=self.uncertain_known_job();before=json.dumps(job,sort_keys=True);queued=studio.queue.qsize()
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio
+                handler._safe_mutation=lambda:True;handler._body_json=lambda *a:{'reason':'Stop observing this prompt'}
+                sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+                with patch.object(studio,method,wraps=getattr(studio,method)) as command:
+                    for extra in ('/x','/x/y','/'):
+                        handler.path='/api/jobs/'+job['id']+extra+'/'+action;sent.clear();handler.do_POST()
+                        self.assertEqual(sent[0][0],400,sent);command.assert_not_called()
+                        self.assertEqual(json.dumps(job,sort_keys=True),before);self.assertEqual(studio.queue.qsize(),queued)
+                    handler.path='/api/jobs/'+job['id']+'/'+action;sent.clear();handler.do_POST()
+                    self.assertEqual(sent[0][0],status,sent);command.assert_called_once()
 
     def test_stop_tracking_persists_only_disposition_and_is_idempotent(self):
         studio,job=self.uncertain_known_job();directory=studio.runs/job['id']
@@ -1429,9 +1467,21 @@ class ServerTests(unittest.TestCase):
         graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
         (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
         for bad in (True,False):
-            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'number or short text'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'safetensors filename'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
         _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'other.safetensors'}})
         self.assertEqual(bound['1']['inputs']['lora'],'other.safetensors')
+
+    def test_lora_slot_values_are_checked_whatever_the_bound_input_holds(self):
+        # A filename-bound slot takes only a bare .safetensors name, never a number or a path; any other binding, including an
+        # input the graph leaves unset, is a 0-2 strength. Raw text or 99 once reached the workflow and failed late in ComfyUI.
+        graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in (99,0.5,'../escape.safetensors','x'*9000,'style.ckpt'):
+            with self.subTest(filename=bad),self.assertRaisesRegex(server.StudioError,'safetensors filename'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        del graph['1']['inputs']['lora'];(self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in ('abc','style.safetensors',5,-1,float('nan')):
+            with self.subTest(unset=bad),self.assertRaisesRegex(server.StudioError,'lora must be'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'1.5'}});self.assertEqual(bound['1']['inputs']['lora'],1.5)
 
     def test_disabled_slots_leave_the_graph_and_rewire_model_edges(self):
         self.lora_stack(); s=self.studio()

@@ -8,6 +8,7 @@ function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve
 async function fixture(){
   const listeners={},inputs={},requests=[],statuses=[],option={dataset:{lookOption:'rain'},checked:false};
   const node=id=>inputs[id]||(inputs[id]={value:'',textContent:'',hidden:false,disabled:false,dataset:{},classList:{toggle(){}},
+    click(){return this.onclick?.();},
     before(){},addEventListener(type,fn){(this.listeners??={})[type]=fn;},closest:()=>true,
     dispatchEvent(event){this.listeners?.[event.type]?.(event);emit(event.type,this);},
     cloneNode(){return {...this};},checkValidity(){return true;}});
@@ -15,15 +16,16 @@ async function fixture(){
   ['#createView','#positive','#negative','#batch','#lookSelect','#lookScene','#lookName','#lookOptions','#lookReset','#uxFills'].forEach(node);
   node('#positive').value='default';node('#batch').value='1';
   const look={id:'look-a',name:'Look A',revision:1,usable:true,body:{preset_id:'demo',options:[{id:'rain',default:false,label:'Rain'}]},lineage:[]};
-  let reads=0,applied=0,stamp='baseline';const pending=deferred();
-  const ctx={console,Event:class{constructor(type){this.type=type;}},esc:String,
+  let reads=0,applied=0,generated=0,stamp='baseline';const pending=deferred();
+  const ctx={console,recipeTemplateHash:null,Event:class{constructor(type){this.type=type;}},esc:String,
     document:{querySelector:node,querySelectorAll:()=>[option],createElement:()=>node('#lookBlock'),addEventListener(type,fn){(listeners[type]??=[]).push(fn);}},
     selected:{id:'demo',defaults:{positive:'default'}},parentAssets:[],
     values:()=>({positive:node('#positive').value,negative:node('#negative').value}),
-    StudioSetupDraft:{stamp:()=>JSON.stringify([stamp,ctx.selected.id,ctx.values()])},
+    StudioSetupDraft:{stamp:()=>JSON.stringify([stamp,ctx.selected.id,ctx.values()]),capture:()=>({recipe:{preset:ctx.selected.id,controls:ctx.values()}})},
     api:async()=>{reads++;return {looks:[look,{...look,id:'look-b',name:'Look B'}]};},
     post:(path,payload)=>{requests.push({path,payload});return pending.promise;},
     selectPreset(id){applied++;ctx.selected={id,defaults:{positive:'default'}};ctx.StudioLooks.clearApplication();emit('studio:recipe');},
+    generateShortcut(){generated++;},
     getControl:key=>node(key),confirm:()=>true,message:text=>statuses.push(text),updateReady(){},updateLoraHints(){},scheduleTimeEstimate(){},recipeChanged:()=>emit('studio:recipe'),
     $:node,attachedReferencePayload:()=>[],referenceRecords:[],parentByInput:{},
   };
@@ -31,12 +33,23 @@ async function fixture(){
   vm.runInContext(appFunction('continuationBlockerItems')+'\n'+appFunction('checkedSetupControls'),ctx);
   await Promise.resolve();await Promise.resolve();
   node('#lookSelect').value='look-a';node('#lookScene').value='a room';emit('change',node('#lookSelect'));
-  return {ctx,node,option,requests,statuses,pending,emit,reads:()=>reads,applied:()=>applied,stamp:value=>{stamp=value;},
+  return {ctx,node,option,requests,statuses,pending,emit,reads:()=>reads,applied:()=>applied,generated:()=>generated,stamp:value=>{stamp=value;},
+    shortcut(extra={}){let prevented=false;node('#lookScene').listeners.keydown({key:'Enter',ctrlKey:true,target:node('#lookScene'),preventDefault(){prevented=true;},...extra});return prevented;},
     start:()=>node('#lookPrepare').onclick(),result:()=>({preset_id:'demo',look:{id:'look-a',name:'Look A'},controls:{positive:'prepared',negative:''}})};
 }
 let count=0,failed=0;
 async function test(name,fn){try{await fn();count++;console.log('PASS '+name);}catch(e){failed++;console.error('FAIL '+name+'\n'+e.stack);}}
 (async()=>{
+  await test('scene Ctrl+Enter prepares first, ignores repeat, generates only unchanged prepared inputs',async()=>{
+    const f=await fixture();assert.equal(f.shortcut(),true);assert.equal(f.requests.length,1);assert.equal(f.generated(),0);
+    f.shortcut();assert.equal(f.generated(),0,'A pending response cannot generate');
+    f.pending.resolve(f.result());for(let i=0;i<6;i++)await Promise.resolve();
+    assert.match(f.node('#lookStatus').textContent,/Prepared\. Press Ctrl\+Enter again \(or Generate\) to run it\./);
+    f.shortcut({repeat:true});assert.equal(f.generated(),0);
+    f.shortcut();assert.equal(f.generated(),1);
+    f.node('#lookScene').value='a different room';f.emit('input',f.node('#lookScene'));f.shortcut();
+    assert.equal(f.generated(),1);assert.equal(f.requests.length,2,'Changed scene must prepare again');
+  });
   await test('pending request synchronously holds actual Generate and named-setup admission',async()=>{
     const f=await fixture(),work=f.start();
     assert.match(f.ctx.StudioLooks.applicationBlocker('demo'),/prepar/i);

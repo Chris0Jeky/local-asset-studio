@@ -179,7 +179,7 @@ class EntryPoints(unittest.TestCase):
                 self.page.set_content(shell_html(workflow))
                 self.assertEqual(self.page.locator('#studioQuickCreate').count(), 1)
                 self.assertTrue(self.page.locator('#studioQuickCreate').is_visible())
-                self.assertEqual(self.page.locator('#studioQuickCreate').get_attribute('href'), '/#create')
+                self.assertEqual(self.page.locator('#studioQuickCreate').get_attribute('href'), '/#make')
                 self.assertTrue(self.page.locator('#studioSidebar').evaluate('(n)=>n.inert'))
                 self.page.click('#studioNavToggle')
                 self.assertTrue(self.page.evaluate("!!document.activeElement.closest('#studioSidebar')"))

@@ -49,7 +49,7 @@
   }
   function checkedProject(project){
     require(project?.id===loaded.projectId&&project.root_id==='character-study:'+loaded.plan.plan_sha256,'The saved project does not match this study case.');
-    if(project.plan){const source=project.plan.character_source;require(source?.kind==='character_primary_import'&&source.case_id===loaded.item.id&&source.study_plan?.plan_sha256===loaded.plan.plan_sha256&&source.handoff?.handoff_sha256===loaded.handoff.handoff_sha256,'This case already exists with a different handoff. Inspect its saved plan in Runs & review.');}
+    if(project.plan){const source=project.plan.character_source;require(source?.kind==='character_primary_import'&&source.case_id===loaded.item.id&&source.study_plan?.plan_sha256===loaded.plan.plan_sha256&&source.handoff?.handoff_sha256===loaded.handoff.handoff_sha256,'This case already exists with a different handoff. Inspect its saved plan in Compare & review.');}
     return project;
   }
   async function existing(){
@@ -84,7 +84,7 @@
   $('#characterImportForm').onsubmit=async e=>{
     e.preventDefault();if(busy||!loaded)return;lock(true);abortRequested=false;uploadController=null;$('#cancelCharacterImport').disabled=false;
     try{
-      if(attempted){const saved=await existing();if(saved)await show(saved,true);else status('The case is not visible yet. No import was repeated. Inspect Runs & review and the reported failure before loading corrected files.',true);return;}
+      if(attempted){const saved=await existing();if(saved)await show(saved,true);else status('The case is not visible yet. No import was repeated. Inspect Compare & review and the reported failure before loading corrected files.',true);return;}
       const files=[];
       validatePayload(payload(loaded.refs.map(ref=>({reference_id:ref.id,file:'x'.repeat(200)}))));
       // Check all bytes before uploading any file; hash one bounded image at a time.

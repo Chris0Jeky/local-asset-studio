@@ -87,6 +87,7 @@ async def exercise_backend_refresh(page, checks, posts):
               };
             }""")
             await page.evaluate("showView('models')")
+            await page.evaluate("document.querySelector('.environment-panel').open=true")  # the switcher folds away on Models until asked for
             await page.click('#switchBackend')
             await page.wait_for_function("typeof __switchObserve==='function'")
             await page.evaluate("showView('create')")

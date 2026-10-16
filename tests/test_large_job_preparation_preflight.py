@@ -154,6 +154,21 @@ class LargeJobPreparationPreflightTests(LargeJobPreparationTestCase):
         self.assertEqual(studio.free_calls, [])
         self.assertEqual(studio.backends.launches, 0)
 
+    def test_fallback_prepare_studio_error_is_a_refused_receipt(self):
+        studio = Studio(self.root, [observation(commit=40 * GIB)])
+
+        def bad_prepare(recipe):
+            raise server.StudioError("Invalid workflow binding")
+
+        studio.prepare = bad_prepare
+        result = self.controller(studio).run(self.request())
+        self.assertEqual(result["state"], "refused")
+        self.assertEqual(result["phase"], "refused")
+        self.assertEqual(result["final"]["reason"], "Invalid workflow binding")
+        self.assertEqual(result["actions"], [])
+        self.assertEqual(studio.free_calls, [])
+        self.assertEqual(studio.backends.launches, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,25 @@
+{
+  "version": "R2",
+  "duration_seconds": 8,
+  "export_fps": 24,
+  "effects": [
+    "falling-rain",
+    "reflection-light",
+    "one-way-train"
+  ],
+  "train_enabled_default": true,
+  "static_sha256": "224e57e879e9d0de30d943bd4a8becf3347b12682fe8b82fa7d1299c3ac0bf54",
+  "source_art_unchanged": true,
+  "loops": {
+    "rain_seconds": 2,
+    "light_flame_steam_seconds": 4,
+    "train_seconds": 8
+  },
+  "train_reset": "discrete jump +560 to -560 at60%; both endpoints fully outside stationary window clip",
+  "steam_rise_units": 110,
+  "steam_parent_scale": 0.7,
+  "steam_rise_at_320_px": 30.8,
+  "rain_downward_speed_at_320_px_per_second": 80,
+  "preview_only_native_layers": "16 rain strokes or a second steam plume; original standalone SVG remains byte-identical",
+  "human_acceptance": "not inferred from timing or numeric readability thresholds"
+}
