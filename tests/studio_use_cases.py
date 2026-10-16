@@ -244,6 +244,8 @@ LOCAL_CONTROLS = {
     '#loadPreset': 'reads a registered recipe graph into the builder (GET)',
     '#compileWorkflow': 'checks connections: POST /api/workflow-studio/compile validates and stores nothing',
     '#assetDialog [data-ux-tile-band]': 'chooses the seam band for Make seamless in this page; nothing is sent',
+    '#workshopTune': 'opens Fine-tune the recipe in this page',
+    '#loraSlots select[data-key]': 'chooses an adapter file in this page; sets its strength and trigger wording, nothing is sent',
 }
 
 
@@ -333,6 +335,9 @@ def build_handler():
                     unusable_reason=None, anchor_asset_id=None, preset_name=names.get(entry['body']['preset_id']))
                for entry in json.loads((ROOT / looks.SEEDS).read_text(encoding='utf-8'))['looks']]
 
+    knowledge = json.loads((ROOT / 'presets/settings-kb.json').read_text(encoding='utf-8'))
+    recipes = json.loads((ROOT / 'presets/recipes.json').read_text(encoding='utf-8'))
+
     class PromptFixtureBase(fixture.Handler):
         studio = None
         # Production's own length guard; its host/origin guards hard-code :8191 and this fixture
@@ -357,6 +362,11 @@ def build_handler():
             if path == '/api/workflow-studio/capabilities':
                 return self.json({'version': 1, 'run': {'available': False, 'reason': 'The use-case fixture never executes graphs.'}, 'generation_submitted': False})
             if path == '/api/workflow-studio/documents': return self.json({'documents': []})
+            # The real adapter knowledge, its file list as the inventory and the authored recipes: the Full editor's
+            # adapter slots and the recipe picker read these, exactly as /api/knowledge, /api/options and /api/recipes do.
+            if path == '/api/knowledge': return self.json(knowledge)
+            if path == '/api/options': return self.json({'loras': sorted(knowledge['loras'])})
+            if path == '/api/recipes': return self.json(recipes)
             if path == '/api/looks': return self.json({'looks': copy.deepcopy(shipped), 'seed_errors': [], 'generation_submitted': False})
             if path == '/api/workflow-studio/document-runs': return self.json({'runs': []})
             if path.startswith('/api/workflow-studio/presets/'):
@@ -1569,6 +1579,37 @@ def _make_chosen(c):
           and float(state['lora2'] or 0) > 0 and state['seed'] == '4242' and int(state['steps'] or 0) > 25 and state['positive'].startswith(trigger) and MAKE_SCENE in state['positive']
           and 'model Pearly Anima Mix' in summary)
     return ok, 'models offered %s; added row %r; tuned %r; prepared %s' % (offered, row, summary, {k: state[k] for k in ('preset', 'lora2_name', 'lora2', 'steps', 'seed')})
+
+@driver('specific-lora-in-full-editor')
+def _specific_lora(c):
+    """#278 J1 (16 Oct 2026 live audit): a specific adapter in the Full editor. The hint read "place it at the anywhere of the
+    prompt", a chosen adapter stayed at strength 0 and its trigger had to be typed by hand. Nothing is generated."""
+    c.boot('#create')
+    c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
+    c.act('#presetSearch', 'fill', typed='WAI v17')
+    card = c.page.evaluate("""(() => {const b = document.querySelector('#presetList [data-id="wai"]');
+      return {group: b?.closest('[data-group]')?.dataset.group || '', thumb: !!b?.querySelector('.preset-thumb'), pace: b?.querySelector('.pace')?.textContent || '',
+              chips: /review separate/i.test(document.querySelector('#presetList').innerText)};})()""")
+    c.act('#presetList [data-id="wai"]', note='WAI v17 illustration: %s' % card)
+    c.act('#positive', 'fill', typed=BRIEF)
+    c.act('#workshopTune', note='open Fine-tune the recipe', supplementary=True)
+    c.act('#loraSlots select[data-key="lora_name"]', 'select', typed='manga-ink-screentone.safetensors')
+    chosen = c.page.evaluate("""({strength: getControl('lora').value, positive: document.querySelector('#positive').value, status: document.querySelector('#status').textContent,
+      range: document.querySelector('[data-range="lora"]')?.textContent || ''})""")
+    triggers = chosen['positive'].count('m4ng41nk')
+    # The placement wording itself, read the way the hint builds it before the trigger is in the prompt.
+    place = c.page.evaluate("triggerPlace(knowledge.loras['manga-ink-screentone.safetensors'].trigger_position)")
+    hint = c.page.evaluate("document.querySelector('[data-hint=\"lora\"]').innerText")
+    hint_ok = 'at the anywhere' not in hint and 'Trigger: m4ng41nk' in hint and 'recommended 0.8' in hint and place == 'put it anywhere in the prompt'
+    c.observe('the adapter hint names the trigger, its placement and the recommended range', hint_ok and chosen['range'] == '· 0.6–1',
+              detail='hint %r; placement %r; range %r' % (hint, place, chosen['range']))
+    c.act('#loraSlots select[data-key="lora_name"]', 'select', typed='Detail_enhancer_IL_v2.safetensors')
+    after = c.page.evaluate("({strength: getControl('lora').value, positive: document.querySelector('#positive').value})")
+    ok = (card['group'] == 'character' and card['thumb'] and bool(card['pace']) and not card['chips'] and chosen['strength'] == '0.8'
+          and triggers == 1 and chosen['positive'] == BRIEF + ' m4ng41nk' and 'Added the trigger m4ng41nk' in chosen['status'] and hint_ok
+          and after['positive'] == BRIEF and after['strength'] == '0.7')
+    return ok, 'picker card %s; strength on choosing %s (range %s); trigger in prompt %dx; hint %r; after switching: strength %s, trigger removed %s' % (
+        card, chosen['strength'], chosen['range'], triggers, hint[:90], after['strength'], after['positive'] == BRIEF)
 
 
 @driver('new-scene-in-an-accepted-look')

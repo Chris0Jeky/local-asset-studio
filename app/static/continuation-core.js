@@ -405,7 +405,8 @@
     if(plan.kind==='reseed')return 'Vary prepared as new seeds, same recipe ('+plan.route.name+'): '+seeds+', '+varyTime(plan.round.timing)+'. No close-variation route is recorded for this recipe, so each picture starts afresh from the same words. Nothing was generated; press Generate to run the round.';
     const controls=plan.strengths[strength].controls;
     const adapters=varyAdapters(plan.carry),fellBack=Array.isArray(plan.carryFallback)&&plan.carryFallback.length;
-    const kept=!plan.carry?'':adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':fellBack?', same checkpoint, recipe default for '+plan.carryFallback.join(', '):', same checkpoint as this picture, no adapters (it used none)';
+    const defaults=fellBack?plan.carryFallback.map(key=>key+" not recorded; using the recipe's current default: "+plan.carry[key]).join('; '):'';
+    const kept=!plan.carry?'':fellBack?', same checkpoint, '+(adapters.length?'adapters prepared ('+adapters.join(', ')+'), ':'')+defaults:adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':', same checkpoint as this picture, no adapters (it used none)';
     return 'Vary '+strength+' prepared on '+plan.route.name+' from this picture'+kept+': denoise '+controls.denoise+(plan.starting?' (a starting value, not yet judged)':'')+', '+seeds+', '+varyTime(plan.round.timing)+'. Nothing was generated; press Generate to run the round.';
   }
   function varyHint(plan){

@@ -377,7 +377,7 @@
     catch{if(!state.runs.includes(run)){timers.delete(id);return;}if(!run.lost){run.lost=true;renderRuns();}poll(id,misses+1);}},Math.min(POLL_MAX,POLL*2**Math.min(misses,4))));}
   // A finished run's pictures join an open picture grid at once, so the next goal can start from them.
   function refreshPickers(){const g=goal();if(!g.intent)return;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])if(q('#'+id))void fillPictures(g,id,attr);}
-  function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: check Runs & review',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
+  function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: check Compare & review',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
   const marks=a=>{const review=reviewOf(a),mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+(review===value?'✓ '+(value==='selected'?'Kept':'Marked: not this'):label)+'</button>';return mark('selected','★ Keep')+mark('rejected','Not this');};
   function actions(job,output){
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';

@@ -79,6 +79,24 @@ in slot 2, its trigger in the words, more than 25 steps and the seed. `tests/mak
 fixture `/api/jobs`. It asserts the exact controls sent, the run card summary and the restore on Edit and re-run, including the
 seed lock after a run with new seeds.
 
+## Full editor adapters and a scannable recipe picker — 16 October 2026
+
+Refs #278 (16 October 2026 live journey audit, J1 and item 24).
+
+- **Adapter slots** (Fine-tune the recipe): the hint reads the trigger's placement in plain words (*put it anywhere in the
+  prompt*; it said *place it at the anywhere of the prompt*). Choosing an adapter file sets its recorded recommended strength
+  (settings-kb `default`; a recorded 0 falls back to the slot's authored strength, else 1.0), shows the recorded range beside
+  Strength, and adds its trigger to the prompt once, saying so in the status line. Changing the file, or turning the slot to 0,
+  removes only the exact trigger the page added. *Add trigger to prompt* and *Use 0.8* cover the manual path.
+- **Change recipe**: search and results come first (the list starts at y≈360 of 900, was ≈680), with the task, kind and
+  collection filters on one row. Cards are grouped by what they make, show one plain sentence, a committed recipe-default
+  picture where one exists, a speed badge (fastest recorded run, else the recipe's own stated timing) and *Needs download*.
+  The bundle launcher now uses the dark theme.
+
+`python tests/studio_use_cases.py` passed **23/23** journeys with **zero generation submissions and zero page errors**. The new
+`specific-lora-in-full-editor` journey finds WAI in the picker, chooses the manga ink adapter and asserts strength 0.8, range
+0.6–1, the trigger added once and removed again when the slot switches to an adapter without a trigger.
+
 ## Make: a goal-first way in — 15 October 2026
 
 Owner ask (15 October 2026): the Studio was too clunky; someone who wants, say, a high-end anime picture should get there

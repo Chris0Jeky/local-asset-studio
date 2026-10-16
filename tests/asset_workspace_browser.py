@@ -21,6 +21,7 @@ from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 import server as production
+from browser_ports import BoundPortGuard
 
 ROOT = Path(__file__).resolve().parents[1]
 KEY = 'studio.asset-recovery.v1.detail'
@@ -41,7 +42,7 @@ async def exercise(args):
         assert b.register(job, 0, source) == identifier
         scope_a, scope_b = a.snapshot()['workspace_id'], b.snapshot()['workspace_id']
 
-        class Handler(production.Handler):
+        class Handler(BoundPortGuard, production.Handler):
             studio = SimpleNamespace(assets=a)
             json = fixture.Handler.json
             def do_GET(self):
@@ -65,7 +66,7 @@ async def exercise(args):
                 return super()._json(status, data)
 
         # Refuse an occupied production-allowed loopback port; never attach to an existing Studio.
-        http = production.StudioHTTPServer(('127.0.0.1', 8191), Handler)
+        http = production.StudioHTTPServer(('127.0.0.1', args.port), Handler)
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start(); fixture.POSTS.clear()
         def check(case, expectation, condition):
             checks.append({'id': case, 'expectation': expectation, 'passed': bool(condition)})
@@ -86,8 +87,8 @@ async def exercise(args):
                 async def new_page(session=None):
                     page = await context.new_page(); page.set_default_timeout(6000)
                     page.on('pageerror', lambda e: errors.append(str(e)))
-                    if args.inert: await inert_page(page, 8191, session)
-                    else: await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
+                    if args.inert: await inert_page(page, http.server_port, session)
+                    else: await page.goto(f'http://127.0.0.1:{http.server_port}/#assets', timeout=20000)
                     await ready(page)
                     return page
                 async def reload(page):
@@ -187,4 +188,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--inert', action='store_true')
+    parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
     asyncio.run(exercise(parser.parse_args()))

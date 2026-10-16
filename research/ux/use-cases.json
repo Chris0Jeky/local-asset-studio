@@ -948,6 +948,39 @@
       ]
     },
     {
+      "id": "specific-lora-in-full-editor",
+      "goal": "Use one specific style adapter in the full editor without knowing its trigger word or a sensible strength by heart.",
+      "starting_view": "create",
+      "success_condition": "Choosing the adapter in a slot sets its recommended strength (not 0), shows its recommended range, reads its trigger placement in plain words and adds the trigger to the prompt once, saying so; changing to an adapter without a trigger takes the added trigger out again; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "find the anime illustration recipe by name",
+          "expect": "the picker lists it under characters with its picture and speed"
+        },
+        {
+          "intent": "choose it",
+          "expect": "the recipe loads with its own wording"
+        },
+        {
+          "intent": "describe the picture",
+          "expect": "the prompt box keeps the words"
+        },
+        {
+          "intent": "choose the manga ink adapter in the first adapter slot",
+          "expect": "strength becomes its recommended value and its trigger is added to the prompt once"
+        },
+        {
+          "intent": "check the adapter hint",
+          "expect": "it names the trigger and its placement in plain words, and the recommended range sits beside Strength"
+        },
+        {
+          "intent": "switch the slot to an adapter with no trigger word",
+          "expect": "the trigger that was added is taken out again"
+        }
+      ]
+    },
+    {
       "id": "make-anime-look-chosen-model-and-lora",
       "goal": "Make a high-end anime picture on a model and adapter I choose, then tweak quality and the seed, without leaving Make or knowing the full editor's recipes.",
       "starting_view": "make",
