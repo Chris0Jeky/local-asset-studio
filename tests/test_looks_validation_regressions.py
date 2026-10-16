@@ -35,6 +35,53 @@ class LookValidationTests(unittest.TestCase):
     def test_allowed_controls_match_the_existing_server_contract(self):
         self.assertEqual(set(fixture.looks.CONTROL_KEYS), set(fixture.server.CONTROL_KEYS) - fixture.looks.NOT_CONTROLS)
 
+    def test_saved_controls_obey_the_ranges_and_choices_jobs_enforce(self):
+        # A look control /api/jobs would refuse is refused when the look is saved, and again when it is prepared.
+        preset = dict(fixture.TEXT, cfg=['1', 'steps'], sampler=['1', 'steps'], lora=['1', 'steps'], lora_name=['1', 'steps'],
+                      dimension_limits=[256, 1024], dimension_multiple=64, choices={'sampler': ['euler']})
+        for key, bad in (('steps', 0), ('steps', 151), ('steps', 2.5), ('steps', 'many'), ('seed', -1), ('seed', 2**63), ('cfg', 31),
+                         ('lora', 2.5), ('lora', -0.1), ('lora', 'style.ckpt'), ('lora_name', '../x.safetensors'), ('lora_name', 'x.ckpt'),
+                         ('width', 1344), ('width', 300), ('width', 128), ('sampler', 'dpmpp_9m')):
+            with self.subTest(key=key, bad=bad), self.assertRaisesRegex(fixture.WorkspaceError, key):
+                fixture.looks.validate_body(dict(fixture.BODY, controls={key: bad}), preset)
+        good = {'steps': '30', 'seed': 0, 'cfg': 7.5, 'lora': 1.2, 'lora_name': 'style.safetensors', 'width': 832 - 832 % 64, 'sampler': 'euler'}
+        self.assertEqual(fixture.looks.validate_body(dict(fixture.BODY, controls=good), preset)['controls'], good)
+        self.assertIsNone(fixture.looks.control_problem(dict(preset, choices={}), 'sampler', 'anything'), 'unknown choices are checked at /api/jobs')
+        card = self.create()
+        self.studio.catalog = lambda: {'presets': [dict(fixture.TEXT, dimension_limits=[256, 1024])]}
+        with self.assertRaisesRegex(fixture.WorkspaceError, 'width must be'):
+            fixture.looks.prepare(self.studio, {'id': card['id'], 'scene': 'a quiet room'})
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
+    def test_a_filename_is_a_lora_slot_value_only_where_the_recipe_slot_holds_a_filename(self):
+        # /api/jobs takes a filename for a slot only when the graph input it binds holds one (older presets); a strength slot refuses it.
+        strength = dict(fixture.TEXT, lora=['1', 'steps'], defaults={'lora': 1.0})
+        with self.assertRaisesRegex(fixture.WorkspaceError, 'lora must be a number'):
+            fixture.looks.validate_body(dict(fixture.BODY, controls={'lora': 'style.safetensors'}), strength)
+        with self.assertRaisesRegex(fixture.WorkspaceError, 'lora must be a number'):
+            fixture.looks.validate_body(dict(fixture.BODY, controls={'lora': 'style.safetensors'}), dict(strength, defaults={}))
+        filename = dict(strength, defaults={'lora': 'authored.safetensors'})
+        self.assertEqual(fixture.looks.validate_body(dict(fixture.BODY, controls={'lora': 'style.safetensors'}), filename)['controls'], {'lora': 'style.safetensors'})
+        for bad in (0.5, '../x.safetensors', 'x.ckpt'):
+            with self.subTest(bad=bad), self.assertRaisesRegex(fixture.WorkspaceError, 'lora must be'):
+                fixture.looks.validate_body(dict(fixture.BODY, controls={'lora': bad}), filename)
+
+    def test_saved_control_ranges_match_the_job_route(self):
+        self.assertEqual({k: v for k, v in fixture.looks.NUMBER_RANGES.items() if k in dict((r[0], r) for r in fixture.server.NUMBER_RANGES)},
+                         {r[0]: r[1:] for r in fixture.server.NUMBER_RANGES})
+
+    def test_model_of_names_the_one_loader_and_its_text_encoders(self):
+        # Make's Tune offers another model only when loader and encoders match; a graph with no or two loaders offers none.
+        graph = {'1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': 'base.safetensors'}},
+                 '2': {'class_type': 'CLIPLoader', 'inputs': {'clip_name': 'te.safetensors', 'type': 'x'}},
+                 '3': {'class_type': 'DualCLIPLoader', 'inputs': {'clip_name1': 'b.safetensors', 'clip_name2': 'a.safetensors'}}}
+        self.assertEqual(fixture.looks.model_of(graph), {'file': 'base.safetensors', 'loader': 'UNETLoader', 'encoders': ['a.safetensors', 'b.safetensors', 'te.safetensors']})
+        self.assertEqual(fixture.looks.model_of({'1': {'class_type': 'CheckpointLoaderSimple', 'inputs': {'ckpt_name': 'sdxl.safetensors'}}})['encoders'], [])
+        for bad in ({}, {'1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': ['9', 0]}}}, dict(graph, **{'4': {'class_type': 'CheckpointLoaderSimple', 'inputs': {'ckpt_name': 'x.safetensors'}}})):
+            with self.subTest(bad=bad): self.assertIsNone(fixture.looks.model_of(bad))
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(dict(fixture.GRAPH, **graph)))
+        self.assertEqual(self.studio.catalog()['presets'][0]['model']['file'], 'base.safetensors')
+
     def test_each_bad_seed_is_reported_without_preventing_the_good_seed(self):
         good = {'id': 'look-good', 'kind': 'look', 'name': 'Good', 'body': copy.deepcopy(fixture.BODY)}
         bad = [dict(good, id='../bad'), dict(good, id=123), dict(good, name=''), dict(good, name=12),
@@ -127,11 +174,13 @@ class LookValidationTests(unittest.TestCase):
         self.assertIs(fixture.looks.validate_lineage(kept), kept)
 
     def test_body_rejects_a_control_string_over_300_chars(self):
+        # A text-valued setting (a sampler with no fixed choices); numeric ones such as seed are now refused as non-numbers first.
+        preset = dict(fixture.TEXT, sampler=['1', 'sampler_name'])
         with self.assertRaises(fixture.WorkspaceError) as caught:
-            fixture.looks.validate_body(dict(fixture.BODY, controls={'seed': 'x' * 301}), fixture.TEXT)
-        self.assertEqual(str(caught.exception), 'seed must be up to 300 characters')
-        kept = fixture.looks.validate_body(dict(fixture.BODY, controls={'seed': 'x' * 300}), fixture.TEXT)
-        self.assertEqual(kept['controls'], {'seed': 'x' * 300})
+            fixture.looks.validate_body(dict(fixture.BODY, controls={'sampler': 'x' * 301}), preset)
+        self.assertEqual(str(caught.exception), 'sampler must be up to 300 characters')
+        kept = fixture.looks.validate_body(dict(fixture.BODY, controls={'sampler': 'x' * 300}), preset)
+        self.assertEqual(kept['controls'], {'sampler': 'x' * 300})
 
     def test_body_rejects_more_than_40_controls(self):
         controls = {'key%d' % index: index for index in range(41)}

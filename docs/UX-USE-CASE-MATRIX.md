@@ -1,5 +1,35 @@
 # UX use-case matrix
 
+## Make: Tune this look, and tweak a result in place — 16 October 2026
+
+Owner ask (16 October 2026): a high-end anime picture needs specific models and adapters, then tweaking, without confusion.
+Refs #278.
+
+- **Tune this look** sits folded under the description box; a newcomer never needs it. Opened, it shows:
+  - **Model** in plain words, with a switch to another model of the same type. Same type means the same loader node and text
+    encoders on the same backend; the candidate must also bind every setting and adapter slot the look uses. The catalog now
+    names each recipe's base model (`model`: loader, file, encoders). A model that needs a download says so and links to
+    Models & setup.
+  - **Adapters (LoRAs)** as rows: on/off, strength 0–2, the trigger word, and Remove. **Add an installed adapter** searches only
+    installed files that the settings knowledge base places in the same model type. An added adapter's trigger word is written
+    into the wording, at the start or end as its card says.
+  - **Quality and speed**: steps as made, draft or finer, and the sampler when the recipe binds it. **Leave out**: the negative
+    prompt. **Seed**: locked when *Different pictures each time* is off.
+- Tuning only changes the controls Generate sends; the server still checks every value against the recipe's allow-list. A switched
+  model gets an explicit 0 on every slot the tune does not use, so it never keeps an authored adapter of its own.
+- Each run card names what was tuned in one line. **Edit and re-run** brings back the run's own settings: tune, shape, count,
+  style strength, optional lines and the seed it used, now locked. Change one thing and press Generate.
+- Generate and its estimate sit in a sticky bar. The goal tiles fold to one scrolling row once a look is chosen. Slow looks
+  start at one picture, and an estimate over ten minutes is shown in the warning colour.
+- *What this look uses* shows the model, the adapters with their strengths and trigger words, and the example. The evidence
+  notes sit behind *Details for maintainers*.
+
+The new `make-anime-look-chosen-model-and-lora` journey picks the Anima Pearly Petiflow look, switches to Pearly Anima Mix, adds
+koukouya, asks for finer steps, locks seed 4242 and opens the full editor. There it asserts the chosen recipe, the added adapter
+in slot 2, its trigger in the words, more than 25 steps and the seed. `tests/make_tune_browser.py` presses Generate against a
+fixture `/api/jobs`. It asserts the exact controls sent, the run card summary and the restore on Edit and re-run, including the
+seed lock after a run with new seeds.
+
 ## Full editor adapters and a scannable recipe picker — 16 October 2026
 
 Refs #278 (16 October 2026 live journey audit, J1 and item 24).

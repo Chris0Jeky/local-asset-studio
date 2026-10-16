@@ -1523,6 +1523,43 @@ def _make_tune(c):
     return ok, 'sentence kept across looks %s; adapters %s halved %s; wording from the new look %s; no slider on a look without adapters %s; slider for a graph-fixed adapter %s' % (kept == MAKE_SCENE, active, halved, positive == wording, plain, fixed)
 
 
+@driver('make-anime-look-chosen-model-and-lora')
+def _make_chosen(c):
+    """Owner ask, 16 Oct 2026: a high-end anime picture needs specific models and adapters, then tweaking, without the full
+    editor's 90 recipes. Tune this look shows the look's model and adapters in plain words, offers only same-type models and
+    installed adapters made for them, and carries steps and a locked seed. Proven through the full editor: nothing runs."""
+    look, base, switch, added = 'look-anima-pearly-petiflow', 'anima-v1-baseline', 'pearly-anima-mix-v10-baseline', 'anima-koukouya_v2_step2500.safetensors'
+    c.boot('#make')
+    c.need_recipe(switch)
+    if not c.live:  # synthetic adapter inventory: the knowledge base's own files, as an installed library would list them
+        c.page.wait_for_function("typeof knowledge !== 'undefined' && knowledge && typeof knowledge === 'object'", timeout=10000)
+        kb = json.loads((ROOT / 'presets/settings-kb.json').read_text(encoding='utf-8'))
+        c.page.evaluate('data => { knowledge = data; installedLoras = Object.keys(data.loras); }', kb)
+    trigger = c.page.evaluate('name => knowledge?.loras?.[name]?.trigger || ""', added)
+    c.act('[data-make-goal="character"]', note='say this is an anime character')
+    c.act('[data-make-change]', supplementary=True, note='open the gallery') if c.page.query_selector('[data-make-change]') else None
+    c.act('[data-make-look="%s"]' % look, note='choose an Anima look that uses an adapter')
+    c.act('#makeTune > summary', note='open Tune this look')
+    c.act('#makeModel', 'read', note=c.page.evaluate("[...document.querySelectorAll('#makeModel option')].map(o => o.textContent).join(' | ')")[:200])
+    offered = c.page.evaluate("[...document.querySelectorAll('#makeModel option')].map(o => o.value)")
+    c.act('#makeModel', 'select', typed=switch, note='switch to Pearly Anima Mix, same model type')
+    c.act('#makeLoraSearch', 'fill', typed=added, note='search the installed adapters for koukouya')
+    c.act('[data-tune-add]', note='add it')
+    row = c.page.evaluate("document.querySelector('[data-slot=lora2] small')?.textContent || ''")
+    c.act('[data-tune=steps]', 'select', typed=c.page.evaluate("document.querySelectorAll('[data-tune=steps] option')[2]?.value || ''"), note='ask for finer quality')
+    c.act('#makeNewSeed', note='turn off different pictures each time')
+    c.act('#makeSeed', 'fill', typed='4242', note='lock seed 4242')
+    summary = c.page.evaluate("document.querySelector('#makeTuneSum').textContent")
+    c.act('#makeScene', 'fill', typed=MAKE_SCENE, supplementary=True, note='describe the picture in plain words')
+    c.act('#makeEditor', note='open the prepared request in the full editor')
+    c.page.wait_for_function("location.hash === '#create' && selected?.id === '%s'" % switch, timeout=5000)
+    state = c.page.evaluate("""() => ({preset: selected.id, positive: document.querySelector('#positive').value, seed: getControl('seed')?.value, steps: getControl('steps')?.value,
+      lora: getControl('lora')?.value, lora2: getControl('lora2')?.value, lora2_name: getControl('lora2_name')?.value})""")
+    ok = (offered[:1] == [base] and switch in offered and 'wai' not in offered and trigger in row and state['preset'] == switch and state['lora2_name'] == added
+          and float(state['lora2'] or 0) > 0 and state['seed'] == '4242' and int(state['steps'] or 0) > 25 and state['positive'].startswith(trigger) and MAKE_SCENE in state['positive']
+          and 'model Pearly Anima Mix' in summary)
+    return ok, 'models offered %s; added row %r; tuned %r; prepared %s' % (offered, row, summary, {k: state[k] for k in ('preset', 'lora2_name', 'lora2', 'steps', 'seed')})
+
 @driver('specific-lora-in-full-editor')
 def _specific_lora(c):
     """#278 J1 (16 Oct 2026 live audit): a specific adapter in the Full editor. The hint read "place it at the anywhere of the

@@ -99,7 +99,8 @@ class BackendManager:
             try:record['online']=endpoint_ready(self.request(profile,'/system_stats',0.8))
             except (OSError,ValueError):record['online']=False
             record['active']=self.active==profile['id'];profiles.append(record)
-        return {'active':self.active,'busy':self.busy,'operation':copy.deepcopy(self.operation),'profiles':profiles,'last_launch_reserve':copy.deepcopy(self.last_launch_reserve)}
+        with self.studio.lock:active=self.active;busy=self.busy;operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve)
+        return {'active':active,'busy':busy,'operation':operation,'profiles':profiles,'last_launch_reserve':last_launch_reserve}
 
     def _save(self):
         self.studio._write_json_atomic(self.state_path,{'active':self.active,'operation':self.operation})
@@ -361,14 +362,16 @@ class BackendManager:
                 # Recheck just before termination; only this verified, idle local process is stopped.
                 self._idle(profile)
                 self._check_startup_processes()
-                self.operation.setdefault('stopped_processes', []).append({'profile':key,'pid':process.pid,'created_at':process.create_time(),'matched_entry':profile['entry']})
-                self.operation['message']='Stopping idle '+profile['name'];self._save()
+                stopped={'profile':key,'pid':process.pid,'created_at':process.create_time(),'matched_entry':profile['entry']}
+                with self.studio.lock:
+                    self.operation.setdefault('stopped_processes', []).append(stopped)
+                    self.operation['message']='Stopping idle '+profile['name'];self._save()
                 process.terminate();process.wait(timeout=15)
             owned=self.process(target)
             if owned and observed[identifier]!=(owned.pid,owned.create_time()):raise ValueError('Target process changed during preflight; retry explicitly')
             if not owned:
                 if observed[identifier] is not None:raise ValueError('Target process disappeared during preflight; retry explicitly')
-                self.operation['message']='Starting '+target['name'];self._save()
+                with self.studio.lock:self.operation['message']='Starting '+target['name'];self._save()
                 verified_listeners=self._check_startup_processes()
                 # The startup scan may have verified a target listener after the
                 # earlier preflight observation. Reuse it instead of launching a
@@ -378,13 +381,14 @@ class BackendManager:
                     stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
                     if identifier=='primary':
                         stopped=[p['pid'] for p in self.operation.get('stopped_processes',[])]
-                        self.last_launch_reserve=dict(self.launch_reserve(target,stopped),recorded_at=time.time(),profile=identifier,stopped_pids=stopped)
-                        argv=self.primary_argv(target,self.last_launch_reserve);self.operation['launch_reserve']=self.last_launch_reserve
+                        reserve=dict(self.launch_reserve(target,stopped),recorded_at=time.time(),profile=identifier,stopped_pids=stopped)
+                        argv=self.primary_argv(target,reserve)
+                        with self.studio.lock:self.last_launch_reserve=reserve;self.operation['launch_reserve']=reserve
                     elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
                     else:argv=[target['python'],'-s',target['entry'],'--comfy-root',target['root']]
                     with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:
                         launched=subprocess.Popen(argv,cwd=target['root'],stdout=out,stderr=err,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
-                    self.operation.update(pid=launched.pid,log_directory=str(logs));self._save()
+                    with self.studio.lock:self.operation.update(pid=launched.pid,log_directory=str(logs));self._save()
                     if identifier=='primary':Path(target['pidfile']).write_text(str(launched.pid))
                     for _ in range(120):
                         if launched.poll() is not None:raise ValueError('The selected runtime exited during startup; inspect its saved log')
@@ -400,12 +404,14 @@ class BackendManager:
                 listener=self.process(target)
                 if listener is None or listener.pid!=launched.pid:raise ValueError('Ready endpoint does not belong to the launched process; inspect retained runtime')
             self.activate(identifier)
-            self.operation.update(status='completed',finished_at=time.time(),message=target['name']+' endpoint is ready. Model inference was not checked; no generation submitted.');self._save()
+            with self.studio.lock:
+                self.operation.update(status='completed',finished_at=time.time(),message=target['name']+' endpoint is ready. Model inference was not checked; no generation submitted.');self._save()
         except Exception as exc:
             # A timed-out launcher may already be accepting direct ComfyUI jobs.
             # Never terminate it blindly during cleanup or silently restart the old family.
-            if launched and launched.poll() is None:
-                self.operation.update(preserved_pid=launched.pid,recovery='Inspect the retained runtime and queue, then switch explicitly. No automatic retry.')
-            self.operation.update(status='failed',finished_at=time.time(),message=str(exc)[:500]);self._save()
+            preserved=launched and launched.poll() is None
+            with self.studio.lock:
+                if preserved:self.operation.update(preserved_pid=launched.pid,recovery='Inspect the retained runtime and queue, then switch explicitly. No automatic retry.')
+                self.operation.update(status='failed',finished_at=time.time(),message=str(exc)[:500]);self._save()
         finally:
             with self.studio.lock:self.busy=False
