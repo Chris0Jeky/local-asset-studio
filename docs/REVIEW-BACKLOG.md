@@ -65,4 +65,7 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   after 32 requests.
 - [ ] **A stale seamless plan no longer blocks loading a setup** (#1441): it is dropped with a message and the rest
   loads. Before, the whole setup was refused.
+- [ ] **Picture goals stay in Make; Compare looks** (#1442): "Draw the pose" offers the editor's two built-in figures
+  plus mirror (single-joint editing still needs the full editor). Compare runs each look as made (no Tune). Restyle's
+  "Colours to keep" defaults to "keep them exactly as they are". The chosen picture stays chosen across picture goals.
 
