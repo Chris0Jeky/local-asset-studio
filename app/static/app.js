@@ -216,7 +216,7 @@ function addTrigger(key, auto) {
   if (!field || !selected?.positive || !trigger) return '';
   if (promptHas(field.value, trigger)) return 'The trigger ' + trigger + ' is already in the prompt.';
   const text = field.value.replace(/[\s,]+$/, ''), start = /^start/i.test(String(entry.trigger_position || '').trim());
-  const fragment = start ? trigger + (text ? ', ' : '') : (text ? ', ' : '') + trigger;
+  const fragment = start ? trigger + (text ? ', ' : '') : (!text ? '' : /[.!?;:]$/.test(text) ? ' ' : ', ') + trigger;
   field.value = start ? fragment + field.value : text + fragment;
   if (auto) autoTriggers[key] = fragment;
   field.dispatchEvent(new Event('input', {bubbles: true}));
@@ -230,7 +230,7 @@ function dropAutoTrigger(key) {
   const literal = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), token = fragment.endsWith(', ') ? RegExp('^' + literal) : RegExp(literal + '(?=\\s*(,|$))');
   if (!token.test(field.value)) return '';
   field.value = field.value.replace(token, ''); field.dispatchEvent(new Event('input', {bubbles: true}));
-  return 'Removed the trigger ' + fragment.replace(/^, |, $/g, '') + ' added for the previous adapter.';
+  return 'Removed the trigger ' + fragment.replace(/^[, ]+|[, ]+$/g, '') + ' added for the previous adapter.';
 }
 function chooseLora(key) {
   const removed = dropAutoTrigger(key), entry = loraEntry(getControl(loraNameKey(key))?.value), input = getControl(key), strength = recommendedStrength(key, entry);
