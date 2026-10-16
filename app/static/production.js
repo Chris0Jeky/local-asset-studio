@@ -133,7 +133,7 @@ function renderProduction(){
   }
   const terminalReconciliation=p.can_reconcile_tracking===true||p.can_reconcile_batch===true,active=['queued','running','observing'].includes(p.state.status),trackingRecoveryPending=!terminalReconciliation&&(p.stages||[]).some(s=>{const d=s.job?.tracking_disposition;return (d?.status==='stopped'||d?.history?.some(event=>event.status==='stopped'))&&s.job?.status!=='completed';}),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
   const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending?'disabled':'')+'>'+(terminalReconciliation?'Reconcile outcome only':p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
-  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
+  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+(p.kind==='comparison'&&blindComparison?'<small class="muted">Full plan hidden while comparing blind. Reveal settings to download it.</small>':'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a>')+'</div>';
   if(p.kind==='comparison'){
     const clock=p.state.time_budget;
     if(clock&&!p.state.time_budget_error){
@@ -146,7 +146,7 @@ function renderProduction(){
     for(const s of p.stages){const j=s.job,images=(j?.outputs||[]).filter(o=>o.asset_id);
       const index=p.stages.indexOf(s),variant=(p.variants||[])[index],checked=images.map(o=>candidateCheckAsset(o.asset_id)).filter(Boolean),counted=checked.length?StudioReviewChecks.summary(checked,candidateCheckNames(j)):'';
       html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(variant?variant.label:p.axis+' '+p.values[index])+'</small>'+(variant?.rationale?'<p class="muted">'+esc(variant.rationale)+'</p>':'')+(variant?.sources||[]).map(u=>'<a href="'+safeUrl(u)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' '))+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>'+(counted?'<p class="muted candidate-check-count">'+esc(counted)+'</p>':'');
-      for(const o of images){const url='/api/assets/'+o.asset_id+'/file';html+=o.media_type==='image'?'<button class="candidate-image" data-candidate-open="'+o.asset_id+'"><img src="'+url+'" alt="Candidate '+esc(s.label)+'"></button>':o.media_type==='video'?'<video src="'+url+'" controls preload="metadata"></video>':'<a href="'+url+'" download>Download '+esc(o.media_type)+'</a>';
+      for(const o of images){const url='/api/assets/'+o.asset_id+'/file';html+=o.media_type==='image'?'<button class="candidate-image" data-candidate-open="'+o.asset_id+'"><img src="'+url+'" alt="Candidate '+esc(s.label)+'"></button>':o.media_type==='video'?'<video src="'+url+'" controls preload="metadata" aria-label="Candidate '+esc(s.label)+'"></video>':'<a href="'+url+'" download>Download '+esc(o.media_type)+'</a>';
         if(['awaiting_review','reviewed'].includes(p.state.status)&&!p.state.review?.desk_url)html+='<button data-choose-candidate="'+o.asset_id+'">Choose '+esc(s.label)+'</button>';
         // Workspace review of one image, through the same guarded update the asset
         // dialog uses.  Blind mode hides settings, never the pictures, so marking a
@@ -156,7 +156,8 @@ function renderProduction(){
         const checkNames=o.media_type==='image'?candidateCheckNames(j):[];
         if(checkNames.length)html+='<div class="candidate-checks" role="group" aria-label="Quick checks for candidate '+esc(s.label)+'">'+StudioReviewChecks.chipsHTML({tags:candidateCheckAsset(o.asset_id)?.tags||[],names:checkNames,attr:'data-candidate-check',asset:o.asset_id,escape:esc})+'</div>';
       }
-      if(j)html+='<details><summary>Execution record</summary><small>'+esc(j.message)+'</small><p>'+esc((j.prompt_ids||[]).join(', '))+'</p>'+(j.tracking_disposition?.status==='stopped'?'<p><b>Tracking stopped</b>: '+esc(j.tracking_disposition.reason)+'</p>':'')+'<button data-job-recipe="'+j.id+'">Recipe</button></details>';
+      // The recipe carries the exact settings, so it stays hidden while blind, like the labels, until Reveal.
+      if(j)html+='<details><summary>Execution record</summary><small>'+esc(j.message)+'</small><p>'+esc((j.prompt_ids||[]).join(', '))+'</p>'+(j.tracking_disposition?.status==='stopped'?'<p><b>Tracking stopped</b>: '+esc(j.tracking_disposition.reason)+'</p>':'')+(blindComparison?'<small class="muted">Recipe hidden while comparing blind. Reveal settings to see the recipe.</small>':'<button data-job-recipe="'+j.id+'">Recipe</button>')+'</details>';
       html+='</article>';
     }
     html+='</div>';
@@ -325,11 +326,17 @@ $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindCom
 // Workspace review of a single candidate image: the same revision-guarded
 // /api/assets/update command the asset dialog sends, never a new endpoint. It
 // records a creative preference only; the comparison's own outcome is untouched.
+const candidateReviewBusy=new Set();
 async function reviewCandidateAsset(id,review){
   if(!id||!['selected','needs_work'].includes(review))return;
-  await refreshAssets(true);
-  await mutateAssets({ids:[id],action:'edit',review});
-  productionMessage((review==='selected'?'Marked as a keeper':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
+  // A second press on the same candidate while its save is in flight would queue a second library update and report it as a failure.
+  if(candidateReviewBusy.has(id)){productionMessage('Still saving the last mark for this candidate. Press again in a moment. Nothing was changed.');return;}
+  candidateReviewBusy.add(id);
+  try{
+    await refreshAssets(true);
+    await mutateAssets({ids:[id],action:'edit',review});
+    productionMessage((review==='selected'?'Marked as a keeper':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
+  }finally{candidateReviewBusy.delete(id);}
 }
 // #1203: quick yes/no checks on a candidate picture, saved one press at a time through the same guarded update.
 // Counts per candidate come only from those owner answers; the comparison's own outcome is untouched.
@@ -349,12 +356,12 @@ async function checkCandidateAsset(id,name){
   }finally{candidateCheckBusy=false;}
 }
 $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
-  if(coordinatorAction&&productionActionPending)return;
+  if(coordinatorAction&&productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
   try{
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   const putAway=e.target.closest('[data-plan-put-away]');
-  if(putAway){if(productionActionPending)return;productionActionPending=true;putAway.disabled=true;const away=putAway.dataset.planPutAway==='true';
+  if(putAway){if(productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}productionActionPending=true;putAway.disabled=true;const away=putAway.dataset.planPutAway==='true';
     try{await post('/api/production/'+p.id+'/put-away',{put_away:away});productionMessage(away?'Put away. Status: All statuses in Your plans still lists it; Bring back returns it to your desk.':'Back on your desk and in the in-progress list.');await refreshProduction(true);}
     finally{productionActionPending=false;putAway.disabled=false;}return;}
   const choice=e.target.closest('[data-choose-candidate]')?.dataset.chooseCandidate;
