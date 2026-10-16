@@ -476,8 +476,9 @@
   // Redraw the picker only where it is showing (a chosen picture shows the composer instead).
   const refreshCharacters=()=>{const g=goal();if(CHARACTER_GOALS.includes(g.intent)&&(!state.pick||state.repicking))void renderPictures(g);};
   function characterMarkup(job,a){
+    if(!a)return'';
     const owner=usableCharacters().find(c=>c.canon_asset_id===a);if(owner)return'<small class="make-canon">Canon of '+escape(owner.name)+'</small>';
-    if(reviewOf(a)!=='selected')return'';return state.charSave!==a?'<button type="button" data-make-character-save="'+escape(a)+'">Make this my character…</button>':characterForm(a,'create',CANON_NOTE);
+    return state.charSave!==a?'<button type="button" data-make-character-save="'+escape(a)+'">Make this my character…</button>':characterForm(a,'create',CANON_NOTE);
   }
   // Prefilled from the run where it is plain: a pose run's answers, else the scene as typed. A look run names its look.
   function openCharacterForm(a,runId){const run=state.runs.find(r=>r.job.id===runId)||state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===a));
@@ -647,14 +648,14 @@
     if(g.intent==='edit')return first(p=>p.continuation_capability.operation==='instruction-edit'&&!p.reference_slots?.length);
     if(g.intent==='restyle'){const words=state.styleWords||!lookPictures().length;return first(p=>p.id===(words?'restyle-klein':'restyle-klein-picture'))||first(p=>!!p.reference_slots?.length!==words);}
     if(g.intent==='combine'){if(state.poseMode==='figure')return first(p=>SC().combineKind(p)==='skeleton');
-      const scene=state.poseRoute==='scene'&&list.find(p=>p.id===POSE_ROUTE.scene);if(scene)return scene;
+      const chosen=state.poseRoute!=='copy'&&list.find(p=>p.id===POSE_ROUTE[state.poseRoute]);if(chosen)return chosen;
       const copy=list.find(p=>p.id===POSE_ROUTE.copy);return runnable(copy)?copy:list.find(p=>runnable(p)&&SC().combineKind(p)==='picture'&&!POSE_OFF.includes(p.id)&&p.id!==POSE_ROUTE.scene)||copy||null;}
     return first(()=>true);
   }
   // Character in a new pose from a picture (lab round 3, PR #1481, docs/looks/LOOK-LAB-2026-10-16.md "Pose measurements"): Copy Pose
-  // kept pose, face and finish 2/2; Replace character put the face into the pose picture's scene 2/2 as designed. Depth and plain 9B
-  // lost the face (a reject each), so Make never picks them; the full editor still offers them. Copy Pose missing: the next picture route.
-  const POSE_ROUTE={copy:'combine-klein-9b-copypose',scene:'combine-klein-9b-replace'},POSE_OFF=['combine-klein-9b-depth','combine-klein-9b'];
+  // kept pose, face and finish 2/2; Replace character put the face into the pose picture's scene 2/2 as designed. Depth lost identity,
+  // so it is an explicit choice with a warning (owner, 16 Oct); plain 9B stays hidden. Neither is an automatic Copy Pose fallback.
+  const POSE_ROUTE={copy:'combine-klein-9b-copypose',scene:'combine-klein-9b-replace',depth:'combine-klein-9b-depth'},POSE_OFF=['combine-klein-9b-depth','combine-klein-9b'];
   const notReady=p=>!p?'is not in the recipe library':p.runtime_block?'cannot run here ('+p.runtime_block.replace(/[\s.]+$/,'')+')':'needs '+missingFor(p).length+' model file'+(missingFor(p).length>1?'s':'')+' first (open Models & setup)';
   function goalBlocker(g,p){
     const runtime=runtimeBlocker();if(runtime)return runtime;
@@ -755,15 +756,15 @@
       else{if(f.look==null&&p)f.look=splitLook(SC().promptFor(p,null)||'')[0];main=field('look','Describe the new look','a soft watercolour illustration with loose ink lines',4,2000)+(lookPictures().length?'<button type="button" class="make-link" data-make-style-pictures>Pick a look by its picture instead</button>':'')+'<small class="muted">Your words carry the look. Your picture keeps its character, pose, clothes and layout.</small>';}}
     else if(g.intent==='combine'){
       const figure=state.poseMode==='figure',pose=state.pose,figures=(PE()?.PRESETS||[]).filter(x=>x.points),mode=(value,label)=>'<label class="make-check"><input type="radio" name="makePoseMode" id="makePoseMode-'+value+'" data-make-pose-mode="'+value+'"'+(state.poseMode===value?' checked':'')+'> '+label+'</label>';
-      // From a picture: Copy Pose by default, Replace character as the second choice, each with what it keeps; a fallback says why.
-      const all=ready()?SC().destinations('combine',presets(),null):[],copy=all.find(x=>x.id===POSE_ROUTE.copy),scene=p?.id===POSE_ROUTE.scene;
-      const opt=(v,label,says)=>'<label class="make-check"><input type="radio" name="makePoseRoute" id="makePoseRoute-'+v+'" data-make-pose-route="'+v+'"'+((scene?'scene':'copy')===v?' checked':'')+' aria-describedby="makePoseRouteHint-'+v+'"> '+label+'</label><small class="muted" id="makePoseRouteHint-'+v+'">'+says+'</small>';
-      const routes=(all.some(x=>x.id===POSE_ROUTE.scene)?'<fieldset class="make-options make-pose-routes"><legend>What to keep</legend>'+opt('copy','Keep my character as it is','Your character keeps its face, clothes, background and finish; only the body position comes from the pose picture.')+opt('scene','Put my character into this picture’s scene','The pose picture keeps its outfit, setting and finish; only your character’s face and hair go in.')+'</fieldset>':'')
-        +(!scene&&p&&p.id!==POSE_ROUTE.copy?'<small class="make-warn" id="makePoseFallback">'+goalWhy(copy||p,'Copy Pose '+notReady(copy)+', so this uses '+SC().combineEngineLabel(p)+' instead; it may keep the face less well.')+'</small>':'');
+      // Copy Pose by default; Replace character and depth are explicit choices. A fallback says why.
+      const all=ready()?SC().destinations('combine',presets(),null):[],copy=all.find(x=>x.id===POSE_ROUTE.copy),route=Object.keys(POSE_ROUTE).find(k=>p?.id===POSE_ROUTE[k])||'copy',scene=route==='scene',depth=route==='depth';
+      const opt=(v,label,says)=>'<label class="make-check"><input type="radio" name="makePoseRoute" id="makePoseRoute-'+v+'" data-make-pose-route="'+v+'"'+(route===v?' checked':'')+' aria-describedby="makePoseRouteHint-'+v+'"> '+label+'</label><small class="muted" id="makePoseRouteHint-'+v+'">'+says+'</small>';
+      const routes=(all.some(x=>x.id===POSE_ROUTE.scene||x.id===POSE_ROUTE.depth)?'<fieldset class="make-options make-pose-routes"><legend>What to keep</legend>'+opt('copy','Keep my character as it is','Your character keeps its face, clothes, background and finish; only the body position comes from the pose picture.')+(all.some(x=>x.id===POSE_ROUTE.scene)?opt('scene','Put my character into this picture’s scene','The pose picture keeps its outfit, setting and finish; only your character’s face and hair go in.'):'')+(all.some(x=>x.id===POSE_ROUTE.depth)?opt('depth','Follow the pose picture’s outline (depth)','Follows the outline closely; in lab round 3 it simplified the face and curls, and one result had a blank grey face.'):'')+'</fieldset>':'')
+        +(route==='copy'&&p&&p.id!==POSE_ROUTE.copy?'<small class="make-warn" id="makePoseFallback">'+goalWhy(copy||p,'Copy Pose '+notReady(copy)+', so this uses '+SC().combineEngineLabel(p)+' instead; it may keep the face less well.')+'</small>':'');
       main='<div class="make-slots"><section class="make-slot" aria-labelledby="makeSlotA"><h3 id="makeSlotA">Character picture</h3><img src="'+thumbUrl(a)+'" alt=""><small>'+escape(chosenCharacter()?'Your character '+chosenCharacter().name+' \u00b7 canon picture':pictureLabel(a))+'</small><button type="button" data-make-repick>Change picture</button></section>'
         +'<section class="make-slot" id="makePoseSlot" tabindex="-1" aria-labelledby="makeSlotB"><h3 id="makeSlotB">Pose</h3><div class="make-seg" role="group" aria-label="Where the pose comes from">'+mode('picture','A picture of the pose')+mode('figure','Draw the pose')+'</div>'
         +(figure?'<div class="make-figures">'+figures.map(x=>'<label class="make-figure"><input type="radio" name="makeFigure" id="makeFigure-'+x.id+'" data-make-figure="'+x.id+'"'+(pose?.figure===x.id?' checked':'')+'>'+figureSvg(x.points,pose?.figure===x.id&&pose.mirror)+'<span>'+escape(x.label)+'</span></label>').join('')+'</div><label class="make-check"><input type="checkbox" id="makeMirror" data-make-mirror'+(pose?.mirror?' checked':'')+(pose?.figure?'':' disabled')+'> Mirror left and right</label><small class="muted">A stick figure carries the pose and nothing else. To move single joints, open the full editor.</small><small class="muted" id="makeFigureHint">Hands and gaze follow the words only weakly. Describe the pose simply, and leave out words the figure contradicts, such as crossed legs on the bent figure.</small>'
-          :routes+(pose?.asset&&!state.posePicking?'<img src="'+thumbUrl(pose.asset)+'" alt=""><small>'+escape(pictureLabel(pose.asset))+'</small><button type="button" data-make-pose-change>Change pose picture</button><small class="muted">'+(scene?'Its pose, camera, clothes and background stay; only the person changes.':'Only the body position is taken from it, not the person, clothes or colours.')+'</small>'
+          :routes+(pose?.asset&&!state.posePicking?'<img src="'+thumbUrl(pose.asset)+'" alt=""><small>'+escape(pictureLabel(pose.asset))+'</small><button type="button" data-make-pose-change>Change pose picture</button><small class="muted">'+(scene?'Its pose, camera, clothes and background stay; only the person changes.':depth?'Its outline guides the pose; clothing shapes can carry over and your character may change.':'Only the body position is taken from it, not the person, clothes or colours.')+'</small>'
           :pictureFinder('makePosePictures','data-make-pose-pick')))+'</section></div>'+fields.map(fill).join('');}
     else if(g.intent==='animate'){main=field('motion','Motion and camera','she turns her head and smiles; the camera slowly moves closer',3)+'<small class="muted">Say what moves and how the camera moves. A description of the picture alone gives a still clip.</small>';
       const list=clips(p);if(list.length)side='<label>Length<select id="makeClip" data-make-field="clip">'+list.map(m=>'<option value="'+escape(m.id)+'"'+((f.clip||list[0].id)===m.id?' selected':'')+'>'+escape(CLIP[m.id]||m.name)+' · '+m.controls.frames+' frames, about '+(m.controls.frames/CLIP_FPS).toFixed(1)+' s</option>').join('')+'</select></label>';}
@@ -800,7 +801,7 @@
   function redoRun(run){const r=run.redo,g=GOALS.find(x=>x.id===run.goal);if(!g?.intent||!r||typeof r.pick!=='string')return false;
     state.goal=g.id;state.compare=false;state.character=null;choosePicture(r.pick);
     state.form=Object.fromEntries(Object.entries(r.form&&typeof r.form==='object'?r.form:{}).filter(([,v])=>typeof v==='string'&&v.length<=2000));
-    if(['picture','figure'].includes(r.poseMode))state.poseMode=r.poseMode;if(['copy','scene'].includes(r.poseRoute))state.poseRoute=r.poseRoute;
+    if(['picture','figure'].includes(r.poseMode))state.poseMode=r.poseMode;if(['copy','scene','depth'].includes(r.poseRoute))state.poseRoute=r.poseRoute;
     const find=id=>state.pictures?.find(x=>x.id===id)||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||{id,title:''};
     state.pose=typeof r.pose?.asset==='string'?{asset:find(r.pose.asset)}:PE()?.PRESETS?.some(x=>x.id===r.pose?.figure)?{figure:r.pose.figure,mirror:!!r.pose.mirror}:null;state.posePicking=false;
     if(typeof r.styleLook==='string')state.styleLook=r.styleLook;state.styleWords=!!r.styleWords;if(POLISH[r.fix])state.fix=r.fix;

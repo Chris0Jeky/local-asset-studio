@@ -29,7 +29,7 @@ class MakeGoalRequestTests(unittest.TestCase):
         catalog = json.loads((base.ROOT / 'presets/catalog.json').read_text(encoding='utf-8'))['presets']
         local = json.loads((root / 'presets/catalog.json').read_text(encoding='utf-8'))
         for preset in catalog:
-            if preset['id'] in ('restyle-klein-picture', 'combine-klein-9b-copypose', 'flux-edit', 'wan22-i2v', 'trellis-auto-cutout'):
+            if preset['id'] in ('restyle-klein-picture', 'combine-klein-9b-copypose', 'combine-klein-9b-depth', 'flux-edit', 'wan22-i2v', 'trellis-auto-cutout'):
                 (root / preset['graph']).parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(base.ROOT / preset['graph'], root / preset['graph'])
                 local['presets'].append(preset)
         (root / 'presets/catalog.json').write_text(json.dumps(local), encoding='utf-8')
@@ -65,6 +65,15 @@ class MakeGoalRequestTests(unittest.TestCase):
         result = self.preview('combine-klein-9b-copypose', 'combine', {'last_reference': self.file, 'positive': words, 'seed': 7},
                               [dict(board_record(pose, pose['parent_asset']), role='pose')], parents=[self.asset, pose['parent_asset']])
         self.assertEqual((result['workflow']['14']['inputs']['image'], result['workflow']['20']['inputs']['image']), (self.file, pose['file']))
+
+    def test_combine_depth_keeps_character_and_pose_in_the_authored_order(self):
+        preset, pose = self.studio.preset('combine-klein-9b-depth'), self.studio.asset_reference(self.case.source_job['outputs'][1]['asset_id'])
+        words = preset['continuation_prompt']
+        for placeholder, answer in zip(preset['continuation_placeholder'], ('the traveller', 'arms crossed', 'a green cloak')): words = words.replace(placeholder, answer)
+        result = self.preview(preset['id'], 'combine', {'last_reference': self.file, 'positive': words, 'seed': 7},
+                              [dict(board_record(pose, pose['parent_asset']), role='pose')], parents=[self.asset, pose['parent_asset']])
+        self.assertFalse(result['submitted'])
+        self.assertEqual((result['workflow']['14']['inputs']['image'], result['workflow']['20']['inputs']['image']), (pose['file'], self.file))
 
     def test_edit_animate_and_mesh_take_the_source_on_reference(self):
         preset = self.studio.preset('flux-edit')

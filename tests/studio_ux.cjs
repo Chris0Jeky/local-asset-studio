@@ -295,4 +295,29 @@ test('pose canvas is exposed as an operable application, not a static image (#14
   assert.match(tag, /aria-label="[^"]*Pose skeleton[^"]*"/, 'pose canvas keeps its accessible label');
   assert.match(tag, /aria-label="[^"]*joint[^"]*arrow keys[^"]*Shift[^"]*"/, 'pose canvas label must describe joint selection, arrow keys and Shift+arrow');
 });
+test('Make offers a character card on every saved picture regardless of review, and preserves canon labels',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
+  const context={state:{charSave:null},reviewOf:()=>context.review,usableCharacters:()=>context.characters,escape:s=>s,characterForm:()=>'<form>character</form>',CANON_NOTE:'canon',characters:[]};
+  vm.runInNewContext(make.slice(make.indexOf('  function characterMarkup('),make.indexOf('  // Prefilled from the run')),context);
+  for(const review of ['unreviewed','selected','rejected','needs_work']){context.review=review;assert.match(context.characterMarkup({status:'completed'},'asset-0'),/data-make-character-save="asset-0"/,review);}
+  context.state.charSave='asset-0';assert.equal(context.characterMarkup({},'asset-0'),'<form>character</form>');
+  context.characters=[{canon_asset_id:'asset-0',name:'Mira'}];assert.equal(context.characterMarkup({},'asset-0'),'<small class="make-canon">Canon of Mira</small>');
+  assert.equal(context.characterMarkup({},null),'');
+});
+test('Make depth is explicit, Copy Pose remains default, missing choices fall back and plain 9B stays hidden',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
+  const ids=['combine-klein-9b-copypose','combine-klein-9b-replace','combine-klein-9b-depth','combine-klein-9b','combine-klein'];
+  const context={state:{poseMode:'picture',poseRoute:'copy'},ready:()=>true,presets:()=>context.list,runnable:p=>!!p&&!p.runtime_block,SC:()=>({destinations:()=>context.list,combineKind:()=> 'picture'})};
+  context.list=ids.map(id=>({id,continuation_capability:{}}));
+  vm.runInNewContext(make.slice(make.indexOf('  function goalRoute('),make.indexOf('  // Character in a new pose from a picture'))+make.slice(make.indexOf('  const POSE_ROUTE='),make.indexOf('  const notReady=')),context);
+  const route=()=>context.goalRoute({intent:'combine'})?.id;
+  assert.equal(route(),ids[0]);context.state.poseRoute='scene';assert.equal(route(),ids[1]);
+  context.state.poseRoute='depth';assert.equal(route(),ids[2]);
+  context.list=context.list.filter(p=>p.id!==ids[2]);assert.equal(route(),ids[0],'missing depth uses the existing default');
+  context.list=ids.map(id=>({id,continuation_capability:{}}));context.list[2].runtime_block='unavailable';assert.equal(route(),ids[2],'explicit depth surfaces its blocker');
+  context.state.poseRoute='copy';context.list[0].runtime_block='unavailable';assert.equal(route(),ids[4],'depth and plain 9B never become automatic fallbacks');
+  context.list=context.list.filter(p=>p.id!==ids[0]&&p.id!==ids[1]);assert.equal(route(),ids[4],'missing Copy Pose still uses the existing fallback');
+  context.state.poseRoute='scene';assert.equal(route(),ids[4],'missing Replace still uses the existing fallback');
+  context.list=context.list.filter(p=>p.id!==ids[4]);assert.equal(route(),undefined,'plain 9B stays hidden');
+});
 console.log(count+' Studio UX policy checks passed.');

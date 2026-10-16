@@ -147,9 +147,9 @@ The owner answered these in the session's question picker; their chosen option i
 - [ ] **Fix buttons that cannot run stay visible, disabled, with the reason**; Make card/choice borders 3.2:1.
 - [ ] **Resume keeps a failed receipt failed** (#1460): after a ComfyUI restart, Resume used to turn a known execution
   failure into "outcome unknown". (A reported "wedged mid-batch" case, #1458, was a false positive: app/mixed_batch.py already offers it a recovery.)
-- [ ] **Character cards v1 in progress** (#1205): "Make this my character…" on a kept picture; pickers show "Your
-  characters" first and fill who/clothes. Canon = one chosen keeper portrait (owner decision recorded on #1205, 27 Sep).
-- [ ] **Character cards v1** (#1466): only *kept* pictures offer "Make this my character…"; the form prefills from a
+- [ ] **Character cards v1 in progress** (#1205): "Make this my character…" on any finished picture saved in the library; pickers show "Your
+  characters" first and fill who/clothes. Canon = one chosen picture, regardless of review (owner, 16 Oct: "Keep, allow any picture").
+- [ ] **Character cards v1** (#1466): all finished pictures with an asset id offer "Make this my character…" (owner, 16 Oct); the form prefills from a
   new-pose run's who/clothes answers (else the scene) and a look run's look becomes the preferred look; a canon
   picture shows "Canon of <name>"; "Your characters" shows only in Change, Fix or upscale, Restyle and New pose, only
   while picking; choosing one overwrites who/clothes and clears the other pose answers (as picking any picture does);
@@ -194,8 +194,9 @@ The owner answered these in the session's question picker; their chosen option i
 - [ ] **Live Studio restarted** at 13:52 on main d2973fa0 (no Studio work active) so tonight's Python changes load
   (character routes, resume fix, durable saves, workspace/model-library hardening).
 - [ ] **Make wave 6: pose routes from the lab** (#1482): "Character in a new pose" from a picture now asks "What to
-  keep": *Keep my character as it is* (Copy Pose, default) or *Put my character into this picture's scene* (Replace
-  character). Depth and plain Klein 9B are never picked in Make (still in the Full editor); a missing Copy Pose falls
+  keep": *Keep my character as it is* (Copy Pose, default), *Put my character into this picture's scene* (Replace
+  character), or *Follow the pose picture’s outline (depth)* (owner, 16 Oct: "Keep, show depth too"). Depth carries the
+  round-3 identity warning and is never an automatic fallback; plain Klein 9B stays hidden. A missing Copy Pose falls
   back to Klein 4B with the reason. The drawn figure warns that hands and gaze follow words weakly. Tune starts Xilmo
   and Ke-ta at 0.35 and NEWANIMASTYLE at 0.5 *only on Petiflow's own model*, with the lab note; Kieed shows a warning.
   Reverse: `POSE_ROUTE`/`POSE_OFF`/`LAB` in make.js.
