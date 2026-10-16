@@ -500,7 +500,10 @@
   }
   // A failed read keeps the list already shown and says so; the saying that follows a command appends it, so it is not overwritten.
   const STALE=' Your characters could not be refreshed, so the list shown may be out of date.';
-  async function loadCharacters(){try{state.characters=(await json('/api/characters')).characters||[];state.charStale=false;}catch{state.charStale=true;say(STALE.trim());}}
+  // A chosen character whose words changed (edited here or elsewhere) refreshes the form's who and clothes, which were copied when it was chosen.
+  async function loadCharacters(){const was=(state.characters||[]).find(c=>c.id===state.character);
+    try{state.characters=(await json('/api/characters')).characters||[];state.charStale=false;}catch{state.charStale=true;say(STALE.trim());return;}
+    const now=state.characters.find(c=>c.id===state.character);if(was&&now&&(was.body.who!==now.body.who||was.body.clothes!==now.body.clothes)){state.form.who=now.body.who||'';state.form.clothes=now.body.clothes||'';}}
   const sayChars=text=>say(text+(state.charStale?STALE:''));
   // Picture goals that take a character list the saved ones first. Choosing one picks its canon as it is and fills its words.
   const CHARACTER_GOALS=['edit','repair','restyle','combine'];

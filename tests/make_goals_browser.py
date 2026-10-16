@@ -369,12 +369,19 @@ def run(shots):
         form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("Your edit was not saved")')
         assert posted('/api/characters')[-1]['expected_revision'] == 0 and fixture_card(0)['body'].get('avoid') is None, 'a stale edit changes nothing'
         assert not page.locator('.make-character-form').count() and 'Mira (renamed elsewhere)' in page.locator('[data-make-character="character-0"]').inner_text(), 'the card is reloaded'
+        # A chosen character is edited from the picker; staying with it shows the edited words, not the ones copied when it was chosen (Codex review of #1472).
+        page.locator('[data-make-character="character-0"]').click(); page.wait_for_selector('#makePoseSlot')
+        assert page.input_value('#makeF-clothes') == 'a moss-green cloak with brass buttons'
+        page.locator('#makeComposer [data-make-repick]').click(); page.wait_for_selector('[data-make-character-edit="character-0"]')
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
         form.locator('[data-make-char="name"]').fill('Mira'); form.locator('[data-make-char="clothes"]').fill('a moss-green cloak, brass buttons, mud on the hem'); form.locator('[data-make-char="avoid"]').fill('glasses, hat')
         form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Saved the changes")')
         assert posted('/api/characters')[-1] == {'action': 'edit', 'id': 'character-0', 'expected_revision': 1, 'name': 'Mira', 'body': {'who': 'Mira, a lantern keeper with silver hair', 'clothes': 'a moss-green cloak, brass buttons, mud on the hem', 'avoid': 'glasses, hat'}}, posted('/api/characters')[-1]
         assert 'glasses' not in page.locator('.make-characters').inner_text(), 'avoid words are stored, not shown'
         assert page.evaluate('document.activeElement.dataset.makeCharacterEdit') == 'character-0'
+        page.locator('[data-make-keep-picture]').click(); page.wait_for_selector('#makeF-clothes')
+        assert page.input_value('#makeF-clothes') == 'a moss-green cloak, brass buttons, mud on the hem', page.input_value('#makeF-clothes')
+        page.locator('#makeComposer [data-make-repick]').click(); page.wait_for_selector('[data-make-character="character-0"]')
         # Avoid words ride only where the goal's request already has a negative field.
         page.locator('[data-make-character="character-0"]').click(); page.wait_for_selector('#makePoseSlot')
         if page.locator('#makeF-pose').count() and not page.input_value('#makeF-pose'): page.locator('#makeF-pose').fill('standing')
