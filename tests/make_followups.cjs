@@ -94,7 +94,7 @@ function compareHarness(leaveAt){
   const context={state,view,Uint32Array,crypto:{getRandomValues:a=>a},compareList:()=>[1,2,3].map(id=>({id:'look-'+id,name:'Look '+id,body:{}})),compareBlocker:()=>'',q:()=>({value:'a room'}),say:s=>statuses.push(s),
     MutationObserver:class{constructor(callback){this.callback=callback;observer=this;}observe(){}disconnect(){this.disconnected=true;}},
     presetFor:()=>({id:'preset'}),shapeSize:()=>[512,512],bound:()=>false,remember(){},renderRuns(){},poll:id=>polled.push(id),syncOperation(){},
-    json:async(url,body)=>{requests.push({url,body});if(url==='/api/looks/prepare'){if(leaveAt==='prepare')leave();return{controls:{}};}
+    json:async(url,body)=>{requests.push({url,body});if(url==='/api/looks/prepare'){if(leaveAt==='prepare')leave();return{controls:{},notices:['Swap '+body.id+'.']};}
       if(leaveAt==='job')leave();return{id:'job-'+requests.filter(r=>r.url==='/api/jobs').length,status:'queued'};}};
   const generate=vm.runInNewContext(between('  async function generateCompare(){','  // Your pictures lives')+';generateCompare',context);
   return{generate,state,requests,statuses,polled,disconnected:()=>observer?.disconnected};
@@ -104,7 +104,8 @@ test('Compare navigation during prepare sends zero; navigation during a job keep
   for(const [at,count] of [['prepare',0],['job',1]]){
     const h=compareHarness(at);await h.generate();
     assert.equal(h.requests.filter(r=>r.url==='/api/jobs').length,count,at);assert.equal(h.state.runs.length,count);assert.equal(h.polled.length,count);
-    assert.equal(h.statuses.at(-1),'Started '+count+' of 3; the rest were not sent because you left Make.');assert.equal(h.state.busy,false);assert.equal(h.disconnected(),true);
+    // Codex P2 on #1514: only a look whose job started reports its sampler swap.
+    assert.equal(h.statuses.at(-1),'Started '+count+' of 3; the rest were not sent because you left Make.'+(count?' Swap look-1.':''));assert.equal(h.state.busy,false);assert.equal(h.disconnected(),true);
     await Promise.resolve();assert.equal(h.requests.filter(r=>r.url==='/api/jobs').length,count,'returning never sends remaining jobs');
   }
 });
@@ -116,6 +117,15 @@ test('Compare still sends every look when Make stays visible',async()=>{
 test('uncertain restored runs keep polling reads until the job settles',async()=>{
   const h=restoreHarness(200,'uncertain');await h.load();assert.equal(h.pending(),1);await h.tick();assert.equal(h.pending(),1);
   h.jobStatus('completed');await h.tick();assert.equal(h.pending(),0);assert.ok(h.requests.every(r=>!r.options.method));
+});
+
+test('an uncertain run polls at the back-off ceiling, not every 2.5 s (#1514 review)',async()=>{
+  const h=restoreHarness(200,'uncertain');await h.load();await h.tick();assert.equal(h.queue[0].delay,30000);
+});
+
+test('unfinished cards past the six are capped at 20 (#1514 review)',()=>{
+  const runs=Array.from({length:6},(_,i)=>run('done-'+i)).concat(Array.from({length:25},(_,i)=>run('busy-'+i,'running')));
+  const h=historyHarness(runs);h.restored();assert.equal(h.renderRuns().length,26);
 });
 
 test('uncertain observation can resume and Stop tracking clears its polling timer',async()=>{

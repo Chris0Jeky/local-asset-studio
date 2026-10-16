@@ -50,7 +50,8 @@
   // Keep the newest six cards, plus every card still being observed; a Compare stays whole, including in storage.
   const runCards=runs=>{const cards=[],groups=new Map();for(const run of runs){let card=run.group&&groups.get(run.group);
     if(!card){card={group:run.group||null,id:run.group||run.job.id,runs:[]};cards.push(card);if(run.group)groups.set(run.group,card);}card.runs.push(run);}
-    return cards.filter((c,i)=>i<6||c.runs.some(observing));};
+    // Unfinished cards stay past the six, but at most 20 of them, so a run stuck 'uncertain' cannot grow history without bound.
+    let extra=0;return cards.filter((c,i)=>i<6||c.runs.some(observing)&&extra++<20);};
   const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:runCards(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,status,tracking_disposition,...r})=>({...r,job:{id,status,tracking_disposition}}))]).flatMap(c=>c.runs).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo,lost})=>({id:job.id,status:job.status,tracking_disposition:job.tracking_disposition,look,lookId,goal,scene,tune,tuned,group,title,fills,redo,lost}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string');}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
@@ -428,7 +429,7 @@
     try{const job=await json('/api/jobs/'+encodeURIComponent(id));const changed=stamp(job)!==stamp(run.job)||run.lost;run.job=job;run.lost=false;
       // Redraw only when something changed, so a poll never resets an open menu or steals keyboard focus.
       if(changed){renderRuns();remember();if(job.outputs?.some(o=>o.asset_id)){state.pictures=null;refreshPickers();}}
-      if(observing(run))poll(id);else timers.delete(id);}
+      if(observing(run))poll(id,run.job.status==='uncertain'?4:0);else timers.delete(id);}
     catch{if(!state.runs.includes(run)){timers.delete(id);return;}if(!run.lost){run.lost=true;renderRuns();}poll(id,misses+1);}},Math.min(POLL_MAX,POLL*2**Math.min(misses,4))));}
   // A finished run's pictures join an open picture grid at once, so the next goal can start from them.
   function refreshPickers(){const g=goal();if(!g.intent)return;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])if(q('#'+id))void fillPictures(g,id,attr);}
@@ -874,13 +875,13 @@
       for(const look of list){
         if(stopped())break;
         const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options:Object.fromEntries(look.body.options.map(o=>[o.id,!!o.default]))}:{}),expected_revision:look.revision});
-        notes.push(...(result.notices||[]));const p=presetFor(look),controls={...result.controls},[w,h]=shapeSize(p,look,'design');
+        const swaps=result.notices||[];const p=presetFor(look),controls={...result.controls},[w,h]=shapeSize(p,look,'design');
         if('width' in controls||p?.width)Object.assign(controls,{width:w,height:h});
         if(bound(p,'seed'))controls.seed=seed;
         if(stopped())break;
         say('Sending '+(started+1)+' of '+list.length+' to ComfyUI…');
         const job=await json('/api/jobs',{preset_id:p?.id||look.body.preset_id,controls,batch_count:1,label:'Make · Compare · '+look.name});
-        state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene,group});remember();renderRuns();poll(job.id);
+        state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene,group});notes.push(...swaps);remember();renderRuns();poll(job.id);
       }
       const noted=notes.map(n=>' '+n).join('');
       say((started<list.length?'Started '+started+' of '+list.length+'; the rest were not sent because you left Make.':'Started '+list.length+' pictures, one per look. They appear side by side in Your pictures.')+noted);
