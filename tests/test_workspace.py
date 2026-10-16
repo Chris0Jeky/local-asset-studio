@@ -1,5 +1,6 @@
 import importlib.util
 import json
+from contextlib import contextmanager
 import tempfile
 import time
 import unittest
@@ -155,6 +156,27 @@ class WorkspaceTests(unittest.TestCase):
             self.store.save_setup({'action': 'delete'})
         self.assertEqual(self.store.setups(), before)
         self.assertEqual([s['id'] for s in self.store.setups()], [kept['id']])
+
+    def test_save_setup_conflicts_when_the_winning_row_vanishes_mid_save(self):
+        # The ignored INSERT sees a live row, but both reads of it miss: the winner was deleted in between.
+        recipe = {'preset': 'test'}
+        self.store.save_setup({'id': 'raced-setup', 'name': 'Raced', 'recipe': recipe})
+        real_connection = self.store.connection
+        class Empty:
+            rowcount = 0
+            def fetchone(self): return None
+        class HiddenReads:
+            def __init__(self, db): self.db = db
+            def __getattr__(self, name): return getattr(self.db, name)
+            def execute(self, sql, params=()):
+                return Empty() if sql.startswith('SELECT name,recipe FROM setups') else self.db.execute(sql, params)
+        @contextmanager
+        def connection():
+            with real_connection() as db: yield HiddenReads(db)
+        with patch.object(self.store, 'connection', connection):
+            with self.assertRaisesRegex(workspace.WorkspaceError, 'changed while it was being saved'):
+                self.store.save_setup({'id': 'raced-setup', 'name': 'Raced', 'recipe': recipe})
+        self.assertEqual([s['name'] for s in self.store.setups()], ['Raced'])
 
     def test_save_setup_validation_rejects_invalid_without_storing(self):
         self.assertEqual(self.store.setups(),[])

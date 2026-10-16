@@ -569,6 +569,9 @@ class AssetWorkspace:
                 inserted = db.execute("INSERT OR IGNORE INTO setups VALUES (?,?,?,?)", (identifier, name, raw, time.time()))
                 if inserted.rowcount == 0:
                     winner = db.execute("SELECT name,recipe FROM setups WHERE id=?", (identifier,)).fetchone()
+                    if winner is None:  # deleted between the ignored insert and this read: a conflict, not a TypeError
+                        raise WorkspaceError("That setup changed while it was being saved; nothing was stored. Save again with a new ID.",
+                                             status=409, code="setup_conflict")
                     if winner["name"] != name or json.loads(winner["recipe"]) != recipe:
                         raise WorkspaceError("That setup ID already exists; the original was preserved. Save with a new ID.")
         return {"id": identifier, "name": name}
