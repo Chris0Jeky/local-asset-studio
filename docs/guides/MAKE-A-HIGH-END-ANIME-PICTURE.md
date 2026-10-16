@@ -138,7 +138,9 @@ The anime looks run in about 25 to 45 seconds a picture in the lab, so a draft e
 
 **Make this my character…** appears on every finished picture saved in the library, including Compare pictures, whether kept, unreviewed or marked **Not this**. Name the character and save: this picture becomes its canon without making another picture or changing its review. A canon picture says **Canon of** followed by the character's name. The character's **Line-up** keeps the canon first, then kept descendants.
 
-**Compare looks.** In the look gallery, press **Compare looks**. Choose two or three looks, type one scene, and press **Generate** (the button reads "Generate 3 pictures"). Each look runs once, as made, at its own shape, from one seed where its recipe takes a seed. The pictures share one card. If you already picked a look, press **Change look** first to get the gallery back, and **Back to one look** to leave. Compare ignores your Tune changes.
+**Compare looks.** In the look gallery, press **Compare looks**. Choose two or three looks, type one scene, and press **Generate** (the button reads "Generate 3 pictures"). Each look runs once, as made, at its own shape, from one seed where its recipe takes a seed. The pictures share one card. If you already picked a look, press **Change look** first to get the gallery back, and **Back to one look** to leave. Compare looks ignores your Tune changes.
+
+**Compare one setting.** To see what one setting does to one look, for example Petiflow alone against Petiflow with Ke-ta at 0.35, or 25 against 13 steps, choose the look and open **Compare one setting** under **Tune this look**. Pick the **Setting to vary**: **Steps**, an adapter's strength (0 turns it off), or **Model** (the models Tune offers for this look). Give two or three values; the first two are filled in for you. Press **Generate** (it reads "Generate 3 pictures"). Every picture uses the same words, shape, tune and seed; only that setting changes. They share one card, **Compare a setting**, and each picture is labelled with its value. Your Tune applies to every picture, so to compare an added adapter, add it in Tune first, then vary its strength. While **Compare one setting** is open, **How many** is one picture per value; fold it shut to make pictures as usual. Leaving Make while it sends stops the pictures not yet sent. These are not blind: for a budgeted, blind comparison use **Plan comparison** (section 6).
 
 **Vary.** The **Vary** buttons under a picture open the Full editor with new seeds or a nearby variation prepared. They do not run. Press **Generate** there.
 
@@ -233,6 +235,7 @@ Read the line under **Generate**. It says why. The same text is the button's too
 | The Studio worker has stopped. Restart the Studio before generating. | Close and reopen the Studio. Make sure nothing is running first. |
 | This look’s recipe is not in the library. | The look points at a recipe that is not installed. Pick another look. |
 | Choose at least two looks to compare. | Compare looks needs two or three. |
+| Compare one setting: choose the setting to vary. (or: give two or three values, give different values) | Finish **Compare one setting**, or fold it shut to make pictures as usual. |
 
 If Generate is enabled and you press it with an empty box, the page says "Describe your picture first, or press Use the example." and puts the cursor in the box.
 

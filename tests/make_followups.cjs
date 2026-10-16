@@ -96,7 +96,7 @@ function compareHarness(leaveAt){
     presetFor:()=>({id:'preset'}),shapeSize:()=>[512,512],bound:()=>false,remember(){},renderRuns(){},poll:id=>polled.push(id),syncOperation(){},
     json:async(url,body)=>{requests.push({url,body});if(url==='/api/looks/prepare'){if(leaveAt==='prepare')leave();return{controls:{},notices:['Swap '+body.id+'.']};}
       if(leaveAt==='job')leave();return{id:'job-'+requests.filter(r=>r.url==='/api/jobs').length,status:'queued'};}};
-  const generate=vm.runInNewContext(between('  async function generateCompare(){','  // Your pictures lives')+';generateCompare',context);
+  const generate=vm.runInNewContext(between('  function leaveWatch(){','  // Your pictures lives')+';generateCompare',context);
   return{generate,state,requests,statuses,polled,disconnected:()=>observer?.disconnected};
 }
 

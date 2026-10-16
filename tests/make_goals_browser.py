@@ -526,6 +526,65 @@ def run(shots):
             if count:
                 assert page.locator('.make-compare [data-make-review=selected]').count() >= 3, 'sent jobs remain on their cards'
             page.unroute(pattern, leave_make)
+        # Compare one setting (#1496): one look with its Tune, one setting varied, words and seed held; one press sends one job per
+        # value into one card, and the jobs differ only in that setting.
+        page.locator('[data-make-compare]').first.click(); pick_look('look-anima-pearly-petiflow')
+        page.locator('#makeScene').fill('An adult lantern keeper in a pine wood at dusk')
+        assert page.locator('#makeGenerate').inner_text() == 'Generate' and page.locator('#makeCount').is_enabled()
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeWhy").textContent.includes("choose the setting")')
+        assert page.locator('#makeGenerate').is_disabled() and 'choose the setting to vary' in page.locator('#makeWhy').inner_text(), page.locator('#makeWhy').inner_text()
+        assert page.locator('#makeCount').is_disabled() and page.locator('#makeCount').get_attribute('aria-describedby') == 'makeSweepOne' and page.locator('#makeSweepOne').is_visible()
+
+        def changed(a, b): return {k for k in set(a) | set(b) if a.get(k) != b.get(k)}
+
+        def press(n):
+            before = len(jobs()); page.locator('#makeGenerate').click()
+            page.wait_for_function('n=>document.querySelector("#makeStatus")?.textContent.startsWith("Started "+n+" pictures, one per value of")', arg=n, timeout=8000)
+            sent = jobs()[before:]; assert len(sent) == n, sent
+            assert all(j['label'].startswith('Make · Compare · ') and j['batch_count'] == 1 for j in sent) and len({j['controls']['seed'] for j in sent}) == 1, sent
+            assert len({j['controls']['positive'] for j in sent}) == 1, 'the words are held'
+            page.wait_for_function('n=>document.querySelector(".make-compare")?.querySelectorAll("figure").length===n', arg=n, timeout=8000)
+            return sent
+        page.select_option('#makeSweepAxis', 'steps')
+        assert [page.input_value('[data-sweep-value="%d"]' % i) for i in range(3)] == ['25', '13', ''], 'as made, then the draft count'
+        page.fill('[data-sweep-value="2"]', '13')
+        assert page.locator('#makeGenerate').is_disabled() and 'give different values' in page.locator('#makeWhy').inner_text()
+        page.fill('[data-sweep-value="2"]', '40')
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.startsWith("3 pictures, one per value")')
+        assert page.locator('#makeGenerate').inner_text() == 'Generate 3 pictures' and page.locator('#makeSweepSum').inner_text() == '25 steps vs 13 steps vs 40 steps'
+        shot('compare-setting-composer')
+        sent = press(3)
+        assert all(changed(sent[0]['controls'], j['controls']) <= {'steps'} for j in sent) and [j['controls']['steps'] for j in sent] == [25, 13, 40], sent
+        assert len({j['preset_id'] for j in sent}) == 1
+        card = page.locator('.make-compare').first
+        assert card.locator('figcaption b').all_inner_texts() == ['25 steps', '13 steps', '40 steps'] and 'Compare a setting' in card.locator('header b').inner_text()
+        assert '3 values of Steps' in card.locator('header small').inner_text(), card.locator('header small').inner_text()
+        shot('compare-setting-results', '.make-compare')
+        # Adapter strength, off included: only that adapter's strength differs.
+        page.select_option('#makeSweepAxis', 'adapter:lora')
+        assert [page.input_value('[data-sweep-value="%d"]' % i) for i in range(2)] == ['1', '0']
+        sent = press(2)
+        assert all(changed(sent[0]['controls'], j['controls']) <= {'lora'} for j in sent) and [j['controls']['lora'] for j in sent] == [1, 0], sent
+        assert page.locator('.make-compare').first.locator('figcaption b').all_inner_texts()[1].endswith(' off')
+        # Model: the same controls, another recipe of the same model type.
+        page.select_option('#makeSweepAxis', 'model')
+        sent = press(2)
+        assert all(changed(sent[0]['controls'], j['controls']) <= {'sampler'} for j in sent) and len({j['preset_id'] for j in sent}) == 2, sent
+        clicks['compare-setting'] = 4  # look, Compare one setting, the setting, Generate (+ one scene; values prefilled)
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate"')
+        assert page.locator('#makeGenerate').inner_text() == 'Generate' and page.locator('#makeCount').is_enabled(), 'folded shut, Make is as before'
+        before = len(jobs()); page.locator('#makeGenerate').click()
+        page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started. ")', timeout=8000); assert len(jobs()) == before + 1
+        # Edit and re-run (like Make the final and Same words, another look) folds the look's sweep shut: Generate then sends one job (#1518 review).
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate 2 pictures"')
+        page.locator('.make-run:not(.make-compare) [data-make-rerun]').first.click(); page.wait_for_selector('#makeScene')
+        assert not page.evaluate('document.querySelector("#makeSweep").open') and page.locator('#makeGenerate').inner_text() == 'Generate' and page.locator('#makeCount').is_enabled()
+        before = len(jobs()); page.locator('#makeGenerate').click()
+        page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started. ")', timeout=8000); page.wait_for_timeout(300); assert len(jobs()) == before + 1, jobs()[before:]
+        # Night Shift's recipe takes its step count from the graph (8): the served catalog's defaults carry it (Codex on #1518).
+        page.locator('[data-make-goal="scene"]').click(); pick_look('look-night-shift-retro-anime'); page.locator('#makeSweep > summary').click()
+        page.select_option('#makeSweepAxis', 'steps'); assert [page.input_value('[data-sweep-value="%d"]' % i) for i in range(2)] == ['8', '4']
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate"')
         # A picture goal whose copied reference does not match the verified source sends nothing.
         page.route('**/api/assets/reference', lambda route: route.fulfill(json={'file': 'x' * 32 + '_ref.png', 'sha256': '0' * 64, 'parent_asset': 'asset-1', 'context': {}}))
         goal('edit'); page.locator('#makeF-change').fill('give her a hat'); before = len(jobs())

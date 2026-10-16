@@ -1,5 +1,24 @@
 # UX use-case matrix
 
+## Make: Compare one setting — 16 October 2026
+
+Audit v3 N7, issue #1496. One look with its Tune, one setting varied over two or three values, the words, shape, tune and
+seed held: **Compare one setting** folds open under *Tune this look*. The setting is **Steps**, one adapter's strength
+(0 is off; added adapters included) or **Model** (Tune's compatible models); an axis this look cannot vary stays listed,
+disabled, with its reason. Values 1 and 2 are prefilled (as made, then the draft count / off / the other model). While it
+is open, *How many* is disabled and says why, the Generate label states the count (*Generate 3 pictures*), the estimate
+sums `/api/estimate` per value, and a refusal (*give different values*, out of range, a model needing files) names itself
+under Generate. One press: one `/api/looks/prepare`, then one `/api/jobs` per value (batch 1, one seed), into one
+*Compare a setting* card labelled per value; leaving Make stops the unsent ones (#1514's watch, now shared).
+
+Judgement: a client-side group like *Compare looks*, not `app/production.py`'s planned comparison: the owner wants to see
+the values named (Blind until Reveal is for planned comparisons only, 27 Sep), the jobs are ordinary Make runs, and a
+plan would add a budget and review step this quick look does not need. *Plan comparison* stays the budgeted, blind route.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| Compare one setting (`make_goals_browser.py`) | not possible in Make (a Runs & review plan, or one Generate per value by hand) | 4 clicks + 1 scene (look, Compare one setting, setting, Generate; values prefilled) | payload diff: the jobs differ only in `steps` / `lora` / preset (+ an unoffered sampler) |
+
 ## Make wave 7: your pictures first, partial adapter names, Make from the Library — 16 October 2026
 
 Third live audit (PR #1484, `docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v3.md`), N1-N6 and N8, plus the wave 6 pose-route ask.
@@ -22,7 +41,7 @@ Third live audit (PR #1484, `docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v3.md`), N1-N6 
   the button puts them back without sending.
 - **Models & setup** (N8): the looks panel holds its place while files are checked (a placeholder, then a *Checking* row per
   look); missing files a look needs lead, and missing files nothing uses fold under *Optional*.
-- Not done: Compare cannot vary model, adapter strength or steps (N7, a larger feature).
+- Compare one setting (N7) shipped later the same day; see the section above.
 
 ## Make: picture goals stay in Make, and Compare looks — 16 October 2026
 
