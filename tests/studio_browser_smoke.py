@@ -156,6 +156,7 @@ def run(screenshots):
                 check(page.locator(f'[data-nav-group="{section}"]').evaluate('(el)=>el.open'),section+' opens for its bookmarked route')
                 page.evaluate("showView('make')");page.locator(f'[data-nav-group="{section}"] summary').click()
             page.wait_for_function('!!selected && schemaAvailable')
+            check(page.locator('#createView h1').inner_text()=='Full editor — every setting for one recipe','Full editor heading explains its purpose')
             check(page.locator('#positive').input_value()=='','Full editor starts with an empty prompt')
             check(page.locator('#positive').get_attribute('placeholder')=='Describe the picture','Full editor has a neutral prompt placeholder')
             for query,label,href,goal in [('anime','Anime character','/#make','character'),('upscale','Fix or upscale','/#make','repair'),('download','Models & setup','/#models',None),('pose','Character in a new pose','/#make','combine')]:
@@ -178,6 +179,21 @@ def run(screenshots):
             for query,href in [('pictures','/#assets'),('keepers','/#assets'),('compare','/#production'),('seed','/#create')]:
                 finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
                 check(finder.locator('#studioCommandResults a').first.get_attribute('href')==href,'finder keyword: '+query);finder.keyboard.press('Escape')
+            for query in ['wai','krea','noob','anima']:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                finder.wait_for_selector('#studioCommandResults [data-make-look]')
+                check(finder.locator('#studioCommandResults [data-make-look]').count()>0,'model search lists a Make look: '+query)
+                if query=='wai':check(finder.locator('#studioCommandResults [data-make-look="look-wai-fantasy-portrait"]').count()==1,'wai lists the WAI portrait look')
+                finder.keyboard.press('Escape')
+            for query in ['pony','flux','qwen']:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                check(finder.locator('#studioCommandResults a[href="/#models"]').count()==1,'model without an authored look leads to Models & setup: '+query)
+                finder.keyboard.press('Escape')
+            for query in ['lora','adapter','tune']:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                result=finder.locator('#studioCommandResults a').first
+                check(result.get_attribute('href')=='/#make' and 'Open Tune this look under the composer' in result.inner_text(),'Tune hint leads to Make: '+query)
+                finder.keyboard.press('Escape')
             finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch','pixel');finder.wait_for_selector('#studioCommandResults [data-make-look="look-preset-pixel-lora"]')
             check(finder.locator('#studioCommandResults a').first.get_attribute('data-make-look')=='look-preset-pixel-lora','pixel search leads to the pixel-art look')
             finder.keyboard.press('ArrowDown');finder.keyboard.press('ArrowDown');finder.keyboard.press('ArrowUp');finder.keyboard.press('Enter')

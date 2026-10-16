@@ -207,31 +207,34 @@ const loraRange = entry => Array.isArray(entry?.strength) ? entry.strength.filte
 function recommendedStrength(key, entry) {
   if (Number(entry?.default) > 0) return Number(entry.default);
   const authored = Number(selected?.defaults?.[key]), top = Math.max(...loraRange(entry), 0);
-  return authored > 0 ? authored : top > 0 ? Math.min(1, top) : 1;
+  const value = authored > 0 ? authored : 1, range = loraRange(entry);
+  return range.length ? Math.max(Math.min(...range), Math.min(value, top)) : value;
 }
 let autoTriggers = {}; // slot key -> the exact fragment this page added to the prompt for that slot
-const promptHas = (text, trigger) => String(text).toLowerCase().includes(String(trigger).toLowerCase());
+const promptToken = trigger => '(?<![\\p{L}\\p{N}_])' + String(trigger).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}\\p{N}_])';
+const promptHas = (text, trigger) => RegExp(promptToken(trigger), 'iu').test(String(text));
 function addTrigger(key, auto) {
   const field = $('#positive'), entry = loraEntry(getControl(loraNameKey(key))?.value), trigger = entry?.trigger;
   if (!field || !selected?.positive || !trigger) return '';
   if (promptHas(field.value, trigger)) return 'The trigger ' + trigger + ' is already in the prompt.';
   const text = field.value.replace(/[\s,]+$/, ''), start = /^start/i.test(String(entry.trigger_position || '').trim());
   const fragment = start ? trigger + (text ? ', ' : '') : (!text ? '' : /[.!?;:]$/.test(text) ? ' ' : ', ') + trigger;
-  field.value = start ? fragment + field.value : text + fragment;
+  field.value = start ? fragment + text : text + fragment;
   if (auto) autoTriggers[key] = fragment;
   field.dispatchEvent(new Event('input', {bubbles: true}));
   return 'Added the trigger ' + trigger + ' to the ' + (start ? 'start' : 'end') + ' of the prompt.';
 }
 // Only the exact fragment added for this slot is removed; text the user edited around it stays as typed.
 function dropAutoTrigger(key) {
-  const fragment = autoTriggers[key], field = $('#positive'); delete autoTriggers[key];
+  const fragment = autoTriggers[key], field = $('#positive');
   if (!fragment || !field) return '';
   // Another enabled slot still needs the same trigger: hand the fragment over instead of removing it.
-  const trigger = fragment.replace(/^[, ]+|[, ]+$/g, ''), other = activeLoraSlots().find(k => k !== key && Number(getControl(k)?.value) > 0 && loraEntry(getControl(loraNameKey(k))?.value)?.trigger === trigger);
-  if (other) { autoTriggers[other] = fragment; return ''; }
+  const trigger = fragment.replace(/^[, ]+|[, ]+$/g, ''), other = activeLoraSlots().find(k => k !== key && Number(getControl(k)?.value) > 0 && String(loraEntry(getControl(loraNameKey(k))?.value)?.trigger || '').toLowerCase() === trigger.toLowerCase());
+  if (other) { autoTriggers[other] = fragment; delete autoTriggers[key]; return ''; }
   // Still a whole token where it was put: a leading fragment at the very start, a trailing one before a comma or the end.
-  const literal = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), token = fragment.endsWith(', ') ? RegExp('^' + literal) : RegExp(literal + '(?=\\s*(,|$))');
+  const literal = fragment.split(trigger).map(text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(promptToken(trigger)), token = fragment.endsWith(', ') ? RegExp('^' + literal, 'iu') : RegExp(literal + '(?=\\s*(,|$))', 'iu');
   if (!token.test(field.value)) return '';
+  delete autoTriggers[key];
   field.value = field.value.replace(token, ''); field.dispatchEvent(new Event('input', {bubbles: true}));
   return 'Removed the trigger ' + fragment.replace(/^[, ]+|[, ]+$/g, '') + ' added for the previous adapter.';
 }
@@ -791,7 +794,7 @@ function staleTilePlan(s,target){return s.tile!=null&&(!target?.tile_route||type
 function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
-  if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
+  if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid look application state.');
   const target=catalog.presets.find(p=>p.id===s.preset);
   const droppedTile=s.tileDropped||staleTilePlan(s,target);
   const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(droppedTile?{...s,tile:null}:s):(s.tile!=null||s.parallax!=null?null:{});
