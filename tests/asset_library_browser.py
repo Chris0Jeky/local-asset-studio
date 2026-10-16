@@ -20,6 +20,7 @@ from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 import server as production
+from browser_ports import BoundPortGuard
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -48,7 +49,7 @@ async def exercise(args):
         scope = store.snapshot()['workspace_id']
         empty = store.collection({'name': 'Empty project'})
 
-        class Handler(production.Handler):
+        class Handler(BoundPortGuard, production.Handler):
             studio = SimpleNamespace(assets=store)
             json = fixture.Handler.json
             def do_GET(self):
@@ -65,7 +66,7 @@ async def exercise(args):
                 # Any export/generation request is evidence of an unexpected action, not authorized work.
                 return fixture.Handler.do_POST(self)
 
-        http = production.StudioHTTPServer(('127.0.0.1', 8191), Handler)
+        http = production.StudioHTTPServer(('127.0.0.1', args.port), Handler)
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
         try:
@@ -79,9 +80,9 @@ async def exercise(args):
                     await (dialog.accept() if outcome['accept'] else dialog.dismiss())
                 page.on('dialog', confirm)
                 if args.inert:
-                    await inert_page(page, 8191)
+                    await inert_page(page, http.server_port)
                 else:
-                    await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
+                    await page.goto(f'http://127.0.0.1:{http.server_port}/#assets', timeout=20000)
                 await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id')
                 await page.evaluate("showView('assets')")
                 await page.wait_for_selector(f'[data-asset-check="{ids[0]}"]')
@@ -239,5 +240,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--inert', action='store_true')
+    parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
     parser.add_argument('--baseline', action='store_true')
     asyncio.run(exercise(parser.parse_args()))

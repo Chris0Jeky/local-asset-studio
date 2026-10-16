@@ -20,6 +20,7 @@ from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 import server as production
+from browser_ports import BoundPortGuard
 
 
 async def exercise(args):
@@ -40,7 +41,7 @@ async def exercise(args):
         assert ids == [b.register(job, 0, source) for job in jobs]
         b_before = b.snapshot()
 
-        class Handler(production.Handler):
+        class Handler(BoundPortGuard, production.Handler):
             studio = SimpleNamespace(assets=a)
             json = fixture.Handler.json
 
@@ -70,7 +71,7 @@ async def exercise(args):
                             return super()._json(503, {'error': 'Synthetic held-response deadline'})
                 return super()._json(status, data)
 
-        http = production.StudioHTTPServer(('127.0.0.1', 8191), Handler)
+        http = production.StudioHTTPServer(('127.0.0.1', args.port), Handler)
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         fixture.POSTS.clear()
 
@@ -102,9 +103,9 @@ async def exercise(args):
                     context = await browser.new_context(viewport={'width': 1280, 'height': 1000}, reduced_motion='reduce')
                     page = await context.new_page(); page.set_default_timeout(8000)
                     page.on('pageerror', lambda error: errors.append(str(error)))
-                    if args.inert: await inert_page(page, 8191)
+                    if args.inert: await inert_page(page, http.server_port)
                     # A cold Windows runner can take longer than the 8 s default for the first load (as in #943).
-                    else: await page.goto('http://127.0.0.1:8191/#assets', timeout=20000)
+                    else: await page.goto(f'http://127.0.0.1:{http.server_port}/#assets', timeout=20000)
                     await page.wait_for_function('!!catalog && !!selected')
                     await page.evaluate("showView('assets')"); await refreshed(page)
                     check('SESSION-01 boot sends no metadata mutation', not writes)
@@ -167,5 +168,6 @@ async def exercise(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--inert', action='store_true')
+    parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
     parser.add_argument('--out', type=Path, default=Path('.runtime/asset-recovery-session'))
     asyncio.run(exercise(parser.parse_args()))
