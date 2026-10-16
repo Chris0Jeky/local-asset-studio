@@ -497,11 +497,35 @@ def run(shots):
         assert page.locator('.make-compare .make-canon').count() >= 3 and not page.locator('.make-compare [data-make-character-save]').count(), 'a canon picture is named, not offered again'
         saved_characters = list(CHARACTERS); no_characters(); kept_review = fixture.ASSETS[0]['review']; fixture.ASSETS[0]['review'] = 'unreviewed'
         page.reload(); page.wait_for_selector('.make-compare figure img', timeout=8000); page.wait_for_function('!!assetState?.assets?.length'); page.evaluate('StudioMake.refresh()')
+        page.locator('.make-compare').first.scroll_into_view_if_needed()
         page.wait_for_selector('.make-compare [data-make-character-save]', timeout=8000)
         before = len(jobs()); page.locator('.make-compare [data-make-character-save]').first.click()
         assert page.locator('.make-compare .make-character-form').count() >= 1 and len(jobs()) == before, 'the form opens on the compare card and submits nothing'
         page.locator('.make-compare [data-make-character-cancel]').first.click(); assert not page.locator('.make-character-form').count()
         CHARACTERS.extend(saved_characters); fixture.ASSETS[0]['review'] = kept_review
+        page.locator('[data-make-goal="character"]').click()
+        if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
+        page.locator('[data-make-compare]').first.click()
+        for look in ids[:3]: page.locator('[data-make-look="%s"]' % look).click()
+        page.locator('#makeScene').fill('An adult lantern keeper in a pine wood at dusk')
+        # Leaving Make during either awaited request stops the remaining looks, including a quick leave-and-return.
+        for phase, count, quick_return in (('prepare', 0, False), ('jobs', 1, False), ('jobs', 1, True)):
+            pattern = '**/api/looks/prepare' if phase == 'prepare' else '**/api/jobs'
+            def leave_make(route):
+                if route.request.method != 'POST': return route.continue_()
+                response = route.fetch()  # fixture response only; no ComfyUI
+                page.evaluate('showView("assets")' + (';showView("make")' if quick_return else ''))
+                route.fulfill(response=response)
+            page.route(pattern, leave_make)
+            before = len(jobs()); page.locator('#makeGenerate').click()
+            message = 'Started %d of 3; the rest were not sent because you left Make.' % count
+            page.wait_for_function('s=>document.querySelector("#makeStatus")?.textContent===s', arg=message, timeout=8000)
+            assert len(jobs()) == before + count, (phase, quick_return, jobs()[before:])
+            page.evaluate('showView("make")'); page.wait_for_timeout(200)
+            assert page.locator('#makeStatus').inner_text() == message and len(jobs()) == before + count
+            if count:
+                assert page.locator('.make-compare [data-make-review=selected]').count() >= 3, 'sent jobs remain on their cards'
+            page.unroute(pattern, leave_make)
         # A picture goal whose copied reference does not match the verified source sends nothing.
         page.route('**/api/assets/reference', lambda route: route.fulfill(json={'file': 'x' * 32 + '_ref.png', 'sha256': '0' * 64, 'parent_asset': 'asset-1', 'context': {}}))
         goal('edit'); page.locator('#makeF-change').fill('give her a hat'); before = len(jobs())
@@ -577,6 +601,33 @@ def run(shots):
         assert not fresh.locator('.make-note').count(), 'a dismissed note is not offered again'
         assert len(jobs()) == before_note, 'the migration note submits nothing'
         fresh.close()
+        # Restore more than six runs: one Compare at the boundary, old completed cards, and ongoing overflow.
+        retained = [dict(id='retained-%d' % i, look='Look %d' % i, status='completed') for i in range(5)]
+        retained += [dict(id='retained-pair-%d' % i, look='Pair %d' % i, status='completed', group='retained-pair') for i in range(3)]
+        retained += [dict(id='retained-old', look='Old', status='completed'), dict(id='retained-queued', look='Queued', status='queued'),
+                     dict(id='retained-uncertain', look='Unknown', status='uncertain'), dict(id='retained-mix-a', look='Done', status='completed', group='retained-mix'),
+                     dict(id='retained-mix-b', look='Unknown', status='uncertain', group='retained-mix')]
+        records = {r['id']: dict(id=r['id'], status=r['status'], outputs=[], batch_count=1) for r in retained}; reads = []
+        history = browser.new_page(); history.on('pageerror', lambda e: errors.append(str(e)))
+        def read_run(route):
+            id = route.request.url.rsplit('/', 1)[-1]; reads.append(id); route.fulfill(json=records[id])
+        history.route('**/api/jobs/retained-*', read_run)
+        history.add_init_script("if(!localStorage.getItem('studio.make'))localStorage.setItem('studio.make', %s)" % json.dumps(json.dumps({'goal': 'character', 'runs': retained})))
+        history.goto(origin + '/#make'); history.wait_for_selector('[data-run="retained-mix"]')
+        assert history.locator('.make-run').count() == 9 and history.locator('[data-run="retained-pair"] figure').count() == 3
+        assert not history.locator('[data-run="retained-old"]').count()
+        assert history.locator('[data-run="retained-mix"] header .make-run-state').inner_text() == '1 of 2 done'
+        expected = [r['id'] for r in retained if r['id'] != 'retained-old']
+        assert history.evaluate("JSON.parse(localStorage.getItem('studio.make')).runs.map(r=>r.id)") == expected
+        history.reload(); history.wait_for_selector('[data-run="retained-mix"]')
+        assert history.locator('.make-run').count() == 9 and history.locator('[data-run="retained-pair"] figure').count() == 3
+        history.wait_for_function('document.querySelector("[data-run=retained-queued]")!==null')
+        history.wait_for_timeout(2800)
+        assert all(reads.count(id) >= 3 for id in ('retained-queued', 'retained-uncertain', 'retained-mix-b')), reads
+        records['retained-queued']['status'] = 'completed'
+        history.wait_for_selector('[data-run="retained-queued"]', state='detached', timeout=5000)
+        assert history.evaluate("JSON.parse(localStorage.getItem('studio.make')).runs.map(r=>r.id)") == [id for id in expected if id != 'retained-queued']
+        history.close()
         assert not errors, errors
         browser.close()
     server.shutdown()

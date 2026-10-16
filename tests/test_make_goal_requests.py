@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import shutil
+import subprocess
 import unittest
 
 from PIL import Image
@@ -36,6 +37,13 @@ class MakeGoalRequestTests(unittest.TestCase):
         stream = io.BytesIO(); Image.new('RGB', (16, 24), 'navy').save(stream, 'JPEG')
         self.look = self.studio.upload('look-preset-realvis.jpg', 'image/jpeg', stream.getvalue())
         self.file, self.asset = self.case.attachment['file'], self.case.asset_id
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for Make owner-decision contracts')
+    def test_running_history_and_stop_on_navigation_contracts(self):
+        result = subprocess.run([shutil.which('node'), '--test', '--test-name-pattern=history|overflow|navigation|Compare still|uncertain restored',
+                                 str(base.ROOT / 'tests/make_followups.cjs')], capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('fail 0', result.stdout, result.stdout + result.stderr)
 
     def claim(self, preset_id, intent):
         graph = self.case.root / next(p for p in json.loads((self.case.root / 'presets/catalog.json').read_text(encoding='utf-8'))['presets'] if p['id'] == preset_id)['graph']
