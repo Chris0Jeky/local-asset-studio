@@ -140,7 +140,8 @@ Overview has left the navigation: `#home` and `#overview` open Make (#18).
   **Generate** (the only press that submits: `/api/looks/prepare`, then `/api/jobs`). *Open in the full editor instead* loads the
   same prepared request into Create without running it.
 - **Next steps on each result**: Vary subtle / strong, Fix details or upscale, Review and keep, and under *More*: change one
-  thing, restyle, put in a new pose, animate. All reuse the existing Vary and continuation handoffs.
+  thing, restyle, put in a new pose, animate. All reuse the existing Vary and continuation handoffs. Since #1497 (16 Oct 2026)
+  Vary on a Make card runs like Fix and Upscale: one press sends the round Vary prepares (one `/api/jobs`), without the full editor.
 - Picture goals list your newest pictures; choosing one opens the existing handoff on that task.
 
 `python tests/studio_use_cases.py` passed **21/21** journeys with **zero generation submissions and zero page errors**. The new

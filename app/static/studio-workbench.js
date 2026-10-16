@@ -1051,7 +1051,39 @@
       return await post('/api/jobs',{preset_id:preset.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+(typeof label==='string'&&label?label:StudioContinuation.POLISH[kind])});   // Make passes the name it showed (e.g. a merged face-and-hands pass)
     }finally{polishBusy.delete(key);}
   }
-  Object.assign(globalThis.StudioWorkbench,{polish,polishPlan});
+  // #1497 Vary from Make: the round prepareVary sets up (same plan, wording, carried stack, strength and round size), sent as
+  // one job without touching Create's form, so the #1213 overwrite question has nothing to protect. One press posts
+  // /api/jobs once; a failed or uncertain post is reported, never sent again.
+  const makeVaryBusy=new Set();
+  async function vary(assetId,presetId,jobId,strength){
+    if(makeVaryBusy.has(assetId))throw Error('Vary is already being sent for this picture. Wait for it.');
+    makeVaryBusy.add(assetId);
+    try{
+      if(!catalog)throw Error('Recipes are still loading.');
+      const plan=varyPlanFor(presetId,jobId,assetId);if(plan.kind==='none')throw Error(plan.reason);
+      if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength))throw Error('This Vary button is out of date. Nothing was sent; press Vary again.');
+      const route=plan.route,seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,base={preset_id:route.id,batch_count:plan.round.count,parent_assets:[assetId],references:[],label:'Make · '+(strength==='reseed'?'Vary':'Vary '+strength)};
+      if(plan.kind==='reseed'){
+        const recipe=await api('/api/jobs/'+encodeURIComponent(jobId)+'/recipe');
+        if(recipe?.preset_id!==route.id)throw Error('This run no longer records '+route.name+'. Nothing was sent.');
+        const check=await post('/api/recipe-check',recipe);
+        return await post('/api/jobs',{...base,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
+      }
+      if(StudioContinuation.sourceInput(route.continuation_capability)!=='reference')throw Error(route.name+' needs more than this picture. Use Continue with this.');
+      let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
+      if(source?.asset_id!==assetId)throw Error('This picture’s record could not be verified. Refresh and try again.');
+      const words=StudioContinuation.wording(route,source).positive;
+      if(route.positive&&!words.trim())throw Error('No description was kept for this picture, and '+route.name+' needs one. Use Continue with this and describe it.');
+      if(StudioContinuation.unfilled(route,words).length)throw Error(route.name+' needs wording filled in. Use Continue with this.');
+      const result=await post('/api/assets/reference',{id:assetId});
+      if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
+      const prepared=StudioContinuation.initial(result.context,route,'edit',result.file);
+      const controls={reference:result.file,...(StudioContinuation.canvasFor(result.context,route)||{}),...(plan.carry||{}),...plan.strengths[strength].controls};
+      if(route.positive)controls.positive=prepared.positive;if(route.negative)controls.negative=prepared.negative;if(route.seed)controls.seed=seed;
+      return await post('/api/jobs',{...base,continuation:prepared.claim,controls});
+    }finally{makeVaryBusy.delete(assetId);}
+  }
+  Object.assign(globalThis.StudioWorkbench,{polish,polishPlan,vary});
   // #1220 Make seamless: square, flat textures only. The server says whether this picture qualifies and a disabled button
   // carries its reason. Prepare rolls the texture and attaches its seam cross to the tile recipe; Generate stays the owner's press.
   let tileBusy=false,tileRead=0;

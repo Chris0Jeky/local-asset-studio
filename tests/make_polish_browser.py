@@ -177,7 +177,9 @@ def make_checks(browser, origin):
     MAKE_JOBS[saved[1]['id']]['outputs'] = [dict(filename='forest.png', asset_id='asset-0', media_type='image')]
     page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]')
     assert page.locator('#varyFixtureasset-0').is_visible()
-    assert page.locator('#varyFixtureasset-0').inner_text() == 'Prepare variations in the full editor; Generate there starts them.'
+    # Vary runs from the card (#1497): its hint is the plan's own, and the button is Make's, not the full editor's prepare.
+    assert page.locator('#varyFixtureasset-0').inner_text() == 'Use Prepare new seed'
+    vary = (page.locator('#makeRuns [data-make-vary="subtle"]').count(), page.locator('#makeRuns [data-ux-vary]').count()); assert vary[0] >= 1 and vary[1] == 0, vary
     page.locator('[data-make-polish=upscale][data-asset=asset-0]').click()
     assert page.locator('[data-make-polish=upscale][data-asset=asset-0]').is_disabled()
     assert page.locator('.make-action-reason').count() == 1 and page.locator('.make-action-reason').is_visible()
