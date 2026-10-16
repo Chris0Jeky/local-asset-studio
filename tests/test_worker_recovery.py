@@ -45,9 +45,9 @@ class WorkerRecoveryTests(unittest.TestCase):
         def execute(job):
             if job['id']==bad['id']:raise RuntimeError('pre-submission failure')
             return run(job)
-        def persist(job):
+        def persist(job,**kwargs):
             if job['id']==bad['id']:raise OSError('disk full while recording failure')
-            return save(job)
+            return save(job,**kwargs)
         with patch.object(self.studio,'_run',side_effect=execute),patch.object(self.studio,'_save',side_effect=persist):
             self.dispatch([('generate',bad['id']),('generate',good['id'])])
         self.assertEqual(good['status'],'completed')

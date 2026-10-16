@@ -1363,7 +1363,15 @@ class Studio:
     def _write_observation_state(self, path, value):
         return observation_state.publish(path, value, self._sync_parent_directory)
 
-    def _save(self, job):
+    @staticmethod
+    def _finite_state(value):
+        """Non-finite floats become null in a durable copy: ComfyUI JSON may carry NaN into optional readings (#1459)."""
+        if isinstance(value, float) and not math.isfinite(value): return None
+        if isinstance(value, dict): return {k: Studio._finite_state(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)): return [Studio._finite_state(v) for v in value]
+        return value
+
+    def _save(self, job, durable=False):
         directory = self.runs / job["id"]
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
@@ -1371,8 +1379,10 @@ class Studio:
         if job.get("tile") is not None: recipe["tile"] = job["tile"]
         if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]
         self._write_json_atomic(directory / "recipe.json", recipe)
-        self._write_json_atomic(directory / "workflow.json", job["graph"])
-        state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
+        state = {k:v for k,v in job.items() if k != "graph"}
+        if durable:   # #1459: restart (_load_jobs) reads workflow.json and state.json; both must survive an OS crash at the marker and receipt
+            self._write_observation_state(directory / "workflow.json", job["graph"]); self._write_observation_state(directory / "state.json", self._finite_state(state)); return
+        self._write_json_atomic(directory / "workflow.json", job["graph"]); self._write_json_atomic(directory / "state.json", state)
 
     @staticmethod
     def _tracking_stopped(job):
@@ -2103,7 +2113,13 @@ class Studio:
             with self.lock:
                 # Last point before the POST: a cancel that arrived during the wait or the eviction sends nothing.
                 if self._cancel_checkpoint(job): return
-                job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+                job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}
+                try: self._save(job, durable=True)
+                except (OSError, ValueError) as exc:
+                    # Fail safe (#1459): without a durable marker the POST is never sent.
+                    job.pop("pending_submission", None); job["status"] = "partial" if job.get("prompt_ids") else "failed"
+                    job["message"] = "The submission marker could not be saved durably (" + (str(exc) or type(exc).__name__)[:200] + "). No prompt was submitted for output " + str(i + 1) + "."
+                    self._stamp_finished(job); self._save(job); return
             self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
@@ -2128,7 +2144,14 @@ class Studio:
                 job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
             self._resource_observation_event('accepted', job, index=i, prompt_id=prompt_id)
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
-            job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
+            job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"
+            try: self._save(job, durable=True)
+            except (OSError, ValueError) as exc:
+                # The prompt is queued: keep its receipt in memory, never treat the job as unsubmitted, never send another member (#1459).
+                job["status"] = "uncertain"; job["message"] = "Prompt " + prompt_id[:80] + " was accepted, but its receipt could not be saved durably (" + (str(exc) or type(exc).__name__)[:200] + "). It will not be resubmitted; use Resume observation."
+                try: self._save(job)
+                except (OSError, ValueError): pass   # the durable marker on disk still restarts as uncertain, never not_submitted
+                return
             if not self._wait_history(job, submission): return
         job["status"] = "completed"; job["message"] = "Complete"
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
