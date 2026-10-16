@@ -875,7 +875,11 @@
     const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();q('[data-make-goal="'+state.goal+'"]')?.focus();return;}
     const l=e.target.closest('[data-make-look]');if(l&&state.compare){const id=l.dataset.makeLook,i=state.compareLooks.indexOf(id);
       if(i>=0)state.compareLooks.splice(i,1);else if(state.compareLooks.length>=3){say('Three looks at most: unselect one first.');return;}else state.compareLooks.push(id);
-      renderLooks();q('[data-make-look="'+id+'"]')?.focus();return;}
+      renderLooks();
+      // The scene box sits below the cards (audit v3 N4): from the second look on, bring it into view and put the keyboard there.
+      if(i<0&&state.compareLooks.length>=2){const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;q('#makeComposer .make-step')?.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'});q('#makeScene')?.focus({preventScroll:true});
+        say(state.compareLooks.length<3?'Two looks chosen. Type the scene, or scroll up to add a third look.':'Three looks chosen. Type the scene, then press Generate.');return;}
+      q('[data-make-look="'+id+'"]')?.focus();return;}
     if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();focusScene();return;}
     if(e.target.closest('[data-make-compare]')){state.compare=!state.compare;state.compareLooks=state.compare&&lookList().some(x=>x.id===state.look)?[state.look]:[];
       say(state.compare?'Compare looks: choose two or three looks, type one scene, then press Generate once.':'');renderLooks();q('[data-make-compare]')?.focus();return;}
