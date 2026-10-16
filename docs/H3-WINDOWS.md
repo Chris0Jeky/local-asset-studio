@@ -22,7 +22,7 @@ Three-seed audition requests three full generations; it is not free cache reuse.
 ## What goes in which folder
 
 These paths are beneath `C:/AI/ComfyUI_windows_portable/ComfyUI/models/` on the
-configured PC. Studio's **Models & folders** view exposes the paths and status.
+configured PC. Studio's **Models & setup** view exposes the paths and status.
 
 | Component | File location |
 |---|---|
