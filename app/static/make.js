@@ -197,7 +197,7 @@
       +(t.rows.length?'<label class="make-tune-scale">All adapters × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
       +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add an installed adapter</label><input id="makeLoraSearch" list="makeLoraList" placeholder="Search by name" autocomplete="off" aria-describedby="makeLoraFit'+(slot?'':' makeLoraFull')+'"'+(slot?'':' disabled')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>{const e=entry(f);return '<option value="'+escape(f)+'">'+escape(short(f)+(e.role?' · '+e.role:'')+' · '+(fits(look,f)?'made for this model':e.family+', may not suit'))+'</option>';}).join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
         +'<small id="makeLoraFit">'+(made?made+' made for '+escape(family(p))+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
-        +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'</div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
+        +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'<div id="makeLoraChoices" class="make-lora-choices" role="group" aria-label="Matching adapters"></div></div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
       +((bound(tp,'steps')&&steps)||(bound(tp,'sampler')&&tp.choices?.sampler?.length)?'<div class="make-tune-group"><h3>Quality and speed</h3><div class="make-pair">'
         +(bound(tp,'steps')&&steps?'<label>Steps<select data-tune="steps">'+option('','As made · '+steps,t.steps==null)+option(draft,'Draft · '+draft+', faster',t.steps===draft)+option(fine,'Finer · '+fine+', slower',t.steps===fine)+'</select></label>':'')
         +(bound(tp,'sampler')&&tp.choices?.sampler?.length?'<label>Sampler<select data-tune="sampler">'+option('','As made'+(c.sampler?' · '+c.sampler:''),!t.sampler)+tp.choices.sampler.filter(s=>s!==c.sampler).map(s=>option(s,s,t.sampler===s)).join('')+'</select></label>':'')+'</div></div>':'')
@@ -227,14 +227,25 @@
     if(key==='seed')t.seed=target.value===''?null:Number(target.value);
     tuneChanged(false);return true;
   }
+  // Matches on the file name or the knowledge base's label, ignoring case: an exact name wins, else every typed word must appear.
+  function adapterMatches(look,text){const s=text.toLowerCase(),files=compatible(look),names=f=>[f,f.replace(/\.safetensors$/i,''),short(f)].map(x=>x.toLowerCase());
+    const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>{const hay=names(f).join(' ');return words.every(w=>hay.includes(w));});}
+  function addAdapter(look,name){const t=tuneOf(look),slot=freeSlot(look,t);if(!slot||!compatible(look).includes(name)||t.rows.some(r=>r.name===name))return;
+    t.rows.push({slot,name,strength:clamp(labOf(look,name)?.[0]??entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
+    say(fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');}
   function tuneClick(target){
     const look=current();if(!look)return false;
     const remove=target.closest('[data-tune-remove]');if(remove){const t=tuneOf(look),s=remove.dataset.tuneRemove;t.rows=t.rows.filter(r=>r.slot!==s);if(!t.cleared.includes(s))t.cleared.push(s);tuneChanged();q('#makeLoraSearch')?.focus();return true;}
-    if(target.closest('[data-tune-add]')){const t=tuneOf(look),input=q('#makeLoraSearch'),name=input?.value.trim(),slot=freeSlot(look,t);
-      if(!compatible(look).includes(name)){say(name?'Choose an adapter from the list: '+name+' is not an installed adapter for this model type.':'Type part of an adapter name, then choose it from the list.');input?.focus();return true;}
-      if(t.rows.some(r=>r.name===name)){say(short(name)+' is already added.');input?.focus();return true;}if(!slot)return true;
-      t.rows.push({slot,name,strength:clamp(labOf(look,name)?.[0]??entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
-      say(fits(look,name)?'':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');return true;}
+    const pick=target.closest('[data-tune-pick]');if(pick){addAdapter(look,pick.dataset.tunePick);return true;}
+    if(target.closest('[data-tune-add]')){const input=q('#makeLoraSearch'),text=input?.value.trim()||'',t=tuneOf(look),choices=q('#makeLoraChoices');if(choices)choices.innerHTML='';
+      if(!text){say('Type part of an adapter name, then press Add.');input?.focus();return true;}
+      // A part of the name is enough (audit v3 N2): one match is added, several are offered as choices, none says why.
+      const found=adapterMatches(look,text),open=found.filter(f=>!t.rows.some(r=>r.name===f));
+      if(!found.length){say(text+' is not an installed adapter for this model type. Type part of its name, or choose one from the list.');input?.focus();return true;}
+      if(!open.length){say(short(found[0])+(found.length>1?' and the other matches are':' is')+' already added.');input?.focus();return true;}
+      if(open.length===1){addAdapter(look,open[0]);return true;}
+      if(choices){choices.innerHTML='<small>'+open.length+' adapters match “'+escape(text)+'”. Choose one:</small>'+open.slice(0,8).map(f=>'<button type="button" class="make-link" data-tune-pick="'+escape(f)+'">'+escape(short(f))+(fits(look,f)?'':' · '+escape(entry(f).family)+', may not suit')+'</button>').join('')+(open.length>8?'<small>'+(open.length-8)+' more: type more of the name.</small>':'');choices.querySelector('button')?.focus();}
+      say(open.length+' adapters match. Choose one.');return true;}
     if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];delete savedTunes[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
     return false;
   }
@@ -910,7 +921,8 @@
   view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void saveCharacter(form);}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
-  }if((e.target.id==='makeScene'||e.target.dataset.makeField)&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void submit();}});
+  }if(e.target.id==='makeLoraSearch'&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!e.repeat)q('[data-tune-add]')?.click();return;}
+  if((e.target.id==='makeScene'||e.target.dataset.makeField)&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void submit();}});
   // Generate is one button for every mode: a look, a compare, or a picture goal.
   const submit=()=>goal().intent?goalGenerate():state.compare?generateCompare():generate();
   let loaded=false;
