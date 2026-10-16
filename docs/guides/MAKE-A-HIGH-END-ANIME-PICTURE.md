@@ -1,6 +1,6 @@
 # Make a high-end anime picture
 
-This guide takes you from "I want a very good anime picture" to a picture you can keep, using Make. It uses the button names you see on screen. It was written from the Make page as built on 16 October 2026 (`app/static/make.js`) and from the [look lab of the same day](../looks/LOOK-LAB-2026-10-16.md).
+This guide takes you from "I want a very good anime picture" to a picture you can keep, using Make. It uses the button names you see on screen. It was written from the Make page as built on 16 October 2026 (`app/static/make.js`, after Make wave 5) and from the [look lab of the same day](../looks/LOOK-LAB-2026-10-16.md).
 
 **What this guide does not claim.**
 
@@ -15,7 +15,7 @@ You need the Studio and ComfyUI running. On the configured PC, `Start Studio.cmd
 1. **Open Make.** In the sidebar, under Workspace, press **Make**. **Anime character** is already chosen on a fresh browser. If not, press it.
 2. **Pick the look.** The first card is **Flat pastel close-up**. Press it. The card list folds to one line and the words box opens below it, with your pictures beside it on a wide window.
 3. **Describe it.** Under **Describe your picture**, answer "Who or what, doing what, where?". Plain words are fine. The look adds its own style and quality words. Press **Use the example** if you want a starting sentence you can edit. Do not paste model tags such as `masterpiece`: the look writes those.
-4. **Press Generate** (or Ctrl+Enter in the words box). Nothing runs until you press it. A line under the button says how long it should take, from earlier runs on this PC. The default is **4 to choose from**.
+4. **Press Generate** (or Ctrl+Enter in the words box). Nothing runs until you press it. A line under the button says how long it should take, from earlier runs on this PC. The default is **4 to choose from**, or **1 picture** for a slow look.
 
 Your pictures appear under **Your pictures** as they finish. Press **Keep** on the ones you like and **Not this** on the rest (section 4).
 
@@ -28,8 +28,10 @@ Press Ctrl+K at any time for the tool finder. It searches goals, looks and tools
 ### What the card tells you
 
 - **Name.** It describes the finish, not the model. The model name is under **What this look uses** (below Generate).
-- **Pace line.** "Fast" or "Fast · about half a minute" for the anime looks. "Finest detail · slow, about 10-17 min" for Krea looks. Treat the minutes as a floor: in the lab, Krea pictures took 6 to 37 minutes.
+- **Speed label.** It shows a measured median per picture: this PC's finished runs of the look, or if there are none, the lab. "Fast · ~31 s" is under 45 seconds, "Medium · ~N s" is under 3 minutes, and "Slow · ~N min" is 3 minutes or more. A look with no timing yet says "Speed not measured yet". A Krea look with no number says "Slow · several minutes". Hover the label for its source. In the lab, Krea pictures took 6 to 37 minutes, so treat Krea minutes as a floor.
 - **Tested well.** The look kept its named subject and props in at least 3 of 4 lab pictures, or 2 of 2 where only two were made. Hover the badge for the exact count. It means an agent liked how the lab pictures matched the brief. It is not art approval and not licence clearance. A look without the badge is not bad. It was not kept often enough, or it was not tested the same way.
+- **Best for.** A short line on the tested looks saying what that look carried in the lab, for example "Close-ups and upper-body portraits holding one thing". It is a note from the lab, not a promise.
+- **Non-commercial.** A tag on a look whose own recipe note names non-commercial terms (the Anima family and NoobAI, for example). It is copied from the catalog. It is not a licence check. See [Licences](#licences-read-this-before-selling-anything).
 - **Run on this PC before.** The recipe behind the look has an executed record here.
 
 ### The Anime character looks, in the order Make lists them
@@ -78,7 +80,7 @@ Open **Tune this look** under the words box. It is folded by default. The line n
 - **Add an installed adapter**: type part of a name, choose it from the list, press **Add**. Only adapters that are installed and known to fit this model type are listed. The strength starts at the adapter's usual value.
 - If you add an adapter that has a trigger word, the Studio adds that word to your text for you (the row says "added to your words"). The look's own adapters already have theirs.
 - If all adapter slots are in use, **Add** is disabled and the page says "All adapter slots of this recipe are in use; remove one first."
-- **Style strength** (beside **Shape** and **How many**) scales all the look's adapters together. 100% is the look as made. It multiplies the per-adapter strengths above.
+- **Style strength** (under **Shape** and **How many**; with **Tune this look** open, it sits above the adapters instead) scales all the look's adapters together. 100% is the look as made. It multiplies the per-adapter strengths above.
 - What the lab saw: PetiFlow at 1.0 and Ringeko at 0.6 and 0.8 worked. Adding a detail, lighting or hand adapter at 0.4 to 0.6 on top of Ringeko did not make a measurable difference on one clean scene. More tags and more adapters were not a proven fix for a missing prop. The lab never tried those extra adapters at 1.0.
 
 **Quality and speed, Leave out, Seed**
@@ -105,21 +107,21 @@ A matching hash proves the bytes match the pinned file. It does not prove who ma
 
 **Another go, same words.** Press **Generate** again. While **Different pictures each time** is ticked, every press starts from a new seed.
 
-**Change one thing.** Press **Edit and re-run** on a finished card. It brings back that run's words, shape, count, style strength, tune and **seed, locked**, and sets **Different pictures each time** off. The page says "That run's settings are back, with its seed locked." Change one setting or a few words, then press Generate. Because the seed is the same, what you change is what you see.
+**Change one thing.** Press **Edit and re-run** on a finished card. It brings back that run's words, shape, count, style strength, tune and **seed, locked**, and sets **Different pictures each time** off. The page says "That run’s settings are back, with its seed locked." Change one setting or a few words, then press Generate. Because the seed is the same, what you change is what you see.
 
-**Draft, then the final.** Slow looks (the Krea ones) show a **Draft first** tick under the words options: about half the steps, rougher but quicker. On the fast anime looks there is no such tick. Use **Tune this look**, **Steps**, **Draft**. Either way:
+**Draft, then the final.** **Draft first** is a tick under the words options: about half the steps, rougher but quicker. It shows on any look with 10 or more steps, and on every slow look (the Krea ones). The anime looks have 25 to 30 steps, so they show it too. You can also set **Steps** to **Draft** under **Tune this look**. Either way:
 
 1. Press **Generate**. The card's tune line reads "Tuned: draft N steps".
 2. If you like it, press **Make the final** on the card. It sets up the same words and the same seed at the look's full steps. The page says "The final is set up". It does not start the job: press **Generate** to make it.
 
-The anime looks run in about 30 seconds, so a draft earns its place mostly when you change a lot at once.
+The anime looks run in about 25 to 45 seconds a picture in the lab, so a draft earns its place mostly when you change a lot at once.
 
 **Keep or drop.** Under each picture:
 
-- **Keep** saves the decision in the library. The button changes to "Kept". The page says "Kept. Your keepers are in the library under Keepers."
-- **Not this** marks it as not wanted. The button changes to "Marked: not this".
+- **★ Keep** saves the decision in the library. Once pressed, it shows "✓ Kept". The page says "Kept. Your keepers are in the library under Keepers."
+- **Not this** marks it as not wanted. Once pressed, it shows "✓ Marked: not this".
 - Press the same button again to clear it. It never deletes the picture.
-- In the look gallery there is also a link called **Keep** followed by a look name. That one just closes the gallery and keeps the look. It saves nothing.
+- In the look gallery there is also a link called **Stay with** followed by the look's name. It appears once a look is chosen. It just closes the gallery and keeps the look. It saves nothing.
 
 **Same words, another look.** On a finished card, press **Same words, another look**. The gallery opens with that scene ready.
 
@@ -135,7 +137,7 @@ The anime looks run in about 30 seconds, so a draft earns its place mostly when 
 
 - **Fix face**, **Fix hands and details** and **Upscale 2×**. Each shows an estimated time when the Studio has one. One press starts one job. The result appears at the top of **Your pictures**.
 - The face and hand fixes repaint with an anime model, so they are offered only for pictures made by anime families. Upscale accepts any picture.
-- If a fix button is missing, the Studio decided it cannot run on that picture and hid it. Open the goal **Fix or upscale** to see the reason (below).
+- A fix that cannot run stays on the picture, greyed out, with its reason in a line beside the buttons. Open the goal **Fix or upscale** to see the same reasons (below).
 - **More** holds: **Open full size**, **Other fixes…**, **Change one thing**, **Restyle**, **Put in a new pose**, **Animate**, **Make it 3D**. The goal buttons open that goal with your picture already chosen.
 
 The lab did not measure these fixes. Look at the result before replacing your original.
@@ -194,7 +196,7 @@ Read the line under **Generate**. It says why. The same text is the button's too
 | ComfyUI is still starting up. Try again in a moment. | Wait. |
 | A model environment switch is running. Wait for it to finish. | Wait. |
 | The Studio worker has stopped. Restart the Studio before generating. | Close and reopen the Studio. Make sure nothing is running first. |
-| This look's recipe is not in the library. | The look points at a recipe that is not installed. Pick another look. |
+| This look’s recipe is not in the library. | The look points at a recipe that is not installed. Pick another look. |
 | Choose at least two looks to compare. | Compare looks needs two or three. |
 
 If Generate is enabled and you press it with an empty box, the page says "Describe your picture first, or press Use the example." and puts the cursor in the box.
@@ -213,11 +215,13 @@ If Generate is enabled and you press it with an empty box, the page says "Descri
 
 ### Outcome unknown
 
-If the card reads **Outcome unknown**, the Studio lost the answer from ComfyUI. It records the job as uncertain and will not run it again by itself. That is on purpose. A job whose result is unknown may already be running or finished.
+If the card reads **Outcome unknown: nothing was sent again**, the Studio lost the answer from ComfyUI. It records the job as uncertain and will not run it again by itself. That is on purpose. A job whose result is unknown may already be running or finished.
 
 - Do not press **Generate** again for the same picture to "retry".
 - Keep the card. The prompt ID and the full recipe are saved under `experiments/runs/<job-id>/`.
-- The Make card says to check **Compare & review**. In this build the job's own controls (**Resume observation**, **Stop tracking**) sit in the **Full editor**, under **Recent runs**, in **Problems**. **Resume observation** collects the result if ComfyUI still holds it. A ComfyUI restart erases that record.
+- The run's card offers **Resume observation** and **Stop tracking…** on an uncertain or partial run, when the Studio still has its prompt IDs. **Resume observation** reads ComfyUI again and collects the result if ComfyUI still holds it. It never sends the picture again.
+- **Stop tracking…** opens a reason box. The reason is required: the button will not stop tracking without one. A ComfyUI restart erases a finished result, so press **Resume observation** first if you may want it.
+- The Full editor's **Problems** list has the same two controls.
 - Details are in [Operations](../OPERATIONS.md) ("Uncertain submission").
 
 ### Other things
