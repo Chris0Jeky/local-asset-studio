@@ -746,7 +746,7 @@ function renderCuratedModels(){
   const cardStatus=currentModelStatus(),shownCards=library.assets.filter(a=>(need?!a.present&&missing.some(file=>{const key=canonicalModelRel(a.file,windows),required=canonicalModelRel(file,windows);return key===required||key.endsWith('/'+required);}):modelStatusMatch(a,cardStatus))&&[a.name,a.family,a.file,...(use.get(a.id)?.looks||[]).map(x=>x.name),...(use.get(a.id)?.recipes||[]).map(x=>x.name)].some(v=>String(v||'').toLowerCase().includes(query))),hiddenCards=library.assets.length-shownCards.length;
   const card=a=>{
       const d=a.download||{},active=['queued','downloading','verifying'].includes(d.status)&&Date.now()/1000-d.updated_at<180,u=use.get(a.id);
-      const pinOnly=a.installable!==true,dir=String(a.path||'').replace(/[\\/][^\\/]*$/,'')||(library.model_root?library.model_root+'/'+String(a.file||'').replace(/\/?[^/]*$/,''):'');
+      const pinOnly=a.installable!==true,dir=a.status==='invalid_pin'?'':String(a.path||'').replace(/[\\/][^\\/]*$/,'')||(library.model_root?library.model_root+'/'+String(a.file||'').replace(/\/?[^/]*$/,''):'');
       const state=a.verified?'SHA-256 verified':a.verification==='linked-path-refused'?'Linked folder · not managed':pinOnly?(a.present?'Present · pin only':'Pin only · not installed'):a.present?'Present · verify file':active?d.status:'Not installed';
       let host='';try{host=new URL(a.source).hostname;}catch{}
       const usedBy=u&&(u.looks.length||u.recipes.length)?'<p class="model-used" title="'+esc([...u.looks.map(x=>x.name),...u.recipes.map(x=>'recipe: '+x.name)].join('\n'))+'">Used by: '+[u.looks.length?listed(u.looks,4):'',u.recipes.length?'recipes '+listed(u.recipes,3):''].filter(Boolean).join(' · ')+'</p>':'';
