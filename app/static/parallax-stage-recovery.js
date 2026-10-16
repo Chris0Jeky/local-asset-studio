@@ -108,9 +108,11 @@
       finally{button.disabled=false;}
     },true);
     gallery.dataset.parallaxRecovery='mounted';
+    api.mounted=true;
     // Existing cards may precede this asynchronously loaded feature. The renderer's
     // normal focus/media preservation applies; no polling or mutation observer.
     jobsSignature='';renderJobs();
   }
-  return {create,render,mount,readJobList};
+  const api={create,render,mount,readJobList,mounted:false};
+  return api;
 });

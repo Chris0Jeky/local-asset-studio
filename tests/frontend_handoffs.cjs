@@ -1553,9 +1553,31 @@ async function parallaxStagesAreTwoOwnerPresses() {
   run(`jobs=[]`);
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxFinish' ? {dataset: {job: 'plate-job'}} : null}});
   assert.deepEqual(requests.filter(r => r.url === '/api/parallax/finish').map(r => r.data), [{job_id: 'plate-job'}]);
+  assert.match(card(plate), /disabled[^>]*title="Parallax staging is unavailable: reload the page\."/, 'without the controller the stage button is disabled with its reason in the title');
+  assert.match(card(plate), /Parallax staging is unavailable: reload the page\./, 'without the controller the disabled reason is visible');
+  const stagePosts = requests.filter(r => r.url === '/api/parallax/stage').length;
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
-  assert.equal(run('selected.id'), 'parallax-route'); assert.equal(run('parallaxState.stage'), 'isolate');
+  assert.equal(requests.filter(r => r.url === '/api/parallax/stage').length, stagePosts, 'without the controller a stage click POSTs nothing');
   assert.equal(jobs().length, 2, 'splitting or loading a stage never submits a generation');
+}
+
+// #1407: without the recovery controller the legacy .parallaxStage path must be impossible:
+// the button renders disabled with a visible reason and a click POSTs nothing.
+async function parallaxStageWithoutControllerPostsNothing() {
+  const {element, requests, run} = sandbox(null, null);
+  installSetupStamp(run);
+  const file = 'f'.repeat(32) + '_room.png';
+  const plan = {version: 1, plan_id: 'b'.repeat(64), preset_id: 'parallax-route', source_asset_id: 'source-asset', source_sha256: 'a'.repeat(64), source_file: file, width: 1344, height: 768, objects: 'the desk', view_polygons: []};
+  run(`catalog.presets.push({id:'parallax-route',name:'Parallax layers',modality:'image',parallax_route:true,reference:['14','image'],positive:['4','text'],width:['10','width'],height:['10','height'],defaults:{}});selectPreset('parallax-route');`);
+  const plate = {id: 'plate-job', status: 'completed', controls: {}, preset_name: 'Parallax layers', parallax: {...plan, stage: 'plate'}};
+  run(`jobs=[]`);
+  const html = run(`mediaCard(${JSON.stringify(plate)},0,{media_type:'image',asset_id:'edit'})`);
+  assert.match(html, /class="parallaxStage"[^>]*disabled[^>]*title="Parallax staging is unavailable: reload the page\."/, 'without the controller the stage button is disabled with its reason in the title');
+  assert.match(html, /Parallax staging is unavailable: reload the page\./, 'without the controller the disabled reason is visible');
+  const before = requests.filter(r => r.url === '/api/parallax/stage').length;
+  await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
+  assert.equal(requests.filter(r => r.url === '/api/parallax/stage').length, before, 'clicking the disabled stage button POSTs nothing');
+  assert.equal(requests.filter(r => r.url === '/api/jobs').length, 0, 'a disabled stage click never submits generation');
 }
 
 function installSetupStamp(run) {
@@ -1684,6 +1706,7 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await windowsInventoryStatusMatchesCaseAndSeparators();
   await seamlessTileSubmitsTheServerPlan();
   await parallaxStagesAreTwoOwnerPresses();
+  await parallaxStageWithoutControllerPostsNothing();
   await parallaxLateRepliesKeepCreateEdits();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
