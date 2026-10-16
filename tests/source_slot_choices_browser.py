@@ -234,6 +234,7 @@ async def main(args):
             await page.wait_for_function("!!selected && schemaAvailable && assetState.assets.length>0",timeout=20000)
             await exercise_source_choices(page,check)
             check('no generation, installation or environment switching', all(row['path'] in {'/api/assets/reference','/api/estimate','/api/references/check'} for row in fixture.POSTS))
+            if errors:print('JavaScript exceptions:',json.dumps(errors),flush=True)  # #1306: the hosted failure kept no message
             check('no page exceptions',not errors)
             await browser.close()
     finally:
