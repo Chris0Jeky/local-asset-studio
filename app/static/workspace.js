@@ -504,11 +504,11 @@ function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=nu
 function assetThumbUrl(asset) {return '/api/assets/'+encodeURIComponent(asset.id)+'/thumb?v='+ASSET_THUMB_VERSION+'-'+encodeURIComponent(String(asset.sha256||'').slice(0,16));}
 function assetPreview(asset, detail=false) {
   const url=asset.url, alt=esc(asset.title);
-  if(!url)return '<span class="asset-type-placeholder">▨<small>'+(detail?'File unavailable':'No preview · file missing')+'</small></span>';
+  if(!url)return '<span class="asset-type-placeholder"><span aria-hidden="true">▨</span><small>'+(detail?'File unavailable':'No preview · file missing')+'</small></span>';
   if(asset.media_type==='image')return detail?'<img loading="lazy" decoding="async" src="'+url+'" alt="'+alt+'">':'<img loading="lazy" decoding="async" src="'+esc(assetThumbUrl(asset))+'" data-full-src="'+esc(url)+'" alt="'+alt+'">';
   if(asset.media_type==='video')return '<video '+(detail?'controls':'muted')+' preload="metadata" src="'+url+'" aria-label="'+alt+'"></video>';
-  if(asset.media_type==='audio')return detail?'<audio controls src="'+url+'"></audio>':'<span class="asset-type-placeholder">♫<small>Audio</small></span>';
-  return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder">◇<small>3D model</small></span>';
+  if(asset.media_type==='audio')return detail?'<audio controls aria-label="Play '+alt+'" src="'+url+'"></audio>':'<span class="asset-type-placeholder"><span aria-hidden="true">♫</span><small>Audio</small></span>';
+  return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder"><span aria-hidden="true">◇</span><small>3D model</small></span>';
 }
 function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
@@ -932,7 +932,7 @@ async function handoffAsset(id,presetId) {
   const intent=preset.modality==='video'?'animate':preset.modality==='3d'?'mesh':/fix|refine|upscale|esrgan/.test(preset.id)?'repair':'edit';
   beginContinuation(result,preset.id,intent);
   $('#referenceHint').textContent='Attached '+(assetState.assets.find(a=>a.id===id)?.title||'asset')+' · '+result.width+' × '+result.height;
-  $('#assetDialog').close();showView('create');$('#selectedPreset').scrollIntoView({block:'start',behavior:'smooth'});message('Source asset attached. Adjust your brief, then generate.');
+  $('#assetDialog').close();showView('create');$('#selectedPreset').scrollIntoView({block:'start',behavior:typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});message('Source asset attached. Adjust your brief, then generate.');
 }
 // An explicit refresh shows that it is running and is never swallowed by a background read already in flight: it waits
 // for that read (up to 15 s), then reads again.
@@ -1092,7 +1092,7 @@ document.addEventListener('click',async e=>{
 });
 // A thumbnail the server cannot produce (unreadable image, older server) falls back once to the original file;
 // a card image neither source can supply becomes a labelled reason, never an empty box.
-document.addEventListener('error',e=>{const image=e.target;if(image?.tagName!=='IMG'||!image.isConnected||!image.getAttribute('src'))return;if(image.dataset?.fullSrc){const full=image.dataset.fullSrc;delete image.dataset.fullSrc;image.src=full;return;}const open=image.closest?.('[data-asset-card] .asset-open');if(open)open.innerHTML='<span class="asset-type-placeholder">▨<small>No preview · file missing</small></span>';},true);
+document.addEventListener('error',e=>{const image=e.target;if(image?.tagName!=='IMG'||!image.isConnected||!image.getAttribute('src'))return;if(image.dataset?.fullSrc){const full=image.dataset.fullSrc;delete image.dataset.fullSrc;image.src=full;return;}const open=image.closest?.('[data-asset-card] .asset-open');if(open)open.innerHTML='<span class="asset-type-placeholder"><span aria-hidden="true">▨</span><small>No preview · file missing</small></span>';},true);
 // A checkbox click precedes its change event; remember only whether Shift was held for that click.
 document.addEventListener('click',e=>{if(e.target?.dataset?.assetCheck!==undefined)assetCheckShift=!!e.shiftKey;},true);
 document.addEventListener('change',e=>{if(e.target?.dataset?.assetCheck)toggleAssetCheck(e.target);});
