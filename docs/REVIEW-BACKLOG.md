@@ -70,4 +70,8 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   "Colours to keep" defaults to "keep them exactly as they are". The chosen picture stays chosen across picture goals.
 - [ ] **The UX use-case suite cap rose from 24 to 26** (#1437): tonight added Make tune, compare looks and the Full
   editor adapter journeys. It runs in about a minute. Reverse: merge journeys and restore the cap.
+- [ ] **Make orders looks by the lab's evidence** (#1447): a "Tested well" badge on four looks with two keep verdicts;
+  painterly and Krea painting looks moved to "Painted illustration"; per-goal default shapes (character portrait,
+  scene landscape, game square); "Fast general picture, you describe it all" renamed "Quick picture, any subject";
+  an optional "Draft first" for slow looks, then "Make the final" at full steps with the same seed and words.
 
