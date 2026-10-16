@@ -201,3 +201,13 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   Skip-to-workspace focus ring stays on screen; three doc corrections.
 - [ ] **GPU admission** (#1490): a VRAM counter above the card (+128 MiB) now reads as unknown (admission waits)
   instead of being subtracted as if measured.
+- [ ] **Lab round 5** (#1492): on Anima looks Make's Fix face and Fix hands are one WAI repaint that harmed Petiflow's
+  face finish (neutral elsewhere); Upscale 2× smooths fine texture; Restyle keeps identity recognisably (watercolour
+  transferred better than ink). The new game-icon look drew one item 6/6 but kept only 1/6 strictly (shape drift,
+  added frames). The agent rule now treats ESRGAN upscales as heavy (admitted only below 60% host commit).
+- [ ] **Make shows what the lab measured** (#1494): the game-icon look lost its "Tested well" badge (still first in
+  Game items, Best-for "One item on white; check shape details"); where Fix face and Fix hands run the same recipe
+  they become one "Fix face and hands" button with "Repaints with a WAI model and can change this look's face finish —
+  keep the original and compare"; Upscale says "Smooths fine texture; upscale the version you chose."
+- [ ] **User guide updated with rounds 3-5** (#1493): pose routes, Petiflow adapter strengths and framing, finishing
+  steps, game icons.
