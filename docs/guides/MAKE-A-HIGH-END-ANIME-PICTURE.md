@@ -99,6 +99,7 @@ If **Generate** is disabled and the reason says "Needs 2 model files first: open
 - If the Studio can install the file, the button reads **Install** with the size. Press it once. Progress shows on the card.
 - If it cannot, the card says **Manual install only**, shows the source link and the folder to put the file in, and has **Copy folder** and **Copy file path**. Download it yourself and copy it in. The card for the adapter you added in Tune appears the same way.
 - After copying a file, press **Refresh inventory** and check the card reads as present. **Verify** hashes the file and compares it with its pinned checksum.
+- Only `.safetensors` files can be installed or verified here. A file of another format, such as a GGUF, reads **Present · pin only** once copied in, and its button stays disabled as **Manual file**. The UI cannot hash it, so it never reads "SHA-256 verified"; compare its checksum with the pin in `models/library.json` yourself.
 - The top of **Models & setup** also lists **What you can make**: which looks are ready now and which need a download.
 
 A matching hash proves the bytes match the pinned file. It does not prove who made it or that you may use it commercially.
@@ -233,7 +234,7 @@ If the card reads **Outcome unknown: nothing was sent again**, the Studio lost t
 
 ## Licences: read this before selling anything
 
-The Studio records each model's and adapter's terms. It does not interpret them for you. A flag copied from a download page is not a clearance. Read the owner's page before commercial use. The terms are in `models/library.json` and on each card in **Models & setup**.
+The Studio records each model's and adapter's terms. It does not interpret them for you. A flag copied from a download page is not a clearance. Read the owner's page before commercial use. Each card in **Models & setup** shows the short licence line only. The longer terms the manifest records for a file (its `terms` field, such as a model card's licence name and revision) are in `models/library.json`, not on the card, so read them there.
 
 For the path in this guide:
 
