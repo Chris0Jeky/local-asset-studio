@@ -1,6 +1,6 @@
 # Local Asset Studio UX audit (live 127.0.0.1:8191, main @ 618ddcc3, 16 Oct 2026)
 
-Method: Python Playwright, desktop 1440x900 + mobile 390x844, fresh browser contexts, page.route abort on POST /api/jobs and prepare-then-jobs (blocked attempts: 0). Scripts (lib.py, s*.py) and screenshots (*.png) are in this folder.
+Method: Python Playwright, desktop 1440x900 + mobile 390x844, fresh browser contexts, page.route abort on POST /api/jobs and prepare-then-jobs (blocked attempts: 0). The audit scripts and screenshots were working files and are not committed (screenshots stay out of Git).
 Side effects: POST /api/estimate and /api/recipe-check (read-only); POST /api/assets/reference x4 (Prepare in Create for restyle, combine, animate, mesh copies the chosen picture as a reference asset). No job submitted, no tracked file edited, no process started or stopped.
 
 ## Ranked problems
