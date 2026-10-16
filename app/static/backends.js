@@ -44,6 +44,8 @@ async function refreshBackends() {
     $('#backendStatus').textContent=switching?(state.operation.message||'One model environment at a time. Switching never starts a generation.'):(state.busy?busyMessage:(state.operation?.message||'One model environment at a time. Switching never starts a generation.'));
     renderRecovery(state.recovery);
     backendActive=state.active;$('#activeBackend').textContent=state.profiles.find(p=>p.active)?.name||'';
+    // The Models disclosure is folded by default; a running switch keeps it open so its progress and the disabled controls stay visible.
+    const activeName=state.profiles.find(p=>p.active)?.name||'',panel=$('.environment-panel'),summary=$('#envSummary');if(summary)summary.textContent=switching?'Switching to '+(state.profiles.find(p=>p.id===state.operation.target)?.name||state.operation.target)+'…':activeName?'Active: '+activeName+' · switching is always explicit':'Switching is always explicit';if(switching&&panel)panel.open=true;
     updateReady();
     if(changed||backendInventoryPending){
       backendInventoryPending=true;

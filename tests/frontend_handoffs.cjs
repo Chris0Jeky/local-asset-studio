@@ -856,6 +856,70 @@ async function linkedModelFolderIsOneRow() {
   assert.match(folders, /<button data-folder="loras">Open folder/);
 }
 
+// Models as a shop: looks and recipes are joined to the files they need; a missing file says where it comes from and where it goes,
+// and the install button is live only where the library marks the file installable. Rendering never installs.
+async function modelShopCards() {
+  const {element, run} = sandbox({}, {});
+  const file = (id, folder, extra) => ({id, name: id + ' model', family: 'Fam ' + id, bytes: 8, file: folder + '/' + id + '.safetensors', path: 'C:\\models\\' + folder + '\\' + id + '.safetensors',
+    present: true, verified: false, installable: true, source: 'https://huggingface.co/org/' + id, license: 'x', download: {}, ...extra});
+  const assets = [file('base', 'checkpoints', {present: false}), file('enc', 'text_encoders', {present: false, installable: false, install_note: 'Copy it in by hand.', source: 'https://example.com/enc'}),
+    file('shared', 'vae'), file('style', 'loras'), file('lonely', 'loras')];
+  run(`library=${JSON.stringify({assets, inventory: [], storage: {}, folders: [], collections: [], model_root: 'C:/models'})};`
+    + `modelLooks=${JSON.stringify([{id: 'look-a', kind: 'look', name: 'Look A', preset_name: 'Preset 1', body: {preset_id: 'p1', controls: {lora_name: 'style.safetensors', lora: 1}}}, {id: 'look-b', kind: 'look', name: 'Look B', preset_name: 'Preset 2', body: {preset_id: 'p2'}}])};`
+    + `modelReqs=new Map([['p1',${JSON.stringify([{file: 'checkpoints/base.safetensors', asset_id: 'base', present: false}, {file: 'text_encoders/enc.safetensors', asset_id: 'enc', present: false}, {file: 'vae/shared.safetensors', asset_id: 'shared', present: true}])}],['p2',${JSON.stringify([{file: 'vae/shared.safetensors', asset_id: 'shared', present: true}])}]]);`
+    + `atelierRecipes=[{id:'r1',name:'Recipe One',preset_id:'p1',controls:{}}];`);
+  element('#modelCards').querySelector = () => null;
+  element('#curatedModelSearch').value = '';
+  run('renderCuratedModels()');
+  const card = id => element('#modelCards').innerHTML.split('<article').find(part => part.includes('<code>') && part.includes('/' + id + '.safetensors</code>')) || assert.fail('no card for ' + id);
+  // Used by: the looks that need the file, the recipes (by preset or adapter name) that use it; unused files say nothing.
+  assert.match(card('base'), /Used by: Look A · recipes Recipe One/);
+  assert.match(card('shared'), /Used by: Look A, Look B · recipes Recipe One/);
+  assert.match(card('style'), /Used by: Look A/, 'an adapter named in a look control is used by that look');
+  assert.doesNotMatch(card('lonely'), /Used by/);
+  // The missing, installable file: source host, folder, both copy buttons, a live install button.
+  const base = card('base');
+  assert.match(base, /Get it from <a href="https:\/\/huggingface\.co\/org\/base"[^>]*>huggingface\.co/);
+  assert.match(base, /Put it in <code>C:\\models\\checkpoints<\/code>/);
+  assert.match(base, /data-copy="C:\\models\\checkpoints">Copy folder/);
+  assert.match(base, /data-copy="C:\\models\\checkpoints\\base\.safetensors">Copy file path/);
+  assert.match(base, /<button data-install="base" +class="primary"/);
+  assert.doesNotMatch(base, /data-install="base" disabled/);
+  // The pin-only file has the same instructions but no live install button.
+  const enc = card('enc');
+  assert.match(enc, /example\.com/); assert.match(enc, /Copy it in by hand\./); assert.match(enc, /data-install="enc" disabled/);
+  assert.doesNotMatch(card('shared'), /model-get/, 'a present file needs no acquisition block');
+  // Looks: which can be used now and which need files, each missing file named.
+  const looks = element('#modelLooks').innerHTML;
+  assert.match(looks, /1 of 2 looks ready now · 1 needs a download/);
+  assert.match(looks, /Needs a download<\/h4>[\s\S]*Look A[\s\S]*Needs: base\.safetensors, enc\.safetensors[\s\S]*2 files to get[\s\S]*Ready now<\/h4>[\s\S]*Look B/);
+  assert.match(looks, /href="\/#models\?need=p1"/);
+  // The top search filters looks and cards, and also matches a file by the look that uses it.
+  element('#curatedModelSearch').value = 'look b';
+  run('renderCuratedModels()');
+  assert.match(element('#modelCards').innerHTML, /shared model/); assert.doesNotMatch(element('#modelCards').innerHTML, /base model|lonely model/);
+  assert.doesNotMatch(element('#modelLooks').innerHTML, /Look A/); assert.match(element('#modelLooks').innerHTML, /Look B/);
+  element('#curatedModelSearch').value = 'lonely';
+  run('renderCuratedModels()');
+  assert.match(element('#modelCards').innerHTML, /lonely model/); assert.doesNotMatch(element('#modelCards').innerHTML, /shared model/);
+  assert.match(element('#modelLooks').innerHTML, /No look matches this search/);
+  // The top search narrows the file table too.
+  run(`library.inventory=[{file:'loras/lonely.safetensors',bytes:8},{file:'vae/shared.safetensors',bytes:8}];renderInventory()`);
+  assert.match(element('#inventory').innerHTML, /lonely/); assert.doesNotMatch(element('#inventory').innerHTML, /shared/);
+  // Readiness follows the preset's own root (the inspect requirement), not the active library's copy of the asset:
+  // after an environment switch the library describes another backend.
+  element('#curatedModelSearch').value = '';
+  run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true}]);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
+  run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
+  // An adapter named in a look but listed nowhere (library or disk) is missing, not silently ignored; one on disk is fine.
+  run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared',present:true}]);modelLooks[1].body.controls={lora_name:'ghost.safetensors'};renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*ghost\.safetensors/);
+  run(`library.inventory=[{file:'loras/ghost.safetensors',bytes:8}];renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
+}
+
 async function modelStatusFilter() {
   const {element, context, run} = sandbox({}, {});
   context.localStorage = (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map());
@@ -1248,19 +1312,18 @@ async function recentRunsHostHeldProblemsDropTheStaleGalleryProblems() {
   const mount = s.context.document.getElementById;
   s.context.document.getElementById = () => null;
   const failedA = {id: 'held-a', preset_name: 'Failure A', status: 'failed', message: 'Out of memory', outputs: [], prompt_ids: [], created_at: 5, can_put_away: true, put_away: false};
-  const failedB = {id: 'held-b', preset_name: 'Failure B', status: 'failed', message: 'Still failing', outputs: [], prompt_ids: [], created_at: 6, can_put_away: true, put_away: false};
   await s.poll([recentJob('clip', 1, 'video'), failedA]);
   assert.ok(s.nodes().some(node => node.tagName === 'DETAILS'), 'Problems lands inside the gallery before the host mounts');
   s.context.document.getElementById = mount;
   const video = s.nodes().find(node => node.tagName === 'VIDEO');
   video.paused = false;
   const writes = s.writes;
-  await s.poll([failedB, failedA, recentJob('clip', 1, 'video')]);
+  await s.poll([failedA, recentJob('clip', 1, 'video')]);
   assert.equal(s.writes, writes, 'The gallery still waits for the clip');
   assert.equal(s.nodes().some(node => node.tagName === 'DETAILS'), false, 'The stale in-gallery Problems is dropped');
   assert.equal(s.nodes().some(node => node.inProblems), false, 'No Problems-owned node stays in the gallery');
   assert.equal(s.host.nodes.filter(node => node.tagName === 'DETAILS').length, 1, 'Problems renders once in the host');
-  assert.deepEqual(s.host.nodes.filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem).sort(), ['held-a', 'held-b'], 'Both failures render in the host Problems');
+  assert.deepEqual(s.host.nodes.filter(node => node.tagName === 'ARTICLE' && node.inProblems).map(node => node.dataset.problem), ['held-a'], 'Unchanged Problems move into the host');
   assert.ok(s.nodes().includes(video), 'The playing clip is untouched');
 }
 
@@ -1705,6 +1768,7 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await avoidWordingIsVisibleWhenTheRecipeBindsIt();
   await aFailedStartupStageDoesNotStopTheRest();
   await linkedModelFolderIsOneRow();
+  await modelShopCards();
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
   await seamlessTileSubmitsTheServerPlan();

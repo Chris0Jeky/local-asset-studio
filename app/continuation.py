@@ -127,24 +127,30 @@ VARY_FIXED = {"seed", "positive", "negative", "reference", "last_reference", "wi
 
 
 def _models(graph):
-    # checkpoint_name is a loader field too. model_name is not: face detectors use it, and counting it would call two checkpoints the same family.
-    keys = ("ckpt_name", "unet_name", "checkpoint_name")
-    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items() if key in keys and isinstance(value, str)}
+    # model_name also names auxiliary models; only the shipped base-model loader contributes it.
+    keys = ("ckpt_name", "unet_name", "checkpoint_name", "gguf_name")
+    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items()
+            if (key in keys or key == "model_name" and node.get("class_type") == "HiDreamO1ModelLoader") and isinstance(value, str)}
 
 
-def _downstream(graph, start):
-    """Node ids reachable forward from start, including start. A LoRA chained through another LoRA still reaches the sampler."""
-    seen, stack = set(), [str(start)]
-    while stack:
-        node = stack.pop()
-        if node in seen: continue
-        seen.add(node)
-        for key, other in graph.items():
-            if str(key) in seen: continue
-            for value in (other.get("inputs") or {}).values():
-                if isinstance(value, list) and value and str(value[0]) == node:
-                    stack.append(str(key)); break
-    return seen
+def _lora_feeds(graph, start, target, field):
+    """Trace a MODEL/CLIP input back through known LoRA outputs; None means an unknown graph shape."""
+    if graph.get(start, {}).get("class_type") != "LoraLoader": return None
+    seen, output = set(), 0 if field == "model" else 1
+    while target not in seen:
+        seen.add(target)
+        link = (graph.get(target, {}).get("inputs") or {}).get(field)
+        if not isinstance(link, list) or len(link) != 2 or type(link[1]) is not int: return None
+        target, port = str(link[0]), link[1]
+        if target == start: return port == output
+        node = graph.get(target)
+        if not isinstance(node, dict): return None
+        kind = node.get("class_type")
+        if kind in ("LoraLoader", "LoraLoaderModelOnly"):
+            if port != output or kind == "LoraLoaderModelOnly" and field == "clip": return False
+        elif kind in ("CheckpointLoaderSimple", "ImageOnlyCheckpointLoader", "UNETLoader", "UnetLoaderGGUF", "CLIPLoader", "HiDreamO1ModelLoader"): return False
+        else: return None
+    return False
 
 
 VARY_LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
@@ -179,9 +185,12 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
     samplers = {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("KSampler")}
     encoders = {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("CLIPTextEncode")}
     for node in sorted(carried_nodes):
-        reached = _downstream(graph, node)
-        if (samplers and not reached & samplers) or (encoders and not reached & encoders):
-            problems.append("%s: vary adapter node %s does not feed the sampler and the text encoders" % (name, node))
+        model_paths = [_lora_feeds(graph, node, target, "model") for target in sorted(samplers)]
+        clip_paths = [_lora_feeds(graph, node, target, "clip") for target in sorted(encoders)]
+        if not samplers or not encoders or (True not in model_paths and None in model_paths) or None in clip_paths:
+            problems.append("%s: vary cannot determine whether adapter node %s feeds the sampler model and all text encoder clip inputs (missing nodes, invalid links or unknown graph shape)" % (name, node))
+        elif True not in model_paths or not all(clip_paths):
+            problems.append("%s: vary adapter node %s does not feed the sampler and the text encoders through its MODEL/CLIP outputs" % (name, node))
     for node in sorted(_lora_nodes(graph) - carried_nodes):
         problems.append("%s: vary route has an adapter it does not take from the source (node %s); it would change the picture's LoRA stack" % (name, node))
     models = _models(graph)
@@ -195,6 +204,8 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
                 problems.append("%s: vary source %s has an adapter the route does not carry (node %s); varying it here would drop it" % (name, source_id, node))
         for key in carry:
             if not source.get(key): problems.append("%s: vary source %s does not bind carried %s, so its recorded value is unknown" % (name, source_id, key)); continue
+            if key in VARY_LORA_SLOTS and source.get(key + "_name") and str(source[key][0]) != str(source[key + "_name"][0]):
+                problems.append("%s: vary source %s %s and %s_name bind different nodes" % (name, source_id, key, key))
             if key in VARY_LORA_SLOTS and preset.get(key) and _slot_fields(source, key) != _slot_fields(preset, key):
                 problems.append("%s: vary carries %s, but its strength reaches %s here and %s on %s" % (name, key, _slot_fields(preset, key), _slot_fields(source, key), source_id))
             accepted = (preset.get("choices") or {}).get(key)

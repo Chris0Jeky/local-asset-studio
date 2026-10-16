@@ -206,6 +206,48 @@ class CarryContract(unittest.TestCase):
         self.edits["wai-vary"].append(detector)
         self.assertEqual(self.problems(), [], self.problems())
 
+    def test_source_lora_name_and_strength_must_bind_the_same_node(self):
+        by_id(self.presets, "wai")["lora_name"] = ["9", "lora_name"]
+        self.assertTrue(any("wai" in p and "lora_name" in p and "different nodes" in p for p in self.problems()), self.problems())
+
+    def test_sampler_model_cannot_bypass_lora_through_its_conditioning(self):
+        self.edits["wai-vary"] = [lambda graph: graph["5"]["inputs"].update(model=["1", 0])]
+        self.assertTrue(any("does not feed" in p for p in self.problems()), self.problems())
+
+    def test_model_and_clip_must_use_the_correct_lora_output_ports(self):
+        for node, field, wrong in (("5", "model", 1), ("2", "clip", 0)):
+            with self.subTest(node=node):
+                self.edits["wai-vary"] = [lambda graph: graph[node]["inputs"].update({field: ["9", wrong]})]
+                self.assertTrue(any("does not feed" in p for p in self.problems()), self.problems())
+
+    def test_every_text_encoder_must_receive_the_carried_clip(self):
+        self.edits["wai-vary"] = [lambda graph: graph["3"]["inputs"].update(clip=["1", 1])]
+        self.assertTrue(any("does not feed" in p for p in self.problems()), self.problems())
+
+    def test_unknown_or_missing_graph_shape_is_reported(self):
+        def unknown(graph):
+            graph["20"] = {"class_type": "UnknownModelWrapper", "inputs": {"model": ["9", 0]}}
+            graph["5"]["inputs"]["model"] = ["20", 0]
+        for edit in (unknown, lambda graph: graph["8"].update(class_type="UnknownLora"),
+                     lambda graph: graph["5"].update(class_type="UnknownSampler"),
+                     lambda graph: [graph[key].update(class_type="UnknownEncoder") for key in ("2", "3")]):
+            with self.subTest(edit=edit):
+                self.edits["wai-vary"] = [edit]
+                self.assertTrue(any("cannot determine" in p for p in self.problems()), self.problems())
+
+    def test_alternate_loader_fields_compare_exactly_without_counting_auxiliary_models(self):
+        for loader, field in (("HiDreamO1ModelLoader", "model_name"), ("UnetLoaderGGUF", "gguf_name")):
+            with self.subTest(loader=loader):
+                def replace(graph):
+                    value = graph["1"]["inputs"].pop("ckpt_name")
+                    graph["1"] = {"class_type": loader, "inputs": {field: value}}
+                    graph["30"] = {"class_type": "UpscaleModelLoader", "inputs": {"model_name": "upscale.pth"}}
+                self.edits = {key: [replace] for key in ("wai-vary", "wai", "anime-wai-quality")}
+                self.assertEqual(continuation._models(self.graph(self.route)), {"waiIllustriousSDXL_v170.safetensors"})
+                self.assertEqual(self.problems(), [])
+                self.edits["wai"].append(lambda graph: graph["1"]["inputs"].update({field: "other.gguf"}))
+                self.assertTrue(any("wai" in p and "another checkpoint" in p for p in self.problems()), self.problems())
+
 
 class VaryClientPolicy(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")

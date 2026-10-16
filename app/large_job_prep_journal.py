@@ -11,6 +11,9 @@ from large_job_prep_common import (
 )
 
 
+MAX_SPENT = 256  # request IDs of rotated action receipts; a request_id is at most 128 characters, so this stays small
+
+
 class JournalMixin:
     def _load(self) -> dict[str, Any]:
         try:
@@ -31,6 +34,9 @@ class JournalMixin:
             if record["request_id"] in seen:
                 raise PreparationError("Large-job preparation journal contains duplicate request identities")
             seen.add(record["request_id"])
+        spent = value.get("spent", [])
+        if not isinstance(spent, list) or len(spent) > MAX_SPENT or not all(isinstance(item, str) for item in spent):
+            raise PreparationError("Large-job preparation journal tombstones are invalid")
         _canonical(value, MAX_JOURNAL_BYTES)
         return value
 
@@ -46,13 +52,17 @@ class JournalMixin:
         else:
             if len(records) >= MAX_RECORDS:
                 for evict_index, candidate in enumerate(records):
-                    # An action intent is the only durable guard against replaying
-                    # /free or a restart after the request ID is retried.
-                    if candidate.get("state") in ("completed", "refused") and not candidate.get("actions"):
+                    # Keep unresolved action intents; terminal receipts rotate oldest-first.
+                    if candidate.get("state") in ("completed", "refused"):
+                        if candidate.get("actions"):
+                            # A rotated receipt that ran /free or a restart leaves a compact tombstone, so a retry
+                            # of its request ID is refused instead of running the action again.
+                            spent = journal.setdefault("spent", [])
+                            spent.append(candidate["request_id"]); del spent[:-MAX_SPENT]
                         del records[evict_index]
                         break
                 else:
-                    raise PreparationError("Large-job preparation receipt retention is full")
+                    raise PreparationError("Large-job preparation receipt retention is full: all retained receipts are unresolved or in progress")
             records.append(copy.deepcopy(receipt))
         _canonical(receipt, MAX_RECEIPT_BYTES)
         _canonical(journal, MAX_JOURNAL_BYTES)
