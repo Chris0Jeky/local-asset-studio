@@ -921,6 +921,44 @@ async function modelShopCards() {
   assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*ghost\.safetensors/);
   run(`library.inventory=[{file:'loras/ghost.safetensors',bytes:8}];renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
+
+  // Independent regressions report every broken contract against the old app in one run.
+  const regressions = await Promise.allSettled([
+    async () => {
+      const s = sandbox({}, {});
+      s.run(`modelLooks=[{id:'retained',kind:'look',body:{preset_id:'p'}}];modelReqs.set('p',[]);modelExamples={loaded:true};renderCuratedModels=()=>{};api=async()=>({looks:null})`);
+      await s.run('loadModelUse()');
+      assert.equal(s.run('modelLooks?.[0]?.id'), 'retained', 'malformed looks reply preserves the last good list');
+      s.run(`api=async()=>{throw Error('offline')}`);
+      await s.run('loadModelUse()');
+      assert.equal(s.run('modelLooks?.[0]?.id'), 'retained', 'failed looks reply preserves the last good list');
+      s.run(`api=async()=>({looks:[]})`);
+      await s.run('loadModelUse()');
+      assert.equal(s.run('modelLooks.length'), 0, 'a valid empty list still removes old looks');
+    },
+    async () => {
+      const s = sandbox({}, {});
+      s.run(`modelExamples={loaded:true};renderCuratedModels=()=>{};atelierRecipes=[{preset_id:'failed'},{preset_id:'malformed'},{preset_id:'good'}];globalThis.clock=1000;Date.now=()=>clock;globalThis.calls={};api=async url=>{if(url==='/api/looks')return {looks:[]};const id=url.split('/').pop();calls[id]=(calls[id]||0)+1;if(clock<121000){if(id==='failed')throw Error('offline');if(id==='malformed')return {};}return {requirements:[]};}`);
+      await s.run('loadModelUse()');
+      await s.run('loadModelUse()');
+      assert.equal(s.run('calls.failed+calls.malformed'), 2, 'failed and malformed inspections do not retry every poll');
+      s.run('clock=120999');await s.run('loadModelUse()');
+      assert.equal(s.run('calls.failed+calls.malformed'), 2, 'inspection back-off lasts two minutes');
+      s.run('clock=121000');await s.run('loadModelUse()');
+      assert.equal(s.run('calls.failed+calls.malformed'), 4, 'failed and malformed inspections retry after two minutes');
+      assert.equal(s.run('calls.good'), 1, 'successful inspections stay cached');
+      assert.equal(s.run('Array.isArray(modelReqs.get("failed"))&&Array.isArray(modelReqs.get("malformed"))'), true, 'successful retries replace failures');
+    },
+    async () => {
+      run(`modelLooks[1].body.controls={lora_name:'unknown-adapter',lora:0.5};library.inventory=[];renderCuratedModels()`);
+      assert.doesNotMatch(element('#modelLooks').innerHTML, /unknown-adapter/, 'with no disk inventory reported yet an unlisted adapter is unknown, not missing');
+      run(`library.inventory=[{file:'loras/other.safetensors',bytes:8}];renderCuratedModels()`);
+      assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*unknown-adapter/, 'an unknown extension-less adapter blocks readiness once an inventory is reported');
+      run(`modelLooks[1].body.controls.lora='0.5';library.inventory=[{file:'loras/unknown-adapter',bytes:8}];renderCuratedModels()`);
+      assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/, 'an adapter on disk is ready and a string strength is not a file');
+    },
+  ].map(check => check()));
+  assert.equal(regressions.filter(r => r.status === 'rejected').map(r => r.reason.message).join('\n'), '', 'model shop regression contracts');
 }
 
 async function modelStatusFilter() {
