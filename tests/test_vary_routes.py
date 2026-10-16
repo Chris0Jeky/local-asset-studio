@@ -51,8 +51,8 @@ class ShippedVaryRoutes(unittest.TestCase):
         self.assertEqual(continuation.capability(route, graph_of(route))["operation"], "image-to-image")
         # verified only with a recorded proving run (the 27 Sep 2026 live proof through the page, #1202)
         if route["verified"]: self.assertIn("Executed", route.get("execution_note", ""))
-        # Started at the SDXL owner values, still a starting value until a GPU proof and the owner's look at WAI pictures.
-        self.assertEqual(route["vary"]["status"], "starting-value")
+        # Started at the SDXL owner values; owner-approved on 16 Oct 2026 after the WAI proof sheet (wai-vary-look-1202).
+        self.assertEqual(route["vary"]["status"], "owner-approved")
         self.assertEqual((route["vary"]["subtle"]["controls"], route["vary"]["strong"]["controls"]), ({"denoise": 0.5}, {"denoise": 0.7}))
 
     def test_every_strength_is_labelled_per_recipe_not_a_global(self):

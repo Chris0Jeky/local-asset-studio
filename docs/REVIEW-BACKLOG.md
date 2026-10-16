@@ -9,6 +9,19 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 ## 2026-10-16 overnight session
 
+### Owner review, 16 October 2026 evening (walkthrough in the next session)
+
+The owner answered these in the session's question picker; their chosen option is quoted.
+
+- #1 Make as home: "Keep". #2 the "Tested well" badge rule: "Keep rule". #7 durable submission saves: "Keep".
+  #9 Fix face + Fix hands merged: "Keep". #6 lab pictures behind "Show all pictures": "Keep".
+- #3 Copy Pose default: "Keep, show depth too" (also offer the depth route in Make as a third, clearly labelled
+  option). Follow-up being built.
+- #4 Character cards: "Keep, allow any picture" (offer "Make this my character…" on any finished picture, not only
+  kept ones). Follow-up being built.
+- Not yet asked: #5 (Overview retired, part of #1), #8 (unoffered sampler refused at save), #10 (Petiflow Tune
+  starting strengths).
+
 ### Review these first (biggest effect on how the Studio feels)
 
 1. **Make is the home and does the whole anime flow** (waves 1-7, #1427-#1486): goal → look → describe → Tune →
