@@ -803,9 +803,23 @@ BRIEF = ('A lanternkeeper of the deep wood: a young elf with silver-grey hair, a
 @driver('first-image-from-brief')
 def _first_image(c):
     c.boot('#make')
+    assert c.page.locator('.topbar').count() == 0, 'legacy navigation is replaced by the accessible shell'
+    assert c.page.locator('[data-studio-route="make"]').get_attribute('aria-current') == 'page'
+    assert c.page.locator('#studioConnection #health').get_attribute('role') == 'status'
+    assert c.page.evaluate("""() => {const observer=new MutationObserver(()=>{});observer.observe(document.querySelector('#health'),{childList:true,characterData:true,subtree:true});
+      updateReady();updateReady();const count=observer.takeRecords().length;observer.disconnect();return count===0;}"""), 'unchanged health status must stay silent in the DOM'
+    group = c.page.get_by_role('group', name='From a picture you have', exact=True)
+    assert group.get_by_role('radio').count() == 6
+    c.page.locator('[data-make-goal="game"]').focus()
+    c.page.keyboard.press('ArrowRight')
+    assert c.page.locator('[data-make-goal="edit"]').evaluate('(e) => e === document.activeElement')
+    c.page.keyboard.press('Home')
+    assert c.page.locator('[data-make-goal="character"]').evaluate('(e) => e === document.activeElement')
     c.act('#makeGoals', 'read', note='Make starting points')
     c.act('[data-nav-group="Advanced"] summary', note='open advanced tools', supplementary=True)
     c.act('[data-studio-route="create"]', navigation=True)
+    assert c.page.locator('[data-studio-route="create"]').get_attribute('aria-current') == 'page'
+    assert c.page.locator('[data-studio-route="make"]').get_attribute('aria-current') is None
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetSearch', 'fill', typed='anima')
     c.act('#presetList button.preset', note='first matching recipe')
@@ -957,6 +971,10 @@ def _restyle(c):
     c.act('[data-make-search="makePictures"]', 'fill', typed='' if c.live else 'forest', note='search your pictures')
     picture = c.pick('asset-1', '#makePictures [data-make-pick]', 'picture in the Make picker')
     c.act('[data-make-pick="%s"]' % picture, note='the picture to restyle')
+    c.act('[data-make-repick]', note='reopen the picture picker', supplementary=True)
+    c.page.locator('[data-make-keep-picture]').focus()
+    c.act('[data-make-keep-picture]', 'press', typed='Enter', note='keep the picture with the keyboard', supplementary=True)
+    assert c.page.locator('#makeComposer .make-step h2').evaluate('(e) => e === document.activeElement'), 'Stay with picture must restore focus to the composer'
     look = c.pick('look-preset-realvis', '#makeStyleLooks [data-make-style]', 'look with a picture')
     c.act('label:has([data-make-style="%s"])' % look, note='the look, chosen by its picture')
     c.act('#makeGenerate', 'read', note='readiness only; never pressed')

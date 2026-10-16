@@ -2,12 +2,32 @@
 import shutil
 import subprocess
 import unittest
+from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class StudioUXTests(unittest.TestCase):
+    def test_asset_and_export_dialogs_have_visible_names(self):
+        class Elements(HTMLParser):
+            def __init__(self): super().__init__(); self.ids = {}
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if attrs.get('id'): self.ids[attrs['id']] = (tag, attrs)
+        html = (ROOT / 'app/static/index.html').read_text(encoding='utf-8')
+        elements = Elements(); elements.feed(html)
+        for dialog in ('assetDialog', 'articulatedDialog'):
+            with self.subTest(dialog=dialog):
+                label = elements.ids[dialog][1].get('aria-labelledby')
+                self.assertTrue(label, 'Dialog needs a visible accessible name')
+                self.assertIn(label, elements.ids)
+                self.assertRegex(html, r'id="' + label + r'"[^>]*>[^<\s]')
+
+    def test_health_is_a_polite_status(self):
+        html = (ROOT / 'app/static/index.html').read_text(encoding='utf-8')
+        self.assertRegex(html, r'<div id="health"[^>]*role="status"')
+
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for UX policy checks')
     def test_pure_workflow_policy(self):
         result = subprocess.run([shutil.which('node'), str(ROOT / 'tests/studio_ux.cjs')],

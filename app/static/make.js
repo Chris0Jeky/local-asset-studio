@@ -267,7 +267,7 @@
   function placeStatus(){const button=q('.make-go #makeGenerate'),slot=button?null:q('#makeStatusSlot');if(button&&statusEl.previousElementSibling!==button)button.after(statusEl);else if(slot&&statusEl.parentElement!==slot)slot.append(statusEl);}
   placeStatus();
   function renderGoals(){
-    q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<span class="make-goal-break">From a picture you have</span>':'')+'<button type="button" role="radio" tabindex="'+(g.id===state.goal?'0':'-1')+'" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('');
+    q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<div class="make-goal-group" role="group" aria-labelledby="makePictureGoals"><span class="make-goal-break" id="makePictureGoals">From a picture you have</span>':'')+'<button type="button" role="radio" tabindex="'+(g.id===state.goal?'0':'-1')+'" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('')+'</div>';
   }
   // Once a look is chosen the gallery folds to one line and the results sit beside the words, so Generate and its pictures share a screen.
   function layout(){const focused=!goal().intent&&!!current()&&!state.picking&&!state.compare;q('#makeSplit').classList.toggle('make-has-look',focused);view.classList.toggle('make-focused',focused);}
@@ -768,7 +768,7 @@
     else if(g.intent==='animate'){main=field('motion','Motion and camera','she turns her head and smiles; the camera slowly moves closer',3)+'<small class="muted">Say what moves and how the camera moves. A description of the picture alone gives a still clip.</small>';
       const list=clips(p);if(list.length)side='<label>Length<select id="makeClip" data-make-field="clip">'+list.map(m=>'<option value="'+escape(m.id)+'"'+((f.clip||list[0].id)===m.id?' selected':'')+'>'+escape(CLIP[m.id]||m.name)+' · '+m.controls.frames+' frames, about '+(m.controls.frames/CLIP_FPS).toFixed(1)+' s</option>').join('')+'</select></label>';}
     else main='<p>One press: the background is cut away, then a textured 3D model (GLB) is built from this picture. Hidden sides are guessed, so check the model before you use it.</p>';
-    box.innerHTML='<div class="make-step"><span>2</span><h2>'+escape(HEAD[g.intent])+'</h2></div><div class="make-composer"><div class="make-compose-main">'+main+'</div><div class="make-compose-side">'+side
+    box.innerHTML='<div class="make-step"><span>2</span><h2 tabindex="-1">'+escape(HEAD[g.intent])+'</h2></div><div class="make-composer"><div class="make-compose-main">'+main+'</div><div class="make-compose-side">'+side
       +'<button type="button" class="make-link" data-ux-handoff="'+escape(a.id)+'" data-ux-handoff-intent="'+g.intent+'">Open in the full editor instead</button>'
       +(p?'<details class="make-about"><summary>What this uses</summary><p>'+escape(p.name)+'</p></details>':'')+'</div>'+goBar(why?goalWhy(p,why):'')+'</div>';
     if(q('#makePosePictures'))void fillPictures(g,'makePosePictures','data-make-pose-pick');
@@ -943,7 +943,7 @@
     const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
     const all=e.target.closest('[data-make-all]');if(all){state.allPictures=!state.allPictures;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])renderGrid(id,attr);q('[data-make-all="'+all.dataset.makeAll+'"]')?.focus();return;}
     if(e.target.closest('[data-make-repick]')){state.repicking=true;renderPictures(goal());q('[data-make-search="makePictures"]')?.focus();return;}
-    if(e.target.closest('[data-make-keep-picture]')){state.repicking=false;renderPictures(goal());return;}
+    if(e.target.closest('[data-make-keep-picture]')){state.repicking=false;renderPictures(goal());q('#makeComposer .make-step h2')?.focus();return;}
     const posePick=e.target.closest('[data-make-pose-pick]');if(posePick){const a=state.pictures?.find(x=>x.id===posePick.dataset.makePosePick);if(a){state.pose={asset:a};state.posePicking=false;renderGoalComposer(goal());q('[data-make-pose-change]')?.focus();}return;}
     if(e.target.closest('[data-make-pose-change]')){state.posePicking=true;renderGoalComposer(goal());q('[data-make-search="makePosePictures"]')?.focus();return;}
     if(e.target.closest('[data-make-style-words]')){state.styleWords=true;renderGoalComposer(goal());q('#makeF-look')?.focus();return;}

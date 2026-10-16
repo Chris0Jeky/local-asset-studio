@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const elements = new Map(), healthRequests = [], requests = [];
+let healthWrites = 0, healthText = '';
 const element = selector => {
   if (!elements.has(selector)) elements.set(selector, {
     value: '', files: [], textContent: '', className: '', disabled: false, hidden: false,
@@ -12,6 +13,7 @@ const element = selector => {
   });
   return elements.get(selector);
 };
+Object.defineProperty(element('#health'), 'textContent', {get() {return healthText;}, set(value) {healthWrites++; healthText=value;}});
 const context = vm.createContext({
   document: {querySelector: element, querySelectorAll: () => [], addEventListener() {}},
   URL, Blob, location: {hash: ''}, setInterval() {},
@@ -39,10 +41,17 @@ const respondHealth = async payload => {
   let pending = vm.runInContext('health()', context); await Promise.resolve();
   await respondHealth({online: true, schema_available: true, missing_models: {}}); await pending;
   assert.deepEqual(state(), {online: true, workerAlive: true, schemaAvailable: true, healthError: false, disabled: false, text: 'ComfyUI connected', className: 'pill ready', recovery: 'Runtime recovery is disabled.', retryHidden: true}, 'online health response enables a ready preset');
+  const connectedWrites = healthWrites;
+  vm.runInContext('updateReady();updateReady();', context);
+  assert.equal(healthWrites, connectedWrites, 'unchanged readiness must not rewrite a live status');
+  pending = vm.runInContext('health()', context); await Promise.resolve();
+  await respondHealth({online: true, schema_available: true, missing_models: {}}); await pending;
+  assert.equal(healthWrites, connectedWrites, 'identical health polls stay silent');
 
   pending = vm.runInContext('health()', context); await Promise.resolve();
   await respondHealth({online: true, worker_alive: false, schema_available: true, missing_models: {}, recovery: {enabled: true, status: 'breaker-open', message: 'Recovery attempt limit reached.'}}); await pending;
   assert.deepEqual(state(), {online: true, workerAlive: false, schemaAvailable: true, healthError: false, disabled: true, text: 'Studio worker unavailable', className: 'pill offline', recovery: 'Recovery attempt limit reached.', retryHidden: false}, 'dead worker is visibly degraded and routine health refresh exposes breaker reset');
+  assert.equal(healthWrites, connectedWrites + 1, 'a real readiness transition updates the live status once');
 
   pending = vm.runInContext('health()', context); await Promise.resolve();
   await respondHealth({online: false, schema_available: false, missing_models: {}}); await pending;

@@ -4,6 +4,7 @@
 .make-view{max-width:1240px}
 .make-heading h1{margin:10px 0 8px}.make-heading p{color:var(--muted);margin:0 0 22px;max-width:640px}
 .make-goals{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px;align-items:stretch}
+.make-goal-group{display:flex;flex-wrap:wrap;gap:8px;flex-basis:100%}
 .make-goals button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:10px 14px;min-height:44px;background:var(--panel);border:1px solid var(--make-edge);border-radius:10px}
 .make-goals button b{font-size:13px;font-weight:600}.make-goals button small{font-size:11px;color:var(--muted)}
 .make-goals button[aria-checked="true"]{border-color:var(--accent);background:#2b3c2c;box-shadow:inset 0 0 0 1px var(--accent)}
@@ -80,7 +81,7 @@
 .make-run header small.make-tuned{color:var(--accent)}
 @media(max-width:520px){.make-tune-row{grid-template-columns:1fr}.make-tune-strength input{flex:1;width:auto;min-width:0}}
 .make-go{position:sticky;bottom:0;z-index:3;display:flex;flex-direction:column;gap:6px;background:var(--panel);padding:10px 0 6px;border-top:1px solid var(--line);box-shadow:0 -10px 14px -12px rgba(0,0,0,.6)}.make-go p{margin:0;font-size:12px}
-.make-focused .make-goals button{flex:0 0 auto;padding:6px 11px;min-height:34px}.make-focused .make-goal-break{display:none}
+.make-focused .make-goals button{flex:0 0 auto;padding:6px 11px;min-height:34px}.make-focused .make-goal-break{display:none}.make-focused .make-goal-group{flex-basis:auto}
 .make-about ul{margin:4px 0 8px;padding-left:18px;font-size:11px;line-height:1.6}.make-about code{font-size:11px}.make-maint summary{font-size:11px}
 /* Picture goals in Make (16 Oct 2026): the picture, then a short composer per goal; Compare looks (#16). */
 .make-search{width:100%;max-width:420px;margin:0 0 12px;padding:9px 12px;font-size:14px}
