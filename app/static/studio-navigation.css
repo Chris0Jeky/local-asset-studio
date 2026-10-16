@@ -10,3 +10,7 @@ button.ux-desk-row {width:100%;text-align:left;font:inherit}
 #uxJobInspector pre {white-space:pre-wrap;overflow-wrap:anywhere}
 /* #940: Put away / Bring back sits with its consequence in the job inspector. */
 .ux-desk-action {display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.studio-sidebar .studio-nav-group {margin:0;padding:0;border:0;background:none}
+.studio-sidebar .studio-nav-group>summary {display:list-item;cursor:pointer;padding:10px 8px;min-height:36px}
+.studio-sidebar .studio-nav-group>summary:focus-visible {outline:2px solid currentColor;outline-offset:2px}

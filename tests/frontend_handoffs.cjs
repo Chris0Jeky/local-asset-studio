@@ -57,7 +57,7 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
   };
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener(name, handler) {if (name === 'click') clickHandler = handler;}},
-    URL, Blob, StudioContinuation, StudioAssetRecovery, StudioUX,
+    URL, URLSearchParams, Blob, StudioContinuation, StudioAssetRecovery, StudioUX,
     sessionStorage: (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map()),
     window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
@@ -575,7 +575,7 @@ async function unstagedLocalFilesCannotBeSaved() {
     assert.equal(s.element('#saveName').value,'Keep pending local selection');
     assert.equal(s.element('#'+input).files[0].name,'replacement.png');
     assert.deepEqual(s.parents(),parents,'Save must not recreate the released old source');
-    assert.match(s.element('#setupStatus').textContent,/not uploaded.*Asset library.*Pull from library/);
+    assert.match(s.element('#setupStatus').textContent,/not uploaded.*Library.*Pull from library/);
     assert.match(s.element('#setupStatus').textContent,input==='reference'?/first frame/:/Last frame/);
     // Clearing a browser-only selection permits the already supported source-free setup.
     s.element('#'+input).files=[];s.element('#'+input).onchange();

@@ -500,7 +500,7 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;recentShownKeys=keys;recentHeldRemoved.clear();showRecentHeld('');
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
   gallery.className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
-  gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
+  gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open the Library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
   if(host)host.innerHTML=problemMarkup;
   }
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
@@ -598,19 +598,30 @@ function libraryRootIsWindows(root){return typeof root==='string'&&(/^[A-Za-z]:[
 function canonicalModelRel(value,windows){const s=String(value??'');return windows?s.replace(/\\/g,'/').toLowerCase():s;}
 function inventoryNeedsAction(m,assets,root){const windows=libraryRootIsWindows(root??(typeof library!=='undefined'?library?.model_root:undefined));const key=canonicalModelRel(m?.file,windows);const match=(assets||[]).find(a=>canonicalModelRel(a?.file,windows)===key);return !!match&&match.verified!==true;}
 function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase(),status=currentModelStatus(),assets=library.assets||[];const rows=library.inventory.filter(m=>m.file.toLowerCase().includes(q)&&(status==='all'||(status==='action'?inventoryNeedsAction(m,assets):!inventoryNeedsAction(m,assets))));$('#inventory').innerHTML=rows.map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';const count=$('#modelCount');if(count)count.textContent=rows.length+' of '+library.inventory.length+(status==='action'?' need action':status==='installed'?' installed':' shown');}
-async function refreshLibrary(){
-  try{
-    library=await api('/api/library');const s=library.storage;
-    $('#storage').innerHTML='<div><b>'+gib(s.free_bytes)+'</b><small> free on the model drive</small></div><div class="bar"><span style="width:'+Math.min(100,s.free_bytes/s.total_bytes*100)+'%"></span></div><small>Downloads keep '+gib(s.reserve_bytes)+' free for cache, outputs and system memory. Model folder: '+esc(library.model_root)+'</small>';
-    const busy=library.assets.some(a=>['queued','downloading','verifying'].includes(a.download?.status)&&Date.now()/1000-a.download.updated_at<180);
-    const cardStatus=currentModelStatus(),shownCards=library.assets.filter(a=>modelStatusMatch(a,cardStatus)),hiddenCards=library.assets.length-shownCards.length;
-    $('#modelCards').innerHTML=shownCards.map(a=>{
+function renderCuratedModels(){
+  if(!library)return;const params=new URLSearchParams(location.hash.split('?')[1]||''),need=StudioUX.normalizeView(location.hash)==='models'?(params.get('need')||new URLSearchParams(location.search).get('need')):null;
+  const preset=(catalog?.presets||[]).find(p=>p.id===need),missing=Object.hasOwn(missingByPreset,need)&&Array.isArray(missingByPreset[need])?missingByPreset[need]:[],query=$('#curatedModelSearch').value.toLowerCase(),windows=libraryRootIsWindows(library.model_root);
+  const busy=library.assets.some(a=>['queued','downloading','verifying'].includes(a.download?.status)&&Date.now()/1000-a.download.updated_at<180);
+  const cardStatus=currentModelStatus(),shownCards=library.assets.filter(a=>(need?!a.present&&missing.some(file=>{const key=canonicalModelRel(a.file,windows),required=canonicalModelRel(file,windows);return key===required||key.endsWith('/'+required);}):modelStatusMatch(a,cardStatus))&&[a.name,a.family,a.file].some(v=>String(v||'').toLowerCase().includes(query))),hiddenCards=library.assets.length-shownCards.length;
+  const card=a=>{
       const d=a.download||{},active=['queued','downloading','verifying'].includes(d.status)&&Date.now()/1000-d.updated_at<180;
       const pinOnly=a.installable!==true;
       const state=a.verified?'SHA-256 verified':a.verification==='linked-path-refused'?'Linked folder · not managed':pinOnly?(a.present?'Present · pin only':'Pin only · not installed'):a.present?'Present · verify file':active?d.status:'Not installed';
       return '<article class="model-card"><span class="badge '+(a.verified?'tested':'')+'">'+esc(state)+'</span><h3>'+esc(a.name)+'</h3><p>'+esc(a.family)+' · '+gib(a.bytes)+'</p><code>'+esc(a.file)+'</code>'+(a.trigger?'<p>Trigger: <b>'+esc(a.trigger)+'</b></p>':'')+'<p>'+esc(a.license)+'</p>'+(active?'<progress max="'+a.bytes+'" value="'+(d.bytes_done||0)+'"></progress><p>'+gib(d.bytes_done)+' / '+gib(a.bytes)+'</p>':'')+(d.status==='failed'?'<p class="error">'+esc(d.message)+'</p>':'')+'<div class="model-actions"><a href="'+esc(safeUrl(a.source))+'" target="_blank" rel="noreferrer">Source ↗</a><button data-install="'+esc(a.id)+'" '+(a.verified||pinOnly||busy?'disabled':'')+' title="'+esc(pinOnly?(a.install_note||'Automatic installation eligibility is unknown; refresh the library.'):'')+'">'+(a.verified?'Installed':pinOnly?'Copy in by hand':a.present?'Verify existing file':'Install / use download')+'</button></div></article>';
-    }).join('')+(hiddenCards?'<p class="muted model-filter-note">'+hiddenCards+' curated model'+(hiddenCards===1?' is':'s are')+' hidden by the “'+esc($('#modelStatus').selectedOptions?.[0]?.textContent||cardStatus)+'” filter. <button type="button" data-model-status-all>Show everything</button></p>':'');
-    $('#modelCards').querySelector('[data-model-status-all]')?.addEventListener('click',()=>{$('#modelStatus').value='all';$('#modelStatus').onchange();});
+    };
+  const group=(name,items,collapsed=false)=>collapsed?'<details'+(query?' open':'')+'><summary>'+name+' ('+items.length+')</summary><div class="model-cards">'+items.map(card).join('')+'</div></details>':'<section><h3>'+name+' ('+items.length+')</h3><div class="model-cards">'+items.map(card).join('')+'</div></section>';
+  $('#curatedModelTitle').textContent=need?'Files needed for '+(preset?.name||need):'Curated additions';
+  $('#modelCards').innerHTML=(need?'<p><a href="/#models" data-models-all>Show everything</a></p>':'')+group('Missing',shownCards.filter(a=>!a.present&&!a.verified))+group('Needs a check',shownCards.filter(a=>a.present&&!a.verified))+group('Installed',shownCards.filter(a=>a.verified),true)+(!shownCards.length?'<p class="muted">'+(need?'No missing curated files for this preset match.':'No matching curated models.')+'</p>':'')+(!need&&hiddenCards?'<p class="muted model-filter-note">'+hiddenCards+' curated model'+(hiddenCards===1?' is':'s are')+' hidden by the active filters. <button type="button" data-model-status-all>Show everything</button></p>':'');
+  const reset=()=>{$('#curatedModelSearch').value='';$('#modelStatus').value='all';writeStoredModelStatus('all');renderCuratedModels();renderInventory();};
+  $('#modelCards').querySelector('[data-model-status-all]')?.addEventListener('click',reset);
+  // A need given as a page query (?need=) is cleared too; the shell routes the /#models link in place and keeps location.search.
+  $('#modelCards').querySelector('[data-models-all]')?.addEventListener('click',()=>{const url=new URL(location.href);if(url.searchParams.has('need')){url.searchParams.delete('need');history.replaceState(history.state,'',url.pathname+url.search+url.hash);}reset();});
+}
+async function refreshLibrary(){
+  try{
+    library=await api('/api/library');const s=library.storage;
+    $('#storage').innerHTML='<div><b>'+gib(s.free_bytes)+'</b><small> free on the model drive</small></div><div class="bar"><span style="width:'+Math.min(100,s.free_bytes/s.total_bytes*100)+'%"></span></div><small>Downloads keep '+gib(s.reserve_bytes)+' free for cache, outputs and system memory. Model folder: '+esc(library.model_root)+'</small>';
+    renderCuratedModels();
     $('#folders').innerHTML=library.folders.map(f=>'<article class="folder"><b>'+esc(f.label)+'</b><code>'+esc(f.path)+'</code>'+(f.unavailable?'<p class="disabledReason"><small>'+esc(f.unavailable)+'</small></p><button data-folder="'+esc(f.id)+'" disabled>Open folder</button>':'<button data-folder="'+esc(f.id)+'">Open folder</button>')+'<button data-copy="'+esc(f.path)+'">Copy path</button></article>').join('');
     $('#collections').innerHTML=(library.collections || []).map(c=>'<article class="collection"><b><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noreferrer">'+esc(c.name)+' ↗</a></b><p>'+esc(c.description)+'</p><small>'+esc(c.status || '')+'</small></article>').join('');
     renderInventory();
@@ -641,7 +652,7 @@ function applySaved(s,{guessLegacyParent=false}={}){
   if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
   const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(s):(s.tile!=null||s.parallax!=null?null:{});
   const target=catalog.presets.find(p=>p.id===s.preset);
-  if(!prepared||prepared.tile&&!target.tile_route||prepared.parallax&&!target.parallax_route)throw Error('Invalid saved prepared plan for this recipe. Prepare it again from the Asset library.');
+  if(!prepared||prepared.tile&&!target.tile_route||prepared.parallax&&!target.parallax_route)throw Error('Invalid saved prepared plan for this recipe. Prepare it again from the Library.');
   selectPreset(s.preset);
   tileState=prepared.tile||null;parallaxState=prepared.parallax||null;
 
@@ -717,8 +728,8 @@ function continuationBlockerItems(){
   if(lookProblem)return [{code:'look',message:lookProblem}];
   // Both the original run button and the workbench consume this shared list.
   // Source-free text recipes need wording too; image-only recipes have no binding.
-  if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Asset library.'}];
-  if(selected?.parallax_route&&!parallaxState)return [{code:'parallax',message:'Start from Make parallax layers on a picture in the Asset library.'}];
+  if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Library.'}];
+  if(selected?.parallax_route&&!parallaxState)return [{code:'parallax',message:'Start from Make parallax layers on a picture in the Library.'}];
   if(tileState||parallaxState){const problem=StudioUX.preparedBlocker({preset:selected.id,...tilePayload(),...parallaxPayload(),controls:values(),parent_assets:parentAssets,batch:$('#batch').value});if(problem)return [{code:tileState?'tile':'parallax',message:problem}];}
   if(!continuationState)return selected?.positive&&!String($('#positive')?.value||'').trim()?[{code:'wording',message:'Add a prompt to generate.'}]:[];
   const controls=values();
@@ -859,11 +870,11 @@ function checkedSetupControls() {
   const inputs=[['reference','reference',selected?.reference_label||'Reference / first frame'],['lastReference','last_reference',selected?.last_reference_label||'Last frame']];
   const unstaged=inputs.filter(([input,key])=>selected?.[key]&&$('#'+input).files?.length&&!controls[key]);
   if(unstaged.length)throw Error('Setup not saved: '+unstaged.map(([, ,label])=>label).join(' and ')+
-    ' is selected only in this browser and is not uploaded. Import the file into Asset library, then use Pull from library to attach it before saving. Your selection and setup name are unchanged.');
+    ' is selected only in this browser and is not uploaded. Import the file into the Library, then use Pull from library to attach it before saving. Your selection and setup name are unchanged.');
   const pending=inputs
     .filter(([input,key])=>parentByInput[input]&&parentAssets.includes(parentByInput[input])&&!controls[key]);
   if(pending.length)throw Error('Setup not saved: reattach '+pending.map(([, ,label])=>label).join(' and ')+
-    ' using Pull from library. To use a new local file, import it into Asset library first. Its source link has no attached file. Your draft and setup name are unchanged.');
+    ' using Pull from library. To use a new local file, import it into the Library first. Its source link has no attached file. Your draft and setup name are unchanged.');
   return controls;
 }
 function setupMessage(text,error=false){message(text,error);$('#setupStatus').textContent=text;$('#setupStatus').classList.toggle('error',error);}
@@ -871,7 +882,7 @@ let savingSetup=false; // A double click stored two setups: each save without an
 $('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load],{guessLegacyParent:true});if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
 $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,tile:recipe.tile,parallax:recipe.parallax,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
-$('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
+$('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;$('#curatedModelSearch').oninput=renderCuratedModels;$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
 function configureReadPolling(){
   if(!window.ReadPoller||readPoller)return;
   readPoller=new window.ReadPoller();window.StudioReadPoller=readPoller;
@@ -907,7 +918,7 @@ $('#importWorkflow').onchange=async e=>{
   // Each later stage is independent: one failing read (saved setups, a legacy migration) must not leave
   // health, jobs, the library and polling unstarted until a reload. The first failure stays on screen.
   const failed=[];
-  for(const [label,stage] of [['Saved setups',loadSetups],['Health',health],['Jobs',refresh],['Asset library',refreshAssets],['Models',refreshLibrary]]){
+  for(const [label,stage] of [['Saved setups',loadSetups],['Health',health],['Jobs',refresh],['Library',refreshAssets],['Models',refreshLibrary]]){
     try{await stage();}catch(e){failed.push(label+' could not load: '+e.message);}
   }
   const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);

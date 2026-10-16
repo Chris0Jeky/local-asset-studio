@@ -48,6 +48,7 @@
   // The same runtime facts the full editor gates on (app.js globals); unknown (null) health does not block.
   function runtimeBlocker(){if(typeof backendSwitching!=='undefined'&&backendSwitching)return'A model environment switch is running. Wait for it to finish.';if(typeof workerAlive!=='undefined'&&workerAlive===false)return'The Studio worker has stopped. Restart the Studio before generating.';if(typeof online!=='undefined'&&online===false)return'ComfyUI is not reachable. Start it, then try again.';if(typeof online!=='undefined'&&online===true&&typeof schemaAvailable!=='undefined'&&!schemaAvailable)return'ComfyUI is still starting up. Try again in a moment.';return'';}
   function blocker(look){const runtime=runtimeBlocker();if(runtime)return runtime;if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';const p=tunedPreset(look);if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
+  const blockerMarkup=(look,text)=>escape(text).replace('Models &amp; setup','<a href="/#models?need='+escape(encodeURIComponent(tunedPreset(look)?.id||look.body.preset_id))+'">Models &amp; setup</a>');
 
   // Tune this look (owner ask, 16 Oct 2026): see and change the look's model, adapters, steps, negative and seed without the
   // full editor. Folded shut by default. Tuning only changes the controls Generate sends: the server's allow-list, adapter
@@ -115,7 +116,7 @@
     box.innerHTML='<div class="make-tune-group"><h3>Model</h3>'
       +'<label>Base model<select id="makeModel" data-tune="model">'+option(p.id,'As made · '+family(p)+(missingFor(p).length?' · needs download':''),tp===p)+list.map(m=>option(m.id,family(m)+(missingFor(m).length?' · needs download':''),tp===m)).join('')+'</select></label>'
       +'<small class="muted">'+escape(tp?.model?.file||tp?.name||'')+(list.length?' · Same model type: the look’s words and adapters carry over; pictures will differ.':' · No other model in the library takes this look’s words and adapters.')+'</small>'
-      +(missing.length?'<p class="make-warn" id="makeTuneWhy">Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first. <a href="/#models">Open Models & setup</a></p>':'')+'</div>'
+      +(missing.length?'<p class="make-warn" id="makeTuneWhy">Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first. <a href="/#models?need='+escape(encodeURIComponent(tp.id))+'">Open Models & setup</a></p>':'')+'</div>'
       +'<div class="make-tune-group"><h3>Adapters (LoRAs)</h3>'+(t.rows.length?t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
       +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add an installed adapter</label><input id="makeLoraSearch" list="makeLoraList" placeholder="Search by name" autocomplete="off"'+(slot?'':' disabled aria-describedby="makeLoraFull"')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>'<option value="'+escape(f)+'">'+escape(short(f)+' · '+entry(f).family)+'</option>').join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
         +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'</div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
@@ -131,7 +132,7 @@
   function tuneChanged(redraw=true){
     const look=current();if(!look)return;if(redraw){renderTune();return;}
     const sum=q('#makeTuneSum'),why=blocker(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
-    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.textContent=why;said.hidden=!why;}estimate();
+    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=blockerMarkup(look,why);said.hidden=!why;}estimate();
   }
   function tuneInput(target){
     const look=current();if(!look)return false;const t=tuneOf(look),row=s=>t.rows.find(r=>r.slot===s);
@@ -172,9 +173,9 @@
     if(state.error){body.innerHTML='<p class="make-error" role="alert">'+escape(state.error)+' <button type="button" data-make-retry>Try again</button></p>';return;}
     if(!state.looks){body.innerHTML='<p class="muted">Loading looks…</p>';return;}
     const list=lookList();if(!list.some(l=>l.id===state.look))state.look=null;
-    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<button type="button" class="make-look'+(l.id===state.look?' active':'')+'" data-make-look="'+escape(l.id)+'" aria-pressed="'+(l.id===state.look)+'">'
+    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<article class="make-look'+(l.id===state.look?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" aria-pressed="'+(l.id===state.look)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+(why?'<small class="make-warn">'+escape(why)+'</small>':'')+'</span></button>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking){const p=presetFor(chosen),thumb=thumbOf(chosen);
       body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b><small class="make-pace '+speed(p)[0]+'">'+escape(speed(p)[1])+'</small></div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
@@ -205,7 +206,7 @@
       +'<label class="make-check"><input type="checkbox" id="makeNewSeed"'+(tuneOf(look).reseed?' checked':'')+'> Different pictures each time</label>'
       +'<p id="makeEstimate" class="muted" aria-live="polite"></p>'
       +'<button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>Generate</button>'
-      +(why?'<p id="makeWhy" class="make-warn">'+escape(why)+'</p>':'')
+      +(why?'<p id="makeWhy" class="make-warn">'+blockerMarkup(look,why)+'</p>':'')
       +'<button type="button" id="makeEditor" class="make-link">Open in the full editor instead</button>'
       +'<details class="make-about"><summary>What this look uses</summary><p>'+escape(p?.name||look.body.preset_id)+'</p>'+(adapters(look).length?'<p>Adapters: '+adapters(look).map(a=>escape(a.name.replace(/\.safetensors$/,''))+' at '+escape(a.strength)).join(', ')+'</p>':'<p>No style adapters: the model and the wording carry this look.</p>')+'<p class="muted">'+escape(look.body.notes||'')+'</p></details>'
       +'</div></div><p id="makeStatus" class="make-status" role="status"></p>';
@@ -351,13 +352,13 @@
     if(e.target.closest('#makeTune')&&tuneClick(e.target))return;
     const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();return;}
     const l=e.target.closest('[data-make-look]');if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();q('#makeScene')?.focus();return;}
-    if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active')?.focus();return;}
+    if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
     if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();q('#makeScene')?.focus();return;}
     const again=e.target.closest('[data-make-rerun],[data-make-another]');if(again){const run=state.runs.find(r=>r.job.id===(again.dataset.makeRerun||again.dataset.makeAnother));if(!run)return;
       state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;
       // Edit and re-run brings the run's tune back with its look; another look starts from that look as made.
       if(!again.dataset.makeAnother){if(Array.isArray(run.tune?.rows)&&Array.isArray(run.tune.cleared)){state.tune[run.lookId]=structuredClone(run.tune);state.tuneOpen=state.tuneOpen||!!run.tuned;}else delete state.tune[run.lookId];}try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
-      const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active')?.focus();return;}
+      const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
     if(e.target.closest('#makeGenerate'))void generate();
