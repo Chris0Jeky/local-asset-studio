@@ -53,4 +53,6 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   Pony V6 (each choice is labelled with its family). LoRAs that settings-kb.json does not know (about 30 of 100
   installed) are not offered. Edit and re-run fixes the run's seed by default. Trigger words are auto-added only for
   LoRAs you add. "Good for / Not for" was not invented because looks carry no such data.
+- [ ] **Looks Prepare refuses to half-apply** (#1434): if a saved LoRA, sampler or scheduler is no longer offered,
+  Prepare stops, names it and restores the Full editor as it was.
 
