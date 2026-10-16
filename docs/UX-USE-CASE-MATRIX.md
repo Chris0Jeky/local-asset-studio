@@ -46,7 +46,7 @@ Owner ask (16 October 2026): "the user should be able to do it without much conf
     wear, with colours / The pose, in a few words, with the lab's tested wording as placeholder). No bracket and no recipe
     example that names a person reaches the page.
   - **Change one thing** (`flux-edit`): one field. **Fix or upscale**: Fix face, Fix hands and details or Upscale 2×. These
-    are the existing one-press polish routes, and a route that does not fit the picture gives its reason. **Animate**
+    are the existing one-press polish routes (Anima pictures send Fix face and Fix hands to the same repaint, so they show as one **Fix face and hands** button with a keep-the-original warning; round 5, #1492), and a route that does not fit the picture gives its reason. **Animate**
     (`wan22-i2v`): a motion field and a length (Short, 17 frames, about 0.7 s; Longer, 33 frames, about 1.4 s; held modes are
     not offered). **Picture to 3D** (`trellis-auto-cutout`): nothing to fill in.
   - Every goal keeps *Open in the full editor instead*, which opens the old dialog. A result's *More* menu (Change one

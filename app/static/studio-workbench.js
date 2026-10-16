@@ -1038,7 +1038,7 @@
     const route=await polishRoute(assetId,kind),timing=route.ok?StudioContinuation.combineTiming(jobs,route.preset.id):null;
     return{ok:!!route.ok,preset_id:route.preset?.id||null,reason:route.reason||'',...(timing?{seconds:timing.seconds}:{})};
   }
-  async function polish(assetId,kind){
+  async function polish(assetId,kind,label){
     const key=assetId+':'+kind;if(polishBusy.has(key))throw Error('This polish is already being sent. Wait for it.');
     polishBusy.add(key);
     try{
@@ -1048,7 +1048,7 @@
       const prepared=StudioContinuation.initial(result.context,preset,'repair',result.file),controls={reference:result.file};
       if(preset.positive)controls.positive=prepared.positive;if(preset.negative)controls.negative=prepared.negative;
       if(preset.seed)controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
-      return await post('/api/jobs',{preset_id:preset.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+StudioContinuation.POLISH[kind]});
+      return await post('/api/jobs',{preset_id:preset.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+(typeof label==='string'&&label?label:StudioContinuation.POLISH[kind])});   // Make passes the name it showed (e.g. a merged face-and-hands pass)
     }finally{polishBusy.delete(key);}
   }
   Object.assign(globalThis.StudioWorkbench,{polish,polishPlan});
