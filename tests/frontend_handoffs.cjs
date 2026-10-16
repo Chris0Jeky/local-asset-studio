@@ -924,6 +924,8 @@ async function modelShopCards() {
   // Missing files a look needs come first, recipe-only ones next, and files nothing uses fold under Optional (audit v3 N8).
   run(`library.assets.unshift(${JSON.stringify(file('orphan', 'loras', {present: false}))},${JSON.stringify(file('rec', 'checkpoints', {present: false}))});atelierRecipes.push({id:'r2',name:'Recipe Two',preset_id:'p3',controls:{}});modelReqs.set('p3',[{file:'checkpoints/rec.safetensors',asset_id:'rec',present:false}]);renderCuratedModels()`);
   assert.match(element('#modelCards').innerHTML, /<h3>Missing \(3\)<\/h3>[\s\S]*base model[\s\S]*enc model[\s\S]*rec model[\s\S]*<summary>Optional · not used by any look or recipe \(1\)<\/summary>[\s\S]*orphan model/);
+  run(`modelReqs.set('p3',null);renderCuratedModels()`);   // a failed inspection is not an answer: nothing folds (PR #1486 review)
+  assert.match(element('#modelCards').innerHTML, /<h3>Missing \(4\)<\/h3>/); assert.doesNotMatch(element('#modelCards').innerHTML, /Optional ·/);
   // The looks panel holds its place (audit v3 N8): a placeholder before the looks arrive, a "Checking" row per look still being inspected.
   run(`modelReqs.delete('p2');renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /1 still being checked[\s\S]*Checking<\/h4>[\s\S]*Look B[\s\S]*Checking its files/); assert.equal(element('#modelLooks').attributes['aria-busy'], 'true');
