@@ -78,13 +78,20 @@ def run():
             page.fill('#makeNegative', 'extra hands')
             page.uncheck('#makeNewSeed'); page.fill('#makeSeed', '1234')
             page.fill('#makeScene', SCENE)
+            page.select_option('#makeShape', 'square'); page.select_option('#makeCount', '2')
+            page.evaluate('() => { const r = document.querySelector("#makeStrength"); r.value = "50"; r.dispatchEvent(new Event("input")); }')
+            assert page.evaluate('getComputedStyle(document.querySelector(".make-go")).position') == 'sticky' and page.query_selector('.make-go #makeGenerate')
+            about = page.text_content('.make-about')
+            assert 'Details for maintainers' in about and 'Model:' in about, about
             assert not posted('/api/jobs'), 'tuning never submits'
             page.click('#makeGenerate'); page.wait_for_function('document.querySelector(".make-run .make-tuned")')
             jobs = posted('/api/jobs'); assert len(jobs) == 1, jobs
             job, steps = jobs[0], max(1, round(shipped['controls']['steps'] / 2 + 1e-9))
             c = job['controls']
             assert job['preset_id'] == SWITCH, job['preset_id']
-            assert (c['lora'], c['lora_name'], c['lora2'], c['lora2_name']) == (0.7, shipped['controls']['lora_name'], KNOWLEDGE['loras'][ADDED]['default'], ADDED), c
+            # Style strength at 50% scales every tuned adapter, the added one included.
+            assert (c['lora'], c['lora_name'], c['lora2'], c['lora2_name']) == (0.35, shipped['controls']['lora_name'], round(KNOWLEDGE['loras'][ADDED]['default'] * 0.5, 2), ADDED), c
+            assert job['batch_count'] == 2 and c['width'] == c['height'], (job['batch_count'], c['width'], c['height'])
             assert all(c[k] == 0 for k in ('lora3', 'lora4', 'lora5', 'lora6')), 'a switched model keeps none of its own authored adapters'
             assert (c['steps'], c['negative'], c['seed']) == (steps, 'extra hands', 1234), c
             assert c['positive'].startswith('@40u40uya, ') and SCENE in c['positive'], c['positive']
@@ -97,7 +104,19 @@ def run():
             page.click('[data-make-rerun="%s"]' % JOB['id'])
             assert page.input_value('#makeModel') == SWITCH and page.query_selector('[data-slot=lora2]'), 'Edit and re-run restores the tune'
             assert not page.is_checked('#makeNewSeed') and page.input_value('#makeSeed') == '1234' and page.input_value('#makeScene') == SCENE
-            assert len(posted('/api/jobs')) == 1, 'restoring a tune never submits'
+            assert (page.input_value('#makeShape'), page.input_value('#makeCount'), page.input_value('#makeStrength')) == ('square', '2', '50'), 'the run keeps its own shape, count and strength'
+            assert len(posted('/api/jobs')) == 1, 'restoring a run never submits'
+            # A run made with new seeds each time comes back locked to the seed it used: change only the words, same picture.
+            page.check('#makeNewSeed'); fixture.POSTS.clear(); page.click('#makeGenerate')
+            page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Started")')
+            used = posted('/api/jobs')[-1]['controls']['seed']; assert used != 1234, used
+            page.click('[data-make-rerun="%s"]' % JOB['id'])
+            assert not page.is_checked('#makeNewSeed') and page.input_value('#makeSeed') == str(used), (used, page.input_value('#makeSeed'))
+            assert 'seed locked' in page.text_content('#makeStatus') and len(posted('/api/jobs')) == 1, page.text_content('#makeStatus')
+            # A slow look starts at one picture.
+            page.click('[data-make-goal="painting"]')
+            if page.query_selector('[data-make-change]'): page.click('[data-make-change]')
+            page.click('[data-make-look="look-krea-oil-fantasy"]'); assert page.input_value('#makeCount') == '1'
             browser.close()
     finally:
         server.shutdown(); server.server_close()

@@ -192,7 +192,8 @@
   function renderComposer(){
     const box=q('#makeComposer'),look=current();if(!box)return;
     if(!look){box.innerHTML='<p class="make-hint">Choose a look above. Each picture is one real run of that look on this PC; yours will differ.</p>';return;}
-    const p=presetFor(look),why=blocker(look),example=look.body.scene_example||'',options=look.body.options||[];
+    // A slow look starts at one picture: four Krea pictures are about forty minutes, which nobody should get by default.
+    const p=presetFor(look),why=blocker(look),example=look.body.scene_example||'',options=look.body.options||[],slow=speed(p)[0]==='slow';
     box.innerHTML='<div class="make-step"><span>2</span><h2>Describe your picture</h2></div><div class="make-composer"><div class="make-compose-main">'
       +'<label for="makeScene">'+escape(state.goal==='scene'?'Where is it, and what is there?':state.goal==='game'?'What is the item?':'Who or what, doing what, where?')+'</label>'
       +'<textarea id="makeScene" rows="3" maxlength="1000" placeholder="'+escape(example)+'"></textarea>'
@@ -201,14 +202,17 @@
       +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Tune this look <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
       +'</div><div class="make-compose-side">'
       +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'">'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
-      +'<label>How many<select id="makeCount"><option value="1">1 picture</option><option value="2">2 pictures</option><option value="4" selected>4 to choose from</option></select></label></div>'
+      +'<label>How many<select id="makeCount"><option value="1"'+(slow?' selected':'')+'>1 picture</option><option value="2">2 pictures</option><option value="4"'+(slow?'':' selected')+'>4 to choose from</option></select></label></div>'
       +(adapters(look).length?'<label>Style strength <output id="makeStrengthOut">100%</output><input type="range" id="makeStrength" min="0" max="150" step="10" value="100" aria-describedby="makeStrengthHint"><small id="makeStrengthHint" class="muted">How strongly the look\u2019s '+adapters(look).length+' style adapter'+(adapters(look).length>1?'s apply':' applies')+'. 100% is the look as made.</small></label>':'')
       +'<label class="make-check"><input type="checkbox" id="makeNewSeed"'+(tuneOf(look).reseed?' checked':'')+'> Different pictures each time</label>'
+      +'<div class="make-go"><button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>Generate</button>'
       +'<p id="makeEstimate" class="muted" aria-live="polite"></p>'
-      +'<button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>Generate</button>'
-      +(why?'<p id="makeWhy" class="make-warn">'+blockerMarkup(look,why)+'</p>':'')
+      +(why?'<p id="makeWhy" class="make-warn">'+blockerMarkup(look,why)+'</p>':'')+'</div>'
       +'<button type="button" id="makeEditor" class="make-link">Open in the full editor instead</button>'
-      +'<details class="make-about"><summary>What this look uses</summary><p>'+escape(p?.name||look.body.preset_id)+'</p>'+(adapters(look).length?'<p>Adapters: '+adapters(look).map(a=>escape(a.name.replace(/\.safetensors$/,''))+' at '+escape(a.strength)).join(', ')+'</p>':'<p>No style adapters: the model and the wording carry this look.</p>')+'<p class="muted">'+escape(look.body.notes||'')+'</p></details>'
+      +'<details class="make-about"><summary>What this look uses</summary><p><b>Model:</b> '+escape(family(p)||look.body.preset_id)+(p?.model?.file?' <small class="muted">'+escape(p.model.file)+'</small>':'')+'</p>'
+      +(adapters(look).length?'<p><b>Adapters:</b></p><ul>'+adapters(look).map(a=>'<li>'+escape(short(a.name==='built-in adapter'?'':a.name))+' at '+escape(a.strength)+(entry(a.name)?.trigger?' \u00b7 trigger <code>'+escape(entry(a.name).trigger)+'</code>':'')+'</li>').join('')+'</ul>':'<p>No style adapters: the model and the wording carry this look.</p>')
+      +(example?'<p><b>Example:</b> '+escape(example)+'</p>':'')
+      +(look.body.notes?'<details class="make-maint"><summary>Details for maintainers</summary><p class="muted">'+escape(look.body.notes)+'</p></details>':'')+'</details>'
       +'</div></div><p id="makeStatus" class="make-status" role="status"></p>';
     const scene=q('#makeScene');try{scene.value=sessionStorage.getItem('studio.make.scene.'+state.goal)||'';}catch{}
     scene.oninput=()=>{try{sessionStorage.setItem('studio.make.scene.'+state.goal,scene.value);}catch{}};
@@ -216,7 +220,13 @@
     q('#makeShape').onchange=q('#makeCount').onchange=()=>estimate();estimate();
     const strength=q('#makeStrength');if(strength)strength.oninput=()=>{q('#makeStrengthOut').textContent=strength.value+'%';};
     q('#makeNewSeed').onchange=e=>{tuneOf(look).reseed=e.target.checked;tuneChanged();};
-    q('#makeTune').ontoggle=e=>{state.tuneOpen=e.target.open;};renderTune();
+    q('#makeTune').ontoggle=e=>{state.tuneOpen=e.target.open;};
+    const kept=state.tune[look.id]?.composer;if(kept){delete state.tune[look.id].composer;
+      const set=(el,v)=>{if(el&&v!=null&&[...(el.options||[{value:String(v)}])].some(o=>o.value===String(v)))el.value=String(v);};set(q('#makeShape'),kept.shape);set(q('#makeCount'),kept.count);
+      if(strength&&kept.strength!=null){strength.value=kept.strength;strength.oninput();}
+      for(const box of view.querySelectorAll('[data-make-option]'))if(typeof kept.options?.[box.dataset.makeOption]==='boolean')box.checked=kept.options[box.dataset.makeOption];
+      q('#makeStatus').textContent='That run\u2019s settings are back'+(tuneOf(look).reseed?'':', with its seed locked')+'. Change the words or a setting, then press Generate.';estimate();}
+    renderTune();
   }
   async function prepared(look){
     // Every form value is read before the first await: a click on another look mid-request must not change this one.
@@ -231,13 +241,15 @@
     else if(t.seed!=null&&(p?.seed||p?.bindings_extra?.seed))controls.seed=t.seed;
     // Style strength scales the tuned adapters; two decimals, inside the server's 0-2 adapter range.
     const preset_id=applyTune(controls,look,t,scale),tuned=tuneSummary(look,t);
-    return{preset_id,controls,batch_count,scene,tuned,tune:{...t,seed:controls.seed??t.seed}};
+    // The run keeps its own settings, seed locked, so Edit and re-run changes only what you change next.
+    const composer={shape:q('#makeShape').value,count:batch_count,strength:q('#makeStrength')?.value??null,options};
+    return{preset_id,controls,batch_count,scene,tuned,tune:{...t,reseed:controls.seed==null&&t.reseed,seed:controls.seed??t.seed,composer}};
   }
   let estimateEpoch=0;
   async function estimate(retry=false){
     const look=current(),out=q('#makeEstimate');if(!look||!out)return;const epoch=++estimateEpoch,p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),t=state.tune[look.id];
     try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
-      out.textContent=e.estimate_seconds?'About '+duration(e.estimate_seconds)+' in total, from earlier runs on this PC.':'No timing yet: this look has not run here at this size.';}
+      out.classList.toggle('make-warn',e.estimate_seconds>600);out.textContent=e.estimate_seconds?'About '+duration(e.estimate_seconds)+' in total, from earlier runs on this PC.':'No timing yet: this look has not run here at this size.';}
     catch{if(epoch===estimateEpoch&&!retry)setTimeout(()=>{if(epoch===estimateEpoch)estimate(true);},1500);}
   }
   const duration=s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min';
