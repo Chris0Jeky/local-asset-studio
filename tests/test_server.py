@@ -1112,8 +1112,50 @@ class ServerTests(unittest.TestCase):
         with patch.object(server,'urlopen',return_value=self._http_response(b'')):
             self.assertIsNone(s._request('/free',method='POST',data={},allow_empty=True))
 
+    def test_eviction_skips_at_or_below_commit_floor_and_unknown_headroom(self):
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES; graph={"4":{"inputs":{"ckpt_name":"next.safetensors"}}}
+        idle={"queue_running":[],"queue_pending":[]}; stats={"devices":[{"torch_vram_total":8*1024**3}]}
+        for reason in ('model change','spill'):
+            for available in (floor,floor-1,12*1024**3,None,True,False,float('nan'),float('inf'),'45'):
+                with self.subTest(reason=reason,available=available):
+                    s=FakeStudio(self.root,[idle,stats,None,{"devices":[{"torch_vram_total":0}]}]); job={}
+                    s._resident={'url':s.comfy_url,'pid':42,'models':frozenset({'old.safetensors'})} if reason=='model change' else None
+                    reading={'pid':42,'shared_bytes':4*1024**3 if reason=='spill' else 0,'spilled':reason=='spill'}
+                    s._host_commit=self._commit_reading(floor+1);s._host_commit_at=server.time.monotonic()
+                    with patch.object(s,'gpu_memory_reading',return_value=reading), patch.object(server.host_memory,'read',return_value=self._commit_reading(available)) as read, patch.object(server.time,'sleep'):
+                        record=s._evict_before_submit(job,graph,3)
+                    self.assertNotIn('/free',[r[0][0] for r in s.requests])
+                    read.assert_called_once_with()
+                    self.assertEqual((record['reason'],record['index']),(reason,3))
+                    self.assertEqual(record['outcome'],'skipped: ' + server.COMMIT_RELEASE_FLOOR_NOTE)
+                    self.assertIn('before_available_bytes',record)
+                    self.assertEqual(job['model_evictions'],[record]); self.assertIsNone(s._spill_unload_ineffective)
+
+    def test_eviction_rechecks_commit_headroom_and_releases_above_floor(self):
+        floor=server.COMMIT_RELEASE_FLOOR_BYTES; graph={"4":{"inputs":{"ckpt_name":"next.safetensors"}}}
+        idle={"queue_running":[],"queue_pending":[]}; stats={"devices":[{"torch_vram_total":8*1024**3}]}
+        s=FakeStudio(self.root,[idle,stats,idle,stats,None,{"devices":[{"torch_vram_total":0}]}]); job={}
+        reading={'pid':42,'shared_bytes':4*1024**3,'spilled':True}
+        with patch.object(s,'gpu_memory_reading',return_value=reading), patch.object(server.host_memory,'read',side_effect=[self._commit_reading(floor),self._commit_reading(floor+1)]) as read, patch.object(server.time,'sleep'):
+            self.assertTrue(s._evict_before_submit(job,graph,0)['outcome'].startswith('skipped: '))
+            self.assertIsNone(s._spill_unload_ineffective)
+            record=s._evict_before_submit(job,graph,1)
+        self.assertEqual(record['outcome'],'unloaded'); self.assertEqual(record['before_available_bytes'],floor+1)
+        self.assertEqual(read.call_count,2)
+        self.assertEqual([r[0][0] for r in s.requests].count('/free'),1)
+        self.assertEqual(len(job['model_evictions']),2)
+
+    def test_eviction_commit_probe_failure_skips_free_and_records_failure(self):
+        s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"devices":[{"torch_vram_total":8*1024**3}]},None,{"devices":[{"torch_vram_total":0}]}]); job={}
+        with patch.object(s,'gpu_memory_reading',return_value={'pid':42,'spilled':True}), patch.object(server.host_memory,'read',side_effect=OSError('commit probe failed')), patch.object(server.time,'sleep'):
+            record=s._evict_before_submit(job,{"4":{"inputs":{"ckpt_name":"next.safetensors"}}},0)
+        self.assertNotIn('/free',[r[0][0] for r in s.requests])
+        self.assertEqual(record['outcome'],'failed: commit probe failed')
+        self.assertEqual(job['model_evictions'],[record]); self.assertIsNone(s._spill_unload_ineffective)
+
     def test_checkpoint_change_unloads_resident_models_and_waits_for_the_release(self):
         """A graph that drops a model the previous graph loaded is preceded by /free {unload_models} and a wait until torch's reservation falls."""
+        self._ample_commit_for_idle_release()
         sdxl_a={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"sdxl\\cstati.safetensors"}},"5":{"inputs":{"samples":["4",0]}}}
         sdxl_b={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"sdxl/wai.safetensors"}},"9":{"inputs":{"lora_name":"detail.safetensors","strength":0.5}}}
         self.assertEqual(server.Studio.graph_model_files(sdxl_a),frozenset({"sdxl/cstati.safetensors"}))
@@ -1136,6 +1178,7 @@ class ServerTests(unittest.TestCase):
 
     def test_spilling_idle_process_is_unloaded_and_failures_never_block_submission(self):
         """An idle ComfyUI already spilling is unloaded even for the same model; busy queue, unreadable stats, errors and the off switch are recorded."""
+        self._ample_commit_for_idle_release()
         idle={"queue_running":[],"queue_pending":[]}; graph={"4":{"inputs":{"ckpt_name":"a.safetensors"}}}
         spilling={'pid':7,'shared_bytes':4*1024**3,'dedicated_bytes':12*1024**3,'spilled':True}
         s=FakeStudio(self.root,[idle,{"devices":[{"torch_vram_total":8*1024**3}]},None,{"devices":[{}]}]); job={}
@@ -1158,6 +1201,7 @@ class ServerTests(unittest.TestCase):
 
     def test_eviction_follow_ups_lora_change_nothing_resident_malformed_stats_and_outside_spill(self):
         """#901: a LoRA change needs no unload, an empty GPU is recorded as such, bad stats never escape, a spill an unload cannot clear is not chased."""
+        self._ample_commit_for_idle_release()
         idle={"queue_running":[],"queue_pending":[]}; quiet={'pid':42,'shared_bytes':0,'dedicated_bytes':9*1024**3,'spilled':False}
         base={"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"wai.safetensors"}}}
         with_lora=dict(base,**{"9":{"class_type":"LoraLoader","inputs":{"lora_name":"detail.safetensors","strength_model":0.5}}})
