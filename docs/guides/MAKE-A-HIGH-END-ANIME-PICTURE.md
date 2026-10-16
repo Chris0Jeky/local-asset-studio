@@ -1,6 +1,6 @@
 # Make a high-end anime picture
 
-This guide takes you from "I want a very good anime picture" to a picture you can keep, using Make. It uses the button names you see on screen. It was written from the Make page as built on 16 October 2026 (`app/static/make.js`, after Make wave 5) and from the [look lab of the same day](../looks/LOOK-LAB-2026-10-16.md).
+This guide takes you from "I want a very good anime picture" to a picture you can keep, using Make. It uses the button names you see on screen. It was written from the Make page as built on 16 October 2026 (`app/static/make.js`, after Make wave 5) and from the [look lab of the same day](../looks/LOOK-LAB-2026-10-16.md). Rounds 3 to 5 (poses, adapters, finishing, restyle and game icons) are in that report.
 
 **What this guide does not claim.**
 
@@ -19,7 +19,7 @@ You need the Studio and ComfyUI running. On the configured PC, `Start Studio.cmd
 
 Your pictures appear under **Your pictures** as they finish. Press **Keep** on the ones you like and **Not this** on the rest (section 4).
 
-What you just used: **Flat pastel close-up** is the Anima model with the PetiFlow adapter. Its wording asks for flat colours, a face-focus, upper-body, close-up framing and an adult character. Ask for a portrait or a bust. A full-body action scene fights the look's own words. If you want something glossier or wider, go to section 2.
+What you just used: **Flat pastel close-up** is the Anima model with the PetiFlow adapter. Its wording asks for flat colours, a face-focus, upper-body, close-up framing and an adult character. Ask for a portrait or a bust for the best measured results. A medium shot or a standing full-body scene also held the look in the lab, on some seeds (section 2). If you want something glossier, go to section 2.
 
 Press Ctrl+K at any time for the tool finder. It searches goals, looks and tools by the names on the cards. It only moves you around: it never starts a picture. It matches the card names, not model names: search "pastel", not "PetiFlow".
 
@@ -52,9 +52,16 @@ How to read this:
 
 - The lab is two to four pictures per look. It cannot rank them. The lab report says differences under 0.3 on its score are ties.
 - Specific held objects fail more often than faces. Check hands, props and any written words in every picture.
+- **Flat pastel close-up** also held its look at medium shot (2 of 2 seeds: head to hips, elbows and waist visible) and at full body (1 of 2 seeds). The seed that failed added camera-like fixtures to the greenhouse sides, so check the background as well as the figure.
 - The lab did not test which look is "high-end". If you want to choose by eye, use **Compare looks** (section 4).
 
 Painted looks (oil, ink, watercolour) are under **Painted illustration**, and the Krea ones take minutes per picture. They are a different journey.
+
+### Game items
+
+The **Game item or icon** goal has **Painted game icon**, which draws one named object on a white background. In the round-5 lab it always drew one item (6 of 6 trials), but its shape details often drifted. Only 1 of 6 trials on new objects was a strict keep: the backpack, on its default seed. The shield, crystal and key were fixable. Both shield seeds turned the requested round outline into a pointed heraldic shield. Both crystal seeds added a rounded-square frame. The key had two teeth instead of three.
+
+The card can show **Tested well**, because of the two round-4 objects (a potion and a sword, one seed each). That badge does not cover a new object. Check the shape, the count and any frame or border in every picture before you use it. The lab did not prove exact white, transparency, small-icon readability or a game-engine import.
 
 ## 3. Getting the right model and adapters
 
@@ -77,11 +84,14 @@ Open **Tune this look** under the words box. It is folded by default. The line n
 
 - Each row has a tick (on or off), the adapter name, a strength slider from 0 to 2, **Remove**, and a note: its trigger word, "No trigger word", or "Fixed in this recipe".
 - Strength 0 turns an adapter off. The Studio removes it from the picture's recipe.
-- **Add an installed adapter**: type part of a name, choose it from the list, press **Add**. Only adapters that are installed and known to fit this model type are listed. The strength starts at the adapter's usual value.
+- **Add an installed adapter**: type part of a name, choose it from the list, press **Add**. Only adapters that are installed and known to fit this model type are listed. The strength starts at the adapter's usual value, or, for the Petiflow adapters the lab tested, at the lab's neutral value (see above).
 - If you add an adapter that has a trigger word, the Studio adds that word to your text for you (the row says "added to your words"). The look's own adapters already have theirs.
 - If all adapter slots are in use, **Add** is disabled and the page says "All adapter slots of this recipe are in use; remove one first."
 - **Style strength** (under **Shape** and **How many**; with **Tune this look** open, it sits above the adapters instead) scales all the look's adapters together. 100% is the look as made. It multiplies the per-adapter strengths above.
 - What the lab saw: PetiFlow at 1.0 and Ringeko at 0.6 and 0.8 worked. Adding a detail, lighting or hand adapter at 0.4 to 0.6 on top of Ringeko did not make a measurable difference on one clean scene. More tags and more adapters were not a proven fix for a missing prop. The lab never tried those extra adapters at 1.0.
+- **Adding style adapters to Flat pastel close-up.** On one fern scene (round 3, one seed), the lab added Anima style adapters to PetiFlow at 1.0. At low strength they were neutral: Ke-ta at 0.35 and 0.7, Xilmo at 0.35, NEWANIMASTYLE at 0.5. Ke-ta and Xilmo together, at 0.35 each, were neutral too. At their defaults they were not: Xilmo at 0.7 turned the fern into broad leaves, NEWANIMASTYLE at 1.0 changed the plant and the face, and Kieed at 0.5 (and at 0.25) flattened the face and changed the plant. Ke-ta at its default 0.7 was neutral.
+- Make starts the tested ones at the neutral strength and shows the lab note under the row. Kieed has no neutral value in the lab: both 0.5 (its usual start) and 0.25 harmed the face and plant, so leave it off unless you want to experiment.
+- Neutral is not better. None of these adapters improved the picture in the lab. Prefer the untuned look unless you want a different flavour.
 
 **Quality and speed, Leave out, Seed**
 
@@ -137,11 +147,18 @@ The anime looks run in about 25 to 45 seconds a picture in the lab, so a draft e
 ### Under each picture
 
 - **Fix face**, **Fix hands and details** and **Upscale 2×**. Each shows an estimated time when the Studio has one. One press starts one job. The result appears at the top of **Your pictures**.
-- The face and hand fixes repaint with an anime model, so they are offered only for pictures made by anime families. Upscale accepts any picture.
+- The face and hand fixes repaint with an anime model, so they are offered only for pictures made by anime families. Upscale accepts any picture. On Anima pictures, **Fix face** and **Fix hands and details** both run the same WAI-based repaint, face then hands.
 - A fix that cannot run stays on the picture, greyed out, with its reason in a line beside the buttons. Open the goal **Fix or upscale** to see the same reasons (below).
 - **More** holds: **Open full size**, **Other fixes…**, **Change one thing**, **Restyle**, **Put in a new pose**, **Animate**, **Make it 3D**. The goal buttons open that goal with your picture already chosen.
 
-The lab did not measure these fixes. Look at the result before replacing your original.
+Round 5 of the lab measured these passes on clean pictures, which had no named defect to repair. They show what each pass does to a picture that was already good, not whether it repairs a broken hand or face. The steps below come from that test. Look at the result before replacing your original.
+
+### How to finish a picture
+
+1. **Keep the original.** Open it full size. Check the eyes, both hands, held objects and any lettering before you choose a fix.
+2. **Fix face or Fix hands and details** on an anime picture: try one, once. On Anima looks these repaint with a WAI model, and they can change the face finish. In the lab, PetiFlow's soft face and eye colour drifted. Compare the new face, fingers, expression and style with the original. Keep the pass only if the thing that needed fixing got better and nothing important was lost. The lab's fix passes took 37 to 148 seconds each.
+3. **Upscale 2×** the version you chose, not the original. Upscale smooths texture, so eyelashes, hair lines, fabric and hands can look softer at full size. It keeps earlier mistakes and cannot repair anatomy. The lab's upscales took 59 to 499 seconds.
+4. **Restyle** is a redraw, not a filter. It keeps the character recognisable, but the face, pose and props can drift. In the lab, watercolour transferred better than ink, for both sources. The ink target only partly took its bold brushwork. Run Restyle from the original unless you want the repaired version as its input. Name the colours to keep, and compare the face, pose and props as well as the style. Restyle took 62 to 80 seconds.
 
 ### Fix or upscale (a goal)
 
@@ -162,8 +179,20 @@ Restyle uses its own restyle recipe, not the look's model. The page says only ho
 
 1. Press **Character in a new pose**, choose the character picture.
 2. Under **Pose**, choose **A picture of the pose** (pick a library picture) or **Draw the pose** (pick a stick figure, optionally tick **Mirror left and right**).
-3. Fill the fields: who is in the picture, what they wear with colours, the pose in a few words.
-4. Press **Generate**.
+3. When the pose is a picture, **What to keep** appears with two choices:
+   - **Keep my character as it is** (Copy Pose, the default). Your character keeps its face, clothes, background and finish. Only the body position comes from the pose picture.
+   - **Put my character into this picture’s scene** (Replace character). The pose picture keeps its outfit, setting and finish. Only your character’s face and hair go in.
+4. Fill the fields: who is in the picture, what they wear with colours, the pose in a few words.
+5. Press **Generate**.
+
+**What the lab measured for the picture route:**
+
+- **Keep my character as it is** kept the pose, the face and the finish on 3 of 3 seeds for each of the two Anima pairs in round 4: the Petiflow botanist on One Obsession's flute pose, and the One Obsession musician on Petiflow's pot pose. Each picture took about 90 to 125 seconds. Identity was not exact. Faces drifted, with eyes, freckles or curls changing, so check the face every time.
+- It also worked with a Z-Image source (one picture, one seed, KEEP). That source's own stance missed its brief, with the hands hanging by the thighs, so check the stance too.
+- **WAI sources needed a hand repair.** On the WAI older man, Keep my character as it is was fixable, because the foreground fingers formed an awkward grip. The same WAI source with Put my character into this picture’s scene was a KEEP.
+- **Put my character into this picture’s scene** swapped the character into the pose picture's outfit and setting. On the two Anima pairs it was 2 of 2 KEEP in round 3, and on the WAI and Z-Image sources it was KEEP in round 4. The outfit and setting are the pose picture's by design, so do not expect your character's clothes to come back.
+
+**Hands and wording:** a drawn figure follows the body but not hand words. In round 3, both standing outputs ignored "relaxed closed hands". Describe the pose simply: the body position, the held object by name, and the camera. Do not rely on a finger count.
 
 A stick figure carries the pose and nothing else. To move single joints, use **Open in the full editor instead**. In the lab, a drawn pose controlled the body. It did not prove that the same character came back, and it does not control fingers. Treat identity and outfit as something to check, not something to trust.
 
