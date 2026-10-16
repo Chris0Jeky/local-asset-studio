@@ -14,9 +14,10 @@ test('browser drafts preserve both prepared routes and deep-copy polygon state',
   }
 });
 test('malformed, mixed and cross-recipe claims cannot silently turn into plain drafts',()=>{
-  for(const claim of [{...tile,version:2},{...tile,size:257},{...tile,rolled_file:'../bad.png'},{...tile,extra:true},{...tile,band_px:15}])assert.equal(U.normalizeDraft(draft(recipe('tile',claim))),null);
+  // A bad seamless plan drops alone and says so (tileDropped, announced on restore, #1230); it never passes as a plan.
+  for(const claim of [{...tile,version:2},{...tile,size:257},{...tile,rolled_file:'../bad.png'},{...tile,extra:true},{...tile,band_px:15}]){const n=U.normalizeDraft(draft(recipe('tile',claim)));assert.equal(n.tileDropped,true);assert.equal(n.recipe.tile??null,null);}
   for(const claim of [{...parallax,stage:'invented'},{...parallax,width:511},{...parallax,view_polygons:[[[1,2]]]},{...parallax,plan_id:'bad'}])assert.equal(U.normalizeDraft(draft(recipe('parallax',claim))),null);
-  assert.equal(U.normalizeDraft(draft({...recipe('tile',tile),preset:'other'})),null);
+  assert.equal(U.normalizeDraft(draft({...recipe('tile',tile),preset:'other'})).tileDropped,true,'a plan naming another recipe drops alone');
   assert.equal(U.normalizeDraft(draft({...recipe('tile',tile),parallax})),null);
   assert.equal(U.normalizeDraft(draft({...recipe('tile',tile),continuation:{}})),null);
 });
@@ -28,7 +29,7 @@ test('stale input, lineage, dimensions and batching produce explicit read-only b
   const missing={...base,controls:{positive:'reviewed words'}};assert.ok(U.normalizeDraft(draft(missing)),'keep the held envelope so reattachment stays explicit');assert.match(U.preparedBlocker(missing),/prepared/);
 });
 const app=fs.readFileSync(require.resolve('../app/static/app.js'),'utf8');
-const apply=app.slice(app.indexOf('function applySaved('),app.indexOf('function continuationPayload('));
+const apply=app.slice(app.indexOf('function staleTilePlan('),app.indexOf('function continuationPayload('));
 function applyFixture(saved){
   const inputs={'#reference':{value:'',files:[]},'#lastReference':{value:'',files:[]},'#positive':{value:''},'#negative':{value:''},'#batch':{value:1}};
   const sandbox={catalog:{presets:[{id:'tile-demo',reference:['1','image'],tile_route:true},{id:'parallax-demo',reference:['1','image'],parallax_route:true},{id:'plain'}]},StudioUX:U,
@@ -41,7 +42,7 @@ test('shipped saved-setup application restores the claim, source and lineage',()
   for(const [kind,claim] of [['tile',tile],['parallax',parallax]]){
     const state=applyFixture(recipe(kind,claim));assert.deepEqual(JSON.parse(JSON.stringify(state[kind+'State'])),claim);assert.equal(state.uploaded,claim.rolled_file||claim.source_file);assert.deepEqual(Array.from(state.parentAssets),['source']);
   }
-  assert.throws(()=>applyFixture({...recipe('tile',tile),preset:'plain'}),/prepared|plan/i);
+  assert.equal(applyFixture({...recipe('tile',tile),preset:'plain'}).tileState,null);
 });
 test('save, snapshot and checked recipe import carry both envelopes',()=>{
   const workbench=fs.readFileSync(require.resolve('../app/static/studio-workbench.js'),'utf8');
